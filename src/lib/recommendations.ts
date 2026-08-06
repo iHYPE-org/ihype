@@ -10,7 +10,7 @@ import {
 export { WEIGHTS, geoTier, tasteScore, finalScore, buildReason } from '@/lib/recommendation-scoring';
 export type { Signals, RecommendationReason } from '@/lib/recommendation-scoring';
 
-const VALID_TYPES: ProfileType[] = ['ARTIST', 'DJ', 'VENUE'];
+const VALID_TYPES: ProfileType[] = ['ARTIST', 'VENUE'];
 
 const COLLAB_MAX_COHYPE_USERS = 300;
 const COLLAB_MAX_CANDIDATES   = 80;
@@ -163,7 +163,7 @@ export async function getRecommendations(
   if (viewerGenres.length > 0) {
     const comparableArtists = await db.profile.findMany({
       where: {
-        type: { in: ['ARTIST', 'DJ'] },
+        type: 'ARTIST',
         genres: { hasSome: viewerGenres.slice(0, 4) },
         hypeCount: { gte: 5 },
         id: { notIn: viewerId ? [...alreadyHypedIds] : [] },

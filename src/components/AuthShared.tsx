@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { postJson } from '@/lib/api-client';
 import { useI18n } from '@/components/I18nProvider';
 
-export type RoleOption = 'FAN' | 'ARTIST' | 'DJ' | 'VENUE';
+export type RoleOption = 'FAN' | 'ARTIST' | 'VENUE';
 export type AuthMethod = 'email' | 'passkey';
 export type RegisterStep = 'gate' | 'form' | 'passkey' | 'magic-link-sent';
 export type SignupVariant = 'email_first' | 'passkey_first';

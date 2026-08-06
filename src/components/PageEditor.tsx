@@ -509,7 +509,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
   const isVenue = data.type === 'VENUE';
   const isFan = data.type === 'LISTENER';
-  const isArtistOrDj = data.type === 'ARTIST' || data.type === 'DJ';
+  const isArtistOrDj = data.type === 'ARTIST';
 
   const preset = getProfileDesignPreset(data.themePreset);
   const accentTone = getProfileAccentTone(data.themeAccentTone);

@@ -2,9 +2,8 @@ import { ProfileType } from '@prisma/client/edge';
 import { db } from '@/lib/db';
 import { createHexId } from '@/lib/hex-id';
 
-export function getProfileType(role: 'FAN' | 'ARTIST' | 'DJ' | 'VENUE'): ProfileType {
+export function getProfileType(role: 'FAN' | 'ARTIST' | 'VENUE'): ProfileType {
   if (role === 'ARTIST') return 'ARTIST';
-  if (role === 'DJ') return 'DJ';
   if (role === 'VENUE') return 'VENUE';
   return 'LISTENER';
 }
@@ -22,14 +21,6 @@ export function getProfileCopy(type: ProfileType, name: string) {
     };
   }
 
-  if (type === 'DJ') {
-    return {
-      headline: `${name} is building the next room worth talking about.`,
-      bio: 'Introduce your sound, your rooms, and how you like to move a crowd.',
-      aboutContent: 'Tell artists and venues what kind of nights you build and what you are looking for next.',
-      recommendContent: 'Use this section to talk about the artists, collaborators, and scenes you champion.'
-    };
-  }
 
   if (type === 'VENUE') {
     return {

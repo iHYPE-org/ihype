@@ -54,6 +54,6 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
 export default async function ForFansPage() {
   const t = await getServerT();
   const config = buildConfig(t);
-  const cityHeat = await getCityHeatForRole(['ARTIST', 'DJ', 'VENUE']);
+  const cityHeat = await getCityHeatForRole(['ARTIST', 'VENUE']);
   return <RecruitingKitPage config={config} cityHeat={cityHeat} />;
 }

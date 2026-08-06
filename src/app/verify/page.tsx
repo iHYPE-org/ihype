@@ -38,7 +38,7 @@ export default async function VerifyPage() {
   };
 
   const profiles = await db.profile.findMany({
-    where: { ownerId: session.user.id, type: { in: ['ARTIST', 'DJ', 'VENUE'] } },
+    where: { ownerId: session.user.id, type: { in: ['ARTIST', 'VENUE'] } },
     orderBy: { createdAt: 'asc' },
     select: { id: true, type: true, name: true, city: true, genres: true, contactInfo: true, verificationStatus: true, verificationSubmittedAt: true },
   });
@@ -121,11 +121,11 @@ export default async function VerifyPage() {
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifyYourPagePrefix', 'Verify your')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifyYourPageSuffix', 'page.')}</h1>
       <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24, lineHeight: 1.6 }}>
-        {t('verifyPage.instantVsVerification', 'Fan accounts are instant. Artist, DJ, and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.')}
+        {t('verifyPage.instantVsVerification', 'Fan accounts are instant. Artist and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.')}
       </p>
       <VerifyForm
         profileId={profile.id}
-        type={profile.type as 'ARTIST' | 'DJ' | 'VENUE'}
+        type={profile.type as 'ARTIST' | 'VENUE'}
         initialName={profile.name}
         initialCity={profile.city ?? ''}
         initialGenres={profile.genres.join(', ')}

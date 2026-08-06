@@ -39,7 +39,7 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
     },
   });
 
-  if (!profile || (profile.type !== 'ARTIST' && profile.type !== 'DJ')) return notFound();
+  if (!profile || profile.type !== 'ARTIST') return notFound();
 
   const t = await getServerT();
   const nonce = await getCspNonce();

@@ -7,7 +7,7 @@ export const revalidate = 3600;
 
 export async function GET() {
   const profiles = await db.profile.findMany({
-    where: { verified: true, type: { in: ['ARTIST', 'DJ'] } },
+    where: { verified: true, type: 'ARTIST' },
     orderBy: { createdAt: 'desc' },
     take: 100,
     select: { id: true, name: true, slug: true, bio: true, createdAt: true, genres: true }

@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     includeArtists
       ? db.profile.findMany({
           where: {
-            type: { in: ['ARTIST', 'DJ', 'VENUE'] },
+            type: { in: ['ARTIST', 'VENUE'] },
             discoverable: true,
             OR: [
               { name:        { contains: q, mode: 'insensitive' } },
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
 
   profiles.forEach(p => {
     const loc  = [p.city, p.stateRegion].filter(Boolean).join(', ');
-    const type = p.type === 'VENUE' ? 'venue' : p.type === 'DJ' ? 'promoter' : 'artist';
+    const type = p.type === 'VENUE' ? 'venue' : 'artist';
     const sub  = [
       p.genres.slice(0, 2).join(' · '),
       loc,

@@ -62,7 +62,7 @@ export function VenueLineupComposer({
     const res = await fetch(`/api/search?q=${encodeURIComponent(slug)}&type=artist&limit=10`);
     if (!res.ok) return null;
     const data = await res.json().catch(() => null);
-    const match = (data?.profiles ?? []).find((p: { slug: string; type: string }) => p.slug === slug && (p.type === 'ARTIST' || p.type === 'DJ'));
+    const match = (data?.profiles ?? []).find((p: { slug: string; type: string }) => p.slug === slug && p.type === 'ARTIST');
     return match ? { id: match.id, name: match.name } : null;
   }
 

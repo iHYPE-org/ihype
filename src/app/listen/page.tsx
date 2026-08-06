@@ -70,7 +70,7 @@ export default async function ListenPage({
   }
   if (roles.size === 0) roles.add('fan');
 
-  const creatorMetrics = (type: 'ARTIST' | 'DJ' | 'VENUE'): Array<[string, string]> => {
+  const creatorMetrics = (type: 'ARTIST' | 'VENUE'): Array<[string, string]> => {
     const owned = user.profiles.filter((profile) => profile.type === type);
     const total = (pick: (profile: typeof owned[number]) => number) => owned.reduce((sum, profile) => sum + pick(profile), 0);
     return [
@@ -92,7 +92,6 @@ export default async function ListenPage({
       ['Playlists', format.format(playlistCount)],
     ],
     artist: creatorMetrics('ARTIST'),
-    dj: creatorMetrics('DJ'),
     venue: creatorMetrics('VENUE'),
     advertiser: [
       ['Campaigns', String(campaigns.length)],

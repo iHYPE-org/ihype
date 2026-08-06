@@ -16,7 +16,7 @@ interface Prefs {
   bookingRequests: boolean;
 }
 
-const ROLE_COLOR: Record<string, string> = { ARTIST: 'var(--role-artist)', DJ: 'var(--role-dj)', VENUE: 'var(--role-venue)' };
+const ROLE_COLOR: Record<string, string> = { ARTIST: 'var(--role-artist)', VENUE: 'var(--role-venue)' };
 
 /**
  * `label` is required, not optional, and it is the whole point.

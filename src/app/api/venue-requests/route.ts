@@ -72,7 +72,7 @@ export async function POST(request: Request) {
         select: { id: true, name: true, type: true }
       });
 
-      if (!artistProfile || !['ARTIST', 'DJ'].includes(artistProfile.type)) {
+      if (!artistProfile || !['ARTIST'].includes(artistProfile.type)) {
         return NextResponse.json({ error: 'Choose an artist or promoter profile' }, { status: 400 });
       }
 

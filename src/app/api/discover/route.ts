@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return NextResponse.json({ artists: [], venues: [], djs: [] });
+      return NextResponse.json({ artists: [], venues: [] });
     }
 
     // Get profileIds the user has already hyped
@@ -74,21 +74,8 @@ export async function GET() {
         avatarImage: p.avatarImage,
       }));
 
-    const djs = profiles
-      .filter(p => p.type === 'DJ')
-      .slice(0, 20)
-      .map(p => ({
-        id: p.id,
-        slug: p.slug,
-        name: p.name,
-        city: p.city,
-        stateRegion: p.stateRegion,
-        hypeCount: p.hypeCount,
-        genres: p.genres,
-        avatarImage: p.avatarImage,
-      }));
 
-    return NextResponse.json({ artists, venues, djs });
+    return NextResponse.json({ artists, venues });
   } catch (err) {
     log.error('[api/discover]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

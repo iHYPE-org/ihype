@@ -20,7 +20,7 @@ describe('public location privacy', () => {
     expect(isPublicVenueCoordinate(venue)).toBe(true);
   });
 
-  it.each(['ARTIST', 'DJ'] as const)('never publishes exact %s coordinates', (type) => {
+  it.each(['ARTIST'] as const)('never publishes exact %s coordinates', (type) => {
     const profile = sanitizePublicLocation({
       type,
       discoverable: true,

@@ -46,9 +46,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
   const dashboardHref = isVenueOwner && show.venueProfile
     ? `/venues/${show.venueProfile.slug}/dashboard`
     : isHeadlinerOwner && show.headlinerProfile
-      ? show.headlinerProfile.type === 'DJ'
-        ? `/artists/${show.headlinerProfile.slug}/dashboard`
-        : `/artists/${show.headlinerProfile.slug}/dashboard`
+      ? `/artists/${show.headlinerProfile.slug}/dashboard`
       : `/shows/${show.slug}`;
 
   return (

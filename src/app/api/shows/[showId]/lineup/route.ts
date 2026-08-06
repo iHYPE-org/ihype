@@ -118,7 +118,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
   }
 
   const profiles = await db.profile.findMany({
-    where: { id: { in: profileIds }, type: { in: ['ARTIST', 'DJ'] } },
+    where: { id: { in: profileIds }, type: 'ARTIST' },
     select: { id: true, name: true, ownerId: true },
   });
   if (profiles.length !== profileIds.length) {

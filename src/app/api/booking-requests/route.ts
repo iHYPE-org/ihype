@@ -26,7 +26,7 @@ export async function GET() {
             name: true, username: true,
             // The requester's own performer profile, if they have one —
             // lets the inbox link to "View profile" without exposing email.
-            profiles: { where: { type: { in: ['ARTIST', 'DJ'] } }, select: { slug: true, type: true, genres: true, city: true }, take: 1 },
+            profiles: { where: { type: 'ARTIST' }, select: { slug: true, type: true, genres: true, city: true }, take: 1 },
           },
         },
         toProfile: { select: { name: true, type: true } },

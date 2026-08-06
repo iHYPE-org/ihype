@@ -11,7 +11,7 @@ export async function sendArtistOnboardingNudges(): Promise<{ sent: number }> {
   // Artists with no shows after 7 days
   const noShowArtists = await db.profile.findMany({
     where: {
-      type: { in: ['ARTIST', 'DJ'] },
+      type: 'ARTIST',
       createdAt: { gte: since7, lt: since7end },
       headlinerShows: { none: {} },
       owner: { email: { not: null } }

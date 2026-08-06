@@ -5,7 +5,7 @@ import { useAsyncForm } from '@/hooks/useAsyncForm';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
 import { useI18n } from '@/components/I18nProvider';
 
-const ROLES = ['ALL', 'FAN', 'ARTIST', 'DJ', 'VENUE', 'ADVERTISER'] as const;
+const ROLES = ['ALL', 'FAN', 'ARTIST', 'VENUE', 'ADVERTISER'] as const;
 
 export function AdminBroadcastForm() {
   const { t } = useI18n();

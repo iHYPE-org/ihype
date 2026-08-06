@@ -13,14 +13,12 @@ import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
-  DJ: 'var(--role-dj)',
   VENUE: 'var(--role-venue)',
   LISTENER: 'var(--role-fan)',
 };
 
 const TYPE_LABEL: Record<string, string> = {
   ARTIST: 'Artist',
-  DJ: 'DJ',
   VENUE: 'Venue',
   LISTENER: 'Fan',
 };
@@ -56,7 +54,6 @@ const NET_FILTERS = [
   { id: 'all', label: 'All' },
   { id: 'ARTIST', label: 'Artists' },
   { id: 'VENUE', label: 'Venues' },
-  { id: 'DJ', label: 'DJs' },
   { id: 'LISTENER', label: 'Fans' },
 ] as const;
 

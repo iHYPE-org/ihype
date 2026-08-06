@@ -129,17 +129,12 @@
 
   /* ── Role colors ─────────────────────────────────────────────────── */
   --role-fan:      #b983ff;
-  /* DJ was split-brained: this token said azure #5b8cff while /discover,
-     /settings, /pages and /register each hardcoded #ff3e9a, and /join and
-     /for-djs wrote `var(--role-dj, #ff3e9a)` — a fallback contradicting the
-     token it falls back from, so they rendered azure against their author's
-     intent. Resolved to the pink the product mostly already showed.
-     DEPRECATED as of the Music/Map/Me handoff (DESIGN_SYNC row 267): the
-     design system renamed this token to --role-promoter and states there is
-     no DJ role. Kept as an alias — same value, so nothing repaints — until
-     the DJ-removal work in that row actually lands and its ~7 call sites go
-     away with it. Do not add new uses. */
-  --role-dj:       var(--role-promoter);
+  /* --role-dj and --role-dj-text are GONE as of the DJ role removal
+     (docs/dj-role-removal-scope.md, step 4). They were same-value aliases of
+     --role-promoter, kept only so the DJ surface would not repaint before the
+     removal landed. It has landed, and all of their call sites went with it.
+     Do not reintroduce them: promoter is the surviving concept and
+     --role-promoter is its token. */
   --role-artist:   #ff5029;
   --role-venue:    #22e5d4;
   /* The venue teal as TEXT. It is 10.6:1 on the dark charter card but 1.26:1
@@ -159,7 +154,6 @@
      readable text. Light mode overrides the aliases without dulling artwork,
      charts, chips, or other brand fills. */
   --role-promoter-text: var(--role-promoter);
-  --role-dj-text: var(--role-promoter-text);
   --role-artist-text: var(--role-artist);
   --role-advertiser-text: var(--warning-text);
   /* Backlog item 3 of the app-shell handoff: "Add --role-advertiser to the

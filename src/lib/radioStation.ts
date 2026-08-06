@@ -63,7 +63,7 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
         // station predates them and never did.
         ...releasedMediaWhere(now),
         freeUseEnabled: true,
-        profile: { ...getDemoOwnerExclusion(), type: { in: ['ARTIST', 'DJ'] } },
+        profile: { ...getDemoOwnerExclusion(), type: 'ARTIST' },
       },
       orderBy: { profile: { hypeCount: 'desc' } },
       take: ROTATION_SIZE,

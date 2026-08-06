@@ -35,7 +35,6 @@ export async function GET() {
     const fanProfile = user.profiles.find(p => p.type === 'LISTENER') ?? user.profiles[0];
     const artistProfile = user.profiles.find(p => p.type === 'ARTIST');
     const venueProfile = user.profiles.find(p => p.type === 'VENUE');
-    const djProfile = user.profiles.find(p => p.type === 'DJ');
 
     const hexId = fanProfile?.hexId ?? null;
     // "HYPE Link" — short /h/{code} alias that resolves to the same
@@ -46,7 +45,6 @@ export async function GET() {
 
     const artistLink = artistProfile?.hexId ? `${baseUrl}/h/${artistProfile.hexId}` : null;
     const venueLink = venueProfile?.hexId ? `${baseUrl}/h/${venueProfile.hexId}` : null;
-    const djLink = djProfile?.hexId ? `${baseUrl}/h/${djProfile.hexId}` : null;
 
     // Count referrals — username-based and hexId-based
     const usernameCount = await db.auditLog.count({
@@ -94,7 +92,7 @@ export async function GET() {
       ? `I've brought ${referralCount} ${referralCount === 1 ? 'friend' : 'friends'} to iHYPE! Join the music community → ${referralLink}`
       : `Join me on iHYPE — the music community → ${referralLink}`;
 
-    return NextResponse.json({ referralLink, referralCount, referrals, shareText, artistLink, venueLink, djLink });
+    return NextResponse.json({ referralLink, referralCount, referrals, shareText, artistLink, venueLink });
   } catch (err) {
     log.error('[api/referral]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

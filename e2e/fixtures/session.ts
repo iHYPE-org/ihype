@@ -40,7 +40,7 @@ export type SeededUser = {
 
 export type ShellFixtureOptions = {
   /** Creator profiles to attach, which is what the drawer's role gates read. */
-  profiles?: { type: 'ARTIST' | 'DJ' | 'VENUE'; name: string }[];
+  profiles?: { type: 'ARTIST' | 'VENUE'; name: string }[];
   role?: Role;
 };
 

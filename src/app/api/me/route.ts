@@ -31,7 +31,7 @@ export async function GET() {
   // Fan-only accounts have nothing to toggle (LISTENER profiles never
   // appear in /discover), so this is simply omitted for them.
   const creatorProfile = await db.profile.findFirst({
-    where: { ownerId: session.user.id, type: { in: ['ARTIST', 'DJ', 'VENUE'] } },
+    where: { ownerId: session.user.id, type: { in: ['ARTIST', 'VENUE'] } },
     select: { id: true, discoverable: true },
   });
 
@@ -76,7 +76,7 @@ export async function PATCH(req: Request) {
 
   if (typeof body.discoverable === 'boolean') {
     const creatorProfile = await db.profile.findFirst({
-      where: { ownerId: session.user.id, type: { in: ['ARTIST', 'DJ', 'VENUE'] } },
+      where: { ownerId: session.user.id, type: { in: ['ARTIST', 'VENUE'] } },
       select: { id: true },
     });
     if (creatorProfile) {

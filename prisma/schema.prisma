@@ -7,10 +7,16 @@ datasource db {
   provider = "postgresql"
 }
 
+// DJ removed 2026-08-06 (step 4 of docs/dj-role-removal-scope.md). The three
+// DJ-typed rows were reassigned to ARTIST in migration
+// 20260806130000_reassign_dj_profiles, verified 0 remaining in production
+// before this. The DB still carries the value until the parked drop migration
+// in prisma/migrations-pending/ is deliberately moved across -- that is the
+// repo's gating workflow for irreversible DDL, and it is why the code half
+// ships first (same pattern as drop_ad_clicks).
 enum Role {
   FAN
   ARTIST
-  DJ
   VENUE
   ADMIN
   ADVERTISER
@@ -26,7 +32,6 @@ enum ShowStatus {
 
 enum ProfileType {
   ARTIST
-  DJ
   VENUE
   LISTENER
 }

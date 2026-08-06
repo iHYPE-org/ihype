@@ -29,7 +29,7 @@ test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to se
  * account has no link and the card must be absent rather than blank. The
  * profile-bearing paths get their own describe block below.
  */
-async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 'ARTIST' | 'DJ' | 'VENUE'; name: string }[] = []) {
+async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 'ARTIST' | 'VENUE'; name: string }[] = []) {
   await applySessionCookie(context, email, { profiles });
   // Pre-accept cookie consent. Not cosmetic: the consent dialog is pinned to the
   // bottom of the viewport, which is exactly where this shell puts its logo

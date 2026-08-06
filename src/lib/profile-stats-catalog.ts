@@ -21,10 +21,10 @@ export type StatDef = { key: StatKey; label: string };
 // booking-request pipeline) is deliberately excluded; it's owner-only via
 // ProfileInsights, never pinnable to a public tile.
 export const STAT_CATALOG: Record<StatKey, StatDef & { roles: string[] }> = {
-  hypeTotal: { key: 'hypeTotal', label: 'Total Hypes', roles: ['ARTIST', 'DJ', 'VENUE'] },
-  followerCount: { key: 'followerCount', label: 'Followers', roles: ['ARTIST', 'DJ', 'VENUE', 'LISTENER'] },
-  monthlyListeners: { key: 'monthlyListeners', label: 'Monthly Listeners', roles: ['ARTIST', 'DJ'] },
-  trackCompletionRate: { key: 'trackCompletionRate', label: 'Track Completion', roles: ['ARTIST', 'DJ'] },
+  hypeTotal: { key: 'hypeTotal', label: 'Total Hypes', roles: ['ARTIST', 'VENUE'] },
+  followerCount: { key: 'followerCount', label: 'Followers', roles: ['ARTIST', 'VENUE', 'LISTENER'] },
+  monthlyListeners: { key: 'monthlyListeners', label: 'Monthly Listeners', roles: ['ARTIST'] },
+  trackCompletionRate: { key: 'trackCompletionRate', label: 'Track Completion', roles: ['ARTIST'] },
   ticketsSold: { key: 'ticketsSold', label: 'Tickets Sold', roles: ['VENUE'] },
   showsAttended: { key: 'showsAttended', label: 'Shows Attended', roles: ['LISTENER'] },
   artistsHyped: { key: 'artistsHyped', label: 'Artists Hyped', roles: ['LISTENER'] },

@@ -151,7 +151,6 @@ export function NavDrawer({
 
   const groups = useMemo<MenuGroup[]>(() => {
     const artist = profiles.find((profile) => profile.type === 'ARTIST');
-    const dj = profiles.find((profile) => profile.type === 'DJ');
     const venue = profiles.find((profile) => profile.type === 'VENUE');
     const canPromote = canPromoteWithHypeLink(session?.user?.role);
 

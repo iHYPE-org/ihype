@@ -43,7 +43,7 @@ function resultHref(r: ResultItem): string {
 
 function resultColor(r: ResultItem): string {
   if (r.type === 'venue') return 'var(--role-venue)';
-  if (r.type === 'promoter') return 'var(--role-dj)';
+  if (r.type === 'promoter') return 'var(--role-promoter)';
   if (r.type === 'song') return 'var(--role-fan)';
   return 'var(--role-artist)';
 }
