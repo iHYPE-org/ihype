@@ -72,12 +72,25 @@ test.describe('Passkey registration and sign-in', () => {
     // handler, which issues discoverable-credential options.
     await context.clearCookies();
     await page.goto('/login');
-    await expect(page.getByRole('button', { name: /sign in with passkey/i })).toBeVisible();
-    await page.getByRole('button', { name: /sign in with passkey/i }).click();
+    // The button must exist and be visible — that assertion is the point of
+    // keeping it against the .dc.html (conditional mediation is browser chrome
+    // and Playwright cannot click it, so without this button there is no
+    // sign-in coverage at all). Keep it strict.
+    const passkeyButton = page.getByRole('button', { name: /sign in with passkey/i });
+    await expect(passkeyButton).toBeVisible();
 
-    // Destination varies (/listen for an onboarded account, /welcome for a
-    // freshly-registered-passkey one) — assert the sign-in actually
-    // succeeded (left /login) rather than pin an exact route.
+    // The click, though, is best-effort. The conditional ceremony is armed on
+    // mount against the same discoverable credentials, and the CDP virtual
+    // authenticator approves without a user gesture — so on a fast machine it
+    // can complete, navigate away and detach this button before the click
+    // lands. That is a success, not a failure, and pinning it as one made this
+    // test fail for the app working correctly. What actually has to be true is
+    // asserted immediately below: the session exists and we left /login.
+    await passkeyButton.click({ timeout: 5000 }).catch(() => { /* ceremony won the race */ });
+
+    // Destination varies (WORKBENCH_PATH — now /app/map — for an onboarded
+    // account, /welcome for a freshly-registered-passkey one) — assert the
+    // sign-in actually succeeded (left /login) rather than pin an exact route.
     await expect(page).not.toHaveURL(/\/login/, { timeout: 15000 });
     await expect(page.locator('body')).not.toContainText('Internal Server Error');
 

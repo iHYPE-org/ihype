@@ -411,16 +411,32 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/app/map');
 
-    const raised = await page.evaluate(() => document.querySelector('.mmm-logo')!.getBoundingClientRect().bottom);
+    // Distance from the bottom of the viewport, which is what the CSS controls.
+    // Measured rather than compared against a constant: the resting value is
+    // 26px at the base rule and 22px inside the design's own <=720px
+    // breakpoint, so a hardcoded number here asserts the wrong thing on one
+    // side of that line — and the breakpoint is the side that matters.
+    const gap = () => page.evaluate(() => {
+      const box = document.querySelector('.mmm-logo')!.getBoundingClientRect();
+      return Math.round(window.innerHeight - box.bottom);
+    });
+
+    // Wait for the dialog before measuring: "lifted" is only meaningful once
+    // the thing being avoided is actually on screen, and measuring straight
+    // after goto() samples the pre-stylesheet frame where the trigger has not
+    // been positioned yet.
+    await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toBeVisible();
+
+    const lifted = await gap();
     await page.getByRole('button', { name: /Essential only/i }).click();
     await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toHaveCount(0);
 
-    await expect.poll(async () => page.evaluate(() => {
-      const box = document.querySelector('.mmm-logo')!.getBoundingClientRect();
-      return Math.round(window.innerHeight - box.bottom);
-    })).toBe(26);
+    await expect.poll(gap).toBeLessThan(40);
+    const resting = await gap();
 
-    // Sanity: it really had been lifted, so the check above is not vacuous.
-    expect(raised).toBeLessThan(844 - 26);
+    // The trigger really had been lifted clear of the dialog, so the assertion
+    // above is not vacuously true of a trigger that never moved. A whole
+    // banner's height separates the two states.
+    expect(lifted).toBeGreaterThan(resting + 80);
   });
 });

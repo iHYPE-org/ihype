@@ -582,10 +582,14 @@ html.mmm-locked .site-shell > main {
   pointer-events: none;
 }
 
+/* The trigger sits at the arc anchor's own origin, so these offsets must track
+   `.mmm-nav-anchor` above — including its consent lift, or the fan clears the
+   consent dialog while the button that opens it stays underneath. */
 .mmm-logo {
   position: absolute;
-  left: 0;
-  bottom: 0;
+  left: 26px;
+  bottom: max(26px, calc(var(--consent-inset, 0px) + 12px));
+  z-index: 31;
   width: 76px;
   height: 76px;
   border-radius: 9999px;
@@ -608,7 +612,11 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-logo:hover { opacity: 0.92; }
 /* Open state tips the logo, so the trigger reads as "engaged". */
-.mmm-nav-anchor[data-open='true'] .mmm-logo { transform: scale(0.86) rotate(-6deg); }
+/* The logo is a SIBLING of the arc anchor (both are children of `.mmm-chrome`
+   — see MmmShell), so the descendant selector this used to be never matched
+   anything and the trigger never tipped when the nav opened. `:has()` on the
+   shared parent is what actually expresses "while the nav is open". */
+.mmm-chrome:has(.mmm-nav-anchor[data-open='true']) .mmm-logo { transform: scale(0.86) rotate(-6deg); }
 
 .mmm-eq { display: flex; align-items: flex-end; gap: 1.5px; height: 7px; }
 .mmm-eq span { width: 2px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
@@ -800,7 +808,14 @@ html.mmm-locked .site-shell > main {
    the ARC table in mmm-nav.ts, which the component picks per viewport — only
    the anchor and the player move here. */
 @media (max-width: 720px) {
-  .mmm-nav-anchor { left: 18px; bottom: 22px; }
+  /* Keeps the consent lift from the base rule. Restating plain `bottom: 22px`
+     here silently disabled it at exactly the width where the banner is
+     `100vw - 32px` wide and actually covers the trigger — the only width that
+     needed it. Whenever the resting value changes, the max() has to come with
+     it. */
+  .mmm-nav-anchor { left: 18px; bottom: max(22px, calc(var(--consent-inset, 0px) + 12px)); }
+  /* Same offsets as the anchor: the two are one control and must not drift. */
+  .mmm-logo { left: 18px; bottom: max(22px, calc(var(--consent-inset, 0px) + 12px)); }
   .mmm-result-line { left: 18px; right: 18px; bottom: 186px; }
   .mmm-nav-hint { left: 18px; bottom: 104px; }
   .mmm-player {

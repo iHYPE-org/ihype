@@ -19,7 +19,11 @@ const CORE_PAGES = [
   '/',
   '/shows',
   '/hype',
-  '/tickets'
+  '/tickets',
+  // Precached so the real offline page is available when there is no network.
+  // Install runs on a first visit while still online, so by the time it is
+  // needed it is already here. See offlineFallback().
+  '/offline'
 ];
 
 // Never cached. These are the signed-in surfaces: their HTML is personalized,
@@ -157,7 +161,7 @@ async function staleWhileRevalidate(request, cacheName) {
     })
     .catch(() => null);
 
-  return cached || (await networkFetch) || offlineFallback();
+  return cached || (await networkFetch) || (await offlineFallback());
 }
 
 async function networkWithCacheFallback(request, cacheName) {
@@ -170,7 +174,7 @@ async function networkWithCacheFallback(request, cacheName) {
     return response;
   } catch {
     const cached = await caches.match(request);
-    return cached || offlineFallback();
+    return cached || (await offlineFallback());
   }
 }
 
@@ -190,14 +194,16 @@ self.addEventListener('push', (event) => {
       body: data.body,
       icon: '/icons/icon-192.png',
       badge: '/icons/icon-192.png',
-      data: { url: data.url || '/listen' },
+      // WORKBENCH_PATH. A push with no explicit url should open the app
+      // surface, not the module deck the cutover moved off (row 269).
+      data: { url: data.url || '/app/map' },
     })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  const url = event.notification.data?.url || '/listen';
+  const url = event.notification.data?.url || '/app/map';
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
       for (const client of clients) {
@@ -211,7 +217,27 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-function offlineFallback() {
+/**
+ * The offline response.
+ *
+ * Prefers the real `/offline` page, which is design-mapped (Offline.dc.html),
+ * translated, brand-tokened, and auto-retries with backoff — and which nothing
+ * reached until this was wired up: the app had two offline experiences, and the
+ * one users actually got was the crude inline copy below.
+ *
+ * The inline copy is kept, but only as the last resort it was always meant to
+ * be. It covers the one case the cached page cannot: a visitor whose very first
+ * request happens with no network, so `install` never ran and nothing is in the
+ * cache. That is why this is not simply a redirect to `/offline` — a redirect
+ * with nothing cached to redirect to is a dead end.
+ */
+async function offlineFallback() {
+  try {
+    const cached = await caches.match('/offline');
+    if (cached) return cached;
+  } catch {
+    // Cache API unavailable (private mode, storage pressure) — fall through.
+  }
   return new Response(
     `<!DOCTYPE html>
 <html lang="en">
@@ -229,7 +255,7 @@ a{display:inline-block;padding:.8rem 1.5rem;background:linear-gradient(135deg,#f
 <body>
 <div>
   <h1>You're offline.</h1>
-  <p>iHYPE needs a connection to load this page. Try going back to the Promise.</p>
+  <p>iHYPE needs a connection to load this page.</p>
   <a href="/">Back to iHYPE</a>
 </div>
 </body>

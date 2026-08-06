@@ -185,7 +185,12 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           aria-label={navOpen ? 'Close iHYPE navigation' : 'Open iHYPE navigation'}
           className="mmm-logo"
           onClick={toggleNav}
-          style={{ position: 'absolute', left: 26, bottom: 26, zIndex: 31 }}
+          /* Positioned in mmm.css, not here. Inline styles outrank every
+             stylesheet rule, so hardcoding left/bottom made the logo the one
+             piece of chrome the <=720px breakpoint could not move: the arc
+             anchor shifted to 18/22 and the trigger stayed at 26/26, leaving
+             the fan opening from a point offset from the button it belongs to.
+             It also made the consent lift impossible to apply. */
           type="button"
         >
           <span>iHYPE</span>
