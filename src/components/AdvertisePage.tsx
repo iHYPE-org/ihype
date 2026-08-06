@@ -364,7 +364,7 @@ function CoverageBuilder() {
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
             {[{ color: '#b983ff', label: t('advertisePage.djRadioAdBreaks', 'DJ radio ad breaks') }, { color: '#22e5d4', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
-              <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: '#9e9080', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
+              <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: 'var(--ink-a60)', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
                 {p.label}
               </span>
@@ -380,7 +380,7 @@ function CoverageBuilder() {
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
-              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: '#9e9080' }}>{t('advertisePage.total', 'Total')}</span>
+              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a60)' }}>{t('advertisePage.total', 'Total')}</span>
               <span style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 34, letterSpacing: '-.03em', color: '#ff5029' }}>
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}{t('advertisePage.slashDay', '/day')}</small>
               </span>
@@ -404,7 +404,7 @@ function CoverageBuilder() {
                 <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
                   {submit.message}
                 </div>
-                <div style={{ fontSize: 11, color: '#9e9080', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
+                <div style={{ fontSize: 11, color: 'var(--ink-a60)', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
                 <Link href="/advertise/dashboard" style={{ display: 'inline-block', marginTop: 8, fontSize: 11, color: 'var(--ink)', textDecoration: 'underline' }}>
                   {t('advertisePage.viewMyCampaigns', 'View my campaigns →')}
                 </Link>
@@ -416,7 +416,7 @@ function CoverageBuilder() {
               </div>
             )}
 
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 14, color: '#9e9080', marginTop: 14, lineHeight: 1.45 }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-a60)', marginTop: 14, lineHeight: 1.45 }}>
               {t('advertisePage.nothingChargesNote', 'Nothing charges until your creative clears the AI screen.')}
               <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginLeft: 3, verticalAlign: 'middle' }} />
             </p>
@@ -494,7 +494,7 @@ function AIScanner() {
             <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#ff5029', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
             <div>
               <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{c.title}</div>
-              <p style={{ fontSize: 12.5, color: '#9e9080', lineHeight: 1.5, marginTop: 6 }}>{c.desc}</p>
+              <p style={{ fontSize: 12.5, color: 'var(--ink-a60)', lineHeight: 1.5, marginTop: 6 }}>{c.desc}</p>
             </div>
           </div>
         ))}
@@ -503,7 +503,7 @@ function AIScanner() {
       {/* Interactive scanner */}
       <div style={{ background: '#100d09', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: '#9e9080' }}>
+          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: 'var(--ink-a60)' }}>
             <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5029', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
             {t('advertisePage.hypeScreen', 'HYPE Screen')}
           </span>
@@ -537,7 +537,7 @@ function AIScanner() {
               )}
               <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, letterSpacing: '.14em', textTransform: 'uppercase', color: '#5a5048' }}>{sub.tag}</div>
               <div style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 700, fontSize: 17, letterSpacing: '-.01em', marginTop: 8, lineHeight: 1.15 }}>{sub.copy}</div>
-              <div style={{ fontSize: 12, color: '#9e9080', marginTop: 7, lineHeight: 1.45 }}>{sub.body}</div>
+              <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginTop: 7, lineHeight: 1.45 }}>{sub.body}</div>
             </div>
 
             {/* Gate rows */}
@@ -728,7 +728,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}
             </span>
             <h1 className="adv-hero-title" style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 68, lineHeight: .96, letterSpacing: '-.035em', margin: '20px 0 0' }}>
-              {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
+              {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
             </h1>
             <p style={{ fontSize: 16, color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
               {t('advertisePage.heroBodyPrefix', 'Buy reach by the spot —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMid', ', by the day. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
@@ -765,9 +765,9 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step01Build', 'Step 01 · Build')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
+              {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played inside DJ radio shows — priced per day, billed per spot.')}
             </p>
           </div>
@@ -785,9 +785,9 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step02Screen', 'Step 02 · The screen')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.guardHeadingPrefix', 'Every ad clears')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.fiveGates', 'five gates')}</em> {t('advertisePage.guardHeadingSuffix', 'before a single listener sees it.')}
+              {t('advertisePage.guardHeadingPrefix', 'Every ad clears')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.fiveGates', 'five gates')}</em> {t('advertisePage.guardHeadingSuffix', 'before a single listener sees it.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.guardSub', 'No human review queue. iHYPE runs on one operator — HYPE Screen scans the buyer, the copy, and the submission itself. Approval is instant when every gate passes.')}
             </p>
           </div>
@@ -803,9 +803,9 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step03Upload', 'Step 03 · Upload & go live')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.scanHeadingPrefix', 'Drop your audio.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</em> {t('advertisePage.scanHeadingSuffix', 'does the rest.')}
+              {t('advertisePage.scanHeadingPrefix', 'Drop your audio.')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</em> {t('advertisePage.scanHeadingSuffix', 'does the rest.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
               {t('advertisePage.scanSub', 'Try the scanner below. When every gate passes, checkout unlocks instantly — no sales call, no review queue.')}
             </p>
           </div>
@@ -824,9 +824,9 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step04Buying', "Step 04 · Who's buying")}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.pathsHeadingPrefix', 'Two ways in.')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.sameScreen', 'Same screen')}</em> {t('advertisePage.pathsHeadingSuffix', 'for both.')}
+              {t('advertisePage.pathsHeadingPrefix', 'Two ways in.')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.sameScreen', 'Same screen')}</em> {t('advertisePage.pathsHeadingSuffix', 'for both.')}
             </h2>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
               {t('advertisePage.pathsSub', "Whether you're on the platform already or coming from the outside, you buy the same coverage and pass the same gates.")}
             </p>
           </div>
@@ -913,11 +913,11 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.coopPromise', 'The co-op promise')}
             </span>
             <h2 style={{ fontFamily: 'var(--f-d,Syne,sans-serif)', fontWeight: 800, fontSize: 38, letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.transHeadingPrefix', 'Ad money feeds the')} <em style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.artistsEm', 'artists')}</em>{t('advertisePage.transHeadingSuffix', ', not a feed.')}
+              {t('advertisePage.transHeadingPrefix', 'Ad money feeds the')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.artistsEm', 'artists')}</em>{t('advertisePage.transHeadingSuffix', ', not a feed.')}
             </h2>
           </div>
           <div className="adv-trans" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 40, alignItems: 'center', marginTop: 8 }}>
-            <p style={{ fontFamily: 'Instrument Serif,serif', fontStyle: 'italic', fontSize: 26, lineHeight: 1.35, color: 'var(--ink-2)', maxWidth: '22ch' }}>
+            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 26, lineHeight: 1.35, color: 'var(--ink-2)', maxWidth: '22ch' }}>
               {t('advertisePage.transBodyPrefix', 'iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend')} <b style={{ fontFamily: 'DM Sans,sans-serif', fontStyle: 'normal', fontWeight: 600, color: 'var(--accent)' }}>{t('advertisePage.transBodyBold', 'goes back into the music')}</b>{t('advertisePage.transBodySuffix', ', not overhead.')}
             </p>
             <div style={{ borderTop: '1px solid var(--hair-70)' }}>
