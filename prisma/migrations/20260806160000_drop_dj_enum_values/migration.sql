@@ -1,10 +1,12 @@
--- @gated
+-- Ungated 2026-08-06. Both counts re-verified 0 against production
+-- immediately before the move, which is the condition below. The DO block
+-- guard stays regardless -- it costs nothing and refuses cleanly if a row
+-- appears between this check and the deploy.
 --
 -- Step 4 (final) of the DJ role removal — docs/dj-role-removal-scope.md.
--- Drops DJ from both enums. PARKED, not applied: Prisma never reads this
--- directory, and `npm run guard:migrations` fails the build if a @gated file
--- reaches prisma/migrations/. Applying it is a deliberate `git mv` in its own
--- commit.
+-- Drops DJ from both enums. This was parked in prisma/migrations-pending/
+-- until the row counts were verified, then moved here deliberately in its own
+-- commit -- the workflow described in that directory's README.
 --
 -- WHY THIS IS GATED RATHER THAN SHIPPED WITH THE CODE
 --
