@@ -1,7 +1,12 @@
--- Ungated 2026-08-06. Both counts re-verified 0 against production
--- immediately before the move, which is the condition below. The DO block
--- guard stays regardless -- it costs nothing and refuses cleanly if a row
--- appears between this check and the deploy.
+-- @gated
+--
+-- Counts WERE verified 0 against production on 2026-08-06, so this is ready
+-- on the data. It is re-parked for a sequencing reason, not a safety one:
+-- docs/dj-role-removal-scope.md requires step 4 to land in a deploy AFTER
+-- step 2 (the code half, PR #650), and #650 had not merged yet. Shipping
+-- them together would hold a code deploy hostage to an enum rewrite.
+-- Move it across once #650 is on main -- and re-check the two counts then,
+-- because the whole point of the check is that it is recent.
 --
 -- Step 4 (final) of the DJ role removal — docs/dj-role-removal-scope.md.
 -- Drops DJ from both enums. This was parked in prisma/migrations-pending/
