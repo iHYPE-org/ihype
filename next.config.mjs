@@ -121,6 +121,21 @@ const nextConfig = {
         permanent: false
       },
       {
+        // The Radio Show Creator. Radio is computed per listener now
+        // (src/lib/stations.ts) and advertising airs on the always-on station
+        // (src/lib/station-breaks.ts), so there is nothing left for a person
+        // to author — the studio and its DJ-only gate are gone.
+        //
+        // Redirected rather than left to 404 because this URL is in real
+        // notification emails and in bookmarks belonging to the accounts that
+        // used it. `permanent: false`: the role removal is finished, but this
+        // is a surface decision, and a 308 is cached by browsers effectively
+        // forever if it later turns out /radio is the wrong landing.
+        source: '/radio/studio',
+        destination: '/radio',
+        permanent: false
+      },
+      {
         // The DJ recruiting kit. The role is being removed
         // (docs/dj-role-removal-scope.md, signed off 2026-08-05) and there is
         // no DJ option left at /join or /register, so this recruits for

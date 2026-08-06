@@ -301,14 +301,6 @@ export function RadioHome() {
         </div>
       </a>
 
-      {/* DJ entry point into Radio Show Creator */}
-      <a className="radio-rise radio-rise-2" href="/radio/studio" style={{ textDecoration: 'none', display: 'block', marginBottom: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '10px 16px', borderRadius: 12, background: 'rgba(var(--role-fan-rgb),.06)', border: '1px solid rgba(var(--role-fan-rgb),.2)' }}>
-          <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 13, color: 'var(--ink)' }}>{t('radioHome.djBuildShow', 'DJ? Build a show →')}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-fan)', flexShrink: 0 }}>{t('radioHome.radioStudio', 'Radio Studio')}</span>
-        </div>
-      </a>
-
       {toast && (
         <div style={{
           position: 'fixed', bottom: 80, left: '50%', transform: 'translateX(-50%)',

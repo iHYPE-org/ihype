@@ -232,7 +232,7 @@ const roleData: Record<RoleId, { headline: string; description: string; metrics:
 const roleActionHrefs: Record<RoleId, string[]> = {
   fan: ['/playlist/discovery', '/me/promote', '/shows/map'],
   artist: ['/me/dashboard', '/pages', '/me/analytics'],
-  dj: ['/radio/studio', '/me/analytics', '/me/promote'],
+  dj: ['/pages', '/me/analytics', '/me/promote'],
   venue: ['/events/new', '/pages', '/pages'],
   promoter: ['/me/promote', '/me/promote/analytics', '/shows'],
   advertiser: ['/advertise/dashboard', '/advertise/dashboard', '/advertise/dashboard'],
@@ -918,7 +918,7 @@ function DashboardModule({ production, viewer }: { production: boolean; viewer?:
       {!production && managingRoles && <div className="role-manager dashboard-role-manager"><span>Alpha role preview</span><p>The live dashboard derives these from verified account roles.</p><div>{(Object.keys(roleData) as RoleId[]).map((id) => <button aria-pressed={assignedRoles.includes(id)} key={id} onClick={() => toggleRole(id)} type="button"><span>{assignedRoles.includes(id) ? '✓' : '+'}</span>{id}</button>)}</div></div>}
       <div className="dashboard-signal dashboard-workspace">
         <div className="dashboard-glance">
-          <article className="dashboard-build"><span>WORKSPACE</span><strong>{liveData?.build.title ?? data.build[0]}</strong><p>{liveData?.build.detail ?? data.build[1]}</p><Link href={liveData?.build.href ?? (role === 'dj' ? '/radio/studio' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages')}>Open workspace ↗</Link></article>
+          <article className="dashboard-build"><span>WORKSPACE</span><strong>{liveData?.build.title ?? data.build[0]}</strong><p>{liveData?.build.detail ?? data.build[1]}</p><Link href={liveData?.build.href ?? (role === 'dj' ? '/pages' : role === 'venue' ? '/events/new' : role === 'advertiser' ? '/advertise/dashboard' : '/pages')}>Open workspace ↗</Link></article>
           <article className="dashboard-notifications"><span>NOTIFICATIONS</span>{production && liveData?.notifications.length === 0 && <Link href="/me/dashboard"><b>✓</b><strong>All caught up</strong><small>No unread scene signals need you.</small><i>↗</i></Link>}{(production && liveData ? liveData.notifications : [{ id: 'signals', label: '3', title: 'New scene signals', detail: 'Artists you HYPE, voting, and ticket activity', href: '/me/dashboard' }, { id: 'action', label: '1', title: 'Action needs you', detail: data.actions[0], href: '/me/dashboard' }]).map((item) => <Link href={item.href} key={item.id}><b>{item.label}</b><strong>{item.title}</strong><small>{item.detail}</small><i>↗</i></Link>)}</article>
           <article className="dashboard-upcoming"><span>UPCOMING</span>{production && liveData?.upcoming.length === 0 && <Link href="/shows"><b>OPEN</b><strong>Find a local event</strong><small>Your next show can start on the scene map.</small><i>View ↗</i></Link>}{(production && liveData ? liveData.upcoming : [{ id: 'tonight', label: 'TONIGHT', title: 'Local discovery night', detail: 'Near your saved scene · doors 7:00 PM', href: '/shows', action: 'Tickets' }, { id: 'friday', label: 'FRI', title: 'Three new nearby events', detail: 'Matched from HYPES and saved artists', href: '/shows', action: 'View' }]).map((item) => <Link href={item.href} key={item.id}><b>{item.label}</b><strong>{item.title}</strong><small>{item.detail}</small><i>{item.action ?? 'View'} ↗</i></Link>)}</article>
         </div>

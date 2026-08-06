@@ -135,7 +135,6 @@ export default async function DJProfilePage({
               )}
               {isOwner && (
                 <>
-                  {profile.type === 'DJ' && <Link className="dj-hero-btn" href="/radio/studio">{t('promotersSlugPage.radioStudioLink', 'Radio Studio')}</Link>}
                   <FanMailButton profileId={profile.id} triggerClassName="dj-hero-btn" />
                   <Link className="dj-hero-btn" href="/pages">{t('promotersSlugPage.customizeLink', 'Customize')}</Link>
                   <Link className="dj-hero-btn" href="/settings">{t('promotersSlugPage.settingsLink', 'Settings')}</Link>

@@ -203,13 +203,6 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'showcreator', section: 'PAGES',
-      href: account.djProfileSlug ? '/radio/studio' : '/radio',
-      labelKey: 'appShell.nav.showCreator', labelFallback: 'Show Creator',
-      badge: { text: 'DJ', tone: 'dj' }, gate: 'DJ',
-      inDrawer: true, inTabs: true,
-    },
-    {
       id: 'tourcreator', section: 'PAGES',
       href: account.artistProfileId
         ? `/pages?tab=mypage&profile=${encodeURIComponent(account.artistProfileId)}&tool=tour`

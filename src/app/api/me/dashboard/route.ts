@@ -10,7 +10,11 @@ type DashboardRole = 'fan' | 'artist' | 'dj' | 'venue' | 'promoter' | 'advertise
 const roleWorkspace: Record<DashboardRole, { title: string; href: string; next: string; actions: Array<{ title: string; href: string }> }> = {
   fan: { title: 'Your listening profile', href: '/me/dashboard', next: 'Open your next local discovery', actions: [{ title: 'Open my Discovery playlist', href: '/playlists' }, { title: 'Share my HYPE link', href: '/me/promote' }, { title: 'See nearby events', href: '/shows' }] },
   artist: { title: 'Artist page and release workspace', href: '/pages', next: 'Strengthen your artist page', actions: [{ title: 'Edit artist page', href: '/pages' }, { title: 'Create recommended tour', href: '/tour-planner' }, { title: 'Review song insights', href: '/profile-insights' }] },
-  dj: { title: 'DJ page and radio studio', href: '/radio/studio', next: 'Build your next radio show', actions: [{ title: 'Create a radio show', href: '/radio/studio' }, { title: 'Edit DJ page', href: '/pages' }, { title: 'Review show insights', href: '/profile-insights' }] },
+  // The DJ role is being removed and the Radio Show Creator is gone — radio is
+  // computed per listener now. Kept keyed as `dj` only because three profiles
+  // still carry that type until the data migration; it points at what a DJ
+  // account can actually still do.
+  dj: { title: 'Your page', href: '/pages', next: 'Keep your page current', actions: [{ title: 'Edit my page', href: '/pages' }, { title: 'Review song insights', href: '/profile-insights' }, { title: 'See nearby events', href: '/shows' }] },
   venue: { title: 'Venue page and event workspace', href: '/pages', next: 'Create your next event', actions: [{ title: 'Create an event', href: '/events/new' }, { title: 'Edit venue page', href: '/pages' }, { title: 'Review booking interest', href: '/tour-planner' }] },
   promoter: { title: 'HYPE link promotion workspace', href: '/me/promote', next: 'Find an event your network will love', actions: [{ title: 'Open HYPE link analytics', href: '/me/promote' }, { title: 'Find events to promote', href: '/shows' }, { title: 'Review ticket assists', href: '/tickets' }] },
   advertiser: { title: 'Music-only advertising workspace', href: '/advertise/dashboard', next: 'Review your aggregate scene matches', actions: [{ title: 'Open advertiser dashboard', href: '/advertise/dashboard' }, { title: 'Review aggregate heat map', href: '/shows' }, { title: 'Update advertiser profile', href: '/advertise' }] },
