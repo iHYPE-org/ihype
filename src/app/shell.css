@@ -22,15 +22,34 @@
    ══════════════════════════════════════════════════════════════════════════ */
 
 .shell-root {
-  --shell-header-h: 82px;
+  /* ── Safe areas ──────────────────────────────────────────────────────────
+     layout.tsx sets `viewportFit: 'cover'` and
+     `apple-mobile-web-app-status-bar-style: black-translucent`, and iOS/Android
+     ship as a Capacitor WebView pointed at the live site — so on a phone this
+     chrome really does start at the physical top of the display, underneath
+     the status bar / Dynamic Island, and end underneath the home indicator.
+     In desktop Safari and Chrome these resolve to 0px and nothing below moves.
+
+     They are folded into the geometry TOKENS rather than into elements,
+     because the table above is the contract: every consumer already derives
+     from these four properties, so the insets reach the header, the strip, the
+     content region, the drawer and the scrim without any of them knowing. */
+  --shell-safe-top: env(safe-area-inset-top, 0px);
+  --shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* The 82px band is the DESIGN's height; the inset is added on top so the bar
+     keeps its full 82px of usable space below the island (`.shell-header` pads
+     itself by the same amount). Same for the content region's top, which
+     derives from this. */
+  --shell-header-h: calc(82px + var(--shell-safe-top));
   --shell-strip-h: 52px;
-  --shell-chrome-h: calc(var(--shell-header-h) + var(--shell-strip-h)); /* 134px */
+  --shell-chrome-h: calc(var(--shell-header-h) + var(--shell-strip-h)); /* 134px + inset */
   /* Rule 7: the player offsets the content region's bottom AND the drawer's
-     bottom. If the player is hidden, both go to 0 — which is why these are set
-     here and overridden by the `body:has(.site-dock)` rule below rather than
-     written into each element. */
-  --shell-player-offset: 0px;
-  --shell-drawer-offset: 0px;
+     bottom. If the player is hidden, both go to the safe-area inset alone —
+     which is why these are set here and overridden by the `body:has(.site-dock)`
+     rule below rather than written into each element. On a device with no home
+     indicator the inset is 0px, so "no player → 0" still holds exactly. */
+  --shell-player-offset: var(--shell-safe-bottom);
+  --shell-drawer-offset: var(--shell-safe-bottom);
   --shell-strip-top: var(--shell-header-h);
   --shell-main-top: var(--shell-chrome-h);
   --shell-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
@@ -42,13 +61,15 @@
    rendered for an authenticated member, so its absence really does zero both
    edges with no JS involved. */
 body:has(.site-dock) .shell-root {
-  --shell-player-offset: 118px;
-  --shell-drawer-offset: 120px;
+  --shell-player-offset: calc(118px + var(--shell-safe-bottom));
+  --shell-drawer-offset: calc(120px + var(--shell-safe-bottom));
 }
 
 .shell-root[data-header-hidden='true'] {
-  --shell-strip-top: 0px;
-  --shell-main-top: var(--shell-strip-h);
+  /* The header is gone, so the strip inherits the job of clearing the island —
+     otherwise auto-hide slides the strip's own text under the status bar. */
+  --shell-strip-top: var(--shell-safe-top);
+  --shell-main-top: calc(var(--shell-strip-h) + var(--shell-safe-top));
 }
 
 /* Contract rule 2: the document itself does not scroll. */
@@ -87,7 +108,10 @@ html.ihype-shell-locked .site-shell > footer {
   align-items: center;
   gap: 18px;
   height: var(--shell-header-h);
-  padding: 0 22px;
+  /* The inset is part of the height above, so it is padding here rather than a
+     smaller bar: the row keeps its designed 82px and the blurred background
+     fills the island band instead of leaving it transparent. */
+  padding: var(--shell-safe-top) 22px 0;
   background: rgba(var(--bg-base-rgb), 0.9);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid var(--line);
@@ -433,9 +457,14 @@ html.ihype-shell-locked .site-dock-r {
   .shell-search { max-width: none; }
   .shell-context-strip { padding: 0 14px; gap: 10px; }
   .shell-drawer { width: min(308px, 86vw); }
+  /* `MobileBottomNav` is 60px tall and pads itself by the bottom inset, so the
+     band it occupies is 60px + inset — not the flat 64px this used to assume,
+     which was 4px of guesswork on a notchless phone and ~30px short of the
+     truth on every iPhone since the X. The inset appears once, here, because
+     the two offsets already carry it from `.shell-root`. */
   body:has(.mobile-bottom-nav) .shell-root {
-    --shell-player-offset: calc(118px + 64px);
-    --shell-drawer-offset: calc(120px + 64px);
+    --shell-player-offset: calc(118px + 60px + var(--shell-safe-bottom));
+    --shell-drawer-offset: calc(120px + 60px + var(--shell-safe-bottom));
   }
 }
 

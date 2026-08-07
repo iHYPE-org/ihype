@@ -3953,11 +3953,17 @@ html.high-contrast p {
 /* 11. Audio player bar — above bottom tab bar on mobile */
 @media (max-width: 768px) {
   .site-dock {
-    bottom: 60px;
+    /* The tab bar is 60px of content PLUS its own bottom safe-area padding
+       (MobileBottomNav.tsx), so stacking on top of it means clearing both.
+       Without the inset the dock sat ~34px low on every notched iPhone —
+       overlapping the tab bar it is supposed to rest above, because
+       `viewport-fit=cover` puts the bottom of the WebView at the bottom of the
+       physical display, not above the home indicator. */
+    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
     min-height: 64px;
   }
   .site-dock-play { min-width: 44px; min-height: 44px; }
-  body:has(.site-dock) .site-shell { padding-bottom: 140px; }
+  body:has(.site-dock) .site-shell { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
 }
 .ptr-indicator {
   display: flex;

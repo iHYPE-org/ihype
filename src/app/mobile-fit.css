@@ -1,0 +1,150 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   iHYPE — phone fit layer
+   ──────────────────────────────────────────────────────────────────────────
+   iOS and Android are not a separate codebase. `capacitor.config.ts` points a
+   WebView at https://ihype.org, so the native apps render exactly these
+   stylesheets — which means every phone-fit problem is a CSS problem here, and
+   every fix ships with the next Cloudflare deploy rather than a store review.
+
+   WHY THIS FILE EXISTS, measured rather than felt. Driving a 393×852 iPhone
+   viewport over 16 public pages of production (scripts/audit-mobile.mjs):
+
+     | tap targets under 44×44   | 158 |
+     | text nodes under 12px     | 282 |  (5 at 7.4px, 20 at 9px, 118 at 11px)
+     | pages overflowing sideways|   1 |
+
+   So the phone problem is NOT width blowout — layouts do fit. It is DENSITY:
+   the design is drawn at desktop reading distance and shipped to a phone
+   unchanged. This file sets the two floors a touch device needs and nothing
+   else. It is deliberately not a redesign; the type ramp is a separate,
+   larger piece of work tracked in DESIGN_SYNC.
+
+   TWO RULES, both load-bearing:
+
+   1. Everything is gated on `(pointer: coarse)`, not on width. A narrow desktop
+      window is still a mouse and does not want 44px rows; an iPad Pro at 1024px
+      is a finger and does. Width is a proxy for the thing we actually mean.
+
+   2. It is a FLOOR, never a size. Every rule below is `min-height`/`min-width`
+      or padding — a control the design already made big enough keeps its own
+      geometry, and only the ones below the threshold move. That is what stops
+      this file becoming a second opinion about how big things are.
+
+   The threshold is 44px because that is the Apple HIG minimum; Material asks
+   for 48dp, which 44px + the surrounding gap satisfies in practice.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (pointer: coarse) {
+  /* ── Buttons ──────────────────────────────────────────────────────────── */
+  /* Measured at 38px tall (13px padding + 15px line) and 30 of them across the
+     public pages. Six pixels short reads as "slightly hard to hit" rather than
+     broken, which is why it survived this long. */
+  .ihype-btn-primary,
+  .ihype-btn-ghost,
+  .shell-icon-button,
+  .shell-pill,
+  .mmm-tab,
+  .mmm-sheet-cta,
+  .mmm-sheet-cta-2,
+  .mmm-chip,
+  button.badge,
+  .authcard-btn-primary,
+  .authcard-btn-ghost,
+  .authcard-tab {
+    min-height: 44px;
+  }
+
+  /* Icon-only controls need the width too — a 44px-tall, 24px-wide button is
+     still a miss. */
+  .shell-icon-button,
+  .mmm-player-icon,
+  .mmm-player-play,
+  .mmm-sheet-dismiss {
+    min-width: 44px;
+  }
+
+  /* ── Link rows ────────────────────────────────────────────────────────── */
+  /* The worst offenders on the site: footer and nav links measured 15–16px
+     tall, because an inline <a> is only as tall as its line box. Padding is
+     the fix rather than min-height — `min-height` on an inline element does
+     nothing at all, which is the trap here. `inline-flex` + `align-items`
+     keeps them on the same baseline they had. */
+  .ihype-footer a,
+  .site-footer-links a,
+  .adaptive-site-header-nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  /* These two are already block-level flex containers with their own width and
+     padding — they need the floor but NOT the display change. Switching them to
+     inline-flex would drop them into inline layout inside the drawer and add
+     baseline whitespace between every row. Same floor, no layout change. */
+  .shell-nav-row,
+  .shell-drawer-card-head {
+    min-height: 44px;
+  }
+
+  /* A skip link is keyboard-only, but it measured 16px and is the first thing
+     in the tab order on every page — including for a switch-control user on a
+     phone, who taps it. */
+  .skip-to-content {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  /* ── Form controls ────────────────────────────────────────────────────── */
+  /* Safari zooms the whole page when a focused input's text is under 16px, and
+     it does not zoom back out on blur — the single most common "the app went
+     weird" report on an iPhone. 16px here is a functional requirement, not a
+     type opinion. */
+  input:not([type='checkbox']):not([type='radio']),
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+    min-height: 44px;
+  }
+  input[type='checkbox'],
+  input[type='radio'] {
+    min-width: 24px;
+    min-height: 24px;
+  }
+
+  /* ── Tap feedback ─────────────────────────────────────────────────────── */
+  /* The grey flash Android/iOS paints on tap is the wrong colour on a dark
+     surface and lags the real state change by ~300ms. The app has its own
+     :active states. */
+  a, button, [role='button'] {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* ── Horizontal overflow guard ────────────────────────────────────────────
+   `/launch` measured 488px of scroll width in a 393px viewport — 95px of
+   sideways rubber-banding on a page with no wide content, entirely from the
+   decorative background orbs (`.site-background-orb-b` is 620px wide at
+   `right: -140px`). `.site-background` already carries `overflow: hidden`, but
+   the orbs are 60vmax and on a tall phone vmax is the HEIGHT — 852px — so a
+   "60% of the viewport" circle is one and a half viewports wide.
+
+   Sizing them off the smaller axis keeps the bleed the design wants while
+   making the element incapable of driving document width. Not gated on
+   `pointer: coarse`: the vmax/vmin difference is about viewport aspect ratio,
+   and a short-and-wide desktop window has the same problem in the other
+   direction. */
+.site-background-orb {
+  width: 60vmin;
+  height: 60vmin;
+  max-width: 120vw;
+}
+
+/* ── Text scaling ─────────────────────────────────────────────────────────
+   Both platforms let a reader enlarge system text, and both expose it to a
+   WebView. This opts the app in rather than fighting it: `-webkit-text-size-
+   adjust: 100%` (set in globals.css) prevents Safari's own heuristic reflow,
+   but the accessibility setting still applies to rem-authored type. Nothing to
+   add here yet — noted so the next person does not "fix" it by disabling it.
+   The 282 sub-12px nodes are inline px and therefore immune to all of this;
+   that is the type-ramp work, not a line of CSS. */
