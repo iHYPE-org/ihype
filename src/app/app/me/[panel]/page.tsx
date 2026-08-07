@@ -16,7 +16,7 @@ const DESTINATIONS: Record<string, Array<{ label: string; detail: string; href: 
     { label: 'Account and privacy', detail: 'Profile, visibility, data export', href: '/settings' },
     { label: 'Notifications', detail: 'Email and push, per category', href: '/settings#notifications' },
     { label: 'Payouts', detail: 'Stripe Connect status and history', href: '/payouts' },
-    { label: 'Tickets and wallet', detail: 'Your tickets, transfers, QR codes', href: '/tickets' },
+    { label: 'Tickets and wallet', detail: 'Your tickets, transfers, QR codes', href: '/app/events?tab=tickets' },
   ],
   info: [
     { label: 'How iHYPE works', detail: 'The walkthrough, start to finish', href: '/walkthrough' },

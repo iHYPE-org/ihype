@@ -142,8 +142,8 @@ removal. Row 268 lists all five open items.
 sign-in resolve to `WORKBENCH_PATH = '/app/map'`, and the four LISTEN
 destinations in `app-nav.ts` plus `MobileBottomNav`'s Listen tab point at
 `/app/music/*`. That closed a trap worth understanding before touching either
-shell: MMM has no Events or Pages module, so it links out to `/tickets`,
-`/pages` and `/shows/[slug]`, which render in the LEGACY shell — and while every
+shell: MMM had no Events or Pages module, so it linked out to `/tickets`,
+`/pages` and `/shows/[slug]`, which rendered in the LEGACY shell — and while every
 nav destination still pointed back at `/listen?tab=…`, one tap on a ticket
 dropped a member into the six-module deck **with no route back for the rest of
 the session**. The shell was live, was the landing surface, and still nobody saw
@@ -155,6 +155,19 @@ structure is the app-shell handoff's and is asserted as such; MMM's arc nav
 already carries MAP. Events, Pages, advertise and Account keep legacy routes on
 purpose (no MMM equivalent), and `/app/me/settings` is a bridge MENU of links
 rather than the settings UI, so it is not the Account destination.
+
+**Since row 274, Events and Pages render INSIDE MMM** at `/app/events` and
+`/app/pages` — a re-parenting, not two new modules. Both design sources draw
+exactly three modules and the arc nav is a coordinate table for three, so there
+is no nav entry for either and none may be invented; they are reached from ME's
+cards. The routes are four lines each because `EventsHome`/`PagesHome` read
+their shell context through plain `useContext` defaults and therefore render
+their own tab strip when no shell is above them — do not fork those components.
+**This is the precondition for retiring the legacy shell**, since `/tickets`,
+`/shows` and `/pages` could previously only render in it. What is NOT done is
+the paint: the panes still use the legacy card language, and matching them to
+MUSIC/ME needs a design source rather than an eye. `/shows` and `/pages` stay
+live for emails, bookmarks and the legacy shell's own nav.
 
 **Also in the repo: `design/handoff-music-map-me/`.** That is
 iHYPE Design System 6 ("Music · Map · Me", 2026-08-04) vendored verbatim — the first
