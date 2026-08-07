@@ -107,6 +107,29 @@ export const METRIC_CATALOGUE: readonly MetricDefinition[] = [
     unit: 'count',
     audiences: ['fan', 'artist', 'platform'],
   },
+  // The two metrics `/me/analytics` had been deriving for itself. Declaring
+  // them here is the whole point of the catalogue: the fan surface was showing
+  // three figures while the catalogue knew about two, so "render metrics rather
+  // than re-derive them" was impossible for that page without inventing a
+  // fourth private definition of a quantity other surfaces also want.
+  {
+    id: 'shows_attended',
+    label: 'Shows attended',
+    help: 'Shows you bought a ticket to that have already started.',
+    unit: 'count',
+    // Fan-only for now. The same quantity for an artist or venue means "people
+    // who attended MY show", which is a different query against a different
+    // scope — it gets its own id when a surface needs it, rather than being
+    // quietly overloaded onto this one.
+    audiences: ['fan'],
+  },
+  {
+    id: 'promoter_earnings',
+    label: 'Referral earned',
+    help: 'Your share of the 10% promoter pool, from tickets sold through your HYPE link.',
+    unit: 'cents',
+    audiences: ['fan'],
+  },
   {
     id: 'followers',
     label: 'New followers',

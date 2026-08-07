@@ -116,6 +116,54 @@ const RESOLVERS: Record<string, Resolver> = {
     return Promise.resolve(UNKNOWN);
   },
 
+  // Counts by the show's START time, not the order's creation time: "attended"
+  // is about when the gig happened, which is the same rule `shows` already
+  // follows. CAPTURED only — a RESERVED order is a held seat that may never be
+  // paid for, and counting it would tell a fan they went to a show they did
+  // not buy. Same definition `tickets_sold` uses for the seller side.
+  shows_attended: (scope, range) =>
+    scope.kind === 'user'
+      ? pair(
+          (w) => db.ticketOrder.count({
+            where: { buyerUserId: scope.userId, status: 'CAPTURED', show: { startsAt: w } },
+          }),
+          range,
+        )
+      : Promise.resolve(UNKNOWN),
+
+  // Real money that actually moved: RELEASED entries only, so this cannot show
+  // a fan earnings that are still pending and might yet be voided by a refund.
+  //
+  // NOTE this is a genuine improvement on what /me/analytics displayed, not
+  // just a move. That page read `getPromoterDashboard().earnedCents`, which
+  // takes no range parameter — so a LIFETIME total sat inside a card headed
+  // "7 Days", changing nothing when the range changed. Windowed here, with a
+  // prior-period delta like every other metric.
+  promoter_earnings: (scope, range) =>
+    scope.kind === 'user'
+      ? (async () => {
+          const profiles = await db.profile
+            .findMany({ where: { ownerId: scope.userId }, select: { id: true } })
+            .catch(() => null);
+          if (!profiles?.length) return UNKNOWN;
+          const ids = profiles.map((entry) => entry.id);
+          return pair(
+            (w) => db.accountsPayableEntry
+              .aggregate({
+                _sum: { amountCents: true },
+                where: {
+                  profileId: { in: ids },
+                  category: 'PROMOTER_AFFILIATE',
+                  status: 'RELEASED',
+                  createdAt: w,
+                },
+              })
+              .then((result) => result._sum?.amountCents ?? 0),
+            range,
+          );
+        })()
+      : Promise.resolve(UNKNOWN),
+
   followers: (scope, range) =>
     scope.kind === 'profile'
       ? pair((w) => db.follow.count({ where: { followeeProfileId: scope.profileId, createdAt: w } }), range)
