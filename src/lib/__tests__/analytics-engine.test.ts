@@ -159,8 +159,39 @@ describe('isAnalyticsRange', () => {
   it('accepts the supported ranges and rejects anything else', () => {
     expect(isAnalyticsRange('30d')).toBe(true);
     expect(isAnalyticsRange('ytd')).toBe(true);
-    expect(isAnalyticsRange('all')).toBe(false);
+    // 'all' became a real range when lifetime totals moved onto the catalogue.
+    // It used to be asserted false here, which is why that line is now a true:
+    // the product rule is that a member sees a lifetime total while 30-day
+    // rolling is the scale the platform reasons on, and honouring the first
+    // half without this meant keeping a second private implementation of every
+    // lifetime metric.
+    expect(isAnalyticsRange('all')).toBe(true);
     expect(isAnalyticsRange(30)).toBe(false);
     expect(isAnalyticsRange(undefined)).toBe(false);
+  });
+
+  it('marks only the all-time range as lifetime, and gives it no prior window', () => {
+    const now = new Date('2026-08-07T12:00:00.000Z');
+
+    const lifetime = resolveRange('all', now);
+    expect(lifetime.lifetime).toBe(true);
+    expect(lifetime.start.getTime()).toBe(0);
+    expect(lifetime.end).toEqual(now);
+
+    // Every windowed range keeps a real prior period to compare against.
+    for (const range of ['7d', '30d', '90d', 'ytd'] as const) {
+      const resolved = resolveRange(range, now);
+      expect(resolved.lifetime).toBe(false);
+      expect(resolved.priorEnd).toEqual(resolved.start);
+      expect(resolved.priorStart.getTime()).toBeLessThan(resolved.start.getTime());
+    }
+  });
+
+  it('renders a lifetime tile with no delta rather than a permanent +100%', () => {
+    // A lifetime total has nothing to compare against, so resolvers report
+    // previous: null. Comparing against an empty prior window instead would
+    // return 0 and read as "+100% this period" forever.
+    expect(deltaPercent(42, null)).toBeNull();
+    expect(formatDelta(deltaPercent(42, null))).toBe('—');
   });
 });

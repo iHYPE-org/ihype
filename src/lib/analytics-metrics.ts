@@ -56,6 +56,13 @@ async function pair(
   range: ResolvedRange,
 ): Promise<{ value: number | null; previous: number | null }> {
   const { current, prior } = windows(range);
+  // A lifetime total has no preceding period, so the prior query is skipped
+  // rather than run against an empty window — which would return 0 and render
+  // as a permanent "+100% this period". Also halves the query count for every
+  // lifetime tile.
+  if (range.lifetime) {
+    return { value: await run(current).catch(() => null), previous: null };
+  }
   const [value, previous] = await Promise.all([
     run(current).catch(() => null),
     run(prior).catch(() => null),
@@ -131,14 +138,28 @@ const RESOLVERS: Record<string, Resolver> = {
         )
       : Promise.resolve(UNKNOWN),
 
-  // Real money that actually moved: RELEASED entries only, so this cannot show
-  // a fan earnings that are still pending and might yet be voided by a refund.
+  // ATTRIBUTED promoter payout, settlement pending — deliberately not the
+  // RELEASED-only figure.
   //
-  // NOTE this is a genuine improvement on what /me/analytics displayed, not
-  // just a move. That page read `getPromoterDashboard().earnedCents`, which
-  // takes no range parameter — so a LIFETIME total sat inside a card headed
-  // "7 Days", changing nothing when the range changed. Windowed here, with a
-  // prior-period delta like every other metric.
+  // The two are genuinely different quantities and picking the wrong one is a
+  // silent, user-visible lie. `AccountsPayableEntry.status = RELEASED` means
+  // Stripe actually moved the money; production has never run a payout (live
+  // mode holds zero PaymentIntents), so a RELEASED sum renders $0 for everyone
+  // while `/me/dashboard` and `/me/analytics` have always shown a real
+  // attributed total. Telling a fan they earned nothing because the platform
+  // has not settled yet is worse than useless.
+  //
+  // So this mirrors `getPromoterDashboard()` exactly — the sum of
+  // `TicketOrder.promoterPayoutCents` over non-void orders driven by any
+  // profile this account owns — and adds the one thing that helper cannot do,
+  // which is a window. `getPromoterDashboard()` takes no range parameter, so
+  // /me/analytics rendered a LIFETIME total inside a card headed "7 Days" that
+  // did not change when the range changed.
+  //
+  // RESERVED is included alongside CAPTURED because the dashboard helper counts
+  // it: a held seat is attributed the moment it is held. If an "actually paid
+  // out" figure is ever wanted it belongs beside this one under its own id,
+  // never as a redefinition of this one.
   promoter_earnings: (scope, range) =>
     scope.kind === 'user'
       ? (async () => {
@@ -148,17 +169,16 @@ const RESOLVERS: Record<string, Resolver> = {
           if (!profiles?.length) return UNKNOWN;
           const ids = profiles.map((entry) => entry.id);
           return pair(
-            (w) => db.accountsPayableEntry
+            (w) => db.ticketOrder
               .aggregate({
-                _sum: { amountCents: true },
+                _sum: { promoterPayoutCents: true },
                 where: {
-                  profileId: { in: ids },
-                  category: 'PROMOTER_AFFILIATE',
-                  status: 'RELEASED',
+                  affiliatePromoterProfileId: { in: ids },
+                  status: { in: ['CAPTURED', 'RESERVED'] },
                   createdAt: w,
                 },
               })
-              .then((result) => result._sum?.amountCents ?? 0),
+              .then((result) => result._sum?.promoterPayoutCents ?? 0),
             range,
           );
         })()

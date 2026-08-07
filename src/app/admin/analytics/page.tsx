@@ -24,6 +24,7 @@ const RANGE_LABEL: Record<AnalyticsRange, string> = {
   '30d': '30 days',
   '90d': '90 days',
   ytd: 'Year to date',
+  all: 'All time',
 };
 
 /**
