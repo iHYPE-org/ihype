@@ -81,6 +81,23 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
+      {/* Setup, once it stopped being a gate in front of the app.
+          `/welcome` used to hold a new creator on a "Set up your page →" screen
+          until the wizard was done; it now lands everyone in the app, so the
+          task has to travel with them or it simply disappears — and
+          verification is what activates the 70% split, so disappearing is not
+          an option. First card in ME, and it removes itself the moment
+          `onboardedAt` is stamped. */}
+      {data.setup && (
+        <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.58rem' }}>Finish setup</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>
+            Verification is what activates your 70% of every ticket. It takes about two minutes.
+          </div>
+          <Link className="mmm-btn-primary" href={data.setup.href} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>{data.setup.label}</Link>
+        </div>
+      )}
+
       {/* Events and tickets have no module in this shell — the design is MAP,
           MUSIC, ME and the arc nav carries exactly those three, so this is a
           bridge out to the surfaces that already exist, the same pattern as

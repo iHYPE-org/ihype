@@ -18,6 +18,7 @@
  */
 
 import { db } from '@/lib/db';
+import { getProfilePathForType } from '@/lib/profile-paths';
 
 export const MMM_ME_ROLES = ['fan', 'artist', 'venue'] as const;
 export type MmmMeRole = (typeof MMM_ME_ROLES)[number];
@@ -34,6 +35,17 @@ export type MmmMeData = {
   activity: MmmActivityRow[];
   /** Artist and Venue only. Fans have no page creator — removed deliberately. */
   page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' } | null;
+  /**
+   * Set only while a creator profile has not finished its onboarding wizard.
+   *
+   * This exists because `/welcome` stopped gating new creators behind the
+   * wizard and now lands everyone in the app (DESIGN_SYNC row 275). Setup is
+   * still real work — verification is what activates the 70% split, and it has
+   * to happen before a payout can route anywhere — so removing the gate only
+   * simplifies the product if the task follows the member into the app instead
+   * of vanishing. Null for fans, and null the moment `onboardedAt` is stamped.
+   */
+  setup: { href: string; label: string } | null;
   hypeLink: { url: string; clicks: number | null; tickets: number | null; earnedCents: number | null } | null;
 };
 
@@ -63,6 +75,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     select: {
       id: true, type: true, name: true, slug: true, hexId: true, hypeCount: true,
       isVerified: true, verified: true, city: true, stateRegion: true, capacity: true,
+      onboardedAt: true,
     },
   });
 
@@ -81,7 +94,22 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   // loaders used to each return their own value and two of them returned an
   // empty array — which hid the switcher as soon as you switched to a creator
   // role, so there was no way back to Fan without editing the URL.
-  const withRoles = (data: MmmMeData): MmmMeData => ({ ...data, availableRoles });
+  //
+  // `setup` is stamped in the same seam for the same reason: three loaders each
+  // deriving it independently is how that bug happened. It is also account-wide
+  // rather than role-scoped on purpose — an artist looking at their Fan tab
+  // still has a page to finish setting up.
+  const setupProfile = profiles.find(
+    (entry) => (entry.type === 'ARTIST' || entry.type === 'VENUE') && !entry.onboardedAt,
+  );
+  const setup: MmmMeData['setup'] = setupProfile
+    ? {
+        href: `${getProfilePathForType(setupProfile.type, setupProfile.slug)}/onboarding`,
+        label: setupProfile.type === 'VENUE' ? 'List your room' : 'Set up your page',
+      }
+    : null;
+
+  const withRoles = (data: MmmMeData): MmmMeData => ({ ...data, availableRoles, setup });
 
   if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now));
   const profile = profiles.find((entry) => entry.type === (role === 'artist' ? 'ARTIST' : 'VENUE'));
@@ -146,6 +174,7 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
 
   return {
     role: 'fan',
+    setup: null,  // Stamped by loadMmmMe's withRoles(), same as availableRoles.
     // Overwritten by loadMmmMe — see withRoles().
     availableRoles: ['fan'],
     stats,
@@ -195,6 +224,7 @@ async function loadArtist(
 
   return {
     role: 'artist',
+    setup: null,  // Stamped by loadMmmMe's withRoles(), same as availableRoles.
     availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent payouts',
@@ -260,6 +290,7 @@ async function loadVenue(
 
   return {
     role: 'venue',
+    setup: null,  // Stamped by loadMmmMe's withRoles(), same as availableRoles.
     availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent settlements',
