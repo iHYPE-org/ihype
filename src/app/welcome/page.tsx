@@ -48,6 +48,20 @@ export default async function WelcomePage() {
     profileRole
     ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
 
+  // "You're in." is a POST-SIGNUP screen — Welcome.dc.html's whole subject is
+  // an account that has just been created. But `resolvePostAuthRedirect` sends
+  // every generic sign-in here, so a creator who finished setup months ago was
+  // still being congratulated on arriving, every single time, and had to click
+  // through a setup CTA to get anywhere. That is the "this is all I see when I
+  // sign in" report.
+  //
+  // Once the wizard has reported finishing there is nothing on this page for
+  // them, so they go straight to the app. Keyed on `onboardedAt` because that
+  // is the existing "this account is set up" signal; a fan has no such column
+  // and still sees the screen once, which is correct — for a fan it really is
+  // the confirmation that signup worked, and their CTA already leads to the app.
+  if (profile?.onboardedAt) redirect(WORKBENCH_PATH);
+
   // Only the three creator roles have a wizard. A fan does not need one, and
   // without a profile row there is no slug to build a URL from.
   //
@@ -58,6 +72,21 @@ export default async function WelcomePage() {
     profile && role !== 'FAN' && !profile.onboardedAt
       ? `${getProfilePathForType(profile.type, profile.slug)}/onboarding`
       : null;
+
+  // Where a creator goes once the wizard is behind them. This used to fall back
+  // to `/pages`, which produced the worst possible landing for the people most
+  // invested in the platform: `resolvePostAuthRedirect` sends EVERY generic
+  // sign-in here, not just the first one, so a fully set-up artist signed in,
+  // read "Set up your page →", and was handed the page editor again — for the
+  // rest of the account's life, with no route to the app on the screen at all.
+  // A fan's CTA has always pointed at WORKBENCH_PATH; this makes the creator
+  // roles agree once they have nothing left to set up.
+  //
+  // Welcome.dc.html's single CTA points at the app (FanApp.dc.html), so this is
+  // the design's own intent. The wizard destination below is the deliberate
+  // divergence from it and is kept: verification has to come before payouts
+  // (see ArtistOnboardingWizard), and that is worth one screen of detour.
+  const setUpPath = onboardingPath ?? WORKBENCH_PATH;
 
   const CONFIG: Record<Role, {
     roleLabel: string; tint: string;
@@ -79,7 +108,7 @@ export default async function WelcomePage() {
     ARTIST: {
       roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
       sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
-      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: setUpPath,
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can be crated by DJs for radio shows.') },
@@ -89,7 +118,7 @@ export default async function WelcomePage() {
     VENUE: {
       roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
       sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
-      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: setUpPath,
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
