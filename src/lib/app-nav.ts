@@ -142,23 +142,48 @@ export const DEFAULT_SHELL_SECTION: ShellSectionId = 'LISTEN';
 export function buildShellNav(account: ShellAccount): ShellNavItem[] {
   const items: ShellNavItem[] = [
     // ── LISTEN ──────────────────────────────────────────────────────────
+    // These five point INTO the Music · Map · Me shell at `/app`, not at this
+    // shell's own `/listen` deck, and that is the whole of the "one-way door"
+    // fix (DESIGN_SYNC row 273).
+    //
+    // `/app/map` is where sign-in and `/` already land, so a member starts in
+    // MMM. But MMM has no Events or Pages module, so it links out to `/tickets`,
+    // `/pages` and `/shows/[slug]`, which render in THIS shell — and every
+    // destination here used to point back at `/listen?tab=…`. One tap on a
+    // ticket therefore dropped a member into the legacy deck with no route
+    // back, and they stayed there for the rest of the session. That is why the
+    // new design "was not showing up" despite being live and being the landing
+    // surface.
+    //
+    // Only the destinations MMM genuinely implements are moved. Events, Pages,
+    // advertise and account keep their own routes below, because pointing them
+    // at a module that does not exist would trade a stale shell for a dead end.
+    // `/app/me/settings` is deliberately NOT the Account destination either: it
+    // is a bridge menu of links to `/settings`, so routing there would add a
+    // hop and still land back in this shell.
+    //
+    // No MAP entry is added here. The destinations change; the drawer's
+    // STRUCTURE does not, because it is the app-shell handoff's and is asserted
+    // as such in app-nav.test.ts. MMM's own arc nav carries MAP, so arriving at
+    // any of these four puts the map one tap away without inventing a row the
+    // design never drew.
     {
-      id: 'discover', section: 'LISTEN', href: '/listen?tab=seeds',
+      id: 'discover', section: 'LISTEN', href: '/app/music/discover',
       labelKey: 'appShell.nav.discover', labelFallback: 'Discover',
       badge: { text: 'SEEDS', tone: 'muted' }, inDrawer: true, inTabs: true,
     },
     {
-      id: 'radio', section: 'LISTEN', href: '/listen?tab=radio',
+      id: 'radio', section: 'LISTEN', href: '/app/music/radio',
       labelKey: 'appShell.nav.radio', labelFallback: 'Radio',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'charts', section: 'LISTEN', href: '/listen?tab=charts',
+      id: 'charts', section: 'LISTEN', href: '/app/music/charts',
       labelKey: 'appShell.nav.charts', labelFallback: 'Charts',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'playlists', section: 'LISTEN', href: '/listen?tab=playlists',
+      id: 'playlists', section: 'LISTEN', href: '/app/music/playlists',
       labelKey: 'appShell.nav.playlists', labelFallback: 'Playlists',
       inDrawer: true, inTabs: true,
     },
