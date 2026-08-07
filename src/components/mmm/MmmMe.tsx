@@ -81,6 +81,26 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
+      {/* Events and tickets have no module in this shell — the design is MAP,
+          MUSIC, ME and the arc nav carries exactly those three, so this is a
+          bridge out to the surfaces that already exist, the same pattern as
+          "Edit page" below.
+
+          It is not decoration: once the legacy shell's own nav started pointing
+          INTO this one (app-nav.ts, DESIGN_SYNC row 273), a member who came in
+          via MAP or MUSIC had no first-class route to their tickets at all —
+          only two taps deep inside the ME → Settings panel. Closing a one-way
+          door in one direction opens one in the other unless both ends have a
+          link. Rendered unconditionally, because every member has tickets to
+          look at even when they have no page to edit. */}
+      <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
+        <div className="mmm-eyebrow" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Events</div>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
+          <Link className="mmm-btn-ghost" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
+        </div>
+      </div>
+
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
           <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.58rem' }}>Your page</div>

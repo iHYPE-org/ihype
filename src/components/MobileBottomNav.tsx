@@ -12,8 +12,15 @@ const TAB_TO_SECTION: Record<string, ShellSection> = { listen: 'listen', events:
 const TABS = [
   {
     id: 'listen',
+    // Into the Music · Map · Me shell, not this shell's `/listen` deck — the
+    // same one-way-door fix as the LISTEN section in `app-nav.ts`, applied to
+    // the control a phone actually uses. This bar only renders on legacy
+    // routes (mmm.css hides `.ihype-mobile-nav` inside `/app`), so tapping
+    // Listen hands off to MMM's own navigation rather than stacking two bars.
+    // `/app/music/discover` rather than `/app/map`, so the label stays honest;
+    // the map is one tap away on MMM's own nav.
     label: 'Listen',
-    href: '/listen',
+    href: '/app/music/discover',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M9 18V5l12-2v13"/>

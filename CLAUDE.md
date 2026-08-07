@@ -138,6 +138,24 @@ guarantees that. `AppShell` stands aside for `/app/*` the same way it does for
 exists, and choosing between them is an operator decision, as is the DJ-role
 removal. Row 268 lists all five open items.
 
+**What IS cut over, since row 273: the way in and the way around.** `/` and
+sign-in resolve to `WORKBENCH_PATH = '/app/map'`, and the four LISTEN
+destinations in `app-nav.ts` plus `MobileBottomNav`'s Listen tab point at
+`/app/music/*`. That closed a trap worth understanding before touching either
+shell: MMM has no Events or Pages module, so it links out to `/tickets`,
+`/pages` and `/shows/[slug]`, which render in the LEGACY shell — and while every
+nav destination still pointed back at `/listen?tab=…`, one tap on a ticket
+dropped a member into the six-module deck **with no route back for the rest of
+the session**. The shell was live, was the landing surface, and still nobody saw
+it; it was reported as "I still see older versions". The invariants: no LISTEN
+destination may resolve to `/listen` (asserted in `app-nav.test.ts`), and any
+new MMM→legacy bridge needs a legacy→MMM counterpart or it re-opens the door the
+other way. **Do not add a MAP row to the drawer to solve this** — the drawer's
+structure is the app-shell handoff's and is asserted as such; MMM's arc nav
+already carries MAP. Events, Pages, advertise and Account keep legacy routes on
+purpose (no MMM equivalent), and `/app/me/settings` is a bridge MENU of links
+rather than the settings UI, so it is not the Account destination.
+
 **Also in the repo: `design/handoff-music-map-me/`.** That is
 iHYPE Design System 6 ("Music · Map · Me", 2026-08-04) vendored verbatim — the first
 `.dc.html` files this checkout has tracked, which is why every cold session's audit

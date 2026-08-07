@@ -136,18 +136,45 @@ describe('active item resolution', () => {
   const items = buildShellNav(EVERYTHING);
 
   it('matches a tabbed hub on its ?tab= value', () => {
-    expect(resolveActiveItemId(items, '/listen', 'charts')).toBe('charts');
     expect(resolveActiveItemId(items, '/shows', 'tickets')).toBe('tickets');
     expect(resolveActiveItemId(items, '/pages', 'creator')).toBe('pagecreator');
   });
 
   it('falls back to the section default when a hub carries no tab', () => {
-    expect(resolveActiveItemId(items, '/listen', null)).toBe('discover');
     expect(resolveActiveItemId(items, '/shows', null)).toBe('nearme');
   });
 
   it('falls back to the default for an unknown tab rather than lighting nothing', () => {
-    expect(resolveActiveItemId(items, '/listen', 'nonsense')).toBe('discover');
+    expect(resolveActiveItemId(items, '/shows', 'nonsense')).toBe('nearme');
+  });
+
+  // `/listen` used to be the third hub asserted above. Since DESIGN_SYNC row
+  // 273 the four LISTEN destinations point into the Music · Map · Me shell at
+  // `/app/music/*`, so no nav item carries a `/listen?tab=` href any more and
+  // nothing in the strip can resolve as active there.
+  //
+  // The route itself is deliberately still live and still in SHELL_ROUTES:
+  // sent emails, old bookmarks and anyone who prefers the six-module deck can
+  // reach it. It is simply no longer a NAV DESTINATION, and an unlit strip is
+  // the honest rendering of "you are somewhere the nav does not point". The
+  // strip still shows the four LISTEN items, which is what carries a member
+  // from the legacy deck into the new shell.
+  it('lights nothing on /listen, which is still routable but no longer a destination', () => {
+    expect(resolveActiveItemId(items, '/listen', 'charts')).toBeNull();
+    expect(resolveActiveItemId(items, '/listen', null)).toBeNull();
+  });
+
+  it('points the LISTEN section at the Music · Map · Me shell, not the legacy deck', () => {
+    const listen = items.filter((i) => i.section === 'LISTEN');
+    expect(listen.map((i) => i.href)).toEqual([
+      '/app/music/discover',
+      '/app/music/radio',
+      '/app/music/charts',
+      '/app/music/playlists',
+    ]);
+    // The one-way door this closes: not one LISTEN destination may point back
+    // into `/listen`, or a member lands in the legacy deck and cannot get out.
+    expect(listen.every((i) => i.href.startsWith('/app/'))).toBe(true);
   });
 
   it('matches routes the registry names directly', () => {
