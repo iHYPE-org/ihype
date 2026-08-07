@@ -4,7 +4,6 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { WelcomeStepsChecklist } from '@/components/WelcomeStepsChecklist';
-import { getProfilePathForType } from '@/lib/profile-paths';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { getServerT } from '@/lib/i18n/server';
 
@@ -13,7 +12,10 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ';
+// No DJ. The role was removed from both enums in #650 and every DJ profile was
+// reassigned to ARTIST by migration, so a session can no longer carry it — its
+// branch here was unreachable code keeping a retired role's copy alive.
+type Role = 'FAN' | 'ARTIST' | 'VENUE';
 
 export default async function WelcomePage() {
   const session = await auth();
@@ -34,9 +36,8 @@ export default async function WelcomePage() {
   });
 
   // Prefer the profile's own type over session.user.role: the profile is what
-  // the onboarding wizard is keyed to, and getProfilePathForType already owns
-  // the type -> URL-prefix mapping (ARTIST -> /artists, DJ -> /promoters,
-  // VENUE -> /venues), so there is no second copy of it here to drift.
+  // the onboarding wizard is keyed to, and it is the same source ME uses to
+  // decide whether setup is still outstanding.
   const profileRole: Role | null =
     profile?.type === 'ARTIST' || profile?.type === 'VENUE'
       ? profile.type
@@ -46,18 +47,39 @@ export default async function WelcomePage() {
   const sessionRole = (session.user as { role?: string }).role;
   const role: Role =
     profileRole
-    ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
+    ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' ? sessionRole : 'FAN');
 
-  // Only the three creator roles have a wizard. A fan does not need one, and
-  // without a profile row there is no slug to build a URL from.
+  // "You're in." is a POST-SIGNUP screen — Welcome.dc.html's whole subject is
+  // an account that has just been created. But `resolvePostAuthRedirect` sends
+  // every generic sign-in here, so a creator who finished setup months ago was
+  // still being congratulated on arriving, every single time, and had to click
+  // through a setup CTA to get anywhere. That is the "this is all I see when I
+  // sign in" report.
   //
-  // Skipped once the wizard has reported finishing: /welcome is normally seen
-  // once at signup, but it is a plain URL anyone can return to, and sending a
-  // set-up creator back through setup would undo the point of tracking it.
-  const onboardingPath =
-    profile && role !== 'FAN' && !profile.onboardedAt
-      ? `${getProfilePathForType(profile.type, profile.slug)}/onboarding`
-      : null;
+  // Once the wizard has reported finishing there is nothing on this page for
+  // them, so they go straight to the app. Keyed on `onboardedAt` because that
+  // is the existing "this account is set up" signal; a fan has no such column
+  // and still sees the screen once, which is correct — for a fan it really is
+  // the confirmation that signup worked, and their CTA already leads to the app.
+  if (profile?.onboardedAt) redirect(WORKBENCH_PATH);
+
+  // EVERY role's CTA goes to the app. This page has one button and it opens
+  // iHYPE — which is what Welcome.dc.html draws (its single CTA targets
+  // FanApp.dc.html) and what the fan role has always done.
+  //
+  // It used to be `onboardingPath ?? '/pages'` for creators, which was two
+  // problems in one expression. A creator mid-setup was held on a signup screen
+  // in front of the app, and a creator who had FINISHED setup got `/pages`
+  // forever, because `resolvePostAuthRedirect` sends every generic sign-in here
+  // — so the most invested users signed in, were congratulated on arriving, and
+  // were handed the page editor with no route to the app on the screen at all.
+  //
+  // Setup did not disappear with the gate: `loadMmmMe` now carries it as
+  // `setup` and ME renders it as the first card until `onboardedAt` is stamped.
+  // That is the trade — verification still has to happen before a payout can
+  // route anywhere, but it is a task inside the product rather than a wall in
+  // front of it.
+  const setUpPath = WORKBENCH_PATH;
 
   const CONFIG: Record<Role, {
     roleLabel: string; tint: string;
@@ -79,7 +101,7 @@ export default async function WelcomePage() {
     ARTIST: {
       roleLabel: t('welcomePage.roleArtist', 'Artist'), tint: 'var(--accent)',
       sub: t('welcomePage.subArtist', 'Welcome to the platform where 70% of every ticket is yours — locked by charter, before a single ticket sells.'),
-      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: setUpPath,
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
         { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can be crated by DJs for radio shows.') },
@@ -89,21 +111,11 @@ export default async function WelcomePage() {
     VENUE: {
       roleLabel: t('welcomePage.roleVenue', 'Venue'), tint: 'var(--role-venue)',
       sub: t('welcomePage.subVenue', 'A guaranteed 20% of every gate, by charter — plus real demand data on who fans actually want to see.'),
-      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: onboardingPath ?? '/pages',
+      cta: t('welcomePage.ctaVenue', 'List your room →'), ctaHref: setUpPath,
       steps: [
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
         { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3Desc', 'Your 20% is locked in the charter at publish. Settlement goes direct after the show.') },
-      ],
-    },
-    DJ: {
-      roleLabel: t('welcomePage.roleDj', 'DJ'), tint: 'var(--accent-2)',
-      sub: t('welcomePage.subDj', 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.'),
-      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/radio',
-      steps: [
-        { title: t('welcomePage.djStep1Title', 'Crate some tracks'), desc: t('welcomePage.djStep1Desc', 'Browse the free-use library and add tracks to your crate — they’re licensed for your radio shows.') },
-        { title: t('welcomePage.djStep2Title', 'Record your first show'), desc: t('welcomePage.djStep2Desc', 'Mix crated tracks with your voice and royalty-free SFX, right from your phone.') },
-        { title: t('welcomePage.djStep3Title', 'Promote and earn'), desc: t('welcomePage.djStep3Desc', 'Share referral links for shows you play — you earn from the 10% promoter pool.') },
       ],
     },
   };

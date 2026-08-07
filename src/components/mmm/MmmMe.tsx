@@ -81,23 +81,40 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
-      {/* Events and tickets have no module in this shell — the design is MAP,
-          MUSIC, ME and the arc nav carries exactly those three, so this is a
-          bridge out to the surfaces that already exist, the same pattern as
-          "Edit page" below.
+      {/* Setup, once it stopped being a gate in front of the app.
+          `/welcome` used to hold a new creator on a "Set up your page →" screen
+          until the wizard was done; it now lands everyone in the app, so the
+          task has to travel with them or it simply disappears — and
+          verification is what activates the 70% split, so disappearing is not
+          an option. First card in ME, and it removes itself the moment
+          `onboardedAt` is stamped. */}
+      {data.setup && (
+        <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.58rem' }}>Finish setup</div>
+          <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>
+            Verification is what activates your 70% of every ticket. It takes about two minutes.
+          </div>
+          <Link className="mmm-btn-primary" href={data.setup.href} style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>{data.setup.label}</Link>
+        </div>
+      )}
+
+      {/* Events has no entry in the arc nav, because the design draws three
+          modules and the arc is a coordinate table for three. This card is how
+          you reach it, and `/app/events` renders the Events surface INSIDE this
+          shell rather than handing you to the legacy one — so the chrome no
+          longer changes under you halfway through a session.
 
           It is not decoration: once the legacy shell's own nav started pointing
           INTO this one (app-nav.ts, DESIGN_SYNC row 273), a member who came in
           via MAP or MUSIC had no first-class route to their tickets at all —
-          only two taps deep inside the ME → Settings panel. Closing a one-way
-          door in one direction opens one in the other unless both ends have a
-          link. Rendered unconditionally, because every member has tickets to
-          look at even when they have no page to edit. */}
+          only two taps deep inside the ME → Settings panel. Rendered
+          unconditionally, because every member has tickets to look at even when
+          they have no page to edit. */}
       <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
         <div className="mmm-eyebrow" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Events</div>
         <div style={{ display: 'flex', gap: 8 }}>
-          <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
-          <Link className="mmm-btn-ghost" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
+          <Link className="mmm-btn-ghost" href="/app/events" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
+          <Link className="mmm-btn-ghost" href="/app/events?tab=tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
         </div>
       </div>
 
@@ -107,7 +124,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link className="mmm-btn-primary" href="/pages" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
+            <Link className="mmm-btn-primary" href="/app/pages" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
             <Link className="mmm-btn-ghost" href={`/${data.page.kind}/${data.page.slug}`}>Preview</Link>
           </div>
         </div>
