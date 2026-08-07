@@ -33,7 +33,14 @@
  * client components and unit tests.
  */
 
-export const ANALYTICS_RANGES = ['7d', '30d', '90d', 'ytd'] as const;
+// `all` is lifetime-to-date and exists so a surface can show a running total
+// through the SAME catalogue every windowed surface uses. That is the settled
+// product rule: a member sees lifetime totals, while 30-day rolling is the
+// scale the platform reasons on. Without this, "keep the lifetime number"
+// meant "keep a second, private implementation of the metric", which is the
+// exact split that let /me/dashboard and /me/analytics show the same two
+// labels with different definitions.
+export const ANALYTICS_RANGES = ['7d', '30d', '90d', 'ytd', 'all'] as const;
 export type AnalyticsRange = (typeof ANALYTICS_RANGES)[number];
 
 export function isAnalyticsRange(value: unknown): value is AnalyticsRange {
@@ -107,6 +114,29 @@ export const METRIC_CATALOGUE: readonly MetricDefinition[] = [
     unit: 'count',
     audiences: ['fan', 'artist', 'platform'],
   },
+  // The two metrics `/me/analytics` had been deriving for itself. Declaring
+  // them here is the whole point of the catalogue: the fan surface was showing
+  // three figures while the catalogue knew about two, so "render metrics rather
+  // than re-derive them" was impossible for that page without inventing a
+  // fourth private definition of a quantity other surfaces also want.
+  {
+    id: 'shows_attended',
+    label: 'Shows attended',
+    help: 'Shows you bought a ticket to that have already started.',
+    unit: 'count',
+    // Fan-only for now. The same quantity for an artist or venue means "people
+    // who attended MY show", which is a different query against a different
+    // scope — it gets its own id when a surface needs it, rather than being
+    // quietly overloaded onto this one.
+    audiences: ['fan'],
+  },
+  {
+    id: 'promoter_earnings',
+    label: 'Referral earned',
+    help: 'Your share of the 10% promoter pool from tickets sold through your HYPE link. Attributed at sale; settlement follows the show.',
+    unit: 'cents',
+    audiences: ['fan'],
+  },
   {
     id: 'followers',
     label: 'New followers',
@@ -168,6 +198,14 @@ export type ResolvedRange = {
   priorStart: Date;
   priorEnd: Date;
   days: number;
+  /**
+   * True for `all`. A lifetime total has no preceding period to compare
+   * against, so resolvers skip the prior query entirely and report `previous:
+   * null` — which `deltaPercent` turns into null and `formatDelta` renders as
+   * an em dash. The alternative, comparing against an empty window, would read
+   * as "+100% this period" on every lifetime tile forever.
+   */
+  lifetime: boolean;
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -185,7 +223,12 @@ export function resolveRange(range: AnalyticsRange, now: Date = new Date()): Res
   const end = now;
   let start: Date;
 
-  if (range === 'ytd') {
+  if (range === 'all') {
+    // The epoch, not the account's creation date: a resolver filters by the
+    // viewer's own scope anyway, and reading a per-account floor here would
+    // make every metric depend on a lookup none of them otherwise need.
+    start = new Date(0);
+  } else if (range === 'ytd') {
     start = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
   } else {
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90;
@@ -200,6 +243,7 @@ export function resolveRange(range: AnalyticsRange, now: Date = new Date()): Res
     priorStart: new Date(start.getTime() - spanMs),
     priorEnd: start,
     days: Math.round(spanMs / DAY_MS),
+    lifetime: range === 'all',
   };
 }
 

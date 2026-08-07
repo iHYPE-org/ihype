@@ -3,9 +3,9 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getPromoterDashboard } from '@/lib/promoterDashboard';
-import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerT } from '@/lib/i18n/server';
+import { deltaPercent, formatDelta, formatMetricValue, resolveRange } from '@/lib/analytics-engine';
+import { getAnalytics } from '@/lib/analytics-metrics';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,11 +21,6 @@ const RANGE_TABS: { id: RangeId; label: string }[] = [
   { id: 'ytd', label: 'YTD' },
 ];
 
-function rangeStart(range: RangeId, now: Date): Date {
-  if (range === '7d') return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  if (range === 'ytd') return new Date(now.getFullYear(), 0, 1);
-  return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-}
 
 type Bucket = { label: string; start: Date; end: Date; count: number };
 
@@ -87,36 +82,29 @@ export default async function FanAnalyticsPage({
   const range: RangeId = rawRange === '7d' || rawRange === 'ytd' ? rawRange : '30d';
 
   const now = new Date();
-  const start = rangeStart(range, now);
-  // Prior period of the same length, for the Hype Cast "+X this period" delta.
-  const priorStart = new Date(start.getTime() - (now.getTime() - start.getTime()));
+  // The window comes from the engine, so this page and every other analytics
+  // surface agree on what "7 Days" means. `rangeStart` used to define it here,
+  // privately, which is exactly the five-implementations-of-one-question
+  // problem METRIC_CATALOGUE exists to end.
+  const resolved = resolveRange(range, now);
+  const start = resolved.start;
 
-  const [
-    hypeCastCurrent,
-    hypeCastPrior,
-    showsAttended,
-    promoterDashboard,
-    hypesInRangeWithArtist,
-  ] = await Promise.all([
-    // Real count of HypeEvent rows this user cast in the selected range.
-    db.hypeEvent.count({ where: { userId, createdAt: { gte: start, lte: now } } }),
-    // Same window, shifted back — the only cheap real basis for a period delta.
-    db.hypeEvent.count({ where: { userId, createdAt: { gte: priorStart, lt: start } } }),
-    // Real count of captured ticket orders for shows that already happened,
-    // within the selected range — "Shows Attended".
-    db.ticketOrder.count({
-      where: {
-        buyerUserId: userId,
-        status: 'CAPTURED',
-        show: { startsAt: { gte: start, lte: now } },
-      },
-    }),
-    // Reuses the real promoter/referral dashboard — earnedCents is exactly the
-    // "Referral Earned" stat (lifetime; getPromoterDashboard has no range
-    // parameter, so this is not scoped to the selected range).
-    getPromoterDashboard(userId),
-    // Backs both the "hype cast over time" chart and the "Top Artists" list —
-    // one real query, bucketed/grouped in JS below.
+  const [analytics, hypesInRangeWithArtist] = await Promise.all([
+    // Every stat tile on this page, declared once in METRIC_CATALOGUE and
+    // resolved here. Each resolver is independently caught and returns null on
+    // failure, which renders as an em dash — a dashboard showing 0 for "could
+    // not read" is worse than one showing nothing, because 0 is a claim.
+    getAnalytics('fan', { kind: 'user', userId }, range, now),
+    // Stays local: the engine returns a value and a prior-period value per
+    // metric, which is the right shape for a tile and the wrong shape for a
+    // time series or a grouped list. This one query still backs both the
+    // "hype cast over time" chart and "Top Artists".
+    //
+    // Note it counts HypeEvent only, while the `hypes_given` tile above counts
+    // HypeEvent AND ProfileHypeEvent — a hype on a page is still a hype. So the
+    // chart can legitimately total less than the tile. Left as is rather than
+    // widened, because the chart is explicitly about shows and the artist
+    // grouping below has no meaning for a page hype.
     db.hypeEvent.findMany({
       where: { userId, createdAt: { gte: start, lte: now } },
       select: {
@@ -130,7 +118,6 @@ export default async function FanAnalyticsPage({
     }),
   ]);
 
-  const hypeDelta = hypeCastCurrent - hypeCastPrior;
 
   const buckets = buildBuckets(range, start, now);
   for (const h of hypesInRangeWithArtist) {
@@ -174,29 +161,33 @@ export default async function FanAnalyticsPage({
         ))}
       </div>
 
+      {/* One tile per catalogued fan metric, in catalogue order. The page no
+          longer decides WHICH figures a fan sees or what they are called —
+          adding a fan metric to METRIC_CATALOGUE puts it here, and on every
+          other fan surface, without editing this file.
+
+          Still no "Listening Streak": nothing in the schema tracks daily listen
+          streaks, and the catalogue only declares metrics with something real
+          behind them. Omitted rather than fabricated.
+
+          `formatMetricValue` renders null as an em dash, so a failed read is
+          visibly unknown rather than a confident zero. */}
       <div className="fa-stats-grid">
-        {/* NOTE: no "Listening Streak" card — nothing in the schema tracks
-            daily listen streaks (no field/model for it). Omitted rather than
-            fabricated, same as src/app/me/dashboard/page.tsx. */}
-        <Link className="fa-stat-card" href="/tickets">
-          <div className="fa-stat-label">{t('meAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
-          <div className="fa-stat-val">{hypeCastCurrent.toLocaleString()}</div>
-          <div className="fa-stat-sub" style={{ color: hypeDelta !== 0 ? 'var(--role-fan)' : undefined }}>
-            {hypeDelta > 0 ? `+${hypeDelta}` : hypeDelta} {t('meAnalyticsPage.thisPeriod', 'this period')}
+        {analytics.metrics.map((entry) => (
+          <div className="fa-stat-card" key={entry.id}>
+            <div className="fa-stat-label">{entry.label}</div>
+            <div
+              className="fa-stat-val"
+              style={entry.unit === 'cents' ? { color: 'var(--role-fan)' } : undefined}
+              title={entry.help}
+            >
+              {formatMetricValue(entry.value, entry.unit)}
+            </div>
+            <div className="fa-stat-sub">
+              {formatDelta(deltaPercent(entry.value, entry.previous))} {t('meAnalyticsPage.thisPeriod', 'this period')}
+            </div>
           </div>
-        </Link>
-        <div className="fa-stat-card">
-          <div className="fa-stat-label">{t('meAnalyticsPage.showsAttendedLabel', 'Shows Attended')}</div>
-          <div className="fa-stat-val">{showsAttended.toLocaleString()}</div>
-          <div className="fa-stat-sub">{t('meAnalyticsPage.thisPeriodCap', 'This period')}</div>
-        </div>
-        <div className="fa-stat-card">
-          <div className="fa-stat-label">{t('meAnalyticsPage.referralEarnedLabel', 'Referral Earned')}</div>
-          <div className="fa-stat-val" style={{ color: 'var(--role-fan)' }}>
-            {formatCurrencyFromCents(promoterDashboard.earnedCents)}
-          </div>
-          <div className="fa-stat-sub">{t('meAnalyticsPage.referralEarnedSub', 'From your HYPE Link (lifetime, pending settlement)')}</div>
-        </div>
+        ))}
       </div>
 
       <div className="fa-eyebrow">{t('meAnalyticsPage.hypeCastOverTime', 'Hype cast over time')}</div>

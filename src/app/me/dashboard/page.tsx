@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getPromoterDashboard } from '@/lib/promoterDashboard';
+import { formatMetricValue } from '@/lib/analytics-engine';
+import { getAnalytics } from '@/lib/analytics-metrics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerT } from '@/lib/i18n/server';
 import { NotificationsList } from '@/components/NotificationsList';
@@ -37,10 +38,22 @@ export default async function FanDashboardPage() {
   const userId = session.user.id;
   const now = new Date();
 
-  const [user, hypeCastCount, recentHypes, upcomingOrders, ownFanProfile, promoterDashboard] = await Promise.all([
+  const [user, analytics, recentHypes, upcomingOrders, ownFanProfile] = await Promise.all([
     db.user.findUnique({ where: { id: userId }, select: { username: true, name: true } }),
-    // Real count of Hype rows cast by this user (HypeEvent.userId) — "Hype Cast" stat.
-    db.hypeEvent.count({ where: { userId } }),
+    // "Hype Cast" and "Referral Earned", from METRIC_CATALOGUE at range 'all'.
+    //
+    // Lifetime is kept deliberately — a member's running total is what this
+    // surface is for, and 30-day rolling is the scale the platform reasons on,
+    // not the scale it reports to the person who earned it. What changes is
+    // WHERE the definition lives: both figures now come from the same
+    // catalogue /me/analytics renders, so the two screens can no longer show
+    // the same label with different arithmetic behind it.
+    //
+    // One number does move: `hypes_given` counts HypeEvent AND
+    // ProfileHypeEvent, where this page counted show hypes only. A hype on an
+    // artist's page was always a hype; it just was not being counted here. The
+    // figure goes up slightly and now matches /me/analytics.
+    getAnalytics('fan', { kind: 'user', userId }, 'all'),
     db.hypeEvent.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
@@ -62,10 +75,11 @@ export default async function FanDashboardPage() {
       },
     }),
     db.profile.findFirst({ where: { ownerId: userId, type: 'LISTENER' }, select: { slug: true } }),
-    // Reuses the real promoter/referral dashboard — earnedCents is exactly the
-    // "Referral Earned" stat, already computed from live TicketOrder rows.
-    getPromoterDashboard(userId),
   ]);
+
+  // Null (a failed read) renders as an em dash rather than 0 — the rule the
+  // whole engine is built on: 0 is a claim, and "we could not read it" is not.
+  const metric = (id: string) => analytics.metrics.find((entry) => entry.id === id)?.value ?? null;
 
   // Most recent real referral conversion (a ticket order driven by this user's
   // own profiles' affiliate link), for the activity feed.
@@ -140,13 +154,13 @@ export default async function FanDashboardPage() {
             convention, that card is omitted rather than fabricated. */}
         <Link className="fan-dash-stat-card" href="/tickets">
           <div className="fan-dash-stat-label">{t('meDashboardPage.hypeCastLabel', 'Hype Cast')}</div>
-          <div className="fan-dash-stat-value">{hypeCastCount}</div>
+          <div className="fan-dash-stat-value">{formatMetricValue(metric('hypes_given'), 'count')}</div>
           <div className="fan-dash-stat-sub">{t('meDashboardPage.showsYouveHyped', 'Shows you’ve hyped')}</div>
         </Link>
         <div className="fan-dash-stat-card">
           <div className="fan-dash-stat-label">{t('meDashboardPage.referralEarnedLabel', 'Referral Earned')}</div>
           <div className="fan-dash-stat-value" style={{ color: 'var(--role-fan)' }}>
-            {formatCurrencyFromCents(promoterDashboard.earnedCents)}
+            {formatMetricValue(metric('promoter_earnings'), 'cents')}
           </div>
           <div className="fan-dash-stat-sub">{t('meDashboardPage.referralEarnedSub', 'From your HYPE Link (pending settlement)')}</div>
         </div>
