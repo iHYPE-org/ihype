@@ -1,4 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0a0805"></rect>
-  <path d="M17.5 6L9.5 18h6l-1 8 9-12h-6l1-8z" fill="#ff5029"></path>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ihype-fav-title">
+  <title id="ihype-fav-title">iHYPE</title>
+
+  <!--
+    The 16-32px cut. Two elements only: the wordmark at full tile width and the
+    crowd. The LOCAL MUSIC label is deliberately absent — at 16px its letters
+    are a sixth of a pixel tall, so carrying it would cost the wordmark a third
+    of its size to render a grey smear. The label lives in the nav tile
+    (ihype-logo-mark-compact.svg) and the app icon (ihype-logo-mark.svg), both
+    of which have the pixels to spend on it.
+    design-exempt: brand asset, rendered where no stylesheet reaches.
+  -->
+
+  <defs>
+    <clipPath id="ihype-f-clip"><rect class="ihype-tile-shape" width="512" height="512" rx="112" /></clipPath>
+    <g id="ihype-f-fan">
+      <path d="M-35 0c0-20 15-31 35-31s35 11 35 31z" />
+      <circle cx="0" cy="-50" r="19" />
+      <rect x="-35" y="-6" width="70" height="200" />
+    </g>
+  </defs>
+
+  <g clip-path="url(#ihype-f-clip)">
+    <rect width="512" height="512" fill="#0a0805" />
+
+    <g fill="#ff5029">
+      <use href="#ihype-f-fan" transform="translate(30 470) scale(1.25)" />
+      <use href="#ihype-f-fan" transform="translate(140 470) scale(1.25)" />
+      <use href="#ihype-f-fan" transform="translate(250 470) scale(1.25)" />
+      <use href="#ihype-f-fan" transform="translate(360 470) scale(1.25)" />
+      <use href="#ihype-f-fan" transform="translate(470 470) scale(1.25)" />
+      <rect x="88" y="320" width="15" height="130" rx="7.5" transform="rotate(-13 95 385)" />
+      <rect x="300" y="320" width="15" height="130" rx="7.5" transform="rotate(10 307 385)" />
+    </g>
+
+    <g transform="translate(36 128) scale(1.176)">
+      <g fill="#ff5029">
+        <rect width="24" height="20" rx="4" />
+        <rect y="28" width="24" height="72" rx="3" />
+      </g>
+      <g fill="#f0ebe5">
+        <rect x="36" width="24" height="100" rx="3" />
+        <rect x="96" width="24" height="100" rx="3" />
+        <rect x="36" y="38" width="84" height="22" />
+        <path d="M132 0h26l13 32 13-32h26l-27 62v38h-24v-38z" />
+        <path fill-rule="evenodd" d="M222 0h36c22 0 38 12 38 29s-16 29-38 29h-12v42h-24zm24 20v18h12c8 0 13-4 13-9s-5-9-13-9z" />
+        <rect x="308" width="24" height="100" rx="3" />
+        <rect x="308" width="66" height="24" rx="3" />
+        <rect x="308" y="38" width="58" height="22" />
+        <rect x="308" y="76" width="66" height="24" rx="3" />
+      </g>
+    </g>
+  </g>
 </svg>

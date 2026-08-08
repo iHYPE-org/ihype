@@ -62,7 +62,11 @@ export function AppShellHeader({
         title={t('appShell.menuAriaLabel', 'Menu')}
         type="button"
       >
-        <Image alt="" height={48} priority src="/brand/ihype-menu-logo.webp" width={48} />
+        {/* The small cut of the mark. `unoptimized` because /_next/image
+            refuses SVG unless `dangerouslyAllowSVG` is set in next.config, and
+            turning that on to serve one 2KB file would let the optimizer
+            re-serve any SVG it can reach. There is nothing to optimize here. */}
+        <Image alt="" height={48} priority src="/brand/ihype-logo-mark-compact.svg" unoptimized width={48} />
       </button>
 
       <form

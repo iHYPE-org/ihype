@@ -53,6 +53,24 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'
   ),
+  // Nothing linked the manifest or any icon before this, so the PWA icons in
+  // public/icons/ were unreachable: the tab fell back to a /favicon.ico that
+  // does not exist, and "Add to Home Screen" had no icon to offer. The files
+  // were all there — no route ever pointed at them.
+  //
+  // Three cuts of one mark, by how many pixels each gets: the wordmark-and-
+  // crowd favicon at tab size, the full mark for the installed app, and (in the
+  // nav) the compact cut. See public/brand/ihype-logo-mark.svg.
+  manifest: '/manifest.json',
+  icons: {
+    icon: [
+      { url: '/assets/logo/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+    ],
+    // iOS ignores `sizes` here and rounds the corners itself, which is why the
+    // generated PNGs are square and full-bleed rather than pre-rounded.
+    apple: [{ url: '/icons/icon-180.png', sizes: '180x180', type: 'image/png' }],
+  },
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
