@@ -13,7 +13,7 @@ import { getProfilePathForType } from '@/lib/profile-paths';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const profileId = searchParams.get('profileId');
-  const fallback = NextResponse.redirect(new URL('/listen', origin));
+  const fallback = NextResponse.redirect(new URL('/app/map', origin));
 
   if (!isStripeConfigured() || !profileId) return fallback;
 

@@ -131,7 +131,7 @@ jobs:
         # this landed; they render correctly today only because the right rule
         # happens to come last. Existing debt passes, a NEW duplicate fails.
         # Lower this number as they get fixed. Never raise it.
-        run: npm run audit:css -- --max=145
+        run: npm run audit:css -- --max=144
 
       - name: Unit tests
         run: npm test

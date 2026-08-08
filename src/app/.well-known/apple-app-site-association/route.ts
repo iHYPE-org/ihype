@@ -28,7 +28,7 @@ export async function GET() {
         ? [
             {
               appID: `${teamId}.${bundleId}`,
-              paths: ['/shows/*', '/artists/*', '/venues/*', '/promoters/*', '/fans/*', '/radio', '/h/*']
+              paths: ['/shows/*', '/artists/*', '/venues/*', '/fans/*', '/app/*', '/h/*']
             }
           ]
         : []

@@ -7,7 +7,6 @@ import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGri
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -126,7 +125,6 @@ export function PagesHome({
   resetToken?: number;
 } = {}) {
   const { t } = useI18n();
-  const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
   const [gridMode, setGridMode] = useState(!validInitialTab);
@@ -296,7 +294,6 @@ export function PagesHome({
         items={gridItems}
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as TabId); }}
-        onSwipeSection={shell?.swipeSection}
         searchPlaceholder={t('pagesHome.searchPlaceholder', 'Search artists, venues, shows…')}
       />
 

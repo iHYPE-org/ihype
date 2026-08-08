@@ -13,7 +13,7 @@ import { log } from '@/lib/logger';
  * as onboarded if Stripe has approved it.
  */
 export async function GET(request: NextRequest) {
-  let fallback = '/listen';
+  let fallback = '/app/map';
   try {
     const profileId = request.nextUrl.searchParams.get('profileId');
 

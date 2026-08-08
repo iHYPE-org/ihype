@@ -26,7 +26,7 @@ import AxeBuilder from '@axe-core/playwright';
 // insufficient contrast on real body text) are unambiguous defects worth
 // blocking on.
 
-const STATIC_PAGES = ['/', '/login', '/register', '/discover'];
+const STATIC_PAGES = ['/', '/login', '/register', '/shows'];
 const SEEDED_SHOW_SLUG = 'signal-yard-launch-night';
 
 async function assertNoSeriousViolations(page: Page, path: string, response: Response | null) {

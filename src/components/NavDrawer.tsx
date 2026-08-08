@@ -88,7 +88,7 @@ function MenuIcon({ name }: { name: IconName }) {
 
 function isActivePath(pathname: string, href: string) {
   const base = href.split('?')[0].split('#')[0];
-  if (base === '/listen') return pathname === '/listen';
+  if (base === '/app/music/discover') return pathname === '/app/music/discover';
   if (base === '/shows') return pathname === '/shows';
   return pathname === base || (base !== '/' && pathname.startsWith(`${base}/`));
 }
@@ -160,10 +160,10 @@ export function NavDrawer({
         label: 'LISTEN',
         color: 'var(--accent)',
         items: [
-          { href: '/listen?tab=seeds', label: 'Discover', badge: 'Seeds', icon: 'seed', description: 'Swipe into something new' },
-          { href: '/listen?tab=radio', label: 'Radio', icon: 'radio', description: 'Scene-run shows and rotation' },
-          { href: '/listen?tab=charts', label: 'Charts', icon: 'chart', description: 'Follow the real local signal' },
-          { href: '/listen?tab=playlists', label: 'Playlists', icon: 'playlist', description: 'Everything you saved' },
+          { href: '/app/music/discover', label: 'Discover', badge: 'Seeds', icon: 'seed', description: 'Swipe into something new' },
+          { href: '/app/music/radio', label: 'Radio', icon: 'radio', description: 'Generated stations, always on' },
+          { href: '/app/music/charts', label: 'Charts', icon: 'chart', description: 'Follow the real local signal' },
+          { href: '/app/music/playlists', label: 'Playlists', icon: 'playlist', description: 'Everything you saved' },
         ],
       },
       {

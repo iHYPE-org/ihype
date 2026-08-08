@@ -96,7 +96,6 @@ describe('creator hrefs resolve against the owned profile', () => {
 
 describe('route registry', () => {
   it('claims the signed-in surfaces and leaves marketing alone', () => {
-    expect(isShellRoute('/listen')).toBe(true);
     expect(isShellRoute('/shows')).toBe(true);
     expect(isShellRoute('/shows/echo-park-night')).toBe(true);
     expect(isShellRoute('/me/dashboard')).toBe(true);
@@ -107,6 +106,18 @@ describe('route registry', () => {
     expect(isShellRoute('/register')).toBe(false);
     expect(isShellRoute('/join')).toBe(false);
     expect(isShellRoute('/for-artists')).toBe(false);
+  });
+
+  it('does not claim a retired route that is now only a redirect', () => {
+    // These four were the pre-shell three-tab app and each is now a bare
+    // redirect into /app/music/*. A registry entry would have this shell
+    // resolve a section and paint its chrome around a page that is already on
+    // its way somewhere else — a visible flash of the retired shell on the way
+    // into the new one, which is precisely what this cut-over is ending.
+    expect(isShellRoute('/listen')).toBe(false);
+    expect(isShellRoute('/radio')).toBe(false);
+    expect(isShellRoute('/discover')).toBe(false);
+    expect(isShellRoute('/search')).toBe(false);
   });
 
   it('does not let a prefix entry swallow a longer unrelated path', () => {
@@ -128,7 +139,10 @@ describe('route registry', () => {
   it('puts detail pages in the section that owns them', () => {
     expect(resolveSection('/shows/some-show')).toBe('EVENTS');
     expect(resolveSection('/artists/jayla-reign')).toBe('PAGES');
-    expect(resolveSection('/radio')).toBe('LISTEN');
+    // A track page is a real LISTEN destination the MUSIC module links out to,
+    // so it still needs a section. It replaces /radio in this assertion, which
+    // is no longer a page.
+    expect(resolveSection('/tracks/0f3a91')).toBe('LISTEN');
   });
 });
 

@@ -340,15 +340,13 @@ test.describe('App shell — scope', () => {
     await signIn(context, FAN_EMAIL);
     await page.goto('/');
     // `/` redirects an authenticated member to WORKBENCH_PATH, so a signed-in
-    // visitor never sees the marketing landing page at all. That path is now
-    // the Music · Map · Me shell rather than `/listen`'s module deck — the
-    // cutover recorded in DESIGN_SYNC row 268.
+    // visitor never sees the marketing landing page at all. That path is the
+    // Music · Map · Me shell, which is now the only app shell.
     await expect(page).toHaveURL(/\/app\/map/, { timeout: 15000 });
     await expect(page.locator('.mmm-frame')).toBeVisible({ timeout: 20000 });
-    // AppShell must stand aside for /app exactly as it does for /listen —
-    // mounting both would put an 82px header back over the map.
+    // AppShell must stand aside for /app — mounting both would put an 82px
+    // header back over the map.
     await expect(page.locator('.shell-root')).toHaveCount(0);
-    await expect(page.locator('.mas-root.is-active')).toHaveCount(0);
     await expect(page.locator('.site-dock')).toBeHidden();
   });
 
@@ -365,8 +363,33 @@ test.describe('App shell — scope', () => {
   });
 
   test('an unauthenticated visitor gets no shell and is sent to login', async ({ page }) => {
-    await page.goto('/listen');
+    // `/app/map` rather than `/listen`: the latter is now only a redirect into
+    // the shell, and middleware gates both, so testing the real surface keeps
+    // this assertion about the shell rather than about a redirect chain.
+    await page.goto('/app/map');
     await expect(page).toHaveURL(/\/login/, { timeout: 15000 });
     await expect(page.locator('.shell-root')).toHaveCount(0);
+  });
+
+  test('a retired surface redirects into the shell instead of rendering', async ({ page, context }) => {
+    // The pre-shell three-tab app left five URLs behind in sent emails, push
+    // payloads, the sitemap and the Stripe Connect return flow. Each must land
+    // in the shell — a 404 there would strand a member holding a real link, and
+    // rendering the old surface is the regression this cut-over removed.
+    await signIn(context, FAN_EMAIL);
+    for (const [from, to] of [
+      ['/listen', '/app/music/discover'],
+      ['/discover', '/app/music/discover'],
+      ['/search', '/app/music/discover'],
+      ['/radio', '/app/music/radio'],
+      ['/shows/map', '/app/map'],
+      ['/home', '/app/map'],
+      ['/studio', '/app/map'],
+    ] as const) {
+      await page.goto(from);
+      await expect(page, `${from} should land on ${to}`).toHaveURL(
+        new RegExp(to.replace(/\//g, '\\/')), { timeout: 15000 },
+      );
+    }
   });
 });

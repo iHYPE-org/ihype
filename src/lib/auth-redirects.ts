@@ -1,14 +1,11 @@
 /**
  * Where a signed-in member lands.
  *
- * This is the Music · Map · Me shell (DESIGN_SYNC row 268). It was built and
- * mounted at `/app` but deliberately left un-cut-over, because choosing between
- * it and `/listen`'s six-module deck was an operator decision rather than a
- * code one. That call has now been made: `/app` is the product.
- *
- * `/listen` still exists and still works — nothing was deleted here, so the
- * deck remains reachable and this is a one-line reversal if the call changes.
- * It is deliberately still gated below, for that reason.
+ * This is the Music · Map · Me shell, and as of the design system v8 cut-over
+ * it is the ONLY app shell. The six-module deck it used to compete with was
+ * deleted rather than left reachable: while both existed, a member who left the
+ * shell for a ticket or a page landed in the other one with no route back, and
+ * reported it as "I still see older versions".
  */
 export const WORKBENCH_PATH = '/app/map';
 
@@ -27,6 +24,10 @@ export const WORKBENCH_PATH = '/app/map';
  * middleware, before render, is what makes it a real 307 (row 268, item g).
  */
 export const PROTECTED_PREFIXES = ['/app', '/listen', '/dashboard', '/admin'] as const;
+// `/listen` is kept in the list even though it is now only a redirect into
+// `/app/music/discover`. Gating it means an unauthenticated visitor following an
+// old link gets one 307 to sign-in rather than a redirect into a route that then
+// redirects them to sign-in anyway.
 
 export function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(

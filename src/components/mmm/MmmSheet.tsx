@@ -210,7 +210,7 @@ function describe(target: MapSheetTarget): SheetContent {
         c: artist.hypeCount.toLocaleString(),
       })),
       primary: city.artists[0] ? { label: `Open ${city.artists[0].name}`, href: `/artists/${city.artists[0].slug}` } : null,
-      secondary: { label: 'Discover →', href: '/discover' },
+      secondary: { label: 'Discover →', href: '/app/music/discover' },
     };
   }
 

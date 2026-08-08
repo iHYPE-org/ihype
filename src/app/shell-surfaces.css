@@ -43,11 +43,6 @@
 .shell-content .believers-eyebrow,
 .shell-content .booking-eyebrow,
 .shell-content .community-eyebrow,
-.shell-content .dja-eyebrow,
-.shell-content .dja-note-eyebrow,
-.shell-content .dja-section-eyebrow,
-.shell-content .djd-eyebrow,
-.shell-content .djd-section-eyebrow,
 .shell-content .fa-eyebrow,
 .shell-content .fan-dash-eyebrow,
 .shell-content .fan-ref-label,
@@ -55,7 +50,6 @@
 .shell-content .kicker,
 .shell-content .lsp-eyebrow,
 .shell-content .promo-referral-label,
-.shell-content .station-page-eyebrow,
 .shell-content .track-eyebrow,
 .shell-content .track-radio-status-label,
 .shell-content .vaa-card-label,
@@ -84,11 +78,6 @@
 .shell-content .artist-show-title,
 .shell-content .believers-title,
 .shell-content .booking-title,
-.shell-content .dj-show-title,
-.shell-content .dja-show-title,
-.shell-content .dja-title,
-.shell-content .djd-show-title,
-.shell-content .djd-title,
 .shell-content .fa-title,
 .shell-content .fan-dash-show-title,
 .shell-content .foryou-title,
@@ -97,7 +86,6 @@
 .shell-content .pa-chart-title,
 .shell-content .promo-section-title,
 .shell-content .settings-section-title,
-.shell-content .station-page-title,
 .shell-content .ticket-title,
 .shell-content .track-more-title,
 .shell-content .track-title,
@@ -126,9 +114,6 @@
 .shell-content .composer-sample-card,
 .shell-content .composer-sequence-card,
 .shell-content .composer-voice-card,
-.shell-content .dj-show-card,
-.shell-content .dja-card,
-.shell-content .djd-card,
 .shell-content .fan-ref-box,
 .shell-content .foryou-card,
 .shell-content .ihype-card,
@@ -158,10 +143,6 @@
 .shell-content .aa-event-row,
 .shell-content .ad-activity-row,
 .shell-content .ad-event-row,
-.shell-content .dj-earn-row,
-.shell-content .dja-show-row,
-.shell-content .djd-activity-row,
-.shell-content .djd-show-row,
 .shell-content .fa-artist-row,
 .shell-content .fan-dash-activity-row,
 .shell-content .fan-dash-show-row,
@@ -185,10 +166,6 @@
 .shell-content a.aa-event-row,
 .shell-content a.ad-activity-row,
 .shell-content a.ad-event-row,
-.shell-content a.dj-earn-row,
-.shell-content a.dja-show-row,
-.shell-content a.djd-activity-row,
-.shell-content a.djd-show-row,
 .shell-content a.fa-artist-row,
 .shell-content a.fan-dash-activity-row,
 .shell-content a.fan-dash-show-row,
@@ -230,9 +207,6 @@
 .shell-content .ad-dash-stat-val,
 .shell-content .ad-stat-val,
 .shell-content .artist-stat-val,
-.shell-content .dj-stat-val,
-.shell-content .dja-stat-value,
-.shell-content .djd-stat-value,
 .shell-content .fa-stat-val,
 .shell-content .fan-dash-stat-value,
 .shell-content .fan-stat-val,
@@ -251,9 +225,6 @@
 .shell-content .ad-dash-stat-label,
 .shell-content .ad-stat-label,
 .shell-content .artist-stat-label,
-.shell-content .dj-stat-label,
-.shell-content .dja-stat-label,
-.shell-content .djd-stat-label,
 .shell-content .fa-stat-label,
 .shell-content .fan-dash-stat-label,
 .shell-content .fan-stat-label,
@@ -272,8 +243,6 @@
 .shell-content .aa-stat-sub,
 .shell-content .ad-dash-stat-sub,
 .shell-content .ad-stat-sub,
-.shell-content .dja-stat-sub,
-.shell-content .djd-stat-sub,
 .shell-content .fa-stat-sub,
 .shell-content .fan-dash-stat-sub,
 .shell-content .pa-stat-sub,
@@ -308,7 +277,6 @@
 .shell-content .foryou-head > :is(h1,h2,h3,strong),
 .shell-content .pa-chart-head > :is(h1,h2,h3,strong),
 .shell-content .pa-links-head > :is(h1,h2,h3,strong),
-.shell-content .station-page-head > :is(h1,h2,h3,strong),
 .shell-content .track-section-head > :is(h1,h2,h3,strong),
 .shell-content .vaa-head > :is(h1,h2,h3,strong),
 .shell-content .vaa-section-head > :is(h1,h2,h3,strong),
@@ -330,7 +298,6 @@
 .shell-content .foryou-head :is(a,button),
 .shell-content .pa-chart-head :is(a,button),
 .shell-content .pa-links-head :is(a,button),
-.shell-content .station-page-head :is(a,button),
 .shell-content .track-section-head :is(a,button),
 .shell-content .vaa-head :is(a,button),
 .shell-content .vaa-section-head :is(a,button),
@@ -352,10 +319,6 @@
 .shell-content .believers-you-tag,
 .shell-content .community-badge,
 .shell-content .community-page-badge,
-.shell-content .dj-badge,
-.shell-content .dj-live-pill,
-.shell-content .djd-live-pill,
-.shell-content .djd-scheduled-pill,
 .shell-content .fan-badge,
 .shell-content .fan-chip,
 .shell-content .fan-dash-pill,
@@ -385,9 +348,6 @@
 .shell-content .artist-empty,
 .shell-content .booking-empty,
 .shell-content .community-empty,
-.shell-content .dj-empty,
-.shell-content .dja-empty,
-.shell-content .djd-empty,
 .shell-content .empty,
 .shell-content .fa-empty,
 .shell-content .fan-dash-empty,
@@ -414,9 +374,6 @@
 .shell-content .artist-empty :is(h2,h3,strong),
 .shell-content .booking-empty :is(h2,h3,strong),
 .shell-content .community-empty :is(h2,h3,strong),
-.shell-content .dj-empty :is(h2,h3,strong),
-.shell-content .dja-empty :is(h2,h3,strong),
-.shell-content .djd-empty :is(h2,h3,strong),
 .shell-content .empty :is(h2,h3,strong),
 .shell-content .fa-empty :is(h2,h3,strong),
 .shell-content .fan-dash-empty :is(h2,h3,strong),
@@ -444,9 +401,6 @@
 .shell-content .artist-empty p,
 .shell-content .booking-empty p,
 .shell-content .community-empty p,
-.shell-content .dj-empty p,
-.shell-content .dja-empty p,
-.shell-content .djd-empty p,
 .shell-content .empty p,
 .shell-content .fa-empty p,
 .shell-content .fan-dash-empty p,
@@ -508,8 +462,8 @@
    it 15px/500 --font-body with the supporting line at 13px --ink-2 (Charts, the
    radio schedule, settlements, Top Tracks all read this way). Without this the
    ramp above would turn every row into a stack of 18px display type. */
-.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .dj-show-card, .dja-card, .djd-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) :is(h2, h3, h4),
-.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .dj-earn-row, .dja-show-row, .djd-activity-row, .djd-show-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) :is(h2, h3, h4) {
+.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) :is(h2, h3, h4),
+.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) :is(h2, h3, h4) {
   font-family: var(--f-b);
   font-weight: 500;
   font-size: 0.9375rem;
@@ -517,8 +471,8 @@
   line-height: 1.3;
   margin: 0;
 }
-.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .dj-show-card, .dja-card, .djd-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) p,
-.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .dj-earn-row, .dja-show-row, .djd-activity-row, .djd-show-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) p {
+.shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) p,
+.shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) p {
   margin: 2px 0 0;
   font-size: 0.8438rem;
   line-height: 1.5;
@@ -548,8 +502,8 @@
   line-height: 1;
   cursor: pointer;
 }
-.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .djd-btn, .dja-btn,
-  .ad-btn, .artist-hero-btn, .dj-hero-btn, .venue-hero-btn, .fan-hero-btn) {
+.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn,
+  .ad-btn, .artist-hero-btn, .venue-hero-btn, .fan-hero-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -564,8 +518,8 @@
   line-height: 1;
   cursor: pointer;
 }
-.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .djd-btn, .dja-btn,
-  .ad-btn, .artist-hero-btn, .dj-hero-btn, .venue-hero-btn, .fan-hero-btn):hover {
+.shell-content :is(.ihype-btn-outline, .settings-btn, .vdash-btn,
+  .ad-btn, .artist-hero-btn, .venue-hero-btn, .fan-hero-btn):hover {
   background: rgba(var(--surface-tint-rgb), 0.06);
 }
 .shell-content :is(.settings-btn-ghost, .text-link, .promo-analytics-link,

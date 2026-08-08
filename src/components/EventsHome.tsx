@@ -7,7 +7,6 @@ import { TicketCardActions } from '@/components/TicketCardActions';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -143,7 +142,6 @@ export function EventsHome({
   resetToken?: number;
 } = {}) {
   const { t } = useI18n();
-  const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : null;
   const [tab, setTab] = useState<Tab>(validInitialTab ?? 'local');
   const [gridMode, setGridMode] = useState(!validInitialTab);
@@ -267,7 +265,6 @@ export function EventsHome({
         items={gridItems}
         onSearchTap={() => { setGridMode(false); setTab('search'); }}
         onSelect={(id) => { setGridMode(false); setTab(id as Tab); }}
-        onSwipeSection={shell?.swipeSection}
         searchPlaceholder={t('eventsHome.searchPlaceholder', 'Search artists, venues, shows…')}
       />
 
@@ -329,7 +326,7 @@ export function EventsHome({
                   ? `${t('eventsHome.nearLabel', 'NEAR')} ${(nearCity ?? nearRegion)!.toUpperCase()}`
                   : t('eventsHome.allCitiesLabel', 'ALL CITIES — SET YOUR HOMETOWN IN SETTINGS TO LOCALIZE')}
               </div>
-              <Link href="/shows/map" style={{ fontSize: 12.5, color: 'var(--ink-a60)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
+              <Link href="/app/map" style={{ fontSize: 12.5, color: 'var(--ink-a60)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
             </div>
             <EventList
               emptyBody={t('eventsHome.localEmptyBody', 'No shows in your city or region right now — check For You or Search instead.')}

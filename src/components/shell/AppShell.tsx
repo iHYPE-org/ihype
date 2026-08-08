@@ -5,7 +5,6 @@ import {
 } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { AppShellHeader } from '@/components/shell/AppShellHeader';
 import { AppShellContextStrip } from '@/components/shell/AppShellContextStrip';
 import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
@@ -45,17 +44,17 @@ import { isMmmRoute } from '@/lib/mmm-nav';
  * and auth surfaces keep the existing header/footer chrome — the handoff scopes
  * this to "the signed-in iHYPE experience".
  *
- * `/listen` owns the new full-screen module deck at every viewport, including
- * its own header, navigation, scroll surface and player. It therefore always
- * stands outside this legacy shell. So does `/app/*` — the Music · Map · Me
- * shell (DESIGN_SYNC row 267), which has no header or tab bar at all and locks
- * document scroll itself. On phone widths, `/shows` and `/pages` have a
- * purpose-built swipe shell (`MobileAppShell`, which scroll-locks the body and
- * holds all three sections permanently mounted). Two shells cannot both own the
- * scroll container, so this one stands aside while that one is active. That is
- * also the shape backlog item 6 asks for ("at phone width the drawer should
- * likely become bottom tabs"), which is exactly what MobileBottomNav already
- * is — so it stays visible there and the content region reserves room for it.
+ * `/app/*` — the Music · Map · Me shell — has no header or tab bar at all and
+ * locks document scroll itself, so this one stands aside there. That is the only
+ * exception left. Two other shells used to compete for the same scroll
+ * container: `/listen`'s full-screen module deck, and a phone swipe carousel
+ * that held Listen/Events/Pages permanently mounted. Both were the pre-shell
+ * three-tab app, retired by design system v8, and both are gone.
+ *
+ * At phone width the nav is `MobileBottomNav` — the shape the app-shell
+ * handoff's backlog item 6 asked for ("at phone width the drawer should likely
+ * become bottom tabs") — so it stays visible and the content region reserves
+ * room for it.
  */
 export function AppShell({
   account,
@@ -72,7 +71,6 @@ export function AppShell({
 }) {
   const pathname = usePathname();
   const { status: sessionStatus } = useSession();
-  const mobileShell = useMobileShell();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const [headerHidden, setHeaderHidden] = useState(false);
@@ -85,12 +83,12 @@ export function AppShell({
 
   const activeSection = resolveSection(pathname);
   const shellEligible = Boolean(account) && sessionStatus === 'authenticated' && isShellRoute(pathname);
-  // Two surfaces own their own full-screen chrome and must not be wrapped:
-  // `/listen` (the module deck) and `/app/*` (the Music/Map/Me shell, which
-  // scroll-locks the document itself — two shells cannot both own the scroll
-  // container). See the note above and DESIGN_SYNC row 267.
-  const dedicatedModuleDeck = pathname === '/listen' || isMmmRoute(pathname);
-  const active = shellEligible && !dedicatedModuleDeck && !mobileShell?.active;
+  // `/app/*` — the Music · Map · Me shell — owns its own full-screen chrome and
+  // scroll-locks the document itself. Two shells cannot both own the scroll
+  // container, so this one stands aside there. It is the ONLY such exception
+  // now: `/listen`'s module deck and the phone swipe carousel were both retired
+  // with the pre-shell three-tab app.
+  const active = shellEligible && !isMmmRoute(pathname);
 
   const items = useMemo<ShellNavItem[]>(
     () => (account ? buildShellNav(account) : []),

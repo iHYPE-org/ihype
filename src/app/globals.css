@@ -2977,7 +2977,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
 .fan-playlist-panel,
 .profile-card,
 .directory-hero,
-.discover-module,
 .video-shell{
   border-radius: var(--radius-lg);
 }.button,
@@ -3046,8 +3045,7 @@ body {
 .panel,
 .card,
 .profile-card,
-.directory-hero,
-.discover-module-panel{
+.directory-hero{
   border-radius: 26px;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
 }.profile-card,
@@ -3056,8 +3054,7 @@ body {
 
 .home-shell{
   padding-top: 1rem;
-}.discover-module-panel,
-.directory-hero,
+}.directory-hero,
 .ticketing-panel,
 
 .discover-spotlight-card .profile-card{
@@ -3402,7 +3399,6 @@ html.high-contrast .card,
 html.high-contrast .nav,
 html.high-contrast .a11y-panel,
 html.high-contrast .signed-landing-schema,
-html.high-contrast .discover-module-panel,
 html.high-contrast .recommendation-engine-panel,
 html.high-contrast .stats-engine-panel,
 html.high-contrast .visual-drop-studio {
@@ -4565,52 +4561,6 @@ h1, h2 {
   .mqg-btn { animation: none; transition: none; }
 }
 
-/* ── Mobile app shell ──────────────────────────────────────────────────
-   Persistent carousel holding Listen/Events/Pages always-mounted together
-   (MobileAppShell.tsx). Desktop untouched — hidden here, and each route's
-   own page content (RouteShellSlot) renders normally there instead. */
-.mas-root { display: none; }
-@media (max-width: 768px) {
-  .mas-root.is-active {
-    display: block;
-    position: fixed;
-    /* Keep the module viewport below the persistent 62px mobile header. */
-    top: 62px; left: 0; right: 0;
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
-    z-index: 35;
-    overflow: hidden;
-    background: var(--bg);
-  }
-  /* RouteShellSlot returns null on /listen, /shows, /pages once the shell
-     takes over, so #main-content briefly measures zero height in the
-     underlying document flow — the shell/placeholder covers it visually
-     (position: fixed doesn't occupy flow space), but SiteFooter, which
-     sits right after <main> in that same flow, jumps upward to fill the
-     gap regardless of what's painted on top. Reserving a minimum height
-     here keeps the document's own layout stable across that swap, which a
-     fixed-position overlay on top of it structurally cannot do. Confirmed
-     via Lighthouse: this was scored as a footer-node layout shift with
-     CLS ~0.8 on /shows, the same signature as the original shell-flash
-     bug, but from the underlying flow collapsing rather than a hydration
-     timing gap. */
-  #main-content { min-height: 100dvh; }
-}
-.mas-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  touch-action: pan-y;
-}
-.mas-slot {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  will-change: transform;
-}
-
 /* Fan-first home and adaptive listening chrome. */
 .adaptive-site-header {
   position: sticky;
@@ -4978,9 +4928,6 @@ html[data-theme="light"] body:has(.fan-entry) { background: #f3eee6; }
   .fan-entry-primary { transition: none; }
 }
 
-.listen-stage { width: min(1180px,calc(100% - 40px)); margin: 0 auto; padding: clamp(32px,5vw,70px) 0 120px; }
-.listen-stage-tabs { gap: 8px; flex-wrap: wrap; margin: 0 0 32px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: var(--hair-30); }
-.listen-stage-tabs .sub-tab { min-height: 44px; flex: 1 1 130px; border-radius: 12px; }
 .mqg-content.is-hidden { display: none; }
 .discovery-home { display: grid; gap: 42px; }
 .discovery-section { min-width: 0; }
@@ -5047,8 +4994,6 @@ html[data-theme="light"] body:has(.fan-entry) { background: #f3eee6; }
   .adaptive-site-header .search-bar-desktop { display: flex; max-width: none; }
   .adaptive-site-header-auth { display: none; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
-  .listen-stage { width: min(100% - 24px,680px); padding-top: 18px; }
-  .listen-stage-tabs { display: none; }
   .discovery-home { gap: 30px; }
   .discovery-feature { min-height: 360px; }
   .discovery-track-list { display: none; }

@@ -90,10 +90,14 @@ export type ShellRouteEntry = {
 
 export const SHELL_ROUTES: ShellRouteEntry[] = [
   // ── LISTEN ────────────────────────────────────────────────────────────
-  { path: '/listen', kind: 'exact', section: 'LISTEN', tabParam: 'tab' },
-  { path: '/radio', kind: 'prefix', section: 'LISTEN', itemId: 'radio' },
-  { path: '/discover', kind: 'prefix', section: 'LISTEN', itemId: 'discover' },
-  { path: '/search', kind: 'prefix', section: 'LISTEN', itemId: 'search' },
+  // `/listen`, `/radio`, `/discover` and `/search` are gone: they were the
+  // pre-shell three-tab app, and each is now a redirect into `/app/music/*`.
+  // A redirect needs no shell chrome, so it needs no registry entry — and
+  // leaving one behind would have this shell briefly resolve a section for a
+  // page that is on its way somewhere else.
+  //
+  // `/tracks` and `/playlist` stay: both are real routes the MUSIC module links
+  // out to, so a member can land on one and the strip has to resolve a section.
   { path: '/tracks', kind: 'prefix', section: 'LISTEN' },
   { path: '/playlist', kind: 'prefix', section: 'LISTEN', itemId: 'playlists' },
 

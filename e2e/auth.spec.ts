@@ -60,20 +60,20 @@ test.describe('Authentication', () => {
     await expect(page.locator('body')).not.toContainText('Internal Server Error');
   });
 
-  test('Unauthenticated /listen redirects to /login', async ({ page }) => {
-    // /listen is WORKBENCH_PATH (src/lib/auth-redirects.ts) — the actual
-    // route middleware gates on. Verified directly: unauthenticated /listen
-    // returns a 307 to /login?callbackUrl=%2Flisten.
+  test('Unauthenticated /app/map redirects to /login', async ({ page }) => {
+    // `/app/map` is WORKBENCH_PATH (src/lib/auth-redirects.ts) and the route
+    // middleware actually gates on. This used to test `/listen`, which was
+    // WORKBENCH_PATH before the shell cut-over and is now only a redirect into
+    // it — still gated, but testing it would assert a redirect chain rather
+    // than the auth gate.
     //
-    // /home (the previous target of this test) is NOT equivalent: it's just
-    // a legacy alias page that unconditionally calls redirect('/listen')
-    // regardless of auth state, so it isn't useful as an auth-gate check —
-    // that redirect fires from inside a Suspense boundary (loading.tsx),
-    // so it's encoded as a NEXT_REDIRECT marker for client-side hydration to
-    // process rather than a raw HTTP 307 (visible directly with curl, which
-    // has no JS and so never follows it) — confirmed working correctly and
-    // consistently in a real browser across repeated runs, not a bug.
-    await page.goto('/listen');
+    // /home is NOT equivalent and was rejected as a target for the same reason
+    // it was before: it is a legacy alias that calls redirect() unconditionally,
+    // regardless of auth state, from inside a Suspense boundary (loading.tsx).
+    // That is encoded as a NEXT_REDIRECT marker for client-side hydration
+    // rather than a raw HTTP 307 — invisible to curl, which has no JS, and so
+    // useless as an auth-gate check.
+    await page.goto('/app/map');
     await expect(page).toHaveURL(/\/login/, { timeout: 8000 });
   });
 

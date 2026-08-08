@@ -29,54 +29,77 @@ function assertMissing(relativePath, reason) {
   }
 }
 
-// /home is retired as a rendered page — the Workbench (WorkbenchShellV2/
-// WorkbenchMobile) has been superseded by the Listen/Events/Pages design.
-// /home now exists only to forward legacy links/bookmarks onward.
-assertIncludes(
-  'src/app/home/page.tsx',
-  "redirect('/listen')",
-  '/home is a legacy alias only and must forward to the canonical /listen route.'
-);
-assertIncludes(
-  'src/app/listen/page.tsx',
-  '<ModuleDeckMockup production',
-  '/listen is the canonical authenticated module deck and must render the live, backend-wired experience.'
-);
-assertNotIncludes(
-  'src/app/listen/page.tsx',
-  'ListenHome',
-  'The retired multi-panel Listen homepage must not replace the full-screen module deck.'
-);
-assertIncludes(
-  'src/app/ui-preview/page.tsx',
-  "process.env.NODE_ENV !== 'development'",
-  'The editable sample-data preview must remain unavailable in production.'
-);
-for (const apiPath of ['/api/discover/seeds', '/api/radio', '/api/shows/nearby', '/api/search']) {
-  assertIncludes(
-    'src/app/ui-preview/preview-api.ts',
-    apiPath,
-    `The production module deck must retain its ${apiPath} backend adapter.`
-  );
-}
-assertIncludes(
-  'src/app/ui-preview/ModuleDeckMockup.tsx',
-  'production={production}',
-  'Preview and production behaviors must remain explicitly separated.'
-);
-assertMissing(
-  'src/app/workbench/page.tsx',
-  '/workbench is a legacy alias only; do not recreate it as a second authenticated app.'
-);
-// The canonical post-auth surface is now the Music · Map · Me shell rather
-// than /listen's module deck — the cutover recorded in DESIGN_SYNC row 268,
-// made as the operator decision that row said it needed. The guard is kept
-// (not dropped) because its purpose is unchanged: there must be exactly one
-// landing surface, and it must not drift silently.
+// ── One app shell ────────────────────────────────────────────────────────
+//
+// This guard used to assert the opposite of what it asserts now: that /listen
+// was "the canonical authenticated module deck" and had to render a live,
+// backend-wired ModuleDeckMockup. Design system v8 retired that surface — it is
+// the pre-shell three-tab app, `templates/fan-app/` in the bundle's own Removed
+// list — and the Music · Map · Me shell at /app is the only app shell.
+//
+// The guard's PURPOSE is unchanged and is the reason it was rewritten rather
+// than deleted: there must be exactly one signed-in surface, and it must not
+// drift back to two silently. That is not hypothetical. While /listen and /app
+// both existed, a member who left the shell for a ticket or a page landed in
+// the other one with no route back for the rest of the session, and reported it
+// as "I still see older versions" — the shell was live, was the landing
+// surface, and still nobody saw it.
 assertIncludes(
   'src/lib/auth-redirects.ts',
   "WORKBENCH_PATH = '/app/map'",
   'All successful auth paths should resolve to the canonical app surface.'
+);
+assertIncludes(
+  'src/app/app/layout.tsx',
+  'MmmShell',
+  'The shell must stay mounted in the /app LAYOUT: the map is the base layer and a '
+  + 'layout is the only place the App Router preserves a subtree across navigation.'
+);
+// The surfaces v8 retired. Each is a REDIRECT into the shell, not a 404 and not
+// a rendered page: their URLs are already in sent emails, push payloads, the
+// sitemap and the Stripe Connect return flow, so a 404 would strand a member
+// holding a real link — while rendering the old surface is the regression above.
+for (const [relativePath, destination] of [
+  ['src/app/listen/page.tsx', "redirect('/app/music/discover')"],
+  ['src/app/discover/page.tsx', "redirect('/app/music/discover')"],
+  ['src/app/search/page.tsx', "redirect('/app/music/discover')"],
+  ['src/app/radio/page.tsx', "redirect('/app/music/radio')"],
+  ['src/app/shows/map/page.tsx', "redirect('/app/map')"],
+  ['src/app/home/page.tsx', "redirect('/app/map')"],
+  ['src/app/studio/page.tsx', "redirect('/app/map')"],
+]) {
+  assertIncludes(
+    relativePath, destination,
+    'A surface design system v8 retired must forward into the shell, not render.'
+  );
+}
+// The components those surfaces were built from. Listed by name because a
+// redirect page is easy to keep and a 1,000-line deck is easy to reintroduce
+// beside it — which is exactly how there came to be two.
+for (const relativePath of [
+  'src/components/ListenHome.tsx',
+  'src/components/MobileAppShell.tsx',
+  'src/components/RouteShellSlot.tsx',
+  'src/lib/MobileShellContext.tsx',
+  'src/app/ui-preview/page.tsx',
+  'src/app/ui-preview/ModuleDeckMockup.tsx',
+  'src/app/workbench/page.tsx',
+]) {
+  assertMissing(
+    relativePath,
+    'Retired with the pre-shell three-tab app. Do not recreate it as a second '
+    + 'authenticated app — see ROUTE_TEMPLATE_MAP.md, Removed.'
+  );
+}
+// The map's CSP allowance has to name the route the map is actually on.
+// maplibre-gl builds its tile worker from a blob: URL, so without this the map
+// silently fails to initialise — and this allowance was left keyed on /listen
+// and /ui-preview when the map moved to /app, on the one route whose whole
+// point is the map.
+assertIncludes(
+  'src/middleware.ts',
+  "pathname === '/app' || pathname.startsWith('/app/')",
+  "The scene-map CSP allowance (worker-src blob:, geolocation) must cover the shell."
 );
 assertIncludes(
   'src/components/AuthLogin.tsx',
@@ -159,4 +182,4 @@ assertIncludes(
   'The authenticated workbench should remain noindex via robots.'
 );
 
-console.log('Design guard passed: /listen is the canonical backend-wired module deck.');
+console.log('Design guard passed: /app is the only app shell, and the retired surfaces stay retired.');

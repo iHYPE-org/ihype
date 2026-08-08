@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import type { Metadata } from 'next';
 import { PagesHome } from '@/components/PagesHome';
-import { RouteShellSlot } from '@/components/RouteShellSlot';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,13 +23,11 @@ export default async function PagesPage({
 
   const resolvedSearchParams = searchParams ? await searchParams : {};
   return (
-    <RouteShellSlot>
-      <PagesHome
+    <PagesHome
         initialEditorSection={resolvedSearchParams.editor}
         initialProfileId={resolvedSearchParams.profile}
         initialTab={resolvedSearchParams.tab}
         initialTool={resolvedSearchParams.tool}
       />
-    </RouteShellSlot>
   );
 }

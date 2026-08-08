@@ -99,7 +99,7 @@ export default async function WelcomePage() {
     DJ: {
       roleLabel: t('welcomePage.roleDj', 'DJ'), tint: 'var(--accent-2)',
       sub: t('welcomePage.subDj', 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.'),
-      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/radio',
+      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/app/music/radio',
       steps: [
         { title: t('welcomePage.djStep1Title', 'Crate some tracks'), desc: t('welcomePage.djStep1Desc', 'Browse the free-use library and add tracks to your crate — they’re licensed for your radio shows.') },
         { title: t('welcomePage.djStep2Title', 'Record your first show'), desc: t('welcomePage.djStep2Desc', 'Mix crated tracks with your voice and royalty-free SFX, right from your phone.') },

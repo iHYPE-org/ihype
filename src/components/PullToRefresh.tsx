@@ -7,11 +7,13 @@ const MAX_PULL = 90;
 const RESISTANCE = 0.5;
 
 /**
- * Native-style pull-to-refresh. Only arms when the page is scrolled to the
- * very top, so it never fights normal scrolling or the shell's own
- * horizontal swipe-between-sections gesture (which is already disabled
- * whenever a section's content — not its grid — is showing, see
- * MobileAppShell/useDragCarousel).
+ * Native-style pull-to-refresh. Only arms when the page is scrolled to the very
+ * top, so it never fights normal scrolling.
+ *
+ * It used to also have to stay out of the way of a horizontal
+ * swipe-between-sections gesture. That belonged to the phone carousel, which was
+ * retired with the rest of the pre-shell three-tab app — this is now the only
+ * gesture on the surface.
  */
 export function PullToRefresh({ onRefresh, children }: { onRefresh: () => unknown; children: ReactNode }) {
   const [pull, setPull] = useState(0);

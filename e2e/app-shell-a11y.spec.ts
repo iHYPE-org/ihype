@@ -111,14 +111,5 @@ test.describe('App shell accessibility (serious/critical only)', () => {
       await expect(page.locator('.shell-drawer')).toBeVisible();
       await assertNoSeriousViolations(page, `${theme} drawer open`);
     });
-
-    test(`${theme}: the dedicated Listen module deck has no serious or critical axe violations`, async ({ page }) => {
-      await useTheme(page, theme);
-      await page.goto('/listen');
-      await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20000 });
-      await expect(page.locator('.shell-root')).toHaveCount(0);
-      await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-      await assertNoSeriousViolations(page, `${theme} /listen module deck`);
-    });
   }
 });

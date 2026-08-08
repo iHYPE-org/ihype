@@ -53,7 +53,18 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allo
 
 function applySecurityHeaders(response: NextResponse, nonce: string, pathname: string) {
   const allowEmbedding = pathname.startsWith('/embed/');
-  const allowSceneMap = pathname === '/listen' || (process.env.NODE_ENV !== 'production' && pathname.startsWith('/ui-preview'));
+  // The map needs two things ordinary pages must not have: `worker-src blob:`,
+  // because maplibre-gl builds its tile worker from a blob URL, and
+  // geolocation, to open on where you actually are.
+  //
+  // This was keyed on `/listen` and `/ui-preview` — the two surfaces that USED
+  // to host a map. The map moved into the Music · Map · Me shell at `/app/map`,
+  // which is also the post-sign-in landing surface, and this allowance did not
+  // move with it: maplibre's worker was blocked by CSP on the one route whose
+  // whole point is the map. Keyed on the shell prefix rather than `/app/map`
+  // exactly, because the map is mounted in the `/app` LAYOUT and stays mounted
+  // underneath `/app/music/*` and `/app/me` (ADHERENCE rule 7).
+  const allowSceneMap = pathname === '/app' || pathname.startsWith('/app/');
   response.headers.set('x-pathname', pathname);
   if (!allowEmbedding) response.headers.set('X-Frame-Options', 'DENY');
   else response.headers.delete('X-Frame-Options');
