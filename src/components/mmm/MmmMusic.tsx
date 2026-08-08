@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
+import { MmmSearch } from '@/components/mmm/MmmSearch';
 import type { StationSummary } from '@/app/api/stations/route';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
@@ -35,6 +36,9 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
  * own note on state management. The strip below is therefore links, not
  * buttons: middle-click and back both work, which they did not in the prototype.
  *
+ * Search is a PERSISTENT FIELD in the control row, not a tab (ADHERENCE rule
+ * 37). It is what replaced the retired `/search` route.
+ *
  * Radio is **station-based, not DJ-hosted** — the key product change in this
  * handoff. Stations come from `GET /api/stations`, which computes each one at
  * request time; there is no station→track join table anywhere. The five filter
@@ -50,18 +54,24 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
 export function MmmMusic({ tab }: { tab: MusicTabId }) {
   return (
     <>
-      <nav aria-label="Music" className="mmm-tabs">
-        {MMM_MUSIC_TABS.map((item) => (
-          <Link
-            aria-current={item.id === tab ? 'page' : undefined}
-            className="mmm-tab"
-            href={item.href}
-            key={item.id}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      {/* Tabs and the universal search field share ONE row. The visual pass in
+          the v8 sync audit collapsed three stacked control rows into this: at
+          full width the field parked itself on top of the content column. */}
+      <div className="mmm-controls">
+        <nav aria-label="Music" className="mmm-tabs">
+          {MMM_MUSIC_TABS.map((item) => (
+            <Link
+              aria-current={item.id === tab ? 'page' : undefined}
+              className="mmm-tab"
+              href={item.href}
+              key={item.id}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <MmmSearch />
+      </div>
       {tab === 'discover' && <DiscoverTab />}
       {tab === 'radio' && <RadioTab />}
       {tab === 'charts' && <ChartsTab />}

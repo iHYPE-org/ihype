@@ -16,7 +16,7 @@ export type MmmNowPlaying = {
   /**
    * The artist's profile id, or null when the artist cannot be hyped from here
    * — no linked profile, a non-discoverable one, or the viewer's own. The
-   * layout resolves this server-side so the heart is never a control that is
+   * layout resolves this server-side so HYPE is never a control that is
    * guaranteed to fail.
    */
   artistProfileId: string | null;
@@ -45,7 +45,16 @@ export type MmmNowPlaying = {
  * 5. One scroll container: the module pane. `html`/`body` are locked by
  *    `.mmm-locked`, which this component toggles.
  */
-export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPlaying: MmmNowPlaying }) {
+export function MmmShell({
+  canFavourite,
+  children,
+  nowPlaying,
+}: {
+  /** Resolved server-side: `/api/fan-favorites` is FAN/ADMIN only. */
+  canFavourite: boolean;
+  children: ReactNode;
+  nowPlaying: MmmNowPlaying;
+}) {
   const pathname = usePathname() ?? '/app/map';
   const activeModule = moduleForPath(pathname);
   const activeItemId = itemForPath(pathname);
@@ -56,6 +65,8 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
+  const [favourited, setFavourited] = useState(false);
+  const [favouritePending, setFavouritePending] = useState(false);
 
   // Real playback, not local state. The pill used to own a `playing` boolean
   // that toggled nothing — DESIGN_SYNC row 268 open item (d). /app sits inside
@@ -75,11 +86,26 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
       }
     : nowPlaying;
 
-  // The hype heart resolves its target server-side, against `nowPlaying`. If
-  // the audio element has since moved to a different track, that target is no
-  // longer the artist on screen — so the heart is hidden rather than left
-  // pointing at the wrong profile.
+  // HYPE resolves its target server-side, against `nowPlaying`. If the audio
+  // element has since moved to a different track, that target is no longer the
+  // artist on screen — so the control is hidden rather than left pointing at the
+  // wrong profile.
   const canHype = !currentTrack && Boolean(nowPlaying?.artistProfileId);
+
+  // The heart is the OTHER control, and it gates on the opposite condition:
+  // saving a track needs the track — `/api/fan-favorites` takes a media id and
+  // a URL, which only `currentTrack` carries. So HYPE is available for a
+  // server-resolved recent listen and the heart is not, and both are absent
+  // when neither condition holds. They are never the same button: ADHERENCE
+  // rule 22 — "HYPE spends from your balance and moves the artist up the local
+  // chart; the heart only saves the track. Never collapse them — the mechanic
+  // the product is named after disappears into a bookmark." One heart used to
+  // do the hyping here, which is exactly that collapse.
+  const canFavouriteTrack = canFavourite && Boolean(currentTrack);
+
+  // A different track means a different saved state. Without this the heart
+  // stayed filled from the previous track across a skip.
+  useEffect(() => { setFavourited(false); }, [currentTrack?.id]);
 
   // Navigation closes the nav and resets it to level 1, per the interaction
   // table ("Tap submenu item → navigates, closes nav, resets section to root").
@@ -105,7 +131,7 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
     setNavSection('root');
   }, []);
 
-  // The heart writes through to /api/hype — the same toggle endpoint the artist
+  // HYPE writes through to /api/hype — the same toggle endpoint the artist
   // page's HypeButton posts to, so a hype tapped here counts once, in the same
   // place, and spends from the same balance.
   //
@@ -140,6 +166,48 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
     }
   }, [hyped, hypePending, nowPlaying?.artistProfileId]);
 
+  // The heart. POST saves, DELETE removes — `/api/fan-favorites` has no toggle,
+  // so the method comes from the current state. Optimistic and reverted on
+  // failure, same as HYPE: a heart left filled after a refused save tells the
+  // viewer a track is in their library when it is not.
+  const toggleFavourite = useCallback(async () => {
+    const track = currentTrack;
+    if (!track || favouritePending) return;
+    const previous = favourited;
+    setFavourited(!previous);
+    setFavouritePending(true);
+    try {
+      // `mediaId` before `id`: the queue prefixes ids by source (`radio-<hexId>`)
+      // so two entries for one asset do not collide, but the favourite has to key
+      // on the ASSET or the same track saved from radio and from an artist page
+      // becomes two rows that neither can un-save.
+      const mediaId = track.mediaId ?? track.id;
+      const res = previous
+        ? await fetch('/api/fan-favorites', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ mediaId }),
+          })
+        : await fetch('/api/fan-favorites', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              mediaId,
+              title: track.title,
+              artistName: track.artistName,
+              url: track.url,
+              artistProfileSlug: track.artistProfileSlug ?? null,
+              artworkUrl: track.artworkUrl ?? null,
+            }),
+          });
+      if (!res.ok) setFavourited(previous);
+    } catch {
+      setFavourited(previous);
+    } finally {
+      setFavouritePending(false);
+    }
+  }, [currentTrack, favourited, favouritePending]);
+
   const toggleNav = useCallback(() => {
     setSheet(null);
     setNavSection('root');
@@ -160,9 +228,12 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
           hidden={navOpen}
+          canFavourite={canFavouriteTrack}
           canHype={canHype}
           canTogglePlay={Boolean(currentTrack)}
+          favourited={favourited}
           hyped={hyped}
+          onToggleFavourite={() => void toggleFavourite()}
           onToggleHype={() => void toggleHype()}
           onTogglePlay={togglePlayback}
           playing={Boolean(currentTrack) && isPlaying}

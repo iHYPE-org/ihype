@@ -1,15 +1,13 @@
 /*
- * The Music · Map · Me shell — DESIGN_SYNC row 267.
+ * The Music · Map · Me shell — the ONLY app shell.
  *
- * TWO design sources, and the newer one wins where they disagree:
- *   - `design/design-system-app-shell/templates/simple-app/SimpleApp.dc.html`
- *     (the app-shell redesign) — authoritative for the CHROME: the radial arc
- *     nav, the 76px solid-accent logo, the pill player, the vignette.
- *   - `design/handoff-music-map-me/SimplifiedApp.dc.html` (Design System 6) —
- *     authoritative for the MAP module's pins, chips, sheet and result line,
- *     which the redesign did not restate.
- * Where the redesign restates something, it supersedes: its nav is an arc, not
- * the pill column DS6 drew, and its ME module has no fan-out submenu at all.
+ * ONE design source, since the v8 cut-over:
+ * `design/design-system-v8/templates/simplified-app/SimplifiedApp.dc.html`,
+ * with the chrome locked by `design/design-system-v8/SHELL_LOCK_2026-08-08.md`
+ * and the rules in its `ADHERENCE.md`. The two overlapping bundles this file
+ * used to arbitrate between — one authoritative for the chrome, one for the map
+ * module — are deleted; do not reintroduce either, and do not copy a value out
+ * of a design bundle that contradicts the token layer (see divergence 1).
  *
  * ## The shape, and why it is this shape
  *
@@ -128,7 +126,34 @@ html.mmm-locked .site-shell > main {
      includes it. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --mmm-bottom: max(calc(26px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+
+  /* ── One figure drives the chrome ───────────────────────────────────────
+     SHELL_LOCK_2026-08-08: `chromeSize = 88` sizes the logo trigger, the
+     player's height, the nav hint's offset and the player's dock position.
+     "Change one and re-derive the rest rather than nudging in isolation" — so
+     it is one token here and every dependant is a calc() below, rather than
+     four numbers that have to be kept in agreement by hand.
+
+     The radius is round(88 × 0.342) = 30. That ratio is not arbitrary: the
+     player's 64px artwork uses the SAME ratio (round(64 × 0.342) = 22) so the
+     two squircles match, and it is a squircle rather than a circle because the
+     square holds the artist's logo and a circle crops a mark. The trigger was
+     `border-radius: 9999px` at 76px, which got both wrong.
+
+     The trigger and the pill share a height and a baseline, so their top and
+     bottom edges align instead of one being centred against the other.
+     `box-sizing: border-box` on the pill is what puts the two borders on one
+     line rather than 2px apart — the shared height is the OUTER height. */
+  --mmm-chrome: 88px;
+  --mmm-chrome-radius: 30px;
+  --mmm-inset: 26px;
+  --mmm-chrome-gap: 16px;
+  /* Where the pill docks: inset + trigger width + gap. Stated once, per the
+     lock — "never hardcode it in two places". */
+  --mmm-dock-left: calc(var(--mmm-inset) + var(--mmm-chrome) + var(--mmm-chrome-gap));
+  /* The band the chrome occupies, for anything that has to clear it. */
+  --mmm-chrome-clear: calc(var(--mmm-bottom) + var(--mmm-chrome));
 }
 
 /* ── Map layer ─────────────────────────────────────────────────────────── */
@@ -208,11 +233,12 @@ html.mmm-locked .site-shell > main {
 
 .mmm-result-line {
   position: absolute;
-  /* Clears the player pill (bottom: 26px, ~60px tall). On the narrow
-     breakpoint the player moves to bottom: 112px and this follows it. */
-  bottom: calc(100px + var(--mmm-safe-bottom));
-  left: 26px;
-  right: 26px;
+  /* Clears the chrome band, derived rather than measured: it used to be a
+     hardcoded 100px standing for "26px bottom plus a ~60px pill", which stopped
+     being true the moment the pill became 88px. */
+  bottom: calc(var(--mmm-chrome-clear) + 10px);
+  left: var(--mmm-inset);
+  right: var(--mmm-inset);
   z-index: 20;
   padding: 6px 11px;
   border-radius: 9px;
@@ -299,6 +325,142 @@ html.mmm-locked .site-shell > main {
      clear the Dynamic Island at the top and the home indicator at the bottom,
      which the handoff's 430px rectangle has neither of. */
   padding: calc(14px + var(--mmm-safe-top)) 16px calc(96px + var(--mmm-safe-bottom));
+}
+
+/* ── The MUSIC control row ────────────────────────────────────────────────
+   Tabs and the universal search field share ONE row. The v8 visual pass
+   collapsed three stacked control rows into this, and the reason it matters is
+   the search field: at full width it parked itself on top of the content
+   column. Below 720px the two stack, because five tabs plus a field in one
+   line leaves neither usable. */
+.mmm-controls {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 2px 0 14px;
+}
+.mmm-controls .mmm-tabs { flex: 1 1 auto; min-width: 0; padding: 0; }
+.mmm-controls .mmm-search { flex: 0 0 232px; }
+@media (max-width: 720px) {
+  .mmm-controls { flex-direction: column; gap: 8px; }
+  .mmm-controls .mmm-search { flex: 1 1 auto; width: 100%; }
+}
+
+/* ── Universal search ────────────────────────────────────────────────────
+   Nothing here fades in. The scope row and the result panel are authored at
+   their final values and appear as a state change — ADHERENCE rule 23, the one
+   that cost four rounds of false "fixed" reports on the arc nav. */
+.mmm-search { position: relative; }
+.mmm-search-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--hair-120);
+  border-radius: 10px;
+  background: var(--hair-40);
+  padding: 0 10px;
+}
+.mmm-search-field:focus-within { border-color: rgba(var(--accent-rgb), 0.45); }
+.mmm-search-input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  padding: 9px 0;
+  outline: none;
+}
+.mmm-search-input::placeholder { color: var(--ink-3); }
+/* Safari zooms the page when a focused input is under 16px and never zooms back
+   out. That is a functional rule, not a type opinion — the same one
+   mobile-fit.css applies, restated here because this field is inside the shell
+   and mobile-fit's rules do not reach it. Gated on a coarse pointer so the
+   design's 0.82rem survives on a desktop, where the zoom does not happen. */
+@media (pointer: coarse) {
+  .mmm-search-input { font-size: max(16px, 0.82rem); }
+}
+.mmm-search-clear {
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 4px;
+}
+.mmm-search-scopes { display: flex; gap: 6px; margin-top: 7px; flex-wrap: wrap; }
+.mmm-search-scope {
+  border: 1px solid var(--hair-120);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink-3);
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+.mmm-search-scope[aria-pressed='true'] {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+}
+.mmm-search-panel {
+  position: absolute;
+  top: calc(100% + 42px);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  max-height: 340px;
+  overflow-y: auto;
+  border: 1px solid var(--hair-150);
+  border-radius: var(--radius-card);
+  /* Translucent with a blur and a hairline, like the module panes: the map is
+     still beneath this, and the map staying mounted is the architectural point
+     of the shell. */
+  background: rgba(var(--bg-base-rgb), 0.94);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: var(--shadow-raised);
+  padding: 6px;
+}
+.mmm-search-note {
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  line-height: 1.5;
+  padding: 10px 8px;
+  margin: 0;
+}
+.mmm-search-result {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  padding: 9px 10px;
+  border-radius: 10px;
+  text-decoration: none;
+}
+a.mmm-search-result:hover { background: var(--hair-70); }
+.mmm-search-kind {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-search-name {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: var(--ink);
+}
+.mmm-search-sub {
+  font-family: var(--font-body);
+  font-size: 0.74rem;
+  color: var(--ink-2);
 }
 
 .mmm-tabs { display: flex; gap: 8px; padding: 2px 0 14px; }
@@ -586,19 +748,19 @@ html.mmm-locked .site-shell > main {
 
 /* The nav trigger and the cookie-consent dialog both want the bottom of the
    viewport, and at phone width the banner is `100vw - 32px` wide — so it lands
-   squarely on top of this 76px logo and swallows every pointer event aimed at
+   squarely on top of this 88px logo and swallows every pointer event aimed at
    it. A first-time visitor could not open the navigation at all until they
    dismissed consent.
 
    Consent is a compliance surface, so it is not the thing that moves: it
    publishes how much of the bottom edge it occupies as `--consent-inset` (see
    `CookieConsent.tsx`) and the shell lifts its own chrome by that much, for
-   exactly as long as the dialog is on screen. `max()` means the ordinary 26px
+   exactly as long as the dialog is on screen. `max()` means the ordinary
    resting position is unchanged once consent is answered, and the fallback of
    0px keeps this inert on every page that never shows the banner. */
 .mmm-nav-anchor {
   position: absolute;
-  left: 26px;
+  left: var(--mmm-inset);
   bottom: var(--mmm-bottom);
   z-index: 30;
   width: 0;
@@ -611,12 +773,13 @@ html.mmm-locked .site-shell > main {
    consent dialog while the button that opens it stays underneath. */
 .mmm-logo {
   position: absolute;
-  left: 26px;
+  left: var(--mmm-inset);
   bottom: var(--mmm-bottom);
   z-index: 31;
-  width: 76px;
-  height: 76px;
-  border-radius: 9999px;
+  box-sizing: border-box;
+  width: var(--mmm-chrome);
+  height: var(--mmm-chrome);
+  border-radius: var(--mmm-chrome-radius);
   border: 1px solid var(--hair-120);
   background: var(--accent);
   color: var(--ink-on-accent);
@@ -704,8 +867,8 @@ html.mmm-locked .site-shell > main {
 
 .mmm-nav-hint {
   position: absolute;
-  left: 26px;
-  bottom: calc(108px + var(--mmm-safe-bottom));
+  left: var(--mmm-inset);
+  bottom: calc(var(--mmm-chrome-clear) + 18px);
   z-index: 29;
   padding: 2px 7px;
   border-radius: 6px;
@@ -724,10 +887,16 @@ html.mmm-locked .site-shell > main {
    unmounted, so its transition can play out. */
 .mmm-player {
   position: absolute;
-  left: 118px;
+  left: var(--mmm-dock-left);
   right: auto;
-  max-width: min(820px, calc(100vw - 150px));
-  bottom: calc(26px + var(--mmm-safe-bottom));
+  /* Docked immediately right of the trigger, sharing its baseline and its
+     height. `border-box` is load-bearing: the shared height is the OUTER
+     height, so without it the pill's 1px border puts its edges 2px off the
+     trigger's. */
+  box-sizing: border-box;
+  height: var(--mmm-chrome);
+  max-width: calc(100vw - var(--mmm-dock-left) - var(--mmm-inset));
+  bottom: var(--mmm-bottom);
   z-index: 28;
   display: flex;
   align-items: center;
@@ -735,7 +904,9 @@ html.mmm-locked .site-shell > main {
   background: var(--bg-2);
   border: 1px solid var(--hair-100);
   border-radius: 9999px;
-  padding: 9px 16px 9px 10px;
+  /* 64 in 88 leaves exactly 12px above and below the artwork, so the pill's
+     horizontal padding matches the inset on every side the artwork touches. */
+  padding: 0 12px;
   box-shadow: var(--shadow-raised);
   pointer-events: auto;
   transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
@@ -747,9 +918,14 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-art {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 9999px;
+  /* The artwork is the row's FIRST child, so it centres against the pill's
+     whole height and the lines beside it stack in a column — which is why the
+     text aligns to it by construction rather than by a hardcoded padding.
+     Square, not round: it holds the artist's logo and a circle crops a mark.
+     22px is round(64 × 0.342), the trigger's own corner ratio. */
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   display: flex;
   align-items: center;
@@ -778,6 +954,37 @@ html.mmm-locked .site-shell > main {
   text-overflow: ellipsis;
   margin-top: 2px;
 }
+/* HYPE. The word is always the word — SHELL_LOCK: "HYPE always reads HYPE.
+   State is the fill, the border, and the wait label BESIDE the word — never a
+   rename." So `data-on` changes paint and nothing else. Distinct from the heart
+   below on purpose (ADHERENCE rule 22): spending a hype and saving a track are
+   different acts and must not look like one control in two states. */
+.mmm-player-hype {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 9999px;
+  border: 1px solid rgba(var(--accent-rgb), 0.4);
+  background: transparent;
+  color: var(--accent-text);
+  cursor: pointer;
+  line-height: 1;
+}
+.mmm-player-hype[data-on='true'] {
+  border-color: transparent;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+}
+.mmm-player-hype-label {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+/* The heart: saves the track, nothing more. */
 .mmm-player-icon {
   flex-shrink: 0;
   font-size: 0.88rem;
@@ -788,6 +995,7 @@ html.mmm-locked .site-shell > main {
   padding: 0;
   color: var(--ink-2);
 }
+.mmm-player-icon[aria-pressed='true'] { color: var(--accent-text); }
 .mmm-player-play {
   flex-shrink: 0;
   width: 34px;
@@ -832,25 +1040,30 @@ html.mmm-locked .site-shell > main {
    the ARC table in mmm-nav.ts, which the component picks per viewport — only
    the anchor and the player move here. */
 @media (max-width: 720px) {
-  /* The resting value drops 26px → 22px here. It is re-stated through the same
-     token as the base rule rather than as a literal `max()`, which is what
-     keeps the consent lift AND the home-indicator inset attached to it: the
-     earlier version of this block restated a plain `bottom: 22px` and silently
-     disabled the lift at exactly the width that needed it. Redefining the
-     token is now the only edit a new resting value needs, and both properties
-     below follow automatically. */
-  .mmm-frame { --mmm-bottom: max(calc(22px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px)); }
-  .mmm-nav-anchor { left: 18px; }
-  /* Same offsets as the anchor: the two are one control and must not drift. */
-  .mmm-logo { left: 18px; }
-  .mmm-result-line { left: 18px; right: 18px; bottom: calc(186px + var(--mmm-safe-bottom)); }
-  .mmm-nav-hint { left: 18px; bottom: calc(104px + var(--mmm-safe-bottom)); }
+  /* The resting value drops 26px → 22px and the side inset 26px → 18px here.
+     Both are done by redefining the ORIGIN tokens rather than by restating the
+     values they feed, which is the same rule the base block states: the anchor,
+     the trigger, the player, the hint and the result line all derive from
+     these, so one edit moves all five and none of them can drift.
+     An earlier version restated a plain `bottom: 22px` and silently disabled
+     the consent lift at exactly the width that needed it — `--mmm-bottom` keeps
+     the lift and the home-indicator inset attached by construction. */
+  .mmm-frame {
+    --mmm-inset: 18px;
+    --mmm-bottom: max(calc(22px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  }
+  .mmm-result-line { bottom: calc(var(--mmm-chrome-clear) + 96px); }
+  .mmm-nav-hint { bottom: calc(var(--mmm-chrome-clear) + 14px); }
+  /* Too narrow to dock beside the trigger, so the pill stacks ABOVE it and goes
+     full width. It keeps the shared height and the 12px inset — the artwork is
+     still 64px in 88px here — and its offset is derived from the chrome band
+     rather than the 112px literal that stood for "22px bottom plus a 76px
+     trigger plus a gap" and stopped being true when the trigger became 88px. */
   .mmm-player {
-    left: 18px;
-    right: 18px;
+    left: var(--mmm-inset);
+    right: var(--mmm-inset);
     max-width: none;
-    bottom: calc(112px + var(--mmm-safe-bottom));
-    padding: 8px 14px 8px 8px;
+    bottom: calc(var(--mmm-chrome-clear) + 12px);
   }
 }
 

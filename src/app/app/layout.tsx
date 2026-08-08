@@ -79,5 +79,13 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
       }
     : null;
 
-  return <MmmShell nowPlaying={nowPlaying}>{children}</MmmShell>;
+  // Whether the heart may be rendered at all. `/api/fan-favorites` is gated to
+  // FAN and ADMIN roles and answers 403 for anyone else, so resolving the role
+  // here keeps ADHERENCE rule 15 — never render a control that is guaranteed to
+  // fail — rather than discovering it on click. This is the FAVOURITE gate and
+  // is a different question from `artistProfileId`, which gates HYPE: rule 22
+  // says the two are separate acts and must be separate controls.
+  const canFavourite = session.user.role === 'FAN' || session.user.role === 'ADMIN';
+
+  return <MmmShell canFavourite={canFavourite} nowPlaying={nowPlaying}>{children}</MmmShell>;
 }

@@ -18,27 +18,46 @@
  * That record carries no URL, so there is nothing to start; the control is
  * omitted instead of rendered as a button that cannot work.
  *
- * The hype toggle IS real: it writes through to `/api/hype`, the same endpoint
- * an artist page's HypeButton posts to, so a heart tapped here counts once and
- * spends from the same balance. The heart renders only when the artist is
- * actually hypeable (`canHype`) — the layout resolves "no linked profile",
- * "not discoverable" and "your own profile" server-side, so this is never a
- * control whose every press is refused.
+ * ## HYPE and the heart are two controls, not one
+ *
+ * ADHERENCE rule 22, and this player used to break it: a single heart wrote
+ * through to `/api/hype`, so the mechanic the product is named after was drawn
+ * as, and read as, a bookmark. They are different acts and they now have
+ * different buttons and different gates:
+ *
+ *  - **HYPE** spends from your balance and moves the artist up the local chart.
+ *    It carries the **bolt from the mark, drawn as SVG** — the obvious glyph for
+ *    it is an emoji and the system does not use emoji. Gated on `canHype`: the
+ *    layout resolves "no linked profile", "not discoverable" and "your own
+ *    profile" server-side, so it is never a control whose every press is refused.
+ *  - **The heart** only saves the track to your library, through
+ *    `/api/fan-favorites`. Gated on `canFavourite`, which is the opposite
+ *    condition — saving needs the actual track, because that endpoint takes a
+ *    media id and a URL, and it is FAN/ADMIN only.
+ *
+ * So on a server-resolved recent listen you get HYPE and no heart; on a real
+ * playing track you get both. That asymmetry is the point, not an oversight.
  */
 export function MmmPlayer({
+  canFavourite,
   canHype,
   canTogglePlay,
+  favourited,
   hidden,
   hyped,
+  onToggleFavourite,
   onToggleHype,
   onTogglePlay,
   playing,
   track,
 }: {
+  canFavourite: boolean;
   canHype: boolean;
   canTogglePlay: boolean;
+  favourited: boolean;
   hidden: boolean;
   hyped: boolean;
+  onToggleFavourite: () => void;
   onToggleHype: () => void;
   onTogglePlay: () => void;
   playing: boolean;
@@ -56,12 +75,33 @@ export function MmmPlayer({
         <button
           aria-label={hyped ? `Remove hype from ${track.artist}` : `Hype ${track.artist}`}
           aria-pressed={hyped}
-          className="mmm-player-icon"
+          className="mmm-player-hype"
+          data-on={hyped}
           onClick={onToggleHype}
           tabIndex={hidden ? -1 : 0}
           type="button"
         >
-          <span aria-hidden="true">{hyped ? '\u2665' : '\u2661'}</span>
+          {/* The bolt from the iHYPE mark. Drawn inline rather than loaded so it
+              inherits currentColor and does not depend on an asset path \u2014 and it
+              is the reason HYPE does not need an emoji. */}
+          <svg aria-hidden="true" focusable="false" height="15" viewBox="0 0 24 24" width="15">
+            <path d="M13.2 2 4 13.6h5.4L8.6 22 19 9.9h-5.6z" fill="currentColor" />
+          </svg>
+          {/* The word, always. State is the fill and the border, never a rename:
+              SHELL_LOCK \u2014 "HYPE always reads HYPE." */}
+          <span className="mmm-player-hype-label">HYPE</span>
+        </button>
+      )}
+      {canFavourite && (
+        <button
+          aria-label={favourited ? `Remove ${track.title} from your library` : `Save ${track.title} to your library`}
+          aria-pressed={favourited}
+          className="mmm-player-icon"
+          onClick={onToggleFavourite}
+          tabIndex={hidden ? -1 : 0}
+          type="button"
+        >
+          <span aria-hidden="true">{favourited ? '\u2665' : '\u2661'}</span>
         </button>
       )}
       {canTogglePlay && (
