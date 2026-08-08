@@ -1,0 +1,421 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>iHYPE — map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="../../styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--map-void,#0a1020);font-family:var(--font-body,'Work Sans',system-ui,sans-serif)}
+#map{position:absolute;inset:0;background:var(--map-void,#0a1020)}
+/* The basemap is CARTO's dark raster build of OpenStreetMap data, so no CSS
+   filter is needed to make it sit under a navy UI — and nothing is inverted, so
+   place labels stay the right way round. Standard tile.openstreetmap.org is a
+   volunteer service that 403s embedded use; this is the documented alternative
+   and still requires the OSM attribution. A slight hue rotation pulls its neutral
+   grey toward the iHYPE navy. */
+.leaflet-tile-pane{filter:hue-rotate(202deg) saturate(1.25) brightness(1.04)}
+.leaflet-container{background:var(--map-void,#0a1020)}
+.leaflet-control-attribution{background:rgba(11,18,32,.8)!important;color:var(--ink-3,#8792a6)!important;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px!important;border-radius:9999px 0 0 0;padding:3px 8px!important}
+.leaflet-control-attribution a{color:var(--ink-2,#96a1b5)!important}
+.leaflet-control-zoom{display:none}
+.leaflet-marker-icon{background:transparent;border:0}
+/* Venue marker — a real address, so it earns a precise point. */
+.ih-venue{display:flex;align-items:center;gap:8px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:6px 12px 6px 7px;box-shadow:0 12px 30px rgba(4,8,18,.55);white-space:nowrap;cursor:pointer}
+.ih-venue .av{width:24px;height:24px;border-radius:9999px;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:11px;color:var(--ink-2,#96a1b5)}
+.ih-venue b{font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13px;letter-spacing:-.01em;color:var(--ink-1,#eef1f6)}
+.ih-venue u{text-decoration:none;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px}
+/* Artist marker — artists and promoters give a city of origin and nothing more,
+   so the pin sits on the city, is visibly softer-edged than a venue, and never
+   implies a street address. */
+.ih-artist{display:flex;align-items:center;gap:7px;background:rgba(18,27,46,.74);border:1px dashed var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:5px 11px;white-space:nowrap;cursor:pointer;backdrop-filter:blur(6px)}
+.ih-artist .dot{width:8px;height:8px;border-radius:9999px;background:var(--role-fan,#b983ff)}
+.ih-artist b{font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:12.5px;letter-spacing:-.01em;color:var(--ink-1,#eef1f6)}
+.ih-artist u{text-decoration:none;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3,#8792a6)}
+/* Controls */
+#top{position:absolute;left:22px;right:22px;top:22px;z-index:500;display:flex;flex-direction:column;gap:8px;align-items:flex-start;pointer-events:none}
+#top>*{pointer-events:auto}
+#row1{display:flex;gap:12px;align-items:center;width:100%}
+#chips{display:flex;gap:6px}
+#chips button{font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border-radius:9999px;padding:8px 15px;cursor:pointer;background:var(--bg-surface,#121b2e);color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))}
+#chips button[data-on]{background:var(--accent,#ff5029);color:#fff;border-color:var(--accent,#ff5029)}
+/* Date strip — only on the events layer, because only events have a date. */
+#dates{display:flex;gap:6px}
+#dates button{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:54px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.12em;text-transform:uppercase;border-radius:14px;padding:7px 10px;cursor:pointer;background:var(--bg-surface,#121b2e);color:var(--ink-3,#8792a6);border:1px solid var(--line-2,rgba(238,241,246,.13))}
+#dates button .d{font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:15px;letter-spacing:-.02em;color:var(--ink-1,#eef1f6)}
+#dates button[data-on]{border-color:var(--accent,#ff5029);background:rgba(255,80,41,.14)}
+#dates button[data-on] .d{color:var(--accent,#ff5029)}
+#dates button .n{font-size:8.5px}
+#dates button[data-in]{background:rgba(255,80,41,.07);border-color:rgba(255,80,41,.3)}
+#range{position:relative;display:flex;align-items:center;gap:10px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:8px 8px 8px 15px;align-self:center}
+#range button[data-on]{background:var(--accent,#ff5029);border-color:var(--accent,#ff5029);color:#fff}
+/* Mini calendar. Opens from the range pill and owns range picking; the strip
+   beside it stays a toggle list, so a scattered Fri-and-Sun selection is still
+   two taps and does not need the calendar at all. */
+#cal{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:266px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px;box-shadow:0 20px 48px rgba(4,8,18,.62);padding:14px}
+#cal[hidden]{display:none}
+#calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+#calhead b{font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:14px;letter-spacing:-.02em;text-transform:none;color:var(--ink-1,#eef1f6)}
+#calhead button{width:26px;height:26px;padding:0;border-radius:9999px;font-size:12px;letter-spacing:0;display:grid;place-items:center}
+#dow,#grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+#dow span{text-align:center;font-size:8.5px;letter-spacing:.1em;color:var(--ink-3,#8792a6);padding-bottom:5px}
+#grid button{position:relative;height:32px;padding:0;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink-2,#96a1b5);font-family:var(--font-body,'Work Sans',sans-serif);font-size:12.5px;letter-spacing:0;text-transform:none;cursor:pointer}
+#grid button:disabled{color:rgba(238,241,246,.18);cursor:default}
+#grid button[data-has]::after{content:'';position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:3px;height:3px;border-radius:9999px;background:var(--heat-warm,#ffb84a)}
+#grid button[data-sel]{background:var(--accent,#ff5029);border-color:var(--accent,#ff5029);color:#fff}
+#grid button[data-sel]::after{background:#fff}
+#grid button[data-anchor]{border-color:var(--accent,#ff5029)}
+#calfoot{display:flex;gap:6px;margin-top:11px;padding-top:11px;border-top:1px solid rgba(238,241,246,.07)}
+#calfoot button{flex:1}
+#calnote{margin-top:9px;font-size:9px;letter-spacing:.1em;color:var(--ink-3,#8792a6);text-transform:uppercase}
+#range b{font-family:var(--font-body,'Work Sans',sans-serif);font-weight:500;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--ink-1,#eef1f6)}
+#range button{font-family:inherit;font-size:9px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:6px 12px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))}
+#daterow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+/* Venue search — appears under the selectors on the venues layer, dismisses on
+   click-out. Magnifier sits at the far right, inside the field, and is a real
+   button so it can be tapped to run the search. */
+#searchwrap{display:none}
+#searchwrap[data-show]{display:block}
+#search{display:flex;align-items:center;gap:10px;width:min(460px,72vw);background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:8px 8px 8px 18px;box-shadow:0 14px 34px rgba(4,8,18,.5)}
+#search input{flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink-1,#eef1f6);font-family:inherit;font-size:13.5px}
+#search input::placeholder{color:var(--ink-3,#8792a6)}
+#go{width:34px;height:34px;flex:0 0 auto;border-radius:9999px;background:var(--accent,#ff5029);border:0;color:#fff;cursor:pointer;font-size:14px;display:grid;place-items:center}
+#hits{margin-top:6px;width:min(460px,72vw);background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px;overflow:hidden;box-shadow:0 14px 34px rgba(4,8,18,.5)}
+#hits button{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid rgba(238,241,246,.07);padding:11px 16px;cursor:pointer;color:var(--ink-1,#eef1f6);font-family:inherit;font-size:13.5px}
+#hits button:last-child{border-bottom:0}
+#hits button span{display:block;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.08em;color:var(--ink-3,#8792a6);margin-top:2px}
+a{color:var(--accent,#ff5029)}a:hover{color:var(--ink-1,#eef1f6)}
+</style>
+</head>
+<body>
+<div id="map"></div>
+<div id="top">
+  <div id="row1"><div id="chips"></div></div>
+  <div id="daterow"><div id="dates"></div><div id="range"><span>Dates</span><b id="rangetext"></b><button id="calopen" type="button" aria-expanded="false">Calendar</button>
+    <div id="cal" hidden role="dialog" aria-label="Choose a date range">
+      <div id="calhead"><button id="prev" type="button" aria-label="Previous month">‹</button><b id="calmon"></b><button id="next" type="button" aria-label="Next month">›</button></div>
+      <div id="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
+      <div id="grid"></div>
+      <div id="calnote">Click a day, then a second to take the span</div>
+      <div id="calfoot"><button id="callall" type="button">All dates</button><button id="calclear" type="button">Clear</button></div>
+    </div>
+  </div></div>
+  <div id="searchwrap"><div id="search"><input id="q" type="search" placeholder="Search venues by name, city or address" autocomplete="off"><button id="go" type="button" aria-label="Search venues"><span aria-hidden="true">⌕</span></button></div><div id="hits" hidden></div></div>
+</div>
+<script>
+/* Venues carry real street addresses — a venue IS a place, and the pin has to
+   land on the door. Artists carry a city of origin only: the product never asks
+   them for an address, so this map must not invent one. */
+const VENUES = [
+  { name: 'SPACE',           city: 'Portland, ME',    addr: '538 Congress St, Portland, ME 04101',     ll: [43.6558, -70.2593], cap: 500, hypes: '1,204', books: 'Dream-pop · Indie',      slug: 'space-portland' },
+  { name: 'Elsewhere',       city: 'Brooklyn, NY',    addr: '599 Johnson Ave, Brooklyn, NY 11237',     ll: [40.7079, -73.9236], cap: 650, hypes: '3,880', books: 'Post-punk · Electronic', slug: 'elsewhere' },
+  { name: 'Mohawk',          city: 'Austin, TX',      addr: '912 Red River St, Austin, TX 78701',      ll: [30.2685, -97.7370], cap: 600, hypes: '742',   books: 'Indie · Rock',           slug: 'mohawk' },
+  { name: 'The Echo',        city: 'Los Angeles, CA', addr: '1822 Sunset Blvd, Los Angeles, CA 90026', ll: [34.0781, -118.2608], cap: 400, hypes: '1,912', books: 'Dream-pop · Indie',     slug: 'the-echo' },
+  { name: 'Empty Bottle',    city: 'Chicago, IL',     addr: '1035 N Western Ave, Chicago, IL 60622',   ll: [41.9006, -87.6870], cap: 400, hypes: '968',   books: 'Garage · Punk',          slug: 'empty-bottle' },
+  { name: 'Corsica Studios', city: 'London, UK',      addr: '4/5 Elephant Rd, London SE17 1LB',        ll: [51.4930, -0.0983],  cap: 500, hypes: '5,110', books: 'Electronic · Techno',    slug: 'corsica-studios' },
+];
+
+const CITY = {
+  'Portland, ME': [43.6591, -70.2568], 'Brooklyn, NY': [40.6782, -73.9442],
+  'Austin, TX': [30.2672, -97.7431], 'Los Angeles, CA': [34.0522, -118.2437],
+  'Chicago, IL': [41.8781, -87.6298], 'London, UK': [51.5074, -0.1278], 'Oslo, NO': [59.9139, 10.7522],
+};
+
+const ARTISTS = [
+  { name: 'Vera Sound',  city: 'Portland, ME',    genre: 'Dream-pop',   hypes: '1,204', slug: 'vera-sound' },
+  { name: 'Null Harbor', city: 'Brooklyn, NY',    genre: 'Post-punk',   hypes: '3,880', slug: 'null-harbor' },
+  { name: 'Kite Season', city: 'Austin, TX',      genre: 'Bedroom folk', hypes: '742',  slug: 'kite-season' },
+  { name: 'Marguerite',  city: 'Los Angeles, CA', genre: 'Jazz',        hypes: '918',   slug: 'marguerite' },
+  { name: 'Aster Loop',  city: 'London, UK',      genre: 'Electronic',  hypes: '5,110', slug: 'aster-loop' },
+  { name: 'Halveg',      city: 'Oslo, NO',        genre: 'Shoegaze',    hypes: '2,041', slug: 'halveg' },
+];
+
+const DATES = ['2026-08-07', '2026-08-08', '2026-08-09', '2026-08-10', '2026-08-11'];
+
+const EVENTS = [
+  { date: '2026-08-07', venue: 'SPACE',           artist: 'Vera Sound',  time: '8:00 PM', support: 'with Cove Radio',      price: '$12' },
+  { date: '2026-08-07', venue: 'SPACE',           artist: 'Late Shift',  time: '10:30 PM', support: 'late set',            price: '$8'  },
+  { date: '2026-08-07', venue: 'Elsewhere',       artist: 'Null Harbor', time: '9:00 PM', support: 'with Dry Season DJs',  price: '$18' },
+  { date: '2026-08-07', venue: 'Corsica Studios', artist: 'Aster Loop',  time: '11:00 PM', support: 'arch two, all night', price: '£15' },
+  { date: '2026-08-08', venue: 'Mohawk',          artist: 'Kite Season', time: '8:30 PM', support: 'patio stage',          price: '$15' },
+  { date: '2026-08-08', venue: 'The Echo',        artist: 'Marguerite',  time: '9:00 PM', support: 'quartet',              price: '$20' },
+  { date: '2026-08-08', venue: 'SPACE',           artist: 'Halveg',      time: '9:30 PM', support: 'first US date',        price: '$14' },
+  { date: '2026-08-09', venue: 'Empty Bottle',    artist: 'Null Harbor', time: '9:00 PM', support: 'with Western Ave',     price: '$16' },
+  { date: '2026-08-09', venue: 'The Echo',        artist: 'Vera Sound',  time: '8:00 PM', support: 'album release',        price: '$14' },
+  { date: '2026-08-10', venue: 'Mohawk',          artist: 'Marguerite',  time: '8:00 PM', support: 'indoor stage',         price: '$18' },
+  { date: '2026-08-10', venue: 'Corsica Studios', artist: 'Halveg',      time: '10:00 PM', support: 'with Aster Loop',     price: '£14' },
+  { date: '2026-08-11', venue: 'Elsewhere',       artist: 'Kite Season', time: '9:00 PM', support: 'with Null Harbor',     price: '$17' },
+  { date: '2026-08-11', venue: 'SPACE',           artist: 'Vera Sound',  time: '8:30 PM', support: 'hometown, sold out',   price: '$12' },
+];
+
+const HEAT = ['var(--heat-cold,#40506b)', 'var(--heat-warm,#ffb84a)', 'var(--heat-fire,#ff1f3d)'];
+const venueBy = (n) => VENUES.find((v) => v.name === n);
+const fmt = (iso) => {
+  const d = new Date(iso + 'T12:00:00');
+  return { dow: d.toLocaleDateString('en-US', { weekday: 'short' }), day: d.getDate(), mon: d.toLocaleDateString('en-US', { month: 'short' }),
+    long: d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }) };
+};
+
+const map = L.map('map', { zoomControl: false, worldCopyJump: true });
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+  attribution: '© OpenStreetMap contributors © CARTO',
+  subdomains: 'abcd',
+  maxZoom: 20,
+}).addTo(map);
+const send = (target) => { try { parent.postMessage({ type: 'ihype:select', target }, '*'); } catch (e) {} };
+
+let layer = 'events';
+/* A date range, not a date. One tap picks a single night; dragging across the
+   strip — or tapping the far end of a range you have started — picks a span,
+   which is how anyone planning a weekend actually reads a listings map. */
+/* A set of days, not a span. Clicking the strip toggles one day, so a Friday
+   and a Sunday with nothing between them is a legal selection — which is what
+   anyone planning a weekend actually wants. The calendar writes contiguous
+   spans into the same set, so the two controls never disagree. */
+let sel = new Set([DATES[0]]);
+const inRange = (iso) => sel.has(iso);
+const selected = () => [...sel].sort();
+const group = L.layerGroup().addTo(map);
+
+/* A venue pin opened on a date is a "what is happening here today" screen: the
+   day's lineup in playing order, then the venue's own numbers, then the link out
+   to its page. */
+function venueSheet(v) {
+  const day = EVENTS.filter((e) => e.venue === v.name && inRange(e.date)).sort((a, b) => a.date.localeCompare(b.date));
+  const span = sel.size === 1;
+  return {
+    kind: 'Venue · ' + (span ? fmt(selected()[0]).long : rangeLong()),
+    title: v.name,
+    meta: v.addr,
+    body: day.length ? 'Capacity ' + v.cap + '. ' + day.length + (day.length === 1 ? ' show' : ' shows') + (span ? ' tonight.' : ' on the days you picked.')
+                     : 'Capacity ' + v.cap + '. Nothing booked on those days — books ' + v.books.toLowerCase() + '.',
+    lines: day.map((e) => ({ time: (span ? '' : fmt(e.date).dow + ' ') + e.time, title: e.artist, meta: e.support, value: e.price })),
+    action: { label: 'Open venue page', href: '/venues/' + v.slug },
+    rows: [
+      { label: 'Hypes this month', value: v.hypes, accent: true },
+      { label: 'Upcoming shows', value: String(EVENTS.filter((e) => e.venue === v.name).length) },
+      { label: 'Books', value: v.books },
+    ],
+  };
+}
+
+/* An artist pin shows every date they play, anywhere — so the map zooms out to
+   hold all of them rather than staying on the city they came from. */
+function artistSheet(a) {
+  const dates = EVENTS.filter((e) => e.artist === a.name);
+  const lls = dates.map((e) => venueBy(e.venue)).filter(Boolean).map((v) => v.ll);
+  if (lls.length) map.fitBounds(L.latLngBounds(lls).pad(0.35), { maxZoom: 11, animate: true });
+  else map.flyTo(CITY[a.city], 10, { duration: .7 });
+  return {
+    kind: 'Artist · from ' + a.city,
+    title: a.name,
+    meta: a.genre + ' · city of origin only, no address',
+    body: dates.length ? 'Playing ' + dates.length + (dates.length === 1 ? ' date' : ' dates') + ' across ' +
+        new Set(dates.map((e) => venueBy(e.venue).city)).size + ' cities. The map is fitted to all of them.'
+      : 'No dates on the calendar right now.',
+    lines: dates.map((e) => {
+      const v = venueBy(e.venue);
+      return { time: fmt(e.date).mon + ' ' + fmt(e.date).day, title: v.name, meta: v.city + ' · ' + e.time, value: e.price };
+    }),
+    action: { label: 'Open artist page', href: '/artists/' + a.slug },
+    rows: [{ label: 'Hypes', value: a.hypes, accent: true }, { label: 'From', value: a.city }],
+  };
+}
+
+function draw() {
+  group.clearLayers();
+  if (layer === 'artists') {
+    ARTISTS.forEach((a, i) => {
+      /* Deterministic offset so two artists from one city do not stack. */
+      const c = CITY[a.city] || [0, 0];
+      const ll = [c[0] + (i % 2 ? 0.045 : -0.045), c[1] + (i % 3 - 1) * 0.06];
+      const html = '<div class="ih-artist"><div class="dot"></div><b>' + a.name + '</b><u>' + a.city.split(',')[0] + '</u></div>';
+      L.marker(ll, { icon: L.divIcon({ html, className: '', iconSize: null, iconAnchor: [10, 10] }), title: a.name })
+        .addTo(group).on('click', () => send(artistSheet(a)));
+    });
+    return;
+  }
+  const onDate = layer === 'events';
+  VENUES.forEach((v) => {
+    const n = EVENTS.filter((e) => e.venue === v.name && (!onDate || inRange(e.date))).length;
+    if (onDate && n === 0) return;
+    const heat = HEAT[Math.min(2, n)];
+    const html = '<div class="ih-venue"><div class="av">' + v.name.charAt(0) + '</div><b>' + v.name + '</b>' +
+      '<u style="color:' + heat + '">' + (onDate ? n + (n === 1 ? ' show' : ' shows') : EVENTS.filter((e) => e.venue === v.name).length + ' up') + '</u></div>';
+    L.marker(v.ll, { icon: L.divIcon({ html, className: '', iconSize: null, iconAnchor: [14, 16] }), title: v.name })
+      .addTo(group).on('click', () => {
+        map.flyTo(v.ll, Math.max(map.getZoom(), 14), { duration: .7 });
+        send(venueSheet(v));
+      });
+  });
+}
+
+const HOME = [43.6558, -70.2593], HOME_ZOOM = 13;
+
+/* Reads a set, not a span: contiguous days print as a range, scattered ones as
+   a count, because "Aug 7 – Aug 11" for two picked days would be a lie. */
+function rangeLong() {
+  const s = selected();
+  if (!s.length) return 'No days';
+  const a = fmt(s[0]), b = fmt(s[s.length - 1]);
+  const span = a.mon === b.mon ? a.mon + ' ' + a.day + '\u2013' + b.day : a.mon + ' ' + a.day + ' \u2013 ' + b.mon + ' ' + b.day;
+  if (s.length === 1) return a.mon + ' ' + a.day;
+  const solid = (new Date(s[s.length - 1]) - new Date(s[0])) / 864e5 + 1 === s.length;
+  return solid ? span : s.length + ' days in ' + span;
+}
+
+function apply(refit) {
+  draw();
+  const s = selected();
+  const one = s.length === 1;
+  document.getElementById('daterow').style.display = layer === 'events' ? 'flex' : 'none';
+  document.getElementById('rangetext').textContent = !s.length ? 'None'
+    : one ? fmt(s[0]).dow + ' ' + fmt(s[0]).mon + ' ' + fmt(s[0]).day + ' · one day'
+    : rangeLong();
+  const sw = document.getElementById('searchwrap');
+  if (layer === 'venues') sw.setAttribute('data-show', '');
+  else { sw.removeAttribute('data-show'); hide(); }
+  [...document.querySelectorAll('#chips button')].forEach((b) => {
+    if (b.dataset.id === layer) b.setAttribute('data-on', ''); else b.removeAttribute('data-on');
+  });
+  [...document.querySelectorAll('#dates button')].forEach((b) => {
+    if (sel.has(b.dataset.iso)) b.setAttribute('data-on', ''); else b.removeAttribute('data-on');
+  });
+  if (!document.getElementById('cal').hidden) paintCal();
+  if (refit) {
+    if (layer === 'artists') map.fitBounds(L.latLngBounds(Object.values(CITY)).pad(0.15), { maxZoom: 5 });
+    else if (map.getZoom() < 10) map.flyTo(HOME, HOME_ZOOM, { duration: .8 });
+  }
+}
+
+const chips = document.getElementById('chips');
+[['events', 'Events'], ['artists', 'Artists'], ['venues', 'Venues']].forEach(([id, label]) => {
+  const b = document.createElement('button');
+  b.type = 'button'; b.textContent = label; b.dataset.id = id;
+  b.onclick = () => { layer = id; send(null); apply(true); };
+  chips.appendChild(b);
+});
+
+/* The strip is a set of toggles: click a day to add it, click again to drop it.
+   Nothing is contiguous by force. */
+const strip = document.getElementById('dates');
+const commit = () => { send(null); apply(false); };
+DATES.forEach((iso) => {
+  const f = fmt(iso);
+  const b = document.createElement('button');
+  b.type = 'button'; b.dataset.iso = iso;
+  b.setAttribute('aria-pressed', 'false');
+  b.innerHTML = '<span class="n">' + f.dow + '</span><span class="d">' + f.day + '</span><span class="n">' + f.mon + '</span>';
+  b.onclick = () => {
+    if (sel.has(iso)) sel.delete(iso); else sel.add(iso);
+    b.setAttribute('aria-pressed', String(sel.has(iso)));
+    commit();
+  };
+  strip.appendChild(b);
+});
+
+/* ── Mini calendar. Two clicks make a span: the first drops an anchor, the
+   second takes everything between. A single click that lands back on the
+   anchor keeps that one day. Days with nothing booked stay pickable — an empty
+   night is a real answer to "what is on" — but carry no dot. ── */
+const cal = document.getElementById('cal');
+const calBtn = document.getElementById('calopen');
+const grid = document.getElementById('grid');
+const HAS = new Set(EVENTS.map((e) => e.date));
+const iso = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+let view = new Date(DATES[0] + 'T12:00:00');
+let anchor = null;
+
+function paintCal() {
+  const y = view.getFullYear(), m = view.getMonth();
+  document.getElementById('calmon').textContent = view.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const first = new Date(y, m, 1), lead = first.getDay(), days = new Date(y, m + 1, 0).getDate();
+  grid.innerHTML = '';
+  for (let i = 0; i < lead; i += 1) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.disabled = true; b.tabIndex = -1;
+    grid.appendChild(b);
+  }
+  for (let d = 1; d <= days; d += 1) {
+    const key = iso(new Date(y, m, d));
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = d; b.dataset.iso = key;
+    b.setAttribute('aria-pressed', String(sel.has(key)));
+    if (HAS.has(key)) b.setAttribute('data-has', '');
+    if (sel.has(key)) b.setAttribute('data-sel', '');
+    if (anchor === key) b.setAttribute('data-anchor', '');
+    b.onclick = () => {
+      if (!anchor) { anchor = key; sel = new Set([key]); }
+      else {
+        const a = anchor < key ? anchor : key, z = anchor < key ? key : anchor;
+        sel = new Set();
+        for (let t = new Date(a + 'T12:00:00'); iso(t) <= z; t.setDate(t.getDate() + 1)) sel.add(iso(t));
+        anchor = null;
+      }
+      commit();
+    };
+    grid.appendChild(b);
+  }
+  document.getElementById('calnote').textContent = anchor
+    ? 'Pick the second day \u2014 or the same one again for a single night'
+    : 'Click a day, then a second to take the span';
+}
+
+const openCal = (on) => {
+  cal.hidden = !on;
+  calBtn.setAttribute('aria-expanded', String(on));
+  if (on) { calBtn.setAttribute('data-on', ''); anchor = null; paintCal(); }
+  else calBtn.removeAttribute('data-on');
+};
+calBtn.onclick = () => openCal(cal.hidden);
+document.getElementById('prev').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() - 1, 1); paintCal(); };
+document.getElementById('next').onclick = () => { view = new Date(view.getFullYear(), view.getMonth() + 1, 1); paintCal(); };
+document.getElementById('callall').onclick = () => { sel = new Set(DATES); anchor = null; commit(); };
+document.getElementById('calclear').onclick = () => { sel = new Set(); anchor = null; commit(); };
+document.addEventListener('pointerdown', (e) => {
+  if (cal.hidden) return;
+  if (!cal.contains(e.target) && e.target !== calBtn) openCal(false);
+}, true);
+
+/* Venue search. Results are venues only — this bar belongs to the venues layer,
+   and matching an artist here would send you to a pin that does not exist. */
+const q = document.getElementById('q');
+const hits = document.getElementById('hits');
+function hide() { hits.hidden = true; hits.innerHTML = ''; }
+function run() {
+  const term = q.value.trim().toLowerCase();
+  if (!term) return hide();
+  const found = VENUES.filter((v) => (v.name + ' ' + v.city + ' ' + v.addr).toLowerCase().includes(term));
+  hits.innerHTML = '';
+  if (!found.length) {
+    const none = document.createElement('button');
+    none.type = 'button'; none.disabled = true;
+    none.innerHTML = 'No venues match that.<span>Try a city, a street or part of the name</span>';
+    hits.appendChild(none);
+  }
+  found.forEach((v) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.innerHTML = v.name + '<span>' + v.addr + '</span>';
+    b.onclick = () => { map.flyTo(v.ll, 15, { duration: .8 }); send(venueSheet(v)); hide(); q.blur(); };
+    hits.appendChild(b);
+  });
+  hits.hidden = false;
+}
+q.addEventListener('input', run);
+q.addEventListener('keydown', (e) => { if (e.key === 'Enter') run(); if (e.key === 'Escape') { q.value = ''; hide(); q.blur(); } });
+document.getElementById('go').onclick = () => { run(); q.focus(); };
+/* Click-out dismisses the results, and the field itself when it is empty. */
+document.addEventListener('pointerdown', (e) => {
+  if (document.getElementById('searchwrap').contains(e.target)) return;
+  hide();
+}, true);
+
+map.setView(HOME, HOME_ZOOM);
+apply(false);
+</script>
+</body>
+</html>

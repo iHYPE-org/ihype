@@ -1,0 +1,71 @@
+/* iHYPE Base Reset + Root Styles */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-base);
+  color: var(--ink-1);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-x: none;
+}
+
+/* Hide scrollbars — iHYPE app is gesture-native */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* Marquee for the player's track line. A keyframe cannot be expressed inline,
+   so it lives here rather than in the component: the title scrolls only when it
+   overflows, and the component sets the duration from the string length.
+   Two copies of the text sit side by side and the pair translates by -50%, so
+   the loop has no visible seam. */
+@keyframes ih-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+/* The player's own reveal, used by the queue panel. */
+@keyframes ih-pop {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* The arc's staggered reveal. This is a KEYFRAME, not a transition, on purpose:
+   a CSS transition only advances while the document timeline ticks, and in
+   embedded preview contexts it can sit at currentTime 0 forever holding its FROM
+   value — leaving the fan permanently invisible while every inline style and
+   React prop reads "open". Keyframe animations render in those contexts.
+   Position is applied statically by the component; this only fades and settles
+   the item, so the keyframe needs no per-item values and can live here. */
+/* A plain fade, for anything whose position must not move while it appears. */
+@keyframes ih-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes ih-ray-in {
+  from { opacity: 0; scale: .82; }
+  to   { opacity: 1; scale: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A permanently scrolling title is exactly what this setting is for. */
+  [data-ih-marquee] { animation: none !important; transform: none !important; }
+}

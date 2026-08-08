@@ -1,0 +1,45 @@
+/* iHYPE Typography Tokens
+   Overhauled 2026-08-07 — "Bulletin" direction.
+   Bricolage Grotesque replaces Syne on display; Work Sans replaces DM Sans on
+   body. Bricolage is variable with an optical-size axis, so the display scale
+   pairs each size with an `opsz` and a negative tracking value — set both or
+   large headings look loose and small ones look cramped. */
+:root {
+  /* ── Font Families ── */
+  --font-display: 'Bricolage Grotesque', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', sans-serif;
+  --font-body:    'Work Sans', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', monospace;
+  --font-serif:   'Instrument Serif', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', serif;
+
+  /* ── Font Sizes ── */
+  --text-xs:   10px;
+  --text-sm:   12px;
+  --text-base: 14px;
+  --text-md:   16px;
+  --text-lg:   20px;
+  --text-xl:   28px;
+  --text-2xl:  38px;
+  --text-3xl:  54px;
+
+  /* ── Display optical size ── Pair with the matching --text-* step.
+     Bricolage's opsz axis is 12..96; feeding it the pixel size is the point. */
+  --opsz-lg:  20; /* @kind other */
+  --opsz-xl:  28; /* @kind other */
+  --opsz-2xl: 38; /* @kind other */
+  --opsz-3xl: 54; /* @kind other */
+
+  /* ── Letter Spacing ──
+     Display tracking is tighter than the old Syne scale: Bricolage sets wide by
+     default and needs -.035em at headline sizes to hold together. */
+  --tracking-display: -0.035em;
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.08em;
+  --tracking-wider:    0.14em;
+  --tracking-widest:   0.22em;
+
+  /* ── Line height ── */
+  --leading-display: 1.03;
+  --leading-heading: 1.15;
+  --leading-body:    1.62;
+}

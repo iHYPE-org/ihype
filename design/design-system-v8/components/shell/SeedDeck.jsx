@@ -1,0 +1,305 @@
+const _SD = {
+  surf: '#121b2e', raised: '#18233a', ink: '#eef1f6', ink2: '#96a1b5', ink3: '#8792a6',
+  acc: '#ff5029', line: 'rgba(238,241,246,.13)', hair: 'rgba(238,241,246,.07)',
+  fd: "'Bricolage Grotesque',sans-serif", fb: "'Work Sans',system-ui,sans-serif",
+  fm: "'JetBrains Mono',monospace",
+};
+
+/**
+ * The seed deck — Discover itself, not a section of it.
+ *
+ * One card at a time: the artist's own graphic with their name, the release and
+ * the track over it, and a clip of 15–30 seconds playing underneath. Swipe left
+ * to skip, right to add to the Discover playlist, HYPE beneath. The deck is the
+ * whole surface because the decision is binary and the queue is infinite —
+ * a grid of six would ask you to compare when the product only wants a verdict.
+ *
+ * Every transform here is tweened in JS on requestAnimationFrame rather than by
+ * CSS transition. This shell runs in contexts where the document timeline never
+ * advances, and a transition that never ticks holds its from-state forever; a
+ * rAF tween writes real values on every frame and is safe everywhere.
+ *
+ * It owns no audio. `clipSeconds` drives the progress ring so the card and the
+ * real clip stay in step, and the parent decides what actually plays.
+ */
+
+const easeOut = (t) => 1 - Math.pow(1 - t, 3);
+
+export function SeedDeck({
+  items = [], index = 0, hyped = false, savedCount = 0, clipSeconds = 22,
+  hypeLocked = false, hypeLabel, maxHeight,
+  onSkip, onSave, onHype, onOpenArtist, onTogglePlay, playing = true,
+}) {
+  const [dx, setDx] = React.useState(0);
+  const [dy, setDy] = React.useState(0);
+  const [flying, setFlying] = React.useState(false);
+  const [clip, setClip] = React.useState(0);
+  const drag = React.useRef(null);
+  const raf = React.useRef(0);
+
+  /* The clip meter. Driven off performance.now() deltas, not the document
+     timeline, and reset whenever the card underneath changes. */
+  React.useEffect(() => {
+    setClip(0);
+    let last = performance.now();
+    let v = 0;
+    let id = 0;
+    const tick = (now) => {
+      const d = (now - last) / 1000; last = now;
+      if (playing) { v = (v + d / clipSeconds) % 1; setClip(v); }
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [index, playing, clipSeconds]);
+
+  React.useEffect(() => () => cancelAnimationFrame(raf.current), []);
+
+  const tween = (from, to, ms, onFrame, done) => {
+    cancelAnimationFrame(raf.current);
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / ms);
+      onFrame(from + (to - from) * easeOut(t));
+      if (t < 1) raf.current = requestAnimationFrame(step);
+      else if (done) done();
+    };
+    raf.current = requestAnimationFrame(step);
+  };
+
+  const fling = (dir) => {
+    if (flying) return;
+    setFlying(true);
+    const start = dx;
+    tween(start, dir * 720, 300, (v) => { setDx(v); setDy(v * 0.12); }, () => {
+      setDx(0); setDy(0); setFlying(false);
+      if (dir > 0) onSave && onSave(items[index]);
+      else onSkip && onSkip(items[index]);
+    });
+  };
+
+  const settle = () => {
+    const start = dx, startY = dy;
+    tween(1, 0, 260, (k) => { setDx(start * k); setDy(startY * k); });
+  };
+
+  const down = (e) => {
+    if (flying) return;
+    drag.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const move = (e) => {
+    if (!drag.current || flying) return;
+    setDx(e.clientX - drag.current.x);
+    setDy((e.clientY - drag.current.y) * 0.35);
+  };
+  const up = () => {
+    if (!drag.current || flying) return;
+    drag.current = null;
+    if (Math.abs(dx) > 108) fling(dx > 0 ? 1 : -1);
+    else settle();
+  };
+
+  const item = items[index];
+  if (!item) {
+    return React.createElement('div', {
+      style: { textAlign: 'center', padding: '80px 20px', color: _SD.ink2, fontFamily: _SD.fb },
+    },
+      React.createElement('div', { style: { fontFamily: _SD.fd, fontWeight: 800, fontSize: 24, color: _SD.ink, letterSpacing: '-.03em' } }, 'Deck empty'),
+      React.createElement('div', { style: { fontSize: 13.5, marginTop: 6 } }, 'New seeds arrive as artists upload and as you move.')
+    );
+  }
+
+  /* The deck is measured against the space it is given, not drawn at a fixed
+     size and hoped to fit. `maxHeight` is the room above the player; the card
+     takes what is left after the controls (52) and the caption (34) and the two
+     gaps (36), and never grows past its natural 436 or shrinks below a size the
+     three text lines still fit in. A fixed 436 put the caption under the player
+     at common laptop heights, and pane padding could not fix it — the pane is
+     top-aligned, so padding-bottom only bites once the content scrolls. */
+  const CARD_W = 328;
+  const CHROME = 52 + 34 + 36;
+  const CARD_H = maxHeight ? Math.max(320, Math.min(436, maxHeight - CHROME)) : 436;
+  const rot = Math.max(-14, Math.min(14, dx / 14));
+  const intent = Math.min(1, Math.abs(dx) / 108);
+
+  /* Two cards behind, nudged and dimmed, so the deck reads as a deck. They lift
+     toward their final resting place as the top card leaves. */
+  const behind = (offset) => {
+    const it = items[index + offset];
+    if (!it) return null;
+    const k = offset - intent * 0.55;
+    return React.createElement('div', {
+      key: 'b' + (index + offset),
+      'aria-hidden': 'true',
+      style: {
+        position: 'absolute', left: 0, right: 0, top: 0,
+        height: CARD_H, borderRadius: 26, overflow: 'hidden',
+        background: _SD.surf, border: '1px solid ' + _SD.line,
+        transform: 'translateY(' + k * 16 + 'px) scale(' + (1 - k * 0.045) + ')',
+        opacity: 1 - k * 0.28,
+        boxShadow: '0 18px 44px rgba(4,8,18,.45)',
+      },
+    }, React.createElement('div', {
+      style: { position: 'absolute', inset: 0, background: 'linear-gradient(150deg,' + it.c1 + ',' + it.c2 + ')', opacity: .5 },
+    }));
+  };
+
+  const label = (text, side, color) => React.createElement('div', {
+    'aria-hidden': 'true',
+    style: {
+      position: 'absolute', top: 22, [side]: 22,
+      fontFamily: _SD.fm, fontSize: 11, letterSpacing: '.2em', textTransform: 'uppercase',
+      color: '#fff', background: color, borderRadius: 9999, padding: '8px 14px',
+      opacity: (side === 'left' ? dx > 0 : dx < 0) ? intent : 0,
+      transform: 'rotate(' + (side === 'left' ? -8 : 8) + 'deg)',
+    },
+  }, text);
+
+  const circ = 2 * Math.PI * 15;
+
+  return React.createElement('div', {
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, fontFamily: _SD.fb, paddingTop: 4 },
+  },
+    React.createElement('div', { style: { position: 'relative', width: CARD_W, height: CARD_H + 34 } },
+      behind(2), behind(1),
+      React.createElement('div', {
+        onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up,
+        style: {
+          position: 'absolute', left: 0, top: 0, width: CARD_W, height: CARD_H,
+          borderRadius: 26, overflow: 'hidden', background: _SD.surf,
+          border: '1px solid ' + _SD.line, boxShadow: '0 26px 60px rgba(4,8,18,.6)',
+          transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)',
+          cursor: flying ? 'default' : 'grab', touchAction: 'none', userSelect: 'none',
+        },
+      },
+        /* The artist's own graphic goes here. Until one is uploaded the card
+           falls back to the artist's palette — never a stock image. */
+        React.createElement('div', {
+          'aria-hidden': 'true',
+          style: {
+            position: 'absolute', inset: 0,
+            background: 'linear-gradient(150deg,' + item.c1 + ' 0%,' + item.c2 + ' 100%)',
+          },
+        },
+          React.createElement('div', {
+            style: {
+              position: 'absolute', right: -46, bottom: -70,
+              fontFamily: _SD.fd, fontWeight: 800, fontSize: 300, lineHeight: .8,
+              color: 'rgba(255,255,255,.13)', letterSpacing: '-.06em',
+            },
+          }, item.initial)
+        ),
+        React.createElement('div', {
+          'aria-hidden': 'true',
+          style: { position: 'absolute', inset: 0, background: 'linear-gradient(180deg,rgba(6,10,20,.42) 0%,rgba(6,10,20,0) 34%,rgba(6,10,20,.86) 100%)' },
+        }),
+
+        /* Clip meter, top-left: a ring that fills over the length of the clip,
+           with the length stated so 22 seconds is never mistaken for the track. */
+        React.createElement('div', {
+          style: { position: 'absolute', top: 18, left: 18, display: 'flex', alignItems: 'center', gap: 9 },
+        },
+          React.createElement('svg', { width: 34, height: 34, viewBox: '0 0 34 34', 'aria-hidden': 'true' },
+            React.createElement('circle', { cx: 17, cy: 17, r: 15, fill: 'rgba(6,10,20,.45)', stroke: 'rgba(255,255,255,.28)', strokeWidth: 2 }),
+            React.createElement('circle', {
+              cx: 17, cy: 17, r: 15, fill: 'none', stroke: '#fff', strokeWidth: 2, strokeLinecap: 'round',
+              strokeDasharray: circ, strokeDashoffset: circ * (1 - clip), transform: 'rotate(-90 17 17)',
+            })
+          ),
+          React.createElement('span', {
+            style: { fontFamily: _SD.fm, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,.82)' },
+          }, Math.round(clipSeconds) + 's clip')
+        ),
+
+        /* Pause the clip without leaving the card. It sits opposite the meter,
+           the only control in the artwork's top band, and stops the pointer
+           reaching the drag handler underneath it. */
+        React.createElement('button', {
+          type: 'button',
+          onPointerDown: (e) => e.stopPropagation(),
+          onClick: (e) => { e.stopPropagation(); onTogglePlay && onTogglePlay(); },
+          'aria-label': playing ? 'Pause the clip' : 'Play the clip',
+          style: {
+            position: 'absolute', top: 18, right: 18,
+            width: 38, height: 38, borderRadius: 9999, cursor: 'pointer', padding: 0,
+            background: 'rgba(6,10,20,.5)', border: '1px solid rgba(255,255,255,.28)',
+            color: '#fff', display: 'grid', placeItems: 'center',
+            fontSize: playing ? 11 : 12, lineHeight: 1,
+            paddingLeft: playing ? 0 : 3,
+          },
+        }, React.createElement('span', { 'aria-hidden': 'true' }, playing ? '❚❚' : '▶')),
+
+        label('Save', 'left', _SD.acc),
+        label('Skip', 'right', 'rgba(10,16,30,.86)'),
+
+        React.createElement('div', { style: { position: 'absolute', left: 22, right: 22, bottom: 22 } },
+          React.createElement('button', {
+            type: 'button',
+            onClick: (e) => { e.stopPropagation(); onOpenArtist && onOpenArtist(item); },
+            style: {
+              display: 'block', background: 'transparent', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer',
+              fontFamily: _SD.fd, fontWeight: 800, fontSize: 30, letterSpacing: '-.03em', color: '#fff', lineHeight: 1.05,
+            },
+          }, item.artist),
+          React.createElement('div', {
+            style: { fontFamily: _SD.fd, fontWeight: 600, fontSize: 17, letterSpacing: '-.015em', color: 'rgba(255,255,255,.94)', marginTop: 7 },
+          }, item.song),
+          React.createElement('div', {
+            style: { fontSize: 13, color: 'rgba(255,255,255,.72)', marginTop: 2 },
+          }, item.album),
+          React.createElement('div', {
+            style: { fontFamily: _SD.fm, fontSize: 9.5, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,.6)', marginTop: 11 },
+          }, item.why)
+        )
+      )
+    ),
+
+    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 16 } },
+      React.createElement('button', {
+        type: 'button', onClick: () => fling(-1), 'aria-label': 'Skip ' + item.artist,
+        style: {
+          width: 56, height: 56, borderRadius: 9999, cursor: 'pointer',
+          background: 'rgba(238,241,246,.06)', border: '1px solid ' + _SD.line,
+          color: _SD.ink2, fontSize: 21, display: 'grid', placeItems: 'center',
+        },
+      }, React.createElement('span', { 'aria-hidden': 'true' }, '\u2715')),
+
+      React.createElement('button', {
+        type: 'button', onClick: hypeLocked ? undefined : () => onHype && onHype(item),
+        disabled: hypeLocked, 'aria-pressed': hyped,
+        'aria-label': hypeLocked
+          ? 'Already hyped ' + item.artist + '. ' + (hypeLabel || '') + ' until you can hype again'
+          : 'Hype ' + item.artist,
+        style: {
+          display: 'flex', alignItems: 'center', gap: 9, height: 56, padding: '0 30px',
+          borderRadius: 9999, cursor: hypeLocked ? 'default' : 'pointer',
+          background: hypeLocked ? 'rgba(255,80,41,.08)' : (hyped ? _SD.acc : 'rgba(255,80,41,.14)'),
+          border: '1px solid ' + (hypeLocked ? 'rgba(255,80,41,.28)' : (hyped ? _SD.acc : 'rgba(255,80,41,.45)')),
+          color: hypeLocked ? 'rgba(255,80,41,.6)' : (hyped ? '#0b1220' : _SD.acc),
+          fontFamily: _SD.fd, fontWeight: 800, letterSpacing: '.02em',
+        },
+      },
+        React.createElement('span', {
+          style: { fontFamily: _SD.fd, fontWeight: 800, fontSize: 17, letterSpacing: '.06em' },
+        }, 'HYPE'),
+        hypeLocked && hypeLabel ? React.createElement('span', {
+          style: { fontFamily: _SD.fm, fontWeight: 500, fontSize: 11, letterSpacing: '.04em', opacity: .85 },
+        }, hypeLabel) : null
+      ),
+
+      React.createElement('button', {
+        type: 'button', onClick: () => fling(1), 'aria-label': 'Add ' + item.song + ' to your Discover playlist',
+        style: {
+          width: 56, height: 56, borderRadius: 9999, cursor: 'pointer',
+          background: 'rgba(238,241,246,.06)', border: '1px solid ' + _SD.line,
+          color: _SD.ink, fontSize: 27, display: 'grid', placeItems: 'center',
+        },
+      }, React.createElement('span', { 'aria-hidden': 'true' }, '\u2661'))
+    ),
+
+    React.createElement('div', {
+      style: { fontFamily: _SD.fm, fontSize: 9.5, letterSpacing: '.16em', textTransform: 'uppercase', color: _SD.ink3, textAlign: 'center' },
+    }, 'Drag left to skip · right to save \u00b7 ' + savedCount + ' in Discover playlist')
+  );
+}

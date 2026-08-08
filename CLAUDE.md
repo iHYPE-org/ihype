@@ -116,58 +116,40 @@ The workflow is:
 
 If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Never guess.
 
-**TWO design bundles now live in the repo and they overlap — read
-`design/design-system-app-shell/HANDOFF_NOTES.md` FIRST.** It carries the
-source-of-truth table: which bundle wins on which topic, and the two places both
-bundles contradict themselves (base surfaces, light mode). The short version —
-`design-system-app-shell/` (the app-shell redesign, 48 templates + UI-kit
-contracts + guidelines) owns the **chrome**: the radial arc nav, the 76px
-solid-accent logo, the pill player, MUSIC's tab list, the five radio categories,
-and the four roles. `handoff-music-map-me/` (Design System 6) owns the **map
-module** and the **backend migration spec**, which the redesign does not restate.
-Two rules from the redesign that the code follows and you must not undo: **no
-emoji anywhere** (Unicode glyphs only), and **promoter is not a role** — never
-put it in a role picker.
+**There is exactly ONE design bundle: `design/design-system-v8/`.** Read its
+`README.md` first, then `ROUTE_TEMPLATE_MAP.md`, `SHELL_LOCK_2026-08-08.md` and
+`ADHERENCE.md`. Vendored 2026-08-08 and signed off by the owner as the **final**
+iteration; `design/design-system-app-shell/` and `design/handoff-music-map-me/`
+were **deleted** in the same commit. Do not re-add either, and do not vendor the
+zip's `uploads/iHYPE/*.dc.html` tree — that is the previous generation of the
+same designs, and a second copy of a design is how the last two overlapping
+bundles came to contradict each other on base surfaces and light mode.
 
-**The Music · Map · Me shell is built and live at `/app`** (DESIGN_SYNC row 268):
-`/app/map`, `/app/music/[tab]`, `/app/me`, `/app/me/[panel]`. `MmmShell` is
-mounted in the **`/app` layout** on purpose — the map is the base layer and must
-survive navigation between modules, and a layout is the only place the App Router
-guarantees that. `AppShell` stands aside for `/app/*` the same way it does for
-`/listen`. **It is deliberately not cut over**: `/listen`'s six-module deck still
-exists, and choosing between them is an operator decision, as is the DJ-role
-removal. Row 268 lists all five open items.
+Four rules from v8 that the code follows and you must not undo: **no emoji
+anywhere** (Unicode glyphs only), **promoter is not a role** and **there is no DJ
+role** (the four account types are Fan · Artist · Venue · Advertiser), and **no
+reveal may be produced by an animation or a transition** (`ADHERENCE.md` 23–25 —
+this one has already produced four rounds of false "fixed" reports; verify with
+`getComputedStyle`, never with props or a screenshot).
 
-**What IS cut over, since row 273: the way in and the way around.** `/` and
-sign-in resolve to `WORKBENCH_PATH = '/app/map'`, and the four LISTEN
-destinations in `app-nav.ts` plus `MobileBottomNav`'s Listen tab point at
-`/app/music/*`. That closed a trap worth understanding before touching either
-shell: MMM has no Events or Pages module, so it links out to `/tickets`,
-`/pages` and `/shows/[slug]`, which render in the LEGACY shell — and while every
-nav destination still pointed back at `/listen?tab=…`, one tap on a ticket
-dropped a member into the six-module deck **with no route back for the rest of
-the session**. The shell was live, was the landing surface, and still nobody saw
-it; it was reported as "I still see older versions". The invariants: no LISTEN
-destination may resolve to `/listen` (asserted in `app-nav.test.ts`), and any
-new MMM→legacy bridge needs a legacy→MMM counterpart or it re-opens the door the
-other way. **Do not add a MAP row to the drawer to solve this** — the drawer's
-structure is the app-shell handoff's and is asserted as such; MMM's arc nav
-already carries MAP. Events, Pages, advertise and Account keep legacy routes on
-purpose (no MMM equivalent), and `/app/me/settings` is a bridge MENU of links
-rather than the settings UI, so it is not the Account destination.
+**The Music · Map · Me shell at `/app/*` is the ONLY app shell.** `/app/map`,
+`/app/music/[tab]`, `/app/me`, `/app/me/[panel]`, governed by
+`templates/simplified-app/` and locked by `SHELL_LOCK_2026-08-08.md`. `MmmShell`
+is mounted in the **`/app` layout** on purpose — the map is the base layer and
+must survive navigation between modules, and a layout is the only place the App
+Router guarantees that. `chromeSize = 88` drives the logo trigger, the player
+height, the nav hint offset and the dock position; change one and re-derive the
+rest rather than nudging in isolation.
 
-**Also in the repo: `design/handoff-music-map-me/`.** That is
-iHYPE Design System 6 ("Music · Map · Me", 2026-08-04) vendored verbatim — the first
-`.dc.html` files this checkout has tracked, which is why every cold session's audit
-used to report "0 tracked". Read `design/handoff-music-map-me/HANDOFF_NOTES.md` first:
-it says what was deliberately not carried across and, more importantly, lists three
-token scales (`--radius-lg`, `--ease`, `--duration-slow`) where the handoff and
-`globals.css` **disagree under the same name** — assuming they match is silent, not an
-error. Its `FRONTEND_GOTCHAS.md` is a list of bugs already found in the prototype;
-read it before building the shell, not after. **The product half of that handoff is
-specified but NOT built** — dropping the DJ role, computed radio stations, the
-Music/Map/Me shell, single-step auth. DESIGN_SYNC row 267 scopes each one and says
-which need operator sign-off. Do not start any of them assuming it is a small change.
+**`/` and sign-in resolve to `WORKBENCH_PATH = '/app/map'`**, and every LISTEN
+destination points into `/app/music/*` — asserted in `app-nav.test.ts`, because
+the regression it guards against is the one that was actually reported: MMM has
+no Events or Pages module, so it links out to `/tickets`, `/pages` and
+`/shows/[slug]`, and while those legacy routes carried a shell of their own, one
+tap on a ticket dropped a member into a different shell with no route back for
+the rest of the session. The shell was live, was the landing surface, and still
+nobody saw it — reported as "I still see older versions". That is why there is
+now one shell rather than a bridge between two.
 
 ---
 

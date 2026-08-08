@@ -1,9 +1,10 @@
 /**
  * The Music · Map · Me navigation manifest and radial-arc geometry.
  *
- * Source: `design/design-system-app-shell/templates/simple-app/SimpleApp.dc.html`
- * — the app-shell redesign, which supersedes the earlier
- * `handoff-music-map-me/SimplifiedApp.dc.html` on three points that matter here:
+ * Source: `design/design-system-v8/templates/simplified-app/SimplifiedApp.dc.html`,
+ * locked by `design/design-system-v8/SHELL_LOCK_2026-08-08.md`. It supersedes both
+ * retired bundles, and differs from the pre-v8 generation on three points that
+ * matter here:
  *
  *   1. **The nav is a true radial arc**, not a vertical pill column. Items fan
  *      out to specific offsets from the logo, listed in ARC below.

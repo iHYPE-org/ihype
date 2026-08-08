@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Role Onboarding" description="Multi-step onboarding wizard — Artist/DJ/Venue signup, switchable role" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;padding:44px 24px 100px;max-width:520px;margin:0 auto">
+  <div style="display:flex;gap:6px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:4px;margin-bottom:28px;width:fit-content">
+    <sc-for list="{{ roles }}" as="r" hint-placeholder-count="3">
+      <sc-if value="{{ r.active }}"><button onClick="{{ r.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:rgba(var(--surface-tint-rgb),.08);color:var(--ink-1)">{{ r.label }}</button></sc-if>
+      <sc-if value="{{ r.inactive }}"><button onClick="{{ r.pick }}" style="padding:7px 14px;border-radius:9px;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ink-3)">{{ r.label }}</button></sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:28px">
+    <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+      <div style="flex:1">
+        <sc-if value="{{ st.doneArtist }}"><div style="height:4px;border-radius:999px;background:var(--accent)"></div></sc-if>
+        <sc-if value="{{ st.doneDj }}"><div style="height:4px;border-radius:999px;background:var(--role-dj)"></div></sc-if>
+        <sc-if value="{{ st.doneVenue }}"><div style="height:4px;border-radius:999px;background:var(--role-venue)"></div></sc-if>
+        <sc-if value="{{ st.doneFan }}"><div style="height:4px;border-radius:999px;background:var(--role-fan)"></div></sc-if>
+        <sc-if value="{{ st.notDone }}"><div style="height:4px;border-radius:999px;background:rgba(var(--surface-tint-rgb),.1)"></div></sc-if>
+        <sc-if value="{{ st.done }}"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-1);margin-top:8px">{{ st.label }}</div></sc-if>
+        <sc-if value="{{ st.notDone }}"><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:8px">{{ st.label }}</div></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <sc-if value="{{ isStep1 }}">
+    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">{{ step1Title }}</h1>
+    <p style="font-size:14px;color:rgba(var(--ink-1-rgb),.55);margin:0 0 24px">{{ step1Sub }}</p>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">{{ nameLabel }}</div>
+        <input placeholder="{{ namePlaceholder }}" style="width:100%;height:44px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+      <div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">{{ homeCityLabel }}</div>
+        <input placeholder="{{ homeCityPh }}" style="width:100%;height:44px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isStep2 }}">
+    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">{{ step2Title }}</h1>
+    <p style="font-size:14px;color:rgba(var(--ink-1-rgb),.55);margin:0 0 24px">{{ step2Sub }}</p>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <sc-for list="{{ genreOrGenreLike }}" as="g" hint-placeholder-count="6">
+        <sc-if value="{{ g.activeArtist }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--accent);background:rgba(255,80,41,.13);color:var(--accent)">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeDj }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-dj);background:rgba(255,62,154,.13);color:var(--role-dj)">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeVenue }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-venue);background:rgba(34,229,212,.13);color:var(--role-venue)">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeFan }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-fan);background:rgba(185,131,255,.13);color:var(--role-fan)">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.inactive }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-2)">{{ g.label }}</button></sc-if>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isStep3 }}">
+    <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 6px">{{ stepDoneTitle }}</h1>
+    <p style="font-size:14px;color:rgba(var(--ink-1-rgb),.55);margin:0 0 24px;line-height:1.6">{{ step3Body }}</p>
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 20px">
+      <sc-if value="{{ isArtist }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-dj);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
+      <sc-if value="{{ isVenue }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-venue);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
+      <sc-if value="{{ isFan }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-fan);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
+      <div style="font-size:14px;color:var(--ink-1);line-height:1.6">{{ charterLine }}</div>
+    </div>
+  </sc-if>
+
+  <div style="display:flex;gap:10px;margin-top:32px">
+    <sc-if value="{{ showBack }}"><button onClick="{{ back }}" style="flex:1;height:46px;border-radius:12px;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer">{{ backLabel }}</button></sc-if>
+    <sc-if value="{{ isStep3 }}"><a href="../role-dashboard/RoleDashboard.dc.html" style="flex:2;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;text-decoration:none;background:var(--accent);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;box-sizing:border-box">{{ nextLabel }}</a></sc-if>
+    <sc-if value="{{ notStep3AndArtist }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--accent);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ notStep3AndDj }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-dj);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ notStep3AndVenue }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-venue);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ notStep3AndFan }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-fan);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+  </div>
+  <sc-if value="{{ isStep3 }}"><a href="../page-creator/PageCreator.dc.html" style="display:block;text-align:center;margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;color:var(--ink-2);text-decoration:none">✦ {{ aiPageLine }}</a></sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { role: 'artist', step: 1, genres: {} };
+  renderVals() {
+    const { role, step, genres } = this.state;
+    const t = window.ihypeT || (k => k);
+    const ROLE_DATA = {
+      artist: { label: t('roRoleArtist'), accent: 'var(--accent)', nameLabel: t('roNameLabelArtist'), namePlaceholder: t('roNamePhArtist'),
+        step1Title: t('roStep1TitleArtist'), step1Sub: t('roStep1SubArtist'),
+        step2Title: t('roStep2TitleArtist'), step2Sub: t('roStep2SubArtist'),
+        step3Body: t('roStep3BodyArtist'),
+        genres: ['Dream-pop','Indie','Shoegaze','Jazz','Punk','Lo-fi'] },
+      dj: { label: t('roRoleDj'), accent: 'var(--role-dj)', nameLabel: t('roNameLabelDj'), namePlaceholder: t('roNamePhDj'),
+        step1Title: t('roStep1TitleDj'), step1Sub: t('roStep1SubDj'),
+        step2Title: t('roStep2TitleDj'), step2Sub: t('roStep2SubDj'),
+        step3Body: t('roStep3BodyDj'),
+        genres: ['House','Techno','Hip-hop','Disco','Ambient','Drum & Bass'] },
+      venue: { label: t('roRoleVenue'), accent: 'var(--role-venue)', nameLabel: t('roNameLabelVenue'), namePlaceholder: t('roNamePhVenue'),
+        step1Title: t('roStep1TitleVenue'), step1Sub: t('roStep1SubVenue'),
+        step2Title: t('roStep2TitleVenue'), step2Sub: t('roStep2SubVenue'),
+        step3Body: t('roStep3BodyVenue'),
+        genres: ['Live music','DJ nights','All-ages','18+','21+','Outdoor'] },
+      fan: { label: t('roRoleFan'), accent: 'var(--role-fan)', nameLabel: t('roNameLabelFan'), namePlaceholder: t('roNamePhFan'),
+        step1Title: t('roStep1TitleFan'), step1Sub: t('roStep1SubFan'),
+        step2Title: t('roStep2TitleFan'), step2Sub: t('roStep2SubFan'),
+        step3Body: t('roStep3BodyFan'),
+        genres: ['Bedroom Pop','Indie','Shoegaze','House','Hip-hop','Jazz'] },
+    };
+    const r = ROLE_DATA[role];
+    const isArtist = role === 'artist', isDj = role === 'dj', isVenue = role === 'venue', isFan = role === 'fan';
+    return {
+      isArtist, isDj, isVenue, isFan,
+      roles: [['artist',t('roRoleArtist')],['dj',t('roRoleDj')],['venue',t('roRoleVenue')],['fan',t('roRoleFan')]].map(([id, label]) => ({ label, active: role === id, inactive: role !== id, pick: () => this.setState({ role: id, step: 1, genres: {} }) })),
+      homeCityLabel: t('roHomeCityLabel'), homeCityPh: t('roHomeCityPh'), stepDoneTitle: t('roStepDoneTitle'), charterOneLine: t('roCharterOneLine'), charterLine: t('roCharterLine'), backLabel: t('roBackLabel'), aiPageLine: t('roAiPageLine'),
+      steps: [t('roStepBasics'), t('roStepSound'), t('roStepDone')].map((label, i) => {
+        const done = step > i;
+        return { label, done, notDone: !done, doneArtist: done && isArtist, doneDj: done && isDj, doneVenue: done && isVenue, doneFan: done && isFan };
+      }),
+      isStep1: step === 1, isStep2: step === 2, isStep3: step === 3,
+      nameLabel: r.nameLabel, namePlaceholder: r.namePlaceholder,
+      step1Title: r.step1Title, step1Sub: r.step1Sub, step2Title: r.step2Title, step2Sub: r.step2Sub, step3Body: r.step3Body,
+      genreOrGenreLike: r.genres.map(g => {
+        const active = !!genres[g];
+        return { label: g, activeArtist: active && isArtist, activeDj: active && isDj, activeVenue: active && isVenue, activeFan: active && isFan, inactive: !active, toggle: () => this.setState(s => ({ genres: { ...s.genres, [g]: !s.genres[g] } })) };
+      }),
+      showBack: step > 1,
+      notStep3AndArtist: step !== 3 && isArtist, notStep3AndDj: step !== 3 && isDj, notStep3AndVenue: step !== 3 && isVenue, notStep3AndFan: step !== 3 && isFan,
+      nextLabel: step === 3 ? t('roGoToDashboard') : t('roContinue'),
+      back: () => this.setState(s => ({ step: Math.max(1, s.step - 1) })),
+      next: () => this.setState(s => ({ step: Math.min(3, s.step + 1) })),
+    };
+  }
+  componentDidMount() { this._h = () => this.forceUpdate(); window.addEventListener('ihype-i18n-change', this._h); }
+  componentWillUnmount() { window.removeEventListener('ihype-i18n-change', this._h); }
+}
+
+</script>
+</body>
+</html>

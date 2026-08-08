@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Status" description="Admin status page — env checks (DB/Resend/KV/Stripe dots), launch-readiness blockers panel, rate-limit table. Grounded in src/app/status/page.tsx." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;-webkit-font-smoothing:antialiased}
+@keyframes stPulse{0%,100%{opacity:1}50%{opacity:.35}}</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:60px 28px 100px">
+  <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px">
+    <h1 data-i18n="stSystemStatus" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(1.7rem,5vw,2.4rem);letter-spacing:-.03em">System status</h1>
+    <span data-i18n="stAdminOnly" style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)">Admin only · refreshed on load</span>
+  </div>
+  <sc-if value="{{ allOk }}"><div data-i18n="stAllOperational" style="display:inline-flex;align-items:center;gap:9px;margin:16px 0 36px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--role-venue);border:1px solid rgba(34,229,212,.35);background:rgba(34,229,212,.07);border-radius:999px;padding:7px 16px"><span style="width:8px;height:8px;border-radius:50%;background:var(--role-venue);animation:stPulse 1.4s infinite"></span>All systems operational</div></sc-if>
+  <sc-if value="{{ notOk }}"><div data-i18n="stDegraded" style="display:inline-flex;align-items:center;gap:9px;margin:16px 0 36px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.35);background:rgba(255,184,74,.07);border-radius:999px;padding:7px 16px"><span style="width:8px;height:8px;border-radius:50%;background:#ffb84a;animation:stPulse 1.4s infinite"></span>Degraded — 1 check failing</div></sc-if>
+
+  <h2 data-i18n="stEnvChecks" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);margin-bottom:14px">Environment checks</h2>
+  <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:44px">
+    <sc-for list="{{ checks }}" as="c" hint-placeholder-count="6">
+      <div style="display:flex;align-items:center;gap:14px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;padding:14px 18px">
+        <sc-if value="{{ c.ok }}"><span style="width:10px;height:10px;border-radius:50%;background:var(--role-venue);flex-shrink:0;box-shadow:0 0 10px var(--role-venue)"></span></sc-if>
+        <sc-if value="{{ c.notOk }}"><span style="width:10px;height:10px;border-radius:50%;background:#ffb84a;flex-shrink:0;box-shadow:0 0 10px #ffb84a"></span></sc-if>
+        <div style="flex:1"><div style="font-weight:700;font-size:.9rem">{{ c.name }}</div><div style="font-family:'JetBrains Mono',monospace;font-size:.66rem;color:var(--ink-3);margin-top:2px">{{ c.detail }}</div></div>
+        <sc-if value="{{ c.ok }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--role-venue)">{{ c.status }}</span></sc-if>
+        <sc-if value="{{ c.notOk }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:#ffb84a">{{ c.status }}</span></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 data-i18n="stLaunchReadiness" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:#ffb84a;margin-bottom:14px">Launch readiness</h2>
+  <div style="background:rgba(255,184,74,.05);border:1px solid rgba(255,184,74,.22);border-radius:14px;padding:20px 22px;margin-bottom:44px">
+    <sc-for list="{{ blockers }}" as="b" hint-placeholder-count="3">
+      <div style="display:flex;gap:12px;align-items:flex-start;padding:9px 0">
+        <sc-if value="{{ b.ok }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--role-venue);flex-shrink:0;margin-top:1px">{{ b.icon }}</span></sc-if>
+        <sc-if value="{{ b.notOk }}"><span style="font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#ffb84a;flex-shrink:0;margin-top:1px">{{ b.icon }}</span></sc-if>
+        <div><div style="font-weight:700;font-size:.88rem">{{ b.name }}</div><div style="font-size:.8rem;color:var(--ink-2);margin-top:2px;line-height:1.5">{{ b.detail }}</div></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 data-i18n="stRateLimits" style="font-family:'JetBrains Mono',monospace;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-2);margin-bottom:14px">Rate limits</h2>
+  <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;overflow:hidden">
+    <div style="display:grid;grid-template-columns:2fr 1fr 1fr;padding:12px 18px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.15);font-family:'JetBrains Mono',monospace;font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)"><span data-i18n="stEndpoint">Endpoint</span><span data-i18n="stWindow">Window</span><span data-i18n="stLimit" style="text-align:right">Limit</span></div>
+    <sc-for list="{{ limits }}" as="l" hint-placeholder-count="6">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;padding:12px 18px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.05);font-size:.84rem"><span style="font-family:'JetBrains Mono',monospace;color:var(--ink-1)">{{ l.path }}</span><span style="color:var(--ink-2)">{{ l.window }}</span><span style="text-align:right;color:var(--ink-2)">{{ l.limit }}</span></div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;820px&quot;,&quot;height&quot;:&quot;900px&quot;},&quot;allOk&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this._h = () => this.forceUpdate(); window.addEventListener('ihype-i18n-change', this._h); }
+  componentWillUnmount() { window.removeEventListener('ihype-i18n-change', this._h); }
+  renderVals() {
+    const t = window.ihypeT || (k => k);
+    const allOk = this.props.allOk ?? false;
+    return {
+      allOk,
+      notOk: !allOk,
+      checks: [
+        { name: t('stDatabase'), detail: 'DATABASE_URL · Supabase Postgres', status: 'OK', ok: true, notOk: false },
+        { name: t('stEmail'), detail: 'RESEND_API_KEY · Resend', status: 'OK', ok: true, notOk: false },
+        { name: t('stKvRateLimiting'), detail: 'KV_REST_API_URL · Upstash', status: 'OK', ok: true, notOk: false },
+        { name: t('stPayments'), detail: 'STRIPE_SECRET_KEY · Stripe live mode', status: allOk ? 'OK' : t('stTestMode'), ok: allOk, notOk: !allOk },
+        { name: t('stMediaStorage'), detail: 'R2 bucket · Cloudflare', status: 'OK', ok: true, notOk: false },
+        { name: t('stAiScreening'), detail: t('stUploadVetting'), status: 'OK', ok: true, notOk: false },
+      ],
+      blockers: allOk ? [
+        { icon: '✓', ok: true, notOk: false, name: t('stAllChecksPassing'), detail: t('stNoBlockers') },
+      ] : [
+        { icon: '⚠', ok: false, notOk: true, name: t('stStripeTestMode'), detail: t('stStripeTestModeDesc') },
+        { icon: '✓', ok: true, notOk: false, name: t('stLegalPublished'), detail: t('stLegalPublishedDesc') },
+        { icon: '✓', ok: true, notOk: false, name: t('stAiScreeningActive'), detail: t('stAiScreeningActiveDesc') },
+      ],
+      limits: [
+        { path: 'POST /api/auth/magic-link', window: t('st1Min'), limit: t('st3PerIp') },
+        { path: 'POST /api/tickets', window: t('st1Min'), limit: t('st10PerUser') },
+        { path: 'POST /api/hype', window: t('st1Week'), limit: t('stBudgetCap') },
+        { path: 'POST /api/reports', window: t('st1Hour'), limit: t('st20PerUser') },
+        { path: 'POST /api/dmca', window: t('st1Hour'), limit: t('st5PerIp') },
+        { path: 'POST /api/waitlist', window: t('st1Min'), limit: t('st3PerIp') },
+      ],
+    };
+  }
+}
+</script>
+<script>function stApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',stApplyI18n);window.addEventListener('ihype-i18n-change',stApplyI18n);if(window.ihypeT)stApplyI18n();</script>
+</body>
+</html>

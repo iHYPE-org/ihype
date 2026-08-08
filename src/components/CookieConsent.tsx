@@ -54,7 +54,7 @@ export function CookieConsent() {
     publish();
 
     // Observing the dialog is safe from the re-entrancy loop that
-    // `design/handoff-music-map-me/FRONTEND_GOTCHAS.md` §3 warns about: the
+    // the design system's own gotcha list warns about: the
     // property is set on :root and read only by elements outside this dialog,
     // so nothing the callback writes can change the box it measures.
     const observer = new ResizeObserver(publish);

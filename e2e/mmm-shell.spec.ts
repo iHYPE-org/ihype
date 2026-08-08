@@ -4,8 +4,8 @@ import { applySessionCookie, canSeedSession } from './fixtures/session';
 /**
  * The Music · Map · Me shell contract, as executable assertions.
  *
- * The design bundle ships its own verification checklist
- * (`design/handoff-music-map-me/FRONTEND_GOTCHAS.md` §9). Most of its items are
+ * The design bundle ships its own verification checklist — now
+ * `design/design-system-v8/ADHERENCE.md` rules 6-28. Most of its items are
  * exactly the kind that regress silently — an item present in the manifest but
  * clipped off-screen, a fan that animates all at once, a player that stays
  * reachable behind the scrim — so the checklist is encoded here rather than

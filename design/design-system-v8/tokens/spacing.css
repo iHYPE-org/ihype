@@ -1,0 +1,44 @@
+/* iHYPE Spacing, Radius, Shadow Tokens
+   Motion lives in tokens/motion.css and ONLY there. This file used to
+   redeclare --ease, --duration-fast/-base/-slow with values that contradicted
+   it (--duration-slow 300ms here against 480ms there). Removed 2026-08-07. */
+:root {
+  /* ── Spacing ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Border Radius ──
+     sm/md/lg are unchanged: the three scales that cannot be reconciled by name
+     against the codebase are documented in the handoff notes, and renumbering
+     --radius-lg would add drift rather than remove it.
+     --radius-card and --radius-pill are the Bulletin direction's two working
+     radii; reach for those in new work. */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-3xl:  32px;
+  --radius-full: 9999px;
+  --radius-card: 18px;
+  --radius-pill: 9999px;
+  /* The logo trigger's squircle — 76px tile, 26px corner. */
+  --radius-trigger: 26px;
+
+  /* ── Shadows ── Re-anchored to the navy ground: pure-black shadows read
+     grey-green over #0b1220, so the ambient layers carry a navy tint. */
+  --shadow-card:   0 1px 3px rgba(4,8,18,.24), 0 4px 16px rgba(4,8,18,.18);
+  --shadow-raised: 0 4px 16px rgba(4,8,18,.32), 0 1px 4px rgba(4,8,18,.18);
+  --shadow-play:   0 14px 36px rgba(4,8,18,.55);
+  --shadow-album:  0 30px 80px rgba(255,80,41,.27);
+  --shadow-glow:   0 0 40px rgba(255,80,41,.35);
+  --shadow-trigger: 0 14px 34px rgba(255,80,41,.3);
+}
