@@ -196,7 +196,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
       <style>{`
         .legal-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
         .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .65rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
-        .legal-h1 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: clamp(1.75rem, 6vw, 2.4rem); letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
+        .legal-h1 { font-family: var(--f-d); font-weight: 800; font-size: clamp(1.75rem, 6vw, 2.4rem); letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
         @media (max-width: 480px) {
           .legal-wrap { padding: 2rem 1.1rem 4rem; }
         }
@@ -212,7 +212,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            only ever showed at desktop widths. Wrapping means the strip cannot
            scroll at any width, so there is nothing to hide. */
         .legal-seg { display: flex; flex-wrap: wrap; gap: 4px; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; width: 100%; padding: 4px; margin-bottom: 2.5rem; box-sizing: border-box; }
-        .legal-seg-btn { flex: 1 1 auto; padding: 9px 20px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .legal-seg-btn { flex: 1 1 auto; padding: 9px 20px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-family: var(--f-d); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
         @media (max-width: 480px) {
           .legal-seg { width: 100%; border-radius: 10px; }
           /* Six tabs at phone width wrap onto two or three rows rather than
@@ -224,12 +224,12 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
         .legal-doc { display: none; }
         .legal-doc.active { display: block; }
-        .legal-doc h2 { font-family: var(--f-d, 'Syne', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
+        .legal-doc h2 { font-family: var(--f-d); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
         .legal-doc li + li { margin-top: .65rem; }
         .legal-doc a { color: var(--accent); }
-        .legal-split-display { font-family: var(--f-d, 'Syne', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
+        .legal-split-display { font-family: var(--f-d) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block
            when it was folded into this tab. */
         .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }

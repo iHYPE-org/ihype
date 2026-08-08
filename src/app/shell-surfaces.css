@@ -2,7 +2,7 @@
    iHYPE app shell — subpage surfaces
    ──────────────────────────────────────────────────────────────────────────
    The shell handoff describes ~20 routes as one small vocabulary repeated:
-   a card, a row, a stat card, an eyebrow, a Syne 800 title, a tile grid, a
+   a card, a row, a stat card, an eyebrow, a display-800 title, a tile grid, a
    pill, an empty state. The product had already built all twenty routes —
    but each one invented its own names for those primitives (`promo-stat-card`,
    `pa-stat-card`, `fan-dash-stat-card`, `ad-dash-stat-card`, `aa-stat-card`,
@@ -74,7 +74,7 @@
 
 
 /* ── Primitive: Title ────────────────────────────────────────────────────
-   Syne 800, -0.02em. Size is left to the element (h1 32px / h2 26px / h3
+   --font-display 800, -0.02em. Size is left to the element (h1 32px / h2 26px / h3
    below), set by the element rules further down, so a card title does not
    become a page title. */
 .shell-content .aa-event-title,
@@ -209,7 +209,7 @@
 
 
 /* ── Primitive: StatCard ─────────────────────────────────────────────────
-   Centred, per screenshot 06: value in Syne 800 --accent, label in mono
+   Centred, per screenshot 06: value in --font-display 800 --accent, label in mono
    uppercase --ink-2, delta below in --accent. */
 .shell-content .aa-stat-card,
 .shell-content .ad-dash-stat-card,
@@ -296,7 +296,7 @@
 
 /* ── Primitive: section head ─────────────────────────────────────────────
    A title beside a "View all ›" affordance. These are containers, so only
-   the heading inside them is typed — setting Syne 800 on the container
+   the heading inside them is typed — setting --font-display 800 on the container
    itself would swallow the link sitting next to it. */
 .shell-content .ad-section-head > :is(h1,h2,h3,strong),
 .shell-content .believers-head > :is(h1,h2,h3,strong),
@@ -468,7 +468,7 @@
 }
 
 /* ── Element ramp ────────────────────────────────────────────────────────
-   "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne
+   "Each non-Discover route opens with a back pill, an Eyebrow, and a display
    800 32px h1." Every shell page already writes a real <h1>, so the ramp is
    applied to the page's own heading rather than a second one being injected
    from the chrome — a duplicate h1 would be a real accessibility regression.
@@ -505,9 +505,9 @@
 }
 
 /* A heading INSIDE a row or card is not a section heading — the handoff types
-   it 15px/500 DM Sans with the supporting line at 13px --ink-2 (Charts, the
+   it 15px/500 --font-body with the supporting line at 13px --ink-2 (Charts, the
    radio schedule, settlements, Top Tracks all read this way). Without this the
-   ramp above would turn every row into a stack of 18px Syne. */
+   ramp above would turn every row into a stack of 18px display type. */
 .shell-root .shell-content :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .dj-show-card, .dja-card, .djd-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) :is(h2, h3, h4),
 .shell-root .shell-content :is(.aa-event-row, .ad-activity-row, .ad-event-row, .dj-earn-row, .dja-show-row, .djd-activity-row, .djd-show-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) :is(h2, h3, h4) {
   font-family: var(--f-b);

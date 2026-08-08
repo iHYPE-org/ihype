@@ -25,7 +25,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
             width: '100%', height: '100%',
             display: 'flex', flexDirection: 'column',
             justifyContent: 'space-between',
-            background: '#0a0805',
+            background: '#0b1220',
             padding: '72px 80px',
             fontFamily: 'sans-serif',
           }}
@@ -36,7 +36,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('fansSlugOpengraphImage.kicker', 'My scene')}</div>
-            <div style={{ fontSize: 64, fontWeight: 900, color: '#f0ebe5', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{t('fansSlugOpengraphImage.fallbackTitle', 'Fan on iHYPE')}</div>
+            <div style={{ fontSize: 64, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{t('fansSlugOpengraphImage.fallbackTitle', 'Fan on iHYPE')}</div>
             <div style={{ fontSize: 24, color: '#5a5048' }}>{t('fansSlugOpengraphImage.fallbackSubtitle', 'Independent music, built for the scene.')}</div>
           </div>
           <div style={{ color: '#3a342e', fontSize: 20, letterSpacing: '0.08em' }}>ihype.org/fans/{slug}</div>
@@ -67,7 +67,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           width: '100%', height: '100%',
           display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0a0805',
+          background: '#0b1220',
           padding: '72px 80px',
           fontFamily: 'sans-serif',
         }}
@@ -78,7 +78,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{t('fansSlugOpengraphImage.kicker', 'My scene')}</div>
-          <div style={{ fontSize: 68, fontWeight: 900, color: '#f0ebe5', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{profile.name}</div>
+          <div style={{ fontSize: 68, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{profile.name}</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             {city && <span style={{ fontSize: 22, color: '#5a5048' }}>{city}</span>}
             <span style={{ fontSize: 22, color: '#5a5048' }}>{followCount} {t('fansSlugOpengraphImage.following', 'following')}</span>

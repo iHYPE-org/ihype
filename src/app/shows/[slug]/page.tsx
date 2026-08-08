@@ -388,10 +388,10 @@ export default async function ShowDetailPage({
             )}
           </div>
 
-          {/* The design system's top step: Syne 800, 54px. This was 32px -- smaller
+          {/* The design system's top step: display 800, 54px. This was 32px -- smaller
               than the ticket price in the sidebar, so the page had no dominant
               element and read as a form. clamp() keeps it from wrapping badly on a
-              phone; -.03em and 0.98 line-height are what large Syne needs to stop
+              phone; -.03em and 0.98 line-height are what the large display face needs to stop
               looking loose at display size. */}
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.375rem, 6vw, 3.375rem)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 0.98, marginBottom: 14, textWrap: 'balance' }}>{show.title}</h1>
 

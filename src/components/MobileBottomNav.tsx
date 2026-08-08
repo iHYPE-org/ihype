@@ -73,7 +73,7 @@ const tabButtonStyle = {
   gap: 3,
   flex: 1,
   textDecoration: 'none',
-  fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+  fontFamily: "var(--font-body)",
   fontSize: '0.65rem',
   fontWeight: 500,
   letterSpacing: '0.02em',

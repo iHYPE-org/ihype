@@ -7,7 +7,7 @@ import './shell-surfaces.css';
 import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
-import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
+import { Bricolage_Grotesque, Work_Sans, JetBrains_Mono, Instrument_Serif, Forum, Yeseva_One } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
@@ -27,11 +27,26 @@ import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { AppShell } from '@/components/shell/AppShell';
 import { getShellViewer } from '@/lib/shell-account';
 
-const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
-const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
+// Design system v8's "Bulletin" direction: Bricolage Grotesque retires Syne on
+// display, Work Sans retires DM Sans on body. The CSS variable names are
+// deliberately NOT renamed — `--font-syne`/`--font-dm` are referenced by
+// --f-d/--f-b in globals.css and by a handful of inline styles, and renaming
+// them would be a second, unrelated churn across the same files. The names are
+// stale; the values are correct.
+//
+// Bricolage is a variable font with an optical-size axis, which is the whole
+// point of choosing it (ADHERENCE rule 31: set `opsz` to the pixel size AND
+// letter-spacing -.035em at headline sizes). `weight` is therefore omitted —
+// passing a weight list to next/font pins static instances and throws the axes
+// away, taking `opsz` with them.
+const bricolage = Bricolage_Grotesque({ subsets: ['latin'], axes: ['opsz'], variable: '--font-syne', display: 'swap' });
+const workSans = Work_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-dm', display: 'swap' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-jb', display: 'swap' });
 const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
 const forum = Forum({ subsets: ['latin'], weight: ['400'], variable: '--font-forum', display: 'swap' });
+// The nameplate. One weight, display only: it sets the three module labels in
+// the arc nav and nothing else — at text sizes its contrast closes up.
+const yeseva = Yeseva_One({ subsets: ['latin'], weight: ['400'], variable: '--font-yeseva', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -81,7 +96,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { account: shellAccount, unreadCount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable} ${yeseva.variable}`}>
       <head>
         <script
           nonce={nonce}

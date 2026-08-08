@@ -27,11 +27,13 @@
  *
  * ## Divergences from the handoff, all deliberate
  *
- * 1. **Colour comes from tokens, never the handoff's literals.** The bundle
- *    contradicts itself on the base surfaces — its README table says base
- *    `#0d0b0a` / surface `#16120f`, its own `tokens/colors.css` says `#0a0805` /
- *    `#100d09`, and globals.css matches the latter. Painting from `--bg`/`--bg-3`
- *    picks the token file over the prose and gets light-theme support free.
+ * 1. **Colour comes from tokens, never the design system's literals.** This is
+ *    what made the v8 ground move (warm near-black → ink navy) a value-only edit
+ *    in globals.css that this file inherited without a single change: every
+ *    surface here paints from `--bg`/`--bg-3`, so re-anchoring the token
+ *    re-anchored the shell. The retired bundles also contradicted themselves on
+ *    the base surfaces — a README table and a tokens file disagreeing — which is
+ *    the second reason not to copy a literal out of a design bundle.
  * 2. **The faintest labels use `--ink-3`, not the handoff's `#6f6660`.** That
  *    literal behind a 10px eyebrow is precisely the contrast failure axe caught
  *    in DESIGN_SYNC row 262; `--ink-3` is the value measured to clear 4.5:1 on

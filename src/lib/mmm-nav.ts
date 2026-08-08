@@ -33,7 +33,7 @@ export type MmmNavItem = { id: string; label: string; href: string };
 
 export type MmmModule = {
   id: MmmModuleId;
-  /** Level-1 pill label — Syne 800, 19px, as drawn. */
+  /** Level-1 pill label — display 800, 19px, as drawn. */
   label: string;
   href: string;
   /** Level-2 fan-out items. Empty means the pill navigates directly. */

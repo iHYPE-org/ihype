@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
   const accent = '#ff5029';
   const teal   = '#22e5d4';
   const purple = '#b983ff';
-  const bg     = '#0a0805';
-  const bg2    = '#100d09';
+  const bg     = '#0b1220';
+  const bg2    = '#121b2e';
 
   const typeColor =
     type === 'show' ? teal :
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
           )}
           <div style={{
             fontSize: title.length > 40 ? 52 : title.length > 25 ? 62 : 72,
-            fontWeight: 900, color: '#f0ebe5',
+            fontWeight: 900, color: '#eef1f6',
             letterSpacing: '-0.04em', lineHeight: 0.95,
             marginBottom: 24,
             display: 'flex',

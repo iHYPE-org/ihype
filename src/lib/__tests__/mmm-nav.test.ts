@@ -130,7 +130,7 @@ describe('radial arc geometry', () => {
   // breakpoint the design system names). Slot 5 sits at x=226 and has the least
   // headroom of any slot, so a longer MUSIC label is the thing most likely to
   // push a pill off-screen — which is why the width is derived from the actual
-  // longest label in the manifest rather than hardcoded. DM Sans 14px averages
+  // longest label in the manifest rather than hardcoded. Body type at 14px averages
   // ~0.54em per character, plus the design's 18px horizontal padding each side.
   it('keeps every narrow-arc pill inside a 375px frame, using the real labels', () => {
     const longest = Math.max(...MMM_MUSIC_TABS.map((item) => item.label.length));

@@ -7,7 +7,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   return (
     <html>
       <body style={{
-        background: 'var(--bg)', color: '#f0ebe5', fontFamily: "'DM Sans', sans-serif",
+        background: 'var(--bg)', color: '#eef1f6', fontFamily: 'var(--font-body)',
         minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
         padding: '40px 24px', textAlign: 'center',
       }}>
@@ -19,7 +19,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
             <path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
           </svg>
         </div>
-        <h2 style={{ fontFamily: "'Syne', sans-serif", fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px' }}>
           {t('globalError.heading', 'Something broke.')}
         </h2>
         <p style={{ fontSize: 15, color: 'rgba(240,235,229,.6)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
@@ -27,7 +27,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
         </p>
         <button
           onClick={reset}
-          style={{ padding: '14px 28px', background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none', borderRadius: 10, fontFamily: "'Syne', sans-serif", fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
+          style={{ padding: '14px 28px', background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none', borderRadius: 10, fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, cursor: 'pointer' }}
         >
           {t('globalError.tryAgain', 'Try again')}
         </button>

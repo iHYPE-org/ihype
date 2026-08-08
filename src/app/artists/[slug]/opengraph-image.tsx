@@ -25,7 +25,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           width: '100%', height: '100%',
           display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0a0805',
+          background: '#0b1220',
           padding: '72px 80px',
           fontFamily: 'sans-serif',
         }}
@@ -36,7 +36,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {genre ? <div style={{ fontSize: 18, color: '#ff5029', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{genre}</div> : null}
-          <div style={{ fontSize: 80, fontWeight: 900, color: '#f0ebe5', lineHeight: 0.98, letterSpacing: '-0.04em' }}>{name}</div>
+          <div style={{ fontSize: 80, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.04em' }}>{name}</div>
           <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
             {location ? <span style={{ fontSize: 24, color: '#5a5048' }}>{location}</span> : null}
             {hype ? <span style={{ fontSize: 24, color: '#b983ff', fontWeight: 700 }}>{hype}</span> : null}

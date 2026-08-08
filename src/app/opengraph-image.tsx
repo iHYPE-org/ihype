@@ -13,7 +13,7 @@ export default function OgImage() {
           width: '100%', height: '100%',
           display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0a0805',
+          background: '#0b1220',
           padding: '72px 80px',
           fontFamily: 'sans-serif',
         }}
@@ -26,7 +26,7 @@ export default function OgImage() {
 
         {/* Centre: headline */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 72, fontWeight: 900, color: '#f0ebe5', lineHeight: 1.05, letterSpacing: '-0.03em' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 72, fontWeight: 900, color: '#eef1f6', lineHeight: 1.05, letterSpacing: '-0.03em' }}>
             <span>Independent music,</span>
             <span style={{ color: '#ff5029' }}>built for the scene.</span>
           </div>

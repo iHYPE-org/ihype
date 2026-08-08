@@ -55,7 +55,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
             flexShrink: 0,
             background: session.user.image ? `url(${session.user.image}) center/cover` : 'rgba(var(--role-venue-rgb),.18)',
             color: 'var(--role-venue)',
-            fontFamily: "var(--font-display, 'Syne', sans-serif)",
+            fontFamily: "var(--font-display)",
             fontSize: 13,
             fontWeight: 800,
           }}

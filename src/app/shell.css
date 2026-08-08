@@ -474,7 +474,7 @@ html.ihype-shell-locked .site-dock-r {
 html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
 
 /* ── Route body pattern ─────────────────────────────────────────────────── */
-/* "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne 800
+/* "Each non-Discover route opens with a back pill, an Eyebrow, and a display-800
    32px h1." The shared pieces live here so a route only supplies its content. */
 .shell-route { min-width: 0; }
 .shell-route-narrow { max-width: 760px; }
@@ -512,24 +512,28 @@ html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
    the light theme and pins --bg to #000, so a light-theme member turning high
    contrast on used to get a black page. These restore the intended behaviour
    for both themes. */
+/* High contrast lifts the two muted inks and the hairlines. Re-anchored with
+   the ground 2026-08-08: these are the navy-side neutrals, not the retired warm
+   ones — a warm high-contrast ink over a navy ground reads as a colour cast
+   rather than as more contrast. */
 html.high-contrast {
   --line: rgba(255, 255, 255, 0.30);
   --line-2: rgba(255, 255, 255, 0.62);
-  --ink-2: #e6ded4;
-  --ink-3: #bdb3a7;
+  --ink-2: #dde3ec;
+  --ink-3: #b3bdcd;
 }
 html.high-contrast[data-theme='light'] {
-  --bg: #f5f2ed;
+  --bg: #f4f6fa;
   --text: var(--ink);
   --muted: var(--ink-3);
-  --line: rgba(28, 21, 16, 0.28);
-  --line-2: rgba(28, 21, 16, 0.55);
-  --ink-2: #3a3128;
-  --ink-3: #5a5048;
+  --line: rgba(16, 23, 37, 0.28);
+  --line-2: rgba(16, 23, 37, 0.55);
+  --ink-2: #262f3f;
+  --ink-3: #414b5c;
   color-scheme: light;
 }
 html.high-contrast[data-theme='light'] body {
-  background: #f5f2ed !important;
+  background: #f4f6fa !important;
   color: var(--ink) !important;
 }
 html.high-contrast[data-theme='light'] a { color: #005f6b; }
@@ -537,7 +541,7 @@ html.high-contrast[data-theme='light'] button,
 html.high-contrast[data-theme='light'] input,
 html.high-contrast[data-theme='light'] select,
 html.high-contrast[data-theme='light'] textarea {
-  border-color: rgba(28, 21, 16, 0.7) !important;
+  border-color: rgba(16, 23, 37, 0.7) !important;
   background-color: #ffffff !important;
   color: #1a1410 !important;
 }
