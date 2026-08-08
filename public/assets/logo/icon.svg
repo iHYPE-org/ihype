@@ -1,4 +1,133 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#0a0805"></rect>
-  <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="#ff5029"></path>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ihype-mark-title ihype-mark-desc">
+  <title id="ihype-mark-title">iHYPE</title>
+  <desc id="ihype-mark-desc">The iHYPE wordmark above a Local Music label and a crowd of raised hands.</desc>
+
+  <!--
+    The single iHYPE mark: nav tile AND app icon.
+
+    Colours are literal on purpose. This file is rendered as a favicon, as a PWA
+    icon and inside a Capacitor WebView, none of which resolve CSS custom
+    properties from globals.css — a var() here would paint nothing. The values
+    are the brand constants: accent #ff5029, ink #f0ebe5, base #0a0805.
+    design-exempt: brand asset, rendered outside any stylesheet's reach.
+
+    Every element sits inside the maskable safe circle (r=205 about 256,256)
+    except the crowd, which is meant to bleed off the bottom edge; an adaptive
+    icon mask crops crowd texture, never the wordmark or the label.
+
+    Letterforms are drawn as geometry rather than <text>. Syne and DM Sans are
+    loaded through next/font and do not exist in a favicon, an OS icon cache or
+    a screenshotter, so live text would silently fall back to a system face and
+    the mark would differ everywhere it is used.
+  -->
+
+  <defs>
+    <linearGradient id="ihype-tile" x1="0" y1="0" x2="0" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#15120d" />
+      <stop offset="1" stop-color="#0a0805" />
+    </linearGradient>
+
+    <!-- The stage wash the crowd is lit by. -->
+    <radialGradient id="ihype-stage" cx="256" cy="506" r="272" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5029" stop-opacity=".5" />
+      <stop offset="1" stop-color="#ff5029" stop-opacity="0" />
+    </radialGradient>
+
+    <clipPath id="ihype-tile-clip"><rect class="ihype-tile-shape" width="512" height="512" rx="112" /></clipPath>
+
+    <!-- One person: shoulders, head, and a body that runs off the bottom.
+         56 wide against a 62 pitch, so ~6 units of tile shows between bodies —
+         at a solid fill they merge into one orange block and the crowd stops
+         reading as people. -->
+    <g id="ihype-fan">
+      <path d="M-28 0c0-16 12-25 28-25s28 9 28 25z" />
+      <circle cx="0" cy="-40" r="15" />
+      <rect x="-28" y="-5" width="56" height="260" />
+    </g>
+    <g id="ihype-arm"><rect x="-5" y="-96" width="10" height="96" rx="5" /></g>
+  </defs>
+
+  <g clip-path="url(#ihype-tile-clip)">
+    <rect width="512" height="512" fill="url(#ihype-tile)" />
+    <rect width="512" height="512" fill="url(#ihype-stage)" />
+
+    <!-- ── The crowd ──────────────────────────────────────────────────────
+         Two ranks. The back rank is smaller, higher and dimmed, which is what
+         makes it read as depth rather than as a second row of the same people. -->
+    <g fill="#ff5029" opacity=".42">
+      <use href="#ihype-fan" transform="translate(-10 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(44 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(98 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(152 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(206 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(260 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(314 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(368 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(422 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(476 428) scale(.78)" />
+      <use href="#ihype-fan" transform="translate(530 428) scale(.78)" />
+      <use href="#ihype-arm" transform="translate(118 412) rotate(16) scale(.8)" />
+      <use href="#ihype-arm" transform="translate(334 412) rotate(-12) scale(.8)" />
+      <use href="#ihype-arm" transform="translate(226 408) rotate(5) scale(.8)" />
+    </g>
+
+    <g fill="#ff5029">
+      <use href="#ihype-fan" transform="translate(20 470)" />
+      <use href="#ihype-fan" transform="translate(82 470)" />
+      <use href="#ihype-fan" transform="translate(144 470)" />
+      <use href="#ihype-fan" transform="translate(206 470)" />
+      <use href="#ihype-fan" transform="translate(268 470)" />
+      <use href="#ihype-fan" transform="translate(330 470)" />
+      <use href="#ihype-fan" transform="translate(392 470)" />
+      <use href="#ihype-fan" transform="translate(454 470)" />
+      <use href="#ihype-fan" transform="translate(516 470)" />
+      <use href="#ihype-arm" transform="translate(120 452) rotate(-14)" />
+      <use href="#ihype-arm" transform="translate(292 452) rotate(11)" />
+      <use href="#ihype-arm" transform="translate(416 452) rotate(-8)" />
+    </g>
+
+    <!-- ── The wordmark ───────────────────────────────────────────────────
+         Drawn at a 100-unit cap height, then scaled to 280 wide and centred. -->
+    <g transform="translate(116 140) scale(.749)">
+      <g fill="#ff5029">
+        <rect width="24" height="20" rx="4" />
+        <rect y="28" width="24" height="72" rx="3" />
+      </g>
+      <g fill="#f0ebe5">
+        <rect x="36" width="24" height="100" rx="3" />
+        <rect x="96" width="24" height="100" rx="3" />
+        <rect x="36" y="38" width="84" height="22" />
+        <path d="M132 0h26l13 32 13-32h26l-27 62v38h-24v-38z" />
+        <path fill-rule="evenodd" d="M222 0h36c22 0 38 12 38 29s-16 29-38 29h-12v42h-24zm24 20v18h12c8 0 13-4 13-9s-5-9-13-9z" />
+        <rect x="308" width="24" height="100" rx="3" />
+        <rect x="308" width="66" height="24" rx="3" />
+        <rect x="308" y="38" width="58" height="22" />
+        <rect x="308" y="76" width="66" height="24" rx="3" />
+      </g>
+    </g>
+
+    <!-- ── | LOCAL MUSIC | ────────────────────────────────────────────────
+         Monoline caps between accent pipes. Stroked rather than filled so the
+         weight stays even at 48px, where a filled face closes up its counters. -->
+    <g transform="translate(90 242) scale(.799)" fill="none" stroke-width="7" stroke-linecap="square">
+      <g stroke="#ff5029">
+        <path d="M3.5-2V32" />
+        <path d="M411-2V32" />
+      </g>
+      <g stroke="#f0ebe5">
+        <path d="M30.5 0v26.5H47" />
+        <rect x="60.5" y="3.5" width="23" height="23" rx="11.5" />
+        <path d="M120 7a11.5 11.5 0 1 0 0 16" />
+        <path d="M138.5 28 148 2l9.5 26M141 20h14" />
+        <path d="M174.5 0v26.5H191" />
+        <path d="M226.5 30V3l13.5 17L253.5 3v27" />
+        <path d="M270.5 0v13a12.5 12.5 0 0 0 25 0V0" />
+        <path d="M330 8c0-5-6-7.5-10.5-7.5S312 4 312 8s4 6.5 9 7c5 .5 9 3 9 7s-5 7.5-10 7.5S311 27 310 24" />
+        <path d="M347.5 0v30" />
+        <path d="M384 7a11.5 11.5 0 1 0 0 16" />
+      </g>
+    </g>
+
+    <rect class="ihype-tile-edge" x=".75" y=".75" width="510.5" height="510.5" rx="111.25" fill="none" stroke="#f0ebe5" stroke-opacity=".14" stroke-width="1.5" />
+  </g>
 </svg>

@@ -1,4 +1,106 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="7" fill="#0a0805"></rect>
-  <path d="M17.5 6L9.5 18h6l-1 8 9-12h-6l1-8z" fill="#ff5029"></path>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ihype-fav-title">
+  <title id="ihype-fav-title">iHYPE</title>
+
+  <!--
+    The 16-32px cut. Two elements only: the wordmark at full tile width and the
+    crowd, drawn from the same figure library as ihype-logo-mark.svg at five
+    figures instead of twenty-one. The LOCAL MUSIC label is deliberately absent -
+    at 16px its letters are a sixth of a pixel tall, so carrying it would cost
+    the wordmark a third of its size to render a grey smear. The label lives in
+    the nav tile (ihype-logo-mark-compact.svg) and the app icon
+    (ihype-logo-mark.svg), both of which have the pixels to spend on it.
+    design-exempt: brand asset, rendered where no stylesheet reaches.
+  -->
+
+  <defs>
+    <radialGradient id="ihype-f-stage" cx="256" cy="506" r="268" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ff5029" stop-opacity=".45" />
+      <stop offset="1" stop-color="#ff5029" stop-opacity="0" />
+    </radialGradient>
+    <clipPath id="ihype-f-clip"><rect class="ihype-tile-shape" width="512" height="512" rx="112" /></clipPath>
+
+    <!-- Origin is the TOP OF THE HEAD, y growing down, so a figure is placed by
+         where its head lands rather than by a baseline nothing can see. -->
+    <g id="ihype-f-p1"><!-- short hair, both hands up -->
+      <ellipse cx="0" cy="22" rx="19" ry="22" />
+      <path d="M-9 36h18v20h-18z" />
+      <path d="M-10 53C-28 56-40 68-43 92l-4 120h94l-4-120c-3-24-15-36-33-39z" />
+      <path d="M-30 74-52 24-48-26" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-48" cy="-33" r="8.5" />
+      <path d="M30 74 52 24 48-26" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="48" cy="-33" r="8.5" />
+    </g>
+    <g id="ihype-f-p2"><!-- bun, one arm up holding a phone -->
+      <ellipse cx="0" cy="24" rx="18" ry="21" />
+      <circle cx="14" cy="4" r="9.5" />
+      <path d="M-8 38h16v19h-16z" />
+      <path d="M-9 54C-26 57-38 69-41 93l-4 119h90l-4-119c-3-24-15-36-32-39z" />
+      <path d="M28 76 46 26 42-14" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="31" y="-46" width="22" height="34" rx="4" />
+    </g>
+    <g id="ihype-f-p3"><!-- long hair, arms down -->
+      <path d="M-28 60c-6-30 2-54 28-54s34 24 28 54c-2 10-9 12-16 12h-24c-7 0-14-2-16-12z" />
+      <ellipse cx="0" cy="28" rx="17" ry="20" />
+      <path d="M-8 42h16v18h-16z" />
+      <path d="M-9 57C-28 60-41 73-44 97l-4 115h96l-4-115c-3-24-16-37-35-40z" />
+    </g>
+    <g id="ihype-f-p4"><!-- cap, one arm up -->
+      <ellipse cx="0" cy="27" rx="18" ry="21" />
+      <path d="M-19 20C-19 5-11-4 0-4s19 9 19 24l18 5H-19z" />
+      <path d="M-8 40h16v19h-16z" />
+      <path d="M-9 56C-27 59-39 72-42 96l-4 116h92l-4-116c-3-24-15-37-33-40z" />
+      <path d="M-29 76-50 32-44-12" stroke-width="12.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-44" cy="-19" r="8" />
+    </g>
+    <g id="ihype-f-p5"><!-- curls, both hands up, slimmer -->
+      <circle cx="0" cy="26" r="20" />
+      <circle cx="-16" cy="14" r="10.5" /><circle cx="16" cy="14" r="10.5" /><circle cx="0" cy="6" r="11.5" />
+      <path d="M-8 42h16v18h-16z" />
+      <path d="M-9 56C-26 59-37 71-40 95l-4 117h88l-4-117c-3-24-14-36-31-39z" />
+      <path d="M-28 76-46 32-54-8" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-54" cy="-15" r="8" />
+      <path d="M28 76 46 32 54-8" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="54" cy="-15" r="8" />
+    </g>
+  </defs>
+
+  <g clip-path="url(#ihype-f-clip)">
+    <rect width="512" height="512" fill="#0a0805" />
+    <rect width="512" height="512" fill="url(#ihype-f-stage)" />
+
+    <g fill="#ff5029" stroke="#ff5029" stroke-width="0" opacity=".38">
+      <use href="#ihype-f-p3" transform="translate(10 300) scale(.95)" />
+      <use href="#ihype-f-p1" transform="translate(100 288) scale(.95)" />
+      <use href="#ihype-f-p5" transform="translate(190 304) scale(.95)" />
+      <use href="#ihype-f-p2" transform="translate(280 290) scale(.95)" />
+      <use href="#ihype-f-p4" transform="translate(370 302) scale(.95)" />
+      <use href="#ihype-f-p3" transform="translate(460 292) scale(.95)" />
+    </g>
+
+    <g fill="#ff5029" stroke="#ff5029" stroke-width="0">
+      <use href="#ihype-f-p1" transform="translate(20 346) scale(1.35)" />
+      <use href="#ihype-f-p3" transform="translate(128 364) scale(1.35)" />
+      <use href="#ihype-f-p2" transform="translate(236 344) scale(1.35)" />
+      <use href="#ihype-f-p4" transform="translate(344 362) scale(1.35)" />
+      <use href="#ihype-f-p5" transform="translate(452 346) scale(1.35)" />
+    </g>
+
+    <g transform="translate(36 116) scale(1.176)">
+      <g fill="#ff5029">
+        <rect width="24" height="20" rx="4" />
+        <rect y="28" width="24" height="72" rx="3" />
+      </g>
+      <g fill="#f0ebe5">
+        <rect x="36" width="24" height="100" rx="3" />
+        <rect x="96" width="24" height="100" rx="3" />
+        <rect x="36" y="38" width="84" height="22" />
+        <path d="M132 0h26l13 32 13-32h26l-27 62v38h-24v-38z" />
+        <path fill-rule="evenodd" d="M222 0h36c22 0 38 12 38 29s-16 29-38 29h-12v42h-24zm24 20v18h12c8 0 13-4 13-9s-5-9-13-9z" />
+        <rect x="308" width="24" height="100" rx="3" />
+        <rect x="308" width="66" height="24" rx="3" />
+        <rect x="308" y="38" width="58" height="22" />
+        <rect x="308" y="76" width="66" height="24" rx="3" />
+      </g>
+    </g>
+  </g>
 </svg>

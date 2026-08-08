@@ -785,29 +785,15 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
   justify-items: start;
   text-decoration: none;
 }
-.nav-logo-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.12rem;
-  font-size: 1.05rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.nav-logo-word {
-  color: #fff7ec;
-}
-.nav-logo-dot {
-  background: var(--accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.nav-logo:hover .nav-logo-discover,
-.nav-logo:focus-visible .nav-logo-discover {
-  background:
-    linear-gradient(90deg, rgba(35,208,216,0.34), rgba(255,103,196,0.3), rgba(255,196,87,0.34));
-  color: #fff8ec;
+/* The marketing nav's mark. The text lockup this replaces owned six selectors
+   across four blocks of this file; they are gone rather than left dead, which
+   is the fix audit:css's override ratchet is asking for. 44px is also the
+   mobile-fit touch floor, so the tile needs no separate min-size rule. */
+.nav-logo-tile {
+  display: block;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
 }
 .fan-playlist-manager {
   position: relative;
@@ -2750,21 +2736,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
 .nav-logo {
   gap: 0.28rem;
 }
-.nav-logo-mark {
-  gap: 0.18rem;
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-}
-.nav-logo-word {
-  color: #f8fbff;
-}
-.nav-logo-dot {
-  background: linear-gradient(135deg, #8ddfff, #ffe0a2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 .media-player-button {
   border-color: var(--hair-80);
   background: var(--hair-45);
@@ -2884,10 +2855,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
     width: 100%;
     justify-content: center;
   }
-  .nav-logo-mark {
-    font-size: 0.86rem;
-    letter-spacing: 0.05em;
-  }
   .fan-playlist-panel {
     right: -0.1rem;
     width: min(94vw, 400px);
@@ -2986,10 +2953,7 @@ body {
   gap: 1rem;
   padding: 0.72rem 0;
 }
-
-.nav-logo-mark {
-  letter-spacing: 0.14em;
-}.button,
+.button,
 .directory-switcher-link,
 
 .panel,
@@ -3086,38 +3050,9 @@ body {
   padding: 0 28px;
 }
 
-.nav-logo,
-
-.nav-logo-mark {
+.nav-logo {
   display: inline-flex;
   align-items: center;
-  gap: 2px;
-  color: #fff;
-  font-family: var(--font-display, 'Syne', sans-serif);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.17em;
-  line-height: 1;
-  text-transform: uppercase;
-  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-}
-
-.nav-logo-word {
-  color: #fff;
-  transition: color 150ms;
-}
-
-.nav-logo-dot {
-  color: var(--accent, var(--accent));
-  transition: color 150ms;
-}
-
-.nav-logo:hover .nav-logo-dot,
-.nav-logo:focus-visible .nav-logo-dot {
-  background: linear-gradient(90deg, #ff4635, #ff3d87 35%, #7c5cff 68%, #39d8df);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
 }
 .nav-a11y-button{
   min-height: 38px;

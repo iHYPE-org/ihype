@@ -12,7 +12,7 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
         <Link aria-label="iHYPE home" className="fan-entry-logo" href="/">
-          <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+          <Image alt="" height={54} priority src="/brand/ihype-logo-mark-compact.svg" unoptimized width={54} />
         </Link>
         <nav aria-label="Account" className="fan-entry-nav">
           <ThemeToggle />

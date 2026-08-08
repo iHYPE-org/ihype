@@ -129,7 +129,9 @@ html.ihype-shell-locked .site-shell > footer {
   overflow: hidden;
   border: 1px solid var(--line-2);
   border-radius: 12px;
-  background: #000; /* The sticker logo is authored on black; this is the asset's own matte, not a theme color. */
+  /* The mark is authored on its own near-black tile; this is that matte showing
+     through the corner radius, not a theme color. design-exempt: brand asset matte. */
+  background: #0a0805;
   cursor: pointer;
 }
 .shell-logo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
