@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="ihype-mark-title ihype-mark-desc">
   <title id="ihype-mark-title">iHYPE</title>
-  <desc id="ihype-mark-desc">The iHYPE wordmark above a Local Music label and a crowd of raised hands.</desc>
+  <desc id="ihype-mark-desc">The iHYPE wordmark above a Local Music label and a crowd of people with their hands up.</desc>
 
   <!--
     The single iHYPE mark: nav tile AND app icon.
@@ -11,14 +11,35 @@
     are the brand constants: accent #ff5029, ink #f0ebe5, base #0a0805.
     design-exempt: brand asset, rendered outside any stylesheet's reach.
 
-    Every element sits inside the maskable safe circle (r=205 about 256,256)
-    except the crowd, which is meant to bleed off the bottom edge; an adaptive
-    icon mask crops crowd texture, never the wordmark or the label.
+    Everything sits inside the maskable safe circle (r=205 about 256,256) except
+    the crowd, which is meant to bleed off the bottom edge; an adaptive icon mask
+    crops crowd texture, never the wordmark or the label.
 
     Letterforms are drawn as geometry rather than <text>. Syne and DM Sans are
     loaded through next/font and do not exist in a favicon, an OS icon cache or
     a screenshotter, so live text would silently fall back to a system face and
     the mark would differ everywhere it is used.
+
+    ## The crowd
+
+    Five figures — each with a head, hair, a visible neck and sloped shoulders,
+    and a distinct pose — instanced with varied scale, height and order. Three
+    things make it read as an audience rather than a row of icons, and all three
+    are easy to undo by accident:
+
+      1. **They are cropped at the chest.** A figure drawn full-length reads as
+         a chess pawn no matter how well the shoulders are shaped. You see a
+         crowd's heads and shoulders, not its legs.
+      2. **They overlap.** The pitch is smaller than the shoulder width, so
+         neighbouring shoulders merge into one continuous mass and the heads
+         break the skyline above it. Spacing them apart turns the mass back into
+         separate figures standing in a line.
+      3. **The head tops vary.** A constant y is the single strongest tell that
+         something was placed by a loop rather than being a group of people.
+
+    The back rank is smaller, higher and dimmed — that is the depth. Keep the
+    two ranks' pitches different, or the rear heads line up in the gaps and the
+    repeat becomes visible.
   -->
 
   <defs>
@@ -35,55 +56,81 @@
 
     <clipPath id="ihype-tile-clip"><rect class="ihype-tile-shape" width="512" height="512" rx="112" /></clipPath>
 
-    <!-- One person: shoulders, head, and a body that runs off the bottom.
-         56 wide against a 62 pitch, so ~6 units of tile shows between bodies —
-         at a solid fill they merge into one orange block and the crowd stops
-         reading as people. -->
-    <g id="ihype-fan">
-      <path d="M-28 0c0-16 12-25 28-25s28 9 28 25z" />
-      <circle cx="0" cy="-40" r="15" />
-      <rect x="-28" y="-5" width="56" height="260" />
+    <!-- Origin is the TOP OF THE HEAD, y growing down, so a figure is placed by
+         where its head lands rather than by a baseline nothing can see. -->
+    <g id="ihype-p1"><!-- short hair, both hands up -->
+      <ellipse cx="0" cy="22" rx="19" ry="22" />
+      <path d="M-9 36h18v20h-18z" />
+      <path d="M-10 53C-28 56-40 68-43 92l-4 120h94l-4-120c-3-24-15-36-33-39z" />
+      <path d="M-30 74-52 24-48-26" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-48" cy="-33" r="8.5" />
+      <path d="M30 74 52 24 48-26" stroke-width="13" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="48" cy="-33" r="8.5" />
     </g>
-    <g id="ihype-arm"><rect x="-5" y="-96" width="10" height="96" rx="5" /></g>
+    <g id="ihype-p2"><!-- bun, one arm up holding a phone -->
+      <ellipse cx="0" cy="24" rx="18" ry="21" />
+      <circle cx="14" cy="4" r="9.5" />
+      <path d="M-8 38h16v19h-16z" />
+      <path d="M-9 54C-26 57-38 69-41 93l-4 119h90l-4-119c-3-24-15-36-32-39z" />
+      <path d="M28 76 46 26 42-14" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <rect x="31" y="-46" width="22" height="34" rx="4" />
+    </g>
+    <g id="ihype-p3"><!-- long hair, arms down -->
+      <path d="M-28 60c-6-30 2-54 28-54s34 24 28 54c-2 10-9 12-16 12h-24c-7 0-14-2-16-12z" />
+      <ellipse cx="0" cy="28" rx="17" ry="20" />
+      <path d="M-8 42h16v18h-16z" />
+      <path d="M-9 57C-28 60-41 73-44 97l-4 115h96l-4-115c-3-24-16-37-35-40z" />
+    </g>
+    <g id="ihype-p4"><!-- cap, one arm up -->
+      <ellipse cx="0" cy="27" rx="18" ry="21" />
+      <path d="M-19 20C-19 5-11-4 0-4s19 9 19 24l18 5H-19z" />
+      <path d="M-8 40h16v19h-16z" />
+      <path d="M-9 56C-27 59-39 72-42 96l-4 116h92l-4-116c-3-24-15-37-33-40z" />
+      <path d="M-29 76-50 32-44-12" stroke-width="12.5" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-44" cy="-19" r="8" />
+    </g>
+    <g id="ihype-p5"><!-- curls, both hands up, slimmer -->
+      <circle cx="0" cy="26" r="20" />
+      <circle cx="-16" cy="14" r="10.5" /><circle cx="16" cy="14" r="10.5" /><circle cx="0" cy="6" r="11.5" />
+      <path d="M-8 42h16v18h-16z" />
+      <path d="M-9 56C-26 59-37 71-40 95l-4 117h88l-4-117c-3-24-14-36-31-39z" />
+      <path d="M-28 76-46 32-54-8" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="-54" cy="-15" r="8" />
+      <path d="M28 76 46 32 54-8" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="54" cy="-15" r="8" />
+    </g>
   </defs>
 
   <g clip-path="url(#ihype-tile-clip)">
     <rect width="512" height="512" fill="url(#ihype-tile)" />
     <rect width="512" height="512" fill="url(#ihype-stage)" />
 
-    <!-- ── The crowd ──────────────────────────────────────────────────────
-         Two ranks. The back rank is smaller, higher and dimmed, which is what
-         makes it read as depth rather than as a second row of the same people. -->
-    <g fill="#ff5029" opacity=".42">
-      <use href="#ihype-fan" transform="translate(-10 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(44 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(98 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(152 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(206 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(260 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(314 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(368 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(422 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(476 428) scale(.78)" />
-      <use href="#ihype-fan" transform="translate(530 428) scale(.78)" />
-      <use href="#ihype-arm" transform="translate(118 412) rotate(16) scale(.8)" />
-      <use href="#ihype-arm" transform="translate(334 412) rotate(-12) scale(.8)" />
-      <use href="#ihype-arm" transform="translate(226 408) rotate(5) scale(.8)" />
+    <!-- Back rank: pitch 46 against the front's 58, so the two never line up. -->
+    <g fill="#ff5029" stroke="#ff5029" stroke-width="0" opacity=".38">
+      <use href="#ihype-p3" transform="translate(4 344) scale(.55)" />
+      <use href="#ihype-p1" transform="translate(50 336) scale(.55)" />
+      <use href="#ihype-p5" transform="translate(96 350) scale(.55)" />
+      <use href="#ihype-p2" transform="translate(142 338) scale(.55)" />
+      <use href="#ihype-p4" transform="translate(188 348) scale(.55)" />
+      <use href="#ihype-p3" transform="translate(234 336) scale(.55)" />
+      <use href="#ihype-p1" transform="translate(280 350) scale(.55)" />
+      <use href="#ihype-p4" transform="translate(326 340) scale(.55)" />
+      <use href="#ihype-p5" transform="translate(372 348) scale(.55)" />
+      <use href="#ihype-p2" transform="translate(418 336) scale(.55)" />
+      <use href="#ihype-p3" transform="translate(464 346) scale(.55)" />
+      <use href="#ihype-p1" transform="translate(510 340) scale(.55)" />
     </g>
 
-    <g fill="#ff5029">
-      <use href="#ihype-fan" transform="translate(20 470)" />
-      <use href="#ihype-fan" transform="translate(82 470)" />
-      <use href="#ihype-fan" transform="translate(144 470)" />
-      <use href="#ihype-fan" transform="translate(206 470)" />
-      <use href="#ihype-fan" transform="translate(268 470)" />
-      <use href="#ihype-fan" transform="translate(330 470)" />
-      <use href="#ihype-fan" transform="translate(392 470)" />
-      <use href="#ihype-fan" transform="translate(454 470)" />
-      <use href="#ihype-fan" transform="translate(516 470)" />
-      <use href="#ihype-arm" transform="translate(120 452) rotate(-14)" />
-      <use href="#ihype-arm" transform="translate(292 452) rotate(11)" />
-      <use href="#ihype-arm" transform="translate(416 452) rotate(-8)" />
+    <g fill="#ff5029" stroke="#ff5029" stroke-width="0">
+      <use href="#ihype-p1" transform="translate(10 376) scale(.74)" />
+      <use href="#ihype-p3" transform="translate(68 390) scale(.74)" />
+      <use href="#ihype-p2" transform="translate(126 372) scale(.74)" />
+      <use href="#ihype-p5" transform="translate(184 386) scale(.74)" />
+      <use href="#ihype-p4" transform="translate(242 374) scale(.74)" />
+      <use href="#ihype-p3" transform="translate(300 388) scale(.74)" />
+      <use href="#ihype-p1" transform="translate(358 376) scale(.74)" />
+      <use href="#ihype-p2" transform="translate(416 390) scale(.74)" />
+      <use href="#ihype-p4" transform="translate(474 378) scale(.74)" />
     </g>
 
     <!-- ── The wordmark ───────────────────────────────────────────────────
