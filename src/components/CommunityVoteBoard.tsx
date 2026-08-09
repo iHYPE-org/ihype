@@ -26,7 +26,7 @@ const rowStyle: React.CSSProperties = {
 };
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', fontFamily: 'var(--font-body, DM Sans, sans-serif)', fontSize: 14,
+  width: '100%', fontFamily: 'var(--font-body, Work Sans, sans-serif)', fontSize: 14,
   color: 'var(--ink)', background: 'var(--bg-3)', border: '1px solid var(--line-2)',
   borderRadius: 9, padding: '11px 13px', outline: 'none',
 };

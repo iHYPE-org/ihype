@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Page Builder" description="Structured profile pages for Artist, Venue and Advertiser — fixed sections, prefilled fields, no generation." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-base,#0b1220);color:var(--ink-1,#eef1f6);font-family:'Work Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+input,textarea,button,select{font:inherit;color:inherit}
+input:focus,textarea:focus{outline:none;border-color:var(--accent,#ff5029)}
+a{color:var(--accent,#ff5029)}a:hover{color:var(--ink-1,#eef1f6)}
+</style>
+</helmet>
+
+<div style="max-width:1240px;margin:0 auto;padding:44px 34px 90px">
+
+  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3,#8792a6)">Page builder</div>
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:44px;letter-spacing:-.035em;line-height:1.05;margin:10px 0 0">Every page, the same shape</h1>
+  <p style="max-width:640px;margin:14px 0 0;font-size:15px;line-height:1.65;color:var(--ink-2,#96a1b5);text-wrap:pretty">Fill in the sections for your kind of account. The layout is fixed and identical for everyone, so a fan reading your page already knows where everything is. Nothing is generated — what you type is what shows.</p>
+
+  <!-- The type picker is the only thing that changes the form. The page SHELL is
+       identical across all four; only which fields exist differs, which is the
+       whole point of a fixed layout. -->
+  <div style="display:flex;flex-wrap:wrap;gap:9px;margin:26px 0 0">
+    <!-- Two literal branches rather than one holed style: the picker is the first
+         thing on the page a hand goes to, and a holed background cannot paint
+         until the logic lands, so a holed version renders four unstyled boxes
+         for the length of the stream. -->
+    <sc-for list="{{ kinds }}" as="k" hint-placeholder-count="4">
+      <sc-if value="{{ k.on }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ k.pick }}" type="button" style="border-radius:9999px;padding:11px 20px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14.5px;letter-spacing:-.01em;background:rgba(255,80,41,.14);color:var(--ink-1,#eef1f6);border:1px solid var(--accent,#ff5029)">{{ k.label }}</button>
+      </sc-if>
+      <sc-if value="{{ k.off }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ k.pick }}" type="button" style="border-radius:9999px;padding:11px 20px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14.5px;letter-spacing:-.01em;background:var(--bg-surface,#121b2e);color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))">{{ k.label }}</button>
+      </sc-if>
+    </sc-for>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:14px;margin-top:24px;padding:16px 20px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px">
+    <div style="flex:1;min-width:0">
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.015em">{{ doneLabel }}</div>
+      <div style="display:flex;gap:4px;margin-top:10px">
+        <sc-for list="{{ meter }}" as="m" hint-placeholder-count="5">
+          <sc-if value="{{ m.on }}" hint-placeholder-val="{{ false }}"><span style="flex:1;height:6px;border-radius:9999px;background:var(--accent,#ff5029)"></span></sc-if>
+          <sc-if value="{{ m.off }}" hint-placeholder-val="{{ true }}"><span style="flex:1;height:6px;border-radius:9999px;background:rgba(238,241,246,.09)"></span></sc-if>
+        </sc-for>
+      </div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);text-align:right;flex:0 0 auto">Required<br>fields only</div>
+  </div>
+
+  <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,440px);gap:30px;align-items:start;margin-top:30px">
+
+    <!-- ── The form ── -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <sc-for list="{{ sections }}" as="s" hint-placeholder-count="4">
+        <section style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:18px;padding:22px 24px 24px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px">
+            <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.025em;margin:0">{{ s.title }}</h2>
+            <sc-if value="{{ s.isDone }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-venue-text,#22e5d4);flex:0 0 auto">{{ s.state }}</span></sc-if>
+            <sc-if value="{{ s.isPart }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--warning-text,#ffb84a);flex:0 0 auto">{{ s.state }}</span></sc-if>
+            <sc-if value="{{ s.isSpare }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);flex:0 0 auto">{{ s.state }}</span></sc-if>
+            <sc-if value="{{ s.isBad }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--color-error,#ff4545);flex:0 0 auto">{{ s.state }}</span></sc-if>
+          </div>
+          <p style="margin:7px 0 0;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)">{{ s.note }}</p>
+
+          <div style="display:flex;flex-direction:column;gap:16px;margin-top:18px">
+            <sc-for list="{{ s.fields }}" as="f" hint-placeholder-count="3">
+              <div>
+                <label style="display:flex;align-items:baseline;gap:8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ f.label }}<sc-if value="{{ f.required }}" hint-placeholder-val="{{ true }}"><span style="color:var(--accent-text,#ff5029);letter-spacing:.1em">· required</span></sc-if><sc-if value="{{ f.optional }}" hint-placeholder-val="{{ false }}"><span style="color:var(--ink-3,#8792a6);letter-spacing:.1em">· optional</span></sc-if></label>
+
+                <sc-if value="{{ f.isLine }}" hint-placeholder-val="{{ true }}">
+                  <input onInput="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.placeholder }}" aria-label="{{ f.label }}" style="width:100%;margin-top:8px;background:var(--bg-base,#0b1220);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:11px;padding:12px 15px;font-size:14px">
+                </sc-if>
+
+                <sc-if value="{{ f.isBlock }}" hint-placeholder-val="{{ false }}">
+                  <textarea onInput="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.placeholder }}" aria-label="{{ f.label }}" rows="4" style="width:100%;margin-top:8px;background:var(--bg-base,#0b1220);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:11px;padding:12px 15px;font-size:14px;line-height:1.6;resize:vertical;font-family:inherit"></textarea>
+                </sc-if>
+
+                <sc-if value="{{ f.isLink }}" hint-placeholder-val="{{ false }}">
+                  <sc-if value="{{ f.linkOk }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:var(--bg-base,#0b1220);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:11px;padding:12px 15px">
+                    <span aria-hidden="true" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#8792a6)">https://</span>
+                    <input onInput="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.placeholder }}" aria-label="{{ f.label }}" style="flex:1;min-width:0;background:transparent;border:0;font-size:14px">
+                  </div>
+                  </sc-if>
+                  <sc-if value="{{ f.linkBad }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:flex;align-items:center;gap:8px;margin-top:8px;background:var(--bg-base,#0b1220);border:1px solid var(--color-error,#ff4545);border-radius:11px;padding:12px 15px">
+                    <span aria-hidden="true" style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3,#8792a6)">https://</span>
+                    <input onInput="{{ f.set }}" value="{{ f.value }}" placeholder="{{ f.placeholder }}" aria-label="{{ f.label }}" style="flex:1;min-width:0;background:transparent;border:0;font-size:14px">
+                  </div>
+                  </sc-if>
+                </sc-if>
+
+                <sc-if value="{{ f.hintPlain }}" hint-placeholder-val="{{ true }}"><div style="margin-top:6px;font-size:12px;line-height:1.55;color:var(--ink-3,#8792a6)">{{ f.hint }}</div></sc-if>
+                <sc-if value="{{ f.hintBad }}" hint-placeholder-val="{{ false }}"><div style="margin-top:6px;font-size:12px;line-height:1.55;color:var(--color-error,#ff4545)">{{ f.hint }}</div></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-for>
+
+      <!-- The one rule that is a rule, not a preference, so it is stated once,
+           plainly, where the links are entered rather than buried in help. -->
+      <div style="background:rgba(255,80,41,.08);border:1px solid rgba(255,80,41,.42);border-radius:18px;padding:20px 24px">
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--accent-text,#ff5029)">Link to your own site, not to a platform</div>
+        <p style="margin:7px 0 0;font-size:13px;line-height:1.65;color:var(--ink-2,#96a1b5);text-wrap:pretty">iHYPE does not host or embed media, and it does not carry links out to streaming or social platforms. Point people at a site you control and keep your own audience. This app is the connector, not the catalogue.</p>
+      </div>
+    </div>
+
+    <!-- ── The page, as a fan sees it ── -->
+    <!-- `align-self:stretch` is what makes the sticky work. The grid sets
+         `align-items:start` so the form column keeps its own height, but that
+         also collapses THIS item's box to its content — and a sticky element
+         only travels inside its own box, so a collapsed box means zero travel
+         and it behaves as static. Stretching just this one to the row height
+         gives it the ~930px of travel the tall form column provides. -->
+    <div style="align-self:stretch">
+    <div style="position:sticky;top:34px">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:10px">Live preview</div>
+      <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:18px;overflow:hidden">
+        <div style="height:104px;background:linear-gradient(135deg,#233252,#0e1830);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:rgba(238,241,246,.32)">Your banner image</div>
+        <div style="padding:0 22px 24px">
+          <div style="width:74px;height:74px;margin-top:-37px;border-radius:26px;background:var(--bg-raised,#18233a);border:3px solid var(--bg-surface,#121b2e);display:grid;place-items:center;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:29px">{{ initial }}</div>
+          <div style="display:flex;align-items:center;gap:9px;margin-top:13px">
+            <h3 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:25px;letter-spacing:-.03em;margin:0">{{ pvName }}</h3>
+            <sc-if value="{{ isArtist }}" hint-placeholder-val="{{ true }}"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-artist-text,#ff5029);border:1px solid var(--role-artist-text,#ff5029);border-radius:9999px;padding:4px 9px">Artist</span></sc-if>
+            <sc-if value="{{ isVenue }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-venue-text,#22e5d4);border:1px solid var(--role-venue-text,#22e5d4);border-radius:9999px;padding:4px 9px">Venue</span></sc-if>
+            <sc-if value="{{ isAdvertiser }}" hint-placeholder-val="{{ false }}"><span style="font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-advertiser-text,#ffb84a);border:1px solid var(--role-advertiser-text,#ffb84a);border-radius:9999px;padding:4px 9px">Advertiser</span></sc-if>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:7px">{{ pvMeta }}</div>
+          <p style="margin:14px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink-2,#96a1b5);text-wrap:pretty">{{ pvAbout }}</p>
+
+          <sc-for list="{{ pvRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;gap:14px;padding:11px 0;border-top:1px solid var(--hair-70,rgba(238,241,246,.07))">
+              <div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:2px">{{ r.k }}</div>
+              <div style="flex:1;min-width:0;font-size:13.5px;line-height:1.55;color:var(--ink-1,#eef1f6)">{{ r.v }}</div>
+            </div>
+          </sc-for>
+
+          <!-- Shows are never typed in. They come from the ticketing the account
+               already does on iHYPE, which is the one thing a platform page can
+               offer that a personal site cannot. -->
+          <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--hair-70,rgba(238,241,246,.07))">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ showsLabel }} · from iHYPE</div>
+            <div style="margin-top:9px;font-size:13px;color:var(--ink-2,#96a1b5)">Pulled from your listings automatically. Nothing to fill in.</div>
+          </div>
+
+          <button type="button" style="width:100%;margin-top:18px;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;border-radius:9999px;padding:12px 18px;cursor:pointer;background:var(--accent,#ff5029);color:#fff;border:1px solid var(--accent,#ff5029)">Publish page</button>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  /* Three page kinds, matching the three account types that exist. There is no
+     Promoter page and no DJ page: promoting is something every account already
+     does through its HYPE Link, and a page for it would imply a role to sign up
+     for. The 10% promoter slice of the split is money, not an account type. */
+  KINDS = [
+    { id: 'artist', label: 'Artist', dot: 'var(--accent,#ff5029)' },
+    { id: 'venue', label: 'Venue', dot: 'var(--role-venue,#22e5d4)' },
+    { id: 'advertiser', label: 'Advertiser', dot: 'var(--heat-warm,#ffb84a)' },
+  ];
+
+  /* The section list is deliberately the SAME SHAPE for every kind: identity,
+     the long description, the practical details, then the outbound link. Only
+     the field set inside each section changes. That is what makes every page on
+     iHYPE readable in the same order without anyone having to design one. */
+  SCHEMA = {
+    artist: {
+      banner: ['#2b4a7d', '#0e1830'], shows: 'Upcoming shows',
+      sections: [
+        { title: 'Identity', note: 'What a fan sees first, and what search matches on.', fields: [
+          { k: 'name', label: 'Artist name', kind: 'line', req: true, placeholder: 'Vera Sound' },
+          { k: 'city', label: 'Based in', kind: 'line', req: true, placeholder: 'Portland, ME' },
+          { k: 'genres', label: 'Genres', kind: 'line', req: true, placeholder: 'Dream pop, shoegaze', hint: 'Two or three. These feed the charts and the map filters.' },
+        ] },
+        { title: 'About', note: 'One paragraph. It is the only free text on the page.', fields: [
+          { k: 'about', label: 'Description', kind: 'block', req: true, placeholder: 'Four-piece out of Munjoy Hill. Loud rooms, quiet records.' },
+          { k: 'members', label: 'Line-up', kind: 'line', placeholder: 'Ana Reyes, Kit Farrow, Jo Mbeki, Sam Iyer' },
+        ] },
+        { title: 'Booking', note: 'How a venue reaches you. Shown to venues, not to fans.', fields: [
+          { k: 'contact', label: 'Booking email', kind: 'line', req: true, placeholder: 'booking@verasound.com' },
+          { k: 'rider', label: 'Needs', kind: 'line', placeholder: 'Full backline, four vocal mics' },
+        ] },
+      ],
+    },
+    venue: {
+      banner: ['#2f6b62', '#08181a'], shows: 'What is on',
+      sections: [
+        { title: 'Identity', note: 'What a fan sees first, and what the map pins.', fields: [
+          { k: 'name', label: 'Venue name', kind: 'line', req: true, placeholder: 'SPACE' },
+          { k: 'city', label: 'Address', kind: 'line', req: true, placeholder: '538 Congress St, Portland, ME' },
+          { k: 'genres', label: 'Capacity', kind: 'line', req: true, placeholder: '450 standing' },
+        ] },
+        { title: 'About', note: 'One paragraph. It is the only free text on the page.', fields: [
+          { k: 'about', label: 'Description', kind: 'block', req: true, placeholder: 'Non-profit room on Congress. Two stages, one bar, no headliner fee.' },
+          { k: 'members', label: 'Accessibility', kind: 'line', placeholder: 'Step-free entry, accessible toilets, seating on request' },
+        ] },
+        { title: 'Booking', note: 'How an artist reaches you, and what you take.', fields: [
+          { k: 'contact', label: 'Booking email', kind: 'line', req: true, placeholder: 'book@space538.org' },
+          { k: 'rider', label: 'What you book', kind: 'line', placeholder: 'Touring and local, 3–4 nights a week' },
+        ] },
+      ],
+    },
+    advertiser: {
+      banner: ['#8a5a1e', '#1c1206'], shows: 'Campaigns running',
+      sections: [
+        { title: 'Identity', note: 'Who is paying, shown on every placement.', fields: [
+          { k: 'name', label: 'Business name', kind: 'line', req: true, placeholder: 'Coffee By Design' },
+          { k: 'city', label: 'Trading from', kind: 'line', req: true, placeholder: 'Portland, ME' },
+          { k: 'genres', label: 'Category', kind: 'line', req: true, placeholder: 'Coffee and food' },
+        ] },
+        { title: 'About', note: 'One paragraph. It is the only free text on the page.', fields: [
+          { k: 'about', label: 'Description', kind: 'block', req: true, placeholder: 'Three roasteries in Portland. We put on in-store sets on Thursdays.' },
+          { k: 'members', label: 'Offer for members', kind: 'line', placeholder: '10% off with a ticket stub from the night before' },
+        ] },
+        { title: 'Contact', note: 'Where enquiries land.', fields: [
+          { k: 'contact', label: 'Email', kind: 'line', req: true, placeholder: 'hello@coffeebydesign.com' },
+          { k: 'rider', label: 'Phone', kind: 'line', placeholder: '(207) 555-0142' },
+        ] },
+      ],
+    },
+  };
+
+  /* Platforms iHYPE will not carry a link to. Not a blocklist for its own sake:
+     the charter position is that a member's attention should end up on something
+     the account owns, so a page that just forwards to a streaming service is the
+     one outcome the link field exists to prevent. */
+  PLATFORMS = ['spotify.', 'apple.co', 'music.apple', 'youtube.', 'youtu.be', 'soundcloud.',
+    'bandcamp.', 'instagram.', 'facebook.', 'tiktok.', 'twitter.', 'x.com', 'linktr.ee', 'patreon.'];
+
+  state = { kind: 'artist', v: {} };
+
+  val(kind, key) { return ((this.state.v || {})[kind] || {})[key] || ''; }
+
+  set(kind, key, text) {
+    const v = Object.assign({}, this.state.v);
+    v[kind] = Object.assign({}, v[kind], { [key]: text });
+    this.setState({ v: v });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const kind = st.kind;
+    const schema = this.SCHEMA[kind];
+    const meta = this.KINDS.find((k) => k.id === kind);
+
+    const site = this.val(kind, 'site');
+    const bad = this.PLATFORMS.find((p) => site.toLowerCase().indexOf(p) >= 0);
+
+    /* Required fields across the whole form, so the meter measures the page and
+       not whichever section happens to be open. */
+    let need = 0, have = 0;
+    schema.sections.forEach((s) => s.fields.forEach((f) => {
+      if (!f.req) return;
+      need++;
+      if (this.val(kind, f.k).trim()) have++;
+    }));
+    /* One segment per required field: countable, and no runtime number ends up
+       inside a style attribute. */
+    const meter = [];
+    for (let i = 0; i < need; i++) meter.push({ on: i < have, off: i >= have });
+
+    const sections = schema.sections.map((s) => {
+      const reqs = s.fields.filter((f) => f.req);
+      const filled = reqs.filter((f) => this.val(kind, f.k).trim()).length;
+      const done = filled === reqs.length;
+      return {
+        title: s.title,
+        note: s.note,
+        state: reqs.length === 0 ? 'Optional' : done ? 'Complete' : filled + ' of ' + reqs.length,
+        isDone: reqs.length > 0 && done,
+        isPart: reqs.length > 0 && !done,
+        isSpare: reqs.length === 0,
+        isBad: false,
+        fields: s.fields.map((f) => ({
+          label: f.label,
+          required: Boolean(f.req),
+          optional: !f.req,
+          placeholder: f.placeholder || '',
+          hint: f.hint || '',
+          hintPlain: true,
+          hintBad: false,
+          value: this.val(kind, f.k),
+          isLine: f.kind === 'line',
+          isBlock: f.kind === 'block',
+          isLink: false,
+          linkOk: false,
+          linkBad: false,
+          set: (e) => this.set(kind, f.k, e.target.value),
+        })),
+      };
+    });
+
+    /* The outbound link is appended to every kind rather than written into each
+       schema — the rule is the same for all four, so it should exist in one
+       place. */
+    sections.push({
+      title: 'Your website',
+      note: 'One address, yours. It is the only link that leaves iHYPE.',
+      state: site.trim() ? (bad ? 'Not allowed' : 'Complete') : 'Optional',
+      isDone: Boolean(site.trim()) && !bad,
+      isPart: false,
+      isSpare: !site.trim(),
+      isBad: Boolean(bad),
+      fields: [{
+        label: 'Website',
+        required: false,
+        optional: true,
+        placeholder: 'verasound.com',
+        hint: bad
+          ? 'That is a platform, not your site. Link somewhere you own — a page on iHYPE that forwards to a streaming service helps the platform, not you.'
+          : 'No streaming, social or link-in-bio addresses. A domain you control.',
+        hintPlain: !bad,
+        hintBad: Boolean(bad),
+        value: site,
+        isLine: false,
+        isBlock: false,
+        isLink: true,
+        linkOk: !bad,
+        linkBad: Boolean(bad),
+        set: (e) => this.set(kind, 'site', e.target.value),
+      }],
+    });
+
+    const name = this.val(kind, 'name');
+    const rowKeys = schema.sections[2].fields;
+
+    return {
+      kinds: this.KINDS.map((k) => {
+        const on = k.id === kind;
+        return {
+          label: k.label, on: on, off: !on,
+          pick: () => this.setState({ kind: k.id }),
+        };
+      }),
+      sections: sections,
+      meter: meter,
+      doneLabel: have === need ? 'Ready to publish' : have + ' of ' + need + ' required fields filled',
+
+      isArtist: kind === 'artist',
+      isVenue: kind === 'venue',
+      isAdvertiser: kind === 'advertiser',
+      initial: (name || meta.label).charAt(0).toUpperCase(),
+      pvName: name || 'Your ' + meta.label.toLowerCase() + ' page',
+      pvMeta: [this.val(kind, 'city'), this.val(kind, 'genres')].filter(Boolean).join(' · ')
+        || 'Fill in Identity to see this',
+      pvAbout: this.val(kind, 'about') || 'Your description shows here, exactly as typed.',
+      pvRows: [
+        { k: rowKeys[0].label, v: this.val(kind, rowKeys[0].k) || '—' },
+        { k: rowKeys[1].label, v: this.val(kind, rowKeys[1].k) || '—' },
+        { k: 'Website', v: bad ? 'Not allowed' : (site || '—') },
+      ],
+      showsLabel: schema.shows,
+    };
+  }
+}
+
+</script>
+</body>
+</html>

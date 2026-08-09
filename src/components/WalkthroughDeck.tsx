@@ -188,7 +188,7 @@ function QRCode({ value = 'IHYPE', size = 176 }: { value?: string; size?: number
   // A QR needs a light quiet zone and dark modules to scan; theming either
   // one would break scanning in one of the two themes.
   const QUIET_ZONE = '#fff';     // design-exempt: QR quiet zone
-  const MODULE = '#0a0805';      // design-exempt: QR module
+  const MODULE = '#0b1220';      // design-exempt: QR module
   return (
     <div style={{ background: QUIET_ZONE, padding: 12, borderRadius: 'var(--radius-md)', lineHeight: 0 }}>
       <svg width={size} height={size} shapeRendering="crispEdges">
@@ -454,7 +454,7 @@ function Slide10Surfaces() {
     { key: 'studio', title: t('walkthroughDeck.slide10SurfaceStudioTitle', 'Studio'), body: t('walkthroughDeck.slide10SurfaceStudioBody', 'Creator workbench, demand radar, payout receipts') },
     { key: 'ticketing', title: t('walkthroughDeck.slide10SurfaceTicketingTitle', 'Ticketing'), body: t('walkthroughDeck.slide10SurfaceTicketingBody', '0%-fee checkout → QR pass') },
     { key: 'designSystem', title: t('walkthroughDeck.slide10SurfaceDesignSystemTitle', 'Design system'), body: t('walkthroughDeck.slide10SurfaceDesignSystemBody', '31 components, 112 tokens, 5 templates') },
-    { key: 'brand', title: t('walkthroughDeck.slide10SurfaceBrandTitle', 'Brand'), body: t('walkthroughDeck.slide10SurfaceBrandBody', 'Warm-dark, Syne display, the 70/20/10 promise') },
+    { key: 'brand', title: t('walkthroughDeck.slide10SurfaceBrandTitle', 'Brand'), body: t('walkthroughDeck.slide10SurfaceBrandBody', 'Ink navy, Bricolage Grotesque display, the 70/20/10 promise') },
   ];
   return (
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg-2)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>

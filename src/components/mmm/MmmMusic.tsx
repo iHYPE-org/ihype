@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
+import { MmmSearch } from './MmmSearch';
 import type { StationSummary } from '@/app/api/stations/route';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
@@ -50,18 +51,25 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
 export function MmmMusic({ tab }: { tab: MusicTabId }) {
   return (
     <>
-      <nav aria-label="Music" className="mmm-tabs">
-        {MMM_MUSIC_TABS.map((item) => (
-          <Link
-            aria-current={item.id === tab ? 'page' : undefined}
-            className="mmm-tab"
-            href={item.href}
-            key={item.id}
-          >
-            {item.label}
-          </Link>
-        ))}
-      </nav>
+      {/* Tabs and the universal search field share ONE row — Design System 8's
+          visual pass collapsed three stacked control rows into this. The
+          wrapper is what makes them share it; the tab strip keeps its own
+          semantics as a nav, and search is not a tab in this generation. */}
+      <div className="mmm-music-controls">
+        <nav aria-label="Music" className="mmm-tabs">
+          {MMM_MUSIC_TABS.map((item) => (
+            <Link
+              aria-current={item.id === tab ? 'page' : undefined}
+              className="mmm-tab"
+              href={item.href}
+              key={item.id}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        <MmmSearch />
+      </div>
       {tab === 'discover' && <DiscoverTab />}
       {tab === 'radio' && <RadioTab />}
       {tab === 'charts' && <ChartsTab />}

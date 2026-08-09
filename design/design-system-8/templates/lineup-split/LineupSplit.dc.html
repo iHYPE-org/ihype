@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Lineup & Split Agreement" description="/shows/[slug]/lineup — acts, set times, and the frozen charter split all parties sign off on" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;padding:44px 24px 100px;max-width:640px;margin:0 auto">
+  <div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--role-venue);margin-bottom:6px" data-i18n="lsEyebrow">Lineup & split agreement</div>
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0 0 4px">Sundown Tour — Portland</h1>
+  <div style="font-size:13px;color:var(--ink-2);margin-bottom:28px">Empty Bottle · Jul 20, 2026 · Doors 8:30 PM</div>
+
+  <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;margin:0 0 12px" data-i18n="lsLineupHeading">Lineup & set times</h2>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:28px">
+    <sc-for list="{{ lineup }}" as="l" hint-placeholder-count="4">
+      <div style="display:flex;align-items:center;gap:14px;border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--ink-3);width:64px;flex-shrink:0">{{ l.time }}</div>
+        <div style="flex:1"><div style="font-weight:600;font-size:14px">{{ l.name }}</div><div style="font-size:12px;color:var(--ink-2);margin-top:2px">{{ l.role }}</div></div>
+        <sc-if value="{{ l.confirmed }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(34,229,212,.15);color:var(--role-venue)" data-i18n="lsConfirmed">Confirmed</span></sc-if>
+        <sc-if value="{{ l.pendingConfirm }}"><span style="flex-shrink:0;font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:.1em;padding:5px 10px;border-radius:999px;background:rgba(255,184,74,.15);color:#ffb84a" data-i18n="lsPending">Pending</span></sc-if>
+      </div>
+    </sc-for>
+  </div>
+
+  <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:16px;margin:0 0 12px" data-i18n="lsFrozenHeading">Frozen charter split</h2>
+  <p style="font-size:12.5px;color:var(--ink-2);margin:0 0 14px;line-height:1.6" data-i18n="lsFrozenBody">This split locks the moment the show is published. It cannot change afterward — every ticket sold settles against it.</p>
+  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:28px">
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span data-i18n="lsArtistsSplit">Artists (split across lineup)</span><span style="font-weight:700">70%</span></div>
+      <div style="height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.06)"><div style="height:100%;border-radius:3px;background:var(--accent);width:70%"></div></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
+        <sc-for list="{{ artistSplits }}" as="a" hint-placeholder-count="4">
+          <div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-2)"><span>{{ a.name }} · {{ a.role }}</span><span style="color:var(--accent);font-weight:600">{{ a.pct }}</span></div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span data-i18n="lsVenueSplit">Empty Bottle — Venue</span><span style="font-weight:700">20%</span></div>
+      <div style="height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.06)"><div style="height:100%;border-radius:3px;background:var(--role-venue);width:20%"></div></div>
+    </div>
+    <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:12px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px"><span data-i18n="lsPromoterPool">Promoter pool</span><span style="font-weight:700">10%</span></div>
+      <div style="height:6px;border-radius:3px;background:rgba(var(--surface-tint-rgb),.06)"><div style="height:100%;border-radius:3px;background:var(--role-dj);width:10%"></div></div>
+    </div>
+  </div>
+
+  <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 20px;margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <input type="checkbox" checked="{{ agreed }}" onChange="{{ toggleAgree }}" style="width:18px;height:18px;flex-shrink:0">
+      <div style="font-size:13px;color:var(--ink-1)" data-i18n="lsAgreeCheckbox">I confirm my set time and accept the split above.</div>
+    </div>
+    <sc-if value="{{ agreed }}"><button style="width:100%;height:46px;border-radius:12px;border:none;background:var(--role-venue);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer" data-i18n="lsSignedOff">✓ Signed off</button></sc-if>
+    <sc-if value="{{ notAgreed }}"><button style="width:100%;height:46px;border-radius:12px;border:none;background:rgba(var(--surface-tint-rgb),.08);color:var(--ink-3);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:not-allowed" disabled="true" data-i18n="lsSignToConfirm">Sign off to confirm</button></sc-if>
+  </div>
+</div>
+<script>function lsApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',lsApplyI18n);window.addEventListener('ihype-i18n-change',lsApplyI18n);if(window.ihypeT)lsApplyI18n();</script>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { agreed: false };
+  renderVals() {
+    const { agreed } = this.state;
+    return {
+      agreed, notAgreed: !agreed,
+      toggleAgree: () => this.setState(s => ({ agreed: !s.agreed })),
+      lineup: [
+        { time: '8:30 PM', name: 'Late Coast', role: 'Opener', confirmed: true, pendingConfirm: false },
+        { time: '9:15 PM', name: 'Wax Tropic', role: 'Support', confirmed: true, pendingConfirm: false },
+        { time: '10:00 PM', name: 'Nyla', role: 'Headliner', confirmed: false, pendingConfirm: true },
+        { time: '11:00 PM', name: 'DJ Caro', role: 'Closing DJ set', confirmed: true, pendingConfirm: false },
+      ],
+      artistSplits: [
+        { name: 'Nyla', role: 'Headliner', pct: '45%' },
+        { name: 'Wax Tropic', role: 'Support', pct: '15%' },
+        { name: 'Late Coast', role: 'Opener', pct: '7%' },
+        { name: 'DJ Caro', role: 'Closing DJ set', pct: '3%' },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

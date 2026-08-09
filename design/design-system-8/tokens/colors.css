@@ -1,0 +1,228 @@
+/* iHYPE Color Tokens
+   Overhauled 2026-08-07 — "Bulletin" direction. The ground moved from warm
+   near-black to ink navy and the ink from warm cream to a cool off-white; the
+   accent (#ff5029) and the four role hues are unchanged, which is what the
+   brand carries across the overhaul.
+
+   Structure, alpha scales, semantic aliases and the light-theme strategy are
+   inherited from the 2026-08-07 reconciliation against
+   iHYPE-org/ihype@main src/app/globals.css — only hues were re-anchored, so
+   every token name a template already references still resolves.
+   AA notes on each derived ink are re-measured against the new grounds. */
+:root {
+  color-scheme: dark;
+
+  /* ── Backgrounds ── Ink navy. --bg-base is the app ground; the map's void is
+     a shade below it so the map reads as beneath the frame, not level with it. */
+  --bg-base:    #0b1220;
+  --bg-surface: #121b2e;
+  --bg-raised:  #18233a;
+  --bg-overlay: #1f2b45;
+
+  /* ── Ink ── */
+  --ink-1: #eef1f6;
+  --ink-2: #96a1b5;
+  /* Holds 4.5:1 on every dark surface — 4.91:1 worst case, on --bg-overlay. */
+  --ink-3: #8792a6;
+  --ink-4: #333e54;
+  --ink-on-tint: #a7b1c4;
+
+  /* ── Alpha ink ── Foreground ink at fixed opacities. Theme-aware: dark ink
+     inverts under [data-theme="light"] so translucent copy and hairlines stay
+     legible instead of vanishing on paper. */
+  --ink-a10: rgba(238,241,246,.1);
+  --ink-a20: rgba(238,241,246,.2);
+  --ink-a25: rgba(238,241,246,.25);
+  --ink-a30: rgba(238,241,246,.3);
+  --ink-a35: rgba(238,241,246,.35);
+  --ink-a40: rgba(238,241,246,.4);
+  --ink-a45: rgba(238,241,246,.45);
+  --ink-a50: rgba(238,241,246,.5);
+  --ink-a55: rgba(238,241,246,.55);
+  --ink-a60: rgba(238,241,246,.6);
+  --ink-a65: rgba(238,241,246,.65);
+  --ink-a70: rgba(238,241,246,.7);
+  --ink-a75: rgba(238,241,246,.75);
+  --ink-a80: rgba(238,241,246,.8);
+  --ink-a85: rgba(238,241,246,.85);
+  --ink-a90: rgba(238,241,246,.9);
+
+  /* ── Hairline / surface tint scale ── Subtle borders, dividers, fill tints.
+     Dark = white at the given opacity; light = black at the same opacity. */
+  --hair-20: rgba(255,255,255,.02);
+  --hair-30: rgba(255,255,255,.03);
+  --hair-40: rgba(255,255,255,.04);
+  --hair-50: rgba(255,255,255,.05);
+  --hair-70: rgba(255,255,255,.07);
+  --hair-80: rgba(255,255,255,.08);
+  --hair-100: rgba(255,255,255,.1);
+  --hair-120: rgba(255,255,255,.12);
+  --hair-150: rgba(255,255,255,.15);
+  --hair-180: rgba(255,255,255,.18);
+  --hair-200: rgba(255,255,255,.2);
+  --hair-250: rgba(255,255,255,.25);
+
+  /* ── Lines ── */
+  --line:   rgba(255, 255, 255, 0.07);
+  --line-2: rgba(255, 255, 255, 0.14);
+  --hairline: var(--ink-a10);
+
+  /* ── Accent ── Unchanged through the overhaul. */
+  --accent:   #ff5029;
+  --accent-2: #ff3e9a;
+  /* The accent as COPY. On the navy ground it measures 5.9:1; on light it is
+     2.4:1 and is overridden below. Brand fills never change — this token
+     exists only for accent-coloured text. */
+  --accent-text: var(--accent);
+  --accent-deep: #7a2412;
+  --accent-grad:      linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), #ff3e6e);
+  /* Ink ON a brand fill — the navy ground, 6.1:1 on --accent. White is 3.3:1. */
+  --ink-on-accent: #0b1220;
+
+  /* ── Ink and scrim ON media ── White and black in BOTH themes on purpose:
+     the scrim guarantees a dark backdrop regardless of page theme, so
+     inverting these would put dark text on a dark scrim. */
+  --ink-on-media: #fff;
+  --ink-on-media-rgb: 255, 255, 255; /* @kind color */
+  --scrim-rgb: 0, 0, 0; /* @kind color */
+  --scrim: rgba(6, 10, 20, .74);
+  --map-void: #0a1020;
+
+  /* ── Role Colors ──
+     Fan · Artist · Venue · Advertiser are the four account types.
+     There is NO DJ role (deleted 2026-08-06) and NO Promoter role — any
+     account promotes by sharing its HYPE link. --role-promoter colours the
+     10% pool slice only; it is not an account type. Carried unchanged. */
+  --role-fan:        #b983ff;
+  --role-artist:     var(--accent);
+  --role-venue:      #22e5d4;
+  --role-promoter:   #ff3e9a;
+  --role-advertiser: #ffb84a;
+  /* Role fills stay vivid. These aliases are the same hues calibrated for
+     readable copy, overridden in light mode without dulling artwork. */
+  --role-artist-text:     var(--accent-text);
+  --role-venue-text:      var(--role-venue);
+  --role-promoter-text:   var(--role-promoter);
+  --role-advertiser-text: var(--warning-text);
+
+  /* ── Utility ── */
+  --warning: #ffb84a;
+  --warn:    var(--warning); /* legacy alias */
+  --warning-text: var(--warning);
+  --blue:    #7fb3ff;
+  --live:    #ff3c3c;
+  --success: #22e5d4;
+  --danger:  var(--accent);
+
+  /* ── HYPE heat scale — data-viz language for demand intensity ── */
+  --heat-cold:  #40506b;
+  --heat-warm:  var(--warning);
+  --heat-hot:   var(--accent);
+  --heat-fire:  #ff1f3d;
+
+  /* ── Semantic aliases ── */
+  --color-success:     var(--success);
+  --color-success-bg:  rgba(var(--role-venue-rgb), .1);
+  --color-error:       #ff4545;
+  --color-error-rgb:   255, 69, 69; /* @kind color */
+  --color-error-bg:    rgba(var(--color-error-rgb), .1);
+  --color-warning:     var(--warning-text);
+  --color-warning-bg:  rgba(var(--warning-rgb), .1);
+  --color-info:        var(--blue);
+  --color-info-rgb:    127, 179, 255; /* @kind color */
+  --color-info-bg:     rgba(var(--color-info-rgb), .1);
+
+  /* ── RGB triplets for rgba() composition at arbitrary opacity ──
+     A custom property cannot be decomposed in CSS, so `rgba(var(--accent), .15)`
+     cannot work and the triplet must exist separately. Brand fills are
+     identical in both themes, so these are NOT restated in the light block —
+     only the surface/ink triplets are. */
+  --accent-rgb:          255, 80, 41;   /* @kind color */ /* #ff5029 */
+  --accent-2-rgb:        255, 62, 154;  /* @kind color */ /* #ff3e9a */
+  --role-fan-rgb:        185, 131, 255; /* @kind color */ /* #b983ff */
+  --role-venue-rgb:      34, 229, 212;  /* @kind color */ /* #22e5d4 */
+  --role-promoter-rgb:   255, 62, 154;  /* @kind color */ /* #ff3e9a */
+  --role-advertiser-rgb: 255, 184, 74;  /* @kind color */ /* #ffb84a */
+  --warning-rgb:         255, 184, 74;  /* @kind color */ /* #ffb84a */
+  --heat-fire-rgb: 255, 31, 61; /* @kind color */
+  --heat-hot-rgb:  var(--accent-rgb); /* @kind color */
+  --heat-warm-rgb: 255, 184, 74; /* @kind color */
+  --heat-cold-rgb: 64, 80, 107; /* @kind color */
+
+  --ink-1-rgb:        238, 241, 246; /* @kind color */
+  --surface-tint-rgb: 255, 255, 255; /* @kind color */
+  --bg-base-rgb:      11, 18, 32; /* @kind color */
+}
+
+/* ── Light theme ── Opt-in; dark is canonical.
+   Cool paper rather than the old cream, to sit under the same navy-anchored
+   ink. Brand FILLS are deliberately not restated — accessible-copy variants
+   (--accent-text, --role-*-text, --warning-text, --color-error/-info) carry
+   the theme instead, so a composed-alpha tint never splits from the solid
+   fill beside it. */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg-base:    #f4f6fa;
+  --bg-surface: #eaeef5;
+  --bg-raised:  #dfe5ef;
+  --bg-overlay: #d2dae7;
+
+  --ink-1: #101725;
+  --ink-2: #3a4557;
+  /* Holds 4.5:1 on every light surface — 4.74:1 worst case, on --bg-overlay. */
+  --ink-3: #565f70;
+  --ink-4: #a3aec0;
+  --ink-on-tint: #4a5464;
+
+  --line:   rgba(0, 0, 0, 0.09);
+  --line-2: rgba(0, 0, 0, 0.16);
+
+  --ink-a10: rgba(16,23,37,.1);
+  --ink-a20: rgba(16,23,37,.2);
+  --ink-a25: rgba(16,23,37,.25);
+  --ink-a30: rgba(16,23,37,.3);
+  --ink-a35: rgba(16,23,37,.35);
+  --ink-a40: rgba(16,23,37,.4);
+  --ink-a45: rgba(16,23,37,.45);
+  --ink-a50: rgba(16,23,37,.5);
+  --ink-a55: rgba(16,23,37,.55);
+  --ink-a60: rgba(16,23,37,.7); /* .6 composited under the AA floor */
+  --ink-a65: rgba(16,23,37,.65);
+  --ink-a70: rgba(16,23,37,.7);
+  --ink-a75: rgba(16,23,37,.75);
+  --ink-a80: rgba(16,23,37,.8);
+  --ink-a85: rgba(16,23,37,.85);
+  --ink-a90: rgba(16,23,37,.9);
+
+  --hair-20: rgba(0,0,0,.02);
+  --hair-30: rgba(0,0,0,.03);
+  --hair-40: rgba(0,0,0,.04);
+  --hair-50: rgba(0,0,0,.05);
+  --hair-70: rgba(0,0,0,.07);
+  --hair-80: rgba(0,0,0,.08);
+  --hair-100: rgba(0,0,0,.1);
+  --hair-120: rgba(0,0,0,.12);
+  --hair-150: rgba(0,0,0,.15);
+  --hair-180: rgba(0,0,0,.18);
+  --hair-200: rgba(0,0,0,.2);
+  --hair-250: rgba(0,0,0,.25);
+
+  --map-void: #dde3ec;
+
+  --accent-text: #9c2707;
+  --role-venue-text: #0b6f67;
+  --role-promoter-text: #920044;
+  --role-artist-text: var(--accent-text);
+  --warning-text: #735000;
+
+  --color-error:     #ac2424;
+  --color-error-rgb: 172, 36, 36; /* @kind color */
+  --color-error-bg:  rgba(var(--color-error-rgb), .08);
+  --color-info:      #2259a1;
+  --color-info-rgb:  34, 89, 161; /* @kind color */
+
+  --ink-1-rgb:        16, 23, 37;    /* @kind color */
+  --surface-tint-rgb: 0, 0, 0;       /* @kind color */
+  --bg-base-rgb:      244, 246, 250; /* @kind color */
+}

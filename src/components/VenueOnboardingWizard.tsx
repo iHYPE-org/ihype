@@ -317,7 +317,7 @@ export default function VenueOnboardingWizard({
       )}
 
       <style>{`
-        .von-page { font-family: var(--font-body, 'DM Sans', sans-serif); color: var(--ink); background: var(--bg2); min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 48px 24px 60px; }
+        .von-page { font-family: var(--font-body, 'Work Sans', sans-serif); color: var(--ink); background: var(--bg2); min-height: 100vh; max-width: 480px; margin: 0 auto; padding: 48px 24px 60px; }
         .von-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 10px; }
         .von-progress { width: 100%; height: 10px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; }
         .von-progress-fill { height: 100%; background: var(--role-venue); border-radius: var(--radius-pill); transition: width .2s ease; }

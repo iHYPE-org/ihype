@@ -1,0 +1,30 @@
+<!-- @dsCard group="Spacing" viewport="700x150" name="Spacing Scale" subtitle="8px base grid — space-1 through space-16" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+  body { margin: 0; padding: 16px 20px; background: var(--bg-base); font-family: var(--font-mono); }
+  .row { display: flex; gap: 12px; align-items: flex-end; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .bar { background: var(--accent); border-radius: 2px; width: 14px; }
+  .name { font-size: 8px; letter-spacing: .10em; color: var(--ink-3); text-transform: uppercase; text-align: center; }
+  .val  { font-size: 8px; color: var(--ink-2); text-align: center; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="item"><div class="bar" style="height:4px"></div><div class="name">1</div><div class="val">4</div></div>
+  <div class="item"><div class="bar" style="height:8px"></div><div class="name">2</div><div class="val">8</div></div>
+  <div class="item"><div class="bar" style="height:12px"></div><div class="name">3</div><div class="val">12</div></div>
+  <div class="item"><div class="bar" style="height:16px"></div><div class="name">4</div><div class="val">16</div></div>
+  <div class="item"><div class="bar" style="height:20px"></div><div class="name">5</div><div class="val">20</div></div>
+  <div class="item"><div class="bar" style="height:24px"></div><div class="name">6</div><div class="val">24</div></div>
+  <div class="item"><div class="bar" style="height:32px"></div><div class="name">8</div><div class="val">32</div></div>
+  <div class="item"><div class="bar" style="height:40px"></div><div class="name">10</div><div class="val">40</div></div>
+  <div class="item"><div class="bar" style="height:48px"></div><div class="name">12</div><div class="val">48</div></div>
+  <div class="item"><div class="bar" style="height:64px"></div><div class="name">16</div><div class="val">64</div></div>
+</div>
+</body>
+</html>

@@ -28,7 +28,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0a0805',
+          background: '#0b1220',
           padding: '72px 80px',
           fontFamily: 'sans-serif'
         }}
@@ -45,7 +45,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
             style={{
               fontSize: 80,
               fontWeight: 900,
-              color: '#f0ebe5',
+              color: '#eef1f6',
               lineHeight: 0.98,
               letterSpacing: '-0.04em'
             }}

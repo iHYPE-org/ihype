@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { releasedMediaWhere } from '@/lib/media-release';
 import { consumeRateLimit, rateLimitHeaders } from '@/lib/rate-limit';
@@ -8,15 +9,38 @@ import { log } from '@/lib/logger';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/search?q=QUERY&type=artist|song|show|genre&limit=20
+ * GET /api/search?q=QUERY&type=artist|venue|song|show|genre|city|playlist&limit=20
  *
  * Unified search across:
- *   - Profiles (artists, DJs, venues)
+ *   - Profiles (artists and venues)
  *   - Shows (live events and radio shows)
  *   - Artist media assets (songs with freeUseEnabled)
+ *   - Cities, derived from the profiles that matched
+ *   - The signed-in viewer's own playlists
  *
- * Returns { results, genres } where genres is the set of unique genre
- * strings found across matched artist profiles.
+ * Design System 8 makes this endpoint load-bearing in a way it was not before:
+ * the MUSIC module carries a PERSISTENT universal field on every one of its
+ * five surfaces, "scoped across artists, tracks, venues, cities and playlists
+ * at once". Three of those five scopes are new here.
+ *
+ * `venue` used to be unreachable — VENUE profiles matched, but only under
+ * `type=artist`, so a scope chip reading "Venues" had nothing to ask for. It is
+ * now its own filter over the same query.
+ *
+ * `city` is DERIVED, not stored: there is no City table, so a city result is a
+ * distinct `Profile.city` among the profiles this query already matched. That
+ * makes it exact by construction — a city only appears if somebody is actually
+ * on the platform there, which is the only version of a city result that can be
+ * usefully opened.
+ *
+ * `playlist` is scoped to the CALLER'S OWN playlists and needs a session.
+ * `FanPlaylist` carries no visibility column — every row is someone's private
+ * listening, unlisted-by-id rather than public — so a search that returned
+ * other people's would be an enumeration of exactly that. A signed-out caller
+ * gets an empty playlist scope rather than a 401: the other four scopes are
+ * public and must keep working.
+ *
+ * Returns { results, genres, counts }.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -40,15 +64,33 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ results: [], genres: [] });
   }
 
-  const includeArtists = typeFilter === 'all' || typeFilter === 'artist';
-  const includeSongs   = typeFilter === 'all' || typeFilter === 'song';
-  const includeShows   = typeFilter === 'all' || typeFilter === 'show';
+  // `city` reads the same profile rows as `artist`/`venue` — it is derived from
+  // them, so asking for cities has to run the profile query. `venue` narrows
+  // that query's type filter rather than adding a second one.
+  const includeArtists   = typeFilter === 'all' || typeFilter === 'artist';
+  const includeVenues    = typeFilter === 'all' || typeFilter === 'venue';
+  const includeCities    = typeFilter === 'all' || typeFilter === 'city';
+  const includeSongs     = typeFilter === 'all' || typeFilter === 'song';
+  const includeShows     = typeFilter === 'all' || typeFilter === 'show';
+  // Playlists are the ONE scope `all` does not include, and that is deliberate.
+  // They are the caller's own rows, so a response carrying them cannot be
+  // CDN-cached (see the Cache-Control note at the bottom) — folding them into
+  // the default would make every public search on /search uncacheable to
+  // protect data that search was never asking for. The MUSIC field asks for
+  // them explicitly instead; every viewer there is signed in, because /app is
+  // behind the auth gate.
+  const includePlaylists = typeFilter === 'playlist';
+  const includeProfiles  = includeArtists || includeVenues || includeCities;
+  const profileTypes: Array<'ARTIST' | 'VENUE'> =
+    includeArtists || includeCities
+      ? includeVenues || includeCities ? ['ARTIST', 'VENUE'] : ['ARTIST']
+      : ['VENUE'];
 
-  const [profiles, tracks, shows] = await Promise.all([
-    includeArtists
+  const [profiles, tracks, shows, playlists] = await Promise.all([
+    includeProfiles
       ? db.profile.findMany({
           where: {
-            type: { in: ['ARTIST', 'VENUE'] },
+            type: { in: profileTypes },
             discoverable: true,
             OR: [
               { name:        { contains: q, mode: 'insensitive' } },
@@ -115,6 +157,29 @@ export async function GET(request: NextRequest) {
           }
         })
       : Promise.resolve([]),
+
+    // The caller's OWN playlists only — see the route header. `auth()` is
+    // called lazily inside the branch so a public search never pays for a
+    // session read it does not use, and a failure here degrades this one
+    // scope to empty instead of failing the whole search.
+    includePlaylists
+      ? (async () => {
+          try {
+            const session = await auth();
+            const userId = session?.user?.id;
+            if (!userId) return [];
+            return await db.fanPlaylist.findMany({
+              where: { userId, name: { contains: q, mode: 'insensitive' } },
+              orderBy: [{ updatedAt: 'desc' }],
+              take: limit,
+              select: { id: true, name: true, _count: { select: { items: true } } },
+            });
+          } catch (err) {
+            log.error('[api/search] playlist scope', err instanceof Error ? err : { error: String(err) }, 'error');
+            return [];
+          }
+        })()
+      : Promise.resolve([]),
   ]);
 
   // Also search genres as a distinct concept — any profile whose genres
@@ -126,9 +191,28 @@ export async function GET(request: NextRequest) {
     });
   });
 
+  // Cities are derived from the profiles that matched — one entry per distinct
+  // city, counted, so "Portland" reads as a place with N accounts on it rather
+  // than as a bare string. Only cities whose NAME matched are offered: a
+  // profile can match on bio or headline while sitting in a city the query
+  // never mentioned, and listing that city would be a result the query does
+  // not explain.
+  const cityMatches = new Map<string, { label: string; count: number }>();
+  if (includeCities) {
+    const needle = q.toLowerCase();
+    profiles.forEach(p => {
+      if (!p.city || !p.city.toLowerCase().includes(needle)) return;
+      const label = [p.city, p.stateRegion].filter(Boolean).join(', ');
+      const key = label.toLowerCase();
+      const seen = cityMatches.get(key);
+      if (seen) seen.count += 1;
+      else cityMatches.set(key, { label, count: 1 });
+    });
+  }
+
   // Build unified result list
   type ResultItem = {
-    type: 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre';
+    type: 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre' | 'city' | 'playlist';
     id: string;
     name: string;
     subtitle: string;
@@ -142,8 +226,12 @@ export async function GET(request: NextRequest) {
   const results: ResultItem[] = [];
 
   profiles.forEach(p => {
-    const loc  = [p.city, p.stateRegion].filter(Boolean).join(', ');
     const type = p.type === 'VENUE' ? 'venue' : 'artist';
+    // A `city` request runs the profile query for its cities but must not emit
+    // the profiles themselves — otherwise picking the "Cities" chip would
+    // return a list of artists.
+    if (type === 'venue' ? !includeVenues : !includeArtists) return;
+    const loc  = [p.city, p.stateRegion].filter(Boolean).join(', ');
     const sub  = [
       p.genres.slice(0, 2).join(' · '),
       loc,
@@ -177,19 +265,49 @@ export async function GET(request: NextRequest) {
     results.push({ type: 'genre', id: 'genre-' + g, name: g, subtitle: 'Browse by genre' });
   });
 
+  cityMatches.forEach(({ label, count }) => {
+    results.push({
+      type: 'city',
+      id: 'city-' + label.toLowerCase(),
+      name: label,
+      subtitle: `${count} account${count === 1 ? '' : 's'} here`,
+    });
+  });
+
+  playlists.forEach(list => {
+    const count = list._count.items;
+    results.push({
+      type: 'playlist',
+      id: list.id,
+      name: list.name,
+      subtitle: `Your playlist · ${count} track${count === 1 ? '' : 's'}`,
+      slug: list.id,
+    });
+  });
+
   return NextResponse.json({
     results,
     genres: Array.from(genreMatches),
     counts: {
-      artists:   profiles.filter(p => p.type !== 'VENUE').length,
-      venues:    profiles.filter(p => p.type === 'VENUE').length,
+      artists:   includeArtists ? profiles.filter(p => p.type !== 'VENUE').length : 0,
+      venues:    includeVenues  ? profiles.filter(p => p.type === 'VENUE').length : 0,
       songs:     tracks.length,
       shows:     shows.length,
       genres:    genreMatches.size,
+      cities:    cityMatches.size,
+      playlists: playlists.length,
     }
   }, {
-    // Results are public; let the CDN absorb repeated popular queries.
-    headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300' }
+    // The playlist scope puts the CALLER'S OWN rows in this body. A shared
+    // cache in front of that is a cross-account leak, so any response that
+    // could carry them is private and uncacheable — the same rule
+    // /api/analytics/summary follows. Everything else stays public and
+    // CDN-cacheable, which is what absorbs repeated popular queries.
+    headers: {
+      'Cache-Control': includePlaylists
+        ? 'private, no-store'
+        : 'public, s-maxage=60, stale-while-revalidate=300',
+    }
   });
   } catch (err) {
     log.error('[api/search]', err instanceof Error ? err : { error: String(err) }, 'error');

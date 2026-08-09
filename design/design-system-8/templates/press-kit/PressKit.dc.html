@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Press Kit" description="Brand press kit — boilerplate, fact sheet, founder quote, logo/color specs, contact." -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:inherit;text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:760px;margin:0 auto;padding:56px 28px 100px">
+  <p data-i18n="pkEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px">Press kit</p>
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2rem,6vw,3rem);letter-spacing:-.03em;margin-bottom:20px">iHYPE</h1>
+
+  <h2 data-i18n="pkBoilerplateHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Boilerplate</h2>
+  <p data-i18n="pkBoilerplateBody" style="font-size:.92rem;color:#c9beb1;line-height:1.75;margin-bottom:32px">iHYPE is a not-for-profit live music platform built around a single idea: fans, not fees, should decide who rises. Every ticket splits 70% to the artist, 20% to the venue, and 10% to a promoter pool shared by whoever helped sell it — locked in iHYPE's charter and unchangeable without dissolving and re-incorporating the company. The platform takes nothing from ticket sales; it's funded entirely by music-related advertising, the same way terrestrial radio has always worked. Founded in Portland, Maine in January 2026, iHYPE is run by two people and AI automation.</p>
+
+  <h2 data-i18n="pkFactSheetHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Fact sheet</h2>
+  <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;overflow:hidden;margin-bottom:32px">
+    <sc-for list="{{ facts }}" as="f" hint-placeholder-count="8">
+      <div style="display:flex;justify-content:space-between;padding:13px 20px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.13);font-size:.86rem"><span style="color:var(--ink-2)">{{ f.k }}</span><span style="color:var(--ink-1);text-align:right;max-width:60%">{{ f.v }}</span></div>
+    </sc-for>
+  </div>
+
+  <h2 data-i18n="pkFounderQuoteHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:14px">Founder quote</h2>
+  <blockquote style="border-left:2px solid var(--accent);padding-left:20px;margin-bottom:32px">
+    <p data-i18n="pkQuote" style="font-family:'Instrument Serif',serif;font-style:italic;font-size:1.3rem;line-height:1.5;color:var(--ink-1)">"Every platform that started with good intentions eventually faced a board meeting where fees made sense. We wanted to make that conversation impossible."</p>
+  </blockquote>
+
+  <h2 data-i18n="pkBrandAssetsHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:14px">Brand assets</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:32px">
+    <div style="background:var(--accent);border-radius:14px;padding:36px 20px;text-align:center"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.4rem;color:#fff">iHYPE</span></div>
+    <div style="background:var(--bg-base);border:1px solid rgba(var(--surface-tint-rgb),.12);border-radius:14px;padding:36px 20px;text-align:center"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.4rem;color:var(--ink-1)">iHYPE</span></div>
+  </div>
+  <div style="display:flex;border-radius:12px;overflow:hidden;margin-bottom:32px">
+    <sc-for list="{{ colors }}" as="c" hint-placeholder-count="5">
+      <sc-if value="{{ c.isDark }}"><div style="flex:1;height:64px;background:var(--bg-base);display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-2)">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isAccent }}"><div style="flex:1;height:64px;background:var(--accent);display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isTeal }}"><div style="flex:1;height:64px;background:var(--role-venue);display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--bg-base)">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isPurple }}"><div style="flex:1;height:64px;background:var(--role-fan);display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--bg-base)">{{ c.label }}</div></sc-if>
+      <sc-if value="{{ c.isPink }}"><div style="flex:1;height:64px;background:var(--role-promoter);display:flex;align-items:flex-end;padding:8px;font-family:'JetBrains Mono',monospace;font-size:9px;color:#fff">{{ c.label }}</div></sc-if>
+    </sc-for>
+  </div>
+
+  <h2 data-i18n="pkContactHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;margin-bottom:10px">Contact</h2>
+  <p style="font-size:.9rem;color:#c9beb1;line-height:1.7"><span data-i18n="pkPressInquiries">Press inquiries:</span> <a href="mailto:admin@ihype.org" style="color:var(--accent)">admin@ihype.org</a><br>Portland, ME</p>
+</div>
+<footer style="border-top:1px solid rgba(var(--surface-tint-rgb),.1);padding:36px 28px;margin-top:50px;max-width:900px;margin-left:auto;margin-right:auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.02em;color:var(--accent)">iHYPE</div><div style="display:flex;gap:24px"><a href="../advertise/Advertise.dc.html" data-i18n="footAdvertise" style="font-size:13px;color:var(--ink-2)">Advertise</a><a href="../about/About.dc.html" data-i18n="footAbout" style="font-size:13px;color:var(--ink-2)">About</a><a href="../site-pages/SitePages.dc.html" data-i18n="footSupport" style="font-size:13px;color:var(--ink-2)">Support</a></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-3);letter-spacing:.04em">© 2026 iHYPE</div></footer>
+<script>function pkApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))})}document.addEventListener('DOMContentLoaded',pkApplyI18n);window.addEventListener('ihype-i18n-change',pkApplyI18n);if(window.ihypeT)pkApplyI18n();</script>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      facts: (function(t){
+        return [
+          { k: t('pkFactK1','Founded'), v: t('pkFactV1','January 2026 · Portland, ME') }, { k: t('pkFactK2','Structure'), v: t('pkFactV2','Not-for-profit (iHYPE Inc.)') },
+          { k: t('pkFactK3','Core mechanic'), v: t('pkFactV3','HYPE — a real fan vote, not a like button') },
+          { k: t('pkFactK4','Team'), v: t('pkFactV4','2 people + AI automation') }, { k: t('pkFactK5','Ticket split'), v: t('pkFactV5','70% artist / 20% venue / 10% promoters / 0% iHYPE') },
+          { k: t('pkFactK6','Revenue'), v: t('pkFactV6','Music-related advertising only') }, { k: t('pkFactK7','Payments'), v: t('pkFactV7','Stripe direct — card fee passed through at cost') },
+          { k: t('pkFactK8','Content'), v: t('pkFactV8','Audio only — no video, ever') }, { k: t('pkFactK9','Contact'), v: 'admin@ihype.org' },
+        ];
+      })(window.ihypeT || function(k,d){return d}),
+      colors: [
+        { label: 'var(--bg-base)', isDark: true }, { label: 'var(--accent)', isAccent: true }, { label: 'var(--role-venue)', isTeal: true },
+        { label: 'var(--role-fan)', isPurple: true }, { label: 'var(--role-promoter)', isPink: true },
+      ],
+    };
+  }
+}
+
+</script>
+</body>
+</html>

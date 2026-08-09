@@ -35,7 +35,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           width: '100%', height: '100%',
           display: 'flex', flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#0a0805',
+          background: '#0b1220',
           padding: '72px 80px',
           fontFamily: 'sans-serif',
         }}
@@ -53,7 +53,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
               {show?.isRadioShow ? t('showsSlugOpengraphImage.radioShow', 'Radio Show') : date}
             </div>
           )}
-          <div style={{ fontSize: 72, fontWeight: 900, color: '#f0ebe5', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>
+          <div style={{ fontSize: 72, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
             {headliner && <span style={{ fontSize: 22, color: '#5a5048' }}>{headliner}</span>}
             {venue && <span style={{ fontSize: 22, color: '#5a5048' }}>{venue}</span>}

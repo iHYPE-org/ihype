@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE App Shell" description="The Music · Map · Me app shell — radial arc nav, no header, no tab bar, map as the base layer." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Yeseva+One&display=swap" rel="stylesheet">
+<script src="./ds-base.js"></script>
+<style>*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg-base,#0b1220);overscroll-behavior:none;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+/* Capacitor wraps this exact page in a WKWebView / Android WebView. The notch
+   and the home indicator become real numbers in the layout via this probe —
+   env() cannot be read from JS any other way. */
+:root{--sa-t:env(safe-area-inset-top,0px);--sa-r:env(safe-area-inset-right,0px);--sa-b:env(safe-area-inset-bottom,0px);--sa-l:env(safe-area-inset-left,0px)}
+#saprobe{position:fixed;top:0;left:0;width:0;height:0;pointer-events:none;padding:var(--sa-t) var(--sa-r) var(--sa-b) var(--sa-l)}
+/* Selectable where it is content, not where it is furniture. */
+input,textarea{-webkit-user-select:text;user-select:text}
+/* Reduce motion: the shell has no reveal keyframes left, but the marquee and
+   the deck's rAF tweens are real movement and both check this. */
+[data-a11y-motion="reduce"] *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+/* High contrast raises the two hairline tokens and the two dim ink tokens.
+   Everything reads them through var(), so one override themes the whole app. */
+html[data-a11y-contrast="high"]{--line-2:rgba(238,241,246,.42);--hair-70:rgba(238,241,246,.24);--ink-2:#ccd4e0;--ink-3:#b6c0cf}
+html[data-a11y-contrast="high"][data-theme="light"]{--line-2:rgba(16,23,37,.42);--hair-70:rgba(16,23,37,.24);--ink-2:#242d3d;--ink-3:#2f3949}
+html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!important}::-webkit-scrollbar{width:0;height:0}#ihypeThemeToggle{display:none!important}a{color:var(--accent-text,#ff5029)}a:hover{color:var(--ink-1,#eef1f6)}/* No reveal keyframes: the document timeline does not advance in every context this runs in, and a both-filled animation then holds opacity:0 forever. Everything is authored visible. */</style>
+</helmet>
+<div id="saprobe" aria-hidden="true"></div>
+<div style="position:fixed;inset:0;overflow:hidden;background:var(--bg-base,#0b1220);color:var(--ink-1,#eef1f6);font-family:var(--font-body,'Work Sans',system-ui,sans-serif)">
+
+<!-- ── MAP: the base layer. Stays mounted; Music and Me are panes over it, so
+     returning to MAP keeps pan and zoom.
+
+     The map is a real Leaflet + OpenStreetMap map in its own plain-HTML file,
+     embedded here: a Design Component confines scripts to <helmet>, whose mount
+     timing races the map container. It posts pin selections up to this shell,
+     which is the same seam MmmMap → MmmShell uses in the product.
+
+     Venues sit on their street address. Artists and promoters sit on their city
+     of origin and nothing finer — the product never collects an address for
+     them, so the map must not imply one. ── -->
+<iframe allow="geolocation" src="./map.html" title="iHYPE map" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--map-void,#0a1020)"></iframe>
+<div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none;background:radial-gradient(78% 68% at 50% 46%,transparent,rgba(6,10,20,.72))"></div>
+
+<!-- ── MUSIC pane. Translucent over the map, with a top hairline, so the map
+     reads as still being there rather than replaced. ── -->
+<sc-if value="{{ onMusic }}" hint-placeholder-val="{{ true }}">
+<div style="zoom:var(--a11y-zoom,1);position:absolute;inset:0;overflow-y:auto;padding:var(--pane-pad,30px 40px 142px);background:rgba(var(--bg-base-rgb,11,18,32),.93);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 var(--hair-100,rgba(255,255,255,.1))">
+<div style="max-width:1120px;margin:0 auto">
+  <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:10px">Music · {{ musicLabel }}</div>
+  <h1 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:28px;line-height:1.12;letter-spacing:-.03em;margin:0 0 6px;min-height:2.24em;max-width:820px">{{ musicTitle }}</h1>
+  <!-- Headline and dek are both held at a fixed number of lines. Left to wrap
+       freely they run to two or three depending on the tab, which walked the tab
+       row and the first row of content up and down as you moved between them —
+       the module read as a different page rather than the same page on another
+       tab. The copy is written short enough to fit those lines on a phone. -->
+  <p style="font-size:14px;line-height:1.6;min-height:var(--dek-min,3.2em);color:var(--ink-2,#96a1b5);max-width:640px;margin:0 0 22px">{{ musicDek }}</p>
+
+  <!-- Tabs and universal search share one row: three stacked control rows cost
+       more vertical space than the first row of content. Search is persistent
+       across every MUSIC surface and scoped across artists, tracks, venues,
+       cities and playlists at once. MAP has its own; ME has none, by design. -->
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+    <sc-for list="{{ musicTabs }}" as="t" hint-placeholder-count="5">
+      <sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ t.pick }}" type="button" style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;letter-spacing:-.01em;border-radius:9999px;padding:9px 17px;cursor:pointer;background:var(--accent,#ff5029);color:#fff;border:1px solid var(--accent,#ff5029)">{{ t.label }}</button>
+      </sc-if>
+      <sc-if value="{{ t.off }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ t.pick }}" type="button" style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;letter-spacing:-.01em;border-radius:9999px;padding:9px 17px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))">{{ t.label }}</button>
+      </sc-if>
+    </sc-for>
+    <div style="flex:1;min-width:300px;display:flex;align-items:center;gap:10px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 16px">
+      <span aria-hidden="true" style="color:var(--ink-3,#8792a6);font-size:14px">⌕</span>
+      <input onFocus="{{ focusSearch }}" onBlur="{{ blurSearch }}" placeholder="Search artists, tracks, venues, cities, playlists" style="flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink-1,#eef1f6);font-family:inherit;font-size:13.5px">
+      <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:4px 9px">⌘K</span>
+    </div>
+  </div>
+
+  <!-- Scopes appear on focus only. Six chips permanently on screen is six chips
+       nobody reads. -->
+  <sc-if value="{{ searchFocused }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+    <sc-for list="{{ scopes }}" as="s" hint-placeholder-count="6">
+      <sc-if value="{{ s.on }}" hint-placeholder-val="{{ false }}">
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent,#ff5029);border:1px solid rgba(255,80,41,.42);border-radius:9999px;padding:5px 11px">{{ s.label }}</span>
+      </sc-if>
+      <sc-if value="{{ s.off }}" hint-placeholder-val="{{ true }}">
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:5px 11px">{{ s.label }}</span>
+      </sc-if>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- Discover IS the deck. One card, one verdict: left skips, right saves to
+       the Discover playlist, HYPE sits under it. -->
+  <sc-if value="{{ isDeck }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;justify-content:center;padding-top:8px">
+    <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.SeedDeck" items="{{ seeds }}" index="{{ seedIndex }}" hyped="{{ seedHyped }}" hypeLocked="{{ seedHypeLocked }}" hypeLabel="{{ seedHypeLabel }}" savedCount="{{ savedCount }}" clipSeconds="{{ clipSeconds }}" maxHeight="{{ deckRoom }}" playing="{{ clipPlaying }}" reduceMotion="{{ reduceMotion }}" onSkip="{{ skipSeed }}" onSave="{{ saveSeed }}" onHype="{{ hypeSeed }}" onOpenArtist="{{ openSeedArtist }}" onTogglePlay="{{ toggleSeedPlay }}" hint-size="330px,540px"></x-import>
+  </div>
+  </sc-if>
+
+  <!-- Playlists. The card is the object; edit, delete and share appear on the
+       card you are pointing at rather than behind a menu, because all three act
+       on that one list and nothing else. Sharing uses your HYPE Link, so a
+       shared list is also a referral — the same code, not a second system. -->
+  <sc-if value="{{ isPlaylists }}" hint-placeholder-val="{{ false }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding-top:6px">
+    <button onClick="{{ newPlaylist }}" type="button" style="min-height:186px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;text-align:left;cursor:pointer;background:transparent;border:1px dashed var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:20px;color:var(--ink-2,#96a1b5);font-family:inherit" style-hover="border-color:var(--accent,#ff5029);color:var(--ink-1,#eef1f6)">
+      <span style="width:38px;height:38px;border-radius:9999px;background:rgba(255,80,41,.14);border:1px solid rgba(255,80,41,.42);color:var(--accent,#ff5029);display:grid;place-items:center;font-size:19px">＋</span>
+      <span style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;color:var(--ink-1,#eef1f6)">New playlist</span>
+      <span style="font-size:13px;line-height:1.6">Private until you publish it. Add tracks from the player, the deck or any artist page.</span>
+    </button>
+    <sc-for list="{{ playlists }}" as="p" hint-placeholder-count="3">
+      <div onMouseEnter="{{ p.enter }}" onMouseLeave="{{ p.leave }}" style="position:relative;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:20px;display:flex;flex-direction:column;gap:9px;min-height:186px">
+        <div style="width:38px;height:38px;border-radius:9999px;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:15px;color:var(--ink-2,#96a1b5)">{{ p.initial }}</div>
+        <h3 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;margin:0">{{ p.title }}</h3>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ p.meta }}</div>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)">{{ p.body }}</p>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ p.play }}" type="button" style="display:flex;align-items:center;gap:7px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13px;border-radius:9999px;padding:8px 15px;cursor:pointer;background:rgba(255,80,41,.14);color:var(--accent,#ff5029);border:1px solid rgba(255,80,41,.42)" style-hover="background:var(--accent,#ff5029);color:#fff"><span aria-hidden="true" style="font-size:9px">▶</span>Play now</button>
+          <span style="font-size:12px;color:var(--ink-2,#96a1b5)"><b style="color:var(--heat-warm,#ffb84a);font-weight:600">{{ p.stat }}</b> · {{ p.tag }}</span>
+        </div>
+        <sc-if value="{{ p.hot }}" hint-placeholder-val="{{ false }}">
+        <!-- Bare glyphs are a guess until you tap them, so each one waits out a
+             hover — or a long press, which is the touch equivalent — and names
+             itself. 40px discs: the old 32 was under the target size. -->
+        <div style="position:absolute;top:13px;right:13px;display:flex;gap:7px">
+          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="✎" label="Rename" onClick="{{ p.edit }}" hint-size="40px,40px"></x-import>
+          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="↗" label="Share HYPE Link" onClick="{{ p.share }}" hint-size="40px,40px"></x-import>
+          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="🗑" label="Delete" danger="{{ true }}" onClick="{{ p.remove }}" hint-size="40px,40px"></x-import>
+        </div>
+        </sc-if>
+        <sc-if value="{{ p.shared }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute;left:20px;right:20px;bottom:16px;background:var(--bg-raised,#18233a);border:1px solid rgba(255,80,41,.42);border-radius:10px;padding:9px 12px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent,#ff5029)">Link copied · {{ p.link }}</div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isCards }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;padding-top:6px">
+    <sc-for list="{{ cards }}" as="c" hint-placeholder-count="6">
+      <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:20px;display:flex;flex-direction:column;gap:9px;min-height:186px">
+        <div style="width:38px;height:38px;border-radius:9999px;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:15px;color:var(--ink-2,#96a1b5)">{{ c.initial }}</div>
+        <h3 style="margin:0"><button onClick="{{ c.openArtist }}" type="button" style="background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;color:var(--ink-1,#eef1f6)" style-hover="color:var(--accent,#ff5029)">{{ c.title }}</button></h3>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ c.meta }}</div>
+        <p style="margin:0;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)">{{ c.body }}</p>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ c.why }}</div>
+        <div style="margin-top:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+          <button onClick="{{ c.play }}" type="button" style="display:flex;align-items:center;gap:7px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13px;border-radius:9999px;padding:8px 15px;cursor:pointer;background:rgba(255,80,41,.14);color:var(--accent,#ff5029);border:1px solid rgba(255,80,41,.42)" style-hover="background:var(--accent,#ff5029);color:#fff"><span aria-hidden="true" style="font-size:9px">▶</span>Play now</button>
+          <span style="font-size:12px;color:var(--ink-2,#96a1b5)"><b style="color:var(--heat-warm,#ffb84a);font-weight:600">{{ c.stat }}</b> · {{ c.tag }}</span>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- The chart column is narrow on purpose, and each row carries a heat bar:
+       four columns across the full frame left a dead middle and did not look
+       like a chart. -->
+  <!-- Chart controls. Three axes, because a chart with no scope is a chart of
+       nowhere: genre, place, and which week. The week ends Sunday — the chart
+       is cut and republished then, and the current week is marked live so a
+       position read on Wednesday is not mistaken for a final one. -->
+  <sc-if value="{{ isCharts }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:900px;margin-bottom:16px">
+    <sc-for list="{{ chartFilters }}" as="f" hint-placeholder-count="3">
+      <label style="display:flex;align-items:center;gap:9px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:8px 8px 8px 15px">
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ f.label }}</span>
+        <select onChange="{{ f.pick }}" value="{{ f.value }}" style="appearance:none;-webkit-appearance:none;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:7px 15px;color:var(--ink-1,#eef1f6);font-family:var(--font-body,'Work Sans',sans-serif);font-size:13px;cursor:pointer;outline:none">
+          <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
+            <option value="{{ o.value }}">{{ o.label }}</option>
+          </sc-for>
+        </select>
+      </label>
+    </sc-for>
+    <div style="display:flex;align-items:center;gap:8px;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">
+      <span aria-hidden="true" style="width:7px;height:7px;border-radius:9999px;background:var(--heat-warm,#ffb84a)"></span>{{ chartCadence }}
+    </div>
+  </div>
+  <div style="max-width:900px;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5);margin-bottom:14px">{{ chartSummary }}</div>
+  </sc-if>
+
+  <sc-if value="{{ isRows }}" hint-placeholder-val="{{ true }}">
+  <div style="max-width:900px;border-top:1px solid var(--line-2,rgba(238,241,246,.13));padding-top:2px">
+    <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+      <div style="display:grid;grid-template-columns:32px 1fr 116px 86px;gap:14px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07))">
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:12px;color:var(--ink-3,#8792a6)">{{ r.n }}</div>
+        <!-- Two destinations per row, so two targets. The song plays where it
+             stands; the artist opens their page. A row where the whole thing did
+             one of the two would have to pick, and the chart is read for both. -->
+        <div>
+          <sc-if value="{{ r.canPlay }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ r.onTitle }}" type="button" style="display:flex;align-items:center;gap:9px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)" style-hover="color:var(--accent,#ff5029)"><span aria-hidden="true" style="width:22px;height:22px;flex:0 0 auto;border-radius:9999px;border:1px solid rgba(255,80,41,.45);color:var(--accent,#ff5029);display:grid;place-items:center;font-size:8px;padding-left:2px">▶</span>{{ r.title }}</button>
+          </sc-if>
+          <sc-if value="{{ r.canOpenArtist }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ r.onMeta }}" type="button" style="margin-top:3px;background:transparent;border:0;padding:0;cursor:pointer;text-align:left;font-family:inherit;font-size:12.5px;color:var(--ink-2,#96a1b5);text-decoration:underline;text-decoration-color:rgba(150,161,181,.4);text-underline-offset:3px" style-hover="color:var(--accent,#ff5029)">{{ r.meta }}</button>
+          </sc-if>
+          <sc-if value="{{ r.plainMeta }}" hint-placeholder-val="{{ true }}">
+            <div style="font-size:12.5px;color:var(--ink-2,#96a1b5);margin-top:2px">{{ r.meta }}</div>
+          </sc-if>
+          {{ r.bar }}
+        </div>
+        <div style="font-size:13px;color:var(--ink-2,#96a1b5)">{{ r.detail }}</div>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:12.5px;text-align:right;color:var(--ink-1,#eef1f6)">{{ r.value }}</div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ── ME pane. Flat by design: Settings · Info · Legal · Accessibility are
+     in-page rows, not fan-out destinations. No search here. ── -->
+<sc-if value="{{ onMe }}" hint-placeholder-val="{{ true }}">
+<div style="zoom:var(--a11y-zoom,1);position:absolute;inset:0;overflow-y:auto;padding:var(--pane-pad,30px 40px 142px);background:rgba(var(--bg-base-rgb,11,18,32),.93);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:inset 0 1px 0 var(--hair-100,rgba(255,255,255,.1))">
+<div style="max-width:860px;margin:0 auto">
+
+  <!-- ME → SUBPAGE. Settings, Info, Legal and Accessibility are real routes
+       (/app/me/settings and so on), so each opens a page of its own rather than
+       an accordion. One level deep, one way back. -->
+  <!-- Account deletion. Three gates, each doing different work: the sentence
+       states what actually goes (a member who has sold tickets is deleting a
+       payout history, not just a login), the export is offered before the act
+       rather than mentioned after it, and the typed word is the only step a
+       mis-tap cannot complete. -->
+  <sc-if value="{{ deleteOpen }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-label="Delete your account" style="position:fixed;inset:0;z-index:800;display:grid;place-items:center;padding:24px;background:rgba(6,10,20,.74);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)">
+    <div style="width:min(440px,100%);max-height:calc(100dvh - 48px);overflow-y:auto;background:var(--bg-surface,#121b2e);border:1px solid rgba(var(--color-error-rgb,255,69,69),.45);border-radius:var(--radius-card,18px);box-shadow:0 30px 80px rgba(4,8,18,.72);padding:24px">
+      <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--color-error,#ff4545)">Not reversible</div>
+      <h2 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:25px;letter-spacing:-.03em;line-height:1.15;margin:8px 0 0">Are you sure?</h2>
+      <p style="margin:10px 0 0;font-size:13.5px;line-height:1.65;color:var(--ink-2,#96a1b5)">This removes your account and every profile on it. Your hypes, playlists, tickets, promoter earnings and payout history go with it. Tickets you are holding stop working at the door, and they cannot be reissued.</p>
+
+      <div style="margin-top:18px;background:var(--bg-raised,#18233a);border-radius:14px;padding:16px">
+        <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14.5px;letter-spacing:-.015em">Download your data first</div>
+        <p style="margin:5px 0 12px;font-size:12.5px;line-height:1.6;color:var(--ink-2,#96a1b5)">One JSON file with everything above. We recommend it — after deletion there is nothing left to export.</p>
+        <a href="/app/me/settings?export=1" style="display:inline-block;text-decoration:none;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13.5px;border-radius:9999px;padding:10px 18px;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Download my data</a>
+      </div>
+
+      <label style="display:block;margin-top:18px;font-size:13px;color:var(--ink-2,#96a1b5)">Type <b style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-weight:500;color:var(--ink-1,#eef1f6);letter-spacing:.1em">DELETE</b> to authorize</label>
+      <input onInput="{{ setDeleteWord }}" value="{{ deleteWord }}" placeholder="DELETE" aria-label="Type DELETE to authorize" autocomplete="off" style="width:100%;box-sizing:border-box;margin-top:9px;background:var(--bg-base,#0b1220);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:12px;padding:13px 16px;color:var(--ink-1,#eef1f6);font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:14px;letter-spacing:.14em;outline:none">
+
+      <div style="display:flex;gap:10px;margin-top:18px">
+        <button onClick="{{ closeDelete }}" type="button" style="flex:1;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;border-radius:9999px;padding:13px 18px;cursor:pointer;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))" style-hover="border-color:var(--accent,#ff5029)">Keep my account</button>
+        <sc-if value="{{ deleteArmed }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ confirmDelete }}" type="button" style="flex:1;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;border-radius:9999px;padding:13px 18px;cursor:pointer;background:var(--color-error,#ff4545);color:#fff;border:1px solid var(--color-error,#ff4545)">Delete forever</button>
+        </sc-if>
+        <sc-if value="{{ deleteIdle }}" hint-placeholder-val="{{ true }}">
+          <button type="button" disabled="disabled" style="flex:1;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;border-radius:9999px;padding:13px 18px;background:rgba(238,241,246,.06);color:var(--ink-3,#8792a6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Delete forever</button>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ subOpen }}" hint-placeholder-val="{{ false }}">
+  <div>
+    <!-- The only way out of a subpage, so it is sized to be found: a real pill at
+         a real hit size, not a 10px mono caption. It says BACK rather than the
+         parent's name — one level deep means there is only one place to go. -->
+    <button onClick="{{ backToMe }}" type="button" style="display:inline-flex;align-items:center;gap:9px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:11px 20px 11px 17px;margin-bottom:20px;cursor:pointer;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:.02em;color:var(--ink-1,#eef1f6)" style-hover="border-color:var(--accent,#ff5029);color:var(--accent,#ff5029)"><span aria-hidden="true" style="font-size:19px;line-height:1;margin-top:-2px">‹</span>Back</button>
+    <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:10px">{{ subRoute }}</div>
+    <h1 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:28px;line-height:1.12;letter-spacing:-.03em;margin:0 0 6px">{{ subTitle }}</h1>
+    <p style="font-size:14px;line-height:1.6;color:var(--ink-2,#96a1b5);max-width:600px;margin:0 0 24px">{{ subDek }}</p>
+    <sc-for list="{{ subGroups }}" as="g" hint-placeholder-count="2">
+      <div style="margin-bottom:var(--sub-gap,22px)">
+        <!-- On a phone each group is a closed drawer until you ask for it. Five
+             groups of open rows is a page you scroll past rather than read; the
+             headings are the index, and one is open at a time. Desktop has the
+             room, so nothing collapses there. -->
+        <sc-if value="{{ g.collapsible }}" hint-placeholder-val="{{ false }}">
+          <button onClick="{{ g.toggle }}" type="button" aria-expanded="{{ g.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:14px 18px;cursor:pointer;margin-bottom:8px" style-hover="border-color:var(--accent,#ff5029)">
+            <span style="flex:1;min-width:0;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)">{{ g.title }}</span>
+            <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);flex:0 0 auto">{{ g.count }}</span>
+            <span aria-hidden="true" style="font-size:15px;line-height:1;color:var(--ink-2,#96a1b5);flex:0 0 auto">{{ g.chevron }}</span>
+          </button>
+        </sc-if>
+        <sc-if value="{{ g.plainTitle }}" hint-placeholder-val="{{ true }}">
+          <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:9px">{{ g.title }}</div>
+        </sc-if>
+        <sc-if value="{{ g.open }}" hint-placeholder-val="{{ true }}">
+        <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);overflow:hidden">
+          <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:16px;padding:15px 20px;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07))">
+              <div style="flex:1;min-width:0">
+                <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em">{{ r.label }}</div>
+                <div style="font-size:12.5px;line-height:1.55;color:var(--ink-2,#96a1b5);margin-top:3px">{{ r.detail }}</div>
+              </div>
+              <sc-if value="{{ r.isText }}" hint-placeholder-val="{{ true }}">
+                <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6);text-align:right;flex:0 0 auto">{{ r.value }}</div>
+              </sc-if>
+              <!-- A row that leads somewhere says so: the value keeps its place
+                   as the row's datum and gains a chevron, so the version number
+                   or the date is still the thing you read while the whole pill is
+                   the target. -->
+              <sc-if value="{{ r.isLink }}" hint-placeholder-val="{{ false }}">
+                <a href="{{ r.href }}" style="display:flex;align-items:center;gap:8px;flex:0 0 auto;text-decoration:none;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-1,#eef1f6);background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 14px" style-hover="border-color:var(--accent,#ff5029);color:var(--accent,#ff5029)">{{ r.value }}<span aria-hidden="true" style="font-size:13px;line-height:1;opacity:.7">›</span></a>
+              </sc-if>
+              <sc-if value="{{ r.isLang }}" hint-placeholder-val="{{ false }}">
+                <select onChange="{{ pickLang }}" value="{{ lang }}" aria-label="Language" style="flex:0 0 auto;appearance:none;-webkit-appearance:none;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 17px;color:var(--ink-1,#eef1f6);font-family:var(--font-body,'Work Sans',sans-serif);font-size:13px;cursor:pointer;outline:none">
+                  <sc-for list="{{ langs }}" as="l" hint-placeholder-count="12">
+                    <option value="{{ l.code }}">{{ l.label }}</option>
+                  </sc-for>
+                </select>
+              </sc-if>
+              <sc-if value="{{ r.isCycle }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ r.cycle }}" type="button" aria-label="{{ r.cycleLabel }}" style="flex:0 0 auto;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:var(--bg-raised,#18233a);color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:10px 18px;cursor:pointer" style-hover="border-color:var(--accent,#ff5029)">{{ r.value }}</button>
+              </sc-if>
+              <sc-if value="{{ r.isDelete }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ openDelete }}" type="button" style="flex:0 0 auto;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:transparent;color:var(--color-error,#ff4545);border:1px solid rgba(var(--color-error-rgb,255,69,69),.45);border-radius:9999px;padding:10px 18px;cursor:pointer" style-hover="background:var(--color-error,#ff4545);color:#fff">Delete</button>
+              </sc-if>
+              <sc-if value="{{ r.isTheme }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ toggleTheme }}" type="button" style="flex:0 0 auto;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;background:var(--bg-raised,#18233a);color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:10px 18px;cursor:pointer">{{ themeLabel }}</button>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ meRoot }}" hint-placeholder-val="{{ true }}">
+  <div>
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;flex-wrap:wrap">
+    <div style="width:64px;height:64px;border-radius:9999px;background:var(--role-fan,#b983ff);color:#1a0b2e;display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:26px">N</div>
+    <div style="flex:1;min-width:200px">
+      <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--role-fan,#b983ff);margin-bottom:5px">Fan · Portland, ME</div>
+      <h1 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:30px;letter-spacing:-.03em;margin:0;line-height:1.08">Nyla Okonjo</h1>
+    </div>
+    <!-- The HYPE Link is the whole promoter mechanic in one control: share it,
+         and any ticket bought through it pays you out of the 10% promoter pool.
+         There is no promoter signup because there is nothing to sign up for. -->
+    <button onClick="{{ copyLink }}" type="button" aria-label="Copy your HYPE Link" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:var(--accent,#ff5029);border:1px solid var(--accent,#ff5029);color:#fff;border-radius:9999px;padding:12px 20px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;letter-spacing:-.01em">
+      <span aria-hidden="true" style="font-size:14px">⚡</span>{{ copyLabel }}
+      <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.08em;text-transform:none;opacity:.82">{{ hypeLink }}</span>
+    </button>
+  </div>
+
+  <sc-if value="{{ meFold }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ mS.toggle }}" type="button" aria-expanded="{{ mS.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:14px 18px;cursor:pointer;margin-bottom:8px"><span style="flex:1;min-width:0;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)">Your year</span><span aria-hidden="true" style="font-size:15px;line-height:1;color:var(--ink-2,#96a1b5);flex:0 0 auto">{{ mS.chevron }}</span></button>
+  </sc-if>
+  <sc-if value="{{ mS.open }}" hint-placeholder-val="{{ true }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--me-stat,160px),1fr));gap:var(--me-gap,12px);margin-bottom:var(--me-block,26px)">
+    <sc-for list="{{ meStats }}" as="s" hint-placeholder-count="4">
+      <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:var(--me-card,16px 18px)">
+        <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:var(--me-stat-n,26px);letter-spacing:-.03em;line-height:1">{{ s.value }}</div>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:7px">{{ s.label }}</div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- The ticket itself. Two things a member does with an upcoming ticket: get
+       in, or hand it on. The code to get in is the whole point of the panel, so
+       it is the first thing in it and it is large enough to scan off a phone held
+       at arm's length. Transfer is the second act, folded away until asked for.
+
+       Transfer is at FACE VALUE, always. The recipient's HYPE Link is the
+       address, so the handover and the money are one action and one record —
+       there is no resale price field to fill in because there is no resale
+       price. iHYPE takes $0 from it; Stripe's processing fee is stated
+       separately, never merged into the face value. -->
+  <sc-if value="{{ ticketOpen }}" hint-placeholder-val="{{ false }}">
+  <div role="dialog" aria-label="Your ticket" style="position:fixed;inset:0;z-index:700;display:grid;place-items:center;padding:24px;background:rgba(6,10,20,.72);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)">
+    <div style="width:min(430px,100%);max-height:calc(100dvh - 48px);overflow-y:auto;background:var(--bg-surface,#121b2e);border:1px solid rgba(255,80,41,.42);border-radius:var(--radius-card,18px);box-shadow:0 30px 80px rgba(4,8,18,.72)">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:20px 22px 0">
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--accent,#ff5029)">{{ tk.state }} · {{ tk.day }} {{ tk.mon }}</div>
+          <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:23px;letter-spacing:-.03em;line-height:1.15;margin-top:6px">{{ tk.artist }}</div>
+          <div style="font-size:13px;color:var(--ink-2,#96a1b5);margin-top:3px">{{ tk.venue }}</div>
+        </div>
+        <button onClick="{{ closeTicket }}" type="button" aria-label="Close" style="width:30px;height:30px;flex:0 0 auto;border-radius:9999px;background:rgba(238,241,246,.06);border:1px solid var(--line-2,rgba(238,241,246,.13));color:var(--ink-2,#96a1b5);cursor:pointer;font-size:13px;display:grid;place-items:center">✕</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 22px 22px">
+        <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TicketQR" code="{{ tk.code }}" label="{{ tk.code }}" size="{{ 196 }}" hint-size="196px,222px"></x-import>
+        <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);text-align:center">{{ tk.doors }} · one scan, one entry</div>
+      </div>
+
+      <div style="border-top:1px solid var(--hair-70,rgba(238,241,246,.07));padding:18px 22px 22px">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+          <span style="font-size:13px;color:var(--ink-2,#96a1b5)">Face value</span>
+          <span style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:17px;letter-spacing:-.02em">{{ tk.face }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px">
+          <span style="font-size:12.5px;color:var(--ink-3,#8792a6)">Stripe processing, paid by the buyer</span>
+          <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:11px;color:var(--ink-2,#96a1b5)">{{ tk.fee }}</span>
+        </div>
+        <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:6px">
+          <span style="font-size:12.5px;color:var(--ink-3,#8792a6)">iHYPE fee</span>
+          <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:11px;color:var(--heat-warm,#ffb84a)">$0.00</span>
+        </div>
+
+        <sc-if value="{{ xferClosed }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ openXfer }}" type="button" style="width:100%;margin-top:16px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;border-radius:9999px;padding:12px 18px;cursor:pointer;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))" style-hover="border-color:var(--accent,#ff5029)">Transfer this ticket</button>
+        </sc-if>
+
+        <sc-if value="{{ xferOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;background:var(--bg-raised,#18233a);border-radius:14px;padding:16px">
+          <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em">Transfer to a HYPE Link</div>
+          <p style="margin:6px 0 12px;font-size:12.5px;line-height:1.6;color:var(--ink-2,#96a1b5)">You start it, they accept. The ticket moves and {{ tk.face }} moves back to you in the same step — face value only, nothing above it.</p>
+          <div style="display:flex;align-items:center;gap:8px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:10px 15px">
+            <span aria-hidden="true" style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:11.5px;color:var(--ink-3,#8792a6)">ihy.pe/</span>
+            <input onInput="{{ setXferTo }}" value="{{ xferTo }}" placeholder="their-code" aria-label="Recipient HYPE Link" style="flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink-1,#eef1f6);font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:12.5px">
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-top:12px">
+            <span style="font-size:12.5px;color:var(--ink-2,#96a1b5)">They pay</span>
+            <span style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:16px;letter-spacing:-.02em">{{ tk.face }}</span>
+          </div>
+          <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:5px">Locked to face value · not editable</div>
+          <div style="display:flex;gap:9px;margin-top:15px">
+            <button onClick="{{ closeXfer }}" type="button" style="flex:0 0 auto;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13.5px;border-radius:9999px;padding:11px 17px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))">Cancel</button>
+            <sc-if value="{{ xferReady }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ sendXfer }}" type="button" style="flex:1;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13.5px;border-radius:9999px;padding:11px 17px;cursor:pointer;background:var(--accent,#ff5029);color:#fff;border:1px solid var(--accent,#ff5029)">Send to {{ xferLabel }}</button>
+            </sc-if>
+            <sc-if value="{{ xferBlank }}" hint-placeholder-val="{{ true }}">
+              <button type="button" disabled="disabled" style="flex:1;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13.5px;border-radius:9999px;padding:11px 17px;background:rgba(238,241,246,.06);color:var(--ink-3,#8792a6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Send transfer</button>
+            </sc-if>
+          </div>
+        </div>
+        </sc-if>
+
+        <sc-if value="{{ xferSent }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:16px;background:rgba(255,80,41,.1);border:1px solid rgba(255,80,41,.42);border-radius:14px;padding:15px 16px">
+          <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14.5px;letter-spacing:-.015em;color:var(--accent,#ff5029)">Transfer pending</div>
+          <p style="margin:5px 0 0;font-size:12.5px;line-height:1.6;color:var(--ink-2,#96a1b5)">Sent to {{ xferLabel }}. The ticket stays valid in your wallet until they accept and {{ tk.face }} clears.</p>
+        </div>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <!-- MY TICKETS. Upcoming first and in date order; the wallet code sits on the
+       ticket because that is what gets scanned at the door. Face value and the
+       Stripe processing fee are shown as two numbers, never one — iHYPE's own
+       fee is $0 and merging them would imply otherwise. -->
+  <sc-if value="{{ meFold }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ mT.toggle }}" type="button" aria-expanded="{{ mT.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:14px 18px;cursor:pointer;margin-bottom:8px"><span style="flex:1;min-width:0;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)">My tickets</span><span aria-hidden="true" style="font-size:15px;line-height:1;color:var(--ink-2,#96a1b5);flex:0 0 auto">{{ mT.chevron }}</span></button>
+  </sc-if>
+  <sc-if value="{{ meWide }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px">
+    <h2 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;margin:0">My tickets</h2>
+    <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ ticketNote }}</div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ mT.open }}" hint-placeholder-val="{{ true }}">
+  <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);overflow:hidden;margin-bottom:26px">
+    <sc-for list="{{ tickets }}" as="t" hint-placeholder-count="3">
+      <div style="display:grid;grid-template-columns:60px 1fr auto;gap:16px;align-items:center;padding:15px 20px;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07))">
+        <div style="text-align:center">
+          <sc-if value="{{ t.upcoming }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:22px;letter-spacing:-.03em;line-height:1;color:var(--ink-1,#eef1f6)">{{ t.day }}</div>
+          </sc-if>
+          <sc-if value="{{ t.past }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:22px;letter-spacing:-.03em;line-height:1;color:var(--ink-3,#8792a6)">{{ t.day }}</div>
+          </sc-if>
+          <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:4px">{{ t.mon }}</div>
+        </div>
+        <div style="min-width:0">
+          <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em">{{ t.artist }}</div>
+          <div style="font-size:12.5px;color:var(--ink-2,#96a1b5);margin-top:2px">{{ t.venue }}</div>
+          <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:6px">{{ t.code }} · {{ t.paid }}</div>
+        </div>
+        <div style="text-align:right">
+          <sc-if value="{{ t.upcoming }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent,#ff5029)">{{ t.state }}</div>
+          </sc-if>
+          <sc-if value="{{ t.past }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ t.state }}</div>
+          </sc-if>
+          <div style="font-size:12.5px;color:var(--ink-2,#96a1b5);margin-top:4px">{{ t.doors }}</div>
+          <sc-if value="{{ t.upcoming }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ t.open }}" type="button" style="margin-top:9px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:13px;border-radius:9999px;padding:8px 15px;cursor:pointer;background:rgba(255,80,41,.14);color:var(--accent,#ff5029);border:1px solid rgba(255,80,41,.42)" style-hover="background:var(--accent,#ff5029);color:#fff">View ticket</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+  </sc-if>
+
+  <!-- ABOUT ME. Not a public bio: this is the card an artist or venue sees when
+       you hype them, like their show, or walk through their door. Everything on
+       it is optional and every line states who can read it. -->
+  <sc-if value="{{ meFold }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ mA.toggle }}" type="button" aria-expanded="{{ mA.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:14px 18px;cursor:pointer;margin-bottom:8px"><span style="flex:1;min-width:0;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)">About me</span><span aria-hidden="true" style="font-size:15px;line-height:1;color:var(--ink-2,#96a1b5);flex:0 0 auto">{{ mA.chevron }}</span></button>
+  </sc-if>
+  <sc-if value="{{ meWide }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px">
+    <h2 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;margin:0">About me</h2>
+    <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">Shared with who you hype</div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ mA.open }}" hint-placeholder-val="{{ true }}">
+  <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:20px;margin-bottom:26px">
+    <p style="margin:0 0 16px;font-size:14px;line-height:1.65;color:var(--ink-1,#eef1f6);max-width:600px">{{ aboutBody }}</p>
+    <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:18px">
+      <sc-for list="{{ aboutTags }}" as="t" hint-placeholder-count="5">
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:5px 11px">{{ t.label }}</span>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid var(--hair-70,rgba(238,241,246,.07))">
+      <sc-for list="{{ aboutFields }}" as="f" hint-placeholder-count="4">
+        <div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07))">
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13.5px;font-weight:500">{{ f.label }}</div>
+            <div style="font-size:12.5px;color:var(--ink-2,#96a1b5);margin-top:2px">{{ f.value }}</div>
+          </div>
+          <sc-if value="{{ f.on }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ f.toggle }}" type="button" aria-pressed="true" style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border-radius:9999px;padding:7px 14px;cursor:pointer;background:rgba(255,80,41,.14);color:var(--accent,#ff5029);border:1px solid rgba(255,80,41,.42)">Shared</button>
+          </sc-if>
+          <sc-if value="{{ f.off }}" hint-placeholder-val="{{ false }}">
+            <button onClick="{{ f.toggle }}" type="button" aria-pressed="false" style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;border-radius:9999px;padding:7px 14px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))">Private</button>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+    <button onClick="{{ editAbout }}" type="button" style="margin-top:16px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;background:var(--bg-raised,#18233a);color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:11px 20px;cursor:pointer" style-hover="border-color:var(--ink-2,#96a1b5)">Edit about me</button>
+  </div>
+  </sc-if>
+
+  <!-- PROFILES. One account, one or more profiles. Artist and Venue are the two
+       that exist: both are verified, both add their own dashboard. Promoting is
+       not a profile — it is already switched on for everyone through the HYPE
+       Link above, which is why it is stated here rather than offered. -->
+  <sc-if value="{{ meFold }}" hint-placeholder-val="{{ false }}">
+    <button onClick="{{ mP.toggle }}" type="button" aria-expanded="{{ mP.open }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:14px 18px;cursor:pointer;margin-bottom:8px"><span style="flex:1;min-width:0;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6)">Profiles</span><span aria-hidden="true" style="font-size:15px;line-height:1;color:var(--ink-2,#96a1b5);flex:0 0 auto">{{ mP.chevron }}</span></button>
+  </sc-if>
+  <sc-if value="{{ meWide }}" hint-placeholder-val="{{ true }}">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px">
+    <h2 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;margin:0">Profiles</h2>
+    <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">One account · switch any time</div>
+  </div>
+  </sc-if>
+  <sc-if value="{{ mP.open }}" hint-placeholder-val="{{ true }}">
+  <!-- Three roles exist, so the three cards are written out rather than driven
+       from a colour field: role colour is design, not data, and a token in a
+       hole cannot paint until the logic lands. -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:12px">
+    <div style="background:var(--bg-surface,#121b2e);border:1px solid rgba(185,131,255,.42);border-radius:var(--radius-card,18px);padding:17px 18px;display:flex;flex-direction:column;gap:8px;min-height:132px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;border-radius:9999px;background:var(--role-fan,#b983ff);color:#0b1220;display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:13px">N</span>
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--role-fan,#b983ff)">Fan</span>
+      </div>
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em">Nyla Okonjo</div>
+      <div style="font-size:12.5px;line-height:1.55;color:var(--ink-2,#96a1b5)">Your main profile. Hypes, tickets, playlists and promoter earnings all live here.</div>
+      <div style="margin-top:auto;display:flex;gap:8px;flex-wrap:wrap">
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:8px 15px;color:var(--role-fan,#b983ff);border:1px solid rgba(185,131,255,.42)">Active</span>
+        <a href="../page-builder/PageBuilder.dc.html" style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:8px 15px;text-decoration:none;cursor:pointer;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Edit page</a>
+      </div>
+    </div>
+    <sc-if value="{{ hasArtist }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:17px 18px;display:flex;flex-direction:column;gap:8px;min-height:132px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;border-radius:9999px;background:var(--role-artist,#ff8a3d);color:#0b1220;display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:13px">A</span>
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--role-artist,#ff8a3d)">Artist</span>
+      </div>
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em">Unnamed project</div>
+      <div style="font-size:12.5px;line-height:1.55;color:var(--ink-2,#96a1b5)">Verification pending. Uploads, seed clips and payouts unlock once approved.</div>
+      <a href="../page-builder/PageBuilder.dc.html" style="margin-top:auto;align-self:flex-start;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:8px 15px;text-decoration:none;cursor:pointer;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Build artist page</a>
+    </div>
+    </sc-if>
+    <sc-if value="{{ hasVenue }}" hint-placeholder-val="{{ false }}">
+    <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);padding:17px 18px;display:flex;flex-direction:column;gap:8px;min-height:132px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:30px;height:30px;border-radius:9999px;background:var(--role-venue,#4dd0c1);color:#0b1220;display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:13px">V</span>
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--role-venue,#4dd0c1)">Venue</span>
+      </div>
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em">Unnamed room</div>
+      <div style="font-size:12.5px;line-height:1.55;color:var(--ink-2,#96a1b5)">Verification pending. Listings, lineups and door scanning unlock once approved.</div>
+      <a href="../page-builder/PageBuilder.dc.html" style="margin-top:auto;align-self:flex-start;font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:8px 15px;text-decoration:none;cursor:pointer;background:transparent;color:var(--ink-1,#eef1f6);border:1px solid var(--line-2,rgba(238,241,246,.13))">Build venue page</a>
+    </div>
+    </sc-if>
+
+  </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+    <sc-if value="{{ canAddArtist }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ addArtist }}" type="button" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:transparent;border:1px dashed var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:11px 18px;color:var(--ink-1,#eef1f6);font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px" style-hover="border-color:var(--role-artist,#ff8a3d)">
+        <span aria-hidden="true" style="color:var(--role-artist,#ff8a3d);font-size:15px">＋</span>Add artist profile
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6)">Verified</span>
+      </button>
+    </sc-if>
+    <sc-if value="{{ canAddVenue }}" hint-placeholder-val="{{ true }}">
+      <button onClick="{{ addVenue }}" type="button" style="display:flex;align-items:center;gap:10px;cursor:pointer;background:transparent;border:1px dashed var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:11px 18px;color:var(--ink-1,#eef1f6);font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px" style-hover="border-color:var(--role-venue,#4dd0c1)">
+        <span aria-hidden="true" style="color:var(--role-venue,#4dd0c1);font-size:15px">＋</span>Add venue profile
+        <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3,#8792a6)">Verified</span>
+      </button>
+    </sc-if>
+  </div>
+  <p style="margin:0 0 26px;font-size:12.5px;line-height:1.6;color:var(--ink-3,#8792a6);max-width:600px">Promoting is not a profile. Every account can promote by sharing its HYPE Link, and earns from the 10% promoter pool when a ticket sells through it.</p>
+  </sc-if>
+
+  <div style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);overflow:hidden;margin-bottom:20px">
+    <sc-for list="{{ mePanels }}" as="p" hint-placeholder-count="4">
+      <button onClick="{{ p.open }}" type="button" style="display:flex;width:100%;text-align:left;align-items:center;gap:14px;padding:16px 20px;border:0;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07));cursor:pointer;background:transparent;color:inherit;font-family:inherit" style-hover="background:var(--bg-raised,#18233a)">
+        <div style="flex:1">
+          <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:16px;letter-spacing:-.015em">{{ p.label }}</div>
+          <div style="font-size:12.5px;color:var(--ink-2,#96a1b5);margin-top:3px">{{ p.detail }}</div>
+        </div>
+        <span aria-hidden="true" style="color:var(--ink-3,#8792a6);font-size:15px">›</span>
+      </button>
+    </sc-for>
+  </div>
+
+  <button onClick="{{ signOut }}" type="button" style="display:block;width:100%;margin-bottom:8px;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:15px;border-radius:9999px;padding:14px 20px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))" style-hover="border-color:var(--color-error,#ff4545);color:var(--color-error,#ff4545)">Log out of {{ meHandle }}</button>
+
+  </div>
+  </sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ── The pin sheet belongs to the map: leaving MAP clears it. ── -->
+<sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+<!-- The sheet positions itself against the frame; wrapping it in a second
+     absolutely-positioned, zero-height box was what left its max-height with
+     nothing to resolve against. -->
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.MapSheet" target="{{ sheet }}" onClose="{{ closeSheet }}" hint-size="620px,280px"></x-import>
+</sc-if>
+
+<!-- ── Chrome. No header, no tab bar: the logo trigger, the player and the hint
+     are the only persistent furniture.
+
+     Props are camelCase — the runtime matches them case-insensitively, so the
+     lowercasing the HTML parser applies is harmless. What is NOT harmless is a
+     prop named after a reserved HTML boolean attribute: `open` and `hidden` are
+     dropped outright before the component sees them, which is why these are
+     `expanded` and `dimmed`. ── -->
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.Scrim" state="{{ scrimState }}" onClick="{{ closeNav }}" hint-size="100%,100%"></x-import>
+
+<!-- ── Artist highlight. Opened from the player artwork, which is the only thing
+     on the pill that leads anywhere. Enough to decide whether to go further:
+     who they are, where they are from, what they have earned, and one way
+     through to the full page. ── -->
+<sc-if value="{{ artistOpen }}" hint-placeholder-val="{{ false }}">
+<div role="dialog" aria-label="Artist" style="position:absolute;left:var(--player-l,126px);bottom:var(--artist-b,136px);width:var(--artist-w,340px);background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:var(--radius-card,18px);box-shadow:0 24px 60px rgba(4,8,18,.62);padding:20px;z-index:600">
+  <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px">
+    <div style="width:52px;height:52px;flex:0 0 auto;border-radius:9999px;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));display:grid;place-items:center;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:21px">{{ artistInitial }}</div>
+    <div style="flex:1;min-width:0">
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:21px;letter-spacing:-.03em;line-height:1.1">{{ artistName }}</div>
+      <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:5px">{{ artistMeta }}</div>
+    </div>
+    <button onClick="{{ closeArtist }}" type="button" aria-label="Close" style="width:28px;height:28px;flex:0 0 auto;border-radius:9999px;background:rgba(238,241,246,.06);border:1px solid var(--line-2,rgba(238,241,246,.13));color:var(--ink-2,#96a1b5);cursor:pointer;font-size:13;display:grid;place-items:center">✕</button>
+  </div>
+  <p style="margin:0 0 14px;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)">{{ artistBody }}</p>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px">
+    <div style="background:var(--bg-raised,#18233a);border-radius:12px;padding:11px 13px">
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:18px;letter-spacing:-.02em;color:var(--heat-warm,#ffb84a)">{{ artistHypes }}</div>
+      <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:5px">Hypes</div>
+    </div>
+    <div style="background:var(--bg-raised,#18233a);border-radius:12px;padding:11px 13px">
+      <div style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:18px;letter-spacing:-.02em">{{ artistShows }}</div>
+      <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-top:5px">Upcoming shows</div>
+    </div>
+  </div>
+  <a href="{{ artistHref }}" style="display:block;text-align:center;text-decoration:none;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;background:var(--accent,#ff5029);color:#fff;border-radius:9999px;padding:12px 18px">Open artist page</a>
+</div>
+</sc-if>
+
+<!-- The player docks immediately right of the trigger and shares its baseline
+     and its height. Every figure comes from one place in the logic class:
+     inset + safe area on the left and bottom, one size for both, one gap. -->
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.PlayerPill" track="{{ track }}" dimmed="{{ navOpen }}" playing="{{ playing }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" hypeCount="{{ hypeCount }}" canHype="{{ canHype }}" canTogglePlay="{{ canTogglePlay }}" progress="{{ progress }}" volume="{{ volume }}" queue="{{ queue }}" history="{{ history }}" queueOpen="{{ queueOpen }}" left="{{ playerLeft }}" bottom="{{ chromeBottom }}" width="{{ playerWidth }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleQueue="{{ toggleQueue }}" onPickTrack="{{ pickTrack }}" artistOpen="{{ artistOpen }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" wake="{{ playerWake }}" anchorHeight="{{ chromeSize }}" narrow="{{ isPhone }}" onExpand="{{ openFullPlayer }}" onSearch="{{ openSearch }}" reduceMotion="{{ reduceMotion }}" hint-size="460px,88px"></x-import>
+
+<!-- Phone only. Everything the desktop pill carries that will not fit in a
+     250px bar lives here, one tap behind the bar's artwork. -->
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.FullPlayer" open="{{ fullPlayerOpen }}" track="{{ track }}" playing="{{ playing }}" progress="{{ progress }}" volume="{{ volume }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" queue="{{ queue }}" history="{{ history }}" safeTop="{{ safeTop }}" safeBottom="{{ safeBottom }}" onClose="{{ closeFullPlayer }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onPickTrack="{{ pickTrack }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" hint-size="100%,100%"></x-import>
+
+<!-- Search now rides inside the bar's left edge; see PlayerPill. -->
+
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.ArcNav" nav="{{ navState }}" modules="{{ modules }}" activeModule="{{ activeModule }}" onNavigate="{{ navigate }}" onClose="{{ closeNav }}" hint-size="360px,360px"></x-import>
+
+<!-- The trigger is inset by the mount, not by its own left/bottom: the arc
+     anchor is inset the same way, and hardcoding one of the two leaves the fan
+     opening from a point offset from the button it belongs to. -->
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.LogoTrigger" expanded="{{ navOpen }}" playing="{{ playing }}" onClick="{{ toggleNav }}" size="{{ chromeSize }}" style="position:absolute;left:var(--chrome-l,26px);bottom:var(--chrome-b,26px);width:var(--chrome-s,88px);height:var(--chrome-s,88px)" hint-size="88px,88px"></x-import>
+
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:820},&quot;startModule&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;map&quot;,&quot;music&quot;,&quot;me&quot;],&quot;default&quot;:&quot;map&quot;,&quot;tsType&quot;:&quot;'map' | 'music' | 'me'&quot;,&quot;section&quot;:&quot;Shell&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dark&quot;,&quot;light&quot;],&quot;default&quot;:&quot;dark&quot;,&quot;tsType&quot;:&quot;'dark' | 'light'&quot;,&quot;section&quot;:&quot;Shell&quot;},&quot;showNowPlaying&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Shell&quot;}}">
+class Component extends DCLogic {
+  /**
+   * In the product, module / tab / panel are ROUTES, not state — /app/map,
+   * /app/music/radio, /app/me/settings. This prototype holds them in state
+   * because it is one file, but the ids and labels are the route segments
+   * verbatim so the mapping is mechanical.
+   */
+  state = { module: 'map', tab: 'discover', navOpen: false, navSection: 'root', sheet: null, hypedAt: {}, now: Date.now(), faved: true, playing: true, theme: 'dark', searchFocused: false, trackIndex: 2, progress: 34, volume: 70, queueOpen: false, artist: null, seedIndex: 0, saved: [], seedHyped: {},
+    mePage: null, copied: false, about: { city: true, genres: true, attended: true, contact: false },
+    profiles: ['fan'], hotList: null, sharedList: null, lists: null, a11y: {}, fullPlayer: false, openGroup: {}, meGroup: undefined,
+    deleting: false, deleteWord: '',
+    ticket: null, xfer: 'shut', xferTo: '',
+    viewportH: typeof window === 'undefined' ? 900 : window.innerHeight,
+    viewportW: typeof window === 'undefined' ? 1200 : window.innerWidth,
+    safeT: 0, safeR: 0, safeB: 0, safeL: 0,
+    playerWake: 0, lang: 'en', chartGenre: 'All genres', chartPlace: 'Everywhere', chartWeek: 'w0' };
+
+  /* HYPE resets every 24 hours, per target. One member can keep hyping an artist
+     they keep listening to, but only once a day — the window is what makes a
+     hype worth something. Two hypes an hour apart are the same enthusiasm; two
+     hypes a day apart are two decisions. Enforced here by timestamp rather than
+     by a boolean, so the state survives navigation and the wait can be stated
+     rather than guessed at. The real ledger lives server-side; this is the same
+     rule expressed in the shell so the control never offers what the API will
+     refuse. */
+  HYPE_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+  play(title, artist, album) {
+    let i = this.TRACKS.findIndex((t) => t.title === title);
+    if (i < 0) {
+      this.TRACKS = this.TRACKS.concat([{
+        title, artist, album: album || '', initial: (artist || title).charAt(0).toUpperCase(),
+      }]);
+      i = this.TRACKS.length - 1;
+    }
+    this.setState({ trackIndex: i, progress: 0, playing: true, queueOpen: false, playerWake: Date.now(), faved: false });
+  }
+
+  /* Each setting is a list of options that cycles on tap: one control shape for
+     all five, so there is one thing to learn and one code path to trust. */
+  A11Y = {
+    motion:   { opts: ['System', 'Reduce', 'Full'] },
+    autoplay: { opts: ['On', 'Off'] },
+    contrast: { opts: ['Standard', 'High'] },
+    text:     { opts: ['100%', '115%', '130%', '90%'] },
+    charts:   { opts: ['On', 'Off'] },
+  };
+
+  a11yLabel(key) {
+    const a = this.A11Y[key];
+    return a ? a.opts[(this.state.a11y || {})[key] || 0] : '';
+  }
+
+  cycleA11y(key) {
+    const a = this.A11Y[key];
+    if (!a) return;
+    const cur = (this.state.a11y || {})[key] || 0;
+    this.setState({ a11y: Object.assign({}, this.state.a11y, { [key]: (cur + 1) % a.opts.length }) });
+  }
+
+  /* Published as root attributes and one custom property, so the token
+     overrides in the helmet reach every surface at once — no component has to
+     know the setting exists. */
+  publishA11y() {
+    if (typeof document === 'undefined') return false;
+    const r = document.documentElement;
+    const motion = this.a11yLabel('motion');
+    const reduce = motion === 'Reduce' || (motion === 'System' && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    r.setAttribute('data-a11y-motion', reduce ? 'reduce' : 'full');
+    r.setAttribute('data-a11y-contrast', this.a11yLabel('contrast') === 'High' ? 'high' : 'standard');
+    r.style.setProperty('--a11y-zoom', String(parseInt(this.a11yLabel('text'), 10) / 100));
+    return reduce;
+  }
+
+  /* Written to the document root rather than returned into the template, so
+     every consumer is a literal `var()` with a sane desktop fallback. */
+  publishChrome(left, bottom, size, gap, inset) {
+    if (typeof document === 'undefined') return;
+    const r = document.documentElement.style;
+    const side = left + inset + (this.state.safeR || 0) + size + gap;
+    r.setProperty('--chrome-l', left + 'px');
+    r.setProperty('--chrome-b', bottom + 'px');
+    r.setProperty('--chrome-s', size + 'px');
+    /* The right inset mirrors the left, safe area included. PlayerPill's width
+       clamp reads this: without it the clamp falls back to the desktop 26 and
+       the phone row sits 14 from the left, 26 from the right. */
+    r.setProperty('--chrome-r', (inset + (this.state.safeR || 0)) + 'px');
+    r.setProperty('--player-l', (left + size + gap) + 'px');
+    r.setProperty('--artist-b', (bottom + size + 14) + 'px');
+    r.setProperty('--artist-w', 'min(340px, calc(100vw - ' + side + 'px))');
+    const nar = this.state.viewportW < 620;
+    r.setProperty('--me-stat', nar ? '104px' : '160px');
+    r.setProperty('--me-gap', nar ? '8px' : '12px');
+    r.setProperty('--me-block', nar ? '18px' : '26px');
+    r.setProperty('--me-card', nar ? '13px 14px' : '16px 18px');
+    r.setProperty('--me-stat-n', nar ? '21px' : '26px');
+    /* Three lines on a phone, two on a desktop — the same copy wraps differently
+       and the tab row has to land in the same place either way. */
+    r.setProperty('--dek-min', nar ? '4.8em' : '3.2em');
+    r.setProperty('--sub-gap', nar ? '10px' : '22px');
+    /* The map is a separate document and cannot read the device insets itself. */
+    const mf = document.querySelector('iframe[src*="map.html"]');
+    if (mf && mf.contentWindow) {
+      try {
+        mf.contentWindow.postMessage({
+          type: 'ihype:safe',
+          t: this.state.safeT || 0, r: this.state.safeR || 0,
+          b: this.state.safeB || 0, l: this.state.safeL || 0,
+        }, '*');
+      } catch (e) {}
+    }
+    r.setProperty('--pane-pad', this.state.viewportW < 620
+      ? 'calc(16px + ' + (this.state.safeT || 0) + 'px) 16px ' + (bottom + size + 22) + 'px'
+      : '30px 40px 142px');
+  }
+
+  hypeWait(target) {
+    const at = (this.state.hypedAt || {})[target];
+    if (!at) return 0;
+    return Math.max(0, this.HYPE_WINDOW_MS - (this.state.now - at));
+  }
+
+  /* Coarse on purpose: "17h 40m" then "42m", never a ticking second count. A
+     countdown to the second turns a fairness rule into a game to be timed. */
+  waitLabel(ms) {
+    const mins = Math.ceil(ms / 60000);
+    if (mins >= 60) {
+      const h = Math.floor(mins / 60), m = mins % 60;
+      return m ? h + 'h ' + m + 'm' : h + 'h';
+    }
+    return mins + 'm';
+  }
+
+  hype(target) {
+    if (this.hypeWait(target) > 0) return;
+    this.setState({
+      hypedAt: Object.assign({}, this.state.hypedAt, { [target]: Date.now() }),
+      now: Date.now(),
+    });
+  }
+
+  componentDidMount() {
+    /* One clock for every countdown on screen. A minute is the resolution the
+       labels are written to, so a minute is how often they need recomputing. */
+    this._clock = setInterval(() => this.setState({ now: Date.now() }), 60000);
+    this._resize = () => {
+      const p = document.getElementById('saprobe');
+      const cs = p ? getComputedStyle(p) : null;
+      const px = (v) => (cs ? parseFloat(v) || 0 : 0);
+      const q = new URLSearchParams(location.search);
+      const declared = (k) => parseFloat(q.get(k)) || 0;
+      this.setState({
+        viewportH: window.innerHeight,
+        viewportW: window.innerWidth,
+        safeT: Math.max(cs ? px(cs.paddingTop) : 0, declared('sat')),
+        safeR: Math.max(cs ? px(cs.paddingRight) : 0, declared('sar')),
+        safeB: Math.max(cs ? px(cs.paddingBottom) : 0, declared('sab')),
+        safeL: Math.max(cs ? px(cs.paddingLeft) : 0, declared('sal')),
+      });
+    };
+    window.addEventListener('resize', this._resize);
+    /* Orientation change fires before the insets settle on iOS. */
+    window.addEventListener('orientationchange', this._resize);
+    this._resize();
+    const t = this.props.theme || 'dark';
+    const m = this.props.startModule || 'map';
+    document.documentElement.dataset.theme = t === 'light' ? 'light' : 'dark';
+    this.setState({ theme: t, module: m });
+    /* The map is a separate document, so pin selection arrives by message
+       rather than by callback. Same seam as MmmMap's onOpenSheet: the map owns
+       the pins, the shell owns the sheet. */
+    this._onMessage = (event) => {
+      const data = event.data;
+      if (!data || data.type !== 'ihype:select') return;
+      this.setState({ sheet: data.target, navOpen: false, navSection: 'root' });
+    };
+    window.addEventListener('message', this._onMessage);
+  }
+
+  componentWillUnmount() {
+    if (this._onMessage) window.removeEventListener('message', this._onMessage);
+    if (this._clock) clearInterval(this._clock);
+    if (this._resize) {
+      window.removeEventListener('resize', this._resize);
+      window.removeEventListener('orientationchange', this._resize);
+    }
+  }
+
+  MODULES = [
+    { id: 'map', label: 'Map', href: '/app/map', items: [] },
+    { id: 'music', label: 'Music', href: '/app/music/discover', items: [
+      { id: 'discover', label: 'Discover', href: '/app/music/discover' },
+      { id: 'radio', label: 'Radio', href: '/app/music/radio' },
+      { id: 'charts', label: 'Charts', href: '/app/music/charts' },
+      { id: 'recommended', label: 'Recommended', href: '/app/music/recommended' },
+      { id: 'playlists', label: 'Playlists', href: '/app/music/playlists' },
+    ] },
+    { id: 'me', label: 'Me', href: '/app/me', items: [] },
+  ];
+
+  /* Each ME row is a route. `id` is the last segment of /app/me/<id>, so this
+     table is the router table as much as it is the list. */
+  ME_PANELS = [
+    { id: 'settings', label: 'Settings', detail: 'Account · notifications · language · appearance · payments' },
+    { id: 'info', label: 'Info', detail: 'How iHYPE works' },
+    { id: 'legal', label: 'Legal', detail: 'Charter · terms · privacy' },
+    { id: 'accessibility', label: 'Accessibility', detail: 'Motion · contrast · text' },
+  ];
+
+  ME_SUB = {
+    settings: {
+      title: 'Settings', dek: 'Your account, what reaches you, and how money moves.',
+      groups: [
+        { title: 'Account', rows: [
+          { label: 'Avatar name', detail: 'What you go by on iHYPE. It does not have to be your legal name.', value: 'Nyla Okonjo' },
+          { label: 'Email', detail: 'Receipts, tickets and payout notices go here.', value: 'n.okonjo@…' },
+          { label: 'Home city', detail: 'Sets what the map and your seed deck open on.', value: 'Portland, ME' },
+          { label: 'HYPE Link', detail: 'Your referral code. Shared, it earns from the promoter pool.', value: 'ihy.pe/nyla', href: 'https://ihy.pe/nyla' },
+        ] },
+        { title: 'Notifications', rows: [
+          { label: 'Shows near you', detail: 'When an artist you hype books within 40 miles.', value: 'On' },
+          { label: 'Ticket reminders', detail: 'Day before, and two hours before doors.', value: 'On' },
+          { label: 'Promoter payouts', detail: 'When a ticket sells through your HYPE Link.', value: 'On' },
+          { label: 'Weekly chart', detail: 'Sunday, when the chart is cut and republished.', value: 'Off' },
+        ] },
+        { title: 'Appearance and language', rows: [
+          { label: 'Language', detail: 'Sets the interface. Artist and venue copy stays in the language it was written in.', control: 'lang' },
+          { label: 'Appearance', detail: 'Dark is canonical. Light is verified for contrast.', control: 'theme' },
+        ] },
+        { title: 'Payments', rows: [
+          { label: 'Card on file', detail: 'Charged by Stripe at purchase. iHYPE never holds card data.', value: 'Visa ···4412', href: '/payouts' },
+          { label: 'Processing fee', detail: 'Stripe charges 2.9% + $0.30 per transaction, 3.5% + $0.30 on Amex.', value: 'Stripe', href: '/transparency' },
+          { label: 'iHYPE fee', detail: 'Locked at zero in the charter. iHYPE takes nothing from a ticket price.', value: '$0.00', href: '/charter' },
+          { label: 'Payout method', detail: 'Where promoter earnings land, twice monthly.', value: 'Bank ···8801', href: '/me/payout-settings' },
+        ] },
+      ],
+    },
+    info: {
+      title: 'Info', dek: 'What iHYPE does, and what it refuses to do.',
+      groups: [
+        { title: 'How it works', rows: [
+          { label: 'Hype', detail: 'One member, one hype per artist. It cannot be bought and it cannot be stacked.', value: 'Free', href: '/about' },
+          { label: 'The 70/20/10 split', detail: 'Every ticket: 70% artist, 20% venue, 10% promoter pool.', value: 'Charter', href: '/charter' },
+          { label: 'Charts', detail: 'Ranked by hype from real members. No placement is ever sold.', value: 'Weekly', href: '/app/music/charts' },
+          { label: 'The map', detail: 'Venues sit on their address. Artists sit on a city and nothing finer.', value: 'Live', href: '/app/map' },
+        ] },
+        { title: 'Support', rows: [
+          { label: 'Help centre', detail: 'Tickets, refunds, payouts, verification.', value: 'Open', href: '/support' },
+          { label: 'Report a problem', detail: 'Wrong listing, wrong lineup, a venue that has closed.', value: 'Open', href: '/support?new=1' },
+          { label: 'Contact', detail: 'Goes straight to the two of us. We read every one.', value: 'Open', href: '/support' },
+        ] },
+      ],
+    },
+    legal: {
+      title: 'Legal', dek: 'The charter binds iHYPE first. Everything else follows it.',
+      groups: [
+        { title: 'Documents', rows: [
+          { label: 'The charter', detail: 'The 70/20/10 split and the zero-fee promise, and how they can be changed.', value: 'v1.4', href: '/charter' },
+          { label: 'Terms of service', detail: 'What you agree to by using iHYPE.', value: 'Mar 2026', href: '/terms' },
+          { label: 'Privacy policy', detail: 'What is collected, what is never collected, how long it is kept.', value: 'Mar 2026', href: '/privacy' },
+          { label: 'Cookie policy', detail: 'Session and preference only. No advertising trackers.', value: 'Mar 2026', href: '/legal' },
+        ] },
+        { title: 'Your data', rows: [
+          { label: 'Download your data', detail: 'Hypes, tickets, playlists, payouts, as JSON.', value: 'Request', href: '/app/me/settings' },
+          { label: 'Delete your account', detail: 'Removes the account and every profile on it. Not reversible.', value: 'Delete', control: 'delete' },
+        ] },
+      ],
+    },
+    accessibility: {
+      title: 'Accessibility', dek: 'Set once here, and every surface honours it.',
+      groups: [
+        { title: 'Motion', rows: [
+          { label: 'Reduce motion', detail: 'Stops the marquee in the player and the swipe tween on the seed deck.', control: 'cycle', key: 'motion' },
+          { label: 'Autoplay clips', detail: 'Seed cards play a 15–30 second clip on arrival.', control: 'cycle', key: 'autoplay' },
+        ] },
+        { title: 'Sight', rows: [
+          { label: 'Contrast', detail: 'Raises every hairline and lifts the two dim ink tones across the app.', control: 'cycle', key: 'contrast' },
+          { label: 'Text size', detail: 'Scales the panes, hit targets included.', control: 'cycle', key: 'text' },
+          { label: 'Colour on charts', detail: 'Prints the number beside every heat bar, so colour is never the only signal.', control: 'cycle', key: 'charts' },
+        ] },
+        { title: 'Input', rows: [
+          { label: 'Keyboard navigation', detail: 'The arc nav, the deck and the player are all reachable by tab.', value: 'Always on' },
+          { label: 'Swipe alternatives', detail: 'Skip and save are buttons as well as gestures.', value: 'Always on' },
+        ] },
+      ],
+    },
+  };
+
+  /* Upcoming first, in date order, then past. `state` carries the door status
+     because that is what a member checks the ticket for. */
+  TICKETS = [
+    { day: '14', mon: 'Aug', artist: 'Null Harbor', venue: 'Elsewhere · Brooklyn, NY', code: 'IHY-4K2P', paid: '$18.00 + $0.82 Stripe', state: 'Upcoming', doors: 'Doors 20:00', upcoming: true },
+    { day: '22', mon: 'Aug', artist: 'Vera Sound', venue: 'SPACE · Portland, ME', code: 'IHY-9QJ1', paid: '$12.00 + $0.65 Stripe', state: 'Upcoming', doors: 'Doors 19:30', upcoming: true },
+    { day: '05', mon: 'Sep', artist: 'Aster Loop', venue: 'Arch 12 · London, UK', code: 'IHY-7WD3', paid: '£14.00 + £0.71 Stripe', state: 'Upcoming', doors: 'Doors 21:00', upcoming: true },
+    { day: '19', mon: 'Jul', artist: 'Halveg', venue: 'Blå · Oslo, NO', code: 'IHY-2FM8', paid: 'kr 180 + kr 5.52 Stripe', state: 'Attended', doors: 'Checked in 20:14', upcoming: false },
+  ];
+
+  ABOUT_FIELDS = [
+    { id: 'city', label: 'City', value: 'Portland, ME', on: true },
+    { id: 'genres', label: 'What you listen to', value: 'Dream-pop, post-punk, jazz', on: true },
+    { id: 'attended', label: 'Shows attended', value: '9 in the last year', on: true },
+    { id: 'contact', label: 'Contact email', value: 'n.okonjo@…', on: false },
+  ];
+
+  /* The same twelve locales the i18n harness ships, in the same order, so a
+     language chosen here is one the rest of the product actually has. */
+  LANGS = [
+    ['en', 'English'], ['es', 'Español'], ['fr', 'Français'], ['pt', 'Português'],
+    ['de', 'Deutsch'], ['it', 'Italiano'], ['ru', 'Русский'], ['zh', '中文'],
+    ['ko', '한국어'], ['ja', '日本語'], ['hi', 'हिन्दी'], ['ar', 'العربية'],
+  ];
+
+  CHART_GENRES = ['All genres', 'Dream-pop', 'Post-punk', 'Jazz', 'Electronic', 'Bedroom folk', 'Shoegaze'];
+  CHART_PLACES = ['Everywhere', 'Portland, ME', 'Brooklyn, NY', 'Los Angeles, CA', 'London, UK', 'Austin, TX', 'Oslo, NO'];
+  /* Weeks are Monday-to-Sunday and the chart is cut on Sunday night. The
+     current week is labelled live so a Wednesday position is not read as final. */
+  CHART_WEEKS = [
+    { id: 'w0', label: 'This week · live', cadence: 'Cut Sunday 23:59', live: true },
+    { id: 'w1', label: 'Week of Jul 27', cadence: 'Final · cut Aug 2', live: false },
+    { id: 'w2', label: 'Week of Jul 20', cadence: 'Final · cut Jul 26', live: false },
+    { id: 'w3', label: 'Week of Jul 13', cadence: 'Final · cut Jul 19', live: false },
+  ];
+
+  /* Discover IS the seed module, and its deck is two sources shuffled together:
+     proximity seeds and recommendations drawn from your own hype history. Every
+     card states which one put it there — a recommendation you cannot account for
+     is indistinguishable from an ad. `rec` items are also the whole of the
+     Recommended surface, so the two never disagree about what a recommendation
+     is. */
+  ARTISTS = [
+    { initial: 'V', title: 'Vera Sound', meta: 'Dream-pop · Portland, ME', body: 'Two singles out, both recorded in a garage on Munjoy Hill.', stat: '1,204 hypes', tag: 'rising fast', source: 'seed', why: 'Seeded · 2 mi away' },
+    { initial: 'M', title: 'Marguerite', meta: 'Jazz · Los Angeles, CA', body: 'Quartet out of Leimert Park. Standards, then everything but.', stat: '918 hypes', tag: 'new here', source: 'rec', why: 'Because you hyped Halveg' },
+    { initial: 'N', title: 'Null Harbor', meta: 'Post-punk · Brooklyn, NY', body: 'Loud rooms only. Playing Elsewhere in three weeks.', stat: '3,880 hypes', tag: 'charting', source: 'seed', why: 'Seeded · playing near you' },
+    { initial: 'A', title: 'Aster Loop', meta: 'Electronic · London, UK', body: 'Two railway arches and a modular rig. Residency every second Friday.', stat: '5,110 hypes', tag: 'local', source: 'rec', why: 'Because you saved Arch Four' },
+    { initial: 'K', title: 'Kite Season', meta: 'Bedroom folk · Austin, TX', body: 'Bedroom project turned six-piece. Mohawk set sold out in nine hours.', stat: '742 hypes', tag: 'new here', source: 'seed', why: 'Seeded · new this week' },
+    { initial: 'H', title: 'Halveg', meta: 'Shoegaze · Oslo, NO', body: 'Recorded in a stairwell on purpose. It works.', stat: '2,041 hypes', tag: 'rising fast', source: 'rec', why: 'Because you checked in at SPACE' },
+  ];
+
+  /* The seed deck. Same two sources as the Discover list it replaces —
+     proximity and your own hype history — one card at a time, with a clip of
+     15–30 seconds each. `c1`/`c2` stand in for the artist's uploaded graphic;
+     the real card shows the file they supplied. */
+  SEEDS = [
+    { artist: 'Vera Sound', song: 'Harbour Lights', album: 'Munjoy Hill EP', initial: 'V', c1: '#2b4a7d', c2: '#0e1830', why: 'Seeded · 2 mi away', clip: 24 },
+    { artist: 'Null Harbor', song: 'Dry Season', album: 'Johnson Ave', initial: 'N', c1: '#7d2b3d', c2: '#180d1c', why: 'Seeded · playing near you', clip: 18 },
+    { artist: 'Marguerite', song: 'Ninth Street', album: 'Leimert Sessions', initial: 'M', c1: '#8a5a1e', c2: '#1c1206', why: 'Because you hyped Halveg', clip: 30 },
+    { artist: 'Aster Loop', song: 'Arch Four', album: 'Elephant Road', initial: 'A', c1: '#2f6b62', c2: '#08181a', why: 'Because you saved Arch Four', clip: 22 },
+    { artist: 'Kite Season', song: 'Nine Hours', album: 'Red River', initial: 'K', c1: '#5a3c86', c2: '#130c22', why: 'Seeded · new this week', clip: 16 },
+    { artist: 'Halveg', song: 'Stairwell', album: 'Trappeoppgang', initial: 'H', c1: '#3c5b2e', c2: '#0c150a', why: 'Because you checked in at SPACE', clip: 27 },
+  ];
+
+  /* Five generated categories, not named stations — genre, new, local, from
+     others, your history. Each is computed from what is actually near you. */
+  STATIONS = [
+    { n: '01', title: 'Dream-pop', meta: 'Genre station', detail: 'Built from your hypes', value: '210 tracks', pct: 100 },
+    { n: '02', title: 'New this week', meta: 'Fresh uploads, every genre', detail: 'Refreshed Mondays', value: '61 tracks', pct: 29 },
+    { n: '03', title: 'Local · Portland', meta: 'Everything within 40 miles', detail: 'Proximity, not algorithm', value: '96 tracks', pct: 46 },
+    { n: '04', title: 'From others', meta: 'Shared by people you follow', detail: 'Nyla, Maya + 4 others', value: '38 tracks', pct: 18 },
+    { n: '05', title: 'Your history', meta: 'Played again', detail: 'Last 90 days', value: '174 tracks', pct: 83 },
+  ];
+
+  /* Hypes per week, so switching week changes the order rather than only the
+     numbers — a chart where nothing moves is not a chart. */
+  CHARTS = [
+    { title: 'Arch Four', meta: 'Aster Loop', detail: 'London, UK', genre: 'Electronic', hypes: { w0: 5110, w1: 4880, w2: 4102, w3: 3990 } },
+    { title: 'Dry Season', meta: 'Null Harbor', detail: 'Brooklyn, NY', genre: 'Post-punk', hypes: { w0: 3880, w1: 4020, w2: 4460, w3: 4610 } },
+    { title: 'Stairwell', meta: 'Halveg', detail: 'Oslo, NO', genre: 'Shoegaze', hypes: { w0: 2041, w1: 1770, w2: 1402, w3: 1188 } },
+    { title: 'Harbour Lights', meta: 'Vera Sound', detail: 'Portland, ME', genre: 'Dream-pop', hypes: { w0: 1204, w1: 902, w2: 640, w3: 415 } },
+    { title: 'Sunset & Vine', meta: 'Marguerite', detail: 'Los Angeles, CA', genre: 'Jazz', hypes: { w0: 918, w1: 940, w2: 966, w3: 1010 } },
+    { title: 'Nine Hours', meta: 'Kite Season', detail: 'Austin, TX', genre: 'Bedroom folk', hypes: { w0: 742, w1: 611, w2: 588, w3: 402 } },
+    { title: 'Munjoy Static', meta: 'Vera Sound', detail: 'Portland, ME', genre: 'Dream-pop', hypes: { w0: 688, w1: 512, w2: 388, w3: 240 } },
+    { title: 'Ninth Street', meta: 'Marguerite', detail: 'Los Angeles, CA', genre: 'Jazz', hypes: { w0: 604, w1: 655, w2: 702, w3: 744 } },
+    { title: 'Elephant Road', meta: 'Aster Loop', detail: 'London, UK', genre: 'Electronic', hypes: { w0: 1522, w1: 1610, w2: 1344, w3: 1201 } },
+    { title: 'Johnson Ave', meta: 'Null Harbor', detail: 'Brooklyn, NY', genre: 'Post-punk', hypes: { w0: 1180, w1: 1244, w2: 1390, w3: 1420 } },
+  ];
+
+  /* One ordered list. "Up next" is what follows the current index and "played"
+     is what precedes it, so skipping forward moves a track from one to the
+     other without a second array to keep in sync. */
+  TRACKS = [
+    { title: 'Ninth Street', artist: 'Marguerite', album: 'Leimert Sessions', initial: 'M' },
+    { title: 'Stairwell', artist: 'Halveg', album: 'Trappeoppgang', initial: 'H' },
+    { title: 'Harbour Lights', artist: 'Vera Sound', album: 'Munjoy Hill EP', initial: 'V' },
+    { title: 'Dry Season', artist: 'Null Harbor', album: 'Johnson Ave', initial: 'N' },
+    { title: 'Arch Four', artist: 'Aster Loop', album: 'Elephant Road', initial: 'A' },
+    { title: 'Nine Hours', artist: 'Kite Season', album: 'Red River', initial: 'K' },
+  ];
+
+  PLAYLISTS = [
+    { initial: 'F', title: 'Friday, loud', meta: '24 tracks · yours', body: 'Everything you hyped on a Friday night, in order.', stat: 'Private', tag: 'updated daily' },
+    { initial: 'W', title: 'Walk to work', meta: '18 tracks · yours', body: 'Under four minutes each, nothing that needs headphones.', stat: 'Private', tag: 'updated weekly' },
+    { initial: 'S', title: 'Seen live', meta: '41 tracks · public', body: 'Artists you have a ticket stub for. Auto-built from check-ins.', stat: '12 followers', tag: 'public' },
+  ];
+
+  /* One line each. These surfaces are visited daily — a two-line headline at
+     marketing scale is furniture by the third visit. */
+  COPY = {
+    discover: ['Discover', 'Near you, and from what you hype.', 'Skip it or save it. Proximity picks most of these, your own hype history picks the rest.'],
+    radio: ['Radio', 'Five stations, built from where you are.', 'Genre, new, local, from others, your history. Nothing programmed by hand, nothing paid for.'],
+    charts: ['Charts', 'By hype alone. Recut every Sunday.', 'Scope it by genre, place and week. One member, one hype: position is earned, never bought.'],
+    recommended: ['Recommended', 'From what you hyped, not watched.', 'The recommendation half of your seed deck. It reads hypes and check-ins, never idle scrolling.'],
+    playlists: ['Playlists', 'Yours, and the ones people share.', 'Private by default. Publishing a list is a deliberate act.'],
+  };
+
+  /* Upcoming date counts, keyed by artist. In the product this is a query
+     against the events table; here it matches what the map holds. */
+  SHOWS = { 'Vera Sound': '3', 'Null Harbor': '3', 'Marguerite': '2', 'Aster Loop': '1', 'Kite Season': '2', 'Halveg': '2' };
+
+  artistCard(name) {
+    const a = this.ARTISTS.find((x) => x.title === name);
+    if (!a) return null;
+    return {
+      initial: a.initial, name: a.title, meta: a.meta, body: a.body,
+      hypes: a.stat.replace(' hypes', ''), shows: this.SHOWS[name] || '0',
+      href: '/artists/' + name.toLowerCase().replace(/\s+/g, '-'),
+    };
+  }
+
+  /* One drawer open at a time across the Me root. `meGroup` holds the open
+     section's id; undefined means nobody has chosen yet, so the section marked
+     `first` is the one showing. */
+  meSection(id, first, phone) {
+    const chosen = this.state.meGroup;
+    const open = !phone || (chosen === undefined ? first : chosen === id);
+    return {
+      open,
+      chevron: open ? '\u2013' : '+',
+      toggle: () => this.setState({ meGroup: open ? '' : id }),
+    };
+  }
+
+  go(module, tab) {
+    this.setState({ module, tab: tab || this.state.tab, navOpen: false, navSection: 'root', fullPlayer: false, searchFocused: false, artist: null, mePage: null, hotList: null, sharedList: null, sheet: module === 'map' ? this.state.sheet : null });
+  }
+
+  renderVals() {
+    const st = this.state;
+    const onMusic = st.module === 'music';
+    const copy = this.COPY[st.tab] || this.COPY.discover;
+    const isDeck = onMusic && st.tab === 'discover';
+    const isCards = onMusic && st.tab === 'recommended';
+    const isPlaylists = onMusic && st.tab === 'playlists';
+    const cards = this.ARTISTS.filter((a) => a.source === 'rec');
+    const seed = this.SEEDS[st.seedIndex];
+    const ac = this.artistCard(st.artist) || {};
+    const lists = st.lists || this.PLAYLISTS;
+    /* Phones get a smaller square and a tighter margin — 88px of chrome plus a
+       26px inset is a fifth of a phone's width. The safe-area bottom is ADDED to
+       the margin rather than replacing it, so the trigger clears the home
+       indicator on a notched device and keeps its normal margin on one without. */
+    const phone = st.viewportW < 620;
+    const size = phone ? 56 : 88;
+    const gap = phone ? 10 : 12;
+    const inset = (phone ? 14 : 26);
+    const bottom = inset + st.safeB;
+    const left = inset + st.safeL;
+    this.publishChrome(left, bottom, size, gap, inset);
+    const reduceMotion = this.publishA11y();
+    const chartNumbers = this.a11yLabel('charts') === 'On';
+    const playerWait = this.hypeWait(this.TRACKS[st.trackIndex].artist);
+    const seedWait = seed ? this.hypeWait(seed.artist) : 0;
+    /* `paid` is authored as one string for the row; the panel needs the two
+       numbers apart, because the whole point is that they are two numbers. */
+    const tkt = st.ticket == null ? {} : (() => {
+      const t = this.TICKETS[st.ticket];
+      const [face, fee] = t.paid.split(' + ');
+      return { ...t, face, fee: fee ? fee.replace(' Stripe', '') : '$0.00' };
+    })();
+    const sub = st.mePage ? this.ME_SUB[st.mePage] : null;
+    const HYPE_LINK = 'ihy.pe/nyla';
+    /* The heat bar is the one thing here built as an element rather than
+       markup: its length IS the datum, and a holed `width` in a style attribute
+       cannot paint until this class lands. Decorative, non-editable, one node. */
+    const bar = (pct) => React.createElement('div', {
+      style: { display: 'flex', alignItems: 'center', gap: 9, marginTop: 8 },
+    },
+      chartNumbers ? React.createElement('span', {
+        key: 'n',
+        style: {
+          fontFamily: "'JetBrains Mono',monospace", fontSize: 9.5, letterSpacing: '.08em',
+          color: 'var(--ink-3,#8792a6)', flex: '0 0 auto', minWidth: 26, textAlign: 'right',
+        },
+      }, Math.round(pct) + '%') : null,
+      React.createElement('div', {
+      key: 'b',
+      style: { flex: 1, height: 3, borderRadius: 99, background: 'var(--hair-70,rgba(238,241,246,.07))', overflow: 'hidden' },
+    }, React.createElement('div', {
+      style: { height: '100%', borderRadius: 99, background: 'var(--heat-warm,#ffb84a)', width: pct + '%' },
+    })));
+    /* The chart is derived, not stored: filter, sort by the selected week's
+       hype count, then rank. Position is a consequence of the numbers, so it
+       must be computed after the filter rather than carried on the row. */
+    const isCharts = onMusic && st.tab === 'charts';
+    const week = this.CHART_WEEKS.find((w) => w.id === st.chartWeek) || this.CHART_WEEKS[0];
+    const chart = this.CHARTS
+      .filter((c) => (st.chartGenre === 'All genres' || c.genre === st.chartGenre)
+                  && (st.chartPlace === 'Everywhere' || c.detail === st.chartPlace))
+      .map((c) => ({ ...c, count: c.hypes[week.id] }))
+      .sort((a, b) => b.count - a.count);
+    const top = chart.length ? chart[0].count : 1;
+    const chartRows = chart.map((c, i) => ({
+      n: String(i + 1).padStart(2, '0'), title: c.title, meta: c.meta, detail: c.detail,
+      canPlay: true, canOpenArtist: true,
+      onTitle: () => this.play(c.title, c.meta),
+      onMeta: () => this.setState({ artist: c.meta }),
+      value: c.count.toLocaleString(), pct: Math.round((c.count / top) * 100),
+    }));
+
+    const rows = (isCharts ? chartRows : this.STATIONS.map((st2) => ({
+      ...st2, canPlay: true, canOpenArtist: false,
+      onTitle: () => this.play(st2.title + ' · station', st2.title, st2.meta),
+    }))).map((r) => ({ ...r, bar: bar(r.pct), plainMeta: !r.canOpenArtist }));
+
+    return {
+      onMap: st.module === 'map',
+      onMusic,
+      onMe: st.module === 'me',
+      activeModule: st.module,
+      activeItemId: onMusic ? st.tab : null,
+      modules: this.MODULES,
+      navOpen: st.navOpen,
+      navSection: st.navSection,
+      /* Objects, not bare booleans: a mount can miss a boolean flip, and a fresh
+         object identity every render cannot be missed. */
+      navState: { expanded: st.navOpen, section: st.navSection },
+      scrimState: { visible: st.navOpen },
+      /* Tapping the logo also wakes the player: on a phone it has usually
+         retired to its disc by now, and the nav is the one control that is
+         always there to bring it back. */
+      playerWake: st.playerWake,
+      toggleNav: () => this.setState({ navOpen: !st.navOpen, navSection: 'root', sheet: null, playerWake: st.playerWake + 1 }),
+      closeNav: () => this.setState({ navOpen: false, navSection: 'root' }),
+      setSection: (section) => this.setState({ navSection: section }),
+      navigate: (item) => {
+        const parent = this.MODULES.find((m) => m.items.some((i) => i.id === item.id));
+        if (parent) this.go(parent.id, item.id);
+        else this.go(item.id);
+      },
+
+      /* Layer chips and the result line now live in map.html, next to the
+         layers they switch. */
+
+      musicLabel: copy[0],
+      musicTitle: copy[1],
+      musicDek: copy[2],
+      musicTabs: this.MODULES[1].items.map((t) => ({
+        label: t.label, pick: () => this.setState({ tab: t.id }),
+        on: st.tab === t.id, off: st.tab !== t.id,
+      })),
+      searchFocused: st.searchFocused,
+      focusSearch: () => this.setState({ searchFocused: true }),
+      blurSearch: () => this.setState({ searchFocused: false }),
+      scopes: ['Everything', 'Artists', 'Tracks', 'Venues', 'Cities', 'Playlists'].map((label, i) => ({
+        label, on: i === 0, off: i !== 0,
+      })),
+      isDeck,
+      isCharts,
+      isPlaylists,
+      isCards,
+      isRows: !isCards && !isDeck && !isPlaylists,
+      cards: cards.map((c) => ({
+        ...c,
+        openArtist: () => this.setState({ artist: c.title }),
+        play: () => this.play(c.track || (c.title + ' — latest'), c.title, c.meta),
+      })),
+      rows,
+
+      chartCadence: week.live ? 'Live · ' + week.cadence : week.cadence,
+      chartSummary: chart.length
+        ? chart.length + (chart.length === 1 ? ' track' : ' tracks') + ' · ' + st.chartGenre.toLowerCase() + ' · ' + st.chartPlace.toLowerCase() + ' · ' + week.label.replace(' · live', '')
+        : 'Nothing charted under this combination. Widen the genre or the place.',
+      chartFilters: [
+        { label: 'Genre', value: st.chartGenre, options: this.CHART_GENRES.map((g) => ({ value: g, label: g })), pick: (e) => this.setState({ chartGenre: e.target.value }) },
+        { label: 'Place', value: st.chartPlace, options: this.CHART_PLACES.map((p) => ({ value: p, label: p })), pick: (e) => this.setState({ chartPlace: e.target.value }) },
+        { label: 'Week', value: st.chartWeek, options: this.CHART_WEEKS.map((w) => ({ value: w.id, label: w.label })), pick: (e) => this.setState({ chartWeek: e.target.value }) },
+      ],
+
+      playlists: lists.map((p, i) => ({
+        ...p,
+        play: () => this.play(p.title + ' · list', p.title, p.meta),
+        hot: st.hotList === i,
+        shared: st.sharedList === i,
+        link: 'ihy.pe/nyla/' + p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+        enter: () => this.setState({ hotList: i }),
+        leave: () => this.setState({ hotList: st.hotList === i ? null : st.hotList, sharedList: null }),
+        edit: () => {
+          const name = window.prompt('Rename playlist', p.title);
+          if (name) this.setState({ lists: lists.map((x, j) => (j === i ? { ...x, title: name } : x)) });
+        },
+        remove: () => this.setState({ lists: lists.filter((x, j) => j !== i), hotList: null, sharedList: null }),
+        /* Sharing a list and referring a ticket are the same act: the link
+           carries your HYPE code, so a friend who buys from it pays you. */
+        share: () => {
+          const url = 'https://ihy.pe/nyla/' + p.title.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+          if (navigator.clipboard) navigator.clipboard.writeText(url).catch(() => {});
+          this.setState({ sharedList: i });
+        },
+      })),
+      newPlaylist: () => {
+        const name = window.prompt('Name your playlist', 'New playlist');
+        if (!name) return;
+        this.setState({ lists: [{ initial: name.charAt(0).toUpperCase(), title: name, meta: '0 tracks · yours', body: 'Empty. Add tracks from the player, the deck or any artist page.', stat: 'Private', tag: 'just now' }].concat(lists) });
+      },
+
+      /* Everything the pane spends above the deck: its own top padding, the
+         eyebrow, headline, two-line dek, the tab row, and the bottom padding
+         that holds the player off. Measured once here so the deck and the
+         padding cannot disagree. */
+      deckRoom: Math.max(360, st.viewportH - 330 - 142),
+      seeds: this.SEEDS,
+      seedIndex: st.seedIndex,
+      seedHyped: seedWait > 0,
+      seedHypeLocked: seedWait > 0,
+      seedHypeLabel: seedWait > 0 ? this.waitLabel(seedWait) : undefined,
+      savedCount: st.saved.length,
+      clipSeconds: seed ? seed.clip : 22,
+      /* Skip and save differ in what they record, not in where they land: both
+         advance the deck. Saving appends to the Discover playlist. */
+      skipSeed: () => this.setState({ seedIndex: st.seedIndex + 1 }),
+      saveSeed: (it) => this.setState({ seedIndex: st.seedIndex + 1, saved: st.saved.concat(it.song) }),
+      hypeSeed: (it) => this.hype(it.artist),
+      openSeedArtist: (it) => this.setState({ artist: it.artist }),
+      /* The clip is the card's own audio, so its transport lives on the card —
+         and it is the same `playing` flag the player uses, because there is one
+         thing playing at a time. */
+      toggleSeedPlay: () => this.setState({ playing: !st.playing }),
+
+      artistOpen: Boolean(st.artist),
+      artistInitial: ac.initial,
+      artistName: ac.name,
+      artistMeta: ac.meta,
+      artistBody: ac.body,
+      artistHypes: ac.hypes,
+      artistShows: ac.shows,
+      artistHref: ac.href,
+      openArtist: (t) => this.setState({ artist: st.artist === t.artist ? null : t.artist, queueOpen: false }),
+      /* The release is its own route. Until that page exists the shell opens the
+         artist it belongs to, which is where a release lives in the product. */
+      openAlbum: (t) => this.setState({ artist: t.artist, queueOpen: false }),
+      closeArtist: () => this.setState({ artist: null }),
+
+      meHandle: 'ihy.pe/nyla',
+      signOut: () => this.setState({ mePage: null, navOpen: false, module: 'map' }),
+      meStats: [
+        { value: '128', label: 'Hypes given' },
+        { value: '9', label: 'Shows attended' },
+        { value: '$41.20', label: 'Promoter earnings' },
+        { value: '3', label: 'Artists you broke' },
+      ],
+      mePanels: this.ME_PANELS.map((p) => ({ ...p, open: () => this.setState({ mePage: p.id }) })),
+      /* Me is five sections deep on a phone, and four of them are long. Same
+         drawer treatment as the settings groups: the headings are the index,
+         one open at a time, the first open on arrival. Desktop has the room, so
+         `meWide` keeps the ordinary h2 rows and everything stays expanded. */
+      meFold: phone,
+      meWide: !phone,
+      mS: this.meSection('stats', true, phone),
+      mT: this.meSection('tickets', false, phone),
+      mA: this.meSection('about', false, phone),
+      mP: this.meSection('profiles', false, phone),
+      ticketCount: this.TICKETS.filter((t) => t.upcoming).length + ' upcoming',
+      meRoot: !sub,
+      subOpen: Boolean(sub),
+      subTitle: sub ? sub.title : '',
+      subDek: sub ? sub.dek : '',
+      subRoute: sub ? '/app/me/' + st.mePage : '',
+      /* A settings row is text unless it names a control, so the three cases
+         are decided here rather than by a hole in the markup. */
+      subGroups: sub ? sub.groups.map((g, gi) => ({
+        title: g.title,
+        /* Phone folds; desktop does not. `openGroup` is null until someone taps,
+           so the first group is open on arrival rather than the page opening on
+           five closed drawers with nothing to read. */
+        collapsible: phone,
+        plainTitle: !phone,
+        open: !phone || ((st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title),
+        count: g.rows.length + (g.rows.length === 1 ? ' setting' : ' settings'),
+        chevron: (!phone || ((st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title)) ? '\u2013' : '+',
+        /* Keyed on the ROUTE segment. `sub` is a plain {title, dek, groups}
+           record with no id of its own, so keying on `sub.id` put every page in
+           one `undefined` slot — the same collision under a new name. */
+        toggle: () => this.setState({
+          openGroup: Object.assign({}, st.openGroup, {
+            [st.mePage]: ((st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title) ? '' : g.title,
+          }),
+        }),
+        rows: g.rows.map((r) => ({
+          ...r,
+          isText: !r.control && !r.href,
+          isLink: Boolean(r.href) && !r.control,
+          isLang: r.control === 'lang',
+          isTheme: r.control === 'theme',
+          isDelete: r.control === 'delete',
+          isCycle: r.control === 'cycle',
+          value: r.control === 'cycle' ? this.a11yLabel(r.key) : r.value,
+          cycleLabel: r.label + ' — ' + this.a11yLabel(r.key) + '. Tap to change.',
+          cycle: r.control === 'cycle' ? () => this.cycleA11y(r.key) : undefined,
+        })),
+      })) : [],
+      langs: this.LANGS.map(([code, label]) => ({ code, label })),
+      lang: st.lang,
+      pickLang: (e) => {
+        document.documentElement.lang = e.target.value;
+        document.documentElement.dir = ['ar'].includes(e.target.value) ? 'rtl' : 'ltr';
+        this.setState({ lang: e.target.value });
+      },
+      backToMe: () => this.setState({ mePage: null }),
+
+      hypeLink: HYPE_LINK,
+      copyLabel: st.copied ? 'Copied' : 'HYPE Link',
+      copyLink: () => {
+        if (navigator.clipboard) navigator.clipboard.writeText('https://' + HYPE_LINK).catch(() => {});
+        this.setState({ copied: true });
+        clearTimeout(this._copyT);
+        this._copyT = setTimeout(() => this.setState({ copied: false }), 1800);
+      },
+
+      ticketNote: this.TICKETS.filter((t) => t.upcoming).length + ' upcoming · wallet codes scan at the door',
+      tickets: this.TICKETS.map((t, i) => ({
+        ...t, past: !t.upcoming,
+        open: t.upcoming ? () => this.setState({ ticket: i, xfer: 'shut', xferTo: '' }) : undefined,
+      })),
+
+      /* Deletion, gated three ways: an explicit confirm, the export offered
+         first (the one thing that is unrecoverable afterwards), and the word
+         typed out. The typed word is not theatre — it is the only step that
+         cannot be completed by a mis-tap or by muscle memory. */
+      deleteOpen: st.deleting,
+      openDelete: () => this.setState({ deleting: true, deleteWord: '' }),
+      closeDelete: () => this.setState({ deleting: false, deleteWord: '' }),
+      deleteWord: st.deleteWord,
+      setDeleteWord: (e) => this.setState({ deleteWord: e.target.value }),
+      deleteArmed: st.deleteWord === 'DELETE',
+      deleteIdle: st.deleteWord !== 'DELETE',
+      confirmDelete: () => this.setState({ deleting: false, deleteWord: '', mePage: null }),
+
+      ticketOpen: st.ticket != null,
+      tk: tkt,
+      closeTicket: () => this.setState({ ticket: null, xfer: 'shut', xferTo: '' }),
+      /* Three states, not two booleans: shut, open, sent. A pair of flags would
+         allow "sent and shut" and "open and sent", neither of which exists. */
+      xferClosed: st.xfer === 'shut',
+      xferOpen: st.xfer === 'open',
+      xferSent: st.xfer === 'sent',
+      openXfer: () => this.setState({ xfer: 'open' }),
+      closeXfer: () => this.setState({ xfer: 'shut', xferTo: '' }),
+      sendXfer: () => this.setState({ xfer: 'sent' }),
+      setXferTo: (e) => this.setState({ xferTo: e.target.value.trim().replace(/^ihy\.pe\//, '') }),
+      xferTo: st.xferTo,
+      xferReady: st.xferTo.length > 1,
+      xferBlank: st.xferTo.length <= 1,
+      xferLabel: 'ihy.pe/' + (st.xferTo || '…'),
+
+      aboutBody: 'Nine shows this year, most of them in rooms under 200. I hype what I would drive an hour for, and I keep a public list of every artist I have seen live.',
+      aboutTags: ['Dream-pop', 'Post-punk', 'Jazz', 'Small rooms', 'Weeknights'].map((label) => ({ label })),
+      /* Each line names its own audience. A field that is off is not sent at
+         all — it is not sent-but-hidden. */
+      aboutFields: this.ABOUT_FIELDS.map((f) => {
+        const on = st.about[f.id];
+        return {
+          ...f, on, off: !on,
+          toggle: () => this.setState({ about: { ...st.about, [f.id]: !on } }),
+        };
+      }),
+      editAbout: () => this.setState({ mePage: 'settings' }),
+
+      /* Artist and Venue are the only two addable profiles. Promoter is not
+         here, and must not be added: it is a behaviour of every account, not
+         an account type. */
+      hasArtist: st.profiles.includes('artist'),
+      hasVenue: st.profiles.includes('venue'),
+      canAddArtist: !st.profiles.includes('artist'),
+      canAddVenue: !st.profiles.includes('venue'),
+      addArtist: () => this.setState({ profiles: st.profiles.concat('artist') }),
+      addVenue: () => this.setState({ profiles: st.profiles.concat('venue') }),
+      finishSetup: () => this.setState({ mePage: 'settings' }),
+
+      themeLabel: st.theme === 'light' ? 'Light' : 'Dark',
+      toggleTheme: () => {
+        const next = st.theme === 'light' ? 'dark' : 'light';
+        document.documentElement.dataset.theme = next;
+        this.setState({ theme: next });
+      },
+
+      sheetOpen: Boolean(st.sheet) && st.module === 'map',
+      sheet: st.sheet,
+      closeSheet: () => this.setState({ sheet: null }),
+      /* Chrome geometry lives here so the trigger, the hint and the player all
+         read from one inset rather than three hardcoded numbers. */
+      chromeInset: left,
+      isPhone: phone,
+      /* The bar's artwork is the way in; the corner square is the way out. */
+      fullPlayerOpen: phone && st.fullPlayer,
+      /* The overlay is fixed, so it owns its own safe area rather than sitting
+         inside the padded pane. */
+      safeTop: st.safeT,
+      safeBottom: st.safeB,
+      openFullPlayer: () => this.setState({ fullPlayer: true, navOpen: false }),
+      closeFullPlayer: () => this.setState({ fullPlayer: false }),
+      /* Search rides at the bar's left edge on a phone: it is the one thing
+         people reach for that is not playback, and burying it in a pane that is
+         three taps deep made it unreachable from the map. */
+      openSearch: () => this.setState({ module: 'music', tab: 'discover', navOpen: false, searchFocused: true }),
+      reduceMotion: Boolean(reduceMotion),
+      /* Autoplay seeds the clip rather than overriding a tap: with it off the
+         deck arrives paused and the card's own transport still works. */
+      clipPlaying: st.playing && this.a11yLabel('autoplay') === 'On',
+      /* One figure for the trigger, the player and the hint: the square, the
+         pill and the caption are all sized and placed from it, so they cannot
+         drift apart. */
+      chromeSize: size,
+      chromeBottom: bottom,
+      playerLeft: left + size + gap,
+      /* Fluid: a fixed 460 left 79px for the title, artist and scrub combined. */
+      playerWidth: (phone ? '' : 'min(760px, ') + 'calc(100vw - ' + (left + inset + st.safeR + size + gap) + 'px)' + (phone ? '' : ')'),
+
+      track: this.props.showNowPlaying === false ? null : this.TRACKS[st.trackIndex],
+      queue: this.TRACKS.slice(st.trackIndex + 1),
+      history: this.TRACKS.slice(0, st.trackIndex).reverse(),
+      queueOpen: st.queueOpen,
+      progress: st.progress,
+      volume: st.volume,
+      playing: st.playing,
+      hyped: playerWait > 0,
+      hypeLocked: playerWait > 0,
+      hypeLabel: playerWait > 0 ? this.waitLabel(playerWait) : undefined,
+      faved: st.faved,
+      hypeCount: playerWait > 0 ? '1,205' : '1,204',
+      canHype: true,
+      canTogglePlay: true,
+      /* `track` is a key of this returned object, not a binding in scope — the
+         handler has to reach the row itself, and read state at call time so a
+         track change between render and tap cannot hype the wrong artist. */
+      toggleHype: () => this.hype(this.TRACKS[this.state.trackIndex].artist),
+      toggleFav: () => this.setState({ faved: !st.faved }),
+      togglePlay: () => this.setState({ playing: !st.playing }),
+      toggleQueue: () => this.setState({ queueOpen: !st.queueOpen }),
+      seek: (v) => this.setState({ progress: v }),
+      setVolume: (v) => this.setState({ volume: v }),
+      /* Restarting the current track before stepping back is the behaviour
+         every player has and nobody documents. */
+      prevTrack: () => {
+        if (st.progress > 6) return this.setState({ progress: 0 });
+        this.setState({ trackIndex: Math.max(0, st.trackIndex - 1), progress: 0, faved: false });
+      },
+      nextTrack: () => this.setState({ trackIndex: Math.min(this.TRACKS.length - 1, st.trackIndex + 1), progress: 0, faved: false }),
+      pickTrack: (t) => {
+        const i = this.TRACKS.findIndex((x) => x.title === t.title);
+        if (i >= 0) this.setState({ trackIndex: i, progress: 0, playing: true, queueOpen: false, faved: false });
+      },
+    };
+  }
+}
+
+</script>
+</body>
+</html>

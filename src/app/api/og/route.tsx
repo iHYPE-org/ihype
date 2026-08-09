@@ -13,8 +13,8 @@ export async function GET(request: NextRequest) {
   const accent = '#ff5029';
   const teal   = '#22e5d4';
   const purple = '#b983ff';
-  const bg     = '#0a0805';
-  const bg2    = '#100d09';
+  const bg     = '#0b1220';
+  const bg2    = '#121b2e';
 
   const typeColor =
     type === 'show' ? teal :
@@ -112,7 +112,7 @@ export async function GET(request: NextRequest) {
           )}
           <div style={{
             fontSize: title.length > 40 ? 52 : title.length > 25 ? 62 : 72,
-            fontWeight: 900, color: '#f0ebe5',
+            fontWeight: 900, color: '#eef1f6',
             letterSpacing: '-0.04em', lineHeight: 0.95,
             marginBottom: 24,
             display: 'flex',
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
           </div>
           {subtitle && (
             <div style={{
-              fontSize: 22, color: 'rgba(240,235,229,0.55)',
+              fontSize: 22, color: 'rgba(238,241,246,0.55)',
               letterSpacing: '-0.01em', lineHeight: 1.4,
               display: 'flex',
             }}>
@@ -135,11 +135,11 @@ export async function GET(request: NextRequest) {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '0 56px 44px',
         }}>
-          <div style={{ fontSize: 16, color: 'rgba(240,235,229,0.3)', letterSpacing: '0.04em', display: 'flex' }}>
+          <div style={{ fontSize: 16, color: 'rgba(238,241,246,0.3)', letterSpacing: '0.04em', display: 'flex' }}>
             ihype.org
           </div>
           <div style={{
-            fontSize: 14, color: 'rgba(240,235,229,0.4)', letterSpacing: '0.04em',
+            fontSize: 14, color: 'rgba(238,241,246,0.4)', letterSpacing: '0.04em',
             display: 'flex', alignItems: 'center', gap: 8,
           }}>
             <div style={{ width: 6, height: 6, borderRadius: '50%', background: teal, display: 'flex' }} />

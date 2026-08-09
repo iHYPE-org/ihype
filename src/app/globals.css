@@ -2,53 +2,59 @@
   /* Match native controls (scrollbars, selects, date pickers) to the dark
      UI. Flipped to `light` under [data-theme="light"] below. */
   color-scheme: dark;
-  /* ── Surfaces (warm near-black, low → high elevation) ─────────────── */
-  --bg:    #0a0805;
-  --bg-2:  #100d09;
-  --bg-3:  #1a1612;
-  --bg-4:  #221c16;
+  /* ── Surfaces (ink navy, low → high elevation) ────────────────────── */
+  --bg:    #0b1220;
+  --bg-2:  #121b2e;
+  --bg-3:  #18233a;
+  --bg-4:  #1f2b45;
   /* Aliases — several components use var(--bg2)/var(--bg3) (no hyphen);
      without these they silently resolve to nothing and those surfaces
      render transparent instead of the intended card background. */
   --bg2: var(--bg-2);
   --bg3: var(--bg-3);
 
-  /* ── Ink (warm off-white → muted taupe) ──────────────────────────── */
-  --ink:         #f0ebe5;
-  --ink-2:       #9e9080;
-  /* Was #7a7060, measured by axe at 3.98:1 behind the design system's 10px
-     eyebrows — below the 4.5:1 AA floor. Lightened until it passes on every
-     dark surface it lands on (4.77:1 worst case, on --bg-4). */
-  --ink-3:       #918779;
-  --ink-4:       #3a342e;
-  --ink-on-tint: #b3a899;
+  /* ── Ink (cool off-white → muted slate) ──────────────────────────── */
+  --ink:         #eef1f6;
+  --ink-2:       #96a1b5;
+  /* The faintest copy in the system — the design system's 10px eyebrows sit on
+     it, so it carries the 4.5:1 AA floor rather than the large-text one.
+     Design System 8 re-anchored it to #8792a6 and states 4.91:1 worst case on
+     dark. Re-measured here it is **4.49:1 on --bg-4**, a hair under the floor:
+     the bundle appears to have measured against a lighter overlay than the
+     --bg-overlay it ships. Lifted three steps to hold 4.80:1 there, which is
+     the same headroom the warm-palette value had (4.77:1) before the
+     overhaul. Same method rows 262/265/266 used — the floor is the codebase's
+     own and does not bend to a handoff's arithmetic. */
+  --ink-3:       #8d97ab;
+  --ink-4:       #333e54;
+  --ink-on-tint: #a7b1c4;
   /* Alpha-ink scale — foreground ink at fixed opacities, theme-aware so
      translucent text/hairlines stay legible in light mode. Dark values are
-     byte-identical to the rgba(240,235,229,·) literals they replace, so the
+     byte-identical to the rgba(238,241,246,·) literals they replace, so the
      canonical dark UI is unchanged. Overridden per-opacity under
      [data-theme="light"]. */
-  --ink-a10: rgba(240,235,229,.1);
-  --ink-a20: rgba(240,235,229,.2);
-  --ink-a22: rgba(240,235,229,.22);
-  --ink-a25: rgba(240,235,229,.25);
-  --ink-a28: rgba(240,235,229,.28);
-  --ink-a30: rgba(240,235,229,.3);
-  --ink-a32: rgba(240,235,229,.32);
-  --ink-a35: rgba(240,235,229,.35);
-  --ink-a38: rgba(240,235,229,.38);
-  --ink-a40: rgba(240,235,229,.4);
-  --ink-a42: rgba(240,235,229,.42);
-  --ink-a45: rgba(240,235,229,.45);
-  --ink-a50: rgba(240,235,229,.5);
-  --ink-a55: rgba(240,235,229,.55);
-  --ink-a60: rgba(240,235,229,.6);
-  --ink-a65: rgba(240,235,229,.65);
-  --ink-a70: rgba(240,235,229,.7);
-  --ink-a72: rgba(240,235,229,.72);
-  --ink-a75: rgba(240,235,229,.75);
-  --ink-a80: rgba(240,235,229,.8);
-  --ink-a85: rgba(240,235,229,.85);
-  --ink-a90: rgba(240,235,229,.9);
+  --ink-a10: rgba(238,241,246,.1);
+  --ink-a20: rgba(238,241,246,.2);
+  --ink-a22: rgba(238,241,246,.22);
+  --ink-a25: rgba(238,241,246,.25);
+  --ink-a28: rgba(238,241,246,.28);
+  --ink-a30: rgba(238,241,246,.3);
+  --ink-a32: rgba(238,241,246,.32);
+  --ink-a35: rgba(238,241,246,.35);
+  --ink-a38: rgba(238,241,246,.38);
+  --ink-a40: rgba(238,241,246,.4);
+  --ink-a42: rgba(238,241,246,.42);
+  --ink-a45: rgba(238,241,246,.45);
+  --ink-a50: rgba(238,241,246,.5);
+  --ink-a55: rgba(238,241,246,.55);
+  --ink-a60: rgba(238,241,246,.6);
+  --ink-a65: rgba(238,241,246,.65);
+  --ink-a70: rgba(238,241,246,.7);
+  --ink-a72: rgba(238,241,246,.72);
+  --ink-a75: rgba(238,241,246,.75);
+  --ink-a80: rgba(238,241,246,.8);
+  --ink-a85: rgba(238,241,246,.85);
+  --ink-a90: rgba(238,241,246,.9);
   /* Hairline/surface white-alpha scale — subtle borders, dividers, and
      fill tints. Dark = white at the given opacity (byte-identical to the
      literals replaced); light = black at the same opacity, so dark-surface
@@ -77,18 +83,27 @@
   --hair-280: rgba(255,255,255,.28);
 
   /* ── Hairlines ───────────────────────────────────────────────────── */
-  --line:   rgba(255,255,255,.06);
+  --line:   rgba(255,255,255,.07);
   --line-2: rgba(255,255,255,.14);
 
   /* ── Brand accents ───────────────────────────────────────────────── */
   --accent:      #ff5029;
   --accent-2:    #ff3e9a;
-  /* The accent as TEXT. On dark it is the accent itself (5.5:1 on --bg-3), but
-     on the light theme it measures 2.46:1 against --bg-3 — a WCAG AA failure
-     found by axe on the cookie banner's privacy link, not by eye. The brand
-     fill is unchanged everywhere; this token exists only for accent-coloured
-     copy, which is the case the brand colour cannot serve. */
-  --accent-text: var(--accent);
+  /* The accent as TEXT. This token exists because the brand fill cannot serve
+     as copy on either theme, and the two themes fail it for opposite reasons —
+     light was 2.46:1 against --bg-3, found by axe on the cookie banner's
+     privacy link, and now dark fails too.
+     On the WARM ground it used to be the accent itself and passed (5.16:1
+     worst case, on --bg-4). The navy ground is lighter, so the same orange now
+     measures **4.32:1 on --bg-4** — under the floor. Design System 8 leaves
+     --accent-text pointing at --accent and states 5.9:1, which is correct only
+     against --bg-base; it did not measure the higher surfaces.
+     So dark gets its own lifted value: the same hue, opened until it clears
+     4.5:1 on every dark surface (4.97:1 worst case). **--accent itself is
+     untouched** — every fill, chip, bar and gradient is the brand orange
+     exactly as before. This is copy only, which is the whole point of the
+     token existing. */
+  --accent-text: #ff6a44;
   --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
   /* The warm CTA gradient. Seven pages had hand-written
      `linear-gradient(135deg, #ff5029, #ff3e6e)` on their primary button —
@@ -98,7 +113,7 @@
   /* Ink ON a brand fill — the inverse of --accent-text, which is the accent
      used AS copy over a page background. The dark neutral keeps the orange
      unchanged while clearing WCAG AA in both themes (white was only 3.27:1). */
-  --ink-on-accent: #090b0f;
+  --ink-on-accent: #0b1220;
 
   /* Ink and scrim for content sitting ON media — a photo, or one of the seed
      deck's saturated gradient cards. These are white and black in BOTH
@@ -181,11 +196,11 @@
      now holds the promoter pink, and a "warm" demand tier is not a promoter —
      pointed at the amber it always rendered as, via the token that means it. */
   --heat-warm: var(--warning);
-  --heat-cold: #3a4a5a;
+  --heat-cold: #40506b;
   --heat-fire-rgb: 255, 31, 61;
   --heat-hot-rgb:  var(--accent-rgb);
   --heat-warm-rgb: 255, 184, 74;
-  --heat-cold-rgb: 58, 74, 90;
+  --heat-cold-rgb: 64, 80, 107;
 
   /* ── Status ──────────────────────────────────────────────────────── */
   --live:    #ff3c3c;
@@ -231,8 +246,8 @@
   /* RGB triplets, for composed alpha (`rgba(var(--bg-base-rgb), 0.9)`).
      A custom property cannot be decomposed in CSS, so these are maintained
      alongside their hex counterparts above and re-stated per theme. */
-  --bg-base-rgb:      10, 8, 5;      /* #0a0805 */
-  --ink-1-rgb:        240, 235, 229; /* #f0ebe5 */
+  --bg-base-rgb:      11, 18, 32;    /* #0b1220 */
+  --ink-1-rgb:        238, 241, 246; /* #eef1f6 */
   --surface-tint-rgb: 255, 255, 255; /* the tint that lifts a surface on hover */
 
   /* Semantic success surface — the charter card and the player's transport
@@ -262,19 +277,39 @@
      is how the last shell drifted. The shell's *geometry* deliberately does
      not live here — see shell.css, which owns that table. */
   --accent-deep: #7a2412;               /* gradient partner for --accent */
-  --map-void:    #12100e;               /* behind the map tiles */
-  --scrim:       rgba(8, 6, 5, .62);    /* nav overlay */
+  --map-void:    #0a1020;               /* behind the map tiles */
+  --scrim:       rgba(6, 10, 20, .74);  /* nav overlay */
   --hairline:    var(--ink-a10);        /* the design system's borders/dividers name */
 
-  /* ── Font families ───────────────────────────────────────────────── */
-  --f-d: var(--font-syne,  'Syne', sans-serif);
-  --f-b: var(--font-dm,    'DM Sans', sans-serif);
-  --f-m: var(--font-jb,    'JetBrains Mono', monospace);
-  --f-s: var(--font-serif, 'Instrument Serif', serif);
+  /* ── Font families ───────────────────────────────────────────────────
+     Design System 8 ("Bulletin", 2026-08-07) retires Syne for Bricolage
+     Grotesque on display and DM Sans for Work Sans on body. Mono and serif
+     are unchanged. The --font-syne/--font-dm CSS variables that next/font
+     used to emit are gone with them; --f-d/--f-b now read the new families'
+     variables directly, so nothing downstream of --font-display/--font-body
+     had to change — which is the whole point of this indirection.
+
+     Bricolage is VARIABLE with an optical-size axis (opsz 12..96). Feeding
+     opsz the pixel size is the point of choosing it: see --opsz-* below and
+     the display ramp, which sets font-variation-settings rather than
+     scaling one static instance. */
+  --f-d: var(--font-bricolage, 'Bricolage Grotesque', sans-serif);
+  --f-b: var(--font-work,      'Work Sans', sans-serif);
+  --f-m: var(--font-jb,        'JetBrains Mono', monospace);
+  --f-s: var(--font-serif,     'Instrument Serif', serif);
   --font-display:      var(--f-d);
   --font-body:         var(--f-b);
   --font-mono:         var(--f-m);
   --font-serif-accent: var(--f-s);
+
+  /* Optical size, paired with the matching --text-* step. Bricolage's axis is
+     12..96; a heading rendered at 38px should carry opsz 38, not the 14 it
+     inherits from body copy, or the letterforms stay text-weight at display
+     size. Unitless on purpose — font-variation-settings takes a number. */
+  --opsz-lg:  20;
+  --opsz-xl:  28;
+  --opsz-2xl: 38;
+  --opsz-3xl: 54;
 
   /* ── Type scale ──────────────────────────────────────────────────── */
   --text-xs:      0.72rem;
@@ -298,9 +333,20 @@
   --lh-tight:   1.1;
   --lh-snug:    1.4;
   --lh-body:    1.65;
+  /* Design System 8's own names for the same idea, at Bricolage/Work Sans
+     metrics. They are NOT aliases of the --lh-* rung above them: Bricolage
+     sets shorter than Syne did, so its display leading opens from 0.93 to
+     1.03 rather than staying put. Both scales are live — --lh-* on the
+     surfaces built against it, --leading-* in new work. */
+  --leading-display: 1.03;
+  --leading-heading: 1.15;
+  --leading-body:    1.62;
 
   /* ── Tracking ────────────────────────────────────────────────────── */
-  --tracking-display: -0.04em;
+  /* -0.035em, from Design System 8. Bricolage sets wider than Syne by
+     default and needs the tighter value at headline sizes or the display
+     ramp reads loose; this is the one tracking rung the overhaul moved. */
+  --tracking-display: -0.035em;
   --tracking-tight:   -0.02em;
   --tracking-mono:    0.08em;
   --tracking-caps:    0.2em;
@@ -344,19 +390,34 @@
      literal px from the handoff's radius table rather than assuming a
      --radius-* name means the same thing in both places. */
   --radius-full: var(--radius-pill);
+  /* Design System 8's two working radii, plus the shell trigger's squircle.
+     These are NEW names, not a renumbering: --radius-card (18px) happens to
+     equal this codebase's --radius-lg, and that coincidence is exactly why
+     the overhaul added a name for it rather than moving the ramp — 19 live
+     call sites depend on --radius-lg being 18px while the system's own
+     --radius-lg is 10px. Reach for --radius-card and --radius-pill in new
+     work; leave the sm/md/lg/xl ramp to the surfaces already built on it. */
+  --radius-card:    18px;
+  --radius-trigger: 26px;
 
   /* ── Shadows ─────────────────────────────────────────────────────── */
-  --shadow-sm:     0 4px 24px rgba(0,0,0,.25);
-  --shadow:        0 18px 42px rgba(0,0,0,.35);
-  --shadow-lg:     0 12px 40px rgba(0,0,0,.3), 0 0 0 1px rgba(255,255,255,.04);
+  /* Re-anchored to the navy ground (Design System 8). Pure black over
+     #0b1220 reads grey-green rather than as a shadow, so the ambient layers
+     carry the ground's own hue — rgba(4,8,18,·) is #0b1220 driven darker,
+     not an arbitrary tint. */
+  --shadow-sm:     0 4px 24px rgba(4,8,18,.25);
+  --shadow:        0 18px 42px rgba(4,8,18,.35);
+  --shadow-lg:     0 12px 40px rgba(4,8,18,.3), 0 0 0 1px rgba(255,255,255,.04);
   --shadow-glow:   0 18px 34px rgba(255,80,41,.22);
   --shadow-accent: 0 8px 48px rgba(255,80,41,.10);
   /* Design-system additions. --shadow-card/-raised are neutral elevation;
-     --shadow-play/-album belong to the player and its artwork. */
-  --shadow-card:   0 1px 3px rgba(0,0,0,.16), 0 4px 16px rgba(0,0,0,.12);
-  --shadow-raised: 0 4px 16px rgba(0,0,0,.24), 0 1px 4px rgba(0,0,0,.12);
-  --shadow-play:   0 14px 36px rgba(0,0,0,.5);
-  --shadow-album:  0 30px 80px rgba(var(--accent-rgb),.27);
+     --shadow-play/-album belong to the player and its artwork;
+     --shadow-trigger is the logo tile's accent cast in the MMM shell. */
+  --shadow-card:    0 1px 3px rgba(4,8,18,.24), 0 4px 16px rgba(4,8,18,.18);
+  --shadow-raised:  0 4px 16px rgba(4,8,18,.32), 0 1px 4px rgba(4,8,18,.18);
+  --shadow-play:    0 14px 36px rgba(4,8,18,.55);
+  --shadow-album:   0 30px 80px rgba(var(--accent-rgb),.27);
+  --shadow-trigger: 0 14px 34px rgba(var(--accent-rgb),.3);
   /* The logo trigger's glow in the Music/Map/Me shell. */
   --shadow-logo:   0 0 22px rgba(var(--accent-rgb),.42);
 
@@ -433,45 +494,45 @@
 /* Opt-in light theme. Dark is canonical. */
 [data-theme="light"] {
   color-scheme: light;
-  --bg:    #f5f2ed;
-  --bg-2:  #ede9e2;
-  --bg-3:  #e4dfd6;
-  --bg-4:  #d8d0c6;
-  --ink:   #1a1410;
-  --ink-2: #4a3f35;
+  --bg:    #f4f6fa;
+  --bg-2:  #eaeef5;
+  --bg-3:  #dfe5ef;
+  --bg-4:  #d2dae7;
+  --ink:   #101725;
+  --ink-2: #3a4557;
   /* Was #7a6e64, which measures 3.24:1 against the darkest light surface —
      below the 4.5:1 AA floor for the 10px eyebrows the design system uses it
      for. Darkened until it passes on every light surface (4.70:1 worst case).
      Dark theme's --ink-3 is unchanged. */
-  --ink-3: #5f564e;
-  --ink-4: #b0a898;
-  --line:   rgba(0,0,0,.08);
+  --ink-3: #565f70;
+  --ink-4: #a3aec0;
+  --line:   rgba(0,0,0,.09);
   --line-2: rgba(0,0,0,.16);
-  /* Light-mode alpha-ink: dark ink (#1a1410 → 26,20,16) at the same
+  /* Light-mode alpha-ink: dark ink (#101725 → 16,23,37) at the same
      opacities, so translucent text/hairlines that were near-white in dark
      become the analogous muted dark tone here instead of vanishing. */
-  --ink-a10: rgba(26,20,16,.1);
-  --ink-a20: rgba(26,20,16,.2);
-  --ink-a22: rgba(26,20,16,.22);
-  --ink-a25: rgba(26,20,16,.25);
-  --ink-a28: rgba(26,20,16,.28);
-  --ink-a30: rgba(26,20,16,.3);
-  --ink-a32: rgba(26,20,16,.32);
-  --ink-a35: rgba(26,20,16,.35);
-  --ink-a38: rgba(26,20,16,.38);
-  --ink-a40: rgba(26,20,16,.4);
-  --ink-a42: rgba(26,20,16,.42);
-  --ink-a45: rgba(26,20,16,.45);
-  --ink-a50: rgba(26,20,16,.5);
-  --ink-a55: rgba(26,20,16,.55);
-  --ink-a60: rgba(26,20,16,.7);  /* .6 composited to 4.11:1 on light surfaces — under the AA floor for the ghost-button label. */
-  --ink-a65: rgba(26,20,16,.65);
-  --ink-a70: rgba(26,20,16,.7);
-  --ink-a72: rgba(26,20,16,.72);
-  --ink-a75: rgba(26,20,16,.75);
-  --ink-a80: rgba(26,20,16,.8);
-  --ink-a85: rgba(26,20,16,.85);
-  --ink-a90: rgba(26,20,16,.9);
+  --ink-a10: rgba(16,23,37,.1);
+  --ink-a20: rgba(16,23,37,.2);
+  --ink-a22: rgba(16,23,37,.22);
+  --ink-a25: rgba(16,23,37,.25);
+  --ink-a28: rgba(16,23,37,.28);
+  --ink-a30: rgba(16,23,37,.3);
+  --ink-a32: rgba(16,23,37,.32);
+  --ink-a35: rgba(16,23,37,.35);
+  --ink-a38: rgba(16,23,37,.38);
+  --ink-a40: rgba(16,23,37,.4);
+  --ink-a42: rgba(16,23,37,.42);
+  --ink-a45: rgba(16,23,37,.45);
+  --ink-a50: rgba(16,23,37,.5);
+  --ink-a55: rgba(16,23,37,.55);
+  --ink-a60: rgba(16,23,37,.7);  /* .6 composited to 4.11:1 on light surfaces — under the AA floor for the ghost-button label. */
+  --ink-a65: rgba(16,23,37,.65);
+  --ink-a70: rgba(16,23,37,.7);
+  --ink-a72: rgba(16,23,37,.72);
+  --ink-a75: rgba(16,23,37,.75);
+  --ink-a80: rgba(16,23,37,.8);
+  --ink-a85: rgba(16,23,37,.85);
+  --ink-a90: rgba(16,23,37,.9);
   --hair-15: rgba(0,0,0,.015);
   --hair-20: rgba(0,0,0,.02);
   --hair-22: rgba(0,0,0,.022);
@@ -499,13 +560,18 @@
      automatically. The RGB triplets cannot — they are literals — so they are
      re-stated here. Missing these is what makes a "light mode" shell paint a
      near-black scrim and a near-black header blur over light content. */
-  --bg-base-rgb:      245, 242, 237; /* #f5f2ed */
-  --ink-1-rgb:        26, 20, 16;    /* #1a1410 */
+  --bg-base-rgb:      244, 246, 250; /* #f4f6fa */
+  --ink-1-rgb:        16, 23, 37;    /* #101725 */
   --surface-tint-rgb: 0, 0, 0;
 
   /* See --accent-text above: the brand orange is unreadable as copy here. */
   --accent-text: #9c2707;
-  --role-venue-text: #0b6f67;
+  /* Was #0b6f67, which measured 3.95:1 on the old cream --bg-4 and 4.28:1 on
+     the navy-anchored one — i.e. it has been failing AA since it was
+     introduced, and the ground change improved it without clearing it.
+     Darkened until it holds 4.92:1 on every light surface. A pre-existing
+     defect the re-measure surfaced, not a regression from it. */
+  --role-venue-text: #0a655e;
   --role-promoter-text: #920044;
   --role-artist-text: var(--accent-text);
   --warning-text: #735000;
@@ -515,7 +581,7 @@
      #ff4545 error label on cream is barely there — so they do get restated.
      Values are the design system's light-pilot hues darkened until they clear
      4.5:1 on every light surface this theme defines, including --bg-4
-     #d8d0c6: the pilot's own #d32f2f measures 4.46:1 on --bg and only 3.26:1
+     #d2dae7: the pilot's own #d32f2f measures 4.46:1 on --bg and only 3.26:1
      on --bg-4, and #3d7fd6 measures 2.64:1 there. Same method rows 262 and
      266 used. Both tokens are new and currently unreferenced, so this sets
      the value before there is a surface to regress.
@@ -553,7 +619,7 @@
   background:
     radial-gradient(circle at top, rgba(var(--accent-rgb), 0.06), transparent 24%),
     radial-gradient(circle at 82% 18%, rgba(var(--role-fan-rgb), 0.05), transparent 20%),
-    linear-gradient(180deg, #f7f4ef 0%, #f2ede6 42%, #ece6dd 100%);
+    linear-gradient(180deg, #f8f9fc 0%, #f2f5fa 42%, #e9eef6 100%);
   /* A later `body` rule hardcodes near-white text; restore dark ink so
      default/inherited copy is readable on the light background. */
   color: var(--ink);
@@ -597,7 +663,18 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'DM Sans', 'Segoe UI', sans-serif); }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'Work Sans', 'Segoe UI', sans-serif); }
+/* Bricolage Grotesque carries an optical-size axis and is loaded as the
+   variable face, so the browser can feed `opsz` the used font-size itself —
+   which is what Design System 8 asks for ("Bricolage needs opsz fed the pixel
+   size … or headings read loose"). `auto` is the initial value, but it is
+   stated here rather than assumed: the whole reason the family was loaded with
+   `axes: ['opsz']` is this behaviour, and a future `font-optical-sizing: none`
+   added anywhere for an unrelated reason would silently undo it across every
+   heading on the site with nothing to point at. Reach for the --opsz-* tokens
+   only where a heading must carry an optical size its rendered pixel size does
+   not imply. */
+html { font-optical-sizing: auto; }
 ::selection { background: rgba(var(--accent-rgb),.22); color: var(--ink); }
 a { color: inherit; text-decoration: none; }
 img { max-width: 100%; display: block; }
@@ -1042,7 +1119,7 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 .nav-join-button.button {
   background: var(--accent);
   color: var(--ink-on-accent);
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-weight: 800;
   font-size: 0.88rem;
   padding: 9px 18px;
@@ -3093,7 +3170,7 @@ body {
   align-items: center;
   gap: 2px;
   color: #fff;
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.17em;
@@ -3195,7 +3272,7 @@ body {
 .a11y-panel-head strong {
   display: block;
   color: var(--ink);
-  font-family: var(--font-display, Syne, sans-serif);
+  font-family: var(--font-display, Bricolage Grotesque, sans-serif);
   font-size: 1rem;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -3533,7 +3610,7 @@ html.high-contrast p {
 }
 .site-dock-meta { min-width: 0; }
 .site-dock-title {
-  font-family: var(--f-d, 'Syne', sans-serif);
+  font-family: var(--f-d, 'Bricolage Grotesque', sans-serif);
   font-weight: 700;
   font-size: 13px;
   color: var(--ink-1);
@@ -4069,7 +4146,7 @@ a .ihype-card, a.ihype-card {
   background: var(--hair-40);
   color: var(--ink);
   font-size: 14px;
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Work Sans', sans-serif);
   box-sizing: border-box;
   outline: none;
   transition: border-color 150ms ease, box-shadow 150ms ease;
@@ -4130,7 +4207,7 @@ a .ihype-card, a.ihype-card {
 }
 .ihype-empty-state .icon { font-size: 48px; margin-bottom: 16px; }
 .ihype-empty-state h3 {
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-weight: 800;
   font-size: 18px;
   color: var(--ink);
@@ -4362,7 +4439,7 @@ h1, h2 {
   border-radius: 8px;
   background: var(--accent, var(--accent));
   color: #fff;
-  font-family: var(--font-display, 'Syne', sans-serif);
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-weight: 800;
   font-size: 0.85rem;
   text-decoration: none;
@@ -4447,7 +4524,7 @@ h1, h2 {
     border: none;
     cursor: pointer;
     color: var(--ink-2, var(--ink-a70));
-    font-family: var(--font-display, 'Syne', sans-serif);
+    font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
     font-weight: 800;
     font-size: 15px;
   }
@@ -4464,7 +4541,7 @@ h1, h2 {
   background: var(--bg-2, #14100b);
   border: 1px solid var(--hair-160);
   color: var(--ink-a50);
-  font-family: var(--font-body, 'DM Sans', sans-serif);
+  font-family: var(--font-body, 'Work Sans', sans-serif);
   font-size: 16px;
   font-weight: 500;
   text-align: left;
@@ -4503,7 +4580,7 @@ h1, h2 {
   width: 60px; height: 60px; border-radius: 18px;
   display: flex; align-items: center; justify-content: center;
 }
-.mqg-label { font-family: var(--font-display, 'Syne', sans-serif); font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
+.mqg-label { font-family: var(--font-display, 'Bricolage Grotesque', sans-serif); font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
 .mqg-sublabel { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin-top: -6px; }
 
 @keyframes mqg-rise-in {

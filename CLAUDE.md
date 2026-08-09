@@ -116,18 +116,41 @@ The workflow is:
 
 If a UI detail is unclear → ask Claude Design to clarify in the .dc.html. Never guess.
 
-**TWO design bundles now live in the repo and they overlap — read
-`design/design-system-app-shell/HANDOFF_NOTES.md` FIRST.** It carries the
-source-of-truth table: which bundle wins on which topic, and the two places both
-bundles contradict themselves (base surfaces, light mode). The short version —
-`design-system-app-shell/` (the app-shell redesign, 48 templates + UI-kit
-contracts + guidelines) owns the **chrome**: the radial arc nav, the 76px
-solid-accent logo, the pill player, MUSIC's tab list, the five radio categories,
-and the four roles. `handoff-music-map-me/` (Design System 6) owns the **map
-module** and the **backend migration spec**, which the redesign does not restate.
-Two rules from the redesign that the code follows and you must not undo: **no
-emoji anywhere** (Unicode glyphs only), and **promoter is not a role** — never
-put it in a role picker.
+**THE SOURCE OF TRUTH IS `design/design-system-8/` — iHYPE Design System 8
+("Bulletin", vendored 2026-08-09, DESIGN_SYNC row 274).** It absorbed both
+earlier bundles. The two that came before it —
+`design/design-system-app-shell/` and `design/handoff-music-map-me/` (Design
+System 6) — are **superseded and kept only as history**; where any of the three
+disagree, DS8 wins. Do not open them to answer a question DS8 answers.
+
+Read these three files, in this order, before touching any surface:
+
+1. `design/design-system-8/SYNC_AUDIT_2026-08-07-overhaul.md` — the drift table
+   and, in "What the code should change", the *complete* list of what this
+   overhaul asked of the codebase. Its last line is the important one:
+   **"Nothing structural. The shell's structure was already correct — this
+   overhaul brought the design system up to the code, not the reverse."** If
+   you find yourself restructuring a component to satisfy DS8, re-read it.
+2. `design/design-system-8/SHELL_LOCK_2026-08-08.md` — the app shell's geometry,
+   **signed off by the user as final**. Every figure is load-bearing on the
+   others and several were arrived at by fixing a specific bug. Change one and
+   re-derive the rest; do not nudge one in isolation.
+3. `design/design-system-8/ROUTE_TEMPLATE_MAP.md` — which template governs which
+   route. This replaces guessing from the page map further down.
+
+**What DS8 changed in this codebase (all of it, 2026-08-09):** the ground moved
+from warm near-black to ink navy (`--bg` `#0a0805` → `#0b1220`) and the ink from
+warm cream to cool off-white (`--ink` `#f0ebe5` → `#eef1f6`); display type moved
+Syne → **Bricolage Grotesque** and body DM Sans → **Work Sans**; four token
+names were added (`--radius-card`, `--radius-trigger`, `--opsz-*`,
+`--leading-*`) and the shadows were re-anchored to the navy ground. **Every
+token NAME is unchanged**, which is why this was a value-only edit and why
+`mmm.css` needed nothing: it names no hex. `--accent` `#ff5029` and the four
+role hues are unchanged — that is what the brand carries across the overhaul.
+
+Three rules from DS8 that the code follows and you must not undo: **no emoji
+anywhere** (Unicode glyphs only), **promoter is not a role** (never put it in a
+role picker), and **there is no DJ role** (deleted 2026-08-06).
 
 **The Music · Map · Me shell is built and live at `/app`** (DESIGN_SYNC row 268):
 `/app/map`, `/app/music/[tab]`, `/app/me`, `/app/me/[panel]`. `MmmShell` is
@@ -156,18 +179,22 @@ already carries MAP. Events, Pages, advertise and Account keep legacy routes on
 purpose (no MMM equivalent), and `/app/me/settings` is a bridge MENU of links
 rather than the settings UI, so it is not the Account destination.
 
-**Also in the repo: `design/handoff-music-map-me/`.** That is
-iHYPE Design System 6 ("Music · Map · Me", 2026-08-04) vendored verbatim — the first
-`.dc.html` files this checkout has tracked, which is why every cold session's audit
-used to report "0 tracked". Read `design/handoff-music-map-me/HANDOFF_NOTES.md` first:
-it says what was deliberately not carried across and, more importantly, lists three
-token scales (`--radius-lg`, `--ease`, `--duration-slow`) where the handoff and
-`globals.css` **disagree under the same name** — assuming they match is silent, not an
-error. Its `FRONTEND_GOTCHAS.md` is a list of bugs already found in the prototype;
-read it before building the shell, not after. **The product half of that handoff is
-specified but NOT built** — dropping the DJ role, computed radio stations, the
-Music/Map/Me shell, single-step auth. DESIGN_SYNC row 267 scopes each one and says
-which need operator sign-off. Do not start any of them assuming it is a small change.
+**The three token scales that still disagree under the same name.**
+`--radius-lg`, `--ease` and `--duration-slow` mean different things in the
+design system and in `globals.css`, and DS8 **deliberately did not reconcile
+them** — its own note says renumbering them "would add drift rather than remove
+it", because 19 live call sites depend on `--radius-lg` being 18px here against
+the system's 10px. Assuming a `--radius-*` name means the same thing in both
+places is silent, not an error. This is exactly why DS8 added `--radius-card`
+(18px) as a NEW name rather than moving the ramp: reach for `--radius-card` and
+`--radius-pill` in new work and leave the sm/md/lg/xl ramp to the surfaces
+already built on it.
+
+**One follow-up DS8 names and this codebase does not yet do:** the 46
+re-anchored templates got colour and type, not layout. The Bulletin direction's
+card radius, whitespace and editorial hierarchy are applied in the app shell;
+the remaining surfaces still carry their old layout. That is a real backlog
+item, not an oversight — do not treat a marketing page's spacing as drift.
 
 ---
 
@@ -202,9 +229,10 @@ which need operator sign-off. Do not start any of them assuming it is a small ch
 - **Split:** 70% artist / 20% venue / 10% promoters / 0% iHYPE — locked in charter
 - **No video** — iHYPE does not host video, live streams, or recorded video. Audio only.
 - **Radio shows** — DJs can go live (audio-only) and shows auto-save for on-demand replay
-- **Colors:** accent `#ff5029` · venue `#22e5d4` · **promoter `#ff3e9a`** · fan `#b983ff`
-  - Promoter was listed here as `#b983ff` (fan's purple) while the token held `#ffb84a` (amber) — neither was right. Design System 6's colour table settles it at `#ff3e9a`, renamed from `--role-dj`, and it colours the 10% slice in split bars only. See DESIGN_SYNC row 267.
-- **Fonts:** Syne (display/headlines) · DM Sans (body) · JetBrains Mono (labels/mono)
+- **Ground:** ink navy `#0b1220` · ink cool off-white `#eef1f6` (Design System 8, "Bulletin"). Light theme is `#f4f6fa` / `#101725`. These moved off warm near-black/cream on 2026-08-09 — see DESIGN_SYNC row 274.
+- **Colors:** accent `#ff5029` · venue `#22e5d4` · **promoter `#ff3e9a`** · fan `#b983ff` · advertiser `#ffb84a`. **The accent and the role hues did NOT move in the DS8 overhaul** — they are what the brand carries across it.
+  - Promoter was listed here as `#b983ff` (fan's purple) while the token held `#ffb84a` (amber) — neither was right. The design system's colour table settles it at `#ff3e9a`, renamed from `--role-dj`, and it colours the 10% slice in split bars only. It is **not an account type**. See DESIGN_SYNC row 267.
+- **Fonts:** Bricolage Grotesque (display/headlines) · Work Sans (body) · JetBrains Mono (labels/mono) · Instrument Serif (editorial). Bricolage is loaded as the **variable** face with its optical-size axis (`axes: ['opsz']` in `layout.tsx`) — pinning a static instance throws away the axis the family was chosen for. Syne and DM Sans are retired.
 
 ---
 
