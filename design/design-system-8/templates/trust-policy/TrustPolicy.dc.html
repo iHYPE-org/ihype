@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Trust Policy" description="Trust/policy pages — Ticket Policy, Community Rules, Copyright, DMCA (with takedown form). Pick via `policy` tweak. Copy verbatim from src/app/{ticket-policy,community-rules,copyright,dmca}/page.tsx." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}body{background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;-webkit-font-smoothing:antialiased}a{color:var(--accent);text-decoration:none}</style>
+</helmet>
+
+<div style="max-width:640px;margin:0 auto;padding:70px 28px 100px">
+  <span style="display:inline-block;font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);border:1px solid rgba(255,80,41,.3);background:rgba(255,80,41,.07);border-radius:999px;padding:5px 13px">{{ badge }}</span>
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(1.8rem,5vw,2.6rem);letter-spacing:-.03em;line-height:1.05;margin:18px 0 12px">{{ title }}</h1>
+  <p style="font-size:1rem;color:var(--ink-2);line-height:1.7;margin-bottom:36px">{{ intro }}</p>
+
+  <sc-for list="{{ sections }}" as="s" hint-placeholder-count="4">
+    <div style="background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;padding:22px 24px;margin-bottom:12px">
+      <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;letter-spacing:-.01em;margin-bottom:8px">{{ s.title }}</h2>
+      <p style="font-size:.9rem;color:var(--ink-2);line-height:1.65">{{ s.body }}</p>
+    </div>
+  </sc-for>
+
+  <sc-if value="{{ isDmca }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:10px;padding:12px 16px;background:rgba(var(--surface-tint-rgb),.05);border-radius:8px;font-size:.86rem;color:var(--ink-2);line-height:1.6" data-i18n="tpDmcaNote">For DMCA takedown requests, email <a href="mailto:dmca@ihype.org">dmca@ihype.org</a> with subject "DMCA Takedown Request". We respond within 5 business days.</div>
+    <sc-if value="{{ submitted }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:24px;padding:22px 24px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.3);border-radius:14px;color:var(--role-venue);font-size:.92rem">{{ submittedMsg }}</div>
+      <button onClick="{{ resetForm }}" style="margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.08em;background:transparent;border:1px solid rgba(var(--surface-tint-rgb),.16);color:var(--ink-2);padding:9px 16px;border-radius:999px;cursor:pointer" data-i18n="tpSubmitAnother">Submit another request</button>
+    </sc-if>
+    <sc-if value="{{ notSubmitted }}" hint-placeholder-val="{{ true }}">
+      <div style="margin-top:24px;display:flex;flex-direction:column;gap:14px">
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)" data-i18n="tpYourName">Your name<input value="{{ dName }}" onChange="{{ setDName }}" placeholder="Full legal name" style="display:block;width:100%;margin-top:7px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.12);border-radius:10px;padding:12px 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)" data-i18n="tpYourEmail">Your email<input value="{{ dEmail }}" onChange="{{ setDEmail }}" placeholder="you@example.com" type="email" style="display:block;width:100%;margin-top:7px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.12);border-radius:10px;padding:12px 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)" data-i18n="tpInfringingUrl">Infringing URL<input value="{{ dUrl }}" onChange="{{ setDUrl }}" placeholder="https://ihype.org/..." type="url" style="display:block;width:100%;margin-top:7px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.12);border-radius:10px;padding:12px 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:.92rem;outline:none"></input></label>
+        <label style="font-family:'JetBrains Mono',monospace;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)" data-i18n="tpDescInfringement">Description of infringement<textarea value="{{ dDesc }}" onChange="{{ setDDesc }}" rows="6" placeholder="Describe the original work you own and how it is being infringed." style="display:block;width:100%;margin-top:7px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.12);border-radius:10px;padding:12px 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:.92rem;outline:none;resize:vertical"></textarea></label>
+        <sc-if value="{{ canSubmit }}"><button onClick="{{ submit }}" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.94rem;background:var(--accent);color:#fff;border:none;padding:14px;border-radius:999px;cursor:pointer;box-shadow:0 6px 24px rgba(255,80,41,.3)" data-i18n="tpSubmitReq">Submit DMCA request</button></sc-if>
+        <sc-if value="{{ cantSubmit }}"><button style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.94rem;background:rgba(255,80,41,.3);color:rgba(var(--surface-tint-rgb),.5);border:none;padding:14px;border-radius:999px;cursor:not-allowed" data-i18n="tpSubmitReq">Submit DMCA request</button></sc-if>
+        <p style="font-size:.72rem;color:var(--ink-3);margin:0" data-i18n="tpRequiredNote">Name, email, and infringing URL are required.</p>
+      </div>
+    </sc-if>
+  </sc-if>
+</div>
+<footer style="border-top:1px solid rgba(var(--surface-tint-rgb),.1);padding:36px 28px;margin-top:50px;max-width:900px;margin-left:auto;margin-right:auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;letter-spacing:-.02em;color:var(--accent)">iHYPE</div><div style="display:flex;gap:24px"><a href="../advertise/Advertise.dc.html" data-i18n="footAdvertise" style="font-size:13px;color:var(--ink-2)">Advertise</a><a href="../about/About.dc.html" data-i18n="footAbout" style="font-size:13px;color:var(--ink-2)">About</a><a href="../site-pages/SitePages.dc.html" data-i18n="footSupport" style="font-size:13px;color:var(--ink-2)">Support</a></div><div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-3);letter-spacing:.04em">© 2026 iHYPE</div></footer>
+<script>function tpApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){var v=window.ihypeT(el.getAttribute('data-i18n'));if(el.children.length)el.childNodes[0].textContent=v;else el.innerHTML=v;})}document.addEventListener('DOMContentLoaded',tpApplyI18n);window.addEventListener('ihype-i18n-change',tpApplyI18n);if(window.ihypeT)tpApplyI18n();</script>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;720px&quot;,&quot;height&quot;:&quot;860px&quot;},&quot;policy&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;ticket-policy&quot;,&quot;tsType&quot;:&quot;'ticket-policy'|'community-rules'|'copyright'&quot;,&quot;options&quot;:[&quot;ticket-policy&quot;,&quot;community-rules&quot;,&quot;copyright&quot;],&quot;section&quot;:&quot;Page&quot;}}">
+class Component extends DCLogic {
+  state = { submitted: false, dName: '', dEmail: '', dUrl: '', dDesc: '' };
+  componentDidMount() {
+    this._onI18n = () => this.forceUpdate();
+    window.addEventListener('ihype-i18n-change', this._onI18n);
+  }
+  componentWillUnmount() {
+    if (this._onI18n) window.removeEventListener('ihype-i18n-change', this._onI18n);
+  }
+  renderVals() {
+    const t = window.ihypeT || function(k,d){return d};
+    const policy = this.props.policy ?? 'ticket-policy';
+    const { dName, dEmail, dUrl, dDesc } = this.state;
+    const canSubmit = dName.trim() && dEmail.trim() && dUrl.trim();
+    const P = {
+      'ticket-policy': { badge: t('tpTPBadge','Ticket policy'), title: t('tpTPTitle','Verified tickets, clear event rules'), intro: t('tpTPIntro','The ticket hub should prioritize transparent pricing, serialized tickets, venue verification, and fraud prevention.'), sections: [
+        { title: t('tpTPS1T','Serialized tickets'), body: t('tpTPS1B','Each ticket should carry a unique ID and QR verification path so venues can validate entry once.') },
+        { title: t('tpTPS2T','Pricing and payouts'), body: t('tpTPS2B','Ticket creation should show ticket cost, capacity, tax estimates, and artist/venue/promoter payout assumptions before opening sales.') },
+        { title: t('tpTPS3T','Refunds and changes'), body: t('tpTPS3B','Venues and event organizers are responsible for clear event-change, cancellation, refund, and reissue instructions.') },
+        { title: t('tpTPS4T','Resale'), body: t('tpTPS4B','Ticket resale should be limited to face value and require venue-assisted reassignment so the valid token owner is clear.') },
+      ]},
+      'community-rules': { badge: t('tpCRBadge','Community'), title: t('tpCRTitle','Keep the scene safe enough to grow'), intro: t('tpCRIntro','iHYPE should be useful, human, and fair. That means no harassment, fraud, manipulation, or unsafe content.'), sections: [
+        { title: t('tpCRS1T','Respect people'), body: t('tpCRS1B','No harassment, threats, hate, doxxing, impersonation, or targeted abuse of fans, artists, venues, promoters, staff, or volunteers.') },
+        { title: t('tpCRS2T','Respect the signal'), body: t('tpCRS2B','Do not use bots, fake accounts, paid manipulation, or hidden incentives to distort hype, rankings, playlists, or recommendations.') },
+        { title: t('tpCRS3T','Respect venues and fans'), body: t('tpCRS3B','Event, ticket, safety, accessibility, and venue information should be accurate and corrected quickly when it changes.') },
+        { title: t('tpCRS4T','Report problems'), body: t('tpCRS4B','Users should report unsafe content, rights concerns, fraud, impersonation, or ticket issues so admins can review them in the beta console.') },
+      ]},
+      'copyright': { badge: t('tpCPBadge','Copyright'), title: t('tpCPTitle','Copyright and media rights'), intro: t('tpCPIntro','iHYPE is built for independent music, which means rights handling needs to be clear and serious.'), sections: [
+        { title: t('tpCPS1T','Upload authority'), body: t('tpCPS1B','Do not upload songs, videos, artwork, samples, or logos unless you own them or have permission to use them on iHYPE.') },
+        { title: t('tpCPS2T','Reports'), body: t('tpCPS2B','Rights holders should report unauthorized media through the content report flow or support channel with enough detail to identify the asset.') },
+        { title: t('tpCPS3T','Review'), body: t('tpCPS3B','Reported media can be hidden, removed, or restricted while iHYPE reviews ownership, license, and safety concerns.') },
+        { title: t('tpCPS4T','Repeat issues'), body: t('tpCPS4B','Accounts that repeatedly upload unauthorized content may lose upload privileges or account access.') },
+      ]},
+      'dmca': { badge: t('tpDMBadge','DMCA'), title: t('tpDMTitle','Copyright Takedown'), intro: t('tpDMIntro','To report infringing content, complete the form below. We will review and respond within 5 business days. False claims may result in account suspension.'), sections: [
+        { title: t('tpDMS1T','How the process works'), body: t('tpDMS1B','Submit the form with your contact details, the infringing URL, and a description of your original work. We acknowledge within 48 hours. Valid claims are removed within 5 business days. The content owner is notified and may file a counter-notice.') },
+      ]},
+    }[policy];
+    return {
+      ...P,
+      isDmca: policy === 'dmca',
+      submittedMsg: t('tpSubmittedMsg','Your DMCA request has been submitted. We will contact you at {email} within 48 hours.').replace('{email}', dEmail),
+      dName, dEmail, dUrl, dDesc,
+      setDName: (e) => this.setState({ dName: e.target.value }),
+      setDEmail: (e) => this.setState({ dEmail: e.target.value }),
+      setDUrl: (e) => this.setState({ dUrl: e.target.value }),
+      setDDesc: (e) => this.setState({ dDesc: e.target.value }),
+      canSubmit: !!canSubmit, cantSubmit: !canSubmit,
+      submitted: this.state.submitted,
+      notSubmitted: !this.state.submitted,
+      submit: () => { if (canSubmit) this.setState({ submitted: true }); },
+      resetForm: () => this.setState({ submitted: false, dName: '', dEmail: '', dUrl: '', dDesc: '' }),
+    };
+  }
+}
+</script>
+</body>
+</html>

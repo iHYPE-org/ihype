@@ -38,8 +38,8 @@ export default async function StationPage() {
 const STATION_PAGE_CSS = `
 .station-page { max-width: 560px; margin: 0 auto; padding: 40px 16px 64px; }
 .station-page-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--accent); }
-.station-page-title { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 34px; line-height: 1.0; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 12px; }
-.station-page-sub { font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.6; color: var(--ink-a60); max-width: 52ch; margin: 0 0 28px; }
-.station-page-foot { font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--ink-a45); margin-top: 24px; }
+.station-page-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 34px; line-height: 1.0; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 12px; }
+.station-page-sub { font-family: 'Work Sans', sans-serif; font-size: 15px; line-height: 1.6; color: var(--ink-a60); max-width: 52ch; margin: 0 0 28px; }
+.station-page-foot { font-family: 'Work Sans', sans-serif; font-size: 13px; color: var(--ink-a45); margin-top: 24px; }
 .station-page-foot a { color: var(--accent); }
 `;

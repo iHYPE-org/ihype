@@ -1,15 +1,19 @@
 /*
  * The Music · Map · Me shell — DESIGN_SYNC row 267.
  *
- * TWO design sources, and the newer one wins where they disagree:
- *   - `design/design-system-app-shell/templates/simple-app/SimpleApp.dc.html`
- *     (the app-shell redesign) — authoritative for the CHROME: the radial arc
- *     nav, the 76px solid-accent logo, the pill player, the vignette.
- *   - `design/handoff-music-map-me/SimplifiedApp.dc.html` (Design System 6) —
- *     authoritative for the MAP module's pins, chips, sheet and result line,
- *     which the redesign did not restate.
- * Where the redesign restates something, it supersedes: its nav is an arc, not
- * the pill column DS6 drew, and its ME module has no fan-out submenu at all.
+ * Source of truth since 2026-08-09: `design/design-system-8/` — Design System
+ * 8 ("Bulletin"), which absorbed both earlier bundles. Its own sync audit
+ * (`SYNC_AUDIT_2026-08-07-overhaul.md`) is explicit that the overhaul brought
+ * the DESIGN up to this code rather than the reverse: the shell's structure
+ * here was already correct, and the only things it asked the code to change
+ * were token VALUES, the two font families, and the new radius names. Read
+ * `SHELL_LOCK_2026-08-08.md` before touching any number in this file — the
+ * shell geometry is signed off as final and the figures are load-bearing on
+ * each other.
+ *
+ * The two earlier bundles (`design/design-system-app-shell/`,
+ * `design/handoff-music-map-me/`) are SUPERSEDED and kept only as history.
+ * Where any of the three disagree, Design System 8 wins.
  *
  * ## The shape, and why it is this shape
  *
@@ -27,12 +31,13 @@
  *
  * ## Divergences from the handoff, all deliberate
  *
- * 1. **Colour comes from tokens, never the handoff's literals.** The bundle
- *    contradicts itself on the base surfaces — its README table says base
- *    `#0d0b0a` / surface `#16120f`, its own `tokens/colors.css` says `#0a0805` /
- *    `#100d09`, and globals.css matches the latter. Painting from `--bg`/`--bg-3`
- *    picks the token file over the prose and gets light-theme support free.
- * 2. **The faintest labels use `--ink-3`, not the handoff's `#6f6660`.** That
+ * 1. **Colour comes from tokens, never the handoff's literals.** This is why
+ *    the Bulletin overhaul cost this file nothing: the ground moved from warm
+ *    near-black to ink navy in `globals.css` and every surface here followed,
+ *    because none of them names a hex. Keep it that way — a literal typed in
+ *    here is a surface that will miss the next re-anchor and the light theme
+ *    at the same time.
+ * 2. **The faintest labels use `--ink-3`, not a handoff literal.** That
  *    literal behind a 10px eyebrow is precisely the contrast failure axe caught
  *    in DESIGN_SYNC row 262; `--ink-3` is the value measured to clear 4.5:1 on
  *    every surface. Reintroducing #6f6660 would re-break it.
@@ -299,6 +304,26 @@ html.mmm-locked .site-shell > main {
   padding: calc(14px + var(--mmm-safe-top)) 16px calc(96px + var(--mmm-safe-bottom));
 }
 
+/* ── MUSIC control row: tabs + universal search ───────────────────────────
+   NOT `.mmm-control-row` — that name is taken by the MAP module's layer-chip
+   rows above, and reusing it here would restyle the map's chrome as a side
+   effect of laying out a tab strip.
+   Design System 8 collapsed three stacked control rows into one. On a phone
+   the two wrap onto separate lines rather than being squeezed — a 300px
+   minimum on the field is what forces that wrap, and it is the same figure
+   the template uses. The row is `position: relative` because the result
+   list hangs off it absolutely; anything else and the list would push the
+   first row of content down on every keystroke. */
+.mmm-music-controls {
+  position: relative;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 2px 0 14px;
+}
+.mmm-music-controls .mmm-tabs { flex: 0 1 auto; padding: 0; }
+
 .mmm-tabs { display: flex; gap: 8px; padding: 2px 0 14px; }
 .mmm-tab {
   flex: 1;
@@ -317,6 +342,115 @@ html.mmm-locked .site-shell > main {
   background: rgba(var(--accent-rgb), 0.14);
   color: var(--accent-text);
   font-weight: 700;
+}
+
+/* ── Universal search ─────────────────────────────────────────────────── */
+.mmm-search-wrap { flex: 1 1 300px; min-width: 0; }
+.mmm-search-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+}
+.mmm-search-field:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
+.mmm-search-glyph { color: var(--ink-3); font-size: 0.9rem; line-height: 1; }
+.mmm-search-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: 0;
+  outline: none;
+  color: var(--ink);
+  font-family: inherit;
+  /* 16px floor, not a design size: Safari zooms the page on a focused input
+     below 16px and never zooms back. Same rule as mobile-fit.css. */
+  font-size: max(16px, 0.85rem);
+}
+.mmm-search-input::placeholder { color: var(--ink-3); }
+/* The search-type clear affordance is Safari's own and does not follow the
+   theme; the field is cleared by selecting and deleting, as elsewhere here. */
+.mmm-search-input::-webkit-search-decoration,
+.mmm-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.mmm-search-key {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  padding: 4px 9px;
+}
+/* Hidden where there is no keyboard to press it with. */
+@media (pointer: coarse) { .mmm-search-key { display: none; } }
+
+.mmm-search-scopes {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 8px;
+}
+.mmm-search-scope {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  background: transparent;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  padding: 5px 11px;
+  cursor: pointer;
+}
+.mmm-search-scope[aria-pressed='true'] {
+  color: var(--accent-text);
+  border-color: rgba(var(--accent-rgb), 0.42);
+}
+
+/* Absolutely positioned so results overlay the pane rather than reflowing it
+   on every keystroke. The pane beneath is translucent by design, so this
+   needs its own opaque ground or the two sets of text overlap. */
+.mmm-search-results {
+  position: absolute;
+  z-index: 4;
+  left: 0;
+  right: 0;
+  top: 100%;
+  max-height: min(46vh, 420px);
+  overflow-y: auto;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-raised);
+  padding: 6px;
+}
+.mmm-search-note {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  line-height: 1.6;
+  padding: 10px 10px;
+  margin: 0;
+}
+.mmm-search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 10px;
+  border-radius: 10px;
+}
+.mmm-search-result:hover,
+.mmm-search-result:focus-visible { background: var(--hair-50); }
+.mmm-search-result-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mmm-search-kind {
+  font-family: var(--font-mono);
+  font-size: 0.56rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
 }
 
 .mmm-eyebrow {

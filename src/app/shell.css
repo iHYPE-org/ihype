@@ -515,21 +515,21 @@ html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
 html.high-contrast {
   --line: rgba(255, 255, 255, 0.30);
   --line-2: rgba(255, 255, 255, 0.62);
-  --ink-2: #e6ded4;
-  --ink-3: #bdb3a7;
+  --ink-2: #dde3ec;
+  --ink-3: #b3bccb;
 }
 html.high-contrast[data-theme='light'] {
-  --bg: #f5f2ed;
+  --bg: #f4f6fa;
   --text: var(--ink);
   --muted: var(--ink-3);
-  --line: rgba(28, 21, 16, 0.28);
-  --line-2: rgba(28, 21, 16, 0.55);
-  --ink-2: #3a3128;
-  --ink-3: #5a5048;
+  --line: rgba(16, 23, 37, 0.28);
+  --line-2: rgba(16, 23, 37, 0.55);
+  --ink-2: #2c3547;
+  --ink-3: #4b5566;
   color-scheme: light;
 }
 html.high-contrast[data-theme='light'] body {
-  background: #f5f2ed !important;
+  background: #f4f6fa !important;
   color: var(--ink) !important;
 }
 html.high-contrast[data-theme='light'] a { color: #005f6b; }
@@ -537,9 +537,9 @@ html.high-contrast[data-theme='light'] button,
 html.high-contrast[data-theme='light'] input,
 html.high-contrast[data-theme='light'] select,
 html.high-contrast[data-theme='light'] textarea {
-  border-color: rgba(28, 21, 16, 0.7) !important;
+  border-color: rgba(16, 23, 37, 0.7) !important;
   background-color: #ffffff !important;
-  color: #1a1410 !important;
+  color: #101725 !important;
 }
 /* The active pill inverts to the page background; under the button override
    above it would otherwise read as an inactive white pill. */

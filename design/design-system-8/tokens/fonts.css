@@ -1,0 +1,30 @@
+/* iHYPE Webfonts
+   Overhauled 2026-08-07 — "Bulletin" direction.
+   Display: Bricolage Grotesque (retires Syne). Body: Work Sans (retires DM Sans).
+   Mono: JetBrains Mono, unchanged. Serif: Instrument Serif, retained for
+   editorial moments (long-form charter / transparency copy).
+   Nameplate: Yeseva One — one weight, display only. It sets the three module
+   labels in the arc nav and nothing else; at text sizes its contrast closes up.
+
+   Bricolage Grotesque and Work Sans load through the CSS2 API rather than
+   pinned @font-face blocks — Bricolage is a variable font with an optical-size
+   axis, and pinning one static instance would throw the axis away. Templates
+   additionally carry their own <link> to these families, as they always have.
+*/
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=Yeseva+One&display=swap');
+
+/* Noto Sans Arabic / SC / JP — the CJK and Arabic fallback for the twelve
+   locales the app ships. Every @import has to sit above the first @font-face:
+   CSS drops an @import that follows any other rule, so when this block lived at
+   the foot of the file it was parsed away and those scripts silently fell back
+   to system fonts. */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;700;800&family=Noto+Sans+SC:wght@400;500;700;800&family=Noto+Sans+JP:wght@400;500;700;800&display=swap');
+
+/* ── JetBrains Mono (eyebrows / metadata / tabular figures) ── */
+@font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:400; font-display:swap; src:url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family:'JetBrains Mono'; font-style:normal; font-weight:500; font-display:swap; src:url(https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPxDcwg.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+
+/* ── Instrument Serif (editorial) ── */
+@font-face { font-family:'Instrument Serif'; font-style:normal;  font-weight:400; font-display:swap; src:url(https://fonts.gstatic.com/s/instrumentserif/v5/jizBRFtNs2ka5fXjeivQ4LroWlx-6zUTjg.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+@font-face { font-family:'Instrument Serif'; font-style:italic; font-weight:400; font-display:swap; src:url(https://fonts.gstatic.com/s/instrumentserif/v5/jizHRFtNs2ka5fXjeivQ4LroWlx-6zAjjH7M.woff2) format('woff2'); unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD; }
+

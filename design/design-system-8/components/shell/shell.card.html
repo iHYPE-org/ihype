@@ -1,0 +1,63 @@
+<!-- @dsCard group="Components" viewport="1280x760" name="App shell chrome" subtitle="LogoTrigger · ArcNav · PlayerPill · NavHint · MapSheet · ModulePane · Scrim" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../styles.css">
+<script src="../../_ds_bundle.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#060a14;font-family:'Work Sans',system-ui,sans-serif}
+.stage{position:relative;width:1280px;height:760px;overflow:hidden;background:var(--bg-base)}
+.map{position:absolute;inset:0;background:radial-gradient(circle at 26% 24%,rgba(255,80,41,.09),transparent 44%),radial-gradient(circle at 74% 62%,rgba(255,80,41,.07),transparent 40%),linear-gradient(0deg,rgba(238,241,246,.07) 1px,transparent 1px) 0 0/100% 120px,linear-gradient(90deg,rgba(238,241,246,.07) 1px,transparent 1px) 0 0/140px 100%,linear-gradient(180deg,#101a2f,#0b1220)}
+.pin{position:absolute;width:12px;height:12px;border-radius:9999px;background:var(--accent);border:2px solid #060a14;box-shadow:0 0 0 5px rgba(255,80,41,.16)}
+.legend{position:absolute;left:26px;top:22px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-3)}
+a{color:var(--accent)}a:hover{color:var(--ink-1)}
+</style></head><body>
+<div class="stage" id="stage"></div>
+<script>
+const NS = Object.values(window).find((v) => v && typeof v === 'object' && v.ArcNav && v.PlayerPill) || {};
+const { ArcNav, LogoTrigger, PlayerPill, NavHint, MapSheet, Scrim, Vignette } = NS;
+const MODULES = [
+  { id: 'map', label: 'Map' },
+  { id: 'music', label: 'Music', items: [
+    { id: 'discover', label: 'Discover' }, { id: 'radio', label: 'Radio' },
+    { id: 'charts', label: 'Charts' }, { id: 'recommended', label: 'Recommended' },
+    { id: 'playlists', label: 'Playlists' } ] },
+  { id: 'me', label: 'Me' },
+];
+function Demo() {
+  const [open, setOpen] = React.useState(true);
+  const [section, setSection] = React.useState('root');
+  const [sheet, setSheet] = React.useState({
+    kind: 'Venue', title: 'The Echo', meta: 'Echo Park, Los Angeles · cap. 400',
+    body: 'Echo Park mainstay. Books dream-pop and indie five nights a week.',
+    rows: [{ label: 'Upcoming shows', value: '8' }, { label: 'Hypes this month', value: '1,204', accent: true }, { label: 'Books', value: 'Dream-pop · Indie' }],
+  });
+  return React.createElement(React.Fragment, null,
+    React.createElement('div', { className: 'map' }),
+    React.createElement(Vignette, { strength: .8 }),
+    React.createElement('div', { className: 'pin', style: { left: 320, top: 190 } }),
+    React.createElement('div', { className: 'pin', style: { left: 690, top: 330 } }),
+    React.createElement('div', { className: 'pin', style: { left: 905, top: 250 } }),
+    React.createElement('div', { className: 'legend' }, 'Nav open · sheet open · player dimmed'),
+    React.createElement(MapSheet, { target: sheet, onClose: () => setSheet(null) }),
+    React.createElement(Scrim, { visible: open, onClick: () => { setOpen(false); setSection('root'); } }),
+    React.createElement(PlayerPill, {
+      track: { title: 'Harbour Lights', artist: 'Vera Sound', initial: 'V' },
+      hidden: open, playing: true, hyped: true, canHype: true, canTogglePlay: true,
+    }),
+    React.createElement(ArcNav, {
+      open, section, modules: MODULES, activeModule: 'map',
+      onSection: setSection, onClose: () => { setOpen(false); setSection('root'); },
+      onNavigate: () => { setOpen(false); setSection('root'); },
+    }),
+    React.createElement(LogoTrigger, {
+      open, playing: true,
+      onClick: () => { setSection('root'); setOpen((o) => !o); },
+    }),
+    open ? null : React.createElement(NavHint, { label: 'Map' })
+  );
+}
+ReactDOM.createRoot(document.getElementById('stage')).render(React.createElement(Demo));
+</script>
+</body></html>

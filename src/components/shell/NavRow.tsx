@@ -7,7 +7,7 @@ import { badgeToneVar, type ShellBadge } from '@/lib/app-nav';
  * Backlog item 4: the drawer row promoted to a component — "badge + active
  * left border + aria-current".
  *
- * Design: padding 10px 14px, radius 8px, DM Sans 14.5px var(--ink-2),
+ * Design: padding 10px 14px, radius 8px, Work Sans 14.5px var(--ink-2),
  * border-left 2px solid transparent. Active → var(--ink-1),
  * rgba(var(--surface-tint-rgb), 0.07), border-left-color var(--accent),
  * aria-current="true". All of that lives in `.shell-nav-row` in shell.css.

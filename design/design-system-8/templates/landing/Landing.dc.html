@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+<script src="../../lib/i18n.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="iHYPE Landing Page" description="Public marketing site — hero, role-selector waitlist, split bar, roles grid, artist section, FAQ, footer. Wired to lib/api.js." -->
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<script src="./ds-base.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+<script src="../../lib/api.js"></script>
+<style>
+  @keyframes blink { 50% { opacity: .3; } }
+  @keyframes float { 50% { transform: translateY(-20px); } }
+  *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+  html { scroll-behavior: smooth; }
+  body { background: radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base); color: var(--ink-1); font-family: 'Work Sans', sans-serif; overflow-x: hidden; -webkit-font-smoothing: antialiased; transition: background-color .2s ease, color .2s ease; }
+  a { color: inherit; text-decoration: none; }
+</style>
+</helmet>
+
+<!-- Nav -->
+<nav style="position:sticky;top:0;z-index:50;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:rgba(var(--bg-base-rgb),.72);border-bottom:1px solid rgba(var(--surface-tint-rgb),.15)">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px">
+    <a href="#top" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.4rem;letter-spacing:-.04em;color:var(--accent)">iHYPE</a>
+    <div style="display:flex;gap:26px;align-items:center">
+      <a href="../advertise/Advertise.dc.html" data-i18n="lpAdvertise" style="font-size:.9rem;color:var(--ink-2)">Advertise</a>
+      <a href="../about/About.dc.html" data-i18n="lpAbout" style="font-size:.9rem;color:var(--ink-2)">About</a>
+      <a href="../site-pages/SitePages.dc.html" data-i18n="lpSupport" style="font-size:.9rem;color:var(--ink-2)">Support</a>
+      <a href="#join" data-i18n="lpJoinBeta" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.88rem;background:var(--accent);color:#fff;padding:9px 18px;border-radius:999px;box-shadow:0 4px 18px rgba(255,80,41,.3)">Join beta</a>
+          </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<header id="top" style="position:relative;overflow:hidden;padding:120px 0 80px;text-align:center">
+  <div style="position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:900px;height:700px;background:radial-gradient(circle,rgba(255,80,41,.18),transparent 60%);pointer-events:none"></div>
+  <div style="max-width:900px;margin:0 auto;padding:0 32px;position:relative">
+    <span style="display:inline-flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:#ffb84a;border:1px solid rgba(255,184,74,.3);background:rgba(255,184,74,.08);border-radius:999px;padding:6px 15px">
+      <span style="width:7px;height:7px;border-radius:50%;background:var(--role-venue);animation:blink 1.4s infinite;flex-shrink:0"></span><span data-i18n="lpNonprofitLive">A nonprofit. Live now.</span>
+    </span>
+    <h1 data-i18n="lpHeroH1" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2.6rem,7vw,5.4rem);letter-spacing:-.05em;line-height:.97;margin:26px auto 0">You already know<br>who's <span style="color:var(--role-fan)">next.</span></h1>
+    <p data-i18n="lpHeroSub" style="font-size:clamp(1.05rem,2vw,1.3rem);color:var(--ink-2);max-width:620px;margin:22px auto 0;line-height:1.6">Local music is broken — pay-to-play discovery, tickets marked up 30%+, artists who never see who actually showed up. Fans are the fix. Every hype you cast, every ticket you buy direct, every friend you bring — that's what keeps the scene alive. <strong style="color:var(--ink-1)">iHYPE just makes it count.</strong></p>
+
+    <div style="margin:36px auto 0">
+      <a href="#join" data-i18n="lpJoinFanFree" style="display:inline-block;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.05rem;background:var(--role-fan);color:var(--bg-base);padding:17px 40px;border-radius:999px;box-shadow:0 8px 30px rgba(185,131,255,.4)">Join as a fan — free →</a>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--ink-3);margin-top:14px;letter-spacing:.06em"><span data-i18n="lpNoCard">No card. No catch. 30 seconds.</span> <a href="#join" data-i18n="lpArtistInstead" style="color:var(--ink-2);text-decoration:underline">Artist, DJ, or venue instead?</a></div>
+    </div>
+  </div>
+</header>
+
+<!-- Three things, one idea -->
+<section style="padding:80px 0 96px">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="text-align:center;max-width:640px;margin:0 auto 56px">
+      <div data-i18n="lpWhatYouDoEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--role-fan)">What you actually do here</div>
+      <h2 data-i18n="lpWhatYouDoH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(1.9rem,4vw,2.7rem);letter-spacing:-.03em;line-height:1.1;margin-top:14px">Three small things. One big difference for the scene.</h2>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
+      <div style="background:rgba(185,131,255,.05);border:1px solid rgba(185,131,255,.2);border-radius:20px;padding:34px 28px">
+        <div style="font-size:2rem;margin-bottom:16px">🔥</div>
+        <h3 data-i18n="lpThing1H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;margin-bottom:10px">Hype who deserves it</h3>
+        <p data-i18n="lpThing1P" style="font-size:.98rem;line-height:1.6;color:var(--ink-2)">Your HYPE is a real vote, not a like. When you back an artist early, venues and other fans actually see it — that's how someone gets discovered instead of paying to be seen.</p>
+      </div>
+      <div style="background:rgba(255,80,41,.04);border:1px solid rgba(255,80,41,.18);border-radius:20px;padding:34px 28px">
+        <div style="font-size:2rem;margin-bottom:16px">🎟️</div>
+        <h3 data-i18n="lpThing2H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;margin-bottom:10px">Buy the ticket, direct</h3>
+        <p data-i18n="lpThing2P" style="font-size:.98rem;line-height:1.6;color:var(--ink-2)">Face value, no scalper markup. Buying direct is what actually pays the artist 70% and the room 20% — not a platform fee that never reaches either of them.</p>
+      </div>
+      <div style="background:rgba(34,229,212,.04);border:1px solid rgba(34,229,212,.18);border-radius:20px;padding:34px 28px">
+        <div style="font-size:2rem;margin-bottom:16px">📣</div>
+        <h3 data-i18n="lpThing3H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.35rem;letter-spacing:-.02em;margin-bottom:10px">Bring someone with you</h3>
+        <p data-i18n="lpThing3P" style="font-size:.98rem;line-height:1.6;color:var(--ink-2)">Share a show with your link. If a ticket sells because you spread the word, you earn a real cut of the 10% promoter pool — never the artist's share.</p>
+      </div>
+    </div>
+    <p data-i18n="lpArtistsWritep" style="text-align:center;max-width:560px;margin:44px auto 0;font-size:1.05rem;color:var(--ink-1);line-height:1.6">Artists write the songs. DJs spin the sets. Venues open the doors. <strong style="color:var(--role-fan)">None of it happens without fans showing up first.</strong> That's the part you play.</p>
+  </div>
+</section>
+
+<!-- Waitlist -->
+<section id="join" style="padding:0 0 96px">
+  <div style="max-width:560px;margin:0 auto;padding:0 32px;text-align:center">
+    <h2 data-i18n="lpReadyH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(1.8rem,4vw,2.4rem);letter-spacing:-.03em;margin-bottom:14px">Ready to be part of the scene?</h2>
+    <p data-i18n="lpReadySub" style="color:var(--ink-2);font-size:1rem;line-height:1.6;margin-bottom:28px">Free forever, for everyone — fans, artists, DJs, and venues alike.</p>
+    <div id="roleSegs" style="display:inline-flex;gap:6px;background:rgba(var(--surface-tint-rgb),.04);border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:999px;padding:5px;margin-bottom:20px">
+      <button onclick="setRole('fan',this)" data-i18n="lpRoleFan" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:var(--role-fan);color:var(--bg-base);font-weight:700;cursor:pointer">Fan</button>
+      <button onclick="setRole('artist',this)" data-i18n="lpRoleArtist" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:var(--ink-2);cursor:pointer">Artist</button>
+      <button onclick="setRole('venue',this)" data-i18n="lpRoleVenue" hidden style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:var(--ink-2);cursor:pointer">DJ</button>
+      <button onclick="setRole('venue',this)" data-i18n="lpRoleVenue" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;padding:8px 16px;border-radius:999px;border:none;background:transparent;color:var(--ink-2);cursor:pointer">Venue</button>
+    </div>
+    <form id="joinForm" onsubmit="joinWaitlist(event)" style="display:flex;gap:10px">
+      <input type="email" id="wlEmail" data-i18n-ph="lpEmailPh" placeholder="your@email.com" required style="flex:1;padding:15px 20px;border-radius:999px;border:1px solid rgba(var(--surface-tint-rgb),.12);background:rgba(var(--surface-tint-rgb),.05);color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:1rem;outline:none">
+      <button type="submit" data-i18n="lpRequestInvite" style="background:var(--accent);color:#fff;border:none;border-radius:999px;padding:0 24px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;white-space:nowrap;box-shadow:0 4px 20px rgba(255,80,41,.3)">Request invite</button>
+    </form>
+    <p data-i18n="lpNoSpam" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;color:var(--ink-3);margin-top:12px;letter-spacing:.04em">No spam. Small waves. Artists + fans first.</p>
+    <div id="wlOk" style="display:none;padding:16px 20px;background:rgba(34,229,212,.08);border:1px solid rgba(34,229,212,.3);border-radius:14px;margin-top:14px">
+      <div data-i18n="lpOnList" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;color:var(--role-venue)">You're on the list 🔥</div>
+      <p data-i18n="lpEmailInvite" style="font-size:.9rem;color:var(--ink-2);margin-top:6px;line-height:1.5">We'll email your invite code soon.</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how" style="padding:0 0 96px">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div data-i18n="lpMechanicsEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">The mechanics</div>
+    <h2 data-i18n="lpMechanicsH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0;max-width:18ch">Discover, hype, buy direct.</h2>
+    <p data-i18n="lpMechanicsSub" style="font-size:1.08rem;color:var(--ink-2);line-height:1.6;margin-top:18px;max-width:52ch">Every step moves value from the middlemen back to artists and the fans who found them first.</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px">
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);letter-spacing:.1em;margin-bottom:14px">01 · HYPE</div><h3 data-i18n="lpStep1H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Back the artists you believe in</h3><p data-i18n="lpStep1P" style="font-size:.96rem;line-height:1.55;color:var(--ink-2)">A weekly flame budget lets you hype any artist, track, or show. The HYPE chart rises in real time.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);letter-spacing:.1em;margin-bottom:14px">02 · TICKETS</div><h3 data-i18n="lpStep2H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Buy direct, frozen charter</h3><p data-i18n="lpStep2P" style="font-size:.96rem;line-height:1.55;color:var(--ink-2)">Every event publishes a split that can never change after sale. You see exactly where your money goes.</p></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-radius:18px;padding:28px 26px"><div style="font-family:'JetBrains Mono',monospace;font-size:.78rem;color:var(--accent);letter-spacing:.1em;margin-bottom:14px">03 · PROMOTE</div><h3 data-i18n="lpStep3H" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px">Spread the word, earn a cut</h3><p data-i18n="lpStep3P" style="font-size:.96rem;line-height:1.55;color:var(--ink-2)">Share any event with your referral link. Earn up to 10% of the gate you drove — from the dedicated promoter slice, never the artist's.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- Split bar -->
+<section style="background:rgba(255,80,41,.04);border-top:1px solid rgba(255,80,41,.1);border-bottom:1px solid rgba(255,80,41,.1);padding:88px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div data-i18n="lpModelEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">The model</div>
+    <h2 data-i18n="lpModelH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Every ticket, every time.</h2>
+    <div style="display:flex;height:80px;border-radius:14px;overflow:hidden;margin-top:40px">
+      <div style="width:70%;background:var(--accent);display:flex;flex-direction:column;justify-content:center;padding-left:20px;color:var(--bg-base)"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.6rem">70%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em">ARTIST</div></div>
+      <div style="width:20%;background:var(--role-venue);display:flex;flex-direction:column;justify-content:center;padding-left:18px;color:var(--bg-base)"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.5rem">20%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.62rem;letter-spacing:.08em">VENUE</div></div>
+      
+      <div style="width:10%;background:var(--role-promoter);display:flex;flex-direction:column;justify-content:center;padding-left:14px;color:var(--bg-base)"><div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem">10%</div><div style="font-family:'JetBrains Mono',monospace;font-size:.58rem;letter-spacing:.06em">PROMO</div></div>
+    </div>
+    <p data-i18n="lpModelBody" style="font-size:.96rem;color:var(--ink-2);margin-top:20px;max-width:60ch;line-height:1.55">The promoter's 10% is its own dedicated slice — iHYPE takes 0%. The only charge above face value is the card-processing fee (Stripe 2.9% + $0.30; AMEX 3.5% + $0.30), passed through at cost.</p>
+  </div>
+</section>
+
+<!-- Roles -->
+<section id="roles" style="padding:96px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div data-i18n="lpWhoForEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">Who it's for</div>
+    <h2 data-i18n="lpWhoForH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2rem,4.5vw,3.2rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Four roles. One account.</h2>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px">
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-top:4px solid var(--accent);border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🎤</div><h3 data-i18n="lpRoleArtist" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Artist</h3><p data-i18n="lpRoleArtistP" style="font-size:.9rem;line-height:1.5;color:var(--ink-2)">Upload, go live, sell direct. Keeps 70%.</p><a href="../artist-kit/ArtistKit.dc.html" data-i18n="lpLearnMore" style="display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;color:var(--accent)">Learn more →</a></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-top:4px solid var(--role-fan);border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🎧</div><h3 data-i18n="lpRoleFan" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Fan</h3><p data-i18n="lpRoleFanP" style="font-size:.9rem;line-height:1.5;color:var(--ink-2)">Hype, discover, buy, attend, earn referrals.</p><a href="../fan-kit/FanKit.dc.html" data-i18n="lpLearnMore" style="display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;color:var(--role-fan)">Learn more →</a></div>
+      <div style="background:rgba(var(--surface-tint-rgb),.03);border:1px solid rgba(var(--surface-tint-rgb),.07);border-top:4px solid var(--role-venue);border-radius:16px;padding:26px 22px"><div style="font-size:2.2rem">🏛️</div><h3 data-i18n="lpRoleVenue" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.3rem;letter-spacing:-.02em;margin:14px 0 8px">Venue</h3><p data-i18n="lpRoleVenueP" style="font-size:.9rem;line-height:1.5;color:var(--ink-2)">List events, manage door, share the gate.</p><a href="../venue-kit/VenueKit.dc.html" data-i18n="lpLearnMore" style="display:inline-block;margin-top:14px;font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.06em;color:var(--role-venue)">Learn more →</a></div>
+    </div>
+  </div>
+</section>
+
+<!-- Artist band -->
+<section id="artists" style="padding:88px 0">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px">
+    <div style="background:linear-gradient(160deg,var(--bg-overlay),var(--bg-base));border:1px solid rgba(255,80,41,.18);border-radius:24px;padding:64px 56px;position:relative;overflow:hidden">
+      <div style="position:absolute;top:-150px;right:-100px;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,80,41,.22),transparent 65%)"></div>
+      <div style="max-width:640px;position:relative">
+        <div data-i18n="lpForArtists" style="font-family:'JetBrains Mono',monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)">For artists</div>
+        <h2 data-i18n="lpArtistBandH2" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2rem,4vw,3rem);letter-spacing:-.03em;line-height:1.06;margin:14px 0 0">Your music. Your gate. Your fans.</h2>
+        <p data-i18n="lpArtistBandP" style="font-size:1.08rem;color:var(--ink-2);line-height:1.6;margin-top:18px">iHYPE is a nonprofit. The 70% to you is enshrined in the charter, legally, before a single ticket sells. No agent required.</p>
+        <div style="display:flex;flex-wrap:wrap;gap:9px;margin-top:24px">
+          <span data-i18n="lpChip1" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-1);background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.17);border-radius:999px;padding:7px 14px">70% split · locked</span>
+          <span data-i18n="lpChip2" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-1);background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.17);border-radius:999px;padding:7px 14px">Direct fan data</span>
+          <span data-i18n="lpChip3" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-1);background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.17);border-radius:999px;padding:7px 14px">Tour creator</span>
+          <span data-i18n="lpChip4" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-1);background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.17);border-radius:999px;padding:7px 14px">Live show hosting</span>
+          <span data-i18n="lpChip5" style="font-family:'JetBrains Mono',monospace;font-size:.76rem;color:var(--ink-1);background:rgba(var(--surface-tint-rgb),.05);border:1px solid rgba(var(--surface-tint-rgb),.17);border-radius:999px;padding:7px 14px">No agent needed</span>
+        </div>
+        <form id="artistForm" onsubmit="applyArtist(event)" style="display:flex;gap:10px;margin-top:30px;max-width:480px">
+          <input type="email" id="artistEmail" data-i18n-ph="lpEmailPh" placeholder="your@email.com" required style="flex:1;padding:13px 16px;border-radius:12px;border:1px solid rgba(255,80,41,.3);background:rgba(255,80,41,.06);color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:.96rem;outline:none">
+          <button type="submit" data-i18n="lpApply" style="background:var(--accent);color:#fff;border:none;border-radius:12px;padding:0 22px;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:.9rem;cursor:pointer;white-space:nowrap">Apply →</button>
+        </form>
+        <div id="artistOk" data-i18n="lpApplicationReceived" style="display:none;margin-top:14px;font-size:.92rem;color:var(--role-venue)">✓ Application received — we'll reach out within 48 hours.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer style="border-top:1px solid rgba(var(--surface-tint-rgb),.07);padding:56px 0 64px">
+  <div style="max-width:1120px;margin:0 auto;padding:0 32px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px">
+    <div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-.04em;color:var(--accent)">iHYPE</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:.68rem;color:var(--ink-3);margin-top:8px;letter-spacing:.06em">Artist-owned live music · Not-for-profit</div>
+    </div>
+    <div style="display:flex;gap:32px"><a href="../advertise/Advertise.dc.html" data-i18n="lpAdvertise" style="font-size:.92rem;color:var(--ink-2)">Advertise</a><a href="../about/About.dc.html" data-i18n="lpAbout" style="font-size:.92rem;color:var(--ink-2)">About</a><a href="../site-pages/SitePages.dc.html" data-i18n="lpSupport" style="font-size:.92rem;color:var(--ink-2)">Support</a></div>
+  </div>
+  <div data-i18n="lpFooterCopy" style="max-width:1120px;margin:40px auto 0;padding:0 32px;font-family:'JetBrains Mono',monospace;font-size:.7rem;color:var(--ink-3);letter-spacing:.04em">© 2026 iHYPE. 501(c)(3) nonprofit — real payments, real payouts.</div>
+</footer>
+
+<script>
+  let selectedRole = 'fan';
+  function setRole(role, btn) {
+    selectedRole = role;
+    const cols = {fan:'var(--role-fan)',artist:'var(--accent)',venue:'var(--role-venue)'};
+    document.querySelectorAll('#roleSegs button').forEach(b => { b.style.background='transparent'; b.style.color='var(--ink-2)'; b.style.fontWeight='400'; });
+    btn.style.background = cols[role]; btn.style.color = 'var(--bg-base)'; btn.style.fontWeight = '700';
+  }
+  async function joinWaitlist(e) {
+    e.preventDefault();
+    const email = document.getElementById('wlEmail').value;
+    try { if (window.IHYPE_API) await window.IHYPE_API.auth.joinWaitlist(email, selectedRole); } catch {}
+    document.getElementById('joinForm').style.display = 'none';
+    document.getElementById('wlOk').style.display = 'block';
+  }
+  async function applyArtist(e) {
+    e.preventDefault();
+    const email = document.getElementById('artistEmail').value;
+    try { if (window.IHYPE_API) await window.IHYPE_API.auth.artistApply({ email, type: 'artist' }); } catch {}
+    document.getElementById('artistForm').style.display = 'none';
+    document.getElementById('artistOk').style.display = 'block';
+  }
+  function lpApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))});document.querySelectorAll('[data-i18n-ph]').forEach(function(el){el.placeholder=window.ihypeT(el.getAttribute('data-i18n-ph'))})}
+  document.addEventListener('DOMContentLoaded',lpApplyI18n);window.addEventListener('ihype-i18n-change',lpApplyI18n);if(window.ihypeT)lpApplyI18n();
+</script>
+</x-dc>
+</body>
+</html>

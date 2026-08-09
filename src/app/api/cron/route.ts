@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
             to: getAdminAlertRecipients(),
             subject: '[iHYPE] Health check failure',
             text: `iHYPE health check returned non-ok status.\n\n${summary}`,
-            html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:var(--bg);color:#f0ebe5;padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
+            html: `<p>iHYPE health check returned non-ok status.</p><pre style="font-family:monospace;font-size:12px;background:var(--bg);color:#eef1f6;padding:12px;border-radius:6px;white-space:pre-wrap;">${summary.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`
           });
         } catch (err) {
           log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'alert email failed');

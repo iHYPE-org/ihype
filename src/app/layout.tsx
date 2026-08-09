@@ -7,7 +7,7 @@ import './shell-surfaces.css';
 import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
-import { Syne, DM_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
+import { Bricolage_Grotesque, Work_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
@@ -27,8 +27,16 @@ import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { AppShell } from '@/components/shell/AppShell';
 import { getShellViewer } from '@/lib/shell-account';
 
-const syne = Syne({ subsets: ['latin'], weight: ['700', '800'], variable: '--font-syne', display: 'swap' });
-const dmSans = DM_Sans({ subsets: ['latin'], weight: ['400', '500'], variable: '--font-dm', display: 'swap' });
+// Design System 8 ("Bulletin"): Bricolage Grotesque retires Syne on display,
+// Work Sans retires DM Sans on body. Bricolage is loaded as the VARIABLE face
+// with its optical-size axis kept — `axes: ['opsz']` is what makes
+// `font-variation-settings: 'opsz' N` on the display ramp do anything. Pinning
+// a static instance instead would throw the axis away, which is the reason the
+// handoff picked this family. `weight` is deliberately omitted so the whole
+// 200..800 wght range ships; next/font rejects the two together on a variable
+// face. Work Sans takes fixed weights because only four are ever used.
+const bricolage = Bricolage_Grotesque({ subsets: ['latin'], axes: ['opsz'], variable: '--font-bricolage', display: 'swap' });
+const workSans = Work_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-work', display: 'swap' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-jb', display: 'swap' });
 const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
 const forum = Forum({ subsets: ['latin'], weight: ['400'], variable: '--font-forum', display: 'swap' });
@@ -81,7 +89,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { account: shellAccount, unreadCount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${syne.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
       <head>
         <script
           nonce={nonce}

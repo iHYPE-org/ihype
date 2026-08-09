@@ -12,7 +12,7 @@ export default async function NotFound() {
       justifyContent: 'center',
       background: 'var(--bg)',
       color: 'var(--ink)',
-      fontFamily: "var(--font-body, 'DM Sans', sans-serif)",
+      fontFamily: "var(--font-body, 'Work Sans', sans-serif)",
       textAlign: 'center',
       padding: '2rem',
     }}>
@@ -24,7 +24,7 @@ export default async function NotFound() {
         marginBottom: 32,
       }} />
       <div style={{
-        fontFamily: "var(--font-display, 'Syne', sans-serif)",
+        fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
         fontWeight: 800,
         fontSize: '1.1rem',
         letterSpacing: '-0.03em',
@@ -33,7 +33,7 @@ export default async function NotFound() {
         i<span style={{ color: 'var(--accent)' }}>HYPE</span>
       </div>
       <div style={{
-        fontFamily: "var(--font-display, 'Syne', sans-serif)",
+        fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
         fontWeight: 800,
         fontSize: '3rem',
         letterSpacing: '-0.05em',
@@ -45,7 +45,7 @@ export default async function NotFound() {
         4·0·4
       </div>
       <h1 style={{
-        fontFamily: "var(--font-display, 'Syne', sans-serif)",
+        fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
         fontWeight: 800,
         fontSize: 'clamp(1.4rem, 5vw, 1.6rem)',
         letterSpacing: '-0.03em',
@@ -62,7 +62,7 @@ export default async function NotFound() {
         color: '#fff',
         padding: '13px 28px',
         borderRadius: 9999,
-        fontFamily: "var(--font-display, 'Syne', sans-serif)",
+        fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
         fontWeight: 800,
         textDecoration: 'none',
         fontSize: '0.95rem',

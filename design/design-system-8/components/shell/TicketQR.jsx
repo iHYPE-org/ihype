@@ -1,0 +1,110 @@
+const _QR = {
+  fd: "'Bricolage Grotesque',sans-serif", fm: "'JetBrains Mono',monospace",
+};
+
+/**
+ * The wallet code as a scannable block.
+ *
+ * This draws a QR-shaped matrix deterministically from the code string — the
+ * same code always produces the same block, so the graphic is stable across
+ * renders and screenshots, and two different tickets never look alike. It is a
+ * representation of the door credential, not an encoder: the shipped app draws
+ * this from the signed wallet payload the scanner actually reads.
+ *
+ * Quiet zone, three finder patterns and one alignment pattern are placed to
+ * spec so it reads as a QR at a glance and at thumbnail size.
+ */
+
+const SIZE = 25;
+
+function matrix(code) {
+  /* FNV-1a over the code, then a xorshift walk — small, dependency-free, and
+     stable for a given string. */
+  let h = 2166136261;
+  for (let i = 0; i < code.length; i++) {
+    h ^= code.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  let x = h >>> 0 || 1;
+  const rand = () => {
+    x ^= x << 13; x >>>= 0;
+    x ^= x >> 17;
+    x ^= x << 5; x >>>= 0;
+    return x / 4294967296;
+  };
+
+  const g = [];
+  for (let r = 0; r < SIZE; r++) {
+    g.push([]);
+    for (let c = 0; c < SIZE; c++) g[r].push(rand() > 0.5);
+  }
+
+  const clear = (r0, c0, h2, w2) => {
+    for (let r = r0; r < r0 + h2; r++) for (let c = c0; c < c0 + w2; c++) if (g[r]) g[r][c] = false;
+  };
+  const finder = (r0, c0) => {
+    clear(r0, c0, 8, 8);
+    for (let r = 0; r < 7; r++) for (let c = 0; c < 7; c++) {
+      const edge = r === 0 || r === 6 || c === 0 || c === 6;
+      const core = r >= 2 && r <= 4 && c >= 2 && c <= 4;
+      g[r0 + r][c0 + c] = edge || core;
+    }
+  };
+  finder(0, 0);
+  finder(0, SIZE - 7);
+  finder(SIZE - 7, 0);
+
+  /* Alignment pattern, bottom-right. */
+  const a = SIZE - 9;
+  clear(a, a, 5, 5);
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) {
+    g[a + r][a + c] = r === 0 || r === 4 || c === 0 || c === 4 || (r === 2 && c === 2);
+  }
+
+  /* Timing rows. */
+  for (let i = 8; i < SIZE - 8; i++) {
+    g[6][i] = i % 2 === 0;
+    g[i][6] = i % 2 === 0;
+  }
+  return g;
+}
+
+export function TicketQR({ code = '', size = 188, label, tone = 'light' }) {
+  const g = React.useMemo(() => matrix(code), [code]);
+  const fg = tone === 'light' ? '#0b1220' : '#eef1f6';
+  const bg = tone === 'light' ? '#ffffff' : 'transparent';
+  const q = 2;
+  const span = SIZE + q * 2;
+
+  const cells = [];
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      if (!g[r][c]) continue;
+      cells.push(React.createElement('rect', {
+        key: r + '.' + c, x: c + q, y: r + q, width: 1.02, height: 1.02, fill: fg,
+      }));
+    }
+  }
+
+  return React.createElement('div', {
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 },
+  },
+    React.createElement('div', {
+      style: { background: bg, borderRadius: 12, padding: 0, lineHeight: 0 },
+    }, React.createElement('svg', {
+      width: size, height: size, viewBox: '0 0 ' + span + ' ' + span,
+      role: 'img', 'aria-label': 'Entry code ' + code,
+      style: { display: 'block', borderRadius: 12 },
+      shapeRendering: 'crispEdges',
+    },
+      React.createElement('rect', { width: span, height: span, fill: bg === 'transparent' ? 'none' : bg }),
+      cells
+    )),
+    label ? React.createElement('div', {
+      style: {
+        fontFamily: _QR.fm, fontSize: 11, letterSpacing: '.16em', textTransform: 'uppercase',
+        color: '#8792a6',
+      },
+    }, label) : null
+  );
+}

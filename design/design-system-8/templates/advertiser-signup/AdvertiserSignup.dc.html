@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<!-- @template name="iHYPE Advertiser Signup" description="/advertise/register — advertiser profile signup, music-industry-only policy gate" -->
+<helmet>
+  <script src="./ds-base.js"></script>
+<script src="../../lib/i18n.js"></script>
+<script src="../../lib/theme.js"></script>
+<script src="../../lib/theme-toggle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <style>html,body{margin:0;background:radial-gradient(1100px 560px at 50% -12%,rgba(255,80,41,.09),transparent 62%),var(--bg-base)}*{box-sizing:border-box}button{transition:transform .16s cubic-bezier(.2,.7,.3,1),box-shadow .16s ease,filter .16s ease}button:hover{filter:brightness(1.08)}button:active{transform:scale(.96)}a{transition:filter .16s ease,transform .16s ease}@keyframes ihFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}body>div{animation:ihFadeUp .5s cubic-bezier(.16,1,.3,1) both}@media(prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}</style>
+</helmet>
+<div style="min-height:100vh;background:var(--bg-base);color:var(--ink-1);font-family:'Work Sans',sans-serif;padding:44px 24px 100px;max-width:520px;margin:0 auto">
+  <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+  <div data-i18n="asgEyebrow" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#ffb84a;margin-bottom:8px">Radio ad campaigns</div>
+  <h1 data-i18n="asgHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.02em;margin:0 0 8px">Advertise on iHYPE radio</h1>
+  <p data-i18n="asgSub" style="font-size:14px;color:rgba(var(--ink-1-rgb),.6);margin:0 0 24px;line-height:1.6">Reach listeners during live and recorded DJ sets. Every campaign is AI-screened, then human-reviewed if flagged.</p>
+
+  <div style="border:1px solid rgba(255,184,74,.25);background:rgba(255,184,74,.06);border-radius:12px;padding:14px 16px;margin-bottom:28px">
+    <div data-i18n="asgMusicOnly" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#ffb84a;margin-bottom:4px">Music-industry only</div>
+    <p data-i18n="asgMusicOnlyBody" style="font-size:12.5px;color:var(--ink-2);line-height:1.6;margin:0">iHYPE only accepts advertisers in music, live events, or related creator services — labels, venues, gear, ticketing, merch, tour support. Everything else is rejected at screening.</p>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:16px;margin-bottom:24px">
+    <div><div data-i18n="asgCompanyLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Company / brand name</div>
+      <input value="{{ company }}" onChange="{{ setCompany }}" data-i18n-ph="asgCompanyPh" placeholder="e.g. Analog Gear Co." style="width:100%;height:44px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    <div><div data-i18n="asgEmailLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Contact email</div>
+      <input value="{{ email }}" onChange="{{ setEmail }}" data-i18n-ph="asgEmailPh" placeholder="you@company.com" style="width:100%;height:44px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:0 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:14px;box-sizing:border-box"></div>
+    <div><div data-i18n="asgCategoryLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Category</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <sc-for list="{{ categories }}" as="c" hint-placeholder-count="6">
+          <sc-if value="{{ c.active }}"><button onClick="{{ c.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid #ffb84a;background:rgba(255,184,74,.13);color:#ffb84a">{{ c.label }}</button></sc-if>
+          <sc-if value="{{ c.inactive }}"><button onClick="{{ c.pick }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-2)">{{ c.label }}</button></sc-if>
+        </sc-for>
+      </div>
+    </div>
+    <div><div data-i18n="asgPitchLabel" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);margin-bottom:6px">Tell us about your campaign</div>
+      <textarea value="{{ pitch }}" onChange="{{ setPitch }}" rows="4" data-i18n-ph="asgPitchPh" placeholder="What are you advertising, and to whom?" style="width:100%;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);border:1px solid rgba(var(--surface-tint-rgb),.14);border-radius:9px;padding:10px 14px;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-size:14px;box-sizing:border-box;resize:vertical"></textarea></div>
+  </div>
+
+  <sc-if value="{{ canSubmit }}"><button data-i18n="asgSubmitBtn" onClick="{{ submit }}" style="width:100%;height:48px;border-radius:12px;border:none;background:#ffb84a;color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">Submit for review</button></sc-if>
+  <sc-if value="{{ cantSubmit }}"><button data-i18n="asgSubmitBtn" style="width:100%;height:48px;border-radius:12px;border:none;background:rgba(255,184,74,.3);color:rgba(var(--bg-base-rgb),.5);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:not-allowed">Submit for review</button></sc-if>
+  <div data-i18n="asgReviewNote" style="font-size:11.5px;color:var(--ink-3);margin-top:12px;text-align:center;line-height:1.6">Most campaigns are reviewed within 48 hours. You'll get an email either way.</div>
+  </sc-if>
+
+  <sc-if value="{{ isSubmitted }}" hint-placeholder-val="{{ false }}">
+    <div style="text-align:center;padding:60px 0">
+      <div style="width:64px;height:64px;border-radius:50%;background:rgba(255,184,74,.12);border:1px solid rgba(255,184,74,.35);display:grid;place-items:center;margin:0 auto 20px;font-size:1.5rem;color:#ffb84a">📻</div>
+      <h1 data-i18n="asgSubmittedHeading" style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:1.5rem;letter-spacing:-.02em;margin-bottom:10px">Campaign submitted.</h1>
+      <p style="font-size:.9rem;color:var(--ink-2);line-height:1.7;max-width:38ch;margin:0 auto">{{ submittedMsg }}</p>
+      <button data-i18n="asgSubmitAnother" onClick="{{ resetForm }}" style="margin-top:22px;font-family:'Work Sans',sans-serif;font-weight:600;font-size:.85rem;background:transparent;color:var(--ink-2);border:1px solid rgba(var(--surface-tint-rgb),.14);padding:10px 20px;border-radius:999px;cursor:pointer">Submit another campaign</button>
+    </div>
+  </sc-if>
+
+</div>
+<script>function asgApplyI18n(){if(!window.ihypeT)return;document.querySelectorAll('[data-i18n]').forEach(function(el){el.innerHTML=window.ihypeT(el.getAttribute('data-i18n'))});document.querySelectorAll('[data-i18n-ph]').forEach(function(el){el.placeholder=window.ihypeT(el.getAttribute('data-i18n-ph'))})}document.addEventListener('DOMContentLoaded',asgApplyI18n);window.addEventListener('ihype-i18n-change',asgApplyI18n);if(window.ihypeT)asgApplyI18n();</script>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = { category: 'gear', company: '', email: '', pitch: '', submitted: false };
+  renderVals() {
+    const { company, email, pitch, submitted } = this.state;
+    const cur = this.state.category;
+    const CATS = [['label',window.ihypeT?window.ihypeT('asgCatLabel'):'Record label'],['venue',window.ihypeT?window.ihypeT('asgCatVenue'):'Venue/promoter'],['gear',window.ihypeT?window.ihypeT('asgCatGear'):'Gear & instruments'],['ticketing',window.ihypeT?window.ihypeT('asgCatTicketing'):'Ticketing'],['merch',window.ihypeT?window.ihypeT('asgCatMerch'):'Merch'],['tour',window.ihypeT?window.ihypeT('asgCatTour'):'Tour support']];
+    const canSubmit = company.trim() && email.trim();
+    const submittedMsg = window.ihypeT ? window.ihypeT('asgSubmittedBody').replace('{company}', company).replace('{email}', email) : `We'll review ${company}'s campaign within 48 hours and email ${email} either way.`;
+    return {
+      categories: CATS.map(([id, label]) => ({ label, active: cur === id, inactive: cur !== id, pick: () => this.setState({ category: id }) })),
+      company, email, pitch, submittedMsg,
+      setCompany: (e) => this.setState({ company: e.target.value }),
+      setEmail: (e) => this.setState({ email: e.target.value }),
+      setPitch: (e) => this.setState({ pitch: e.target.value }),
+      canSubmit: !!canSubmit, cantSubmit: !canSubmit,
+      isForm: !submitted, isSubmitted: submitted,
+      submit: () => { if (canSubmit) this.setState({ submitted: true }); },
+      resetForm: () => this.setState({ submitted: false, company: '', email: '', pitch: '', category: 'gear' }),
+    };
+  }
+}
+
+</script>
+</body>
+</html>
