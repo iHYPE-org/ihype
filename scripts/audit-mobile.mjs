@@ -114,9 +114,23 @@ function probe([tapMin, textMin]) {
   return out;
 }
 
-const browser = await chromium.launch(
-  process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}
-);
+// Chromium does not read HTTPS_PROXY from the environment the way curl and node
+// do, so behind a proxy every navigation fails while `curl https://ihype.org`
+// succeeds from the same shell. Forwarding it is necessary — but NOT always
+// sufficient, and that is worth knowing before you spend an hour on it: against
+// a TLS-terminating agent proxy this still fails, because Playwright launches a
+// throwaway profile with no NSS store and the CA the proxy re-signs with is not
+// in it. Verified, not assumed. Do not "fix" that with ignoreHTTPSErrors or
+// --ignore-certificate-errors; measure from an environment that can reach the
+// target instead, or point --base at a local production build.
+// A no-op when HTTPS_PROXY is unset, which is the CI and laptop case.
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
+const browser = await chromium.launch({
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
+  // localhost is in NO_PROXY everywhere; --base=http://localhost still works
+  // because Chromium bypasses the proxy for loopback by default.
+  ...(PROXY ? { proxy: { server: PROXY } } : {}),
+});
 const ctx = await browser.newContext({
   ...devices['iPhone 13'],
   viewport: VIEWPORT,
@@ -126,11 +140,15 @@ const ctx = await browser.newContext({
 const page = await ctx.newPage();
 
 const results = [];
+const unmeasured = [];
 console.log(`Measuring ${PAGES.length} pages at ${VIEWPORT.width}x${VIEWPORT.height} against ${BASE}\n`);
 
 for (const path of PAGES) {
   try {
     const resp = await page.goto(BASE + path, { waitUntil: 'domcontentloaded', timeout: 45000 });
+    // A 404 or a 500 renders a page whose boxes are real and whose CONTENT is
+    // not the page under test, so it must not quietly contribute measurements.
+    if (resp && !resp.ok()) throw new Error(`HTTP ${resp.status()}`);
     await page.waitForTimeout(1200);
     const r = await page.evaluate(probe, [TAP_MIN, TEXT_MIN]);
     results.push({ path, ...r });
@@ -141,6 +159,7 @@ for (const path of PAGES) {
       `text<${TEXT_MIN}px:${String(r.tinyText.length).padStart(3)}`
     );
   } catch (e) {
+    unmeasured.push({ path, reason: e.message.slice(0, 80) });
     console.log(`  ${path.padEnd(15)} ERROR ${e.message.slice(0, 60)}`);
   }
 }
@@ -163,11 +182,37 @@ for (const [key, budget] of Object.entries(BUDGET)) {
 }
 console.log('─────────────────────────────────────────────');
 
+// A PAGE THAT DID NOT LOAD CONTRIBUTES ZERO OFFENDERS, AND ZERO LOOKS LIKE A
+// PASS. This is the failure mode that matters most in an instrument: every
+// budget above is a SUM over `results`, so a run that reached nothing printed
+// `0 / 98 improved`, "Budgets beaten — lower them", and exited 0 under
+// --strict. It was found by pointing the script at production from a sandbox
+// whose Chromium could not route there — sixteen ERROR lines, followed by a
+// clean bill of health.
+//
+// So the counts are only a verdict when the sample is complete. Anything
+// missing is reported first, loudly, and is a hard failure under --strict
+// regardless of what the numbers say: an incomplete measurement is not a
+// smaller measurement, it is an unknown one.
+if (unmeasured.length) {
+  console.error(`\n${unmeasured.length} of ${PAGES.length} page(s) could not be measured:`);
+  for (const u of unmeasured) console.error(`  ${u.path.padEnd(15)} ${u.reason}`);
+  console.error(
+    '\nThe totals above are a sum over the pages that DID load, so they are not\n' +
+    'comparable to the budgets and must not be used to lower them. Fix the run\n' +
+    'first. (If the pages are unreachable rather than broken, check the proxy:\n' +
+    'this script forwards HTTPS_PROXY to Chromium, which does not read it.)'
+  );
+  if (STRICT) process.exit(1);
+}
+
 if (failed && STRICT) {
   console.error('\nA mobile budget regressed. Fix the new offender — do not raise the budget.');
   process.exit(1);
 }
-if (!failed) {
+// Only invite a ratchet when every page was actually measured — otherwise the
+// suggestion is to bake a gap in coverage into the gate.
+if (!failed && !unmeasured.length) {
   const better = Object.entries(BUDGET).filter(([k, v]) => actual[k] < v);
   if (better.length) console.log('\nBudgets beaten — lower them in this file to lock the gain in.');
 }
