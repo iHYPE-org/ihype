@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatAge, orderByUrgency, type WorkbenchQueue } from '@/lib/admin-workbench';
+import { firstAskByEmail, formatAge, orderByUrgency, stillWaiting, type WorkbenchQueue } from '@/lib/admin-workbench';
 
 function q(over: Partial<WorkbenchQueue> & { id: string }): WorkbenchQueue {
   return {
@@ -64,5 +64,79 @@ describe('formatAge', () => {
   it('switches to days at 24h', () => {
     expect(formatAge(24)).toBe('1d');
     expect(formatAge(47.9)).toBe('1d');
+  });
+});
+
+/**
+ * The access-request queue's logic, extracted from its two database queries so
+ * the part most likely to be wrong is testable. See `pendingAccessRequests`.
+ */
+describe('firstAskByEmail', () => {
+  const at = (iso: string) => new Date(iso);
+
+  it('dates a repeat asker by their FIRST request, not their latest', () => {
+    // Rows arrive newest-first, which is the order the query returns them in.
+    const map = firstAskByEmail([
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: { email: 'nyla@example.com' } },
+      { createdAt: at('2026-08-01T00:00:00Z'), metadata: { email: 'nyla@example.com' } },
+    ]);
+    expect(map.size).toBe(1);
+    expect(map.get('nyla@example.com')?.toISOString()).toBe('2026-08-01T00:00:00.000Z');
+  });
+
+  it('treats addresses case-insensitively and trims them', () => {
+    const map = firstAskByEmail([
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: { email: '  NYLA@Example.com ' } },
+      { createdAt: at('2026-08-02T00:00:00Z'), metadata: { email: 'nyla@example.com' } },
+    ]);
+    expect([...map.keys()]).toEqual(['nyla@example.com']);
+    expect(map.get('nyla@example.com')?.toISOString()).toBe('2026-08-02T00:00:00.000Z');
+  });
+
+  it('skips rows with no usable address rather than counting them', () => {
+    const map = firstAskByEmail([
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: null },
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: {} },
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: { email: 42 } },
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: { email: 'not-an-address' } },
+      { createdAt: at('2026-08-09T00:00:00Z'), metadata: { email: 'ok@example.com' } },
+    ]);
+    expect([...map.keys()]).toEqual(['ok@example.com']);
+  });
+});
+
+describe('stillWaiting', () => {
+  const asked = () =>
+    new Map([
+      ['early@example.com', new Date('2026-08-01T00:00:00Z')],
+      ['late@example.com', new Date('2026-08-08T00:00:00Z')],
+    ]);
+
+  it('reports the oldest outstanding wait, not the newest', () => {
+    const result = stillWaiting(asked(), []);
+    expect(result.count).toBe(2);
+    expect(result.oldest?.toISOString()).toBe('2026-08-01T00:00:00.000Z');
+  });
+
+  it('drops people who now have an account, and re-dates the queue', () => {
+    const result = stillWaiting(asked(), ['early@example.com']);
+    expect(result.count).toBe(1);
+    // The queue is no longer a week old just because someone who already
+    // signed up asked a week ago.
+    expect(result.oldest?.toISOString()).toBe('2026-08-08T00:00:00.000Z');
+  });
+
+  it('matches an account whose address differs only in case or spacing', () => {
+    // Otherwise a request sits "waiting" forever because someone capitalised
+    // their own address when they registered.
+    expect(stillWaiting(asked(), ['  Early@Example.COM ', 'LATE@example.com']).count).toBe(0);
+  });
+
+  it('ignores null account emails — a passkey account has none', () => {
+    expect(stillWaiting(asked(), [null]).count).toBe(2);
+  });
+
+  it('is empty and undated when nobody is waiting', () => {
+    expect(stillWaiting(new Map(), [])).toEqual({ count: 0, oldest: null });
   });
 });

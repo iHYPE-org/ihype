@@ -59,6 +59,99 @@ function build(
   };
 }
 
+/**
+ * Alpha access requests that have not become accounts yet.
+ *
+ * `POST /api/beta-access-request` records an `AuditLog` row and emails the
+ * admin recipients, and until now that was the whole story: **nothing on any
+ * admin page showed a single request.** For a closed alpha whose front page
+ * makes request-access the only way in, that put the entire inbound funnel in
+ * one inbox — and this platform has already lost 35 days of outbound email
+ * once without noticing (DESIGN_SYNC row 254). A queue nobody can see is a
+ * queue nobody works.
+ *
+ * Why this needs two round trips rather than a `count()`: an audit row has no
+ * "handled" state, so counting them would produce a number that only ever goes
+ * up, which is worse than no number at all on a board whose whole ordering is
+ * by how long the oldest item has waited. "Waiting" is therefore defined as
+ * *requested an invite and does not yet have an account* — which clears by
+ * itself the moment the person signs up, with nothing to mark off by hand.
+ *
+ * Bounded deliberately: the newest `SCAN` rows within `WINDOW_DAYS`. This is a
+ * board that has to render fast, and a request from six months ago is not
+ * work-in-progress. Both queries are caught independently, like every other
+ * count here — a failure hides the badge rather than claiming zero.
+ */
+async function pendingAccessRequests(): Promise<{ count: number; oldest: Date | null }> {
+  const WINDOW_DAYS = 90;
+  const SCAN = 500;
+  try {
+    const rows = await db.auditLog.findMany({
+      where: {
+        action: 'beta_access_request',
+        createdAt: { gte: new Date(Date.now() - WINDOW_DAYS * 864e5) },
+      },
+      orderBy: { createdAt: 'desc' },
+      take: SCAN,
+      select: { createdAt: true, metadata: true },
+    });
+    if (rows.length === 0) return { count: 0, oldest: null };
+
+    const asked = firstAskByEmail(rows);
+    if (asked.size === 0) return { count: 0, oldest: null };
+
+    const onboarded = await db.user.findMany({
+      where: { email: { in: [...asked.keys()], mode: 'insensitive' } },
+      select: { email: true },
+    });
+    return stillWaiting(asked, onboarded.map((u) => u.email));
+  } catch {
+    return { count: 0, oldest: null };
+  }
+}
+
+/**
+ * One entry per address, dated by the FIRST time that address asked — somebody
+ * who asked three times is one person waiting, and their wait started with the
+ * first ask, not the most recent one. Rows whose metadata carries no usable
+ * address are skipped rather than counted as an anonymous request nobody could
+ * action. Pure, so the part most likely to be wrong is the part under test.
+ */
+export function firstAskByEmail(
+  rows: ReadonlyArray<{ createdAt: Date; metadata: unknown }>,
+): Map<string, Date> {
+  const firstAsk = new Map<string, Date>();
+  for (const row of rows) {
+    const email = (row.metadata as { email?: unknown } | null)?.email;
+    if (typeof email !== 'string' || !email.includes('@')) continue;
+    const key = email.trim().toLowerCase();
+    const seen = firstAsk.get(key);
+    if (!seen || row.createdAt < seen) firstAsk.set(key, row.createdAt);
+  }
+  return firstAsk;
+}
+
+/**
+ * Drops everyone who now has an account. Case-insensitively, because the
+ * request form takes whatever the person typed and `User.email` is whatever
+ * they later registered with — matching those exactly would leave a request
+ * "waiting" forever because someone capitalised their own address. Pure.
+ */
+export function stillWaiting(
+  asked: Map<string, Date>,
+  onboardedEmails: ReadonlyArray<string | null>,
+): { count: number; oldest: Date | null } {
+  const waiting = new Map(asked);
+  for (const email of onboardedEmails) {
+    if (email) waiting.delete(email.trim().toLowerCase());
+  }
+  const dates = [...waiting.values()];
+  return {
+    count: dates.length,
+    oldest: dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : null,
+  };
+}
+
 export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
   // Every query is independently guarded. A workbench that renders nothing
   // because one count threw would be worse than one that renders a zero: the
@@ -78,6 +171,7 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
     oldestFeedback,
     stalledPayouts,
     oldestPayout,
+    accessRequests,
   ] = await Promise.all([
     // Only real submissions. verificationRequested is false on the profiles
     // that registration used to auto-stamp PENDING at signup, which had no
@@ -142,6 +236,10 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
       orderBy: { createdAt: 'asc' },
       select: { createdAt: true },
     }).catch(() => null),
+
+    // Alpha access requests still waiting for an invite. See the note above
+    // the return for why this one needs two round trips instead of a count().
+    pendingAccessRequests(),
   ]);
 
   return [
@@ -201,6 +299,21 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
       stalledPayouts,
       oldestPayout?.createdAt,
       24,
+    ),
+    build(
+      'access-requests',
+      'Alpha access requests',
+      'People who asked for an invite from the landing page and have no account yet',
+      '/admin/audit?action=beta_access_request',
+      accessRequests.count,
+      accessRequests.oldest,
+      // No SLA, and that is not an oversight: the form promises "we will reach
+      // out when your invite is ready" and the landing page says the app opens
+      // city by city. Neither is a time commitment, and this file does not
+      // invent one — see the note at the top about where the 48h comes from.
+      // The queue still carries its count and the age of the longest wait,
+      // which is what makes a stalled funnel visible.
+      null,
     ),
     build(
       'feedback',
