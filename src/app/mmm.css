@@ -854,12 +854,26 @@ html.mmm-locked .site-shell > main {
 /* The player is a pill to the right of the logo. Opening the nav dims
    everything including the player — it fades and drops rather than being
    unmounted, so its transition can play out. */
+/* ── Player pill ──────────────────────────────────────────────────────────
+   Rebuilt to SHELL_LOCK_2026-08-08.md. Every figure here is from that file and
+   several fixed a specific bug; the lock's own instruction is to change one and
+   re-derive the rest rather than nudge it in isolation.
+
+   `--mmm-chrome` is the single figure the lock says drives the chrome: it sizes
+   the logo trigger, the player's height and the dock position. It lives here so
+   the pill and the trigger cannot drift apart — the same rule as --mmm-bottom. */
 .mmm-player {
+  --mmm-chrome: 88px;
   position: absolute;
+  /* Docked immediately right of the trigger, sharing its baseline, so the two
+     read as one piece of furniture. box-sizing: border-box on the pill is what
+     puts the two borders on one line instead of 2px apart. */
   left: 118px;
   right: auto;
-  max-width: min(820px, calc(100vw - 150px));
-  bottom: calc(26px + var(--mmm-safe-bottom));
+  box-sizing: border-box;
+  width: min(760px, calc(100vw - 150px));
+  min-height: var(--mmm-chrome);
+  bottom: var(--mmm-bottom);
   z-index: 28;
   display: flex;
   align-items: center;
@@ -867,9 +881,11 @@ html.mmm-locked .site-shell > main {
   background: var(--bg-2);
   border: 1px solid var(--hair-100);
   border-radius: 9999px;
-  padding: 9px 16px 9px 10px;
+  /* 0 12px, so a 64px square in an 88px pill insets equally on every side. */
+  padding: 0 12px;
   box-shadow: var(--shadow-raised);
   pointer-events: auto;
+  overflow: hidden;
   transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
 }
 .mmm-player[data-hidden='true'] {
@@ -877,29 +893,67 @@ html.mmm-locked .site-shell > main {
   transform: translateY(14px);
   pointer-events: none;
 }
+
+/* A CONTINUOUS hairline, not a partial top bar. The bar competed with the scrub
+   row for the same job and, measured against the pill's rectangular box, hung
+   past the 44px-radius capsule at each end. */
+.mmm-player-hairline {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
+  pointer-events: none;
+}
+
+/* The artwork is the row's FIRST CHILD, so it centres against the pill's whole
+   height and the scrub row aligns with the title by construction. A squircle,
+   not a circle: the square holds the artist's logo and a circle crops a mark.
+   Size and radius come from the component (anchorHeight - 24, ratio 0.342). */
 .mmm-player-art {
-  flex-shrink: 0;
-  width: 42px;
-  height: 42px;
-  border-radius: 9999px;
+  flex: 0 0 auto;
+  overflow: hidden;
   background: linear-gradient(135deg, var(--accent), var(--accent-deep));
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   color: var(--ink-on-accent);
 }
+.mmm-player-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.mmm-player-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
 .mmm-player-track {
   font-family: var(--font-body);
   font-weight: 500;
   font-size: 0.86rem;
   color: var(--ink);
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+/* Masked only when it actually scrolls — a fade on a short title reads as a
+   rendering fault. */
+.mmm-player-track[data-over] {
+  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 88%, transparent);
+}
+.mmm-player-track > div { display: inline-flex; gap: 28px; }
+.mmm-player-track [data-ih-marquee] {
+  animation-name: ih-marquee;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+@keyframes ih-marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* A permanently scrolling title is exactly what this setting is for. */
+@media (prefers-reduced-motion: reduce) {
+  .mmm-player-track [data-ih-marquee] { animation: none; transform: none; }
+}
+
 .mmm-player-artist {
   font-family: var(--font-mono);
   font-size: 0.57rem;
@@ -908,11 +962,45 @@ html.mmm-locked .site-shell > main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-top: 2px;
 }
+
+.mmm-player-scrub { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
+
+/* Seek and volume. A range input rather than a div with pointer maths: keyboard
+   operable and labelled for free, which a hand-rolled bar is not. The fill is a
+   gradient stop on the track itself, so it cannot drift from the thumb. */
+.mmm-player-range {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ink-a30) 0 var(--fill), var(--hair-100) var(--fill) 100%);
+  cursor: pointer;
+}
+.mmm-player-range[data-accent] {
+  background: linear-gradient(90deg, var(--accent) 0 var(--fill), var(--hair-100) var(--fill) 100%);
+}
+.mmm-player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 0;
+}
+.mmm-player-range::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 0;
+}
+
+.mmm-player-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+
 .mmm-player-icon {
   flex-shrink: 0;
-  font-size: 0.88rem;
+  font-size: 1rem;
   cursor: pointer;
   line-height: 1;
   background: none;
@@ -920,6 +1008,41 @@ html.mmm-locked .site-shell > main {
   padding: 0;
   color: var(--ink-2);
 }
+.mmm-player-icon[data-active] { color: var(--accent-text); }
+.mmm-player-icon:disabled { opacity: 0.35; cursor: default; }
+
+/* HYPE. Always reads HYPE — state is the fill, the border and the wait label
+   beside the word, never a rename. */
+.mmm-player-hype {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  background: transparent;
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mmm-player-hype[data-hyped] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink-on-accent);
+}
+.mmm-player-hype[data-locked] { cursor: default; opacity: 0.75; }
+.mmm-player-hype-wait,
+.mmm-player-hype-count {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+
 .mmm-player-play {
   flex-shrink: 0;
   width: 34px;
@@ -934,6 +1057,7 @@ html.mmm-locked .site-shell > main {
   font-size: 0.72rem;
   cursor: pointer;
 }
+
 
 /* The scrim dims the frame under the fan. */
 .mmm-nav-scrim {

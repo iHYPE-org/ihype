@@ -7,7 +7,7 @@ import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
-import { itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
+import { ARC_NARROW_MAX_WIDTH, itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
 
 export type MmmNowPlaying = {
   title: string;
@@ -61,7 +61,62 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   // that toggled nothing — DESIGN_SYNC row 268 open item (d). /app sits inside
   // AppProviders, so the same MediaPlayerProvider the rest of the site uses is
   // already overhead; the pill just was not reading it.
-  const { currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
+  const {
+    canGoBack,
+    canGoForward,
+    currentTime,
+    currentTrack,
+    duration,
+    isPlaying,
+    playNext,
+    playPrevious,
+    seekTo,
+    setVolume,
+    togglePlayback,
+    volume,
+  } = useMediaPlayer();
+
+  // The heart, which is NOT the HYPE control. SHELL_LOCK is explicit that they
+  // are two acts: HYPE spends from your balance and moves the artist up the
+  // local chart, the heart only saves the track. Collapsing them into one lost
+  // the mechanic the product is named after, which is the state this shell was
+  // in. `/api/fan-favorites` already existed to back it.
+  const [faved, setFaved] = useState(false);
+  const [favPending, setFavPending] = useState(false);
+
+  // A track change invalidates the heart: it describes THIS track, and leaving
+  // it lit would tell the member a song is saved when it is not.
+  useEffect(() => {
+    setFaved(false);
+  }, [currentTrack?.id]);
+
+  const toggleFav = useCallback(async () => {
+    if (!currentTrack || favPending) return;
+    const previous = faved;
+    setFavPending(true);
+    setFaved(!previous); // Optimistic: a heart that lags reads as a dropped tap.
+    try {
+      const response = previous
+        ? await fetch(`/api/fan-favorites?mediaId=${encodeURIComponent(currentTrack.id)}`, { method: 'DELETE' })
+        : await fetch('/api/fan-favorites', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({
+              mediaId: currentTrack.id,
+              title: currentTrack.title,
+              artistName: currentTrack.artistName,
+              url: currentTrack.url,
+              artistProfileSlug: currentTrack.artistProfileSlug ?? null,
+              artworkUrl: currentTrack.artworkUrl ?? null,
+            }),
+          });
+      if (!response.ok) setFaved(previous);
+    } catch {
+      setFaved(previous);
+    } finally {
+      setFavPending(false);
+    }
+  }, [currentTrack, faved, favPending]);
 
   // Two different things can be shown here, and they are not interchangeable.
   // `currentTrack` is what the audio element actually holds. `nowPlaying` is a
@@ -72,8 +127,23 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
         title: currentTrack.title,
         artist: currentTrack.artistName,
         initial: (currentTrack.artistName || currentTrack.title).charAt(0).toUpperCase(),
+        artworkUrl: currentTrack.artworkUrl ?? null,
       }
     : nowPlaying;
+
+  // The phone form of the pill drops prev/next, the heart and the volume track:
+  // they do not fit beside a 64px square at 393px, and each is reachable
+  // elsewhere. ARC_NARROW_MAX_WIDTH is the shell's own breakpoint, the one the
+  // arc nav already switches at — a second threshold here would let the chrome
+  // disagree with itself about how wide the frame is.
+  const [narrow, setNarrow] = useState(false);
+  useEffect(() => {
+    const query = window.matchMedia(`(max-width: ${ARC_NARROW_MAX_WIDTH}px)`);
+    const sync = () => setNarrow(query.matches);
+    sync();
+    query.addEventListener('change', sync);
+    return () => query.removeEventListener('change', sync);
+  }, []);
 
   // The hype heart resolves its target server-side, against `nowPlaying`. If
   // the audio element has since moved to a different track, that target is no
@@ -159,14 +229,29 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
             can play out — the design's `data-ih-hide` behaviour. Opening the nav
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
-          hidden={navOpen}
+          canFavourite={Boolean(currentTrack)}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
           canHype={canHype}
           canTogglePlay={Boolean(currentTrack)}
+          faved={faved}
+          hidden={navOpen}
           hyped={hyped}
+          narrow={narrow}
+          onNext={playNext}
+          onPrev={playPrevious}
+          // The pill speaks 0-100; the audio element speaks seconds. Converted
+          // here rather than in the component, so the component stays
+          // presentation over whatever playback state it is given.
+          onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}
+          onToggleFav={() => void toggleFav()}
           onToggleHype={() => void toggleHype()}
           onTogglePlay={togglePlayback}
+          onVolume={(value) => setVolume(value / 100)}
           playing={Boolean(currentTrack) && isPlaying}
+          progress={duration > 0 ? (currentTime / duration) * 100 : 0}
           track={displayTrack}
+          volume={volume * 100}
         />
 
         {/* Always mounted: the arc animates between states, and unmounting it

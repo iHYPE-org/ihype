@@ -271,7 +271,10 @@ const RUNTIME_DEFINED = [
   // referenced with a full fallback stack — `var(--font-syne, 'Syne', …)` —
   // precisely because they do not exist at build time. Pointing them at a
   // "real" token would break font loading.
-  /^--font-(syne|dm|jb|serif|forum)$/,
+  /^--font-(bricolage|work|jb|serif|forum)$/,
+  // Set inline by MmmPlayer on each range input — it is the seek/volume fill
+  // percentage, a per-element value that cannot be a token by definition.
+  /^--fill$/,
 ];
 // walk() above deliberately collects only .tsx — but tokens are DEFINED in
 // .css, so reusing it here would report every real token as undefined.
