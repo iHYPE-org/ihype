@@ -4818,8 +4818,11 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-kicker {
   margin: 0 0 clamp(18px,2vw,26px);
   color: var(--fan-entry-teal);
-  font: 800 clamp(.58rem,.7vw,.7rem)/1 var(--f-m);
-  letter-spacing: .22em;
+  /* .75rem floor = 12px. Was .58rem (9.28px): the vw term never wins at
+     phone width, so a clamp's FIRST value is the size a phone actually
+     gets — treat it as the real one, not as a lower bound nobody hits. */
+  font: 800 clamp(.75rem,.7vw,.8rem)/1.35 var(--f-m);
+  letter-spacing: .18em;
   text-transform: uppercase;
 }
 .fan-entry-copy h1 {
@@ -4839,6 +4842,23 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   line-height: 1.58;
 }
 .fan-entry-actions { margin-top: clamp(24px,2.5vw,34px); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+/* Request access is the hero's primary action while the product is pre-beta,
+   so it gets the width of the copy column rather than sitting inline with a
+   secondary link. RequestBetaAccessForm brings its own field styling — this
+   only sizes and introduces it. */
+.fan-entry-request { width: min(100%, 480px); }
+.fan-entry-request-lead {
+  margin: 0 0 12px;
+  color: var(--ink-a72);
+  font-size: clamp(.88rem,1.05vw,.98rem);
+  line-height: 1.55;
+}
+.fan-entry-secondary-line {
+  margin: 14px 0 0;
+  color: var(--ink-a60);
+  font: 600 .82rem/1.4 var(--f-b);
+}
 .fan-entry-primary {
   min-height: 56px;
   box-sizing: border-box;
@@ -4865,8 +4885,8 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-assurance {
   margin: 16px 0 0;
   color: var(--ink-a40);
-  font: 600 clamp(.5rem,.58vw,.6rem)/1.5 var(--f-m);
-  letter-spacing: .08em;
+  font: 600 clamp(.75rem,.58vw,.78rem)/1.5 var(--f-m);
+  letter-spacing: .06em;
 }
 .fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange); font-style: normal; }
 .fan-entry-visual {
@@ -4902,8 +4922,8 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   align-items: center;
   gap: 11px;
   color: var(--ink-a50);
-  font: 700 .54rem/1 var(--f-m);
-  letter-spacing: .18em;
+  font: 700 .75rem/1.3 var(--f-m);
+  letter-spacing: .14em;
   text-transform: uppercase;
 }
 .fan-entry-signal span { width: 30px; height: 1px; background: var(--fan-entry-orange); box-shadow: 0 0 12px var(--fan-entry-orange); }
@@ -4919,7 +4939,7 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-steps article { min-width: 0; padding: 4px clamp(18px,3vw,42px); display: flex; align-items: flex-start; gap: 16px; }
 .fan-entry-steps article:first-child { padding-left: 0; }
 .fan-entry-steps article + article { border-left: 1px solid var(--hair-100); }
-.fan-entry-steps article > span { color: var(--fan-entry-orange); font: 700 .56rem/1.2 var(--f-m); letter-spacing: .12em; }
+.fan-entry-steps article > span { color: var(--fan-entry-orange); font: 700 .75rem/1.2 var(--f-m); letter-spacing: .12em; }
 .fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1 var(--f-d); text-transform: uppercase; }
 .fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: var(--ink-a55); font-size: .82rem; line-height: 1.45; }
 .fan-entry-stats {
@@ -4931,8 +4951,12 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 }
 .fan-entry-stats > div { min-width: 0; display: grid; place-content: center; text-align: center; }
 .fan-entry-stats > div + div { border-left: 1px solid var(--hair-100); }
+/* Empty when LandingStats suppressed an all-zero snapshot — see that file.
+   Without this the section keeps its min-height and leaves a labelled blank
+   band where four counters should be. */
+.fan-entry-stats:empty { display: none; }
 .fan-entry-stats strong { color: var(--fan-entry-paper); font: 800 clamp(1.45rem,2.4vw,2.45rem)/1 var(--f-d); letter-spacing: -.035em; }
-.fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(.46rem,.58vw,.6rem)/1.2 var(--f-m); letter-spacing: .17em; text-transform: uppercase; }
+.fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(.75rem,.58vw,.78rem)/1.3 var(--f-m); letter-spacing: .12em; text-transform: uppercase; }
 @keyframes fan-entry-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-.35deg); } }
 
 body:has(.fan-entry) { background: var(--bg); }
@@ -4973,19 +4997,21 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-logo { width: 46px; height: 46px; border-radius: 12px; }
   .fan-entry-nav { gap: 8px; }
   .fan-entry-nav .theme-toggle { width: 36px; height: 36px; }
-  .fan-entry-nav a { min-height: 38px; font-size: .72rem; }
+  .fan-entry-nav a { min-height: 44px; font-size: .78rem; }
   .fan-entry-signin { padding-inline: 4px; }
   .fan-entry-join { min-width: 94px; padding-inline: 14px; }
   .fan-entry-hero { gap: 30px; padding: 38px 18px 28px; }
-  .fan-entry-kicker { margin-bottom: 16px; font-size: .54rem; line-height: 1.5; }
+  .fan-entry-kicker { margin-bottom: 16px; font-size: .75rem; line-height: 1.5; }
   .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(2.65rem,10.8vw,3.7rem); line-height: .92; }
   .fan-entry-lead { max-width: 40ch; margin-top: 20px; font-size: .94rem; }
   .fan-entry-actions { align-items: stretch; gap: 13px; }
   .fan-entry-primary { width: 100%; min-height: 52px; }
   .fan-entry-secondary { width: 100%; text-align: center; }
-  .fan-entry-assurance { font-size: .48rem; text-align: center; }
+  /* .75rem = 12px. Was .48rem (7.68px) — the smallest text in the app, on
+     the page every visitor sees first. */
+  .fan-entry-assurance { font-size: .75rem; line-height: 1.6; text-align: center; }
   .fan-entry-visual { width: min(88vw,440px); }
-  .fan-entry-signal { margin-top: 12px; justify-content: center; font-size: .46rem; }
+  .fan-entry-signal { margin-top: 12px; justify-content: center; }
   .fan-entry-steps { width: calc(100% - 36px); padding: 6px 0; grid-template-columns: 1fr; }
   .fan-entry-steps article { padding: 17px 0; }
   .fan-entry-steps article + article { border-top: 1px solid var(--hair-100); border-left: 0; }

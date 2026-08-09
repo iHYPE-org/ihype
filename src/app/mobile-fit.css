@@ -50,7 +50,15 @@
   button.badge,
   .authcard-btn-primary,
   .authcard-btn-ghost,
-  .authcard-tab {
+  .authcard-tab,
+  /* The request-access field and its submit. This is the primary action on
+     the landing page while access is by request, so it carries the floor like
+     any other primary control. Safe to set from here even though the form
+     injects its own <style> later in the document: that block declares no
+     min-height, so there is nothing for source order to decide between —
+     unlike .ihype-consent-btn, which did declare one and won. */
+  .beta-access-row input,
+  .beta-access-row button {
     min-height: 44px;
   }
 
