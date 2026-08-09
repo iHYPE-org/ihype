@@ -106,7 +106,10 @@ export function CookieConsent() {
         fontFamily: "var(--font-body, 'Work Sans', sans-serif)",
       }}
     >
-      <p style={{ flex: '1 1 230px', margin: 0, fontSize: 11, color: 'var(--ink-2)', lineHeight: 1.45 }}>
+      {/* 12px, not 11: the same legibility floor as the buttons. This banner
+          renders on every page, so one sub-floor paragraph here was counted 16
+          times over. */}
+      <p style={{ flex: '1 1 230px', margin: 0, fontSize: 12, color: 'var(--ink-2)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
         <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, var(--accent))', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
@@ -114,28 +117,44 @@ export function CookieConsent() {
         {/* No inline `minHeight` here: an inline style outranks every
             stylesheet, so a hardcoded 36px would defeat mobile-fit.css's 44px
             touch floor on the one dialog every first-time visitor must dismiss
-            before they can use the app. The CSS min-height applies on a coarse
-            pointer and the 36px design height holds everywhere else. */}
+            before they can use the app. See the <style> block below for the
+            second half of that rule, which is where it was actually failing.
+            `fontSize: 12` is the 12px legibility floor, not a design size — at
+            11px these two buttons were the single largest contributor to
+            audit:mobile's tinyText count, appearing on all 16 measured pages
+            because the banner is sitewide. */}
         <button
           onClick={() => choose('essential')}
           className="ihype-btn-ghost ihype-consent-btn"
-          style={{ fontSize: 11 }}
+          style={{ fontSize: 12 }}
         >
           {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
           className="ihype-btn-primary ihype-consent-btn"
-          style={{ fontSize: 11, padding: '8px 14px' }}
+          style={{ fontSize: 12, padding: '8px 14px' }}
         >
           {t('cookieConsent.acceptAll', 'Accept all')}
         </button>
       </div>
       <style>{`
-        /* The design's own 36px, restored for a mouse. mobile-fit.css raises
-           both buttons to 44px on a coarse pointer; this only supplies the
-           resting height the inline style used to. */
-        .ihype-consent-btn { min-height: 36px; }
+        /* The design's own 36px, restored for a mouse — and gated on NOT being
+           a coarse pointer, which is load-bearing rather than tidy.
+           mobile-fit.css sets .ihype-btn-primary/.ihype-btn-ghost to a 44px
+           min-height under (pointer: coarse). Both rules score (0,1,0), and a
+           <style> element rendered into the body comes after every linked
+           stylesheet — so when this rule was unconditional it won on source
+           order alone and every phone got 36px. The comment above the buttons
+           asserted the opposite for as long as it was wrong.
+           Making the two conditions mutually exclusive is what removes source
+           order from the question entirely. Written "not all and" rather than
+           the Media Queries Level 4 bare negation so it parses everywhere.
+           audit:css cannot catch this class of bug: it reads .css files, not
+           <style> blocks inside components. */
+        @media not all and (pointer: coarse) {
+          .ihype-consent-btn { min-height: 36px; }
+        }
         /* Clear the fixed mobile bottom nav (60px + safe-area) instead of
            sitting underneath it — the nav has a higher z-index and a solid
            background, so without this the accept/decline buttons are

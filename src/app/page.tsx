@@ -7,8 +7,12 @@ import { LandingStats, LandingStatsFallback } from '@/components/LandingStats';
 import { getBaseUrl } from '@/lib/utils';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 
-const TITLE = 'iHYPE — Listen. Engage. HYPE local.';
-const DESCRIPTION = 'Listen to free local music, discover artists and live events around you, and HYPE what deserves to be heard.';
+// Says what the app is, not what it makes you feel. The old title named three
+// verbs and never the noun, so a search result for "local music app" had
+// nothing to match on. Access is by request while the product is pre-beta —
+// the description must not imply an open signup the invite gate then refuses.
+const TITLE = 'iHYPE — the free app for local music';
+const DESCRIPTION = 'Stream music from artists in your own city, free. Find the shows they are playing this week, and HYPE the ones you want more people to hear. Private alpha — request access.';
 
 export const metadata: Metadata = {
   title: TITLE,

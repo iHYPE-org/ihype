@@ -6,16 +6,24 @@ import { useI18n } from '@/components/I18nProvider';
 
 interface Props {
   role?: string;
+  /**
+   * Render the field immediately instead of behind the "Don't have a code?"
+   * disclosure. On `/register` the toggle is right — the form is a fallback for
+   * someone who arrived without a code. On the landing page it is the PRIMARY
+   * action, and a primary action hidden behind a disclosure is not one.
+   */
+  defaultOpen?: boolean;
 }
 
 /**
  * Captures an email for the private-alpha waitlist and forwards it to
  * admin@ihype.org (POST /api/beta-access-request) — used wherever
- * registration is gated behind an invite code.
+ * registration is gated behind an invite code, and on `/` for as long as
+ * access is by request rather than open signup.
  */
-export function RequestBetaAccessForm({ role }: Props) {
+export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
   const { t } = useI18n();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [error, setError] = useState('');
@@ -71,9 +79,16 @@ export function RequestBetaAccessForm({ role }: Props) {
       <style>{`
         .beta-access-toggle { background: none; border: none; padding: 0; color: var(--ink-2); font-family: var(--font-mono); font-size: .78rem; text-decoration: underline; cursor: pointer; }
         .beta-access-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--hair-30); }
-        .beta-access-label { font-family: var(--font-mono); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+        .beta-access-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
         .beta-access-row { display: flex; gap: 8px; }
-        .beta-access-row input { flex: 1; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: var(--font-body); font-size: .9rem; }
+        .beta-access-row input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: var(--font-body); font-size: max(16px, .9rem); }
+        /* max(16px, …) is functional, not typographic: Safari zooms the page
+           on a focused input under 16px and never zooms back. Set here rather
+           than relying on mobile-fit.css's bare input rule, because this
+           block is injected into the body and would win on source order —
+           the same trap .ihype-consent-btn fell into. min-width:0 lets the
+           flex item shrink below its intrinsic width instead of pushing the
+           row past the viewport. */
         .beta-access-row button { background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-display); font-weight: 700; font-size: .85rem; cursor: pointer; white-space: nowrap; }
         .beta-access-row button:disabled { opacity: .6; cursor: default; }
         .beta-access-error { font-size: .78rem; color: var(--accent); margin: 0; }

@@ -4723,9 +4723,20 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 /* Public fan entrance. Kept on its own class namespace so retired landing
    concepts cannot leak through as stacked backgrounds or visual artifacts. */
 .fan-entry {
-  --fan-entry-paper: #f4efe8;
-  --fan-entry-teal: #23dfd1;
-  --fan-entry-orange: #ff542f;
+  /* Re-anchored onto the real tokens (Design System 8 follow-up). These three
+     were hand-typed near-misses of the brand palette — #ff542f against
+     --accent #ff5029, #23dfd1 against --role-venue #22e5d4 — and a warm paper
+     that predates the navy ground entirely. Keeping the local NAMES means the
+     ~30 call sites below did not have to change; pointing them at the tokens
+     means this page now follows the theme, which is what let the whole
+     html[data-theme="light"] .fan-entry override block below be deleted.
+     Do not put a hex back here: the landing page sits outside .shell-content,
+     so audit:shell structurally cannot see a literal in this block — that is
+     exactly why it was still warm three overhauls later. */
+  --fan-entry-paper: var(--ink);
+  --fan-entry-teal: var(--role-venue);
+  --fan-entry-orange: var(--accent);
+  --fan-entry-ground: var(--bg);
   width: 100%;
   min-height: 100svh;
   position: relative;
@@ -4733,9 +4744,9 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   overflow: hidden;
   color: var(--fan-entry-paper);
   background:
-    radial-gradient(circle at 76% 46%, rgba(255,84,47,.12), transparent 27%),
-    radial-gradient(circle at 84% 52%, rgba(35,223,209,.09), transparent 38%),
-    #050607;
+    radial-gradient(circle at 76% 46%, rgba(var(--accent-rgb),.12), transparent 27%),
+    radial-gradient(circle at 84% 52%, rgba(var(--role-venue-rgb),.09), transparent 38%),
+    var(--fan-entry-ground);
 }
 .fan-entry::before {
   content: "";
@@ -4743,7 +4754,7 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   inset: 74px 0 auto;
   height: 1px;
   z-index: 4;
-  background: linear-gradient(90deg, transparent, rgba(35,223,209,.25), rgba(255,84,47,.22), transparent);
+  background: linear-gradient(90deg, transparent, rgba(var(--role-venue-rgb),.25), rgba(var(--accent-rgb),.22), transparent);
 }
 .fan-entry-header {
   width: 100%;
@@ -4755,7 +4766,7 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(5,6,7,.84);
+  background: rgba(var(--bg-base-rgb),.84);
   backdrop-filter: blur(18px);
 }
 .fan-entry-logo {
@@ -4786,11 +4797,11 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-join {
   min-width: 118px;
   padding: 0 21px;
-  color: #fff !important;
+  color: var(--ink-on-accent) !important;
   background: var(--fan-entry-orange);
-  box-shadow: 0 10px 28px rgba(255,84,47,.25);
+  box-shadow: 0 10px 28px rgba(var(--accent-rgb),.25);
 }
-.fan-entry-join:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(255,84,47,.38); }
+.fan-entry-join:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(var(--accent-rgb),.38); }
 .fan-entry-main { width: 100%; }
 .fan-entry-hero {
   width: min(1600px,100%);
@@ -4807,8 +4818,11 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-kicker {
   margin: 0 0 clamp(18px,2vw,26px);
   color: var(--fan-entry-teal);
-  font: 800 clamp(.58rem,.7vw,.7rem)/1 var(--f-m);
-  letter-spacing: .22em;
+  /* .75rem floor = 12px. Was .58rem (9.28px): the vw term never wins at
+     phone width, so a clamp's FIRST value is the size a phone actually
+     gets — treat it as the real one, not as a lower bound nobody hits. */
+  font: 800 clamp(.75rem,.7vw,.8rem)/1.35 var(--f-m);
+  letter-spacing: .18em;
   text-transform: uppercase;
 }
 .fan-entry-copy h1 {
@@ -4823,11 +4837,28 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
 .fan-entry-lead {
   max-width: 49ch;
   margin: clamp(22px,2.2vw,30px) 0 0;
-  color: rgba(244,239,232,.72);
+  color: var(--ink-a72);
   font-size: clamp(.98rem,1.22vw,1.18rem);
   line-height: 1.58;
 }
 .fan-entry-actions { margin-top: clamp(24px,2.5vw,34px); display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+
+/* Request access is the hero's primary action while the product is pre-beta,
+   so it gets the width of the copy column rather than sitting inline with a
+   secondary link. RequestBetaAccessForm brings its own field styling — this
+   only sizes and introduces it. */
+.fan-entry-request { width: min(100%, 480px); }
+.fan-entry-request-lead {
+  margin: 0 0 12px;
+  color: var(--ink-a72);
+  font-size: clamp(.88rem,1.05vw,.98rem);
+  line-height: 1.55;
+}
+.fan-entry-secondary-line {
+  margin: 14px 0 0;
+  color: var(--ink-a60);
+  font: 600 .82rem/1.4 var(--f-b);
+}
 .fan-entry-primary {
   min-height: 56px;
   box-sizing: border-box;
@@ -4837,25 +4868,25 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   justify-content: center;
   gap: 8px;
   border-radius: 999px;
-  color: #02100e;
+  color: var(--ink-on-accent);
   background: var(--fan-entry-teal);
-  box-shadow: 0 14px 38px rgba(35,223,209,.18);
+  box-shadow: 0 14px 38px rgba(var(--role-venue-rgb),.18);
   font: 800 clamp(.86rem,1vw,.98rem)/1 var(--f-d);
   text-decoration: none;
   transition: transform .16s ease, box-shadow .16s ease;
 }
-.fan-entry-primary:hover { transform: translateY(-3px); box-shadow: 0 18px 46px rgba(35,223,209,.3); }
+.fan-entry-primary:hover { transform: translateY(-3px); box-shadow: 0 18px 46px rgba(var(--role-venue-rgb),.3); }
 .fan-entry-secondary {
-  color: rgba(244,239,232,.62);
+  color: var(--ink-a60);
   font: 700 .78rem/1.3 var(--f-d);
   text-underline-offset: 5px;
 }
 .fan-entry-secondary:hover { color: var(--fan-entry-paper); }
 .fan-entry-assurance {
   margin: 16px 0 0;
-  color: rgba(244,239,232,.4);
-  font: 600 clamp(.5rem,.58vw,.6rem)/1.5 var(--f-m);
-  letter-spacing: .08em;
+  color: var(--ink-a40);
+  font: 600 clamp(.75rem,.58vw,.78rem)/1.5 var(--f-m);
+  letter-spacing: .06em;
 }
 .fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange); font-style: normal; }
 .fan-entry-visual {
@@ -4873,8 +4904,8 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   border-radius: 50%;
   opacity: .78;
   background:
-    radial-gradient(circle at 50% 58%, rgba(255,84,47,.2), transparent 34%),
-    radial-gradient(circle at 38% 45%, rgba(35,223,209,.13), transparent 46%);
+    radial-gradient(circle at 50% 58%, rgba(var(--accent-rgb),.2), transparent 34%),
+    radial-gradient(circle at 38% 45%, rgba(var(--role-venue-rgb),.13), transparent 46%);
   filter: blur(18px);
 }
 .fan-entry-art {
@@ -4890,9 +4921,9 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   display: flex;
   align-items: center;
   gap: 11px;
-  color: rgba(244,239,232,.48);
-  font: 700 .54rem/1 var(--f-m);
-  letter-spacing: .18em;
+  color: var(--ink-a50);
+  font: 700 .75rem/1.3 var(--f-m);
+  letter-spacing: .14em;
   text-transform: uppercase;
 }
 .fan-entry-signal span { width: 30px; height: 1px; background: var(--fan-entry-orange); box-shadow: 0 0 12px var(--fan-entry-orange); }
@@ -4902,15 +4933,15 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   padding: 24px 0;
   display: grid;
   grid-template-columns: repeat(3,minmax(0,1fr));
-  border-top: 1px solid rgba(244,239,232,.14);
-  border-bottom: 1px solid rgba(244,239,232,.1);
+  border-top: 1px solid var(--hair-150);
+  border-bottom: 1px solid var(--hair-100);
 }
 .fan-entry-steps article { min-width: 0; padding: 4px clamp(18px,3vw,42px); display: flex; align-items: flex-start; gap: 16px; }
 .fan-entry-steps article:first-child { padding-left: 0; }
-.fan-entry-steps article + article { border-left: 1px solid rgba(244,239,232,.1); }
-.fan-entry-steps article > span { color: var(--fan-entry-orange); font: 700 .56rem/1.2 var(--f-m); letter-spacing: .12em; }
+.fan-entry-steps article + article { border-left: 1px solid var(--hair-100); }
+.fan-entry-steps article > span { color: var(--fan-entry-orange); font: 700 .75rem/1.2 var(--f-m); letter-spacing: .12em; }
 .fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1 var(--f-d); text-transform: uppercase; }
-.fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: rgba(244,239,232,.54); font-size: .82rem; line-height: 1.45; }
+.fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: var(--ink-a55); font-size: .82rem; line-height: 1.45; }
 .fan-entry-stats {
   width: min(1420px,calc(100% - clamp(36px,8vw,140px)));
   min-height: 108px;
@@ -4919,12 +4950,16 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   grid-template-columns: repeat(4,minmax(0,1fr));
 }
 .fan-entry-stats > div { min-width: 0; display: grid; place-content: center; text-align: center; }
-.fan-entry-stats > div + div { border-left: 1px solid rgba(244,239,232,.1); }
+.fan-entry-stats > div + div { border-left: 1px solid var(--hair-100); }
+/* Empty when LandingStats suppressed an all-zero snapshot — see that file.
+   Without this the section keeps its min-height and leaves a labelled blank
+   band where four counters should be. */
+.fan-entry-stats:empty { display: none; }
 .fan-entry-stats strong { color: var(--fan-entry-paper); font: 800 clamp(1.45rem,2.4vw,2.45rem)/1 var(--f-d); letter-spacing: -.035em; }
-.fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(.46rem,.58vw,.6rem)/1.2 var(--f-m); letter-spacing: .17em; text-transform: uppercase; }
+.fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(.75rem,.58vw,.78rem)/1.3 var(--f-m); letter-spacing: .12em; text-transform: uppercase; }
 @keyframes fan-entry-float { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-.35deg); } }
 
-body:has(.fan-entry) { background: #050607; }
+body:has(.fan-entry) { background: var(--bg); }
 body:has(.fan-entry) .adaptive-site-header,
 body:has(.fan-entry) .site-background,
 body:has(.fan-entry) .mobile-bottom-nav,
@@ -4934,29 +4969,18 @@ body:has(.fan-entry) .site-shell > footer { display: none !important; }
 body:has(.fan-entry) .site-shell { padding: 0 !important; }
 body:has(.fan-entry) #main-content { width: 100%; }
 
-html[data-theme="light"] .fan-entry {
-  color: #171411;
-  background:
-    radial-gradient(circle at 76% 46%, rgba(255,84,47,.1), transparent 29%),
-    radial-gradient(circle at 84% 52%, rgba(18,139,133,.1), transparent 40%),
-    #f3eee6;
-}
-html[data-theme="light"] .fan-entry-header { background: rgba(247,242,234,.88); }
-html[data-theme="light"] .fan-entry::before { background: linear-gradient(90deg,transparent,rgba(18,139,133,.25),rgba(231,67,36,.22),transparent); }
-html[data-theme="light"] .fan-entry-nav a { color: #171411; }
-html[data-theme="light"] .fan-entry-join { color: #fff; }
-html[data-theme="light"] .fan-entry-copy h1,
-html[data-theme="light"] .fan-entry-steps strong,
-html[data-theme="light"] .fan-entry-stats strong { color: #171411; }
-html[data-theme="light"] .fan-entry-lead { color: rgba(23,20,17,.72); }
-html[data-theme="light"] .fan-entry-secondary { color: rgba(23,20,17,.62); }
-html[data-theme="light"] .fan-entry-assurance,
-html[data-theme="light"] .fan-entry-signal { color: rgba(23,20,17,.48); }
-html[data-theme="light"] .fan-entry-steps { border-color: rgba(23,20,17,.15); }
-html[data-theme="light"] .fan-entry-steps article + article,
-html[data-theme="light"] .fan-entry-stats > div + div { border-color: rgba(23,20,17,.12); }
-html[data-theme="light"] .fan-entry-steps p { color: rgba(23,20,17,.58); }
-html[data-theme="light"] body:has(.fan-entry) { background: #f3eee6; }
+/* The fourteen `html[data-theme="light"] .fan-entry*` rules that used to sit
+   here are GONE, and their absence is the fix rather than a side effect of it.
+   Every one of them restated a colour the base rule had hardcoded — a warm
+   #f3eee6 paper, #171411 ink, an rgba(23,20,17,·) ramp and two more near-miss
+   brand hues (#128b85, #e74324) — so the page carried two hand-maintained
+   palettes and neither followed the tokens. That is why it was still warm
+   after the Bulletin re-anchor moved everything else to ink navy: nothing
+   about the ground change could reach a literal.
+   The base rules above now paint from --ink, --accent, --role-venue, --bg and
+   the theme-aware --ink-a and --hair ramps, all of which the light theme
+   already overrides in one place. One palette, one place. If a light-mode
+   tweak is needed here, change a token — do not reintroduce this block. */
 
 @media (max-width: 980px) {
   .fan-entry { overflow: visible; }
@@ -4973,30 +4997,31 @@ html[data-theme="light"] body:has(.fan-entry) { background: #f3eee6; }
   .fan-entry-logo { width: 46px; height: 46px; border-radius: 12px; }
   .fan-entry-nav { gap: 8px; }
   .fan-entry-nav .theme-toggle { width: 36px; height: 36px; }
-  .fan-entry-nav a { min-height: 38px; font-size: .72rem; }
+  .fan-entry-nav a { min-height: 44px; font-size: .78rem; }
   .fan-entry-signin { padding-inline: 4px; }
   .fan-entry-join { min-width: 94px; padding-inline: 14px; }
   .fan-entry-hero { gap: 30px; padding: 38px 18px 28px; }
-  .fan-entry-kicker { margin-bottom: 16px; font-size: .54rem; line-height: 1.5; }
+  .fan-entry-kicker { margin-bottom: 16px; font-size: .75rem; line-height: 1.5; }
   .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(2.65rem,10.8vw,3.7rem); line-height: .92; }
   .fan-entry-lead { max-width: 40ch; margin-top: 20px; font-size: .94rem; }
   .fan-entry-actions { align-items: stretch; gap: 13px; }
   .fan-entry-primary { width: 100%; min-height: 52px; }
   .fan-entry-secondary { width: 100%; text-align: center; }
-  .fan-entry-assurance { font-size: .48rem; text-align: center; }
+  /* .75rem = 12px. Was .48rem (7.68px) — the smallest text in the app, on
+     the page every visitor sees first. */
+  .fan-entry-assurance { font-size: .75rem; line-height: 1.6; text-align: center; }
   .fan-entry-visual { width: min(88vw,440px); }
-  .fan-entry-signal { margin-top: 12px; justify-content: center; font-size: .46rem; }
+  .fan-entry-signal { margin-top: 12px; justify-content: center; }
   .fan-entry-steps { width: calc(100% - 36px); padding: 6px 0; grid-template-columns: 1fr; }
   .fan-entry-steps article { padding: 17px 0; }
-  .fan-entry-steps article + article { border-top: 1px solid rgba(244,239,232,.1); border-left: 0; }
+  .fan-entry-steps article + article { border-top: 1px solid var(--hair-100); border-left: 0; }
   .fan-entry-steps p { max-width: none; }
   .fan-entry-stats { width: calc(100% - 36px); min-height: 176px; grid-template-columns: repeat(2,minmax(0,1fr)); }
   .fan-entry-stats > div + div { border-left: 0; }
-  .fan-entry-stats > div:nth-child(even) { border-left: 1px solid rgba(244,239,232,.1); }
-  .fan-entry-stats > div:nth-child(n+3) { border-top: 1px solid rgba(244,239,232,.1); }
-  html[data-theme="light"] .fan-entry-steps article + article,
-  html[data-theme="light"] .fan-entry-stats > div:nth-child(even),
-  html[data-theme="light"] .fan-entry-stats > div:nth-child(n+3) { border-color: rgba(23,20,17,.12); }
+  .fan-entry-stats > div:nth-child(even) { border-left: 1px solid var(--hair-100); }
+  .fan-entry-stats > div:nth-child(n+3) { border-top: 1px solid var(--hair-100); }
+  /* The light-theme border restatement that used to sit here is gone with the
+     rest of the parallel palette — --hair-100 is already black-on-light. */
 }
 @media (prefers-reduced-motion: reduce) {
   .fan-entry-art { animation: none; }

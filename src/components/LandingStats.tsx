@@ -40,6 +40,21 @@ export async function LandingStats() {
   const { counters } = await getTransparencySnapshot();
   const format = (value: number) => value.toLocaleString('en-US');
 
+  // A counter that is genuinely zero is still a claim, and "0 local artists"
+  // on the front door of a request-access alpha argues against the page it is
+  // printed on. When every counter is zero — an empty or brand-new database —
+  // the whole strip renders nothing and `.fan-entry-stats:empty` removes the
+  // section, rather than four boxes of zeroes.
+  // This is the marketing-surface version of the rule admin-workbench.ts and
+  // analytics-engine.ts already follow: absent beats a misleading number.
+  // Note the asymmetry — ONE real number is enough to show the strip; this
+  // only suppresses the all-zero case, so it stops applying the moment the
+  // platform has anything at all on it.
+  const total =
+    counters.totalArtists + counters.totalListeners +
+    counters.profileHypes + counters.showHypes + counters.upcomingShows;
+  if (total === 0) return null;
+
   return (
     <StatList
       values={[
