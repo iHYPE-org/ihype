@@ -11,6 +11,9 @@ import { verifyBearerToken } from '@/lib/secret-compare';
 import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { consumeAdminSetupRateLimit } from '@/lib/admin-setup-rate-limit';
+import { DEFAULT_ADMIN_EMAIL as ADMIN_EMAIL } from '@/lib/admin-allowlist';
+import { sendOperationalEmail } from '@/lib/mailer';
+import { deferWork } from '@/lib/defer-work';
 
 export async function POST(request: Request) {
   try {
@@ -58,7 +61,7 @@ export async function POST(request: Request) {
     const bootstrap = createPasskeyBootstrapCapability();
     const result = await db.$transaction(async (tx) => {
       const existing = await tx.user.findUnique({
-        where: { email: 'admin@ihype.org' },
+        where: { email: ADMIN_EMAIL },
         select: { id: true, _count: { select: { passkeys: true } } },
       });
 
@@ -69,7 +72,7 @@ export async function POST(request: Request) {
         : (
             await tx.user.create({
               data: {
-                email: 'admin@ihype.org',
+                email: ADMIN_EMAIL,
                 role: 'ADMIN',
                 isThirteenOrOlder: true,
                 username: 'admin',
@@ -106,6 +109,38 @@ export async function POST(request: Request) {
         ipAddress: readClientAddress(request),
         metadata: { via: 'admin-setup' },
       });
+
+      // Creating the administrator is the single most sensitive thing this
+      // deployment can do, and until now it happened in silence — an audit row
+      // nobody reads unless they already suspect something. The notice goes to
+      // the account's OWN mailbox, which is the point: whoever holds
+      // admin@ihype.org finds out that an admin account now exists, even if
+      // they were not the one who ran setup.
+      //
+      // Deferred and not awaited: a mail outage must not fail the one endpoint
+      // that can bootstrap access, and `deferWork` reports its own failures to
+      // Sentry. The audit row above is written first and is the durable record.
+      const when = new Date().toISOString();
+      const lines = [
+        `An administrator account was created for ${ADMIN_EMAIL} at ${when}.`,
+        `Requested from ${readClientAddress(request) ?? 'an unknown address'}.`,
+        '',
+        'A one-time passkey registration link was issued with it. If this was',
+        'not you, register a passkey on that account immediately to claim it,',
+        'then set ALLOW_ADMIN_SETUP to false.',
+      ];
+      deferWork(
+        sendOperationalEmail(
+          {
+            to: ADMIN_EMAIL,
+            subject: 'iHYPE administrator account created',
+            text: lines.join('\n'),
+            html: lines.map((line) => `<p>${line}</p>`).join('\n'),
+          },
+          'admin-setup-notice',
+        ),
+        'admin-setup-notice',
+      );
     }
 
     const response = NextResponse.json({

@@ -1,0 +1,104 @@
+# GitHub Pages configuration — for a repository that is NOT a website.
+#
+# ## Why this file exists
+#
+# GitHub Pages is enabled on this repository in its settings ("Deploy from a
+# branch"), so GitHub runs `actions/jekyll-build-pages` against the repo root on
+# every push. Nothing in this repo asked for that — there is no Pages workflow
+# in `.github/workflows/` — and iHYPE is a Next.js app deployed to Cloudflare
+# Workers. Jekyll has no job here.
+#
+# That build has been FAILING, on this:
+#
+#   Liquid Exception: Variable '{{ animationDelay: `${i * 70}' was not properly
+#   terminated ... in design/handoff-music-map-me/FRONTEND_GOTCHAS.md
+#
+# Jekyll renders every `.md` in the repo as a Liquid template (the
+# `jekyll-optional-front-matter` plugin is what makes files without front matter
+# eligible), and 17 of our markdown files contain `{{ … }}` — JSX inline styles
+# inside code fences. Liquid does not care that they are in code fences.
+#
+# ## Why the fix is NOT to escape the braces
+#
+# Because making that build SUCCEED is the bad outcome. A green Jekyll build
+# publishes this repository as a public website at the org's github.io address,
+# which would put `CLAUDE.md` — Supabase host, Hyperdrive id, KV namespace id,
+# R2 bucket — alongside `DEPLOY.md`, `SECURITY_COMPLIANCE.md`, `DESIGN_SYNC.md`
+# and the entire vendored design system on the open internet. None of it is a
+# credential, and all of it is a map of the infrastructure.
+#
+# The Liquid error is the only thing that has been preventing that. Chasing
+# `{% raw %}` across 17 files would have "fixed the error" by switching on a
+# public site nobody asked for.
+#
+# So: everything is excluded. If Pages stays enabled, it publishes an empty
+# site instead of internal documentation, and the build stops failing because
+# there is nothing left to render.
+#
+# ## The actual fix is a repository setting
+#
+# Settings → Pages → Source: None. This file is the safety net for as long as
+# that is switched on, not a substitute for switching it off. Leave it in place
+# even after disabling Pages — re-enabling it later, by hand or by accident,
+# should not start publishing the repo.
+
+# Belt: nothing is a candidate for the site.
+include: []
+
+# Braces: every top-level path spelled out, so a new one added at the root
+# without updating this file is the only way anything can leak — and a new
+# top-level directory is a visible event in review.
+exclude:
+  - .claude/
+  - .env.example
+  - .github/
+  - .mcp.json
+  - .npm-cache/
+  - .npmrc
+  - .vercelignore
+  - AGENTS.md
+  - CLAUDE.md
+  - DEPLOY.md
+  - DESIGN_SYNC.md
+  - Dockerfile
+  - README.md
+  - SECURITY_COMPLIANCE.md
+  - SITE-WIREFRAME.md
+  - android/
+  - capacitor-shell/
+  - capacitor.config.ts
+  - design/
+  - docker-compose.yml
+  - docs/
+  - e2e/
+  - export-ios/
+  - ios/
+  - lib/
+  - next-env.d.ts
+  - next.config.mjs
+  - node_modules/
+  - open-next.config.ts
+  - package-lock.json
+  - package.json
+  - playwright.config.ts
+  - prisma/
+  - prisma.config.ts
+  - public/
+  - scripts/
+  - sentry.client.config.ts
+  - sentry.server.config.ts
+  - src/
+  - tsconfig.json
+  - vitest.config.ts
+  - worker.js
+  - workers/
+  - wrangler.cron.toml
+  - wrangler.toml
+
+# The plugin that makes front-matter-less markdown renderable in the first
+# place. Off, so a file that slips past `exclude` is still not a page.
+defaults:
+  - scope:
+      path: ''
+    values:
+      published: false
