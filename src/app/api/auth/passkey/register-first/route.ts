@@ -23,6 +23,57 @@ function clearBootstrapCookies(response: NextResponse) {
   return response;
 }
 
+/**
+ * The POST's read of the challenge, issued as a WRITE — on purpose.
+ *
+ * Hyperdrive caches eligible read queries for 60 seconds by default and
+ * **does not invalidate that cache when the application writes**. The passkey
+ * ceremony is a read-after-write inside that window, which is precisely the
+ * case Cloudflare's own docs tell you not to serve from cache:
+ *
+ *   1. POST /api/admin/setup (or /api/register) INSERTs the token —
+ *      `challenge` is NULL.
+ *   2. GET below SELECTs that row through `readBootstrapRecord()`. The result,
+ *      challenge and all, enters the cache as NULL.
+ *   3. The same handler UPDATEs the row to store the challenge.
+ *   4. POST re-runs the byte-identical SELECT, hits the cache, and sees the
+ *      pre-update NULL — so `!record.challenge` is true and the user is told
+ *      "Challenge expired. Start registration again."
+ *
+ * This was not theoretical. `PasskeyBootstrapToken` held three rows, from
+ * 2026-07-11, 2026-07-17 and 2026-08-10, every one with `usedAt` NULL: first
+ * passkey registration had never once completed in production, and two real
+ * users hit it and gave up. The platform's own administrator account could not
+ * be created until Hyperdrive caching was turned off account-wide.
+ *
+ * Turning caching off fixed it, and a setting is not a guarantee — anyone may
+ * re-enable it, and the failure is silent, blames the user's timing, and
+ * leaves no error anywhere. So the fix belongs in the query. Hyperdrive never
+ * caches a mutating statement, and `SET "challenge" = "challenge"` is a
+ * deliberate no-op write whose only job is to make this read uncacheable while
+ * leaving the row's meaning untouched.
+ *
+ * It does NOT consume the token. Claiming here would burn the capability on a
+ * cancelled or mistyped ceremony and force the whole bootstrap to be redone;
+ * the atomic single-use claim stays where it was, in the transaction below,
+ * guarded on `usedAt IS NULL`.
+ *
+ * The `usedAt`/`expiresAt` guards live in the WHERE clause so a spent or
+ * expired token returns no row at all, rather than being re-checked in JS
+ * against values that could themselves be stale.
+ */
+async function readBootstrapRecordFresh(tokenHash: string, now: Date) {
+  const rows = await db.$queryRaw<Array<{ id: string; userId: string; challenge: string | null }>>`
+    UPDATE "PasskeyBootstrapToken"
+       SET "challenge" = "challenge"
+     WHERE "tokenHash" = ${tokenHash}
+       AND "usedAt" IS NULL
+       AND "expiresAt" > ${now}
+    RETURNING "id", "userId", "challenge"
+  `;
+  return rows[0] ?? null;
+}
+
 async function readBootstrapRecord() {
   const { cookies } = await import('next/headers');
   const jar = await cookies();
@@ -108,9 +159,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Too many attempts. Wait a minute and try again.' }, { status: 429 });
   }
 
-  const record = await readBootstrapRecord();
   const now = new Date();
-  if (!record || record.usedAt || record.expiresAt <= now || !record.challenge) {
+  const { cookies } = await import('next/headers');
+  const jar = await cookies();
+  const bootstrapToken = jar.get(getPasskeyBootstrapCookieName())?.value;
+  if (!bootstrapToken) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Challenge expired. Start registration again.' }, { status: 400 }),
+    );
+  }
+  const tokenHash = hashPasskeyBootstrapToken(bootstrapToken);
+  // Read through the write above, never the cacheable SELECT — see its header.
+  const record = await readBootstrapRecordFresh(tokenHash, now);
+  if (!record || !record.challenge) {
+    return clearBootstrapCookies(
+      NextResponse.json({ error: 'Challenge expired. Start registration again.' }, { status: 400 }),
+    );
+  }
+
+  const user = await db.user.findUnique({
+    where: { id: record.userId },
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      email: true,
+      image: true,
+      role: true,
+      emailVerified: true,
+      userSecurityVersion: true,
+    },
+  });
+  if (!user) {
     return clearBootstrapCookies(
       NextResponse.json({ error: 'Challenge expired. Start registration again.' }, { status: 400 }),
     );
@@ -142,7 +222,7 @@ export async function POST(request: Request) {
       const claimed = await tx.passkeyBootstrapToken.updateMany({
         where: {
           id: record.id,
-          tokenHash: record.tokenHash,
+          tokenHash,
           challenge: record.challenge,
           usedAt: null,
           expiresAt: { gt: now },
@@ -151,12 +231,12 @@ export async function POST(request: Request) {
       });
       if (claimed.count !== 1) return false;
 
-      const existingPasskeys = await tx.passkey.count({ where: { userId: record.user.id } });
+      const existingPasskeys = await tx.passkey.count({ where: { userId: user.id } });
       if (existingPasskeys > 0) throw new PasskeyAlreadyRegisteredError();
 
       await tx.passkey.create({
         data: {
-          userId: record.user.id,
+          userId: user.id,
           ...verified,
           name: null,
         },
@@ -179,7 +259,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Could not save this passkey.' }, { status: 500 });
   }
 
-  const sessionCookie = await buildAuthSessionCookie(record.user);
+  const sessionCookie = await buildAuthSessionCookie(user);
   if (!sessionCookie) {
     return clearBootstrapCookies(
       NextResponse.json({ error: 'Passkey saved, but the session could not be created. Please sign in.' }, { status: 500 }),
