@@ -63,7 +63,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
       >
         {loading === 'dismiss_reports' ? t('reportPageBulkButtons.dismissing', 'Dismissing…') : t('reportPageBulkButtons.dismissAllOnPage', 'Dismiss all on page')}
       </button>
-      {error && <span style={{ fontSize: 11, color: '#e74c3c', fontFamily: 'var(--f-m)' }}>{error}</span>}
+      {error && <span style={{ fontSize: 11, color: 'var(--danger)', fontFamily: 'var(--f-m)' }}>{error}</span>}
       {pendingReauth && (
         <AdminReauthPrompt
           onCancel={() => setPendingReauth(null)}

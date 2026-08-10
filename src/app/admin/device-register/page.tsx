@@ -41,14 +41,19 @@ export default function AdminDeviceRegisterPage() {
       .catch(() => { setStatus('error'); setErrorMsg(t('adminDeviceRegisterPage.networkError', 'Network error.')); });
   }, [token, mode, router]);
 
+  // This page renders OUTSIDE AdminShell (the layout returns it before the
+  // session gate), so it paints its own ground. It previously set color:#111
+  // with no background at all — near-black copy on the DS8 navy page, i.e.
+  // effectively invisible, on the one screen that completes admin device
+  // registration.
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'system-ui', color: '#111' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'var(--f-b)', background: 'var(--bg)', color: 'var(--ink)' }}>
       {status === 'registering' && <p>{t('adminDeviceRegisterPage.registering', 'Registering this device…')}</p>}
-      {status === 'done' && <p style={{ color: 'green' }}>{t('adminDeviceRegisterPage.done', 'Device registered. Redirecting to admin…')}</p>}
+      {status === 'done' && <p style={{ color: 'var(--success)' }}>{t('adminDeviceRegisterPage.done', 'Device registered. Redirecting to admin…')}</p>}
       {status === 'error' && (
         <>
-          <p style={{ color: 'red' }}>{t('adminDeviceRegisterPage.errorPrefix', 'Error:')} {errorMsg}</p>
-          <p style={{ fontSize: 14, color: '#666' }}>{t('adminDeviceRegisterPage.requestNewLink', 'Request a new setup link from admin@ihype.org.')}</p>
+          <p style={{ color: 'var(--danger)' }}>{t('adminDeviceRegisterPage.errorPrefix', 'Error:')} {errorMsg}</p>
+          <p style={{ fontSize: 14, color: 'var(--ink-3)' }}>{t('adminDeviceRegisterPage.requestNewLink', 'Request a new setup link from admin@ihype.org.')}</p>
         </>
       )}
     </div>

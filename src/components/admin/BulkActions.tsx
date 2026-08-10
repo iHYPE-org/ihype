@@ -80,7 +80,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
         <select
           value={action}
           onChange={(e) => setAction(e.target.value as BulkAction)}
-          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line2, #333)', background: 'var(--bg2, #111)', color: 'inherit', fontSize: 13 }}
+          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: 13 }}
         >
           {actionOptions.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -93,7 +93,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
         >
           {loading ? t('bulkActions.applying', 'Applying…') : `${t('bulkActions.applyTo', 'Apply to')} ${selected.size}`}
         </button>
-        {result && <span style={{ fontSize: 13, color: result.startsWith('Error') ? '#e74c3c' : '#2ecc71' }}>{result}</span>}
+        {result && <span style={{ fontSize: 13, color: result.startsWith('Error') ? 'var(--danger)' : 'var(--success)' }}>{result}</span>}
       </div>
       {needsReauth && (
         <div style={{ marginBottom: 8 }}>

@@ -410,7 +410,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             name="userSearch"
             defaultValue={userSearch ?? ''}
             placeholder={t('adminPage.userSearchPlaceholder', 'Email or username…')}
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line2, #333)', background: 'var(--bg2, #111)', color: 'inherit', fontSize: 14 }}
+            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: 14 }}
           />
           <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
           {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
@@ -603,7 +603,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           {rateLimitMetrics.length ? (
             rateLimitMetrics.map((row) => (
               <div className="admin-list-row" key={row.bucket}>
-                <span style={{ fontFamily: 'var(--f-mono, monospace)', fontSize: 12 }}>{row.bucket}</span>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: 12 }}>{row.bucket}</span>
                 <strong>{row.hits}</strong>
               </div>
             ))
@@ -809,11 +809,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <div className="admin-health-grid">
           <div className="admin-health-card">
             <span>{t('adminPage.noUploadsYet', 'No uploads yet')}</span>
-            <strong style={{ color: funnelStage1 > 0 ? '#e74c3c' : 'inherit' }}>{funnelStage1}</strong>
+            <strong style={{ color: funnelStage1 > 0 ? 'var(--danger)' : 'inherit' }}>{funnelStage1}</strong>
           </div>
           <div className="admin-health-card">
             <span>{t('adminPage.uploadsNoShows', 'Uploads, no shows')}</span>
-            <strong style={{ color: funnelStage2 > 0 ? '#f39c12' : 'inherit' }}>{funnelStage2}</strong>
+            <strong style={{ color: funnelStage2 > 0 ? 'var(--warning-text)' : 'inherit' }}>{funnelStage2}</strong>
           </div>
           <div className="admin-health-card">
             <span>{t('adminPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
@@ -850,10 +850,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {recentSocialPosts.map((post) => (
-              <div key={post.id} style={{ background: 'var(--bg2,#111)', border: '1px solid var(--line2,#333)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+              <div key={post.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <pre style={{ fontFamily: 'inherit', fontSize: 13, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
-                  <small style={{ color: 'var(--ink3,#666)', fontSize: 11 }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
+                  <small style={{ color: 'var(--ink-3)', fontSize: 11 }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
                 </div>
                 <SocialPostCopy text={post.text} />
               </div>
@@ -883,7 +883,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               }, {})
             ).map(([date, shows]) => (
               <div key={date} style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: 'var(--f-mono,monospace)', fontSize: 12, fontWeight: 700, color: 'var(--ink3,#666)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
                 {shows.map((show) => (
                   <div key={show.id} className="admin-list-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ flex: 1 }}>{show.title}</span>
