@@ -13,7 +13,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ';
+// ADMIN is here because an administrator signing in lands on /welcome like
+// anyone else, and this union is what picks the label and the call to action.
+// Without it the fall-through below resolved ADMIN to FAN, so the operator of
+// the platform was greeted as a fan and pointed at "start hyping artists".
+type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ' | 'ADMIN';
 
 export default async function WelcomePage() {
   const session = await auth();
@@ -44,9 +48,14 @@ export default async function WelcomePage() {
         ? 'FAN'
         : null;
   const sessionRole = (session.user as { role?: string }).role;
+  // ADMIN is checked BEFORE the profile, unlike every other role: an operator
+  // may also own an artist or venue page, and being greeted as that page's
+  // owner would hide the console they actually signed in to reach.
   const role: Role =
-    profileRole
-    ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
+    sessionRole === 'ADMIN'
+      ? 'ADMIN'
+      : profileRole
+        ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
 
   // Only the three creator roles have a wizard. A fan does not need one, and
   // without a profile row there is no slug to build a URL from.
@@ -74,6 +83,19 @@ export default async function WelcomePage() {
         { title: t('welcomePage.fanStep1Title', 'Hype your first artist'), desc: t('welcomePage.fanStep1Desc', 'Listen to a track all the way through or tap the flame — every hype is a demand signal venues can see.') },
         { title: t('welcomePage.fanStep2Title', 'Follow your scene'), desc: t('welcomePage.fanStep2Desc', 'Pick your city and genres so Local shows and For You surface the right nights out.') },
         { title: t('welcomePage.fanStep3Title', 'Share a referral link'), desc: t('welcomePage.fanStep3Desc', 'Promote any show you love and earn from the dedicated 10% promoter pool.') },
+      ],
+    },
+    // No wizard and no profile: an administrator's next steps are the queues
+    // that are already waiting, so every step here points at a real console
+    // route rather than a setup task that does not exist for this role.
+    ADMIN: {
+      roleLabel: t('welcomePage.roleAdmin', 'Admin'), tint: 'var(--accent)',
+      sub: t('welcomePage.subAdmin', 'You are signed in as a platform administrator. The console shows every queue waiting on a human, ordered by what is overdue.'),
+      cta: t('welcomePage.ctaAdmin', 'Open the console →'), ctaHref: '/admin',
+      steps: [
+        { title: t('welcomePage.adminStep1Title', 'Register this device'), desc: t('welcomePage.adminStep1Desc', 'The console requires a registered device in addition to your passkey. Without one, /admin redirects here.') },
+        { title: t('welcomePage.adminStep2Title', 'Work the queues'), desc: t('welcomePage.adminStep2Desc', 'Verifications, held tracks, moderation and ad approvals each carry the turnaround the product promises applicants.') },
+        { title: t('welcomePage.adminStep3Title', 'Check launch readiness'), desc: t('welcomePage.adminStep3Desc', 'System status reports the runtime configuration and anything blocking launch.') },
       ],
     },
     ARTIST: {
@@ -158,6 +180,21 @@ export default async function WelcomePage() {
       </div>
 
       <style>{`
+        /* Welcome is a full-screen interstitial and owns the viewport — the
+           DS8 template (templates/welcome/Welcome.dc.html) is a bare centred
+           column with no header, no nav and no player dock. The root layout
+           renders all three on every route, so this page was drawing its
+           100vh card UNDER the marketing header and OVER the player dock:
+           a search field and a "Nothing playing" bar framing the moment an
+           account is created.
+
+           Hidden with :has() rather than a prop, matching how the shell does
+           the same job (body:has(.site-dock) in shell.css) — the rule lives
+           with the page that needs it and costs no JS. */
+        body:has(.welcome-body) .adaptive-site-header,
+        body:has(.welcome-body) .site-dock,
+        body:has(.welcome-body) .ihype-mobile-nav { display: none; }
+
         .welcome-body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
         .welcome-card { max-width: 560px; width: 100%; text-align: center; }
         .welcome-check { width: 64px; height: 64px; border-radius: 50%; background: rgba(var(--role-venue-rgb),.12); border: 1px solid rgba(var(--role-venue-rgb),.35); display: flex; align-items: center; justify-content: center; margin: 0 auto 22px; font-size: 26px; color: var(--role-venue); }

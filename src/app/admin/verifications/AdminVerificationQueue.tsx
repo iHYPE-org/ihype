@@ -73,7 +73,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
             <span
               className="badge"
               style={profile.verificationStatus === 'REJECTED'
-                ? { borderColor: 'rgba(248,113,113,0.4)', background: 'rgba(248,113,113,0.1)', color: '#fca5a5' }
+                ? { borderColor: 'rgba(var(--danger-rgb),0.4)', background: 'rgba(var(--danger-rgb),0.1)', color: 'var(--danger)' }
                 : {}}
             >
               {profile.verificationStatus}
@@ -140,7 +140,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
               className="button"
               disabled={pending}
               onClick={() => decide('VERIFIED')}
-              style={{ background: 'rgba(35,208,216,0.15)', borderColor: 'rgba(35,208,216,0.4)', color: '#d8f8ff' }}
+              style={{ background: 'rgba(var(--role-venue-rgb),0.15)', borderColor: 'rgba(var(--role-venue-rgb),0.4)', color: 'var(--role-venue)' }}
             >
               {t('adminVerificationsAdminVerificationQueue.verifyButton', 'Verify')}
             </button>
@@ -148,7 +148,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
               className="button secondary"
               disabled={pending}
               onClick={() => decide('REJECTED')}
-              style={{ borderColor: 'rgba(248,113,113,0.4)', color: '#fca5a5' }}
+              style={{ borderColor: 'rgba(var(--danger-rgb),0.4)', color: 'var(--danger)' }}
             >
               {t('adminVerificationsAdminVerificationQueue.rejectButton', 'Reject')}
             </button>
@@ -173,7 +173,7 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
       )}
 
       {message && (
-        <p className="meta" style={{ marginTop: '0.5rem', color: decided && message.includes('✓') ? '#34d399' : '#fca5a5' }}>
+        <p className="meta" style={{ marginTop: '0.5rem', color: decided && message.includes('✓') ? 'var(--success)' : 'var(--danger)' }}>
           {message}
         </p>
       )}

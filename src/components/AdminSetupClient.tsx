@@ -70,11 +70,11 @@ export function AdminSetupClient() {
   return (
     <div
       style={{
-        background: 'var(--card-background, #111827)',
-        color: 'var(--foreground, #f5f7fb)',
-        borderRadius: 18,
+        background: 'var(--bg-2)',
+        color: 'var(--ink)',
+        borderRadius: 'var(--radius-card)',
         padding: 28,
-        boxShadow: '0 10px 35px rgba(0,0,0,0.35)',
+        boxShadow: 'var(--shadow)',
         border: '1px solid var(--hair-80)'
       }}
     >
@@ -112,7 +112,7 @@ export function AdminSetupClient() {
             width: '100%',
             padding: '11px 16px',
             borderRadius: 12,
-            background: '#5b8def',
+            background: 'var(--accent)',
             color: 'var(--ink-on-accent)',
             border: 'none',
             fontWeight: 600,
@@ -134,7 +134,7 @@ export function AdminSetupClient() {
         <p style={{ marginTop: 16, fontSize: 13, opacity: 0.85 }}>{status}</p>
       ) : null}
       {error ? (
-        <p style={{ marginTop: 12, fontSize: 13, color: '#ff8a8a' }}>{error}</p>
+        <p style={{ marginTop: 12, fontSize: 13, color: 'var(--danger)' }}>{error}</p>
       ) : null}
     </div>
   );

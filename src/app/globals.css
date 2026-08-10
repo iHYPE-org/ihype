@@ -141,6 +141,11 @@
   --role-promoter-rgb: 255, 62, 154; /* #ff3e9a — see --role-promoter below */
   --role-advertiser-rgb: 255, 184, 74; /* #ffb84a */
   --warning-rgb:     255, 184, 74;  /* #ffb84a */
+  /* Same value as --accent-rgb today, and deliberately its own name: a tinted
+     "this failed" chip is not a branded surface, and the two must be able to
+     diverge without hunting for which rgba() meant which. Not re-stated in the
+     light block, like every other fill triplet above. */
+  --danger-rgb:      255, 80, 41;   /* #ff5029 */
 
   /* ── Role colors ─────────────────────────────────────────────────── */
   --role-fan:      #b983ff;
