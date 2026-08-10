@@ -5561,3 +5561,47 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .app-nav-link:hover,
   .app-nav-link.active { transform: none; }
 }
+
+/* ── Impersonation banner ────────────────────────────────────────────────
+   Fixed to the top of the viewport on every route and above every shell.
+   It uses --warning rather than the accent on purpose: the accent is the
+   brand and reads as a feature, and this is a state the operator needs to
+   notice rather than enjoy. No dismiss control — the only way out is Exit. */
+.impersonation-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
+  padding-top: max(8px, env(safe-area-inset-top));
+  background: var(--warning);
+  color: var(--ink-on-accent);
+  font-family: var(--font-body);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  box-shadow: var(--shadow-sm);
+}
+.impersonation-banner-text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.impersonation-banner-text strong { font-weight: 700; }
+.impersonation-banner-text span { opacity: 0.85; font-size: 0.72rem; }
+.impersonation-banner-error { font-size: 0.72rem; font-weight: 600; }
+.impersonation-banner-exit {
+  flex: 0 0 auto;
+  /* A real hit target: this is the only control on the bar and it is reached
+     on a phone. 44px is the floor mobile-fit.css applies everywhere else. */
+  min-height: 36px;
+  padding: 7px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  background: transparent;
+  color: inherit;
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.impersonation-banner-exit[disabled] { opacity: 0.6; cursor: progress; }

@@ -16,6 +16,7 @@ import { OfflineBanner } from '@/components/OfflineBanner';
 import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
 import { SiteFooter } from '@/components/SiteFooter';
+import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { getCspNonce } from '@/lib/csp-nonce';
@@ -128,6 +129,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               {children}
             </AppShell>
             <SitePlayerDock />
+            {/* Above every shell, on every route: an operator must never be
+                able to forget whose account they are looking at. */}
+            <ImpersonationBanner />
             <CookieConsent />
             <ServiceWorkerRegister />
           </MobileShellProvider>

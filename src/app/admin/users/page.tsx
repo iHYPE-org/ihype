@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { promoteToAdminAction, suspendUserAction } from './actions';
 import { getServerT } from '@/lib/i18n/server';
+import { ImpersonateButton } from '@/components/admin/ImpersonateButton';
 
 export const metadata: Metadata = {
   title: 'User management | iHYPE Admin',
@@ -86,6 +87,11 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
                   <input type="hidden" name="userId" value={user.id} />
                   <button className="button small secondary" type="submit">{t('adminUsersPage.suspend', 'Suspend')}</button>
                 </form>
+                {/* Never offered for an ADMIN row — impersonating another
+                    administrator would be a privilege-escalation path around
+                    the allowlist. The server refuses it too; this only keeps
+                    the button from being there to press. */}
+                {user.role !== 'ADMIN' && <ImpersonateButton email={user.email} userId={user.id} />}
                 {user.role !== 'ADMIN' && (
                   <form action={promoteToAdminAction}>
                     <input type="hidden" name="userId" value={user.id} />

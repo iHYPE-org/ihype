@@ -7,6 +7,14 @@ const ADMIN_API_EXCEPTIONS = new Set([
   'src/app/api/admin/setup/route.ts',
   // device-setup is protected by ADMIN_SETUP_SECRET bearer token — no admin session exists yet during bootstrap
   'src/app/api/admin/device-setup/route.ts',
+  // impersonate/stop is the one admin route whose caller is deliberately NOT
+  // an admin: while impersonating, the session belongs to the member (role
+  // FAN, no admin device cookie), so an admin check here would refuse the one
+  // request an impersonating operator most needs to make and strand them in
+  // somebody else's account. It authorises on the `imp` claim instead, which
+  // lives inside the signed token and cannot be forged, and re-checks the
+  // operator against the admin allowlist before re-minting their session.
+  'src/app/api/admin/impersonate/stop/route.ts',
 ]);
 
 describe('admin API guard coverage', () => {
