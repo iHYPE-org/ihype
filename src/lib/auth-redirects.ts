@@ -28,7 +28,38 @@ export const WORKBENCH_PATH = '/app/map';
  */
 export const PROTECTED_PREFIXES = ['/app', '/listen', '/dashboard', '/admin'] as const;
 
+/**
+ * The two pages under a protected prefix that must work WITHOUT a session.
+ *
+ * Both are account-recovery paths, and gating them is a deadlock: each exists
+ * precisely for the moment you cannot sign in, so requiring a sign-in to reach
+ * one means it can never be used for the thing it is for.
+ *
+ * - `/admin/setup` bootstraps the administrator account. On a deployment with
+ *   no admin — which is every deployment, once — the gate redirected it to
+ *   `/login`, and the only account that could get past `/login` was the one the
+ *   page existed to create. Signing up instead is not a way round it:
+ *   `isReservedPlatformEmail()` refuses `@ihype.org` at `/api/register`, by
+ *   design. So the platform had no reachable path to its own admin account.
+ * - `/admin/device-register` completes an emailed one-time-token link during
+ *   device re-registration. It authenticates on the token in the URL, and the
+ *   session it would establish is the thing being recovered.
+ *
+ * Neither is unprotected by this exemption; both were always protected by
+ * something other than the session cookie. `/admin/setup` needs the
+ * `ADMIN_SETUP_SECRET` bearer token, is rate-limited, and returns 410 unless
+ * `ALLOW_ADMIN_SETUP` is `true` — so on a normal deployment the page renders a
+ * form that cannot do anything. `/admin/device-register` needs a valid,
+ * unexpired, single-use token. The middleware gate was redundant with those and
+ * fatal to both.
+ *
+ * Exact matches only. A prefix test would exempt `/admin/setup-users` and any
+ * other real admin page that happened to start with these strings.
+ */
+export const SESSION_EXEMPT_PATHS = ['/admin/setup', '/admin/device-register'] as const;
+
 export function isProtectedPath(pathname: string): boolean {
+  if ((SESSION_EXEMPT_PATHS as readonly string[]).includes(pathname)) return false;
   return PROTECTED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
