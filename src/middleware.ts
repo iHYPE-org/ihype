@@ -2,6 +2,7 @@ import NextAuth from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
 import { WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
+import { MAP_TILE_HOSTS, isMapRoute } from '@/lib/csp-routes';
 
 const { auth } = NextAuth(authConfig);
 
@@ -28,7 +29,17 @@ function sentryIngestOrigin() {
 
 function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allowSceneMap: boolean) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
-  const sceneMapConnect = allowSceneMap ? ' https://tiles.openfreemap.org' : '';
+  // Two hosts, and only one of them is production. The LIVE map is
+  // src/components/mmm/MmmMap.tsx, which draws CartoDB raster tiles;
+  // tiles.openfreemap.org is used by src/app/ui-preview/ModuleDeckMockup.tsx
+  // and nothing else. The policy used to allow only the second, so the map
+  // that ships was blocked while the mockup's was permitted.
+  //
+  // maplibre fetches raster tiles through the network stack rather than as
+  // <img>, so connect-src is what governs them — the broad `img-src https:`
+  // above does not cover this and reading it as though it did is what makes
+  // the failure look like a rendering bug instead of a policy one.
+  const sceneMapConnect = allowSceneMap ? ` ${MAP_TILE_HOSTS.join(' ')}` : '';
   return [
     "default-src 'self'",
     "base-uri 'self'",
@@ -53,7 +64,16 @@ function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allo
 
 function applySecurityHeaders(response: NextResponse, nonce: string, pathname: string) {
   const allowEmbedding = pathname.startsWith('/embed/');
-  const allowSceneMap = pathname === '/listen' || (process.env.NODE_ENV !== 'production' && pathname.startsWith('/ui-preview'));
+  // The map is the MMM shell's BASE LAYER and MmmShell is mounted in the /app
+  // layout, so it exists on every /app route — not only /app/map. Scoping this
+  // to one path would blank the map the moment someone opened /app/music or
+  // /app/me, which is the whole reason the shell keeps it mounted.
+  //
+  // This is why signing in landed on a dead map: row 273 moved WORKBENCH_PATH
+  // to /app/map, and this list still named /listen — where the map no longer
+  // is. Without the blob worker-src below, maplibre cannot start its worker at
+  // all, so the failure is a blank canvas rather than missing tiles.
+  const allowSceneMap = isMapRoute(pathname, process.env.NODE_ENV !== 'production');
   response.headers.set('x-pathname', pathname);
   if (!allowEmbedding) response.headers.set('X-Frame-Options', 'DENY');
   else response.headers.delete('X-Frame-Options');
