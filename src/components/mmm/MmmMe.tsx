@@ -29,6 +29,48 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
  * Settings row links to. Showing an empty Advertiser tab here would be worse
  * than not showing one.
  */
+/**
+ * ME's sections are accordions, per Design System 8's
+ * `templates/simplified-app/`: a labelled button carrying `aria-expanded`, a
+ * chevron, `--radius-card` corners, and the body underneath.
+ *
+ * Why accordions rather than four stacked cards: ME is the only surface in this
+ * shell with no search and no tabs, so everything an account has lives on one
+ * scroll. Left open, three screens of stats sit between the member and the
+ * Account rows, which are what most visits are actually for. Collapsed, the
+ * whole surface is one screen.
+ *
+ * "Your year" opens by default because it is the only section that is not an
+ * errand — the other three are things you go and do.
+ */
+function Accordion({
+  children,
+  defaultOpen,
+  label,
+}: {
+  children: React.ReactNode;
+  defaultOpen?: boolean;
+  label: string;
+}) {
+  const [open, setOpen] = useState(Boolean(defaultOpen));
+  return (
+    <div className="mmm-me-section">
+      <button
+        aria-expanded={open}
+        className="mmm-me-accordion"
+        onClick={() => setOpen((value) => !value)}
+        type="button"
+      >
+        <span className="mmm-me-accordion-label">{label}</span>
+        {/* One element rotated, not two glyphs: a single node cannot render a
+            chevron that disagrees with aria-expanded. */}
+        <span aria-hidden="true" className="mmm-me-accordion-chevron" data-open={open || undefined}>›</span>
+      </button>
+      {open && <div className="mmm-me-accordion-body">{children}</div>}
+    </div>
+  );
+}
+
 export function MmmMe({ data }: { data: MmmMeData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,6 +112,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
+      <Accordion defaultOpen label="Your year">
       {data.stats.length > 0 && (
         <div className="mmm-stat-grid">
           {data.stats.map((stat) => (
@@ -93,13 +136,21 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           door in one direction opens one in the other unless both ends have a
           link. Rendered unconditionally, because every member has tickets to
           look at even when they have no page to edit. */}
-      <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-        <div className="mmm-eyebrow" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Events</div>
+      </Accordion>
+
+      <Accordion label="My tickets">
+        <p className="mmm-me-note">
+          Your tickets, and the shows you could still get into. Both live on the events
+          surface — this shell has no events module, so it links out rather than keeping
+          a second copy of one.
+        </p>
         <div style={{ display: 'flex', gap: 8 }}>
+          <Link className="mmm-btn-primary" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
           <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
-          <Link className="mmm-btn-ghost" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
         </div>
-      </div>
+      </Accordion>
+
+      <Accordion label="Profiles">
 
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
@@ -113,6 +164,32 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
+      {/* Creating an artist or venue profile is a real POST /api/profiles, and
+          the full form already exists on /pages — so these link there instead of
+          growing a second creator. The chip is not decoration: both types go
+          through the verification queue all three onboarding wizards promise a
+          48-hour turnaround on. Fan is absent because every account already is
+          one — it is implicit and permanent. */}
+      <div className="mmm-me-add-row">
+        <Link className="mmm-me-add" data-kind="artist" href="/pages?create=artist">
+          <span aria-hidden="true">＋</span>
+          Add artist profile
+          <span className="mmm-me-add-chip">Verified</span>
+        </Link>
+        <Link className="mmm-me-add" data-kind="venue" href="/pages?create=venue">
+          <span aria-hidden="true">＋</span>
+          Add venue profile
+          <span className="mmm-me-add-chip">Verified</span>
+        </Link>
+      </div>
+
+      <p className="mmm-me-note">
+        Promoting is not a profile. Every account can promote by sharing its HYPE Link,
+        and earns from the 10% promoter pool when a ticket sells through it.
+      </p>
+      </Accordion>
+
+      <Accordion label="About me">
       {data.hypeLink && (
         <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
           <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Your HYPE link</div>
@@ -188,6 +265,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           </div>
         </>
       )}
+
+      </Accordion>
 
       <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>Account</div>
       <div>
