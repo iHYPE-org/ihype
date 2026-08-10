@@ -86,33 +86,36 @@ export type ArcOffset = { x: number; y: number; delayMs: number };
  * Level-1 delays run ME → MUSIC → MAP (0 / 30 / 60ms), so the fan unfurls
  * upward from the thumb rather than downward into it.
  */
-export const ARC: Record<'wide' | 'narrow', { level1: ArcOffset[]; level2: ArcOffset[] }> = {
+/**
+ * Where each module disc lands, measured from the logo's own origin.
+ *
+ * These are the design system's tables verbatim
+ * (`components/shell/ArcNav.jsx`), not values fitted by eye — the two
+ * breakpoints are separately hand-placed so no two discs collide, and the
+ * previous values here disagreed with the design in every slot while the
+ * breakpoint and the delays happened to match. That is the signature of
+ * numbers tuned locally rather than copied.
+ *
+ * There is NO second level. `ArcNav.d.ts` is explicit: "There is no second
+ * level: Music's sections are tabs at the top of the Music pane. `items` is
+ * ignored here and kept only so the shell can hold the route table in one
+ * place." The five-item Music arc this file used to carry was a navigation
+ * layer the design does not have, duplicating the tab strip `MmmMusic`
+ * already renders.
+ */
+export const ARC: Record<'wide' | 'narrow', { level1: ArcOffset[] }> = {
   wide: {
     level1: [
-      { x: 6, y: -186, delayMs: 60 },   // MAP
-      { x: 118, y: -132, delayMs: 30 }, // MUSIC
-      { x: 182, y: -14, delayMs: 0 },   // ME
-    ],
-    level2: [
-      { x: 2, y: -330, delayMs: 40 },
-      { x: 140, y: -296, delayMs: 70 },
-      { x: 248, y: -224, delayMs: 100 },
-      { x: 318, y: -124, delayMs: 130 },
-      { x: 340, y: -12, delayMs: 160 },
+      { x: 5, y: -192, delayMs: 60 },   // MAP
+      { x: 115, y: -152, delayMs: 30 }, // MUSIC
+      { x: 182, y: -48, delayMs: 0 },   // ME
     ],
   },
   narrow: {
     level1: [
-      { x: 4, y: -158, delayMs: 60 },
-      { x: 92, y: -112, delayMs: 30 },
-      { x: 138, y: -12, delayMs: 0 },
-    ],
-    level2: [
-      { x: 2, y: -278, delayMs: 40 },
-      { x: 104, y: -246, delayMs: 70 },
-      { x: 178, y: -186, delayMs: 100 },
-      { x: 214, y: -108, delayMs: 130 },
-      { x: 226, y: -18, delayMs: 160 },
+      { x: 4, y: -176, delayMs: 60 },
+      { x: 100, y: -132, delayMs: 30 },
+      { x: 165, y: -43, delayMs: 0 },
     ],
   },
 };
@@ -128,13 +131,13 @@ export function arcTransform(offset: ArcOffset): string {
 }
 
 /**
- * The arc has exactly five level-2 slots. A module with more items than that
- * would silently lose the overflow, so this is asserted rather than trusted —
- * `FRONTEND_GOTCHAS.md` §4 is the same class of bug (items present in the
- * manifest but unreachable on screen).
+ * How many discs the arc has room for. Three, at both breakpoints — a module
+ * added to `MMM_NAV` without a slot would silently never appear, which is the
+ * `FRONTEND_GOTCHAS.md` §4 class of bug (present in the manifest, unreachable
+ * on screen), so the count is asserted rather than trusted.
  */
-export function arcSlotsFor(level: 1 | 2, breakpoint: 'wide' | 'narrow' = 'wide'): number {
-  return ARC[breakpoint][level === 1 ? 'level1' : 'level2'].length;
+export function arcSlotsFor(breakpoint: 'wide' | 'narrow' = 'wide'): number {
+  return ARC[breakpoint].level1.length;
 }
 
 /* ────────────────────────────────────────────────────────────────────────────
