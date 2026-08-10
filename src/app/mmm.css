@@ -344,6 +344,83 @@ html.mmm-locked .site-shell > main {
   font-weight: 700;
 }
 
+/* ── ME accordions ────────────────────────────────────────────────────────
+   Design System 8's ME surface. The section header is the control, so it takes
+   the full row and the whole thing is the hit target — a chevron-sized tap area
+   on a phone is the complaint this shell's touch floors exist to prevent. */
+.mmm-me-section { margin-bottom: 8px; }
+.mmm-me-accordion {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  padding: 14px 18px;
+  cursor: pointer;
+}
+.mmm-me-accordion-label {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.94rem;
+  letter-spacing: -0.015em;
+  color: var(--ink);
+}
+.mmm-me-accordion-chevron {
+  flex: 0 0 auto;
+  font-size: 0.95rem;
+  line-height: 1;
+  color: var(--ink-2);
+  transform: rotate(90deg);
+  transition: transform var(--duration-fast) var(--ease-default);
+}
+.mmm-me-accordion-chevron[data-open] { transform: rotate(-90deg); }
+.mmm-me-accordion-body { padding: 14px 2px 4px; }
+
+/* Supporting copy inside a section. Not --ink-3 at this size: it is a full
+   sentence rather than a label, and it wants to be read once. */
+.mmm-me-note {
+  margin: 0 0 14px;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--ink-2);
+  max-width: 600px;
+}
+
+/* Add artist / add venue. Tinted by role on hover only — the resting state is
+   neutral because these are two of several controls in the section, and two
+   permanently coloured buttons would read as the section's subject. */
+.mmm-me-add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+.mmm-me-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.84rem;
+  text-decoration: none;
+}
+.mmm-me-add[data-kind='artist']:hover { border-color: var(--role-artist); }
+.mmm-me-add[data-kind='venue']:hover { border-color: var(--role-venue); }
+.mmm-me-add[data-kind='artist'] > [aria-hidden] { color: var(--role-artist-text); }
+.mmm-me-add[data-kind='venue'] > [aria-hidden] { color: var(--role-venue-text); }
+.mmm-me-add-chip {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
 /* ── Universal search ─────────────────────────────────────────────────── */
 .mmm-search-wrap { flex: 1 1 300px; min-width: 0; }
 .mmm-search-field {
