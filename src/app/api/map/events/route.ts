@@ -57,11 +57,46 @@ export async function GET(request: Request) {
     if (isMapRequestFailure(parsed)) return parsed.error;
     const { queryBbox, genre, clustered, cellDegrees, limit } = parsed;
 
+    // The MAP date strip. `dates` is a comma-separated list of YYYY-MM-DD, and
+    // it is a SET of days rather than a span — Friday and Sunday with nothing
+    // between them is a legal selection, which is what anyone planning a
+    // weekend actually wants. Design System 8's map document is explicit about
+    // that, and about the consequence: a venue with nothing booked on the
+    // chosen days drops OFF the map rather than sitting there as a dead pin.
+    //
+    // Each day becomes a half-open [00:00, next 00:00) window in the SERVER's
+    // zone. That is the same approximation the rest of the product makes about
+    // "a night" and it is worth naming: a member in another timezone asking for
+    // Friday gets Friday where the show is, which is the one they mean.
+    // Absent or unparseable = no date filter at all, i.e. the previous
+    // behaviour, so an old client keeps working.
+    const dateParam = new URL(request.url).searchParams.get('dates');
+    const days = (dateParam ?? '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter((value) => /^\d{4}-\d{2}-\d{2}$/.test(value))
+      .slice(0, 31);
+    const dayWindows = days
+      .map((day) => {
+        const from = new Date(`${day}T00:00:00`);
+        if (Number.isNaN(from.getTime())) return null;
+        const to = new Date(from.getTime() + 86_400_000);
+        return { startsAt: { gte: from, lt: to } };
+      })
+      .filter((window): window is { startsAt: { gte: Date; lt: Date } } => window !== null);
+
     const shows = await db.show.findMany({
       where: {
         status: 'SCHEDULED',
         moderationStatus: 'APPROVED',
+        // Past days are never returned even when explicitly asked for: the strip
+        // only offers future days, so a past date in the query is a stale client
+        // or a hand-edited URL, not a request to browse history.
         startsAt: { gte: new Date() },
+        // AND, not a second top-level OR: `genre` below already uses `OR`, and
+        // in an object literal the later spread would silently replace this one
+        // — a genre-filtered map would quietly ignore the date strip.
+        ...(dayWindows.length ? { AND: [{ OR: dayWindows }] } : {}),
         venueProfile: { is: { type: 'VENUE', discoverable: true, ...bboxWhere(queryBbox) } },
         ...(genre
           ? { OR: [{ tags: { has: genre } }, { headlinerProfile: { is: { genres: { has: genre } } } }] }
