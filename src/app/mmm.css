@@ -1396,3 +1396,25 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-mini svg { position: absolute; inset: 0; overflow: visible; }
 .mmm-player-mini span { position: relative; }
+
+/* Artist and release are separate destinations, so they are separate targets.
+   Underlined rather than coloured: the meta line is already --ink-2, and a
+   second colour there competes with the accent that means "playing". A name
+   with no handler renders as plain text — never a target that goes nowhere. */
+.mmm-player-name {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: rgba(var(--ink-1-rgb), 0.4);
+  text-underline-offset: 3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.mmm-player-name[data-plain] { text-decoration: none; cursor: inherit; }
+.mmm-player-name:hover:not([data-plain]) { color: var(--accent-text); }

@@ -49,7 +49,7 @@ import { useEffect, useRef, useState } from 'react';
 export type MmmPlayerTrack = {
   title: string;
   artist: string;
-  /** Appended to the artist line as "artist · album". */
+  /** Shown after the artist as "artist · album", as its own destination. */
   album?: string;
   /** Fallback when there is no artwork URL. */
   initial: string;
@@ -73,6 +73,8 @@ export function MmmPlayer({
   narrow,
   onNext,
   onPrev,
+  onOpenAlbum,
+  onOpenArtist,
   onSeek,
   onToggleFav,
   onToggleHype,
@@ -104,6 +106,14 @@ export function MmmPlayer({
   narrow: boolean;
   onNext: () => void;
   onPrev: () => void;
+  /**
+   * The artist name in the meta line. A SEPARATE destination from the release —
+   * omit it and the name renders as plain text rather than a target that does
+   * nothing.
+   */
+  onOpenArtist?: () => void;
+  /** The release name in the meta line. Separate from the artist. */
+  onOpenAlbum?: () => void;
   onSeek: (value: number) => void;
   onToggleFav: () => void;
   onToggleHype: () => void;
@@ -155,7 +165,14 @@ export function MmmPlayer({
   if (!track) return null;
 
   const art = Math.max(40, anchorHeight - 24);
-  const meta = [track.artist, track.album].filter(Boolean).join(' · ');
+  /* Artist and release are separate destinations, so they are separate
+     targets. One run of grey text that silently opens one of two different
+     pages is the thing this replaces — and a name with no handler stays plain
+     text rather than becoming a target that goes nowhere. */
+  const nameLink = (text: string, onClick?: () => void) =>
+    onClick
+      ? <button className="mmm-player-name" onClick={onClick} type="button">{text}</button>
+      : <span className="mmm-player-name" data-plain="">{text}</span>;
 
   // The retired disc. Same squircle ratio as the logo trigger and the artwork,
   // so the three read as one family.
@@ -235,7 +252,11 @@ export function MmmPlayer({
 
       <div className="mmm-player-body">
         <Marquee className="mmm-player-track" text={track.title} />
-        <div className="mmm-player-artist">{meta}</div>
+        <div className="mmm-player-artist">
+          {nameLink(track.artist, onOpenArtist)}
+          {track.album ? <span aria-hidden="true"> · </span> : null}
+          {track.album ? nameLink(track.album, onOpenAlbum) : null}
+        </div>
 
         {!narrow && (
           <div className="mmm-player-scrub">
