@@ -277,42 +277,26 @@ export function MmmMap({
 
       {active && (
         <>
+          {/* One chip row: the LAYER, and nothing else.
+              `templates/simplified-app/map.html` — the map's own design source
+              — carries exactly three chips and no second row. The scope chips
+              (County/State/Country/Global) and the genre chips were built here
+              and appear in no design; two rows of filters above a map is most
+              of a phone screen spent on controls before you have seen a pin.
+
+              The API still accepts `genre`, so the filter is not gone from the
+              backend — only from a control surface that never had it. */}
           <div className="mmm-map-controls">
             <div className="mmm-control-row">
               {LAYERS.map((entry) => (
                 <button
                   aria-pressed={layer === entry.id}
-                  className="mmm-chip"
+                  className="mmm-map-chip"
                   key={entry.id}
                   onClick={() => setLayer(entry.id)}
                   type="button"
                 >
                   {entry.label}
-                </button>
-              ))}
-              <div aria-hidden="true" className="mmm-control-divider" />
-              {MAP_SCOPES.map((entry) => (
-                <button
-                  aria-pressed={scope === entry}
-                  className="mmm-chip"
-                  key={entry}
-                  onClick={() => setScope(entry)}
-                  type="button"
-                >
-                  {entry.charAt(0).toUpperCase() + entry.slice(1)}
-                </button>
-              ))}
-            </div>
-            <div className="mmm-control-row">
-              {GENRES.map((entry) => (
-                <button
-                  aria-pressed={genre === entry}
-                  className="mmm-chip mmm-chip-genre"
-                  key={entry}
-                  onClick={() => setGenre(entry)}
-                  type="button"
-                >
-                  {entry}
                 </button>
               ))}
             </div>
@@ -352,13 +336,17 @@ export function MmmMap({
               </div>
             </div>
           )}
-          <div className="mmm-result-line" role="status">
-            {failed
-              ? 'The map could not load. Everything else still works.'
-              : paused
-                ? 'Map lookups are paused right now — try again shortly.'
-                : resultLine(total, layer, genre)}
-          </div>
+          {/* No standing result caption: the map's design source has none, and
+              "tap a pin for their page" is an instruction the pins already
+              give by being tappable. The two FAILURE lines stay — those say
+              something the map cannot show by itself. */}
+          {(failed || paused) && (
+            <div className="mmm-result-line" role="status">
+              {failed
+                ? 'The map could not load. Everything else still works.'
+                : 'Map lookups are paused right now — try again shortly.'}
+            </div>
+          )}
         </>
       )}
     </div>

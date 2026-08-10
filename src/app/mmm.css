@@ -1344,3 +1344,27 @@ html.mmm-locked .site-shell > main {
   }
   .mmm-sheet { animation-name: mmmSheetUpWide; }
 }
+
+/* ── MAP controls ─────────────────────────────────────────────────────────
+   Translated from `design/design-system-8/templates/simplified-app/map.html`,
+   the map's own design source — mono, uppercase, wide tracking, and a SOLID
+   accent fill when active rather than the tinted treatment the generic
+   `.mmm-chip` uses. The map's chips sit over a photograph of a city, so a
+   translucent chip is unreadable in a way the same chip over a pane is not. */
+.mmm-map-chip {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 8px 15px;
+  cursor: pointer;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
+}
+.mmm-map-chip[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  border-color: var(--accent);
+}
