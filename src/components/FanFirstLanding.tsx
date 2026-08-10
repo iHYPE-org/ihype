@@ -80,8 +80,27 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
               Already invited? <Link className="fan-entry-secondary" href="/login">Sign in</Link>
             </p>
 
+            {/* This line used to read "No ads between songs", which was false
+                and is the one claim on this page the product contradicts
+                directly: show-composer.ts injects `kind: 'AD'` breaks into a
+                radio show's sequence every `advertising.frequency` tracks, and
+                ShowSequencePlayer plays them. Ads are how the platform is
+                funded — the charter takes 0% of a ticket — so denying them on
+                the front page misstated the business model, not a detail.
+
+                The model is a radio one, and the copy now says so. Two facts
+                back it: the spots are audio only (the banner-ad system was
+                retired outright — see the AdSubmission row in CLAUDE.md), and
+                every advertiser category on offer is music-industry —
+                AdvertiserCategory is LABEL, VENUE_PROMOTER, GEAR, TICKETING,
+                MERCH, TOUR and nothing else.
+
+                Note the column is nullable, so "music-only" describes what
+                signup offers rather than a constraint the database enforces.
+                If that ever needs to be a promise rather than a practice, make
+                the field required before strengthening this line. */}
             <p className="fan-entry-assurance">
-              Free forever <i aria-hidden="true">·</i> No ads between songs <i aria-hidden="true">·</i> We never sell your data
+              Free forever <i aria-hidden="true">·</i> Funded like radio, with music-only ads <i aria-hidden="true">·</i> We never sell your data
             </p>
           </div>
 
