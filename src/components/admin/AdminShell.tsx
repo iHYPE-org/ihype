@@ -2,6 +2,7 @@
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
+import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 
 type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'system'|'growth';
 
@@ -89,6 +90,19 @@ export function AdminShell({ children, name, email }: Props) {
           <span className="ops-search-hint"><kbd>⌘K</kbd> {t('adminAdminShell.search', 'Search')}</span>
         </div>
         <div className="ops-topbar-right">
+          {/* The way out to the member app. An administrator account is a
+              normal member as well — nothing gates /app on role, so this
+              account has a fan profile, hypes and tickets like anyone else —
+              but /admin is a fixed shell with no link to the product it
+              administers, so the only route across was editing the URL.
+
+              It is NOT impersonation: this is the operator's own account
+              seeing its own data. Impersonating another member is a separate
+              control with an audit trail behind it. */}
+          <Link className="ops-topbar-app" href={WORKBENCH_PATH} title={t('adminAdminShell.viewAppTitle', 'Open the member app as this account')}>
+            {t('adminAdminShell.viewApp', 'View app')}
+            <span aria-hidden="true">›</span>
+          </Link>
           <span className="ops-chip ops-chip-sm">{t('adminAdminShell.operator', 'OPERATOR')}</span>
           <div className="ops-topbar-avatar" title={name ?? email ?? t('adminAdminShell.operatorTitle', 'Operator')}>{ops}</div>
         </div>

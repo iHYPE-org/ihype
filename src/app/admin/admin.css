@@ -197,3 +197,25 @@
   .admin-workbench-card { transition: none; }
   .admin-workbench-card:hover { transform: none; }
 }
+
+/* "View app" — the console's one link out to the product it administers.
+   Sized and coloured as a quiet control, not a primary action: an operator
+   reaches for it occasionally, and it sits beside the OPERATOR chip in a bar
+   whose job is status rather than navigation. */
+.ops-topbar-app {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  font-family: var(--f-m, monospace);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  text-decoration: none;
+  transition: border-color .15s, color .15s;
+}
+.ops-topbar-app:hover,
+.ops-topbar-app:focus-visible { border-color: var(--accent); color: var(--accent-text); }
