@@ -52,6 +52,9 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const mapActive = activeModule === 'map';
 
   const [navOpen, setNavOpen] = useState(false);
+  // Tapping the logo also wakes the player: on a wide screen it has usually
+  // retired to its disc by then, and the logo is the one control always there.
+  const [playerWake, setPlayerWake] = useState(0);
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
@@ -209,6 +212,7 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
 
   const toggleNav = useCallback(() => {
     setSheet(null);
+    setPlayerWake((value) => value + 1);
     setNavOpen((open) => !open);
   }, []);
 
@@ -234,6 +238,7 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           hidden={navOpen}
           hyped={hyped}
           narrow={narrow}
+          wake={playerWake}
           onNext={playNext}
           onPrev={playPrevious}
           // The pill speaks 0-100; the audio element speaks seconds. Converted

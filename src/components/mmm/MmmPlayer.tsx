@@ -69,6 +69,7 @@ export function MmmPlayer({
   hypeLabel,
   hypeLocked,
   hyped,
+  idleMs = 10000,
   narrow,
   onNext,
   onPrev,
@@ -81,6 +82,7 @@ export function MmmPlayer({
   progress,
   track,
   volume,
+  wake = 0,
 }: {
   anchorHeight?: number;
   canFavourite: boolean;
@@ -94,6 +96,11 @@ export function MmmPlayer({
   hypeLabel?: string;
   hypeLocked?: boolean;
   hyped: boolean;
+  /**
+   * How long the pill waits before retiring to its disc. The design's own
+   * default; exposed so a test does not have to wait ten seconds.
+   */
+  idleMs?: number;
   narrow: boolean;
   onNext: () => void;
   onPrev: () => void;
@@ -108,15 +115,106 @@ export function MmmPlayer({
   track: MmmPlayerTrack | null;
   /** 0–100. */
   volume: number;
+  /**
+   * Bump to bring the pill back from its retired disc and restart the idle
+   * countdown. Any number will do — only a CHANGE is read. The shell bumps it
+   * when the logo is tapped, because on a wide screen the player has usually
+   * retired by then and the logo is the control that is always there.
+   */
+  wake?: number;
 }) {
+  /**
+   * The pill retires to a disc after `idleMs` of nothing happening, and comes
+   * back when it is touched or when `wake` changes.
+   *
+   * Two things about this are the design's and are easy to get backwards:
+   *
+   *  - **It is a WIDE-screen behaviour.** `PlayerPill.jsx` computes
+   *    `mini = !narrow && !awake && !dimmed` and returns early from the timer
+   *    on `narrow`, so a phone never retires. The `wake` prop's own comment
+   *    says "wake the player on a phone", which is a summary that disagrees
+   *    with the implementation — the implementation wins.
+   *  - **One timer, not a CSS animation and not the document timeline.** That
+   *    timeline does not advance in every context this runs in, and a
+   *    both-filled animation then holds its from-state forever.
+   */
+  const [awake, setAwake] = useState(true);
+  const rootRef = useRef<HTMLDivElement | null>(null);
+  const rouse = () => setAwake(true);
+
+  useEffect(() => { setAwake(true); }, [wake]);
+
+  useEffect(() => {
+    if (narrow || hidden || !awake) return undefined;
+    const timer = window.setTimeout(() => setAwake(false), idleMs);
+    return () => window.clearTimeout(timer);
+    // Every value that means "something is happening" restarts the countdown.
+  }, [awake, hidden, idleMs, narrow, playing, progress, volume, hyped, faved, track?.title]);
+
   // null renders nothing. Never invent a placeholder track.
   if (!track) return null;
 
   const art = Math.max(40, anchorHeight - 24);
   const meta = [track.artist, track.album].filter(Boolean).join(' · ');
 
+  // The retired disc. Same squircle ratio as the logo trigger and the artwork,
+  // so the three read as one family.
+  if (!narrow && !awake && !hidden) {
+    const size = anchorHeight;
+    const radius = Math.round(size * 0.342);
+    const inset = 2;
+    const pct = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
+    return (
+      <button
+        aria-label={`Show the player — ${track.title} by ${track.artist}`}
+        className="mmm-player-mini"
+        onClick={rouse}
+        style={{ width: size, height: size, borderRadius: radius }}
+        type="button"
+      >
+        {/* `pathLength` normalises the rounded rectangle's perimeter to 100, so
+            progress maps straight onto it with no arc-length maths — and stays
+            correct if the corner radius changes. */}
+        <svg aria-hidden="true" height={size} viewBox={`0 0 ${size} ${size}`} width={size}>
+          <rect
+            fill="none"
+            height={size - inset * 2}
+            rx={radius - inset}
+            stroke="var(--hair-100)"
+            strokeWidth={2}
+            width={size - inset * 2}
+            x={inset}
+            y={inset}
+          />
+          <rect
+            fill="none"
+            height={size - inset * 2}
+            pathLength={100}
+            rx={radius - inset}
+            stroke="var(--accent)"
+            strokeDasharray={100}
+            strokeDashoffset={100 - pct}
+            strokeLinecap="round"
+            strokeWidth={2}
+            width={size - inset * 2}
+            x={inset}
+            y={inset}
+          />
+        </svg>
+        <span>{track.initial}</span>
+      </button>
+    );
+  }
+
   return (
-    <div aria-hidden={hidden} className="mmm-player" data-hidden={hidden} style={{ minHeight: anchorHeight }}>
+    <div
+      aria-hidden={hidden}
+      className="mmm-player"
+      data-hidden={hidden}
+      onPointerDown={rouse}
+      ref={rootRef}
+      style={{ minHeight: anchorHeight }}
+    >
       {/* The continuous hairline. A pseudo-element would inherit the capsule's
           radius; this is a real child so it can span the pill's full width. */}
       <span aria-hidden="true" className="mmm-player-hairline" />

@@ -1375,3 +1375,24 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-on-accent);
   border-color: var(--accent);
 }
+
+/* The retired player. Same squircle ratio as the logo trigger and the artwork
+   (0.342) so the three read as one family; the progress ring is drawn on the
+   perimeter rather than as a bar, because at this size a bar is a smudge. */
+.mmm-player-mini {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  cursor: pointer;
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+}
+.mmm-player-mini svg { position: absolute; inset: 0; overflow: visible; }
+.mmm-player-mini span { position: relative; }
