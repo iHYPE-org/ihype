@@ -206,7 +206,10 @@ export function MmmPlayer({
           />
         )}
 
-        {canHype && (
+        {/* No HYPE on a phone. `PlayerPill.jsx` gates it `canHype && !compact
+            && !narrow`: at 393px the bar is search, artwork, title and play,
+            and HYPE is reachable from the track and artist pages. */}
+        {canHype && !narrow && (
           <button
             aria-label={
               hypeLocked

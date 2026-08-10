@@ -1018,39 +1018,46 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-nav-anchor[data-open='true'] .mmm-ray { opacity: 1; pointer-events: auto; }
 
-.mmm-nav-pill {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 19px;
-  letter-spacing: -0.01em;
-  padding: 13px 22px;
+/* An icon ray is a DISC: 66px square, nothing sets its width from content, so
+   width and height are given outright and the text padding drops out.
+   `overflow: visible` is load-bearing — the mark is 92px (the pin 100px) and
+   is MEANT to break the disc's edge on every side, so the three read as
+   objects sitting on the frame rather than buttons in a row. */
+.mmm-ray-disc {
+  width: 66px;
+  height: 66px;
+  padding: 0;
+  overflow: visible;
   border-radius: 9999px;
   border: 1px solid var(--hair-150);
   background: var(--bg-2);
   color: var(--ink);
 }
-.mmm-nav-pill:hover,
-.mmm-nav-pill[aria-current='page'] {
+.mmm-ray-disc:hover,
+.mmm-ray-disc[aria-current='page'] {
   background: var(--accent);
   color: var(--ink-on-accent);
   border-color: var(--accent);
 }
 
-.mmm-nav-item {
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 500;
-  padding: 11px 18px;
-  border-radius: 9999px;
-  border: 1px solid var(--hair-120);
-  background: var(--bg-2);
-  color: var(--ink-a85);
-}
-.mmm-nav-item:hover,
-.mmm-nav-item[aria-current='page'] {
-  background: var(--accent);
-  color: var(--ink-on-accent);
-  border-color: var(--accent);
+/* Absolutely centred, not laid out. `place-items: center` on a grid whose item
+   is bigger than its track resolves to the START edge — CSS's
+   overflow-alignment safety — which is exactly why an oversized mark sits down
+   and to the right of centre. Pinning 50/50 and pulling back half its own size
+   is immune to it. */
+.mmm-ray-glyph {
+  display: block;
+  overflow: visible;
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  /* Embossed: one dark stroke pushed down, one light stroke pulled up, both
+     behind the mark, so the line reads as pressed into the surface. Filters
+     rather than duplicated paths — a filter follows whatever the geometry is,
+     so a redrawn glyph needs no second copy kept in sync. Sub-pixel on purpose:
+     at 1.55 stroke a full pixel of relief becomes a visible double line. */
+  filter: drop-shadow(0 1px 0.7px rgba(4, 8, 18, 0.7)) drop-shadow(0 -0.8px 0.6px rgba(255, 255, 255, 0.3));
 }
 
 .mmm-nav-hint {

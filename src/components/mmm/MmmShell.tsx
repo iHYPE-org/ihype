@@ -52,7 +52,6 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const mapActive = activeModule === 'map';
 
   const [navOpen, setNavOpen] = useState(false);
-  const [navSection, setNavSection] = useState<MmmModuleId | 'root'>('root');
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
@@ -151,11 +150,10 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   // pointing at the wrong profile.
   const canHype = !currentTrack && Boolean(nowPlaying?.artistProfileId);
 
-  // Navigation closes the nav and resets it to level 1, per the interaction
-  // table ("Tap submenu item → navigates, closes nav, resets section to root").
+  // Navigating closes the nav. There is no section to reset — the arc is one
+  // level of three discs, per ArcNav.d.ts.
   useEffect(() => {
     setNavOpen(false);
-    setNavSection('root');
   }, [pathname]);
 
   // Leaving the map closes any open pin sheet — it belongs to the map, and a
@@ -172,7 +170,6 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
 
   const closeNav = useCallback(() => {
     setNavOpen(false);
-    setNavSection('root');
   }, []);
 
   // The heart writes through to /api/hype — the same toggle endpoint the artist
@@ -212,7 +209,6 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
 
   const toggleNav = useCallback(() => {
     setSheet(null);
-    setNavSection('root');
     setNavOpen((open) => !open);
   }, []);
 
@@ -257,12 +253,9 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
         {/* Always mounted: the arc animates between states, and unmounting it
             would make every open a fresh mount with no closing transition. */}
         <MmmNav
-          activeItemId={activeItemId}
           activeModule={activeModule}
           onClose={closeNav}
-          onSection={setNavSection}
           open={navOpen}
-          section={navSection}
         />
 
         <button

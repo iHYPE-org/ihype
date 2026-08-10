@@ -71,17 +71,34 @@ describe('MMM_NAV manifest', () => {
 });
 
 describe('radial arc geometry', () => {
-  it('has three level-1 slots and five level-2 slots at both breakpoints', () => {
+  // The design's own tables, asserted literally. The previous values here were
+  // hand-tuned and disagreed with `components/shell/ArcNav.jsx` in every slot
+  // at both breakpoints, while the breakpoint and the delays happened to match
+  // — so nothing caught it. Copied numbers are worth pinning; derived ones are
+  // not, and these are copied.
+  it('matches the design system’s slot tables exactly', () => {
+    expect(ARC.wide.level1.map(({ x, y }) => [x, y])).toEqual([
+      [5, -192], [115, -152], [182, -48],
+    ]);
+    expect(ARC.narrow.level1.map(({ x, y }) => [x, y])).toEqual([
+      [4, -176], [100, -132], [165, -43],
+    ]);
+  });
+
+  // "There is no second level: Music's sections are tabs at the top of the
+  // Music pane" — ArcNav.d.ts. A second arc would be a duplicate route to the
+  // five destinations MmmMusic's tab strip already carries.
+  it('has exactly one level, of three discs, at both breakpoints', () => {
     for (const breakpoint of ['wide', 'narrow'] as const) {
-      expect(arcSlotsFor(1, breakpoint)).toBe(3);
-      expect(arcSlotsFor(2, breakpoint)).toBe(5);
+      expect(arcSlotsFor(breakpoint)).toBe(3);
+      expect(Object.keys(ARC[breakpoint])).toEqual(['level1']);
     }
   });
 
-  // The arc has exactly five slots. A sixth MUSIC item would be in the manifest
-  // and invisible on screen — the same failure class as the clipped submenu.
-  it('has a slot for every MUSIC item and no item without a slot', () => {
-    expect(MMM_MUSIC_TABS.length).toBe(arcSlotsFor(2));
+  it('has a disc for every module and no module without one', () => {
+    for (const breakpoint of ['wide', 'narrow'] as const) {
+      expect(ARC[breakpoint].level1.length).toBe(MMM_NAV.length);
+    }
   });
 
   it('unfurls upward from the thumb: ME first, then MUSIC, then MAP', () => {
@@ -89,54 +106,38 @@ describe('radial arc geometry', () => {
     expect(delays).toEqual([60, 30, 0]);
   });
 
-  it('staggers every level-2 slot distinctly and monotonically', () => {
+  it('fans every disc up and to the right of the logo', () => {
     for (const breakpoint of ['wide', 'narrow'] as const) {
-      const delays = ARC[breakpoint].level2.map((offset) => offset.delayMs);
-      expect(new Set(delays).size).toBe(delays.length);
-      expect([...delays].sort((a, b) => a - b)).toEqual(delays);
+      for (const offset of ARC[breakpoint].level1) {
+        expect(offset.y).toBeLessThan(0);
+        expect(offset.x).toBeGreaterThanOrEqual(0);
+      }
     }
   });
 
-  it('fans every item up and to the right of the logo', () => {
+  // A collision is the "one blob" bug in nav form: two discs stacked, one
+  // unreachable. The design's own note gives the rule — centres need roughly
+  // 104px between them, because the 92px MARK sets the footprint, not the 66px
+  // disc it sits in.
+  it('keeps every pair of disc centres about 104px apart', () => {
     for (const breakpoint of ['wide', 'narrow'] as const) {
-      for (const level of ['level1', 'level2'] as const) {
-        for (const offset of ARC[breakpoint][level]) {
-          expect(offset.y).toBeLessThan(0);
-          expect(offset.x).toBeGreaterThanOrEqual(0);
+      const slots = ARC[breakpoint].level1;
+      for (let i = 0; i < slots.length; i += 1) {
+        for (let j = i + 1; j < slots.length; j += 1) {
+          const dx = slots[i].x - slots[j].x;
+          const dy = slots[i].y - slots[j].y;
+          expect(Math.hypot(dx, dy)).toBeGreaterThan(104);
         }
       }
     }
   });
 
-  // A collision here is the "one blob" bug in nav form: two pills stacked, one
-  // unreachable. The pills are ~46px tall and up to ~180px wide, so slots must
-  // be separated on at least one axis by more than that.
-  it('separates every pair of slots in the same fan', () => {
-    for (const breakpoint of ['wide', 'narrow'] as const) {
-      for (const level of ['level1', 'level2'] as const) {
-        const slots = ARC[breakpoint][level];
-        for (let i = 0; i < slots.length; i += 1) {
-          for (let j = i + 1; j < slots.length; j += 1) {
-            const apart = Math.abs(slots[i].x - slots[j].x) > 60
-              || Math.abs(slots[i].y - slots[j].y) > 46;
-            expect(apart).toBe(true);
-          }
-        }
-      }
-    }
-  });
-
-  // The narrow arc is drawn for a 375px frame (iPhone SE 2, the smallest
-  // breakpoint the design system names). Slot 5 sits at x=226 and has the least
-  // headroom of any slot, so a longer MUSIC label is the thing most likely to
-  // push a pill off-screen — which is why the width is derived from the actual
-  // longest label in the manifest rather than hardcoded. DM Sans 14px averages
-  // ~0.54em per character, plus the design's 18px horizontal padding each side.
-  it('keeps every narrow-arc pill inside a 375px frame, using the real labels', () => {
-    const longest = Math.max(...MMM_MUSIC_TABS.map((item) => item.label.length));
-    const pillWidth = Math.ceil(longest * 14 * 0.54) + 36;
-    for (const offset of ARC.narrow.level2) {
-      expect(offset.x + pillWidth).toBeLessThanOrEqual(375);
+  // The narrow arc is drawn for a 375px frame (iPhone SE 2, the smallest the
+  // design system names). A disc is 66px, but the mark overhangs it, so the
+  // 92px footprint is what has to fit.
+  it('keeps every narrow disc inside a 375px frame at its full mark width', () => {
+    for (const offset of ARC.narrow.level1) {
+      expect(offset.x + 92).toBeLessThanOrEqual(375);
     }
   });
 
