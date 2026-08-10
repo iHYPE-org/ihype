@@ -69,8 +69,18 @@ transport and HYPE and **none of the following**, verified by grep:
 | `left` / `bottom` / `width` | docking: `left` = logo width + gap; width defaults to `min(760px, 100vw - 150px)` |
 | `seconds` on the track | "Both the bar and the full player read it, so the two surfaces cannot disagree" |
 
-`narrow` also differs: the design drops **prev/next, favourite and the volume
-track**; the code drops the entire scrub row, taking **seek** with it.
+**Correction (2026-08-10, after reading `PlayerPill.jsx`).** An earlier draft
+of this document claimed `narrow` differed — that the design keeps seek on a
+phone and the code drops it. **That was wrong, and acting on it would have
+broken the design.** The `.d.ts` comment lists three things `narrow` drops, but
+the implementation drops the entire scrub row (`narrow ? null :`, line 476) and
+replaces it with a full-bleed progress line on the pill's own top edge — "the
+scrub row below is for aiming; this is for knowing". The live code already does
+exactly that. Read the `.jsx` as well as the `.d.ts`; the prop comment was a
+summary, not the specification.
+
+The one real `narrow` difference: the design drops **HYPE** on a phone
+(`canHype && !compact && !narrow`) and the code keeps it.
 
 **`FullPlayer` is not built at all** — `components/shell/FullPlayer.jsx` exists
 in the design system and has no counterpart in `src/`.
@@ -111,15 +121,18 @@ invented "tap a pin" result line, and chip styling.
 
 1. **Arc nav** — icon discs, drop level 2, correct the slots. Highest visible
    impact and removes an undesigned navigation layer.
-2. **Player pill** — search, expand, wake, queue; correct `narrow` so seek
-   survives on a phone.
+2. **Player pill** — search, expand, wake, queue. NOT the `narrow` scrub row:
+   see the correction in §2, the code is already right.
 3. **`FullPlayer`** — the destination `onExpand` needs.
 4. **Map** — calendar, Near me, venue search.
 5. **`NavHint`**, then the smaller shared components.
 
 ## Note for whoever picks this up
 
-Read the component's `.d.ts` **before** its `.jsx`. The prop comments state the
+Read the `.d.ts` **and then the `.jsx`** — not one or the other. The correction
+in §2 is exactly why: the prop comment summarised what `narrow` drops, the
+implementation dropped more, and trusting the summary alone produced a
+confidently-worded finding that was false. The prop comments state the
 reasoning — why HYPE and favourite are two controls, why `expanded` rather than
 `open`, why `null` renders nothing. Several of the divergences above are things
 the design explicitly warns against, which means they were decided once and then
