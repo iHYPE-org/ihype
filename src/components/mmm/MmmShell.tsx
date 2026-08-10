@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer } from '@/components/mmm/MmmPlayer';
@@ -20,6 +20,12 @@ export type MmmNowPlaying = {
    * guaranteed to fail.
    */
   artistProfileId: string | null;
+  /**
+   * The artist's public page, for the meta line's artist target. Null when the
+   * track has no linked profile — the name then renders as plain text rather
+   * than a link to nowhere.
+   */
+  artistSlug: string | null;
   /** Whether the viewer has already hyped that profile. */
   hyped: boolean;
 } | null;
@@ -47,6 +53,7 @@ export type MmmNowPlaying = {
  */
 export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPlaying: MmmNowPlaying }) {
   const pathname = usePathname() ?? '/app/map';
+  const router = useRouter();
   const activeModule = moduleForPath(pathname);
   const activeItemId = itemForPath(pathname);
   const mapActive = activeModule === 'map';
@@ -238,6 +245,11 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           hidden={navOpen}
           hyped={hyped}
           narrow={narrow}
+          onOpenArtist={
+            nowPlaying?.artistSlug
+              ? () => router.push(`/artists/${nowPlaying.artistSlug}`)
+              : undefined
+          }
           wake={playerWake}
           onNext={playNext}
           onPrev={playPrevious}

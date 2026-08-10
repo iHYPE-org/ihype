@@ -75,6 +75,9 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
         artist: listen.artistName,
         initial: (listen.artistName || listen.title).charAt(0).toUpperCase(),
         artistProfileId: hypeableProfileId,
+        // Already selected above and simply never passed through, which is why
+        // the player's artist name had no destination to point at.
+        artistSlug: listen.artistProfileSlug ?? null,
         hyped: existingHype !== null,
       }
     : null;
