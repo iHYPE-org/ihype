@@ -51,10 +51,17 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
 export function MmmMusic({ tab }: { tab: MusicTabId }) {
   return (
     <>
-      {/* Tabs and the universal search field share ONE row — Design System 8's
-          visual pass collapsed three stacked control rows into this. The
-          wrapper is what makes them share it; the tab strip keeps its own
-          semantics as a nav, and search is not a tab in this generation. */}
+      {/* Tabs on one row, search on the next — the 2026-08-10 template moved
+          them apart. Sharing a row read as tighter and was not: five tabs plus
+          a field wrap to two rows of chips on a phone, which costs more height
+          than the field saved AND shifts the first card by a different amount
+          on each tab, so the module reads as a different page per tab.
+
+          The wrapper is now a column; `.mmm-tabs` holds one line at every
+          width. The strip keeps its `nav` semantics and search is still not a
+          tab. There is deliberately no eyebrow, headline or dek above this:
+          the tab already names the surface, and a standing description of a
+          screen you visit daily is furniture by the third visit. */}
       <div className="mmm-music-controls">
         <nav aria-label="Music" className="mmm-tabs">
           {MMM_MUSIC_TABS.map((item) => (

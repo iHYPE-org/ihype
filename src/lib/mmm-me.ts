@@ -35,7 +35,37 @@ export type MmmMeData = {
   /** Artist and Venue only. Fans have no page creator — removed deliberately. */
   page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' } | null;
   hypeLink: { url: string; clicks: number | null; tickets: number | null; earnedCents: number | null } | null;
+  /**
+   * Whether this account already has an advertiser profile.
+   *
+   * The 2026-08-10 shell template adds Advertiser as a third profile card
+   * beside Artist and Venue. It is NOT in `availableRoles` and must not be: an
+   * advertiser has no `Profile` row and no dashboard of this shape — it has
+   * `/advertise/dashboard` — so putting it in the role switcher would offer a
+   * tab that renders nothing. It is a card and an add button, not a role.
+   */
+  hasAdvertiser: boolean;
+  /**
+   * Valid tickets this account holds, for the My Tickets summary line.
+   *
+   * `null` means the count could not be read, and renders as no line at all
+   * rather than "0 tickets" — the same rule the analytics engine follows,
+   * because a zero is a claim and a failed read is not.
+   */
+  ticketCount: number | null;
 };
+
+/**
+ * What a per-role loader returns.
+ *
+ * The three account-level fields are stamped once by `loadMmmMe` and are
+ * deliberately NOT part of this type: a loader that could set `availableRoles`
+ * is a loader that can get it wrong, and two of them once returned an empty
+ * array — which hid the role switcher the moment you switched to a creator
+ * role, leaving no way back to Fan without editing the URL. Naming the seam in
+ * the type is what stops that returning.
+ */
+type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount'>;
 
 const money = (cents: number) => `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 const count = (value: number) => value.toLocaleString('en-US');
@@ -77,11 +107,30 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   // what /api/me already returns as `inviteHexId`.
   const linkProfile = profiles[0] ?? null;
 
+  // Account-level facts, read once and independent of which role is being
+  // viewed. Both are `.catch()`'d separately: a failure hides the advertiser
+  // card and the ticket line rather than taking the whole surface down, which
+  // is the rule the admin workbench and the analytics engine already follow.
+  const [advertiser, ticketCount] = await Promise.all([
+    db.advertiserAccount
+      .findUnique({ where: { userId }, select: { id: true } })
+      .catch(() => null),
+    db.ticket
+      .count({ where: { status: 'VALID', ticketOrder: { buyerUserId: userId } } })
+      .catch(() => null),
+  ]);
+
   // `availableRoles` is stamped here, once, for every branch. The per-role
   // loaders used to each return their own value and two of them returned an
   // empty array — which hid the switcher as soon as you switched to a creator
-  // role, so there was no way back to Fan without editing the URL.
-  const withRoles = (data: MmmMeData): MmmMeData => ({ ...data, availableRoles });
+  // role, so there was no way back to Fan without editing the URL. The two
+  // account-level fields above ride the same seam for the same reason.
+  const withRoles = (data: MmmMeRoleData): MmmMeData => ({
+    ...data,
+    availableRoles,
+    hasAdvertiser: advertiser !== null,
+    ticketCount,
+  });
 
   if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now));
   const profile = profiles.find((entry) => entry.type === (role === 'artist' ? 'ARTIST' : 'VENUE'));
@@ -122,7 +171,7 @@ async function hypeLinkFor(
   };
 }
 
-async function loadFan(userId: string, linkProfile: { id: string; hexId: string } | null, now: Date): Promise<MmmMeData> {
+async function loadFan(userId: string, linkProfile: { id: string; hexId: string } | null, now: Date): Promise<MmmMeRoleData> {
   const [hypesCast, showsAttended, following, orders, hypeLink] = await Promise.all([
     db.profileHypeEvent.count({ where: { userId } }).catch(() => null),
     db.showAttendee.count({ where: { userId } }).catch(() => null),
@@ -147,7 +196,6 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
   return {
     role: 'fan',
     // Overwritten by loadMmmMe — see withRoles().
-    availableRoles: ['fan'],
     stats,
     activityLabel: 'Recent tickets',
     activity: orders.map((order) => ({
@@ -169,7 +217,7 @@ async function loadArtist(
   profile: { id: string; name: string; slug: string; hexId: string; hypeCount: number; isVerified: boolean; verified: boolean; city: string | null; stateRegion: string | null },
   linkProfile: { id: string; hexId: string } | null,
   now: Date,
-): Promise<MmmMeData> {
+): Promise<MmmMeRoleData> {
   const [paidOut, upcoming, followers, releases, hypeLink] = await Promise.all([
     db.accountsPayableEntry.aggregate({
       _sum: { amountCents: true },
@@ -194,8 +242,7 @@ async function loadArtist(
   if (followers !== null) stats.push({ value: count(followers), label: 'Followers' });
 
   return {
-    role: 'artist',
-    availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
+    role: 'artist',  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent payouts',
     activity: releases.map((entry) => ({
@@ -224,7 +271,7 @@ async function loadVenue(
   profile: { id: string; name: string; slug: string; hexId: string; isVerified: boolean; verified: boolean; city: string | null; stateRegion: string | null; capacity: number | null },
   linkProfile: { id: string; hexId: string } | null,
   now: Date,
-): Promise<MmmMeData> {
+): Promise<MmmMeRoleData> {
   const [gate, booked, recentShows, settlements, hypeLink] = await Promise.all([
     db.accountsPayableEntry.aggregate({
       _sum: { amountCents: true },
@@ -259,8 +306,7 @@ async function loadVenue(
   if (profile.capacity) stats.push({ value: count(profile.capacity), label: 'Capacity' });
 
   return {
-    role: 'venue',
-    availableRoles: [],  // Overwritten by loadMmmMe — see withRoles().
+    role: 'venue',  // Overwritten by loadMmmMe — see withRoles().
     stats,
     activityLabel: 'Recent settlements',
     activity: settlements.map((entry) => ({

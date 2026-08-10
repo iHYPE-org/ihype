@@ -314,28 +314,49 @@ html.mmm-locked .site-shell > main {
    the template uses. The row is `position: relative` because the result
    list hangs off it absolutely; anything else and the list would push the
    first row of content down on every keystroke. */
+/* Two rows, not one. The previous generation shared a single row between the
+   tab strip and the search field; the 2026-08-10 template separates them,
+   because five tabs plus a search field wrap to two rows of chips on a phone,
+   and a wrapped strip costs MORE height than the field it was sharing space
+   with — while moving the first card down by a different amount on every tab.
+
+   The tabs now hold one line at every width (`nowrap` below) and search sits
+   beneath, so the content start is at a fixed offset on all five tabs. */
 .mmm-music-controls {
   position: relative;
   display: flex;
-  gap: 10px;
-  align-items: center;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: var(--tab-row-gap, 10px);
   padding: 2px 0 14px;
 }
-.mmm-music-controls .mmm-tabs { flex: 0 1 auto; padding: 0; }
+.mmm-music-controls .mmm-tabs { padding: 0; }
 
-.mmm-tabs { display: flex; gap: 8px; padding: 2px 0 14px; }
+.mmm-tabs { display: flex; gap: var(--tab-gap, 8px); padding: 2px 0 14px; }
 .mmm-tab {
-  flex: 1;
-  padding: 9px 0;
-  border-radius: 10px;
+  /* `0 1 auto` + nowrap, not `flex: 1`. Equal-width tabs force the longest
+     label to set every tab's width and then wrap the strip; sized to content
+     and allowed to shrink, all five fit one line down to 320px. The type ramp
+     is a token so a narrow phone can tighten it without a second rule set. */
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  padding: var(--tab-pad, 9px 14px);
+  border-radius: var(--radius-pill);
   border: 1px solid var(--hair-120);
   background: transparent;
   color: var(--ink-3);
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.82rem;
+  font-size: var(--tab-fs, 0.82rem);
   cursor: pointer;
+  text-align: center;
+}
+/* The strip must never wrap; below this width the type and padding tighten
+   instead. A horizontal scroller was the alternative and is worse — a tab you
+   cannot see is a tab you do not know exists. */
+.mmm-tabs { flex-wrap: nowrap; }
+@media (max-width: 460px) {
+  .mmm-tabs { --tab-gap: 5px; --tab-fs: 0.72rem; --tab-pad: 8px 9px; }
 }
 .mmm-tab[aria-current='page'] {
   border-color: rgba(var(--accent-rgb), 0.45);
@@ -436,23 +457,56 @@ html.mmm-locked .site-shell > main {
 .mmm-me-accordion {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   width: 100%;
   text-align: left;
   background: var(--bg-2);
   border: 1px solid var(--line-2);
   border-radius: var(--radius-card);
-  padding: 14px 18px;
+  padding: 16px 20px;
   cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-default);
 }
+.mmm-me-accordion:hover,
+.mmm-me-accordion:focus-visible { border-color: var(--accent); }
+
+/* Label and detail stack, so the flex child that grows is the pair rather than
+   the label — otherwise the detail line sets its own width and the chevron
+   drifts inward on the rows that have one. */
+.mmm-me-accordion-text { flex: 1; min-width: 0; }
 .mmm-me-accordion-label {
-  flex: 1;
-  min-width: 0;
+  display: block;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 0.94rem;
+  font-size: 1rem;
   letter-spacing: -0.015em;
   color: var(--ink);
+}
+/* Says what is inside without opening it. Truncates rather than wrapping: a
+   two-line detail changes the row's height, and a column of rows at different
+   heights reads as unrelated cards instead of one list. */
+.mmm-me-accordion-detail {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Role-labelled rule above the stat grid inside Profiles. */
+.mmm-me-stats-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 9px;
+}
+.mmm-me-stats-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--hair-70);
 }
 .mmm-me-accordion-chevron {
   flex: 0 0 auto;
@@ -495,8 +549,12 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-me-add[data-kind='artist']:hover { border-color: var(--role-artist); }
 .mmm-me-add[data-kind='venue']:hover { border-color: var(--role-venue); }
+.mmm-me-add[data-kind='advertiser']:hover { border-color: var(--role-advertiser); }
 .mmm-me-add[data-kind='artist'] > [aria-hidden] { color: var(--role-artist-text); }
 .mmm-me-add[data-kind='venue'] > [aria-hidden] { color: var(--role-venue-text); }
+/* The -text variant, not the fill: amber on this ground is 2.63:1 as copy,
+   which is why --role-advertiser-text exists as its own token. */
+.mmm-me-add[data-kind='advertiser'] > [aria-hidden] { color: var(--role-advertiser-text); }
 .mmm-me-add-chip {
   font-family: var(--font-mono);
   font-size: 0.55rem;

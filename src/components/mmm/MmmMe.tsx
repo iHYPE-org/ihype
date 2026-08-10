@@ -40,16 +40,28 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
  * Account rows, which are what most visits are actually for. Collapsed, the
  * whole surface is one screen.
  *
- * "Your year" opens by default because it is the only section that is not an
- * errand — the other three are things you go and do.
+ * Profiles opens by default, and is first: it is the only section that changes
+ * what the account IS, and its add buttons are what a new member came for. The
+ * stats it carries used to be a separate "Your year" section above everything
+ * else, which put a screen of numbers between the member and the thing they
+ * opened ME to do.
  */
 function Accordion({
   children,
   defaultOpen,
+  detail,
   label,
 }: {
   children: React.ReactNode;
   defaultOpen?: boolean;
+  /**
+   * A second line under the label, saying what is inside without opening it.
+   * Added by the 2026-08-10 template: a closed accordion labelled only
+   * "Profiles" tells you nothing about whether opening it is worth the tap.
+   * Omitted rather than rendered empty when the underlying figure could not be
+   * read — see `ticketCount`.
+   */
+  detail?: string | null;
   label: string;
 }) {
   const [open, setOpen] = useState(Boolean(defaultOpen));
@@ -61,7 +73,10 @@ function Accordion({
         onClick={() => setOpen((value) => !value)}
         type="button"
       >
-        <span className="mmm-me-accordion-label">{label}</span>
+        <span className="mmm-me-accordion-text">
+          <span className="mmm-me-accordion-label">{label}</span>
+          {detail ? <span className="mmm-me-accordion-detail">{detail}</span> : null}
+        </span>
         {/* One element rotated, not two glyphs: a single node cannot render a
             chevron that disagrees with aria-expanded. */}
         <span aria-hidden="true" className="mmm-me-accordion-chevron" data-open={open || undefined}>›</span>
@@ -112,45 +127,33 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
-      <Accordion defaultOpen label="Your year">
+
+
+
+
+      <Accordion defaultOpen detail="Fan · add artist, venue or advertiser" label="Profiles">
+      {/* The stats that used to sit in a separate "Your year" section. The
+          2026-08-10 template folds them under Profiles and labels them by role,
+          because a figure like "Shows attended" belongs to the profile it was
+          earned by — and a standing section of numbers above the thing you came
+          to do was the top third of a phone screen. */}
       {data.stats.length > 0 && (
-        <div className="mmm-stat-grid">
-          {data.stats.map((stat) => (
-            <div className="mmm-card" key={stat.label}>
-              <div className="mmm-stat-value">{stat.value}</div>
-              <div className="mmm-stat-label">{stat.label}</div>
-            </div>
-          ))}
-        </div>
+        <>
+          <div className="mmm-me-stats-head">
+            <span className="mmm-eyebrow">{ROLE_LABELS[data.role]} stats</span>
+            <span aria-hidden="true" className="mmm-me-stats-rule" />
+          </div>
+          <div className="mmm-stat-grid" style={{ marginBottom: 16 }}>
+            {data.stats.map((stat) => (
+              <div className="mmm-card" key={stat.label}>
+                <div className="mmm-stat-value">{stat.value}</div>
+                <div className="mmm-stat-label">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {/* Events and tickets have no module in this shell — the design is MAP,
-          MUSIC, ME and the arc nav carries exactly those three, so this is a
-          bridge out to the surfaces that already exist, the same pattern as
-          "Edit page" below.
-
-          It is not decoration: once the legacy shell's own nav started pointing
-          INTO this one (app-nav.ts, DESIGN_SYNC row 273), a member who came in
-          via MAP or MUSIC had no first-class route to their tickets at all —
-          only two taps deep inside the ME → Settings panel. Closing a one-way
-          door in one direction opens one in the other unless both ends have a
-          link. Rendered unconditionally, because every member has tickets to
-          look at even when they have no page to edit. */}
-      </Accordion>
-
-      <Accordion label="My tickets">
-        <p className="mmm-me-note">
-          Your tickets, and the shows you could still get into. Both live on the events
-          surface — this shell has no events module, so it links out rather than keeping
-          a second copy of one.
-        </p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link className="mmm-btn-primary" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
-          <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
-        </div>
-      </Accordion>
-
-      <Accordion label="Profiles">
 
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
@@ -181,6 +184,18 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           Add venue profile
           <span className="mmm-me-add-chip">Verified</span>
         </Link>
+        {!data.hasAdvertiser && (
+          /* Advertiser is a real fifth account type with no Profile row, so it
+             is a card here and never a role in the switcher — it has
+             /advertise/dashboard, not a dashboard of this shape. Hidden once
+             the account has one: this is an ADD button and there is nothing to
+             add twice. */
+          <Link className="mmm-me-add" data-kind="advertiser" href="/advertise/register">
+            <span aria-hidden="true">＋</span>
+            Add advertiser profile
+            <span className="mmm-me-add-chip">Verified</span>
+          </Link>
+        )}
       </div>
 
       <p className="mmm-me-note">
@@ -189,7 +204,19 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </p>
       </Accordion>
 
-      <Accordion label="About me">
+      <Accordion detail={data.ticketCount === null ? null : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · transfer at face value`} label="My Tickets">
+        <p className="mmm-me-note">
+          Your tickets, and the shows you could still get into. Both live on the events
+          surface — this shell has no events module, so it links out rather than keeping
+          a second copy of one.
+        </p>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <Link className="mmm-btn-primary" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
+          <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
+        </div>
+      </Accordion>
+
+      <Accordion detail="What artists and venues see" label="About Me">
       {data.hypeLink && (
         <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
           <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Your HYPE link</div>
