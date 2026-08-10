@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
+import { ME_PANEL_ROWS, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
 const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
@@ -95,6 +96,23 @@ export function MmmMe({ data }: { data: MmmMeData }) {
     const params = new URLSearchParams(searchParams?.toString() ?? '');
     params.set('role', role);
     router.replace(`/app/me?${params.toString()}`);
+  };
+
+  const rawPanel = searchParams?.get('panel');
+  const openPanel = isMePanelId(rawPanel) ? rawPanel : null;
+
+  /**
+   * `push`, not `replace` — closing a drawer should be what Back does, which
+   * is the whole reason this lives in the URL. `scroll: false` because the
+   * drawer opens where the member already is; scrolling to the top would move
+   * the row they just tapped off screen.
+   */
+  const togglePanel = (id: MePanelId) => {
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    if (openPanel === id) params.delete('panel');
+    else params.set('panel', id);
+    const query = params.toString();
+    router.push(query ? `/app/me?${query}` : '/app/me', { scroll: false });
   };
 
   const copy = async () => {
@@ -295,17 +313,59 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
       </Accordion>
 
+      {/* Account panels open IN PLACE, one at a time. They used to be four
+          routes under /app/me/[panel]; the 2026-08-10 template makes ME one
+          column of drawers, and each panel is only a menu of bridge links —
+          no form state — so nothing is lost by not navigating.
+
+          Open state lives in the URL rather than component state, which buys
+          three things a useState could not: /app/me?panel=settings is still
+          deep-linkable (the old routes redirect onto it, so existing links
+          keep working), Back closes the drawer instead of leaving ME, and
+          "one at a time" is structural — a single value cannot hold two. */}
       <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>Account</div>
       <div>
-        {MMM_ME_PANELS.map((panel) => (
-          <Link className="mmm-row" href={panel.href} key={panel.id} style={{ display: 'flex' }}>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="mmm-row-title" style={{ display: 'block' }}>{panel.label}</span>
-              <span className="mmm-row-sub" style={{ display: 'block' }}>{panel.detail}</span>
-            </span>
-            <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-          </Link>
-        ))}
+        {MMM_ME_PANELS.map((panel) => {
+          // The nav list types `id` as a plain string, so this is the narrowing
+          // that lets the row look up its own contents. It is also the check
+          // that keeps the two lists honest: a panel added to the nav without
+          // rows here renders nothing rather than crashing on an undefined
+          // index — and `mmm-me-panels.test.ts` fails the build for it.
+          // Captured as a const rather than narrowed in place: the narrowing
+          // does not survive into the onClick closure, where it is needed.
+          const panelId: MePanelId | null = isMePanelId(panel.id) ? panel.id : null;
+          if (!panelId) return null;
+          const open = openPanel === panelId;
+          return (
+            <div className="mmm-me-section" key={panel.id}>
+              <button
+                aria-expanded={open}
+                className="mmm-me-accordion"
+                onClick={() => togglePanel(panelId)}
+                type="button"
+              >
+                <span className="mmm-me-accordion-text">
+                  <span className="mmm-me-accordion-label">{panel.label}</span>
+                  <span className="mmm-me-accordion-detail">{panel.detail}</span>
+                </span>
+                <span aria-hidden="true" className="mmm-me-accordion-chevron" data-open={open || undefined}>›</span>
+              </button>
+              {open && (
+                <div className="mmm-me-accordion-body">
+                  {ME_PANEL_ROWS[panelId].map((row) => (
+                    <Link className="mmm-row" href={row.href} key={row.href + row.label} style={{ display: 'flex' }}>
+                      <span style={{ flex: 1, minWidth: 0 }}>
+                        <span className="mmm-row-title" style={{ display: 'block' }}>{row.label}</span>
+                        <span className="mmm-row-sub" style={{ display: 'block' }}>{row.detail}</span>
+                      </span>
+                      <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </>
   );
