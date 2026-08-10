@@ -344,6 +344,90 @@ html.mmm-locked .site-shell > main {
   font-weight: 700;
 }
 
+/* ── MAP date strip ───────────────────────────────────────────────────────
+   Events only — an event has a date and a venue or an artist does not, which is
+   also why the API is never sent a `dates` param on those layers.
+
+   A horizontal scroller rather than a wrap: five pills that reflow to two rows
+   push the map down by a row on a phone, and the map is the module. */
+.mmm-date-block { pointer-events: auto; padding: 0 12px 8px; }
+.mmm-date-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+}
+.mmm-date-pill {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  /* 52px wide keeps three glyph rows legible without the strip becoming the
+     subject of the screen; the touch floor in mobile-fit.css raises the height
+     on a coarse pointer. */
+  min-width: 52px;
+  padding: 7px 9px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: var(--bg-2);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.mmm-date-pill[aria-pressed='true'] {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+}
+.mmm-date-dow,
+.mmm-date-mon {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  color: var(--ink-3);
+}
+.mmm-date-pill[aria-pressed='true'] .mmm-date-dow,
+.mmm-date-pill[aria-pressed='true'] .mmm-date-mon { color: inherit; }
+.mmm-date-day {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.mmm-date-pill[aria-pressed='true'] .mmm-date-day { color: inherit; }
+
+.mmm-date-summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-2);
+}
+.mmm-date-label {
+  font-family: var(--font-mono);
+  font-size: 0.52rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-date-value { flex: 1; min-width: 0; font-size: 0.78rem; color: var(--ink); }
+.mmm-date-clear {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
 /* ── ME accordions ────────────────────────────────────────────────────────
    Design System 8's ME surface. The section header is the control, so it takes
    the full row and the whole thing is the hit target — a chevron-sized tap area

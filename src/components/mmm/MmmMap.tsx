@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
+import { describeSelection, stripDays, toDatesParam, toggleDay } from '@/lib/map-dates';
 import {
   MAP_SCOPES,
   PIN_COLLISION,
@@ -74,6 +75,16 @@ export function MmmMap({
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>('events');
+
+  // The date strip. A SET of days, not a span — Design System 8's map document
+  // is explicit that Friday and Sunday with nothing between them is a legal
+  // selection, "which is what anyone planning a weekend actually wants".
+  // Computed once per mount rather than per render: `stripDays(new Date())`
+  // inside the body would produce a new array every render and re-run the
+  // effect below forever.
+  const [days] = useState(() => stripDays(new Date()));
+  const [selectedDays, setSelectedDays] = useState<ReadonlySet<string>>(() => new Set());
+  const datesParam = toDatesParam(selectedDays);
   const [genre, setGenre] = useState<string>('All');
   const [events, setEvents] = useState<MapEventPin[]>([]);
   const [venues, setVenues] = useState<MapVenuePin[]>([]);
@@ -160,6 +171,10 @@ export function MmmMap({
       .map((value) => value.toFixed(4)).join(',');
     const params = new URLSearchParams({ bbox, zoom: map.getZoom().toFixed(2) });
     if (genre !== 'All') params.set('genre', genre);
+    // Only the events layer has dates. Sending them on the venues or artists
+    // layer would be a filter those endpoints do not implement and a URL that
+    // busts their cache for no reason.
+    if (layer === 'events' && datesParam) params.set('dates', datesParam);
     try {
       const response = await fetch(`/api/map/${layer}?${params.toString()}`, { cache: 'no-store' });
       if (response.status === 503) {
@@ -178,7 +193,7 @@ export function MmmMap({
     } catch {
       // Leave the last good set on screen rather than blanking the map.
     }
-  }, [active, genre, layer, ready]);
+  }, [active, datesParam, genre, layer, ready]);
 
   // Debounced against the camera tick: a pan fires `move` per frame, and one
   // request per frame would be a self-inflicted denial of service.
@@ -302,6 +317,41 @@ export function MmmMap({
               ))}
             </div>
           </div>
+          {/* The date strip belongs to the events layer alone: only an event has
+              a date. Venues and artists keep the chips above and nothing else,
+              which is also why the API is not sent a `dates` param for them. */}
+          {layer === 'events' && (
+            <div className="mmm-date-block">
+              <div className="mmm-date-strip" role="group" aria-label="Filter by date">
+                {days.map((day) => (
+                  <button
+                    aria-pressed={selectedDays.has(day.key)}
+                    className="mmm-date-pill"
+                    key={day.key}
+                    onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
+                    type="button"
+                  >
+                    <span className="mmm-date-dow">{day.weekday}</span>
+                    <span className="mmm-date-day">{day.day}</span>
+                    <span className="mmm-date-mon">{day.month}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mmm-date-summary">
+                <span className="mmm-date-label">Dates</span>
+                <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
+                {selectedDays.size > 0 && (
+                  <button
+                    className="mmm-date-clear"
+                    onClick={() => setSelectedDays(new Set())}
+                    type="button"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           <div className="mmm-result-line" role="status">
             {failed
               ? 'The map could not load. Everything else still works.'
