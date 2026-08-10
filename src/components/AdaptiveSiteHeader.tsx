@@ -1,20 +1,32 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
-import { NavDrawer } from '@/components/NavDrawer';
+import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import {
+  buildShellNav, resolveActiveItemId, resolveSection,
+  type ShellAccount, type ShellSectionId,
+} from '@/lib/app-nav';
 
 export function AdaptiveSiteHeader({
+  account,
   inviteOnly,
   label,
 }: {
+  /**
+   * The viewer, for the drawer's nav. Null when signed out or unreadable, in
+   * which case the menu has nothing to list and is not rendered — the header's
+   * sign-in links are the whole menu for a visitor.
+   */
+  account: ShellAccount | null;
   inviteOnly: boolean;
   label: string;
 }) {
@@ -22,6 +34,15 @@ export function AdaptiveSiteHeader({
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [menuDemo, setMenuDemo] = useState(false);
+  const pathname = usePathname();
+  // Opens on the section you are already in, so the menu answers "where else
+  // can I go from here" rather than making you find your own place first.
+  const [openSection, setOpenSection] = useState<ShellSectionId | null>(null);
+  // One source for both drawers. Memoised on `account` because buildShellNav
+  // walks the registry and the header re-renders on every scroll tick.
+  const navItems = useMemo(() => (account ? buildShellNav(account) : []), [account]);
+  const activeItemId = resolveActiveItemId(navItems, pathname, null);
+  const currentSection = resolveSection(pathname);
   const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
@@ -103,7 +124,26 @@ export function AdaptiveSiteHeader({
             <div className="adaptive-site-header-auth">
               <HeaderAuthLinks inviteOnly={inviteOnly} />
             </div>
-            <NavDrawer open={menuOpen} onOpenChange={setMenuOpen} showTrigger={false} />
+            {/* The SAME drawer the app shell renders, from the SAME nav
+                registry. It used to be `NavDrawer`, a second drawer with its
+                own hand-written destination list — which still pointed LISTEN
+                at `/listen?tab=…` months after DESIGN_SYNC row 273 moved those
+                four to `/app/music/*`. Row 273 closed the one-way door in the
+                shell's drawer and left this one open, and this is the drawer a
+                phone actually sees, because the shell's chrome only exists on
+                shell routes. */}
+            {account && (
+              <AppShellDrawer
+                activeItemId={activeItemId}
+                items={navItems}
+                onClose={() => setMenuOpen(false)}
+                onToggleSection={(section) =>
+                  setOpenSection((current) => (current === section ? null : section))
+                }
+                open={menuOpen}
+                openSection={openSection ?? currentSection}
+              />
+            )}
           </>
         ) : (
           <>

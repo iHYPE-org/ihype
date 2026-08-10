@@ -130,7 +130,10 @@ export default async function FanDashboardPage() {
           <p className="fan-dash-intro">{t('meDashboardPage.intro', 'Everything you HYPE, attend, share, and discover becomes part of the signal.')}</p>
         </div>
         <div className="fan-dash-header-actions">
-          <Link className="ihype-btn-outline" href="/listen?tab=seeds">{t('meDashboardPage.startSeed', 'Start Seed')}</Link>
+          {/* Discover, which is `/app/music/discover` since row 273 — the tab
+              that carries the SEEDS badge in the nav registry. This pointed at
+              `/listen?tab=seeds` and was a second way into the legacy deck. */}
+          <Link className="ihype-btn-outline" href="/app/music/discover">{t('meDashboardPage.startSeed', 'Start Seed')}</Link>
         </div>
       </div>
 

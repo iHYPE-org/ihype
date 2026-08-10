@@ -115,6 +115,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                 (The old comment here named `.wb-shell`, a class that no longer
                 exists anywhere in the codebase.) */}
             <AdaptiveSiteHeader
+              account={shellAccount}
               inviteOnly={inviteOnly}
               label={t('layout.primarySiteHeader', 'Primary site header')}
             />
