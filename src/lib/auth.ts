@@ -13,6 +13,7 @@ import { PrismaAdapter } from '@auth/prisma-adapter';
 import { db } from '@/lib/db';
 import { authConfig } from '@/lib/auth.config';
 import { log } from '@/lib/logger';
+import { readImpersonatorId } from '@/lib/impersonation';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 
@@ -86,6 +87,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user.role = typeof token.role === 'string' ? token.role : 'FAN';
         (session.user as { emailVerified?: Date | null }).emailVerified =
           token.emailVerified ? new Date(token.emailVerified as string) : null;
+        // Surfaced so the banner can render and the exit route can authorise.
+        // Read through the guard rather than cast: a claim that is not a
+        // non-empty string is not an impersonation and must never reach a
+        // lookup as a user id.
+        (session.user as { impersonatorId?: string | null }).impersonatorId =
+          readImpersonatorId(token as unknown as Record<string, unknown>);
       }
       return session;
     }

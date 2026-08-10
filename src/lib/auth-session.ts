@@ -7,6 +7,7 @@ import {
   getAuthSessionCookieOptions,
 } from '@/lib/auth-cookie';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { IMPERSONATOR_CLAIM } from '@/lib/impersonation';
 
 export { AUTH_SESSION_MAX_AGE_SECONDS, getAuthSessionCookieName } from '@/lib/auth-cookie';
 
@@ -40,7 +41,15 @@ async function readUserSecurityVersion(user: AuthSessionUser) {
   }
 }
 
-export async function buildAuthSessionCookie(user: AuthSessionUser) {
+/**
+ * Mints the session cookie for `user`.
+ *
+ * `impersonatorId` is the real operator's id when an admin is signing in as
+ * this account, and is written into the signed token as the `imp` claim — so
+ * it cannot be forged by a client, and exiting does not need a second sign-in.
+ * Omit it for every ordinary sign-in, which is all of them but one route.
+ */
+export async function buildAuthSessionCookie(user: AuthSessionUser, impersonatorId?: string) {
   const secret = readRuntimeEnv('AUTH_SECRET');
   if (!secret) return null;
 
@@ -61,6 +70,7 @@ export async function buildAuthSessionCookie(user: AuthSessionUser) {
       iat: now,
       exp: now + AUTH_SESSION_MAX_AGE_SECONDS,
       jti: crypto.randomUUID(),
+      ...(impersonatorId ? { [IMPERSONATOR_CLAIM]: impersonatorId } : {}),
     },
     secret,
     salt: cookieName,
