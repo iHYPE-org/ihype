@@ -15,7 +15,7 @@ import { profileAccentToneIds, profileBackdropToneIds, profileDesignPresetIds } 
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyTurnstileToken } from '@/lib/turnstile';
-import { areRegistrationsEnabledRuntime, isInviteCodeRequiredRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
+import { areRegistrationsEnabledRuntime, isInviteCodeRequiredRuntime, isInviteCodeSharingEnabledRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
 import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
 import { log } from '@/lib/logger';
@@ -170,6 +170,7 @@ export async function POST(request: Request) {
     }
 
     const inviteCodeRequired = await isInviteCodeRequiredRuntime();
+    const sharingAllowed = inviteCodeRequired ? await isInviteCodeSharingEnabledRuntime() : false;
     const submittedInviteCode = body.inviteCode?.trim() || null;
     // Three invite channels: shared codes from BETA_INVITE_CODES (one per
     // distribution channel), single-use codes minted by admins via
@@ -180,6 +181,11 @@ export async function POST(request: Request) {
     // is never "claimed"/consumed: it identifies a real account, not a
     // one-time token, so the same alpha user can invite any number of
     // friends with the same link.
+    //
+    // The first and third are SHARING and are gated behind
+    // `invite_code_sharing`, which is off: for now the landing page's request
+    // form is the only way in, and an admin issues each approved requester a
+    // single-use code. See `isInviteCodeSharingEnabledRuntime`.
     let dbInviteCodeId: string | null = null;
     let refSatisfiesInviteGate = false;
     // A HYPE code typed straight into the invite field — an existing member's
@@ -187,7 +193,7 @@ export async function POST(request: Request) {
     // /invite/[code] link carries). Captured here so it also credits the
     // inviter as a referrer, exactly like arriving via their ?ref= link would.
     let hypeCodeRef: string | null = null;
-    if (inviteCodeRequired && !isValidInviteCode(submittedInviteCode, inviteCodeRequired)) {
+    if (inviteCodeRequired && !(sharingAllowed && isValidInviteCode(submittedInviteCode, inviteCodeRequired))) {
       if (submittedInviteCode) {
         const dbCode = await db.inviteCode.findUnique({
           where: { code: submittedInviteCode.toUpperCase() },
@@ -200,7 +206,7 @@ export async function POST(request: Request) {
         // Like a personal invite link (and unlike an admin code), this is
         // never claimed/consumed, so one member can invite any number of
         // friends with the same code.
-        if (!dbInviteCodeId) {
+        if (!dbInviteCodeId && sharingAllowed) {
           const hypeReferrer = await resolveReferrer(submittedInviteCode);
           if (hypeReferrer) {
             refSatisfiesInviteGate = true;
@@ -208,13 +214,20 @@ export async function POST(request: Request) {
           }
         }
       }
-      if (!dbInviteCodeId && !refSatisfiesInviteGate && body.ref) {
+      if (sharingAllowed && !dbInviteCodeId && !refSatisfiesInviteGate && body.ref) {
         const referrer = await resolveReferrer(body.ref.trim());
         refSatisfiesInviteGate = referrer !== null;
       }
       if (!dbInviteCodeId && !refSatisfiesInviteGate) {
         return NextResponse.json(
-          { error: 'A HYPE code from an existing member (or a beta invite code) is required while invite-only signup is enabled.' },
+          {
+            // The message has to describe the door that is actually open. While
+            // sharing is off, telling someone to go find a member's HYPE code
+            // sends them after a key that no longer fits.
+            error: sharingAllowed
+              ? 'A HYPE code from an existing member (or a beta invite code) is required while invite-only signup is enabled.'
+              : 'iHYPE is invite-only right now, and invites are issued one at a time. Request access from the home page and we will send you a code.',
+          },
           { status: 403 },
         );
       }

@@ -29,6 +29,7 @@ import {
   isRadioEnabledRuntime,
   areMapsEnabledRuntime,
   isInviteCodeRequiredRuntime,
+  isInviteCodeSharingEnabledRuntime,
   isOutboundEmailEnabledRuntime,
   shouldHideDemoContentRuntime
 } from '@/lib/runtime-flags';
@@ -239,6 +240,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const [
     demoLoginsEnabled,
     inviteOnlySignupEnabled,
+    inviteCodeSharingEnabled,
     demoContentHidden,
     blobMediaStorageEnabled,
     ticketPaymentCaptureEnabled,
@@ -253,6 +255,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ] = await Promise.all([
     areDemoLoginsEnabledRuntime(),
     isInviteCodeRequiredRuntime(),
+    isInviteCodeSharingEnabledRuntime(),
     shouldHideDemoContentRuntime(),
     getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()),
     getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()),
@@ -268,6 +271,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const featureFlags = [
     { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
     { key: 'invite_only_signup', label: 'Invite-only signup', enabled: inviteOnlySignupEnabled },
+    { key: 'invite_code_sharing', label: 'Invite code sharing (shared beta codes + member HYPE links)', enabled: inviteCodeSharingEnabled },
     { key: 'hide_demo_content', label: 'Hide demo content', enabled: demoContentHidden },
     { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
     { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled },

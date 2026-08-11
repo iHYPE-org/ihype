@@ -12,9 +12,11 @@ import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import {
-  buildShellNav, resolveActiveItemId, resolveSection,
+  buildShellNav, isShellRoute, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellSectionId,
 } from '@/lib/app-nav';
+import { useMobileShell } from '@/lib/MobileShellContext';
+import { isMmmRoute } from '@/lib/mmm-nav';
 
 export function AdaptiveSiteHeader({
   account,
@@ -43,6 +45,23 @@ export function AdaptiveSiteHeader({
   const navItems = useMemo(() => (account ? buildShellNav(account) : []), [account]);
   const activeItemId = resolveActiveItemId(navItems, pathname, null);
   const currentSection = resolveSection(pathname);
+  const mobileShell = useMobileShell();
+  // Exactly `AppShell`'s own `active` condition. Both components render
+  // `AppShellDrawer` — which is right, they should be the same drawer from the
+  // same registry — but on a route where the shell's chrome is up, rendering
+  // it twice puts two `role="dialog" aria-modal="true"` nodes with the same
+  // label in the document. That is an a11y defect on its own (a screen reader
+  // is offered two identical menus, and `aria-modal` on the hidden one is a
+  // lie), and it broke the app-shell contract suite, where `.shell-drawer`
+  // stopped resolving to one element.
+  //
+  // The header's copy is not redundant: the shell's chrome only exists on
+  // shell routes, so on everything else this is the only drawer a phone has.
+  // It steps aside rather than being removed.
+  const appShellOwnsDrawer = isShellRoute(pathname)
+    && pathname !== '/listen'
+    && !isMmmRoute(pathname)
+    && !mobileShell?.active;
   const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
@@ -132,7 +151,7 @@ export function AdaptiveSiteHeader({
                 shell's drawer and left this one open, and this is the drawer a
                 phone actually sees, because the shell's chrome only exists on
                 shell routes. */}
-            {account && (
+            {account && !appShellOwnsDrawer && (
               <AppShellDrawer
                 activeItemId={activeItemId}
                 items={navItems}
