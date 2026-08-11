@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import { AdminReportActions, AdminVerificationActions } from '@/components/AdminModerationActions';
 import { AdminPrivacyRequestActions } from '@/components/AdminPrivacyRequestActions';
 import { AdminFeatureFlags } from '@/components/AdminFeatureFlags';
+import { MintInviteCodes } from '@/components/admin/MintInviteCodes';
 import { FeatureToggle } from '@/components/admin/FeatureToggle';
 import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
@@ -905,6 +906,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
       <section className="section">
         <h2>{t('adminPage.inviteCodes', 'Invite Codes')}</h2>
+        {/* The only door, while `invite_code_sharing` is off: a request comes
+            in through the workbench queue above, and the operator issues a
+            single-use code here. */}
+        <MintInviteCodes />
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
           <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
             {t('adminPage.viewAllViaApi', 'View all via API')}
@@ -914,7 +919,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </a>
         </div>
         {recentInviteCodes.length === 0 ? (
-          <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet. POST to /api/admin/invite-codes to generate some.')}</p>
+          <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet — mint one above to admit someone from the access-request queue.')}</p>
         ) : (
           <div className="admin-list">
             {recentInviteCodes.map((code) => (
