@@ -17,6 +17,7 @@ import {
   type ShellAccount, type ShellNavItem, type ShellSectionId,
 } from '@/lib/app-nav';
 import { isMmmRoute } from '@/lib/mmm-nav';
+import { setAppShellChromeActive } from '@/lib/shell-chrome';
 
 /**
  * The signed-in app shell — one screen, chrome that never remounts.
@@ -109,7 +110,14 @@ export function AppShell({
   useEffect(() => {
     const root = document.documentElement;
     root.classList.toggle('ihype-shell-locked', active);
-    return () => root.classList.remove('ihype-shell-locked');
+    // Published in the same effect on purpose: the header is stood down
+    // visually by that class and stands its drawer down by this flag, so the
+    // two can never disagree. See src/lib/shell-chrome.ts.
+    setAppShellChromeActive(active);
+    return () => {
+      root.classList.remove('ihype-shell-locked');
+      setAppShellChromeActive(false);
+    };
   }, [active]);
 
   // Contract rule 3 + 4: content scrollTop, threshold 24, mobile only.

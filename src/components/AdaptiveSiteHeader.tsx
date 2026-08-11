@@ -12,11 +12,10 @@ import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import {
-  buildShellNav, isShellRoute, resolveActiveItemId, resolveSection,
+  buildShellNav, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellSectionId,
 } from '@/lib/app-nav';
-import { useMobileShell } from '@/lib/MobileShellContext';
-import { isMmmRoute } from '@/lib/mmm-nav';
+import { useAppShellChromeActive } from '@/lib/shell-chrome';
 
 export function AdaptiveSiteHeader({
   account,
@@ -45,23 +44,23 @@ export function AdaptiveSiteHeader({
   const navItems = useMemo(() => (account ? buildShellNav(account) : []), [account]);
   const activeItemId = resolveActiveItemId(navItems, pathname, null);
   const currentSection = resolveSection(pathname);
-  const mobileShell = useMobileShell();
-  // Exactly `AppShell`'s own `active` condition. Both components render
-  // `AppShellDrawer` — which is right, they should be the same drawer from the
-  // same registry — but on a route where the shell's chrome is up, rendering
-  // it twice puts two `role="dialog" aria-modal="true"` nodes with the same
-  // label in the document. That is an a11y defect on its own (a screen reader
-  // is offered two identical menus, and `aria-modal` on the hidden one is a
-  // lie), and it broke the app-shell contract suite, where `.shell-drawer`
-  // stopped resolving to one element.
+  // Both components render `AppShellDrawer` — which is right, they should be
+  // the same drawer from the same registry — but rendering it twice puts two
+  // `role="dialog" aria-modal="true"` nodes with the same label in the
+  // document. That is an a11y defect on its own (a screen reader is offered
+  // two identical menus, and `aria-modal` on the hidden one is a lie), and it
+  // broke the app-shell contract suite, where `.shell-drawer` stopped
+  // resolving to one element.
+  //
+  // `AppShell` PUBLISHES whether its chrome is up rather than this component
+  // re-deriving it: an earlier attempt duplicated the condition here, and the
+  // two copies drifted — the header stood down on a route where the shell was
+  // rendering nothing, leaving a phone with no menu at all.
   //
   // The header's copy is not redundant: the shell's chrome only exists on
   // shell routes, so on everything else this is the only drawer a phone has.
   // It steps aside rather than being removed.
-  const appShellOwnsDrawer = isShellRoute(pathname)
-    && pathname !== '/listen'
-    && !isMmmRoute(pathname)
-    && !mobileShell?.active;
+  const appShellOwnsDrawer = useAppShellChromeActive();
   const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
