@@ -70,7 +70,7 @@ export function AdvertiserRegisterForm() {
         <div className="aar-eyebrow">{t('advertiserRegisterForm.eyebrow', '3rd-Party Advertiser Account')}</div>
         <h1 className="aar-title">{t('advertiserRegisterForm.title', 'Manage your ad campaigns.')}</h1>
         <p className="aar-sub">
-          {t('advertiserRegisterForm.sub', 'For music stores, merch printers, live-production companies, and other music-adjacent businesses — no artist, venue, or DJ account required, and no public profile page.')}
+          {t('advertiserRegisterForm.sub', 'For music stores, merch printers, live-production companies, and other music-adjacent businesses — no artist or venue account required, and no public profile page.')}
         </p>
 
         <div className="aar-notice">

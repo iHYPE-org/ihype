@@ -7,7 +7,7 @@ import { trackRequest } from '@/lib/analytics';
 
 const schema = z.object({
   event: z.string().min(1).max(80),
-  role: z.enum(['FAN', 'ARTIST', 'DJ', 'VENUE']).optional(),
+  role: z.enum(['FAN', 'ARTIST', 'VENUE']).optional(),
   method: z.enum(['email', 'passkey']).optional(),
   step: z.string().trim().max(80).optional(),
   reason: z.string().trim().max(240).optional(),

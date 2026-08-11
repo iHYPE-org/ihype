@@ -64,14 +64,12 @@ export const getShellViewer = cache(async function getShellViewer(): Promise<She
   ]);
 
   const artist = profiles.find((profile) => profile.type === 'ARTIST');
-  const dj = profiles.find((profile) => profile.type === 'DJ');
   const venue = profiles.find((profile) => profile.type === 'VENUE');
 
   return {
     account: {
       name: session.user?.name || session.user?.email?.split('@')[0] || 'Account',
       artistProfileId: artist?.id,
-      djProfileSlug: dj?.slug,
       venueProfileId: venue?.id,
       isAdvertiser: session.user?.role === 'ADVERTISER',
       canPromote: canPromoteWithHypeLink(session.user?.role),

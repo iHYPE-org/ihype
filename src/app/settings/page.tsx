@@ -401,7 +401,7 @@ export default function SettingsPage() {
     }
   }
 
-  const isCreator = role === 'ARTIST' || role === 'DJ' || role === 'VENUE';
+  const isCreator = role === 'ARTIST' || role === 'VENUE';
   const roleColor = ROLE_COLOR[role] ?? 'var(--role-fan)';
 
   return (
@@ -503,12 +503,12 @@ export default function SettingsPage() {
               <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
               <Row action={<Toggle checked={prefs.journalPosts} label={t('settingsPage.journalPosts', 'Journal posts')} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
               <Row action={<Toggle checked={prefs.weeklyDigest} label={t('settingsPage.weeklyDigest', 'Weekly digest')} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
-              <Row action={<Toggle checked={prefs.radioLive} label={t('settingsPage.radioShows', 'Radio shows')} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When DJs you follow go live')} label={t('settingsPage.radioShows', 'Radio shows')} />
-              {(role === 'ARTIST' || role === 'DJ') && (
-                <Row action={<Toggle checked={prefs.crateUploads} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={role === 'DJ' ? t('settingsPage.crateUploads', 'Crate uploads') : t('settingsPage.trackUploads', 'Track uploads')} />
+              <Row action={<Toggle checked={prefs.radioLive} label={t('settingsPage.radioShows', 'Radio shows')} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When a show you follow goes live')} label={t('settingsPage.radioShows', 'Radio shows')} />
+              {role === 'ARTIST' && (
+                <Row action={<Toggle checked={prefs.crateUploads} label={t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={t('settingsPage.trackUploads', 'Track uploads')} />
               )}
               {role === 'VENUE' && (
-                <Row action={<Toggle checked={prefs.bookingRequests} label={t('settingsPage.bookingRequests', 'Booking requests')} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist or DJ requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
+                <Row action={<Toggle checked={prefs.bookingRequests} label={t('settingsPage.bookingRequests', 'Booking requests')} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
               )}
               <Row
                 action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} label={t('settingsPage.pushLabel', 'Push notifications (this browser)')} onChange={(v) => void togglePush(v)} />}

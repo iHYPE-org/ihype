@@ -14,7 +14,6 @@ const FAN: ShellAccount = {
 const EVERYTHING: ShellAccount = {
   name: 'Jayla Reign',
   artistProfileId: 'artist-1',
-  djProfileSlug: 'dj-ora',
   venueProfileId: 'venue-1',
   isAdvertiser: true,
   canPromote: true,

@@ -382,7 +382,7 @@ export async function POST(request: NextRequest) {
       const rank = updatedProfile.hypeCount;
       db.profile.findUnique({ where: { id: payload.targetId }, select: { slug: true, name: true, type: true } })
         .then((p: { slug: string; name: string; type: string } | null) => {
-          if (p && (p.type === 'ARTIST' || p.type === 'DJ')) {
+          if (p && p.type === 'ARTIST') {
             notifyUser(session.user.id, {
               type: 'EARLY_BELIEVER',
               title: 'You called it early',

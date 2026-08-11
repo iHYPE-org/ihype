@@ -192,7 +192,7 @@ export default async function ArtistPage({
 
         {activeSection === 'tracks' && (
           <>
-            {isOwner && <TrackUploadPanel profileId={profile.id} profileType="ARTIST" />}
+            {isOwner && <TrackUploadPanel profileId={profile.id} />}
             {media.entries.length ? (
               <ArtistMediaPlaylist
                 artistName={profile.name}
