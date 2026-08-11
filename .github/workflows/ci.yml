@@ -150,20 +150,6 @@ jobs:
         if: env.FULL_CI == 'true'
         run: npx playwright test e2e/public-smoke.spec.ts --project=chromium
 
-      - name: Mandatory responsive module regression gate
-        if: env.FULL_CI == 'true'
-        run: npm run test:e2e:responsive
-
-      - name: Upload responsive regression evidence
-        if: always() && env.FULL_CI == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: responsive-module-regression
-          path: |
-            playwright-report
-            test-results
-          if-no-files-found: ignore
-
       - name: Mandatory authenticated E2E suite (Workerd)
         if: env.FULL_CI == 'true'
         # Runs against a real `wrangler dev` (workerd) instance, not `next

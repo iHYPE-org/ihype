@@ -28,7 +28,7 @@ export type ShellSectionId = (typeof SHELL_SECTIONS)[number];
  * sees it. These gate VISIBILITY only — every destination keeps its own
  * server-side authorization check, exactly as the old drawer did.
  */
-export type ShellRoleGate = 'ARTIST' | 'DJ' | 'VENUE' | 'ADVERTISER' | 'PROMOTER';
+export type ShellRoleGate = 'ARTIST' | 'VENUE' | 'ADVERTISER' | 'PROMOTER';
 
 /** Badge tone → the design token that paints it (never a hex literal). */
 export type ShellBadgeTone = 'muted' | 'venue' | 'promoter' | 'artist' | 'advertiser';
@@ -59,7 +59,6 @@ export type ShellAccount = {
   name: string;
   /** Owned profile (id + name) per creator type, when one exists. */
   artistProfileId?: string;
-  djProfileSlug?: string;
   venueProfileId?: string;
   isAdvertiser: boolean;
   canPromote: boolean;
@@ -90,7 +89,6 @@ export type ShellRouteEntry = {
 
 export const SHELL_ROUTES: ShellRouteEntry[] = [
   // ── LISTEN ────────────────────────────────────────────────────────────
-  { path: '/listen', kind: 'exact', section: 'LISTEN', tabParam: 'tab' },
   { path: '/radio', kind: 'prefix', section: 'LISTEN', itemId: 'radio' },
   { path: '/discover', kind: 'prefix', section: 'LISTEN', itemId: 'discover' },
   { path: '/search', kind: 'prefix', section: 'LISTEN', itemId: 'search' },
@@ -289,7 +287,6 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
 export function passesGate(gate: ShellRoleGate | undefined, account: ShellAccount) {
   if (!gate) return true;
   if (gate === 'ARTIST') return Boolean(account.artistProfileId);
-  if (gate === 'DJ') return Boolean(account.djProfileSlug);
   if (gate === 'VENUE') return Boolean(account.venueProfileId);
   if (gate === 'ADVERTISER') return account.isAdvertiser;
   return account.canPromote;

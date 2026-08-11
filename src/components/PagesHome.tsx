@@ -3,11 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
-import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -115,21 +113,15 @@ export function PagesHome({
   initialProfileId,
   initialEditorSection,
   initialTool,
-  isShellForeground = true,
-  resetToken,
 }: {
   initialTab?: string;
   initialProfileId?: string;
   initialEditorSection?: string;
   initialTool?: string;
-  isShellForeground?: boolean;
-  resetToken?: number;
 } = {}) {
   const { t } = useI18n();
-  const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
-  const [gridMode, setGridMode] = useState(!validInitialTab);
   // The app shell's context strip navigates between these tabs with real
   // links (/pages?tab=creator). Same route, different query = a soft nav, so
   // the useState initialiser above never re-runs and the tab would otherwise
@@ -137,17 +129,9 @@ export function PagesHome({
   useEffect(() => {
     if (!validInitialTab) return;
     setTab(validInitialTab);
-    setGridMode(false);
   }, [validInitialTab]);
   const shellDrivesTabs = useAppShellActive();
   const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
-  const prevResetToken = useRef(resetToken);
-  useEffect(() => {
-    if (resetToken !== undefined && resetToken !== prevResetToken.current) {
-      prevResetToken.current = resetToken;
-      setGridMode(true);
-    }
-  }, [resetToken]);
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
@@ -256,30 +240,6 @@ export function PagesHome({
 
   const typeLabel = (type: string) => t(`pagesHome.typeLabel.${type}`, TYPE_LABEL[type] ?? type);
 
-  const gridItems: QuickGridItem[] = [
-    {
-      id: 'mypage', label: t('pagesHome.gridLabel.mypage', 'My Page'), color: 'var(--accent)', sublabel: `${myProfiles.length} ${myProfiles.length === 1 ? t('pagesHome.gridSublabel.page', 'page') : t('pagesHome.gridSublabel.pages', 'pages')}`,
-      icon: <svg fill="none" height="30" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>,
-    },
-    {
-      id: 'network', label: t('pagesHome.gridLabel.network', 'Network'), color: 'var(--role-venue)', sublabel: `${following.length} ${t('pagesHome.gridSublabel.following', 'following')}`,
-      icon: <svg fill="none" height="30" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><circle cx="8" cy="8" r="3" /><circle cx="17" cy="9" r="2.5" /><path d="M2 20c0-3.3 2.7-6 6-6s6 2.7 6 6" /><path d="M14.5 14.2c2.5.4 4.5 2.6 4.5 5.3" /></svg>,
-    },
-    {
-      id: 'creator', label: t('pagesHome.gridLabel.creator', 'Creator'), color: 'var(--accent-2)', sublabel: t('pagesHome.gridSublabel.creator', 'Add a page'),
-      icon: <svg fill="none" height="30" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><line x1="12" x2="12" y1="5" y2="19" /><line x1="5" x2="19" y1="12" y2="12" /></svg>,
-    },
-    {
-      id: 'settings', label: t('pagesHome.gridLabel.settings', 'Settings'), color: 'var(--role-fan)', sublabel: t('pagesHome.gridSublabel.settings', 'Account & privacy'), href: '/me/settings',
-      icon: (
-        <svg fill="none" height="30" stroke="var(--role-fan)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-      ),
-    },
-  ];
-
   if (signedOut) {
     return (
       <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px', textAlign: 'center' }}>
@@ -291,26 +251,12 @@ export function PagesHome({
 
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
-      <MobileQuickGrid
-        active={gridMode && isShellForeground}
-        items={gridItems}
-        onSearchTap={() => { setGridMode(false); setTab('search'); }}
-        onSelect={(id) => { setGridMode(false); setTab(id as TabId); }}
-        onSwipeSection={shell?.swipeSection}
-        searchPlaceholder={t('pagesHome.searchPlaceholder', 'Search artists, venues, shows…')}
-      />
-
       <PullToRefresh onRefresh={refreshAll}>
-      <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <div className="section-content">
       <div ref={contentTopRef} />
-      <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
-        <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
-        {t('pagesHome.backToPages', 'Dashboard')}
-      </button>
-
       <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Dashboard')}</h1>
 
-      <nav className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
+      <nav className="section-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
         {visibleTabs.map((tabItem) => (
           <button
             key={tabItem.id}

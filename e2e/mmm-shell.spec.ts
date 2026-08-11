@@ -91,7 +91,7 @@ test.describe('Music · Map · Me shell', () => {
     const logo = page.getByRole('button', { name: /Open iHYPE navigation/i });
     await logo.click();
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'true');
-    await expect(page.getByRole('button', { name: 'MUSIC' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Close iHYPE navigation/i }).click();
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
@@ -103,14 +103,23 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
-  test('MAP navigates directly; MUSIC opens a submenu without leaving', async ({ page }) => {
+  // `ArcNav.d.ts`: "one 66px icon disc each … There is NO second level:
+  // Music's sections are tabs at the top of the Music pane."
+  //
+  // This test used to assert the opposite — that MUSIC opened a five-item
+  // level-2 arc and stayed on `/app/me`. That layer was removed as a second,
+  // undesigned route to five destinations the Music pane's tab strip already
+  // carries. Every module now navigates on the first tap.
+  test('every module navigates on the first tap; there is no second level', async ({ page }) => {
     await page.goto('/app/me');
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
-    // Still open, now showing level 2.
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-sub', 'true');
-    await expect(page).toHaveURL(/\/app\/me/);
-    await expect(page.getByRole('button', { name: 'Radio' })).toBeVisible();
+    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
+    await expect(page).toHaveURL(/\/app\/music\/discover/);
+    // The fan closes behind it, and nothing has grown a sub-level.
+    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
+    await expect(page.locator('.mmm-nav-anchor')).not.toHaveAttribute('data-sub', 'true');
+    // The five sections live here instead, as tabs.
+    await expect(page.getByRole('navigation', { name: 'Music' })).toBeVisible();
   });
 
   // §9: "All 5 MUSIC items are visible and reachable, no clipping." §4 is the
@@ -124,13 +133,15 @@ test.describe('Music · Map · Me shell', () => {
   // That is the test measuring an animation, not the layout being wrong.
   test('every MUSIC item is on screen and hit-testable', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/app/map');
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
+    // The five items moved from a level-2 arc to the Music pane's tab strip,
+    // so the guard follows them there. The bug it protects against is the same
+    // one — an item rendered but off-screen or covered — and a horizontally
+    // scrolling strip on a 390px phone is exactly where that recurs.
+    await page.goto('/app/music/discover');
 
     const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
     for (const label of labels) {
-      await expect(page.getByRole('button', { name: label, exact: true })).toBeVisible();
+      await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
     }
 
     // One poll over the whole set: each pill fully inside the viewport, and the
@@ -138,7 +149,7 @@ test.describe('Music · Map · Me shell', () => {
     await expect.poll(async () => page.evaluate((names) => {
       const problems: string[] = [];
       for (const name of names) {
-        const node = [...document.querySelectorAll('.mmm-nav-item')]
+        const node = [...document.querySelectorAll('.mmm-tab')]
           .find((candidate) => candidate.textContent?.trim() === name);
         if (!node) { problems.push(`${name}: not rendered`); continue; }
         const box = node.getBoundingClientRect();
@@ -160,12 +171,15 @@ test.describe('Music · Map · Me shell', () => {
   test('fan items carry a per-index stagger', async ({ page }) => {
     await page.goto('/app/map');
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
-    const delays = await page.locator('.mmm-nav-item').evaluateAll(
+    // The three discs, not the retired level-2 pills. `ARC` staggers them
+    // 60/30/0ms, and §5's bug is still the thing being guarded: the prototype
+    // routed the delay through an undeclared custom property, which silently
+    // invalidated the whole declaration and fanned everything out at once.
+    const delays = await page.locator('.mmm-ray-disc').evaluateAll(
       (nodes) => nodes.map((node) => getComputedStyle(node).transitionDelay),
     );
-    expect(delays.length).toBe(5);
-    expect(new Set(delays).size, `expected distinct delays, got ${delays.join(', ')}`).toBe(5);
+    expect(delays.length).toBe(3);
+    expect(new Set(delays).size, `expected distinct delays, got ${delays.join(', ')}`).toBe(3);
   });
 
   // §9: "Nav opens, dims everything including the player."
@@ -182,13 +196,11 @@ test.describe('Music · Map · Me shell', () => {
     }
   });
 
-  test('Escape steps back a level, then closes', async ({ page }) => {
+  // One press, because there is one level. `MmmNav`'s own comment says it:
+  // "Escape closes. There is no level to step back to any more."
+  test('Escape closes the fan', async ({ page }) => {
     await page.goto('/app/map');
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-sub', 'true');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-sub', 'false');
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'true');
     await page.keyboard.press('Escape');
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
@@ -236,20 +248,52 @@ test.describe('Music · Map · Me shell', () => {
     await page.goto('/app/map');
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
-    await page.getByRole('button', { name: 'Radio' }).click();
+    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
+    // Radio is a TAB in the Music pane now, not a second-level arc item.
+    await page.getByRole('link', { name: 'Radio', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // The four panels are ACCORDIONS, not links. They were four routes under
+  // /app/me/[panel] until the 2026-08-10 template made ME one column of
+  // drawers that open in place — the old routes now redirect onto
+  // /app/me?panel=<id>, so this asserts the control that exists rather than
+  // the navigation that was removed.
   test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
+    // Matched on the LABEL SPAN, not on the button's text and not on its
+    // accessible name. Both of those are the label and the detail line
+    // concatenated — the two spans are adjacent with no whitespace between
+    // them, so the button reads "SettingsAccount · notifications · payments".
+    // That is why an anchored `/^Settings\b/` found nothing: there is no word
+    // boundary between "Settings" and "Account". The label span holds exactly
+    // the label, so an exact match on it is both correct and stable.
+    //
+    // Scoped this tightly on purpose: "Settings", "Info" and "Legal" are short
+    // common words, and a bare role query for them will find something else
+    // the first time this surface grows a control.
+    const panelFor = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+
     for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
-      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible();
+      await expect(panelFor(label), `no ${label} panel`).toBeVisible();
     }
+    // Deliberately no count assertion: `.mmm-me-accordion` is also the class
+    // on the Profiles / My Tickets / About Me drawers above, so the page
+    // carries seven of them and pinning a number here would break the next
+    // time ME grows a section — which is not what this test is about.
+    //
+    // Collapsed until asked: a drawer that starts open is not a drawer.
+    await expect(panelFor('Settings')).toHaveAttribute('aria-expanded', 'false');
     // ME must not open a submenu — only MUSIC does.
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'ME' }).click();
+    // `exact` is load-bearing: accessible-name matching is substring by
+    // default, and since the account panels became accordion BUTTONS, a loose
+    // 'ME' also matches "About Me · What artists and venues see".
+    await page.getByRole('button', { name: 'ME', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me$/);
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
@@ -259,7 +303,7 @@ test.describe('Music · Map · Me shell', () => {
   // render, which is the actual risk.
   test('a profile-less account still renders ME, without a HYPE link card', async ({ page }) => {
     await page.goto('/app/me');
-    await expect(page.getByRole('link', { name: /Settings/ }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Settings/ }).first()).toBeVisible();
     await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
   });
 });
@@ -400,7 +444,7 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
 
     // And it actually opens, with consent still up.
     await trigger.click();
-    await expect(page.getByRole('button', { name: 'MUSIC' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
     await expect(consent).toBeVisible();
   });
 

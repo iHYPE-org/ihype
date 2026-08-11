@@ -80,17 +80,6 @@ html.ihype-shell-locked body {
   overscroll-behavior: none;
 }
 
-/* Modal scroll lock. `acquireScrollLock()` (src/lib/scrollLock.ts) locks
-   `html`/`body` — which, inside the shell, no longer scroll. The real scroller
-   is the content region, so without this every overlay in the app (report
-   dialog, fan mail, the radio composer, the quick grid) leaves the page
-   scrolling behind it. Kept ref-counted by that helper; this only extends the
-   class it already sets to the element that actually scrolls, and applies at
-   every width because modals are not a phone-only affordance. */
-html.mqg-scroll-lock .shell-content {
-  overflow: hidden;
-  overscroll-behavior: none;
-}
 
 /* The shell replaces the marketing chrome entirely — it is the whole screen. */
 html.ihype-shell-locked .adaptive-site-header,
@@ -471,7 +460,7 @@ html.ihype-shell-locked .site-dock-r {
 /* An in-page strip left with nothing to show inside the shell (every tab moved
    to the context strip) collapses instead of leaving a gap. See SHELL_TABS in
    each *Home component for which ids the strip carries. */
-html.ihype-shell-locked .mqg-tabstrip:empty { display: none; }
+html.ihype-shell-locked .section-tabstrip:empty { display: none; }
 
 /* ── Route body pattern ─────────────────────────────────────────────────── */
 /* "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne 800

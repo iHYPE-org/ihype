@@ -5,9 +5,7 @@ import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { TicketCardActions } from '@/components/TicketCardActions';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
-import { MobileQuickGrid, type QuickGridItem } from '@/components/MobileQuickGrid';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useMobileShell } from '@/lib/MobileShellContext';
 import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -134,19 +132,13 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
 export function EventsHome({
   initialTab,
   initialTicketView,
-  isShellForeground = true,
-  resetToken,
 }: {
   initialTab?: string;
   initialTicketView?: string;
-  isShellForeground?: boolean;
-  resetToken?: number;
 } = {}) {
   const { t } = useI18n();
-  const shell = useMobileShell();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as Tab) : null;
   const [tab, setTab] = useState<Tab>(validInitialTab ?? 'local');
-  const [gridMode, setGridMode] = useState(!validInitialTab);
   // The app shell's context strip navigates between these tabs with real
   // links (/shows?tab=tickets). Same route, different query = a soft nav, so
   // the useState initialiser above never re-runs and the tab would otherwise
@@ -154,17 +146,9 @@ export function EventsHome({
   useEffect(() => {
     if (!validInitialTab) return;
     setTab(validInitialTab);
-    setGridMode(false);
   }, [validInitialTab]);
   const shellDrivesTabs = useAppShellActive();
   const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
-  const prevResetToken = useRef(resetToken);
-  useEffect(() => {
-    if (resetToken !== undefined && resetToken !== prevResetToken.current) {
-      prevResetToken.current = resetToken;
-      setGridMode(true);
-    }
-  }, [resetToken]);
   const [q, setQ] = useState('');
   const [shows, setShows] = useState<Show[] | null>(null);
   const [forYouShows, setForYouShows] = useState<Show[] | null>(null);
@@ -241,47 +225,14 @@ export function EventsHome({
     ? allShows.filter((s) => `${s.title} ${s.headlinerProfile?.name ?? ''} ${s.venueProfile?.name ?? ''} ${s.venueProfile?.city ?? ''}`.toLowerCase().includes(ql))
     : [];
 
-  const gridItems: QuickGridItem[] = [
-    {
-      id: 'local', label: t('eventsHome.gridLocal', 'Local'), color: 'var(--role-venue)', sublabel: nearCity ? `${nearCity} · ${localShows.length}` : `${localShows.length} ${t('eventsHome.gridShows', 'shows')}`,
-      icon: <svg fill="none" height="30" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z" /><circle cx="12" cy="10" r="3" /></svg>,
-    },
-    {
-      id: 'foryou', label: t('eventsHome.gridForYou', 'For You'), color: 'var(--accent)', sublabel: `${forYouShownList.length} ${t('eventsHome.gridMatched', 'matched')}`,
-      icon: <svg fill="none" height="30" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M12 21s-7.5-4.6-10-9.3C.5 8.2 2.4 4 6.4 4c2 0 3.6 1 5.6 3 2-2 3.6-3 5.6-3 4 0 5.9 4.2 4.4 7.7C19.5 16.4 12 21 12 21Z" /></svg>,
-    },
-    {
-      id: 'tickets', label: t('eventsHome.gridTickets', 'Tickets'), color: 'var(--role-fan)', sublabel: loggedIn ? t('eventsHome.gridViewYours', 'View yours') : t('eventsHome.gridLogInToView', 'Log in to view'),
-      icon: <svg fill="none" height="30" stroke="var(--role-fan)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M3 9a2 2 0 0 0 2-2V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2a2 2 0 0 0 0 4v2a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2Z" /></svg>,
-    },
-    {
-      id: 'referral', label: t('eventsHome.gridHypeLink', 'HYPE Link'), color: 'var(--accent-2)', sublabel: t('eventsHome.gridTenPercentShare', '10% share'),
-      icon: <svg fill="none" height="30" stroke="var(--accent-2)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="30"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1.5 1.5" /><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1.5-1.5" /></svg>,
-    },
-  ];
-
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
-      <MobileQuickGrid
-        active={gridMode && isShellForeground}
-        items={gridItems}
-        onSearchTap={() => { setGridMode(false); setTab('search'); }}
-        onSelect={(id) => { setGridMode(false); setTab(id as Tab); }}
-        onSwipeSection={shell?.swipeSection}
-        searchPlaceholder={t('eventsHome.searchPlaceholder', 'Search artists, venues, shows…')}
-      />
-
       <PullToRefresh onRefresh={refreshAll}>
-      <div className={`mqg-content${gridMode ? ' is-hidden' : ''}`}>
+      <div className="section-content">
       <div ref={contentTopRef} />
-      <button className="mqg-back" onClick={() => setGridMode(true)} type="button">
-        <svg fill="none" height="18" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" width="18"><polyline points="15 18 9 12 15 6" /></svg>
-        {t('eventsHome.backButton', 'Events')}
-      </button>
-
       <h1 className="sr-only">{t('eventsHome.pageHeading', 'Events')}</h1>
 
-      <div className="mqg-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
+      <div className="section-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {visibleTabs.map((tabItem) => (
           <button
             key={tabItem.id}

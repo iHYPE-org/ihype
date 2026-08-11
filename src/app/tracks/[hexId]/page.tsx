@@ -77,7 +77,7 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
     session?.user?.id
       ? db.profileHypeEvent.findUnique({
           where: { userId_profileId: { userId: session.user.id, profileId: asset.profile.id } },
-          select: { userId: true },
+          select: { createdAt: true },
         })
       : null,
     db.artistMediaAsset.findMany({
@@ -140,7 +140,7 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
                 targetType="profile"
                 targetId={asset.profile.id}
                 initialCount={asset.profile.hypeCount}
-                initiallyHyped={Boolean(hypedByMe)}
+                lastHypedAt={hypedByMe?.createdAt.toISOString() ?? null}
                 entityLabel={asset.profile.name}
               />
               <Link className="button secondary" href={artistHref}>{t('tracksHexIdPage.viewArtist', 'View artist')}</Link>

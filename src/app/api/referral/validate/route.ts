@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
-import { isInviteCodeRequiredRuntime, isValidInviteCode } from '@/lib/runtime-flags';
+import { isInviteCodeRequiredRuntime, isInviteCodeSharingEnabledRuntime, isValidInviteCode } from '@/lib/runtime-flags';
 import { resolveReferrer } from '@/lib/registration-post-processing';
 import { log } from '@/lib/logger';
 
@@ -15,7 +15,8 @@ const schema = z.object({ code: z.string().trim().min(1).max(80) });
  * invite code). This endpoint answers only "would this code satisfy the
  * invite gate?" — it mirrors POST /api/register's acceptance logic exactly
  * (shared BETA_INVITE_CODES code, an unclaimed admin-minted InviteCode, or a
- * real member's own HYPE code / @username) but performs NO account creation
+ * real member's own HYPE code / @username — the first and third only while
+ * `invite_code_sharing` is on) but performs NO account creation
  * and, crucially, never claims/consumes anything — the same code is re-checked
  * for real inside the register transaction, which is where a single-use admin
  * code is actually burned. Rate-limited so it can't be used to brute-force
@@ -46,8 +47,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ valid: true });
     }
 
+    // Channels 1 and 3 below are SHARING — one string or one link admitting
+    // any number of people — and are closed while `invite_code_sharing` is
+    // off. Register applies the same flag; this endpoint exists to predict
+    // that answer, so a divergence here would tell an applicant their code is
+    // good and then reject it at submit.
+    const sharingAllowed = await isInviteCodeSharingEnabledRuntime();
+
     // 1) A shared code from BETA_INVITE_CODES.
-    if (isValidInviteCode(trimmed, inviteCodeRequired)) {
+    if (sharingAllowed && isValidInviteCode(trimmed, inviteCodeRequired)) {
       return NextResponse.json({ valid: true });
     }
 
@@ -64,13 +72,20 @@ export async function POST(request: Request) {
     }
 
     // 3) An existing member's own HYPE code (their profile hexId or @username).
-    const referrer = await resolveReferrer(trimmed);
-    if (referrer) {
-      return NextResponse.json({ valid: true });
+    if (sharingAllowed) {
+      const referrer = await resolveReferrer(trimmed);
+      if (referrer) {
+        return NextResponse.json({ valid: true });
+      }
     }
 
     return NextResponse.json(
-      { valid: false, error: 'That code isn’t recognized. Ask an existing member for their HYPE code.' },
+      {
+        valid: false,
+        error: sharingAllowed
+          ? 'That code isn’t recognized. Ask an existing member for their HYPE code.'
+          : 'That code isn’t recognized. Invites are issued one at a time — request access from the home page and we will send you a code.',
+      },
       { status: 200 },
     );
   } catch (error) {

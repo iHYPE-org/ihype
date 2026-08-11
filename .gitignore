@@ -42,3 +42,5 @@ tsconfig.tsbuildinfo
 # mirrored into public/ so they ship as Cloudflare static assets, not Worker script.
 public/i18n/*.json
 .wrangler-e2e-workerd.toml
+# Same shape, written by hand when running audit:mobile against a local build.
+.wrangler-audit.toml

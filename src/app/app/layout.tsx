@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import '@/app/mmm.css';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { canHype } from '@/lib/hype-window';
 import { MmmShell, type MmmNowPlaying } from '@/components/mmm/MmmShell';
 
 export const dynamic = 'force-dynamic';
@@ -58,13 +59,14 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
   const hypeableProfileId =
     artistProfile && artistProfile.ownerId !== session.user.id ? artistProfile.id : null;
 
-  // Whether the viewer has already hyped this artist, so the heart opens filled
-  // instead of resetting to empty on every navigation.
+  // Whether the viewer has hyped this artist inside the current 24h window, so
+  // the heart opens filled instead of resetting to empty on every navigation —
+  // and empties again once the window has passed and the hype is spendable.
   const existingHype = hypeableProfileId
     ? await db.profileHypeEvent
         .findUnique({
           where: { userId_profileId: { userId: session.user.id, profileId: hypeableProfileId } },
-          select: { id: true },
+          select: { createdAt: true },
         })
         .catch(() => null)
     : null;
@@ -78,7 +80,7 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
         // Already selected above and simply never passed through, which is why
         // the player's artist name had no destination to point at.
         artistSlug: listen.artistProfileSlug ?? null,
-        hyped: existingHype !== null,
+        hyped: !canHype(existingHype?.createdAt),
       }
     : null;
 

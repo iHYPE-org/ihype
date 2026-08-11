@@ -76,7 +76,7 @@ export async function GET(request: Request) {
         detail: creatorProfile ? `${mediaCount} uploaded track${mediaCount === 1 ? '' : 's'} · ${creatorProfile.hypeCount.toLocaleString()} profile HYPES` : `${hypes} HYPES · ${follows} follows · ${ticketOrders} ticket order${ticketOrders === 1 ? '' : 's'}`,
         href: workspace.href,
       },
-      nextAction: { title: workspace.next, href: role === 'fan' ? '/listen' : workspace.actions[0].href },
+      nextAction: { title: workspace.next, href: role === 'fan' ? '/app/music/discover' : workspace.actions[0].href },
       notifications: notifications.map((notification) => ({ id: notification.id, label: notification.read ? 'UPDATE' : 'NEW', title: labelForNotification(notification.type), detail: notification.body, href: notification.link || '/me/dashboard', action: 'Open' })),
       upcoming: upcoming.map((show) => ({ id: show.id, label: showDate(show.startsAt).split(',')[0].toUpperCase(), title: show.title, detail: `${showDate(show.startsAt)}${show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}`, href: `/shows/${show.slug}`, action: show.isTicketed ? 'Tickets' : 'View' })),
       recommendations,

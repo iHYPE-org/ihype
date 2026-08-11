@@ -18,7 +18,6 @@ type SnapshotRow = {
   totalEventsHeld: number;
   totalProfiles: number;
   artists: number;
-  promoters: number;
   venues: number;
   listeners: number;
   listenersLiveNow: number;
@@ -66,11 +65,10 @@ const getTransparencySnapshotCached = unstable_cache(
           SELECT
             count(*)::int                                                       AS "totalProfiles",
             count(*) FILTER (WHERE type = 'ARTIST')::int                        AS "artists",
-            count(*) FILTER (WHERE type = 'DJ')::int                            AS "promoters",
             count(*) FILTER (WHERE type = 'VENUE')::int                         AS "venues",
             count(*) FILTER (WHERE type = 'LISTENER')::int                      AS "listeners",
             COALESCE(sum("songUploadCount")
-                     FILTER (WHERE type IN ('ARTIST', 'DJ')), 0)::int           AS "totalSongsUploaded"
+                     FILTER (WHERE type = 'ARTIST'), 0)::int                    AS "totalSongsUploaded"
           FROM "Profile"
         ),
         request_stats AS (
@@ -110,7 +108,6 @@ const getTransparencySnapshotCached = unstable_cache(
         totalEventsHeld,
         totalProfiles,
         artists,
-        promoters,
         venues,
         listeners,
         listenersLiveNow,
@@ -136,8 +133,6 @@ const getTransparencySnapshotCached = unstable_cache(
           totalProfiles,
           artists,
           totalArtists: artists,
-          promoters,
-          totalPromoters: promoters,
           venues,
           totalVenues: venues,
           listeners,
@@ -174,8 +169,6 @@ const getTransparencySnapshotCached = unstable_cache(
           totalProfiles: 0,
           artists: 0,
           totalArtists: 0,
-          promoters: 0,
-          totalPromoters: 0,
           venues: 0,
           totalVenues: 0,
           listeners: 0,

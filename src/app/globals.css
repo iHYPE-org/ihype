@@ -4484,163 +4484,16 @@ h1, h2 {
   .app-splash img { animation: none; }
 }
 
-/* ── Mobile quick-access grid ─────────────────────────────────────────────
-   Shared by Listen/Events/Pages: on mobile, a full-screen search+grid
-   "home" replaces the old horizontal tab strip. Desktop is untouched —
-   everything here is gated behind the same 768px breakpoint the rest of
-   the mobile shell already uses. */
-.mqg-overlay { display: none; }
-.mqg-back { display: none; }
-/* Desktop default for the pill tab strips; the mobile media block below
-   hides them. Must live here (not inline) — an inline display:flex would
-   defeat the media query's display:none, since inline always wins. */
-.mqg-tabstrip { display: flex; }
-@media (max-width: 768px) {
-  .mqg-overlay.is-active {
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    /* The authenticated header remains visible above every mobile module.
-       Start the fixed quick grid below it so its search and controls cannot
-       render beneath (or be intercepted by) the header. */
-    top: 62px; left: 0; right: 0;
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
-    z-index: 40;
-    background: var(--bg);
-    padding: 10px 4px 0;
-    overscroll-behavior: none;
-    touch-action: pan-x;
-  }
-  /* Prevents iOS Safari's elastic overscroll bounce on the page underneath
-     while the overlay is shown — without this, pulling down at the top of
-     the page stretches/distorts the fixed overlay during the bounce. */
-  html.mqg-scroll-lock, body.mqg-scroll-lock {
-    overflow: hidden;
-    overscroll-behavior: none;
-  }
-  .mqg-tabstrip { display: none; }
-  .mqg-back {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    min-height: 44px;
-    margin-bottom: 8px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--ink-2, var(--ink-a70));
-    font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-    font-weight: 800;
-    font-size: 15px;
-  }
-  .mqg-content.is-hidden { display: none; }
-}
+/* ── Section tab strips ───────────────────────────────────────────────────
+   `/shows` and `/pages` render a pill tab strip above their content. Both were
+   once the second half of a mobile "quick grid" home screen that replaced the
+   strip on a phone; that grid belonged to the phone swipe shell, which Design
+   System 8 retires along with the idea of a separate mobile build. The strip is
+   now simply the tab strip, at every width.
 
-.mqg-search {
-  flex-shrink: 0;
-  display: flex; align-items: center; gap: 10px;
-  min-height: 50px;
-  padding: 0 16px;
-  margin: 0 4px 8px;
-  border-radius: 16px;
-  background: var(--bg-2, #14100b);
-  border: 1px solid var(--hair-160);
-  color: var(--ink-a50);
-  font-family: var(--font-body, 'Work Sans', sans-serif);
-  font-size: 16px;
-  font-weight: 500;
-  text-align: left;
-  cursor: pointer;
-}
-.mqg-search svg { flex-shrink: 0; opacity: .6; }
-
-.mqg-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-template-rows: 1fr 1fr;
-  gap: 3px;
-  min-height: 0;
-  padding: 0 4px 3px;
-}
-.mqg-btn {
-  width: 100%; height: 100%;
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
-  border-radius: 26px;
-  border: 1px solid var(--hair-160);
-  cursor: pointer;
-  text-align: center;
-  padding: 10px;
-  color: var(--ink);
-  transition: transform .18s cubic-bezier(.34,1.56,.64,1), opacity .15s ease;
-  animation: mqg-rise-in .5s cubic-bezier(.22,1,.36,1) both;
-}
-.mqg-btn:active { transform: scale(.93); opacity: .82; }
-.mqg-btn.mqg-spacer { visibility: hidden; pointer-events: none; }
-.mqg-btn:nth-child(1) { animation-delay: 70ms; }
-.mqg-btn:nth-child(2) { animation-delay: 120ms; }
-.mqg-btn:nth-child(3) { animation-delay: 170ms; }
-.mqg-btn:nth-child(4) { animation-delay: 220ms; }
-.mqg-icon {
-  width: 60px; height: 60px; border-radius: 18px;
-  display: flex; align-items: center; justify-content: center;
-}
-.mqg-label { font-family: var(--font-display, 'Bricolage Grotesque', sans-serif); font-size: 19px; font-weight: 800; letter-spacing: -.01em; }
-.mqg-sublabel { font-family: var(--font-mono, 'JetBrains Mono', monospace); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50); margin-top: -6px; }
-
-@keyframes mqg-rise-in {
-  from { opacity: 0; transform: translateY(16px) scale(.95); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .mqg-btn { animation: none; transition: none; }
-}
-
-/* ── Mobile app shell ──────────────────────────────────────────────────
-   Persistent carousel holding Listen/Events/Pages always-mounted together
-   (MobileAppShell.tsx). Desktop untouched — hidden here, and each route's
-   own page content (RouteShellSlot) renders normally there instead. */
-.mas-root { display: none; }
-@media (max-width: 768px) {
-  .mas-root.is-active {
-    display: block;
-    position: fixed;
-    /* Keep the module viewport below the persistent 62px mobile header. */
-    top: 62px; left: 0; right: 0;
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
-    z-index: 35;
-    overflow: hidden;
-    background: var(--bg);
-  }
-  /* RouteShellSlot returns null on /listen, /shows, /pages once the shell
-     takes over, so #main-content briefly measures zero height in the
-     underlying document flow — the shell/placeholder covers it visually
-     (position: fixed doesn't occupy flow space), but SiteFooter, which
-     sits right after <main> in that same flow, jumps upward to fill the
-     gap regardless of what's painted on top. Reserving a minimum height
-     here keeps the document's own layout stable across that swap, which a
-     fixed-position overlay on top of it structurally cannot do. Confirmed
-     via Lighthouse: this was scored as a footer-node layout shift with
-     CLS ~0.8 on /shows, the same signature as the original shell-flash
-     bug, but from the underlying flow collapsing rather than a hydration
-     timing gap. */
-  #main-content { min-height: 100dvh; }
-}
-.mas-track {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  touch-action: pan-y;
-}
-.mas-slot {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  will-change: transform;
-}
+   `display: flex` must live here rather than inline: the shell hides an EMPTY
+   strip (shell.css), and an inline display would beat a stylesheet's. */
+.section-tabstrip { display: flex; }
 
 /* Fan-first home and adaptive listening chrome. */
 .adaptive-site-header {
@@ -5034,54 +4887,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-primary { transition: none; }
 }
 
-.listen-stage { width: min(1180px,calc(100% - 40px)); margin: 0 auto; padding: clamp(32px,5vw,70px) 0 120px; }
-.listen-stage-tabs { gap: 8px; flex-wrap: wrap; margin: 0 0 32px; padding: 12px; border: 1px solid var(--line); border-radius: 18px; background: var(--hair-30); }
-.listen-stage-tabs .sub-tab { min-height: 44px; flex: 1 1 130px; border-radius: 12px; }
-.mqg-content.is-hidden { display: none; }
-.discovery-home { display: grid; gap: 42px; }
-.discovery-section { min-width: 0; }
-.discovery-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 14px; }
-.discovery-heading h1,.discovery-heading h2 { margin: 0; color: var(--ink); font: 800 clamp(1.35rem,2vw,1.8rem)/1 var(--f-d); letter-spacing: -.035em; }
-.discovery-heading p { margin: 5px 0 0; color: var(--ink-3); font-size: 12px; }
-.discovery-heading a,.discovery-heading button { padding: 0; border: 0; color: var(--accent-3,var(--role-venue)); background: none; cursor: pointer; font: 600 11px var(--f-m); text-decoration: none; }
-.discovery-feature { min-height: 330px; position: relative; overflow: hidden; border: 1px solid var(--line); border-radius: 10px; background: var(--bg-3); }
-.discovery-feature > img { object-fit: cover; }
-.discovery-feature::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg,rgba(0,0,0,.12),transparent 55%),linear-gradient(0deg,rgba(0,0,0,.78),transparent 62%); }
-.discovery-feature > div { position: absolute; z-index: 2; left: 22px; bottom: 22px; display: flex; align-items: flex-start; flex-direction: column; color: #fff; }
-.discovery-feature span { color: var(--accent-3,var(--role-venue)); font: 700 9px var(--f-m); letter-spacing: .14em; }
-.discovery-feature h2 { max-width: 8ch; margin: 7px 0 2px; color: #fff; font: 800 clamp(2rem,4vw,3.6rem)/.86 var(--f-d); letter-spacing: -.055em; text-transform: uppercase; }
-.discovery-feature strong { font-size: 12px; font-weight: 500; }
-.discovery-feature button { margin-top: 14px; padding: 9px 14px; border: 1px solid rgba(255,255,255,.45); border-radius: 7px; color: #fff; background: rgba(0,0,0,.45); cursor: pointer; }
-.discovery-track-list { display: grid; gap: 8px; }
-.discovery-track-row { min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--line); border-radius: 9px; background: var(--hair-40); }
-.discovery-track-row > img { height: 54px; object-fit: cover; border-radius: 6px; }
-.discovery-track-row > div { min-width: 0; flex: 1; display: flex; flex-direction: column; }
-.discovery-track-row strong,.discovery-track-row > div span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.discovery-track-row strong { color: var(--ink); font: 800 12px var(--f-d); }
-.discovery-track-row > div span,.discovery-track-row > span { color: var(--ink-3); font-size: 10px; }
-.discovery-track-row > button { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line-2); border-radius: 50%; color: var(--ink); background: transparent; cursor: pointer; }
-.discovery-show-grid { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; }
-.discovery-show-card { min-width: 0; padding: 8px; display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 10px; background: var(--hair-30); }
-.discovery-show-art { position: relative; aspect-ratio: 4/3; overflow: hidden; border-radius: 7px; }
-.discovery-show-art img { object-fit: cover; }
-.discovery-show-art span { position: absolute; top: 8px; left: 8px; padding: 5px 7px; border-radius: 5px; color: var(--accent-3,var(--role-venue)); background: rgba(0,0,0,.75); font: 700 8px var(--f-m); text-transform: uppercase; }
-.discovery-show-card > strong { margin-top: 10px; color: var(--ink); font: 800 13px var(--f-d); }
-.discovery-show-card > small { min-height: 32px; margin-top: 3px; color: var(--ink-3); line-height: 1.4; }
-.discovery-show-card > a { margin-top: 9px; padding: 7px; border: 1px solid var(--line-2); border-radius: 6px; color: var(--ink); text-align: center; text-decoration: none; font-size: 11px; }
-.discovery-artists > div:last-child { display: flex; justify-content: space-around; gap: 18px; overflow-x: auto; }
-.discovery-artists > div:last-child button { min-width: 100px; display: flex; align-items: center; flex-direction: column; gap: 8px; border: 0; color: var(--ink-2); background: none; cursor: pointer; font-size: 11px; }
-.discovery-artists img { width: 100px; height: 100px; object-fit: cover; border: 1px solid var(--line); border-radius: 50%; }
-.discovery-rising-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; }
-.discovery-rising-card { min-height: 220px; position: relative; display: flex; align-items: flex-end; overflow: hidden; padding: 18px; border: 1px solid var(--line); border-radius: 14px; color: #fff; background: var(--bg-3); text-align: left; cursor: pointer; }
-.discovery-rising-card > img { object-fit: cover; transition: transform .35s var(--ease-out),filter .25s ease; }
-.discovery-rising-card::after { content: ""; position: absolute; inset: 0; background: linear-gradient(0deg,rgba(0,0,0,.9),rgba(0,0,0,.06) 70%); }
-.discovery-rising-card:hover > img { transform: scale(1.035); filter: saturate(1.1); }
-.discovery-rising-rank { position: absolute; z-index: 2; top: 14px; left: 15px; color: var(--accent-3,var(--role-venue)); font: 800 11px var(--font-mono); }
-.discovery-rising-copy { position: relative; z-index: 2; min-width: 0; display: flex; flex: 1; flex-direction: column; }
-.discovery-rising-copy strong,.discovery-rising-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.discovery-rising-copy strong { color: #fff; font: 800 16px var(--font-display); }
-.discovery-rising-copy small { margin-top: 4px; color: rgba(255,255,255,.66); font-size: 11px; }
-.discovery-rising-hype { position: relative; z-index: 2; margin-left: 12px; color: var(--accent-3,var(--role-venue)); font: 700 8px var(--font-mono); letter-spacing: .08em; }
 
 .site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); background: rgba(9,8,6,.96); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
 .site-dock-l { min-width: min(30vw,340px); }
@@ -5103,13 +4908,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .adaptive-site-header .search-bar-desktop { display: flex; max-width: none; }
   .adaptive-site-header-auth { display: none; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
-  .listen-stage { width: min(100% - 24px,680px); padding-top: 18px; }
-  .listen-stage-tabs { display: none; }
-  .discovery-home { gap: 30px; }
-  .discovery-feature { min-height: 360px; }
-  .discovery-track-list { display: none; }
-  .discovery-show-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
-  .discovery-show-card:nth-child(n+3) { display: none; }
   .site-dock { height: 70px; padding: 0 12px; }
   .site-dock-art { width: 48px; height: 48px; }
   .site-dock-settled .site-dock-art { width: 38px; height: 38px; }

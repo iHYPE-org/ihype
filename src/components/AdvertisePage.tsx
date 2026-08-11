@@ -323,7 +323,7 @@ function CoverageBuilder() {
                 </label>
                 {audio.phase === 'done' && (
                   <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#22e5d4', marginTop: 8 }}>
-                    ✓ {audio.fileName}{typeof audio.durationSecs === 'number' ? ` · :${audio.durationSecs}` : ''} — {t('advertisePage.willPlayInBreaks', 'will play in DJ radio-show ad breaks')}
+                    ✓ {audio.fileName}{typeof audio.durationSecs === 'number' ? ` · :${audio.durationSecs}` : ''} — {t('advertisePage.willPlayInBreaks', 'will play in station ad breaks')}
                   </div>
                 )}
                 {audio.phase === 'error' && (
@@ -363,7 +363,7 @@ function CoverageBuilder() {
 
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-            {[{ color: '#b983ff', label: t('advertisePage.djRadioAdBreaks', 'DJ radio ad breaks') }, { color: '#22e5d4', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
+            {[{ color: '#b983ff', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: '#22e5d4', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
               <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: 'var(--ink-a60)', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
                 {p.label}
@@ -484,7 +484,7 @@ function AIScanner() {
       {/* Three checks */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {[
-          { n: '01', title: t('advertisePage.gate1Title', 'Verified buyers only'), desc: t('advertisePage.gate1Desc', 'Only verified artists, venues, DJs, and music-related organizations reach checkout. No verified badge, no buy button.') },
+          { n: '01', title: t('advertisePage.gate1Title', 'Verified buyers only'), desc: t('advertisePage.gate1Desc', 'Only verified artists, venues, and music-related organizations reach checkout. No verified badge, no buy button.') },
           { n: '02', title: t('advertisePage.gate2Title', 'Audio relevance scan'), desc: t('advertisePage.gate2Desc', "The submission is scored against your advertiser profile. If it isn't about live music, releases, gear, or merch, it doesn't run.") },
           { n: '03', title: t('advertisePage.gate3Title', 'Listener safety'), desc: t('advertisePage.gate3Desc', 'Hate speech, harassment, explicit content outside rating, scams, and unsafe claims are flagged before a listener ever hears it.') },
           { n: '04', title: t('advertisePage.gate4Title', 'Copyright firewall'), desc: t('advertisePage.gate4Desc', "Ad copy is AI-screened, and your audio spot is transcribed and screened too, for protected song titles, lyrics, and artist name-drops you don't have rights to. Flagged for manual review on any match.") },
@@ -768,7 +768,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
             </h2>
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 19, color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played inside DJ radio shows — priced per day, billed per spot.')}
+              {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played on the always-on station — priced per day, billed per spot.')}
             </p>
           </div>
           <div>
@@ -811,7 +811,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
           </div>
           <ScanDemo />
           <p style={{ maxWidth: 640, margin: '22px auto 0', textAlign: 'center', fontSize: 12, color: '#5a5048', lineHeight: 1.7 }}>
-            {t('advertisePage.purchasingNote', 'Purchasing is available exclusively to verified artists, venues, DJs, and music-related organizations. Rejected spots are never heard by listeners and are refunded in full.')}
+            {t('advertisePage.purchasingNote', 'Purchasing is available exclusively to verified artists, venues, and music-related organizations. Rejected spots are never heard by listeners and are refunded in full.')}
           </p>
         </div>
       </section>

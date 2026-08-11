@@ -11,7 +11,7 @@
 # That build has been FAILING, on this:
 #
 #   Liquid Exception: Variable '{{ animationDelay: `${i * 70}' was not properly
-#   terminated ... in design/handoff-music-map-me/FRONTEND_GOTCHAS.md
+#   terminated ... in a design bundle's markdown
 #
 # Jekyll renders every `.md` in the repo as a Liquid template (the
 # `jekyll-optional-front-matter` plugin is what makes files without front matter

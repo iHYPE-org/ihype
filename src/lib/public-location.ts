@@ -1,5 +1,5 @@
 type PublicLocationInput = {
-  type: 'ARTIST' | 'DJ' | 'VENUE' | 'LISTENER';
+  type: 'ARTIST' | 'VENUE' | 'LISTENER';
   discoverable?: boolean;
   addressLine1?: string | null;
   city?: string | null;

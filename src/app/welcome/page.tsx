@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 // anyone else, and this union is what picks the label and the call to action.
 // Without it the fall-through below resolved ADMIN to FAN, so the operator of
 // the platform was greeted as a fan and pointed at "start hyping artists".
-type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'DJ' | 'ADMIN';
+type Role = 'FAN' | 'ARTIST' | 'VENUE' | 'ADMIN';
 
 export default async function WelcomePage() {
   const session = await auth();
@@ -39,7 +39,7 @@ export default async function WelcomePage() {
 
   // Prefer the profile's own type over session.user.role: the profile is what
   // the onboarding wizard is keyed to, and getProfilePathForType already owns
-  // the type -> URL-prefix mapping (ARTIST -> /artists, DJ -> /promoters,
+  // the type -> URL-prefix mapping (ARTIST -> /artists,
   // VENUE -> /venues), so there is no second copy of it here to drift.
   const profileRole: Role | null =
     profile?.type === 'ARTIST' || profile?.type === 'VENUE'
@@ -55,7 +55,7 @@ export default async function WelcomePage() {
     sessionRole === 'ADMIN'
       ? 'ADMIN'
       : profileRole
-        ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' || sessionRole === 'DJ' ? sessionRole : 'FAN');
+        ?? (sessionRole === 'ARTIST' || sessionRole === 'VENUE' ? sessionRole : 'FAN');
 
   // Only the three creator roles have a wizard. A fan does not need one, and
   // without a profile row there is no slug to build a URL from.
@@ -104,7 +104,7 @@ export default async function WelcomePage() {
       cta: t('welcomePage.ctaArtist', 'Set up your page →'), ctaHref: onboardingPath ?? '/pages',
       steps: [
         { title: t('welcomePage.artistStep1Title', 'Complete verification'), desc: t('welcomePage.artistStep1Desc', 'Link your catalog and confirm identity — the 70% split activates the moment you’re verified.') },
-        { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can be crated by DJs for radio shows.') },
+        { title: t('welcomePage.artistStep2Title', 'Upload your first track'), desc: t('welcomePage.artistStep2Desc', 'Choose all-rights or free-use licensing per track; free-use tracks can air on the station.') },
         { title: t('welcomePage.artistStep3Title', 'Publish a show'), desc: t('welcomePage.artistStep3Desc', 'Set face-value pricing and lock your 70/20 charter. Fans buy direct — $0 platform fees.') },
       ],
     },
@@ -116,16 +116,6 @@ export default async function WelcomePage() {
         { title: t('welcomePage.venueStep1Title', 'Verify your room'), desc: t('welcomePage.venueStep1Desc', 'Confirm capacity and address so events can go live with serialized, QR-verified tickets.') },
         { title: t('welcomePage.venueStep2Title', 'Check the demand radar'), desc: t('welcomePage.venueStep2Desc', 'See which artists your city is hyping before you book — no promoter guesswork.') },
         { title: t('welcomePage.venueStep3Title', 'Publish your first event'), desc: t('welcomePage.venueStep3Desc', 'Your 20% is locked in the charter at publish. Settlement goes direct after the show.') },
-      ],
-    },
-    DJ: {
-      roleLabel: t('welcomePage.roleDj', 'DJ'), tint: 'var(--accent-2)',
-      sub: t('welcomePage.subDj', 'Your studio is waiting. Build radio shows from the free-use library and get paid to promote the shows you play.'),
-      cta: t('welcomePage.ctaDj', 'Open the studio →'), ctaHref: onboardingPath ?? '/radio',
-      steps: [
-        { title: t('welcomePage.djStep1Title', 'Crate some tracks'), desc: t('welcomePage.djStep1Desc', 'Browse the free-use library and add tracks to your crate — they’re licensed for your radio shows.') },
-        { title: t('welcomePage.djStep2Title', 'Record your first show'), desc: t('welcomePage.djStep2Desc', 'Mix crated tracks with your voice and royalty-free SFX, right from your phone.') },
-        { title: t('welcomePage.djStep3Title', 'Promote and earn'), desc: t('welcomePage.djStep3Desc', 'Share referral links for shows you play — you earn from the 10% promoter pool.') },
       ],
     },
   };

@@ -69,8 +69,7 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/app-shell.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
-  ['e2e/mobile-shell.spec.ts'],
-  ['e2e/module-deck.spec.ts'],
+  ['e2e/phone-chrome.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
 ];
 const TEST_SHARDS = REQUESTED_TESTS.length > 0

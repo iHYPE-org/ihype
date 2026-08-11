@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { EventsHome } from '@/components/EventsHome';
-import { RouteShellSlot } from '@/components/RouteShellSlot';
 
 export const metadata: Metadata = {
   title: 'Events · iHYPE',
@@ -16,8 +15,6 @@ export default async function ShowsIndexPage({
 }) {
   const resolvedParams = searchParams ? await searchParams : {};
   return (
-    <RouteShellSlot>
-      <EventsHome initialTab={resolvedParams.tab} initialTicketView={resolvedParams.ticketView} />
-    </RouteShellSlot>
+    <EventsHome initialTab={resolvedParams.tab} initialTicketView={resolvedParams.ticketView} />
   );
 }

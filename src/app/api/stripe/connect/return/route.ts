@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 import { getProfilePathForType } from '@/lib/profile-paths';
 import { log } from '@/lib/logger';
+import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 
 /**
  * GET /api/stripe/connect/return?profileId=<cuid>
@@ -13,7 +14,7 @@ import { log } from '@/lib/logger';
  * as onboarded if Stripe has approved it.
  */
 export async function GET(request: NextRequest) {
-  let fallback = '/listen';
+  let fallback: string = WORKBENCH_PATH;
   try {
     const profileId = request.nextUrl.searchParams.get('profileId');
 

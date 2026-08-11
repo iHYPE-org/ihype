@@ -22,6 +22,7 @@ vi.mock('@/lib/rate-limit', () => ({
 vi.mock('@/lib/request-meta', () => ({ readClientAddress: vi.fn().mockReturnValue('1.2.3.4') }));
 vi.mock('@/lib/runtime-flags', () => ({
   isInviteCodeRequiredRuntime: vi.fn().mockResolvedValue(true),
+  isInviteCodeSharingEnabledRuntime: vi.fn().mockResolvedValue(true),
   isValidInviteCode: vi.fn().mockReturnValue(false),
 }));
 vi.mock('@/lib/registration-post-processing', () => ({ resolveReferrer: vi.fn().mockResolvedValue(null) }));
@@ -29,13 +30,14 @@ vi.mock('@/lib/logger', () => ({ log: { error: vi.fn(), info: vi.fn(), warn: vi.
 
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
-import { isInviteCodeRequiredRuntime, isValidInviteCode } from '@/lib/runtime-flags';
+import { isInviteCodeRequiredRuntime, isInviteCodeSharingEnabledRuntime, isValidInviteCode } from '@/lib/runtime-flags';
 import { resolveReferrer } from '@/lib/registration-post-processing';
 import { POST } from '@/app/api/referral/validate/route';
 
 const mockDb = db as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
 const mockConsumeRateLimit = consumeRateLimit as unknown as ReturnType<typeof vi.fn>;
 const mockInviteRequired = isInviteCodeRequiredRuntime as unknown as ReturnType<typeof vi.fn>;
+const mockSharingAllowed = isInviteCodeSharingEnabledRuntime as unknown as ReturnType<typeof vi.fn>;
 const mockIsValidInviteCode = isValidInviteCode as unknown as ReturnType<typeof vi.fn>;
 const mockResolveReferrer = resolveReferrer as unknown as ReturnType<typeof vi.fn>;
 
@@ -51,6 +53,9 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockConsumeRateLimit.mockResolvedValue({ allowed: true, retryAfterSeconds: 0 });
   mockInviteRequired.mockResolvedValue(true);
+  // The existing cases below describe the door with sharing OPEN. The suite
+  // that follows covers it shut, which is the shipped default.
+  mockSharingAllowed.mockResolvedValue(true);
   mockIsValidInviteCode.mockReturnValue(false);
   mockResolveReferrer.mockResolvedValue(null);
   mockDb.inviteCode.findUnique.mockResolvedValue(null);
@@ -107,6 +112,40 @@ describe('POST /api/referral/validate', () => {
     const json = await res.json();
     expect(json.valid).toBe(false);
     expect(json.error).toMatch(/isn’t recognized|not recognized/i);
+  });
+
+  /**
+   * The shipped default: invites are ISSUED, not passed around. Only the
+   * admin-minted single-use code opens the door, so the landing page's
+   * request form is the one way in.
+   */
+  describe('with invite code sharing off', () => {
+    beforeEach(() => {
+      mockSharingAllowed.mockResolvedValue(false);
+    });
+
+    it('still accepts an admin-minted single-use code', async () => {
+      mockDb.inviteCode.findUnique.mockResolvedValue({ usedByUserId: null, expiresAt: null });
+      expect(await (await post({ code: 'abc123' })).json()).toEqual({ valid: true });
+    });
+
+    it('refuses a shared BETA_INVITE_CODES code, and does not even consult it', async () => {
+      mockIsValidInviteCode.mockReturnValue(true);
+      expect((await (await post({ code: 'launch-2026' })).json()).valid).toBe(false);
+      expect(mockIsValidInviteCode).not.toHaveBeenCalled();
+    });
+
+    it("refuses a member's HYPE code, and does not resolve the referrer", async () => {
+      mockResolveReferrer.mockResolvedValue({ referrerId: 'u_42' });
+      expect((await (await post({ code: 'colin' })).json()).valid).toBe(false);
+      expect(mockResolveReferrer).not.toHaveBeenCalled();
+    });
+
+    it('points a rejected applicant at the request form rather than at a member', async () => {
+      const json = await (await post({ code: 'nope' })).json();
+      expect(json.error).toMatch(/request access/i);
+      expect(json.error).not.toMatch(/ask an existing member/i);
+    });
   });
 
   it('returns 429 when rate limited', async () => {

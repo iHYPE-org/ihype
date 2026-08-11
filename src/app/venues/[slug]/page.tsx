@@ -83,7 +83,7 @@ export default async function VenuePage({
       orderBy: { startsAt: 'asc' },
     }),
     session?.user?.id
-      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { createdAt: true } })
       : null,
   ]);
 
@@ -126,7 +126,7 @@ export default async function VenuePage({
             </div>
           )}
           <div className="venue-hero-actions">
-            <HypeButton entityLabel="venue" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+            <HypeButton entityLabel="venue" initialCount={profile.hypeCount} lastHypedAt={userHype?.createdAt.toISOString() ?? null} targetId={profile.id} targetType="profile" />
             {!isOwner && session?.user?.id && (
               <ReportButton className="venue-hero-btn" entityLabel="profile" targetId={profile.id} targetType="profile" />
             )}

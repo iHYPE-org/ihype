@@ -1,0 +1,31 @@
+<!-- @dsCard group="Mobile" viewport="700x270" name="The 375px floor" subtitle="One breakpoint at 620px · grids that collapse without a media query" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:22px 24px;background:var(--bg-base);font-family:var(--font-body)}
+.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:12px}
+.bar{display:flex;align-items:stretch;gap:2px;margin-bottom:16px;height:46px}
+.seg{border-radius:6px;display:flex;flex-direction:column;justify-content:center;padding:0 12px;font-family:var(--font-mono);font-size:9px;letter-spacing:.1em}
+.seg b{font-family:var(--font-body);font-size:12px;font-weight:600;letter-spacing:0;margin-bottom:2px}
+.two{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.card{padding:11px 13px;border-radius:10px;border:1px solid var(--line-2,rgba(238,241,246,.13));font-size:11.5px;line-height:1.6;color:var(--ink-2,#96a1b5)}
+code{font-family:var(--font-mono);font-size:10px;letter-spacing:.01em;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="lbl">Widths · 375 is the design width, not the edge case</div>
+<div class="bar">
+  <div class="seg" style="width:31%;background:rgba(255,80,41,.13);border:1px solid rgba(255,80,41,.4);color:#ff5029"><b style="color:#ff5029">375px</b>phone floor · 327 content</div>
+  <div class="seg" style="width:22%;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));color:var(--ink-3)"><b style="color:var(--ink-2,#96a1b5)">620px</b>the one breakpoint</div>
+  <div class="seg" style="flex:1;background:rgba(34,229,212,.09);border:1px solid rgba(34,229,212,.3);color:#22e5d4"><b style="color:#22e5d4">desktop</b>88px chrome · 26px insets · pill player</div>
+</div>
+<div class="two">
+  <div class="card" style="background:rgba(255,80,41,.06);border-color:rgba(255,80,41,.3)"><code style="color:#ff5029">✗ grid-template-columns:1fr 420px</code><br>Cannot collapse. Overflows at 375px, and no media query saves it cheaply.</div>
+  <div class="card" style="background:rgba(34,229,212,.06);border-color:rgba(34,229,212,.28)"><code style="color:#22e5d4">✓ repeat(auto-fit,minmax(min(100%,320px),1fr))</code><br>Two columns when there is room, one when there is not. No breakpoint needed.</div>
+</div>
+<div style="margin-top:15px;font-size:11.5px;color:var(--ink-2,#96a1b5);line-height:1.65">Never a fixed <code>width:</code> over 320px on a content element — decorative absolutely-positioned glows are exempt, they sit under <code>overflow:hidden</code>. Use <code>dvh</code>, never <code>vh</code>.</div>
+</body>
+</html>

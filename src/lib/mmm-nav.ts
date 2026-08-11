@@ -1,23 +1,22 @@
 /**
  * The Music · Map · Me navigation manifest and radial-arc geometry.
  *
- * Source: `design/design-system-app-shell/templates/simple-app/SimpleApp.dc.html`
- * — the app-shell redesign, which supersedes the earlier
- * `handoff-music-map-me/SimplifiedApp.dc.html` on three points that matter here:
+ * Source: `design/design-system-8/templates/simplified-app/` and the shell
+ * contracts in `components/shell/` — `ArcNav.jsx` carries this geometry, and
+ * `SHELL_LOCK_2026-08-08.md` is the signed-off figures.
+ *
+ * Three things the structure asserts, each of which an earlier draft got wrong:
  *
  *   1. **The nav is a true radial arc**, not a vertical pill column. Items fan
  *      out to specific offsets from the logo, listed in ARC below.
- *   2. **MUSIC's items changed**: Search is gone and **Recommended** is new —
- *      Discover · Radio · Charts · Recommended · Playlists.
+ *   2. **MUSIC's items are** Discover · Radio · Charts · Recommended ·
+ *      Playlists. There is no Search item.
  *   3. **ME has no submenu at all.** It navigates straight to the ME surface,
  *      which carries Settings · Info · Legal · Accessibility as in-page rows.
- *      The earlier seven-item ME fan-out is retired — which also disposes of
- *      `FRONTEND_GOTCHAS.md` §4's clipping bug at the source, since there is no
- *      longer a seven-item wrapping submenu to clip.
  *
- * The handoff's own note on state still holds: module, tab and panel are
- * ROUTES, not component state — "the module structure is a natural URL
- * hierarchy". Only `navOpen`, `sheet`, `playing` and `hyped` are ephemeral.
+ * Module, tab and panel are ROUTES, not component state — the module structure
+ * is a natural URL hierarchy. Only `navOpen`, `sheet`, `playing` and `hyped`
+ * are ephemeral.
  *
  * Pure and dependency-light (no `@/lib/db`, no `next/*`): imported by client
  * components and by tests.

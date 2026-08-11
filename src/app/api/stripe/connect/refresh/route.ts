@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { createConnectOnboardingUrl, isStripeConfigured } from '@/lib/stripe';
 import { getProfilePathForType } from '@/lib/profile-paths';
 
@@ -13,7 +14,7 @@ import { getProfilePathForType } from '@/lib/profile-paths';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const profileId = searchParams.get('profileId');
-  const fallback = NextResponse.redirect(new URL('/listen', origin));
+  const fallback = NextResponse.redirect(new URL(WORKBENCH_PATH, origin));
 
   if (!isStripeConfigured() || !profileId) return fallback;
 

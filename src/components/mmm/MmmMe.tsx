@@ -149,6 +149,63 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
 
 
+      {/* The HYPE link is NOT a drawer. `templates/simplified-app/`: "ME pane.
+          Six things, in one column: HYPE Link, Profiles, My Tickets, About Me,
+          Settings, Log Out. Everything BELOW the link is a drawer" — so the
+          link sits above them, always on screen.
+
+          It had been nested inside the About Me drawer since the accordion
+          rebuild, which hid a fan's primary surface behind a collapsed panel
+          labelled "What artists and venues see" — the one thing the HYPE link
+          is not. Two e2e tests had been asserting it visible all along. */}
+      {data.hypeLink && (
+        <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Your HYPE link</div>
+          {data.role === 'fan' && (
+            <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 9 }}>
+              Share it — friends see what you hype, and shows you can go to together.
+            </div>
+          )}
+          <div className="mmm-link-field">
+            <span className="mmm-link-value">{data.hypeLink.url}</span>
+            <button
+              className="mmm-btn-primary"
+              onClick={() => void copy()}
+              style={{ flexShrink: 0, padding: '5px 11px', borderRadius: 7, fontSize: '0.72rem' }}
+              type="button"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+          </div>
+          {/* Only figures that were actually read are rendered. A referral count
+              that failed to load is absent, not zero. */}
+          {(data.hypeLink.tickets !== null || data.hypeLink.earnedCents !== null) && (
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginBottom: 9 }}>
+              {data.hypeLink.tickets !== null && (
+                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
+                    {data.hypeLink.tickets}
+                  </div>
+                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.53rem' }}>Tickets</div>
+                </div>
+              )}
+              {data.hypeLink.earnedCents !== null && (
+                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
+                    ${(data.hypeLink.earnedCents / 100).toFixed(0)}
+                  </div>
+                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.53rem' }}>Earned</div>
+                </div>
+              )}
+            </div>
+          )}
+          <div style={{ fontSize: '0.74rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>
+            Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool —
+            never the artist&rsquo;s 70%. Promoting needs no role and no signup.
+          </div>
+        </div>
+      )}
+
       <Accordion defaultOpen detail="Fan · add artist, venue or advertiser" label="Profiles">
       {/* The stats that used to sit in a separate "Your year" section. The
           2026-08-10 template folds them under Profiles and labels them by role,
@@ -235,53 +292,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </Accordion>
 
       <Accordion detail="What artists and venues see" label="About Me">
-      {data.hypeLink && (
-        <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem' }}>Your HYPE link</div>
-          {data.role === 'fan' && (
-            <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 9 }}>
-              Share it — friends see what you hype, and shows you can go to together.
-            </div>
-          )}
-          <div className="mmm-link-field">
-            <span className="mmm-link-value">{data.hypeLink.url}</span>
-            <button
-              className="mmm-btn-primary"
-              onClick={() => void copy()}
-              style={{ flexShrink: 0, padding: '5px 11px', borderRadius: 7, fontSize: '0.72rem' }}
-              type="button"
-            >
-              {copied ? 'Copied' : 'Copy'}
-            </button>
-          </div>
-          {/* Only figures that were actually read are rendered. A referral count
-              that failed to load is absent, not zero. */}
-          {(data.hypeLink.tickets !== null || data.hypeLink.earnedCents !== null) && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginBottom: 9 }}>
-              {data.hypeLink.tickets !== null && (
-                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
-                    {data.hypeLink.tickets}
-                  </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.53rem' }}>Tickets</div>
-                </div>
-              )}
-              {data.hypeLink.earnedCents !== null && (
-                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
-                    ${(data.hypeLink.earnedCents / 100).toFixed(0)}
-                  </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.53rem' }}>Earned</div>
-                </div>
-              )}
-            </div>
-          )}
-          <div style={{ fontSize: '0.74rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>
-            Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool —
-            never the artist&rsquo;s 70%. Promoting needs no role and no signup.
-          </div>
-        </div>
-      )}
 
       {data.activity.length > 0 && (
         <>

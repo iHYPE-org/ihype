@@ -17,13 +17,16 @@ type LayerRevealState = 'pending' | 'checking' | 'done';
 
 const STAGGER_MS = 550;
 
+/**
+ * The crate half of this component is gone with the DJ role. `profileType` had
+ * exactly two values and only `"ARTIST"` was ever passed — `/promoters/[slug]`,
+ * the one mount that sent `"DJ"`, was deleted in step 2c of the DJ removal.
+ */
 export function TrackUploadPanel({
   profileId,
-  profileType,
   onUploaded,
 }: {
   profileId: string;
-  profileType: 'ARTIST' | 'DJ';
   onUploaded?: () => void;
 }) {
   const { t } = useI18n();
@@ -39,8 +42,7 @@ export function TrackUploadPanel({
   const [revealed, setRevealed] = useState<Record<number, LayerRevealState>>({});
   const [finalMessage, setFinalMessage] = useState<string | null>(null);
 
-  const isDj = profileType === 'DJ';
-  const submitLabel = isDj ? t('trackUploadPanel.addToCrateButton', 'Add to crate') : t('trackUploadPanel.uploadTrackButton', 'Upload track');
+  const submitLabel = t('trackUploadPanel.uploadTrackButton', 'Upload track');
 
   // Sequentially reveal each layer's already-known result on a stagger, so
   // the scan reads as a live gate pass rather than an instant dump of JSON.
@@ -118,20 +120,10 @@ export function TrackUploadPanel({
     <div className="artist-media-upload-panel">
       <div className="artist-media-upload-header">
         <div>
-          <h3>{isDj ? t('trackUploadPanel.addToCrateHeading', 'Add to crate') : t('trackUploadPanel.uploadTrackHeading', 'Upload track')}</h3>
+          <h3>{t('trackUploadPanel.uploadTrackHeading', 'Upload track')}</h3>
           <p className="meta">
-            {isDj
-              ? t('trackUploadPanel.djAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC) — nothing airs until it clears the scan below.')
-              : t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC). Every upload runs an automated scan before it’s marked cleared.')}
+            {t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC). Every upload runs an automated scan before it’s marked cleared.')}
           </p>
-          {isDj && (
-            <p className="meta">
-              {t('trackUploadPanel.freeUseSamplesPrompt', 'Need free-use samples?')}{' '}
-              <a href="https://pixabay.com/" rel="noopener noreferrer" target="_blank">
-                {t('trackUploadPanel.browsePixabayLink', "Browse Pixabay's free audio library →")}
-              </a>
-            </p>
-          )}
         </div>
       </div>
 
@@ -176,7 +168,7 @@ export function TrackUploadPanel({
             onChange={(e) => setFreeUseEnabled(e.target.checked)}
             type="checkbox"
           />
-          {t('trackUploadPanel.allowFreeUseLabel', 'Allow free use (promoters/DJs can add this to shows and playlists)')}
+          {t('trackUploadPanel.allowFreeUseLabel', 'Allow free use (this track can air on the station and in playlists)')}
         </label>
         <button className="button small" disabled={submitting} onClick={submit} type="button">
           {submitting ? t('trackUploadPanel.uploadingButton', 'Uploading…') : submitLabel}

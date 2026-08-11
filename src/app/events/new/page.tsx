@@ -414,7 +414,7 @@ export default function EventsNewPage() {
                 {t('eventsNewPage.viewEventPage', 'View event page →')}
               </Link>
             )}
-            <Link className="btn-ghost" href="/listen" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
+            <Link className="btn-ghost" href="/app/music/discover" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>
               {t('eventsNewPage.backToDashboard', 'Back to dashboard')}
             </Link>
           </div>

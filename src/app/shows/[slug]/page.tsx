@@ -270,7 +270,7 @@ export default async function ShowDetailPage({
     : [];
 
   const userShowHype = session?.user?.id
-    ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { userId: true } })
+    ? await db.hypeEvent.findUnique({ where: { userId_showId: { userId: session.user.id, showId: show.id } }, select: { createdAt: true } })
     : null;
 
   // Demand sparkline — real ticket-order velocity over the last 12h, bucketed
@@ -454,7 +454,7 @@ export default async function ShowDetailPage({
 
           {show.status !== 'DRAFT' ? (
             <div style={{ marginTop: 12 }}>
-              <HypeButton entityLabel="show" initialCount={show.hypeCount} initiallyHyped={!!userShowHype} targetId={show.id} targetType="show" />
+              <HypeButton entityLabel="show" initialCount={show.hypeCount} lastHypedAt={userShowHype?.createdAt.toISOString() ?? null} targetId={show.id} targetType="show" />
             </div>
           ) : (
             <p className="meta">{t('showsSlugPage.draftPreviewNotice', 'Draft previews stay private until the promoter broadcasts the show live.')}</p>
@@ -769,7 +769,7 @@ export default async function ShowDetailPage({
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                 <h2>{t('showsSlugPage.transferYourTicket', 'Transfer your ticket')}</h2>
                 <p className="subtitle" style={{ marginBottom: '1rem' }}>{t('showsSlugPage.transferTicketDesc', "Can't make it? You can transfer your ticket to a friend without a fee.")}</p>
-                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/listen">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
+                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/me/dashboard">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
               </div>
             )}
 

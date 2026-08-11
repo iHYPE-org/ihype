@@ -20,8 +20,6 @@ import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { getCspNonce } from '@/lib/csp-nonce';
-import { MobileShellProvider } from '@/lib/MobileShellContext';
-import { MobileAppShellLoader } from '@/components/MobileAppShellLoader';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
@@ -100,42 +98,39 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       </head>
       <body>
         <AppProviders>
-          <MobileShellProvider>
-            <AppSplash />
-            <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
-            <WebVitals />
-            <OfflineBanner />
-            <div aria-hidden="true" className="site-background">
-              <span className="site-background-orb site-background-orb-a" />
-              <span className="site-background-orb site-background-orb-b" />
-              <span className="site-background-grid" />
-            </div>
-            {/* Marketing nav. On shell routes the signed-in app shell replaces
-                it outright — hidden by `html.ihype-shell-locked` in shell.css.
-                (The old comment here named `.wb-shell`, a class that no longer
-                exists anywhere in the codebase.) */}
-            <AdaptiveSiteHeader
-              account={shellAccount}
-              inviteOnly={inviteOnly}
-              label={t('layout.primarySiteHeader', 'Primary site header')}
-            />
-            <MobileBottomNav />
-            <MobileAppShellLoader />
-            {/* Off shell routes (marketing, auth, and the phone swipe shell)
-                AppShell renders exactly what this layout rendered before —
-                site-shell + footer — so nothing about the signed-out
-                experience changes. The footer crosses as a slot, not a render
-                prop: a function cannot be serialized to a client component. */}
-            <AppShell account={shellAccount} footer={<SiteFooter />} unreadCount={unreadCount}>
-              {children}
-            </AppShell>
-            <SitePlayerDock />
-            {/* Above every shell, on every route: an operator must never be
-                able to forget whose account they are looking at. */}
-            <ImpersonationBanner />
-            <CookieConsent />
-            <ServiceWorkerRegister />
-          </MobileShellProvider>
+          <AppSplash />
+          <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
+          <WebVitals />
+          <OfflineBanner />
+          <div aria-hidden="true" className="site-background">
+            <span className="site-background-orb site-background-orb-a" />
+            <span className="site-background-orb site-background-orb-b" />
+            <span className="site-background-grid" />
+          </div>
+          {/* Marketing nav. On shell routes the signed-in app shell replaces
+              it outright — hidden by `html.ihype-shell-locked` in shell.css.
+              (The old comment here named `.wb-shell`, a class that no longer
+              exists anywhere in the codebase.) */}
+          <AdaptiveSiteHeader
+            account={shellAccount}
+            inviteOnly={inviteOnly}
+            label={t('layout.primarySiteHeader', 'Primary site header')}
+          />
+          <MobileBottomNav />
+          {/* Off shell routes (marketing and auth) AppShell renders exactly
+              what this layout rendered before — site-shell + footer — so
+              nothing about the signed-out experience changes. The footer
+              crosses as a slot, not a render prop: a function cannot be
+              serialized to a client component. */}
+          <AppShell account={shellAccount} footer={<SiteFooter />} unreadCount={unreadCount}>
+            {children}
+          </AppShell>
+          <SitePlayerDock />
+          {/* Above every shell, on every route: an operator must never be
+              able to forget whose account they are looking at. */}
+          <ImpersonationBanner />
+          <CookieConsent />
+          <ServiceWorkerRegister />
         </AppProviders>
         {process.env.NEXT_PUBLIC_CF_BEACON_TOKEN ? (
           <AnalyticsBeacon nonce={nonce} token={process.env.NEXT_PUBLIC_CF_BEACON_TOKEN} />

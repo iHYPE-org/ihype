@@ -15,6 +15,7 @@ import {
   buildShellNav, resolveActiveItemId, resolveSection,
   type ShellAccount, type ShellSectionId,
 } from '@/lib/app-nav';
+import { useAppShellChromeActive } from '@/lib/shell-chrome';
 
 export function AdaptiveSiteHeader({
   account,
@@ -43,6 +44,23 @@ export function AdaptiveSiteHeader({
   const navItems = useMemo(() => (account ? buildShellNav(account) : []), [account]);
   const activeItemId = resolveActiveItemId(navItems, pathname, null);
   const currentSection = resolveSection(pathname);
+  // Both components render `AppShellDrawer` — which is right, they should be
+  // the same drawer from the same registry — but rendering it twice puts two
+  // `role="dialog" aria-modal="true"` nodes with the same label in the
+  // document. That is an a11y defect on its own (a screen reader is offered
+  // two identical menus, and `aria-modal` on the hidden one is a lie), and it
+  // broke the app-shell contract suite, where `.shell-drawer` stopped
+  // resolving to one element.
+  //
+  // `AppShell` PUBLISHES whether its chrome is up rather than this component
+  // re-deriving it: an earlier attempt duplicated the condition here, and the
+  // two copies drifted — the header stood down on a route where the shell was
+  // rendering nothing, leaving a phone with no menu at all.
+  //
+  // The header's copy is not redundant: the shell's chrome only exists on
+  // shell routes, so on everything else this is the only drawer a phone has.
+  // It steps aside rather than being removed.
+  const appShellOwnsDrawer = useAppShellChromeActive();
   const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
@@ -132,7 +150,7 @@ export function AdaptiveSiteHeader({
                 shell's drawer and left this one open, and this is the drawer a
                 phone actually sees, because the shell's chrome only exists on
                 shell routes. */}
-            {account && (
+            {account && !appShellOwnsDrawer && (
               <AppShellDrawer
                 activeItemId={activeItemId}
                 items={navItems}

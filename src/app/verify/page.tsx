@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 
 const BADGE_COLOR: Record<string, { bg: string; border: string; text: string }> = {
   ARTIST: { bg: 'rgba(var(--accent-rgb),.12)', border: 'rgba(var(--accent-rgb),.3)', text: 'var(--accent)' },
-  DJ: { bg: 'rgba(var(--role-fan-rgb),.12)', border: 'rgba(var(--role-fan-rgb),.3)', text: 'var(--role-fan)' },
   VENUE: { bg: 'rgba(var(--role-venue-rgb),.12)', border: 'rgba(var(--role-venue-rgb),.3)', text: 'var(--role-venue)' },
 };
 
@@ -27,13 +26,11 @@ export default async function VerifyPage() {
 
   const TYPE_LABEL: Record<string, string> = {
     ARTIST: t('verifyPage.typeArtist', 'Artist'),
-    DJ: t('verifyPage.typeDj', 'DJ'),
     VENUE: t('verifyPage.typeVenue', 'Venue'),
   };
 
   const NEXT_STEP: Record<string, { title: string; body: string; cta: string; href: string }> = {
     ARTIST: { title: t('verifyPage.nextStepArtistTitle', 'Draft your artist page'), body: t('verifyPage.nextStepArtistBody', "Add a bio, pin a track, and set your genres now — it goes live the moment you're verified."), cta: t('verifyPage.nextStepArtistCta', 'Start your page'), href: '/pages?tab=creator' },
-    DJ: { title: t('verifyPage.nextStepDjTitle', 'Build your crate'), body: t('verifyPage.nextStepDjBody', "Upload free-use tracks and set your regular show slot — ready to air the moment you're verified."), cta: t('verifyPage.nextStepDjCta', 'Open your crate'), href: '/pages?tab=creator' },
     VENUE: { title: t('verifyPage.nextStepVenueTitle', 'Set up your room'), body: t('verifyPage.nextStepVenueBody', "Add capacity, amenities, and photos so promoters and artists can find you the moment you're verified."), cta: t('verifyPage.nextStepVenueCta', 'Set up your venue'), href: '/pages?tab=creator' },
   };
 
@@ -49,7 +46,7 @@ export default async function VerifyPage() {
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 12 }}>{t('verifyPage.nothingToVerify', 'Nothing to verify yet.')}</h1>
         <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24 }}>
-          {t('verifyPage.noProfilesBody', "Fan accounts don't need verification. Create an Artist, DJ, or Venue page to get started.")}
+          {t('verifyPage.noProfilesBody', "Fan accounts don't need verification. Create an Artist or Venue page to get started.")}
         </p>
         <Link href="/pages?tab=creator" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
           {t('verifyPage.createPage', 'Create a page →')}
@@ -109,7 +106,7 @@ export default async function VerifyPage() {
             {nextStep.cta} →
           </Link>
         </div>
-        <Link href="/listen" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+        <Link href="/app/map" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
           {t('verifyPage.exploreAsFan', 'Explore as a Fan →')}
         </Link>
       </div>

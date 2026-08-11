@@ -194,7 +194,7 @@ export function ArtistOnboardingWizard({
               {saving ? t('artistOnboardingWizard.saving', 'Saving…') : t('artistOnboardingWizard.continue', 'Continue →')}
             </button>
             <div className="aow-alt-link">
-              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/pages?tab=creator">{t('artistOnboardingWizard.aiPageCreator', 'build it with the AI Page Creator →')}</Link>
+              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/pages?tab=creator">{t('artistOnboardingWizard.aiPageCreator', 'build it in the Page Creator →')}</Link>
             </div>
           </div>
         )}

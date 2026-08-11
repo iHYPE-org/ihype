@@ -45,7 +45,7 @@ export function AppShellHeader({
     if (!dirtyRef.current) return;
     const timer = window.setTimeout(() => {
       const trimmed = query.trim();
-      router.replace(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/listen?tab=seeds');
+      router.replace(trimmed ? `/search?q=${encodeURIComponent(trimmed)}` : '/app/music/discover');
     }, 320);
     return () => window.clearTimeout(timer);
   }, [query, router]);

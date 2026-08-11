@@ -21,6 +21,7 @@ function parseBooleanFlag(value: unknown, defaultValue: boolean) {
 export type RuntimeFlagKey =
   | 'demo_logins'
   | 'invite_only_signup'
+  | 'invite_code_sharing'
   | 'hide_demo_content'
   | 'blob_media_storage'
   | 'ticket_payment_capture'
@@ -48,6 +49,31 @@ export async function getRuntimeFlag(key: RuntimeFlagKey, fallback: boolean) {
   const override = await readRuntimeOverride(key);
   return override ?? fallback;
 }
+
+/**
+ * Whether a code that can be PASSED AROUND opens the door.
+ *
+ * `invite_only_signup` says the door is shut; this says which keys fit. There
+ * are three invite channels and they are not the same kind of thing:
+ *
+ *  1. a shared `BETA_INVITE_CODES` code — one string, a whole channel of people
+ *  2. an admin-minted `InviteCode` row — single-use, claimed in the signup
+ *     transaction, issued to one person
+ *  3. a member's own HYPE code / `/invite/[hexId]` link — never consumed, so
+ *     one member admits unlimited friends
+ *
+ * 1 and 3 are sharing; 2 is issuance. While this flag is OFF only 2 is
+ * accepted, which makes the landing page's request form the single way in: you
+ * ask, and an admin issues you a code that admits exactly you. Turning it on
+ * re-opens 1 and 3 with no deploy, which is the point of it being a runtime
+ * flag rather than deleted code.
+ *
+ * Defaults to FALSE, and that direction matters: a flag that fails open would
+ * mean an unreachable KV silently re-opens signup to anyone holding any shared
+ * code. Read by `POST /api/register` and `POST /api/referral/validate`, which
+ * must agree — the second exists to predict the first.
+ */
+export const isInviteCodeSharingEnabledRuntime = () => getRuntimeFlag('invite_code_sharing', false);
 
 export const areRegistrationsEnabledRuntime = () => getRuntimeFlag('registrations_enabled', true);
 export const areUploadsEnabledRuntime = () => getRuntimeFlag('uploads_enabled', true);

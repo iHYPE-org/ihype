@@ -19,7 +19,7 @@ const SHARED_FIELDS: Record<string, number> = {
   links: 5000,
 };
 
-const ARTIST_DJ_FIELDS: Record<string, number> = {
+const ARTIST_FIELDS: Record<string, number> = {
   tourContent: 5000,
   upcomingContent: 5000,
   requestContent: 5000,
@@ -64,8 +64,8 @@ export const AI_FIELD_LABELS: Record<string, string> = {
 
 /** Text fields (with length caps) the AI may edit for a given profile type. */
 export function aiTextFieldLimits(profileType: string): Record<string, number> {
-  if (profileType === 'ARTIST' || profileType === 'DJ') {
-    return { ...SHARED_FIELDS, ...ARTIST_DJ_FIELDS };
+  if (profileType === 'ARTIST') {
+    return { ...SHARED_FIELDS, ...ARTIST_FIELDS };
   }
   if (profileType === 'VENUE') {
     return { ...SHARED_FIELDS, ...VENUE_FIELDS };

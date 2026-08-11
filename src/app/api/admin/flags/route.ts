@@ -9,6 +9,7 @@ import { log } from '@/lib/logger';
 const ALLOWED_FLAGS = new Set([
   'demo_logins',
   'invite_only_signup',
+  'invite_code_sharing',
   'hide_demo_content',
   'blob_media_storage',
   'ticket_payment_capture',

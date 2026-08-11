@@ -7,7 +7,7 @@ import { useI18n } from '@/components/I18nProvider';
 
 const TABS = [
   {
-    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/listen', color: 'var(--accent)',
+    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/app/music/discover', color: 'var(--accent)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <path d="M4 15v-3a8 8 0 0 1 16 0v3" />
@@ -37,7 +37,7 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
+  if (pathname.startsWith('/app/music') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';

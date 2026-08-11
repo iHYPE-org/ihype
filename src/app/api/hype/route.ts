@@ -11,6 +11,7 @@ import { sendPushNotification } from '@/lib/push-notify';
 import { notifyUser } from '@/lib/notify';
 import { log } from '@/lib/logger';
 import { applyHypeEntry, InsufficientHypeError } from '@/lib/hype-ledger';
+import { formatHypeWait, hypeWaitMs, nextHypeAt } from '@/lib/hype-window';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 const SHOW_HYPE_MILESTONES = [10, 25, 50, 100, 250, 500];
@@ -202,34 +203,33 @@ export async function POST(request: NextRequest) {
         where: { userId_showId: { userId: session.user.id, showId: payload.targetId } }
       }));
 
-      if (existing) {
-        // Toggle off: unhype the show.
-        const result = await withDbRetry(() => db.$transaction(async (tx) => {
-          await tx.hypeEvent.delete({
-            where: { userId_showId: { userId: session.user.id, showId: payload.targetId } },
-          });
-          const refund = await applyHypeEntry(tx, {
-            userId: session.user.id,
-            amount: 1,
-            source: 'HYPE_REFUND',
-            idempotencyKey: `show-unhype:${existing.id}`,
-            targetType: 'show',
-            targetId: payload.targetId,
-          });
-          const updatedShow = await tx.show.update({
-            where: { id: payload.targetId },
-            data: { hypeCount: { decrement: 1 } },
-          });
-          return { updatedShow, balance: refund.entry?.balanceAfter };
-        }));
-        return NextResponse.json({
-          action: 'unhyped',
-          hypeCount: Math.max(0, result.updatedShow.hypeCount),
-          hypeBalance: result.balance,
-        });
+      // Inside the 24h window this tap is refused rather than toggled off. The
+      // button states the remaining wait, so reaching this is a stale page or
+      // a scripted call — either way the answer is when, not no.
+      const showWait = hypeWaitMs(existing?.createdAt);
+      if (showWait > 0) {
+        return NextResponse.json(
+          {
+            error: `You already hyped this show. You can hype it again in ${formatHypeWait(showWait)}.`,
+            code: 'HYPE_WINDOW_OPEN',
+            nextHypeAt: nextHypeAt(existing?.createdAt)?.toISOString(),
+            retryAfterMs: showWait,
+          },
+          { status: 429, headers: { 'Retry-After': String(Math.ceil(showWait / 1000)) } },
+        );
       }
 
       const result = await withDbRetry(() => db.$transaction(async (tx) => {
+        // Replaced, not updated: the row IS the current hype, so `createdAt`
+        // keeps meaning "when this hype was given" and the new row's id gives
+        // the ledger spend a genuinely new idempotency key. Updating in place
+        // would reuse `show-hype:<id>`, and the ledger would swallow every
+        // repeat spend as a duplicate — a free hype, every day, forever.
+        if (existing) {
+          await tx.hypeEvent.delete({
+            where: { userId_showId: { userId: session.user.id, showId: payload.targetId } },
+          });
+        }
         const hype = await tx.hypeEvent.create({
           data: { userId: session.user.id, showId: payload.targetId, positionSeconds: payload.positionSeconds }
         });
@@ -294,6 +294,7 @@ export async function POST(request: NextRequest) {
         action: 'hyped',
         hypeCount: updatedShow.hypeCount,
         hypeBalance: result.balance,
+        nextHypeAt: nextHypeAt(new Date())?.toISOString(),
       });
     }
 
@@ -312,40 +313,27 @@ export async function POST(request: NextRequest) {
       where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } }
     });
 
-    if (existing) {
-      // Toggle off: unhype the profile.
-      const result = await db.$transaction(async (tx) => {
+    const profileWait = hypeWaitMs(existing?.createdAt);
+    if (profileWait > 0) {
+      return NextResponse.json(
+        {
+          error: `You already hyped this. You can hype it again in ${formatHypeWait(profileWait)}.`,
+          code: 'HYPE_WINDOW_OPEN',
+          nextHypeAt: nextHypeAt(existing?.createdAt)?.toISOString(),
+          retryAfterMs: profileWait,
+        },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil(profileWait / 1000)) } },
+      );
+    }
+    const isFirstHype = !existing;
+
+    const result = await db.$transaction(async (tx) => {
+      // See the note in the show branch: replaced, not updated.
+      if (existing) {
         await tx.profileHypeEvent.delete({
           where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } },
         });
-        const refund = await applyHypeEntry(tx, {
-          userId: session.user.id,
-          amount: 1,
-          source: 'HYPE_REFUND',
-          idempotencyKey: `profile-unhype:${existing.id}`,
-          targetType: 'profile',
-          targetId: payload.targetId,
-        });
-        const updatedProfile = await tx.profile.update({
-          where: { id: payload.targetId },
-          data: { hypeCount: { decrement: 1 } },
-        });
-        return { updatedProfile, balance: refund.entry?.balanceAfter };
-      });
-      await recordAuditEvent({
-        actorUserId: session.user.id,
-        action: 'profile_unhyped',
-        entityType: 'profile',
-        entityId: payload.targetId
-      });
-      return NextResponse.json({
-        action: 'unhyped',
-        hypeCount: Math.max(0, result.updatedProfile.hypeCount),
-        hypeBalance: result.balance,
-      });
-    }
-
-    const result = await db.$transaction(async (tx) => {
+      }
       const hype = await tx.profileHypeEvent.create({
         data: { userId: session.user.id, profileId: payload.targetId },
       });
@@ -375,14 +363,20 @@ export async function POST(request: NextRequest) {
     await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
     checkAndAwardBadges(session.user.id).catch(() => {});
 
-    // Early-believer re-engagement: the new hyper is the hypeCount-th believer
-    // (one hype per user). If they're in the first 25 (the believers-board early
-    // tier), tell them their rank and link them to the board to share it.
-    if (updatedProfile.hypeCount <= 25) {
-      const rank = updatedProfile.hypeCount;
+    // Early-believer re-engagement. `hypeCount` is a running total and stopped
+    // being a headcount the day HYPE started resetting every 24h — one member
+    // hyping daily used to be indistinguishable from a hundred members hyping
+    // once. Rank comes from the believer ROWS instead, which are still one per
+    // member (unique on user+profile), and only a first-time believer has a
+    // rank to be told about.
+    if (isFirstHype) {
+      const rank = await db.profileHypeEvent
+        .count({ where: { profileId: payload.targetId } })
+        .catch(() => 0);
+      if (rank > 0 && rank <= 25) {
       db.profile.findUnique({ where: { id: payload.targetId }, select: { slug: true, name: true, type: true } })
         .then((p: { slug: string; name: string; type: string } | null) => {
-          if (p && (p.type === 'ARTIST' || p.type === 'DJ')) {
+          if (p && p.type === 'ARTIST') {
             notifyUser(session.user.id, {
               type: 'EARLY_BELIEVER',
               title: 'You called it early',
@@ -392,6 +386,7 @@ export async function POST(request: NextRequest) {
           }
         })
         .catch(() => {});
+      }
     }
 
     // Push notification to track owner (fire-and-forget, skip self-hype)
@@ -410,6 +405,7 @@ export async function POST(request: NextRequest) {
       action: 'hyped',
       hypeCount: updatedProfile.hypeCount,
       hypeBalance: result.balance,
+      nextHypeAt: nextHypeAt(new Date())?.toISOString(),
     });
   } catch (err) {
     if (err instanceof InsufficientHypeError) {

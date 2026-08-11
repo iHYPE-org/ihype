@@ -3,49 +3,68 @@
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '@/lib/haptics';
 import { useI18n } from '@/components/I18nProvider';
+import { formatHypeWait, hypeWaitMs, HYPE_WINDOW_MS } from '@/lib/hype-window';
 
 type HypeButtonProps = {
   targetType: 'show' | 'profile';
   targetId: string;
   initialCount: number;
-  initiallyHyped?: boolean;
+  /**
+   * When the viewer last hyped this target, ISO. The window is a timestamp,
+   * never a boolean — see `src/lib/hype-window.ts`.
+   */
+  lastHypedAt?: string | null;
   entityLabel?: string;
 };
 
-export function HypeButton({ targetType, targetId, initialCount, initiallyHyped, entityLabel }: HypeButtonProps) {
+export function HypeButton({ targetType, targetId, initialCount, lastHypedAt, entityLabel }: HypeButtonProps) {
   const { t } = useI18n();
-  const storageKey = `hyped:${targetType}:${targetId}`;
+  const storageKey = `hyped-at:${targetType}:${targetId}`;
   const [count, setCount] = useState(initialCount);
-  const [hyped, setHyped] = useState(initiallyHyped ?? false);
+  const [hypedAt, setHypedAt] = useState<string | null>(lastHypedAt ?? null);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [popping, setPopping] = useState(false);
   const [bursting, setBursting] = useState(false);
+  // Re-render on a coarse tick so the stated wait counts down while the page
+  // is open. Every 30s, not every second: the label is minutes, and a
+  // per-second countdown turns a fairness rule into a game to be timed.
+  const [, setTick] = useState(0);
   const burstRef = useRef<HTMLSpanElement>(null);
   const noun = entityLabel ?? (targetType === 'show' ? 'show' : 'profile');
 
   useEffect(() => {
-    if (initiallyHyped !== undefined) return; // server-provided state is authoritative
+    if (lastHypedAt !== undefined) return; // server-provided state is authoritative
     try {
-      setHyped(localStorage.getItem(storageKey) === '1');
+      setHypedAt(localStorage.getItem(storageKey));
     } catch {}
-  }, [storageKey, initiallyHyped]);
+  }, [storageKey, lastHypedAt]);
+
+  const waitMs = hypeWaitMs(hypedAt);
+  const waiting = waitMs > 0;
+
+  useEffect(() => {
+    if (!waiting) return;
+    const id = window.setInterval(() => setTick((n) => n + 1), 30_000);
+    return () => window.clearInterval(id);
+  }, [waiting]);
 
   async function handleClick() {
+    if (waiting || pending) return;
     haptic('light');
     setPending(true);
     setMessage(null);
 
-    const wasHyped = hyped;
-    // Optimistic update
-    setHyped(!wasHyped);
-    setCount((c) => wasHyped ? Math.max(0, c - 1) : c + 1);
-    if (!wasHyped) {
-      setPopping(true);
-      setBursting(true);
-      setTimeout(() => setPopping(false), 400);
-      setTimeout(() => setBursting(false), 700);
-    }
+    // Optimistic: the spend is one-way now, so there is nothing to toggle back
+    // to — only a failure rolls it off.
+    const previousHypedAt = hypedAt;
+    const now = new Date().toISOString();
+    setHypedAt(now);
+    setCount((c) => c + 1);
+    setPopping(true);
+    setBursting(true);
+    setTimeout(() => setPopping(false), 400);
+    setTimeout(() => setBursting(false), 700);
 
     let response: Response;
     try {
@@ -56,64 +75,62 @@ export function HypeButton({ targetType, targetId, initialCount, initiallyHyped,
       });
     } catch {
       // Network failure — roll back.
-      setHyped(wasHyped);
-      setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
-      setMessage(
-        wasHyped
-          ? t('hypeButton.unhypeNetworkError', 'Could not unhype this {noun} (network error)').replace('{noun}', noun)
-          : t('hypeButton.hypeNetworkError', 'Could not hype this {noun} (network error)').replace('{noun}', noun)
-      );
+      setHypedAt(previousHypedAt);
+      setCount((c) => Math.max(0, c - 1));
+      setMessage(t('hypeButton.hypeNetworkError', 'Could not hype this {noun} (network error)').replace('{noun}', noun));
       setPending(false);
       return;
     }
 
     const data = await response.json().catch(() => ({} as Record<string, unknown>));
     if (response.ok) {
-      const isHyped = data.action === 'hyped';
       if (typeof data.hypeCount === 'number') setCount(data.hypeCount);
-      setHyped(isHyped);
-      try {
-        if (isHyped) localStorage.setItem(storageKey, '1');
-        else localStorage.removeItem(storageKey);
-      } catch {}
+      try { localStorage.setItem(storageKey, now); } catch {}
       setMessage(
-        isHyped
-          ? t('hypeButton.hypedSuccess', "Hyped! You've hyped {count} total on this {noun}.")
-              .replace('{count}', (data.hypeCount ?? count).toLocaleString())
-              .replace('{noun}', noun)
-          : null
+        t('hypeButton.hypedWindow', "Hyped! You can hype this {noun} again in 24 hours.")
+          .replace('{noun}', noun)
       );
     } else {
-      // Roll back the optimistic update.
-      setHyped(wasHyped);
-      setCount((c) => wasHyped ? c + 1 : Math.max(0, c - 1));
+      // A 429 from the window means this page was stale — adopt the server's
+      // answer rather than rolling back to a state it disagrees with.
+      const serverNext = typeof data.nextHypeAt === 'string' ? data.nextHypeAt : null;
+      if (serverNext) {
+        const lastFromServer = new Date(new Date(serverNext).getTime() - HYPE_WINDOW_MS);
+        setHypedAt(Number.isNaN(lastFromServer.getTime()) ? previousHypedAt : lastFromServer.toISOString());
+      } else {
+        setHypedAt(previousHypedAt);
+      }
+      setCount((c) => Math.max(0, c - 1));
       setMessage(
         (data.error as string | undefined) ??
-          (wasHyped
-            ? t('hypeButton.unhypeFailed', 'Could not unhype this {noun}').replace('{noun}', noun)
-            : t('hypeButton.hypeFailed', 'Could not hype this {noun}').replace('{noun}', noun))
+          t('hypeButton.hypeFailed', 'Could not hype this {noun}').replace('{noun}', noun)
       );
     }
 
     setPending(false);
   }
 
+  const waitLabel = formatHypeWait(waitMs);
+  const actionLabel = waiting
+    ? t('hypeButton.waitAria', 'You can hype this {noun} again in {wait}')
+        .replace('{noun}', noun).replace('{wait}', waitLabel)
+    : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun);
+
   return (
     <div className="cta-row" style={{ position: 'relative' }}>
       <button
-        className={`button${hyped ? ' secondary' : ''}${popping ? ' hype-pop' : ''}`}
+        className={`button${waiting ? ' secondary' : ''}${popping ? ' hype-pop' : ''}`}
         onClick={handleClick}
-        disabled={pending}
+        disabled={pending || waiting}
         type="button"
-        aria-pressed={hyped}
-        aria-label={hyped ? t('hypeButton.removeHypeAria', 'Remove hype from this {noun}').replace('{noun}', noun) : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun)}
-        title={hyped ? t('hypeButton.removeHypeAria', 'Remove hype from this {noun}').replace('{noun}', noun) : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun)}
+        aria-label={actionLabel}
+        title={actionLabel}
         style={{ position: 'relative', overflow: 'visible' }}
       >
         {pending
           ? t('hypeButton.updating', 'Updating…')
-          : hyped
-            ? `${t('hypeButton.hypedCount', '✓ Hyped')} ${count.toLocaleString()}`
+          : waiting
+            ? `${t('hypeButton.hypedCount', '✓ Hyped')} ${count.toLocaleString()} · ${waitLabel}`
             : `${t('hypeButton.hypeCount', 'Hype')} ${count.toLocaleString()}`}
         {bursting && (
           <span ref={burstRef} aria-hidden="true" style={{

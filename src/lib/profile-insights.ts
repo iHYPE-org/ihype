@@ -158,10 +158,10 @@ export async function getProfileInsights(profileId: string, profileType: string)
     bookingRequests,
   };
 
-  if (profileType === 'ARTIST' || profileType === 'DJ') {
-    // DJ profiles' own shows are typically attached via promoterProfileId
-    // (see src/app/promoters/[slug]/page.tsx), not headlinerProfileId like a
-    // plain artist — check both so a DJ's hosted shows aren't silently missed.
+  if (profileType === 'ARTIST') {
+    // Both attachments, not just the headliner one: an artist can be booked as
+    // the act OR be the profile promoting the show, and a show counted only on
+    // `headlinerProfileId` silently drops the second case.
     const [{ listeners, topTracks, trackCompletionRate }, showStats] = await Promise.all([
       getListenerStats(profileId),
       getShowBasedStats({ OR: [{ headlinerProfileId: profileId }, { promoterProfileId: profileId }] }),

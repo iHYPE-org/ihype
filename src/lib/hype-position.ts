@@ -18,7 +18,7 @@ export function bucketHypePositionIndex(
   return Math.floor(pct * bucketCount);
 }
 
-/** Same trackDur > planDur > 3600-fallback formula RadioHome.tsx uses to render show length. */
+/** Same trackDur > planDur > 3600-fallback formula the retired RadioHome used to render show length. */
 export function computeShowDurationSecs(show: {
   radioTracks: { durationSecs: number | null }[];
   productionPlan: unknown;

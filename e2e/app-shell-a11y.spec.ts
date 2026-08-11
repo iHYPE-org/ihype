@@ -112,13 +112,18 @@ test.describe('App shell accessibility (serious/critical only)', () => {
       await assertNoSeriousViolations(page, `${theme} drawer open`);
     });
 
-    test(`${theme}: the dedicated Listen module deck has no serious or critical axe violations`, async ({ page }) => {
+    // The six-module deck this used to check is retired: Design System 8's
+    // route map has no `/listen`, and the music surfaces are `/app/music/*`
+    // inside the Music · Map · Me shell. That shell has its own contract suite
+    // (mmm-shell.spec.ts); what belongs HERE is the assertion that the legacy
+    // shell correctly stands aside for it, since that is this file's subject.
+    test(`${theme}: the app shell stands aside for the Music · Map · Me shell`, async ({ page }) => {
       await useTheme(page, theme);
-      await page.goto('/listen');
-      await expect(page.locator('.module-deck-preview')).toBeVisible({ timeout: 20000 });
+      await page.goto('/app/music/discover');
+      await expect(page.locator('.mmm-frame')).toBeVisible({ timeout: 20000 });
       await expect(page.locator('.shell-root')).toHaveCount(0);
       await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
-      await assertNoSeriousViolations(page, `${theme} /listen module deck`);
+      await assertNoSeriousViolations(page, `${theme} /app/music/discover`);
     });
   }
 });
