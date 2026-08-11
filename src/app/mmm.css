@@ -167,19 +167,22 @@ html.mmm-locked .site-shell > main {
   /* The rows are interactive; the gap between them must not eat map drags. */
   pointer-events: none;
 }
+/* `#row1` in the map's design source: the layer chips and the "Near me" pill
+   on one line, 12px apart. The chips keep their own 6px rhythm inside
+   `.mmm-map-chips`, which is why this is two nested flex rows rather than one
+   — a single gap cannot be both. */
 .mmm-control-row {
   display: flex;
-  gap: 6px;
+  gap: 12px;
+  align-items: center;
   overflow-x: auto;
   pointer-events: auto;
   padding: 2px 12px 0;
 }
-.mmm-control-row + .mmm-control-row { padding: 0 12px 10px; }
-.mmm-control-divider {
-  flex-shrink: 0;
-  width: 1px;
-  background: var(--line-2);
-  margin: 5px 3px;
+.mmm-map-chips {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 6px;
 }
 
 .mmm-chip {
@@ -638,7 +641,10 @@ html.mmm-locked .site-shell > main {
   left: 0;
   right: 0;
   top: 100%;
-  max-height: min(46vh, 420px);
+  /* `dvh`, never `vh` — MOBILE.md. Mobile browser chrome resizes the viewport,
+     and a `vh`-sized dropdown is either clipped behind the address bar or
+     floating above where it collapsed to. */
+  max-height: min(46dvh, 420px);
   overflow-y: auto;
   background: var(--bg-2);
   border: 1px solid var(--line-2);
@@ -1032,12 +1038,23 @@ html.mmm-locked .site-shell > main {
   border: 1px solid var(--hair-150);
   background: var(--bg-2);
   color: var(--ink);
+  /* The discs CAST — they are objects on the frame, not buttons in it, and the
+     drop shadow is the other half of what the oversized mark is doing. From
+     `ArcNav.jsx`; the navy tint is the same re-anchoring the shadow tokens got
+     (pure black reads grey-green over #0b1220). */
+  box-shadow: 0 14px 34px rgba(4, 8, 18, 0.55);
 }
-.mmm-ray-disc:hover,
+/* Hover is NOT the current page. Both used to paint the accent fill, so
+   pointing at MUSIC from the map made two discs claim to be where you are. */
+.mmm-ray-disc:hover {
+  border-color: var(--accent);
+}
 .mmm-ray-disc[aria-current='page'] {
   background: var(--accent);
   color: var(--ink-on-accent);
   border-color: var(--accent);
+  /* The active disc adds an accent halo on top of a deeper cast. */
+  box-shadow: 0 16px 38px rgba(4, 8, 18, 0.6), 0 0 0 5px rgba(var(--accent-rgb), 0.2);
 }
 
 /* Absolutely centred, not laid out. `place-items: center` on a grid whose item
@@ -1374,6 +1391,37 @@ html.mmm-locked .site-shell > main {
   background: var(--accent);
   color: var(--ink-on-accent);
   border-color: var(--accent);
+}
+
+/* "Near me" — one pill holding a reading and its remedy. The count is set in
+   the same ink as the map's own captions, not in the chip's ink: it is a
+   readout, and only the button is a control. */
+.mmm-map-near {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-mono);
+  font-size: 0.594rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  background: var(--bg-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  padding: 7px 7px 7px 14px;
+}
+.mmm-map-recentre {
+  font-family: inherit;
+  font-size: 0.563rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: var(--radius-pill);
+  padding: 6px 12px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
 }
 
 /* The retired player. Same squircle ratio as the logo trigger and the artwork

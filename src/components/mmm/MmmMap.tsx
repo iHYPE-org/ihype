@@ -203,6 +203,40 @@ export function MmmMap({
     return () => window.clearTimeout(timer);
   }, [active, cameraTick, load]);
 
+  // "Near me". The design asks for the browser's position ONCE, on load, and
+  // never blocks on it: "the layer works from the seeded home until (and
+  // unless) the browser answers". A denial or a timeout is not an error state
+  // — the control stays, it just recentres on the seeded camera instead.
+  const [home, setHome] = useState<[number, number] | null>(null);
+  const flownHome = useRef(false);
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+    let cancelled = false;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        if (!cancelled) setHome([position.coords.longitude, position.coords.latitude]);
+      },
+      () => {},
+      { timeout: 6000, maximumAge: 600000 },
+    );
+    return () => { cancelled = true; };
+  }, []);
+
+  const recentre = useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+    map.flyTo({ center: home ?? SCOPE_CAMERAS.county.center, zoom: 12, duration: 800 });
+  }, [home]);
+
+  // If the browser answers while the artists layer is up, the design flies
+  // there — that layer is the one whose whole question is "who is near me".
+  // Once only: re-flying on every return to the layer would fight a pan.
+  useEffect(() => {
+    if (!ready || !home || layer !== 'artists' || flownHome.current) return;
+    flownHome.current = true;
+    recentre();
+  }, [home, layer, ready, recentre]);
+
   const collision = layer === 'events' ? PIN_COLLISION.event : PIN_COLLISION.venue;
 
   const candidates = useMemo(() => {
@@ -288,17 +322,36 @@ export function MmmMap({
               backend — only from a control surface that never had it. */}
           <div className="mmm-map-controls">
             <div className="mmm-control-row">
-              {LAYERS.map((entry) => (
-                <button
-                  aria-pressed={layer === entry.id}
-                  className="mmm-map-chip"
-                  key={entry.id}
-                  onClick={() => setLayer(entry.id)}
-                  type="button"
-                >
-                  {entry.label}
-                </button>
-              ))}
+              <div className="mmm-map-chips">
+                {LAYERS.map((entry) => (
+                  <button
+                    aria-pressed={layer === entry.id}
+                    className="mmm-map-chip"
+                    key={entry.id}
+                    onClick={() => setLayer(entry.id)}
+                    type="button"
+                  >
+                    {entry.label}
+                  </button>
+                ))}
+              </div>
+              {/* `#near` rides beside the chips on the ARTISTS layer only, and
+                  nowhere else — an artist pin is a city of origin rather than
+                  an address, so "how many are around here" is the only reading
+                  the count has. Events and venues answer that with their own
+                  pins. */}
+              {layer === 'artists' && (
+                <div className="mmm-map-near">
+                  <span aria-live="polite">
+                    {total > 0
+                      ? `${total} artist${total === 1 ? '' : 's'} here`
+                      : 'None in view — zoom out'}
+                  </span>
+                  <button className="mmm-map-recentre" onClick={recentre} type="button">
+                    Near me
+                  </button>
+                </div>
+              )}
             </div>
           </div>
           {/* The date strip belongs to the events layer alone: only an event has

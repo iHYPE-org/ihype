@@ -1,0 +1,37 @@
+<!-- @dsCard group="Mobile" viewport="700x300" name="Safe areas" subtitle="Notch · home indicator · the shell's inset properties" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:22px 24px;background:var(--bg-base);font-family:var(--font-body)}
+.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:12px}
+.wrap{display:flex;gap:26px;align-items:flex-start}
+.phone{width:150px;height:214px;border-radius:22px;border:1px solid var(--line-2,rgba(238,241,246,.13));background:var(--bg-surface,#121b2e);position:relative;overflow:hidden;flex-shrink:0}
+.inset{position:absolute;left:0;right:0;background:rgba(255,80,41,.11);border-color:rgba(255,80,41,.45);font-family:var(--font-mono);font-size:8px;letter-spacing:.1em;color:#ff5029;display:flex;align-items:center;justify-content:center}
+.notch{width:64px;height:15px;border-radius:0 0 10px 10px;background:var(--bg-base);position:absolute;top:0;left:50%;transform:translateX(-50%)}
+.content{position:absolute;left:8px;right:8px;top:38px;bottom:44px;border:1px dashed rgba(34,229,212,.5);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:8px;letter-spacing:.12em;color:#22e5d4;text-align:center;line-height:1.7}
+table{border-collapse:collapse;font-size:11.5px;color:var(--ink-2,#96a1b5)}
+td{padding:6px 14px 6px 0;vertical-align:top;line-height:1.55}
+code{font-family:var(--font-mono);font-size:10px;color:var(--accent);letter-spacing:.02em;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="lbl">Safe areas · consume, never re-derive</div>
+<div class="wrap">
+  <div class="phone">
+    <div class="inset" style="top:0;height:38px;border-bottom:1px solid rgba(255,80,41,.45)">safe top</div>
+    <div class="notch"></div>
+    <div class="content">pane<br>content</div>
+    <div class="inset" style="bottom:0;height:44px;border-top:1px solid rgba(255,80,41,.45)">safe bottom + chrome</div>
+  </div>
+  <table>
+    <tr><td><code>--pane-pad</code></td><td>Full pane padding. Under 620px: <code>calc(16px + safeT) 16px (chrome + 22px)</code>. Above: <code>30px 40px 142px</code>.</td></tr>
+    <tr><td><code>--chrome-l</code><br><code>--chrome-r</code></td><td>Trigger inset plus the safe left/right edge.</td></tr>
+    <tr><td><code>--player-l</code></td><td>Where the player bar starts — trigger inset + size + gap.</td></tr>
+  </table>
+</div>
+<div style="margin-top:18px;font-size:11.5px;color:var(--ink-2,#96a1b5);line-height:1.65;max-width:600px">A <strong style="color:var(--ink-1,#eef1f6);font-weight:600">fixed overlay</strong> owns its own safe area — it sits outside the padded pane. A <strong style="color:var(--ink-1,#eef1f6);font-weight:600">scrolling pane</strong> inherits <code>--pane-pad</code> and must not add its own top padding. The insets come from a probe element, because <code>env()</code> cannot be read from JS any other way.</div>
+</body>
+</html>

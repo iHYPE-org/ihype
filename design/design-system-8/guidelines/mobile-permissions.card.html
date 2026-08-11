@@ -1,0 +1,38 @@
+<!-- @dsCard group="Mobile" viewport="700x330" name="Permissions" subtitle="Primer → OS prompt → denied fallback · ask at the moment of use" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="../styles.css">
+<style>
+body{margin:0;padding:22px 24px;background:var(--bg-base);font-family:var(--font-body)}
+.lbl{font-family:var(--font-mono);font-size:9px;letter-spacing:.18em;color:var(--ink-3);text-transform:uppercase;margin-bottom:12px}
+.flow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:20px}
+.st{padding:12px 13px;border-radius:11px;border:1px solid var(--line-2,rgba(238,241,246,.13));background:var(--bg-surface,#121b2e)}
+.st b{display:block;font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px}
+.st p{margin:0;font-size:11.5px;line-height:1.6;color:var(--ink-2,#96a1b5)}
+table{border-collapse:collapse;width:100%;font-size:11.5px}
+th{text-align:left;font-family:var(--font-mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:400;padding:0 12px 7px 0;border-bottom:1px solid var(--line-2,rgba(238,241,246,.13))}
+td{padding:7px 12px 7px 0;color:var(--ink-2,#96a1b5);line-height:1.5;border-bottom:1px solid var(--line-1,rgba(238,241,246,.07));vertical-align:top}
+td:first-child{color:var(--ink-1,#eef1f6);font-weight:600;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="lbl">Three designed states · every capability, no exceptions</div>
+<div class="flow">
+  <div class="st" style="border-color:rgba(185,131,255,.35)"><b style="color:#b983ff">1 · Primer</b><p>Ours, not the OS's. Says why we're asking and what breaks without it. Has a real "Not now".</p></div>
+  <div class="st"><b style="color:var(--ink-3)">2 · OS prompt</b><p>Fired only after the primer is accepted. One shot per install — never trigger it speculatively.</p></div>
+  <div class="st" style="border-color:rgba(34,229,212,.32)"><b style="color:#22e5d4">3 · Denied</b><p>The path still works, degraded. Never a dead end, never a nag loop.</p></div>
+</div>
+<table>
+  <tr><th>Capability</th><th>Used for</th><th>Denied fallback</th></tr>
+  <tr><td>Notifications</td><td>Show reminders, promoter payouts, ticket transfers</td><td>In-app notification centre — nothing is lost</td></tr>
+  <tr><td>Location</td><td>"Near me" on the map, local radio</td><td>Home city from Settings</td></tr>
+  <tr><td>Camera</td><td>QR check-in at the door</td><td>Venue scans the fan's code instead</td></tr>
+  <tr><td>Apple&nbsp;/&nbsp;Google Pay</td><td>Checkout</td><td>Card entry via Stripe</td></tr>
+  <tr><td>Share sheet</td><td>HYPE Links</td><td>Clipboard copy with confirmation</td></tr>
+  <tr style="border-bottom:none"><td>Offline storage</td><td>Ticket wallet</td><td>Online-only; codes re-fetch on connect</td></tr>
+</table>
+<div style="margin-top:14px;font-size:11.5px;color:var(--ink-2,#96a1b5);line-height:1.6"><strong style="color:var(--ink-1,#eef1f6);font-weight:600">Ask at the moment of use, never on launch.</strong> The notification primer fires after a first ticket purchase — not during onboarding, where it has no context and gets denied.</div>
+</body>
+</html>

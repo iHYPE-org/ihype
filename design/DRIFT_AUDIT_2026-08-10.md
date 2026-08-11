@@ -127,6 +127,65 @@ invented "tap a pin" result line, and chip styling.
 4. **Map** — calendar, Near me, venue search.
 5. **`NavHint`**, then the smaller shared components.
 
+---
+
+# Design-system sync — 2026-08-11
+
+Pulled from the live Claude Design project **"Design System"**
+(`0a104bf9-bc92-45f4-aa81-48b29a6b9a93`), which is the DS8 bundle vendored at
+`design/design-system-8/`. The older **"iHYPE Design System"** project
+(`39bcce7b-…`) is the superseded pre-DS8 bundle — do not read it.
+
+The update was a **mobile pass**. Vendored into `design/design-system-8/`:
+
+| New file | What it is |
+|---|---|
+| `MOBILE.md` | The mobile spec. 375px floor, one breakpoint at 620px, 44px targets, `dvh`, permissions, offline, PWA, store notes |
+| `guidelines/mobile-breakpoints.card.html` | The 375/620/desktop bar and the `auto-fit` grid rule |
+| `guidelines/mobile-safe-areas.card.html` | `--pane-pad` / `--chrome-l` / `--player-l` |
+| `guidelines/mobile-touch.card.html` | Hit areas and the four gestures |
+| `guidelines/mobile-permissions.card.html` | Primer → OS prompt → denied fallback |
+
+**Unchanged, verified by fetch rather than assumed:** `tokens/colors.css`,
+`tokens/spacing.css`, `ROUTE_TEMPLATE_MAP.md`, `components/shell/ArcNav.jsx`.
+Not vendored: `explorations/` (three abandoned directions and a logo/player
+merge — history, not spec), and the design project's own app scaffolding
+(`index.html`, `lib/`, `beta/`, `ui_kits/`, `screenshots/`).
+
+## Fixed in this pass
+
+- **`46vh` → `46dvh`** on the search dropdown (`mmm.css`). MOBILE.md: "Use
+  `dvh`, never `vh`". It was the only non-`dvh` viewport unit in either shell.
+- **The arc discs cast a shadow again.** `ArcNav.jsx` gives an inactive disc
+  `0 14px 34px rgba(4,8,18,.55)` and an active one a deeper cast plus a 5px
+  accent halo; the port had dropped both, so the discs sat flat in a nav whose
+  whole conceit is three objects on the frame.
+- **Hover no longer impersonates the current page.** `:hover` and
+  `[aria-current]` shared one rule, so pointing at MUSIC from the map lit two
+  discs as "here". Hover now moves the border only.
+- **The map and date controls carry the 44px floor** (`mobile-fit.css`). The
+  design's own `map.html` sizes `#recentre` at 6px/12px on 9px mono — 24px
+  tall, against MOBILE.md's "44×44px minimum, always, including on desktop".
+  Added as a floor, so the design's geometry survives on a mouse.
+
+## Open — needs a product decision, not a translation
+
+Two PRODUCT SYNC facts in the design system's `readme.md` describe features
+this codebase still ships differently. Both are scope changes, so they are
+flagged rather than done:
+
+1. **"No AI page generation. Retired 2026-08-08."** `templates/page-creator/`
+   was deleted from the design system and replaced by `templates/page-builder/`,
+   a fixed per-type schema — same sections, order and layout for Artist, Venue
+   and Advertiser, only the field set differing. `src/components/PageEditor.tsx`
+   still has `generatePage()` wired to an AI Page Studio button. Removing a
+   shipped feature is the owner's call.
+2. **"HYPE resets every 24 hours, per target."** A timestamp per target, never
+   a boolean, so the wait can be stated — the control shows the remaining time
+   ("17h 40m") and refuses the tap rather than letting the API reject it, coarse
+   to the minute on purpose. Nothing in `HypeButton.tsx` or `/api/hype`
+   implements a window.
+
 ## Note for whoever picks this up
 
 Read the `.d.ts` **and then the `.jsx`** — not one or the other. The correction

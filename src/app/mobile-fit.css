@@ -47,6 +47,15 @@
   .mmm-sheet-cta,
   .mmm-sheet-cta-2,
   .mmm-chip,
+  /* The map's own controls. `map.html` sizes these at 7–8px of vertical
+     padding on 9–10px mono, which lands at 24–33px — the design's own numbers,
+     and under the floor MOBILE.md sets for every control on every surface.
+     Growing the vertical padding is the prescribed fix: the horizontal axis is
+     the constrained one on a phone, and these sit in a scrolling row. */
+  .mmm-map-chip,
+  .mmm-map-recentre,
+  .mmm-date-pill,
+  .mmm-date-clear,
   button.badge,
   .authcard-btn-primary,
   .authcard-btn-ghost,

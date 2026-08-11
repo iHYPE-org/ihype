@@ -137,6 +137,18 @@ Read these three files, in this order, before touching any surface:
    re-derive the rest; do not nudge one in isolation.
 3. `design/design-system-8/ROUTE_TEMPLATE_MAP.md` — which template governs which
    route. This replaces guessing from the page map further down.
+4. `design/design-system-8/MOBILE.md` — added 2026-08-11. **iOS and Android are
+   not a separate build**: `templates/simplified-app/` IS the app, Capacitor
+   wraps that exact page, so a phone bug is a CSS bug here (the same point
+   `mobile-fit.css` makes from the code side). Design at **375px** first — 327px
+   of content after the pane padding. **One breakpoint, 620px**; do not invent a
+   second, and note it is NOT `ARC_NARROW_MAX_WIDTH`, which is 720 in
+   `ArcNav.jsx` and governs the arc table alone. **44×44 minimum on every
+   control, desktop included** — grow vertical padding, never font size. **`dvh`,
+   never `vh`.** Every native capability needs three designed states (primer →
+   OS prompt → denied fallback that still works), asked at the moment of use and
+   never on launch. The four `guidelines/mobile-*.card.html` specimens carry the
+   same rules visually.
 
 **What DS8 changed in this codebase (all of it, 2026-08-09):** the ground moved
 from warm near-black to ink navy (`--bg` `#0a0805` → `#0b1220`) and the ink from
