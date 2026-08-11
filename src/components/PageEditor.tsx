@@ -158,10 +158,6 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   // One-shot "Generate my page" intake — a thin front door onto the same
   // runAiRefine()/refine endpoint below, for an owner with an empty page who
   // hasn't written anything yet to reorganize.
-  const [genBio, setGenBio] = useState('');
-  const [genGenre, setGenGenre] = useState<string | null>(null);
-  const [genBusy, setGenBusy] = useState(false);
-  const [genStep, setGenStep] = useState(0);
   // Press kit sub-form: friendly text fields serialized into the single
   // pressKitContent JSON column on every change.
   const [kitTagline, setKitTagline] = useState('');
@@ -435,66 +431,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
     }
   }
 
-  const genStepLabels = [
-    t('pageEditor.genStepReading', 'Reading your bio…'),
-    t('pageEditor.genStepDrafting', 'Drafting page copy…'),
-    t('pageEditor.genStepLayout', 'Laying out your sections…'),
-  ];
-
-  async function generatePage() {
-    const bio = genBio.trim();
-    if (!bio || genBusy) return;
-    setGenBusy(true);
-    setGenStep(0);
-    setAiError(null);
-    setAiProposed(null);
-    setAiApplied(false);
-    const stepTimers = genStepLabels.map((_, i) => setTimeout(() => setGenStep(i), i * 700));
-    try {
-      // The refine engine below reads the profile's saved fields, not local
-      // state, so the pasted bio has to land in the DB before we ask it to
-      // draft the rest of the page from it.
-      if (!data?.bio) {
-        setData((d) => (d ? { ...d, bio } : d));
-        const saveRes = await fetch('/api/profile-editor', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profileId, ...data, bio }),
-        });
-        if (!saveRes.ok) {
-          const d = await saveRes.json().catch(() => ({}));
-          setAiError(d.error ?? t('pageEditor.saveBioFailed', 'Failed to save your bio.'));
-          return;
-        }
-      }
-      const instruction = genGenre
-        ? `Draft my whole page from my bio: write a punchy headline, tighten the bio to 1-3 sentences, and write an About section expanding on it. My genre is ${genGenre} — pick a theme preset and accent tone that fits that mood.`
-        : 'Draft my whole page from my bio: write a punchy headline, tighten the bio to 1-3 sentences, and write an About section expanding on it.';
-      const res = await fetch('/api/page-builder/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, instruction }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAiError(d.error ?? t('pageEditor.aiGenericError', 'Something went wrong — try again.'));
-      } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        setAiError(
-          d.reason === 'engine'
-            ? t('pageEditor.aiEngineUnavailable', 'The AI engine is temporarily unavailable — please try again in a moment.')
-            : t('pageEditor.genPartialSave', "Saved your bio, but the AI couldn't draft more from it yet — try Customize with AI below.")
-        );
-      } else {
-        setAiProposed(d.changes as Record<string, string>);
-      }
-    } catch {
-      setAiError(t('pageEditor.networkError', 'Network error — try again.'));
-    } finally {
-      stepTimers.forEach(clearTimeout);
-      setGenBusy(false);
-    }
-  }
-
+  // Whole-page AI generation lived here and was retired 2026-08-08 (Design
+  // System 8): it cost tokens on every page and still produced pages that had
+  // to be hand-edited into a common shape, so profile pages are now a fixed
+  // per-type schema. The two AI tools below are deliberately kept — both edit
+  // content the member has already supplied rather than inventing a page.
   function applyAiChanges() {
     if (!aiProposed) return;
     setData((d) => (d ? { ...d, ...aiProposed } : d));
@@ -904,60 +845,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.18em', textTransform: 'uppercase',
             color: 'var(--ink-a35)', marginBottom: 14,
           }}>
-            {t('pageEditor.aiPageStudioLabel', 'AI PAGE STUDIO')}
+            {t('pageEditor.aiPageStudioLabel', 'AI PAGE TOOLS')}
           </div>
           <p style={{ fontSize: 13, color: 'var(--ink-a60)', margin: '0 0 16px', lineHeight: 1.55 }}>
             {t('pageEditor.aiStudioIntro', "Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works with content you've already added, and nothing changes until you apply and save.")}
           </p>
-
-          {!data.bio && !data.aboutContent && (
-            <div style={{
-              border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 14,
-              background: 'rgba(var(--accent-rgb),.05)', padding: '18px 18px 16px', marginBottom: 20,
-            }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 6 }}>
-                {t('pageEditor.generateIntakeTitle', "Give us what you've got. We'll build the rest.")}
-              </div>
-              <p style={{ fontSize: 12.5, color: 'var(--ink-a60)', margin: '0 0 14px', lineHeight: 1.5 }}>
-                {t('pageEditor.generateIntakeBody', 'Paste a bio, an Instagram caption, a press quote — anything. One generation drafts a headline, tightens the bio, writes an About section, and picks a fitting theme.')}
-              </p>
-              <TextAreaField
-                maxLength={2000}
-                onChange={setGenBio}
-                placeholder={t('pageEditor.generateIntakePlaceholder', 'e.g. Dream-pop from the Maine coast. New EP Glasslight out now — @nylamusic')}
-                rows={4}
-                value={genBio}
-              />
-              {!isFan && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, margin: '12px 0 0' }}>
-                  {MUSIC_GENRES.slice(0, 8).map((g) => (
-                    <button
-                      key={g}
-                      onClick={() => setGenGenre((cur) => (cur === g ? null : g))}
-                      style={{
-                        fontSize: 12, padding: '6px 12px', borderRadius: 9999, cursor: 'pointer',
-                        border: `1px solid ${genGenre === g ? 'var(--accent)' : 'var(--hair-100)'}`,
-                        background: genGenre === g ? 'rgba(var(--accent-rgb),.15)' : 'var(--hair-30)',
-                        color: genGenre === g ? 'var(--accent)' : 'var(--ink-a65)', fontFamily: 'var(--font-body)',
-                      }}
-                      type="button"
-                    >
-                      {g}
-                    </button>
-                  ))}
-                </div>
-              )}
-              <button
-                className="settings-btn settings-btn-accent"
-                disabled={genBusy || !genBio.trim()}
-                onClick={generatePage}
-                style={{ width: '100%', marginTop: 14, padding: '13px', fontSize: 14 }}
-                type="button"
-              >
-                {genBusy ? genStepLabels[genStep] : t('pageEditor.generateMyPage', '✦ Generate my page')}
-              </button>
-            </div>
-          )}
 
           {!isFan && (
             <div style={{

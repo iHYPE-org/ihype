@@ -160,8 +160,18 @@ test.describe('Mobile app shell', () => {
     // The iHYPE mark is the single menu owner across desktop and mobile.
     const menuButton = page.getByRole('button', { name: 'Open iHYPE menu' });
     await menuButton.click();
-    const menu = page.getByLabel('Primary site header').getByRole('navigation', { name: 'iHYPE menu' });
-    await menu.getByRole('button', { name: 'SETTINGS', exact: true }).click();
+    // role="dialog", not navigation: the drawer is a <nav> carrying an explicit
+    // role="dialog" + aria-modal, and an explicit role wins over the implicit
+    // one. This asked for 'navigation' back when the header rendered NavDrawer.
+    const menu = page.getByLabel('Primary site header').getByRole('dialog', { name: 'iHYPE menu' });
+    // 'Settings', not 'SETTINGS': the drawer uppercases its section headings
+    // in CSS, and text-transform does not touch the accessible name. This read
+    // 'SETTINGS' from the days when the header rendered the old NavDrawer,
+    // whose labels really were uppercase strings; `exact: true` makes the
+    // match case-sensitive, so it silently matched nothing once the header
+    // moved to AppShellDrawer. Nothing caught it because this stage only runs
+    // behind the `full-ci` label.
+    await menu.getByRole('button', { name: 'Settings', exact: true }).click();
     await menu.locator('a[href="/info"]').click();
     await page.waitForURL('**/info');
 

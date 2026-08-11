@@ -96,7 +96,7 @@ export default async function ArtistPage({
       orderBy: { startsAt: 'asc' },
     }),
     session?.user?.id
-      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { createdAt: true } })
       : null,
     uploadHexIds.length > 0
       ? db.mediaListen.groupBy({ by: ['mediaId'], where: { mediaId: { in: uploadHexIds } }, _count: { _all: true } })
@@ -131,7 +131,7 @@ export default async function ArtistPage({
               {profile.verificationStatus === 'VERIFIED' && <span className="artist-badge" style={{ background: 'rgba(var(--role-venue-rgb),.15)', color: 'var(--role-venue)' }}>{t('artistsSlugPage.verifiedBadge', '✓ Verified')}</span>}
             </div>
             <div className="artist-hero-actions">
-              <HypeButton entityLabel="artist" initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+              <HypeButton entityLabel="artist" initialCount={profile.hypeCount} lastHypedAt={userHype?.createdAt.toISOString() ?? null} targetId={profile.id} targetType="profile" />
               <FollowButton profileId={profile.id} variant="hero" />
               <ShareButton className="artist-hero-btn" label="Share" path={`/artists/${profile.slug}`} title={profile.name} />
               {!isOwner && session?.user?.id && (

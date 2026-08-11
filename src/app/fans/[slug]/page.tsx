@@ -91,7 +91,7 @@ export default async function FanProfilePage({
       orderBy: { createdAt: 'desc' },
     }),
     session?.user?.id
-      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { userId: true } })
+      ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { createdAt: true } })
       : null,
     isOwner ? getPromoterDashboard(profile.ownerId) : Promise.resolve(null),
   ]);
@@ -224,7 +224,7 @@ export default async function FanProfilePage({
       </div>
 
       <div style={{ padding: '0 32px' }}>
-        <HypeButton entityLabel={t('fansSlugPage.hypeEntityLabel', 'fan page')} initialCount={profile.hypeCount} initiallyHyped={!!userHype} targetId={profile.id} targetType="profile" />
+        <HypeButton entityLabel={t('fansSlugPage.hypeEntityLabel', 'fan page')} initialCount={profile.hypeCount} lastHypedAt={userHype?.createdAt.toISOString() ?? null} targetId={profile.id} targetType="profile" />
       </div>
 
       <style>{`

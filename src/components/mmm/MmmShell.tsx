@@ -26,7 +26,7 @@ export type MmmNowPlaying = {
    * than a link to nowhere.
    */
   artistSlug: string | null;
-  /** Whether the viewer has already hyped that profile. */
+  /** Whether the viewer has hyped that profile inside the current 24h window. */
   hyped: boolean;
 } | null;
 
@@ -182,19 +182,19 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
     setNavOpen(false);
   }, []);
 
-  // The heart writes through to /api/hype — the same toggle endpoint the artist
+  // The heart writes through to /api/hype — the same endpoint the artist
   // page's HypeButton posts to, so a hype tapped here counts once, in the same
   // place, and spends from the same balance.
   //
-  // Optimistic, then reverted on failure: the endpoint is a real toggle with a
-  // hype-balance spend behind it, and leaving the heart filled after a refusal
-  // would tell the viewer they spent a hype they still have. The server's own
-  // `action` is what the final state comes from, not the optimistic guess.
+  // It is no longer a toggle: HYPE resets every 24 hours per target, so a
+  // filled heart means "spent, and spendable again later", and tapping it
+  // again inside the window does nothing rather than refunding. Optimistic,
+  // then reverted on failure — leaving the heart filled after a refusal would
+  // tell the viewer they spent a hype they still have.
   const toggleHype = useCallback(async () => {
     const profileId = nowPlaying?.artistProfileId;
-    if (!profileId || hypePending) return;
-    const previous = hyped;
-    setHyped(!previous);
+    if (!profileId || hypePending || hyped) return;
+    setHyped(true);
     setHypePending(true);
     try {
       const res = await fetch('/api/hype', {
@@ -202,16 +202,13 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ targetType: 'profile', targetId: profileId }),
       });
-      if (!res.ok) {
-        setHyped(previous);
-        return;
-      }
-      const data = (await res.json()) as { action?: string };
-      if (data.action === 'hyped' || data.action === 'unhyped') {
-        setHyped(data.action === 'hyped');
+      // A 429 from the 24h window is not a failure to reflect: the hype IS
+      // spent for this target, which is what the filled heart says.
+      if (!res.ok && res.status !== 429) {
+        setHyped(false);
       }
     } catch {
-      setHyped(previous);
+      setHyped(false);
     } finally {
       setHypePending(false);
     }
