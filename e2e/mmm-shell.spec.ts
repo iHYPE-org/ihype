@@ -249,16 +249,24 @@ test.describe('Music · Map · Me shell', () => {
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     await page.getByRole('button', { name: 'MUSIC' }).click();
-    await page.getByRole('button', { name: 'Radio' }).click();
+    // Radio is a TAB in the Music pane now, not a second-level arc item.
+    await page.getByRole('link', { name: 'Radio', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // The four panels are ACCORDIONS, not links. They were four routes under
+  // /app/me/[panel] until the 2026-08-10 template made ME one column of
+  // drawers that open in place — the old routes now redirect onto
+  // /app/me?panel=<id>, so this asserts the control that exists rather than
+  // the navigation that was removed.
   test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
     for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
-      await expect(page.getByRole('link', { name: new RegExp(label) }).first()).toBeVisible();
+      await expect(page.getByRole('button', { name: new RegExp(label) }).first()).toBeVisible();
     }
+    // Collapsed until asked: a drawer that starts open is not a drawer.
+    await expect(page.getByRole('button', { name: /Settings/ }).first()).toHaveAttribute('aria-expanded', 'false');
     // ME must not open a submenu — only MUSIC does.
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     await page.getByRole('button', { name: 'ME' }).click();
@@ -271,7 +279,7 @@ test.describe('Music · Map · Me shell', () => {
   // render, which is the actual risk.
   test('a profile-less account still renders ME, without a HYPE link card', async ({ page }) => {
     await page.goto('/app/me');
-    await expect(page.getByRole('link', { name: /Settings/ }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /Settings/ }).first()).toBeVisible();
     await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
   });
 });
