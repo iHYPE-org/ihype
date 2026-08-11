@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
 import { resolveActiveItemId, type ShellNavItem } from '@/lib/app-nav';
 
-const DISCOVER_HREF = '/listen?tab=seeds';
+const DISCOVER_HREF = '/app/music/discover';
 
 /**
  * "Each non-Discover route opens with a back pill ('‹ For you')."

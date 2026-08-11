@@ -31,22 +31,15 @@ export const MAP_TILE_HOSTS = [
   // src/components/mmm/MmmMap.tsx — the real map. Raster tiles over a
   // wildcard because the source rotates a./b./c./d. subdomains.
   'https://*.basemaps.cartocdn.com',
-  // src/app/ui-preview/ModuleDeckMockup.tsx only. Kept because that preview is
-  // reachable in development, not because anything in production uses it.
-  'https://tiles.openfreemap.org',
 ] as const;
 
 /**
  * True when this path renders a map.
  *
- * `isDevelopment` gates the preview route only: `/ui-preview` does not exist in
- * production and must not widen the policy there.
+ * One surface does: the Music · Map · Me shell at `/app/*`. `/listen` was here
+ * too, for the six-module deck's own map; the deck and its `/ui-preview`
+ * harness are both retired, and with them the second tile host.
  */
-export function isMapRoute(pathname: string, isDevelopment = false): boolean {
-  if (pathname === '/app' || pathname.startsWith('/app/')) return true;
-  // The six-module deck. Retained deliberately: row 273 cut the way in and the
-  // way around over to /app, but /listen still exists and is still reachable,
-  // and a stale entry here is harmless where a missing one is not.
-  if (pathname === '/listen') return true;
-  return isDevelopment && pathname.startsWith('/ui-preview');
+export function isMapRoute(pathname: string): boolean {
+  return pathname === '/app' || pathname.startsWith('/app/');
 }

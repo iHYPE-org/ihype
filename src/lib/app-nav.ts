@@ -89,7 +89,6 @@ export type ShellRouteEntry = {
 
 export const SHELL_ROUTES: ShellRouteEntry[] = [
   // ── LISTEN ────────────────────────────────────────────────────────────
-  { path: '/listen', kind: 'exact', section: 'LISTEN', tabParam: 'tab' },
   { path: '/radio', kind: 'prefix', section: 'LISTEN', itemId: 'radio' },
   { path: '/discover', kind: 'prefix', section: 'LISTEN', itemId: 'discover' },
   { path: '/search', kind: 'prefix', section: 'LISTEN', itemId: 'search' },

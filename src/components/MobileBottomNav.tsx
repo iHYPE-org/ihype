@@ -3,20 +3,15 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { useMobileShell } from '@/lib/MobileShellContext';
-import type { ShellSection } from '@/lib/mobileShell';
 import { useI18n } from '@/components/I18nProvider';
-
-const TAB_TO_SECTION: Record<string, ShellSection> = { listen: 'listen', events: 'shows', pages: 'pages' };
 
 const TABS = [
   {
     id: 'listen',
-    // Into the Music · Map · Me shell, not this shell's `/listen` deck — the
-    // same one-way-door fix as the LISTEN section in `app-nav.ts`, applied to
-    // the control a phone actually uses. This bar only renders on legacy
-    // routes (mmm.css hides `.ihype-mobile-nav` inside `/app`), so tapping
-    // Listen hands off to MMM's own navigation rather than stacking two bars.
+    // Into the Music · Map · Me shell, which is where listening lives. This
+    // bar only renders on legacy routes (mmm.css hides `.ihype-mobile-nav`
+    // inside `/app`), so tapping Listen hands off to MMM's own navigation
+    // rather than stacking two bars.
     // `/app/music/discover` rather than `/app/map`, so the label stays honest;
     // the map is one tap away on MMM's own nav.
     label: 'Listen',
@@ -56,7 +51,7 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/listen') || pathname.startsWith('/discover') || pathname.startsWith('/radio')) return 'listen';
+  if (pathname.startsWith('/discover') || pathname.startsWith('/radio')) return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
@@ -84,22 +79,15 @@ const tabButtonStyle = {
 export function MobileBottomNav() {
   const { t } = useI18n();
   const pathname = usePathname();
-  const shell = useMobileShell();
   const { status: sessionStatus } = useSession();
-  const localDesignPreview = process.env.NODE_ENV === 'development' && pathname === '/ui-preview';
 
   // Index (the marketing/pitch page) and every auth-flow page: no app chrome
   // before someone's actually signed up.
   // The three primary destinations remain visible after sign-in on compact
   // screens. The logo menu still owns secondary tools and settings.
-  if ((!localDesignPreview && sessionStatus !== 'authenticated') || pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
+  if (sessionStatus !== 'authenticated' || pathname === '/' || AUTH_PATHS.some(p => pathname.startsWith(p))) return null;
 
-  // While the shell is active, its own section state is the source of truth
-  // for which tab is "active" — window.history.pushState (used to update the
-  // URL without a real navigation) doesn't necessarily update usePathname().
-  const active = shell?.active
-    ? (shell.section === 'shows' ? 'events' : shell.section)
-    : matchTab(pathname);
+  const active = matchTab(pathname);
 
   return (
       <nav
@@ -124,11 +112,6 @@ export function MobileBottomNav() {
           <Link
             key={tabDef.id}
             href={tabDef.href}
-            onClick={(e) => {
-              if (!shell?.active) return;
-              e.preventDefault();
-              shell.goToSectionHome(TAB_TO_SECTION[tabDef.id]);
-            }}
             style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent)' : 'rgba(240,240,240,0.45)' }}
           >
             {tabDef.icon}

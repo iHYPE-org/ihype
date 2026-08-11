@@ -29,40 +29,32 @@ function assertMissing(relativePath, reason) {
   }
 }
 
-// /home is retired as a rendered page — the Workbench (WorkbenchShellV2/
-// WorkbenchMobile) has been superseded by the Listen/Events/Pages design.
-// /home now exists only to forward legacy links/bookmarks onward.
+// /home and /listen are retired as rendered pages and exist only to forward
+// legacy links. /home once pointed at /listen's module deck; /listen itself is
+// now a forward into the Music · Map · Me shell, which is the only signed-in
+// app surface Design System 8 describes.
 assertIncludes(
   'src/app/home/page.tsx',
-  "redirect('/listen')",
-  '/home is a legacy alias only and must forward to the canonical /listen route.'
+  "redirect('/app/map')",
+  '/home is a legacy alias only and must forward onward rather than render.'
 );
 assertIncludes(
   'src/app/listen/page.tsx',
-  '<ModuleDeckMockup production',
-  '/listen is the canonical authenticated module deck and must render the live, backend-wired experience.'
+  "redirect('/app/music/discover')",
+  '/listen is a legacy alias only; the module deck it rendered is retired.'
 );
 assertNotIncludes(
   'src/app/listen/page.tsx',
-  'ListenHome',
-  'The retired multi-panel Listen homepage must not replace the full-screen module deck.'
+  'ModuleDeckMockup',
+  'The six-module deck is retired — /listen must not render a second app surface.'
 );
-assertIncludes(
+assertMissing(
   'src/app/ui-preview/page.tsx',
-  "process.env.NODE_ENV !== 'development'",
-  'The editable sample-data preview must remain unavailable in production.'
+  'The module-deck preview harness went with the deck it previewed.'
 );
-for (const apiPath of ['/api/discover/seeds', '/api/radio', '/api/shows/nearby', '/api/search']) {
-  assertIncludes(
-    'src/app/ui-preview/preview-api.ts',
-    apiPath,
-    `The production module deck must retain its ${apiPath} backend adapter.`
-  );
-}
-assertIncludes(
-  'src/app/ui-preview/ModuleDeckMockup.tsx',
-  'production={production}',
-  'Preview and production behaviors must remain explicitly separated.'
+assertMissing(
+  'src/components/MobileAppShell.tsx',
+  'The phone swipe shell is retired: DS8 has no separate mobile build.'
 );
 assertMissing(
   'src/app/workbench/page.tsx',
@@ -159,4 +151,4 @@ assertIncludes(
   'The authenticated workbench should remain noindex via robots.'
 );
 
-console.log('Design guard passed: /listen is the canonical backend-wired module deck.');
+console.log('Design guard passed: one signed-in app surface, no retired shells resurrected.');

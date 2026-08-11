@@ -11,9 +11,9 @@
  * shell geometry is signed off as final and the figures are load-bearing on
  * each other.
  *
- * The two earlier bundles (`design/design-system-app-shell/`,
- * `design/handoff-music-map-me/`) are SUPERSEDED and kept only as history.
- * Where any of the three disagree, Design System 8 wins.
+ * Design System 8 is the ONLY design source. The two bundles that preceded it
+ * were deleted rather than kept as history — a superseded design that is still
+ * on disk gets read, and then built from twice.
  *
  * ## The shape, and why it is this shape
  *
@@ -921,7 +921,6 @@ html.mmm-locked .site-shell > main {
 
 /* ── Chrome: logo trigger, player, radial arc nav ─────────────────────────
  *
- * From the app-shell redesign (design-system-app-shell/templates/simple-app).
  * The nav is a zero-size fixed anchor at the frame's lower left; the logo and
  * every fan item are absolutely positioned at its origin and moved into place
  * by transform. That is what makes the fan-out a pure compositor animation

@@ -106,7 +106,7 @@ export default async function VerifyPage() {
             {nextStep.cta} →
           </Link>
         </div>
-        <Link href="/listen" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+        <Link href="/app/map" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
           {t('verifyPage.exploreAsFan', 'Explore as a Fan →')}
         </Link>
       </div>

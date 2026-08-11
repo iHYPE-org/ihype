@@ -21,22 +21,13 @@ describe('isMapRoute', () => {
     expect(isMapRoute('/app/me/settings')).toBe(true);
   });
 
-  it('still covers the six-module deck', () => {
-    expect(isMapRoute('/listen')).toBe(true);
-  });
-
+  // The deck and its preview harness are retired, and so are their
+  // allowances: one map surface, one tile host, no environment-dependent
+  // widening.
   it('does not widen the policy on ordinary routes', () => {
-    for (const path of ['/', '/login', '/shows', '/pages', '/admin', '/applesauce']) {
-      expect(isMapRoute(path)).toBe(false);
+    for (const path of ['/', '/login', '/listen', '/shows', '/pages', '/admin', '/ui-preview', '/applesauce']) {
+      expect(isMapRoute(path), path).toBe(false);
     }
-  });
-
-  // /ui-preview does not exist in production and must not widen the policy
-  // there — it is the only route whose allowance is environment-dependent.
-  it('gates the preview route on development', () => {
-    expect(isMapRoute('/ui-preview/module-deck', true)).toBe(true);
-    expect(isMapRoute('/ui-preview/module-deck', false)).toBe(false);
-    expect(isMapRoute('/ui-preview/module-deck')).toBe(false);
   });
 
   // A path that merely starts with the same characters is a different route.

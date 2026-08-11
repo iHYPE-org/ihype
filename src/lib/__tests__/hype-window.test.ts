@@ -49,10 +49,13 @@ describe('hype window', () => {
   });
 
   it('never says 0m while still refusing the tap', () => {
-    // A control that reads zero and does nothing looks broken.
+    // A control that reads zero and does nothing looks broken. `now` is passed
+    // explicitly rather than read from the clock: with 1ms left on the window,
+    // a slow test run walks past the boundary between the two assertions.
     for (const ms of [1, 500, 59_999]) {
       expect(formatHypeWait(ms), String(ms)).not.toBe('0m');
-      expect(hypeWaitMs(new Date(Date.now() - HYPE_WINDOW_MS + ms))).toBeGreaterThan(0);
+      const lastHyped = at(-HYPE_WINDOW_MS + ms);
+      expect(hypeWaitMs(lastHyped, T0), String(ms)).toBeGreaterThan(0);
     }
   });
 

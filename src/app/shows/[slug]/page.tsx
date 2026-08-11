@@ -769,7 +769,7 @@ export default async function ShowDetailPage({
               <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
                 <h2>{t('showsSlugPage.transferYourTicket', 'Transfer your ticket')}</h2>
                 <p className="subtitle" style={{ marginBottom: '1rem' }}>{t('showsSlugPage.transferTicketDesc', "Can't make it? You can transfer your ticket to a friend without a fee.")}</p>
-                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/listen">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
+                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/me/dashboard">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
               </div>
             )}
 

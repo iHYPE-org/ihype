@@ -29,11 +29,11 @@ function sentryIngestOrigin() {
 
 function buildContentSecurityPolicy(nonce: string, allowEmbedding: boolean, allowSceneMap: boolean) {
   const developmentEval = process.env.NODE_ENV === 'production' ? '' : " 'unsafe-eval'";
-  // Two hosts, and only one of them is production. The LIVE map is
-  // src/components/mmm/MmmMap.tsx, which draws CartoDB raster tiles;
-  // tiles.openfreemap.org is used by src/app/ui-preview/ModuleDeckMockup.tsx
-  // and nothing else. The policy used to allow only the second, so the map
-  // that ships was blocked while the mockup's was permitted.
+  // One map, one tile host: src/components/mmm/MmmMap.tsx draws CartoDB
+  // raster tiles, and MAP_TILE_HOSTS in csp-routes.ts is the list. There used
+  // to be a second entry for the retired module-deck mockup — and for a while
+  // the policy allowed only THAT one, so the map that ships was blocked while
+  // the mockup's was permitted.
   //
   // maplibre fetches raster tiles through the network stack rather than as
   // <img>, so connect-src is what governs them — the broad `img-src https:`
@@ -73,7 +73,7 @@ function applySecurityHeaders(response: NextResponse, nonce: string, pathname: s
   // to /app/map, and this list still named /listen — where the map no longer
   // is. Without the blob worker-src below, maplibre cannot start its worker at
   // all, so the failure is a blank canvas rather than missing tiles.
-  const allowSceneMap = isMapRoute(pathname, process.env.NODE_ENV !== 'production');
+  const allowSceneMap = isMapRoute(pathname);
   response.headers.set('x-pathname', pathname);
   if (!allowEmbedding) response.headers.set('X-Frame-Options', 'DENY');
   else response.headers.delete('X-Frame-Options');

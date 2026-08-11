@@ -95,13 +95,15 @@ describe('creator hrefs resolve against the owned profile', () => {
 
 describe('route registry', () => {
   it('claims the signed-in surfaces and leaves marketing alone', () => {
-    expect(isShellRoute('/listen')).toBe(true);
     expect(isShellRoute('/shows')).toBe(true);
     expect(isShellRoute('/shows/echo-park-night')).toBe(true);
     expect(isShellRoute('/me/dashboard')).toBe(true);
     expect(isShellRoute('/settings')).toBe(true);
 
     expect(isShellRoute('/')).toBe(false);
+    // A pure redirect, since the six-module deck it rendered was retired: it
+    // never paints, so it must not claim shell chrome on the way through.
+    expect(isShellRoute('/listen')).toBe(false);
     expect(isShellRoute('/login')).toBe(false);
     expect(isShellRoute('/register')).toBe(false);
     expect(isShellRoute('/join')).toBe(false);
@@ -152,13 +154,10 @@ describe('active item resolution', () => {
   // `/app/music/*`, so no nav item carries a `/listen?tab=` href any more and
   // nothing in the strip can resolve as active there.
   //
-  // The route itself is deliberately still live and still in SHELL_ROUTES:
-  // sent emails, old bookmarks and anyone who prefers the six-module deck can
-  // reach it. It is simply no longer a NAV DESTINATION, and an unlit strip is
-  // the honest rendering of "you are somewhere the nav does not point". The
-  // strip still shows the four LISTEN items, which is what carries a member
-  // from the legacy deck into the new shell.
-  it('lights nothing on /listen, which is still routable but no longer a destination', () => {
+  // /listen is a forward into `/app/music/discover` now — old bookmarks and
+  // links inside already-sent emails still land somewhere real. It is neither
+  // a destination nor a shell route, so nothing lights up on the way through.
+  it('lights nothing on /listen, which is a forward and not a destination', () => {
     expect(resolveActiveItemId(items, '/listen', 'charts')).toBeNull();
     expect(resolveActiveItemId(items, '/listen', null)).toBeNull();
   });

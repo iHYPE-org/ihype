@@ -51,7 +51,7 @@ describe('GET /api/me/dashboard', () => {
     expect(response.status).toBe(200);
     const payload = await response.json();
     expect(payload.build.title).toBe('Your listening profile');
-    expect(payload.nextAction.href).toBe('/listen');
+    expect(payload.nextAction.href).toBe('/app/music/discover');
     expect(payload.insights).toContain('3 artists, DJs, or venues currently carry your HYPE signal');
   });
 
