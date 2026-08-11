@@ -1,7 +1,7 @@
 import { db } from '@/lib/db';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { stationPositionAt } from '@/lib/growth-util';
-import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
+import { resolveWeightedAdBreakClips } from '@/lib/ad-clip-selection';
 import { interleaveStationAds } from '@/lib/station-breaks';
 import { releasedMediaWhere } from '@/lib/media-release';
 
@@ -106,15 +106,19 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
   // (docs/dj-role-removal-scope.md) — so without this, self-serve campaigns
   // holding real pre-authorised Stripe funds would have nowhere left to run.
   //
-  // Scope is 'national': this station is one rotation shared by every
-  // listener, with no geography in it, so a 'local' spot would be aired to
-  // people it was never sold for. Per-region stations are what would justify
-  // finer scopes, and they do not exist here.
+  // A break is a MIXTURE of scopes, weighted local-most to global-least — see
+  // `ad-scope-mix.ts`. It used to ask for 'national' and nothing else, which
+  // meant a local advertiser's spot could never air at all: the cheapest tier,
+  // and the one a venue down the road is most likely to buy.
+  //
+  // "Local" still means the platform's market rather than the individual
+  // listener's, because this is one rotation positioned off the wall clock and
+  // shared by everyone. That limit is written up on the resolver.
   //
   // Fails open on purpose. A break that cannot be resolved must never take the
   // music down with it — the station being silent is a worse outcome than the
   // station being unmonetised for one request.
-  const adClips = await resolveAdBreakClips('national').catch(() => []);
+  const adClips = await resolveWeightedAdBreakClips().catch(() => []);
   const sequence = interleaveStationAds(rotation, adClips);
 
   const { index, offset } = stationPositionAt(

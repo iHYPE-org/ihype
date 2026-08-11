@@ -16,18 +16,9 @@ import { checkContent } from '@/lib/auto-mod';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
 
-const radioTrackSchema = z.object({
-  hexId: z.string().min(1),
-  title: z.string().min(1),
-  artistName: z.string().min(1),
-  artistProfileSlug: z.string().optional(),
-  position: z.number().int().nonnegative()
-});
-
 const schema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
-  isRadioShow: z.boolean().default(false),
   status: z.enum(['DRAFT', 'SCHEDULED', 'LIVE']).default('SCHEDULED'),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
@@ -43,7 +34,6 @@ const schema = z.object({
   artistPayoutPercent: z.coerce.number().int().min(0).max(95).optional(),
   promoterPayoutPercent: z.coerce.number().int().min(0).max(10).optional(),
   tags: z.array(z.string()).default([]),
-  radioTracks: z.array(radioTrackSchema).optional(),
   productionPlan: showProductionPlanSchema.optional()
 });
 
@@ -172,113 +162,16 @@ export async function POST(request: NextRequest) {
       body.productionPlan.advertising.clips = await resolveAdBreakClips(body.productionPlan.advertising.scope);
     }
 
-    if (body.isRadioShow && body.productionPlan) {
-      // Rich production-plan path (Radio Show Creator) — an alternate,
-      // additive way to create a radio show alongside the legacy flat
-      // radioTracks path below. Requires an owned DJ promoter profile, same
-      // as the ticketed-show productionPlan rule further down.
-      if (!body.promoterProfileId) {
-        return NextResponse.json({ error: 'A promoter profile is required when saving a production plan' }, { status: 400 });
-      }
-
-      const promoterProfile = await db.profile.findUnique({ where: { id: body.promoterProfileId } });
-      // No type constraint: promoter is not a profile type (the DJ type it
-      // used to require is gone). Ownership is still enforced immediately
-      // below, which is the check that actually matters here.
-      if (!promoterProfile) {
-        return NextResponse.json({ error: 'Promoter profile not found' }, { status: 400 });
-      }
-
-      if (!isAdmin && promoterProfile.ownerId !== session.user.id) {
-        return NextResponse.json({ error: 'Only the promoter owner can create radio shows from this promoter page' }, { status: 403 });
-      }
-
-      const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
-
-      const show = await createShowWithUniqueSlug(body.title, (slug) => db.show.create({
-        data: {
-          slug,
-          title: body.title,
-          description: body.description,
-          isRadioShow: true,
-          startsAt: body.startsAt ? new Date(body.startsAt) : new Date(),
-          creatorId: session.user.id,
-          promoterProfileId: body.promoterProfileId,
-          tags: Array.from(new Set([...body.tags, 'radio-show', 'prerecorded-show'])),
-          productionPlan: body.productionPlan,
-          status,
-          moderationStatus
-        }
-      }));
-
-      return NextResponse.json(show, { status: 201 });
-    }
-
-    if (body.isRadioShow) {
-      const tracks = body.radioTracks ?? [];
-      if (!tracks.length) {
-        return NextResponse.json({ error: 'A radio show needs at least one track.' }, { status: 400 });
-      }
-
-      if (tracks.length > 50) {
-        return NextResponse.json({ error: 'A radio show can have at most 50 tracks.' }, { status: 400 });
-      }
-
-      const promoterProfile = body.promoterProfileId
-        ? await db.profile.findUnique({ where: { id: body.promoterProfileId } })
-        : null;
-
-      if (body.promoterProfileId && !promoterProfile) {
-        return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
-      }
-
-      if (
-        body.promoterProfileId &&
-        !isAdmin &&
-        promoterProfile?.ownerId !== session.user.id
-      ) {
-        return NextResponse.json({ error: 'Only the promoter owner can create radio shows from this promoter page' }, { status: 403 });
-      }
-
-      const hexIds = tracks.map((track) => track.hexId);
-      const assets = await db.artistMediaAsset.findMany({
-        where: { hexId: { in: hexIds }, freeUseEnabled: true },
-        select: { hexId: true }
-      });
-      const validHexIds = new Set(assets.map((asset) => asset.hexId));
-      const invalidTracks = hexIds.filter((hexId) => !validHexIds.has(hexId));
-
-      if (invalidTracks.length) {
-        return NextResponse.json(
-          { error: `${invalidTracks.length} track(s) are not in the free-use catalogue.` },
-          { status: 400 }
-        );
-      }
-
-      const status = body.status === 'DRAFT' ? 'DRAFT' : 'SCHEDULED';
-      const sortedTracks = [...tracks].sort((left, right) => left.position - right.position);
-
-      const show = await createShowWithUniqueSlug(body.title, (slug) => db.show.create({
-        data: {
-          slug,
-          title: body.title,
-          description: body.description,
-          isRadioShow: true,
-          startsAt: new Date(),
-          creatorId: session.user.id,
-          promoterProfileId: body.promoterProfileId ?? null,
-          tags: Array.from(new Set([...body.tags, 'radio-show', 'prerecorded-show'])),
-          productionPlan: {
-            kind: 'radio',
-            tracks: sortedTracks
-          },
-          status,
-          moderationStatus
-        }
-      }));
-
-      return NextResponse.json(show, { status: 201 });
-    }
+    // Radio show creation is OUT. Both paths that built one — the
+    // production-plan flow behind the Radio Show Creator, and the older flat
+    // radioTracks flow — went with the DJ role, and `isRadioShow` is no
+    // longer in the schema above, so nothing can set it.
+    //
+    // Radio is COMPUTED now, not authored: `stations.ts` builds a rotation
+    // per listener and `radioStation.ts` runs the always-on station, with ad
+    // breaks interleaved every fifteen minutes of music. Production holds
+    // zero `isRadioShow` rows, so nothing is orphaned; the column and its
+    // read paths stay for anything that ever appears.
 
     if (!body.startsAt) {
       return NextResponse.json({ error: 'A start date/time is required for live events.' }, { status: 400 });

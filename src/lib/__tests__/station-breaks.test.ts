@@ -143,3 +143,33 @@ describe('billing discrimination', () => {
     expect(adIdFromClipId('mkt_')).toBeNull();
   });
 });
+
+/**
+ * The stated product rule, pinned: "Every 15 mins, or until past 15 minutes to
+ * allow for song completion. This way ads aren't interrupting the music, but
+ * are tucked in between song playback."
+ */
+describe('the fifteen-minute cadence never interrupts a song', () => {
+  it('waits for the track that crosses the threshold to finish', () => {
+    // A 14-minute track, then a 4-minute one. The break cannot land at 15:00,
+    // because 15:00 falls inside track 2 — so it lands at 18:00, after the
+    // track that carried the total past the interval.
+    const rotation = [track(1, 14 * 60), track(2, 4 * 60), track(3), track(4)];
+    const out = interleaveStationAds(rotation, [clip('mkt_a')], STATION_AD_INTERVAL_SECS, 1);
+    expect(kindsOf(out)).toEqual(['TRACK', 'TRACK', 'AD', 'TRACK', 'TRACK']);
+    // Stated the other way round: nothing sits between tracks 1 and 2, where
+    // the raw fifteen-minute mark actually fell.
+    expect(out[1].adClipId).toBeUndefined();
+  });
+
+  it('never opens or closes the rotation on an ad', () => {
+    // The rotation loops, so a trailing break would run straight into the
+    // leading one on the next pass.
+    const out = interleaveStationAds(tracks(12), [clip('mkt_a'), clip('mkt_b')]);
+    expect(out[0].adClipId).toBeUndefined();
+    expect(out[out.length - 1].adClipId).toBeUndefined();
+    // 60 minutes of music holds three interior breaks; the fourth would be
+    // trailing and is refused.
+    expect(adCount(out) / ADS_PER_BREAK).toBe(3);
+  });
+});
