@@ -28,7 +28,20 @@ test.describe('Public application smoke', () => {
     await page.goto('/');
     await expect(page.locator('.site-dock')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /play now|pause/i })).toHaveCount(0);
-    await expect(page.locator('main a[href="/register"]').first()).toBeVisible();
+    // The positive control: the landing rendered its own primary call to
+    // action, so "no playback controls" means "this is the marketing page"
+    // rather than "the page failed to render".
+    //
+    // It used to look for a /register link. There has not been one on this
+    // page since 2026-08-09, when access became request-only — and
+    // `src/app/page.tsx` is explicit that the copy does NOT self-correct off
+    // the invite flag, because which doors are open is an operator decision
+    // and a page must not silently rewrite one. So the assertion had been
+    // wrong for two days about a deliberate product change. It went unnoticed
+    // because this whole step is gated behind the `full-ci` label and nothing
+    // had carried that label since the labelling mechanism itself was fixed.
+    await expect(page.locator('main a[href="#request-access"]').first()).toBeVisible();
+    await expect(page.locator('main .beta-access-row button[type="submit"]')).toBeVisible();
     await expect(page.locator('.search-bar-desktop')).toHaveCount(0);
   });
 
