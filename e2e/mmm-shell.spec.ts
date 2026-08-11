@@ -262,13 +262,24 @@ test.describe('Music · Map · Me shell', () => {
   // the navigation that was removed.
   test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
-    // Scoped to the accordion class rather than matched on name alone: the
-    // labels are short common words, and a bare `getByRole('button', …)` for
-    // "Settings" or "Info" will happily find something else on a surface that
-    // grows a new control.
-    const panels = page.locator('.mmm-me-accordion');
+    // Matched on the LABEL SPAN, not on the button's text and not on its
+    // accessible name. Both of those are the label and the detail line
+    // concatenated — the two spans are adjacent with no whitespace between
+    // them, so the button reads "SettingsAccount · notifications · payments".
+    // That is why an anchored `/^Settings\b/` found nothing: there is no word
+    // boundary between "Settings" and "Account". The label span holds exactly
+    // the label, so an exact match on it is both correct and stable.
+    //
+    // Scoped this tightly on purpose: "Settings", "Info" and "Legal" are short
+    // common words, and a bare role query for them will find something else
+    // the first time this surface grows a control.
+    const panelFor = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+
     for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
-      await expect(panels.filter({ hasText: new RegExp(`^${label}\\b`) }).first()).toBeVisible();
+      await expect(panelFor(label), `no ${label} panel`).toBeVisible();
     }
     // Deliberately no count assertion: `.mmm-me-accordion` is also the class
     // on the Profiles / My Tickets / About Me drawers above, so the page
@@ -276,7 +287,7 @@ test.describe('Music · Map · Me shell', () => {
     // time ME grows a section — which is not what this test is about.
     //
     // Collapsed until asked: a drawer that starts open is not a drawer.
-    await expect(panels.filter({ hasText: /^Settings\b/ }).first()).toHaveAttribute('aria-expanded', 'false');
+    await expect(panelFor('Settings')).toHaveAttribute('aria-expanded', 'false');
     // ME must not open a submenu — only MUSIC does.
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     // `exact` is load-bearing: accessible-name matching is substring by
