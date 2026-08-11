@@ -91,7 +91,7 @@ test.describe('Music · Map · Me shell', () => {
     const logo = page.getByRole('button', { name: /Open iHYPE navigation/i });
     await logo.click();
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'true');
-    await expect(page.getByRole('button', { name: 'MUSIC' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
     await page.getByRole('button', { name: /Close iHYPE navigation/i }).click();
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
@@ -113,7 +113,7 @@ test.describe('Music · Map · Me shell', () => {
   test('every module navigates on the first tap; there is no second level', async ({ page }) => {
     await page.goto('/app/me');
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
+    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/music\/discover/);
     // The fan closes behind it, and nothing has grown a sub-level.
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
@@ -248,7 +248,7 @@ test.describe('Music · Map · Me shell', () => {
     await page.goto('/app/map');
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC' }).click();
+    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
     // Radio is a TAB in the Music pane now, not a second-level arc item.
     await page.getByRole('link', { name: 'Radio', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
@@ -262,14 +262,27 @@ test.describe('Music · Map · Me shell', () => {
   // the navigation that was removed.
   test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
+    // Scoped to the accordion class rather than matched on name alone: the
+    // labels are short common words, and a bare `getByRole('button', …)` for
+    // "Settings" or "Info" will happily find something else on a surface that
+    // grows a new control.
+    const panels = page.locator('.mmm-me-accordion');
     for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
-      await expect(page.getByRole('button', { name: new RegExp(label) }).first()).toBeVisible();
+      await expect(panels.filter({ hasText: new RegExp(`^${label}\\b`) }).first()).toBeVisible();
     }
+    // Deliberately no count assertion: `.mmm-me-accordion` is also the class
+    // on the Profiles / My Tickets / About Me drawers above, so the page
+    // carries seven of them and pinning a number here would break the next
+    // time ME grows a section — which is not what this test is about.
+    //
     // Collapsed until asked: a drawer that starts open is not a drawer.
-    await expect(page.getByRole('button', { name: /Settings/ }).first()).toHaveAttribute('aria-expanded', 'false');
+    await expect(panels.filter({ hasText: /^Settings\b/ }).first()).toHaveAttribute('aria-expanded', 'false');
     // ME must not open a submenu — only MUSIC does.
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'ME' }).click();
+    // `exact` is load-bearing: accessible-name matching is substring by
+    // default, and since the account panels became accordion BUTTONS, a loose
+    // 'ME' also matches "About Me · What artists and venues see".
+    await page.getByRole('button', { name: 'ME', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me$/);
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
@@ -420,7 +433,7 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
 
     // And it actually opens, with consent still up.
     await trigger.click();
-    await expect(page.getByRole('button', { name: 'MUSIC' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
     await expect(consent).toBeVisible();
   });
 
