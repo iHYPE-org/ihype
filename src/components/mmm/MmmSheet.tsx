@@ -164,7 +164,7 @@ function describe(target: MapSheetTarget): SheetContent {
         // the one that ejected you from MMM with no route back.
         href: `/app/shows/${event.slug}`,
       },
-      secondary: event.venueSlug ? { label: 'Venue →', href: `/venues/${event.venueSlug}` } : null,
+      secondary: event.venueSlug ? { label: 'Venue →', href: `/app/venues/${event.venueSlug}` } : null,
     };
   }
 
@@ -188,7 +188,7 @@ function describe(target: MapSheetTarget): SheetContent {
       ],
       listTitle: venue.genres.length ? 'Books' : '',
       list: venue.genres.map((entry) => ({ a: entry, b: '', c: '' })),
-      primary: { label: 'Open venue page', href: `/venues/${venue.slug}` },
+      primary: { label: 'Open venue page', href: `/app/venues/${venue.slug}` },
       secondary: null,
     };
   }
@@ -212,8 +212,8 @@ function describe(target: MapSheetTarget): SheetContent {
         b: artist.genres.join(' · '),
         c: artist.hypeCount.toLocaleString(),
       })),
-      primary: city.artists[0] ? { label: `Open ${city.artists[0].name}`, href: `/artists/${city.artists[0].slug}` } : null,
-      secondary: { label: 'Discover →', href: '/discover' },
+      primary: city.artists[0] ? { label: `Open ${city.artists[0].name}`, href: `/app/artists/${city.artists[0].slug}` } : null,
+      secondary: { label: 'Discover →', href: '/app/music/discover' },
     };
   }
 

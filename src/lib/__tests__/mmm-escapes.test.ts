@@ -25,17 +25,45 @@ const MMM_SOURCES = [
   ...globSync('src/app/app/**/*.tsx'),
 ];
 
-/** An href literal that points somewhere outside `/app`. */
-function legacyHrefs(source: string): string[] {
+/**
+ * Route literals in MMM source that point outside `/app`.
+ *
+ * **This reads ROUTE-SHAPED STRING LITERALS, not `href=` attributes**, and the
+ * difference is the whole reason it works. The first version matched `href=`
+ * and therefore could not see `MmmSearch`'s `hrefFor()`, a switch returning
+ * template strings — so the most central control in MUSIC was sending every
+ * single result into the legacy shell, invisibly, while this audit reported the
+ * shell as nearly closed. An audit that cannot see the biggest hole is worse
+ * than no audit, because it is trusted.
+ *
+ * The known first segments are listed explicitly rather than matched as "any
+ * leading slash": prose, class names and API paths are full of slashes, and a
+ * looser pattern produced more noise than signal.
+ */
+const LEGACY_FIRST_SEGMENTS = [
+  'shows', 'artists', 'venues', 'fans', 'promoters', 'djs', 'tracks', 'playlist',
+  'playlists', 'tickets', 'pages', 'discover', 'search', 'settings', 'payouts',
+  'advertise', 'listen', 'me', 'radio', 'events', 'this-weekend', 'for-you',
+];
+
+/**
+ * Comments are stripped first. Every file here documents its own routes in
+ * prose, so scanning raw source reports each doc comment as an escape — noise
+ * that would get the whole audit ignored.
+ */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
+function legacyHrefs(rawSource: string): string[] {
+  const source = stripComments(rawSource);
   const found: string[] = [];
-  for (const match of source.matchAll(/href=[{"'`]+([^"'`}\s,)]+)/g)) {
-    const href = match[1];
-    if (!href.startsWith('/')) continue;
-    if (href.startsWith('/app')) continue;
-    // `/login` is not an escape: it is the auth boundary, and it returns the
-    // member to the `/app` route they asked for via callbackUrl.
-    if (href.startsWith('/login')) continue;
-    found.push(href.split('?')[0]);
+  const pattern = new RegExp(`['\`"](/(?:${LEGACY_FIRST_SEGMENTS.join('|')})(?:/[^'\`"\s]*)?)`, 'g');
+  for (const match of source.matchAll(pattern)) {
+    const route = match[1].split('?')[0];
+    // `/me` inside `/app/me` is not an escape; the pattern anchors on the
+    // opening quote so `/app/...` never matches in the first place.
+    found.push(route);
   }
   return found;
 }
@@ -50,27 +78,37 @@ describe('MMM escapes into the legacy shell', () => {
   });
 
   it('has no more outbound links than the last time this was counted', () => {
-    // 11 as of the artist pane landing, down from 13. Closing `/artists/[slug]`
-    // removed two NAVIGATION links (a chart row, a show's headliner) and added
-    // one labelled hand-off from the pane itself. Every remaining escape is a
-    // surface MMM does not implement yet: pages, tickets, tracks, playlists,
-    // search, advertise.
+    // 11. Three are the panes' own labelled hand-offs (artist, venue and show
+    // each link once to their full legacy page for the tooling they do not
+    // carry). The other eight are surfaces MMM has no equivalent for yet:
+    // `/pages` x3, `/advertise/register`, `/radio?station=`, `/discover` x2
+    // for city and genre filters, and the ticket transfer page.
+    //
+    // Lower this as panes are built; never raise it.
     expect(escapes.length, `outbound links:\n${escapes.sort().join('\n')}`).toBeLessThanOrEqual(11);
   });
 
-  it('never NAVIGATES to an artist profile outside the shell', () => {
-    // The most-trafficked door, and the one that now has an in-shell
-    // replacement: a chart row and a show's headliner must resolve to
-    // `/app/artists/<slug>`.
-    //
-    // The artist pane's own "full profile" link is exempt and is the one
-    // deliberate exception. It is not navigation into legacy by surprise — it
-    // is a labelled hand-off to the tracks, insights and owner tooling this
-    // pane does not carry, and it is still counted by the ratchet above, so it
-    // cannot multiply quietly.
-    const artistEscapes = escapes.filter(
-      (entry) => / -> \/artists\//.test(entry) && !entry.startsWith('src/app/app/artists/'),
+  /**
+   * Where an in-shell pane exists, nothing may navigate around it.
+   *
+   * Each pane's own single hand-off to its full legacy page is exempt and is
+   * still counted by the ratchet above, so it cannot multiply quietly.
+   */
+  it.each([
+    ['artists', 'src/app/app/artists/'],
+    ['venues', 'src/app/app/venues/'],
+    ['tracks', 'src/app/app/tracks/'],
+    ['playlists', 'src/app/app/playlists/'],
+  ])('never NAVIGATES to a legacy %s destination', (segment, ownPane) => {
+    const offenders = escapes.filter(
+      (entry) => new RegExp(` -> /${segment}/`).test(entry) && !entry.startsWith(ownPane),
     );
-    expect(artistEscapes, 'link at /app/artists/<slug> instead').toEqual([]);
+    expect(offenders, `link at /app/${segment}/... instead`).toEqual([]);
+  });
+
+  it('never NAVIGATES to the singular legacy playlist route', () => {
+    // `/playlist/[slug]` (singular) is the legacy route; the MMM tab is
+    // `/app/playlists/[id]` (plural). Easy to typo back into.
+    expect(escapes.filter((entry) => / -> \/playlist\//.test(entry))).toEqual([]);
   });
 });

@@ -50,25 +50,39 @@ const SCOPES: ReadonlyArray<{ id: string; label: string; type: string }> = [
   { id: 'playlists', label: 'Playlists', type: 'playlist' },
 ];
 
-/** Where a result of each kind actually lives. */
+/**
+ * Where a result of each kind actually lives.
+ *
+ * **Every destination that has an in-shell equivalent resolves inside `/app`.**
+ * This function used to return legacy routes for all eight kinds, which made
+ * the most central control in MUSIC the widest door out of the shell: every
+ * search result swapped the header and the player. It was also invisible to the
+ * escape audit, which reads `href=` literals and cannot see a switch.
+ *
+ * The one kind that still leaves is named rather than papered over: a city or
+ * genre result opens `/discover`, because MUSIC's own Discover tab does not
+ * take those filters yet. When it does, it changes here and the count in
+ * `mmm-escapes.test.ts` comes down.
+ */
 function hrefFor(result: SearchResult): string {
   switch (result.type) {
     case 'song':
-      return `/tracks/${result.id}`;
-    case 'venue':
-      return `/venues/${result.slug ?? ''}`;
+      return `/app/tracks/${result.id}`;
     case 'show':
-      return `/shows/${result.slug ?? ''}`;
+      return `/app/shows/${result.slug ?? ''}`;
     case 'playlist':
-      return `/playlist/${result.id}`;
-    // No city route exists, and inventing one would be a link to a 404.
-    // /discover already filters by city and is the page a city result means.
+      return `/app/playlists/${result.id}`;
+    case 'venue':
+      return `/app/venues/${result.slug ?? ''}`;
+    // No city route exists anywhere, and inventing one would be a link to a
+    // 404. `/discover` already filters by city and is the page a city result
+    // means; MUSIC's own Discover tab does not take these filters yet.
     case 'city':
       return `/discover?city=${encodeURIComponent(result.name)}`;
     case 'genre':
       return `/discover?genre=${encodeURIComponent(result.name)}`;
     default:
-      return `/artists/${result.slug ?? ''}`;
+      return `/app/artists/${result.slug ?? ''}`;
   }
 }
 

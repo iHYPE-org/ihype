@@ -1959,3 +1959,66 @@ html.mmm-locked .site-shell > main {
   color: var(--accent-text);
   text-decoration: none;
 }
+
+/* Track copyright line. Tone is an attribute rather than two class names —
+   the states are mutually exclusive and one of them is always present. */
+.mmm-track-copyright { margin: 0; font-size: 0.82rem; color: var(--role-venue); }
+.mmm-track-copyright[data-tone='pending'] { color: var(--warning-text); }
+
+/* Playlist rows reuse `.mmm-profile-show`; only the index is new. */
+.mmm-playlist-items { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+.mmm-playlist-index {
+  flex-shrink: 0;
+  min-width: 22px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+
+/* ── Search pane ──────────────────────────────────────────────────────────
+   The input is 42px tall at 9px radius, the same control the role-settings
+   template draws — a search field and a settings field are the same object.
+   `font-size: max(16px, 1em)` is functional, not typographic: Safari zooms the
+   page on a sub-16px focused input and never zooms back. */
+.mmm-search-input {
+  width: 100%;
+  min-height: 44px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border-radius: 9px;
+  border: 1px solid rgba(var(--surface-tint-rgb), 0.14);
+  background: rgba(var(--surface-tint-rgb), 0.05);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: max(16px, 0.875rem);
+}
+.mmm-search-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.mmm-search-filters {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 6px;
+}
+.mmm-search-filter {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--surface-tint-rgb), 0.14);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.mmm-search-filter[aria-selected='true'] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink-on-accent);
+}

@@ -168,7 +168,7 @@ function DiscoverTab() {
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button className="mmm-btn-primary" disabled={busy} onClick={() => void act(seed, 'hype')} style={{ flex: 1 }} type="button">Hype</button>
           <button className="mmm-btn-ghost" disabled={busy} onClick={() => void act(seed, 'skip')} type="button">Skip</button>
-          <button className="mmm-btn-ghost" onClick={() => router.push(`/tracks/${seed.hexId}`)} type="button">Open</button>
+          <button className="mmm-btn-ghost" onClick={() => router.push(`/app/tracks/${seed.hexId}`)} type="button">Open</button>
         </div>
       </div>
       <p className="mmm-eyebrow" style={{ textAlign: 'center', letterSpacing: '0.1em' }}>
@@ -261,7 +261,7 @@ function RecommendedTab() {
   return (
     <div>
       {tracks.map((track) => (
-        <Link className="mmm-row" href={`/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
@@ -337,7 +337,7 @@ function PlaylistsTab() {
   return (
     <div>
       {lists.map((list) => (
-        <Link className="mmm-row" href={`/playlist/${list.id}`} key={list.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/app/playlists/${list.id}`} key={list.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>
