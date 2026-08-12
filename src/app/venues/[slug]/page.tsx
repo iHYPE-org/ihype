@@ -243,7 +243,7 @@ export default async function VenuePage({
 
       <style>{`
         .venue-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
-        .venue-hero { background: var(--profile-hero, linear-gradient(160deg, rgba(var(--role-venue-rgb),.18), rgba(var(--role-fan-rgb),.1))); border-bottom: 1px solid var(--profile-border, rgba(var(--role-venue-rgb),.2)); padding: 48px 32px 40px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
+        .venue-hero { background: var(--profile-hero, linear-gradient(160deg, rgba(var(--role-venue-rgb),.18), rgba(var(--role-fan-rgb),.1))); border-bottom: 1px solid var(--profile-border, rgba(var(--role-venue-rgb),.2)); padding: 40px 32px 32px; display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
         .venue-avatar { width: 100px; height: 100px; border-radius: 16px; background: var(--profile-hero, linear-gradient(135deg,var(--role-venue),var(--role-fan))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .venue-info h1 { font-family: var(--profile-font-display, var(--font-display)); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .venue-info p { font-size: 14px; color: var(--ink-a70); margin-bottom: 16px; }
