@@ -299,7 +299,10 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link className="mmm-btn-primary" href="/pages" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
-            <Link className="mmm-btn-ghost" href={`/${data.page.kind}/${data.page.slug}`}>Preview</Link>
+            {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
+                shell — so previewing your own page no longer means leaving the
+                design to look at it. */}
+            <Link className="mmm-btn-ghost" href={`/app/${data.page.kind}/${data.page.slug}`}>Preview</Link>
           </div>
         </div>
       )}

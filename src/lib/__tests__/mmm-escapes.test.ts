@@ -106,6 +106,26 @@ describe('MMM escapes into the legacy shell', () => {
     expect(offenders, `link at /app/${segment}/... instead`).toEqual([]);
   });
 
+  /**
+   * A route whose FIRST segment is a variable — `/${kind}/${slug}`.
+   *
+   * The segment list below cannot see these, and one was live: ME's "Preview"
+   * button built its href from `page.kind` ('artists' | 'venues'), so a member
+   * previewing their own page left the shell to look at it, and every audit
+   * here reported the shell as unchanged. Any route literal that opens with an
+   * interpolation is either `/app/...` or a bug.
+   */
+  it('builds no route from a variable first segment', () => {
+    const offenders: string[] = [];
+    for (const file of MMM_SOURCES) {
+      const source = stripComments(readFileSync(file, 'utf8'));
+      for (const match of source.matchAll(/href=\{`(\/\$\{[^`]*)`\}/g)) {
+        offenders.push(`${file} -> ${match[1]}`);
+      }
+    }
+    expect(offenders, 'anchor the route under /app/ instead').toEqual([]);
+  });
+
   it('never NAVIGATES to the singular legacy playlist route', () => {
     // `/playlist/[slug]` (singular) is the legacy route; the MMM tab is
     // `/app/playlists/[id]` (plural). Easy to typo back into.
