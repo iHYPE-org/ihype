@@ -7,6 +7,9 @@ import { hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
 // Exempt paths: device setup/register/change endpoints don't require an already-registered device
 const DEVICE_EXEMPT = [
   '/api/admin/device-setup',
+  // The lockout-recovery route: requiring a registered device to ask for a
+  // device registration link would be a closed loop.
+  '/api/admin/device-reissue',
   '/api/admin/device-register',
   '/api/admin/device-change',
   '/api/admin/device-change/verify',

@@ -47,7 +47,10 @@ export async function POST(request: NextRequest) {
   response.cookies.set(getDeviceCookieName(), deviceToken, {
     httpOnly: true,
     secure: true,
-    sameSite: 'strict',
+    // Lax for the same reason as the setup path in
+    // src/app/api/admin/device-register/route.ts: a Strict cookie is withheld
+    // on arrival from an email link, which is exactly how this one is issued.
+    sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
   });
