@@ -58,10 +58,18 @@ jobs:
       # broken change still cannot reach production; it just gets caught at
       # deploy time rather than at merge time.
       #
-      # Add the `full-ci` label to a PR that touches the shell, auth, routing,
-      # the service worker or anything Workerd-specific -- those are exactly
-      # what the trimmed stages cover.
-      FULL_CI: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+      # WHICH stage set runs is decided by the "Decide the CI depth" step
+      # below, from the diff, and it writes FULL_CI to $GITHUB_ENV. It is NOT
+      # set here, because a job-level default would win over nothing and only
+      # confuse the precedence.
+      #
+      # It used to be `contains(github.event.pull_request.labels.*.name,
+      # 'full-ci')` alone, and a separate workflow applied that label from the
+      # changed paths. That could not work: Actions does not start a workflow
+      # run from an event created with the GITHUB_TOKEN, so the label landed
+      # on the PR and no `labeled` run ever fired -- the same silent skip,
+      # arrived at through the automation written to prevent it. Deciding
+      # in-job needs no second event at all.
       DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
       AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
       NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
@@ -75,6 +83,48 @@ jobs:
 
     steps:
       - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
+        with:
+          # The depth decision below diffs against the PR base, which a
+          # depth-1 checkout does not have.
+          fetch-depth: 0
+
+      - name: Decide the CI depth
+        # What each pattern buys, so the list can be argued with rather than
+        # cargo-culted:
+        #   *.css                     - layout and geometry; only a browser sees it
+        #   components/shell, app/app - the two shells' chrome contracts
+        #   components/mmm            - the map, the panes, the player
+        #   lib/*-nav.ts              - the route registries both shells read
+        #   middleware.ts             - auth redirects and CSP, Edge-runtime only
+        #   public/sw.js              - caching, and it can serve a stale app
+        #   e2e/                      - the tests themselves
+        #   layout.tsx                - metadata, manifest, viewport, providers
+        #   this workflow             - so a change to the gate proves itself
+        #
+        # The `full-ci` label still forces the full set, as a manual override
+        # for a diff these patterns do not catch. It is no longer the only way
+        # in, which is what made it a single point of forgetting.
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
+        run: |
+          set -euo pipefail
+          if [ "$LABELLED" = "true" ]; then
+            echo "FULL_CI=true" >> "$GITHUB_ENV"
+            echo "Full CI: the PR carries the full-ci label."
+            exit 0
+          fi
+          changed="$(git diff --name-only "$BASE" "$HEAD")"
+          echo "Changed files:"; echo "$changed"
+          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^\.github/workflows/ci\.yml$)'
+          if echo "$changed" | grep -qE "$pattern"; then
+            echo "FULL_CI=true" >> "$GITHUB_ENV"
+            echo "Full CI: this diff touches the shell, routing, styling or the service worker."
+          else
+            echo "FULL_CI=false" >> "$GITHUB_ENV"
+            echo "Trimmed CI: nothing the gated stages cover was touched."
+          fi
 
       - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
         with:
