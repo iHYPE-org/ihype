@@ -132,7 +132,7 @@ export default async function AdvertiserDashboard() {
           <div key={campaign.id} className="panel" style={{ padding: 16 }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
               <div>
-                <div style={{ fontWeight: 600, fontSize: 16 }}>{campaign.title}</div>
+                <div style={{ fontWeight: 600, fontSize: '1rem' }}>{campaign.title}</div>
                 <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
                 {campaign.clickUrl && (
                   <div className="meta" style={{ marginTop: 4 }}>

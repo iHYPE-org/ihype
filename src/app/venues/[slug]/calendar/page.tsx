@@ -79,18 +79,18 @@ export default async function VenueCalendarPage({ params }: Props) {
   return (
     <div className="container section" style={{ maxWidth: 900 }}>
       <div style={{ marginBottom: 16 }}>
-        <Link href={`/venues/${slug}`} className="text-link" style={{ fontSize: 13 }}>
+        <Link href={`/venues/${slug}`} className="text-link" style={{ fontSize: '0.8125rem' }}>
           {t('venuesSlugCalendarPage.backToPrefix', '← Back to')} {profile.name}
         </Link>
       </div>
-      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, marginBottom: 4 }}>
+      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.75rem', marginBottom: 4 }}>
         {profile.name}
       </h1>
       <p className="meta" style={{ marginBottom: 24 }}>{monthName} — {shows.length} {shows.length !== 1 ? t('venuesSlugCalendarPage.showsPlural', 'shows') : t('venuesSlugCalendarPage.showSingular', 'show')}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 8 }}>
         {dayNames.map((d) => (
-          <div key={d} style={{ fontFamily: 'var(--f-m)', fontSize: 11, fontWeight: 600, color: 'var(--ink-3)', textAlign: 'center', padding: '4px 0', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+          <div key={d} style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', fontWeight: 600, color: 'var(--ink-3)', textAlign: 'center', padding: '4px 0', letterSpacing: '.08em', textTransform: 'uppercase' }}>
             {d}
           </div>
         ))}
@@ -113,7 +113,7 @@ export default async function VenueCalendarPage({ params }: Props) {
             >
               {day ? (
                 <>
-                  <span style={{ fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--ink-2)' }}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--ink-2)' }}>
                     {day}
                   </span>
                   {dayShows.map((s) => (
@@ -123,7 +123,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                       style={{
                         display: 'block',
                         marginTop: 4,
-                        fontSize: 10,
+                        fontSize: '0.625rem',
                         fontFamily: 'var(--f-m)',
                         color: 'var(--ink)',
                         background: 'rgba(var(--role-fan-rgb),.15)',
@@ -148,17 +148,17 @@ export default async function VenueCalendarPage({ params }: Props) {
 
       {shows.length > 0 && (
         <div style={{ marginTop: 32 }}>
-          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 18, marginBottom: 12 }}>{t('venuesSlugCalendarPage.upcomingShowsHeading', 'Upcoming shows')}</h2>
+          <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.125rem', marginBottom: 12 }}>{t('venuesSlugCalendarPage.upcomingShowsHeading', 'Upcoming shows')}</h2>
           {shows.map((s) => (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
-              <div style={{ minWidth: 60, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 20, color: 'var(--accent)' }}>
+              <div style={{ minWidth: 60, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--accent)' }}>
                 {s.startsAt.getDate()}
               </div>
               <div>
-                <Link href={`/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 15, color: 'var(--ink)', textDecoration: 'none' }}>
+                <Link href={`/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--ink)', textDecoration: 'none' }}>
                   {s.title}
                 </Link>
-                <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-2)', margin: '2px 0 0' }}>
+                <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
                   {s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
               </div>

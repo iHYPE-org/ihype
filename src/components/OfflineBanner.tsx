@@ -32,7 +32,7 @@ export function OfflineBanner() {
         color: 'var(--ink-on-accent)',
         textAlign: 'center',
         padding: '8px 16px',
-        fontSize: 13,
+        fontSize: '0.8125rem',
       }}
     >
       {t('offlineBanner.message', 'No internet connection — showing cached content')}

@@ -26,7 +26,7 @@ const rowStyle: React.CSSProperties = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>
         {title}
       </div>
       {children}
@@ -35,14 +35,14 @@ function Section({ title, children }: { title: string; children: ReactNode }) {
 }
 
 function EmptyNote({ text }: { text: string }) {
-  return <p style={{ fontSize: 13, color: 'var(--ink-a45)', margin: 0 }}>{text}</p>;
+  return <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)', margin: 0 }}>{text}</p>;
 }
 
 function Stat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{value.toLocaleString()}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: '1.375rem', fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{value.toLocaleString()}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -50,8 +50,8 @@ function Stat({ label, value, color }: { label: string; value: number; color: st
 function PercentStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
     <div>
-      <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{Math.round(value * 100)}%</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
+      <div style={{ fontSize: '1.375rem', fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{Math.round(value * 100)}%</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>{label}</div>
     </div>
   );
 }
@@ -104,7 +104,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
 
       {typeof data.ticketRevenueCents === 'number' && (
         <Section title={t('profileInsights.sectionTicketRevenue', 'Ticket revenue')}>
-          <div style={{ fontSize: 26, fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
+          <div style={{ fontSize: '1.625rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
             ${(data.ticketRevenueCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
           </div>
         </Section>
@@ -135,8 +135,8 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
             <div>
               {data.topTracks.map((track) => (
                 <div key={track.title} style={rowStyle}>
-                  <span style={{ fontSize: 14, color: 'var(--ink)' }}>{track.title}</span>
-                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--ink)' }}>{track.title}</span>
+                  <span style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>
                     {track.plays} {track.plays === 1 ? t('profileInsights.listenerSingular', 'listener') : t('profileInsights.listenerPlural', 'listeners')}
                   </span>
                 </div>
@@ -164,12 +164,12 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
                   />
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a40)', marginTop: 6 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.625rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a40)', marginTop: 6 }}>
                 <span>{t('profileInsights.showStart', 'Show start')}</span>
                 <span>{t('profileInsights.showEnd', 'Show end')}</span>
               </div>
               {timeline.untracked > 0 && (
-                <p style={{ fontSize: 11, color: 'var(--ink-a40)', marginTop: 12 }}>
+                <p style={{ fontSize: '0.6875rem', color: 'var(--ink-a40)', marginTop: 12 }}>
                   +{timeline.untracked} {timeline.untracked === 1 ? t('profileInsights.moreHypeSingular', 'more hype fired without an active player open (position unknown).') : t('profileInsights.moreHypePlural', 'more hypes fired without an active player open (position unknown).')}
                 </p>
               )}
@@ -186,8 +186,8 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
             <div>
               {data.topCities.map((c) => (
                 <div key={c.city} style={rowStyle}>
-                  <span style={{ fontSize: 14, color: 'var(--ink)' }}>{c.city}</span>
-                  <span style={{ fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>{c.count}</span>
+                  <span style={{ fontSize: '0.875rem', color: 'var(--ink)' }}>{c.city}</span>
+                  <span style={{ fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a55)' }}>{c.count}</span>
                 </div>
               ))}
             </div>
@@ -197,7 +197,7 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
         </Section>
       )}
 
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)', margin: 0 }}>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)', margin: 0 }}>
         {t('profileInsights.cohortsUnder5', 'Cohorts under 5 fans are never shown')}
       </p>
 

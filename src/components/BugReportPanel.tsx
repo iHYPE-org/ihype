@@ -75,9 +75,9 @@ export function BugReportPanel() {
         style={cardStyle}
         tabIndex={0}
       >
-        <div aria-hidden="true" style={{ fontSize: 24, marginBottom: 8 }}>🐛</div>
-        <div style={{ fontSize: 14, fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
-        <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
+        <div aria-hidden="true" style={{ fontSize: '1.5rem', marginBottom: 8 }}>🐛</div>
+        <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
+        <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
       </div>
 
       {open && (
@@ -89,17 +89,17 @@ export function BugReportPanel() {
         >
           <div className="ihype-sheet-panel" style={{ maxWidth: 460 }}>
             <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 6 }}>
-              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 800 }}>{t('bugReportPanel.dialogTitle', 'Report a bug')}</h2>
-              <button onClick={close} aria-label={t('bugReportPanel.closeAriaLabel', 'Close')} style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: 22, cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
+              <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800 }}>{t('bugReportPanel.dialogTitle', 'Report a bug')}</h2>
+              <button onClick={close} aria-label={t('bugReportPanel.closeAriaLabel', 'Close')} style={{ background: 'none', border: 'none', color: 'var(--ink-a50)', fontSize: '1.375rem', cursor: 'pointer', lineHeight: 1, padding: 0 }}>×</button>
             </div>
 
             {sent ? (
-              <div style={{ fontSize: 13, color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
                 ✓ {t('bugReportPanel.sentConfirmation', 'Thanks — we logged it and will take a look.')}
               </div>
             ) : (
               <form className="form" onSubmit={submit}>
-                <p style={{ fontSize: 13, color: 'var(--ink-a55)', margin: '0 0 6px' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a55)', margin: '0 0 6px' }}>
                   {t('bugReportPanel.dialogBody', "What happened? We'll attach only the app version, module, and coarse device category.")}
                 </p>
                 <label className="field">

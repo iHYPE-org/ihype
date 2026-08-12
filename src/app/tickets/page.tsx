@@ -53,7 +53,7 @@ export default async function MyTicketsPage() {
     <div className="tickets-container">
       <div className="tickets-header">
         <h1>{t('ticketsPage.title', 'My Tickets')}</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>{t('ticketsPage.subtitle', 'Your upcoming shows')}</p>
+        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)' }}>{t('ticketsPage.subtitle', 'Your upcoming shows')}</p>
       </div>
 
       {/* The push primer's moment: after a first ticket, never at onboarding.

@@ -26,11 +26,11 @@ export async function PayoutsHistoryPanel({ released, pending }: { released: Pay
 
       <div className="panel" style={{ padding: '14px 20px', marginBottom: 24, display: 'flex', gap: 24 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 24 }}>{fmtCents(totalReleasedCents)}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{fmtCents(totalReleasedCents)}</div>
           <div className="meta">{t('payoutsHistoryPanel.totalReceived', 'Total received')}</div>
         </div>
         <div>
-          <div style={{ fontWeight: 700, fontSize: 24 }}>{released.length}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{released.length}</div>
           <div className="meta">{t('payoutsHistoryPanel.payoutsCount', 'Payouts')}</div>
         </div>
       </div>

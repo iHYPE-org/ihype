@@ -43,9 +43,9 @@ export default async function VerifyPage() {
   if (profiles.length === 0) {
     return (
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 12 }}>{t('verifyPage.nothingToVerify', 'Nothing to verify yet.')}</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24 }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a60)', marginBottom: 24 }}>
           {t('verifyPage.noProfilesBody', "Fan accounts don't need verification. Create an Artist or Venue page to get started.")}
         </p>
         <Link href="/pages?tab=creator" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
@@ -68,7 +68,7 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifiedHeading', "You're verified.")}</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-a60)' }}>{profile.name} {t('verifyPage.isVerifiedPrefix', 'is a verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.isVerifiedSuffix', 'on iHYPE.')}</p>
+        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a60)' }}>{profile.name} {t('verifyPage.isVerifiedPrefix', 'is a verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.isVerifiedSuffix', 'on iHYPE.')}</p>
       </div>
     );
   }
@@ -86,7 +86,7 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.submittedHeading', 'Submitted.')}</h1>
-        <p style={{ fontSize: 14, color: 'var(--ink-a60)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
+        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a60)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
           {t('verifyPage.submittedBody', "We'll review your application within 48 hours and email you at the address on your account. While you wait, you can use iHYPE as a Fan.")}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
@@ -115,9 +115,9 @@ export default async function VerifyPage() {
 
   return (
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px' }}>
-      <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifyYourPagePrefix', 'Verify your')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifyYourPageSuffix', 'page.')}</h1>
-      <p style={{ fontSize: 14, color: 'var(--ink-a60)', marginBottom: 24, lineHeight: 1.6 }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--ink-a60)', marginBottom: 24, lineHeight: 1.6 }}>
         {t('verifyPage.instantVsVerification', 'Fan accounts are instant. Artist and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.')}
       </p>
       <VerifyForm

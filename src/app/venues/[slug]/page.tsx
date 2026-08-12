@@ -153,11 +153,11 @@ export default async function VenuePage({
 
         {activeSection === 'about' && (
           <div>
-            <p style={{ fontSize: 15, lineHeight: 1.7, color: 'var(--ink-a85)', marginBottom: 28 }}>
+            <p style={{ fontSize: '0.9375rem', lineHeight: 1.7, color: 'var(--ink-a85)', marginBottom: 28 }}>
               {profile.aboutContent || profile.bio || t('venuesSlugPage.aboutEmpty', 'This venue has not filled out the About section yet.')}
             </p>
             {(venueAddress || profile.hoursText) && (
-              <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 28 }}>
+              <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', marginBottom: 28 }}>
                 {venueAddress}{profile.hoursText ? ` · ${profile.hoursText}` : ''}
               </p>
             )}
@@ -169,7 +169,7 @@ export default async function VenuePage({
                 <div className="venue-split-seg venue-venue-seg" style={{ flex: 20 }}><div className="venue-seg-pct" style={{ color: 'var(--role-venue)' }}>20%</div><div className="venue-seg-label" style={{ color: 'var(--role-venue)' }}>{profile.name}</div></div>
                 <div className="venue-split-seg venue-promoter-seg" style={{ flex: 10 }}><div className="venue-seg-pct" style={{ color: 'var(--accent-2)' }}>10%</div><div className="venue-seg-label" style={{ color: 'var(--accent-2)' }}>{t('venuesSlugPage.splitPromoters', 'Promoters')}</div></div>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>{t('venuesSlugPage.splitFooter', '$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.')}</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ink-a50)', marginTop: 12 }}>{t('venuesSlugPage.splitFooter', '$0 fees for ticket buyers. iHYPE takes nothing — locked in the charter.')}</p>
             </div>
           </div>
         )}
@@ -177,7 +177,7 @@ export default async function VenuePage({
         {activeSection === 'shows' && (
           <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12 }}>
-              <Link href={`/venues/${profile.slug}/calendar`} className="text-link" style={{ fontSize: 13 }}>
+              <Link href={`/venues/${profile.slug}/calendar`} className="text-link" style={{ fontSize: '0.8125rem' }}>
                 {t('venuesSlugPage.fullCalendar', 'Full calendar →')}
               </Link>
             </div>
@@ -208,14 +208,14 @@ export default async function VenuePage({
           <div>
             {isOwner ? (
               <>
-                <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)', marginBottom: 24 }}>
                   {t('venuesSlugPage.requestOwnerBody', 'Pending artist booking recommendations from fans and promoters. Approving marks the request booked; denying dismisses it.')}
                 </p>
                 <VenueRequestInbox />
               </>
             ) : (
               <>
-                <p style={{ fontSize: 14, color: 'var(--ink-a70)', marginBottom: 24 }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)', marginBottom: 24 }}>
                   {t('venuesSlugPage.requestFanBody', "We use the iHYPE demand radar to book artists. Fill this out and we'll reach out if there's a fit.")}
                 </p>
                 {session?.user ? (

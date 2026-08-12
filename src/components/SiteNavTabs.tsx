@@ -93,7 +93,7 @@ export function SiteNavTabs() {
             <span
               style={{
                 fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
-                fontSize: 14,
+                fontSize: '0.875rem',
                 fontWeight: 800,
                 letterSpacing: '-0.01em',
                 color: isActive ? 'var(--ink)' : 'var(--ink-a75)',

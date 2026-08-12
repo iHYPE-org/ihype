@@ -199,7 +199,7 @@ export function ShowEngagement({
                 background: 'var(--accent, var(--accent-2))', border: '2px solid var(--bg, #0a0a14)',
                 marginLeft: i > 0 ? -10 : 0, overflow: 'hidden',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 12, fontWeight: 700, color: 'var(--ink-on-accent)', flexShrink: 0,
+                fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink-on-accent)', flexShrink: 0,
               }}
             >
               {a.avatar ? (

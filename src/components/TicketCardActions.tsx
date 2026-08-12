@@ -194,7 +194,7 @@ export function TicketCardActions({
         )}
       </div>
       {(resendDone || resendError) && (
-        <p style={{ fontSize: 12, marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
+        <p style={{ fontSize: '0.75rem', marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
       {showQr && (
@@ -209,7 +209,7 @@ export function TicketCardActions({
                 style={{ borderRadius: 8, background: 'var(--ink)' }}
                 width={120}
               />
-              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', color: 'var(--ink-a50)', letterSpacing: '.04em' }}>
+              <span style={{ fontSize: '0.625rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a50)', letterSpacing: '.04em' }}>
                 {ticket.serializedId}
               </span>
             </div>
@@ -225,15 +225,15 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.transferModalTitle', 'Transfer tickets')}</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.transferModalTitle', 'Transfer tickets')}</h3>
             {done ? (
               <>
-                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
                 <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.recipientEmailLabel', "Recipient's email")}</label>
+                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.recipientEmailLabel', "Recipient's email")}</label>
                 <input
                   id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
@@ -242,7 +242,7 @@ export function TicketCardActions({
                   type="email"
                   value={email}
                 />
-                {error && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent)', fontSize: '0.75rem', marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
@@ -263,15 +263,15 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
             {resaleDone ? (
               <>
-                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
                 <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: 12, color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
+                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: '0.75rem', color: 'var(--ink-a50)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
                 <input
                   id="ticket-resale-price"
                   min="0"
@@ -282,7 +282,7 @@ export function TicketCardActions({
                   type="number"
                   value={resalePrice}
                 />
-                {resaleError && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{resaleError}</p>}
+                {resaleError && <p style={{ color: 'var(--accent)', fontSize: '0.75rem', marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
@@ -303,15 +303,15 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.cancelModalTitle', 'Cancel ticket')}</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.cancelModalTitle', 'Cancel ticket')}</h3>
             {cancelDone ? (
               <>
-                <p style={{ fontSize: 13, color: 'var(--role-venue)', marginBottom: 16 }}>{cancelDone}</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{cancelDone}</p>
                 <button className="btn btn-primary" onClick={closeCancel} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : tooLateToCancel ? (
               <>
-                <p style={{ fontSize: 13, color: 'var(--warning-text)', marginBottom: 16 }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--warning-text)', marginBottom: 16 }}>
                   {t('ticketCardActions.tooLateToCancelMessage', 'Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.')}
                 </p>
                 <div style={{ display: 'flex', gap: 10 }}>
@@ -321,10 +321,10 @@ export function TicketCardActions({
               </>
             ) : (
               <>
-                <p style={{ fontSize: 13, color: 'var(--ink-a60)', marginBottom: 16 }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', marginBottom: 16 }}>
                   {t('ticketCardActions.cancelRefundInfo', 'Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.')}
                 </p>
-                {cancelError && <p style={{ color: 'var(--accent)', fontSize: 12, marginBottom: 12 }}>{cancelError}</p>}
+                {cancelError && <p style={{ color: 'var(--accent)', fontSize: '0.75rem', marginBottom: 12 }}>{cancelError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.keepTicketButton', 'Keep ticket')}</button>
                   <button className="btn btn-primary" disabled={cancelSubmitting} onClick={requestCancellation} style={{ flex: 1 }} type="button">

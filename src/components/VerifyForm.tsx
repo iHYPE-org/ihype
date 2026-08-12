@@ -155,7 +155,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         placeholder={t('verifyForm.notesPlaceholder', 'Optional — any context that helps us verify faster.')}
       />
 
-      {error && <p style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+      {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
 
       <button onClick={submit} disabled={submitting} className="ihype-btn-primary" style={{ width: '100%' }}>
         {submitting ? t('verifyForm.submitting', 'Submitting…') : t('verifyForm.submitForReview', 'Submit for review →')}

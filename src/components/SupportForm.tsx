@@ -80,9 +80,9 @@ export function SupportForm({ alphaModule, initialType = 'general', initialSubje
   if (sent) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 0' }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 800, marginBottom: 8 }}>{t('supportForm.messageSentTitle', 'Message sent')}</h2>
-        <p style={{ fontSize: 14, color: 'var(--ink-a65)' }}>{t('supportForm.replyWithin24h', "We'll reply to")} {email} {t('supportForm.within24h', 'within 24h.')}</p>
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>✅</div>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 800, marginBottom: 8 }}>{t('supportForm.messageSentTitle', 'Message sent')}</h2>
+        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)' }}>{t('supportForm.replyWithin24h', "We'll reply to")} {email} {t('supportForm.within24h', 'within 24h.')}</p>
       </div>
     );
   }

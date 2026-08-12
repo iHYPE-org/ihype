@@ -68,10 +68,10 @@ function ProfilePicker({
         <label>{label}</label>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(var(--accent-rgb),.07)', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 10 }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{value.name}</div>
-            <div style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
+            <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{value.name}</div>
+            <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
           </div>
-          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: 18, lineHeight: 1, padding: '0 4px' }} type="button">×</button>
+          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
         </div>
       </div>
     );
@@ -104,8 +104,8 @@ function ProfilePicker({
               }}
               type="button"
             >
-              <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
-              <div style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
+              <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
             </button>
           ))}
         </div>
@@ -312,7 +312,7 @@ export default function EventsNewPage() {
               className={`ticket-type-btn${ticketType === 'ga' ? ' selected' : ''}`}
               onClick={() => setTicketType('ga')}
             >
-              <span style={{ fontSize: 20 }}>🎟</span>
+              <span style={{ fontSize: '1.25rem' }}>🎟</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.gaTitle', 'General Admission')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
@@ -322,7 +322,7 @@ export default function EventsNewPage() {
               className={`ticket-type-btn${ticketType === 'vip' ? ' selected' : ''}`}
               onClick={() => setTicketType('vip')}
             >
-              <span style={{ fontSize: 20 }}>⭐</span>
+              <span style={{ fontSize: '1.25rem' }}>⭐</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.vipTitle', 'VIP')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
@@ -391,7 +391,7 @@ export default function EventsNewPage() {
                 {t('eventsNewPage.ihypeChip', 'iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately')}
               </div>
             </div>
-            {error && <p style={{ color: 'var(--accent)', fontSize: 13, marginBottom: 12 }}>{error}</p>}
+            {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
               {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter 🔒')}
             </button>

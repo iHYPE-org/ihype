@@ -66,7 +66,7 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
       <button className="venue-submit-btn" disabled={pending} type="submit">
         {pending ? t('venueRequestForm.submitting', 'Submitting…') : t('venueRequestForm.submitRequest', 'Submit Request')}
       </button>
-      {message && <p style={{ marginTop: 12, fontSize: 13, color: 'var(--role-venue)' }}>{message}</p>}
+      {message && <p style={{ marginTop: 12, fontSize: '0.8125rem', color: 'var(--role-venue)' }}>{message}</p>}
 
       <style>{`
         .venue-request-form { border: 1px solid var(--line); border-radius: 10px; padding: 28px; background: var(--bg2); }

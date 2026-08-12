@@ -24,11 +24,11 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px', color: 'var(--ink)' }}>
         {t('error.title', 'Something broke.')}
       </h1>
-      <p style={{ fontSize: 15, color: 'var(--ink-a60)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
+      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a60)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
         {t('error.description', 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.')}
       </p>
       {error.digest && (
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a30)', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a30)', marginBottom: 24 }}>
           {t('error.errorIdLabel', 'Error ID:')} {error.digest}
         </p>
       )}
@@ -42,7 +42,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         onClick={reset}
         style={{
           padding: '14px 28px', background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none', borderRadius: 10,
-          fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, cursor: 'pointer',
+          fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, cursor: 'pointer',
         }}
       >
         {t('error.tryAgain', 'Try again')}

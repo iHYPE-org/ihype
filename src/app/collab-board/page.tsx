@@ -73,13 +73,13 @@ export default async function CollabBoardPage({
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 100px' }}>
       <div style={{ marginBottom: 28 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
           {t('collabBoardPage.eyebrow', 'COLLAB BOARD')}
         </p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
           {t('collabBoardPage.title', 'Find your next bandmate')}
         </h1>
-        <p style={{ color: 'var(--ink-a55)', fontSize: 14, margin: 0 }}>
+        <p style={{ color: 'var(--ink-a55)', fontSize: '0.875rem', margin: 0 }}>
           {t('collabBoardPage.subtitle', "Musician classifieds — post what you're looking for, or what you have to offer.")}
         </p>
       </div>
@@ -89,34 +89,34 @@ export default async function CollabBoardPage({
       {/* Filters */}
       <div style={{ margin: '32px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.typeFilterLabel', 'Type')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.typeFilterLabel', 'Type')}</span>
           {typeFilter && (
             <Link href={buildUrl(null, roleFilter)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                 {typeLabel(typeFilter)} ×
               </span>
             </Link>
           )}
           {TYPES.filter(tp => tp.value !== typeFilter).map(tp => (
             <Link key={tp.value} href={buildUrl(tp.value, roleFilter)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                 {typeLabel(tp.value)}
               </span>
             </Link>
           ))}
         </div>
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.roleFilterLabel', 'Role')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('collabBoardPage.roleFilterLabel', 'Role')}</span>
           {roleFilter && (
             <Link href={buildUrl(typeFilter, null)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                 {roleLabel(roleFilter)} ×
               </span>
             </Link>
           )}
           {ROLES.filter(r => r.value !== roleFilter).map(r => (
             <Link key={r.value} href={buildUrl(typeFilter, r.value)} style={{ textDecoration: 'none' }}>
-              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
+              <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                 {roleLabel(r.value)}
               </span>
             </Link>
@@ -127,10 +127,10 @@ export default async function CollabBoardPage({
       {/* Listings */}
       {posts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--ink-a30)' }}>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, marginBottom: 8, color: 'var(--ink)' }}>
+          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', marginBottom: 8, color: 'var(--ink)' }}>
             {t('collabBoardPage.emptyTitle', 'No listings yet')}
           </p>
-          <p style={{ fontSize: 14 }}>{t('collabBoardPage.emptyBody', 'Be the first to post — find a drummer, a venue, or your next gig.')}</p>
+          <p style={{ fontSize: '0.875rem' }}>{t('collabBoardPage.emptyBody', 'Be the first to post — find a drummer, a venue, or your next gig.')}</p>
         </div>
       ) : (
         <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: 12 }}>
@@ -142,7 +142,7 @@ export default async function CollabBoardPage({
                   <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                     <span
                       style={{
-                        fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase',
+                        fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.08em', textTransform: 'uppercase',
                         padding: '4px 10px', borderRadius: 999,
                         color: p.type === 'looking-for' ? 'var(--accent)' : 'var(--role-venue)',
                         background: p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.1)' : 'rgba(var(--role-venue-rgb),.1)',
@@ -153,7 +153,7 @@ export default async function CollabBoardPage({
                     </span>
                     <span
                       style={{
-                        fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase',
+                        fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.08em', textTransform: 'uppercase',
                         padding: '4px 10px', borderRadius: 999, color: 'var(--ink-a60)',
                         background: 'var(--hair-40)', border: '1px solid var(--hair-100)',
                       }}
@@ -163,14 +163,14 @@ export default async function CollabBoardPage({
                   </div>
                   {isOwn && <DeleteCollabPostButton id={p.id} />}
                 </div>
-                <p style={{ fontSize: 14, color: 'var(--ink-a85)', lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontSize: '0.875rem', color: 'var(--ink-a85)', lineHeight: 1.6, margin: '0 0 10px', whiteSpace: 'pre-wrap' }}>
                   {p.body}
                 </p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
                   {p.contact ? (
-                    <span style={{ fontSize: 12, color: 'var(--ink-a70)' }}>{t('collabBoardPage.contactPrefix', 'Contact:')} {p.contact}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--ink-a70)' }}>{t('collabBoardPage.contactPrefix', 'Contact:')} {p.contact}</span>
                   ) : <span />}
-                  <span className="meta" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a40)' }}>
+                  <span className="meta" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-a40)' }}>
                     {new Date(p.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                   </span>
                 </div>

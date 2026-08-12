@@ -63,9 +63,9 @@ export default async function AdminGrowthPage() {
   return (
     <div className="container section admin-console">
       <section className="panel admin-console-panel">
-        <h1 style={{ fontSize: 20, marginBottom: 16 }}>{t('adminGrowthPage.title', 'Growth')}</h1>
+        <h1 style={{ fontSize: '1.25rem', marginBottom: 16 }}>{t('adminGrowthPage.title', 'Growth')}</h1>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.artistFunnelHeading', 'Artist Funnel')}</h2>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.artistFunnelHeading', 'Artist Funnel')}</h2>
         <div className="admin-health-grid" style={{ marginBottom: 24 }}>
           {funnelSteps.map(({ label, value }) => (
             <div className="admin-health-card" key={label}>
@@ -75,7 +75,7 @@ export default async function AdminGrowthPage() {
           ))}
         </div>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.dropoffPointsHeading', 'Dropoff Points')}</h2>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.dropoffPointsHeading', 'Dropoff Points')}</h2>
         <div className="admin-health-grid" style={{ marginBottom: 24 }}>
           <div className="admin-health-card">
             <span>{t('adminGrowthPage.noUploadsYet', 'No uploads yet')}</span>
@@ -91,7 +91,7 @@ export default async function AdminGrowthPage() {
           </div>
         </div>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.topHypedProfilesHeading', 'Top Hyped Profiles')}</h2>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.topHypedProfilesHeading', 'Top Hyped Profiles')}</h2>
         {!topHypedProfiles || topHypedProfiles.length === 0 ? (
           <div className="empty">{t('adminGrowthPage.noProfilesWithHypes', 'No profiles with hypes yet.')}</div>
         ) : (
@@ -106,7 +106,7 @@ export default async function AdminGrowthPage() {
           </div>
         )}
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>{t('adminGrowthPage.recentArtistsHeading', 'Recent Artists')}</h2>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.recentArtistsHeading', 'Recent Artists')}</h2>
         {!recentArtists || recentArtists.length === 0 ? (
           <div className="empty">{t('adminGrowthPage.noArtistsYet', 'No artists yet.')}</div>
         ) : (

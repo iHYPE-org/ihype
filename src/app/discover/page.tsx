@@ -192,13 +192,13 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
     <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px 100px' }}>
 
       <div style={{ marginBottom: 32 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
           {t('discoverPage.kicker', 'DISCOVER')}
         </p>
         <h1 className="ihype-hero-heading" style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
           {t('discoverPage.heroTitle', 'Find your next favourite artist')}
         </h1>
-        <p style={{ color: 'var(--ink-a55)', fontSize: 14, margin: 0 }}>
+        <p style={{ color: 'var(--ink-a55)', fontSize: '0.875rem', margin: 0 }}>
           {t('discoverPage.heroSubtitle', 'Ranked by real fan hypes — no paid promotion.')}
         </p>
       </div>
@@ -207,10 +207,10 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       <Link href="/for-you" style={{ textDecoration: 'none', display: 'block', marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(var(--accent-rgb),.08)', border: '1px solid rgba(var(--accent-rgb),.3)' }}>
           <div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)' }}>{t('discoverPage.forYouKicker', 'FOR YOU')}</span>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.forYouTitle', 'Artists picked for your taste →')}</div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)' }}>{t('discoverPage.forYouKicker', 'FOR YOU')}</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.forYouTitle', 'Artists picked for your taste →')}</div>
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)', flexShrink: 0 }}>{t('discoverPage.forYouCta', 'See why')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-a50)', flexShrink: 0 }}>{t('discoverPage.forYouCta', 'See why')}</span>
         </div>
       </Link>
 
@@ -218,10 +218,10 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       <Link href="/this-weekend" style={{ textDecoration: 'none', display: 'block', marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '14px 18px', borderRadius: 16, background: 'rgba(var(--role-venue-rgb),.08)', border: '1px solid rgba(var(--role-venue-rgb),.3)' }}>
           <div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-venue)' }}>{t('discoverPage.thisWeekendKicker', 'THIS WEEKEND')}</span>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.thisWeekendTitle', 'Shows near you →')}</div>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-venue)' }}>{t('discoverPage.thisWeekendKicker', 'THIS WEEKEND')}</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', letterSpacing: '-.02em', color: 'var(--ink)', marginTop: 2 }}>{t('discoverPage.thisWeekendTitle', 'Shows near you →')}</div>
           </div>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a50)', flexShrink: 0 }}>{t('discoverPage.thisWeekendCta', 'Get tickets')}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-a50)', flexShrink: 0 }}>{t('discoverPage.thisWeekendCta', 'Get tickets')}</span>
         </div>
       </Link>
 
@@ -229,8 +229,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {rising.length > 0 && (
         <section style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>🔥 {t('discoverPage.risingTitle', 'Rising near you')}</h2>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: 0 }}>🔥 {t('discoverPage.risingTitle', 'Rising near you')}</h2>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
               {t('discoverPage.risingSubtitle', 'Sorted by hype velocity, not date')}
             </span>
           </div>
@@ -238,10 +238,10 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             {rising.map(r => (
               <Link key={r.key} href={r.href} style={{ textDecoration: 'none' }}>
                 <div style={{ background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.14), transparent 60%), var(--hair-40)', border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 12, padding: '14px 16px' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 3, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
-                  <div style={{ fontSize: 11, color: 'var(--ink-a55)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.875rem', marginBottom: 3, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.title}</div>
+                  <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a55)', marginBottom: 10, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.meta}</div>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--accent)' }}>▲ {r.ratePerHour}/hr</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--accent)' }}>▲ {r.ratePerHour}/hr</span>
                     <CompactHypeButton targetType={r.targetType} targetId={r.targetId} initialCount={r.hypeCount} />
                   </div>
                 </div>
@@ -258,8 +258,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {(cityHeat.length > 0 || genreHeat.length > 0) && (
         <section style={{ marginBottom: 32, border: '1px solid var(--hair-80)', borderRadius: 16, background: 'var(--hair-40)', padding: '20px 22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 16, margin: 0 }}>{t('discoverPage.heatMapTitle', 'Heat map')}</h2>
-            <Link href="/app/map" style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)', textDecoration: 'none' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', margin: 0 }}>{t('discoverPage.heatMapTitle', 'Heat map')}</h2>
+            <Link href="/app/map" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)', textDecoration: 'none' }}>
               {t('discoverPage.heatMapOpenMap', 'Open map view')} <span aria-hidden="true">›</span>
             </Link>
           </div>
@@ -267,11 +267,11 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9, marginBottom: genreHeat.length > 0 ? 18 : 0 }}>
               {cityHeat.map(ch => (
                 <div key={ch.label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ width: 92, flexShrink: 0, fontSize: 12, color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.label}</span>
+                  <span style={{ width: 92, flexShrink: 0, fontSize: '0.75rem', color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ch.label}</span>
                   <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'var(--hair-80)', overflow: 'hidden' }} role="img" aria-label={`${ch.label}: ${ch.score.toLocaleString()} ${t('discoverPage.hypesUnit', 'hypes')}`}>
                     <div style={{ width: HEAT_TIER_WIDTH[ch.tier], height: '100%', borderRadius: 4, background: HEAT_TIER_COLOR[ch.tier] }} />
                   </div>
-                  <span style={{ width: 72, flexShrink: 0, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-a45)' }}>{ch.score.toLocaleString()} {t('discoverPage.hypesUnit', 'hypes')}</span>
+                  <span style={{ width: 72, flexShrink: 0, textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-a45)' }}>{ch.score.toLocaleString()} {t('discoverPage.hypesUnit', 'hypes')}</span>
                 </div>
               ))}
             </div>
@@ -279,7 +279,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           {genreHeat.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {genreHeat.map(gh => (
-                <span key={gh.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 999, fontSize: 11, fontFamily: 'var(--font-mono)', background: `rgba(${HEAT_TIER_RGB[gh.tier]}, .125)`, border: `1px solid rgba(${HEAT_TIER_RGB[gh.tier]}, .25)`, color: HEAT_TIER_COLOR[gh.tier] }}>
+                <span key={gh.label} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 11px', borderRadius: 999, fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', background: `rgba(${HEAT_TIER_RGB[gh.tier]}, .125)`, border: `1px solid rgba(${HEAT_TIER_RGB[gh.tier]}, .25)`, color: HEAT_TIER_COLOR[gh.tier] }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: HEAT_TIER_COLOR[gh.tier] }} />
                   {gh.label}
                 </span>
@@ -294,17 +294,17 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <div style={{ marginBottom: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
           {cities.length > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.cityFilterLabel', 'City')}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.cityFilterLabel', 'City')}</span>
               {cityFilter && (
                 <Link href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {cityFilter} ×
                   </span>
                 </Link>
               )}
               {cities.filter(c => c !== cityFilter).map(c => (
                 <Link key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {c}
                   </span>
                 </Link>
@@ -313,17 +313,17 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
           )}
           {genres.length > 0 && (
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.genreFilterLabel', 'Genre')}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.genreFilterLabel', 'Genre')}</span>
               {genreFilter && (
                 <Link href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {genreFilter} ×
                   </span>
                 </Link>
               )}
               {genres.filter(g => g !== genreFilter).map(g => (
                 <Link key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
-                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: 12, fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
+                  <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {g}
                   </span>
                 </Link>
@@ -337,8 +337,8 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {upcomingShows.length > 0 && (
         <section style={{ marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: 0 }}>{t('discoverPage.upcomingShowsTitle', 'Upcoming shows')}</h2>
-            <Link href="/shows" style={{ fontSize: 12, color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: 0 }}>{t('discoverPage.upcomingShowsTitle', 'Upcoming shows')}</h2>
+            <Link href="/shows" style={{ fontSize: '0.75rem', color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
               {t('discoverPage.viewAll', 'VIEW ALL →')}
             </Link>
           </div>
@@ -351,22 +351,22 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                   <div className="ihype-card" style={{ padding: '16px 18px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
                       {isLive ? (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent)', fontFamily: 'var(--font-mono)' }}>
                           <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
                           {t('discoverPage.liveNow', 'Live now')}
                         </span>
                       ) : (
-                        <span style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{date}</span>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{date}</span>
                       )}
                       {s.isTicketed && (
-                        <span style={{ fontSize: 11, color: 'var(--role-venue)', fontFamily: 'var(--font-mono)' }}>
+                        <span style={{ fontSize: '0.6875rem', color: 'var(--role-venue)', fontFamily: 'var(--font-mono)' }}>
                           {s.ticketPriceCents ? `$${(s.ticketPriceCents / 100).toFixed(0)}` : t('discoverPage.free', 'Free')}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, marginBottom: 4, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', marginBottom: 4, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 8, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, color: 'var(--ink-a55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>
                         {s.headlinerProfile?.name ?? 'iHYPE Radio'}
                         {s.venueProfile?.city ? ` · ${s.venueProfile.city}` : ''}
                       </div>
@@ -388,7 +388,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {/* Top artists */}
       {topArtists.length > 0 && (
         <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 16px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: '0 0 16px' }}>
             {t('discoverPage.trendingArtistsTitle', 'Trending artists')}
           </h2>
           <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12 }}>
@@ -399,19 +399,19 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     width: 44, height: 44, borderRadius: 22, position: 'relative',
                     background: `linear-gradient(135deg, ${TYPE_COLOR[p.type] ?? 'var(--role-artist)'}, var(--role-fan))`,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    fontSize: 20, flexShrink: 0, overflow: 'hidden',
+                    fontSize: '1.25rem', flexShrink: 0, overflow: 'hidden',
                   }}>
                     {p.avatarImage
                       ? <Image src={p.avatarImage} alt={p.name} fill sizes="44px" style={{ objectFit: 'cover', borderRadius: 22 }} />
                       : (p.type === 'VENUE' ? '🏛️' : '🎤')}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 14, marginBottom: 2, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
-                    <div style={{ fontSize: 11, color: TYPE_COLOR[p.type] ?? 'var(--role-artist)', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.875rem', marginBottom: 2, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
+                    <div style={{ fontSize: '0.6875rem', color: TYPE_COLOR[p.type] ?? 'var(--role-artist)', fontFamily: 'var(--font-mono)', letterSpacing: '.06em', textTransform: 'uppercase' }}>
                       {t(`discoverPage.typeLabel.${p.type}`, TYPE_LABEL[p.type] ?? p.type)}
                     </div>
                     {p.city && (
-                      <div style={{ fontSize: 11, color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
+                      <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.city}</div>
                     )}
                   </div>
                 </Link>
@@ -432,7 +432,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <Link
             href={buildUrl(cityFilter, genreFilter) + (buildUrl(cityFilter, genreFilter).includes('?') ? `&page=${page + 1}` : `?page=${page + 1}`)}
-            style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--line)', border: '1px solid var(--hair-100)', borderRadius: 8, fontSize: 13, fontFamily: 'var(--font-mono)', color: 'var(--ink-a70)', textDecoration: 'none', letterSpacing: '.04em' }}
+            style={{ display: 'inline-block', padding: '10px 24px', background: 'var(--line)', border: '1px solid var(--hair-100)', borderRadius: 8, fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a70)', textDecoration: 'none', letterSpacing: '.04em' }}
           >
             {t('discoverPage.loadMoreArtists', 'Load more artists →')}
           </Link>
@@ -442,7 +442,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {/* Top venues */}
       {topVenues.length > 0 && (
         <section style={{ marginBottom: 48 }}>
-          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, margin: '0 0 16px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: '0 0 16px' }}>
             {t('discoverPage.venuesTitle', 'Venues')}
           </h2>
           <div className="ihype-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
@@ -450,7 +450,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, color: 'var(--role-venue)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--role-venue)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
                     {/* No onClick wrapper (Server Component) — CompactHypeButton
                         stops propagation/navigation itself. */}
                     <div style={{ flexShrink: 0 }}>
@@ -458,7 +458,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                     </div>
                   </div>
                   {p.city && (
-                    <div style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{p.city}{p.stateRegion ? `, ${p.stateRegion}` : ''}</div>
                   )}
                 </div>
               </Link>
@@ -470,11 +470,11 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {topArtists.length === 0 && upcomingShows.length === 0 && (
         <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a30)' }}>
           <div className="icon" style={{ marginBottom: 16 }}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 56, height: 56, color: 'var(--accent)', opacity: 0.7 }}><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10a7 7 0 0 1-14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg></div>
-          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 18, marginBottom: 8, color: 'var(--ink)' }}>
+          <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', marginBottom: 8, color: 'var(--ink)' }}>
             {t('discoverPage.emptyTitle', 'No artists yet')}
           </p>
-          <p style={{ fontSize: 14 }}>{t('discoverPage.emptySubtitle', 'Be the first to join and claim your page.')}</p>
-          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          <p style={{ fontSize: '0.875rem' }}>{t('discoverPage.emptySubtitle', 'Be the first to join and claim your page.')}</p>
+          <Link href="/register" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minHeight: 44, marginTop: 20, padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: '0.875rem', textDecoration: 'none' }}>
             {t('discoverPage.joinCta', 'Join iHYPE →')}
           </Link>
         </div>

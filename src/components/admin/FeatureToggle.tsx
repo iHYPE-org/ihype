@@ -35,7 +35,7 @@ export function FeatureToggle({ showId, initialFeatured }: FeatureToggleProps) {
         background: 'none',
         border: 'none',
         cursor: loading ? 'default' : 'pointer',
-        fontSize: 18,
+        fontSize: '1.125rem',
         opacity: loading ? 0.5 : 1,
         padding: '2px 4px',
       }}

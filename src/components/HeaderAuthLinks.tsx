@@ -56,7 +56,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
             background: session.user.image ? `url(${session.user.image}) center/cover` : 'rgba(var(--role-venue-rgb),.18)',
             color: 'var(--role-venue)',
             fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
-            fontSize: 13,
+            fontSize: '0.8125rem',
             fontWeight: 800,
           }}
         >
@@ -73,7 +73,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           <span
             style={{
               fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-              fontSize: 8,
+              fontSize: '0.5rem',
               letterSpacing: '.14em',
               textTransform: 'uppercase',
               color: 'var(--role-venue)',
@@ -83,7 +83,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           </span>
           <span
             style={{
-              fontSize: 12,
+              fontSize: '0.75rem',
               fontWeight: 600,
               color: 'var(--ink)',
               overflow: 'hidden',

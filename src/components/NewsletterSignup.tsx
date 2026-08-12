@@ -76,7 +76,7 @@ export function NewsletterSignup() {
 
   if (sent) {
     return (
-      <div style={{ fontSize: 13, color: 'var(--role-venue)', padding: '12px 16px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
+      <div style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', padding: '12px 16px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
         ✓ {t('newsletterSignup.confirmPrefix', 'Check')} {email} {t('newsletterSignup.confirmSuffix', "for a confirm link — you're one click from updates on")} {profile?.name}.
       </div>
     );
@@ -88,8 +88,8 @@ export function NewsletterSignup() {
         <span>{t('newsletterSignup.profileFieldLabel', 'Artist, venue, or DJ')}</span>
         {profile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(var(--accent-rgb),.07)', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 10 }}>
-            <div style={{ flex: 1, fontSize: 14, fontWeight: 600, color: 'var(--ink)' }}>{profile.name}</div>
-            <button onClick={() => setProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: 18, lineHeight: 1, padding: '0 4px' }} type="button">×</button>
+            <div style={{ flex: 1, fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{profile.name}</div>
+            <button onClick={() => setProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
           </div>
         ) : (
           <input
@@ -113,8 +113,8 @@ export function NewsletterSignup() {
                 style={{ display: 'block', width: '100%', padding: '10px 14px', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', borderBottom: '1px solid var(--hair-50)' }}
                 type="button"
               >
-                <div style={{ fontSize: 13, color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
+                <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
               </button>
             ))}
           </div>

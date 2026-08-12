@@ -8,10 +8,10 @@ export function PinnedStatTiles({ stats, accent }: { stats: PinnedStatValue[]; a
     <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', margin: '20px 0 4px' }}>
       {stats.map((s) => (
         <div key={s.key}>
-          <div style={{ fontSize: 22, fontWeight: 700, color: accent, fontFamily: 'var(--font-display)' }}>
+          <div style={{ fontSize: '1.375rem', fontWeight: 700, color: accent, fontFamily: 'var(--font-display)' }}>
             {s.isPercent ? `${Math.round(s.value * 100)}%` : s.value.toLocaleString()}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginTop: 2 }}>
             {s.label}
           </div>
         </div>

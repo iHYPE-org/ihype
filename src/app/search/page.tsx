@@ -111,7 +111,7 @@ function SearchPageInner() {
           placeholder={t('searchPage.searchPlaceholder', 'Artists, shows, tracks…')}
           style={{
             width: '100%', padding: '14px 16px 14px 46px', border: '1px solid var(--hair-120)',
-            borderRadius: 10, background: 'var(--bg2)', color: 'var(--ink)', fontSize: 16, transition: 'all 150ms',
+            borderRadius: 10, background: 'var(--bg2)', color: 'var(--ink)', fontSize: '1rem', transition: 'all 150ms',
           }}
         />
       </div>
@@ -126,7 +126,7 @@ function SearchPageInner() {
               background: filter === f ? 'var(--accent)' : 'var(--hair-50)',
               border: `1px solid ${filter === f ? 'var(--accent)' : 'var(--hair-100)'}`,
               color: filter === f ? 'var(--ink-on-accent)' : 'var(--ink-a75)',
-              fontSize: 13, fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
+              fontSize: '0.8125rem', fontWeight: 500, cursor: 'pointer', transition: 'all 150ms',
             }}
           >
             {FILTER_LABEL[f]}
@@ -135,18 +135,18 @@ function SearchPageInner() {
       </div>
 
       {isPending && (
-        <p style={{ color: 'var(--ink-a35)', fontSize: 13, fontFamily: 'var(--font-mono)' }}>{t('searchPage.searching', 'Searching…')}</p>
+        <p style={{ color: 'var(--ink-a35)', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>{t('searchPage.searching', 'Searching…')}</p>
       )}
 
       {!q && (
         <div>
-          <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{t('searchPage.trending', 'Trending')}</p>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{t('searchPage.trending', 'Trending')}</p>
           <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
             {TRENDING.map((term) => (
               <div
                 key={term}
                 onClick={() => handleSearch(term)}
-                style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--line)', fontSize: 13, color: 'var(--ink-a75)', cursor: 'pointer', transition: 'all 150ms' }}
+                style={{ padding: '8px 14px', borderRadius: 8, background: 'var(--bg2)', border: '1px solid var(--line)', fontSize: '0.8125rem', color: 'var(--ink-a75)', cursor: 'pointer', transition: 'all 150ms' }}
               >
                 {term}
               </div>
@@ -157,7 +157,7 @@ function SearchPageInner() {
 
       {q && !isPending && !hasResults && (
         <div style={{ textAlign: 'center', padding: 60, color: 'var(--ink-a50)' }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--ink-a30)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.35-4.35" /></svg>
           </div>
           <p>{t('searchPage.noResultsPrefix', 'No results for')} &quot;{q}&quot;</p>
@@ -168,7 +168,7 @@ function SearchPageInner() {
         <div>
           {show('artists') && artists.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.artists}</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.artists}</p>
               {artists.map((r) => {
                 const c = resultColor(r);
                 return (
@@ -177,8 +177,8 @@ function SearchPageInner() {
                       <NoteIcon c={c} />
                     </div>
                     <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
+                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );
@@ -188,7 +188,7 @@ function SearchPageInner() {
 
           {show('shows') && shows.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.shows}</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.shows}</p>
               {shows.map((r) => {
                 const c = resultColor(r);
                 return (
@@ -197,8 +197,8 @@ function SearchPageInner() {
                       <TicketIcon c={c} />
                     </div>
                     <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
+                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );
@@ -208,7 +208,7 @@ function SearchPageInner() {
 
           {show('tracks') && tracks.length > 0 && (
             <div>
-              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.tracks}</p>
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.tracks}</p>
               {tracks.map((r) => {
                 const c = resultColor(r);
                 return (
@@ -217,8 +217,8 @@ function SearchPageInner() {
                       <NoteIcon c={c} />
                     </div>
                     <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: 12, color: 'var(--ink-a55)' }}>{r.subtitle}</p>
+                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
+                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
                     </div>
                   </Link>
                 );
