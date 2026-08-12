@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getServerT } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
-type Feature = { emoji: string; title: string; body: string };
+type Feature = { title: string; body: string };
 type CityHeat = { label: string; score: number };
 
 export type RecruitingKitConfig = {
@@ -120,7 +120,6 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
           <div className="rk-feature-grid">
             {config.features.map((f) => (
               <div className="rk-feature" key={f.title}>
-                <div className="rk-feature-emoji">{f.emoji}</div>
                 <h3 className="rk-feature-title">{f.title}</h3>
                 <p className="rk-feature-body">{f.body}</p>
               </div>
@@ -189,7 +188,6 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-features-h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; line-height: 1.06; margin: 14px 0 0; }
         .rk-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
         .rk-feature { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; }
-        .rk-feature-emoji { font-size: 1.8rem; margin-bottom: 14px; }
         .rk-feature-title { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 8px; }
         .rk-feature-body { font-size: .92rem; line-height: 1.55; color: var(--ink-a70); margin: 0; }
         .rk-footer { border-top: 1px solid var(--line); padding: 44px 0 56px; }

@@ -312,7 +312,7 @@ export default function EventsNewPage() {
               className={`ticket-type-btn${ticketType === 'ga' ? ' selected' : ''}`}
               onClick={() => setTicketType('ga')}
             >
-              <span style={{ fontSize: '1.25rem' }}>🎟</span>
+              <span style={{ fontSize: '1.25rem' }}>◇</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.gaTitle', 'General Admission')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
@@ -322,7 +322,7 @@ export default function EventsNewPage() {
               className={`ticket-type-btn${ticketType === 'vip' ? ' selected' : ''}`}
               onClick={() => setTicketType('vip')}
             >
-              <span style={{ fontSize: '1.25rem' }}>⭐</span>
+              <span style={{ fontSize: '1.25rem' }}>★</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.vipTitle', 'VIP')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
@@ -393,7 +393,7 @@ export default function EventsNewPage() {
             </div>
             {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
-              {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter 🔒')}
+              {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}
             </button>
             <button className="btn-ghost" onClick={() => setStep(2)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>

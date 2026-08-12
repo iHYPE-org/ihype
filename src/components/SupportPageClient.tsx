@@ -46,7 +46,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
           <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPageClient.verificationDescription', 'Artist/venue/DJ verification status')}</div>
         </Link>
         <Link href="/me/promote" style={quickCardStyle}>
-          <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">💸</div>
+          <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">◈</div>
           <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.payouts', 'Payouts')}</div>
           <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPageClient.payoutsDescription', 'Settlement, earnings, referrals')}</div>
         </Link>

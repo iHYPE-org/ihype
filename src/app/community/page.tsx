@@ -20,10 +20,10 @@ const CATEGORY_LABEL: Record<string, string> = { update: 'Update', announcement:
 const CATEGORY_COLOR: Record<string, string> = { update: 'var(--accent)', announcement: 'var(--role-fan)' };
 
 const COMMUNITY_CHANNELS = [
-  { icon: '🗳️', title: 'You get a vote', body: 'Platform changes ship with a feedback window. The split and moderation heuristics are published for public audit — check our work.' },
-  { icon: '📻', title: 'Radio shows', body: 'Every DJ and promoter gets the same hosting tools, free. No tier unlocks anything — the scene decides what gets heard.' },
-  { icon: '🔥', title: 'Hype honestly', body: 'No bots, no paid manipulation, no hidden incentives. Hype is the demand signal venues book from — keep it real.' },
-  { icon: '🛡️', title: 'Look out for each other', body: 'Report unsafe content, fraud, or impersonation. Every report is tracked to a resolution in the public trust & safety report.' },
+  { icon: '▲', title: 'You get a vote', body: 'Platform changes ship with a feedback window. The split and moderation heuristics are published for public audit — check our work.' },
+  { icon: '♪', title: 'Radio shows', body: 'Every DJ and promoter gets the same hosting tools, free. No tier unlocks anything — the scene decides what gets heard.' },
+  { icon: '◆', title: 'Hype honestly', body: 'No bots, no paid manipulation, no hidden incentives. Hype is the demand signal venues book from — keep it real.' },
+  { icon: '⬟', title: 'Look out for each other', body: 'Report unsafe content, fraud, or impersonation. Every report is tracked to a resolution in the public trust & safety report.' },
 ];
 
 export default async function CommunityPage() {

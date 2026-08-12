@@ -229,7 +229,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
       {rising.length > 0 && (
         <section style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 14 }}>
-            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: 0 }}>🔥 {t('discoverPage.risingTitle', 'Rising near you')}</h2>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: 0 }}>{t('discoverPage.risingTitle', 'Rising near you')}</h2>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>
               {t('discoverPage.risingSubtitle', 'Sorted by hype velocity, not date')}
             </span>
@@ -403,7 +403,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
                   }}>
                     {p.avatarImage
                       ? <Image src={p.avatarImage} alt={p.name} fill sizes="44px" style={{ objectFit: 'cover', borderRadius: 22 }} />
-                      : (p.type === 'VENUE' ? '🏛️' : '🎤')}
+                      : (p.type === 'VENUE' ? '⬟' : '♪')}
                   </div>
                   <div style={{ minWidth: 0 }}>
                     <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.875rem', marginBottom: 2, color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</div>
@@ -450,7 +450,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
               <Link key={p.id} href={`/venues/${p.slug}`} style={{ textDecoration: 'none' }}>
                 <div className="ihype-card" style={{ padding: '16px 18px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--role-venue)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>🏛️ {p.name}</div>
+                    <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--role-venue)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>⬟️ {p.name}</div>
                     {/* No onClick wrapper (Server Component) — CompactHypeButton
                         stops propagation/navigation itself. */}
                     <div style={{ flexShrink: 0 }}>

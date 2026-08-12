@@ -46,6 +46,30 @@ const PX_FONT_SIZE_EXEMPT = [
 ];
 const inlinePxFontSize = /fontSize: (?:'\d+(?:\.\d+)?px'|\d+(?:\.\d+)?)(?=[,}\s])/;
 
+/**
+ * No emoji in the UI (Design System 8, ADHERENCE rule 29).
+ *
+ * The rule is precise and the precision matters: **Unicode glyphs are fine**
+ * — `▶ ❚❚ ♥ ♡ ✕ ✓ ★ ⚑ ⬟ ♪` are the system's own vocabulary — while
+ * pictographic emoji (`🔥 🎤 🏛 🎟`) are not. So this matches only the
+ * pictographic blocks, not the whole symbol range. A rule that flagged `✓`
+ * would be wrong and would be turned off within a week.
+ *
+ * Why a rule rather than review: 40 of these had accumulated across 20 files,
+ * including one (`\u{1F8ED}`) that is an unassigned codepoint and rendered as
+ * tofu in the privacy panel for nobody knows how long. Emoji arrive one at a
+ * time, in a hurry, and each one looks harmless on its own.
+ *
+ * Comment lines are skipped — this file and the design docs have to be able to
+ * name the characters they forbid.
+ */
+const PICTOGRAPHIC_EMOJI = /[\u{1F000}-\u{1FAFF}]/u;
+const EMOJI_EXEMPT = [
+  // Reaction sets are content the member picks, not chrome the system draws;
+  // the stored `ShowCommentReaction.emoji` values are these exact strings.
+  'ShowComments.tsx',
+];
+
 for (const file of sourceFiles) {
   const content = await text(file);
   if (/\beval\s*\(/.test(content)) fail(file, 'eval() is forbidden.');
@@ -55,6 +79,18 @@ for (const file of sourceFiles) {
   if (portable.endsWith('.tsx') && !PX_FONT_SIZE_EXEMPT.some((x) => portable.includes(x))
       && inlinePxFontSize.test(content)) {
     fail(file, 'inline fontSize in px ignores the Text size accessibility setting — use rem (px / 16).');
+  }
+
+  if (portable.endsWith('.tsx') && !EMOJI_EXEMPT.some((x) => portable.includes(x))) {
+    for (const [index, line] of content.split('\n').entries()) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith('*') || trimmed.startsWith('//') || trimmed.startsWith('/*')) continue;
+      const match = PICTOGRAPHIC_EMOJI.exec(line);
+      if (match) {
+        fail(file, `line ${index + 1}: emoji ${match[0]} — Design System 8 allows Unicode glyphs (▶ ✓ ★ ⬟) but no emoji.`);
+        break;
+      }
+    }
   }
 }
 

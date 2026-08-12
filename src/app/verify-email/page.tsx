@@ -73,7 +73,7 @@ function VerifyEmailForm() {
         textAlign: 'center',
         boxShadow: '0 24px 64px rgba(0,0,0,.5)',
       }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: 20 }}>✉️</div>
+        <div style={{ fontSize: '2.5rem', marginBottom: 20 }}>✉</div>
         <h1 style={{
           fontFamily: 'var(--f-d)',
           fontWeight: 800,

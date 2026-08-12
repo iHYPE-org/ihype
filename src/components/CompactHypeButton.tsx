@@ -96,7 +96,7 @@ export function CompactHypeButton({ targetType, targetId, initialCount, lastHype
         transition: 'color .15s, border-color .15s, background .15s',
       }}
     >
-      <span aria-hidden="true">🔥</span>
+      <span aria-hidden="true">▲</span>
       {count.toLocaleString()}
     </button>
   );
