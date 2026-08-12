@@ -255,6 +255,34 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // Reported from a real iPhone: the layer chips and the date strip painted on
+  // top of each other — EVENTS over WED, VENUES over THU. The strip was a
+  // SIBLING of `.mmm-map-controls`, which is absolutely positioned, so it sat
+  // in normal flow at the top of the map layer directly beneath it.
+  //
+  // Asserted as a geometric non-overlap rather than as DOM structure: the bug
+  // is two boxes sharing pixels, and a later refactor could reintroduce that
+  // without restoring the old parentage.
+  test('the map date strip never overlaps the layer chips', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/app/map');
+
+    const chips = page.locator('.mmm-map-chips');
+    const strip = page.locator('.mmm-date-strip');
+    await expect(chips).toBeVisible();
+    // Events is the landing layer, so the strip is showing without any input.
+    await expect(strip).toBeVisible();
+
+    const [chipBox, stripBox] = await Promise.all([chips.boundingBox(), strip.boundingBox()]);
+    expect(chipBox, 'layer chips have no box').not.toBeNull();
+    expect(stripBox, 'date strip has no box').not.toBeNull();
+    // The strip sits BELOW the chips, with no shared pixels.
+    expect(
+      stripBox!.y,
+      `date strip starts at ${Math.round(stripBox!.y)} but the chips run to ${Math.round(chipBox!.y + chipBox!.height)}`,
+    ).toBeGreaterThanOrEqual(chipBox!.y + chipBox!.height);
+  });
+
   // The search bar belongs to the layer that is showing. Asserted on the
   // CONTROL rather than on results: results depend on what is inside the test
   // viewport's bbox, and a test that needs seeded pins to prove a placeholder

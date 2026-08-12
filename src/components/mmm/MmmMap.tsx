@@ -450,42 +450,50 @@ export function MmmMap({
                 venues={venues}
               />
             )}
+            {/* The date strip belongs to the events layer alone: only an event has
+                a date. Venues and artists keep the chips above and nothing else,
+                which is also why the API is not sent a `dates` param for them.
+
+                It must stay INSIDE `.mmm-map-controls`. That container is
+                `position: absolute` and a flex column — the row gap is what
+                separates the chips from whatever is under them. As a sibling it
+                sat in normal flow at the top of `.mmm-map-layer`, i.e. directly
+                beneath the absolutely-positioned chips, and the two painted on
+                top of each other on a real phone: EVENTS over WED, VENUES over
+                THU. Reported from an iPhone, not caught by any test. */}
+            {layer === 'events' && (
+              <div className="mmm-date-block">
+                <div className="mmm-date-strip" role="group" aria-label="Filter by date">
+                  {days.map((day) => (
+                    <button
+                      aria-pressed={selectedDays.has(day.key)}
+                      className="mmm-date-pill"
+                      key={day.key}
+                      onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
+                      type="button"
+                    >
+                      <span className="mmm-date-dow">{day.weekday}</span>
+                      <span className="mmm-date-day">{day.day}</span>
+                      <span className="mmm-date-mon">{day.month}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="mmm-date-summary">
+                  <span className="mmm-date-label">Dates</span>
+                  <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
+                  {selectedDays.size > 0 && (
+                    <button
+                      className="mmm-date-clear"
+                      onClick={() => setSelectedDays(new Set())}
+                      type="button"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          {/* The date strip belongs to the events layer alone: only an event has
-              a date. Venues and artists keep the chips above and nothing else,
-              which is also why the API is not sent a `dates` param for them. */}
-          {layer === 'events' && (
-            <div className="mmm-date-block">
-              <div className="mmm-date-strip" role="group" aria-label="Filter by date">
-                {days.map((day) => (
-                  <button
-                    aria-pressed={selectedDays.has(day.key)}
-                    className="mmm-date-pill"
-                    key={day.key}
-                    onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
-                    type="button"
-                  >
-                    <span className="mmm-date-dow">{day.weekday}</span>
-                    <span className="mmm-date-day">{day.day}</span>
-                    <span className="mmm-date-mon">{day.month}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="mmm-date-summary">
-                <span className="mmm-date-label">Dates</span>
-                <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
-                {selectedDays.size > 0 && (
-                  <button
-                    className="mmm-date-clear"
-                    onClick={() => setSelectedDays(new Set())}
-                    type="button"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
           {/* No standing result caption: the map's design source has none, and
               "tap a pin for their page" is an instruction the pins already
               give by being tappable. The two FAILURE lines stay — those say
