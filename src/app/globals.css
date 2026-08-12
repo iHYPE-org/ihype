@@ -5232,7 +5232,11 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .ticket-final-headline {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.375rem;
+  /* Deliberately larger than the show title above it. A buyer skims a purchase
+     screen; the term that says the money does not come back has to survive
+     that. Fluid so it stays unmissable on a 375px phone without wrapping to
+     three lines. */
+  font-size: clamp(1.5rem, 6.5vw, 2.125rem);
   line-height: 1.1;
   letter-spacing: -0.02em;
   text-transform: uppercase;

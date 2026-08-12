@@ -348,7 +348,7 @@ export function EventsHome({
                           {dateStr} · {timeStr}
                         </div>
                         {ticketView === 'active' && order.status !== 'VOID' && (
-                          <TicketCardActions orderId={order.id} orderStatus={order.status} showCancel showsAt={order.show.startsAt} tickets={order.tickets} />
+                          <TicketCardActions orderId={order.id} orderStatus={order.status} showsAt={order.show.startsAt} tickets={order.tickets} />
                         )}
                       </div>
                     );
