@@ -48,6 +48,14 @@ export function TicketReassignmentForm({
 
   return (
     <form className="form" onSubmit={handleSubmit}>
+      {/* Same rule as the transfer sheet: the fee on a transferred ticket
+          belongs to the person receiving it. */}
+      <p className="ticket-final-detail" style={{ marginBottom: 16 }}>
+        {t(
+          'ticketReassignmentForm.transferFeeNotice',
+          'Sales are final. Any processing fee on a transferred ticket is the responsibility of whoever receives it — iHYPE absorbs no fees of any kind.',
+        )}
+      </p>
       <div className="grid grid-2">
         <label className="field">
           <span>{t('ticketReassignmentForm.newHolderNameLabel', 'New holder name')}</span>

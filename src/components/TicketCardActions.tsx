@@ -15,13 +15,11 @@ export function TicketCardActions({
   orderStatus,
   tickets,
   showsAt,
-  showCancel,
 }: {
   orderId: string;
   orderStatus?: string;
   tickets: TicketRef[];
   showsAt?: string;
-  showCancel?: boolean;
 }) {
   const [showQr, setShowQr] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -29,10 +27,6 @@ export function TicketCardActions({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<string | null>(null);
-  const [cancelOpen, setCancelOpen] = useState(false);
-  const [cancelSubmitting, setCancelSubmitting] = useState(false);
-  const [cancelError, setCancelError] = useState<string | null>(null);
-  const [cancelDone, setCancelDone] = useState<string | null>(null);
   const [resaleOpen, setResaleOpen] = useState(false);
   const [resalePrice, setResalePrice] = useState('');
   const [resaleSubmitting, setResaleSubmitting] = useState(false);
@@ -52,33 +46,7 @@ export function TicketCardActions({
   // swaps to an explanatory message instead of a form when it's too late.
   const resaleTicket = tickets.find((t) => t.status === 'VALID') ?? (tickets.some((t) => t.status) ? undefined : tickets[0]);
 
-  const hoursUntilShow = showsAt ? (new Date(showsAt).getTime() - Date.now()) / 3_600_000 : null;
-  const tooLateToCancel = hoursUntilShow !== null && hoursUntilShow < 48;
 
-  async function requestCancellation() {
-    setCancelSubmitting(true);
-    setCancelError(null);
-    try {
-      const res = await fetch(`/api/tickets/${orderId}/refund`, { method: 'POST' });
-      const data = await res.json();
-      if (!res.ok) {
-        setCancelError(data.error ?? t('ticketCardActions.cancelRequestErrorFallback', 'Could not submit cancellation request.'));
-        return;
-      }
-      setCancelDone(t('ticketCardActions.cancelDoneMessage', 'Cancelled — your refund has been issued and should appear in a few business days.'));
-      router.refresh();
-    } catch {
-      setCancelError(t('ticketCardActions.networkError', 'Network error'));
-    } finally {
-      setCancelSubmitting(false);
-    }
-  }
-
-  function closeCancel() {
-    setCancelOpen(false);
-    setCancelError(null);
-    setCancelDone(null);
-  }
 
   async function transfer() {
     setSubmitting(true);
@@ -189,9 +157,6 @@ export function TicketCardActions({
             {resendSubmitting ? t('ticketCardActions.sendingButton', 'Sending…') : t('ticketCardActions.resendConfirmationButton', 'Resend confirmation')}
           </button>
         )}
-        {showCancel && (
-          <button className="btn" onClick={() => setCancelOpen(true)} style={{ color: 'var(--accent)' }} type="button">{t('ticketCardActions.cancelTicketButton', 'Cancel ticket')}</button>
-        )}
       </div>
       {(resendDone || resendError) && (
         <p style={{ fontSize: '0.75rem', marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
@@ -226,6 +191,17 @@ export function TicketCardActions({
         >
           <div className="ihype-sheet-panel">
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.transferModalTitle', 'Transfer tickets')}</h3>
+            {/* Stated where the transfer actually happens, not only at
+                purchase. Stripe charges its fee again on a second
+                transaction and iHYPE is a nonprofit that absorbs none of it,
+                so whoever receives the ticket carries any fee on it. Saying so
+                here is what makes that fair rather than a surprise. */}
+            <p className="ticket-final-detail" style={{ marginBottom: 16 }}>
+              {t(
+                'ticketCardActions.transferFeeNotice',
+                'Sales are final. Transfers are allowed, and any processing fee on a transferred ticket is the responsibility of whoever receives it — iHYPE absorbs no fees of any kind.',
+              )}
+            </p>
             {done ? (
               <>
                 <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
@@ -295,47 +271,6 @@ export function TicketCardActions({
         </div>
       )}
 
-      {cancelOpen && (
-        <div
-          aria-modal="true"
-          className="ihype-sheet-overlay"
-          onClick={(e) => e.target === e.currentTarget && closeCancel()}
-          role="dialog"
-        >
-          <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.cancelModalTitle', 'Cancel ticket')}</h3>
-            {cancelDone ? (
-              <>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{cancelDone}</p>
-                <button className="btn btn-primary" onClick={closeCancel} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
-              </>
-            ) : tooLateToCancel ? (
-              <>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--warning-text)', marginBottom: 16 }}>
-                  {t('ticketCardActions.tooLateToCancelMessage', 'Cancellations close 48 hours before the show, so this ticket can no longer be cancelled — you can still transfer it to someone else.')}
-                </p>
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
-                  <button className="btn btn-primary" onClick={() => { setCancelOpen(false); setTransferOpen(true); }} style={{ flex: 1 }} type="button">{t('ticketCardActions.transferInsteadButton', 'Transfer instead')}</button>
-                </div>
-              </>
-            ) : (
-              <>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', marginBottom: 16 }}>
-                  {t('ticketCardActions.cancelRefundInfo', 'Your card will be refunded immediately. Cancellation is allowed up to 48 hours before the event.')}
-                </p>
-                {cancelError && <p style={{ color: 'var(--accent)', fontSize: '0.75rem', marginBottom: 12 }}>{cancelError}</p>}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeCancel} style={{ flex: 1 }} type="button">{t('ticketCardActions.keepTicketButton', 'Keep ticket')}</button>
-                  <button className="btn btn-primary" disabled={cancelSubmitting} onClick={requestCancellation} style={{ flex: 1 }} type="button">
-                    {cancelSubmitting ? t('ticketCardActions.submittingButton', 'Submitting…') : t('ticketCardActions.cancelRefundButton', 'Cancel & refund')}
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
     </>
   );
 }

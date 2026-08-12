@@ -56,7 +56,24 @@ const REASON_LABEL: Record<(typeof REASONS)[number], string> = {
  *
  * Refunds every CAPTURED order in full (Stripe first, DB only after Stripe
  * confirms — same source-of-truth ordering as the self-serve per-ticket
- * refund route) and cancels every still-RESERVED (authorized but never
+ * ## The one refund iHYPE still issues, and why it is not a policy exception
+ *
+ * Buyer-initiated refunds are gone: sales are final, and only a venue can
+ * choose to refund, directly with the buyer. This path stays because it is not
+ * a refund policy — it is the platform returning money it is holding.
+ *
+ * Payments use separate charges and transfers: a ticket captures to iHYPE's own
+ * Stripe balance, and the 70/20/10 transfers only run for shows that ENDED. A
+ * cancelled show never ends, so it never pays out, and the buyer's money would
+ * otherwise sit on the platform's balance forever. A nonprofit that takes $0
+ * cannot keep the gate for a show that did not happen.
+ *
+ * If refunds should instead come from the venue here too, the money has to stop
+ * flowing through iHYPE first — direct charges to the venue's Connect account
+ * rather than separate charges and transfers. That is a payment-architecture
+ * change, not a copy change.
+ *
+ * Refunds every CAPTURED order and cancels every still-RESERVED (authorized but never
  * charged) order. Runs order-by-order rather than one giant transaction —
  * Stripe calls are network round-trips that can't live inside a DB
  * transaction, and one failed refund must never block the other hundreds.
