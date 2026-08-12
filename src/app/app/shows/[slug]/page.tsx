@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { detectRequestLocation } from '@/lib/request-location';
+import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
@@ -37,15 +38,27 @@ export const dynamic = 'force-dynamic';
  */
 export default async function MmmShowPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ ref?: string; affiliate?: string }>;
 }) {
   const { slug } = await params;
+  const query = searchParams ? await searchParams : {};
   const session = await auth();
   // The layout gates this too; every destination keeps its own check.
   if (!session?.user?.id) redirect(`/login?callbackUrl=/app/shows/${slug}`);
 
-  const [show, viewerLocation, currentFan] = await Promise.all([
+  /**
+   * Who gets the 10% promoter credit for a ticket bought here.
+   *
+   * This pane shipped passing null, which silently dropped promoter
+   * attribution for every purchase made in the new shell — the pool exists to
+   * pay people for exactly the journey that ends on this page. It now resolves
+   * the same three ways the legacy page does, plus the HYPE-link cookie, so a
+   * friend's link still pays them after a signup and a week of browsing.
+   */
+  const [show, viewerLocation, currentFan, affiliatePromoter] = await Promise.all([
     db.show.findUnique({
       where: { slug },
       select: {
@@ -83,6 +96,7 @@ export default async function MmmShowPage({
         },
       })
       .catch(() => null),
+    resolveAffiliatePromoter({ affiliateId: query.affiliate, refHexId: query.ref }),
   ]);
 
   if (!show) notFound();
@@ -151,8 +165,8 @@ export default async function MmmShowPage({
       {show.isTicketed && venue && show.headlinerProfile && splits ? (
         <div className="mmm-show-sale">
           <TicketSaleCard
-            affiliatePromoterName={null}
-            affiliatePromoterProfileId={null}
+            affiliatePromoterName={affiliatePromoter?.name ?? null}
+            affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
             artistName={show.headlinerProfile.name}
             artistPayoutPercent={splits.artist}
             currentFan={

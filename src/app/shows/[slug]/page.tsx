@@ -15,6 +15,7 @@ import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { loadShowRsvpState, loadShowSetlist } from '@/lib/show-social';
+import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
@@ -159,17 +160,10 @@ export default async function ShowDetailPage({
           }
         })
       : Promise.resolve(null),
-    refHexId
-      ? db.profile.findFirst({
-          where: { hexId: refHexId },
-          select: { id: true, name: true }
-        })
-      : affiliateId
-        ? db.profile.findFirst({
-            where: { id: affiliateId },
-            select: { id: true, name: true }
-          })
-        : Promise.resolve(null)
+    // Shared with the in-shell buy pane, and now also falls back to the
+    // HYPE-link cookie — so a friend's link still credits them after the
+    // signup and redirect that used to strip the `ref` from the URL.
+    resolveAffiliatePromoter({ affiliateId, refHexId })
   ]);
 
   const visibility = getShowVisibilitySignals(show);
