@@ -512,7 +512,13 @@ function AIScanner() {
             {scanning ? t('advertisePage.scanning', 'Scanning…') : verdict === 'none' ? t('advertisePage.idle', 'Idle') : verdict === 'pass' ? t('advertisePage.cleared', 'Cleared') : t('advertisePage.rejected', 'Rejected')}
           </span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '188px 1fr', minHeight: 330 }}>
+        {/* The 188px submission list is a sidebar on a desktop and most of a
+            phone: at 375px it takes 188 of the 327px content box and leaves the
+            scan panel ~139px. It stacks below 640px — through the class, because
+            a media query cannot override the inline style this grid used to
+            carry, which is why the three breakpoints in this file's own <style>
+            block had never touched it. */}
+        <div className="adv-scan-grid" style={{ display: 'grid', gridTemplateColumns: '188px 1fr', minHeight: 330 }}>
           {/* Submission list */}
           <div style={{ borderRight: '1px solid var(--hair-70)', padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
             {SUBS.map((s, i) => (
@@ -715,6 +721,12 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
         }
         @media (max-width:640px) {
           .adv-shell { padding-left:16px !important; padding-right:16px !important }
+          /* !important throughout: these two elements carry inline styles, and
+             inline beats any selector without it. Stacked, the list's divider
+             is the edge between the two rows rather than between two columns,
+             so the border moves with the layout. */
+          .adv-scan-grid { grid-template-columns:1fr !important }
+          .adv-scan-grid > :first-child { border-right:0 !important; border-bottom:1px solid var(--hair-70) !important }
         }
       `}</style>
 

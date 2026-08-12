@@ -286,7 +286,7 @@ export function PagesHome({
           </div>
           {!q.trim() ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}>
-              <p>{t('pagesHome.searchEmptyState', 'Find an artist, venue, or DJ page.')}</p>
+              <p>{t('pagesHome.searchEmptyState', 'Find an artist or venue page.')}</p>
             </div>
           ) : searchResults === null ? (
             <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a50)' }}><p>{t('pagesHome.loading', 'Loading…')}</p></div>

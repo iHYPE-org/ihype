@@ -160,7 +160,10 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         .vdash-card-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--role-venue); }
         .vdash-card-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
         .vdash-card-sub-accent { color: var(--role-venue); }
-        .vdash-grid { display: grid; grid-template-columns: 1fr 300px; gap: 20px; }
+        /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
+           unbreakable token — a venue name, a URL — pushes this column past its
+           share and scrolls the page sideways above the breakpoint below. */
+        .vdash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
         .vdash-section-head { display: flex; justify-content: space-between; align-items: baseline; }
         .vdash-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a50); }
         .vdash-link-sm { font-family: var(--font-mono); font-size: 11px; letter-spacing: .06em; color: var(--ink-a60); text-decoration: none; }
