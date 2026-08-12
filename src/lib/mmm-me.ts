@@ -149,7 +149,10 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     db.ticket
       .findMany({
         where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
-        orderBy: { show: { startsAt: 'asc' } },
+        // Newest shows first at the database, then re-ordered below. Ascending
+        // here would spend the `take` on the oldest attended tickets and could
+        // push every upcoming show out of the list entirely.
+        orderBy: { show: { startsAt: 'desc' } },
         take: 24,
         select: {
           serializedId: true,
@@ -168,8 +171,25 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
       .catch(() => []),
   ]);
 
+  /**
+   * Upcoming first, soonest first; attended after them, most recent first.
+   *
+   * A single `startsAt` sort puts July's attended ticket above August's
+   * upcoming one, which is backwards for the only question this list answers —
+   * what am I going to, and when. It is also what the design draws.
+   */
+  const nowMs = Date.now();
+  const ordered = [...ticketRows].sort((a, b) => {
+    const aPast = a.show.startsAt.getTime() < nowMs;
+    const bPast = b.show.startsAt.getTime() < nowMs;
+    if (aPast !== bPast) return aPast ? 1 : -1;
+    return aPast
+      ? b.show.startsAt.getTime() - a.show.startsAt.getTime()
+      : a.show.startsAt.getTime() - b.show.startsAt.getTime();
+  });
+
   const tickets: MmmMeTicket[] = await Promise.all(
-    ticketRows.map(async (row) => ({
+    ordered.map(async (row) => ({
       serializedId: row.serializedId,
       title: row.show.title,
       where: [row.show.venueProfile?.name, row.show.venueProfile?.city]

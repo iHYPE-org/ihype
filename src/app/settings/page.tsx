@@ -499,8 +499,10 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Notifications */}
-          <div className="settings-section">
+          {/* Notifications. The `id` is load-bearing: ME's Settings panel links
+              to /settings#notifications, and without an anchor that row drops
+              the member at the top of a long page to hunt for it. */}
+          <div className="settings-section" id="notifications">
             <div className="settings-section-title">{t('settingsPage.notifications', 'Notifications')}</div>
             <div className="settings-group">
               <Row action={<Toggle checked={prefs.newShows} label={t('settingsPage.ticketDrops', 'Ticket drops')} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
