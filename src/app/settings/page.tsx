@@ -409,7 +409,7 @@ export default function SettingsPage() {
   const roleColor = ROLE_COLOR[role] ?? 'var(--role-fan)';
 
   return (
-    <div className="settings-page">
+    <div className="settings-page settings-col">
       <h1>{t('settingsPage.title', 'Settings')}</h1>
 
       {loading ? (
@@ -614,56 +614,92 @@ export default function SettingsPage() {
       )}
 
       <style>{`
-        .settings-page { max-width: 720px; margin: 0 auto; padding: 32px 24px 100px; }
-        .settings-page h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 40px; color: var(--ink); }
-        .settings-section { margin-bottom: 40px; }
-        .settings-section-title { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 16px; }
-        .settings-group { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--bg2); }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; border-bottom: 1px solid var(--line); gap: 16px; }
+        /* ── Design System 8 · templates/role-settings/ ──────────────────
+           Values lifted from the template: a 640px reading column, 28px
+           display heading, cards at 16px radius on the .04/.15 surface-tint
+           pair with 22px padding, rows at 11px 0 divided by a .13 hairline,
+           and the 42x24 toggle.
+
+           Two things about this are structural rather than cosmetic.
+
+           (1) The template puts each section's TITLE inside its card. This page
+           renders the title above ".settings-group", both inside
+           ".settings-section" — so ".settings-section" becomes the card and the
+           group goes transparent inside it. Same result as the template, and no
+           JSX moved, which matters on a page whose rows carry real mutations.
+
+           (2) ".settings-page" is in shell-surfaces.css's page-container group,
+           which sets "max-width: none" at (0,2,0) — deliberately, so a page does
+           not nest a narrow column inside the shell's own. Editing the
+           max-width here therefore did nothing inside the shell, and settings
+           has been rendering at the full 1620px content width no matter what
+           this block said. A settings FORM wants the narrow column, so the
+           element carries a second class and the compound selector below both
+           matches that specificity and comes later in document order. */
+        .settings-page { padding: 44px 24px 100px; }
+        .settings-page.settings-col { max-width: 640px; margin: 0 auto; }
+        .settings-page h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 28px; color: var(--ink); }
+
+        .settings-section {
+          border: 1px solid rgba(var(--surface-tint-rgb), .15);
+          border-radius: 16px;
+          background: rgba(var(--surface-tint-rgb), .04);
+          padding: 22px;
+          margin-bottom: 16px;
+        }
+        .settings-section-title { font-family: var(--font-display); font-weight: 800; font-size: 1rem; letter-spacing: -.01em; text-transform: none; color: var(--ink); margin-bottom: 16px; }
+        /* The card is the group now. */
+        .settings-group { border: 0; border-radius: 0; overflow: visible; background: none; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(var(--surface-tint-rgb), .13); gap: 16px; }
         .settings-row:last-child { border-bottom: none; }
-        .settings-row-label { font-size: 14px; font-weight: 500; color: var(--ink); }
-        .settings-row-detail { font-size: 12px; color: var(--ink-a50); margin-top: 3px; }
-        .settings-invite-note { font-size: 11.5px; color: var(--ink-a50); line-height: 1.5; margin: 10px 2px 0; }
-        .settings-toggle { position: relative; width: 44px; height: 26px; flex-shrink: 0; display: block; }
+        .settings-row-label { font-size: 0.875rem; font-weight: 500; color: var(--ink); }
+        .settings-row-detail { font-size: 0.75rem; color: var(--ink-2); margin-top: 2px; }
+        .settings-invite-note { font-size: 0.71875rem; color: var(--ink-a50); line-height: 1.5; margin: 10px 2px 0; }
+
+        .settings-toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; display: block; }
         .settings-toggle input { opacity: 0; width: 0; height: 0; }
-        .settings-toggle-track { position: absolute; inset: 0; border-radius: 13px; background: var(--hair-120); cursor: pointer; transition: background 200ms; }
-        .settings-toggle input:checked + .settings-toggle-track { background: var(--accent); }
-        .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 3px; left: 3px; border-radius: 50%; background: var(--ink-on-accent); transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
-        .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(18px); }
-        .settings-btn { padding: 10px 18px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
-        .settings-btn-ghost { background: var(--line); color: var(--ink); }
-        .settings-btn-ghost:hover { background: var(--hair-100); }
+        .settings-toggle-track { position: absolute; inset: 0; border-radius: 12px; background: rgba(var(--surface-tint-rgb), .14); cursor: pointer; transition: background 200ms; }
+        .settings-toggle input:checked + .settings-toggle-track { background: var(--role-venue); }
+        .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 2px; left: 2px; border-radius: 50%; background: var(--ink); transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
+        .settings-toggle input:checked ~ .settings-toggle-thumb { background: var(--bg); transform: translateX(18px); }
+
+        .settings-btn { padding: 9px 18px; border-radius: 9px; font-size: 0.8125rem; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
+        .settings-btn-ghost { background: rgba(var(--surface-tint-rgb), .08); color: var(--ink); }
+        .settings-btn-ghost:hover { background: rgba(var(--surface-tint-rgb), .14); }
         .settings-btn-danger { background: rgba(239,68,68,.12); color: #ef4444; }
         .settings-btn-danger:hover { background: rgba(239,68,68,.22); }
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
-        .settings-input-inline { padding: 8px 12px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 14px; }
+
+        .settings-input-inline { height: 42px; padding: 0 14px; border: 1px solid rgba(var(--surface-tint-rgb), .14); border-radius: 9px; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.875rem; box-sizing: border-box; }
+        .settings-input-inline:focus { outline: none; border-color: var(--accent); }
         .settings-recovery { align-items: flex-start; }
         .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         .settings-recovery-controls .settings-input-inline { width: 190px; max-width: 100%; }
-        .settings-recovery-error { margin-top: 6px; font-size: 12px; color: var(--warning-text); }
-        .settings-input-inline:focus { outline: none; border-color: var(--accent); }
-        .settings-danger-zone { border: 1px solid rgba(239,68,68,.2); }
+        .settings-recovery-error { margin-top: 6px; font-size: 0.75rem; color: var(--warning-text); }
+        /* Still the one card that reads as dangerous, now that the border it
+           used to override belongs to the section rather than the group. */
+        .settings-section:has(.settings-danger-zone) { border-color: rgba(239,68,68,.2); }
         .settings-danger-zone .settings-row { border-color: rgba(239,68,68,.1); }
-        .settings-passkeys { padding: 18px 20px; }
+        .settings-passkeys { padding: 11px 0; }
         .settings-payout-card { align-items: center; gap: 14px; }
-        .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: var(--line); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--surface-tint-rgb), .08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
-        .settings-split-mini span { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: var(--hair-50); }
+        .settings-split-mini span { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(var(--surface-tint-rgb), .07); }
 
         @media (max-width: 600px) {
           .settings-page { padding: 24px 16px 100px; }
-          .settings-page h1 { font-size: 26px; margin-bottom: 28px; }
-          .settings-section { margin-bottom: 28px; }
-          .settings-row { flex-wrap: wrap; padding: 16px; }
+          .settings-page h1 { font-size: 1.625rem; margin-bottom: 22px; }
+          .settings-section { padding: 18px; margin-bottom: 14px; }
+          .settings-row { flex-wrap: wrap; }
           .settings-row > *:first-child { flex: 1 1 100%; }
-          .settings-row-label { font-size: 15px; }
+          .settings-row-label { font-size: 0.9375rem; }
           .settings-input-inline { width: 100%; box-sizing: border-box; }
           .settings-btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; }
           .settings-payout-card { flex-wrap: wrap; }
           .settings-payout-card > a, .settings-payout-card > button { flex: 1 1 100%; }
           .settings-toggle { width: 48px; height: 28px; }
-          .settings-toggle-thumb { width: 22px; height: 22px; }
+          .settings-toggle-thumb { width: 22px; height: 22px; top: 3px; left: 3px; }
           .settings-toggle input:checked ~ .settings-toggle-thumb { transform: translateX(20px); }
         }
       `}</style>
