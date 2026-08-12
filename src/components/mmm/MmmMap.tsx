@@ -247,10 +247,23 @@ export function MmmMap({
   const [geolocationSettled, setGeolocationSettled] = useState(false);
   const locationPrimer = usePermissionPrimer('location', geolocationSettled);
 
-  const requestPosition = useCallback(() => {
+  /**
+   * `flyOnArrival` is what makes the "Near me" tap feel like it did something.
+   * The tap opens the primer and returns without moving the camera, so by the
+   * time a position arrives the gesture is long over — and on any layer but
+   * artists nothing else was watching for it, which made an accepted permission
+   * look like a dead button. The flight is requested by whoever asked.
+   */
+  const requestPosition = useCallback((flyOnArrival = false) => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
-      (position) => setHome([position.coords.longitude, position.coords.latitude]),
+      (position) => {
+        const next: [number, number] = [position.coords.longitude, position.coords.latitude];
+        setHome(next);
+        if (!flyOnArrival) return;
+        flownHome.current = true; // Do not let the artists effect fly a second time.
+        mapRef.current?.flyTo({ center: next, zoom: 12, duration: 800 });
+      },
       () => setGeolocationSettled(true),
       { timeout: 6000, maximumAge: 600000 },
     );
@@ -385,7 +398,7 @@ export function MmmMap({
           sheet — the design's "no empty state" for a refusal. */}
       <PermissionPrimerSheet
         id="location"
-        onAccept={() => { locationPrimer.close(); requestPosition(); }}
+        onAccept={() => { locationPrimer.close(); requestPosition(true); }}
         onDecline={() => { locationPrimer.close(); setGeolocationSettled(true); }}
         open={locationPrimer.open}
       />
@@ -420,32 +433,39 @@ export function MmmMap({
                   </button>
                 ))}
               </div>
-              {/* `#near` rides beside the chips on the ARTISTS layer only, and
-                  nowhere else — an artist pin is a city of origin rather than
-                  an address, so "how many are around here" is the only reading
-                  the count has. Events and venues answer that with their own
-                  pins. */}
-              {layer === 'artists' && (
-                <div className="mmm-map-near">
+              {/* "Near me" is on EVERY layer, by explicit product decision
+                  (2026-08-12). The design's `#near` rides beside the chips on
+                  the artists layer alone, and while location was only askable
+                  from this control that made it unreachable for a fan browsing
+                  events on a phone — the single most obvious use of a map.
+
+                  The COUNT stays artists-only, which is the half of the design's
+                  reasoning that still holds: an artist pin is a city of origin
+                  rather than an address, so "how many are around here" is the
+                  only reading it has. Events and venues answer that with their
+                  own pins, and a count beside them would be a second, worse
+                  answer to a question the map already shows. */}
+              <div className="mmm-map-near" data-count={layer === 'artists' || undefined}>
+                {layer === 'artists' && (
                   <span aria-live="polite">
                     {total > 0
                       ? `${total} artist${total === 1 ? '' : 's'} here`
                       : 'None in view — zoom out'}
                   </span>
-                  {/* Tapping this IS a request for the capability, so it opens
-                      the primer if it has never been shown. It does NOT reopen
-                      for someone who already declined — `ask()` returns false
-                      there and the camera falls back to the seeded city, which
-                      is the designed refusal path rather than a dead button. */}
-                  <button
-                    className="mmm-map-recentre"
-                    onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}
-                    type="button"
-                  >
-                    Near me
-                  </button>
-                </div>
-              )}
+                )}
+                {/* Tapping this IS a request for the capability, so it opens
+                    the primer if it has never been shown. It does NOT reopen
+                    for someone who already declined — `ask()` returns false
+                    there and the camera falls back to the seeded city, which is
+                    the designed refusal path rather than a dead button. */}
+                <button
+                  className="mmm-map-recentre"
+                  onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}
+                  type="button"
+                >
+                  Near me
+                </button>
+              </div>
             </div>
             {/* Under the selectors, on the venues and artists layers only —
                 where the layer draws something a name can identify. */}
