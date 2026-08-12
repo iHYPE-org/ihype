@@ -51,7 +51,12 @@ export async function POST(
       if (!order.stripePaymentIntentId) {
         return NextResponse.json({ error: 'No payment on file for this order.' }, { status: 400 });
       }
-      const refundId = await refundTicketPaymentIntent(order.stripePaymentIntentId);
+      // Face value and taxes come back; Stripe's processing fee does not.
+      // Stripe keeps it on a refund, so returning it would mean iHYPE paying
+      // it — and the platform absorbs no fee of any kind. The buyer was told
+      // the fee was Stripe's, on its own line, before they paid.
+      const refundableCents = order.totalChargeCents - order.processingFeeCents;
+      const refundId = await refundTicketPaymentIntent(order.stripePaymentIntentId, refundableCents);
       await db.$transaction(async (tx) => {
         const ok = await refundCapturedTicketOrder(tx, order.id);
         if (!ok) throw new Error('Order changed state before the refund could be recorded.');

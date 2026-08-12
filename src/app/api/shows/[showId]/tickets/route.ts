@@ -368,6 +368,7 @@ export async function POST(
           taxCountryCents: financials.countryCents,
           taxInternationalCents: financials.internationalCents,
           totalTaxCents: financials.totalTaxCents,
+          processingFeeCents: financials.processingFeeCents,
           totalChargeCents: financials.totalChargeCents,
           venuePayoutCents: financials.venuePayoutCents,
           artistPayoutCents: financials.artistPayoutCents,

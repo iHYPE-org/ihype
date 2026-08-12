@@ -73,6 +73,8 @@ export type MmmMeTicket = {
   startsAt: string;
   /** Face value, from the SHOW's own price — a Ticket row carries no price. */
   faceValue: string | null;
+  /** The buyer's share of Stripe's fee for this ticket, or null pre-fee. */
+  processingFee: string | null;
   scannedAt: string | null;
   /** Inline SVG data URL. Cheap enough to send with the list: ~1KB each. */
   qrDataUrl: string;
@@ -152,6 +154,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
         select: {
           serializedId: true,
           scannedAt: true,
+          ticketOrder: { select: { processingFeeCents: true, quantity: true } },
           show: {
             select: {
               title: true,
@@ -176,6 +179,14 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
       // Free shows say Free rather than $0 — the same distinction the map pins
       // already make. A price that could not be read is omitted, not zeroed.
       faceValue: row.show.ticketPriceCents > 0 ? money(row.show.ticketPriceCents) : 'Free',
+      // Per TICKET, not per order: an order of three carries one fee, and
+      // showing the whole thing on each ticket would treble it on screen.
+      // Orders placed before the fee existed carry 0 and show no line at all,
+      // rather than a $0.00 that reads as a fee that was waived.
+      processingFee:
+        row.ticketOrder.processingFeeCents > 0
+          ? money(Math.round(row.ticketOrder.processingFeeCents / Math.max(1, row.ticketOrder.quantity)))
+          : null,
       scannedAt: row.scannedAt?.toISOString() ?? null,
       qrDataUrl: await buildTicketQrCodeDataUrl(row.serializedId),
     })),

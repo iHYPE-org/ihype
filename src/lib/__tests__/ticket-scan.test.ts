@@ -114,9 +114,11 @@ describe('ticket scan: complete order validation', () => {
     venueLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' }
   };
 
-  it('total charge is subtotal + all taxes', () => {
+  it('total charge is subtotal + all taxes + the buyer-paid Stripe fee', () => {
     const result = calculateTicketOrderFinancials(validOrder);
-    expect(result.totalChargeCents).toBe(result.subtotalCents + result.totalTaxCents);
+    expect(result.totalChargeCents).toBe(
+      result.subtotalCents + result.totalTaxCents + result.processingFeeCents,
+    );
   });
 
   it('payouts never exceed subtotal (taxes are buyer-side surcharges)', () => {

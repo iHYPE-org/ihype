@@ -1,3 +1,4 @@
+import { calculateProcessingFee } from '@/lib/stripe-fees';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
 export const MAX_PROMOTER_AFFILIATE_PERCENT = 10;
@@ -181,10 +182,26 @@ export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInpu
   const payouts = calculateTicketOrderPayouts(input);
   const taxes = calculateTicketTaxes(input);
 
+  /**
+   * The buyer pays Stripe's fee; iHYPE absorbs nothing (nonprofit — the
+   * platform's cut is $0 and that includes processing).
+   *
+   * It is added AFTER the payouts are computed, and deliberately not fed back
+   * into them: the 70/20/10 split is a split of face value, so an artist is
+   * paid the same whether the buyer's card cost 30¢ or 85¢ to charge. Feeding
+   * the fee into the split would quietly hand a slice of Stripe's cut to the
+   * artist and leave the platform short by the rest.
+   *
+   * Grossed up over subtotal + taxes, because Stripe charges on everything it
+   * processes — see `stripe-fees.ts` for why a flat percentage under-collects.
+   */
+  const processing = calculateProcessingFee(payouts.subtotalCents + taxes.totalTaxCents);
+
   return {
     ...payouts,
     ...taxes,
-    totalChargeCents: payouts.subtotalCents + taxes.totalTaxCents
+    processingFeeCents: processing.feeCents,
+    totalChargeCents: payouts.subtotalCents + taxes.totalTaxCents + processing.feeCents
   };
 }
 

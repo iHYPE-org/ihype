@@ -22,8 +22,11 @@ Supporting facts a reviewer can verify in the app:
 - **iHYPE takes $0 from the ticket price.** The split is 70% artist / 20% venue /
   10% promoter pool, published at `/info?tab=charter` and shown per event at
   `/payout/<id>`.
-- The only amount added at checkout is **Stripe's processing fee**, charged by
-  Stripe and disclosed as a separate line before payment.
+- The only amount added at checkout is **Stripe's processing fee**, disclosed as
+  its own line before payment (`src/lib/stripe-fees.ts`). iHYPE is a nonprofit
+  and absorbs no fee: the fee is grossed up so that Stripe's cut leaves face
+  value and taxes intact, it is excluded from the 70/20/10 split, and it is
+  retained on refunds because Stripe keeps it.
 - There is **no digital-only content, subscription, or unlockable feature**
   anywhere in the app. Nothing is sold that is consumed inside it.
 

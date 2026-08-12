@@ -182,11 +182,34 @@ export async function cancelTicketPaymentIntent(paymentIntentId: string): Promis
  * `triggerShowPayouts` only ever transfers money for ENDED shows, and this
  * is only ever called for orders more than 48h before their show starts.
  */
-export async function refundTicketPaymentIntent(paymentIntentId: string): Promise<string> {
+/**
+ * Refunds a ticket order.
+ *
+ * `amountCents` is REQUIRED and is not a convenience. Stripe keeps its
+ * processing fee on a refund — the money is already gone — so refunding the
+ * full charge returns the buyer a fee Stripe never gives back, and the
+ * difference comes out of the platform. iHYPE is a nonprofit that absorbs no
+ * fee of any kind, so the caller states what is actually being returned:
+ * normally face value plus taxes, with the processing fee retained because it
+ * was consumed the moment the card was charged.
+ *
+ * Passing `null` refunds everything, which is a deliberate choice a caller has
+ * to make in the open rather than the default it used to be.
+ */
+export async function refundTicketPaymentIntent(
+  paymentIntentId: string,
+  amountCents: number | null,
+): Promise<string> {
   const stripe = getStripe();
   const refund = await stripe.refunds.create(
-    { payment_intent: paymentIntentId },
-    { idempotencyKey: `refund:${paymentIntentId}` }
+    {
+      payment_intent: paymentIntentId,
+      ...(amountCents !== null ? { amount: amountCents } : {}),
+    },
+    // The key carries the amount: a partial refund followed by a different
+    // partial refund on the same intent is two distinct operations, and
+    // sharing a key would silently return the first one's result.
+    { idempotencyKey: `refund:${paymentIntentId}:${amountCents ?? 'full'}` }
   );
   return refund.id;
 }

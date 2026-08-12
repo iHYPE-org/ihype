@@ -11,13 +11,11 @@ import type { MmmMeTicket } from '@/lib/mmm-me';
  * player, no way back into MMM for the rest of the session. The tickets are
  * now here, and the ticket itself opens as a sheet over the shell.
  *
- * Every figure comes from the member's own rows. The one line the design draws
- * that this does NOT render is "Stripe processing, paid by the buyer": nothing
- * in this codebase charges it. `calculateTicketOrderFinancials` computes
- * `totalChargeCents` as subtotal + taxes, so a processing line would be a
- * charge invented at render time. If buyers are meant to pay it, that is a
- * pricing change in the checkout, and this sheet will show it the moment the
- * order carries it.
+ * Every figure comes from the member's own rows, including "Stripe processing,
+ * paid by the buyer" — which is now a real charge rather than a design mock:
+ * iHYPE is a nonprofit, takes $0, and does not absorb Stripe's cost of moving
+ * the money either. It is shown per TICKET (an order of three carries one fee),
+ * and omitted entirely on orders placed before the fee existed.
  */
 
 function dayParts(iso: string) {
@@ -144,7 +142,16 @@ function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTi
             <span>Face value</span>
             <strong>{ticket.faceValue ?? '—'}</strong>
           </div>
-          {/* The charter's number, and the only fee line that is real here. */}
+          {/* Stripe's cost of moving the money, paid by the buyer. iHYPE is a
+              nonprofit and absorbs no fee, so it is named and shown rather than
+              folded into the price. Absent on orders placed before the fee
+              existed — a $0.00 there would read as a fee that was waived. */}
+          {ticket.processingFee && (
+            <div className="mmm-ticket-money-row">
+              <span>Stripe processing, paid by the buyer</span>
+              <strong>{ticket.processingFee}</strong>
+            </div>
+          )}
           <div className="mmm-ticket-money-row">
             <span>iHYPE fee</span>
             <strong className="mmm-ticket-zero">$0.00</strong>
