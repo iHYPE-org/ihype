@@ -16,7 +16,6 @@ describe('alpha readiness', () => {
       discoverableArtists: 2,
       discoverableVenues: 1,
       upcomingEvents: 0,
-      scheduledRadioShows: 0,
       inviteOnlySignup: true,
       restoreDrillReady: false,
     });
@@ -35,7 +34,6 @@ describe('alpha readiness', () => {
       discoverableArtists: 5,
       discoverableVenues: 2,
       upcomingEvents: 2,
-      scheduledRadioShows: 1,
       inviteOnlySignup: true,
       restoreDrillReady: true,
     })).toEqual([]);

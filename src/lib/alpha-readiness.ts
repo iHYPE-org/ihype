@@ -1,10 +1,24 @@
+/**
+ * What the alpha cohort needs on the ground before the doors open.
+ *
+ * There is deliberately NO radio-show target. There used to be one — "schedule
+ * at least 1 radio show" — and it could never be satisfied again: DJ-authored
+ * radio shows were retired as a product decision, `RadioShowCreator` is gone,
+ * and nothing in the app can author one. It counted `Show.isRadioShow` rows,
+ * of which only pre-retirement rows can exist. A permanent blocker on a
+ * readiness board teaches everyone to read past the board, which is how the
+ * Lighthouse budget stopped being read.
+ *
+ * Radio is not unmeasured by dropping it. `/radio` is the always-on station,
+ * assembled from published tracks — so `playableTracks` below IS the radio
+ * readiness check. Ten playable tracks is a station; zero is silence.
+ */
 export const ALPHA_CONTENT_TARGETS = {
   administrators: 2,
   playableTracks: 10,
   discoverableArtists: 5,
   discoverableVenues: 2,
   upcomingEvents: 2,
-  scheduledRadioShows: 1,
 } as const;
 
 const RESTORE_EVIDENCE_MAX_AGE_DAYS = 35;
@@ -27,7 +41,6 @@ export function buildAlphaBlockers({
   discoverableArtists,
   discoverableVenues,
   upcomingEvents,
-  scheduledRadioShows,
   inviteOnlySignup,
   restoreDrillReady,
   launchBlockers = [],
@@ -37,7 +50,6 @@ export function buildAlphaBlockers({
   discoverableArtists: number;
   discoverableVenues: number;
   upcomingEvents: number;
-  scheduledRadioShows: number;
   inviteOnlySignup: boolean;
   restoreDrillReady: boolean;
   launchBlockers?: string[];
@@ -51,6 +63,5 @@ export function buildAlphaBlockers({
     discoverableArtists < ALPHA_CONTENT_TARGETS.discoverableArtists && `Onboard at least ${ALPHA_CONTENT_TARGETS.discoverableArtists} discoverable artists (${discoverableArtists} ready).`,
     discoverableVenues < ALPHA_CONTENT_TARGETS.discoverableVenues && `Onboard at least ${ALPHA_CONTENT_TARGETS.discoverableVenues} discoverable venues (${discoverableVenues} ready).`,
     upcomingEvents < ALPHA_CONTENT_TARGETS.upcomingEvents && `Publish at least ${ALPHA_CONTENT_TARGETS.upcomingEvents} upcoming events (${upcomingEvents} ready).`,
-    scheduledRadioShows < ALPHA_CONTENT_TARGETS.scheduledRadioShows && `Schedule at least ${ALPHA_CONTENT_TARGETS.scheduledRadioShows} radio show (${scheduledRadioShows} ready).`,
   ].filter(Boolean) as string[];
 }
