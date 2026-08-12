@@ -210,12 +210,41 @@ export async function seedShowWithTicket({
     const showSlug = `e2e-show-${stamp}`;
     const hex = (seed: string) => `0x${createHash('sha256').update(seed).digest('hex').slice(0, 32)}`;
 
+    /**
+     * The show's acts belong to an ORGANISER account, not to the buyer.
+     *
+     * They used to be `ownerId: buyerUserId`, which quietly turned the suite's
+     * plain-fan account into the owner of an artist profile and a venue
+     * profile. That is not a test detail: the drawer's role gates, ME's role
+     * switcher and the HYPE link card all resolve from the member's own
+     * `Profile` rows, so seeding a ticket silently changed what a fan sees
+     * everywhere else in the suite. It surfaced as "a profile-less account
+     * still renders ME, without a HYPE link card" failing — the account was
+     * no longer profile-less.
+     *
+     * Buying a ticket must not make you an artist. Same in the fixture as in
+     * the product.
+     */
+    const organiserEmail = `e2e-organiser+${stamp}@ihype.test`;
+    const organiser = await prisma.user.upsert({
+      where: { email: organiserEmail },
+      update: {},
+      create: {
+        email: organiserEmail,
+        name: 'E2E Organiser',
+        username: `e2e-organiser-${stamp}`,
+        role: 'ARTIST',
+        emailVerified: new Date(),
+      },
+      select: { id: true },
+    });
+
     const venue = await prisma.profile.upsert({
       where: { slug: venueSlug },
       update: {},
       create: {
         slug: venueSlug, hexId: hex(venueSlug), name: 'E2E Venue', type: 'VENUE',
-        ownerId: buyerUserId, genres: [], city: 'Portland', stateRegion: 'ME', country: 'US',
+        ownerId: organiser.id, genres: [], city: 'Portland', stateRegion: 'ME', country: 'US',
         discoverable: true,
       },
     });
@@ -224,7 +253,7 @@ export async function seedShowWithTicket({
       update: {},
       create: {
         slug: artistSlug, hexId: hex(artistSlug), name: 'E2E Artist', type: 'ARTIST',
-        ownerId: buyerUserId, genres: [], discoverable: true,
+        ownerId: organiser.id, genres: [], discoverable: true,
       },
     });
 

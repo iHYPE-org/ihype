@@ -226,8 +226,12 @@ test.describe('Music · Map · Me shell', () => {
   // this route's.
   test('an unknown MUSIC tab shows not-found, not a silent fallback to Discover', async ({ page }) => {
     await page.goto('/app/music/nonsense');
-    await expect(page.getByRole('heading', { name: /skipped soundcheck/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /no such tab/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Discover' })).toHaveCount(0);
+    // And it stays inside MMM — exactly one shell, not the marketing 404 and
+    // not two shells stacked (which is what `notFound()` produced here, since
+    // the layout has already flushed by the time it throws).
+    await expect(page.locator('.mmm-frame')).toHaveCount(1);
   });
 
   // §9: "No reference to a DJ role anywhere in the UI." The DJ role is still
@@ -503,7 +507,9 @@ test.describe('Music · Map · Me shell', () => {
 
     test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
       await page.goto(`/app/shows/${seeded.slug}`);
-      await expect(page.getByRole('heading', { name: seeded.title })).toBeVisible();
+      // Scoped to the pane's own H1: `TicketSaleCard` repeats the show title
+      // as an H2 inside itself, so an unscoped role query matches both.
+      await expect(page.locator('h1.mmm-show-title')).toHaveText(seeded.title);
       // The split bar draws the show's OWN percentages.
       const split = page.locator('.mmm-show-split');
       await expect(split).toContainText('70% artist');
@@ -517,7 +523,10 @@ test.describe('Music · Map · Me shell', () => {
       // Without /app/not-found.tsx this rendered the marketing 404 — map gone,
       // player gone, no route back.
       await page.goto('/app/shows/definitely-not-a-real-show');
-      await expect(page.locator('.mmm-frame')).toBeVisible();
+      // Exactly one shell. Two means the page threw `notFound()` after the
+      // async layout had flushed, which streams a second copy of the whole
+      // chain — two maps, two players, two sets of tiles fetched.
+      await expect(page.locator('.mmm-frame')).toHaveCount(1);
       await expect(page.getByRole('link', { name: /Back to the map/i })).toBeVisible();
     });
   });
