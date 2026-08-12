@@ -363,6 +363,12 @@ export function TicketSaleCard({
                 <div><span>{t('ticketSaleCard.countryTaxLabel', 'Country tax')}</span><strong>{formatCurrencyFromCents(preview.countryCents)}</strong></div>
                 <div><span>{t('ticketSaleCard.internationalTaxLabel', 'International tax')}</span><strong>{formatCurrencyFromCents(preview.internationalCents)}</strong></div>
                 <div><span>{t('ticketSaleCard.totalTaxLabel', 'Total tax')}</span><strong>{formatCurrencyFromCents(preview.totalTaxCents)}</strong></div>
+                {/* Disclosed before payment, as its own line and in the buyer's
+                    favour: iHYPE is a nonprofit, takes $0, and does not absorb
+                    Stripe's cost of moving the money either. Naming Stripe is
+                    the point — this is not an iHYPE fee. */}
+                <div><span>{t('ticketSaleCard.processingFeeLabel', 'Stripe processing, paid by the buyer')}</span><strong>{formatCurrencyFromCents(preview.processingFeeCents)}</strong></div>
+                <div><span>{t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee')}</span><strong>{formatCurrencyFromCents(0)}</strong></div>
                 <div><span>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span><strong>{formatCurrencyFromCents(preview.totalChargeCents)}</strong></div>
               </div>
             </div>

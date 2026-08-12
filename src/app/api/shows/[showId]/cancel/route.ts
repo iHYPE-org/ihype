@@ -116,7 +116,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
     try {
       if (order.status === 'CAPTURED') {
         if (!order.stripePaymentIntentId) { failed += 1; continue; }
-        const refundId = await refundTicketPaymentIntent(order.stripePaymentIntentId);
+        /**
+         * Same rule as a buyer-initiated refund: face value and taxes come
+         * back, Stripe's fee does not, because Stripe keeps it and iHYPE
+         * absorbs no fee of any kind.
+         *
+         * This is the harshest place that rule lands, and it is applied here
+         * deliberately rather than by omission: the fan did nothing wrong — the
+         * organiser cancelled — and they are still out the processing fee.
+         * Refunding it instead would mean the platform paying Stripe on behalf
+         * of a venue that cancelled, which the nonprofit charter does not allow
+         * either. If the policy should differ for organiser cancellations, this
+         * is the one line to change.
+         */
+        const refundableCents = order.totalChargeCents - order.processingFeeCents;
+        const refundId = await refundTicketPaymentIntent(order.stripePaymentIntentId, refundableCents);
         await db.$transaction(async (tx) => {
           const ok = await refundCapturedTicketOrder(tx, order.id);
           if (!ok) throw new Error('Order changed state before the refund could be recorded.');

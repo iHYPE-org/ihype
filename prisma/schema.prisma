@@ -603,6 +603,11 @@ model TicketOrder {
   taxCountryCents            Int                    @default(0)
   taxInternationalCents      Int                    @default(0)
   totalTaxCents              Int                    @default(0)
+  // Stripe's fee, paid by the buyer on top of face value and taxes. iHYPE is a
+  // nonprofit and absorbs no fee, so this is recorded per order rather than
+  // recomputed: the rate can change, and a receipt has to say what was actually
+  // charged on the day, not what today's rate would make of it.
+  processingFeeCents         Int                    @default(0)
   totalChargeCents           Int                    @default(0)
   venuePayoutCents           Int
   artistPayoutCents          Int

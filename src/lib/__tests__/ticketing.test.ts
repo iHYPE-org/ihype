@@ -1,3 +1,4 @@
+import { stripeCutOf } from '@/lib/stripe-fees';
 import { describe, it, expect } from 'vitest';
 import {
   validateTicketSplit,
@@ -223,7 +224,7 @@ describe('calculateTicketTaxes', () => {
 });
 
 describe('calculateTicketOrderFinancials', () => {
-  it('total charge equals subtotal plus tax', () => {
+  it('total charge is subtotal + tax + the buyer-paid Stripe fee', () => {
     const result = calculateTicketOrderFinancials({
       ticketPriceCents: 2500,
       quantity: 1,
@@ -233,7 +234,34 @@ describe('calculateTicketOrderFinancials', () => {
       buyerLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' },
       venueLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' }
     });
-    expect(result.totalChargeCents).toBe(result.subtotalCents + result.totalTaxCents);
+    // iHYPE is a nonprofit and absorbs no fee, so processing rides on top of
+    // the charge rather than coming out of it.
+    expect(result.processingFeeCents).toBeGreaterThan(0);
+    expect(result.totalChargeCents).toBe(
+      result.subtotalCents + result.totalTaxCents + result.processingFeeCents,
+    );
+    // And the quoted fee really does cover what Stripe takes.
+    expect(result.totalChargeCents - stripeCutOf(result.totalChargeCents))
+      .toBeGreaterThanOrEqual(result.subtotalCents + result.totalTaxCents);
+  });
+
+  it('keeps the processing fee out of the split entirely', () => {
+    const result = calculateTicketOrderFinancials({
+      ticketPriceCents: 2500,
+      quantity: 2,
+      venuePayoutPercent: 20,
+      artistPayoutPercent: 70,
+      promoterPayoutPercent: 10,
+      buyerLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' },
+      venueLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' }
+    });
+    // The 70/20/10 is a split of FACE VALUE. An artist is paid the same
+    // whether the buyer's card cost 30¢ or 85¢ to charge — folding the fee in
+    // would hand a slice of Stripe's cut to the artist and leave the platform
+    // short by the rest.
+    const payouts = result.venuePayoutCents + result.artistPayoutCents + result.promoterPayoutCents;
+    expect(payouts).toBe(result.subtotalCents);
+    expect(payouts).not.toBe(result.totalChargeCents);
   });
 
   it('payouts still sum to subtotal regardless of tax', () => {
