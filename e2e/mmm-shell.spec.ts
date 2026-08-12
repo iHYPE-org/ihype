@@ -255,6 +255,19 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // No permission sheet on arrival. /app/map is WORKBENCH_PATH — every sign-in
+  // lands here — so a primer that opens on load is a permission wall on launch,
+  // which MOBILE.md forbids outright. It also covered the arc nav: the
+  // map-not-remounted test below failed with ".primer-scrim intercepts pointer
+  // events", which is what a member would have hit too.
+  test('arriving on the map raises no permission sheet', async ({ page }) => {
+    await page.goto('/app/map');
+    await expect(page.locator('.mmm-map-canvas')).toBeVisible();
+    await expect(page.locator('.primer-scrim')).toHaveCount(0);
+    // And the navigation is reachable, which is the thing the scrim broke.
+    await expect(page.getByRole('button', { name: /Open iHYPE navigation/i })).toBeEnabled();
+  });
+
   // Reported from a real iPhone: the layer chips and the date strip painted on
   // top of each other — EVENTS over WED, VENUES over THU. The strip was a
   // SIBLING of `.mmm-map-controls`, which is absolutely positioned, so it sat

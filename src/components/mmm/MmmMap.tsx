@@ -272,12 +272,20 @@ export function MmmMap({
     return () => { cancelled = true; };
   }, [requestPosition]);
 
-  // The design's moment for this sheet: "Fires on first Map open" — so it is
-  // tied to the map becoming active, not to the module mounting behind a pane.
-  useEffect(() => {
-    if (!active || !ready) return;
-    locationPrimer.ask();
-  }, [active, locationPrimer, ready]);
+  // NOT asked on arrival, and this is a deliberate departure from the
+  // permissions template's "Fires on first Map open".
+  //
+  // That line assumes the map is somewhere you navigate TO. Here it is
+  // `WORKBENCH_PATH`: `/` and every sign-in resolve to `/app/map`, so the first
+  // Map open IS the launch — and MOBILE.md's rule is that a capability is asked
+  // for "at the moment of use and never on launch". Auto-opening put a sheet
+  // with a scrim over the whole shell before the member had touched anything,
+  // covering the arc nav; the e2e that proves the map survives a module change
+  // caught it by being unable to reach the navigation at all.
+  //
+  // So the ask belongs to "Near me", which is the moment of use and an explicit
+  // request. Until then the map works from the seeded camera, which is the same
+  // thing it does when location is refused.
 
   const recentre = useCallback(() => {
     const map = mapRef.current;
