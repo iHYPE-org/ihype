@@ -14,6 +14,7 @@ import { ShareButton } from '@/components/ShareButton';
 import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
+import { loadShowRsvpState, loadShowSetlist } from '@/lib/show-social';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
@@ -216,37 +217,17 @@ export default async function ShowDetailPage({
     ...(show.headlinerProfile ? { performer: { '@type': 'MusicGroup', name: show.headlinerProfile.name } } : {}),
   };
 
-  // RSVP state (audit-log driven, no schema change).
-  const rsvpRows = await db.auditLog.findMany({
-    where: { action: 'show_rsvp', entityType: 'show', entityId: show.id },
-    orderBy: { createdAt: 'desc' },
-    select: { actorUserId: true, metadata: true, createdAt: true }
-  });
-  const rsvpLatestByUser = new Map<string, 'going' | 'cancelled'>();
-  for (const row of rsvpRows) {
-    if (!row.actorUserId) continue;
-    if (rsvpLatestByUser.has(row.actorUserId)) continue;
-    const meta = (row.metadata ?? {}) as { state?: string };
-    rsvpLatestByUser.set(row.actorUserId, meta.state === 'cancelled' ? 'cancelled' : 'going');
-  }
-  let rsvpCount = 0;
-  for (const state of rsvpLatestByUser.values()) {
-    if (state === 'going') rsvpCount += 1;
-  }
-  const viewerGoing = session?.user?.id
-    ? rsvpLatestByUser.get(session.user.id) === 'going'
-    : false;
+  // RSVP and setlist state, both audit-log driven. The derivations moved to
+  // `show-social.ts` when the show gained a second surface in the MMM shell —
+  // a "latest row per account wins" reduction copied into two pages drifts
+  // silently, and one of them would keep counting cancelled RSVPs.
+  const [rsvp, setlistTracks] = await Promise.all([
+    loadShowRsvpState(show.id, session?.user?.id),
+    loadShowSetlist(show.id),
+  ]);
+  const rsvpCount = rsvp.count;
+  const viewerGoing = rsvp.viewerGoing;
 
-  // Setlist (audit-log driven, no schema change)
-  const setlistLast = await db.auditLog.findFirst({
-    where: { action: 'show_setlist', entityType: 'show', entityId: show.id },
-    orderBy: { createdAt: 'desc' },
-    select: { metadata: true }
-  });
-  const setlistMeta = (setlistLast?.metadata ?? {}) as { tracks?: unknown };
-  const setlistTracks = Array.isArray(setlistMeta.tracks)
-    ? (setlistMeta.tracks.filter((t) => typeof t === 'string') as string[])
-    : [];
   const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
 
   const recentTicketOrders = isShowOwner || isAdminSession(session)

@@ -158,6 +158,15 @@ function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTi
           </div>
         </div>
 
+        {/* Sales are final; transfer is the way out, so the two are stated
+            together. Any processing fee on a transfer belongs to whoever
+            receives the ticket — iHYPE is a nonprofit and absorbs no fee, and
+            saying so here is what makes that fair rather than a surprise. */}
+        <p className="mmm-ticket-final">
+          All sales are final. Transfer a ticket instead — any processing fee on a
+          transfer is the recipient&rsquo;s.
+        </p>
+
         {/* Transfer is a real endpoint that reissues every ticket in the order
             with a new serializedId, so the old QR dies on transfer. It lives on
             the legacy ticket page for now; this links there rather than
