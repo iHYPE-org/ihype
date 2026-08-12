@@ -1847,3 +1847,12 @@ html.mmm-locked .site-shell > main {
   font-size: 0.85rem;
   color: var(--ink-3);
 }
+/* Sales are final, restated where the holder looks for a way out. */
+.mmm-ticket-final {
+  margin: 16px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+  text-align: left;
+  text-wrap: pretty;
+}

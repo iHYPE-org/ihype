@@ -391,6 +391,22 @@ export function TicketSaleCard({
             ref={turnstileRef}
           />
 
+          {/* ALL SALES ARE FINAL, stated before the button and not after it, at
+              a size nobody can say they missed. This is the one disclosure on
+              the surface that changes what the buyer is agreeing to, so it is
+              not a footnote next to the taxes. */}
+          <div className="ticket-final-notice" role="note">
+            <strong className="ticket-final-headline">
+              {t('ticketSaleCard.allSalesFinal', 'All ticket sales are final')}
+            </strong>
+            <span className="ticket-final-detail">
+              {t(
+                'ticketSaleCard.allSalesFinalDetail',
+                'No refunds once a ticket is issued. You can transfer a ticket to someone else instead — any processing fee on a transfer is the responsibility of whoever receives it. iHYPE is a nonprofit and absorbs no fees of any kind.',
+              )}
+            </span>
+          </div>
+
           <div className="cta-row">
             <button className="button" disabled={pending || awaitingTurnstile} type="submit">
               {pending
