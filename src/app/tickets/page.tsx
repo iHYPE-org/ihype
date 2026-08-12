@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
 import { TicketCardActions } from '@/components/TicketCardActions';
+import { PushPrimer } from '@/components/PushPrimer';
 import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,11 @@ export default async function MyTicketsPage() {
         <h1>{t('ticketsPage.title', 'My Tickets')}</h1>
         <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>{t('ticketsPage.subtitle', 'Your upcoming shows')}</p>
       </div>
+
+      {/* The push primer's moment: after a first ticket, never at onboarding.
+          Rendered only when the member actually holds one, so "we'll remind
+          you before doors" refers to something real. */}
+      {orders.length > 0 && <PushPrimer />}
 
       {orders.length === 0 ? (
         <div className="ihype-empty-state">

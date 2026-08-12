@@ -5102,3 +5102,111 @@ body:has(.fan-entry) #main-content { width: 100%; }
   cursor: pointer;
 }
 .impersonation-banner-exit[disabled] { opacity: 0.6; cursor: progress; }
+
+/* ── Permission primers ───────────────────────────────────────────────────
+   The sheet from `templates/permissions/Permissions.dc.html`. One capability
+   per sheet, drawn at the design's 340px — the width it occupies on a 375px
+   phone once the pane's 16px margins are taken — so the copy is judged at the
+   measure it ships at.
+
+   Deliberately NOT scoped under `.shell-content`: a primer can appear over the
+   MMM shell (location, on the map), over the legacy shell (push, after a
+   ticket) and over a marketing page. It is one of the few surfaces that
+   genuinely spans all three. */
+.primer-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 16px;
+  /* Composed from the ink triplet so it inverts with the theme, rather than a
+     literal black that would be wrong on the light one. */
+  background: rgba(var(--bg-base-rgb), 0.62);
+  backdrop-filter: blur(3px);
+}
+@media (min-width: 620px) {
+  /* One breakpoint, the design system's. Centred once there is room. */
+  .primer-scrim { align-items: center; }
+}
+.primer-sheet {
+  width: min(340px, 100%);
+  border-radius: 22px;
+  border: 1px solid var(--line-2);
+  background: var(--bg-surface);
+  padding: 24px 22px 20px;
+  box-shadow: 0 24px 60px rgba(4, 8, 18, 0.5);
+  /* `dvh`, never `vh` — MOBILE.md. Mobile chrome resizes the viewport. */
+  max-height: min(86dvh, 640px);
+  overflow-y: auto;
+  margin-bottom: var(--mmm-safe-bottom, 0px);
+}
+.primer-mark {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  margin-bottom: 16px;
+  background: rgba(var(--accent-rgb), 0.13);
+}
+/* Each capability carries its own hue, as the design draws them. */
+.primer-mark[data-permission='location'] { background: rgba(var(--role-venue-rgb), 0.13); }
+.primer-mark[data-permission='camera'] { background: rgba(var(--role-fan-rgb), 0.13); }
+.primer-mark[data-permission='wallet'] { background: rgba(var(--warning-rgb), 0.13); }
+.primer-mark[data-permission='share'] { background: rgba(var(--role-promoter-rgb), 0.13); }
+.primer-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 21px;
+  letter-spacing: -0.028em;
+  line-height: 1.15;
+  margin: 0;
+  color: var(--ink);
+}
+.primer-body {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+.primer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 18px;
+}
+/* 46px, which already clears the 44px floor — so mobile-fit.css has nothing to
+   correct here and these are deliberately not added to its group. */
+/* Shared geometry only. Type stays with each button — declaring font-size here
+   and again below would be the same selector twice, which is precisely what
+   `audit:css` counts as an override. */
+.primer-accept,
+.primer-decline {
+  min-height: 46px;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+}
+.primer-accept {
+  border: none;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 14px;
+}
+.primer-decline {
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.primer-moment {
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}

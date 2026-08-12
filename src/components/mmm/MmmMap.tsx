@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { PermissionPrimerSheet, usePermissionPrimer } from '@/components/PermissionPrimerSheet';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { describeSelection, stripDays, toDatesParam, toggleDay } from '@/lib/map-dates';
 import {
@@ -232,24 +233,51 @@ export function MmmMap({
     return () => window.clearTimeout(timer);
   }, [active, cameraTick, load]);
 
-  // "Near me". The design asks for the browser's position ONCE, on load, and
-  // never blocks on it: "the layer works from the seeded home until (and
-  // unless) the browser answers". A denial or a timeout is not an error state
-  // — the control stays, it just recentres on the seeded camera instead.
+  // "Near me". The layer works from the seeded home until (and unless) the
+  // browser answers, and a denial or a timeout is not an error state — the
+  // control stays, it just recentres on the seeded camera instead.
+  //
+  // It NO LONGER asks on mount. `getCurrentPosition` is the OS prompt on a
+  // phone, and firing it the instant the map appears spends the one prompt an
+  // install gets before the member has any idea what it buys them. The primer
+  // sheet asks first, in our own words, and only an accept reaches the
+  // browser. Declining is remembered and never re-asked.
   const [home, setHome] = useState<[number, number] | null>(null);
   const flownHome = useRef(false);
-  useEffect(() => {
+  const [geolocationSettled, setGeolocationSettled] = useState(false);
+  const locationPrimer = usePermissionPrimer('location', geolocationSettled);
+
+  const requestPosition = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-    let cancelled = false;
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (!cancelled) setHome([position.coords.longitude, position.coords.latitude]);
-      },
-      () => {},
+      (position) => setHome([position.coords.longitude, position.coords.latitude]),
+      () => setGeolocationSettled(true),
       { timeout: 6000, maximumAge: 600000 },
     );
-    return () => { cancelled = true; };
   }, []);
+
+  // If the OS already has an answer from a previous session, skip our sheet
+  // and use it — asking again would be theatre. `permissions.query` is not
+  // universal, so its absence simply leaves the primer in charge.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+    let cancelled = false;
+    navigator.permissions.query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        if (cancelled || status.state === 'prompt') return;
+        setGeolocationSettled(true);
+        if (status.state === 'granted') requestPosition();
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [requestPosition]);
+
+  // The design's moment for this sheet: "Fires on first Map open" — so it is
+  // tied to the map becoming active, not to the module mounting behind a pane.
+  useEffect(() => {
+    if (!active || !ready) return;
+    locationPrimer.ask();
+  }, [active, locationPrimer, ready]);
 
   const recentre = useCallback(() => {
     const map = mapRef.current;
@@ -344,6 +372,16 @@ export function MmmMap({
       <div className="mmm-map-canvas" ref={containerRef} />
       <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
 
+      {/* Accepting reaches the browser; declining does not, and is remembered.
+          Either way the map is already drawn on the seeded camera behind this
+          sheet — the design's "no empty state" for a refusal. */}
+      <PermissionPrimerSheet
+        id="location"
+        onAccept={() => { locationPrimer.close(); requestPosition(); }}
+        onDecline={() => { locationPrimer.close(); setGeolocationSettled(true); }}
+        open={locationPrimer.open}
+      />
+
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />
       ))}
@@ -386,7 +424,16 @@ export function MmmMap({
                       ? `${total} artist${total === 1 ? '' : 's'} here`
                       : 'None in view — zoom out'}
                   </span>
-                  <button className="mmm-map-recentre" onClick={recentre} type="button">
+                  {/* Tapping this IS a request for the capability, so it opens
+                      the primer if it has never been shown. It does NOT reopen
+                      for someone who already declined — `ask()` returns false
+                      there and the camera falls back to the seeded city, which
+                      is the designed refusal path rather than a dead button. */}
+                  <button
+                    className="mmm-map-recentre"
+                    onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}
+                    type="button"
+                  >
                     Near me
                   </button>
                 </div>
