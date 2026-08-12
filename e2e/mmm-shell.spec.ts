@@ -15,6 +15,22 @@ import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtur
  * plain `npm run dev` (src/lib/db.ts imports the wasm/workerd Prisma engine, so
  * auth() throws there and every request 401s). Run it through
  * `node scripts/e2e-workerd.mjs`.
+ *
+ * ## Why so many locators here carry `:visible`
+ *
+ * `/app`'s layout is async, so these routes STREAM. While a page is still
+ * arriving, Next holds a copy of the content in a hidden staging node
+ * (`<div hidden id="S:0">`) and moves it into place with a script — so for a
+ * window of a few hundred milliseconds the document genuinely contains two of
+ * everything, and a bare `.mmm-frame` resolves to two elements on a page that
+ * is entirely correct. It shows up as a strict-mode violation naming a path
+ * like `[id="S:0"] > .mmm-frame > .mmm-pane`, and it is intermittent, so it
+ * reads as flake rather than as a fixable cause.
+ *
+ * Waiting on some other element first does NOT fix it — the anchor you wait on
+ * is duplicated too. `:visible` does, because the staging node is `hidden` and
+ * its copy therefore has no box. It also happens to be what these assertions
+ * actually mean: a member can only see the live one.
  */
 
 const EMAIL = 'e2e-mmm-fan@ihype.org';
@@ -56,7 +72,7 @@ test.describe('Music · Map · Me shell', () => {
   // put an 82px header back on screen.
   test('renders no top bar and no bottom tab bar', async ({ page }) => {
     await page.goto('/app/map');
-    await expect(page.locator('.mmm-frame')).toBeVisible();
+    await expect(page.locator('.mmm-frame:visible')).toBeVisible();
     // Real class names, checked against the components: AppShellHeader renders
     // `.shell-header`, AppShellContextStrip `.shell-context-strip`,
     // MobileBottomNav `.ihype-mobile-nav`, GlobalMediaPlayer `.site-dock`. A
@@ -231,7 +247,7 @@ test.describe('Music · Map · Me shell', () => {
     // And it stays inside MMM — exactly one shell, not the marketing 404 and
     // not two shells stacked (which is what `notFound()` produced here, since
     // the layout has already flushed by the time it throws).
-    await expect(page.locator('.mmm-frame')).toHaveCount(1);
+    await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
   });
 
   // §9: "No reference to a DJ role anywhere in the UI." The DJ role is still
@@ -240,8 +256,8 @@ test.describe('Music · Map · Me shell', () => {
   test('the shell surfaces never mention a DJ role', async ({ page }) => {
     for (const path of ['/app/map', '/app/music/radio', '/app/me']) {
       await page.goto(path);
-      await expect(page.locator('.mmm-frame')).toBeVisible();
-      const text = (await page.locator('.mmm-frame').innerText()).toLowerCase();
+      await expect(page.locator('.mmm-frame:visible')).toBeVisible();
+      const text = (await page.locator('.mmm-frame:visible').innerText()).toLowerCase();
       expect(text, `${path} mentions a DJ role`).not.toMatch(/\bdj\b/);
     }
   });
@@ -366,7 +382,7 @@ test.describe('Music · Map · Me shell', () => {
     // common words, and a bare role query for them will find something else
     // the first time this surface grows a control.
     const panelFor = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
@@ -396,7 +412,7 @@ test.describe('Music · Map · Me shell', () => {
   // are the URL, so nothing about the types stops both being open at once.
   test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
     const drawer = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
@@ -430,7 +446,7 @@ test.describe('Music · Map · Me shell', () => {
   test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
     await page.goto('/app/me?panel=legal');
     const drawer = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
     await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
@@ -456,7 +472,7 @@ test.describe('Music · Map · Me shell', () => {
 
     test('a held ticket appears in ME and opens its sheet', async ({ page }) => {
       await page.goto('/app/me');
-      const drawer = page.locator('.mmm-me-accordion').filter({
+      const drawer = page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
       });
       await drawer.click();
@@ -492,11 +508,11 @@ test.describe('Music · Map · Me shell', () => {
       });
 
       await page.goto('/app/me');
-      await page.locator('.mmm-me-accordion').filter({
+      await page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
       }).click();
 
-      const statuses = await page.locator('.mmm-ticket-status').allInnerTexts();
+      const statuses = await page.locator('.mmm-ticket-status:visible').allInnerTexts();
       const firstAttended = statuses.findIndex((s) => /attended/i.test(s));
       const lastUpcoming = statuses.map((s) => /upcoming/i.test(s)).lastIndexOf(true);
       if (firstAttended !== -1 && lastUpcoming !== -1) {
@@ -513,15 +529,15 @@ test.describe('Music · Map · Me shell', () => {
       // script — query in that window and a locator resolves to two nodes that
       // are really one. Anchoring on the sale card (the last thing to arrive)
       // means the assertions below run against a finished document.
-      await expect(page.locator('.mmm-show-sale')).toBeVisible();
+      await expect(page.locator('.mmm-show-sale:visible')).toBeVisible();
       // Now the count means what it says. Scoped to the pane's own H1 because
       // `TicketSaleCard` repeats the title as an H2 inside itself — and asserted
       // as a COUNT so that a genuine double render fails here rather than being
       // absorbed by a `.first()`.
-      await expect(page.locator('h1.mmm-show-title')).toHaveCount(1);
-      await expect(page.locator('h1.mmm-show-title')).toHaveText(seeded.title);
+      await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
+      await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
       // The split bar draws the show's OWN percentages.
-      const split = page.locator('.mmm-show-split');
+      const split = page.locator('.mmm-show-split:visible');
       await expect(split).toContainText('70% artist');
       await expect(split).toContainText('20% venue');
       await expect(split).toContainText('10% promoters');
@@ -532,7 +548,7 @@ test.describe('Music · Map · Me shell', () => {
       // state — which is the state EVERY member is in today, and the one that
       // used to skip the notice entirely because it lived inside the purchase
       // form. Asserting it here is asserting it in the state real users see.
-      await expect(page.locator('.ticket-final-notice')).toContainText(/all ticket sales are final/i);
+      await expect(page.locator('.ticket-final-notice:visible')).toContainText(/all ticket sales are final/i);
     });
 
     test('a dead show link keeps the member inside the shell', async ({ page }) => {
@@ -545,7 +561,7 @@ test.describe('Music · Map · Me shell', () => {
       // Exactly one shell. Two means the page threw `notFound()` after the
       // async layout had flushed, which streams a second copy of the whole
       // chain — two maps, two players, two sets of tiles fetched.
-      await expect(page.locator('.mmm-frame')).toHaveCount(1);
+      await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
     });
   });
 
@@ -555,13 +571,13 @@ test.describe('Music · Map · Me shell', () => {
   // the pair of buttons that left MMM.
   test('My Tickets renders in ME rather than linking out to the legacy shell', async ({ page }) => {
     await page.goto('/app/me');
-    const drawer = page.locator('.mmm-me-accordion').filter({
+    const drawer = page.locator('.mmm-me-accordion:visible').filter({
       has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
     });
     await drawer.click();
     await expect(drawer).toHaveAttribute('aria-expanded', 'true');
 
-    const body = page.locator('.mmm-me-section', { has: drawer }).locator('.mmm-me-accordion-body');
+    const body = page.locator('.mmm-me-section:visible', { has: drawer }).locator('.mmm-me-accordion-body:visible');
     // Either real ticket rows, or the empty note — never a way out of the shell.
     await expect(body.getByRole('link', { name: /My tickets|Browse shows/ })).toHaveCount(0);
     await expect(body.locator('.mmm-ticket-list, .mmm-me-note')).not.toHaveCount(0);
