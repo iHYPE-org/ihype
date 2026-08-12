@@ -25,6 +25,28 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 
 ## Payment and ticket rehearsal
 
+> **None of this has ever executed.** Live mode holds zero PaymentIntents, zero
+> connected accounts and zero balance — nothing has ever been sold. The payout
+> code was *rewritten* after a severe routing bug (the old version sent the
+> whole charge to one Connect account instead of splitting 70/20/10), and the
+> replacement — separate charges and transfers, one `stripe.transfers.create()`
+> per `AccountsPayableEntry` — has never run against Stripe at all. An alpha's
+> first ticket sale would be its first execution. Treat this section as
+> blocking, not as a formality.
+>
+> **Step 0, before any of the below:** `STRIPE_SECRET_KEY=sk_test_… npm run
+> stripe:rehearsal`. It refuses any key that is not `sk_test_`, and it
+> rehearses the Stripe-side semantics the app depends on: full capture to the
+> platform balance with no `transfer_data`, three transfers summing exactly
+> with the last absorbing the remainder, per-entry transfer idempotency, full
+> refund, and partial capture plus hold release for ad settlement.
+>
+> It has **no database**, so it cannot exercise `triggerShowPayouts()`'s own
+> state transitions (PENDING → RELEASED, the `stripeTransferId` write, the
+> refund path that voids still-PENDING entries). Those need a staging database
+> with a real ended show. Do both before the doors open; the rehearsal alone is
+> not sufficient evidence.
+
 - Complete a successful Stripe sandbox purchase.
 - Confirm the order is captured and the expected tickets exist.
 - Confirm ticket email delivery and its Resend delivery event.

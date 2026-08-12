@@ -263,17 +263,17 @@ export default async function StatusPage() {
           <p className="meta" style={{ marginBottom: 12 }}>{t('statusPage.topBucketsPrefix', 'Top')} {rateLimitMetrics.length} {t('statusPage.topBucketsSuffix', 'buckets by request count.')}</p>
           <div style={{ overflowX: 'auto' }}>
             <div className="panel" style={{ borderRadius: 14, overflow: 'hidden', padding: 0 }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: 12 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: '0.75rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--line-2)', color: 'var(--ink-3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
-                    <th style={{ textAlign: 'left', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>{t('statusPage.bucketKey', 'Bucket key')}</th>
-                    <th style={{ textAlign: 'right', padding: '12px 18px', fontWeight: 600, fontSize: 10 }}>{t('statusPage.hits', 'Hits')}</th>
+                    <th style={{ textAlign: 'left', padding: '12px 18px', fontWeight: 600, fontSize: '0.625rem' }}>{t('statusPage.bucketKey', 'Bucket key')}</th>
+                    <th style={{ textAlign: 'right', padding: '12px 18px', fontWeight: 600, fontSize: '0.625rem' }}>{t('statusPage.hits', 'Hits')}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rateLimitMetrics.map((m) => (
                     <tr key={m.bucket} style={{ borderBottom: '1px solid var(--line)' }}>
-                      <td style={{ padding: '12px 18px', color: 'var(--ink)', fontFamily: 'monospace', fontSize: 11 }}>{m.bucket}</td>
+                      <td style={{ padding: '12px 18px', color: 'var(--ink)', fontFamily: 'monospace', fontSize: '0.6875rem' }}>{m.bucket}</td>
                       <td style={{ padding: '12px 18px', textAlign: 'right', color: m.hits > 100 ? 'var(--accent-2)' : 'var(--ink)' }}>{m.hits}</td>
                     </tr>
                   ))}

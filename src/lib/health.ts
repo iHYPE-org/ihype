@@ -40,7 +40,6 @@ export async function getHealthSnapshot() {
       discoverableArtistCount,
       discoverableVenueCount,
       upcomingEventCount,
-      scheduledRadioShowCount,
     ] =
       await Promise.all([
         db.user.count(),
@@ -67,7 +66,6 @@ export async function getHealthSnapshot() {
         db.profile.count({ where: { type: 'ARTIST', discoverable: true } }),
         db.profile.count({ where: { type: 'VENUE', discoverable: true } }),
         db.show.count({ where: { isRadioShow: false, status: 'SCHEDULED', startsAt: { gte: now } } }),
-        db.show.count({ where: { isRadioShow: true, status: { in: ['SCHEDULED', 'LIVE'] } } }),
       ]);
 
     const [
@@ -134,7 +132,6 @@ export async function getHealthSnapshot() {
       discoverableArtists: discoverableArtistCount,
       discoverableVenues: discoverableVenueCount,
       upcomingEvents: upcomingEventCount,
-      scheduledRadioShows: scheduledRadioShowCount,
       inviteOnlySignup,
       restoreDrillReady: restoreDrill.ready,
       launchBlockers,
@@ -199,7 +196,6 @@ export async function getHealthSnapshot() {
           discoverableArtists: discoverableArtistCount,
           discoverableVenues: discoverableVenueCount,
           upcomingEvents: upcomingEventCount,
-          scheduledRadioShows: scheduledRadioShowCount,
         },
       },
       warnings: process.env.NODE_ENV === 'production'

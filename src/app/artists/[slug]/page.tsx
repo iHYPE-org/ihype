@@ -120,7 +120,7 @@ export default async function ArtistPage({
               // eslint-disable-next-line @next/next/no-img-element
               <img alt={profile.name} src={profile.avatarImage} fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 32 }}>{profile.name.charAt(0)}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '2rem' }}>{profile.name.charAt(0)}</span>
             )}
           </div>
           <div className="artist-hero-info" style={{ flex: 1 }}>
@@ -169,22 +169,22 @@ export default async function ArtistPage({
             <p className="artist-about-text">{profile.aboutContent || profile.bio || t('artistsSlugPage.noAbout', 'This artist has not filled out the About section yet.')}</p>
             <PinnedStatTiles accent="var(--profile-accent, var(--accent))" stats={pinnedStats} />
             <div className="artist-split-card">
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('artistsSlugPage.charterSplit', 'Charter Split · Every ticket')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>{t('artistsSlugPage.charterSplit', 'Charter Split · Every ticket')}</div>
               <div className="artist-split-bar">
                 <div className="artist-split-seg" style={{ flex: 7, background: 'rgba(var(--accent-rgb),.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent)' }}>70%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>{t('artistsSlugPage.splitArtist', 'Artist')}</div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--accent)' }}>70%</div>
+                  <div style={{ fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent)', marginTop: 4 }}>{t('artistsSlugPage.splitArtist', 'Artist')}</div>
                 </div>
                 <div className="artist-split-seg" style={{ flex: 2, background: 'rgba(var(--role-venue-rgb),.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--role-venue)' }}>20%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue)', marginTop: 4 }}>{t('artistsSlugPage.splitVenue', 'Venue')}</div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--role-venue)' }}>20%</div>
+                  <div style={{ fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--role-venue)', marginTop: 4 }}>{t('artistsSlugPage.splitVenue', 'Venue')}</div>
                 </div>
                 <div className="artist-split-seg" style={{ flex: 1, background: 'rgba(var(--accent-2-rgb),.15)' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--accent-2)' }}>10%</div>
-                  <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent-2)', marginTop: 4 }}>{t('artistsSlugPage.splitPromoters', 'Promoters')}</div>
+                  <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--accent-2)' }}>10%</div>
+                  <div style={{ fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--accent-2)', marginTop: 4 }}>{t('artistsSlugPage.splitPromoters', 'Promoters')}</div>
                 </div>
               </div>
-              <p style={{ fontSize: 12, color: 'var(--ink-a55)', marginTop: 12 }}>{t('artistsSlugPage.zeroFeeCharter', 'iHYPE takes 0% · locked in the charter')}</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)', marginTop: 12 }}>{t('artistsSlugPage.zeroFeeCharter', 'iHYPE takes 0% · locked in the charter')}</p>
             </div>
             <SimilarArtistsRow accent="var(--profile-hero, linear-gradient(135deg,var(--accent),var(--role-fan)))" artists={similarArtists} />
           </div>
@@ -227,7 +227,7 @@ export default async function ArtistPage({
                     </div>
                     <div style={{ flexShrink: 0 }}>
                       <div className="artist-show-price">{show.isTicketed && show.ticketPriceCents ? `$${(show.ticketPriceCents / 100).toFixed(0)}` : t('artistsSlugPage.free', 'Free')}</div>
-                      <div style={{ fontSize: 11, fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--ink-a50)', textAlign: 'right' }}>{t('artistsSlugPage.zeroFees', '$0 fees')}</div>
+                      <div style={{ fontSize: '0.6875rem', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', color: 'var(--ink-a50)', textAlign: 'right' }}>{t('artistsSlugPage.zeroFees', '$0 fees')}</div>
                     </div>
                   </Link>
                 );

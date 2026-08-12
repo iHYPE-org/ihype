@@ -57,7 +57,7 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
     gap: 7,
     padding: '10px 18px',
     borderRadius: 9,
-    fontSize: 13,
+    fontSize: '0.8125rem',
     fontWeight: 700,
     whiteSpace: 'nowrap' as const,
     flexShrink: 0,
@@ -66,7 +66,7 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
     width: '100%',
     padding: '7px 10px',
     borderRadius: 7,
-    fontSize: 11,
+    fontSize: '0.6875rem',
     fontFamily: 'var(--font-mono)',
     letterSpacing: '.06em',
     // The label is "+ Follow" or "✓ Following · 128". Left to wrap it makes

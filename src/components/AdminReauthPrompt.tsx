@@ -54,7 +54,7 @@ export function AdminReauthPrompt({
         background: 'var(--hair-40)'
       }}
     >
-      <strong style={{ fontSize: 14 }}>{t('adminReauthPrompt.title', "Confirm it's you")}</strong>
+      <strong style={{ fontSize: '0.875rem' }}>{t('adminReauthPrompt.title', "Confirm it's you")}</strong>
       <small style={{ opacity: 0.75 }}>
         {t('adminReauthPrompt.description', 'This admin action needs a recent passkey check. Verify once, then the action retries automatically.')}
       </small>

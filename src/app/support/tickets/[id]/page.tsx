@@ -65,7 +65,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         href="/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
-          fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)',
+          fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)',
           textDecoration: 'none', marginBottom: 18,
         }}
       >
@@ -76,12 +76,12 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
       </Link>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 22, letterSpacing: '-.02em', margin: 0, color: 'var(--ink)' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', margin: 0, color: 'var(--ink)' }}>
           {ticket.subject}
         </h1>
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)',
-          fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(ticket.status),
+          fontSize: '0.625rem', letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(ticket.status),
           border: `1px solid ${statusColor(ticket.status)}`, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap',
         }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor(ticket.status), display: 'inline-block' }} />
@@ -89,7 +89,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         </span>
       </div>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase',
+        fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', letterSpacing: '.1em', textTransform: 'uppercase',
         color: 'var(--ink-a50)', marginBottom: 28,
       }}>
         {ticket.type} · {ticket.priority} {t('supportTicketsIdPage.priorityLabel', 'priority')} · {t('supportTicketsIdPage.openedLabel', 'Opened')} {fmtDateTime(ticket.createdAt)}
@@ -99,7 +99,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--bg2)',
         padding: '16px 18px', marginBottom: 20,
       }}>
-        <p style={{ fontSize: 13.5, color: 'var(--ink-a85)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+        <p style={{ fontSize: '0.8438rem', color: 'var(--ink-a85)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
           {ticket.details}
         </p>
       </div>
@@ -108,7 +108,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         padding: '12px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--bg2)',
         border: '1px solid var(--line)',
       }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, color: 'var(--ink-a50)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', color: 'var(--ink-a50)' }}>
           {t('supportTicketsIdPage.lastUpdated', 'Last updated')} {fmtDateTime(ticket.updatedAt)}. {t('supportTicketsIdPage.replyWithin24h', 'We reply within 24h.')}
         </div>
       </div>

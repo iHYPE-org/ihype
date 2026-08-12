@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
+import { PermissionPrimerSheet, usePermissionPrimer } from '@/components/PermissionPrimerSheet';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { describeSelection, stripDays, toDatesParam, toggleDay } from '@/lib/map-dates';
 import {
@@ -232,24 +233,59 @@ export function MmmMap({
     return () => window.clearTimeout(timer);
   }, [active, cameraTick, load]);
 
-  // "Near me". The design asks for the browser's position ONCE, on load, and
-  // never blocks on it: "the layer works from the seeded home until (and
-  // unless) the browser answers". A denial or a timeout is not an error state
-  // — the control stays, it just recentres on the seeded camera instead.
+  // "Near me". The layer works from the seeded home until (and unless) the
+  // browser answers, and a denial or a timeout is not an error state — the
+  // control stays, it just recentres on the seeded camera instead.
+  //
+  // It NO LONGER asks on mount. `getCurrentPosition` is the OS prompt on a
+  // phone, and firing it the instant the map appears spends the one prompt an
+  // install gets before the member has any idea what it buys them. The primer
+  // sheet asks first, in our own words, and only an accept reaches the
+  // browser. Declining is remembered and never re-asked.
   const [home, setHome] = useState<[number, number] | null>(null);
   const flownHome = useRef(false);
-  useEffect(() => {
+  const [geolocationSettled, setGeolocationSettled] = useState(false);
+  const locationPrimer = usePermissionPrimer('location', geolocationSettled);
+
+  const requestPosition = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-    let cancelled = false;
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        if (!cancelled) setHome([position.coords.longitude, position.coords.latitude]);
-      },
-      () => {},
+      (position) => setHome([position.coords.longitude, position.coords.latitude]),
+      () => setGeolocationSettled(true),
       { timeout: 6000, maximumAge: 600000 },
     );
-    return () => { cancelled = true; };
   }, []);
+
+  // If the OS already has an answer from a previous session, skip our sheet
+  // and use it — asking again would be theatre. `permissions.query` is not
+  // universal, so its absence simply leaves the primer in charge.
+  useEffect(() => {
+    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
+    let cancelled = false;
+    navigator.permissions.query({ name: 'geolocation' as PermissionName })
+      .then((status) => {
+        if (cancelled || status.state === 'prompt') return;
+        setGeolocationSettled(true);
+        if (status.state === 'granted') requestPosition();
+      })
+      .catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [requestPosition]);
+
+  // NOT asked on arrival, and this is a deliberate departure from the
+  // permissions template's "Fires on first Map open".
+  //
+  // That line assumes the map is somewhere you navigate TO. Here it is
+  // `WORKBENCH_PATH`: `/` and every sign-in resolve to `/app/map`, so the first
+  // Map open IS the launch — and MOBILE.md's rule is that a capability is asked
+  // for "at the moment of use and never on launch". Auto-opening put a sheet
+  // with a scrim over the whole shell before the member had touched anything,
+  // covering the arc nav; the e2e that proves the map survives a module change
+  // caught it by being unable to reach the navigation at all.
+  //
+  // So the ask belongs to "Near me", which is the moment of use and an explicit
+  // request. Until then the map works from the seeded camera, which is the same
+  // thing it does when location is refused.
 
   const recentre = useCallback(() => {
     const map = mapRef.current;
@@ -344,6 +380,16 @@ export function MmmMap({
       <div className="mmm-map-canvas" ref={containerRef} />
       <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
 
+      {/* Accepting reaches the browser; declining does not, and is remembered.
+          Either way the map is already drawn on the seeded camera behind this
+          sheet — the design's "no empty state" for a refusal. */}
+      <PermissionPrimerSheet
+        id="location"
+        onAccept={() => { locationPrimer.close(); requestPosition(); }}
+        onDecline={() => { locationPrimer.close(); setGeolocationSettled(true); }}
+        open={locationPrimer.open}
+      />
+
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />
       ))}
@@ -386,7 +432,16 @@ export function MmmMap({
                       ? `${total} artist${total === 1 ? '' : 's'} here`
                       : 'None in view — zoom out'}
                   </span>
-                  <button className="mmm-map-recentre" onClick={recentre} type="button">
+                  {/* Tapping this IS a request for the capability, so it opens
+                      the primer if it has never been shown. It does NOT reopen
+                      for someone who already declined — `ask()` returns false
+                      there and the camera falls back to the seeded city, which
+                      is the designed refusal path rather than a dead button. */}
+                  <button
+                    className="mmm-map-recentre"
+                    onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}
+                    type="button"
+                  >
                     Near me
                   </button>
                 </div>
@@ -403,42 +458,50 @@ export function MmmMap({
                 venues={venues}
               />
             )}
+            {/* The date strip belongs to the events layer alone: only an event has
+                a date. Venues and artists keep the chips above and nothing else,
+                which is also why the API is not sent a `dates` param for them.
+
+                It must stay INSIDE `.mmm-map-controls`. That container is
+                `position: absolute` and a flex column — the row gap is what
+                separates the chips from whatever is under them. As a sibling it
+                sat in normal flow at the top of `.mmm-map-layer`, i.e. directly
+                beneath the absolutely-positioned chips, and the two painted on
+                top of each other on a real phone: EVENTS over WED, VENUES over
+                THU. Reported from an iPhone, not caught by any test. */}
+            {layer === 'events' && (
+              <div className="mmm-date-block">
+                <div className="mmm-date-strip" role="group" aria-label="Filter by date">
+                  {days.map((day) => (
+                    <button
+                      aria-pressed={selectedDays.has(day.key)}
+                      className="mmm-date-pill"
+                      key={day.key}
+                      onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
+                      type="button"
+                    >
+                      <span className="mmm-date-dow">{day.weekday}</span>
+                      <span className="mmm-date-day">{day.day}</span>
+                      <span className="mmm-date-mon">{day.month}</span>
+                    </button>
+                  ))}
+                </div>
+                <div className="mmm-date-summary">
+                  <span className="mmm-date-label">Dates</span>
+                  <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
+                  {selectedDays.size > 0 && (
+                    <button
+                      className="mmm-date-clear"
+                      onClick={() => setSelectedDays(new Set())}
+                      type="button"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
-          {/* The date strip belongs to the events layer alone: only an event has
-              a date. Venues and artists keep the chips above and nothing else,
-              which is also why the API is not sent a `dates` param for them. */}
-          {layer === 'events' && (
-            <div className="mmm-date-block">
-              <div className="mmm-date-strip" role="group" aria-label="Filter by date">
-                {days.map((day) => (
-                  <button
-                    aria-pressed={selectedDays.has(day.key)}
-                    className="mmm-date-pill"
-                    key={day.key}
-                    onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
-                    type="button"
-                  >
-                    <span className="mmm-date-dow">{day.weekday}</span>
-                    <span className="mmm-date-day">{day.day}</span>
-                    <span className="mmm-date-mon">{day.month}</span>
-                  </button>
-                ))}
-              </div>
-              <div className="mmm-date-summary">
-                <span className="mmm-date-label">Dates</span>
-                <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
-                {selectedDays.size > 0 && (
-                  <button
-                    className="mmm-date-clear"
-                    onClick={() => setSelectedDays(new Set())}
-                    type="button"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
           {/* No standing result caption: the map's design source has none, and
               "tap a pin for their page" is an instruction the pins already
               give by being tappable. The two FAILURE lines stay — those say

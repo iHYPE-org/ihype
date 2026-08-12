@@ -60,6 +60,14 @@ export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_BASE_URL || 'https://ihype.org'
   ),
+  /**
+   * The manifest was never linked. `public/manifest.json` has existed for
+   * months, the service worker pre-caches it, and CI fetches it — but nothing
+   * ever DECLARED it, so no browser read it: not installable, and its name,
+   * icons and shortcuts never applied anywhere. The SW fetching a file is not
+   * the same as the document pointing at it.
+   */
+  manifest: '/manifest.json',
   other: {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'black-translucent',
@@ -71,6 +79,16 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  /**
+   * Both variants, because `viewportFit: 'cover'` plus a translucent status bar
+   * means the OS paints its own chrome behind the page and needs to know what
+   * colour it is sitting on. These are the two grounds from the brand
+   * constants — DS8's ink navy and its light counterpart — not new values.
+   */
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#f4f6fa' },
+    { media: '(prefers-color-scheme: dark)', color: '#0b1220' },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

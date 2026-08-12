@@ -56,7 +56,7 @@ export function MintInviteCodes() {
 
   return (
     <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.8125rem' }}>
         <span className="meta">How many</span>
         <input
           aria-label="Number of invite codes to mint"
@@ -69,7 +69,7 @@ export function MintInviteCodes() {
           value={count}
         />
       </label>
-      <button className="button" disabled={pending} onClick={mint} type="button" style={{ fontSize: 13 }}>
+      <button className="button" disabled={pending} onClick={mint} type="button" style={{ fontSize: '0.8125rem' }}>
         {pending ? 'Minting…' : `Mint ${count === 1 ? 'a code' : `${count} codes`}`}
       </button>
       {minted.length > 0 && (

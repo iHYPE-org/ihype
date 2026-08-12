@@ -132,7 +132,7 @@ export default async function CommunityPage() {
             </p>
           </div>
           <div className="community-card" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
-            <p style={{ margin: 0, fontSize: 13, color: 'var(--ink-a70)', maxWidth: '48ch' }}>
+            <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--ink-a70)', maxWidth: '48ch' }}>
               {t('communityPage.collabSub', "Drummers, vocalists, producers, venues, DJs — post a listing or browse what's open.")}
             </p>
             <Link className="ihype-btn-primary" href="/collab-board" style={{ flexShrink: 0, textDecoration: 'none', display: 'inline-flex', alignItems: 'center' }}>

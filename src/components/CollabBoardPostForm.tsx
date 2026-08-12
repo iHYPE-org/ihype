@@ -90,7 +90,7 @@ export function CollabBoardPostForm({ roles }: { roles: RoleOption[] }) {
         value={contact}
         onChange={(e) => setContact(e.target.value)}
       />
-      {error && <p style={{ fontSize: 13, color: 'var(--accent)', margin: 0 }}>{error}</p>}
+      {error && <p style={{ fontSize: '0.8125rem', color: 'var(--accent)', margin: 0 }}>{error}</p>}
       <div style={{ display: 'flex', gap: 10 }}>
         <button type="submit" className="ihype-btn-primary" disabled={submitting} style={{ flex: '0 0 auto', padding: '11px 22px' }}>
           {submitting ? t('collabBoardPostForm.posting', 'Posting…') : t('collabBoardPostForm.postListing', 'Post listing')}

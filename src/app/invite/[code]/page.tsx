@@ -38,18 +38,18 @@ export default async function InviteLandingPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: 480, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
-      <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
+      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
         {t('inviteCodePage.eyebrow', "You're invited")}
       </p>
-      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 32, color: 'var(--ink)', marginBottom: 8 }}>
+      <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', color: 'var(--ink)', marginBottom: 8 }}>
         {inviterName} {t('inviteCodePage.wantsYouOnIhype', 'wants you on iHYPE')}
       </h1>
       {profile?.headline ? (
-        <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-2)', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.875rem', color: 'var(--ink-2)', marginBottom: 24 }}>
           {profile.headline}
         </p>
       ) : (
-        <p style={{ fontFamily: 'var(--f-m)', fontSize: 14, color: 'var(--ink-2)', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.875rem', color: 'var(--ink-2)', marginBottom: 24 }}>
           {t('inviteCodePage.defaultTagline', 'Discover music, hype artists, grab tickets — all in one place.')}
         </p>
       )}
@@ -60,7 +60,7 @@ export default async function InviteLandingPage({ params }: Props) {
       >
         {t('inviteCodePage.joinFree', 'Join iHYPE free')}
       </Link>
-      <p style={{ fontFamily: 'var(--f-m)', fontSize: 12, color: 'var(--ink-3)' }}>
+      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-3)' }}>
         {t('inviteCodePage.alreadyHaveAccount', 'Already have an account?')}{' '}
         <Link href="/login" className="text-link">{t('inviteCodePage.signIn', 'Sign in')}</Link>
       </p>

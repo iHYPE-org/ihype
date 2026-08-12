@@ -69,20 +69,20 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
         <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed var(--hair-120)', background: 'var(--hair-15)' }}>
           <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-40)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
           <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>{t('eventsHome.ghostDateTime', 'Date · Time')}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>{t('eventsHome.ghostDateTime', 'Date · Time')}</div>
             <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a30)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('eventsHome.ghostNextShow', 'Your next show')}</div>
-            <div style={{ fontSize: 13, color: 'var(--ink-a22)' }}>{t('eventsHome.ghostVenueCity', 'Venue · City')}</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--ink-a22)' }}>{t('eventsHome.ghostVenueCity', 'Venue · City')}</div>
           </div>
           <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
             <div>
               <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(var(--accent-rgb),.35)', letterSpacing: '-.02em' }}>—</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
             </div>
             <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(var(--accent-rgb),.2)', color: 'rgba(var(--accent-rgb),.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
           </div>
         </div>
         <div style={{ ...emptyStyle, padding: '28px 24px' }}>
-          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '0 0 6px' }}>{emptyTitle}</h3>
+          <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a60)', margin: '0 0 6px' }}>{emptyTitle}</h3>
           <p style={{ margin: 0 }}>{emptyBody}</p>
         </div>
       </div>
@@ -96,7 +96,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
           <Link className="ev-card" href={`/shows/${show.slug}`} key={show.id} style={eventCard}>
             <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-50)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.15) 0%, transparent 100%)' }}>🎵</div>
             <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 {show.status === 'LIVE'
                   ? <span style={{ color: 'var(--accent)' }}>{t('eventsHome.liveNow', '● LIVE NOW')}</span>
                   : <span>{fmtDate(show.startsAt)}</span>}
@@ -105,12 +105,12 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
               <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                 {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
               </div>
-              <div style={{ fontSize: 13, color: 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
                 {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
               </div>
               {show.reason?.text && (
-                <div style={{ fontSize: 11, color: 'var(--accent)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✨ {show.reason.text}</div>
+                <div style={{ fontSize: '0.6875rem', color: 'var(--accent)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✨ {show.reason.text}</div>
               )}
             </div>
             <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
@@ -118,7 +118,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
                 <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-.02em' }}>
                   {show.isTicketed ? formatCurrencyFromCents(show.ticketPriceCents) : t('eventsHome.free', 'Free')}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
               </div>
               <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'var(--accent)', color: 'var(--ink-on-accent)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
             </div>
@@ -255,14 +255,14 @@ export function EventsHome({
               autoFocus
               onChange={(e) => setQ(e.target.value)}
               placeholder={t('eventsHome.searchPlaceholder', 'Search artists, venues, shows…')}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: 16 }}
+              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}
               type="text"
               value={q}
             />
           </div>
           {!q.trim() ? (
             <div style={emptyStyle}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>{t('eventsHome.searchHeading', 'Search events')}</h3>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>{t('eventsHome.searchHeading', 'Search events')}</h3>
               <p>{t('eventsHome.searchBody', 'Find shows by artist, venue, or city.')}</p>
             </div>
           ) : (
@@ -275,12 +275,12 @@ export function EventsHome({
         shows === null ? <div style={emptyStyle}><p>{t('eventsHome.loadingEvents', 'Loading events…')}</p></div> : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a45)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a45)' }}>
                 {nearCity || nearRegion
                   ? `${t('eventsHome.nearLabel', 'NEAR')} ${(nearCity ?? nearRegion)!.toUpperCase()}`
                   : t('eventsHome.allCitiesLabel', 'ALL CITIES — SET YOUR HOMETOWN IN SETTINGS TO LOCALIZE')}
               </div>
-              <Link href="/shows/map" style={{ fontSize: 12.5, color: 'var(--ink-a60)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
+              <Link href="/shows/map" style={{ fontSize: '0.7812rem', color: 'var(--ink-a60)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
             </div>
             <EventList
               emptyBody={t('eventsHome.localEmptyBody', 'No shows in your city or region right now — check For You or Search instead.')}
@@ -305,8 +305,8 @@ export function EventsHome({
         <div className="sub-panel">
           {!loggedIn ? (
             <div style={emptyStyle}>
-              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>{t('eventsHome.signInHeading', 'Sign in to see your tickets')}</h3>
-              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
+              <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>{t('eventsHome.signInHeading', 'Sign in to see your tickets')}</h3>
+              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.8125rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
             </div>
           ) : (
             <>
@@ -319,7 +319,7 @@ export function EventsHome({
                       flex: 1, textAlign: 'center', padding: 12, borderRadius: 10, cursor: 'pointer',
                       border: `1px solid ${ticketView === v ? 'var(--accent)' : 'var(--hair-120)'}`,
                       background: ticketView === v ? 'rgba(var(--accent-rgb),.08)' : 'transparent',
-                      fontFamily: 'var(--font-display)', fontSize: 14, fontWeight: 800, color: 'var(--ink)',
+                      fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, color: 'var(--ink)',
                     }}
                   >
                     {v === 'active' ? t('eventsHome.ticketsActive', 'Active') : t('eventsHome.ticketsArchive', 'Archive')}
@@ -331,12 +331,12 @@ export function EventsHome({
                 <div style={emptyStyle}><p>{t('eventsHome.loadingTickets', 'Loading tickets…')}</p></div>
               ) : ticketOrders.length === 0 ? (
                 <div style={emptyStyle}>
-                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>
+                  <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a60)', margin: '14px 0 6px' }}>
                     {ticketView === 'archive' ? t('eventsHome.noPastTickets', 'No past tickets yet') : t('eventsHome.noTickets', 'No tickets yet')}
                   </h3>
                   <p>{ticketView === 'archive' ? t('eventsHome.archiveEmptyBody', "Shows you've attended or cancelled tickets land here.") : t('eventsHome.activeEmptyBody', 'Tickets you buy show up here with a QR for entry.')}</p>
                   {ticketView === 'active' && (
-                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: 13, background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
+                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.8125rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
                   )}
                 </div>
               ) : (
@@ -348,13 +348,13 @@ export function EventsHome({
                     const unitPriceCents = order.quantity > 0 ? Math.round((order.totalChargeCents || order.subtotalCents) / order.quantity) : (order.totalChargeCents || order.subtotalCents);
                     return (
                       <div key={order.id} style={{ border: '1px solid var(--hair-80)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 9, letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : 'var(--role-venue)', marginBottom: 6 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : 'var(--role-venue)', marginBottom: 6 }}>
                           ● {order.status === 'VOID' ? t('eventsHome.statusCancelled', 'CANCELLED') : ticketView === 'archive' ? t('eventsHome.statusUsed', 'USED') : t('eventsHome.statusValid', 'VALID')} · {formatCurrencyFromCents(unitPriceCents)} {t('eventsHome.faceValue', 'FACE VALUE')}
                         </div>
                         <Link href={`/shows/${order.show.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3 }}>{order.show.title}</div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3 }}>{order.show.title}</div>
                         </Link>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 14 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 14 }}>
                           {dateStr} · {timeStr}
                         </div>
                         {ticketView === 'active' && order.status !== 'VOID' && (

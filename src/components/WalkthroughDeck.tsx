@@ -147,7 +147,7 @@ function SplitBar({ total }: { total?: number }) {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', marginTop: 10 }}>
         {SPLIT.map(s => (
-          <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: 13, color: 'var(--ink-2)' }}>
+          <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: '0.8125rem', color: 'var(--ink-2)' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: 'inline-block' }} />
             {s.label}
             <b style={{ color: 'var(--ink)', fontWeight: 700 }}>{total != null ? money(s.pct) : `${s.pct}%`}</b>
@@ -213,7 +213,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       boxShadow: '0 32px 80px rgba(0,0,0,.5)',
     }}>
       <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.625rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
           iHYPE · {t('walkthroughDeck.admit', 'admit')} {admits}
         </div>
         <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--ink-on-accent)', letterSpacing: '-0.02em', marginTop: 6, lineHeight: 1.1 }}>{artist}</div>
@@ -235,7 +235,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
 // ─── Shared slide-level helpers ───────────────────────────────────────────────
 
 function Kick({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontFamily: 'var(--f-m)', fontSize: 17, letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--accent)' }}>{children}</div>;
+  return <div style={{ fontFamily: 'var(--f-m)', fontSize: '1.0625rem', letterSpacing: '.2em', textTransform: 'uppercase', color: 'var(--accent)' }}>{children}</div>;
 }
 
 function H({ children, size = 64, style }: { children: React.ReactNode; size?: number; style?: React.CSSProperties }) {
@@ -259,7 +259,7 @@ function StepCard({ children, style }: { children: React.ReactNode; style?: Reac
 }
 
 function Num({ children }: { children: React.ReactNode }) {
-  return <div style={{ fontFamily: 'var(--f-m)', fontSize: 15, letterSpacing: '.14em', color: 'var(--ink-3)' }}>{children}</div>;
+  return <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', letterSpacing: '.14em', color: 'var(--ink-3)' }}>{children}</div>;
 }
 
 // ─── Slides ───────────────────────────────────────────────────────────────────
@@ -280,8 +280,8 @@ function Slide01Cover() {
       <div style={{ position: 'relative' }}><Logo size="lg" /></div>
       <div style={{ position: 'relative' }}>
         <Kick>{t('walkthroughDeck.slide01Kick', 'Product walkthrough')}</Kick>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '22px 0 0', fontSize: 92 }}>{t('walkthroughDeck.slide01TitleLine1', 'One loop.')}<br />{t('walkthroughDeck.slide01TitleLine2', 'Four roles.')}<br />{t('walkthroughDeck.slide01TitleLine3', 'Zero fees.')}</h1>
-        <Body style={{ fontSize: 23, maxWidth: '60ch', marginTop: 26 }}>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '22px 0 0', fontSize: '5.75rem' }}>{t('walkthroughDeck.slide01TitleLine1', 'One loop.')}<br />{t('walkthroughDeck.slide01TitleLine2', 'Four roles.')}<br />{t('walkthroughDeck.slide01TitleLine3', 'Zero fees.')}</h1>
+        <Body style={{ fontSize: '1.4375rem', maxWidth: '60ch', marginTop: 26 }}>
           {t('walkthroughDeck.slide01Body', 'How a single hype turns into a booked show, a sold ticket, a paid artist, and a fan who got in early — with iHYPE taking nothing.')}
         </Body>
       </div>
@@ -297,16 +297,16 @@ function Slide02Problem() {
       <H size={60} style={{ maxWidth: '20ch', marginTop: 26 }}>{t('walkthroughDeck.slide02Title', 'The middle takes the most.')}</H>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, marginTop: 48 }}>
         <StepCard>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: 'var(--accent)', lineHeight: .95 }}>27%</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card1', 'Ticketmaster fees on top of face value.')}</Body>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '3.25rem', letterSpacing: '-.04em', color: 'var(--accent)', lineHeight: .95 }}>27%</div>
+          <Body style={{ marginTop: 10, fontSize: '1.0625rem' }}>{t('walkthroughDeck.slide02Card1', 'Ticketmaster fees on top of face value.')}</Body>
         </StepCard>
         <StepCard>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: 'var(--role-fan)', lineHeight: .95 }}>$0.003</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card2', 'Spotify per stream to the artist.')}</Body>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '3.25rem', letterSpacing: '-.04em', color: 'var(--role-fan)', lineHeight: .95 }}>$0.003</div>
+          <Body style={{ marginTop: 10, fontSize: '1.0625rem' }}>{t('walkthroughDeck.slide02Card2', 'Spotify per stream to the artist.')}</Body>
         </StepCard>
         <StepCard>
-          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 52, letterSpacing: '-.04em', color: 'var(--role-venue)', lineHeight: .95 }}>0</div>
-          <Body style={{ marginTop: 10, fontSize: 17 }}>{t('walkthroughDeck.slide02Card3', 'Transparency into where your money goes.')}</Body>
+          <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '3.25rem', letterSpacing: '-.04em', color: 'var(--role-venue)', lineHeight: .95 }}>0</div>
+          <Body style={{ marginTop: 10, fontSize: '1.0625rem' }}>{t('walkthroughDeck.slide02Card3', 'Transparency into where your money goes.')}</Body>
         </StepCard>
       </div>
     </section>
@@ -330,12 +330,12 @@ function Slide03Loop() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         {roles.map((r, i) => (
           <React.Fragment key={r.key}>
-            <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, color: r.color }}>{r.label}</span>
-            {i < roles.length - 1 && <span style={{ color: 'var(--ink-3)', fontSize: 24 }}>→</span>}
+            <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.375rem', color: r.color }}>{r.label}</span>
+            {i < roles.length - 1 && <span style={{ color: 'var(--ink-3)', fontSize: '1.5rem' }}>→</span>}
           </React.Fragment>
         ))}
       </div>
-      <Body style={{ fontSize: 20, marginTop: 40, maxWidth: '62ch' }}>
+      <Body style={{ fontSize: '1.25rem', marginTop: 40, maxWidth: '62ch' }}>
         {t('walkthroughDeck.slide03Body', 'The next slides walk one show through the whole loop — Midnight Echo at The Echo.')}
       </Body>
     </section>
@@ -348,12 +348,12 @@ function Slide04Hype() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Num>{t('walkthroughDeck.slide04Num', '01 / 06 · FAN')}</Num>
       <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide04Title', 'A fan hypes a track.')}</H>
-      <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
+      <Body style={{ fontSize: '1.3125rem', maxWidth: '58ch', marginTop: 22 }}>
         {t('walkthroughDeck.slide04Body', "In Seeds, swiping right on Midnight Echo spends one of five weekly hypes. Hype is scarce, so it's a real signal — not a free like.")}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 14, alignItems: 'center' }}>
         <HypeButton initialCount={1284} initiallyHyped={true} />
-        <Body style={{ fontSize: 18 }}>{t('walkthroughDeck.slide04Caption', 'scarce by design · 5 per week')}</Body>
+        <Body style={{ fontSize: '1.125rem' }}>{t('walkthroughDeck.slide04Caption', 'scarce by design · 5 per week')}</Body>
       </div>
     </section>
   );
@@ -365,7 +365,7 @@ function Slide05Demand() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Num>{t('walkthroughDeck.slide05Num', '02 / 06 · VENUE')}</Num>
       <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide05Title', 'Demand radar lights up.')}</H>
-      <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
+      <Body style={{ fontSize: '1.3125rem', maxWidth: '58ch', marginTop: 22 }}>
         {t('walkthroughDeck.slide05Body', "Aggregated local hype tells The Echo who's about to pop — so they book the room before the rest of the city catches on.")}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 16 }}>
@@ -382,7 +382,7 @@ function Slide06Booking() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Num>{t('walkthroughDeck.slide06Num', '03 / 06 · ARTIST')}</Num>
       <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide06Title', 'The offer becomes a show.')}</H>
-      <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
+      <Body style={{ fontSize: '1.3125rem', maxWidth: '58ch', marginTop: 22 }}>
         {t('walkthroughDeck.slide06Body', "The venue sends a booking offer; it lands in the artist's inbox. One tap to accept turns it into a live, on-sale show.")}
       </Body>
       <div style={{ marginTop: 40, maxWidth: 560 }}>
@@ -399,7 +399,7 @@ function Slide07Ticket() {
       <div style={{ flex: 1 }}>
         <Num>{t('walkthroughDeck.slide07Num', '04 / 06 · FAN')}</Num>
         <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide07Title', 'A ticket, at face value.')}</H>
-        <Body style={{ fontSize: 21, maxWidth: '46ch', marginTop: 22 }}>
+        <Body style={{ fontSize: '1.3125rem', maxWidth: '46ch', marginTop: 22 }}>
           {t('walkthroughDeck.slide07Body', '$18 is $18. Zero service fees. And every buyer can see exactly where their money goes — 70% artist, 20% venue, 10% promoter.')}
         </Body>
         <div style={{ marginTop: 34, maxWidth: 420 }}>
@@ -417,7 +417,7 @@ function Slide08Referral() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Num>{t('walkthroughDeck.slide08Num', '05 / 06 · PROMOTER')}</Num>
       <H size={64} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide08Title', 'Sharing pays the fan back.')}</H>
-      <Body style={{ fontSize: 21, maxWidth: '58ch', marginTop: 22 }}>
+      <Body style={{ fontSize: '1.3125rem', maxWidth: '58ch', marginTop: 22 }}>
         {t('walkthroughDeck.slide08Body', 'Any fan who shares their link earns the 10% promoter cut on every ticket it sells. Fans become the marketing — and get paid for it.')}
       </Body>
       <div style={{ marginTop: 40, display: 'flex', gap: 16 }}>
@@ -434,7 +434,7 @@ function Slide09Payout() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Num>{t('walkthroughDeck.slide09Num', '06 / 06 · EVERYONE')}</Num>
       <H size={60} style={{ marginTop: 18 }}>{t('walkthroughDeck.slide09Title', 'Paid out. Then the doors open.')}</H>
-      <Body style={{ fontSize: 21, maxWidth: '60ch', marginTop: 22 }}>
+      <Body style={{ fontSize: '1.3125rem', maxWidth: '60ch', marginTop: 22 }}>
         {t('walkthroughDeck.slide09Body', 'Payouts hit automatically — artist and fan see the same receipt. On the night, show-night mode checks fans in, counts live crowd hype, and surfaces the QR at the door.')}
       </Body>
       <div style={{ display: 'flex', gap: 16, marginTop: 40 }}>
@@ -463,8 +463,8 @@ function Slide10Surfaces() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
         {surfaces.map(s => (
           <StepCard key={s.key} style={{ padding: 26 }}>
-            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 22, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95 }}>{s.title}</div>
-            <Body style={{ fontSize: 16, marginTop: 8 }}>{s.body}</Body>
+            <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95 }}>{s.title}</div>
+            <Body style={{ fontSize: '1rem', marginTop: 8 }}>{s.body}</Body>
           </StepCard>
         ))}
       </div>
@@ -476,10 +476,10 @@ function Slide11Quote() {
   const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: 'linear-gradient(135deg,var(--accent),var(--accent-2) 55%,var(--role-fan))', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
-      <div style={{ fontFamily: 'var(--f-s)', fontSize: 62, lineHeight: 1.18, color: 'var(--ink-on-accent)', maxWidth: '24ch' }}>
+      <div style={{ fontFamily: 'var(--f-s)', fontSize: '3.875rem', lineHeight: 1.18, color: 'var(--ink-on-accent)', maxWidth: '24ch' }}>
         &ldquo;{t('walkthroughDeck.slide11Quote', '70% to the artist, 20% to the venue, 10% to whoever brought the fan. iHYPE takes nothing.')}&rdquo;
       </div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: 18, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.8)', marginTop: 40 }}>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '1.125rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.8)', marginTop: 40 }}>
         {t('walkthroughDeck.slide11Caption', 'Locked in the charter')}
       </div>
     </section>
@@ -492,10 +492,10 @@ function Slide12Close() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,var(--accent),var(--accent-2),var(--role-fan))' }} />
       <Logo size="lg" gradient />
-      <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '32px 0 0', fontSize: 80 }}>
+      <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '32px 0 0', fontSize: '5rem' }}>
         {t('walkthroughDeck.slide12TitleLine1', 'For the scene,')}<br />{t('walkthroughDeck.slide12TitleLine2', 'not the algorithm.')}
       </h2>
-      <Body style={{ fontSize: 22, marginTop: 24 }}>ihype.org</Body>
+      <Body style={{ fontSize: '1.375rem', marginTop: 24 }}>ihype.org</Body>
     </section>
   );
 }

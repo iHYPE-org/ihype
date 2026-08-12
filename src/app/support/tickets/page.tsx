@@ -55,7 +55,7 @@ export default async function SupportTicketsPage() {
         href="/support"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
-          fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)',
+          fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)',
           textDecoration: 'none', marginBottom: 18,
         }}
       >
@@ -66,16 +66,16 @@ export default async function SupportTicketsPage() {
       </Link>
 
       <span style={{
-        display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase',
+        display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase',
         letterSpacing: '.14em', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.3)',
         background: 'rgba(var(--role-venue-rgb),.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
       }}>
         {tr('supportTicketsPage.badge', 'Support')}
       </span>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 32, fontWeight: 800, letterSpacing: '-.02em', margin: '18px 0 8px', color: 'var(--ink)' }}>
+      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800, letterSpacing: '-.02em', margin: '18px 0 8px', color: 'var(--ink)' }}>
         {tr('supportTicketsPage.title', 'My tickets')}
       </h1>
-      <p style={{ fontSize: 14, color: 'var(--ink-a65)', marginBottom: 32 }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', marginBottom: 32 }}>
         {tr('supportTicketsPage.intro', "Every support request you've sent us, and where it stands.")}
       </p>
 
@@ -84,7 +84,7 @@ export default async function SupportTicketsPage() {
       {tickets.length === 0 ? (
         <div style={{
           border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', background: 'var(--bg2)',
-          padding: '30px 24px', textAlign: 'center', color: 'var(--ink-a65)', fontSize: 13.5,
+          padding: '30px 24px', textAlign: 'center', color: 'var(--ink-a65)', fontSize: '0.8438rem',
         }}>
           {tr('supportTicketsPage.emptyState', "You haven't sent us anything yet.")}{' '}
           <Link href="/support" style={{ color: 'var(--role-venue)' }}>{tr('supportTicketsPage.contactSupport', 'Contact support')}</Link>.
@@ -101,19 +101,19 @@ export default async function SupportTicketsPage() {
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, marginBottom: 6 }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 15, letterSpacing: '-.01em', color: 'var(--ink)' }}>
+                <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', letterSpacing: '-.01em', color: 'var(--ink)' }}>
                   {t.subject}
                 </div>
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)',
-                  fontSize: 10, letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(t.status),
+                  fontSize: '0.625rem', letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(t.status),
                   border: `1px solid ${statusColor(t.status)}`, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap',
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor(t.status), display: 'inline-block' }} />
                   {t.status}
                 </span>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a50)' }}>
                 {t.type} · {t.priority} {tr('supportTicketsPage.priorityLabel', 'priority')} · {tr('supportTicketsPage.openedLabel', 'Opened')} {fmtDate(t.createdAt)}
               </div>
             </Link>

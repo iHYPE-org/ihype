@@ -109,7 +109,7 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
                 background: 'var(--hair-40)',
                 color: 'var(--ink-a50)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: 11,
+                fontSize: '0.6875rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }
@@ -138,13 +138,13 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
           >
             {status === 'done' ? (
               <>
-                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>{t('reportButton.receivedTitle', 'Report received')}</h2>
+                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginTop: 0 }}>{t('reportButton.receivedTitle', 'Report received')}</h2>
                 <p className="meta">{t('reportButton.receivedBody', 'Thanks — our team will review this {noun}.').replace('{noun}', noun)}</p>
                 <button className="button small secondary" onClick={close} type="button">{t('reportButton.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 800, marginTop: 0 }}>{t('reportButton.dialogTitle', 'Report this {noun}').replace('{noun}', noun)}</h2>
+                <h2 id={titleId} style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginTop: 0 }}>{t('reportButton.dialogTitle', 'Report this {noun}').replace('{noun}', noun)}</h2>
                 <p className="meta" style={{ marginBottom: 16 }}>{t('reportButton.dialogIntro', "Tell us what's wrong. Reports go to our moderation team.")}</p>
 
                 <form className="form" onSubmit={(event) => { event.preventDefault(); submit(); }}>

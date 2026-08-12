@@ -15,12 +15,17 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     cleartext: false,
   },
+  // The ground behind the WebView. This is the one colour in the product that
+  // no stylesheet can reach, which is why it was still the RETIRED warm
+  // near-black (#0a0805) after Design System 8 moved the ground to ink navy —
+  // visible as a launch flash and on overscroll, on both platforms. Changing it
+  // needs a native build, not a web deploy.
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#0a0805',
+    backgroundColor: '#0b1220',
   },
   android: {
-    backgroundColor: '#0a0805',
+    backgroundColor: '#0b1220',
   },
   plugins: {
     // Shows the OS notification banner/sound/badge while the app is already

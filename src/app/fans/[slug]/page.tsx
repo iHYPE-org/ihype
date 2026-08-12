@@ -112,7 +112,7 @@ export default async function FanProfilePage({
               // eslint-disable-next-line @next/next/no-img-element
               <img alt={profile.name} src={profile.avatarImage} fetchPriority="high" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
             ) : (
-              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 26 }}>{profile.name.charAt(0)}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.625rem' }}>{profile.name.charAt(0)}</span>
             )}
           </div>
           <div style={{ flex: 1 }}>
@@ -190,7 +190,7 @@ export default async function FanProfilePage({
                     <h4>{show.title}</h4>
                     <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
-                  <span style={{ fontSize: 12, color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>
               ))}
             </div>
@@ -204,7 +204,7 @@ export default async function FanProfilePage({
                 <div className="fan-ref-label">{t('fansSlugPage.referralLinkLabel', 'Referral Link')}</div>
                 <div className="fan-ref-url">{`${baseUrl}/h/${promoterDashboard.refHexId}`}</div>
                 <PromoteShareButton link={`${baseUrl}/h/${promoterDashboard.refHexId}`} slug="referral" title="iHYPE" />
-                <p style={{ fontSize: 12, color: 'var(--ink-a50)', marginTop: 12 }}>
+                <p style={{ fontSize: '0.75rem', color: 'var(--ink-a50)', marginTop: 12 }}>
                   {t('fansSlugPage.referralExplainer', 'Earn a proportional share of the 10% promoter pool for every ticket your link drives.')}
                 </p>
               </div>

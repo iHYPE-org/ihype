@@ -58,7 +58,7 @@ export default async function AdminAnalyticsPage({
     <div className="container section admin-console">
       <div className="panel admin-console-panel">
         <div className="admin-console-panel-head">
-          <h1 style={{ fontSize: 20, margin: 0 }}>{t('adminAnalyticsPage.heading', 'Analytics')}</h1>
+          <h1 style={{ fontSize: '1.25rem', margin: 0 }}>{t('adminAnalyticsPage.heading', 'Analytics')}</h1>
         </div>
 
         <p className="meta" style={{ marginBottom: 14 }}>
@@ -72,14 +72,14 @@ export default async function AdminAnalyticsPage({
               className={option === range ? 'badge' : 'button secondary'}
               href={`/admin/analytics?range=${option}`}
               key={option}
-              style={{ textDecoration: 'none', fontSize: 12, padding: '6px 12px' }}
+              style={{ textDecoration: 'none', fontSize: '0.75rem', padding: '6px 12px' }}
             >
               {RANGE_LABEL[option]}
             </Link>
           ))}
         </nav>
 
-        <h2 style={{ fontSize: 15, marginBottom: 10 }}>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>
           {t('adminAnalyticsPage.platformHeading', 'Platform')} · {resolved.days}d
         </h2>
         <div className="admin-health-grid" style={{ marginBottom: 24 }}>
@@ -102,7 +102,7 @@ export default async function AdminAnalyticsPage({
           })}
         </div>
 
-        <h2 style={{ fontSize: 15, marginBottom: 4 }}>{t('adminAnalyticsPage.byTypeHeading', 'By account type')}</h2>
+        <h2 style={{ fontSize: '0.9375rem', marginBottom: 4 }}>{t('adminAnalyticsPage.byTypeHeading', 'By account type')}</h2>
         <p className="meta" style={{ marginBottom: 10 }}>
           {t('adminAnalyticsPage.activeDefinition', 'Active means the account hyped or listened in this period. The same definition for every type, so the column can be read down.')}
         </p>

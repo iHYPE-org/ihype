@@ -26,7 +26,7 @@ const rowStyle: React.CSSProperties = {
 };
 
 const inputStyle: React.CSSProperties = {
-  width: '100%', fontFamily: 'var(--font-body, Work Sans, sans-serif)', fontSize: 14,
+  width: '100%', fontFamily: 'var(--font-body, Work Sans, sans-serif)', fontSize: '0.875rem',
   color: 'var(--ink)', background: 'var(--bg-3)', border: '1px solid var(--line-2)',
   borderRadius: 9, padding: '11px 13px', outline: 'none',
 };
@@ -115,7 +115,7 @@ export function CommunityVoteBoard() {
 
   return (
     <div>
-      <p style={{ fontSize: 13, color: 'var(--ink-a60)', lineHeight: 1.55 }}>
+      <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', lineHeight: 1.55 }}>
         {t('communityVoteBoard.governanceNote', 'One fan account gets one vote per proposal. Results, quorum, voting windows, and any emergency security exception remain public. Security fixes may ship immediately when disclosure or delay would put people or the platform at risk.')}
       </p>
       {eligible ? <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -136,21 +136,21 @@ export function CommunityVoteBoard() {
           onChange={(e) => setDescription(e.target.value)}
           maxLength={2000}
         />
-        {message && <p style={{ fontSize: 13, color: 'var(--accent)', margin: 0 }}>{message}</p>}
+        {message && <p style={{ fontSize: '0.8125rem', color: 'var(--accent)', margin: 0 }}>{message}</p>}
         <button className="ihype-btn-primary" type="submit" style={{ alignSelf: 'flex-start', padding: '11px 22px' }}>
           {t('communityVoteBoard.submitButton', 'Submit idea')}
         </button>
       </form> : (
-        <p style={{ marginBottom: 24, fontSize: 13, color: 'var(--ink-a60)' }}>
+        <p style={{ marginBottom: 24, fontSize: '0.8125rem', color: 'var(--ink-a60)' }}>
           <Link href="/login?callbackUrl=/community">{t('communityVoteBoard.signIn', 'Sign in with a fan account')}</Link>{' '}
           {t('communityVoteBoard.signInSuffix', 'to propose changes and vote.')}
         </p>
       )}
 
       {loading ? (
-        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
       ) : requests.length === 0 ? (
-        <p style={{ fontSize: 13, color: 'var(--ink-a45)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
       ) : (
         <div>
           {requests.map((fr) => (
@@ -170,18 +170,18 @@ export function CommunityVoteBoard() {
                   opacity: !eligible || !fr.votingOpen ? 0.55 : 1,
                 }}
               >
-                <span style={{ fontSize: 15, lineHeight: 1 }}>{fr.hasVoted ? '✓' : '▲'}</span>
-                <span style={{ fontSize: 13, fontWeight: 700, marginTop: 4 }}>{fr.votes}</span>
+                <span style={{ fontSize: '0.9375rem', lineHeight: 1 }}>{fr.hasVoted ? '✓' : '▲'}</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, marginTop: 4 }}>{fr.votes}</span>
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink)' }}>{fr.title}</div>
-                <p style={{ fontSize: 13, color: 'var(--ink-a60)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: 'var(--ink-a45)', margin: '7px 0 0' }}>
+                <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ink)' }}>{fr.title}</div>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: 'var(--ink-a45)', margin: '7px 0 0' }}>
                   {fr.quorumMet ? 'Quorum met' : `${fr.quorumRequired - fr.votes} more vote${fr.quorumRequired - fr.votes === 1 ? '' : 's'} for quorum`}
                   {fr.votingClosesAt ? ` · voting closes ${new Date(fr.votingClosesAt).toLocaleDateString()}` : ''}
                 </p>
                 {fr.securityException && (
-                  <p style={{ fontSize: 12, color: 'var(--warning)', margin: '7px 0 0' }}>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--warning)', margin: '7px 0 0' }}>
                     Security exception: {fr.securityExceptionNote ?? 'Emergency protection applied; details will be published when safe.'}
                   </p>
                 )}
@@ -189,7 +189,7 @@ export function CommunityVoteBoard() {
               {fr.status !== 'open' && (
                 <span
                   style={{
-                    flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase',
+                    flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase',
                     letterSpacing: '.08em', padding: '4px 9px', borderRadius: 999,
                     border: `1px solid ${STATUS_COLOR[fr.status] ?? 'var(--line-2)'}`,
                     color: STATUS_COLOR[fr.status] ?? 'var(--ink-a60)',

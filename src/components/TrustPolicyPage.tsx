@@ -21,7 +21,7 @@ export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: 
         <h1>{title}</h1>
         <p className="subtitle">{intro}</p>
         {lastUpdated && (
-          <p style={{ fontSize: 13, opacity: 0.6, marginTop: 8 }}>{t('trustPolicyPage.lastUpdatedLabel', 'Last updated:')} {lastUpdated}</p>
+          <p style={{ fontSize: '0.8125rem', opacity: 0.6, marginTop: 8 }}>{t('trustPolicyPage.lastUpdatedLabel', 'Last updated:')} {lastUpdated}</p>
         )}
         <div className="trust-policy-links">
           <Link className="text-link" href="/info?tab=privacy">{t('trustPolicyPage.privacyLink', 'Privacy')}</Link>

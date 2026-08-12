@@ -25,10 +25,37 @@ async function walk(directory) {
 }
 
 const sourceFiles = await walk('src');
+
+/*
+ * Inline `fontSize` in px does not scale.
+ *
+ * Settings → Accessibility → Text size writes `--ihype-text-scale`, and
+ * `shell.css` applies it as `:root { font-size: calc(100% * var(...)) }` — so
+ * `rem` follows it and `px` cannot. 691 inline px sizes across 77 files were
+ * therefore invisible to that control, which is an accessibility setting that
+ * silently did nothing on most of the app.
+ *
+ * px is still correct in three places and they are exempt: Satori /
+ * ImageResponse surfaces (OG cards, QR, posters) have no root font size at
+ * all, email HTML does not carry our stylesheet, and the EPK is a print
+ * document sized for paper.
+ */
+const PX_FONT_SIZE_EXEMPT = [
+  'opengraph-image', 'api/og/', 'qr/route', 'poster/route', 'card/route',
+  'src/lib/', 'epk/',
+];
+const inlinePxFontSize = /fontSize: (?:'\d+(?:\.\d+)?px'|\d+(?:\.\d+)?)(?=[,}\s])/;
+
 for (const file of sourceFiles) {
   const content = await text(file);
   if (/\beval\s*\(/.test(content)) fail(file, 'eval() is forbidden.');
   if (/\bnew\s+Function\s*\(/.test(content)) fail(file, 'new Function() is forbidden.');
+
+  const portable = file.split(path.sep).join('/');
+  if (portable.endsWith('.tsx') && !PX_FONT_SIZE_EXEMPT.some((x) => portable.includes(x))
+      && inlinePxFontSize.test(content)) {
+    fail(file, 'inline fontSize in px ignores the Text size accessibility setting — use rem (px / 16).');
+  }
 }
 
 const readme = await text('README.md');

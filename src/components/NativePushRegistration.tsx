@@ -11,8 +11,8 @@ import { resolveInternalPath } from '@/lib/deep-link';
  * complete no-op on the website/PWA since every path here is gated on
  * `Capacitor.isNativePlatform()`. Two independent jobs:
  *
- * 1. Push token registration: on the real iOS/Android app, request
- *    permission, register with APNs/FCM, and POST the real device token to
+ * 1. Push token registration: on the real iOS/Android app, register an
+ *    ALREADY-GRANTED permission with APNs/FCM and POST the real device token to
  *    /api/push/register-device so notifyUser() (src/lib/notify.ts) can reach
  *    this device. Wrapped defensively — a device with no Firebase project
  *    configured yet (no google-services.json) can fail registration, and
@@ -96,10 +96,19 @@ export function NativePushRegistration() {
           })
         );
 
+        // ONLY registers an already-granted permission. It must never call
+        // `requestPermissions()`: this component mounts at the app root as
+        // soon as there is a session, so requesting here fires the OS push
+        // dialog at launch, with no context — and an install gets exactly one
+        // of those. Declined at launch, push is gone for that install for
+        // good, and the member never learned what it was for.
+        //
+        // The ask now belongs to the moment the design names ("fires after
+        // first ticket, not onboarding"): the primer sheet asks in our own
+        // words, and only an accept calls `requestPermissions()`. This effect
+        // then picks the grant up and registers the device on the next mount.
         const permission = await PushNotifications.checkPermissions().catch(() => null);
-        const granted =
-          permission?.receive === 'granted' ||
-          (await PushNotifications.requestPermissions().catch(() => null))?.receive === 'granted';
+        const granted = permission?.receive === 'granted';
 
         if (granted && !cancelled) {
           await PushNotifications.register().catch(() => {

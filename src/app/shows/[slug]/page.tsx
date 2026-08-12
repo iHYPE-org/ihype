@@ -395,7 +395,7 @@ export default async function ShowDetailPage({
               looking loose at display size. */}
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(2.375rem, 6vw, 3.375rem)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: 0.98, marginBottom: 14, textWrap: 'balance' }}>{show.title}</h1>
 
-          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: 14, color: 'var(--ink-a75)' }}>
+          <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: '0.875rem', color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
             {show.venueProfile && <span className="badge" style={{ color: 'var(--role-venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
             {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
@@ -421,12 +421,12 @@ export default async function ShowDetailPage({
               free text, normalised server-side, and is never treated as markup. */}
           {show.status === 'CANCELED' && (show.cancellationReason || show.cancellationMessage) && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(var(--accent-rgb),.25)', background: 'rgba(var(--accent-rgb),.06)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10.5, letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
                 {t('showsSlugPage.canceledLabel', 'Event cancelled')}
                 {show.cancellationReason ? ` · ${show.cancellationReason}` : ''}
               </div>
               {show.cancellationMessage && (
-                <p style={{ fontSize: 13, color: 'var(--ink-a75)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a75)', lineHeight: 1.6, margin: 0, whiteSpace: 'pre-wrap' }}>
                   {show.cancellationMessage}
                 </p>
               )}
@@ -463,17 +463,17 @@ export default async function ShowDetailPage({
           {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
               <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
               <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
-                <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--role-venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
               </div>
               {show.promoterPayoutPercent > 0 && (
                 <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
-                  <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--accent-2)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
                 </div>
               )}
             </div>
@@ -503,10 +503,10 @@ export default async function ShowDetailPage({
           <ShowTabs
             venueTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
-                <p style={{ fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
+                <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 {show.venueProfile && (
-                  <p style={{ fontSize: 14, color: 'var(--ink-a70)' }}>
+                  <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)' }}>
                     {t('showsSlugPage.capacityLabel', 'Capacity')}: {(show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')).toLocaleString?.() ?? show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')} · {show.venueProfile.city}
                   </p>
                 )}
@@ -517,11 +517,11 @@ export default async function ShowDetailPage({
                 )}
                 {venueComps.length > 0 && (
                   <div style={{ marginTop: 24 }}>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: 24, letterSpacing: '-.02em', marginBottom: 6 }}>{t('showsSlugPage.howThisShowComps', 'How this show comps')}</h2>
+                    <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-.02em', marginBottom: 6 }}>{t('showsSlugPage.howThisShowComps', 'How this show comps')}</h2>
                     <p className="meta" style={{ marginBottom: 14 }}>{t('showsSlugPage.demandVsOtherShows', 'Demand vs. other shows at')} {show.venueProfile?.name ?? t('showsSlugPage.thisVenue', 'this venue')} {t('showsSlugPage.thisSeason', 'this season.')}</p>
                     {venueComps.map((vc) => (
                       <div key={vc.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderTop: '1px solid var(--hair-80)' }}>
-                        <span style={{ flex: 1, fontSize: 14, color: 'var(--ink-a85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vc.title}</span>
+                        <span style={{ flex: 1, fontSize: '0.875rem', color: 'var(--ink-a85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{vc.title}</span>
                         <div style={{ width: 110, height: 6, borderRadius: 3, background: 'var(--hair-100)', overflow: 'hidden', flexShrink: 0 }}>
                           {vc.isFire && <div style={{ width: '100%', height: '100%', background: 'var(--heat-fire)' }} />}
                           {vc.isHot && <div style={{ width: '70%', height: '100%', background: 'var(--accent)' }} />}
@@ -536,10 +536,10 @@ export default async function ShowDetailPage({
             }
             lineupTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
-                <p style={{ fontSize: 22, fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
-                <p style={{ fontSize: 14 }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
+                <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
+                <p style={{ fontSize: '0.875rem' }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
           >
@@ -749,7 +749,7 @@ export default async function ShowDetailPage({
                     style={{ width: 96, height: 96, background: '#fff', borderRadius: 8, padding: 6 }}
                   />
                   <div>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 4 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 4 }}>
                       {t('showsSlugPage.showDoorQr', 'Show door QR')}
                     </p>
                     <p className="meta" style={{ margin: 0, marginBottom: 8 }}>
@@ -858,22 +858,22 @@ export default async function ShowDetailPage({
           {/* TICKET BOX */}
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
             <aside style={{ border: '1px solid var(--hair-80)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
-              <div style={{ fontSize: 36, fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 11, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
 
               {cap !== null && (
                 <>
                   <div style={{ height: 6, borderRadius: 3, background: 'var(--hair-100)', margin: '16px 0', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%` }} />
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} {t('showsSlugPage.soldLabel', 'sold')} · {cap - sold} {t('showsSlugPage.remainingLabel', 'remaining')}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} {t('showsSlugPage.soldLabel', 'sold')} · {cap - sold} {t('showsSlugPage.remainingLabel', 'remaining')}</div>
                 </>
               )}
 
               <div style={{ marginBottom: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9.5, letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 10, color: demandLabelColor }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5938rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: demandLabelColor }}>
                     {demandLabel === 'Fire' ? t('showsSlugPage.fireEmojiLabel', '🔥 Fire') : demandLabel}
                   </span>
                 </div>
@@ -894,10 +894,10 @@ export default async function ShowDetailPage({
 
               {!isPaymentProcessingConfigured() ? (
                 <div style={{ border: '1px solid rgba(var(--role-venue-rgb),.3)', borderRadius: 10, padding: 16, background: 'rgba(var(--role-venue-rgb),.06)' }}>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--role-venue)', marginBottom: 8 }}>
+                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--role-venue)', marginBottom: 8 }}>
                     {t('showsSlugPage.paidTicketsComingSoon', 'Paid tickets · Coming soon')}
                   </div>
-                  <p style={{ fontSize: 13, lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
+                  <p style={{ fontSize: '0.8125rem', lineHeight: 1.6, color: 'var(--ink-a80)', margin: 0 }}>
                     {t('showsSlugPage.ticketSalesNotOpenNotice', "Ticket sales haven't opened on iHYPE yet. RSVP free above to hold your spot — we'll remind you before the show, and face-value pricing with the locked 70/20/10 split kicks in the moment sales open.")}
                   </p>
                 </div>
@@ -945,14 +945,14 @@ export default async function ShowDetailPage({
               )}
 
               <div style={{ background: 'var(--hair-40)', borderRadius: 8, padding: 14, marginTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: 10, textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
               </div>
 
-              <div style={{ marginTop: 16, fontSize: 11, color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
+              <div style={{ marginTop: 16, fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
                 {t('showsSlugPage.splitLockedByCharter', 'Split locked by charter · iHYPE takes 0%')}
               </div>
             </aside>

@@ -49,8 +49,8 @@ export default async function ShowsMapPage() {
   return (
     <div className="container section" style={{ maxWidth: 960 }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 24 }}>
-        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: 28, margin: 0 }}>{t('showsMapPage.showsNearMe', 'Shows near me')}</h1>
-        <Link href="/shows" className="button secondary" style={{ fontSize: 12, padding: '6px 14px' }}>
+        <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.75rem', margin: 0 }}>{t('showsMapPage.showsNearMe', 'Shows near me')}</h1>
+        <Link href="/shows" className="button secondary" style={{ fontSize: '0.75rem', padding: '6px 14px' }}>
           {t('showsMapPage.listView', 'List view')}
         </Link>
       </div>
@@ -79,14 +79,14 @@ export default async function ShowsMapPage() {
             return (
               <section key={city}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 20, margin: 0, color: 'var(--ink)' }}>
+                  <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.25rem', margin: 0, color: 'var(--ink)' }}>
                     {city}
                   </h2>
                   <a
                     href={mapsUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--accent)', textDecoration: 'none', padding: '2px 8px', border: '1px solid rgba(var(--accent-rgb),.3)', borderRadius: 4 }}
+                    style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', color: 'var(--accent)', textDecoration: 'none', padding: '2px 8px', border: '1px solid rgba(var(--accent-rgb),.3)', borderRadius: 4 }}
                   >
                     {t('showsMapPage.viewOnMap', 'View on map ↗')}
                   </a>
@@ -94,26 +94,26 @@ export default async function ShowsMapPage() {
                 <div style={{ display: 'grid', gap: 8 }}>
                   {cityShows.slice(0, 8).map((s) => (
                     <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '10px 14px', background: 'var(--bg-2)', borderRadius: 8, border: '1px solid var(--line)' }}>
-                      <div style={{ minWidth: 52, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 13, color: 'var(--accent)', textAlign: 'center' }}>
+                      <div style={{ minWidth: 52, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.8125rem', color: 'var(--accent)', textAlign: 'center' }}>
                         {s.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </div>
                       <div style={{ flex: 1 }}>
-                        <Link href={`/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: 14, color: 'var(--ink)', textDecoration: 'none' }}>
+                        <Link href={`/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.875rem', color: 'var(--ink)', textDecoration: 'none' }}>
                           {s.title}
                         </Link>
                         {s.venueProfile?.name ? (
-                          <p style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-2)', margin: '2px 0 0' }}>
+                          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
                             @ <Link href={`/venues/${s.venueProfile.slug}`} style={{ color: 'var(--ink-2)', textDecoration: 'none' }}>{s.venueProfile.name}</Link>
                           </p>
                         ) : null}
                       </div>
-                      <div style={{ fontFamily: 'var(--f-m)', fontSize: 11, color: 'var(--ink-3)' }}>
+                      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', color: 'var(--ink-3)' }}>
                         {s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                       </div>
                     </div>
                   ))}
                   {cityShows.length > 8 && (
-                    <Link href={`/shows?city=${encodeURIComponent(city)}`} className="text-link" style={{ fontSize: 12, padding: '4px 0' }}>
+                    <Link href={`/shows?city=${encodeURIComponent(city)}`} className="text-link" style={{ fontSize: '0.75rem', padding: '4px 0' }}>
                       +{cityShows.length - 8} {t('showsMapPage.moreInCity', 'more in')} {city}
                     </Link>
                   )}

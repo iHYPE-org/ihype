@@ -415,7 +415,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             name="userSearch"
             defaultValue={userSearch ?? ''}
             placeholder={t('adminPage.userSearchPlaceholder', 'Email or username…')}
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: 14 }}
+            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: '0.875rem' }}
           />
           <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
           {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
@@ -608,7 +608,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           {rateLimitMetrics.length ? (
             rateLimitMetrics.map((row) => (
               <div className="admin-list-row" key={row.bucket}>
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: 12 }}>{row.bucket}</span>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem' }}>{row.bucket}</span>
                 <strong>{row.hits}</strong>
               </div>
             ))
@@ -827,7 +827,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </div>
         {funnelStage1Recent.length > 0 && (
           <div className="admin-list" style={{ marginTop: 12 }}>
-            <strong style={{ fontSize: 13, marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
+            <strong style={{ fontSize: '0.8125rem', marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
             {funnelStage1Recent.map((p) => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
@@ -857,8 +857,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             {recentSocialPosts.map((post) => (
               <div key={post.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <pre style={{ fontFamily: 'inherit', fontSize: 13, margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
-                  <small style={{ color: 'var(--ink-3)', fontSize: 11 }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
+                  <pre style={{ fontFamily: 'inherit', fontSize: '0.8125rem', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
+                  <small style={{ color: 'var(--ink-3)', fontSize: '0.6875rem' }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
                 </div>
                 <SocialPostCopy text={post.text} />
               </div>
@@ -888,7 +888,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               }, {})
             ).map(([date, shows]) => (
               <div key={date} style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: 12, fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
                 {shows.map((show) => (
                   <div key={show.id} className="admin-list-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ flex: 1 }}>{show.title}</span>
@@ -911,10 +911,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             single-use code here. */}
         <MintInviteCodes />
         <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
+          <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8125rem' }}>
             {t('adminPage.viewAllViaApi', 'View all via API')}
           </a>
-          <a className="button" href="/api/admin/test-email" target="_blank" rel="noopener noreferrer" style={{ fontSize: 13 }}>
+          <a className="button" href="/api/admin/test-email" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8125rem' }}>
             {t('adminPage.sendTestEmail', 'Send test email')}
           </a>
         </div>
@@ -978,7 +978,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </div>
         {monthlyRows.length > 0 && (
           <>
-            <h3 style={{ fontSize: 14, marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
             <div className="admin-list">
               {monthlyRows.map(([month, cents]) => (
                 <div className="admin-list-row" key={month}>
@@ -991,7 +991,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         )}
         {topEarners.length > 0 && (
           <>
-            <h3 style={{ fontSize: 14, marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
+            <h3 style={{ fontSize: '0.875rem', marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
             <div className="admin-list">
               {topEarners.map((e) => (
                 <div className="admin-list-row" key={e.profileId}>
@@ -1046,7 +1046,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                     AdminAdsClient already does it properly. The i18n pass
                     wrapped the old forms' labels; those strings went with
                     the forms. */}
-                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: 12 }}>
+                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: '0.75rem' }}>
                   {t('adminPage.review', 'Review')}
                 </Link>
               </div>
