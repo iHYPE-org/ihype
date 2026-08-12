@@ -1977,3 +1977,28 @@ html.mmm-locked .site-shell > main {
   padding-top: 3px;
 }
 
+
+/* An active content filter, shown wherever one narrows a list. A filter the
+   member cannot see is indistinguishable from an empty result. */
+.mmm-filter-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.12);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.mmm-filter-chip a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  /* A 44px floor would blow the chip's height; this is a text control inside a
+     pill, and mobile-fit.css's floors apply to standalone controls. */
+  padding: 4px 2px;
+}

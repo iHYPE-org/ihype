@@ -48,7 +48,7 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
  * says so in a sentence rather than showing an empty frame, and a station whose
  * count could not be read renders without a count rather than claiming zero.
  */
-export function MmmMusic({ tab }: { tab: MusicTabId }) {
+export function MmmMusic({ tab, genre }: { tab: MusicTabId; genre?: string }) {
   return (
     <>
       {/* Tabs on one row, search on the next — the 2026-08-10 template moved
@@ -77,7 +77,7 @@ export function MmmMusic({ tab }: { tab: MusicTabId }) {
         </nav>
         <MmmSearch />
       </div>
-      {tab === 'discover' && <DiscoverTab />}
+      {tab === 'discover' && <DiscoverTab genre={genre} />}
       {tab === 'radio' && <RadioTab />}
       {tab === 'charts' && <ChartsTab />}
       {tab === 'recommended' && <RecommendedTab />}
@@ -110,11 +110,27 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
   return state;
 }
 
-function DiscoverTab() {
+/**
+ * `genre` narrows the seed deck.
+ *
+ * It exists because search had nowhere honest to send a genre result. Legacy
+ * sends them to `/listen?genre=`, which has been a redirect since row 273 and
+ * drops the query — so those results have silently landed on an unfiltered
+ * page. Pointing them at an MMM tab that also ignored the parameter would have
+ * reproduced the same bug in the new shell rather than fixing it.
+ *
+ * `/api/discover/seeds` already takes `?genres=` (plural, comma-separated), so
+ * this is a wire-through, not a new query.
+ */
+function DiscoverTab({ genre }: { genre?: string }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-  const { status, data } = useJson<SeedCard[]>('/api/discover/seeds', (payload) => {
+  const trimmedGenre = genre?.trim() ?? '';
+  const seedsUrl = trimmedGenre
+    ? `/api/discover/seeds?genres=${encodeURIComponent(trimmedGenre)}`
+    : '/api/discover/seeds';
+  const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
     return seeds.map((seed) => ({
       id: String(seed.id ?? ''),
@@ -141,22 +157,38 @@ function DiscoverTab() {
     }
   }, []);
 
+  // The active filter is always visible, and always clearable. A deck that is
+  // quietly narrowed looks identical to a deck that has run out — which is the
+  // shape of the bug this parameter exists to fix, just one step later.
+  const filterChip = trimmedGenre ? (
+    <div className="mmm-filter-chip">
+      <span>Genre · {trimmedGenre}</span>
+      <Link href="/app/music/discover">Clear</Link>
+    </div>
+  ) : null;
+
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Discovery is unavailable right now. Radio and Charts still work.</Empty>;
   const seeds = data ?? [];
   const seed = seeds[index];
   if (!seed) {
     return (
-      <Empty>
-        {seeds.length === 0
-          ? 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
-          : 'That is every seed for now. Come back tomorrow, or open Radio.'}
-      </Empty>
+      <>
+        {filterChip}
+        <Empty>
+          {seeds.length === 0
+            ? trimmedGenre
+              ? `No seeds in ${trimmedGenre} right now. Clear the filter, or try Radio.`
+              : 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
+            : 'That is every seed for now. Come back tomorrow, or open Radio.'}
+        </Empty>
+      </>
     );
   }
 
   return (
     <>
+      {filterChip}
       <div className="mmm-card mmm-card-accent" style={{ padding: 20, marginBottom: 14, minHeight: 300, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem', letterSpacing: '0.14em' }}>Seed</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>

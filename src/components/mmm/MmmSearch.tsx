@@ -59,10 +59,10 @@ const SCOPES: ReadonlyArray<{ id: string; label: string; type: string }> = [
  * search result swapped the header and the player. It was also invisible to the
  * escape audit, which reads `href=` literals and cannot see a switch.
  *
- * The one kind that still leaves is named rather than papered over: a city or
- * genre result opens `/discover`, because MUSIC's own Discover tab does not
- * take those filters yet. When it does, it changes here and the count in
- * `mmm-escapes.test.ts` comes down.
+ * The one kind that still leaves is named rather than papered over: a CITY
+ * result opens `/discover`, because `/api/discover/seeds` filters on genre and
+ * has no city parameter — pointing it at an MMM tab that ignored the value
+ * would reproduce the very bug being fixed here rather than fix it.
  */
 function hrefFor(result: SearchResult): string {
   switch (result.type) {
@@ -79,8 +79,11 @@ function hrefFor(result: SearchResult): string {
     // means; MUSIC's own Discover tab does not take these filters yet.
     case 'city':
       return `/discover?city=${encodeURIComponent(result.name)}`;
+    // MUSIC's Discover tab takes `?genre=` and passes it to the seeds
+    // endpoint, so this filter actually applies. Legacy sends genre results to
+    // `/listen?genre=`, where the redirect drops the term.
     case 'genre':
-      return `/discover?genre=${encodeURIComponent(result.name)}`;
+      return `/app/music/discover?genre=${encodeURIComponent(result.name)}`;
     default:
       return `/app/artists/${result.slug ?? ''}`;
   }

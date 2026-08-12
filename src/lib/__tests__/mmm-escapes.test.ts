@@ -115,6 +115,28 @@ describe('MMM escapes into the legacy shell', () => {
    * here reported the shell as unchanged. Any route literal that opens with an
    * interpolation is either `/app/...` or a bug.
    */
+  /**
+   * Genre results must land on a surface that actually applies the filter.
+   *
+   * The bug being avoided is specific and live in legacy: search sends genre
+   * results to `/listen?genre=`, `/listen` is a redirect, and the query is
+   * dropped — so those results have always landed on an unfiltered page. The
+   * MMM equivalent is only an improvement if the destination reads the value,
+   * so this asserts BOTH halves: search points at the tab, and the tab's route
+   * still accepts a `genre` search param.
+   */
+  it('sends genre results to a tab that reads the filter', () => {
+    // Comments stripped: this file's own comment explains the legacy bug by
+    // naming the route, and a raw scan would match that prose.
+    const search = stripComments(readFileSync('src/components/mmm/MmmSearch.tsx', 'utf8'));
+    expect(search).toContain('/app/music/discover?genre=');
+    expect(search).not.toContain('/listen?genre=');
+
+    const tabRoute = readFileSync('src/app/app/music/[tab]/page.tsx', 'utf8');
+    expect(tabRoute).toContain('genre');
+    expect(tabRoute).toContain('searchParams');
+  });
+
   it('builds no route from a variable first segment', () => {
     const offenders: string[] = [];
     for (const file of MMM_SOURCES) {
