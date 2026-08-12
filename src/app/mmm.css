@@ -1765,3 +1765,85 @@ html.mmm-locked .site-shell > main {
   text-decoration: none;
   line-height: 1.5;
 }
+
+/* ── Show detail, inside the shell ────────────────────────────────────────
+   The buy path. Reached from a map pin or a ticket row, and it renders as a
+   pane over the map like MUSIC and ME do — `isMmmDetailPath` is what tells the
+   shell to stand the map down for it, since `moduleForPath` answers MAP here
+   (which is correct: the arc still says MAP, because that is where you were). */
+.mmm-show { display: flex; flex-direction: column; }
+.mmm-show-back {
+  align-self: flex-start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 2px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.mmm-show-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.mmm-show-title {
+  margin: 8px 0 4px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.mmm-show-where { font-size: 0.9rem; color: var(--ink-2); }
+.mmm-show-by { margin-top: 4px; font-size: 0.85rem; }
+.mmm-show-by a { color: var(--accent-text); text-decoration: none; }
+
+/* The split bar. Each part grows by its own percentage, so the bar IS the
+   split rather than a picture of one — a 60/30/10 show draws itself. */
+.mmm-show-split {
+  display: flex;
+  margin-top: 18px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 1px solid var(--hair-70);
+}
+.mmm-show-split-part {
+  flex-basis: 0;
+  padding: 9px 6px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink-on-accent);
+}
+.mmm-show-split-part[data-role='artist'] { background: var(--accent); }
+.mmm-show-split-part[data-role='venue'] { background: var(--role-venue); }
+.mmm-show-split-part[data-role='promoter'] { background: var(--role-promoter); }
+.mmm-show-fee {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-show-sale { margin-top: 20px; }
+.mmm-show-more {
+  margin-top: 22px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}

@@ -148,6 +148,25 @@ export function isMmmRoute(pathname: string | null | undefined): boolean {
   return pathname === MMM_BASE || pathname.startsWith(`${MMM_BASE}/`);
 }
 
+/**
+ * Detail surfaces inside the shell — a show, and whatever follows it.
+ *
+ * They are NOT modules: the arc carries three and only three, and a show is
+ * something you reach FROM the map rather than a fourth destination. But they
+ * must render as a pane, and `moduleForPath` answers `map` for anything it does
+ * not recognise, which is what makes the shell hide its children. Without this
+ * predicate a `/app/shows/<slug>` route mounts and renders nothing at all.
+ *
+ * Kept as a prefix list rather than a regex so adding one is a one-line change
+ * that reads as a list of surfaces.
+ */
+const MMM_DETAIL_PREFIXES = [`${MMM_BASE}/shows/`] as const;
+
+export function isMmmDetailPath(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return MMM_DETAIL_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+}
+
 export function moduleForPath(pathname: string): MmmModuleId {
   if (pathname.startsWith(`${MMM_BASE}/music`)) return 'music';
   if (pathname.startsWith(`${MMM_BASE}/me`)) return 'me';

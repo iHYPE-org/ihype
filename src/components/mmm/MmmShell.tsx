@@ -7,7 +7,7 @@ import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
-import { ARC_NARROW_MAX_WIDTH, itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
+import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
 
 export type MmmNowPlaying = {
   title: string;
@@ -56,7 +56,13 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
   const router = useRouter();
   const activeModule = moduleForPath(pathname);
   const activeItemId = itemForPath(pathname);
-  const mapActive = activeModule === 'map';
+  /**
+   * A detail surface (a show) renders as a pane even though `moduleForPath`
+   * answers `map` for it — the map is where you reached it from, so the arc
+   * keeps saying MAP, but the map itself stands down while it is open.
+   */
+  const detailOpen = isMmmDetailPath(pathname);
+  const mapActive = activeModule === 'map' && !detailOpen;
 
   const [navOpen, setNavOpen] = useState(false);
   // Tapping the logo also wakes the player: on a wide screen it has usually
