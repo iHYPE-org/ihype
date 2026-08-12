@@ -255,6 +255,30 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // The search bar belongs to the layer that is showing. Asserted on the
+  // CONTROL rather than on results: results depend on what is inside the test
+  // viewport's bbox, and a test that needs seeded pins to prove a placeholder
+  // swapped would fail for reasons that are not this behaviour.
+  test('map search follows the layer, and events have none', async ({ page }) => {
+    await page.goto('/app/map');
+    const field = page.locator('.mmm-map-search .mmm-search-input');
+
+    // Events is the landing layer: a price pin is not something a name finds.
+    await expect(field).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await expect(field).toHaveAttribute('placeholder', 'Search venues, streets, cities');
+
+    await page.getByRole('button', { name: 'Artists', exact: true }).click();
+    await expect(field).toHaveAttribute('placeholder', 'Search artists, genres, cities');
+
+    // A term typed against one layer must not survive into the next — it would
+    // read as "no results" when it is really "different layer".
+    await field.fill('anything');
+    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await expect(field).toHaveValue('');
+  });
+
   // The four panels are ACCORDIONS, not links. They were four routes under
   // /app/me/[panel] until the 2026-08-10 template made ME one column of
   // drawers that open in place — the old routes now redirect onto

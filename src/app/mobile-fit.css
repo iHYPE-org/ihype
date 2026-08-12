@@ -47,6 +47,13 @@
   .mmm-sheet-cta,
   .mmm-sheet-cta-2,
   .mmm-chip,
+  /* A search result row. Two lines clear the floor on their own; a result with
+     no subtitle is a single 10px-padded line and does not. Safe in THIS group
+     and not the link-row group below: those rules set `display: inline-flex`,
+     and `.mmm-search-result` is already a full-width flex row — switching it
+     would shrink it to its content. Covers the MUSIC pane's results as well as
+     the map's; they are the same class in two places. */
+  .mmm-search-result,
   /* The map's own controls. `map.html` sizes these at 7–8px of vertical
      padding on 9–10px mono, which lands at 24–33px — the design's own numbers,
      and under the floor MOBILE.md sets for every control on every surface.

@@ -608,6 +608,45 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-3);
 }
 
+/* ── MAP layer search ─────────────────────────────────────────────────────
+   Sits under the layer chips on the venues and artists layers. It reuses the
+   universal-search field below rather than declaring a second one — the two are
+   the same control in two places, and `audit:css` counts a re-declared selector
+   as an override for exactly this reason.
+
+   `position: relative` is load-bearing: `.mmm-search-results` is
+   `position: absolute; top: 100%`, so without a positioned ancestor here the
+   result list would hang off the map layer and cover the canvas.
+
+   `pointer-events: auto` re-arms what `.mmm-map-controls` turned off — that
+   container is transparent to drags on purpose so the gap between rows does not
+   eat a map pan. */
+.mmm-map-search {
+  position: relative;
+  pointer-events: auto;
+  /* The design source's own width for `#search`. */
+  width: min(460px, 72vw);
+  margin: 0 12px;
+}
+/* The design gives the field over the map a deeper shadow and a tighter right
+   pad than the one in the MUSIC pane — it floats over moving tiles rather than
+   sitting on a solid pane, and needs the separation. */
+.mmm-map-search .mmm-search-field {
+  padding: 8px 8px 8px 18px;
+  box-shadow: 0 14px 34px rgba(4, 8, 18, 0.5);
+}
+/* A result row here is a button, not a link — selecting one flies the camera
+   and opens a sheet rather than navigating. It therefore needs the type and
+   alignment the anchor gets for free. */
+.mmm-map-search button.mmm-search-result {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 /* ── Universal search ─────────────────────────────────────────────────── */
 .mmm-search-wrap { flex: 1 1 300px; min-width: 0; }
 .mmm-search-field {
