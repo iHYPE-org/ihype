@@ -526,6 +526,12 @@ test.describe('Music · Map · Me shell', () => {
       await expect(split).toContainText('20% venue');
       await expect(split).toContainText('10% promoters');
       // And the disclosure that changes what the buyer is agreeing to.
+      //
+      // This assertion is stronger than it looks: the seeded account has no
+      // stored payment token, so the card renders its "payment method required"
+      // state — which is the state EVERY member is in today, and the one that
+      // used to skip the notice entirely because it lived inside the purchase
+      // form. Asserting it here is asserting it in the state real users see.
       await expect(page.locator('.ticket-final-notice')).toContainText(/all ticket sales are final/i);
     });
 

@@ -235,6 +235,33 @@ export function TicketSaleCard({
         </div>
       </div>
 
+      {/* ALL SALES ARE FINAL — rendered for EVERY state of this card, not just
+          the one that shows the pay button.
+
+          It used to live inside the purchase form, which only renders once a
+          fan already has a stored payment token. Every other state skipped it
+          entirely: sold out, signed out, and "payment method required" — and
+          that last one is the state every member is in today, because there is
+          deliberately no Stripe.js or Elements in this codebase yet, so nobody
+          can reach the branch that carried the disclosure. The one notice the
+          product promises would be shown "in HUGE print when purchasing" was
+          therefore visible to no one.
+
+          It belongs above the branch for a second reason: a buyer decides to
+          sign in or to add a card BEFORE they see the button, and "no refunds"
+          is something they should know at that point, not after. */}
+      <div className="ticket-final-notice" role="note">
+        <strong className="ticket-final-headline">
+          {t('ticketSaleCard.allSalesFinal', 'All ticket sales are final')}
+        </strong>
+        <span className="ticket-final-detail">
+          {t(
+            'ticketSaleCard.allSalesFinalDetail',
+            'No refunds once a ticket is issued. You can transfer a ticket to someone else instead — any processing fee on a transfer is the responsibility of whoever receives it. iHYPE is a nonprofit and absorbs no fees of any kind.',
+          )}
+        </span>
+      </div>
+
       {remainingTickets === 0 ? (
         <div className="empty">{t('ticketSaleCard.soldOut', 'This ticket allocation is sold out.')}</div>
       ) : !currentFan ? (
@@ -390,22 +417,6 @@ export function TicketSaleCard({
             onToken={setTurnstileToken}
             ref={turnstileRef}
           />
-
-          {/* ALL SALES ARE FINAL, stated before the button and not after it, at
-              a size nobody can say they missed. This is the one disclosure on
-              the surface that changes what the buyer is agreeing to, so it is
-              not a footnote next to the taxes. */}
-          <div className="ticket-final-notice" role="note">
-            <strong className="ticket-final-headline">
-              {t('ticketSaleCard.allSalesFinal', 'All ticket sales are final')}
-            </strong>
-            <span className="ticket-final-detail">
-              {t(
-                'ticketSaleCard.allSalesFinalDetail',
-                'No refunds once a ticket is issued. You can transfer a ticket to someone else instead — any processing fee on a transfer is the responsibility of whoever receives it. iHYPE is a nonprofit and absorbs no fees of any kind.',
-              )}
-            </span>
-          </div>
 
           <div className="cta-row">
             <button className="button" disabled={pending || awaitingTurnstile} type="submit">
