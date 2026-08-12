@@ -64,23 +64,13 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
   const { t } = useI18n();
   if (shows.length === 0) {
     return (
+      // No ghost card. It used to render a dashed "Your next show — Venue ·
+      // City — Get ticket" above this message, to "keep the module's designed
+      // shape with nothing to list". On a real empty city that reads as a
+      // broken listing: a show with no name, no date and a dead buy button,
+      // directly above the words "Nothing here yet". It also carried an emoji,
+      // against DS8's first hard rule. An empty state should say it is empty.
       <div>
-        {/* Ghost event card — the module keeps its designed shape even with nothing to list */}
-        <div aria-hidden="true" className="ev-card" style={{ ...eventCard, border: '1px dashed var(--hair-120)', background: 'var(--hair-15)' }}>
-          <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-40)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.07) 0%, transparent 100%)', opacity: 0.35 }}>🎵</div>
-          <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a25)', marginBottom: 7 }}>{t('eventsHome.ghostDateTime', 'Date · Time')}</div>
-            <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, color: 'var(--ink-a30)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{t('eventsHome.ghostNextShow', 'Your next show')}</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--ink-a22)' }}>{t('eventsHome.ghostVenueCity', 'Venue · City')}</div>
-          </div>
-          <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
-            <div>
-              <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'rgba(var(--accent-rgb),.35)', letterSpacing: '-.02em' }}>—</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a20)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
-            </div>
-            <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'rgba(var(--accent-rgb),.2)', color: 'rgba(var(--accent-rgb),.4)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
-          </div>
-        </div>
         <div style={{ ...emptyStyle, padding: '28px 24px' }}>
           <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a60)', margin: '0 0 6px' }}>{emptyTitle}</h3>
           <p style={{ margin: 0 }}>{emptyBody}</p>
