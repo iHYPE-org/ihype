@@ -162,9 +162,13 @@ function probe([tapMin, textMin, eyebrowMin]) {
 const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
 const browser = await chromium.launch({
   ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
-  // localhost is in NO_PROXY everywhere; --base=http://localhost still works
-  // because Chromium bypasses the proxy for loopback by default.
-  ...(PROXY ? { proxy: { server: PROXY } } : {}),
+  // `bypass` is required, not belt-and-braces. Chromium bypasses loopback for
+  // a proxy it discovers from the environment, but NOT for one handed to it
+  // explicitly like this — so without it every `--base=http://localhost` page
+  // was routed to the proxy, which answers 405, and the documented "point
+  // --base at a local production build" workflow could not run at all in a
+  // sandbox where HTTPS_PROXY is set.
+  ...(PROXY ? { proxy: { server: PROXY, bypass: 'localhost,127.0.0.1,::1' } } : {}),
 });
 const ctx = await browser.newContext({
   ...devices['iPhone 13'],
