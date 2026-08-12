@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { clearPrivateCaches } from '@/lib/private-cache';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
@@ -394,6 +395,9 @@ export default function SettingsPage() {
     });
     if (res.ok) {
       alert(t('settingsPage.deletionScheduled', 'Account deletion scheduled. You will receive a confirmation email.'));
+      // Same reasoning as the sign-out row, and more pressing: this account is
+      // being deleted, so nothing of it should survive in a cache on the device.
+      clearPrivateCaches();
       window.location.href = '/api/auth/signout';
     } else {
       const d = await res.json().catch(() => ({}));
@@ -583,8 +587,17 @@ export default function SettingsPage() {
             <div className="settings-section-title">{t('settingsPage.dangerZone', 'Danger Zone')}</div>
             <div className="settings-group settings-danger-zone">
               {/* Plain <a>, not <Link>: /api/auth/signout is an API route, so it
-                  needs a real navigation — a soft client-side nav won't hit it. */}
-              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout">{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
+                  needs a real navigation — a soft client-side nav won't hit it.
+
+                  onClick drops the ticket and page caches on the way out. A
+                  ticket page is personalised and carries a QR that admits its
+                  holder to a show, and the ticket cache is deliberately
+                  version-independent so an SW update cannot wipe it — which
+                  also meant nothing ever did. On a shared device the next
+                  person could be served the previous account's ticket. The
+                  navigation does not wait: postMessage reaches the service
+                  worker, which outlives this page. */}
+              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout" onClick={() => clearPrivateCaches()}>{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
               <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">{t('settingsPage.delete', 'Delete')}</button>} detail={t('settingsPage.deleteAccountDetail', 'Permanent. All data removed within 30 days.')} label={t('settingsPage.deleteAccountLabel', 'Delete account')} />
             </div>
           </div>
