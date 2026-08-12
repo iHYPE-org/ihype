@@ -296,7 +296,7 @@ function ChartsTab() {
     <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {rows.map((row, index) => (
         <li key={row.id}>
-          <Link className="mmm-row" href={`/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
+          <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
               {String(index + 1).padStart(2, '0')}
             </span>

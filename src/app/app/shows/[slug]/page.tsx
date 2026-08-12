@@ -140,7 +140,7 @@ export default async function MmmShowPage({
       {where && <div className="mmm-show-where">{where}</div>}
       <div className="mmm-show-by">
         {show.headlinerProfile ? (
-          <Link href={`/artists/${show.headlinerProfile.slug}`}>{show.headlinerProfile.name}</Link>
+          <Link href={`/app/artists/${show.headlinerProfile.slug}`}>{show.headlinerProfile.name}</Link>
         ) : null}
       </div>
 
