@@ -507,8 +507,18 @@ test.describe('Music · Map · Me shell', () => {
 
     test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
       await page.goto(`/app/shows/${seeded.slug}`);
-      // Scoped to the pane's own H1: `TicketSaleCard` repeats the show title
-      // as an H2 inside itself, so an unscoped role query matches both.
+      // Wait for the pane to SETTLE before counting anything. This route's
+      // layout is async and the page streams, so mid-flight Next holds a copy
+      // of the content in a hidden staging node and moves it into place with a
+      // script — query in that window and a locator resolves to two nodes that
+      // are really one. Anchoring on the sale card (the last thing to arrive)
+      // means the assertions below run against a finished document.
+      await expect(page.locator('.mmm-show-sale')).toBeVisible();
+      // Now the count means what it says. Scoped to the pane's own H1 because
+      // `TicketSaleCard` repeats the title as an H2 inside itself — and asserted
+      // as a COUNT so that a genuine double render fails here rather than being
+      // absorbed by a `.first()`.
+      await expect(page.locator('h1.mmm-show-title')).toHaveCount(1);
       await expect(page.locator('h1.mmm-show-title')).toHaveText(seeded.title);
       // The split bar draws the show's OWN percentages.
       const split = page.locator('.mmm-show-split');
@@ -523,11 +533,13 @@ test.describe('Music · Map · Me shell', () => {
       // Without /app/not-found.tsx this rendered the marketing 404 — map gone,
       // player gone, no route back.
       await page.goto('/app/shows/definitely-not-a-real-show');
+      // Settle first — counting nodes while the document is still streaming
+      // counts Next's hidden staging copy as a second element.
+      await expect(page.getByRole('link', { name: /Back to the map/i })).toBeVisible();
       // Exactly one shell. Two means the page threw `notFound()` after the
       // async layout had flushed, which streams a second copy of the whole
       // chain — two maps, two players, two sets of tiles fetched.
       await expect(page.locator('.mmm-frame')).toHaveCount(1);
-      await expect(page.getByRole('link', { name: /Back to the map/i })).toBeVisible();
     });
   });
 
