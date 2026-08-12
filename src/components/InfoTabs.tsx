@@ -73,7 +73,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
 
       <div className={`legal-doc${tab === 'privacy' ? ' active' : ''}`}>
         <h2>{t('legalPage.privacy.collectTitle', 'What we collect')}</h2>
-        <p>{t('legalPage.privacy.collectBody', 'iHYPE collects the minimum data necessary to operate: your email address, display name, role (fan/artist/venue/DJ), city, genre preferences, and ticket purchase history. We do not sell this data. We do not share it with advertisers. We do not use it to train AI models.')}</p>
+        <p>{t('legalPage.privacy.collectBody', 'iHYPE collects the minimum data necessary to operate: your email address, display name, account role, city, genre preferences, and ticket purchase history. We do not sell this data. We do not share it with advertisers. We do not use it to train AI models.')}</p>
         <h2>{t('legalPage.privacy.paymentTitle', 'Payment data')}</h2>
         <p>{t('legalPage.privacy.paymentBody', 'Payments are processed by Apple Pay and Stripe. iHYPE never stores card numbers or bank account details. Payout routing information for artists and venues is encrypted at rest and visible only to you and our payments processor.')}</p>
         <h2>{t('legalPage.privacy.analyticsTitle', 'Analytics')}</h2>
@@ -139,7 +139,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
         </div>
         <h2>{t('charterPage.promotersHead', 'Promoters and the 10%')}</h2>
-        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among Fans and DJs whose HYPE Links contributed to ticket sales for an event. There is no separate promoter role: promotion is a capability of the Fan and DJ roles.")}</p>
+        <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among everyone whose HYPE Links contributed to ticket sales for an event. There is no promoter role and no promoter account: promoting is something every account can do.")}</p>
         <p><Link href="/me/promote" className="charter-inline-link">{t('charterPage.promoteDashboardLink', 'See a promoting dashboard →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>

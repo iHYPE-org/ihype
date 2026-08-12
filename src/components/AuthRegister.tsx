@@ -401,7 +401,7 @@ export function RegisterScreen({
         </div>
       ) : step === 'magic-link-sent' ? (
         <div className="authcard-magic-sent">
-          <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉️</div>
+          <div aria-hidden="true" className="authcard-icon-badge authcard-icon-badge-teal">✉</div>
           <h2 className="authcard-magic-heading">{t('authRegister.checkYourEmail', 'Check your email')}</h2>
           <p className="authcard-magic-body">{t('authRegister.magicLinkSentBody', 'We sent a sign-in link to')} <b>{email.trim()}</b>. {t('authRegister.magicLinkExpiry', 'It works once and expires in 15 minutes.')}</p>
           <button className="authcard-resend-btn" disabled={isSubmitting} onClick={useMagicLinkInstead} type="button">

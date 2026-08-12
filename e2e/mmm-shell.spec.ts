@@ -255,6 +255,30 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // The search bar belongs to the layer that is showing. Asserted on the
+  // CONTROL rather than on results: results depend on what is inside the test
+  // viewport's bbox, and a test that needs seeded pins to prove a placeholder
+  // swapped would fail for reasons that are not this behaviour.
+  test('map search follows the layer, and events have none', async ({ page }) => {
+    await page.goto('/app/map');
+    const field = page.locator('.mmm-map-search .mmm-search-input');
+
+    // Events is the landing layer: a price pin is not something a name finds.
+    await expect(field).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await expect(field).toHaveAttribute('placeholder', 'Search venues, streets, cities');
+
+    await page.getByRole('button', { name: 'Artists', exact: true }).click();
+    await expect(field).toHaveAttribute('placeholder', 'Search artists, genres, cities');
+
+    // A term typed against one layer must not survive into the next — it would
+    // read as "no results" when it is really "different layer".
+    await field.fill('anything');
+    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await expect(field).toHaveValue('');
+  });
+
   // The four panels are ACCORDIONS, not links. They were four routes under
   // /app/me/[panel] until the 2026-08-10 template made ME one column of
   // drawers that open in place — the old routes now redirect onto
@@ -296,6 +320,53 @@ test.describe('Music · Map · Me shell', () => {
     await page.getByRole('button', { name: 'ME', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me$/);
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
+  });
+
+  // One drawer open at a time, page-wide — the three sections and the four
+  // account panels are ONE group. This is the invariant that cannot be seen by
+  // reading either half alone: the sections are component state and the panels
+  // are the URL, so nothing about the types stops both being open at once.
+  test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
+    const drawer = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+
+    await page.goto('/app/me');
+    // Profiles is the one showing before anyone has chosen.
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
+
+    // A section closes the other sections.
+    await drawer('My Tickets').click();
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+
+    // A panel closes the sections, and puts itself in the URL so the drawer is
+    // deep-linkable and Back closes it.
+    await drawer('Settings').click();
+    await expect(page).toHaveURL(/panel=settings/);
+    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
+
+    // And a section closes the panel — including its search param, or the drawer
+    // would reopen on the next render from a URL nobody cleared.
+    await drawer('About Me').click();
+    await expect(page).not.toHaveURL(/panel=/);
+    await expect(drawer('About Me')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  // Deep-linking a panel must not also open Profiles: the default applies only
+  // when nothing else is open, or the URL's own drawer loads a screen down.
+  test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
+    await page.goto('/app/me?panel=legal');
+    const drawer = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+    await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
   });
 
   // An account with no Profile row has no hexId and therefore no HYPE link. The

@@ -192,7 +192,10 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         .ad-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
         .ad-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--ink); }
         .ad-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
-        .ad-columns { display: grid; grid-template-columns: 1fr 320px; gap: 20px; }
+        /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
+           unbreakable token — a venue name, a URL — pushes this column past its
+           share and scrolls the page sideways above the breakpoint below. */
+        .ad-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; }
         .ad-section-head { display: flex; justify-content: space-between; align-items: baseline; }
         .ad-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a50); }
         .ad-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; }

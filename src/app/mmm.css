@@ -324,7 +324,10 @@ html.mmm-locked .site-shell > main {
    with — while moving the first card down by a different amount on every tab.
 
    The tabs now hold one line at every width (`nowrap` below) and search sits
-   beneath, so the content start is at a fixed offset on all five tabs. */
+   beneath, so the content start is at a fixed offset on all five tabs.
+
+   `--tab-row-gap` is the gap between the two rows and is unrelated to the
+   retired `--tab-gap`/`--tab-fs`/`--tab-pad` trio the pill strip used. */
 .mmm-music-controls {
   position: relative;
   display: flex;
@@ -334,38 +337,95 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-music-controls .mmm-tabs { padding: 0; }
 
-.mmm-tabs { display: flex; gap: var(--tab-gap, 8px); padding: 2px 0 14px; }
+/* A link bar, not a pill strip (Design System 8 port, 2026-08-12). Five
+   capsules cannot fit 375px without dropping the label to 0.72rem (≈11.5px),
+   and a short word inside a filled pill reads as a balloon. Constant 14px type
+   that scrolls horizontally fits at every width and needs no responsive table
+   — which is why the `--tab-gap`/`--tab-fs`/`--tab-pad` overrides that used to
+   sit below are gone rather than retuned.
+
+   TWO DELIBERATE DEVIATIONS FROM THE DESIGN SOURCE, and they are load-bearing
+   together: the gap is 12px rather than the source's 18px, and `.mmm-tab` has
+   no horizontal padding rather than the source's 2px. At 18px + 2px the five
+   English labels measure 425px, which overflows a 390px phone by 35px — and
+   `e2e/mmm-shell.spec.ts` asserts all five are on screen at 390px, from the
+   handoff's own §9 ("All 5 MUSIC items are visible and reachable, no
+   clipping"). That invariant outranks two spacing values: it was written after
+   a real bug where three of seven items rendered off-screen and unreachable.
+   The two changes together buy 44px, so the strip ends around 381px with ~9px
+   of headroom. The type stays at 14px, which is what the link bar was FOR —
+   the design's objection was to shrinking labels, not to tighter spacing.
+
+   `overflow-x: auto` stays anyway. English fits now; a longer label in one of
+   the twelve locales may not, and a strip that scrolls is recoverable where a
+   clipped one is not. */
+.mmm-tabs {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 2px 0 14px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mmm-tabs::-webkit-scrollbar { display: none; }
+
 .mmm-tab {
-  /* `0 1 auto` + nowrap, not `flex: 1`. Equal-width tabs force the longest
-     label to set every tab's width and then wrap the strip; sized to content
-     and allowed to shrink, all five fit one line down to 320px. The type ramp
-     is a token so a narrow phone can tighten it without a second rule set. */
-  flex: 0 1 auto;
-  min-width: 0;
+  position: relative;
+  flex: 0 0 auto;
   white-space: nowrap;
-  padding: var(--tab-pad, 9px 14px);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--hair-120);
-  background: transparent;
-  color: var(--ink-3);
-  font-family: var(--font-body);
+  /* `display` MUST stay non-inline. `mobile-fit.css` lists `.mmm-tab` in its
+     `min-height: 44px` group, and min-height does nothing on an inline box —
+     `.mmm-tab` is an <a> (Next <Link>), so an inline display would drop the
+     touch floor to ~37px silently, with no error anywhere. */
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  /* No horizontal padding — see the deviation note above. It also makes the
+     active underline exactly the width of its word rather than 4px wider. */
+  padding: 11px 0 12px;
+  font-family: var(--font-display);
   font-weight: 600;
-  font-size: var(--tab-fs, 0.82rem);
+  font-size: 14px;
+  letter-spacing: -0.015em;
+  color: var(--ink-3);
   cursor: pointer;
-  text-align: center;
+  transition:
+    color 160ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    transform 110ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-origin: 50% 100%;
 }
-/* The strip must never wrap; below this width the type and padding tighten
-   instead. A horizontal scroller was the alternative and is worse — a tab you
-   cannot see is a tab you do not know exists. */
-.mmm-tabs { flex-wrap: nowrap; }
-@media (max-width: 460px) {
-  .mmm-tabs { --tab-gap: 5px; --tab-fs: 0.72rem; --tab-pad: 8px 9px; }
+.mmm-tab:hover { color: var(--ink); }
+.mmm-tab:active { transform: scale(0.94); color: var(--ink); }
+
+.mmm-tab[aria-current='page'] { font-weight: 800; color: var(--ink); }
+.mmm-tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 2.5px;
+  border-radius: 9999px;
+  background: var(--accent);
+  /* Same value the design system writes literally (#ff5029 = 255,80,41),
+     through the token every other accent alpha in this file uses. */
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.55);
+  /* Suppressed by the global `prefers-reduced-motion` block in globals.css,
+     which zeroes every animation with !important — no local media query. */
+  animation: mmmUnderline 260ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
-.mmm-tab[aria-current='page'] {
-  border-color: rgba(var(--accent-rgb), 0.45);
-  background: rgba(var(--accent-rgb), 0.14);
-  color: var(--accent-text);
-  font-weight: 700;
+@keyframes mmmUnderline {
+  from {
+    transform: scaleX(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 /* ── MAP date strip ───────────────────────────────────────────────────────
@@ -564,6 +624,45 @@ html.mmm-locked .site-shell > main {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
+}
+
+/* ── MAP layer search ─────────────────────────────────────────────────────
+   Sits under the layer chips on the venues and artists layers. It reuses the
+   universal-search field below rather than declaring a second one — the two are
+   the same control in two places, and `audit:css` counts a re-declared selector
+   as an override for exactly this reason.
+
+   `position: relative` is load-bearing: `.mmm-search-results` is
+   `position: absolute; top: 100%`, so without a positioned ancestor here the
+   result list would hang off the map layer and cover the canvas.
+
+   `pointer-events: auto` re-arms what `.mmm-map-controls` turned off — that
+   container is transparent to drags on purpose so the gap between rows does not
+   eat a map pan. */
+.mmm-map-search {
+  position: relative;
+  pointer-events: auto;
+  /* The design source's own width for `#search`. */
+  width: min(460px, 72vw);
+  margin: 0 12px;
+}
+/* The design gives the field over the map a deeper shadow and a tighter right
+   pad than the one in the MUSIC pane — it floats over moving tiles rather than
+   sitting on a solid pane, and needs the separation. */
+.mmm-map-search .mmm-search-field {
+  padding: 8px 8px 8px 18px;
+  box-shadow: 0 14px 34px rgba(4, 8, 18, 0.5);
+}
+/* A result row here is a button, not a link — selecting one flies the camera
+   and opens a sheet rather than navigating. It therefore needs the type and
+   alignment the anchor gets for free. */
+.mmm-map-search button.mmm-search-result {
+  width: 100%;
+  background: none;
+  border: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
 /* ── Universal search ─────────────────────────────────────────────────── */

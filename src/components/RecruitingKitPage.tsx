@@ -148,7 +148,10 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-nav-cta { font-family: var(--font-display); font-weight: 800; font-size: .88rem; background: var(--rk-tint); color: var(--bg); padding: 9px 18px; border-radius: 999px; text-decoration: none; }
         .rk-hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
         .rk-hero-glow { position: absolute; top: -160px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, color-mix(in srgb, var(--rk-glow) 20%, transparent), transparent 65%); pointer-events: none; }
-        .rk-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: 1fr 420px; gap: 60px; align-items: center; position: relative; }
+        /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
+           unbreakable token — a venue name, a URL — pushes this column past its
+           share and scrolls the page sideways above the breakpoint below. */
+        .rk-hero-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 60px; align-items: center; position: relative; }
         .rk-eyebrow { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rk-tint); margin-bottom: 22px; }
         .rk-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.8rem, 5.5vw, 4.6rem); letter-spacing: -.04em; line-height: .98; }
         .rk-hero-body { font-size: 1.15rem; line-height: 1.6; color: var(--ink-a70); margin-top: 22px; max-width: 48ch; }

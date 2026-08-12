@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { describeSelection, stripDays, toDatesParam, toggleDay } from '@/lib/map-dates';
 import {
@@ -31,6 +32,34 @@ const LAYERS: Array<{ id: MapLayer; label: string }> = [
 ];
 
 type Placed = { key: string; ax: number; ay: number; offset: boolean; target: MapSheetTarget };
+
+/** One row in the layer search: what to show, where to fly, what to open. */
+type LayerHit = {
+  key: string;
+  title: string;
+  detail: string;
+  lngLat: [number, number];
+  zoom: number;
+  target: MapSheetTarget;
+};
+
+/**
+ * The layer search is only ever offered where the layer draws something a name
+ * can identify. Events are excluded by the design source too: an event pin is a
+ * price, and its date strip is the filter that layer actually has.
+ */
+type SearchableLayer = 'venues' | 'artists';
+// A predicate rather than an `includes` test: this narrows, so the component
+// below takes the two layers it handles instead of every layer plus a cast.
+function isSearchableLayer(layer: MapLayer): layer is SearchableLayer {
+  return layer === 'venues' || layer === 'artists';
+}
+
+/** Both strings are the design source's, swapped with the layer. */
+const SEARCH_PLACEHOLDER: Record<SearchableLayer, string> = {
+  artists: 'Search artists, genres, cities',
+  venues: 'Search venues, streets, cities',
+};
 
 /**
  * The Map module — a real slippy map with bounded queries and de-collided pins.
@@ -237,6 +266,16 @@ export function MmmMap({
     recentre();
   }, [home, layer, ready, recentre]);
 
+  /**
+   * Where the layer search sends the camera. `flyTo` and not `jumpTo`: the
+   * result is somewhere the member has not looked, and an instant cut leaves
+   * them with no idea which way they moved. 800ms is the design's duration,
+   * shared with `recentre`.
+   */
+  const goTo = useCallback((lngLat: [number, number], zoom: number) => {
+    mapRef.current?.flyTo({ center: lngLat, zoom, duration: 800 });
+  }, []);
+
   const collision = layer === 'events' ? PIN_COLLISION.event : PIN_COLLISION.venue;
 
   const candidates = useMemo(() => {
@@ -353,6 +392,17 @@ export function MmmMap({
                 </div>
               )}
             </div>
+            {/* Under the selectors, on the venues and artists layers only —
+                where the layer draws something a name can identify. */}
+            {isSearchableLayer(layer) && (
+              <MapLayerSearch
+                cities={cities}
+                layer={layer}
+                onGoTo={goTo}
+                onOpenSheet={onOpenSheet}
+                venues={venues}
+              />
+            )}
           </div>
           {/* The date strip belongs to the events layer alone: only an event has
               a date. Venues and artists keep the chips above and nothing else,
@@ -401,6 +451,163 @@ export function MmmMap({
             </div>
           )}
         </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Search bound to the layer that is showing.
+ *
+ * The rule from `templates/simplified-app/map.html`, verbatim: the bar "belongs
+ * to whichever layer is showing and only ever matches things that layer draws:
+ * venues on the venues layer, artists on the artists layer. Matching an artist
+ * while venues are drawn would send you to a pin that does not exist."
+ *
+ * **It searches what the layer has LOADED, which is what it draws — the bbox.**
+ * The design's fixture arrays are the whole world, so there the distinction does
+ * not arise; here `/api/map/*` rejects an unbounded request outright
+ * (`BBOX_REQUIRED`, `BACKEND_REWRITE.md` §5, and an e2e test asserts it on all
+ * three layers), so there is no way to find a venue outside the viewport AND
+ * still have a coordinate to fly to. Rather than pretend otherwise, the empty
+ * state says the search covers the current view and offers `/search`, which
+ * really does cover everything. Widening this properly needs a place lookup the
+ * codebase does not have — an artist has no coordinate at all by design
+ * (`sanitizeStoredProfileLocation` nulls lat/lng on every non-VENUE profile).
+ */
+function MapLayerSearch({
+  cities,
+  layer,
+  onGoTo,
+  onOpenSheet,
+  venues,
+}: {
+  cities: MapArtistCity[];
+  layer: SearchableLayer;
+  onGoTo: (lngLat: [number, number], zoom: number) => void;
+  onOpenSheet: (target: MapSheetTarget) => void;
+  venues: MapVenuePin[];
+}) {
+  const [term, setTerm] = useState('');
+  const wrapRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  // Switching layers clears the field. The design calls `hide()` on every layer
+  // change for the same reason: a term typed against venues matches nothing on
+  // artists, and leaving it there reads as "no results" rather than "new layer".
+  useEffect(() => { setTerm(''); }, [layer]);
+
+  // Click-out dismisses, matching the design's document-level pointerdown. It
+  // is `pointerdown` and not `click` so a drag that starts on the map closes
+  // the list before the map begins panning under it.
+  useEffect(() => {
+    function onPointerDown(event: PointerEvent) {
+      if (wrapRef.current?.contains(event.target as Node)) return;
+      setTerm('');
+    }
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, []);
+
+  const trimmed = term.trim().toLowerCase();
+
+  const hits = useMemo<LayerHit[]>(() => {
+    if (!trimmed) return [];
+    if (layer === 'artists') {
+      // Flattened out of the city bubbles, because that is what the layer
+      // draws: each city carries up to five hype-ranked artists, and the city
+      // is the only coordinate any of them has.
+      return cities.flatMap((city) =>
+        city.artists
+          .filter((artist) =>
+            `${artist.name} ${city.city} ${artist.genres.join(' ')}`.toLowerCase().includes(trimmed))
+          .map((artist) => ({
+            key: `artist-${artist.id}`,
+            title: artist.name,
+            detail: [artist.genres[0], city.city].filter(Boolean).join(' · '),
+            lngLat: [city.longitude, city.latitude] as [number, number],
+            // The design's zoom for an artist result: a city, not an address.
+            zoom: 11,
+            target: { kind: 'artistCity', data: city } as MapSheetTarget,
+          })));
+    }
+    return venues
+      .filter((venue) =>
+        `${venue.name} ${venue.city ?? ''} ${venue.addressLine1 ?? ''}`.toLowerCase().includes(trimmed))
+      .map((venue) => ({
+        key: `venue-${venue.id}`,
+        title: venue.name,
+        detail: venue.addressLine1 ?? venue.city ?? '',
+        lngLat: [venue.longitude, venue.latitude] as [number, number],
+        // A venue is an address, so the design flies far closer than for a city.
+        zoom: 15,
+        target: { kind: 'venue', data: venue } as MapSheetTarget,
+      }));
+  }, [cities, layer, trimmed, venues]);
+
+  const select = (hit: LayerHit) => {
+    onGoTo(hit.lngLat, hit.zoom);
+    onOpenSheet(hit.target);
+    setTerm('');
+    inputRef.current?.blur();
+  };
+
+  return (
+    <div className="mmm-map-search" ref={wrapRef}>
+      <div className="mmm-search-field">
+        <span aria-hidden="true" className="mmm-search-glyph">⌕</span>
+        <input
+          aria-label={SEARCH_PLACEHOLDER[layer]}
+          autoComplete="off"
+          className="mmm-search-input"
+          onChange={(event) => setTerm(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key !== 'Escape') return;
+            setTerm('');
+            inputRef.current?.blur();
+          }}
+          placeholder={SEARCH_PLACEHOLDER[layer]}
+          ref={inputRef}
+          type="search"
+          value={term}
+        />
+      </div>
+
+      {trimmed.length > 0 && (
+        <div aria-live="polite" className="mmm-search-results">
+          {hits.length === 0 ? (
+            <>
+              <p className="mmm-search-note">
+                {layer === 'artists'
+                  ? 'No artists match that in view. Try a city, a genre or part of the name — or move the map.'
+                  : 'No venues match that in view. Try a city, a street or part of the name — or move the map.'}
+              </p>
+              {/* The one honest way out of a viewport-bounded search: a page
+                  that really does search everything. */}
+              <Link className="mmm-search-result" href={`/search?q=${encodeURIComponent(term.trim())}`}>
+                <span className="mmm-search-result-main">
+                  <span className="mmm-row-title">Search all of iHYPE for “{term.trim()}”</span>
+                  <span className="mmm-row-sub">Leaves the map</span>
+                </span>
+                <span aria-hidden="true" className="mmm-search-kind">→</span>
+              </Link>
+            </>
+          ) : (
+            hits.map((hit) => (
+              <button
+                className="mmm-search-result"
+                key={hit.key}
+                onClick={() => select(hit)}
+                type="button"
+              >
+                <span className="mmm-search-result-main">
+                  <span className="mmm-row-title">{hit.title}</span>
+                  {hit.detail && <span className="mmm-row-sub">{hit.detail}</span>}
+                </span>
+              </button>
+            ))
+          )}
+        </div>
       )}
     </div>
   );

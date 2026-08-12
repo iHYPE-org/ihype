@@ -341,7 +341,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
             color={color}
             href={`/venues/${profile.slug}/booking-inbox`}
             icon={icons.event(color)}
-            sub={t('pageRoleModules.bookingInboxSub', 'Accept or decline artist & DJ requests')}
+            sub={t('pageRoleModules.bookingInboxSub', 'Accept or decline artist booking requests')}
             title={t('pageRoleModules.bookingInboxTitle', 'Booking inbox')}
           />
         )}
