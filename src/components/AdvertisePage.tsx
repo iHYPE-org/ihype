@@ -322,7 +322,7 @@ function CoverageBuilder() {
                   <input accept="audio/*" onChange={handleAudioChange} style={{ display: 'none' }} type="file" />
                 </label>
                 {audio.phase === 'done' && (
-                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#22e5d4', marginTop: 8 }}>
+                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'var(--role-venue)', marginTop: 8 }}>
                     ✓ {audio.fileName}{typeof audio.durationSecs === 'number' ? ` · :${audio.durationSecs}` : ''} — {t('advertisePage.willPlayInBreaks', 'will play in station ad breaks')}
                   </div>
                 )}
@@ -347,7 +347,7 @@ function CoverageBuilder() {
           {/* Dot grid */}
           <div className="adv-dot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(16, 1fr)', gap: 7, padding: '4px 2px 0' }}>
             {dots.map((lit, i) => (
-              <span key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: lit ? '#ff5029' : '#3a342e', boxShadow: lit ? '0 0 8px rgba(255,80,41,.5)' : 'none', transition: 'background .35s, box-shadow .35s', display: 'block' }} />
+              <span key={i} style={{ aspectRatio: '1', borderRadius: '50%', background: lit ? 'var(--accent)' : 'var(--ink-4)', boxShadow: lit ? '0 0 8px rgba(var(--accent-rgb),.5)' : 'none', transition: 'background .35s, box-shadow .35s', display: 'block' }} />
             ))}
           </div>
 
@@ -363,7 +363,7 @@ function CoverageBuilder() {
 
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-            {[{ color: '#b983ff', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: '#22e5d4', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
+            {[{ color: 'var(--role-fan)', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: 'var(--role-venue)', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
               <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.06em', color: 'var(--ink-a60)', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
                 {p.label}
@@ -373,7 +373,7 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
-            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.base', 'base')}`, v: `${money(perSpot)} ${t('advertisePage.perSpot', '/ spot')}` }, { k: `${spots} ${t('advertisePage.spotsSlashDay', 'spots/day')} × ${days} ${t('advertisePage.days', 'days')}`, v: `${money(dailyCost)} ${t('advertisePage.perDay', '/ day')}` }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: '#22e5d4' }].map(r => (
+            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.base', 'base')}`, v: `${money(perSpot)} ${t('advertisePage.perSpot', '/ spot')}` }, { k: `${spots} ${t('advertisePage.spotsSlashDay', 'spots/day')} × ${days} ${t('advertisePage.days', 'days')}`, v: `${money(dailyCost)} ${t('advertisePage.perDay', '/ day')}` }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
               <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: 12 }}>
                 <span style={{ color: '#5a5048', letterSpacing: '.06em' }}>{r.k}</span>
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
@@ -381,7 +381,7 @@ function CoverageBuilder() {
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a60)' }}>{t('advertisePage.total', 'Total')}</span>
-              <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: 34, letterSpacing: '-.03em', color: '#ff5029' }}>
+              <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: 34, letterSpacing: '-.03em', color: 'var(--accent)' }}>
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 11, color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}{t('advertisePage.slashDay', '/day')}</small>
               </span>
             </div>
@@ -398,10 +398,10 @@ function CoverageBuilder() {
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
-                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(var(--warning-rgb),.1)',
-                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(34,229,212,.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(var(--warning-rgb),.3)'}`,
+                background: submit.status === 'AWAITING_PAYMENT' ? 'rgba(var(--role-venue-rgb),.1)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.1)' : 'rgba(var(--warning-rgb),.1)',
+                border: `1px solid ${submit.status === 'AWAITING_PAYMENT' ? 'rgba(var(--role-venue-rgb),.3)' : submit.status === 'REJECTED' ? 'rgba(255,90,90,.3)' : 'rgba(var(--warning-rgb),.3)'}`,
               }}>
-                <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? '#22e5d4' : submit.status === 'REJECTED' ? '#ff5a5a' : '#ffb84a' }}>
+                <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: 13, color: submit.status === 'AWAITING_PAYMENT' ? 'var(--role-venue)' : submit.status === 'REJECTED' ? '#ff5a5a' : 'var(--warning)' }}>
                   {submit.message}
                 </div>
                 <div style={{ fontSize: 11, color: 'var(--ink-a60)', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
@@ -418,7 +418,7 @@ function CoverageBuilder() {
 
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-2)', marginTop: 14, lineHeight: 1.45 }}>
               {t('advertisePage.nothingChargesNote', 'Nothing charges until your creative clears the AI screen.')}
-              <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: '#ff5029', marginLeft: 3, verticalAlign: 'middle' }} />
+              <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)', marginLeft: 3, verticalAlign: 'middle' }} />
             </p>
           </div>
         </div>
@@ -491,7 +491,7 @@ function AIScanner() {
           { n: '05', title: t('advertisePage.gate5Title', 'Reputation risk'), desc: t('advertisePage.gate5Desc', 'A final pass for misleading pricing, fake scarcity, impersonation, or off-platform resale — anything that would tarnish the scene.') },
         ].map(c => (
           <div key={c.n} style={{ display: 'flex', gap: 14, padding: '18px', border: '1px solid var(--hair-70)', borderRadius: 14, background: 'var(--bg-2)' }}>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: '#ff5029', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
+            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 10, color: 'var(--accent)', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
             <div>
               <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: 15, letterSpacing: '-.01em' }}>{c.title}</div>
               <p style={{ fontSize: 12.5, color: 'var(--ink-a60)', lineHeight: 1.5, marginTop: 6 }}>{c.desc}</p>
@@ -504,7 +504,7 @@ function AIScanner() {
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden' }}>
         <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
           <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: 'var(--ink-a60)' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#ff5029', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
+            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
             {t('advertisePage.hypeScreen', 'HYPE Screen')}
           </span>
           <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: 14 }}>{t('advertisePage.submissionReview', 'Submission review')}</span>
@@ -524,7 +524,7 @@ function AIScanner() {
             {SUBS.map((s, i) => (
               <button key={i} onClick={() => runScan(i)} style={{
                 padding: '11px 12px', borderRadius: 9, textAlign: 'left',
-                border: `1px solid ${i === active ? 'rgba(255,255,255,.35)' : 'var(--hair-70)'}`,
+                border: `1px solid ${i === active ? 'var(--ink-a35)' : 'var(--hair-70)'}`,
                 background: i === active ? 'var(--bg-4)' : 'var(--bg-3)',
                 cursor: 'pointer', transition: 'border-color .15s',
               }}>
@@ -539,7 +539,7 @@ function AIScanner() {
             {/* Ad preview */}
             <div style={{ border: '1px solid var(--hair-70)', borderRadius: 11, padding: '14px 16px', background: 'var(--bg-3)', position: 'relative', overflow: 'hidden' }}>
               {scanning && (
-                <div style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #ff5029, transparent)', boxShadow: '0 0 14px #ff5029', animation: 'adv-scan 1.25s ease-in-out' }} />
+                <div style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', boxShadow: '0 0 14px var(--accent)', animation: 'adv-scan 1.25s ease-in-out' }} />
               )}
               <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 8.5, letterSpacing: '.14em', textTransform: 'uppercase', color: '#5a5048' }}>{sub.tag}</div>
               <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: 17, letterSpacing: '-.01em', marginTop: 8, lineHeight: 1.15 }}>{sub.copy}</div>
@@ -553,13 +553,13 @@ function AIScanner() {
                 return (
                   <div key={i} style={{
                     display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10,
-                    border: `1px solid ${state === 'pass' ? 'rgba(34,229,212,.25)' : state === 'fail' ? 'rgba(255,90,90,.25)' : 'var(--hair-70)'}`,
+                    border: `1px solid ${state === 'pass' ? 'rgba(var(--role-venue-rgb),.25)' : state === 'fail' ? 'rgba(255,90,90,.25)' : 'var(--hair-70)'}`,
                     background: 'var(--bg-3)', opacity: state === 'idle' ? .4 : 1, transition: 'opacity .3s, border-color .3s',
                   }}>
                     <span style={{
                       width: 24, height: 24, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      border: `1px solid ${state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : 'var(--line-2)'}`,
-                      color: state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : '#5a5048',
+                      border: `1px solid ${state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? '#ff5a5a' : 'var(--line-2)'}`,
+                      color: state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? '#ff5a5a' : '#5a5048',
                     }}>
                       {state === 'pass' ? <CheckIcon /> : state === 'fail' ? <CrossIcon /> : null}
                     </span>
@@ -567,7 +567,7 @@ function AIScanner() {
                       <div style={{ fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontSize: 12.5, fontWeight: 600 }}>{g[0]}</div>
                       <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9.5, color: '#5a5048', letterSpacing: '.02em', marginTop: 3, lineHeight: 1.4 }}>{g[1]}</div>
                     </span>
-                    <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', flexShrink: 0, color: state === 'pass' ? '#22e5d4' : state === 'fail' ? '#ff5a5a' : 'transparent' }}>
+                    <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: 9, letterSpacing: '.1em', textTransform: 'uppercase', flexShrink: 0, color: state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? '#ff5a5a' : 'transparent' }}>
                       {state === 'pass' ? t('advertisePage.pass', 'Pass') : state === 'fail' ? t('advertisePage.blocked', 'Blocked') : '—'}
                     </span>
                   </div>
@@ -580,9 +580,9 @@ function AIScanner() {
               <div style={{
                 marginTop: 14, padding: '13px 16px', borderRadius: 11, display: 'flex', alignItems: 'center', gap: 11,
                 fontFamily: 'var(--f-m,monospace)', fontSize: 11, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid',
-                borderColor: verdict === 'pass' ? 'rgba(34,229,212,.4)' : 'rgba(255,90,90,.4)',
-                background: verdict === 'pass' ? 'rgba(34,229,212,.07)' : 'rgba(255,90,90,.07)',
-                color: verdict === 'pass' ? '#22e5d4' : '#ff5a5a',
+                borderColor: verdict === 'pass' ? 'rgba(var(--role-venue-rgb),.4)' : 'rgba(255,90,90,.4)',
+                background: verdict === 'pass' ? 'rgba(var(--role-venue-rgb),.07)' : 'rgba(255,90,90,.07)',
+                color: verdict === 'pass' ? 'var(--role-venue)' : '#ff5a5a',
               }}>
                 {verdict === 'pass' ? <CheckIcon /> : <CrossIcon />}
                 <span>{verdict === 'pass' ? t('advertisePage.approvedNote', 'Approved — ad is eligible to run') : t('advertisePage.rejectedNote', 'Rejected — ad will not run')}</span>

@@ -183,7 +183,12 @@ for (const file of colourFiles) {
   let depth = 0;
   lines.forEach((line, i) => {
     const wasInBlock = inBlock;
-    const o = (line.match(/\/\*/g) || []).length;
+    // `/*` opens a comment only at line start or after whitespace, `{` or `(`.
+    // Without that guard an accept="audio/*" attribute reads as a comment
+    // opener and blinds this scan for the whole rest of the file — which is
+    // what hid every colour literal below line 322 of AdvertisePage.tsx for
+    // as long as this check has existed.
+    const o = (line.match(/(?:^|[\s{(])\/\*/g) || []).length;
     const c = (line.match(/\*\//g) || []).length;
     if (o > c) inBlock = true; else if (c > o) inBlock = false;
     const openedPrint = /@media\s+print/.test(line);
@@ -300,7 +305,7 @@ for (const f of allFiles) {
   let inBlock = false;
   readFileSync(f, 'utf8').split('\n').forEach((line) => {
     const was = inBlock;
-    const o = (line.match(/\/\*/g) || []).length;
+    const o = (line.match(/(?:^|[\s{(])\/\*/g) || []).length;
     const c = (line.match(/\*\//g) || []).length;
     if (o > c) inBlock = true; else if (c > o) inBlock = false;
     if (was || /^\s*(\/\/|\*|\/\*)/.test(line)) return;  // prose names tokens too
