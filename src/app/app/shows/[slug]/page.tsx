@@ -1,9 +1,10 @@
 import Link from 'next/link';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { detectRequestLocation } from '@/lib/request-location';
 import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
+import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
@@ -99,10 +100,15 @@ export default async function MmmShowPage({
     resolveAffiliatePromoter({ affiliateId: query.affiliate, refHexId: query.ref }),
   ]);
 
-  if (!show) notFound();
+  // Returned, not thrown. `notFound()` here renders the shell twice, because
+  // this route's layout is async and has already flushed by the time the throw
+  // happens — see `MmmMissing` for the full account.
+  if (!show) return <MmmMissing />;
   // A DRAFT show is private — the same rule the legacy page enforces, and what
-  // keeps a lineup-pending show unbookable while acts are still deciding.
-  if (show.status === 'DRAFT') notFound();
+  // keeps a lineup-pending show unbookable while acts are still deciding. It
+  // returns the same surface as a missing one on purpose: "this show exists but
+  // is not public yet" is not something a stranger should be able to learn.
+  if (show.status === 'DRAFT') return <MmmMissing />;
 
   const venue = show.venueProfile;
   const where = [venue?.name, venue?.city].filter(Boolean).join(' · ');

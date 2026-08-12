@@ -917,7 +917,7 @@ export function SitePlayerDock() {
         {/* Mute + volume */}
         <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? t('globalMediaPlayer.unmute', 'Unmute') : t('globalMediaPlayer.mute', 'Mute')} title={isMuted ? t('globalMediaPlayer.unmuteShortcut', 'Unmute (M)') : t('globalMediaPlayer.muteShortcut', 'Mute (M)')} type="button"
           style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.75rem' }}>
-          {isMuted ? '🔇' : '🔊'}
+          {isMuted ? '⊘' : '◂))'}
         </button>
         <input
           aria-label={t('globalMediaPlayer.volume', 'Volume')}
@@ -937,7 +937,7 @@ export function SitePlayerDock() {
         <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
           aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
           style={{ fontSize: '0.62rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
-          {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '💤'}
+          {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
         </button>
 
         {/* Share */}

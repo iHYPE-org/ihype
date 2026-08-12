@@ -41,12 +41,12 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   featuresEyebrow: t('forFansPage.featuresEyebrow', 'What you get'),
   featuresHeadline: t('forFansPage.featuresHeadline', 'Everything a fan actually wants.'),
   features: [
-    { emoji: '🔥', title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.feature1Body', 'A weekly flame budget — back the artists you believe in before anyone else does.') },
-    { emoji: '🎟️', title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2Body', 'Face value, QR wallet, zero scalper markup — buy straight from the artist.') },
-    { emoji: '💸', title: t('forFansPage.feature3Title', 'Promoter earnings'), body: t('forFansPage.feature3Body', 'Share any show. Earn your proportional cut of the 10% promoter pool.') },
-    { emoji: '📻', title: t('forFansPage.feature4Title', 'Live radio'), body: t('forFansPage.feature4Body', "Tune into any DJ's live or recorded show, free — no paywall, ever.") },
-    { emoji: '🌱', title: t('forFansPage.feature5Title', 'Seeds discovery'), body: t('forFansPage.feature5Body', 'A taste-matched swipe deck that surfaces artists before they blow up.') },
-    { emoji: '📄', title: t('forFansPage.feature6Title', 'Your own page'), body: t('forFansPage.feature6Body', 'Fan-promoters get an AI-built page too — show off what you’ve discovered.') },
+    { title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.feature1Body', 'A weekly flame budget — back the artists you believe in before anyone else does.') },
+    { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2Body', 'Face value, QR wallet, zero scalper markup — buy straight from the artist.') },
+    { title: t('forFansPage.feature3Title', 'Promoter earnings'), body: t('forFansPage.feature3Body', 'Share any show. Earn your proportional cut of the 10% promoter pool.') },
+    { title: t('forFansPage.feature4Title', 'Live radio'), body: t('forFansPage.feature4Body', "Tune into any DJ's live or recorded show, free — no paywall, ever.") },
+    { title: t('forFansPage.feature5Title', 'Seeds discovery'), body: t('forFansPage.feature5Body', 'A taste-matched swipe deck that surfaces artists before they blow up.') },
+    { title: t('forFansPage.feature6Title', 'Your own page'), body: t('forFansPage.feature6Body', 'Fan-promoters get an AI-built page too — show off what you’ve discovered.') },
   ],
   };
 }

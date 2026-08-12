@@ -849,7 +849,7 @@ export default async function ShowDetailPage({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5938rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: demandLabelColor }}>
-                    {demandLabel === 'Fire' ? t('showsSlugPage.fireEmojiLabel', '🔥 Fire') : demandLabel}
+                    {demandLabel === 'Fire' ? t('showsSlugPage.fireLabel', 'Fire') : demandLabel}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 26 }}>

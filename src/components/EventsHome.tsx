@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { HEAT_LABEL, HEAT_TOKEN, heatLevel } from '@/lib/heat-level';
 import { TicketCardActions } from '@/components/TicketCardActions';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { PullToRefresh } from '@/components/PullToRefresh';
@@ -57,7 +58,28 @@ function fmtDate(iso: string) {
   return `${d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).toUpperCase()} · ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
 }
 
-const eventCard = { display: 'flex', alignItems: 'stretch', gap: 0, border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', background: 'var(--hair-30)', textDecoration: 'none', color: 'inherit' } as const;
+/**
+ * The DS8 show card (`templates/discover/`, the `#dsc-shows` grid).
+ *
+ * This replaced a 110px-wide art block holding a 🎵 glyph, a horizontal row
+ * and a full-width stack. Three things about that were wrong under DS8 and
+ * only one of them was cosmetic: the emoji breaks the system's first hard rule,
+ * the row layout is not the template's, and at 1000px a single column of
+ * full-width rows is the shape that made this page read as un-designed while
+ * the tokens underneath it were already correct.
+ *
+ * Values are lifted from the template verbatim — 12px radius, 16/18 padding,
+ * the .04/.15 surface-tint pair, 15px title, 12px meta.
+ */
+const eventCard = {
+  display: 'block',
+  background: 'rgba(var(--surface-tint-rgb), .04)',
+  border: '1px solid rgba(var(--surface-tint-rgb), .15)',
+  borderRadius: 12,
+  padding: '16px 18px',
+  textDecoration: 'none',
+  color: 'inherit',
+} as const;
 const emptyStyle = { textAlign: 'center' as const, padding: '60px 24px', color: 'var(--ink-a50)' };
 
 function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle: string; emptyBody: string }) {
@@ -79,39 +101,38 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
     );
   }
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <div className="ev-grid">
       {shows.map((show) => {
-        const demandLabel = show.hypeCount >= 50 ? `+${Math.min(99, Math.round(show.hypeCount / 5))}% this week` : null;
+        const heat = heatLevel(show.hypeCount);
+        const isLive = show.status === 'LIVE';
         return (
           <Link className="ev-card" href={`/shows/${show.slug}`} key={show.id} style={eventCard}>
-            <div className="ev-art" style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRight: '1px solid var(--hair-50)', background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.15) 0%, transparent 100%)' }}>🎵</div>
-            <div className="ev-main" style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)', marginBottom: 7, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                {show.status === 'LIVE'
-                  ? <span style={{ color: 'var(--accent)' }}>{t('eventsHome.liveNow', '● LIVE NOW')}</span>
-                  : <span>{fmtDate(show.startsAt)}</span>}
-                {demandLabel && <span style={{ color: 'var(--role-venue)' }}>{demandLabel}</span>}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 }}>
+                <span
+                  aria-label={HEAT_LABEL[heat]}
+                  role="img"
+                  style={{ width: 7, height: 7, borderRadius: '50%', background: HEAT_TOKEN[heat], flexShrink: 0 }}
+                  title={HEAT_LABEL[heat]}
+                />
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.06em', textTransform: 'uppercase', color: isLive ? 'var(--accent)' : 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {isLive ? t('eventsHome.liveNow', '● LIVE NOW') : fmtDate(show.startsAt)}
+                </span>
               </div>
-              <div className="ev-title" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 4, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
-              </div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--ink-a50)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
-                {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
-              </div>
-              {show.reason?.text && (
-                <div style={{ fontSize: '0.6875rem', color: 'var(--accent)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>✨ {show.reason.text}</div>
-              )}
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--role-venue)', flexShrink: 0 }}>
+                {show.isTicketed ? formatCurrencyFromCents(show.ticketPriceCents) : t('eventsHome.free', 'Free')}
+              </span>
             </div>
-            <div className="ev-cta" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: 8, flexShrink: 0 }}>
-              <div>
-                <div className="ev-price" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, color: 'var(--accent)', letterSpacing: '-.02em' }}>
-                  {show.isTicketed ? formatCurrencyFromCents(show.ticketPriceCents) : t('eventsHome.free', 'Free')}
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a35)' }}>{t('eventsHome.zeroFees', '$0 fees')}</div>
-              </div>
-              <span className="ev-pill" style={{ fontFamily: 'var(--font-display)', fontWeight: 800, borderRadius: 8, background: 'var(--accent)', color: 'var(--ink-on-accent)', whiteSpace: 'nowrap' }}>{t('eventsHome.getTicket', 'Get ticket')}</span>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', letterSpacing: '-.01em', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
             </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
+              {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
+            </div>
+            {show.reason?.text && (
+              <div style={{ fontSize: '0.6875rem', color: 'var(--accent)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.reason.text}</div>
+            )}
           </Link>
         );
       })}
@@ -216,11 +237,26 @@ export function EventsHome({
     : [];
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
+    <div style={{ maxWidth: 1000, margin: '0 auto', padding: '32px 24px 100px' }}>
       <PullToRefresh onRefresh={refreshAll}>
       <div className="section-content">
       <div ref={contentTopRef} />
-      <h1 className="sr-only">{t('eventsHome.pageHeading', 'Events')}</h1>
+
+      {/* templates/discover/'s header block: mono eyebrow, display heading,
+          one line of body. The heading here was `sr-only` — the page opened
+          straight onto a tab strip with no statement of what it was, which is
+          the single biggest reason it did not read as a designed surface. */}
+      <header style={{ marginBottom: 32 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+          {t('eventsHome.pageHeading', 'Events')}
+        </p>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
+          {t('eventsHome.pageTitle', 'Shows near you')}
+        </h1>
+        <p style={{ color: 'var(--ink-a55)', fontSize: '0.875rem', margin: 0 }}>
+          {t('eventsHome.pageSub', 'Every ticket at face value — 70% artist, 20% venue, 10% promoters. iHYPE keeps none of it; card processing is Stripe’s and is shown before you pay.')}
+        </p>
+      </header>
 
       <div className="section-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
         {visibleTabs.map((tabItem) => (
@@ -364,20 +400,18 @@ export function EventsHome({
       </div>
       </PullToRefresh>
       <style>{`
-        .ev-art { width: 110px; font-size: 30px; }
-        .ev-main { padding: 18px 20px; }
-        .ev-cta { padding: 18px 20px; }
-        .ev-title { font-size: 18px; }
-        .ev-price { font-size: 20px; }
-        .ev-pill { font-size: 12px; padding: 8px 14px; }
-        @media (max-width: 560px) {
-          .ev-art { width: 56px; font-size: 20px; }
-          .ev-main { padding: 12px 12px; }
-          .ev-cta { padding: 12px 12px; }
-          .ev-title { font-size: 15px; }
-          .ev-price { font-size: 16px; }
-          .ev-pill { font-size: 11px; padding: 7px 10px; }
+        /* templates/discover/, #dsc-shows: auto-fill at a 260px floor. One
+           column on a 375px phone, four at 1000px, and no breakpoint to keep
+           in sync — which is why the template uses auto-fill rather than a
+           media query per width. */
+        .ev-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+          gap: 14px;
         }
+        .ev-card { transition: border-color .16s ease; }
+        .ev-card:hover { border-color: rgba(var(--accent-rgb), .35); }
+        @media (prefers-reduced-motion: reduce) { .ev-card { transition: none; } }
       `}</style>
     </div>
   );

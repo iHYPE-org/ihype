@@ -167,3 +167,159 @@ export function canSeedSession() {
     (process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET),
   );
 }
+
+/**
+ * Seeds a real show and a real ticket for a user, so the surfaces that only
+ * exist when a member HAS something can be asserted.
+ *
+ * Why this matters more than it looks: every ticket assertion in this suite was
+ * previously written against an account with no tickets, so they could only
+ * check that a section rendered and did not link out. Two real bugs shipped
+ * straight through that gap — a ticket list sorted so attended shows sat above
+ * upcoming ones, and a buy pane that passed no promoter, silently crediting
+ * nobody from the 10% pool. Both are invisible without rows.
+ *
+ * Everything is upserted from a deterministic key so re-running a spec reuses
+ * the same rows instead of piling up new ones.
+ */
+export type SeededShow = {
+  showId: string;
+  slug: string;
+  title: string;
+  serializedId: string;
+};
+
+export async function seedShowWithTicket({
+  buyerUserId,
+  buyerEmail,
+  key = 'default',
+  startsAt,
+}: {
+  buyerUserId: string;
+  buyerEmail: string;
+  /** Distinguishes multiple shows in one spec. */
+  key?: string;
+  /** Defaults to a week out, i.e. upcoming. Pass a past date for an attended one. */
+  startsAt?: Date;
+}): Promise<SeededShow> {
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
+  try {
+    const stamp = `${buyerUserId.slice(0, 8)}-${key}`;
+    const venueSlug = `e2e-venue-${stamp}`;
+    const artistSlug = `e2e-artist-${stamp}`;
+    const showSlug = `e2e-show-${stamp}`;
+    const hex = (seed: string) => `0x${createHash('sha256').update(seed).digest('hex').slice(0, 32)}`;
+
+    /**
+     * The show's acts belong to an ORGANISER account, not to the buyer.
+     *
+     * They used to be `ownerId: buyerUserId`, which quietly turned the suite's
+     * plain-fan account into the owner of an artist profile and a venue
+     * profile. That is not a test detail: the drawer's role gates, ME's role
+     * switcher and the HYPE link card all resolve from the member's own
+     * `Profile` rows, so seeding a ticket silently changed what a fan sees
+     * everywhere else in the suite. It surfaced as "a profile-less account
+     * still renders ME, without a HYPE link card" failing — the account was
+     * no longer profile-less.
+     *
+     * Buying a ticket must not make you an artist. Same in the fixture as in
+     * the product.
+     */
+    const organiserEmail = `e2e-organiser+${stamp}@ihype.test`;
+    const organiser = await prisma.user.upsert({
+      where: { email: organiserEmail },
+      update: {},
+      create: {
+        email: organiserEmail,
+        name: 'E2E Organiser',
+        username: `e2e-organiser-${stamp}`,
+        role: 'ARTIST',
+        emailVerified: new Date(),
+      },
+      select: { id: true },
+    });
+
+    const venue = await prisma.profile.upsert({
+      where: { slug: venueSlug },
+      update: {},
+      create: {
+        slug: venueSlug, hexId: hex(venueSlug), name: 'E2E Venue', type: 'VENUE',
+        ownerId: organiser.id, genres: [], city: 'Portland', stateRegion: 'ME', country: 'US',
+        discoverable: true,
+      },
+    });
+    const artist = await prisma.profile.upsert({
+      where: { slug: artistSlug },
+      update: {},
+      create: {
+        slug: artistSlug, hexId: hex(artistSlug), name: 'E2E Artist', type: 'ARTIST',
+        ownerId: organiser.id, genres: [], discoverable: true,
+      },
+    });
+
+    // A real ticketed show: priced, with a split, so the buy pane and the split
+    // bar both have something true to draw. The split is the charter's, which
+    // is what the payout engine assumes when nothing overrides it.
+    const show = await prisma.show.upsert({
+      where: { slug: showSlug },
+      update: {},
+      create: {
+        slug: showSlug,
+        title: 'E2E Night',
+        startsAt: startsAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        creatorId: buyerUserId,
+        venueProfileId: venue.id,
+        headlinerProfileId: artist.id,
+        status: 'SCHEDULED',
+        isTicketed: true,
+        ticketPriceCents: 1800,
+        ticketCapacity: 100,
+        venuePayoutPercent: 20,
+        artistPayoutPercent: 70,
+        promoterPayoutPercent: 10,
+      },
+    });
+
+    const confirmationCode = `E2E-${stamp}`.toUpperCase().slice(0, 24);
+    const order = await prisma.ticketOrder.upsert({
+      where: { confirmationCode },
+      update: {},
+      create: {
+        confirmationCode,
+        showId: show.id,
+        buyerUserId,
+        buyerName: 'E2E Buyer',
+        buyerEmail,
+        quantity: 1,
+        subtotalCents: 1800,
+        // The buyer pays Stripe's fee; iHYPE absorbs none of it. Seeded so the
+        // ticket sheet's money lines have the same shape production produces.
+        processingFeeCents: 85,
+        totalChargeCents: 1885,
+        venuePayoutCents: 360,
+        artistPayoutCents: 1260,
+        promoterPayoutCents: 180,
+        status: 'CAPTURED',
+      },
+    });
+
+    const serializedId = `IHY-${createHash('sha256').update(confirmationCode).digest('hex').slice(0, 8).toUpperCase()}`;
+    await prisma.ticket.upsert({
+      where: { serializedId },
+      update: {},
+      create: {
+        serializedId,
+        ticketOrderId: order.id,
+        showId: show.id,
+        venueProfileId: venue.id,
+        holderName: 'E2E Buyer',
+        holderEmail: buyerEmail,
+        status: 'VALID',
+      },
+    });
+
+    return { showId: show.id, slug: show.slug, title: show.title, serializedId };
+  } finally {
+    await prisma.$disconnect();
+  }
+}

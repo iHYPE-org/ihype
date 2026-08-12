@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
-import { applySessionCookie, canSeedSession } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
  * The Music · Map · Me shell contract, as executable assertions.
@@ -15,6 +15,22 @@ import { applySessionCookie, canSeedSession } from './fixtures/session';
  * plain `npm run dev` (src/lib/db.ts imports the wasm/workerd Prisma engine, so
  * auth() throws there and every request 401s). Run it through
  * `node scripts/e2e-workerd.mjs`.
+ *
+ * ## Why so many locators here carry `:visible`
+ *
+ * `/app`'s layout is async, so these routes STREAM. While a page is still
+ * arriving, Next holds a copy of the content in a hidden staging node
+ * (`<div hidden id="S:0">`) and moves it into place with a script — so for a
+ * window of a few hundred milliseconds the document genuinely contains two of
+ * everything, and a bare `.mmm-frame` resolves to two elements on a page that
+ * is entirely correct. It shows up as a strict-mode violation naming a path
+ * like `[id="S:0"] > .mmm-frame > .mmm-pane`, and it is intermittent, so it
+ * reads as flake rather than as a fixable cause.
+ *
+ * Waiting on some other element first does NOT fix it — the anchor you wait on
+ * is duplicated too. `:visible` does, because the staging node is `hidden` and
+ * its copy therefore has no box. It also happens to be what these assertions
+ * actually mean: a member can only see the live one.
  */
 
 const EMAIL = 'e2e-mmm-fan@ihype.org';
@@ -56,7 +72,7 @@ test.describe('Music · Map · Me shell', () => {
   // put an 82px header back on screen.
   test('renders no top bar and no bottom tab bar', async ({ page }) => {
     await page.goto('/app/map');
-    await expect(page.locator('.mmm-frame')).toBeVisible();
+    await expect(page.locator('.mmm-frame:visible')).toBeVisible();
     // Real class names, checked against the components: AppShellHeader renders
     // `.shell-header`, AppShellContextStrip `.shell-context-strip`,
     // MobileBottomNav `.ihype-mobile-nav`, GlobalMediaPlayer `.site-dock`. A
@@ -226,8 +242,12 @@ test.describe('Music · Map · Me shell', () => {
   // this route's.
   test('an unknown MUSIC tab shows not-found, not a silent fallback to Discover', async ({ page }) => {
     await page.goto('/app/music/nonsense');
-    await expect(page.getByRole('heading', { name: /skipped soundcheck/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /no such tab/i })).toBeVisible();
     await expect(page.getByRole('link', { name: 'Discover' })).toHaveCount(0);
+    // And it stays inside MMM — exactly one shell, not the marketing 404 and
+    // not two shells stacked (which is what `notFound()` produced here, since
+    // the layout has already flushed by the time it throws).
+    await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
   });
 
   // §9: "No reference to a DJ role anywhere in the UI." The DJ role is still
@@ -236,8 +256,8 @@ test.describe('Music · Map · Me shell', () => {
   test('the shell surfaces never mention a DJ role', async ({ page }) => {
     for (const path of ['/app/map', '/app/music/radio', '/app/me']) {
       await page.goto(path);
-      await expect(page.locator('.mmm-frame')).toBeVisible();
-      const text = (await page.locator('.mmm-frame').innerText()).toLowerCase();
+      await expect(page.locator('.mmm-frame:visible')).toBeVisible();
+      const text = (await page.locator('.mmm-frame:visible').innerText()).toLowerCase();
       expect(text, `${path} mentions a DJ role`).not.toMatch(/\bdj\b/);
     }
   });
@@ -362,7 +382,7 @@ test.describe('Music · Map · Me shell', () => {
     // common words, and a bare role query for them will find something else
     // the first time this surface grows a control.
     const panelFor = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
@@ -392,7 +412,7 @@ test.describe('Music · Map · Me shell', () => {
   // are the URL, so nothing about the types stops both being open at once.
   test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
     const drawer = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
@@ -426,11 +446,123 @@ test.describe('Music · Map · Me shell', () => {
   test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
     await page.goto('/app/me?panel=legal');
     const drawer = (label: string) =>
-      page.locator('.mmm-me-accordion').filter({
+      page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
     await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  /**
+   * The assertions that were impossible without rows.
+   *
+   * Every ticket test here used to run against an account with no tickets, so
+   * it could only check that a section rendered. Two real bugs shipped through
+   * that gap: a list sorted so attended shows sat above upcoming ones, and a
+   * buy pane that credited nobody from the 10% promoter pool. Both need data to
+   * be visible at all.
+   */
+  test.describe('with a real ticket', () => {
+    let seeded: Awaited<ReturnType<typeof seedShowWithTicket>>;
+
+    test.beforeEach(async ({ context }) => {
+      const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+      seeded = await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });
+    });
+
+    test('a held ticket appears in ME and opens its sheet', async ({ page }) => {
+      await page.goto('/app/me');
+      const drawer = page.locator('.mmm-me-accordion:visible').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
+      });
+      await drawer.click();
+
+      const row = page.locator('.mmm-ticket-row', { hasText: seeded.title });
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(seeded.serializedId);
+
+      await row.getByRole('button', { name: 'View ticket' }).click();
+      const sheet = page.locator('.mmm-ticket-sheet');
+      await expect(sheet).toBeVisible();
+      // The QR is a server-generated data URL, which is what lets the sheet
+      // open at a door with no signal.
+      await expect(sheet.locator('.mmm-ticket-qr img')).toHaveAttribute('src', /^data:image\/svg\+xml/);
+      await expect(sheet).toContainText(seeded.serializedId);
+      // The money lines: face value, the buyer-paid Stripe fee, and $0 iHYPE.
+      await expect(sheet).toContainText('Face value');
+      await expect(sheet).toContainText('Stripe processing');
+      await expect(sheet).toContainText('$0.00');
+      // Sales are final, stated where a holder looks for a way out.
+      await expect(sheet).toContainText(/All sales are final/i);
+    });
+
+    test('upcoming tickets sort above attended ones', async ({ context, page }) => {
+      // The bug this catches: a plain startsAt sort put a July attended ticket
+      // above an August upcoming one, and spent the row limit on old history.
+      const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+      await seedShowWithTicket({
+        buyerUserId: session.user.id,
+        buyerEmail: session.user.email,
+        key: 'past',
+        startsAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      });
+
+      await page.goto('/app/me');
+      await page.locator('.mmm-me-accordion:visible').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
+      }).click();
+
+      const statuses = await page.locator('.mmm-ticket-status:visible').allInnerTexts();
+      const firstAttended = statuses.findIndex((s) => /attended/i.test(s));
+      const lastUpcoming = statuses.map((s) => /upcoming/i.test(s)).lastIndexOf(true);
+      if (firstAttended !== -1 && lastUpcoming !== -1) {
+        expect(lastUpcoming, `attended ticket sorted above an upcoming one: ${statuses.join(', ')}`)
+          .toBeLessThan(firstAttended);
+      }
+    });
+
+    test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
+      await page.goto(`/app/shows/${seeded.slug}`);
+      // Wait for the pane to SETTLE before counting anything. This route's
+      // layout is async and the page streams, so mid-flight Next holds a copy
+      // of the content in a hidden staging node and moves it into place with a
+      // script — query in that window and a locator resolves to two nodes that
+      // are really one. Anchoring on the sale card (the last thing to arrive)
+      // means the assertions below run against a finished document.
+      await expect(page.locator('.mmm-show-sale:visible')).toBeVisible();
+      // Now the count means what it says. Scoped to the pane's own H1 because
+      // `TicketSaleCard` repeats the title as an H2 inside itself — and asserted
+      // as a COUNT so that a genuine double render fails here rather than being
+      // absorbed by a `.first()`.
+      await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
+      await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
+      // The split bar draws the show's OWN percentages.
+      const split = page.locator('.mmm-show-split:visible');
+      await expect(split).toContainText('70% artist');
+      await expect(split).toContainText('20% venue');
+      await expect(split).toContainText('10% promoters');
+      // And the disclosure that changes what the buyer is agreeing to.
+      //
+      // This assertion is stronger than it looks: the seeded account has no
+      // stored payment token, so the card renders its "payment method required"
+      // state — which is the state EVERY member is in today, and the one that
+      // used to skip the notice entirely because it lived inside the purchase
+      // form. Asserting it here is asserting it in the state real users see.
+      await expect(page.locator('.ticket-final-notice:visible')).toContainText(/all ticket sales are final/i);
+    });
+
+    test('a dead show link keeps the member inside the shell', async ({ page }) => {
+      // Without /app/not-found.tsx this rendered the marketing 404 — map gone,
+      // player gone, no route back.
+      await page.goto('/app/shows/definitely-not-a-real-show');
+      // Settle first — counting nodes while the document is still streaming
+      // counts Next's hidden staging copy as a second element.
+      await expect(page.getByRole('link', { name: /Back to the map/i })).toBeVisible();
+      // Exactly one shell. Two means the page threw `notFound()` after the
+      // async layout had flushed, which streams a second copy of the whole
+      // chain — two maps, two players, two sets of tiles fetched.
+      await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
+    });
   });
 
   // The ticket path lives in ME now, not behind a link into the legacy shell.
@@ -439,13 +571,13 @@ test.describe('Music · Map · Me shell', () => {
   // the pair of buttons that left MMM.
   test('My Tickets renders in ME rather than linking out to the legacy shell', async ({ page }) => {
     await page.goto('/app/me');
-    const drawer = page.locator('.mmm-me-accordion').filter({
+    const drawer = page.locator('.mmm-me-accordion:visible').filter({
       has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
     });
     await drawer.click();
     await expect(drawer).toHaveAttribute('aria-expanded', 'true');
 
-    const body = page.locator('.mmm-me-section', { has: drawer }).locator('.mmm-me-accordion-body');
+    const body = page.locator('.mmm-me-section:visible', { has: drawer }).locator('.mmm-me-accordion-body:visible');
     // Either real ticket rows, or the empty note — never a way out of the shell.
     await expect(body.getByRole('link', { name: /My tickets|Browse shows/ })).toHaveCount(0);
     await expect(body.locator('.mmm-ticket-list, .mmm-me-note')).not.toHaveCount(0);

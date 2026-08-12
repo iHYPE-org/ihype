@@ -75,7 +75,6 @@ export function BugReportPanel() {
         style={cardStyle}
         tabIndex={0}
       >
-        <div aria-hidden="true" style={{ fontSize: '1.5rem', marginBottom: 8 }}>🐛</div>
         <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
         <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
       </div>

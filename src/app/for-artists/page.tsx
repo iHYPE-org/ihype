@@ -41,12 +41,12 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   featuresEyebrow: t('forArtistsPage.featuresEyebrow', 'What you get'),
   featuresHeadline: t('forArtistsPage.featuresHeadline', 'Tools built for touring artists.'),
   features: [
-    { emoji: '🎟️', title: t('forArtistsPage.feature1Title', 'Direct ticketing'), body: t('forArtistsPage.feature1Body', 'List a show in minutes. Fans buy direct — no Ticketmaster. QR wallets handled.') },
-    { emoji: '📊', title: t('forArtistsPage.feature2Title', 'Fan data dashboard'), body: t('forArtistsPage.feature2Body', "See who came, who bought first, who's hyping you. Export your list after every show.") },
-    { emoji: '🔴', title: t('forArtistsPage.feature3Title', 'Live show hosting'), body: t('forArtistsPage.feature3Body', 'Go live directly from iHYPE — listener count, hype pulse, live chat.') },
-    { emoji: '📻', title: t('forArtistsPage.feature4Title', 'Radio-eligible tracks'), body: t('forArtistsPage.feature4Body', "Opt each track into the DJ crate pool at upload to reach new listeners through radio shows — or opt out if you're not ready.") },
-    { emoji: '🗺️', title: t('forArtistsPage.feature5Title', 'Tour creator'), body: t('forArtistsPage.feature5Body', 'Build a tour, set dates across cities, manage all events from one dashboard.') },
-    { emoji: '✓', title: t('forArtistsPage.feature6Title', 'Verification badge'), body: t('forArtistsPage.feature6Body', 'Apply for a verified artist badge. Appears on your profile, events, and all iHYPE surfaces.') },
+    { title: t('forArtistsPage.feature1Title', 'Direct ticketing'), body: t('forArtistsPage.feature1Body', 'List a show in minutes. Fans buy direct — no Ticketmaster. QR wallets handled.') },
+    { title: t('forArtistsPage.feature2Title', 'Fan data dashboard'), body: t('forArtistsPage.feature2Body', "See who came, who bought first, who's hyping you. Export your list after every show.") },
+    { title: t('forArtistsPage.feature3Title', 'Live show hosting'), body: t('forArtistsPage.feature3Body', 'Go live directly from iHYPE — listener count, hype pulse, live chat.') },
+    { title: t('forArtistsPage.feature4Title', 'Radio-eligible tracks'), body: t('forArtistsPage.feature4Body', "Opt each track into the DJ crate pool at upload to reach new listeners through radio shows — or opt out if you're not ready.") },
+    { title: t('forArtistsPage.feature5Title', 'Tour creator'), body: t('forArtistsPage.feature5Body', 'Build a tour, set dates across cities, manage all events from one dashboard.') },
+    { title: t('forArtistsPage.feature6Title', 'Verification badge'), body: t('forArtistsPage.feature6Body', 'Apply for a verified artist badge. Appears on your profile, events, and all iHYPE surfaces.') },
   ],
   fanFitBody: (
     <>{t('forArtistsPage.fanFitLead', 'None of this works without fans in the room. iHYPE’s whole job is getting the ones who already believe in you to hype, buy, and bring a friend —')} <a href="/for-fans">{t('forArtistsPage.fanFitLink', 'see how fans fit in →')}</a></>

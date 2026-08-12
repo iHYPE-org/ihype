@@ -41,12 +41,12 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   featuresEyebrow: t('forVenuesPage.featuresEyebrow', 'What you get'),
   featuresHeadline: t('forVenuesPage.featuresHeadline', 'Tools built for booking rooms.'),
   features: [
-    { emoji: '📡', title: t('forVenuesPage.feature1Title', 'Demand radar'), body: t('forVenuesPage.feature1Body', 'See which artists your city is hyping before you commit a date.') },
-    { emoji: '📥', title: t('forVenuesPage.feature2Title', 'Booking inbox'), body: t('forVenuesPage.feature2Body', 'Every artist and promoter request lands in one Pending/Accepted/Declined view.') },
-    { emoji: '📱', title: t('forVenuesPage.feature3Title', 'QR door check-in'), body: t('forVenuesPage.feature3Body', 'Scan tickets straight from a phone — no extra hardware or app.') },
-    { emoji: '📈', title: t('forVenuesPage.feature4Title', 'Fill-rate analytics'), body: t('forVenuesPage.feature4Body', 'Track sellout pace, average fill, and settlement history per show.') },
-    { emoji: '🗓️', title: t('forVenuesPage.feature5Title', 'Event creator'), body: t('forVenuesPage.feature5Body', 'Publish a show with price, capacity, and lineup split in minutes.') },
-    { emoji: '✓', title: t('forVenuesPage.feature6Title', 'AI page, built for you'), body: t('forVenuesPage.feature6Body', "Paste your room's details and a few photos — the AI Page Creator drafts your venue page in one pass.") },
+    { title: t('forVenuesPage.feature1Title', 'Demand radar'), body: t('forVenuesPage.feature1Body', 'See which artists your city is hyping before you commit a date.') },
+    { title: t('forVenuesPage.feature2Title', 'Booking inbox'), body: t('forVenuesPage.feature2Body', 'Every artist and promoter request lands in one Pending/Accepted/Declined view.') },
+    { title: t('forVenuesPage.feature3Title', 'QR door check-in'), body: t('forVenuesPage.feature3Body', 'Scan tickets straight from a phone — no extra hardware or app.') },
+    { title: t('forVenuesPage.feature4Title', 'Fill-rate analytics'), body: t('forVenuesPage.feature4Body', 'Track sellout pace, average fill, and settlement history per show.') },
+    { title: t('forVenuesPage.feature5Title', 'Event creator'), body: t('forVenuesPage.feature5Body', 'Publish a show with price, capacity, and lineup split in minutes.') },
+    { title: t('forVenuesPage.feature6Title', 'AI page, built for you'), body: t('forVenuesPage.feature6Body', "Paste your room's details and a few photos — the AI Page Creator drafts your venue page in one pass.") },
   ],
   fanFitBody: (
     <>{t('forVenuesPage.fanFitLead', 'None of this works without fans walking through the door. iHYPE’s whole job is getting the ones who already hype your shows to actually show up and buy —')} <a href="/for-fans">{t('forVenuesPage.fanFitLink', 'see how fans fit in →')}</a></>

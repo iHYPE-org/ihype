@@ -85,7 +85,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
         }}
         tabIndex={0}
       >
-        <div aria-hidden="true" style={{ fontSize: '1.5rem', marginBottom: 8 }}>🔒</div>
+        <div aria-hidden="true" style={{ fontSize: '1.5rem', marginBottom: 8 }}>⬟</div>
         <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPrivacyPanel.privacy', 'Privacy')}</div>
         <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPrivacyPanel.privacyDescription', 'Report a problem, data deletion, identity detachment')}</div>
       </div>
@@ -117,7 +117,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   className="priv-opt"
                   style={privOptStyle}
                 >
-                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">🚩</span>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⚑</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.reportProblem', 'Report a problem')}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.reportProblemDescription', 'Flag a privacy or data-handling concern')}</span>
@@ -130,7 +130,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   className="priv-opt"
                   style={{ ...privOptStyle, borderColor: 'rgba(var(--accent-rgb),.25)' }}
                 >
-                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">🗑️</span>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⌫</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.requestDataDeletion', 'Request data deletion')}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.requestDataDeletionDescription', 'Permanently erase your account and all data')}</span>
@@ -138,7 +138,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 </button>
 
                 <button onClick={() => submitKind('detach')} disabled={submitting} className="priv-opt" style={privOptStyle}>
-                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⛓️</span>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⊘</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.detachIdentity', 'Detach identity early')}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.detachIdentityDescription', 'Remove IP & location from your activity log now instead of after 30 days')}</span>
@@ -156,7 +156,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 </button>
 
                 <button onClick={() => submitKind('hype-wipe')} disabled={submitting} className="priv-opt" style={privOptStyle}>
-                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">🣭</span>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⌦</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.wipeHypeHistory', 'Wipe hype history')}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.wipeHypeHistoryDescription', 'Clear your past hype votes without deleting your account')}</span>
@@ -164,7 +164,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 </button>
 
                 <Link href="/info?tab=privacy" className="priv-opt" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
-                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">📄</span>
+                  <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">▤</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.readPrivacyPolicy', 'Read the privacy policy')}</span>
                     <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}>{t('supportPrivacyPanel.readPrivacyPolicyDescription', 'How we collect, use, and protect your data')}</span>
