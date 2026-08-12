@@ -324,7 +324,10 @@ html.mmm-locked .site-shell > main {
    with — while moving the first card down by a different amount on every tab.
 
    The tabs now hold one line at every width (`nowrap` below) and search sits
-   beneath, so the content start is at a fixed offset on all five tabs. */
+   beneath, so the content start is at a fixed offset on all five tabs.
+
+   `--tab-row-gap` is the gap between the two rows and is unrelated to the
+   retired `--tab-gap`/`--tab-fs`/`--tab-pad` trio the pill strip used. */
 .mmm-music-controls {
   position: relative;
   display: flex;
@@ -334,38 +337,77 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-music-controls .mmm-tabs { padding: 0; }
 
-.mmm-tabs { display: flex; gap: var(--tab-gap, 8px); padding: 2px 0 14px; }
+/* A link bar, not a pill strip (Design System 8 port, 2026-08-12). Five
+   capsules cannot fit 375px without dropping the label to 0.72rem (≈11.5px),
+   and a short word inside a filled pill reads as a balloon. Constant 14px type
+   that scrolls horizontally fits at every width and needs no responsive table
+   — which is why the `--tab-gap`/`--tab-fs`/`--tab-pad` overrides that used to
+   sit below are gone rather than retuned. */
+.mmm-tabs {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 2px 0 14px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.mmm-tabs::-webkit-scrollbar { display: none; }
+
 .mmm-tab {
-  /* `0 1 auto` + nowrap, not `flex: 1`. Equal-width tabs force the longest
-     label to set every tab's width and then wrap the strip; sized to content
-     and allowed to shrink, all five fit one line down to 320px. The type ramp
-     is a token so a narrow phone can tighten it without a second rule set. */
-  flex: 0 1 auto;
-  min-width: 0;
+  position: relative;
+  flex: 0 0 auto;
   white-space: nowrap;
-  padding: var(--tab-pad, 9px 14px);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--hair-120);
-  background: transparent;
-  color: var(--ink-3);
-  font-family: var(--font-body);
+  /* `display` MUST stay non-inline. `mobile-fit.css` lists `.mmm-tab` in its
+     `min-height: 44px` group, and min-height does nothing on an inline box —
+     `.mmm-tab` is an <a> (Next <Link>), so an inline display would drop the
+     touch floor to ~37px silently, with no error anywhere. */
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: 0;
+  padding: 11px 2px 12px;
+  font-family: var(--font-display);
   font-weight: 600;
-  font-size: var(--tab-fs, 0.82rem);
+  font-size: 14px;
+  letter-spacing: -0.015em;
+  color: var(--ink-3);
   cursor: pointer;
-  text-align: center;
+  transition:
+    color 160ms cubic-bezier(0.2, 0.7, 0.3, 1),
+    transform 110ms cubic-bezier(0.2, 0.7, 0.3, 1);
+  transform-origin: 50% 100%;
 }
-/* The strip must never wrap; below this width the type and padding tighten
-   instead. A horizontal scroller was the alternative and is worse — a tab you
-   cannot see is a tab you do not know exists. */
-.mmm-tabs { flex-wrap: nowrap; }
-@media (max-width: 460px) {
-  .mmm-tabs { --tab-gap: 5px; --tab-fs: 0.72rem; --tab-pad: 8px 9px; }
+.mmm-tab:hover { color: var(--ink); }
+.mmm-tab:active { transform: scale(0.94); color: var(--ink); }
+
+.mmm-tab[aria-current='page'] { font-weight: 800; color: var(--ink); }
+.mmm-tab[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 4px;
+  height: 2.5px;
+  border-radius: 9999px;
+  background: var(--accent);
+  /* Same value the design system writes literally (#ff5029 = 255,80,41),
+     through the token every other accent alpha in this file uses. */
+  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.55);
+  /* Suppressed by the global `prefers-reduced-motion` block in globals.css,
+     which zeroes every animation with !important — no local media query. */
+  animation: mmmUnderline 260ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
 }
-.mmm-tab[aria-current='page'] {
-  border-color: rgba(var(--accent-rgb), 0.45);
-  background: rgba(var(--accent-rgb), 0.14);
-  color: var(--accent-text);
-  font-weight: 700;
+@keyframes mmmUnderline {
+  from {
+    transform: scaleX(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
 }
 
 /* ── MAP date strip ───────────────────────────────────────────────────────
