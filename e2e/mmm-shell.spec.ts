@@ -298,6 +298,53 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
+  // One drawer open at a time, page-wide — the three sections and the four
+  // account panels are ONE group. This is the invariant that cannot be seen by
+  // reading either half alone: the sections are component state and the panels
+  // are the URL, so nothing about the types stops both being open at once.
+  test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
+    const drawer = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+
+    await page.goto('/app/me');
+    // Profiles is the one showing before anyone has chosen.
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
+
+    // A section closes the other sections.
+    await drawer('My Tickets').click();
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+
+    // A panel closes the sections, and puts itself in the URL so the drawer is
+    // deep-linkable and Back closes it.
+    await drawer('Settings').click();
+    await expect(page).toHaveURL(/panel=settings/);
+    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
+
+    // And a section closes the panel — including its search param, or the drawer
+    // would reopen on the next render from a URL nobody cleared.
+    await drawer('About Me').click();
+    await expect(page).not.toHaveURL(/panel=/);
+    await expect(drawer('About Me')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  // Deep-linking a panel must not also open Profiles: the default applies only
+  // when nothing else is open, or the URL's own drawer loads a screen down.
+  test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
+    await page.goto('/app/me?panel=legal');
+    const drawer = (label: string) =>
+      page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
+      });
+    await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+  });
+
   // An account with no Profile row has no hexId and therefore no HYPE link. The
   // card must be absent, not present-and-blank — and the surface must still
   // render, which is the actual risk.

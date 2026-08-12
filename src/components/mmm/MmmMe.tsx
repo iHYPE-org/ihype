@@ -10,6 +10,14 @@ import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
 
 /**
+ * The drawers above the account panels. Order is the design system's —
+ * Profiles · My Tickets · About Me · Settings — and Profiles is `first`, the
+ * one showing before anyone has chosen.
+ */
+type MeSectionId = 'profiles' | 'tickets' | 'about';
+const FIRST_ME_SECTION: MeSectionId = 'profiles';
+
+/**
  * The ME surface — a role-aware dashboard.
  *
  * From the app-shell redesign: ME has no fan-out submenu; Settings, Info, Legal
@@ -46,15 +54,22 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
  * stats it carries used to be a separate "Your year" section above everything
  * else, which put a screen of numbers between the member and the thing they
  * opened ME to do.
+ *
+ * **One drawer open at a time, page-wide** — the sections here and the account
+ * panels below are ONE group, not two. Each section used to hold its own
+ * `useState`, so all three could stand open at once alongside a settings panel;
+ * six open drawers is the state the folding was introduced to prevent. The open
+ * id therefore lives in the parent (`meGroup`), which makes "one at a time"
+ * structural rather than a rule every toggle has to remember.
  */
 function Accordion({
   children,
-  defaultOpen,
   detail,
   label,
+  onToggle,
+  open,
 }: {
   children: React.ReactNode;
-  defaultOpen?: boolean;
   /**
    * A second line under the label, saying what is inside without opening it.
    * Added by the 2026-08-10 template: a closed accordion labelled only
@@ -64,14 +79,15 @@ function Accordion({
    */
   detail?: string | null;
   label: string;
+  onToggle: () => void;
+  open: boolean;
 }) {
-  const [open, setOpen] = useState(Boolean(defaultOpen));
   return (
     <div className="mmm-me-section">
       <button
         aria-expanded={open}
         className="mmm-me-accordion"
-        onClick={() => setOpen((value) => !value)}
+        onClick={onToggle}
         type="button"
       >
         <span className="mmm-me-accordion-text">
@@ -102,17 +118,57 @@ export function MmmMe({ data }: { data: MmmMeData }) {
   const openPanel = isMePanelId(rawPanel) ? rawPanel : null;
 
   /**
+   * Which of the three sections above the account panels is open.
+   *
+   * `undefined` means nobody has chosen yet, so the section marked first
+   * (Profiles) is the one showing; `''` means someone chose to close what was
+   * open, or opened a panel instead, and nothing above is showing. That
+   * three-valued shape is the design system's own `meSection(id, first)` helper
+   * — a plain `'profiles' | null` cannot tell "not chosen yet" from "closed",
+   * and would either re-open Profiles or never open it.
+   */
+  const [meGroup, setMeGroup] = useState<MeSectionId | '' | undefined>(undefined);
+
+  /**
+   * The default only applies when nothing else is open. Arriving on
+   * `/app/me?panel=settings` — a deep link, and where the four retired
+   * `/app/me/[panel]` routes redirect to — must not also open Profiles, or the
+   * page loads with two drawers open and the one the URL asked for pushed a
+   * screen down. The design system's helper has no equivalent guard because
+   * its panels cannot be open on arrival; ours can.
+   */
+  const openSection: MeSectionId | null =
+    meGroup === undefined ? (openPanel ? null : FIRST_ME_SECTION) : meGroup || null;
+
+  /**
    * `push`, not `replace` — closing a drawer should be what Back does, which
    * is the whole reason this lives in the URL. `scroll: false` because the
    * drawer opens where the member already is; scrolling to the top would move
    * the row they just tapped off screen.
    */
-  const togglePanel = (id: MePanelId) => {
+  const setPanel = (id: MePanelId | null) => {
     const params = new URLSearchParams(searchParams?.toString() ?? '');
-    if (openPanel === id) params.delete('panel');
-    else params.set('panel', id);
+    if (id) params.set('panel', id);
+    else params.delete('panel');
     const query = params.toString();
     router.push(query ? `/app/me?${query}` : '/app/me', { scroll: false });
+  };
+
+  const togglePanel = (id: MePanelId) => {
+    setPanel(openPanel === id ? null : id);
+    // Opening a panel shuts every section above it. Symmetric with
+    // `toggleSection`, and between them they are what makes one-at-a-time hold
+    // across two stores — component state up here, the URL down there.
+    setMeGroup('');
+  };
+
+  const toggleSection = (id: MeSectionId) => {
+    const isOpen = openSection === id;
+    setMeGroup(isOpen ? '' : id);
+    // Only touches the URL when there is actually a panel open to close —
+    // otherwise every section tap would push a history entry identical to the
+    // current one, and Back would walk through them one dead step at a time.
+    if (!isOpen && openPanel) setPanel(null);
   };
 
   const copy = async () => {
@@ -206,7 +262,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
-      <Accordion defaultOpen detail="Fan · add artist, venue or advertiser" label="Profiles">
+      <Accordion
+        detail="Fan · add artist, venue or advertiser"
+        label="Profiles"
+        onToggle={() => toggleSection('profiles')}
+        open={openSection === 'profiles'}
+      >
       {/* The stats that used to sit in a separate "Your year" section. The
           2026-08-10 template folds them under Profiles and labels them by role,
           because a figure like "Shows attended" belongs to the profile it was
@@ -279,7 +340,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </p>
       </Accordion>
 
-      <Accordion detail={data.ticketCount === null ? null : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · transfer at face value`} label="My Tickets">
+      <Accordion
+        detail={data.ticketCount === null ? null : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · transfer at face value`}
+        label="My Tickets"
+        onToggle={() => toggleSection('tickets')}
+        open={openSection === 'tickets'}
+      >
         <p className="mmm-me-note">
           Your tickets, and the shows you could still get into. Both live on the events
           surface — this shell has no events module, so it links out rather than keeping
@@ -291,7 +357,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       </Accordion>
 
-      <Accordion detail="What artists and venues see" label="About Me">
+      <Accordion
+        detail="What artists and venues see"
+        label="About Me"
+        onToggle={() => toggleSection('about')}
+        open={openSection === 'about'}
+      >
 
       {data.activity.length > 0 && (
         <>
