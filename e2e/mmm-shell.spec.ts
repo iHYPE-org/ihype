@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
-import { applySessionCookie, canSeedSession } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
  * The Music · Map · Me shell contract, as executable assertions.
@@ -431,6 +431,95 @@ test.describe('Music · Map · Me shell', () => {
       });
     await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  /**
+   * The assertions that were impossible without rows.
+   *
+   * Every ticket test here used to run against an account with no tickets, so
+   * it could only check that a section rendered. Two real bugs shipped through
+   * that gap: a list sorted so attended shows sat above upcoming ones, and a
+   * buy pane that credited nobody from the 10% promoter pool. Both need data to
+   * be visible at all.
+   */
+  test.describe('with a real ticket', () => {
+    let seeded: Awaited<ReturnType<typeof seedShowWithTicket>>;
+
+    test.beforeEach(async ({ context }) => {
+      const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+      seeded = await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });
+    });
+
+    test('a held ticket appears in ME and opens its sheet', async ({ page }) => {
+      await page.goto('/app/me');
+      const drawer = page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
+      });
+      await drawer.click();
+
+      const row = page.locator('.mmm-ticket-row', { hasText: seeded.title });
+      await expect(row).toBeVisible();
+      await expect(row).toContainText(seeded.serializedId);
+
+      await row.getByRole('button', { name: 'View ticket' }).click();
+      const sheet = page.locator('.mmm-ticket-sheet');
+      await expect(sheet).toBeVisible();
+      // The QR is a server-generated data URL, which is what lets the sheet
+      // open at a door with no signal.
+      await expect(sheet.locator('.mmm-ticket-qr img')).toHaveAttribute('src', /^data:image\/svg\+xml/);
+      await expect(sheet).toContainText(seeded.serializedId);
+      // The money lines: face value, the buyer-paid Stripe fee, and $0 iHYPE.
+      await expect(sheet).toContainText('Face value');
+      await expect(sheet).toContainText('Stripe processing');
+      await expect(sheet).toContainText('$0.00');
+      // Sales are final, stated where a holder looks for a way out.
+      await expect(sheet).toContainText(/All sales are final/i);
+    });
+
+    test('upcoming tickets sort above attended ones', async ({ context, page }) => {
+      // The bug this catches: a plain startsAt sort put a July attended ticket
+      // above an August upcoming one, and spent the row limit on old history.
+      const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+      await seedShowWithTicket({
+        buyerUserId: session.user.id,
+        buyerEmail: session.user.email,
+        key: 'past',
+        startsAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      });
+
+      await page.goto('/app/me');
+      await page.locator('.mmm-me-accordion').filter({
+        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
+      }).click();
+
+      const statuses = await page.locator('.mmm-ticket-status').allInnerTexts();
+      const firstAttended = statuses.findIndex((s) => /attended/i.test(s));
+      const lastUpcoming = statuses.map((s) => /upcoming/i.test(s)).lastIndexOf(true);
+      if (firstAttended !== -1 && lastUpcoming !== -1) {
+        expect(lastUpcoming, `attended ticket sorted above an upcoming one: ${statuses.join(', ')}`)
+          .toBeLessThan(firstAttended);
+      }
+    });
+
+    test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
+      await page.goto(`/app/shows/${seeded.slug}`);
+      await expect(page.getByRole('heading', { name: seeded.title })).toBeVisible();
+      // The split bar draws the show's OWN percentages.
+      const split = page.locator('.mmm-show-split');
+      await expect(split).toContainText('70% artist');
+      await expect(split).toContainText('20% venue');
+      await expect(split).toContainText('10% promoters');
+      // And the disclosure that changes what the buyer is agreeing to.
+      await expect(page.locator('.ticket-final-notice')).toContainText(/all ticket sales are final/i);
+    });
+
+    test('a dead show link keeps the member inside the shell', async ({ page }) => {
+      // Without /app/not-found.tsx this rendered the marketing 404 — map gone,
+      // player gone, no route back.
+      await page.goto('/app/shows/definitely-not-a-real-show');
+      await expect(page.locator('.mmm-frame')).toBeVisible();
+      await expect(page.getByRole('link', { name: /Back to the map/i })).toBeVisible();
+    });
   });
 
   // The ticket path lives in ME now, not behind a link into the legacy shell.
