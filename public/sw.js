@@ -60,6 +60,50 @@ const SWR_PATHS = [
 // True when a previous SW was already active — i.e. this is an update, not a first install.
 let isUpdate = false;
 
+/*
+ * Two messages from the page, both about the ticket cache.
+ *
+ * WARM_TICKETS: pre-caches the holder's own ticket pages so one they have
+ * never opened still opens at the door. The cache-fallback below already
+ * covered a ticket that had been viewed while online; the case it missed is
+ * the one that matters — buy on the bus, arrive in a basement, open it for the
+ * first time with no signal.
+ *
+ * CLEAR_PRIVATE: drops the ticket and page caches on sign-out. Ticket pages
+ * are personalised and carry a QR that admits someone to a show, and
+ * TICKETS_CACHE is deliberately version-independent so an SW update cannot
+ * wipe it — which also meant nothing ever wiped it. On a shared device the
+ * next person signing in could be served the previous account's ticket. That
+ * is exactly the risk NETWORK_ONLY_PATHS exists to prevent for /app and
+ * /admin, and the door use case is why these two cannot simply join that list.
+ */
+self.addEventListener('message', (event) => {
+  const data = event.data || {};
+
+  if (data.type === 'WARM_TICKETS' && Array.isArray(data.paths)) {
+    event.waitUntil((async () => {
+      const cache = await caches.open(TICKETS_CACHE);
+      // Sequential and individually guarded: cache.addAll rejects the whole
+      // batch if any one request fails, and a single expired ticket must not
+      // cost the holder every other one.
+      for (const path of data.paths.slice(0, 50)) {
+        if (typeof path !== 'string' || !path.startsWith('/tickets/')) continue;
+        try {
+          const response = await fetch(path, { credentials: 'same-origin' });
+          if (response.ok) await cache.put(path, response.clone());
+        } catch {
+          // Offline already, or the ticket is gone. Nothing to do.
+        }
+      }
+    })());
+    return;
+  }
+
+  if (data.type === 'CLEAR_PRIVATE') {
+    event.waitUntil(Promise.all([caches.delete(TICKETS_CACHE), caches.delete(PAGE_CACHE)]));
+  }
+});
+
 self.addEventListener('install', (event) => {
   isUpdate = Boolean(self.registration.active);
   event.waitUntil(

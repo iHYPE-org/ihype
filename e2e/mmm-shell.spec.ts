@@ -255,6 +255,29 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
+  // "Near me" is on every layer (product decision, 2026-08-12). It is the only
+  // control that can request location, so while it lived on the artists layer
+  // alone a fan browsing events on a phone could never ask for it — the most
+  // obvious thing anyone wants from a map.
+  test('Near me is reachable on every map layer', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/app/map');
+    const nearMe = page.getByRole('button', { name: 'Near me', exact: true });
+
+    // Events is the landing layer and is where this used to be missing.
+    await expect(nearMe).toBeVisible();
+    for (const label of ['Venues', 'Artists', 'Events']) {
+      await page.getByRole('button', { name: label, exact: true }).click();
+      await expect(nearMe, `Near me is missing on ${label}`).toBeVisible();
+    }
+    // The count is artists-only: an artist pin is a city, so "how many here" is
+    // the only reading it has. Events and venues answer that with their pins.
+    await page.getByRole('button', { name: 'Artists', exact: true }).click();
+    await expect(page.locator('.mmm-map-near')).toHaveAttribute('data-count', 'true');
+    await page.getByRole('button', { name: 'Events', exact: true }).click();
+    await expect(page.locator('.mmm-map-near')).not.toHaveAttribute('data-count', 'true');
+  });
+
   // No permission sheet on arrival. /app/map is WORKBENCH_PATH — every sign-in
   // lands here — so a primer that opens on load is a permission wall on launch,
   // which MOBILE.md forbids outright. It also covered the arc nav: the

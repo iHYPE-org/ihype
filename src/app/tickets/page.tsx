@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import type { Metadata } from 'next';
 import { TicketCardActions } from '@/components/TicketCardActions';
 import { PushPrimer } from '@/components/PushPrimer';
+import { OfflineTicketWarmer } from '@/components/OfflineTicketWarmer';
 import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -55,6 +56,14 @@ export default async function MyTicketsPage() {
         <h1>{t('ticketsPage.title', 'My Tickets')}</h1>
         <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)' }}>{t('ticketsPage.subtitle', 'Your upcoming shows')}</p>
       </div>
+
+      {/* Pre-caches these ticket pages so one the member has never opened still
+          opens at a door with no signal. The service worker already covered a
+          ticket that had been viewed online; this covers the one that strands
+          someone. */}
+      <OfflineTicketWarmer
+        paths={orders.flatMap((order) => order.tickets.map((ticket) => `/tickets/${ticket.serializedId}`))}
+      />
 
       {/* The push primer's moment: after a first ticket, never at onboarding.
           Rendered only when the member actually holds one, so "we'll remind

@@ -1507,8 +1507,12 @@ html.mmm-locked .site-shell > main {
   background: var(--bg-2);
   border: 1px solid var(--line-2);
   border-radius: var(--radius-pill);
+  /* The 14px on the left is the count text's inset. */
   padding: 7px 7px 7px 14px;
 }
+/* Without the count — every layer but artists — the pill holds only the button,
+   so the inset would read as a lopsided gap on its left. */
+.mmm-map-near:not([data-count]) { padding-left: 7px; }
 .mmm-map-recentre {
   font-family: inherit;
   font-size: 0.563rem;
