@@ -159,7 +159,10 @@ function describe(target: MapSheetTarget): SheetContent {
       list: [],
       primary: {
         label: event.price === null ? 'Open this show' : `Get ticket — $${event.price}.00`,
-        href: `/shows/${event.slug}`,
+        // Stays inside the shell. This used to be `/shows/<slug>`, which is the
+        // legacy shell — so the one action the map exists to produce was also
+        // the one that ejected you from MMM with no route back.
+        href: `/app/shows/${event.slug}`,
       },
       secondary: event.venueSlug ? { label: 'Venue →', href: `/venues/${event.venueSlug}` } : null,
     };

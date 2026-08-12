@@ -1568,3 +1568,282 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-name[data-plain] { text-decoration: none; cursor: inherit; }
 .mmm-player-name:hover:not([data-plain]) { color: var(--accent-text); }
+
+/* ── My Tickets, inside ME ────────────────────────────────────────────────
+   The ticket path used to leave MMM entirely for the legacy shell. These rows
+   and the sheet below are that path brought into this design system.
+
+   Every colour is a token and every size is rem, so this surface follows both
+   the theme and the Text size accessibility control — the two rules the rest
+   of the shell already keeps. */
+.mmm-ticket-list { display: flex; flex-direction: column; }
+.mmm-ticket-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--hair-70);
+}
+.mmm-ticket-row:last-child { border-bottom: 0; }
+/* The date block: the design's calendar chip, big day over small month. */
+.mmm-ticket-date {
+  flex: 0 0 auto;
+  width: 34px;
+  text-align: center;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+.mmm-ticket-day { display: block; font-size: 1.125rem; font-weight: 800; color: var(--ink); }
+.mmm-ticket-month {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.12em;
+  color: var(--ink-3);
+}
+.mmm-ticket-main { flex: 1; min-width: 0; }
+.mmm-ticket-title {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mmm-ticket-where { margin-top: 2px; font-size: 0.8rem; color: var(--ink-3); }
+.mmm-ticket-meta {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+.mmm-ticket-actions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  text-align: right;
+}
+.mmm-ticket-status {
+  font-family: var(--font-mono);
+  font-size: 0.5rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+/* An attended ticket is history, not a call to action. */
+.mmm-ticket-status[data-attended] { color: var(--ink-3); }
+.mmm-ticket-checkin { font-size: 0.75rem; color: var(--ink-3); }
+.mmm-ticket-view {
+  min-height: 34px;
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  background: transparent;
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+/* ── The ticket sheet ─────────────────────────────────────────────────── */
+.mmm-ticket-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 210;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(var(--bg-base-rgb), 0.72);
+  backdrop-filter: blur(3px);
+}
+.mmm-ticket-sheet {
+  position: relative;
+  width: min(430px, 100%);
+  /* `dvh`, never `vh` — MOBILE.md. */
+  max-height: min(90dvh, 760px);
+  overflow-y: auto;
+  padding: 22px 22px 20px;
+  border-radius: var(--radius-card);
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  background: var(--bg-2);
+  box-shadow: 0 24px 60px rgba(4, 8, 18, 0.55);
+  text-align: center;
+  margin-bottom: var(--mmm-safe-bottom, 0px);
+}
+.mmm-ticket-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--hair-30);
+  color: var(--ink-2);
+  cursor: pointer;
+  line-height: 1;
+}
+.mmm-ticket-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  text-align: left;
+}
+.mmm-ticket-sheet-title {
+  margin: 8px 0 2px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+  text-align: left;
+}
+.mmm-ticket-sheet-where { font-size: 0.85rem; color: var(--ink-3); text-align: left; }
+/* The QR keeps a white quiet zone whatever the theme: a scanner reads contrast,
+   not tokens. design-exempt: a QR quiet zone is not themed. */
+.mmm-ticket-qr {
+  margin: 20px auto 0;
+  width: min(200px, 62%);
+  padding: 10px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+.mmm-ticket-qr img { display: block; width: 100%; height: auto; }
+.mmm-ticket-code {
+  margin-top: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.18em;
+  color: var(--ink-2);
+}
+.mmm-ticket-rule {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-ticket-money {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--hair-70);
+  text-align: left;
+}
+.mmm-ticket-money-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+.mmm-ticket-money-row strong { font-family: var(--font-display); font-weight: 800; color: var(--ink); }
+/* $0 is the charter, so it is stated in the accent rather than muted away. */
+.mmm-ticket-zero { color: var(--accent-text); }
+.mmm-ticket-transfer {
+  display: block;
+  margin-top: 16px;
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+  line-height: 1.5;
+}
+
+/* ── Show detail, inside the shell ────────────────────────────────────────
+   The buy path. Reached from a map pin or a ticket row, and it renders as a
+   pane over the map like MUSIC and ME do — `isMmmDetailPath` is what tells the
+   shell to stand the map down for it, since `moduleForPath` answers MAP here
+   (which is correct: the arc still says MAP, because that is where you were). */
+.mmm-show { display: flex; flex-direction: column; }
+.mmm-show-back {
+  align-self: flex-start;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 2px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-decoration: none;
+}
+.mmm-show-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.mmm-show-title {
+  margin: 8px 0 4px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+.mmm-show-where { font-size: 0.9rem; color: var(--ink-2); }
+.mmm-show-by { margin-top: 4px; font-size: 0.85rem; }
+.mmm-show-by a { color: var(--accent-text); text-decoration: none; }
+
+/* The split bar. Each part grows by its own percentage, so the bar IS the
+   split rather than a picture of one — a 60/30/10 show draws itself. */
+.mmm-show-split {
+  display: flex;
+  margin-top: 18px;
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+  border: 1px solid var(--hair-70);
+}
+.mmm-show-split-part {
+  flex-basis: 0;
+  padding: 9px 6px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink-on-accent);
+}
+.mmm-show-split-part[data-role='artist'] { background: var(--accent); }
+.mmm-show-split-part[data-role='venue'] { background: var(--role-venue); }
+.mmm-show-split-part[data-role='promoter'] { background: var(--role-promoter); }
+.mmm-show-fee {
+  margin-top: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-show-sale { margin-top: 20px; }
+.mmm-show-more {
+  margin-top: 22px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}

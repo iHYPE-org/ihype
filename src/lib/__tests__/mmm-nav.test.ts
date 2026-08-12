@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  isMmmDetailPath,
   ARC,
   ARC_NARROW_MAX_WIDTH,
   MMM_BASE,
@@ -211,5 +212,28 @@ describe('navHint', () => {
     expect(navHint('/app/map')).toBe('MAP');
     expect(navHint('/app/music/charts')).toBe('MUSIC');
     expect(navHint('/app/me')).toBe('ME');
+  });
+});
+
+describe('detail surfaces', () => {
+  it('treats a show as a pane, not a fourth module', () => {
+    // The arc carries three modules and a show is not one of them — it is
+    // something you reach FROM the map, so the hint keeps saying MAP.
+    expect(isMmmDetailPath('/app/shows/null-harbor')).toBe(true);
+    expect(moduleForPath('/app/shows/null-harbor')).toBe('map');
+  });
+
+  it('does not mistake the modules themselves for detail surfaces', () => {
+    // `moduleForPath` answers 'map' for anything it does not recognise, and the
+    // shell hides its children whenever the map is active. Without the
+    // predicate a /app/shows route mounts and renders nothing at all, so this
+    // is the assertion standing between that route and a blank screen.
+    for (const path of ['/app/map', '/app/music/discover', '/app/me', '/app/me/settings']) {
+      expect(isMmmDetailPath(path), path).toBe(false);
+    }
+  });
+
+  it('is false for the legacy show route, which is a different shell', () => {
+    expect(isMmmDetailPath('/shows/null-harbor')).toBe(false);
   });
 });

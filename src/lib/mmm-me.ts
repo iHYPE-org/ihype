@@ -18,6 +18,7 @@
  */
 
 import { db } from '@/lib/db';
+import { buildTicketQrCodeDataUrl } from '@/lib/tickets';
 
 export const MMM_ME_ROLES = ['fan', 'artist', 'venue'] as const;
 export type MmmMeRole = (typeof MMM_ME_ROLES)[number];
@@ -53,6 +54,28 @@ export type MmmMeData = {
    * because a zero is a claim and a failed read is not.
    */
   ticketCount: number | null;
+  /**
+   * The member's own tickets, rendered INSIDE the ME module rather than linked
+   * out to the legacy `/tickets` page.
+   *
+   * Empty means "none, or could not be read" — the surface shows the same
+   * thing either way here, because unlike a count there is no figure to be
+   * wrong about: a list with nothing in it is a list with nothing in it.
+   */
+  tickets: MmmMeTicket[];
+};
+
+export type MmmMeTicket = {
+  serializedId: string;
+  title: string;
+  /** `Venue · City`, already joined, with either half omitted if unknown. */
+  where: string;
+  startsAt: string;
+  /** Face value, from the SHOW's own price — a Ticket row carries no price. */
+  faceValue: string | null;
+  scannedAt: string | null;
+  /** Inline SVG data URL. Cheap enough to send with the list: ~1KB each. */
+  qrDataUrl: string;
 };
 
 /**
@@ -65,7 +88,7 @@ export type MmmMeData = {
  * role, leaving no way back to Fan without editing the URL. Naming the seam in
  * the type is what stops that returning.
  */
-type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount'>;
+type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount' | 'tickets'>;
 
 const money = (cents: number) => `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 const count = (value: number) => value.toLocaleString('en-US');
@@ -111,14 +134,52 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
   // viewed. Both are `.catch()`'d separately: a failure hides the advertiser
   // card and the ticket line rather than taking the whole surface down, which
   // is the rule the admin workbench and the analytics engine already follow.
-  const [advertiser, ticketCount] = await Promise.all([
+  const [advertiser, ticketCount, ticketRows] = await Promise.all([
     db.advertiserAccount
       .findUnique({ where: { userId }, select: { id: true } })
       .catch(() => null),
     db.ticket
       .count({ where: { status: 'VALID', ticketOrder: { buyerUserId: userId } } })
       .catch(() => null),
+    // SCANNED as well as VALID: a ticket you used is still yours, and the
+    // design shows it as an "attended" row with its check-in time. VOID is
+    // excluded — a refunded ticket is not a ticket.
+    db.ticket
+      .findMany({
+        where: { status: { in: ['VALID', 'SCANNED'] }, ticketOrder: { buyerUserId: userId } },
+        orderBy: { show: { startsAt: 'asc' } },
+        take: 24,
+        select: {
+          serializedId: true,
+          scannedAt: true,
+          show: {
+            select: {
+              title: true,
+              startsAt: true,
+              ticketPriceCents: true,
+              venueProfile: { select: { name: true, city: true } },
+            },
+          },
+        },
+      })
+      .catch(() => []),
   ]);
+
+  const tickets: MmmMeTicket[] = await Promise.all(
+    ticketRows.map(async (row) => ({
+      serializedId: row.serializedId,
+      title: row.show.title,
+      where: [row.show.venueProfile?.name, row.show.venueProfile?.city]
+        .filter(Boolean)
+        .join(' · '),
+      startsAt: row.show.startsAt.toISOString(),
+      // Free shows say Free rather than $0 — the same distinction the map pins
+      // already make. A price that could not be read is omitted, not zeroed.
+      faceValue: row.show.ticketPriceCents > 0 ? money(row.show.ticketPriceCents) : 'Free',
+      scannedAt: row.scannedAt?.toISOString() ?? null,
+      qrDataUrl: await buildTicketQrCodeDataUrl(row.serializedId),
+    })),
+  ).catch(() => []);
 
   // `availableRoles` is stamped here, once, for every branch. The per-role
   // loaders used to each return their own value and two of them returned an
@@ -130,6 +191,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     availableRoles,
     hasAdvertiser: advertiser !== null,
     ticketCount,
+    tickets,
   });
 
   if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now));

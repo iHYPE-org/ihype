@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
+import { MmmTickets } from './MmmTickets';
 import { ME_PANEL_ROWS, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
@@ -346,15 +347,11 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         onToggle={() => toggleSection('tickets')}
         open={openSection === 'tickets'}
       >
-        <p className="mmm-me-note">
-          Your tickets, and the shows you could still get into. Both live on the events
-          surface — this shell has no events module, so it links out rather than keeping
-          a second copy of one.
-        </p>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <Link className="mmm-btn-primary" href="/tickets" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>My tickets</Link>
-          <Link className="mmm-btn-ghost" href="/shows" style={{ flex: 1, display: 'block', textAlign: 'center', textDecoration: 'none' }}>Browse shows</Link>
-        </div>
+        {/* The tickets themselves, not a link out to them. This used to be two
+            buttons into the legacy shell, which is a different header, a
+            different player and no route back into MMM for the rest of the
+            session — the same trap row 273 closed for the LISTEN destinations. */}
+        <MmmTickets tickets={data.tickets} />
       </Accordion>
 
       <Accordion
