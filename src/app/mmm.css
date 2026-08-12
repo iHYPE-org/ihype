@@ -342,10 +342,26 @@ html.mmm-locked .site-shell > main {
    and a short word inside a filled pill reads as a balloon. Constant 14px type
    that scrolls horizontally fits at every width and needs no responsive table
    — which is why the `--tab-gap`/`--tab-fs`/`--tab-pad` overrides that used to
-   sit below are gone rather than retuned. */
+   sit below are gone rather than retuned.
+
+   TWO DELIBERATE DEVIATIONS FROM THE DESIGN SOURCE, and they are load-bearing
+   together: the gap is 12px rather than the source's 18px, and `.mmm-tab` has
+   no horizontal padding rather than the source's 2px. At 18px + 2px the five
+   English labels measure 425px, which overflows a 390px phone by 35px — and
+   `e2e/mmm-shell.spec.ts` asserts all five are on screen at 390px, from the
+   handoff's own §9 ("All 5 MUSIC items are visible and reachable, no
+   clipping"). That invariant outranks two spacing values: it was written after
+   a real bug where three of seven items rendered off-screen and unreachable.
+   The two changes together buy 44px, so the strip ends around 381px with ~9px
+   of headroom. The type stays at 14px, which is what the link bar was FOR —
+   the design's objection was to shrinking labels, not to tighter spacing.
+
+   `overflow-x: auto` stays anyway. English fits now; a longer label in one of
+   the twelve locales may not, and a strip that scrolls is recoverable where a
+   clipped one is not. */
 .mmm-tabs {
   display: flex;
-  gap: 18px;
+  gap: 12px;
   align-items: stretch;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -367,7 +383,9 @@ html.mmm-locked .site-shell > main {
   align-items: center;
   background: none;
   border: 0;
-  padding: 11px 2px 12px;
+  /* No horizontal padding — see the deviation note above. It also makes the
+     active underline exactly the width of its word rather than 4px wider. */
+  padding: 11px 0 12px;
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 14px;
