@@ -433,6 +433,24 @@ test.describe('Music · Map · Me shell', () => {
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
   });
 
+  // The ticket path lives in ME now, not behind a link into the legacy shell.
+  // Asserted on the section rather than on rows, because a seeded account with
+  // no tickets is the normal state for this suite — what must not come back is
+  // the pair of buttons that left MMM.
+  test('My Tickets renders in ME rather than linking out to the legacy shell', async ({ page }) => {
+    await page.goto('/app/me');
+    const drawer = page.locator('.mmm-me-accordion').filter({
+      has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
+    });
+    await drawer.click();
+    await expect(drawer).toHaveAttribute('aria-expanded', 'true');
+
+    const body = page.locator('.mmm-me-section', { has: drawer }).locator('.mmm-me-accordion-body');
+    // Either real ticket rows, or the empty note — never a way out of the shell.
+    await expect(body.getByRole('link', { name: /My tickets|Browse shows/ })).toHaveCount(0);
+    await expect(body.locator('.mmm-ticket-list, .mmm-me-note')).not.toHaveCount(0);
+  });
+
   // An account with no Profile row has no hexId and therefore no HYPE link. The
   // card must be absent, not present-and-blank — and the surface must still
   // render, which is the actual risk.
