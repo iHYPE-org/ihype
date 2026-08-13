@@ -95,6 +95,28 @@
     min-width: 44px;
   }
 
+  /* ── The legacy shell's own chrome ────────────────────────────────────────
+     Found the first time the responsive gate was pointed at the older shell.
+     These two appear on EVERY page inside it, so one miss each was ~60 pages
+     of undersized target, and no phone-fit check had ever looked here.
+
+     The avatar is a fixed 38x38 square in `shell.css`; it is the account menu
+     trigger, so it is a control and not decoration. Grown from both axes
+     because a square control has no long axis to lean on.
+
+     `.shell-back` measures 98x34 — wide enough, six pixels short vertically,
+     which is why it reads as fine and is not. Vertical padding rather than a
+     min-height so the label stays centred. */
+  .shell-avatar {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .shell-back {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+
   /* Icon-only controls need the width too — a 44px-tall, 24px-wide button is
      still a miss. */
   .shell-icon-button,

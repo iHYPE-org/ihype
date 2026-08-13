@@ -162,7 +162,24 @@ async function expectTapTargets(page: Page, label: string) {
       // offender — which reads as the check being broken, and is how a check
       // stops being believed. Nothing a finger can tell apart lives in here.
       if (box.height < 43.5 || box.width < 43.5) {
-        const id = el.className && typeof el.className === 'string' ? `.${el.className.split(/\s+/)[0]}` : el.tagName.toLowerCase();
+        /**
+         * Name the offender well enough to act on.
+         *
+         * The first legacy run reported `a 105x13` four times — true, and
+         * useless: an unclassed anchor cannot be found from that. A report you
+         * cannot act on is the same as no report, so fall back to the href and
+         * then to the nearest classed ancestor, which together identify any
+         * link in the tree.
+         */
+        const own = typeof el.className === 'string' && el.className.trim()
+          ? `.${el.className.trim().split(/\s+/)[0]}`
+          : null;
+        const href = el.getAttribute('href');
+        const nearest = el.closest('[class]');
+        const nearestName = nearest && nearest !== el && typeof nearest.className === 'string' && nearest.className.trim()
+          ? ` in .${nearest.className.trim().split(/\s+/)[0]}`
+          : '';
+        const id = own ?? `${el.tagName.toLowerCase()}${href ? `[${href}]` : ''}${nearestName}`;
         // One decimal, so a near-miss reads as a near-miss rather than as a
         // round number that looks like it should have passed.
         const round = (n: number) => Math.round(n * 10) / 10;
