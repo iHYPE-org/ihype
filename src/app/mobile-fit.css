@@ -83,6 +83,18 @@
     min-height: 44px;
   }
 
+  /* The horizontal axis, for the one control where it bites.
+     MOBILE.md's minimum is 44x44, not 44 tall — and the group above only sets
+     `min-height`, so a MUSIC tab with a short label ("All") measured 38x44 and
+     passed every height check while still being a small target. Found by the
+     responsive gate.
+     `min-width` rather than extra padding so a long label is unaffected, and
+     safe against overflow because `.mmm-tabs` is `overflow-x: auto` — a wider
+     tab scrolls the strip rather than the page. */
+  .mmm-tab {
+    min-width: 44px;
+  }
+
   /* Icon-only controls need the width too — a 44px-tall, 24px-wide button is
      still a miss. */
   .shell-icon-button,
