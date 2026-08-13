@@ -238,6 +238,7 @@ item, not an oversight — do not treat a marketing page's spacing as drift.
 - **R2 bucket:** `ihype-media` — media storage
 - **Launch seed:** Already ran June 23 — demo accounts exist
 - **Admin account:** `colinatwood@gmail.com` — role = ADMIN
+- **A red `npm audit` is not automatically a task — check `docs/dependency-advisories.md` first.** It records advisories that have been examined and deliberately accepted, so "reviewed" is distinguishable from "nobody looked". The standing one: `uuid < 11.1.1` via `@capacitor/cli` → `xcode`. **Do not run `npm audit fix --force` for it.** The advisory covers `v3/v5/v6` *when a `buf` argument is passed*; `xcode` calls `uuid.v4()` and nothing else, so the path is unreachable — `npm audit` matches installed versions, not called exports. It is also a devDependency that only runs during `cap sync`, never in the Worker or the browser. The offered fix installs `@capacitor/cli@8.4.2` against a pinned `^8.5.0` — a downgrade npm itself labels breaking — and every PR runs iOS/Android builds that depend on `cap sync`. An `overrides` pin to `uuid@^11` is the same trade: a major jump into a CommonJS consumer, surfacing as a failed mobile build. Revisit when Capacitor's CLI bumps `xcode` on its own.
 
 ---
 

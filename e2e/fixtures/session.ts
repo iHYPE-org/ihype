@@ -331,3 +331,109 @@ export async function seedShowWithTicket({
     await prisma.$disconnect();
   }
 }
+
+export type SeededMedia = {
+  /** The `hexId` — what `/app/tracks/[hexId]` and `/embed/[hexId]` look up by. */
+  hexId: string;
+  title: string;
+  /** A FanPlaylist id, for `/app/playlists/[id]`. */
+  playlistId: string;
+  playlistName: string;
+};
+
+/**
+ * Seeds a published track and a playlist containing it.
+ *
+ * Exists because the track and playlist panes could not be covered without it:
+ * `seedShowWithTicket` creates profiles, a show and a ticket but no
+ * `ArtistMediaAsset` and no `FanPlaylist`, so there was no id to visit. Those
+ * two panes therefore shipped with no browser coverage at all — and the other
+ * two, which DID get covered, turned out to render nothing.
+ *
+ * The track is attached to the caller's own ARTIST profile so this needs no
+ * second account, and everything is upserted from a deterministic key so
+ * re-running a spec reuses the rows instead of multiplying them.
+ */
+export async function seedTrackAndPlaylist({
+  userId,
+  key = 'default',
+}: {
+  userId: string;
+  key?: string;
+}): Promise<SeededMedia> {
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
+  try {
+    const stamp = `${userId.slice(0, 8)}-${key}`;
+    const profileSlug = `e2e-media-artist-${stamp}`;
+    const hex = (seed: string) => `0x${createHash('sha256').update(seed).digest('hex').slice(0, 32)}`;
+
+    const profile = await prisma.profile.upsert({
+      where: { slug: profileSlug },
+      update: {},
+      create: {
+        slug: profileSlug,
+        hexId: hex(profileSlug),
+        name: 'E2E Media Artist',
+        type: 'ARTIST',
+        ownerId: userId,
+        genres: ['Indie'],
+      },
+      select: { id: true, name: true },
+    });
+
+    const trackHex = hex(`${profileSlug}-track`);
+    const track = await prisma.artistMediaAsset.upsert({
+      where: { hexId: trackHex },
+      update: { isPublished: true },
+      create: {
+        hexId: trackHex,
+        title: 'E2E Test Track',
+        // `isPublished` defaults true, but the pane filters on it explicitly,
+        // so it is stated rather than inherited.
+        isPublished: true,
+        originalFileName: 'e2e-test-track.mp3',
+        mimeType: 'audio/mpeg',
+        fileSizeBytes: 1024,
+        durationSecs: 123,
+        profileId: profile.id,
+      },
+      select: { hexId: true, title: true },
+    });
+
+    // FanPlaylist has no natural unique key, so it is looked up by
+    // (userId, name) and created only when absent — an upsert would need a
+    // compound unique the schema does not declare.
+    const playlistName = `E2E Playlist ${stamp}`;
+    let playlist = await prisma.fanPlaylist.findFirst({
+      where: { userId, name: playlistName },
+      select: { id: true, name: true },
+    });
+    if (!playlist) {
+      playlist = await prisma.fanPlaylist.create({
+        data: {
+          userId,
+          name: playlistName,
+          items: {
+            create: [{
+              mediaId: track.hexId,
+              title: track.title,
+              artistName: profile.name,
+              url: `/api/public-media/${track.hexId}`,
+              position: 0,
+            }],
+          },
+        },
+        select: { id: true, name: true },
+      });
+    }
+
+    return {
+      hexId: track.hexId,
+      title: track.title,
+      playlistId: playlist.id,
+      playlistName: playlist.name,
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
