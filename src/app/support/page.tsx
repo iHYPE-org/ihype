@@ -35,6 +35,7 @@ export default async function SupportPage({
       </p>
 
       <Link
+        className="support-ticketlink"
         href="/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)',

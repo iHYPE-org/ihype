@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import { applySessionCookie, canSeedSession } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
  * Automated gate 6 of `docs/alpha-launch-runbook.md`, which listed this suite
@@ -82,6 +82,9 @@ const LEGACY_SURFACES: Surface[] = [
   { path: '/pages', name: 'Pages', frame: '.shell-content' },
   { path: '/settings', name: 'Settings', frame: '.shell-content' },
   { path: '/discover', name: 'Discover', frame: '.shell-content' },
+  { path: '/payouts', name: 'Payouts', frame: '.shell-content' },
+  { path: '/support', name: 'Support', frame: '.shell-content' },
+  { path: '/this-weekend', name: 'This weekend', frame: '.shell-content' },
 ];
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
@@ -114,16 +117,74 @@ async function signIn(context: BrowserContext) {
  * which is noise rather than a bug a member could ever see.
  */
 async function expectNoHorizontalOverflow(page: Page, label: string) {
-  const overflow = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     const roots = [document.documentElement, document.body, ...document.querySelectorAll('.mmm-pane, .shell-content')];
     let worst = 0;
     for (const node of roots) {
       const el = node as HTMLElement;
       worst = Math.max(worst, el.scrollWidth - el.clientWidth);
     }
-    return worst;
+    if (worst <= 1) return { worst, culprits: [] as string[] };
+
+    /**
+     * Name what is actually too wide.
+     *
+     * "704px of horizontal overflow" is true and unusable — it says a page is
+     * three times too wide without saying which element did it, and grepping
+     * for large widths finds OG metadata and `sizes` attributes rather than the
+     * cause. Same failing as the tap-target check reporting `a 105x13`: a
+     * measurement nobody can act on is half a finding.
+     *
+     * Reports the elements whose right edge sits past the viewport, widest
+     * first, skipping any whose parent is already an offender — otherwise one
+     * wide table names itself plus every ancestor and the real cause is buried.
+     */
+    const vw = document.documentElement.clientWidth;
+
+    /**
+     * Content inside a deliberately scrollable box is not overflow.
+     *
+     * `.shell-pill-row` is a sideways-scrolling filter strip; its pills sit
+     * past the viewport by design and contribute nothing to the page's own
+     * scrollWidth. It was named in every single failure report above the real
+     * cause, and a report that cries wolf is one people stop reading. The walk
+     * stops at the measured roots, because an element inside `.shell-content`
+     * DOES count toward the number being asserted.
+     */
+    const measuredRoots = new Set<Element>(roots);
+    const insideScroller = (el: Element) => {
+      for (let p = el.parentElement; p && !measuredRoots.has(p); p = p.parentElement) {
+        const overflowX = getComputedStyle(p).overflowX;
+        if (overflowX === 'auto' || overflowX === 'scroll') return true;
+      }
+      return false;
+    };
+
+    const over: { el: Element; right: number; width: number }[] = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      if (rect.right > vw + 1 && !insideScroller(el)) over.push({ el, right: rect.right, width: rect.width });
+    }
+    const offenders = over.filter((entry) => !over.some((other) => other.el !== entry.el && other.el.contains(entry.el)));
+    const describe = (el: Element) => {
+      const cls = typeof el.className === 'string' && el.className.trim()
+        ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+        : '';
+      return `${el.tagName.toLowerCase()}${cls}`;
+    };
+    return {
+      worst,
+      culprits: offenders
+        .sort((a, b) => b.right - a.right)
+        .slice(0, 4)
+        .map((entry) => `${describe(entry.el)} w=${Math.round(entry.width)} right=${Math.round(entry.right)}`),
+    };
   });
-  expect(overflow, `${label}: ${overflow}px of horizontal overflow`).toBeLessThanOrEqual(1);
+  expect(
+    result.worst,
+    `${label}: ${result.worst}px of horizontal overflow — widest: ${result.culprits.join(' | ') || 'none identified'}`,
+  ).toBeLessThanOrEqual(1);
 }
 
 /**
@@ -258,6 +319,41 @@ test.describe('responsive — runbook gate 6', () => {
       await expectRendered(page, `${mod.name} reduced-motion`, mod.frame);
     }
     await shoot(page, 'reduced-motion-375');
+  });
+
+  /**
+   * The legacy detail pages, which need a real row to render at all.
+   *
+   * These are separated from the static list above because a profile or a show
+   * with no seeded record renders the not-found surface, and a not-found page
+   * is trivially clean — it would pass every assertion here while measuring
+   * nothing. Seeding first is the difference between covering these pages and
+   * only appearing to.
+   *
+   * They matter more than their count suggests: an artist page is the surface a
+   * shared link lands on, so it is the first thing most people ever see of
+   * iHYPE, and it has never been measured at phone width.
+   */
+  test('legacy detail pages at 375', async ({ context, page }) => {
+    const seededUser = await applySessionCookie(context, EMAIL);
+    const show = await seedShowWithTicket({
+      buyerUserId: seededUser.user.id,
+      buyerEmail: seededUser.user.email,
+      key: 'responsive',
+    });
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    for (const [name, path] of [
+      ['Artist', `/artists/${show.artistSlug}`],
+      ['Venue', `/venues/${show.venueSlug}`],
+      ['Show', `/shows/${show.slug}`],
+    ] as const) {
+      await page.goto(path);
+      await expectRendered(page, `${name} @375`, '.shell-content');
+      await expectNoHorizontalOverflow(page, `${name} @375`);
+      await expectTapTargets(page, `${name} @375`);
+      await shoot(page, `legacy-${name}-375`);
+    }
   });
 
   /**
