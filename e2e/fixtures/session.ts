@@ -187,6 +187,14 @@ export type SeededShow = {
   slug: string;
   title: string;
   serializedId: string;
+  /**
+   * The show's acts, so a spec can visit their profiles without re-deriving
+   * the slug stamp. Recomputing `e2e-artist-${userId.slice(0,8)}-${key}` in a
+   * spec would couple it to this function's private naming and break silently
+   * the first time that naming changed.
+   */
+  artistSlug: string;
+  venueSlug: string;
 };
 
 export async function seedShowWithTicket({
@@ -318,7 +326,7 @@ export async function seedShowWithTicket({
       },
     });
 
-    return { showId: show.id, slug: show.slug, title: show.title, serializedId };
+    return { showId: show.id, slug: show.slug, title: show.title, serializedId, artistSlug, venueSlug };
   } finally {
     await prisma.$disconnect();
   }
