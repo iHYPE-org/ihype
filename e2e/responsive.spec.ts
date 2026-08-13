@@ -114,6 +114,12 @@ async function expectTapTargets(page: Page, label: string) {
       if (box.width === 0 || box.height === 0) continue;
       const style = getComputedStyle(el);
       if (style.visibility === 'hidden') continue;
+      // Not reachable, so not a target. MMM's arc rays are the case that found
+      // this: they sit in the DOM permanently at `opacity: 0; pointer-events:
+      // none` and scaled to 0.55, so they measure 36x36 while the nav is shut
+      // and reach full size only when it opens. Measuring a control in its
+      // hidden state reports a failure a member could never encounter.
+      if (style.opacity === '0' || style.pointerEvents === 'none') continue;
       // A link inside a sentence is not a tap target — it is prose that
       // happens to be clickable, and padding it to 44px would wreck the line
       // it sits in. MOBILE.md's rule is about controls. `display: inline` is

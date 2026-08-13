@@ -47,6 +47,11 @@
   .mmm-sheet-cta,
   .mmm-sheet-cta-2,
   .mmm-chip,
+  /* ME's "Add artist/venue profile" rows. 11px padding on a 20px line lands at
+     42px — two pixels under, which is exactly the kind of miss that survives
+     review and only shows up when something measures it. Found by the
+     responsive gate on its first run. */
+  .mmm-me-add,
   /* A search result row. Two lines clear the floor on their own; a result with
      no subtitle is a single 10px-padded line and does not. Safe in THIS group
      and not the link-row group below: those rules set `display: inline-flex`,
