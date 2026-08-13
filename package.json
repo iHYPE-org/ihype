@@ -14,6 +14,7 @@
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:css": "node scripts/audit-css.mjs",
+    "audit:routes": "node scripts/audit-routes.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",
     "seed:admin-preview": "node --import dotenv/config scripts/seed-admin-preview-profiles.mjs",
     "audit:mobile": "node scripts/audit-mobile.mjs",

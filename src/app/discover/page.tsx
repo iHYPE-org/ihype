@@ -259,7 +259,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <section style={{ marginBottom: 32, border: '1px solid var(--hair-80)', borderRadius: 16, background: 'var(--hair-40)', padding: '20px 22px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', margin: 0 }}>{t('discoverPage.heatMapTitle', 'Heat map')}</h2>
-            <Link href="/app/map" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)', textDecoration: 'none' }}>
+            <Link className="section-action" href="/app/map" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--accent-text)', textDecoration: 'none' }}>
               {t('discoverPage.heatMapOpenMap', 'Open map view')} <span aria-hidden="true">›</span>
             </Link>
           </div>
@@ -296,14 +296,14 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.cityFilterLabel', 'City')}</span>
               {cityFilter && (
-                <Link href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {cityFilter} ×
                   </span>
                 </Link>
               )}
               {cities.filter(c => c !== cityFilter).map(c => (
-                <Link key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {c}
                   </span>
@@ -315,14 +315,14 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.genreFilterLabel', 'Genre')}</span>
               {genreFilter && (
-                <Link href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {genreFilter} ×
                   </span>
                 </Link>
               )}
               {genres.filter(g => g !== genreFilter).map(g => (
-                <Link key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {g}
                   </span>
@@ -338,7 +338,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
         <section style={{ marginBottom: 48 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 16 }}>
             <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.125rem', margin: 0 }}>{t('discoverPage.upcomingShowsTitle', 'Upcoming shows')}</h2>
-            <Link href="/shows" style={{ fontSize: '0.75rem', color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
+            <Link className="section-action" href="/shows" style={{ fontSize: '0.75rem', color: 'var(--accent)', textDecoration: 'none', fontFamily: 'var(--font-mono)', letterSpacing: '.06em' }}>
               {t('discoverPage.viewAll', 'VIEW ALL →')}
             </Link>
           </div>
