@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext } from '@playwright/test';
-import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedShowWithTicket, seedTrackAndPlaylist } from './fixtures/session';
 
 /**
  * The in-shell detail panes actually render.
@@ -23,14 +23,9 @@ import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtur
  *      loaded" is not sufficient — the not-found surface is checked for
  *      explicitly and must be absent.
  *
- * ## What this does NOT cover yet, and why
- *
- * The track and playlist panes. `seedShowWithTicket` creates profiles, a show
- * and a ticket, but no `ArtistMediaAsset` and no `FanPlaylist` — so there is
- * no hexId or playlist id to visit, and asserting against a seeded-in-passing
- * row would make this file depend on a fixture detail it does not own. Those
- * two need their own fixture, and saying so here is better than a test that
- * quietly visits a 404 and passes because `MmmMissing` renders fine.
+ * All four are covered. The track and playlist panes needed a fixture of their
+ * own — `seedShowWithTicket` seeds no `ArtistMediaAsset` and no `FanPlaylist`,
+ * so there was no id to visit — which is `seedTrackAndPlaylist`.
  *
  * `:visible` throughout for the streaming-duplication reason documented at
  * length in `mmm-shell.spec.ts`.
@@ -130,6 +125,35 @@ test.describe('MMM detail panes', () => {
    * that is quietly filtered — or quietly NOT filtered — looks identical to
    * one that has simply run out.
    */
+  test('the track pane renders the track inside the shell', async ({ context, page }) => {
+    const seeded = await signIn(context);
+    const media = await seedTrackAndPlaylist({ userId: seeded.user.id, key: 'panes' });
+
+    await page.goto(`/app/tracks/${media.hexId}`);
+    await expectInShell(page);
+    await expect(page.locator('.mmm-show-eyebrow:visible')).toHaveText(/Track/i);
+    await expect(page.locator('.mmm-show-title:visible')).toContainText(media.title);
+    // The copyright line is the one thing this pane carries that the legacy
+    // page would otherwise be the only home for, so it is asserted rather
+    // than assumed.
+    await expect(page.locator('.mmm-track-copyright:visible')).toBeVisible();
+  });
+
+  test('the playlist pane renders its items inside the shell', async ({ context, page }) => {
+    const seeded = await signIn(context);
+    const media = await seedTrackAndPlaylist({ userId: seeded.user.id, key: 'panes' });
+
+    await page.goto(`/app/playlists/${media.playlistId}`);
+    await expectInShell(page);
+    await expect(page.locator('.mmm-show-eyebrow:visible')).toHaveText(/Playlist/i);
+    await expect(page.locator('.mmm-show-title:visible')).toContainText(media.playlistName);
+    // Rows must link INTO the shell — plural `/app/playlists`, and each item
+    // at `/app/tracks/<hexId>` rather than the legacy singular route.
+    const row = page.locator('.mmm-profile-show:visible').first();
+    await expect(row).toContainText(media.title);
+    await expect(row).toHaveAttribute('href', `/app/tracks/${media.hexId}`);
+  });
+
   test('Discover shows an active filter chip and can clear it', async ({ context, page }) => {
     await signIn(context);
     await page.goto('/app/music/discover?genre=Punk');

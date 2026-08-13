@@ -51,10 +51,7 @@ const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
 const REQUESTED_TESTS = process.argv.slice(2);
-// /ui-preview intentionally 404s in production builds, so its responsive
-// suite belongs to CI's mandatory `next dev` responsive stage. Keep it out of
-// the default Workerd pass while still allowing an explicit file argument for
-// local preview debugging. Each default shard gets a fresh workerd process:
+// Each default shard gets a fresh workerd process:
 // the production bundle is intentionally large and a single long-lived local
 // isolate can retain compiled route modules until it reaches workerd's V8 heap
 // ceiling. Fresh isolates mirror separate production requests more closely
@@ -63,6 +60,11 @@ const REQUESTED_TESTS = process.argv.slice(2);
 // does not run in CI until its name appears here. A contract suite that never
 // executes protects nothing while looking green, so add the file in the same
 // commit that adds the spec.
+//
+// `responsive.spec.ts` is the runbook's automated gate 6. It is here so it
+// runs under the `full-ci` label rather than only when someone remembers the
+// launch checklist — the runbook cited it for weeks while neither the script
+// nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
   ['e2e/app-shell-a11y.spec.ts'],
@@ -71,6 +73,7 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
   ['e2e/phone-chrome.spec.ts'],
+  ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
 ];
 const TEST_SHARDS = REQUESTED_TESTS.length > 0
