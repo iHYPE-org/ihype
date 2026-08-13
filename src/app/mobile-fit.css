@@ -120,16 +120,20 @@
   /* Two link shapes the responsive gate found on `/discover`, both of which
      read as fine and are not.
 
-     `.discover-chip` is a `<Link>` wrapping a padded `<span>`: all the padding
-     is on the span, so the ANCHOR — the thing a finger actually hits — was
-     13-18px tall. Worth knowing why the prose exemption in the check did not
+     `.discover-filter-link` is a `<Link>` wrapping a padded `<span>`: all the
+     padding is on the span, so the ANCHOR — the thing a finger actually hits —
+     was 13-18px tall. It is named `-link` and not `-chip` deliberately:
+     `audit:shell` treats any `-chip` suffix as a pill primitive that must be
+     registered in `shell-surfaces.css`, and this anchor is NOT a pill. The
+     span inside it is. Registering the wrapper would paint a pill around a
+     pill. Worth knowing why the prose exemption in the check did not
      swallow these: they sit in a flex row, which blockifies an inline anchor,
      so `display` is not `inline` and they were correctly measured. A chip is a
      control, not a sentence.
 
      `.section-action` is the "Open map view ›" / "see all ›" link that sits
      beside a section heading. Small mono type by design; still a tap target. */
-  .discover-chip,
+  .discover-filter-link,
   .section-action {
     display: inline-flex;
     align-items: center;

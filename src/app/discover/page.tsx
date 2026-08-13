@@ -296,14 +296,14 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.cityFilterLabel', 'City')}</span>
               {cityFilter && (
-                <Link className="discover-chip" href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" href={buildUrl(null, genreFilter)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {cityFilter} ×
                   </span>
                 </Link>
               )}
               {cities.filter(c => c !== cityFilter).map(c => (
-                <Link className="discover-chip" key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" key={c} href={buildUrl(c, genreFilter)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {c}
                   </span>
@@ -315,14 +315,14 @@ export default async function DiscoverPage({ searchParams }: { searchParams?: Pr
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a30)', flexShrink: 0 }}>{t('discoverPage.genreFilterLabel', 'Genre')}</span>
               {genreFilter && (
-                <Link className="discover-chip" href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" href={buildUrl(cityFilter, null)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--accent-2)', color: 'var(--ink-on-accent)', cursor: 'pointer' }}>
                     {genreFilter} ×
                   </span>
                 </Link>
               )}
               {genres.filter(g => g !== genreFilter).map(g => (
-                <Link className="discover-chip" key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
+                <Link className="discover-filter-link" key={g} href={buildUrl(cityFilter, g)} style={{ textDecoration: 'none' }}>
                   <span style={{ padding: '5px 12px', borderRadius: 20, fontSize: '0.75rem', fontFamily: 'var(--font-mono)', background: 'var(--line)', color: 'var(--ink-a60)', cursor: 'pointer', border: '1px solid var(--hair-80)' }}>
                     {g}
                   </span>
