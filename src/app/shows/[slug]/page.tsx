@@ -474,7 +474,26 @@ export default async function ShowDetailPage({
         ) : null}
 
         {/* LAYOUT: tabs + sticky ticket box */}
-        <div style={{ display: 'grid', gridTemplateColumns: show.isTicketed ? '1fr 300px' : '1fr', gap: 40 }}>
+        {/* Layout, so not `shell-surfaces.css` — that file is paint-only by
+            design and explicitly forbids `display`/`grid-template`. Nor
+            `mobile-fit.css`, whose every rule is a FLOOR. A page-local style
+            block is the pattern the other shell pages already use. */}
+        <style>{`
+          .show-detail-grid { grid-template-columns: 1fr 300px; }
+          @media (max-width: 620px) {
+            .show-detail-grid { grid-template-columns: 1fr; }
+          }
+        `}</style>
+
+        {/* One column on a phone, two on a desktop.
+            This was a hardcoded `1fr 300px` with no breakpoint, so a TICKETED
+            show measured 1079px wide inside a 375px viewport — 704px of
+            horizontal scroll on the page where a ticket is actually bought.
+            Only ticketed shows were affected, which is the ones that matter.
+            The class carries the media query; `show-detail-grid` is defined in
+            the page's own style block below at the 620px breakpoint MOBILE.md
+            sets for the whole product. */}
+        <div className={show.isTicketed ? 'show-detail-grid' : undefined} style={{ display: 'grid', gridTemplateColumns: show.isTicketed ? undefined : '1fr', gap: 40 }}>
           <ShowTabs
             venueTab={
               <div>
