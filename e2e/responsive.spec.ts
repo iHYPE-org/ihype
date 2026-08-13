@@ -1,5 +1,5 @@
 import { test, expect, type BrowserContext, type Page } from '@playwright/test';
-import { applySessionCookie, canSeedSession } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
  * Automated gate 6 of `docs/alpha-launch-runbook.md`, which listed this suite
@@ -82,6 +82,9 @@ const LEGACY_SURFACES: Surface[] = [
   { path: '/pages', name: 'Pages', frame: '.shell-content' },
   { path: '/settings', name: 'Settings', frame: '.shell-content' },
   { path: '/discover', name: 'Discover', frame: '.shell-content' },
+  { path: '/payouts', name: 'Payouts', frame: '.shell-content' },
+  { path: '/support', name: 'Support', frame: '.shell-content' },
+  { path: '/this-weekend', name: 'This weekend', frame: '.shell-content' },
 ];
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
@@ -258,6 +261,41 @@ test.describe('responsive — runbook gate 6', () => {
       await expectRendered(page, `${mod.name} reduced-motion`, mod.frame);
     }
     await shoot(page, 'reduced-motion-375');
+  });
+
+  /**
+   * The legacy detail pages, which need a real row to render at all.
+   *
+   * These are separated from the static list above because a profile or a show
+   * with no seeded record renders the not-found surface, and a not-found page
+   * is trivially clean — it would pass every assertion here while measuring
+   * nothing. Seeding first is the difference between covering these pages and
+   * only appearing to.
+   *
+   * They matter more than their count suggests: an artist page is the surface a
+   * shared link lands on, so it is the first thing most people ever see of
+   * iHYPE, and it has never been measured at phone width.
+   */
+  test('legacy detail pages at 375', async ({ context, page }) => {
+    const seededUser = await applySessionCookie(context, EMAIL);
+    const show = await seedShowWithTicket({
+      buyerUserId: seededUser.user.id,
+      buyerEmail: seededUser.user.email,
+      key: 'responsive',
+    });
+
+    await page.setViewportSize({ width: 375, height: 812 });
+    for (const [name, path] of [
+      ['Artist', `/artists/${show.artistSlug}`],
+      ['Venue', `/venues/${show.venueSlug}`],
+      ['Show', `/shows/${show.slug}`],
+    ] as const) {
+      await page.goto(path);
+      await expectRendered(page, `${name} @375`, '.shell-content');
+      await expectNoHorizontalOverflow(page, `${name} @375`);
+      await expectTapTargets(page, `${name} @375`);
+      await shoot(page, `legacy-${name}-375`);
+    }
   });
 
   /**
