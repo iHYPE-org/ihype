@@ -3,28 +3,42 @@ import {
   PROTECTED_PREFIXES,
   SESSION_EXEMPT_PATHS,
   WELCOME_PATH,
+  WORKBENCH_PATH,
   isProtectedPath,
   isSafeLocalRedirect,
   resolvePostAuthRedirect,
 } from '@/lib/auth-redirects';
 
 describe('auth redirects', () => {
-  it('sends empty auth redirects to Welcome first', () => {
-    expect(resolvePostAuthRedirect(undefined)).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect(null)).toBe(WELCOME_PATH);
+  /**
+   * Signing IN lands on the map, not on Welcome.
+   *
+   * Welcome used to be the default here, so every returning member saw an
+   * interstitial on the way to where they were going. It is still the right
+   * screen for a NEW account, which is why `AuthRegister` now asks for it by
+   * name — that is a decision the two call sites can make and this shared
+   * default cannot, because it cannot tell signing up from signing in.
+   */
+  it('sends empty auth redirects to the workbench', () => {
+    expect(resolvePostAuthRedirect(undefined)).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect(null)).toBe(WORKBENCH_PATH);
   });
 
-  it('normalizes transitional auth routes to Welcome', () => {
-    expect(resolvePostAuthRedirect('/auth/landing')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/auth/landing?module=tool-hub')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/auth/magic')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/auth/magic?token=abc')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/workbench')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/workbench?tool=settings')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/dashboard')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/dashboard?tab=tickets')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/login')).toBe(WELCOME_PATH);
-    expect(resolvePostAuthRedirect('/login?callbackUrl=/home')).toBe(WELCOME_PATH);
+  it('still preserves Welcome when a caller asks for it, which signup does', () => {
+    expect(resolvePostAuthRedirect(WELCOME_PATH)).toBe(WELCOME_PATH);
+  });
+
+  it('normalizes transitional auth routes to the workbench', () => {
+    expect(resolvePostAuthRedirect('/auth/landing')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/auth/landing?module=tool-hub')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/auth/magic')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/auth/magic?token=abc')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/workbench')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/workbench?tool=settings')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/dashboard')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/dashboard?tab=tickets')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/login')).toBe(WORKBENCH_PATH);
+    expect(resolvePostAuthRedirect('/login?callbackUrl=/home')).toBe(WORKBENCH_PATH);
   });
 
   it('preserves safe in-app callback destinations', () => {

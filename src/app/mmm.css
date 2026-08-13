@@ -2004,7 +2004,7 @@ html.mmm-locked .site-shell > main {
 }
 
 /* ADMIN MODE — the one piece of chrome that is role-gated.
-   Fixed top-LEFT, permanently visible for an administrator. This shell has no
+   Fixed top-RIGHT, permanently visible for an administrator. This shell has no
    header to put it in and SHELL_LOCK is final on that, so it sits where a
    header button would. The safe-area inset keeps it clear of the Dynamic
    Island the same way `--mmm-bottom` keeps the logo clear of the home
@@ -2012,7 +2012,7 @@ html.mmm-locked .site-shell > main {
 .mmm-admin-mode {
   position: absolute;
   top: calc(14px + env(safe-area-inset-top, 0px));
-  left: calc(14px + env(safe-area-inset-left, 0px));
+  right: calc(14px + env(safe-area-inset-right, 0px));
   z-index: 40;
   display: inline-flex;
   align-items: center;
