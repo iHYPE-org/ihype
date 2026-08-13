@@ -137,6 +137,31 @@ describe('MMM escapes into the legacy shell', () => {
     expect(tabRoute).toContain('searchParams');
   });
 
+  /**
+   * Stations must play, not navigate.
+   *
+   * The bug: every station row pushed `/radio?station=<slug>`, and `/radio`
+   * accepts no `searchParams` whatsoever — it is the always-on station and
+   * calls `getStationState()` with no argument. Eight real stations, one
+   * destination, and the choice did nothing. `GET /api/stations/[slug]/tracks`
+   * had existed the whole time with nothing calling it.
+   *
+   * Asserted from both ends so neither half can regress alone.
+   */
+  it('plays a station in-shell instead of navigating to /radio', () => {
+    const music = stripComments(readFileSync('src/components/mmm/MmmMusic.tsx', 'utf8'));
+    expect(music).not.toContain('/radio?station=');
+    expect(music).toContain('/api/stations/');
+    expect(music).toContain('playTrack');
+  });
+
+  it('still has no station selection on the legacy radio page', () => {
+    // If `/radio` ever DOES learn to read a station, this fails and the comment
+    // above needs rewriting rather than quietly becoming untrue.
+    const radio = stripComments(readFileSync('src/app/radio/page.tsx', 'utf8'));
+    expect(radio).not.toContain('searchParams');
+  });
+
   it('builds no route from a variable first segment', () => {
     const offenders: string[] = [];
     for (const file of MMM_SOURCES) {
