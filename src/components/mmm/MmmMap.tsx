@@ -667,7 +667,7 @@ function MapLayerSearch({
               </p>
               {/* The one honest way out of a viewport-bounded search: a page
                   that really does search everything. */}
-              <Link className="mmm-search-result" href={`/search?q=${encodeURIComponent(term.trim())}`}>
+              <Link className="mmm-search-result" href={`/app/search?q=${encodeURIComponent(term.trim())}`}>
                 <span className="mmm-search-result-main">
                   <span className="mmm-row-title">Search all of iHYPE for “{term.trim()}”</span>
                   <span className="mmm-row-sub">Leaves the map</span>

@@ -228,19 +228,19 @@ export default async function FanProfilePage({
       </div>
 
       <style>{`
-        .fan-page { max-width: 900px; margin: 0 auto; padding: 32px 0 100px; }
+        .fan-page { max-width: 640px; margin: 0 auto; padding: 32px 0 100px; }
         .fan-hero { padding: 40px 32px 32px; background: var(--profile-hero, transparent); border-bottom: 1px solid var(--profile-border, transparent); }
-        .fan-hero-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+        .fan-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .fan-hero { padding: 24px 20px; } .fan-content { padding: 0 20px; } }
-        .fan-avatar { width: 80px; height: 80px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,var(--role-fan),var(--accent-2))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
-        .fan-display-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 4px; color: var(--ink); }
+        .fan-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,var(--role-fan),var(--accent-2))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
+        .fan-display-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 32px; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); }
         .fan-handle { font-family: var(--font-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 12px; }
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .fan-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .14em; }
         .fan-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
         .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 13px; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .fan-hero-btn:hover { background: var(--hair-100); }
-        .fan-stats { display: flex; gap: 28px; margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--line); }
+        .fan-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
         .fan-stat-val { font-size: 22px; font-weight: 700; color: var(--profile-accent, var(--role-fan)); font-family: var(--profile-font-display, var(--font-display)); }
         .fan-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a55); margin-top: 2px; }
         .fan-content { padding: 0 32px; }

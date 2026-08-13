@@ -48,7 +48,7 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
  * says so in a sentence rather than showing an empty frame, and a station whose
  * count could not be read renders without a count rather than claiming zero.
  */
-export function MmmMusic({ tab }: { tab: MusicTabId }) {
+export function MmmMusic({ tab, genre }: { tab: MusicTabId; genre?: string }) {
   return (
     <>
       {/* Tabs on one row, search on the next — the 2026-08-10 template moved
@@ -77,7 +77,7 @@ export function MmmMusic({ tab }: { tab: MusicTabId }) {
         </nav>
         <MmmSearch />
       </div>
-      {tab === 'discover' && <DiscoverTab />}
+      {tab === 'discover' && <DiscoverTab genre={genre} />}
       {tab === 'radio' && <RadioTab />}
       {tab === 'charts' && <ChartsTab />}
       {tab === 'recommended' && <RecommendedTab />}
@@ -110,11 +110,27 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
   return state;
 }
 
-function DiscoverTab() {
+/**
+ * `genre` narrows the seed deck.
+ *
+ * It exists because search had nowhere honest to send a genre result. Legacy
+ * sends them to `/listen?genre=`, which has been a redirect since row 273 and
+ * drops the query — so those results have silently landed on an unfiltered
+ * page. Pointing them at an MMM tab that also ignored the parameter would have
+ * reproduced the same bug in the new shell rather than fixing it.
+ *
+ * `/api/discover/seeds` already takes `?genres=` (plural, comma-separated), so
+ * this is a wire-through, not a new query.
+ */
+function DiscoverTab({ genre }: { genre?: string }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
-  const { status, data } = useJson<SeedCard[]>('/api/discover/seeds', (payload) => {
+  const trimmedGenre = genre?.trim() ?? '';
+  const seedsUrl = trimmedGenre
+    ? `/api/discover/seeds?genres=${encodeURIComponent(trimmedGenre)}`
+    : '/api/discover/seeds';
+  const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
     return seeds.map((seed) => ({
       id: String(seed.id ?? ''),
@@ -141,22 +157,38 @@ function DiscoverTab() {
     }
   }, []);
 
+  // The active filter is always visible, and always clearable. A deck that is
+  // quietly narrowed looks identical to a deck that has run out — which is the
+  // shape of the bug this parameter exists to fix, just one step later.
+  const filterChip = trimmedGenre ? (
+    <div className="mmm-filter-chip">
+      <span>Genre · {trimmedGenre}</span>
+      <Link href="/app/music/discover">Clear</Link>
+    </div>
+  ) : null;
+
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Discovery is unavailable right now. Radio and Charts still work.</Empty>;
   const seeds = data ?? [];
   const seed = seeds[index];
   if (!seed) {
     return (
-      <Empty>
-        {seeds.length === 0
-          ? 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
-          : 'That is every seed for now. Come back tomorrow, or open Radio.'}
-      </Empty>
+      <>
+        {filterChip}
+        <Empty>
+          {seeds.length === 0
+            ? trimmedGenre
+              ? `No seeds in ${trimmedGenre} right now. Clear the filter, or try Radio.`
+              : 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
+            : 'That is every seed for now. Come back tomorrow, or open Radio.'}
+        </Empty>
+      </>
     );
   }
 
   return (
     <>
+      {filterChip}
       <div className="mmm-card mmm-card-accent" style={{ padding: 20, marginBottom: 14, minHeight: 300, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
         <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem', letterSpacing: '0.14em' }}>Seed</div>
         <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>
@@ -168,7 +200,7 @@ function DiscoverTab() {
         <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
           <button className="mmm-btn-primary" disabled={busy} onClick={() => void act(seed, 'hype')} style={{ flex: 1 }} type="button">Hype</button>
           <button className="mmm-btn-ghost" disabled={busy} onClick={() => void act(seed, 'skip')} type="button">Skip</button>
-          <button className="mmm-btn-ghost" onClick={() => router.push(`/tracks/${seed.hexId}`)} type="button">Open</button>
+          <button className="mmm-btn-ghost" onClick={() => router.push(`/app/tracks/${seed.hexId}`)} type="button">Open</button>
         </div>
       </div>
       <p className="mmm-eyebrow" style={{ textAlign: 'center', letterSpacing: '0.1em' }}>
@@ -261,7 +293,7 @@ function RecommendedTab() {
   return (
     <div>
       {tracks.map((track) => (
-        <Link className="mmm-row" href={`/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
@@ -296,7 +328,7 @@ function ChartsTab() {
     <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {rows.map((row, index) => (
         <li key={row.id}>
-          <Link className="mmm-row" href={`/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
+          <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
               {String(index + 1).padStart(2, '0')}
             </span>
@@ -337,7 +369,7 @@ function PlaylistsTab() {
   return (
     <div>
       {lists.map((list) => (
-        <Link className="mmm-row" href={`/playlist/${list.id}`} key={list.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/app/playlists/${list.id}`} key={list.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>

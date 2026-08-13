@@ -1865,3 +1865,140 @@ html.mmm-locked .site-shell > main {
   text-align: left;
   text-wrap: pretty;
 }
+
+/* ── Profile pane ─────────────────────────────────────────────────────────
+   An artist profile inside the shell (`/app/artists/[slug]`), so a chart row
+   no longer drops a member into the legacy shell.
+
+   Values follow `templates/profile-page/`: badges at 4px radius in mono
+   11px/.14em, the 22px/700 figure, rows over a hairline. The identity block
+   reuses `.mmm-show-*` rather than restating it — an artist pane and a show
+   pane are the same object at this level (eyebrow, title, where), and giving
+   them two names is how they drift apart. */
+.mmm-profile-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+.mmm-profile-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background: rgba(var(--surface-tint-rgb), 0.07);
+  color: var(--ink-2);
+}
+.mmm-profile-badge[data-kind='verified'] {
+  background: rgba(var(--role-venue-rgb), 0.15);
+  color: var(--role-venue);
+}
+
+.mmm-profile-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 18px;
+}
+
+.mmm-profile-section { margin-top: 28px; }
+.mmm-profile-section-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mmm-profile-shows { list-style: none; margin: 0; padding: 0; }
+.mmm-profile-show {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  /* A row is a link and a link is a touch target: the floor in mobile-fit.css
+     is a floor, so the padding here has to clear it on its own. */
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(var(--surface-tint-rgb), 0.13);
+  text-decoration: none;
+  color: inherit;
+}
+.mmm-profile-shows li:last-child .mmm-profile-show { border-bottom: 0; }
+.mmm-profile-heat {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+.mmm-profile-show-main { display: flex; flex-direction: column; min-width: 0; }
+.mmm-profile-show-when {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-profile-show-title {
+  margin-top: 2px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+.mmm-profile-show-where { margin-top: 2px; font-size: 0.75rem; color: var(--ink-2); }
+
+.mmm-profile-full {
+  display: inline-block;
+  margin-top: 24px;
+  font-size: 0.82rem;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+/* Track copyright line. Tone is an attribute rather than two class names —
+   the states are mutually exclusive and one of them is always present. */
+.mmm-track-copyright { margin: 0; font-size: 0.82rem; color: var(--role-venue); }
+.mmm-track-copyright[data-tone='pending'] { color: var(--warning-text); }
+
+/* Playlist rows reuse `.mmm-profile-show`; only the index is new. */
+.mmm-playlist-items { list-style: none; margin: 0; padding: 0; counter-reset: none; }
+.mmm-playlist-index {
+  flex-shrink: 0;
+  min-width: 22px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-3);
+  padding-top: 3px;
+}
+
+
+/* An active content filter, shown wherever one narrows a list. A filter the
+   member cannot see is indistinguishable from an empty result. */
+.mmm-filter-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.12);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.mmm-filter-chip a {
+  color: var(--accent-text);
+  text-decoration: underline;
+  /* A 44px floor would blow the chip's height; this is a text control inside a
+     pill, and mobile-fit.css's floors apply to standalone controls. */
+  padding: 4px 2px;
+}

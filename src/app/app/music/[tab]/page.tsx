@@ -4,8 +4,16 @@ import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
 
 export const dynamic = 'force-dynamic';
 
-export default async function MmmMusicPage({ params }: { params: Promise<{ tab: string }> }) {
+export default async function MmmMusicPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ tab: string }>;
+  searchParams?: Promise<{ genre?: string | string[] }>;
+}) {
   const { tab } = await params;
+  const query = searchParams ? await searchParams : {};
+  const genre = Array.isArray(query.genre) ? query.genre[0] : query.genre;
   // The manifest is the allowlist — an unknown tab shows not-found rather than
   // silently falling back to Discover, which would make a typo look like a
   // working link. Returned rather than thrown: this route's layout is async and
@@ -14,5 +22,5 @@ export default async function MmmMusicPage({ params }: { params: Promise<{ tab: 
   if (!MMM_MUSIC_TABS.some((item) => item.id === tab)) {
     return <MmmMissing eyebrow="Not found" title="No such tab" body="That is not one of MUSIC's tabs. Discover, Radio, Charts and Playlists are." />;
   }
-  return <MmmMusic tab={tab as MusicTabId} />;
+  return <MmmMusic genre={genre} tab={tab as MusicTabId} />;
 }

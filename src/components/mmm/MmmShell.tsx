@@ -250,7 +250,7 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           narrow={narrow}
           onOpenArtist={
             nowPlaying?.artistSlug
-              ? () => router.push(`/artists/${nowPlaying.artistSlug}`)
+              ? () => router.push(`/app/artists/${nowPlaying.artistSlug}`)
               : undefined
           }
           wake={playerWake}
