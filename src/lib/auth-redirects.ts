@@ -64,10 +64,24 @@ export function isProtectedPath(pathname: string): boolean {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
-// Generic (no-specific-destination) sign-ins land on Welcome first, which then
-// routes on to WORKBENCH_PATH — matches the Auth → Welcome → Listen flow used
-// for sign-up. A real deep-link callbackUrl (e.g. a show or ticket page the
-// user was trying to reach) is preserved as-is and skips Welcome.
+/**
+ * Signing IN lands on the map — the same first screen for everybody.
+ *
+ * This used to send every generic sign-in to `/welcome`, which then forwarded
+ * to `WORKBENCH_PATH`, so the first thing a returning member saw was an
+ * interstitial on the way to the place they were going. Combined with the
+ * ADMIN branch that used to live in the magic-link handler, the platform owner
+ * never landed in the product at all.
+ *
+ * `/welcome` is still the right screen for a NEW account — it is first-run
+ * onboarding, not a redirect step — so `AuthRegister` asks for it explicitly.
+ * The distinction is signing UP versus signing IN, which is why it now lives at
+ * the two call sites that know which one happened rather than in a shared
+ * default that cannot tell them apart.
+ *
+ * A real deep-link callbackUrl (a show or ticket the member was trying to
+ * reach) is preserved as-is, exactly as before.
+ */
 export const WELCOME_PATH = '/welcome';
 
 export function isSafeLocalRedirect(path: string | null | undefined): path is string {
@@ -78,10 +92,13 @@ export function isSafeLocalRedirect(path: string | null | undefined): path is st
 }
 
 export function resolvePostAuthRedirect(path: string | null | undefined): string {
-  if (!isSafeLocalRedirect(path)) return WELCOME_PATH;
-  if (path === '/login' || path.startsWith('/login?')) return WELCOME_PATH;
-  if (path.startsWith('/auth/')) return WELCOME_PATH;
-  if (path === '/workbench' || path.startsWith('/workbench?')) return WELCOME_PATH;
-  if (path === '/dashboard' || path.startsWith('/dashboard?')) return WELCOME_PATH;
+  if (!isSafeLocalRedirect(path)) return WORKBENCH_PATH;
+  if (path === '/login' || path.startsWith('/login?')) return WORKBENCH_PATH;
+  if (path.startsWith('/auth/')) return WORKBENCH_PATH;
+  // `/workbench` and `/dashboard` are retired routes with no page.tsx. They
+  // resolve forward rather than 404 because they still appear in old bookmarks
+  // and in links already sent by email.
+  if (path === '/workbench' || path.startsWith('/workbench?')) return WORKBENCH_PATH;
+  if (path === '/dashboard' || path.startsWith('/dashboard?')) return WORKBENCH_PATH;
   return path;
 }

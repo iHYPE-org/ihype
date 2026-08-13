@@ -36,7 +36,13 @@ import { createHash } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-const ADMIN_EMAIL = process.env.ADMIN_PREVIEW_EMAIL || 'colinatwood@gmail.com';
+/**
+ * The admin account is `admin@ihype.org` — the same address the brand uses as
+ * its only contact. This defaulted to a personal gmail address, which CLAUDE.md
+ * also recorded as the admin account; both were wrong, and the guard below is
+ * what caught it by refusing to act rather than seeding nothing quietly.
+ */
+const ADMIN_EMAIL = process.env.ADMIN_PREVIEW_EMAIL || 'admin@ihype.org';
 
 function databaseUrl() {
   const url = process.env.DATABASE_URL;

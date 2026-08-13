@@ -117,14 +117,6 @@ test.describe('MMM detail panes', () => {
     await expect(page.getByText(/No such venue/i)).toBeVisible();
   });
 
-  /**
-   * MUSIC's Discover tab must apply `?genre=`, and say so.
-   *
-   * This is the assertion that would have caught the bug the filter shipped
-   * with: the chip is what tells a member the deck is narrowed, and a deck
-   * that is quietly filtered — or quietly NOT filtered — looks identical to
-   * one that has simply run out.
-   */
   test('the track pane renders the track inside the shell', async ({ context, page }) => {
     const seeded = await signIn(context);
     const media = await seedTrackAndPlaylist({ userId: seeded.user.id, key: 'panes' });
@@ -154,6 +146,14 @@ test.describe('MMM detail panes', () => {
     await expect(row).toHaveAttribute('href', `/app/tracks/${media.hexId}`);
   });
 
+  /**
+   * MUSIC's Discover tab must apply `?genre=`, and say so.
+   *
+   * This is the assertion that would have caught the bug the filter shipped
+   * with: the chip is what tells a member the deck is narrowed, and a deck
+   * that is quietly filtered — or quietly NOT filtered — looks identical to
+   * one that has simply run out.
+   */
   test('Discover shows an active filter chip and can clear it', async ({ context, page }) => {
     await signIn(context);
     await page.goto('/app/music/discover?genre=Punk');

@@ -5,7 +5,7 @@ import type { FormEvent } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { postJson } from '@/lib/api-client';
-import { resolvePostAuthRedirect } from '@/lib/auth-redirects';
+import { resolvePostAuthRedirect, WELCOME_PATH } from '@/lib/auth-redirects';
 import {
   AuthCardShell,
   getErrorMessage,
@@ -163,7 +163,11 @@ export function RegisterScreen({
     const credential = await startRegistration({ optionsJSON: options });
     const verifyRes = await postJson<{ redirect?: string }>('/api/auth/passkey/register-first', credential);
     trackSignupFunnel('passkey_success', { role, method: 'passkey', step: 'register', variant: signupVariant, ...getPasskeyDiagnostics() });
-    window.location.href = resolvePostAuthRedirect(verifyRes.redirect);
+    // A NEW account still goes to Welcome — it is first-run onboarding, not a
+    // redirect step, and it is the one moment it is worth showing. Requested
+    // explicitly because `resolvePostAuthRedirect` now defaults to the map:
+    // that default serves signing IN, and cannot tell the two apart on its own.
+    window.location.href = resolvePostAuthRedirect(verifyRes.redirect ?? WELCOME_PATH);
   }
 
   async function submitGate(event: FormEvent<HTMLFormElement>) {
