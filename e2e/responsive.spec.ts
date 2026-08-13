@@ -56,6 +56,18 @@ const MODULES = [
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
 
+/**
+ * `hasTouch` is REQUIRED, not a nicety.
+ *
+ * Every floor in `mobile-fit.css` is gated on `(pointer: coarse)` — width is
+ * deliberately not the trigger, because a narrow desktop window is still a
+ * mouse and an iPad at 1024px is still a finger. Playwright's default context
+ * is `pointer: fine`, so without this the floors never apply and the tap-target
+ * check below fails on controls that are correct on a real phone. Resizing the
+ * viewport does not make a browser a touch device.
+ */
+test.use({ hasTouch: true });
+
 async function signIn(context: BrowserContext) {
   await applySessionCookie(context, EMAIL);
   await context.addInitScript(() => {
@@ -100,7 +112,14 @@ async function expectTapTargets(page: Page, label: string) {
       const box = el.getBoundingClientRect();
       // Invisible or not laid out: not a target anyone can miss.
       if (box.width === 0 || box.height === 0) continue;
-      if (getComputedStyle(el).visibility === 'hidden') continue;
+      const style = getComputedStyle(el);
+      if (style.visibility === 'hidden') continue;
+      // A link inside a sentence is not a tap target — it is prose that
+      // happens to be clickable, and padding it to 44px would wreck the line
+      // it sits in. MOBILE.md's rule is about controls. `display: inline` is
+      // what distinguishes the two, and it is the browser's own answer rather
+      // than a list of selectors to maintain.
+      if (style.display === 'inline') continue;
       if (box.height < 44 || box.width < 44) {
         const id = el.className && typeof el.className === 'string' ? `.${el.className.split(/\s+/)[0]}` : el.tagName.toLowerCase();
         offenders.push(`${id} ${Math.round(box.width)}x${Math.round(box.height)}`);
