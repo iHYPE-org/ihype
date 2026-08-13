@@ -126,9 +126,17 @@ async function expectTapTargets(page: Page, label: string) {
       // what distinguishes the two, and it is the browser's own answer rather
       // than a list of selectors to maintain.
       if (style.display === 'inline') continue;
-      if (box.height < 44 || box.width < 44) {
+      // Half a pixel of tolerance, for the same reason the overflow check
+      // carries one: at fractional device pixel ratios a box that IS 44 can
+      // measure 43.99, and a gate that fails on that reports "44x44" as an
+      // offender — which reads as the check being broken, and is how a check
+      // stops being believed. Nothing a finger can tell apart lives in here.
+      if (box.height < 43.5 || box.width < 43.5) {
         const id = el.className && typeof el.className === 'string' ? `.${el.className.split(/\s+/)[0]}` : el.tagName.toLowerCase();
-        offenders.push(`${id} ${Math.round(box.width)}x${Math.round(box.height)}`);
+        // One decimal, so a near-miss reads as a near-miss rather than as a
+        // round number that looks like it should have passed.
+        const round = (n: number) => Math.round(n * 10) / 10;
+        offenders.push(`${id} ${round(box.width)}x${round(box.height)}`);
       }
     }
     return [...new Set(offenders)];
