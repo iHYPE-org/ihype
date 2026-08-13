@@ -28,9 +28,9 @@ import Link from 'next/link';
  * own chip, because they are the caller's own rows and a response carrying them
  * cannot be CDN-cached. See the route's own header for that reasoning.
  *
- * Every result is a real link to a route that exists. A city has no route of
- * its own, so it opens `/discover?city=`, which does — a chip that navigated
- * nowhere would be worse than no chip.
+ * Every result is a real link to a route that exists, and every kind with an
+ * in-shell equivalent resolves inside `/app` — see `hrefFor` for the one that
+ * still leaves and why.
  */
 
 type SearchResult = {
@@ -59,10 +59,10 @@ const SCOPES: ReadonlyArray<{ id: string; label: string; type: string }> = [
  * search result swapped the header and the player. It was also invisible to the
  * escape audit, which reads `href=` literals and cannot see a switch.
  *
- * The one kind that still leaves is named rather than papered over: a CITY
- * result opens `/discover`, because `/api/discover/seeds` filters on genre and
- * has no city parameter — pointing it at an MMM tab that ignored the value
- * would reproduce the very bug being fixed here rather than fix it.
+ * Every kind now resolves inside `/app`. The last to move was CITY, which
+ * needed `/api/discover/seeds` to grow a `city` parameter first — pointing it
+ * at a tab that ignored the value would have reproduced the very bug this was
+ * fixing rather than fixing it.
  */
 function hrefFor(result: SearchResult): string {
   switch (result.type) {
@@ -74,11 +74,10 @@ function hrefFor(result: SearchResult): string {
       return `/app/playlists/${result.id}`;
     case 'venue':
       return `/app/venues/${result.slug ?? ''}`;
-    // No city route exists anywhere, and inventing one would be a link to a
-    // 404. `/discover` already filters by city and is the page a city result
-    // means; MUSIC's own Discover tab does not take these filters yet.
+    // `/api/discover/seeds` grew a `city` parameter, so MUSIC's own Discover
+    // tab now really filters by city and this no longer has to leave.
     case 'city':
-      return `/discover?city=${encodeURIComponent(result.name)}`;
+      return `/app/music/discover?city=${encodeURIComponent(result.name)}`;
     // MUSIC's Discover tab takes `?genre=` and passes it to the seeds
     // endpoint, so this filter actually applies. Legacy sends genre results to
     // `/listen?genre=`, where the redirect drops the term.

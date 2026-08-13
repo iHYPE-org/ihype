@@ -78,14 +78,15 @@ describe('MMM escapes into the legacy shell', () => {
   });
 
   it('has no more outbound links than the last time this was counted', () => {
-    // 11. Three are the panes' own labelled hand-offs (artist, venue and show
+    // 8. Three are the panes' own labelled hand-offs — artist, venue and show
     // each link once to their full legacy page for the tooling they do not
-    // carry). The other eight are surfaces MMM has no equivalent for yet:
-    // `/pages` x3, `/advertise/register`, `/radio?station=`, `/discover` x2
-    // for city and genre filters, and the ticket transfer page.
+    // carry. The remaining five are surfaces MMM has no equivalent for yet:
+    // `/pages` x3, `/advertise/register`, and the ticket transfer page.
     //
-    // Lower this as panes are built; never raise it.
-    expect(escapes.length, `outbound links:\n${escapes.sort().join('\n')}`).toBeLessThanOrEqual(11);
+    // Was 13 when this audit could first see properly. Radio stations now play
+    // in-shell, and Discover reads `?genre=` and `?city=`. Lower it as panes
+    // are built; never raise it.
+    expect(escapes.length, `outbound links:\n${escapes.sort().join('\n')}`).toBeLessThanOrEqual(8);
   });
 
   /**
@@ -107,15 +108,6 @@ describe('MMM escapes into the legacy shell', () => {
   });
 
   /**
-   * A route whose FIRST segment is a variable — `/${kind}/${slug}`.
-   *
-   * The segment list below cannot see these, and one was live: ME's "Preview"
-   * button built its href from `page.kind` ('artists' | 'venues'), so a member
-   * previewing their own page left the shell to look at it, and every audit
-   * here reported the shell as unchanged. Any route literal that opens with an
-   * interpolation is either `/app/...` or a bug.
-   */
-  /**
    * Genre results must land on a surface that actually applies the filter.
    *
    * The bug being avoided is specific and live in legacy: search sends genre
@@ -125,16 +117,23 @@ describe('MMM escapes into the legacy shell', () => {
    * so this asserts BOTH halves: search points at the tab, and the tab's route
    * still accepts a `genre` search param.
    */
-  it('sends genre results to a tab that reads the filter', () => {
+  it('sends genre and city results to a tab that reads the filter', () => {
     // Comments stripped: this file's own comment explains the legacy bug by
     // naming the route, and a raw scan would match that prose.
     const search = stripComments(readFileSync('src/components/mmm/MmmSearch.tsx', 'utf8'));
     expect(search).toContain('/app/music/discover?genre=');
+    expect(search).toContain('/app/music/discover?city=');
     expect(search).not.toContain('/listen?genre=');
 
     const tabRoute = readFileSync('src/app/app/music/[tab]/page.tsx', 'utf8');
     expect(tabRoute).toContain('genre');
+    expect(tabRoute).toContain('city');
     expect(tabRoute).toContain('searchParams');
+
+    // And the endpoint must actually accept both, or the tab is decoration.
+    const seeds = stripComments(readFileSync('src/app/api/discover/seeds/route.ts', 'utf8'));
+    expect(seeds).toContain("searchParams.get('city')");
+    expect(seeds).toContain("searchParams.get('genres')");
   });
 
   /**
@@ -162,6 +161,15 @@ describe('MMM escapes into the legacy shell', () => {
     expect(radio).not.toContain('searchParams');
   });
 
+  /**
+   * A route whose FIRST segment is a variable — `/${kind}/${slug}`.
+   *
+   * `LEGACY_FIRST_SEGMENTS` cannot see these, and one was live: ME's "Preview"
+   * button built its href from `page.kind` ('artists' | 'venues'), so a member
+   * previewing their own page left the shell to look at it, and every audit
+   * here reported the shell as unchanged. Any route literal that opens with an
+   * interpolation is either `/app/...` or a bug.
+   */
   it('builds no route from a variable first segment', () => {
     const offenders: string[] = [];
     for (const file of MMM_SOURCES) {

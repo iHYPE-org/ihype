@@ -59,7 +59,7 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
  * says so in a sentence rather than showing an empty frame, and a station whose
  * count could not be read renders without a count rather than claiming zero.
  */
-export function MmmMusic({ tab, genre }: { tab: MusicTabId; genre?: string }) {
+export function MmmMusic({ tab, genre, city }: { tab: MusicTabId; genre?: string; city?: string }) {
   return (
     <>
       {/* Tabs on one row, search on the next — the 2026-08-10 template moved
@@ -88,7 +88,7 @@ export function MmmMusic({ tab, genre }: { tab: MusicTabId; genre?: string }) {
         </nav>
         <MmmSearch />
       </div>
-      {tab === 'discover' && <DiscoverTab genre={genre} />}
+      {tab === 'discover' && <DiscoverTab city={city} genre={genre} />}
       {tab === 'radio' && <RadioTab />}
       {tab === 'charts' && <ChartsTab />}
       {tab === 'recommended' && <RecommendedTab />}
@@ -133,13 +133,19 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
  * `/api/discover/seeds` already takes `?genres=` (plural, comma-separated), so
  * this is a wire-through, not a new query.
  */
-function DiscoverTab({ genre }: { genre?: string }) {
+function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const trimmedGenre = genre?.trim() ?? '';
-  const seedsUrl = trimmedGenre
-    ? `/api/discover/seeds?genres=${encodeURIComponent(trimmedGenre)}`
+  const trimmedCity = city?.trim() ?? '';
+  const seedsQuery = new URLSearchParams();
+  // The endpoint's genre parameter is plural and comma-separated; one value is
+  // a valid list of one.
+  if (trimmedGenre) seedsQuery.set('genres', trimmedGenre);
+  if (trimmedCity) seedsQuery.set('city', trimmedCity);
+  const seedsUrl = seedsQuery.size
+    ? `/api/discover/seeds?${seedsQuery.toString()}`
     : '/api/discover/seeds';
   const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
@@ -171,9 +177,13 @@ function DiscoverTab({ genre }: { genre?: string }) {
   // The active filter is always visible, and always clearable. A deck that is
   // quietly narrowed looks identical to a deck that has run out — which is the
   // shape of the bug this parameter exists to fix, just one step later.
-  const filterChip = trimmedGenre ? (
+  const activeFilterLabel = [
+    trimmedGenre ? `Genre · ${trimmedGenre}` : null,
+    trimmedCity ? `City · ${trimmedCity}` : null,
+  ].filter(Boolean).join('  ·  ');
+  const filterChip = activeFilterLabel ? (
     <div className="mmm-filter-chip">
-      <span>Genre · {trimmedGenre}</span>
+      <span>{activeFilterLabel}</span>
       <Link href="/app/music/discover">Clear</Link>
     </div>
   ) : null;
@@ -188,8 +198,8 @@ function DiscoverTab({ genre }: { genre?: string }) {
         {filterChip}
         <Empty>
           {seeds.length === 0
-            ? trimmedGenre
-              ? `No seeds in ${trimmedGenre} right now. Clear the filter, or try Radio.`
+            ? activeFilterLabel
+              ? `Nothing matches that filter right now. Clear it, or try Radio.`
               : 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
             : 'That is every seed for now. Come back tomorrow, or open Radio.'}
         </Empty>
