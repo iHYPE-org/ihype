@@ -131,8 +131,16 @@ export default async function MyTicketsPage() {
         .tickets-container { max-width: 900px; margin: 0 auto; padding: 40px 24px; }
         .tickets-header { margin-bottom: 40px; }
         .tickets-header h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 8px; color: var(--ink); }
-        .ticket-list { display: grid; gap: 24px; }
-        .ticket-card { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
+        /* minmax(0, …) on the track and min-width:0 on the card, for the same
+           reason the ticket details below carry it: the action row is five
+           non-shrinking buttons in a nowrap flex box, which min-contents at
+           638px. The action row already scrolls sideways so those buttons
+           never widen the page themselves — but the card is a grid item with
+           the default min-width:auto, so the TRACK grew to 638 and took the
+           whole card with it. Making the row scrollable is only half a fix
+           unless its container is allowed to be narrower than it. */
+        .ticket-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
+        .ticket-card { border: 1px solid var(--line); border-radius: 12px; padding: 24px; background: linear-gradient(135deg, var(--bg2), var(--bg3)); min-width: 0; }
         .ticket-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
         .ticket-title h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
         .ticket-meta { font-size: 13px; color: var(--ink-a70); }
