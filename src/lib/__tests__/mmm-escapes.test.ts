@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { globSync } from 'glob';
 
@@ -179,6 +179,34 @@ describe('MMM escapes into the legacy shell', () => {
       }
     }
     expect(offenders, 'anchor the route under /app/ instead').toEqual([]);
+  });
+
+  /**
+   * Every `/app/...` link must resolve to a route that exists.
+   *
+   * The bug: MAP's "Search all of iHYPE" pointed at `/app/search`, a pane that
+   * was started and then deleted once MUSIC turned out to already carry a
+   * universal search field. The link survived the deletion and shipped, so the
+   * map's only escape hatch led to the in-shell not-found — which renders
+   * cleanly, so nothing looked broken from the outside.
+   *
+   * A route directory is the cheapest possible source of truth for this, and
+   * the only one that cannot drift from what Next will actually serve.
+   */
+  it('links only to /app routes that exist', () => {
+    const existing = new Set(
+      readdirSync('src/app/app', { withFileTypes: true })
+        .filter((entry) => entry.isDirectory())
+        .map((entry) => entry.name),
+    );
+    const offenders: string[] = [];
+    for (const file of MMM_SOURCES) {
+      const source = stripComments(readFileSync(file, 'utf8'));
+      for (const match of source.matchAll(/["'`](\/app\/([a-z-]+))/g)) {
+        if (!existing.has(match[2])) offenders.push(`${file} -> ${match[1]}`);
+      }
+    }
+    expect(offenders, 'no such route directory under src/app/app/').toEqual([]);
   });
 
   it('never NAVIGATES to the singular legacy playlist route', () => {

@@ -99,8 +99,16 @@ const KIND_LABEL: Record<SearchResult['type'], string> = {
   playlist: 'Playlist',
 };
 
-export function MmmSearch() {
-  const [query, setQuery] = useState('');
+/**
+ * `initialQuery` prefills the field, so a search started somewhere else can be
+ * continued here rather than restarted.
+ *
+ * MAP has its own venue/artist search bound to the map layers; its "Search all
+ * of iHYPE" fallback is a handoff to THIS field, and the handoff is worthless
+ * if it drops the words the member already typed.
+ */
+export function MmmSearch({ initialQuery = '' }: { initialQuery?: string } = {}) {
+  const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState('all');
   const [focused, setFocused] = useState(false);
   const [state, setState] = useState<{ status: 'idle' | 'loading' | 'ready' | 'error'; results: SearchResult[] }>({
