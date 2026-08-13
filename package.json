@@ -15,6 +15,7 @@
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:css": "node scripts/audit-css.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",
+    "seed:admin-preview": "node --import dotenv/config scripts/seed-admin-preview-profiles.mjs",
     "audit:mobile": "node scripts/audit-mobile.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
