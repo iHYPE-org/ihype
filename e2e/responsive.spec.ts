@@ -140,11 +140,31 @@ async function expectNoHorizontalOverflow(page: Page, label: string) {
      * wide table names itself plus every ancestor and the real cause is buried.
      */
     const vw = document.documentElement.clientWidth;
+
+    /**
+     * Content inside a deliberately scrollable box is not overflow.
+     *
+     * `.shell-pill-row` is a sideways-scrolling filter strip; its pills sit
+     * past the viewport by design and contribute nothing to the page's own
+     * scrollWidth. It was named in every single failure report above the real
+     * cause, and a report that cries wolf is one people stop reading. The walk
+     * stops at the measured roots, because an element inside `.shell-content`
+     * DOES count toward the number being asserted.
+     */
+    const measuredRoots = new Set<Element>(roots);
+    const insideScroller = (el: Element) => {
+      for (let p = el.parentElement; p && !measuredRoots.has(p); p = p.parentElement) {
+        const overflowX = getComputedStyle(p).overflowX;
+        if (overflowX === 'auto' || overflowX === 'scroll') return true;
+      }
+      return false;
+    };
+
     const over: { el: Element; right: number; width: number }[] = [];
     for (const el of document.querySelectorAll('body *')) {
       const rect = el.getBoundingClientRect();
       if (rect.width === 0 || rect.height === 0) continue;
-      if (rect.right > vw + 1) over.push({ el, right: rect.right, width: rect.width });
+      if (rect.right > vw + 1 && !insideScroller(el)) over.push({ el, right: rect.right, width: rect.width });
     }
     const offenders = over.filter((entry) => !over.some((other) => other.el !== entry.el && other.el.contains(entry.el)));
     const describe = (el: Element) => {

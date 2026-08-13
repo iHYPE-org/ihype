@@ -479,10 +479,11 @@ export default async function ShowDetailPage({
             `mobile-fit.css`, whose every rule is a FLOOR. A page-local style
             block is the pattern the other shell pages already use. */}
         <style>{`
-          .show-detail-grid { grid-template-columns: 1fr 300px; }
+          .show-detail-grid { grid-template-columns: minmax(0, 1fr) 300px; }
           @media (max-width: 620px) {
-            .show-detail-grid { grid-template-columns: 1fr; }
+            .show-detail-grid { grid-template-columns: minmax(0, 1fr); }
           }
+          .show-table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
         `}</style>
 
         {/* One column on a phone, two on a desktop.
@@ -492,8 +493,17 @@ export default async function ShowDetailPage({
             Only ticketed shows were affected, which is the ones that matter.
             The class carries the media query; `show-detail-grid` is defined in
             the page's own style block below at the 620px breakpoint MOBILE.md
-            sets for the whole product. */}
-        <div className={show.isTicketed ? 'show-detail-grid' : undefined} style={{ display: 'grid', gridTemplateColumns: show.isTicketed ? undefined : '1fr', gap: 40 }}>
+            sets for the whole product.
+
+            The tracks are `minmax(0, 1fr)`, not `1fr`, and that is the half the
+            first fix missed: a grid item's default `min-width: auto` means the
+            track grows to its content's MIN-content width, so collapsing to one
+            column still measured 699px — the eight-column orders table below
+            refusing to shrink, dragging the sticky ticket aside out with it
+            because they share the track. `minmax(0, …)` is what lets a track be
+            narrower than its contents; the table then scrolls in its own
+            `.show-table-scroll` box rather than widening the page. */}
+        <div className={show.isTicketed ? 'show-detail-grid' : undefined} style={{ display: 'grid', gridTemplateColumns: show.isTicketed ? undefined : 'minmax(0, 1fr)', gap: 40 }}>
           <ShowTabs
             venueTab={
               <div>
@@ -703,6 +713,10 @@ export default async function ShowDetailPage({
                   </div>
                 </div>
                 {recentTicketOrders.length ? (
+                  // Eight money columns. A table cannot render narrower than
+                  // its min-content, so on a phone it scrolls in its own box
+                  // rather than widening the page under it.
+                  <div className="show-table-scroll">
                   <table className="table">
                     <thead>
                       <tr>
@@ -730,6 +744,7 @@ export default async function ShowDetailPage({
                       })}
                     </tbody>
                   </table>
+                  </div>
                 ) : (
                   <p className="meta">{t('showsSlugPage.noTicketOrdersYet', 'No ticket orders yet.')}</p>
                 )}

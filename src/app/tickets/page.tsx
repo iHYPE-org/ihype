@@ -137,10 +137,17 @@ export default async function MyTicketsPage() {
         .ticket-title h3 { font-family: var(--font-display); font-size: 18px; font-weight: 800; margin-bottom: 4px; color: var(--ink); }
         .ticket-meta { font-size: 13px; color: var(--ink-a70); }
         .ticket-status { display: inline-block; padding: 4px 8px; background: rgba(var(--role-venue-rgb), 0.15); color: var(--role-venue); font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; border-radius: 3px; }
-        .ticket-details { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding-top: 16px; border-top: 1px solid var(--line); margin-bottom: 16px; }
-        @media (max-width: 480px) { .ticket-details { grid-template-columns: 1fr 1fr; } }
+        /* minmax(0, …) and overflow-wrap together, and both are needed: the
+           Ticket # is a 32-character serialized id with no break opportunity in
+           it, so the grid track grew to fit it on one line and the card
+           measured 638px inside a 375px phone. A grid item's default
+           min-width:auto is what let that happen; the wrap is what gives the
+           string somewhere to go once the track can be narrow. */
+        .ticket-details { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding-top: 16px; border-top: 1px solid var(--line); margin-bottom: 16px; }
+        @media (max-width: 480px) { .ticket-details { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+        .detail-item { min-width: 0; }
         .detail-label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-a60); margin-bottom: 4px; }
-        .detail-value { font-size: 14px; font-weight: 600; color: var(--ink); }
+        .detail-value { font-size: 14px; font-weight: 600; color: var(--ink); overflow-wrap: anywhere; }
         .ticket-actions { display: flex; gap: 12px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
         .ticket-actions::-webkit-scrollbar { display: none; }
         .ticket-actions > * { flex-shrink: 0; white-space: nowrap; }
