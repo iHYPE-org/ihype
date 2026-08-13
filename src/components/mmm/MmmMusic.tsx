@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
 import { MmmSearch } from './MmmSearch';
@@ -12,7 +13,17 @@ export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'play
 type SeedCard = { id: string; hexId: string; title: string; artistName: string; artistSlug: string; meta: string };
 type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number };
 type PlaylistRow = { id: string; name: string; count: number };
-type StationTrackRow = { id: string; hexId: string; title: string; artistName: string; artistSlug: string };
+type StationTrackRow = {
+  id: string;
+  hexId: string;
+  title: string;
+  artistName: string;
+  artistSlug: string;
+  // Present in the endpoint's response and needed to actually play a station;
+  // both are nullable in the underlying row.
+  mediaUrl: string | null;
+  artworkUrl: string | null;
+};
 
 /**
  * The radio filter chips, from the app-shell redesign — "Stations are
@@ -210,12 +221,71 @@ function DiscoverTab({ genre }: { genre?: string }) {
   );
 }
 
+/**
+ * Stations play IN the shell, rather than navigating anywhere.
+ *
+ * What this replaces was not a styling problem. Every station row pushed
+ * `/radio?station=<slug>` — and `/radio` takes no `searchParams` at all: it is
+ * the always-on station and calls `getStationState()` with no argument. So the
+ * Radio tab offered eight real choices (For you, Local, New, Friends, and the
+ * genre stations) and all eight played the same thing. The selection was
+ * decoration.
+ *
+ * The whole backend for it already existed and was reachable:
+ * `GET /api/stations/[slug]/tracks` resolves a station through `stationWhere()`
+ * and returns its ordered tracks. Nothing had ever called it.
+ *
+ * So the fix is not a link change and not a new pane — it is handing that queue
+ * to the player the shell already carries. `playTrack(first, queue)` is the
+ * same call `ArtistMediaPlaylist` makes, so the pill, the lock screen and the
+ * skip controls all work with no further wiring, and the member never leaves
+ * MUSIC to listen to music.
+ */
 function RadioTab() {
-  const router = useRouter();
   const [filter, setFilter] = useState<string>('genre');
+  const [pendingStation, setPendingStation] = useState<string | null>(null);
+  const [stationError, setStationError] = useState<string | null>(null);
+  const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<StationSummary[]>(
     '/api/stations',
     (payload) => (payload as { stations?: StationSummary[] }).stations ?? [],
+  );
+
+  const openStation = useCallback(
+    async (slug: string, title: string) => {
+      setPendingStation(slug);
+      setStationError(null);
+      try {
+        const response = await fetch(`/api/stations/${encodeURIComponent(slug)}/tracks`, {
+          cache: 'no-store',
+        });
+        if (!response.ok) throw new Error(String(response.status));
+        const payload = (await response.json()) as { tracks?: StationTrackRow[] };
+        const queue = (payload.tracks ?? [])
+          // A row with no stored audio cannot be played; keeping it in the
+          // queue would stall the player on a dead entry.
+          .filter((row) => Boolean(row.mediaUrl))
+          .map((row) => ({
+            id: row.hexId,
+            mediaId: row.hexId,
+            title: row.title,
+            artistName: row.artistName,
+            url: row.mediaUrl as string,
+            artistProfileSlug: row.artistSlug ?? null,
+            artworkUrl: row.artworkUrl ?? null,
+          }));
+        if (queue.length === 0) {
+          setStationError(`${title} has no playable tracks yet.`);
+          return;
+        }
+        playTrack(queue[0], queue);
+      } catch {
+        setStationError(`${title} could not be loaded. Try another station.`);
+      } finally {
+        setPendingStation(null);
+      }
+    },
+    [playTrack],
   );
 
   if (status === 'loading') return <Loading />;
@@ -242,14 +312,16 @@ function RadioTab() {
           </button>
         ))}
       </div>
+      {stationError && <p className="mmm-me-note">{stationError}</p>}
       {stations.length === 0 && <Empty>No {active.label.toLowerCase()} station is active yet.</Empty>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
       {stations.map((station) => (
         <button
           className="mmm-row mmm-card mmm-station"
           data-playing="false"
+          disabled={pendingStation === station.slug}
           key={station.slug}
-          onClick={() => router.push(`/radio?station=${station.slug}`)}
+          onClick={() => void openStation(station.slug, station.title)}
           style={{ borderBottom: '1px solid var(--hair-100)' }}
           type="button"
         >
