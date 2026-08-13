@@ -47,11 +47,41 @@ const WIDTHS = [
   { w: 430, h: 932, label: '430' },
 ];
 
-/** "Every module" — MAP, MUSIC and ME are the whole signed-in app. */
-const MODULES = [
-  { path: '/app/map', name: 'MAP' },
-  { path: '/app/music/discover', name: 'MUSIC' },
-  { path: '/app/me', name: 'ME' },
+/**
+ * "Every module" — MAP, MUSIC and ME are the whole signed-in app in MMM.
+ *
+ * `frame` is the container that proves the surface rendered in the right
+ * shell, and the two shells use different ones. Asserting the MMM frame on a
+ * legacy page would fail every time and teach everyone to ignore the suite.
+ */
+type Surface = { path: string; name: string; frame: string };
+
+const MODULES: Surface[] = [
+  { path: '/app/map', name: 'MAP', frame: '.mmm-frame' },
+  { path: '/app/music/discover', name: 'MUSIC', frame: '.mmm-frame' },
+  { path: '/app/me', name: 'ME', frame: '.mmm-frame' },
+];
+
+/**
+ * The LEGACY shell's own surfaces, which no audit has ever measured.
+ *
+ * Every check built for phone fit — this suite, `audit:mobile`, the tap-target
+ * floor — has pointed at `/app` only, while roughly sixty pages render in the
+ * older shell and get none of it. These five are the ones a member in alpha
+ * actually reaches: their tickets, their pages, events, settings, and the
+ * discovery index.
+ *
+ * They are asserted at 375 only, rather than at all four widths. The point is
+ * to find the systematic breakages — a table that will not fit, a control
+ * under the floor — not to quadruple a suite that already takes a minute. If
+ * 375 is clean, the others rarely are not.
+ */
+const LEGACY_SURFACES: Surface[] = [
+  { path: '/shows', name: 'Events', frame: '.shell-content' },
+  { path: '/tickets', name: 'Tickets', frame: '.shell-content' },
+  { path: '/pages', name: 'Pages', frame: '.shell-content' },
+  { path: '/settings', name: 'Settings', frame: '.shell-content' },
+  { path: '/discover', name: 'Discover', frame: '.shell-content' },
 ];
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
@@ -145,8 +175,8 @@ async function expectTapTargets(page: Page, label: string) {
 }
 
 /** A surface that painted its frame but no content is the bug we shipped. */
-async function expectRendered(page: Page, label: string) {
-  await expect(page.locator('.mmm-frame:visible'), `${label}: no shell frame`).toBeVisible();
+async function expectRendered(page: Page, label: string, frame = '.mmm-frame') {
+  await expect(page.locator(`${frame}:visible`), `${label}: no shell frame`).toBeVisible();
   const text = (await page.locator('body').innerText()).trim();
   expect(text.length, `${label}: shell rendered with no readable content`).toBeGreaterThan(20);
 }
@@ -165,7 +195,7 @@ test.describe('responsive — runbook gate 6', () => {
       test(`${mod.name} at ${label}`, async ({ page }) => {
         await page.setViewportSize({ width: w, height: h });
         await page.goto(mod.path);
-        await expectRendered(page, `${mod.name} @${w}`);
+        await expectRendered(page, `${mod.name} @${w}`, mod.frame);
         await expectNoHorizontalOverflow(page, `${mod.name} @${w}`);
         await expectTapTargets(page, `${mod.name} @${w}`);
         await shoot(page, `${mod.name}-${w}`);
@@ -179,7 +209,7 @@ test.describe('responsive — runbook gate 6', () => {
     await page.setViewportSize({ width: 812, height: 375 });
     for (const mod of MODULES) {
       await page.goto(mod.path);
-      await expectRendered(page, `${mod.name} landscape`);
+      await expectRendered(page, `${mod.name} landscape`, mod.frame);
       await expectNoHorizontalOverflow(page, `${mod.name} landscape`);
     }
     await shoot(page, 'landscape');
@@ -208,10 +238,28 @@ test.describe('responsive — runbook gate 6', () => {
     await page.setViewportSize({ width: 375, height: 812 });
     for (const mod of MODULES) {
       await page.goto(mod.path);
-      await expectRendered(page, `${mod.name} reduced-motion`);
+      await expectRendered(page, `${mod.name} reduced-motion`, mod.frame);
     }
     await shoot(page, 'reduced-motion-375');
   });
+
+  /**
+   * The legacy shell, at the design width.
+   *
+   * Sixty-odd pages render here and no phone-fit check has ever pointed at
+   * them. Same three assertions as the modules above — the shell's own frame,
+   * no sideways scroll, and every control clearing the floor.
+   */
+  for (const surface of LEGACY_SURFACES) {
+    test(`${surface.name} (legacy shell) at 375`, async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(surface.path);
+      await expectRendered(page, `${surface.name} @375`, surface.frame);
+      await expectNoHorizontalOverflow(page, `${surface.name} @375`);
+      await expectTapTargets(page, `${surface.name} @375`);
+      await shoot(page, `legacy-${surface.name}-375`);
+    });
+  }
 
   test('200% text does not overflow', async ({ page }) => {
     // `--ihype-text-scale` drives the ROOT font size, which is why the 2026-08-12
@@ -223,7 +271,7 @@ test.describe('responsive — runbook gate 6', () => {
     });
     for (const mod of MODULES) {
       await page.goto(mod.path);
-      await expectRendered(page, `${mod.name} 200% text`);
+      await expectRendered(page, `${mod.name} 200% text`, mod.frame);
       await expectNoHorizontalOverflow(page, `${mod.name} 200% text`);
     }
     await shoot(page, 'text-200pct');

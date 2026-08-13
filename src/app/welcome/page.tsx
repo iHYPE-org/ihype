@@ -91,7 +91,13 @@ export default async function WelcomePage() {
     ADMIN: {
       roleLabel: t('welcomePage.roleAdmin', 'Admin'), tint: 'var(--accent)',
       sub: t('welcomePage.subAdmin', 'You are signed in as a platform administrator. The console shows every queue waiting on a human, ordered by what is overdue.'),
-      cta: t('welcomePage.ctaAdmin', 'Open the console →'), ctaHref: '/admin',
+      // Lands on the map like every other member. An administrator is a member
+      // with a capability, not a different product, and the console is one tap
+      // away from the ADMIN MODE control the shell carries. This used to point
+      // at `/admin`, which — combined with the magic-link handler's own ADMIN
+      // branch — is how the platform owner ended up on a device-registration
+      // lockout screen instead of ever seeing the app.
+      cta: t('welcomePage.ctaAdmin', 'Open iHYPE →'), ctaHref: WORKBENCH_PATH,
       steps: [
         { title: t('welcomePage.adminStep1Title', 'Register this device'), desc: t('welcomePage.adminStep1Desc', 'The console requires a registered device in addition to your passkey. Without one, /admin redirects here.') },
         { title: t('welcomePage.adminStep2Title', 'Work the queues'), desc: t('welcomePage.adminStep2Desc', 'Verifications, held tracks, moderation and ad approvals each carry the turnaround the product promises applicants.') },
