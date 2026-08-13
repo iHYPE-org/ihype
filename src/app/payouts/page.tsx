@@ -92,6 +92,7 @@ export default async function PayoutsHubPage({
       <div style={{ display: 'flex', gap: 8, margin: '16px 0 24px', borderBottom: '1px solid var(--line)' }}>
         {TABS.map((tabDef) => (
           <Link
+            className="payouts-tablink"
             key={tabDef.id}
             href={`/payouts?tab=${tabDef.id}`}
             style={{

@@ -117,16 +117,54 @@ async function signIn(context: BrowserContext) {
  * which is noise rather than a bug a member could ever see.
  */
 async function expectNoHorizontalOverflow(page: Page, label: string) {
-  const overflow = await page.evaluate(() => {
+  const result = await page.evaluate(() => {
     const roots = [document.documentElement, document.body, ...document.querySelectorAll('.mmm-pane, .shell-content')];
     let worst = 0;
     for (const node of roots) {
       const el = node as HTMLElement;
       worst = Math.max(worst, el.scrollWidth - el.clientWidth);
     }
-    return worst;
+    if (worst <= 1) return { worst, culprits: [] as string[] };
+
+    /**
+     * Name what is actually too wide.
+     *
+     * "704px of horizontal overflow" is true and unusable — it says a page is
+     * three times too wide without saying which element did it, and grepping
+     * for large widths finds OG metadata and `sizes` attributes rather than the
+     * cause. Same failing as the tap-target check reporting `a 105x13`: a
+     * measurement nobody can act on is half a finding.
+     *
+     * Reports the elements whose right edge sits past the viewport, widest
+     * first, skipping any whose parent is already an offender — otherwise one
+     * wide table names itself plus every ancestor and the real cause is buried.
+     */
+    const vw = document.documentElement.clientWidth;
+    const over: { el: Element; right: number; width: number }[] = [];
+    for (const el of document.querySelectorAll('body *')) {
+      const rect = el.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0) continue;
+      if (rect.right > vw + 1) over.push({ el, right: rect.right, width: rect.width });
+    }
+    const offenders = over.filter((entry) => !over.some((other) => other.el !== entry.el && other.el.contains(entry.el)));
+    const describe = (el: Element) => {
+      const cls = typeof el.className === 'string' && el.className.trim()
+        ? `.${el.className.trim().split(/\s+/).slice(0, 2).join('.')}`
+        : '';
+      return `${el.tagName.toLowerCase()}${cls}`;
+    };
+    return {
+      worst,
+      culprits: offenders
+        .sort((a, b) => b.right - a.right)
+        .slice(0, 4)
+        .map((entry) => `${describe(entry.el)} w=${Math.round(entry.width)} right=${Math.round(entry.right)}`),
+    };
   });
-  expect(overflow, `${label}: ${overflow}px of horizontal overflow`).toBeLessThanOrEqual(1);
+  expect(
+    result.worst,
+    `${label}: ${result.worst}px of horizontal overflow — widest: ${result.culprits.join(' | ') || 'none identified'}`,
+  ).toBeLessThanOrEqual(1);
 }
 
 /**

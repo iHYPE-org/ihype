@@ -133,6 +133,17 @@
 
      `.section-action` is the "Open map view ›" / "see all ›" link that sits
      beside a section heading. Small mono type by design; still a tap target. */
+  /* Three more the gate named once it could reach these pages. Each is a real
+     control a few pixels under, and each is inline-styled with no class of its
+     own — hence the names, chosen to avoid the `-tab`/`-pill` suffixes that
+     `audit:shell` reserves for paint primitives.
+
+       .weekend-cta        149x38  — the primary CTA on /this-weekend
+       .payouts-tablink     60x39  — the History/Settings/Show tabs
+       .support-ticketlink 133x36  — "my support tickets" on /support  */
+  .weekend-cta,
+  .payouts-tablink,
+  .support-ticketlink,
   .discover-filter-link,
   .section-action {
     display: inline-flex;
