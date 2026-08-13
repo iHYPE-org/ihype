@@ -2002,3 +2002,33 @@ html.mmm-locked .site-shell > main {
      pill, and mobile-fit.css's floors apply to standalone controls. */
   padding: 4px 2px;
 }
+
+/* ADMIN MODE — the one piece of chrome that is role-gated.
+   Fixed top-LEFT, permanently visible for an administrator. This shell has no
+   header to put it in and SHELL_LOCK is final on that, so it sits where a
+   header button would. The safe-area inset keeps it clear of the Dynamic
+   Island the same way `--mmm-bottom` keeps the logo clear of the home
+   indicator; the logo trigger is bottom-left, so the two never collide. */
+.mmm-admin-mode {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top, 0px));
+  left: calc(14px + env(safe-area-inset-left, 0px));
+  z-index: 40;
+  display: inline-flex;
+  align-items: center;
+  /* 44px floor, per MOBILE.md — grown with padding, never with font size. */
+  min-height: 44px;
+  padding: 11px 16px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--accent);
+  background: rgba(var(--bg-base-rgb), 0.72);
+  backdrop-filter: blur(8px);
+  color: var(--accent-text);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.mmm-admin-mode:hover { background: rgba(var(--accent-rgb), 0.16); }
+.mmm-admin-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

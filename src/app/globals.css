@@ -4403,12 +4403,17 @@ a .ihype-card, a.ihype-card {
   .site-footer-rights-suffix { display: none; }
 }
 
-/* Sitewide header font (Forum) — logo intentionally stays on
-   --font-display (Syne) rather than this override. Elements with an
-   inline fontFamily (e.g. the workbench's own h1/h2 usages) take
-   precedence, as normal CSS specificity rules. */
+/* Sitewide heading face.
+   This used to be Forum, and that was drift rather than a decision: Forum
+   appears NOWHERE in Design System 8, and this rule's own comment still named
+   Syne — the face DS8 retired on 2026-08-09 — so it predates the overhaul and
+   was never revisited. The effect was that every bare h1/h2 outside a
+   class-styled surface rendered in a family the design system does not
+   contain. Class selectors (.mmm-show-title and friends) already win over an
+   element selector, which is why the newest shells looked right and hid this.
+   Elements with an inline fontFamily still take precedence, as before. */
 h1, h2 {
-  font-family: var(--font-forum, 'Forum', serif);
+  font-family: var(--font-display);
 }
 
 /* ── Print ───────────────────────────────────────────────────────────────

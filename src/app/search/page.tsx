@@ -31,14 +31,65 @@ const TicketIcon = ({ c }: { c: string }) => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={c} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" /><path d="M13 5v2M13 11v2M13 17v2" /></svg>
 );
 
-function resultHref(r: ResultItem): string {
-  if (r.type === 'venue') return r.slug ? `/venues/${r.slug}` : '#';
-  if (r.type === 'promoter') return r.slug ? `/artists/${r.slug}` : '#';
-  if (r.type === 'artist') return r.slug ? `/artists/${r.slug}` : '#';
-  if (r.type === 'show') return r.slug ? `/shows/${r.slug}` : '#';
+/**
+ * Where a result actually lives, or `null` when it cannot be addressed.
+ *
+ * Two fixes here, both of the same shape: a link that goes somewhere it does
+ * not mean.
+ *
+ * 1. A genre result used to open `/listen?genre=`. `/listen` has been a
+ *    REDIRECT since DESIGN_SYNC row 273 and drops the query, so every genre
+ *    search in the product has silently landed on an unfiltered page.
+ *    `/discover` reads `params.genre` for real, so that is where they go.
+ * 2. A result with no slug used to return `'#'`. That is not a link to
+ *    nothing, it is a link to the top of the current page — indistinguishable
+ *    from a broken click. It now returns `null` and the row renders as plain
+ *    text, which is honest about there being nowhere to go.
+ */
+function resultHref(r: ResultItem): string | null {
+  if (r.type === 'venue') return r.slug ? `/venues/${r.slug}` : null;
+  if (r.type === 'promoter') return r.slug ? `/artists/${r.slug}` : null;
+  if (r.type === 'artist') return r.slug ? `/artists/${r.slug}` : null;
+  if (r.type === 'show') return r.slug ? `/shows/${r.slug}` : null;
   if (r.type === 'song') return `/tracks/${r.id}`;
-  if (r.type === 'genre') return `/listen?genre=${encodeURIComponent(r.name)}`;
-  return '#';
+  if (r.type === 'genre') return `/discover?genre=${encodeURIComponent(r.name)}`;
+  return null;
+}
+
+const ROW_STYLE: React.CSSProperties = {
+  display: 'flex',
+  gap: 16,
+  alignItems: 'center',
+  padding: '14px 16px',
+  border: '1px solid var(--line)',
+  borderRadius: 8,
+  background: 'var(--bg2)',
+  marginBottom: 10,
+  textDecoration: 'none',
+  color: 'inherit',
+};
+
+/**
+ * One result row. The three result lists rendered this identically apart from
+ * the icon, so the unaddressable-result handling would have had to be written
+ * three times and kept in step; it is written once instead.
+ */
+function ResultRow({ r, icon }: { r: ResultItem; icon: 'note' | 'ticket' }) {
+  const c = resultColor(r);
+  const href = resultHref(r);
+  const body = (
+    <>
+      <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
+        {icon === 'ticket' ? <TicketIcon c={c} /> : <NoteIcon c={c} />}
+      </div>
+      <div>
+        <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
+        <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
+      </div>
+    </>
+  );
+  if (!href) return <div style={ROW_STYLE}>{body}</div>;
+  return <Link href={href} style={ROW_STYLE}>{body}</Link>;
 }
 
 function resultColor(r: ResultItem): string {
@@ -169,60 +220,27 @@ function SearchPageInner() {
           {show('artists') && artists.length > 0 && (
             <div>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.artists}</p>
-              {artists.map((r) => {
-                const c = resultColor(r);
-                return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
-                      <NoteIcon c={c} />
-                    </div>
-                    <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {artists.map((r) => (
+                <ResultRow icon="note" key={r.id} r={r} />
+              ))}
             </div>
           )}
 
           {show('shows') && shows.length > 0 && (
             <div>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.shows}</p>
-              {shows.map((r) => {
-                const c = resultColor(r);
-                return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
-                      <TicketIcon c={c} />
-                    </div>
-                    <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {shows.map((r) => (
+                <ResultRow icon="ticket" key={r.id} r={r} />
+              ))}
             </div>
           )}
 
           {show('tracks') && tracks.length > 0 && (
             <div>
               <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a55)', marginBottom: 14, marginTop: 32 }}>{FILTER_LABEL.tracks}</p>
-              {tracks.map((r) => {
-                const c = resultColor(r);
-                return (
-                  <Link key={r.id} href={resultHref(r)} style={{ display: 'flex', gap: 16, alignItems: 'center', padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 8, background: 'var(--bg2)', marginBottom: 10, textDecoration: 'none', color: 'inherit' }}>
-                    <div style={{ width: 44, height: 44, borderRadius: 10, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg,${c}40,transparent)` }}>
-                      <NoteIcon c={c} />
-                    </div>
-                    <div>
-                      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2, color: 'var(--ink)' }}>{r.name}</h4>
-                      <p style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{r.subtitle}</p>
-                    </div>
-                  </Link>
-                );
-              })}
+              {tracks.map((r) => (
+                <ResultRow icon="note" key={r.id} r={r} />
+              ))}
             </div>
           )}
         </div>

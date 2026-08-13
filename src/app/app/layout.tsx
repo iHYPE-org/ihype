@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canHype } from '@/lib/hype-window';
 import { MmmShell, type MmmNowPlaying } from '@/components/mmm/MmmShell';
+import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -84,5 +85,15 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
       }
     : null;
 
-  return <MmmShell nowPlaying={nowPlaying}>{children}</MmmShell>;
+  /**
+   * The ADMIN MODE affordance is resolved HERE, from the session, and never
+   * from anything the client can set. It is visibility only — `/admin` keeps
+   * its own gate (session, role, and the device-cookie check), exactly like
+   * every other role-gated destination in this codebase.
+   */
+  return (
+    <MmmShell isAdmin={isAdminSession(session)} nowPlaying={nowPlaying}>
+      {children}
+    </MmmShell>
+  );
 }

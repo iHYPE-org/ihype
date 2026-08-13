@@ -7,7 +7,7 @@ import './shell-surfaces.css';
 import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
-import { Bricolage_Grotesque, Work_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
+import localFont from 'next/font/local';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
@@ -26,19 +26,72 @@ import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { AppShell } from '@/components/shell/AppShell';
 import { getShellViewer } from '@/lib/shell-account';
 
-// Design System 8 ("Bulletin"): Bricolage Grotesque retires Syne on display,
-// Work Sans retires DM Sans on body. Bricolage is loaded as the VARIABLE face
-// with its optical-size axis kept — `axes: ['opsz']` is what makes
-// `font-variation-settings: 'opsz' N` on the display ramp do anything. Pinning
-// a static instance instead would throw the axis away, which is the reason the
-// handoff picked this family. `weight` is deliberately omitted so the whole
-// 200..800 wght range ships; next/font rejects the two together on a variable
-// face. Work Sans takes fixed weights because only four are ever used.
-const bricolage = Bricolage_Grotesque({ subsets: ['latin'], axes: ['opsz'], variable: '--font-bricolage', display: 'swap' });
-const workSans = Work_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-work', display: 'swap' });
-const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-jb', display: 'swap' });
-const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
-const forum = Forum({ subsets: ['latin'], weight: ['400'], variable: '--font-forum', display: 'swap' });
+/**
+ * Design System 8 ("Bulletin") type, served from files IN THIS REPO.
+ *
+ * ## Why these are vendored rather than `next/font/google`
+ *
+ * `next/font/google` fetches every face from `fonts.gstatic.com` AT BUILD
+ * TIME — three retries, then a hard `Failed to fetch ... from Google Fonts`
+ * that fails the whole build. That is not only a PR nuisance:
+ * `deploy-production.yml` re-runs the same Cloudflare build before it ships,
+ * so an outage at Google blocked RELEASES. It did exactly that on 2026-08-13.
+ *
+ * Vendoring removes a third party from the build path entirely. The files are
+ * the same ones Google serves — latin subset, matching the `subsets: ['latin']`
+ * this used to request — refreshed by `npm run fonts:fetch`
+ * (`scripts/fetch-fonts.mjs`), which is a deliberate manual step: a script that
+ * ran during the build would put the network dependency straight back.
+ *
+ * ## Why three of the four are VARIABLE faces
+ *
+ * Bricolage has to be: `font-variation-settings: 'opsz' N` on the display ramp
+ * is why the handoff chose the family, and a static instance has no axis to
+ * set. That was already true before this change.
+ *
+ * Work Sans and JetBrains Mono did not have to be, and are anyway because it
+ * is strictly smaller. Their latin variable faces are 49 KB and 39 KB and
+ * carry every weight; the four and three STATIC weights they replace were
+ * 196 KB and 92 KB. Same designs at 400/500/600/700 — these are the named
+ * instances of the same masters — for 200 KB less, for every visitor.
+ *
+ * Instrument Serif ships no variable face, so it stays two static files.
+ *
+ * `adjustFontFallback` is left at its default so Next still synthesises
+ * fallback metrics and the CLS behaviour does not regress with the move.
+ */
+const bricolage = localFont({
+  src: './fonts/BricolageGrotesque-Variable.woff2',
+  // The full wght range the axis carries. Declaring a range rather than a
+  // single value is what lets the browser interpolate instead of synthesising.
+  weight: '200 800',
+  style: 'normal',
+  variable: '--font-bricolage',
+  display: 'swap',
+});
+const workSans = localFont({
+  src: './fonts/WorkSans-Variable.woff2',
+  weight: '100 900',
+  style: 'normal',
+  variable: '--font-work',
+  display: 'swap',
+});
+const jetbrainsMono = localFont({
+  src: './fonts/JetBrainsMono-Variable.woff2',
+  weight: '100 800',
+  style: 'normal',
+  variable: '--font-jb',
+  display: 'swap',
+});
+const instrumentSerif = localFont({
+  src: [
+    { path: './fonts/InstrumentSerif-400.woff2', weight: '400', style: 'normal' },
+    { path: './fonts/InstrumentSerif-400italic.woff2', weight: '400', style: 'italic' },
+  ],
+  variable: '--font-serif',
+  display: 'swap',
+  adjustFontFallback: 'Times New Roman',
+});
 
 export const metadata: Metadata = {
   title: {
@@ -106,7 +159,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { account: shellAccount, unreadCount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
       <head>
         <script
           nonce={nonce}

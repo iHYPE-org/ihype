@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
 
-export default function AdminDeviceRegisterPage() {
+function AdminDeviceRegisterInner() {
   const { t } = useI18n();
   const params = useSearchParams();
   const router = useRouter();
@@ -76,6 +76,7 @@ export default function AdminDeviceRegisterPage() {
   // registration.
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'var(--f-b)', background: 'var(--bg)', color: 'var(--ink)' }}>
+      {status === 'pending' && <p>{t('adminDeviceRegisterPage.checking', 'Checking this device…')}</p>}
       {status === 'registering' && <p>{t('adminDeviceRegisterPage.registering', 'Registering this device…')}</p>}
       {status === 'done' && <p style={{ color: 'var(--success)' }}>{t('adminDeviceRegisterPage.done', 'Device registered. Redirecting to admin…')}</p>}
       {status === 'error' && (
@@ -119,5 +120,37 @@ export default function AdminDeviceRegisterPage() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Wrapped in Suspense because `useSearchParams()` requires it.
+ *
+ * Two things made this screen render as a completely blank page — header,
+ * footer, nothing in between — for an administrator who is simply signing in
+ * on a new device:
+ *
+ * 1. `status` starts as 'pending' and the render had NO branch for it, so the
+ *    first paint was empty by construction. Every other state was handled.
+ * 2. `useSearchParams()` in a client component suspends. With no boundary of
+ *    its own the nearest fallback is whatever the tree above provides, which
+ *    here renders nothing.
+ *
+ * Neither is cosmetic. This is the only screen that can re-register an admin
+ * device, so a blank render is a hard lockout from `/admin` with no visible
+ * way forward — and the button that fixes it was sitting in the DOM-less
+ * branch the whole time.
+ */
+export default function AdminDeviceRegisterPage() {
+  return (
+    <Suspense
+      fallback={
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', fontFamily: 'var(--f-b)', background: 'var(--bg)', color: 'var(--ink)' }}>
+          <p>Checking this device…</p>
+        </div>
+      }
+    >
+      <AdminDeviceRegisterInner />
+    </Suspense>
   );
 }

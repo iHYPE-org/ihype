@@ -97,7 +97,20 @@ export async function GET(request: NextRequest) {
   deferWork(checkAndRecordLogin(user, request), 'magic-link-login-security');
 
   const rawCallback = searchParams.get('callbackUrl');
-  const defaultDest = user.role === 'ADMIN' ? '/admin' : user.role === 'ADVERTISER' ? '/advertise/dashboard' : undefined;
+  /**
+   * An ADMIN lands where every other member lands.
+   *
+   * This used to send `role === 'ADMIN'` straight to `/admin`, and that was
+   * the whole reason signing in as an administrator ended on a blank
+   * `/admin/device-register`: `/admin`'s layout redirects there whenever the
+   * device cookie is missing, which is every new browser. So the platform
+   * owner's first screen after sign-in was a lockout page, and they never saw
+   * the product they were signing in to.
+   *
+   * Admin is a capability, not a home. The console is reached deliberately
+   * from the ADMIN MODE control in the shell.
+   */
+  const defaultDest = user.role === 'ADVERTISER' ? '/advertise/dashboard' : undefined;
   const dest = resolvePostAuthRedirect(rawCallback ?? defaultDest);
 
   const response = NextResponse.redirect(new URL(dest, request.url));

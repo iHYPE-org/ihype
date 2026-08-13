@@ -51,7 +51,15 @@ export type MmmNowPlaying = {
  * 5. One scroll container: the module pane. `html`/`body` are locked by
  *    `.mmm-locked`, which this component toggles.
  */
-export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPlaying: MmmNowPlaying }) {
+export function MmmShell({
+  children,
+  nowPlaying,
+  isAdmin = false,
+}: {
+  children: ReactNode;
+  nowPlaying: MmmNowPlaying;
+  isAdmin?: boolean;
+}) {
   const pathname = usePathname() ?? '/app/map';
   const router = useRouter();
   const activeModule = moduleForPath(pathname);
@@ -269,6 +277,20 @@ export function MmmShell({ children, nowPlaying }: { children: ReactNode; nowPla
           track={displayTrack}
           volume={volume * 100}
         />
+
+        {/* ADMIN MODE.
+            Deliberately NOT a header: SHELL_LOCK is signed off as final and
+            this shell has no top bar, so adding one to hang a button on would
+            break the contract the whole shell is built on. It sits where a
+            header button would sit — fixed top-right, clear of the arc, the
+            player and the safe-area insets — and only for an administrator.
+            The admin console is the legacy shell, which is why this is an
+            explicit, labelled departure rather than a silent link. */}
+        {isAdmin && (
+          <a className="mmm-admin-mode" href="/admin">
+            Admin mode
+          </a>
+        )}
 
         {/* Always mounted: the arc animates between states, and unmounting it
             would make every open a fresh mount with no closing transition. */}

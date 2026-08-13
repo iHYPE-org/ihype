@@ -159,8 +159,22 @@ export function isMmmRoute(pathname: string | null | undefined): boolean {
  *
  * Kept as a prefix list rather than a regex so adding one is a one-line change
  * that reads as a list of surfaces.
+ *
+ * **Adding a route under `/app/` and forgetting this list is the single
+ * easiest way to ship a page that renders nothing**, and it has happened: the
+ * artist, venue, track and playlist panes were all built, reviewed and merged
+ * while every one of them rendered a blank shell, because they were missing
+ * here. Nothing failed — the route returns 200, the frame paints, and only the
+ * content is absent. `mmm-nav.test.ts` now derives the expected list from the
+ * route directories on disk so it cannot drift again.
  */
-const MMM_DETAIL_PREFIXES = [`${MMM_BASE}/shows/`] as const;
+const MMM_DETAIL_PREFIXES = [
+  `${MMM_BASE}/shows/`,
+  `${MMM_BASE}/artists/`,
+  `${MMM_BASE}/venues/`,
+  `${MMM_BASE}/tracks/`,
+  `${MMM_BASE}/playlists/`,
+] as const;
 
 export function isMmmDetailPath(pathname: string | null | undefined): boolean {
   if (!pathname) return false;
