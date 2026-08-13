@@ -1,3 +1,4 @@
+import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   isMmmDetailPath,
@@ -235,5 +236,47 @@ describe('detail surfaces', () => {
 
   it('is false for the legacy show route, which is a different shell', () => {
     expect(isMmmDetailPath('/shows/null-harbor')).toBe(false);
+  });
+});
+
+/**
+ * Every `/app/<segment>/[param]` route must be a known detail path.
+ *
+ * This is derived from the route directories on disk rather than hand-listed,
+ * because the hand-listed version is what failed. `moduleForPath` answers
+ * 'map' for anything it does not recognise, and `MmmShell` renders
+ * `{!mapActive && <div className="mmm-pane">{children}</div>}` — so a route
+ * missing from `MMM_DETAIL_PREFIXES` mounts, returns 200, paints the frame,
+ * and shows NO CONTENT AT ALL.
+ *
+ * That is exactly what shipped: the artist, venue, track and playlist panes
+ * were built, reviewed and merged while all four rendered a blank shell. No
+ * check failed, because nothing threw and nothing 404'd — the only symptom was
+ * an empty pane, which a browser test caught and no static check could.
+ */
+describe('every /app detail route renders as a pane', () => {
+  // The three module roots own their own rendering; everything else under
+  // `/app` is a detail surface and needs a prefix.
+  const MODULE_SEGMENTS = new Set(['map', 'music', 'me']);
+
+  const detailSegments = readdirSync('src/app/app', { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .filter((name) => !MODULE_SEGMENTS.has(name))
+    // A dynamic segment directory (`[slug]`) is a param, not a surface.
+    .filter((name) => !name.startsWith('['));
+
+  it('finds the route directories, so a move cannot empty this into a pass', () => {
+    expect(detailSegments.length).toBeGreaterThan(0);
+  });
+
+  it.each(detailSegments)('/app/%s/<param> is a detail path', (segment) => {
+    expect(isMmmDetailPath(`/app/${segment}/anything`)).toBe(true);
+  });
+
+  it('a module root is NOT a detail path', () => {
+    expect(isMmmDetailPath('/app/map')).toBe(false);
+    expect(isMmmDetailPath('/app/music/discover')).toBe(false);
+    expect(isMmmDetailPath('/app/me')).toBe(false);
   });
 });
