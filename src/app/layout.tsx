@@ -7,7 +7,7 @@ import './shell-surfaces.css';
 import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
-import { Bricolage_Grotesque, Work_Sans, JetBrains_Mono, Instrument_Serif, Forum } from 'next/font/google';
+import { Bricolage_Grotesque, Work_Sans, JetBrains_Mono, Instrument_Serif } from 'next/font/google';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
@@ -38,7 +38,6 @@ const bricolage = Bricolage_Grotesque({ subsets: ['latin'], axes: ['opsz'], vari
 const workSans = Work_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-work', display: 'swap' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], weight: ['400', '500', '700'], variable: '--font-jb', display: 'swap' });
 const instrumentSerif = Instrument_Serif({ subsets: ['latin'], weight: ['400'], style: ['normal', 'italic'], variable: '--font-serif', display: 'swap' });
-const forum = Forum({ subsets: ['latin'], weight: ['400'], variable: '--font-forum', display: 'swap' });
 
 export const metadata: Metadata = {
   title: {
@@ -106,7 +105,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const { account: shellAccount, unreadCount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${forum.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
       <head>
         <script
           nonce={nonce}
