@@ -21,6 +21,27 @@ export async function GET(request: NextRequest) {
     .split(',')
     .map((g) => g.trim())
     .filter((g) => g.length > 0);
+  const city = (url.searchParams.get('city') ?? '').trim();
+
+  /**
+   * The profile constraint every pool in this route must share.
+   *
+   * It exists because the filter used to be applied to ONE of the three pools.
+   * `personalizedMedia` honoured `genres`; `randomPool` did not, and it
+   * contributes five cards to every deck — so a deck filtered to Punk arrived
+   * with five cards that were not punk, and the surface had no way to know.
+   * A filter that is 70% applied is harder to trust than no filter, because it
+   * looks like it worked.
+   *
+   * `city` is matched case-insensitively: it arrives from a search result the
+   * member tapped, and "portland" and "Portland" are the same place.
+   */
+  const profileFilter = {
+    discoverable: true,
+    ...(genres.length > 0 ? { genres: { hasSome: genres } } : {}),
+    ...(city ? { city: { equals: city, mode: 'insensitive' as const } } : {}),
+  };
+  const hasFilter = genres.length > 0 || city.length > 0;
 
   try {
     const actioned = await db.seed.findMany({
@@ -32,7 +53,7 @@ export async function GET(request: NextRequest) {
     // --- Collaborative filtering (v2) with time-decay scoring --------
     type SeedMedia = { id: string; hexId: string; title: string; artworkUrl: string | null; profile: { name: string; slug: string; city: string | null; genres: string[]; avatarImage: string | null; nowPlaying: string | null; journalContent: string | null } | null };
     let cfMedia: SeedMedia[] = [];
-    if (genres.length === 0) {
+    if (!hasFilter) {
       const [hypedByMe, playlistItems] = await Promise.all([
         db.profileHypeEvent.findMany({
           where: { userId: session.user.id },
@@ -113,7 +134,7 @@ export async function GET(request: NextRequest) {
           where: {
             id: { notIn: [...actionedIds] },
             ...releasedMediaWhere(),
-            profile: genres.length > 0 ? { genres: { hasSome: genres }, discoverable: true } : { discoverable: true }
+            profile: profileFilter,
           },
           take: 15,
           orderBy: { createdAt: 'desc' },
@@ -130,7 +151,7 @@ export async function GET(request: NextRequest) {
       where: {
         id: { notIn: [...actionedIds, ...personalizedIds] },
         ...releasedMediaWhere(),
-        profile: { discoverable: true },
+        profile: profileFilter,
       },
       take: 100,
       orderBy: { createdAt: 'desc' },
