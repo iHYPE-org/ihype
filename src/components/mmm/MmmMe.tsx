@@ -364,6 +364,18 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         open={openSection === 'about'}
       >
 
+      {/* Never an empty drawer (2026-08-14, from device screenshots). "About Me"
+          opened onto nothing at all when a member had no activity yet — which
+          is every member on day one, and exactly who is most likely to open it.
+          A drawer that opens onto blank space reads as broken rather than as
+          empty, and it is the one state a new account is guaranteed to see. */}
+      {data.activity.length === 0 && (
+        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: '0 0 4px' }}>
+          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
+          shows up here — this is the activity artists and venues can see.
+        </p>
+      )}
+
       {data.activity.length > 0 && (
         <>
           <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{data.activityLabel}</div>
