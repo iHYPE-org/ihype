@@ -1736,8 +1736,23 @@ body:has(.authcard-page) #main-content { width: 100%; }
 }
 .admin-console {
   display: grid;
+  /* `minmax(0, 1fr)`, not `1fr` — and `min-width: 0` on the children.
+     
+     A grid item's default `min-width: auto` refuses to shrink below its
+     content's intrinsic width, so ONE unbreakable row sets the width of the
+     whole console. Measured in Chromium at 393px with the real bundle: the
+     console laid out at **657px inside a 393px shell**, a 284px sideways
+     scroll on every band of the page, because `.admin-console-hero`'s CTA row
+     would not go narrower. `.ops-shell` itself was correctly 393 and the
+     document reported no overflow, which is why this hid — the overflow is
+     inside `.ops-main`, so nothing at the document level ever saw it.
+     
+     This is the console the operator reads on a phone, so a permanent
+     horizontal scroll is not cosmetic. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
 }
+.admin-console > * { min-width: 0; }
 .admin-console-hero {
   display: flex;
   justify-content: space-between;
