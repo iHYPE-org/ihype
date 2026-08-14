@@ -27,11 +27,12 @@ import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtur
  *
  * 320/375/390/430 are the runbook's widths; 375 is MOBILE.md's design width
  * and 320 is the narrowest phone still in use. Landscape, light mode, reduced
- * motion and 200% text are each a real accessibility setting that changes
+ * motion and 140% text are each a real accessibility setting that changes
  * layout, and each has broken a shell before: reduced motion is token-level in
  * `globals.css`, light mode is where the missing RGB triplets painted every
- * composed-alpha surface near-black, and 200% text is what
- * `--ihype-text-scale` drives through the ROOT font size.
+ * composed-alpha surface near-black, and 140% text is what
+ * `--ihype-text-scale` drives through the ROOT font size — 1.4 being
+ * `TEXT_SCALE_MAX`, the largest the settings screen will produce.
  *
  * Environment: authenticated, so workerd — `node scripts/e2e-workerd.mjs`,
  * never `next dev`. `npm run test:e2e:responsive` does this for you.
@@ -374,19 +375,57 @@ test.describe('responsive — runbook gate 6', () => {
     });
   }
 
-  test('200% text does not overflow', async ({ page }) => {
-    // `--ihype-text-scale` drives the ROOT font size, which is why the 2026-08-12
-    // sweep converted 691 inline px font sizes to rem: px cannot follow it, so
-    // before that sweep this setting did nothing on most of the app.
+  /**
+   * The largest text the product can actually produce, driven the way a member
+   * drives it.
+   *
+   * This test used to set `--ihype-text-scale: 2` in an init script and assert
+   * nothing about whether it took. It did not, twice over:
+   *
+   * 1. `AccessibilityControls` writes that same property from stored settings
+   *    on mount — default `1` — so the app overwrote the test's value during
+   *    hydration and every assertion below ran at 100% text. Green, and
+   *    measuring nothing.
+   * 2. `TEXT_SCALE_MAX` is **1.4**. 200% is not a state any member can reach,
+   *    so even unopposed the test described a scenario the product forbids.
+   *
+   * Both are fixed by going through the real mechanism — the same localStorage
+   * key the settings screen writes — rather than fighting the app for a
+   * property it owns. The scale is then ASSERTED before anything is measured:
+   * that check is the whole point, because the failure mode here is not a
+   * wrong number, it is a gate that quietly stops applying its own premise.
+   */
+  test('140% text — the product maximum — does not overflow', async ({ page }) => {
+    // `--ihype-text-scale` drives the ROOT font size, which is why the
+    // 2026-08-12 sweep converted 691 inline px font sizes to rem: px cannot
+    // follow it, so before that sweep this setting did nothing on most of the
+    // app.
     await page.setViewportSize({ width: 375, height: 812 });
     await page.addInitScript(() => {
-      document.documentElement.style.setProperty('--ihype-text-scale', '2');
+      // Mirrors AccessibilityControls' STORAGE_KEY and shape. If either
+      // changes, the assertion below fails rather than the coverage vanishing.
+      localStorage.setItem('ihype-accessibility-settings', JSON.stringify({
+        highContrast: false,
+        largeText: false,
+        reduceMotion: false,
+        underlineLinks: false,
+        readableFont: false,
+        textScale: 1.4,
+      }));
     });
     for (const mod of MODULES) {
       await page.goto(mod.path);
-      await expectRendered(page, `${mod.name} 200% text`, mod.frame);
-      await expectNoHorizontalOverflow(page, `${mod.name} 200% text`);
+      await expectRendered(page, `${mod.name} 140% text`, mod.frame);
+
+      // The premise, checked. 16px root × 1.4 = 22.4px; anything at or near 16
+      // means the setting did not apply and the rest of this test is theatre.
+      const rootPx = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.documentElement).fontSize));
+      expect(rootPx, `${mod.name}: text scale did not apply — root font-size ${rootPx}px`)
+        .toBeGreaterThan(20);
+
+      await expectNoHorizontalOverflow(page, `${mod.name} 140% text`);
     }
-    await shoot(page, 'text-200pct');
+    await shoot(page, 'text-140pct');
   });
 });

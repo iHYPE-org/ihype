@@ -21,7 +21,9 @@ Do not put credentials, customer data, or full webhook payloads in this file.
    - no pending notification job older than 30 minutes.
 6. Run `npm run test:e2e:responsive`. It checks every module at 320, 375,
    390, and 430 CSS pixels, phone landscape, light mode, reduced motion, and
-   200% text; review its screenshot artifacts when CI reports a regression.
+   140% text — `TEXT_SCALE_MAX`, the largest the settings screen produces, and
+   the value the spec now asserts actually applied before measuring anything.
+   Review its screenshot artifacts when CI reports a regression.
 
 ## Payment and ticket rehearsal
 
