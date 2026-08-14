@@ -47,7 +47,12 @@ export async function TransparencyPanel() {
           />
           {t('transparencyPage.liveStatsEyebrow', 'LIVE STATS · UPDATED IN REAL TIME')}
         </p>
-        <h1 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('transparencyPage.heroTitle', 'Transparency report')}</h1>
+        {/* h2, not h1: this panel only ever renders inside a tab of /info,
+            whose masthead already carries the page's one h1 and now names the
+            document. Two h1s on one page was a defect before that change and
+            would be a near-duplicate of the tab title after it. `.lp-hero-h`
+            carries the styling, so the element swap changes nothing visually. */}
+        <h2 className="lp-hero-h" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>{t('transparencyPage.heroTitle', 'Transparency report')}</h2>
         <p className="lp-hero-sub">
           {t('transparencyPage.heroSub', "Every dollar of ticket revenue goes directly to artists and venues. Here's the proof.")}
         </p>
