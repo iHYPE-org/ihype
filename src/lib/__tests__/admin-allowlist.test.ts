@@ -36,9 +36,11 @@ describe('isAllowedAdminEmail', () => {
   });
 
   it('refuses every other address', () => {
-    // Including the address that actually held ADMIN when this rule landed:
-    // the whole point is that being the incumbent is not a qualification.
-    expect(isAllowedAdminEmail('colinatwood@gmail.com')).toBe(false);
+    // Including a personal address that previously held ADMIN: the whole
+    // point of the rule is that being the incumbent is not a qualification.
+    // Deliberately a reserved example.com address rather than the real one —
+    // a test fixture is not a place to keep somebody's mailbox.
+    expect(isAllowedAdminEmail('someone-else@example.com')).toBe(false);
     expect(isAllowedAdminEmail('admin@ihype.org.attacker.com')).toBe(false);
     expect(isAllowedAdminEmail('notadmin@ihype.org')).toBe(false);
   });
