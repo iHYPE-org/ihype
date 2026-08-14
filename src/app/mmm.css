@@ -203,10 +203,39 @@ html.mmm-locked .site-shell > main {
    on one line, 12px apart. The chips keep their own 6px rhythm inside
    `.mmm-map-chips`, which is why this is two nested flex rows rather than one
    — a single gap cannot be both. */
+/* THE SCROLLER IS THE CHIPS, NOT THE ROW (2026-08-14, reported from a phone as
+   "map near me doesn't fit").
+
+   This row used to scroll as a whole, which meant the thing that fell off its
+   right edge was "Near me" — the only control on the map that asks for
+   location, and the only one whose absence a member cannot recover from by
+   looking harder. Measured in Chromium against the real JetBrains Mono face:
+   three layer chips are 245px and the bare pill is 89px, so at 393px the row
+   ended at 369 of 393 — it FITS, by 24px, at a root font size of exactly 16px.
+   The phone it was reported from renders those chips ~22% wider, which is what
+   the text-size setting in Settings → Accessibility does (85-140%, and every
+   size here is rem). At 320px, or on the artists layer where the pill also
+   carries the count and measures 210px, it overruns at 100% too.
+
+   So the fix is not more room, it is deciding WHAT scrolls. The layer chips
+   are three fixed, known destinations and are the right thing to push off the
+   edge; the action is pinned and always reachable. That also moves the fade
+   mask to where it now means something — it marks the chips' own overflow,
+   mid-row, rather than softening the edge of the button. */
 .mmm-control-row {
   display: flex;
   gap: 12px;
   align-items: center;
+  pointer-events: auto;
+  padding: 2px 12px 0;
+}
+.mmm-map-chips {
+  display: flex;
+  /* Shrinkable, and the only shrinkable thing in the row. `min-width: 0` is
+     what lets a flex item go below its content width at all. */
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 6px;
   overflow-x: auto;
   /* The scroller is silent, like `.mmm-tabs` and like the design system's own
      `::-webkit-scrollbar { width: 0; height: 0 }`. A platform scrollbar was
@@ -215,15 +244,8 @@ html.mmm-locked .site-shell > main {
      of chrome rather than as an overflow affordance. */
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
-  pointer-events: auto;
-  padding: 2px 12px 0;
 }
-.mmm-control-row::-webkit-scrollbar { display: none; }
-.mmm-map-chips {
-  display: flex;
-  flex: 0 0 auto;
-  gap: 6px;
-}
+.mmm-map-chips::-webkit-scrollbar { display: none; }
 
 .mmm-chip {
   flex-shrink: 0;
@@ -488,12 +510,19 @@ html.mmm-locked .site-shell > main {
 /* A SCROLLABLE ROW HAS TO LOOK SCROLLABLE (2026-08-14, from device
    screenshots).
 
-   `.mmm-tabs` and `.mmm-control-row` both hold one line at every width and
+   `.mmm-tabs` and `.mmm-map-chips` both hold one line at every width and
    scroll sideways when they overrun — which is the design's own behaviour, and
    correct. What they did not do is SAY so: the last chip was cut dead at the
    frame edge, so "ARTISTS" and "Recommended" read as broken layout rather than
    as more content to the right. Reported from a phone as "map not fitting
    selectors" and "Recommended doesn't quite fit in button".
+
+   The map half of this was on `.mmm-control-row` until 2026-08-14, when the
+   scroller moved down to `.mmm-map-chips` so that "Near me" stops being the
+   thing that scrolls away — see the note beside those two rules. The fade
+   moved with it, and is better placed for it: it now sits between the chips
+   and the pill, marking the chips' overflow, instead of blurring the right
+   edge of a button.
 
    The fade is a mask on the row, not an element: an overlay would sit above
    the chips and eat their taps at exactly the edge the member is reaching for.
@@ -501,7 +530,7 @@ html.mmm-locked .site-shell > main {
    and `scroll-snap` is deliberately NOT used — snapping a filter row fights a
    member who is nudging it a few pixels to read one label. */
 .mmm-tabs,
-.mmm-control-row {
+.mmm-map-chips {
   --mmm-row-fade: 22px;
   mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
   -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
@@ -1666,6 +1695,18 @@ html.mmm-locked .site-shell > main {
 /* Without the count — every layer but artists — the pill holds only the button,
    so the inset would read as a lopsided gap on its left. */
 .mmm-map-near:not([data-count]) { padding-left: 7px; }
+/* The pill is pinned (see `.mmm-map-chips`), so on the artists layer its count
+   would otherwise push the three layer chips into a sliver. Half the row is the
+   most a readout may take from the map's primary selector; past that the count
+   elides and the button — the part that DOES something — keeps its full size. */
+.mmm-map-near[data-count] { max-width: 50%; }
+.mmm-map-near > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mmm-map-recentre { flex: 0 0 auto; }
 .mmm-map-recentre {
   font-family: inherit;
   font-size: 0.563rem;
