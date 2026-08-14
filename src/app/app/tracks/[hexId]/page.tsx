@@ -4,8 +4,15 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
+import { copyrightTone, resolveCopyrightState, type CopyrightState } from '@/lib/track-detail';
 
 export const dynamic = 'force-dynamic';
+
+const COPYRIGHT_LABEL: Record<CopyrightState, string> = {
+  flagged: 'Flagged · pending manual review',
+  'cleared-reviewed': 'Cleared · reviewed by moderator',
+  'cleared-unflagged': 'Cleared · no flags at upload',
+};
 
 function fmtDuration(secs: number | null): string | null {
   if (!secs || secs <= 0) return null;
@@ -67,14 +74,20 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       .catch(() => null),
   ]);
 
-  // A track that reaches this page is always published — an ACTIONED report
-  // would have unpublished it — so only these three states are reachable.
-  const copyright =
-    latestReport?.status === 'OPEN'
-      ? { label: 'Flagged · pending manual review', tone: 'pending' as const }
-      : latestReport?.status === 'DISMISSED'
-        ? { label: 'Cleared · reviewed by moderator', tone: 'ok' as const }
-        : { label: 'Cleared · no flags at upload', tone: 'ok' as const };
+  /* The STATE is `@/lib/track-detail`'s, shared with the public copy of this
+     page; only the copy is this file's. A track reaching either page is always
+     published — an ACTIONED report unpublishes it — which is why there are
+     three states and no "removed" one.
+
+     Known gap, stated rather than hidden: these labels are hardcoded English
+     while the public page runs the same three through `getServerT()`. Sharing
+     the state is what stops the two disagreeing about whether a track is
+     flagged; translating this pane is separate work. */
+  const copyrightState = resolveCopyrightState(latestReport?.status);
+  const copyright = {
+    label: COPYRIGHT_LABEL[copyrightState],
+    tone: copyrightTone(copyrightState),
+  };
 
   const duration = fmtDuration(asset.durationSecs);
   const genre = asset.profile.genre || asset.profile.genres[0] || null;

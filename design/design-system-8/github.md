@@ -3,15 +3,15 @@ branch: main
 path: (whole repo; design sources at design/design-system-app-shell/ and design/handoff-music-map-me/)
 
 ## Last sync
-date: 2026-08-07T16:02:00Z
-tree: 50ab28ac9801
+date: 2026-08-12T01:06:28Z
+tree: 986458737528
 
 ### Updated in this project
-- Audited `main` at tree `50ab28ac9801` — **no new commits** since the morning sync. The drift runs the other way: the shipped app (`src/components/mmm/*`, `src/app/mmm.css`, `src/lib/mmm-nav.ts`, `/app` layout) implements a Music · Map · Me shell this design system never carried. Full table in `SYNC_AUDIT_2026-08-07-overhaul.md`.
-- New visual direction ("Bulletin"): ground → ink navy `#0b1220`, ink → cool off-white `#eef1f6`, display Syne → Bricolage Grotesque, body DM Sans → Work Sans. Accent `#ff5029` and the four role hues carried over unchanged. Re-anchored across 86 files.
-- Rebuilt `templates/simplified-app/` as the app shell: radial arc nav, no header, no tab bar, map as base layer, MUSIC = Discover · Radio · Charts · Recommended · Playlists, flat ME, persistent universal search on MUSIC.
-- Added `components/shell/` — LogoTrigger, ArcNav, PlayerPill, NavHint, MapSheet, ModulePane, Scrim (+ Vignette), each with a `.d.ts` contract.
-- Handoff docs for Claude Code: `SYNC_AUDIT_2026-08-07-overhaul.md`, `ADHERENCE.md`, `ROUTE_TEMPLATE_MAP.md`.
+- Read `src/components/mmm/MmmMusic.tsx`, `src/app/mobile-fit.css` and the `.mmm-tab` block of `src/app/mmm.css` on `main`. **The repo's music subnav is already a link bar semantically** — `<nav className="mmm-tabs">` of `<Link className="mmm-tab">`, tabs as routes not state — so this session's pills→link-bar change is CSS-only.
+- Wrote `PORT_TO_APP.md`: an executable change list for landing this session's design changes into the app, keyed to real files. Flags that `.mmm-tab` sits in `mobile-fit.css`'s `min-height:44px` group, where an inline `<a>` silently defeats the floor.
+- Added `reference/` — static, runtime-free HTML (app shell, show detail) because `.dc.html` templates and `_ds_bundle.js` cannot render outside the authoring environment. Rewrote `SKILL.md` to lead with what does and does not travel.
+- Mobile pass: `manifest.webmanifest`, `MOBILE.md`, four Mobile specimen cards, permission-primer template, app-store review view. Four rigid `1fr <fixed>px` grids made collapsible.
+
 
 ## Screen map
 | Design-system artifact | Repo source |
@@ -29,6 +29,7 @@ tree: 50ab28ac9801
 | full route table | `ROUTE_TEMPLATE_MAP.md` |
 
 ## Sync history
+- 2026-08-07 (later) — v8 "Bulletin" re-anchor audit; shell drift table in `SYNC_AUDIT_2026-08-07-overhaul.md`.
 - 2026-08-07 (earlier) — token layer reconciled against `src/app/globals.css`; AA fix on `--ink-3`; `--role-advertiser` added; motion conflict removed; DJ-role deletion audited.
 - 2026-07-23 — v7 template gap-fill and backend-doc sync (payouts "live", not gated).
 - 2026-07-20 — 501(c)(3) confirmed, paid ticketing live, `/studio` and `/home` retired.

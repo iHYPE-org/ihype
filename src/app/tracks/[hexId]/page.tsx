@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { copyrightTone, resolveCopyrightState } from '@/lib/track-detail';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
@@ -93,12 +94,16 @@ export default async function TrackDetailPage({ params }: { params: Promise<{ he
   // not a hardcoded "Cleared" label. A track that reaches this public page is
   // always isPublished — an ACTIONED (removed) report would have unpublished
   // it — so only OPEN/DISMISSED/no-report states are reachable here.
-  let copyrightStatus: { label: string; tone: 'ok' | 'pending' } = { label: t('tracksHexIdPage.copyrightClearedNoFlags', 'Cleared · no flags at upload'), tone: 'ok' };
-  if (latestReport?.status === 'OPEN') {
-    copyrightStatus = { label: t('tracksHexIdPage.copyrightFlaggedPending', 'Flagged · pending manual review'), tone: 'pending' };
-  } else if (latestReport?.status === 'DISMISSED') {
-    copyrightStatus = { label: t('tracksHexIdPage.copyrightClearedReviewed', 'Cleared · reviewed by moderator'), tone: 'ok' };
-  }
+  const copyrightState = resolveCopyrightState(latestReport?.status);
+  const COPYRIGHT_COPY: Record<typeof copyrightState, string> = {
+    flagged: t('tracksHexIdPage.copyrightFlaggedPending', 'Flagged · pending manual review'),
+    'cleared-reviewed': t('tracksHexIdPage.copyrightClearedReviewed', 'Cleared · reviewed by moderator'),
+    'cleared-unflagged': t('tracksHexIdPage.copyrightClearedNoFlags', 'Cleared · no flags at upload'),
+  };
+  const copyrightStatus: { label: string; tone: 'ok' | 'pending' } = {
+    label: COPYRIGHT_COPY[copyrightState],
+    tone: copyrightTone(copyrightState),
+  };
 
   const duration = fmtDuration(asset.durationSecs);
 

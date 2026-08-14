@@ -124,7 +124,14 @@ export const SHELL_ROUTES: ShellRouteEntry[] = [
   // otherwise fall into.
   { path: '/settings/accessibility', kind: 'exact', section: 'SETTINGS', itemId: 'a11y' },
   { path: '/community', kind: 'prefix', section: 'SETTINGS', itemId: 'community' },
-  { path: '/community-rules', kind: 'prefix', section: 'SETTINGS' },
+  /* `/community-rules` was here and is deliberately NOT any more (2026-08-14).
+     It renders `TrustPolicyPage`, exactly as `/ticket-policy` and `/copyright`
+     do — and those two have never been shell routes, so the same component
+     rendered inside the app shell on one URL and bare on the other two. It
+     also carried no `itemId`, so it was never a drawer destination; the entry
+     bought shell chrome and nothing else. Dropping it settles the three
+     policy documents on one chrome and takes the legacy count down by one,
+     which is the only direction that number is allowed to move. */
   { path: '/info', kind: 'prefix', section: 'SETTINGS', itemId: 'info' },
   { path: '/legal', kind: 'prefix', section: 'SETTINGS', itemId: 'legal' },
   { path: '/support', kind: 'prefix', section: 'SETTINGS' },

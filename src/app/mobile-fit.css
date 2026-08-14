@@ -43,7 +43,8 @@
   .ihype-btn-ghost,
   .shell-icon-button,
   .shell-pill,
-  .mmm-tab,
+  /* `.mmm-tab` was here for its min-height and is not any more — see the note
+     below: both its floors are unconditional in `mmm.css` now. */
   .mmm-sheet-cta,
   .mmm-sheet-cta-2,
   .mmm-chip,
@@ -90,10 +91,12 @@
      responsive gate.
      `min-width` rather than extra padding so a long label is unaffected, and
      safe against overflow because `.mmm-tabs` is `overflow-x: auto` — a wider
-     tab scrolls the strip rather than the page. */
-  .mmm-tab {
-    min-width: 44px;
-  }
+     tab scrolls the strip rather than the page.
+
+     `.mmm-tab` itself is no longer floored HERE (2026-08-14): the rule moved
+     to `mmm.css`, unconditionally. It belongs at every pointer type, and
+     gating it on `(pointer: coarse)` meant the desktop-pointer responsive gate
+     measured the unfloored control — which is how a 41.9px tab reached CI. */
 
   /* ── The legacy shell's own chrome ────────────────────────────────────────
      Found the first time the responsive gate was pointed at the older shell.
@@ -158,6 +161,18 @@
   .mmm-player-play,
   .mmm-sheet-dismiss {
     min-width: 44px;
+  }
+
+  /* Two controls the design draws below the floor: the artist highlight's
+     close (28px) and the seed card's clip pause (38px). Both are the only way
+     to undo what they sit on — dismiss the panel, stop the audio — so a missed
+     tap is not a small cost. Floored here rather than resized in mmm.css, so a
+     mouse still gets the design's own geometry. Their own rule rather than the
+     group above, which already sets `min-height` for some of its members. */
+  .mmm-artist-close,
+  .mmm-deck-play {
+    min-width: 44px;
+    min-height: 44px;
   }
 
   /* ── Link rows ────────────────────────────────────────────────────────── */

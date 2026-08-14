@@ -131,7 +131,30 @@ html.mmm-locked .site-shell > main {
      includes it. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --mmm-bottom: max(calc(26px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  --mmm-safe-left: env(safe-area-inset-left, 0px);
+  --mmm-safe-right: env(safe-area-inset-right, 0px);
+
+  /* ONE FIGURE DRIVES THE CHROME. `SimplifiedApp.dc.html` computes the whole
+     table from `chromeSize`, `gap` and `inset` (56/10/14 under 620px, 88/12/26
+     over it) and hands the results to the trigger, the player and the hint, so
+     the three cannot disagree. This block is that computation.
+
+     It replaces a set of literals that had drifted apart: the trigger was 76px
+     against a player whose min-height was 88, so the two were never the same
+     height and never shared a baseline — which is the FIRST thing SHELL_LOCK
+     says about this chrome ("the trigger and the player are the same height on
+     the same baseline, sharing edges"). Every offset that used to be written
+     out (108px hint, 100/186px result line, 118px dock) is derived here. */
+  --mmm-chrome-size: 88px;
+  --mmm-chrome-gap: 12px;
+  --mmm-inset: 26px;
+  --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
+  /* The pill docks immediately right of the trigger — at EVERY width, which is
+     what the design draws on a phone too. */
+  --mmm-player-left: calc(var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap));
+  /* Anything that must clear the chrome band sits above the trigger's top edge. */
+  --mmm-chrome-top: calc(var(--mmm-bottom) + var(--mmm-chrome-size));
 }
 
 /* ── Map layer ─────────────────────────────────────────────────────────── */
@@ -185,9 +208,17 @@ html.mmm-locked .site-shell > main {
   gap: 12px;
   align-items: center;
   overflow-x: auto;
+  /* The scroller is silent, like `.mmm-tabs` and like the design system's own
+     `::-webkit-scrollbar { width: 0; height: 0 }`. A platform scrollbar was
+     rendering as a full-width grey track directly under the layer chips — on
+     the map, which is the base layer of the whole shell, so it read as a piece
+     of chrome rather than as an overflow affordance. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   pointer-events: auto;
   padding: 2px 12px 0;
 }
+.mmm-control-row::-webkit-scrollbar { display: none; }
 .mmm-map-chips {
   display: flex;
   flex: 0 0 auto;
@@ -223,11 +254,12 @@ html.mmm-locked .site-shell > main {
 
 .mmm-result-line {
   position: absolute;
-  /* Clears the player pill (bottom: 26px, ~60px tall). On the narrow
-     breakpoint the player moves to bottom: 112px and this follows it. */
-  bottom: calc(100px + var(--mmm-safe-bottom));
-  left: 26px;
-  right: 26px;
+  /* Clears the chrome band — derived from it rather than restated, so it
+     follows the trigger and the pill instead of being re-tuned whenever one of
+     them moves. */
+  bottom: calc(var(--mmm-chrome-top) + 12px);
+  left: var(--mmm-left);
+  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
   z-index: 20;
   padding: 6px 11px;
   border-radius: 9px;
@@ -300,6 +332,22 @@ html.mmm-locked .site-shell > main {
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
   font-size: 0.8rem;
 }
+/* A city bubble is NOT a cluster bubble, and until now they were drawn
+   identically — same accent circle, same weight — so "3 artists from Portland"
+   and "3 things here, zoom in" were indistinguishable.
+
+   An artist carries a city of origin and nothing finer; the product never
+   collects an address for one. So this pin must not read as a place the way a
+   venue's does: dashed, softer, in the fan hue (ADHERENCE 17). The dash is what
+   carries the distinction where colour cannot — a colourblind member cannot
+   separate purple from orange, but a dashed edge from a solid one is not a
+   colour judgement. */
+.mmm-bubble-city {
+  background: rgba(var(--role-fan-rgb), 0.22);
+  border: 2px dashed rgba(var(--role-fan-rgb), 0.85);
+  color: var(--ink);
+  box-shadow: 0 3px 14px rgba(var(--scrim-rgb), 0.45);
+}
 
 /* ── Module panes ──────────────────────────────────────────────────────── */
 
@@ -346,31 +394,31 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-music-controls .mmm-tabs { padding: 0; }
 
-/* A link bar, not a pill strip (Design System 8 port, 2026-08-12). Five
-   capsules cannot fit 375px without dropping the label to 0.72rem (≈11.5px),
-   and a short word inside a filled pill reads as a balloon. Constant 14px type
-   that scrolls horizontally fits at every width and needs no responsive table
-   — which is why the `--tab-gap`/`--tab-fs`/`--tab-pad` overrides that used to
-   sit below are gone rather than retuned.
+/* A PILL STRIP, and it is back on purpose (2026-08-14).
 
-   TWO DELIBERATE DEVIATIONS FROM THE DESIGN SOURCE, and they are load-bearing
-   together: the gap is 12px rather than the source's 18px, and `.mmm-tab` has
-   no horizontal padding rather than the source's 2px. At 18px + 2px the five
-   English labels measure 425px, which overflows a 390px phone by 35px — and
-   `e2e/mmm-shell.spec.ts` asserts all five are on screen at 390px, from the
-   handoff's own §9 ("All 5 MUSIC items are visible and reachable, no
-   clipping"). That invariant outranks two spacing values: it was written after
-   a real bug where three of seven items rendered off-screen and unreachable.
-   The two changes together buy 44px, so the strip ends around 381px with ~9px
-   of headroom. The type stays at 14px, which is what the link bar was FOR —
-   the design's objection was to shrinking labels, not to tighter spacing.
+   `PORT_TO_APP.md` in the 2026-08-12 export asked for the opposite — a link
+   bar with a sliding underline — and this file carried it. The design project
+   has since moved past that export: the shipped shell now draws the subnav as
+   filled capsules again, confirmed against the current MobileApp frames, which
+   are an iframe of `templates/simplified-app/` at 393px rather than a separate
+   mockup. A design document that a later revision overtook is not a rule; the
+   rendered shell is. Do not re-flip this from `PORT_TO_APP.md` alone — check
+   what the shell actually draws first.
 
-   `overflow-x: auto` stays anyway. English fits now; a longer label in one of
-   the twelve locales may not, and a strip that scrolls is recoverable where a
-   clipped one is not. */
+   The active tab is a SOLID accent capsule, the rest are outlined. That is the
+   part the underline lost: the selection used to be a 2.5px rule under a word
+   in a row of same-weight words, which on a phone reads as decoration rather
+   than as state.
+
+   Sized to content and allowed to shrink, with the type/padding table below —
+   `e2e/mmm-shell.spec.ts` asserts all five MUSIC items are on screen at 390px
+   (handoff §9, "no clipping"), written after a real bug where three of seven
+   rendered off-screen and unreachable. Five capsules only fit that width if
+   the strip tightens, which is what the table is for. `overflow-x: auto` is
+   the backstop for the eleven other locales. */
 .mmm-tabs {
   display: flex;
-  gap: 12px;
+  gap: var(--tab-gap, 10px);
   align-items: stretch;
   flex-wrap: nowrap;
   overflow-x: auto;
@@ -381,60 +429,60 @@ html.mmm-locked .site-shell > main {
 .mmm-tabs::-webkit-scrollbar { display: none; }
 
 .mmm-tab {
-  position: relative;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  /* 44x44 is the floor at EVERY pointer type — MOBILE.md says "desktop
+     included" — so it lives here rather than only in `mobile-fit.css`, which is
+     gated on `(pointer: coarse)`. It used to be `min-width: 0`, which let the
+     five MUSIC tabs shrink past their own content once the strip stopped
+     fitting: at 320px they compressed to 41.9px and the responsive gate caught
+     it. `.mmm-tabs` is `overflow-x: auto`, so refusing to shrink scrolls the
+     strip rather than the page — which is the behaviour the design wants
+     anyway, since a tab squeezed under its label is not a tab you can read. */
+  min-width: 44px;
+  min-height: 44px;
   white-space: nowrap;
   /* `display` MUST stay non-inline. `mobile-fit.css` lists `.mmm-tab` in its
      `min-height: 44px` group, and min-height does nothing on an inline box —
      `.mmm-tab` is an <a> (Next <Link>), so an inline display would drop the
-     touch floor to ~37px silently, with no error anywhere. */
+     touch floor silently, with no error anywhere. */
   display: inline-flex;
   align-items: center;
-  background: none;
-  border: 0;
-  /* No horizontal padding — see the deviation note above. It also makes the
-     active underline exactly the width of its word rather than 4px wider. */
-  padding: 11px 0 12px;
+  justify-content: center;
+  text-align: center;
+  padding: var(--tab-pad, 9px 17px);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  background: transparent;
   font-family: var(--font-display);
   font-weight: 600;
-  font-size: 14px;
-  letter-spacing: -0.015em;
-  color: var(--ink-3);
+  font-size: var(--tab-fs, 14px);
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
   cursor: pointer;
   transition:
     color 160ms cubic-bezier(0.2, 0.7, 0.3, 1),
     transform 110ms cubic-bezier(0.2, 0.7, 0.3, 1);
-  transform-origin: 50% 100%;
 }
 .mmm-tab:hover { color: var(--ink); }
-.mmm-tab:active { transform: scale(0.94); color: var(--ink); }
+.mmm-tab:active { transform: scale(0.94); }
 
-.mmm-tab[aria-current='page'] { font-weight: 800; color: var(--ink); }
-.mmm-tab[aria-current='page']::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 4px;
-  height: 2.5px;
-  border-radius: 9999px;
+.mmm-tab[aria-current='page'] {
   background: var(--accent);
-  /* Same value the design system writes literally (#ff5029 = 255,80,41),
-     through the token every other accent alpha in this file uses. */
-  box-shadow: 0 0 12px rgba(var(--accent-rgb), 0.55);
-  /* Suppressed by the global `prefers-reduced-motion` block in globals.css,
-     which zeroes every animation with !important — no local media query. */
-  animation: mmmUnderline 260ms cubic-bezier(0.2, 0.7, 0.3, 1) both;
+  border-color: var(--accent);
+  /* NOT #fff, which is what the template writes. White measures 3.27:1 on this
+     accent and fails AA; `--ink-on-accent` is the measured 6.03:1 value and is
+     what every other accent fill in this codebase puts its label in. This is
+     the standing exception recorded in CLAUDE.md — do not "restore" white. */
+  color: var(--ink-on-accent);
 }
-@keyframes mmmUnderline {
-  from {
-    transform: scaleX(0.3);
-    opacity: 0;
-  }
-  to {
-    transform: scaleX(1);
-    opacity: 1;
-  }
+
+/* The strip holds one line; below this width the type and padding tighten
+   rather than the row wrapping or three tabs vanishing off the edge. The
+   vertical padding GROWS as the horizontal shrinks, so the 44px touch floor
+   survives the tightening — shrinking both axes together is what once put
+   these at 31px. */
+@media (max-width: 460px) {
+  .mmm-tabs { --tab-gap: 4px; --tab-fs: 11px; --tab-pad: 15px 9px; }
 }
 
 /* ── MAP date strip ───────────────────────────────────────────────────────
@@ -448,8 +496,12 @@ html.mmm-locked .site-shell > main {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  /* Silent, same reason as `.mmm-control-row` above. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 6px;
 }
+.mmm-date-strip::-webkit-scrollbar { display: none; }
 .mmm-date-pill {
   flex: 0 0 auto;
   display: flex;
@@ -1075,28 +1127,62 @@ html.mmm-locked .site-shell > main {
    consent dialog while the button that opens it stays underneath. */
 .mmm-logo {
   position: absolute;
-  left: 26px;
+  left: var(--mmm-left);
   bottom: var(--mmm-bottom);
   z-index: 31;
-  width: 76px;
-  height: 76px;
-  border-radius: 9999px;
-  border: 1px solid var(--hair-120);
+  /* The shared chrome figure — same height as the player, on the same
+     baseline. It was a fixed 76px against an 88px pill. */
+  width: var(--mmm-chrome-size);
+  height: var(--mmm-chrome-size);
+  /* A SQUIRCLE, not a circle — `LogoTrigger.jsx` draws `round(size × 0.342)`,
+     the same corner ratio the player's artwork and its retired disc already
+     use here, which is what makes the three read as one family. It was
+     `9999px`, so the one piece of chrome that is always on screen was the only
+     one not in that family. The ratio, not a fixed radius, so the corner
+     follows the 88px/56px chrome figure. */
+  border-radius: calc(var(--mmm-chrome-size) * 0.342);
+  /* No border: the trigger is a solid accent fill and a hairline over it reads
+     as a seam at this radius. Per LogoTrigger. */
+  border: 0;
   background: var(--accent);
   color: var(--ink-on-accent);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: 0 10px 40px rgba(var(--accent-rgb), 0.28);
+  box-shadow: 0 14px 34px rgba(var(--accent-rgb), 0.3);
   transition: transform 0.3s var(--ease-default);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   pointer-events: auto;
+}
+
+/* The full wordmark — iH, the bolt standing in for the Y, PE — not the letters
+   alone, which is what this rendered before. With no header anywhere in the
+   shell this square is the only place the product says its own name.
+
+   The sizes are a RATIO of the tile (0.235 of it, per LogoTrigger), not the
+   text ramp: the tile does not grow with the Text size control, so a rem mark
+   would overflow it at 140% — and a fixed px mark would not follow the tile
+   between its 88px and 56px sizes. */
+.mmm-logo-mark {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--mmm-chrome-size) * 0.235);
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+/* The bolt is cropped to its own ink (the 512 artboard is mostly air, which at
+   wordmark scale breaks the word into three pieces) and takes currentColor, so
+   it needs no second colour variant. */
+/* 1.24 of the cap height, and 0.61 of that wide — LogoTrigger's own ratios. */
+.mmm-logo-mark svg {
+  display: block;
+  width: calc(var(--mmm-chrome-size) * 0.1777);
+  height: calc(var(--mmm-chrome-size) * 0.2914);
+  margin: 0 0.06em;
 }
 .mmm-logo:hover { opacity: 0.92; }
 /* Open state tips the logo, so the trigger reads as "engaged". */
@@ -1106,11 +1192,15 @@ html.mmm-locked .site-shell > main {
    shared parent is what actually expresses "while the nav is open". */
 .mmm-chrome:has(.mmm-nav-anchor[data-open='true']) .mmm-logo { transform: scale(0.86) rotate(-6deg); }
 
-.mmm-eq { display: flex; align-items: flex-end; gap: 1.5px; height: 7px; }
-.mmm-eq span { width: 2px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
-.mmm-eq span:nth-child(2) { animation-delay: 0.15s; }
-.mmm-eq span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes mmmEq { 0%, 100% { height: 2px; } 50% { height: 7px; } }
+/* The three bars are 2px wide at 5/9/6 with a 2px gap, per LogoTrigger — the
+   resting heights are declared per bar so that stopping the animation (reduced
+   motion) leaves the design's own stagger rather than three equal stubs. */
+.mmm-eq { display: flex; align-items: flex-end; gap: 2px; height: 9px; }
+.mmm-eq span { width: 2px; border-radius: 1px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
+.mmm-eq span:nth-child(1) { height: 5px; }
+.mmm-eq span:nth-child(2) { height: 9px; animation-delay: 0.15s; }
+.mmm-eq span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+@keyframes mmmEq { 0%, 100% { height: 3px; } 50% { height: 9px; } }
 
 /* Fan items. Closed: tucked behind the logo, scaled down, not tabbable and not
    hit-testable. Open: translated onto the arc. The transform and delay are
@@ -1186,8 +1276,10 @@ html.mmm-locked .site-shell > main {
 
 .mmm-nav-hint {
   position: absolute;
-  left: 26px;
-  bottom: calc(108px + var(--mmm-safe-bottom));
+  left: var(--mmm-left);
+  /* Sits just above the trigger, derived from the chrome band rather than
+     restated as a literal that has to be re-tuned when the trigger resizes. */
+  bottom: calc(var(--mmm-chrome-top) + 4px);
   z-index: 29;
   padding: 2px 7px;
   border-radius: 6px;
@@ -1209,31 +1301,43 @@ html.mmm-locked .site-shell > main {
    several fixed a specific bug; the lock's own instruction is to change one and
    re-derive the rest rather than nudge it in isolation.
 
-   `--mmm-chrome` is the single figure the lock says drives the chrome: it sizes
-   the logo trigger, the player's height and the dock position. It lives here so
-   the pill and the trigger cannot drift apart — the same rule as --mmm-bottom. */
+   The single figure the lock says drives the chrome — the trigger's size, the
+   player's height and the dock position — now lives ONCE in the frame's token
+   block at the top of this file, not here: a second copy is how the pill came
+   to be 88px tall beside a 76px trigger. */
 .mmm-player {
-  --mmm-chrome: 88px;
   position: absolute;
   /* Docked immediately right of the trigger, sharing its baseline, so the two
      read as one piece of furniture. box-sizing: border-box on the pill is what
      puts the two borders on one line instead of 2px apart. */
-  left: 118px;
+  left: var(--mmm-player-left);
   right: auto;
   box-sizing: border-box;
-  width: min(760px, calc(100vw - 150px));
-  min-height: var(--mmm-chrome);
+  width: min(760px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  min-height: var(--mmm-chrome-size);
   bottom: var(--mmm-bottom);
   z-index: 28;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--hair-100);
+  /* Translucent over a blur, not an opaque bar. `PlayerPill` is explicit that
+     at .96 the pill "was a solid bar cutting the frame in half"; the blur is
+     what keeps its own text legible at .74, not the alpha. Composed off
+     --bg-base-rgb, which is a real per-theme triplet — --bg-2 has no triplet
+     and inventing one would mean restating it in both theme blocks. */
+  background: rgba(var(--bg-base-rgb), 0.74);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  /* THE accent ring — a continuous hairline is the pill's own border, not a
+     line drawn across its top edge. This carried a neutral border plus a
+     gradient strip child, which is the partial top bar the lock rejected: it
+     competed with the scrub row for the same job and, measured against the
+     rectangular box, hung past the capsule at each end. */
+  border: 1px solid rgba(var(--accent-rgb), 0.42);
   border-radius: 9999px;
   /* 0 12px, so a 64px square in an 88px pill insets equally on every side. */
   padding: 0 12px;
-  box-shadow: var(--shadow-raised);
+  box-shadow: 0 16px 40px rgba(var(--scrim-rgb), 0.5), 0 0 18px rgba(var(--accent-rgb), 0.12);
   pointer-events: auto;
   overflow: hidden;
   transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
@@ -1244,16 +1348,26 @@ html.mmm-locked .site-shell > main {
   pointer-events: none;
 }
 
-/* A CONTINUOUS hairline, not a partial top bar. The bar competed with the scrub
-   row for the same job and, measured against the pill's rectangular box, hung
-   past the 44px-radius capsule at each end. */
-.mmm-player-hairline {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
-  pointer-events: none;
+/* Search rides at the bar's LEFT EDGE on a phone, divided off by a hairline so
+   it plainly is not a transport control. `PlayerPill` records why it is not a
+   square of its own between the trigger and the bar: floating there it read as
+   part of the nav trigger, and it cost the row the 52px the title needs. */
+.mmm-player-search {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin-right: -4px;
+  border: 0;
+  border-right: 1px solid var(--hair-70);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
+.mmm-player-search svg { display: block; }
 
 /* The artwork is the row's FIRST CHILD, so it centres against the pill's whole
    height and the scrub row aligns with the title by construction. A squircle,
@@ -1429,7 +1543,9 @@ html.mmm-locked .site-shell > main {
    disable a keyframe. */
 @media (prefers-reduced-motion: reduce) {
   .mmm-ray, .mmm-logo, .mmm-player { transition: none; }
-  .mmm-eq span { animation: none; height: 5px; }
+  /* Height is NOT reset here: each bar declares its own resting height above,
+     so the mark holds the design's stagger instead of flattening. */
+  .mmm-eq span { animation: none; }
   .mmm-sheet { animation: none; }
   .mmm-nav-scrim { animation: none; }
 }
@@ -1438,26 +1554,34 @@ html.mmm-locked .site-shell > main {
    the ARC table in mmm-nav.ts, which the component picks per viewport — only
    the anchor and the player move here. */
 @media (max-width: 720px) {
-  /* The resting value drops 26px → 22px here. It is re-stated through the same
-     token as the base rule rather than as a literal `max()`, which is what
-     keeps the consent lift AND the home-indicator inset attached to it: the
-     earlier version of this block restated a plain `bottom: 22px` and silently
-     disabled the lift at exactly the width that needed it. Redefining the
-     token is now the only edit a new resting value needs, and both properties
-     below follow automatically. */
-  .mmm-frame { --mmm-bottom: max(calc(22px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px)); }
-  .mmm-nav-anchor { left: 18px; }
-  /* Same offsets as the anchor: the two are one control and must not drift. */
-  .mmm-logo { left: 18px; }
-  .mmm-result-line { left: 18px; right: 18px; bottom: calc(186px + var(--mmm-safe-bottom)); }
-  .mmm-nav-hint { left: 18px; bottom: calc(104px + var(--mmm-safe-bottom)); }
-  .mmm-player {
-    left: 18px;
-    right: 18px;
-    max-width: none;
-    bottom: calc(112px + var(--mmm-safe-bottom));
-    padding: 8px 14px 8px 8px;
+  /* Nothing to move. The trigger, the hint, the result line and the pill all
+     resolve from the frame's chrome tokens, and the phone values for those are
+     set at 620px below — which is the design system's ONE breakpoint
+     (`MOBILE.md`). 720 is the arc table's own threshold and governs the arc
+     coordinates alone; the two are deliberately different numbers and this
+     block used to conflate them by moving the chrome here as well. */
+  .mmm-nav-anchor { left: var(--mmm-left); }
+}
+
+/* The design system's single breakpoint. `SimplifiedApp.dc.html` switches the
+   whole chrome table here — `phone = viewportW < 620` → size 56, gap 10, inset
+   14 — and every offset follows from those three, so this block redefines only
+   them.
+
+   What this REPLACED matters, because it was the visible bug: the pill used to
+   detach from the trigger below 720px and stack above it full-width
+   (`left: 18px; right: 18px; bottom: 112px`). The design docks the pill
+   immediately right of the trigger at every width — one piece of furniture,
+   bottom-left, on one baseline — which is what the phone mockups show. */
+@media (max-width: 620px) {
+  .mmm-frame {
+    --mmm-chrome-size: 56px;
+    --mmm-chrome-gap: 10px;
+    --mmm-inset: 14px;
   }
+  /* The pill is 56px tall here, so its padding tightens with it: a 40px
+     artwork in 56px leaves 8px, matching the inset on the sides it touches. */
+  .mmm-player { padding: 0 8px; gap: 10px; }
 }
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
@@ -1577,6 +1701,13 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-name[data-plain] { text-decoration: none; cursor: inherit; }
 .mmm-player-name:hover:not([data-plain]) { color: var(--accent-text); }
+/* The name is the control that opened the artist highlight, so while that
+   panel is up the name says so — otherwise the panel is a card with no visible
+   origin, and tapping the name again to close it is a guess. */
+.mmm-player-name[data-active] {
+  color: var(--accent-text);
+  text-decoration-color: currentColor;
+}
 
 /* ── My Tickets, inside ME ────────────────────────────────────────────────
    The ticket path used to leave MMM entirely for the legacy shell. These rows
@@ -2032,3 +2163,655 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-admin-mode:hover { background: rgba(var(--accent-rgb), 0.16); }
 .mmm-admin-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUEUE AND HISTORY — `PlayerPill`'s panel.
+
+   A SIBLING of the pill, never a child: the pill is a 9999px capsule with
+   `overflow: hidden`, so a 320px panel nested inside it is clipped to a curve.
+   It clears the pill by the pill's own height, read from the geometry table
+   rather than restated — the whole point of `--mmm-chrome-size` living once.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-player-queue {
+  position: absolute;
+  left: var(--mmm-player-left);
+  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
+  z-index: 29;
+  box-sizing: border-box;
+  width: min(460px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  background: rgba(var(--bg-base-rgb), 0.86);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  box-shadow: 0 20px 50px rgba(var(--scrim-rgb), 0.6);
+  pointer-events: auto;
+}
+.mmm-queue-eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-queue-now { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; }
+.mmm-queue-now-bar {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+.mmm-queue-now-body { min-width: 0; display: flex; flex-direction: column; }
+.mmm-queue-now-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+.mmm-queue-now-meta { font-size: 0.75rem; color: var(--ink-2); }
+.mmm-queue-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  /* 44px floor per MOBILE.md — grown with padding, never with font size. */
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.mmm-queue-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-queue-index {
+  flex: 0 0 auto;
+  width: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+}
+.mmm-queue-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mmm-queue-artist { flex: 0 0 auto; font-size: 0.75rem; color: var(--ink-2); }
+/* Played sits below a rule and greyed: already heard, still reachable. */
+.mmm-queue-played { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.mmm-queue-played .mmm-queue-row { opacity: 0.55; }
+.mmm-queue-empty { margin: 0; font-size: 0.8125rem; line-height: 1.6; color: var(--ink-3); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE FULL PLAYER — phone only, from `components/shell/FullPlayer.jsx`.
+
+   Everything the phone bar drops lives here. It owns its own safe area because
+   it is fixed and covers the frame, so the shell's offsets do not apply to it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-full {
+  /* The tail that clears the fixed way-out square, and the fade behind that
+     square. One figure, so the last queue row can always be scrolled clear of
+     the corner rather than resting under it. */
+  --mmm-tail-fade: 96px;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: var(--mmm-safe-top);
+  padding-bottom: var(--mmm-safe-bottom);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* `.mmm-chrome`, which this is mounted inside, is `pointer-events: none` so
+     the map stays draggable under the chrome. Every interactive descendant has
+     to opt back in — without this the whole screen is click-through and every
+     control on it silently does nothing. */
+  pointer-events: auto;
+}
+.mmm-full-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 20px 8px;
+}
+.mmm-full-state {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: center;
+}
+.mmm-full-art {
+  width: min(72vw, 300px);
+  aspect-ratio: 1;
+  margin: 18px auto 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-3);
+  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.55);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 6rem;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.mmm-full-art img { width: 100%; height: 100%; object-fit: cover; }
+.mmm-full-titles { text-align: center; margin-top: 22px; }
+.mmm-full-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.625rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.mmm-full-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin: 7px 0 0;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+.mmm-full-name {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.mmm-full-name[data-plain] { text-decoration: none; cursor: default; }
+.mmm-full-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-full-seek, .mmm-full-volume { display: flex; align-items: center; gap: 11px; }
+.mmm-full-seek { margin-top: 22px; }
+.mmm-full-volume { margin-top: 18px; }
+.mmm-full-clock {
+  min-width: 34px;
+  font-family: var(--font-mono);
+  font-size: 0.65625rem;
+  color: var(--ink-3);
+}
+.mmm-full-clock[data-right] { text-align: right; }
+.mmm-full-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-top: 20px;
+}
+.mmm-full-step {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink);
+  font-size: 1.375rem;
+  cursor: pointer;
+}
+.mmm-full-step:disabled { opacity: 0.35; cursor: default; }
+.mmm-full-play {
+  position: relative;
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 0 32px rgba(var(--accent-rgb), 0.4);
+}
+.mmm-full-play svg { position: absolute; inset: 0; }
+.mmm-full-play span { position: relative; }
+.mmm-full-play[data-paused] span { padding-left: 5px; }
+.mmm-full-step:focus-visible,
+.mmm-full-play:focus-visible,
+.mmm-full-hype:focus-visible,
+.mmm-full-fav:focus-visible,
+.mmm-full-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mmm-full-acts { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.mmm-full-hype {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mmm-full-hype[data-hyped] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink-on-accent);
+}
+.mmm-full-hype[data-locked] {
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.28);
+  cursor: default;
+}
+.mmm-full-hype-wait {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.71875rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.mmm-full-fav {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink);
+  font-size: 1.375rem;
+  cursor: pointer;
+}
+.mmm-full-fav[data-active] { color: var(--accent-text); }
+.mmm-full-list { margin-top: 24px; }
+.mmm-full-list[data-played] {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-2);
+}
+.mmm-full-list[data-played] .mmm-queue-row { opacity: 0.55; }
+/* Clears the fixed way-out square below the scrolling column. The fade behind
+   that square is the same height by construction — see --mmm-tail-fade. */
+.mmm-full-tail { height: var(--mmm-tail-fade); }
+.mmm-full-exit {
+  position: absolute;
+  left: 18px;
+  bottom: calc(18px + var(--mmm-safe-bottom));
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+/* The way out is fixed over a scrolling column, so queue rows pass underneath
+   it — and a 9.5px mono label over a track title is unreadable for both. The
+   fade gives the corner a ground of its own without hiding what is behind it.
+   `--mmm-tail-fade` is the same height as `.mmm-full-tail`, so the last row can
+   always be scrolled clear of the square rather than resting under it. */
+.mmm-full-exit::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  right: -18px;
+  bottom: calc(-18px - var(--mmm-safe-bottom));
+  height: var(--mmm-tail-fade);
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(var(--bg-base-rgb), 0) 0%, var(--bg) 62%);
+}
+.mmm-full-back {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 auto;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  /* The same squircle ratio as the logo trigger and the pill's artwork, so the
+     three read as one family — round(62 × 0.342). */
+  border-radius: 21px;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.38);
+}
+.mmm-full-exit-label {
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ARTIST HIGHLIGHT — opened by the player's artist name.
+
+   Anchored to the pill, above it, so it plainly belongs to what is playing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-artist-card {
+  position: absolute;
+  left: var(--mmm-player-left);
+  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
+  z-index: 30;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  padding: 20px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  background: var(--bg-2);
+  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.62);
+  pointer-events: auto;
+}
+.mmm-artist-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.mmm-artist-avatar {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3125rem;
+  color: var(--ink);
+}
+.mmm-artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mmm-artist-ident { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mmm-artist-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3125rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.mmm-artist-meta {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-artist-close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.mmm-artist-close:focus-visible,
+.mmm-artist-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-artist-bio { margin: 0 0 14px; font-size: 0.8125rem; line-height: 1.6; color: var(--ink-2); }
+.mmm-artist-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mmm-artist-stat { padding: 11px 13px; border-radius: 12px; background: var(--bg-3); }
+.mmm-artist-stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mmm-artist-stat-value[data-heat] { color: var(--warning-text); }
+.mmm-artist-stat-label {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-artist-open {
+  display: block;
+  /* 44px floor, grown with padding. */
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SEED DECK — Discover itself, from `components/shell/SeedDeck.jsx`.
+
+   The card's copy sits on the artist's own graphic, so it uses the on-media
+   tokens rather than the page ink ramp: those are white and black in BOTH
+   themes on purpose, because the veil below guarantees a dark backdrop
+   whatever the page theme is.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-deck { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 4px; }
+.mmm-deck-stack { position: relative; width: 328px; max-width: 100%; }
+.mmm-deck-behind {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-2);
+  box-shadow: 0 18px 44px rgba(var(--scrim-rgb), 0.45);
+}
+.mmm-deck-behind > span { position: absolute; inset: 0; opacity: 0.5; }
+.mmm-deck-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-2);
+  box-shadow: 0 26px 60px rgba(var(--scrim-rgb), 0.6);
+  cursor: grab;
+  /* The card is dragged, so the browser must not claim the gesture for a scroll. */
+  touch-action: none;
+  user-select: none;
+}
+.mmm-deck-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mmm-deck-initial {
+  position: absolute;
+  right: -46px;
+  bottom: -70px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18.75rem;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: rgba(var(--ink-on-media-rgb), 0.13);
+}
+/* Guarantees a dark backdrop under the copy whatever the artwork is. */
+.mmm-deck-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--scrim-rgb), 0.42) 0%,
+    rgba(var(--scrim-rgb), 0) 34%,
+    rgba(var(--scrim-rgb), 0.86) 100%
+  );
+}
+.mmm-deck-clip { position: absolute; top: 18px; left: 18px; display: flex; align-items: center; gap: 9px; }
+.mmm-deck-clip span {
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-on-media-rgb), 0.82);
+}
+.mmm-deck-clip-track { fill: rgba(var(--scrim-rgb), 0.45); stroke: rgba(var(--ink-on-media-rgb), 0.28); }
+.mmm-deck-clip-fill { stroke: var(--ink-on-media); }
+.mmm-deck-play {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(var(--ink-on-media-rgb), 0.28);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--scrim-rgb), 0.5);
+  color: var(--ink-on-media);
+  font-size: 0.6875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-deck-play[data-paused] { padding-left: 3px; font-size: 0.75rem; }
+.mmm-deck-verdict {
+  position: absolute;
+  top: 22px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-on-media);
+}
+.mmm-deck-verdict[data-side='save'] { left: 22px; background: var(--accent); transform: rotate(-8deg); }
+.mmm-deck-verdict[data-side='skip'] { right: 22px; background: rgba(var(--scrim-rgb), 0.86); transform: rotate(8deg); }
+.mmm-deck-body { position: absolute; left: 22px; right: 22px; bottom: 22px; }
+.mmm-deck-artist {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.875rem;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink-on-media);
+  cursor: pointer;
+}
+.mmm-deck-song {
+  margin: 7px 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: -0.015em;
+  color: rgba(var(--ink-on-media-rgb), 0.94);
+}
+.mmm-deck-album { margin: 2px 0 0; font-size: 0.8125rem; color: rgba(var(--ink-on-media-rgb), 0.72); }
+/* Why this card is in the deck. Never optional — see ADHERENCE 36. */
+.mmm-deck-why {
+  margin: 11px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-on-media-rgb), 0.6);
+}
+.mmm-deck-controls { display: flex; align-items: center; gap: 16px; }
+.mmm-deck-round {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 1.3125rem;
+  cursor: pointer;
+}
+.mmm-deck-round:disabled, .mmm-deck-hype:disabled { opacity: 0.45; cursor: default; }
+.mmm-deck-hype {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 56px;
+  padding: 0 30px;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.0625rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mmm-deck-hype[data-hyped] { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); }
+.mmm-deck-hype[data-locked] { background: rgba(var(--accent-rgb), 0.08); border-color: rgba(var(--accent-rgb), 0.28); }
+.mmm-deck-hype-wait {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.mmm-deck-round:focus-visible,
+.mmm-deck-hype:focus-visible,
+.mmm-deck-play:focus-visible,
+.mmm-deck-artist:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mmm-deck-count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-deck-empty { text-align: center; padding: 80px 20px; }
+.mmm-deck-empty-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.mmm-deck-empty-body { margin: 6px 0 0; font-size: 0.84375rem; color: var(--ink-2); }

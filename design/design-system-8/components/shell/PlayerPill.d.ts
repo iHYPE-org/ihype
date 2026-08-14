@@ -1,7 +1,9 @@
 export interface PlayerTrack {
   title: string;
   artist: string;
-  /** Optional; appended to the artist line as "artist · album". */
+  /** Optional; appended to the artist line as "artist · album". *
+ * @startingPoint section="App Shell" subtitle="Persistent mini player bar" viewport="700x420"
+ */
   album?: string;
   initial: string;
   /** Track length in seconds. Both the bar and the full player read it, so the

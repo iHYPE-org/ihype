@@ -28,6 +28,7 @@ input,textarea{-webkit-user-select:text;user-select:text}
    Everything reads them through var(), so one override themes the whole app. */
 html[data-a11y-contrast="high"]{--line-2:rgba(238,241,246,.42);--hair-70:rgba(238,241,246,.24);--ink-2:#ccd4e0;--ink-3:#b6c0cf}
 html[data-a11y-contrast="high"][data-theme="light"]{--line-2:rgba(16,23,37,.42);--hair-70:rgba(16,23,37,.24);--ink-2:#242d3d;--ink-3:#2f3949}
+@keyframes ihUnderline{from{transform:scaleX(.3);opacity:0}to{transform:scaleX(1);opacity:1}}
 html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!important}::-webkit-scrollbar{width:0;height:0}#ihypeThemeToggle{display:none!important}a{color:var(--accent-text,#ff5029)}a:hover{color:var(--ink-1,#eef1f6)}/* No reveal keyframes: the document timeline does not advance in every context this runs in, and a both-filled animation then holds opacity:0 forever. Everything is authored visible. */</style>
 </helmet>
 <div id="saprobe" aria-hidden="true"></div>
@@ -60,17 +61,23 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
        to two rows of chips cost more height than the search field it was sharing
        space with, and it moved the first card down by a different amount on
        every tab. -->
-  <div style="display:flex;gap:var(--tab-gap,10px);align-items:center;flex-wrap:nowrap;margin-bottom:10px">
+  <!-- Subnav as a link bar, not pills. Five capsules cannot fit 375px without
+       dropping type below the floor, and a short word in a filled pill reads as
+       a balloon. Plain text at a constant 14px fits, and the selection is an
+       underline that slides in. The 44px target is held on the vertical axis via
+       padding; the row scrolls rather than wrapping so the baseline never breaks
+       into two lines. -->
+  <div style="display:flex;gap:18px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;-webkit-overflow-scrolling:touch">
     <sc-for list="{{ musicTabs }}" as="t" hint-placeholder-count="5">
       <sc-if value="{{ t.on }}" hint-placeholder-val="{{ false }}">
-        <button onClick="{{ t.pick }}" type="button" style="flex:0 1 auto;min-width:0;white-space:nowrap;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:var(--tab-fs,14px);letter-spacing:-.01em;border-radius:9999px;padding:var(--tab-pad,9px 17px);cursor:pointer;background:var(--accent,#ff5029);color:#fff;border:1px solid var(--accent,#ff5029)">{{ t.label }}</button>
+        <button onClick="{{ t.pick }}" type="button" aria-current="page" style="position:relative;flex:0 0 auto;white-space:nowrap;background:none;border:0;padding:11px 2px 12px;cursor:pointer;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:14px;letter-spacing:-.015em;color:var(--ink-1,#eef1f6);transition:color 160ms cubic-bezier(.2,.7,.3,1),transform 110ms cubic-bezier(.2,.7,.3,1);transform-origin:50% 100%" style-active="transform:scale(.94)">{{ t.label }}<span aria-hidden="true" style="position:absolute;left:0;right:0;bottom:4px;height:2.5px;border-radius:9999px;background:var(--accent,#ff5029);box-shadow:0 0 12px rgba(255,80,41,.55);animation:ihUnderline 260ms cubic-bezier(.2,.7,.3,1) both"></span></button>
       </sc-if>
       <sc-if value="{{ t.off }}" hint-placeholder-val="{{ true }}">
-        <button onClick="{{ t.pick }}" type="button" style="flex:0 1 auto;min-width:0;white-space:nowrap;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:var(--tab-fs,14px);letter-spacing:-.01em;border-radius:9999px;padding:var(--tab-pad,9px 17px);cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))">{{ t.label }}</button>
+        <button onClick="{{ t.pick }}" type="button" style="position:relative;flex:0 0 auto;white-space:nowrap;background:none;border:0;padding:11px 2px 12px;cursor:pointer;font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:600;font-size:14px;letter-spacing:-.015em;color:var(--ink-3,#8792a6);transition:color 160ms cubic-bezier(.2,.7,.3,1),transform 110ms cubic-bezier(.2,.7,.3,1);transform-origin:50% 100%" style-hover="color:var(--ink-1,#eef1f6)" style-active="transform:scale(.94);color:var(--ink-1,#eef1f6)">{{ t.label }}</button>
       </sc-if>
     </sc-for>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 16px">
+  <div style="display:flex;align-items:center;gap:10px;max-width:900px;margin-bottom:20px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 16px">
       <span aria-hidden="true" style="color:var(--ink-3,#8792a6);font-size:14px">⌕</span>
       <input onFocus="{{ focusSearch }}" onBlur="{{ blurSearch }}" placeholder="Search artists, tracks, venues, cities, playlists" style="flex:1;min-width:0;background:transparent;border:0;outline:none;color:var(--ink-1,#eef1f6);font-family:inherit;font-size:13.5px">
       <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:4px 9px">⌘K</span>
@@ -96,7 +103,7 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
        the Discover playlist, HYPE sits under it. -->
   <sc-if value="{{ isDeck }}" hint-placeholder-val="{{ false }}">
   <div style="display:flex;justify-content:center;padding-top:8px">
-    <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.SeedDeck" items="{{ seeds }}" index="{{ seedIndex }}" hyped="{{ seedHyped }}" hypeLocked="{{ seedHypeLocked }}" hypeLabel="{{ seedHypeLabel }}" savedCount="{{ savedCount }}" clipSeconds="{{ clipSeconds }}" maxHeight="{{ deckRoom }}" playing="{{ clipPlaying }}" reduceMotion="{{ reduceMotion }}" onSkip="{{ skipSeed }}" onSave="{{ saveSeed }}" onHype="{{ hypeSeed }}" onOpenArtist="{{ openSeedArtist }}" onTogglePlay="{{ toggleSeedPlay }}" hint-size="330px,540px"></x-import>
+    <x-import component-from-global-scope="DesignSystem_0a104b.SeedDeck" items="{{ seeds }}" index="{{ seedIndex }}" hyped="{{ seedHyped }}" hypeLocked="{{ seedHypeLocked }}" hypeLabel="{{ seedHypeLabel }}" savedCount="{{ savedCount }}" clipSeconds="{{ clipSeconds }}" maxHeight="{{ deckRoom }}" playing="{{ clipPlaying }}" reduceMotion="{{ reduceMotion }}" onSkip="{{ skipSeed }}" onSave="{{ saveSeed }}" onHype="{{ hypeSeed }}" onOpenArtist="{{ openSeedArtist }}" onTogglePlay="{{ toggleSeedPlay }}" hint-size="330px,540px"></x-import>
   </div>
   </sc-if>
 
@@ -126,9 +133,9 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
              hover — or a long press, which is the touch equivalent — and names
              itself. 40px discs: the old 32 was under the target size. -->
         <div style="position:absolute;top:13px;right:13px;display:flex;gap:7px">
-          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="✎" label="Rename" onClick="{{ p.edit }}" hint-size="40px,40px"></x-import>
-          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="↗" label="Share HYPE Link" onClick="{{ p.share }}" hint-size="40px,40px"></x-import>
-          <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.IconAction" glyph="🗑" label="Delete" danger="{{ true }}" onClick="{{ p.remove }}" hint-size="40px,40px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_0a104b.IconAction" glyph="✎" label="Rename" onClick="{{ p.edit }}" hint-size="40px,40px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_0a104b.IconAction" glyph="↗" label="Share HYPE Link" onClick="{{ p.share }}" hint-size="40px,40px"></x-import>
+          <x-import component-from-global-scope="DesignSystem_0a104b.IconAction" glyph="🗑" label="Delete" danger="{{ true }}" onClick="{{ p.remove }}" hint-size="40px,40px"></x-import>
         </div>
         </sc-if>
         <sc-if value="{{ p.shared }}" hint-placeholder-val="{{ false }}">
@@ -165,9 +172,9 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
        is cut and republished then, and the current week is marked live so a
        position read on Wednesday is not mistaken for a final one. -->
   <sc-if value="{{ isCharts }}" hint-placeholder-val="{{ false }}">
-  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;max-width:900px;margin-bottom:16px">
+  <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;max-width:900px;margin-bottom:16px">
     <sc-for list="{{ chartFilters }}" as="f" hint-placeholder-count="3">
-      <label style="display:flex;align-items:center;gap:9px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:8px 8px 8px 15px">
+      <label style="display:flex;align-items:center;gap:9px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:8px 10px 8px 15px">
         <span style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ f.label }}</span>
         <select onChange="{{ f.pick }}" value="{{ f.value }}" style="appearance:none;-webkit-appearance:none;background:var(--bg-raised,#18233a);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:7px 15px;color:var(--ink-1,#eef1f6);font-family:var(--font-body,'Work Sans',sans-serif);font-size:13px;cursor:pointer;outline:none">
           <sc-for list="{{ f.options }}" as="o" hint-placeholder-count="4">
@@ -184,7 +191,7 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
   </sc-if>
 
   <sc-if value="{{ isRows }}" hint-placeholder-val="{{ true }}">
-  <div style="max-width:900px;border-top:1px solid var(--line-2,rgba(238,241,246,.13));padding-top:2px">
+  <div style="max-width:900px;border-top:1px solid var(--line-2,rgba(238,241,246,.13));padding-top:6px">
     <sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
       <div style="display:grid;grid-template-columns:32px 1fr 116px 86px;gap:14px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--hair-70,rgba(238,241,246,.07))">
         <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:12px;color:var(--ink-3,#8792a6)">{{ r.n }}</div>
@@ -404,7 +411,7 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
       </div>
 
       <div style="display:flex;flex-direction:column;align-items:center;gap:14px;padding:20px 22px 22px">
-        <x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TicketQR" code="{{ tk.code }}" label="{{ tk.code }}" size="{{ 196 }}" hint-size="196px,222px"></x-import>
+        <x-import component-from-global-scope="DesignSystem_0a104b.TicketQR" code="{{ tk.code }}" label="{{ tk.code }}" size="{{ 196 }}" hint-size="196px,222px"></x-import>
         <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);text-align:center">{{ tk.doors }} · one scan, one entry</div>
       </div>
 
@@ -472,7 +479,6 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
   <sc-if value="{{ meWide }}" hint-placeholder-val="{{ true }}">
   <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px">
     <h2 style="font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:20px;letter-spacing:-.025em;margin:0">My Tickets</h2>
-    <div style="font-family:var(--font-mono,'JetBrains Mono',monospace);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6)">{{ ticketNote }}</div>
   </div>
   </sc-if>
   <sc-if value="{{ mT.open }}" hint-placeholder-val="{{ true }}">
@@ -628,7 +634,7 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
 <!-- The sheet positions itself against the frame; wrapping it in a second
      absolutely-positioned, zero-height box was what left its max-height with
      nothing to resolve against. -->
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.MapSheet" target="{{ sheet }}" onClose="{{ closeSheet }}" hint-size="620px,280px"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.MapSheet" target="{{ sheet }}" onClose="{{ closeSheet }}" hint-size="620px,280px"></x-import>
 </sc-if>
 
 <!-- ── Chrome. No header, no tab bar: the logo trigger, the player and the hint
@@ -639,7 +645,7 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
      prop named after a reserved HTML boolean attribute: `open` and `hidden` are
      dropped outright before the component sees them, which is why these are
      `expanded` and `dimmed`. ── -->
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.Scrim" state="{{ scrimState }}" onClick="{{ closeNav }}" hint-size="100%,100%"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.Scrim" state="{{ scrimState }}" onClick="{{ closeNav }}" hint-size="100%,100%"></x-import>
 
 <!-- ── Artist highlight. Opened from the player artwork, which is the only thing
      on the pill that leads anywhere. Enough to decide whether to go further:
@@ -673,20 +679,20 @@ html[data-a11y-motion="reduce"] *{animation:none!important;transition:none!impor
 <!-- The player docks immediately right of the trigger and shares its baseline
      and its height. Every figure comes from one place in the logic class:
      inset + safe area on the left and bottom, one size for both, one gap. -->
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.PlayerPill" track="{{ track }}" dimmed="{{ navOpen }}" playing="{{ playing }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" hypeCount="{{ hypeCount }}" canHype="{{ canHype }}" canTogglePlay="{{ canTogglePlay }}" progress="{{ progress }}" volume="{{ volume }}" queue="{{ queue }}" history="{{ history }}" queueOpen="{{ queueOpen }}" left="{{ playerLeft }}" bottom="{{ chromeBottom }}" width="{{ playerWidth }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleQueue="{{ toggleQueue }}" onPickTrack="{{ pickTrack }}" artistOpen="{{ artistOpen }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" wake="{{ playerWake }}" anchorHeight="{{ chromeSize }}" narrow="{{ isPhone }}" onExpand="{{ openFullPlayer }}" onSearch="{{ openSearch }}" reduceMotion="{{ reduceMotion }}" hint-size="460px,88px"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.PlayerPill" track="{{ track }}" dimmed="{{ navOpen }}" playing="{{ playing }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" hypeCount="{{ hypeCount }}" canHype="{{ canHype }}" canTogglePlay="{{ canTogglePlay }}" progress="{{ progress }}" volume="{{ volume }}" queue="{{ queue }}" history="{{ history }}" queueOpen="{{ queueOpen }}" left="{{ playerLeft }}" bottom="{{ chromeBottom }}" width="{{ playerWidth }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleQueue="{{ toggleQueue }}" onPickTrack="{{ pickTrack }}" artistOpen="{{ artistOpen }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" wake="{{ playerWake }}" anchorHeight="{{ chromeSize }}" narrow="{{ isPhone }}" onExpand="{{ openFullPlayer }}" onSearch="{{ openSearch }}" reduceMotion="{{ reduceMotion }}" hint-size="460px,88px"></x-import>
 
 <!-- Phone only. Everything the desktop pill carries that will not fit in a
      250px bar lives here, one tap behind the bar's artwork. -->
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.FullPlayer" open="{{ fullPlayerOpen }}" track="{{ track }}" playing="{{ playing }}" progress="{{ progress }}" volume="{{ volume }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" queue="{{ queue }}" history="{{ history }}" safeTop="{{ safeTop }}" safeBottom="{{ safeBottom }}" onClose="{{ closeFullPlayer }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onPickTrack="{{ pickTrack }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" hint-size="100%,100%"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.FullPlayer" open="{{ fullPlayerOpen }}" track="{{ track }}" playing="{{ playing }}" progress="{{ progress }}" volume="{{ volume }}" hyped="{{ hyped }}" hypeLocked="{{ hypeLocked }}" hypeLabel="{{ hypeLabel }}" faved="{{ faved }}" queue="{{ queue }}" history="{{ history }}" safeTop="{{ safeTop }}" safeBottom="{{ safeBottom }}" onClose="{{ closeFullPlayer }}" onTogglePlay="{{ togglePlay }}" onPrev="{{ prevTrack }}" onNext="{{ nextTrack }}" onSeek="{{ seek }}" onVolume="{{ setVolume }}" onToggleHype="{{ toggleHype }}" onToggleFav="{{ toggleFav }}" onPickTrack="{{ pickTrack }}" onOpenArtist="{{ openArtist }}" onOpenAlbum="{{ openAlbum }}" hint-size="100%,100%"></x-import>
 
 <!-- Search now rides inside the bar's left edge; see PlayerPill. -->
 
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.ArcNav" nav="{{ navState }}" modules="{{ modules }}" activeModule="{{ activeModule }}" onNavigate="{{ navigate }}" onClose="{{ closeNav }}" hint-size="360px,360px"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.ArcNav" nav="{{ navState }}" modules="{{ modules }}" activeModule="{{ activeModule }}" onNavigate="{{ navigate }}" onClose="{{ closeNav }}" hint-size="360px,360px"></x-import>
 
 <!-- The trigger is inset by the mount, not by its own left/bottom: the arc
      anchor is inset the same way, and hardcoding one of the two leaves the fan
      opening from a point offset from the button it belongs to. -->
-<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.LogoTrigger" expanded="{{ navOpen }}" playing="{{ playing }}" onClick="{{ toggleNav }}" size="{{ chromeSize }}" style="position:absolute;left:var(--chrome-l,26px);bottom:var(--chrome-b,26px);width:var(--chrome-s,88px);height:var(--chrome-s,88px)" hint-size="88px,88px"></x-import>
+<x-import component-from-global-scope="DesignSystem_0a104b.LogoTrigger" expanded="{{ navOpen }}" playing="{{ playing }}" onClick="{{ toggleNav }}" size="{{ chromeSize }}" style="position:absolute;left:var(--chrome-l,26px);bottom:var(--chrome-b,26px);width:var(--chrome-s,88px);height:var(--chrome-s,88px)" hint-size="88px,88px"></x-import>
 
 
 </div>
@@ -790,13 +796,9 @@ class Component extends DCLogic {
     r.setProperty('--me-block', nar ? '18px' : '26px');
     r.setProperty('--me-card', nar ? '13px 14px' : '16px 18px');
     r.setProperty('--me-stat-n', nar ? '21px' : '26px');
-    /* Five tabs on one line inside ~361px of phone content width. Only the
-       HORIZONTAL axis is constrained by that fit, so only it shrinks — the
-       vertical padding grows instead, keeping the tap target past the 44px
-       floor. Shrinking both axes together is what put it at 31px. */
-    r.setProperty('--tab-fs', nar ? '11px' : '14px');
-    r.setProperty('--tab-pad', nar ? '15px 9px' : '9px 17px');
-    r.setProperty('--tab-gap', nar ? '4px' : '10px');
+    /* The music subnav no longer needs a responsive type/padding table: it is a
+       link bar at a constant 14px that scrolls horizontally instead of fitting
+       five capsules into ~361px. --tab-fs/--tab-pad/--tab-gap retired with it. */
     r.setProperty('--sub-gap', nar ? '10px' : '22px');
     /* The map is a separate document and cannot read the device insets itself. */
     const mf = document.querySelector('iframe[src*="map.html"]');
@@ -1084,13 +1086,17 @@ class Component extends DCLogic {
   /* One drawer open at a time across the Me root. `meGroup` holds the open
      section's id; undefined means nobody has chosen yet, so the section marked
      `first` is the one showing. */
-  meSection(id, first, phone) {
+  /* Every Me section is a drawer, at every width: one open at a time, Profiles
+     open on arrival. Five long sections stacked open is a page you scroll past
+     rather than read, so the headings are the index and opening one shuts the
+     rest. `meGroup` holds the open section's id; undefined means nobody has
+     chosen yet, so the section marked `first` is the one showing. */
+  meSection(id, first) {
     const chosen = this.state.meGroup;
-    const open = !phone || (chosen === undefined ? first : chosen === id);
+    const open = chosen === undefined ? first : chosen === id;
     return {
-      open,
-      chevron: open ? '\u2013' : '+',
-      /* Closes any open settings panel: one thing open at a time, page-wide. */
+      open, shut: !open, chevron: open ? '\u2013' : '+',
+      /* Closes any open settings panel too: one thing open at a time, page-wide. */
       toggle: () => this.setState({ meGroup: open ? '' : id, mePage: null }),
     };
   }
@@ -1315,29 +1321,31 @@ class Component extends DCLogic {
         chevron: st.mePage === p.id ? '\u2013' : '+',
         toggle: () => this.setState({ mePage: st.mePage === p.id ? null : p.id, meGroup: '' }),
       })),
-      /* Me is five sections deep on a phone, and four of them are long. Same
-         drawer treatment as the settings groups: the headings are the index,
-         one open at a time, the first open on arrival. Desktop has the room, so
-         `meWide` keeps the ordinary h2 rows and everything stays expanded. */
-      meFold: phone,
-      meWide: !phone,
-      mT: this.meSection('tickets', false, phone),
-      mA: this.meSection('about', false, phone),
-      mP: this.meSection('profiles', true, phone),
+      /* Me is five sections deep and four of them are long. Same drawer
+         treatment as the settings groups, at every width: the headings are the
+         index, one open at a time, Profiles open on arrival. */
+      meFold: true,
+      meWide: false,
+      mT: this.meSection('tickets', false),
+      mA: this.meSection('about', false),
+      mP: this.meSection('profiles', true),
       ticketCount: this.TICKETS.filter((t) => t.upcoming).length + ' upcoming',
       meRoot: true,
       /* A settings row is text unless it names a control, so the three cases
          are decided here rather than by a hole in the markup. */
-      subGroups: sub ? sub.groups.map((g, gi) => ({
+      subGroups: sub ? sub.groups.map((g, gi) => {
+        /* Drawers at every width, matching the Me sections above them: the
+           group headings are the index, one open at a time, the first open on
+           arrival rather than the page opening on five closed drawers with
+           nothing to read. `openGroup` is undefined until someone taps. */
+        const open = (st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title;
+        return {
         title: g.title,
-        /* Phone folds; desktop does not. `openGroup` is null until someone taps,
-           so the first group is open on arrival rather than the page opening on
-           five closed drawers with nothing to read. */
-        collapsible: phone,
-        plainTitle: !phone,
-        open: !phone || ((st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title),
+        collapsible: true,
+        plainTitle: false,
+        open,
         count: g.rows.length + (g.rows.length === 1 ? ' setting' : ' settings'),
-        chevron: (!phone || ((st.openGroup[st.mePage] === undefined) ? gi === 0 : st.openGroup[st.mePage] === g.title)) ? '\u2013' : '+',
+        chevron: open ? '\u2013' : '+',
         /* Keyed on the ROUTE segment. `sub` is a plain {title, dek, groups}
            record with no id of its own, so keying on `sub.id` put every page in
            one `undefined` slot — the same collision under a new name. */
@@ -1358,7 +1366,7 @@ class Component extends DCLogic {
           cycleLabel: r.label + ' — ' + this.a11yLabel(r.key) + '. Tap to change.',
           cycle: r.control === 'cycle' ? () => this.cycleA11y(r.key) : undefined,
         })),
-      })) : [],
+      }; }) : [],
       langs: this.LANGS.map(([code, label]) => ({ code, label })),
       lang: st.lang,
       pickLang: (e) => {
@@ -1376,7 +1384,7 @@ class Component extends DCLogic {
         this._copyT = setTimeout(() => this.setState({ copied: false }), 1800);
       },
 
-      ticketNote: this.TICKETS.filter((t) => t.upcoming).length + ' upcoming · wallet codes scan at the door',
+      ticketNote: '',
       tickets: this.TICKETS.map((t, i) => ({
         ...t, past: !t.upcoming,
         open: t.upcoming ? () => this.setState({ ticket: i, xfer: 'shut', xferTo: '' }) : undefined,

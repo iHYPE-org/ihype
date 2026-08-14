@@ -128,7 +128,8 @@ readme.md                           ← This file
 SKILL.md                            ← Agent skill manifest
 
 tokens/                             ← 59 CSS custom properties
-  fonts.css                         ← @font-face (Syne · DM Sans · JetBrains Mono · Instrument Serif)
+  fonts.css                         ← @font-face + CSS2 @import (Bricolage Grotesque · Work Sans ·
+                                       JetBrains Mono · Instrument Serif · Yeseva One · Noto fallbacks)
   colors.css                        ← backgrounds · ink · lines · accent · roles · utility
   typography.css                    ← font families · sizes · letter-spacing
   spacing.css                       ← spacing · radius · shadows · transitions
@@ -184,7 +185,7 @@ components/shell/   ← Music · Map · Me app-shell chrome (added v8)
   Scrim       ← nav dimmer, plus Vignette (the map's edge darkening)
   shell.card.html  ← all seven composed, nav open (DS tab)
 
-templates/simplified-app/  ← the app shell
+templates/simplified-app/  ← the app shell (see templates/ index below)
   SimplifiedApp.dc.html ← Music · Map · Me shell (label "iHYPE App Shell")
   map.html    ← the real map: Leaflet + OpenStreetMap. Plain HTML, embedded by
                 the shell, posts pin selections back as `ihype:select`.
@@ -226,11 +227,15 @@ ui_kits/
     ops.jsx                           ← Full React app: Queue review, Platform health, Accounts, Log
                                         Design spec: full-viewport desktop, same rail pattern as Workbench
 
-templates/
-  mobile-app/
-    MobileApp.dc.html                 ← iOS + Android frames around the real shell, Capacitor config
-  workbench-screen/
-    WorkbenchScreen.dc.html           ← Desktop screen scaffold (copy to start a new screen)
+templates/                          ← 40 grounded .dc.html pages, each its own folder + ds-base.js
+  simplified-app/SimplifiedApp.dc.html  ← Music · Map · Me app shell — START HERE for in-app work
+  mobile-app/MobileApp.dc.html          ← iOS + Android frames around the real shell
+  landing · about · charter · legal · trust-policy · transparency · audit · status
+  auth · welcome · role-onboarding · role-dashboard · role-settings · verify
+  discover · show-detail · profile-page · page-builder · event-create · event-cancel
+  payouts · lineup-split · booking-inbox · support-tickets · advertise · advertiser-signup
+  press-kit · artist-kit · venue-kit · fan-kit · app-store-kit · beta-launch-deck
+  email · notif-designs · social · site-pages · ops-console · i18n-test
 ```
 ---
 
@@ -326,7 +331,7 @@ Reconciled July 2026 against the shipped product. Canonical facts:
 - Added Accessibility specimen card (guidelines/accessibility.card.html)
 - Added Android App Onboarding flow (ui_kits/android_app/onboarding.html) — Welcome → Role → Taste
 - Fixed/completed Advertise DC template (templates/advertise/Advertise.dc.html) with live pricing calculator
-- Added @startingPoint tags to Android App, Onboarding, Workbench, and Advertise HTML files
+- Added @startingPoint tags to Android App, Onboarding, Workbench, and Advertise HTML files *(since retired — the Starting Points picker was superseded by the Templates picker. The 40 folders under `templates/` are the seeding surface now; there are deliberately no `@startingPoint` tags in this system.)*
 - Updated component card to show all 17 components with interactive states
 
 ### v2 — June 2026

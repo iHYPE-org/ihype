@@ -7,7 +7,7 @@
 </head>
 <body>
 <x-dc>
-<!-- @template name="iHYPE Fan Kit" description="Fan recruiting page — hero with join form, hype/direct-buy/promoter charter explainer, 6-feature grid, footer. Mirrors Artist/DJ/Venue Kit structure with Fan role tint (var(--role-fan))." -->
+<!-- @template name="iHYPE Fan Kit" description="Fan recruiting page — hero with join form, hype/direct-buy/promoter charter explainer, 6-feature grid, footer. Mirrors Artist/Venue Kit structure with Fan role tint (var(--role-fan))." -->
 <helmet>
 <script src="./ds-base.js"></script>
 <script src="../../lib/theme.js"></script>
@@ -32,7 +32,7 @@
 
 <header style="padding:100px 0 80px;position:relative;overflow:hidden">
   <div style="position:absolute;top:-160px;right:-80px;width:600px;height:600px;background:radial-gradient(circle,rgba(185,131,255,.2),transparent 65%);pointer-events:none"></div>
-  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:1fr 420px;gap:60px;align-items:center">
+  <div style="max-width:1080px;margin:0 auto;padding:0 32px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:60px;align-items:center">
     <div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--role-fan);margin-bottom:22px" data-i18n="fkEyebrow">For Fans · Live 2026</div>
       <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(2.8rem,5.5vw,4.6rem);letter-spacing:-.04em;line-height:.98">Your taste.<br>Your voice.<br><span style="color:var(--role-fan)">Your cut.</span></h1>

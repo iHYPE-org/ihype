@@ -3,7 +3,9 @@ export interface ArcNavItem { id: string; label: string; href?: string }
 export interface ArcNavModule extends ArcNavItem { items?: ArcNavItem[] }
 export interface ArcNavProps {
   /** PREFERRED from a template: { expanded } as one object, so the update
-   *  cannot be missed by a mount. Overrides the flat prop below when present. */
+   *  cannot be missed by a mount. Overrides the flat prop below when present. *
+ * @startingPoint section="App Shell" subtitle="The radial fan nav, two breakpoints" viewport="700x420"
+ */
   nav?: { expanded?: boolean };
   /** Named `expanded` because `open` is a reserved HTML attribute. */
   expanded?: boolean;

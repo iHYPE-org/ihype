@@ -720,8 +720,10 @@ function MapPin({ onOpen, pin }: { onOpen: () => void; pin: Placed }) {
     const size = 30 + Math.min(count, 5) * 5;
     return (
       <button
-        aria-label={`${count} artist${count === 1 ? '' : 's'} in ${city}`}
-        className="mmm-bubble"
+        aria-label={`${count} artist${count === 1 ? '' : 's'} from ${city}`}
+        /* A city of origin, not an address — drawn dashed and softer so it is
+           not mistaken for a venue's door or for a cluster of pins. */
+        className="mmm-bubble mmm-bubble-city"
         onClick={onOpen}
         style={{ ...style, width: size, height: size, transform: 'translate(-50%, -50%)' }}
         type="button"

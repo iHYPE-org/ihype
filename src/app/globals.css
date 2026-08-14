@@ -1922,18 +1922,40 @@ body:has(.authcard-page) #main-content { width: 100%; }
   grid-column: 1 / -1;
   color: var(--muted);
 }
+/* A POLICY PAGE IS A DOCUMENT, so it is laid out as one — `templates/
+   trust-policy/`, applied 2026-08-14.
+
+   It was a two-column grid of equal-height cards. Three things were wrong with
+   that and all three are legibility, not taste: policy sections are read in
+   order and a grid asks you to read down one column and back up the next; a
+   `min-height` on a card pads short rules to match long ones, so the whitespace
+   stops meaning anything; and the full container width put policy text on a
+   ~1240px measure, roughly twice the ~75 characters prose is readable at.
+
+   The Bulletin direction's answer is one reading column with the sections
+   stacked in it, which is what the template draws. 640px is the template's own
+   figure and lands at ~72 characters at this size. */
 .trust-policy-page {
   display: grid;
   gap: 1rem;
+  max-width: 640px;
+  margin-inline: auto;
 }
 .trust-policy-hero {
   padding: 1.5rem;
 }
+/* The template's ramp, not the display ramp. At clamp(2.4rem, 6vw, 4.8rem) the
+   title of a rules page was set larger than the homepage hero — a policy
+   document does not open at 77px. */
 .trust-policy-hero h1 {
-  margin: 0.7rem 0;
-  font-size: clamp(2.4rem, 6vw, 4.8rem);
-  line-height: 0.95;
-  letter-spacing: -0.06em;
+  margin: 0.7rem 0 0.75rem;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+.trust-policy-hero .subtitle {
+  font-size: 1rem;
+  line-height: 1.7;
 }
 .trust-policy-links {
   display: flex;
@@ -1941,23 +1963,34 @@ body:has(.authcard-page) #main-content { width: 100%; }
   gap: 0.8rem;
   margin-top: 1rem;
 }
+/* Stacked, in reading order. */
 .trust-policy-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
 }
 .trust-policy-card {
-  min-height: 160px;
+  padding: 22px 24px;
 }
 .trust-policy-card h2 {
-  margin: 0 0 0.6rem;
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  letter-spacing: -0.01em;
+}
+.trust-policy-card p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.65;
 }
 .support-form {
   max-width: 760px;
 }
 @media (max-width: 920px) {
+  /* `.trust-policy-grid` used to be here too. It is a single column at every
+     width now — a policy document is not two columns on a desktop either — so
+     the narrow override would only restate what the base rule already says. */
   .admin-metric-grid,
   .admin-health-grid,
-  .admin-console-grid,
-  .trust-policy-grid {
+  .admin-console-grid {
     grid-template-columns: 1fr;
   }
 

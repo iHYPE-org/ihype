@@ -32,6 +32,10 @@ import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
 import { ShowTabs } from '@/components/ShowTabs';
 import { ShowComments } from '@/components/ShowComments';
+/* Shared with the shell copy of this page — see the module header for what had
+   already drifted between the two. */
+import { canViewShow, isTicketingOpen } from '@/lib/show-detail';
+import { buildShowJsonLd } from '@/lib/show-jsonld';
 
 const getShowMeta = cache((slug: string) =>
   db.show.findUnique({
@@ -138,10 +142,14 @@ export default async function ShowDetailPage({
   const show = await getShowPage(slug);
 
   if (!show) return notFound();
-  const canPreviewDraft =
-    Boolean(session?.user?.id) &&
-    (session?.user?.id === show.creatorId || (session ? isAdminSession(session) : false));
-  if (show.status === 'DRAFT' && !canPreviewDraft) {
+  /* Draft visibility is `@/lib/show-detail`'s, shared with the shell copy of
+     this page at `/app/shows/[slug]` — the rule is unchanged, it just is not
+     written out twice any more. The two had already disagreed about it: the
+     shell hid a draft from its own creator. */
+  if (!canViewShow(show, {
+    userId: session?.user?.id ?? null,
+    isAdmin: session ? isAdminSession(session) : false,
+  })) {
     return notFound();
   }
 
@@ -181,35 +189,39 @@ export default async function ShowDetailPage({
     : null;
 
   const base = getBaseUrl();
-  const jsonLd = show.isRadioShow ? {
-    '@context': 'https://schema.org',
-    '@type': 'RadioEpisode',
-    name: show.title,
-    url: `${base}/shows/${slug}`,
-    ...(show.description ? { description: show.description } : {}),
-    ...(show.posterImage ? { image: show.posterImage } : {}),
-    ...(show.headlinerProfile ? { byArtist: { '@type': 'MusicGroup', name: show.headlinerProfile.name } } : {}),
-  } : {
-    '@context': 'https://schema.org',
-    '@type': 'MusicEvent',
-    name: show.title,
-    url: `${base}/shows/${slug}`,
-    ...(show.description ? { description: show.description } : {}),
-    ...(show.posterImage ? { image: show.posterImage } : {}),
-    eventStatus: show.status === 'LIVE' ? 'https://schema.org/EventScheduled'
-      : show.status === 'ENDED' ? 'https://schema.org/EventPast'
-      : 'https://schema.org/EventScheduled',
-    eventAttendanceMode: 'https://schema.org/MixedEventAttendanceMode',
-    ...(show.startsAt ? { startDate: show.startsAt.toISOString() } : {}),
-    ...(show.venueProfile ? {
-      location: {
-        '@type': 'Place',
-        name: show.venueProfile.name,
-        address: { '@type': 'PostalAddress', addressLocality: show.venueProfile.city ?? '', addressRegion: show.venueProfile.stateRegion ?? '' },
-      },
-    } : {}),
-    ...(show.headlinerProfile ? { performer: { '@type': 'MusicGroup', name: show.headlinerProfile.name } } : {}),
-  };
+  /* Structured data is `@/lib/show-jsonld`'s, and is tested there. It used to
+     be written out here, where it had drifted from what the page itself says:
+     a CANCELED show published `EventScheduled` while the page rendered the
+     cancellation notice, every ENDED show published `EventPast` (not a
+     schema.org value, so the whole block was invalid), the attendance mode
+     claimed an online option this product does not have, and a ticketing
+     product published no price at all. */
+  const jsonLd = buildShowJsonLd({
+    slug,
+    title: show.title,
+    description: show.description,
+    status: show.status,
+    startsAt: show.startsAt,
+    endsAt: show.endsAt,
+    posterImage: show.posterImage,
+    isRadioShow: show.isRadioShow,
+    isTicketed: show.isTicketed,
+    ticketPriceCents: show.ticketPriceCents,
+    ticketCapacity: show.ticketCapacity,
+    ticketsSoldCount: show.ticketsSoldCount,
+    ticketingOpensAt: show.ticketingOpensAt,
+    headlinerName: show.headlinerProfile?.name ?? null,
+    venue: show.venueProfile
+      ? {
+          name: show.venueProfile.name,
+          addressLine1: show.venueProfile.addressLine1,
+          city: show.venueProfile.city,
+          stateRegion: show.venueProfile.stateRegion,
+          postalCode: show.venueProfile.postalCode,
+          country: show.venueProfile.country,
+        }
+      : null,
+  }, base);
 
   // RSVP and setlist state, both audit-log driven. The derivations moved to
   // `show-social.ts` when the show gained a second surface in the MMM shell —
@@ -933,7 +945,7 @@ export default async function ShowDetailPage({
                 showId={show.id}
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
-                ticketingOpen={show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date())}
+                ticketingOpen={isTicketingOpen(show)}
                 ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}
