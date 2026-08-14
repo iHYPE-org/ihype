@@ -40,6 +40,22 @@ export async function generateMetadata(
   };
 }
 
+/**
+ * The public playlist page.
+ *
+ * This page and its shell copy at `/app/playlists/[id]` were checked against
+ * each other on 2026-08-14, when the show, artist, venue and track pairs all
+ * turned out to have drifted. This pair had not, and there is nothing for a
+ * shared rules module to hold: both do "find by id, list the items in order",
+ * because **`FanPlaylist` carries no visibility column at all**.
+ *
+ * That is the thing to know here. Every playlist is public to anyone with its
+ * id — including this route's OG metadata, which publishes the owner's
+ * username and track count — and no page decides that, the schema does. Adding
+ * a privacy model is a product decision with a migration attached, not a
+ * styling fix; it is recorded here so the next person to look does not read
+ * the absence of a check as an oversight in the page.
+ */
 export default async function PlaylistPage({ params }: { params: Promise<{ slug: string }> }) {
   const t = await getServerT();
   const { slug } = await params;

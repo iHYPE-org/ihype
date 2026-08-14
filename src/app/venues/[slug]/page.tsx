@@ -14,6 +14,7 @@ import { BookingRequestInbox } from '@/components/BookingRequestInbox';
 import { getPinnedStatValues } from '@/lib/profile-stats';
 import { PinnedStatTiles } from '@/components/PinnedStatTiles';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { isUpcomingShow } from '@/lib/profile-detail';
 import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
 import { getServerT } from '@/lib/i18n/server';
@@ -88,7 +89,10 @@ export default async function VenuePage({
   ]);
 
   const now = new Date();
-  const upcomingShows = shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now);
+  /* Shared with the shell copy of this page — and the same fix the artist page
+     took: this filter had no status gate, so a DRAFT or CANCELED show was
+     listed as upcoming on a public venue calendar. See `@/lib/profile-detail`. */
+  const upcomingShows = shows.filter((show) => isUpcomingShow(show, now));
   const totalTicketsSold = shows.reduce((sum, s) => sum + s.ticketsSoldCount, 0);
   const venueAddress = [profile.addressLine1, profile.city, profile.stateRegion, profile.postalCode].filter(Boolean).join(', ');
   const avgFillPct = shows.length > 0

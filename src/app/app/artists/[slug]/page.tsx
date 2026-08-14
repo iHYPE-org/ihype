@@ -8,6 +8,7 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
+import { upcomingShowWhere } from '@/lib/profile-detail';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,8 +76,11 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
       .findMany({
         where: {
           headlinerProfileId: profile.id,
-          status: { in: ['SCHEDULED', 'LIVE'] },
-          startsAt: { gte: now },
+          /* `upcomingShowWhere` rather than `status in (...) AND startsAt >=
+             now`, which is what stood here and which silently dropped the one
+             show a member is most likely looking for: a LIVE show that started
+             an hour ago fails the clock test. See `@/lib/profile-detail`. */
+          ...upcomingShowWhere(now),
           ...getDemoCreatorExclusion(),
         },
         orderBy: { startsAt: 'asc' },

@@ -8,6 +8,7 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
+import { upcomingShowWhere } from '@/lib/profile-detail';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,8 +71,10 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
       .findMany({
         where: {
           venueProfileId: profile.id,
-          status: { in: ['SCHEDULED', 'LIVE'] },
-          startsAt: { gte: now },
+          /* See `@/lib/profile-detail`: `status in (...) AND startsAt >= now`
+             drops the show currently on stage, which on a VENUE page is the
+             one most worth showing. */
+          ...upcomingShowWhere(now),
           ...getDemoCreatorExclusion(),
         },
         orderBy: { startsAt: 'asc' },

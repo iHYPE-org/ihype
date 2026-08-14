@@ -22,6 +22,7 @@ import { getSafeImageUrl } from '@/lib/asset-safety';
 import { resolveProfileThemeVars } from '@/lib/profile-design';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
+import { isUpcomingShow } from '@/lib/profile-detail';
 import { getBaseUrl } from '@/lib/utils';
 import { ConnectPayoutButton } from '@/components/ConnectPayoutButton';
 import { getServerT } from '@/lib/i18n/server';
@@ -109,7 +110,12 @@ export default async function ArtistPage({
   const pinnedStats = await getPinnedStatValues(profile.id, profile.type, profile.pinnedStats);
 
   const now = new Date();
-  const upcomingShows = shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now);
+  /* `isUpcomingShow` rather than `status === 'LIVE' || startsAt >= now`, which
+     is what stood here and had no status gate at all: a DRAFT show appeared in
+     the upcoming list of a PUBLIC profile, disclosing the title, date and venue
+     of a show whose own detail page 404s for everyone but its creator. A
+     CANCELED show was listed as upcoming too. See `@/lib/profile-detail`. */
+  const upcomingShows = shows.filter((show) => isUpcomingShow(show, now));
 
   return (
     <div className="artist-page" style={(themeVars ?? undefined) as React.CSSProperties | undefined}>
