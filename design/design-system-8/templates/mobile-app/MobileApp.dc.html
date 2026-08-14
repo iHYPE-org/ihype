@@ -94,8 +94,58 @@ pre{margin:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;line-height
           <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Location</div><div style="flex:1;font-size:13px;line-height:1.55">Map opens on where you are. Asked for once, when-in-use only, and the map works from a seeded city if it is refused.</div></div>
           <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Camera</div><div style="flex:1;font-size:13px;line-height:1.55">Door scanning on the venue profile only. Never asked for on a fan account.</div></div>
           <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Audio</div><div style="flex:1;font-size:13px;line-height:1.55">Background playback plus lock-screen transport. The seed deck's clips and the player share one session.</div></div>
+          <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Push</div><div style="flex:1;font-size:13px;line-height:1.55">Show reminders, payout notices, ticket transfers. Asked for after a first purchase, never at onboarding — see the primer below.</div></div>
+          <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Wallet</div><div style="flex:1;font-size:13px;line-height:1.55">Apple Pay / Google Pay through Stripe's sheet. No permission prompt, but the merchant ID and domain association file have to exist before the button will render.</div></div>
           <div style="display:flex;gap:14px"><div style="flex:0 0 96px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);padding-top:3px">Not used</div><div style="flex:1;font-size:13px;line-height:1.55">Contacts, photo library, microphone, advertising identifier. Nothing here reads them, and the store listing should say so.</div></div>
         </div>
+      </section>
+
+      <!-- The strings themselves. These are the ones a reviewer reads, and a
+           vague one is a rejection — each names the feature, not the sensor. -->
+      <section style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:18px;padding:22px 24px">
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.025em;margin:0">Permission strings</h2>
+        <p style="margin:7px 0 14px;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)">Name the feature and the benefit. "To provide a better experience" gets rejected.</p>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:8px">ios/App/App/Info.plist</div>
+        <div style="background:var(--bg-base,#0b1220);border:1px solid var(--hair-70,rgba(238,241,246,.07));border-radius:12px;padding:16px 18px;margin-bottom:16px"><pre>NSLocationWhenInUseUsageDescription
+  Shows you gigs happening near you on the map.
+
+NSCameraUsageDescription
+  Scans ticket QR codes at the door. Venue accounts only.
+
+NSFaceIDUsageDescription
+  Unlocks your ticket wallet and confirms payouts.
+
+UIBackgroundModes
+  audio          &lt;!-- player keeps going when screened off --&gt;
+  remote-notification
+
+ITSAppUsesNonExemptEncryption  false</pre></div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3,#8792a6);margin-bottom:8px">android/app/src/main/AndroidManifest.xml</div>
+        <div style="background:var(--bg-base,#0b1220);border:1px solid var(--hair-70,rgba(238,241,246,.07));border-radius:12px;padding:16px 18px"><pre>INTERNET
+ACCESS_NETWORK_STATE
+ACCESS_COARSE_LOCATION   &lt;!-- coarse is enough for "near me" --&gt;
+ACCESS_FINE_LOCATION
+CAMERA                   &lt;!-- android:required="false" --&gt;
+POST_NOTIFICATIONS       &lt;!-- runtime ask, API 33+ --&gt;
+FOREGROUND_SERVICE
+FOREGROUND_SERVICE_MEDIA_PLAYBACK
+USE_BIOMETRIC</pre></div>
+      </section>
+
+      <section style="background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:18px;padding:22px 24px">
+        <h2 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:19px;letter-spacing:-.025em;margin:0">First build</h2>
+        <div style="background:var(--bg-base,#0b1220);border:1px solid var(--hair-70,rgba(238,241,246,.07));border-radius:12px;padding:16px 18px;margin-top:14px"><pre>npm i @capacitor/core @capacitor/cli
+npm i @capacitor/status-bar @capacitor/geolocation \
+      @capacitor/push-notifications @capacitor/share \
+      @capacitor/preferences @capacitor/haptics
+
+npx cap init iHYPE org.ihype.app --web-dir=dist
+npx cap add ios &amp;&amp; npx cap add android
+
+npm run build &amp;&amp; npx cap sync
+npx cap open ios      # Xcode → signing → device
+npx cap open android  # Studio → run</pre></div>
+        <p style="margin:13px 0 0;font-size:13px;line-height:1.6;color:var(--ink-2,#96a1b5)"><b style="color:var(--ink-1,#eef1f6);font-weight:600">Re-run <code>cap sync</code> after every web build.</b> The native projects hold a copy of <code>dist</code>, so a rebuild that skips sync ships the previous release and looks like a caching bug for hours.</p>
       </section>
 
       <section style="background:rgba(255,80,41,.08);border:1px solid rgba(255,80,41,.42);border-radius:18px;padding:20px 24px">

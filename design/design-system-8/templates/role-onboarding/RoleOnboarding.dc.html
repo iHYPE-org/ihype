@@ -30,7 +30,7 @@
     <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
       <div style="flex:1">
         <sc-if value="{{ st.doneArtist }}"><div style="height:4px;border-radius:999px;background:var(--accent)"></div></sc-if>
-        <sc-if value="{{ st.doneDj }}"><div style="height:4px;border-radius:999px;background:var(--role-dj)"></div></sc-if>
+        <sc-if value="{{ st.doneDj }}"><div style="height:4px;border-radius:999px;background:var(--role-promoter)"></div></sc-if>
         <sc-if value="{{ st.doneVenue }}"><div style="height:4px;border-radius:999px;background:var(--role-venue)"></div></sc-if>
         <sc-if value="{{ st.doneFan }}"><div style="height:4px;border-radius:999px;background:var(--role-fan)"></div></sc-if>
         <sc-if value="{{ st.notDone }}"><div style="height:4px;border-radius:999px;background:rgba(var(--surface-tint-rgb),.1)"></div></sc-if>
@@ -57,7 +57,7 @@
     <div style="display:flex;flex-wrap:wrap;gap:8px">
       <sc-for list="{{ genreOrGenreLike }}" as="g" hint-placeholder-count="6">
         <sc-if value="{{ g.activeArtist }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--accent);background:rgba(255,80,41,.13);color:var(--accent)">{{ g.label }}</button></sc-if>
-        <sc-if value="{{ g.activeDj }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-dj);background:rgba(255,62,154,.13);color:var(--role-dj)">{{ g.label }}</button></sc-if>
+        <sc-if value="{{ g.activeDj }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-promoter);background:rgba(255,62,154,.13);color:var(--role-promoter)">{{ g.label }}</button></sc-if>
         <sc-if value="{{ g.activeVenue }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-venue);background:rgba(34,229,212,.13);color:var(--role-venue)">{{ g.label }}</button></sc-if>
         <sc-if value="{{ g.activeFan }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid var(--role-fan);background:rgba(185,131,255,.13);color:var(--role-fan)">{{ g.label }}</button></sc-if>
         <sc-if value="{{ g.inactive }}"><button onClick="{{ g.toggle }}" style="padding:8px 14px;border-radius:999px;font-size:13px;font-family:'Work Sans',sans-serif;cursor:pointer;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-2)">{{ g.label }}</button></sc-if>
@@ -70,7 +70,7 @@
     <p style="font-size:14px;color:rgba(var(--ink-1-rgb),.55);margin:0 0 24px;line-height:1.6">{{ step3Body }}</p>
     <div style="border:1px solid rgba(var(--surface-tint-rgb),.15);border-radius:14px;background:rgba(var(--surface-tint-rgb),.04);backdrop-filter:blur(24px);padding:18px 20px">
       <sc-if value="{{ isArtist }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
-      <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-dj);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
+      <sc-if value="{{ isDj }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-promoter);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
       <sc-if value="{{ isVenue }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-venue);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
       <sc-if value="{{ isFan }}"><div style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--role-fan);margin-bottom:8px">{{ charterOneLine }}</div></sc-if>
       <div style="font-size:14px;color:var(--ink-1);line-height:1.6">{{ charterLine }}</div>
@@ -81,7 +81,7 @@
     <sc-if value="{{ showBack }}"><button onClick="{{ back }}" style="flex:1;height:46px;border-radius:12px;border:1px solid rgba(var(--surface-tint-rgb),.14);background:transparent;color:var(--ink-1);font-family:'Work Sans',sans-serif;font-weight:600;font-size:14px;cursor:pointer">{{ backLabel }}</button></sc-if>
     <sc-if value="{{ isStep3 }}"><a href="../role-dashboard/RoleDashboard.dc.html" style="flex:2;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;text-decoration:none;background:var(--accent);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;box-sizing:border-box">{{ nextLabel }}</a></sc-if>
     <sc-if value="{{ notStep3AndArtist }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--accent);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
-    <sc-if value="{{ notStep3AndDj }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-dj);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
+    <sc-if value="{{ notStep3AndDj }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-promoter);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
     <sc-if value="{{ notStep3AndVenue }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-venue);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
     <sc-if value="{{ notStep3AndFan }}"><button onClick="{{ next }}" style="flex:2;height:46px;border-radius:12px;border:none;background:var(--role-fan);color:var(--bg-base);font-family:'Work Sans',sans-serif;font-weight:700;font-size:14px;cursor:pointer">{{ nextLabel }}</button></sc-if>
   </div>
@@ -101,7 +101,7 @@ class Component extends DCLogic {
         step2Title: t('roStep2TitleArtist'), step2Sub: t('roStep2SubArtist'),
         step3Body: t('roStep3BodyArtist'),
         genres: ['Dream-pop','Indie','Shoegaze','Jazz','Punk','Lo-fi'] },
-      dj: { label: t('roRoleDj'), accent: 'var(--role-dj)', nameLabel: t('roNameLabelDj'), namePlaceholder: t('roNamePhDj'),
+      dj: { label: t('roRoleDj'), accent: 'var(--role-promoter)', nameLabel: t('roNameLabelDj'), namePlaceholder: t('roNamePhDj'),
         step1Title: t('roStep1TitleDj'), step1Sub: t('roStep1SubDj'),
         step2Title: t('roStep2TitleDj'), step2Sub: t('roStep2SubDj'),
         step3Body: t('roStep3BodyDj'),

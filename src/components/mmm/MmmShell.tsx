@@ -262,6 +262,13 @@ export function MmmShell({
               : undefined
           }
           wake={playerWake}
+          /* The design's `openSearch` is module: music, tab: discover, field
+             focused. There is no separate search surface to open — the field
+             lives at the top of every MUSIC tab — so this is that navigation,
+             and `focus=search` is what tells the field to take focus on
+             arrival. Phone only; on a wider frame the field is already on
+             screen whenever MUSIC is. */
+          onSearch={() => router.push('/app/music/discover?focus=search')}
           onNext={playNext}
           onPrev={playPrevious}
           // The pill speaks 0-100; the audio element speaks seconds. Converted
@@ -313,7 +320,19 @@ export function MmmShell({
              It also made the consent lift impossible to apply. */
           type="button"
         >
-          <span>iHYPE</span>
+          {/* The full wordmark, per `components/shell/LogoTrigger.jsx`: iH, the
+              bolt standing in for the Y, PE. It rendered as the plain word
+              before, which lost the mark on the one square that is always on
+              screen. Drawn inline rather than loaded from `assets/logo/` so it
+              takes `currentColor` (`--ink-on-accent`) instead of shipping a
+              second colour variant. */}
+          <span className="mmm-logo-mark">
+            <span>iH</span>
+            <svg aria-hidden="true" viewBox="148 92 200 328">
+              <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="currentColor" />
+            </svg>
+            <span>PE</span>
+          </span>
           {isPlaying && currentTrack && (
             <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
           )}

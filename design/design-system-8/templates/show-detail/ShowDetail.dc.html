@@ -50,13 +50,13 @@
       <sc-if value="{{ rsvp }}"><button onClick="{{ toggleRsvp }}" style="font-family:'Work Sans',sans-serif;font-weight:600;font-size:.82rem;background:rgba(34,229,212,.15);color:var(--role-venue);border:1px solid rgba(34,229,212,.35);padding:9px 18px;border-radius:999px;cursor:pointer">{{ rsvpLabel }}</button></sc-if>
       <sc-if value="{{ notRsvp }}"><button onClick="{{ toggleRsvp }}" style="font-family:'Work Sans',sans-serif;font-weight:600;font-size:.82rem;background:transparent;color:var(--ink-1);border:1px solid rgba(34,229,212,.35);padding:9px 18px;border-radius:999px;cursor:pointer">{{ rsvpLabel }}</button></sc-if>
     </div>
-        <div style="display:inline-block"><x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ hyped }}" count="{{ hypeCount }}" trend="▲ 82/hr" on-toggle="{{ toggleHype }}" size="lg" hint-size="150,52"></x-import></div>
+        <div style="display:inline-block"><x-import component-from-global-scope="DesignSystem_0a104b.HypeButton" active="{{ hyped }}" count="{{ hypeCount }}" trend="▲ 82/hr" on-toggle="{{ toggleHype }}" size="lg" hint-size="150,52"></x-import></div>
 
     <!-- Split bar with dollar amounts -->
     <div style="display:flex;gap:0;border-radius:10px;overflow:hidden;margin-top:24px">
       <div style="flex:7;padding:16px;text-align:center;background:rgba(255,80,41,.15)"><div style="font-size:20px;font-weight:700;color:var(--accent)">$19.60</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:var(--accent)" data-i18n="sdArtist70">Artist · 70%</div></div>
       <div style="flex:2;padding:16px;text-align:center;background:rgba(34,229,212,.15)"><div style="font-size:20px;font-weight:700;color:var(--role-venue)">$5.60</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:var(--role-venue)" data-i18n="sdVenue20">Venue · 20%</div></div>
-      <div style="flex:1;padding:16px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:20px;font-weight:700;color:var(--role-dj)">$2.80</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:var(--role-dj)" data-i18n="sdPromoters10">Promoters · 10%</div></div>
+      <div style="flex:1;padding:16px;text-align:center;background:rgba(255,62,154,.15)"><div style="font-size:20px;font-weight:700;color:var(--role-promoter)">$2.80</div><div style="font-family:'JetBrains Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.14em;margin-top:4px;color:var(--role-promoter)" data-i18n="sdPromoters10">Promoters · 10%</div></div>
     </div>
   </div>
 
@@ -67,7 +67,7 @@
   </a>
 
   <!-- LAYOUT: tabs + sticky ticket box -->
-  <div style="display:grid;grid-template-columns:1fr 300px;gap:40px" class="sd-layout-grid">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:40px" class="sd-layout-grid">
     <div>
       <!-- Tabs -->
       <div style="display:flex;gap:6px;border-bottom:1px solid rgba(var(--surface-tint-rgb),.17);margin-bottom:22px">

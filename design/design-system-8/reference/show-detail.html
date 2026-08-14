@@ -1,0 +1,89 @@
+<!-- @dsCard group="Reference" viewport="700x420" name="Show detail (static)" subtitle="Copyable plain-HTML equivalent of templates/show-detail" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iHYPE — Cold Harbour at Space Gallery</title>
+<link rel="stylesheet" href="../styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Static, no runtime. Copy and edit. The fee block near the bottom is the part
+   most worth preserving verbatim — see the note in it. */
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg-base,#0b1220);color:var(--ink-1,#eef1f6);font-family:'Work Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--accent,#ff5029);text-decoration:none}a:hover{color:var(--ink-1,#eef1f6)}
+.wrap{max-width:1000px;margin:0 auto;padding:34px 20px 90px}
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3,#8792a6)}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,6vw,46px);letter-spacing:-.035em;line-height:1.03;margin:10px 0 0;text-wrap:pretty}
+
+/* Collapses to one column on a phone with no media query. Never write
+   `1fr 300px` here — it cannot collapse and overflows at 375px. */
+.split{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:26px;margin-top:26px}
+
+.hero{aspect-ratio:16/9;border-radius:16px;background:linear-gradient(135deg,rgba(255,80,41,.34),rgba(185,131,255,.28));border:1px solid var(--line-2,rgba(238,241,246,.13))}
+.panel{border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px;background:var(--bg-surface,#121b2e);padding:18px 20px}
+.row{display:flex;justify-content:space-between;gap:16px;font-size:13.5px;padding:7px 0}
+.row span:first-child{color:var(--ink-2,#96a1b5)}
+.rule{height:1px;background:var(--line-2,rgba(238,241,246,.13));margin:10px 0}
+.total{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em}
+.buy{width:100%;height:48px;margin-top:14px;border:0;border-radius:9999px;background:var(--accent,#ff5029);color:var(--ink-on-accent,#0b1220);font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:15px;cursor:pointer;transition:filter 160ms,transform 110ms}
+.buy:hover{filter:brightness(1.07)}.buy:active{transform:scale(.985)}
+
+/* The 70/20/10 split, drawn. Promoter is a pool, not an account type. */
+.splitbar{display:flex;height:8px;border-radius:9999px;overflow:hidden;margin:10px 0 12px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2,#96a1b5)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="eyebrow">Thu 14 Aug · Doors 8:00pm · 21+</div>
+  <h1>Cold Harbour</h1>
+  <p style="margin:10px 0 0;font-size:15px;color:var(--ink-2,#96a1b5)">with Nightjar · Space Gallery, Portland ME</p>
+
+  <div class="split">
+    <div>
+      <div class="hero"></div>
+      <div class="panel" style="margin-top:18px">
+        <div class="eyebrow" style="margin-bottom:10px">Where the money goes</div>
+        <div class="splitbar">
+          <div style="width:70%;background:var(--accent,#ff5029)"></div>
+          <div style="width:20%;background:#22e5d4"></div>
+          <div style="width:10%;background:#ff3e9a"></div>
+        </div>
+        <div class="legend">
+          <span><i style="background:#ff5029"></i>70% artist</span>
+          <span><i style="background:#22e5d4"></i>20% venue</span>
+          <span><i style="background:#ff3e9a"></i>10% promoter pool</span>
+        </div>
+        <p style="margin:12px 0 0;font-size:13px;line-height:1.65;color:var(--ink-2,#96a1b5);text-wrap:pretty">Locked in the charter. Anyone who shares a HYPE Link for this show earns a share of the 10% pool — no signup, any account can do it.</p>
+      </div>
+    </div>
+
+    <aside>
+      <div class="panel">
+        <div class="eyebrow" style="margin-bottom:12px">General admission</div>
+        <div class="row"><span>Ticket</span><span>$18.00</span></div>
+        <div class="row"><span>iHYPE fee</span><span style="color:#22e5d4;font-weight:600">$0.00</span></div>
+        <div class="row"><span>Card processing (Stripe)</span><span>$0.82</span></div>
+        <div class="rule"></div>
+        <div class="row"><span class="total">Total</span><span class="total">$18.82</span></div>
+        <button class="buy" type="button">Get tickets</button>
+        <!-- Never merge these two lines into one number, and never imply iHYPE
+             charges a processing fee. iHYPE's fee is $0 and locked in the
+             charter; Stripe's 2.9% + $0.30 is Stripe's, disclosed separately. -->
+        <p style="margin:12px 0 0;font-size:11.5px;line-height:1.6;color:var(--ink-3,#8792a6)">iHYPE takes $0. The processing fee is charged by Stripe (2.9% + $0.30), not by us.</p>
+        <p style="margin:8px 0 0;font-size:11.5px;line-height:1.6;color:var(--ink-3,#8792a6)">Tickets are nonrefundable unless the organizer cancels the event.</p>
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <div class="eyebrow" style="margin-bottom:10px">Venue</div>
+        <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.015em">Space Gallery</div>
+        <div style="font-size:13px;color:var(--ink-2,#96a1b5);margin-top:3px">538 Congress St, Portland ME</div>
+      </div>
+    </aside>
+  </div>
+</div>
+</body>
+</html>

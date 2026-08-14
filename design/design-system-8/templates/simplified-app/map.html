@@ -63,11 +63,11 @@ html,body{margin:0;height:100%;background:var(--map-void,#0a1020);font-family:va
 /* Mini calendar. Opens from the range pill and owns range picking; the strip
    beside it stays a toggle list, so a scattered Fri-and-Sun selection is still
    two taps and does not need the calendar at all. */
-#cal{position:absolute;top:calc(100% + 8px);left:0;z-index:40;width:260px;max-height:calc(100dvh - 128px);display:flex;flex-direction:column;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px;box-shadow:0 20px 48px rgba(4,8,18,.62);padding:13px}
-#calscroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain}
+#cal{position:absolute;top:calc(100% + 8px);left:auto;right:0;z-index:40;width:272px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 128px);display:flex;flex-direction:column;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:16px;box-shadow:0 20px 48px rgba(4,8,18,.62);padding:13px}
+#calscroll{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable}
 @media (max-width:619px){
   #cal{position:fixed;top:auto;bottom:0;left:0;right:0;transform:none;width:100%;max-height:min(70dvh,440px);border-radius:20px 20px 0 0;padding:14px 16px calc(16px + var(--sa-b,0px));z-index:600}
-  #grid button{height:34px;font-size:13.5px}
+  #cal #calscroll #grid button{height:34px;font-size:13.5px}
   #calveil{position:fixed;inset:0;z-index:590;background:rgba(6,10,20,.66);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 }
 #calveil{display:none}
@@ -76,9 +76,10 @@ html,body{margin:0;height:100%;background:var(--map-void,#0a1020);font-family:va
 #calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex:0 0 auto}
 #calhead b{font-family:var(--font-display,'Bricolage Grotesque',sans-serif);font-weight:800;font-size:14px;letter-spacing:-.02em;text-transform:none;color:var(--ink-1,#eef1f6)}
 #calhead button{width:26px;height:26px;padding:0;border-radius:9999px;font-size:12px;letter-spacing:0;display:grid;place-items:center}
-#dow,#grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
-#dow span{text-align:center;font-size:8.5px;letter-spacing:.1em;color:var(--ink-3,#8792a6);padding-bottom:5px}
-#grid button{position:relative;height:26px;padding:0;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink-2,#96a1b5);font-family:var(--font-body,'Work Sans',sans-serif);font-size:12.5px;letter-spacing:0;text-transform:none;cursor:pointer}
+#dow,#grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px}
+#dow{position:sticky;top:0;z-index:1;background:var(--bg-surface,#121b2e)}
+#dow span{text-align:center;min-width:0;font-size:8.5px;letter-spacing:.1em;color:var(--ink-3,#8792a6);padding-bottom:5px}
+#cal #grid button{position:relative;height:26px;padding:0;min-width:0;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--ink-2,#96a1b5);font-family:var(--font-body,'Work Sans',sans-serif);font-size:12.5px;letter-spacing:0;text-transform:none;cursor:pointer}
 #grid button:disabled{color:rgba(238,241,246,.18);cursor:default}
 #grid button[data-has]::after{content:'';position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:3px;height:3px;border-radius:9999px;background:var(--heat-warm,#ffb84a)}
 #grid button[data-sel]{background:var(--accent,#ff5029);border-color:var(--accent,#ff5029);color:#fff}
@@ -86,7 +87,7 @@ html,body{margin:0;height:100%;background:var(--map-void,#0a1020);font-family:va
 #grid button[data-anchor]{border-color:var(--accent,#ff5029)}
 #calfoot{display:flex;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(238,241,246,.07);flex:0 0 auto}
 #calfoot button{flex:1}
-#calnote{margin-top:8px;font-size:9px;letter-spacing:.1em;color:var(--ink-3,#8792a6);text-transform:uppercase}
+#calnote{display:none}
 #range b{font-family:var(--font-body,'Work Sans',sans-serif);font-weight:500;font-size:11.5px;letter-spacing:0;text-transform:none;color:var(--ink-1,#eef1f6)}
 #range button{font-family:inherit;font-size:9px;letter-spacing:.14em;text-transform:uppercase;border-radius:9999px;padding:6px 12px;cursor:pointer;background:transparent;color:var(--ink-2,#96a1b5);border:1px solid var(--line-2,rgba(238,241,246,.13))}
 #daterow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
@@ -118,9 +119,7 @@ a{color:var(--accent,#ff5029)}a:hover{color:var(--ink-1,#eef1f6)}
   <div id="daterow"><div id="dates"></div><div id="range"><span>Dates</span><b id="rangetext"></b><button id="calopen" type="button" aria-expanded="false">Calendar</button>
     <div id="cal" hidden role="dialog" aria-label="Choose a date range">
       <div id="calhead"><button id="prev" type="button" aria-label="Previous month">‹</button><b id="calmon"></b><button id="next" type="button" aria-label="Next month">›</button></div>
-      <div id="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div>
-      <div id="calscroll"><div id="grid"></div>
-      <div id="calnote">Click a day, then a second to take the span</div></div>
+      <div id="calscroll"><div id="dow"><span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span></div><div id="grid"></div></div>
       <div id="calfoot"><button id="callall" type="button">All dates</button><button id="calclear" type="button">Clear</button></div>
     </div>
   </div></div>
@@ -317,7 +316,11 @@ function apply(refit) {
     : one ? fmt(s[0]).dow + ' ' + fmt(s[0]).mon + ' ' + fmt(s[0]).day + ' · one day'
     : rangeLong();
   const sw = document.getElementById('searchwrap');
-  if (layer === 'venues') sw.setAttribute('data-show', '');
+  if (layer === 'venues' || layer === 'artists') {
+    sw.setAttribute('data-show', '');
+    q.placeholder = layer === 'artists' ? 'Search artists, genres, cities' : 'Search venues, streets, cities';
+    hide();
+  }
   else { sw.removeAttribute('data-show'); hide(); }
   [...document.querySelectorAll('#chips button')].forEach((b) => {
     if (b.dataset.id === layer) b.setAttribute('data-on', ''); else b.removeAttribute('data-on');
@@ -400,9 +403,7 @@ function paintCal() {
     };
     grid.appendChild(b);
   }
-  document.getElementById('calnote').textContent = anchor
-    ? 'Pick the second day \u2014 or the same one again for a single night'
-    : 'Click a day, then a second to take the span';
+  document.getElementById('calnote')?.remove();
 }
 
 const veil = document.getElementById('calveil');
@@ -435,22 +436,42 @@ document.addEventListener('pointerdown', (e) => {
   if (!cal.contains(e.target) && e.target !== calBtn) openCal(false);
 }, true);
 
-/* Venue search. Results are venues only — this bar belongs to the venues layer,
-   and matching an artist here would send you to a pin that does not exist. */
+/* Layer search. The bar belongs to whichever layer is showing and only ever
+   matches things that layer draws: venues on the venues layer, artists on the
+   artists layer. Matching an artist while venues are drawn would send you to a
+   pin that does not exist. */
 const q = document.getElementById('q');
 const hits = document.getElementById('hits');
 function hide() { hits.hidden = true; hits.innerHTML = ''; }
+function none(msg, hint) {
+  const b = document.createElement('button');
+  b.type = 'button'; b.disabled = true;
+  b.innerHTML = msg + '<span>' + hint + '</span>';
+  hits.appendChild(b);
+}
 function run() {
   const term = q.value.trim().toLowerCase();
   if (!term) return hide();
-  const found = VENUES.filter((v) => (v.name + ' ' + v.city + ' ' + v.addr).toLowerCase().includes(term));
   hits.innerHTML = '';
-  if (!found.length) {
-    const none = document.createElement('button');
-    none.type = 'button'; none.disabled = true;
-    none.innerHTML = 'No venues match that.<span>Try a city, a street or part of the name</span>';
-    hits.appendChild(none);
+  if (layer === 'artists') {
+    const found = ARTISTS.filter((a) => (a.name + ' ' + a.city + ' ' + a.genre).toLowerCase().includes(term));
+    if (!found.length) none('No artists match that.', 'Try a city, a genre or part of the name');
+    found.forEach((a) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.innerHTML = a.name + '<span>' + a.genre + ' \u00b7 ' + a.city + '</span>';
+      b.onclick = () => {
+        const c = CITY[a.city];
+        if (c) map.flyTo(c, 11, { duration: .8 });
+        send(artistSheet(a)); hide(); q.blur();
+      };
+      hits.appendChild(b);
+    });
+    hits.hidden = false;
+    return;
   }
+  const found = VENUES.filter((v) => (v.name + ' ' + v.city + ' ' + v.addr).toLowerCase().includes(term));
+  if (!found.length) none('No venues match that.', 'Try a city, a street or part of the name');
   found.forEach((v) => {
     const b = document.createElement('button');
     b.type = 'button';

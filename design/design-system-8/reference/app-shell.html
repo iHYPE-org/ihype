@@ -1,0 +1,114 @@
+<!-- @dsCard group="Reference" viewport="700x420" name="App shell (static)" subtitle="Copyable plain-HTML equivalent of templates/simplified-app" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>iHYPE — app shell</title>
+<link rel="stylesheet" href="../styles.css">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* This file is deliberately plain HTML + CSS. No build step, no runtime, no
+   bundle. Copy it, delete what you don't need, and you are already on-brand.
+   Every value here is the real one — do not round them to a grid. */
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg-base,#0b1220);color:var(--ink-1,#eef1f6);font-family:'Work Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden;overscroll-behavior:none}
+a{color:var(--accent,#ff5029);text-decoration:none}
+a:hover{color:var(--ink-1,#eef1f6)}
+
+/* The pane is the only scroller. html/body stay locked so mobile browser chrome
+   cannot collapse mid-gesture and resize the viewport under a drag. */
+.pane{height:100%;overflow-y:auto;overscroll-behavior:contain;padding:calc(16px + env(safe-area-inset-top)) 16px calc(96px + env(safe-area-inset-bottom))}
+@media(min-width:620px){.pane{padding:30px 40px 142px}}
+
+/* Eyebrow. Mono, tiny, tracked wide, uppercase — metadata only, never content
+   that carries meaning on its own. */
+.eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-3,#8792a6)}
+
+/* Subnav is a link bar, not pills: five capsules cannot fit 375px without
+   shrinking type, and a short word in a filled pill reads as a balloon. The
+   selection is an underline; the 44px target is held on the vertical axis. */
+.subnav{display:flex;gap:18px;align-items:stretch;flex-wrap:nowrap;overflow-x:auto;margin:14px 0;scrollbar-width:none}
+.subnav::-webkit-scrollbar{display:none}
+.subnav button{position:relative;flex:0 0 auto;white-space:nowrap;background:none;border:0;padding:11px 2px 12px;cursor:pointer;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:14px;letter-spacing:-.015em;color:var(--ink-3,#8792a6);transition:color 160ms cubic-bezier(.2,.7,.3,1),transform 110ms cubic-bezier(.2,.7,.3,1);transform-origin:50% 100%}
+.subnav button:hover{color:var(--ink-1,#eef1f6)}
+.subnav button:active{transform:scale(.94);color:var(--ink-1,#eef1f6)}
+.subnav button[aria-current]{font-weight:800;color:var(--ink-1,#eef1f6)}
+.subnav button[aria-current]::after{content:"";position:absolute;left:0;right:0;bottom:4px;height:2.5px;border-radius:9999px;background:var(--accent,#ff5029);box-shadow:0 0 12px rgba(255,80,41,.55);animation:underline 260ms cubic-bezier(.2,.7,.3,1) both}
+@keyframes underline{from{transform:scaleX(.3);opacity:0}to{transform:scaleX(1);opacity:1}}
+
+/* Filters condense to one row: the value itself is the control. */
+.filters{display:flex;gap:16px;align-items:center;flex-wrap:wrap;max-width:900px;margin-bottom:16px}
+.filter{display:flex;align-items:baseline;gap:6px;background:none;border:0;padding:9px 0;cursor:pointer;font-size:13px;color:var(--ink-2,#96a1b5);font-family:'Work Sans',sans-serif}
+.filter b{font-weight:600;color:var(--ink-1,#eef1f6);border-bottom:1px dashed var(--line-2,rgba(238,241,246,.28));padding-bottom:1px}
+.filter:hover b{border-bottom-color:var(--accent,#ff5029);color:var(--accent,#ff5029)}
+
+.search{display:flex;align-items:center;gap:10px;max-width:900px;margin-bottom:20px;background:var(--bg-surface,#121b2e);border:1px solid var(--line-2,rgba(238,241,246,.13));border-radius:9999px;padding:9px 16px}
+.search input{flex:1;background:none;border:0;outline:0;color:var(--ink-1,#eef1f6);font-size:13.5px;font-family:'Work Sans',sans-serif}
+.search input::placeholder{color:var(--ink-3,#8792a6)}
+
+/* Cards: 1px hairline, 14px radius, raised surface. No drop shadow on a card —
+   shadow is reserved for things that float above the pane (sheets, the player). */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:14px;max-width:900px}
+.card{display:flex;gap:13px;align-items:center;padding:13px;border-radius:14px;border:1px solid var(--line-2,rgba(238,241,246,.13));background:var(--bg-surface,#121b2e);cursor:pointer;transition:border-color 160ms,background 160ms}
+.card:hover{border-color:rgba(238,241,246,.24);background:var(--bg-raised,#18233a)}
+.art{width:56px;height:56px;border-radius:10px;flex-shrink:0;background:linear-gradient(135deg,rgba(255,80,41,.35),rgba(185,131,255,.3))}
+.card h3{margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;letter-spacing:-.015em}
+.card p{margin:3px 0 0;font-size:12.5px;color:var(--ink-2,#96a1b5)}
+
+/* Hype button — the namesake mechanic. Geometry and the flame path are lifted
+   verbatim from components/core/HypeButton.jsx (size `md`: icon 16, pad 7px 14px,
+   font 13). Active fills the flame; inactive strokes it at 1.8. Never substitute
+   an emoji for this icon. */
+.hype{position:relative;display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.14);background:transparent;color:rgba(238,241,246,.7);font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1;cursor:pointer;transition:background 150ms ease,border-color 150ms ease,color 150ms ease}
+.hype:hover{border-color:rgba(255,80,41,.4);color:var(--accent,#ff5029)}
+.hype[aria-pressed=true]{background:rgba(255,80,41,.12);border-color:rgba(255,80,41,.3);color:var(--accent,#ff5029)}
+.hype svg{flex-shrink:0}
+
+/* The player floats: it owns its own safe area because it sits outside the pane. */
+.player{position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:rgba(18,27,46,.86);backdrop-filter:blur(18px);border:1px solid var(--line-2,rgba(238,241,246,.13));box-shadow:0 18px 50px rgba(4,8,18,.55)}
+@media(min-width:620px){.player{left:auto;right:40px;width:360px}}
+.player .art{width:38px;height:38px;border-radius:8px}
+.play{width:36px;height:36px;border-radius:50%;border:0;background:var(--ink-1,#eef1f6);color:var(--bg-base,#0b1220);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="pane">
+  <div class="eyebrow">Portland, ME · Thu 14 Aug</div>
+  <h1 style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(28px,7vw,40px);letter-spacing:-.035em;line-height:1.05;margin:8px 0 0">Music</h1>
+
+  <nav class="subnav">
+    <button type="button" aria-current="page">Recommended</button>
+    <button type="button">Charts</button>
+    <button type="button">Radio</button>
+    <button type="button">Lists</button>
+    <button type="button">Live</button>
+  </nav>
+
+  <div class="search">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="#8792a6" stroke-width="1.8"/><path d="m16.5 16.5 4 4" stroke="#8792a6" stroke-width="1.8" stroke-linecap="round"/></svg>
+    <input type="search" placeholder="Search artists, tracks, venues">
+  </div>
+
+  <div class="filters">
+    <button class="filter" type="button">Genre <b>All</b></button>
+    <button class="filter" type="button">Place <b>Portland</b></button>
+    <button class="filter" type="button">When <b>This week</b></button>
+  </div>
+
+  <div class="grid">
+    <article class="card"><div class="art"></div><div style="flex:1;min-width:0"><h3>Cold Harbour</h3><p>Post-punk · Portland</p></div><button class="hype" type="button" aria-pressed="true" aria-label="Hyped, 2.4k"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2.5.5 2-1 3-2 3 1-3-1-4-1-6-1 1-3 2-3 5a3 3 0 0 0 3 3c-3 0-6-2-6-6 0-2 1-3.5 4-3.5z"/></svg><span>2.4k</span></button></article>
+    <article class="card"><div class="art" style="background:linear-gradient(135deg,rgba(34,229,212,.35),rgba(255,80,41,.28))"></div><div style="flex:1;min-width:0"><h3>Sarah Vane</h3><p>Folk · Bangor</p></div><button class="hype" type="button" aria-label="Hype, 891"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2.5.5 2-1 3-2 3 1-3-1-4-1-6-1 1-3 2-3 5a3 3 0 0 0 3 3c-3 0-6-2-6-6 0-2 1-3.5 4-3.5z"/></svg><span>891</span></button></article>
+    <article class="card"><div class="art" style="background:linear-gradient(135deg,rgba(185,131,255,.4),rgba(34,229,212,.25))"></div><div style="flex:1;min-width:0"><h3>The Lupine</h3><p>Indie rock · Portland</p></div><button class="hype" type="button" aria-label="Hype, 1.7k"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2.5.5 2-1 3-2 3 1-3-1-4-1-6-1 1-3 2-3 5a3 3 0 0 0 3 3c-3 0-6-2-6-6 0-2 1-3.5 4-3.5z"/></svg><span>1.7k</span></button></article>
+    <article class="card"><div class="art" style="background:linear-gradient(135deg,rgba(255,184,74,.35),rgba(255,80,41,.3))"></div><div style="flex:1;min-width:0"><h3>Nightjar</h3><p>Electronic · Lewiston</p></div><button class="hype" type="button" aria-label="Hype, 604"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2c1 3-2 4-2 7a4 4 0 0 0 8 0c0-1-.5-2-1-2.5.5 2-1 3-2 3 1-3-1-4-1-6-1 1-3 2-3 5a3 3 0 0 0 3 3c-3 0-6-2-6-6 0-2 1-3.5 4-3.5z"/></svg><span>604</span></button></article>
+  </div>
+</div>
+
+<div class="player">
+  <div class="art"></div>
+  <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Slow Tide</div><div style="font-size:11.5px;color:var(--ink-2,#96a1b5)">Cold Harbour</div></div>
+  <button class="play" type="button" aria-label="Play"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>
+</div>
+</body>
+</html>

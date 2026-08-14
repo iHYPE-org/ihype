@@ -107,7 +107,10 @@ const KIND_LABEL: Record<SearchResult['type'], string> = {
  * of iHYPE" fallback is a handoff to THIS field, and the handoff is worthless
  * if it drops the words the member already typed.
  */
-export function MmmSearch({ initialQuery = '' }: { initialQuery?: string } = {}) {
+export function MmmSearch({
+  autoFocus = false,
+  initialQuery = '',
+}: { autoFocus?: boolean; initialQuery?: string } = {}) {
   const [query, setQuery] = useState(initialQuery);
   const [scope, setScope] = useState('all');
   const [focused, setFocused] = useState(false);
@@ -133,6 +136,14 @@ export function MmmSearch({ initialQuery = '' }: { initialQuery?: string } = {})
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+
+  // The player pill's phone search control navigates here rather than opening a
+  // surface of its own — the field IS the search surface — so arriving with
+  // `?focus=search` has to land in the field, or the tap costs a navigation and
+  // still leaves the member with something to aim at.
+  useEffect(() => {
+    if (autoFocus) inputRef.current?.focus();
+  }, [autoFocus]);
 
   const trimmed = query.trim();
   const activeType = SCOPES.find((entry) => entry.id === scope)?.type ?? 'all';

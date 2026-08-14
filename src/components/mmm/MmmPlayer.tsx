@@ -75,6 +75,7 @@ export function MmmPlayer({
   onPrev,
   onOpenAlbum,
   onOpenArtist,
+  onSearch,
   onSeek,
   onToggleFav,
   onToggleHype,
@@ -115,6 +116,11 @@ export function MmmPlayer({
   /** The release name in the meta line. Separate from the artist. */
   onOpenAlbum?: () => void;
   onSeek: (value: number) => void;
+  /**
+   * Phone only, per `PlayerPill`: search rides at the bar's left edge. Omitted,
+   * it is not drawn — a search control with nowhere to go is worse than none.
+   */
+  onSearch?: () => void;
   onToggleFav: () => void;
   onToggleHype: () => void;
   onTogglePlay: () => void;
@@ -164,7 +170,12 @@ export function MmmPlayer({
   // null renders nothing. Never invent a placeholder track.
   if (!track) return null;
 
-  const art = Math.max(40, anchorHeight - 24);
+  // 64 in an 88px pill leaves exactly 12px above and below, which is the pill's
+  // own padding. On a phone the bar also carries search at its left edge, so the
+  // artwork drops to the design's 40px with a 14px corner — a 64px square there
+  // leaves the title about a word wide.
+  const art = narrow ? 40 : Math.max(40, anchorHeight - 24);
+  const artRadius = narrow ? 14 : Math.round(art * 0.342);
   /* Artist and release are separate destinations, so they are separate
      targets. One run of grey text that silently opens one of two different
      pages is the thing this replaces — and a name with no handler stays plain
@@ -232,13 +243,30 @@ export function MmmPlayer({
       ref={rootRef}
       style={{ minHeight: anchorHeight }}
     >
-      {/* The continuous hairline. A pseudo-element would inherit the capsule's
-          radius; this is a real child so it can span the pill's full width. */}
-      <span aria-hidden="true" className="mmm-player-hairline" />
+      {/* Phone only: search rides at the bar's LEFT EDGE, divided off by a
+          hairline so it plainly is not a transport control. Floating between
+          the trigger and the bar it read as part of the nav trigger and cost
+          the row the 52px the title needs. Omitted when there is nowhere to
+          send it — a search button that does nothing is worse than none. */}
+      {narrow && onSearch && (
+        <button
+          aria-label="Search artists, venues and shows"
+          className="mmm-player-search"
+          onClick={onSearch}
+          type="button"
+        >
+          <svg aria-hidden="true" height={18} viewBox="0 0 24 24" width={18}>
+            <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={1.9}>
+              <circle cx={10.6} cy={10.6} r={6.4} />
+              <path d="m15.4 15.4 4.3 4.3" />
+            </g>
+          </svg>
+        </button>
+      )}
 
       <div
         className="mmm-player-art"
-        style={{ width: art, height: art, borderRadius: Math.round(art * 0.342) }}
+        style={{ width: art, height: art, borderRadius: artRadius }}
       >
         {track.artworkUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are

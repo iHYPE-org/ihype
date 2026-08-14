@@ -131,7 +131,30 @@ html.mmm-locked .site-shell > main {
      includes it. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --mmm-bottom: max(calc(26px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  --mmm-safe-left: env(safe-area-inset-left, 0px);
+  --mmm-safe-right: env(safe-area-inset-right, 0px);
+
+  /* ONE FIGURE DRIVES THE CHROME. `SimplifiedApp.dc.html` computes the whole
+     table from `chromeSize`, `gap` and `inset` (56/10/14 under 620px, 88/12/26
+     over it) and hands the results to the trigger, the player and the hint, so
+     the three cannot disagree. This block is that computation.
+
+     It replaces a set of literals that had drifted apart: the trigger was 76px
+     against a player whose min-height was 88, so the two were never the same
+     height and never shared a baseline — which is the FIRST thing SHELL_LOCK
+     says about this chrome ("the trigger and the player are the same height on
+     the same baseline, sharing edges"). Every offset that used to be written
+     out (108px hint, 100/186px result line, 118px dock) is derived here. */
+  --mmm-chrome-size: 88px;
+  --mmm-chrome-gap: 12px;
+  --mmm-inset: 26px;
+  --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
+  --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
+  /* The pill docks immediately right of the trigger — at EVERY width, which is
+     what the design draws on a phone too. */
+  --mmm-player-left: calc(var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap));
+  /* Anything that must clear the chrome band sits above the trigger's top edge. */
+  --mmm-chrome-top: calc(var(--mmm-bottom) + var(--mmm-chrome-size));
 }
 
 /* ── Map layer ─────────────────────────────────────────────────────────── */
@@ -185,9 +208,17 @@ html.mmm-locked .site-shell > main {
   gap: 12px;
   align-items: center;
   overflow-x: auto;
+  /* The scroller is silent, like `.mmm-tabs` and like the design system's own
+     `::-webkit-scrollbar { width: 0; height: 0 }`. A platform scrollbar was
+     rendering as a full-width grey track directly under the layer chips — on
+     the map, which is the base layer of the whole shell, so it read as a piece
+     of chrome rather than as an overflow affordance. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   pointer-events: auto;
   padding: 2px 12px 0;
 }
+.mmm-control-row::-webkit-scrollbar { display: none; }
 .mmm-map-chips {
   display: flex;
   flex: 0 0 auto;
@@ -223,11 +254,12 @@ html.mmm-locked .site-shell > main {
 
 .mmm-result-line {
   position: absolute;
-  /* Clears the player pill (bottom: 26px, ~60px tall). On the narrow
-     breakpoint the player moves to bottom: 112px and this follows it. */
-  bottom: calc(100px + var(--mmm-safe-bottom));
-  left: 26px;
-  right: 26px;
+  /* Clears the chrome band — derived from it rather than restated, so it
+     follows the trigger and the pill instead of being re-tuned whenever one of
+     them moves. */
+  bottom: calc(var(--mmm-chrome-top) + 12px);
+  left: var(--mmm-left);
+  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
   z-index: 20;
   padding: 6px 11px;
   border-radius: 9px;
@@ -448,8 +480,12 @@ html.mmm-locked .site-shell > main {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  /* Silent, same reason as `.mmm-control-row` above. */
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 6px;
 }
+.mmm-date-strip::-webkit-scrollbar { display: none; }
 .mmm-date-pill {
   flex: 0 0 auto;
   display: flex;
@@ -1075,28 +1111,62 @@ html.mmm-locked .site-shell > main {
    consent dialog while the button that opens it stays underneath. */
 .mmm-logo {
   position: absolute;
-  left: 26px;
+  left: var(--mmm-left);
   bottom: var(--mmm-bottom);
   z-index: 31;
-  width: 76px;
-  height: 76px;
-  border-radius: 9999px;
-  border: 1px solid var(--hair-120);
+  /* The shared chrome figure — same height as the player, on the same
+     baseline. It was a fixed 76px against an 88px pill. */
+  width: var(--mmm-chrome-size);
+  height: var(--mmm-chrome-size);
+  /* A SQUIRCLE, not a circle — `LogoTrigger.jsx` draws `round(size × 0.342)`,
+     the same corner ratio the player's artwork and its retired disc already
+     use here, which is what makes the three read as one family. It was
+     `9999px`, so the one piece of chrome that is always on screen was the only
+     one not in that family. The ratio, not a fixed radius, so the corner
+     follows the 88px/56px chrome figure. */
+  border-radius: calc(var(--mmm-chrome-size) * 0.342);
+  /* No border: the trigger is a solid accent fill and a hairline over it reads
+     as a seam at this radius. Per LogoTrigger. */
+  border: 0;
   background: var(--accent);
   color: var(--ink-on-accent);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 15px;
-  letter-spacing: -0.02em;
   cursor: pointer;
-  box-shadow: 0 10px 40px rgba(var(--accent-rgb), 0.28);
+  box-shadow: 0 14px 34px rgba(var(--accent-rgb), 0.3);
   transition: transform 0.3s var(--ease-default);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   pointer-events: auto;
+}
+
+/* The full wordmark — iH, the bolt standing in for the Y, PE — not the letters
+   alone, which is what this rendered before. With no header anywhere in the
+   shell this square is the only place the product says its own name.
+
+   The sizes are a RATIO of the tile (0.235 of it, per LogoTrigger), not the
+   text ramp: the tile does not grow with the Text size control, so a rem mark
+   would overflow it at 140% — and a fixed px mark would not follow the tile
+   between its 88px and 56px sizes. */
+.mmm-logo-mark {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: calc(var(--mmm-chrome-size) * 0.235);
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+/* The bolt is cropped to its own ink (the 512 artboard is mostly air, which at
+   wordmark scale breaks the word into three pieces) and takes currentColor, so
+   it needs no second colour variant. */
+/* 1.24 of the cap height, and 0.61 of that wide — LogoTrigger's own ratios. */
+.mmm-logo-mark svg {
+  display: block;
+  width: calc(var(--mmm-chrome-size) * 0.1777);
+  height: calc(var(--mmm-chrome-size) * 0.2914);
+  margin: 0 0.06em;
 }
 .mmm-logo:hover { opacity: 0.92; }
 /* Open state tips the logo, so the trigger reads as "engaged". */
@@ -1106,11 +1176,15 @@ html.mmm-locked .site-shell > main {
    shared parent is what actually expresses "while the nav is open". */
 .mmm-chrome:has(.mmm-nav-anchor[data-open='true']) .mmm-logo { transform: scale(0.86) rotate(-6deg); }
 
-.mmm-eq { display: flex; align-items: flex-end; gap: 1.5px; height: 7px; }
-.mmm-eq span { width: 2px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
-.mmm-eq span:nth-child(2) { animation-delay: 0.15s; }
-.mmm-eq span:nth-child(3) { animation-delay: 0.3s; }
-@keyframes mmmEq { 0%, 100% { height: 2px; } 50% { height: 7px; } }
+/* The three bars are 2px wide at 5/9/6 with a 2px gap, per LogoTrigger — the
+   resting heights are declared per bar so that stopping the animation (reduced
+   motion) leaves the design's own stagger rather than three equal stubs. */
+.mmm-eq { display: flex; align-items: flex-end; gap: 2px; height: 9px; }
+.mmm-eq span { width: 2px; border-radius: 1px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
+.mmm-eq span:nth-child(1) { height: 5px; }
+.mmm-eq span:nth-child(2) { height: 9px; animation-delay: 0.15s; }
+.mmm-eq span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+@keyframes mmmEq { 0%, 100% { height: 3px; } 50% { height: 9px; } }
 
 /* Fan items. Closed: tucked behind the logo, scaled down, not tabbable and not
    hit-testable. Open: translated onto the arc. The transform and delay are
@@ -1186,8 +1260,10 @@ html.mmm-locked .site-shell > main {
 
 .mmm-nav-hint {
   position: absolute;
-  left: 26px;
-  bottom: calc(108px + var(--mmm-safe-bottom));
+  left: var(--mmm-left);
+  /* Sits just above the trigger, derived from the chrome band rather than
+     restated as a literal that has to be re-tuned when the trigger resizes. */
+  bottom: calc(var(--mmm-chrome-top) + 4px);
   z-index: 29;
   padding: 2px 7px;
   border-radius: 6px;
@@ -1209,31 +1285,43 @@ html.mmm-locked .site-shell > main {
    several fixed a specific bug; the lock's own instruction is to change one and
    re-derive the rest rather than nudge it in isolation.
 
-   `--mmm-chrome` is the single figure the lock says drives the chrome: it sizes
-   the logo trigger, the player's height and the dock position. It lives here so
-   the pill and the trigger cannot drift apart — the same rule as --mmm-bottom. */
+   The single figure the lock says drives the chrome — the trigger's size, the
+   player's height and the dock position — now lives ONCE in the frame's token
+   block at the top of this file, not here: a second copy is how the pill came
+   to be 88px tall beside a 76px trigger. */
 .mmm-player {
-  --mmm-chrome: 88px;
   position: absolute;
   /* Docked immediately right of the trigger, sharing its baseline, so the two
      read as one piece of furniture. box-sizing: border-box on the pill is what
      puts the two borders on one line instead of 2px apart. */
-  left: 118px;
+  left: var(--mmm-player-left);
   right: auto;
   box-sizing: border-box;
-  width: min(760px, calc(100vw - 150px));
-  min-height: var(--mmm-chrome);
+  width: min(760px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  min-height: var(--mmm-chrome-size);
   bottom: var(--mmm-bottom);
   z-index: 28;
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--bg-2);
-  border: 1px solid var(--hair-100);
+  /* Translucent over a blur, not an opaque bar. `PlayerPill` is explicit that
+     at .96 the pill "was a solid bar cutting the frame in half"; the blur is
+     what keeps its own text legible at .74, not the alpha. Composed off
+     --bg-base-rgb, which is a real per-theme triplet — --bg-2 has no triplet
+     and inventing one would mean restating it in both theme blocks. */
+  background: rgba(var(--bg-base-rgb), 0.74);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  /* THE accent ring — a continuous hairline is the pill's own border, not a
+     line drawn across its top edge. This carried a neutral border plus a
+     gradient strip child, which is the partial top bar the lock rejected: it
+     competed with the scrub row for the same job and, measured against the
+     rectangular box, hung past the capsule at each end. */
+  border: 1px solid rgba(var(--accent-rgb), 0.42);
   border-radius: 9999px;
   /* 0 12px, so a 64px square in an 88px pill insets equally on every side. */
   padding: 0 12px;
-  box-shadow: var(--shadow-raised);
+  box-shadow: 0 16px 40px rgba(var(--scrim-rgb), 0.5), 0 0 18px rgba(var(--accent-rgb), 0.12);
   pointer-events: auto;
   overflow: hidden;
   transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
@@ -1244,16 +1332,26 @@ html.mmm-locked .site-shell > main {
   pointer-events: none;
 }
 
-/* A CONTINUOUS hairline, not a partial top bar. The bar competed with the scrub
-   row for the same job and, measured against the pill's rectangular box, hung
-   past the 44px-radius capsule at each end. */
-.mmm-player-hairline {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(var(--accent-rgb), 0.55), transparent);
-  pointer-events: none;
+/* Search rides at the bar's LEFT EDGE on a phone, divided off by a hairline so
+   it plainly is not a transport control. `PlayerPill` records why it is not a
+   square of its own between the trigger and the bar: floating there it read as
+   part of the nav trigger, and it cost the row the 52px the title needs. */
+.mmm-player-search {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  margin-right: -4px;
+  border: 0;
+  border-right: 1px solid var(--hair-70);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
 }
+.mmm-player-search svg { display: block; }
 
 /* The artwork is the row's FIRST CHILD, so it centres against the pill's whole
    height and the scrub row aligns with the title by construction. A squircle,
@@ -1429,7 +1527,9 @@ html.mmm-locked .site-shell > main {
    disable a keyframe. */
 @media (prefers-reduced-motion: reduce) {
   .mmm-ray, .mmm-logo, .mmm-player { transition: none; }
-  .mmm-eq span { animation: none; height: 5px; }
+  /* Height is NOT reset here: each bar declares its own resting height above,
+     so the mark holds the design's stagger instead of flattening. */
+  .mmm-eq span { animation: none; }
   .mmm-sheet { animation: none; }
   .mmm-nav-scrim { animation: none; }
 }
@@ -1438,26 +1538,34 @@ html.mmm-locked .site-shell > main {
    the ARC table in mmm-nav.ts, which the component picks per viewport — only
    the anchor and the player move here. */
 @media (max-width: 720px) {
-  /* The resting value drops 26px → 22px here. It is re-stated through the same
-     token as the base rule rather than as a literal `max()`, which is what
-     keeps the consent lift AND the home-indicator inset attached to it: the
-     earlier version of this block restated a plain `bottom: 22px` and silently
-     disabled the lift at exactly the width that needed it. Redefining the
-     token is now the only edit a new resting value needs, and both properties
-     below follow automatically. */
-  .mmm-frame { --mmm-bottom: max(calc(22px + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px)); }
-  .mmm-nav-anchor { left: 18px; }
-  /* Same offsets as the anchor: the two are one control and must not drift. */
-  .mmm-logo { left: 18px; }
-  .mmm-result-line { left: 18px; right: 18px; bottom: calc(186px + var(--mmm-safe-bottom)); }
-  .mmm-nav-hint { left: 18px; bottom: calc(104px + var(--mmm-safe-bottom)); }
-  .mmm-player {
-    left: 18px;
-    right: 18px;
-    max-width: none;
-    bottom: calc(112px + var(--mmm-safe-bottom));
-    padding: 8px 14px 8px 8px;
+  /* Nothing to move. The trigger, the hint, the result line and the pill all
+     resolve from the frame's chrome tokens, and the phone values for those are
+     set at 620px below — which is the design system's ONE breakpoint
+     (`MOBILE.md`). 720 is the arc table's own threshold and governs the arc
+     coordinates alone; the two are deliberately different numbers and this
+     block used to conflate them by moving the chrome here as well. */
+  .mmm-nav-anchor { left: var(--mmm-left); }
+}
+
+/* The design system's single breakpoint. `SimplifiedApp.dc.html` switches the
+   whole chrome table here — `phone = viewportW < 620` → size 56, gap 10, inset
+   14 — and every offset follows from those three, so this block redefines only
+   them.
+
+   What this REPLACED matters, because it was the visible bug: the pill used to
+   detach from the trigger below 720px and stack above it full-width
+   (`left: 18px; right: 18px; bottom: 112px`). The design docks the pill
+   immediately right of the trigger at every width — one piece of furniture,
+   bottom-left, on one baseline — which is what the phone mockups show. */
+@media (max-width: 620px) {
+  .mmm-frame {
+    --mmm-chrome-size: 56px;
+    --mmm-chrome-gap: 10px;
+    --mmm-inset: 14px;
   }
+  /* The pill is 56px tall here, so its padding tightens with it: a 40px
+     artwork in 56px leaves 8px, matching the inset on the sides it touches. */
+  .mmm-player { padding: 0 8px; gap: 10px; }
 }
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */

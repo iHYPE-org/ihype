@@ -15,7 +15,7 @@ a{color:var(--accent)}a:hover{color:var(--ink-1)}
 </style></head><body>
 <div class="stage" id="stage"></div>
 <script>
-const NS = Object.values(window).find((v) => v && typeof v === 'object' && v.ArcNav && v.PlayerPill) || {};
+const NS = window.DesignSystem_0a104b || {};
 const { ArcNav, LogoTrigger, PlayerPill, NavHint, MapSheet, Scrim, Vignette } = NS;
 const MODULES = [
   { id: 'map', label: 'Map' },

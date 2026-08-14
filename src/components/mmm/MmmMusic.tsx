@@ -59,7 +59,13 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
  * says so in a sentence rather than showing an empty frame, and a station whose
  * count could not be read renders without a count rather than claiming zero.
  */
-export function MmmMusic({ tab, genre, city, q }: { tab: MusicTabId; genre?: string; city?: string; q?: string }) {
+export function MmmMusic({
+  tab,
+  genre,
+  city,
+  q,
+  focusSearch = false,
+}: { tab: MusicTabId; genre?: string; city?: string; q?: string; focusSearch?: boolean }) {
   return (
     <>
       {/* Tabs on one row, search on the next — the 2026-08-10 template moved
@@ -86,7 +92,7 @@ export function MmmMusic({ tab, genre, city, q }: { tab: MusicTabId; genre?: str
             </Link>
           ))}
         </nav>
-        <MmmSearch initialQuery={q ?? ''} />
+        <MmmSearch autoFocus={focusSearch} initialQuery={q ?? ''} />
       </div>
       {tab === 'discover' && <DiscoverTab city={city} genre={genre} />}
       {tab === 'radio' && <RadioTab />}
