@@ -336,6 +336,29 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             <span className="mmm-me-add-chip">Verified</span>
           </Link>
         )}
+        {data.isAdmin && (
+          /* The admin console, for the one account allowed to hold ADMIN.
+             
+             It sits with the profiles because that is what it is from the
+             member's side — another thing this account can BE — and because
+             the shell has nowhere else to put it: SHELL_LOCK gives MMM no
+             header, and the fixed ADMIN MODE chip that used to carry this link
+             was removed on 2026-08-14 for covering content on every screen.
+             Removing that chip left an administrator with no route into the
+             console from inside the shell at all; this is that route.
+             
+             Not an "add" — it is not created, it is entered — so it carries a
+             chevron rather than a plus, and says where it goes: the console is
+             the legacy shell, which is a departure worth labelling rather than
+             discovering. `isAdmin` is resolved server-side through
+             `isAdminSession()`, so this row is never drawn for an account the
+             console would refuse. */
+          <Link className="mmm-me-add" data-kind="admin" href="/admin">
+            <span aria-hidden="true">›</span>
+            Admin console
+            <span className="mmm-me-add-chip">Admin</span>
+          </Link>
+        )}
       </div>
 
       <p className="mmm-me-note">
@@ -363,6 +386,18 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         onToggle={() => toggleSection('about')}
         open={openSection === 'about'}
       >
+
+      {/* Never an empty drawer (2026-08-14, from device screenshots). "About Me"
+          opened onto nothing at all when a member had no activity yet — which
+          is every member on day one, and exactly who is most likely to open it.
+          A drawer that opens onto blank space reads as broken rather than as
+          empty, and it is the one state a new account is guaranteed to see. */}
+      {data.activity.length === 0 && (
+        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: '0 0 4px' }}>
+          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
+          shows up here — this is the activity artists and venues can see.
+        </p>
+      )}
 
       {data.activity.length > 0 && (
         <>

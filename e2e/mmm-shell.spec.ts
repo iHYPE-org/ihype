@@ -91,7 +91,12 @@ test.describe('Music · Map · Me shell', () => {
   test('the logo trigger and the player are the only persistent chrome', async ({ page }) => {
     await page.goto('/app/map');
     await expect(page.getByRole('button', { name: /Open iHYPE navigation/i })).toBeVisible();
-    await expect(page.locator('.mmm-nav-hint')).toHaveText('MAP');
+    /* The module label that used to sit above the trigger is gone (2026-08-14):
+       on a phone it printed over the pane's own content at the bottom of the
+       screen, and it named the module the member was already looking at. What
+       the rule actually says is that the trigger and the player are the ONLY
+       persistent chrome — so assert exactly that, rather than the label. */
+    await expect(page.locator('.mmm-nav-hint')).toHaveCount(0);
   });
 
   // Rule 5: the module pane is the only scroll container; the document is locked.

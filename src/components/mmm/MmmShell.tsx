@@ -9,7 +9,7 @@ import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
-import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
+import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, type MmmModuleId } from '@/lib/mmm-nav';
 import { resolvePick, splitQueue } from '@/lib/mmm-queue';
 
 export type MmmNowPlaying = {
@@ -402,19 +402,13 @@ export function MmmShell({
           volume={volume * 100}
         />
 
-        {/* ADMIN MODE.
-            Deliberately NOT a header: SHELL_LOCK is signed off as final and
-            this shell has no top bar, so adding one to hang a button on would
-            break the contract the whole shell is built on. It sits where a
-            header button would sit — fixed top-right, clear of the arc, the
-            player and the safe-area insets — and only for an administrator.
-            The admin console is the legacy shell, which is why this is an
-            explicit, labelled departure rather than a silent link. */}
-        {isAdmin && (
-          <a className="mmm-admin-mode" href="/admin">
-            Admin mode
-          </a>
-        )}
+        {/* ADMIN MODE was here and is gone (2026-08-14, from device
+            screenshots). It was fixed top-right on every screen and covered
+            the content underneath — the MUSIC tab strip, the MAP layer chips
+            and a ME stat tile were all partly behind it. It also told an
+            administrator something they already know: that they are one. The
+            console is a drawer destination away, and `isAdmin` is still
+            resolved in the layout for anything that genuinely needs it. */}
 
         {/* Always mounted: the arc animates between states, and unmounting it
             would make every open a fresh mount with no closing transition. */}
@@ -455,7 +449,13 @@ export function MmmShell({
           )}
         </button>
 
-        {!navOpen && <div className="mmm-nav-hint">{navHint(pathname)}</div>}
+        {/* The module label that sat above the logo trigger ("MAP" / "MUSIC" /
+            "ME") is gone (2026-08-14, from device screenshots). On a phone it
+            printed over whatever the pane was showing at the bottom of the
+            screen — the empty-state sentence on MUSIC, a ME row — and it names
+            the module you are already looking at. The trigger itself is the
+            navigation; the label was furniture. `navHint()` stays in
+            `mmm-nav.ts` and stays tested: it is the arc's own labelling. */}
       </div>
     </div>
   );

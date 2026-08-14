@@ -15,7 +15,7 @@ describe('isAdminSession', () => {
     // The second lock. The jwt clamp should already have downgraded this role,
     // so reaching here means a Session arrived from somewhere else — a test
     // fixture, a future provider, a hand-built object in a route.
-    expect(isAdminSession(session('ADMIN', 'colinatwood@gmail.com'))).toBe(false);
+    expect(isAdminSession(session('ADMIN', 'someone-else@example.com'))).toBe(false);
     expect(isAdminSession(session('ADMIN', null))).toBe(false);
   });
 

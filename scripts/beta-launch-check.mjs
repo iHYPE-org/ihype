@@ -34,8 +34,12 @@ const REQUIRED = [
 const OPTIONAL = [
   { key: 'NEXT_PUBLIC_SENTRY_DSN', hint: 'Sentry error monitoring' },
   { key: 'OPENAI_API_KEY', hint: 'AI discovery features' },
-  { key: 'MUX_TOKEN_ID', hint: 'Video streaming' },
-  { key: 'MUX_TOKEN_SECRET', hint: 'Video streaming' },
+  /* MUX_TOKEN_ID/MUX_TOKEN_SECRET were listed here as "Video streaming" and
+     are gone (2026-08-14). iHYPE hosts no video, no live streams and no
+     recorded video — it is a brand constant, not a missing feature — and
+     nothing in src/ has ever read them. An operator running this check at the
+     one moment they are deciding whether the product is ready was being told
+     that video streaming is a thing they could configure. */
   ...(!paymentEnabled
     ? [
         { key: 'STRIPE_SECRET_KEY', hint: 'Not required while FEATURE_ENABLE_TICKET_PAYMENTS=false' },

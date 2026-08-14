@@ -51,7 +51,20 @@
 
 ## Content and native clients
 
-- [ ] Alpha readiness reports at least 10 playable tracks, 5 artists, 2 venues, 2 upcoming events, and 1 radio show.
+- [ ] Alpha readiness reports at least 10 playable tracks, 5 artists, 2 venues, and 2 upcoming events.
+      <!-- "and 1 radio show" was here and is deliberately gone (2026-08-14). It
+      could not be satisfied: DJ-authored radio shows were retired as a product
+      decision, `RadioShowCreator` is gone, and nothing in the app can author
+      one — the check counted `Show.isRadioShow` rows, of which only
+      pre-retirement rows can exist. `ALPHA_CONTENT_TARGETS` in
+      `src/lib/alpha-readiness.ts` dropped it for that reason and this line did
+      not, so the code and the checklist disagreed, with the checklist asking
+      operators for something impossible. Radio is still covered: `/radio` is
+      the always-on station assembled from published tracks, so the 10 playable
+      tracks IS the radio readiness check. This list must match
+      `ALPHA_CONTENT_TARGETS` — a permanently failing item teaches everyone to
+      read past the board. -->
+
 - [ ] Run the native workflow with `publish=false`; install and exercise both retained signed artifacts.
 - [ ] Only after signed-device testing passes, explicitly approve a `publish=true` internal-store upload.
 

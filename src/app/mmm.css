@@ -485,6 +485,35 @@ html.mmm-locked .site-shell > main {
   .mmm-tabs { --tab-gap: 4px; --tab-fs: 11px; --tab-pad: 15px 9px; }
 }
 
+/* A SCROLLABLE ROW HAS TO LOOK SCROLLABLE (2026-08-14, from device
+   screenshots).
+
+   `.mmm-tabs` and `.mmm-control-row` both hold one line at every width and
+   scroll sideways when they overrun — which is the design's own behaviour, and
+   correct. What they did not do is SAY so: the last chip was cut dead at the
+   frame edge, so "ARTISTS" and "Recommended" read as broken layout rather than
+   as more content to the right. Reported from a phone as "map not fitting
+   selectors" and "Recommended doesn't quite fit in button".
+
+   The fade is a mask on the row, not an element: an overlay would sit above
+   the chips and eat their taps at exactly the edge the member is reaching for.
+   `scroll-padding-inline-end` keeps a keyboard-focused chip clear of the fade,
+   and `scroll-snap` is deliberately NOT used — snapping a filter row fights a
+   member who is nudging it a few pixels to read one label. */
+.mmm-tabs,
+.mmm-control-row {
+  --mmm-row-fade: 22px;
+  mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
+  scroll-padding-inline-end: var(--mmm-row-fade);
+}
+/* Known cost, stated rather than hidden: CSS cannot ask "am I overflowing",
+   so the fade also applies to a row that fits, softening the last 22px of its
+   final chip. At 22px against a 44px-minimum chip that is the tail of the
+   pill, not its label. Making it conditional needs a resize observer in JS,
+   which is a lot of machinery for the difference between a crisp pill edge and
+   a slightly soft one. */
+
 /* ── MAP date strip ───────────────────────────────────────────────────────
    Events only — an event has a date and a venue or an artist does not, which is
    also why the API is never sent a `dates` param on those layers.
@@ -679,6 +708,11 @@ html.mmm-locked .site-shell > main {
 /* The -text variant, not the fill: amber on this ground is 2.63:1 as copy,
    which is why --role-advertiser-text exists as its own token. */
 .mmm-me-add[data-kind='advertiser'] > [aria-hidden] { color: var(--role-advertiser-text); }
+/* The admin console row. Accent rather than a role hue on purpose: admin is
+   not one of the four account types, and giving it a role colour would put a
+   fifth role in a list the design system says has four. */
+.mmm-me-add[data-kind='admin']:hover { border-color: var(--accent); }
+.mmm-me-add[data-kind='admin'] > [aria-hidden] { color: var(--accent-text); }
 .mmm-me-add-chip {
   font-family: var(--font-mono);
   font-size: 0.55rem;
@@ -1274,24 +1308,10 @@ html.mmm-locked .site-shell > main {
   filter: drop-shadow(0 1px 0.7px rgba(4, 8, 18, 0.7)) drop-shadow(0 -0.8px 0.6px rgba(255, 255, 255, 0.3));
 }
 
-.mmm-nav-hint {
-  position: absolute;
-  left: var(--mmm-left);
-  /* Sits just above the trigger, derived from the chrome band rather than
-     restated as a literal that has to be re-tuned when the trigger resizes. */
-  bottom: calc(var(--mmm-chrome-top) + 4px);
-  z-index: 29;
-  padding: 2px 7px;
-  border-radius: 6px;
-  background: rgba(var(--bg-base-rgb), 0.8);
-  border: 1px solid var(--hair-100);
-  font-family: var(--font-mono);
-  font-size: 0.5rem;
-  letter-spacing: 0.09em;
-  color: var(--ink-2);
-  white-space: nowrap;
-  pointer-events: none;
-}
+/* `.mmm-nav-hint` was here and is deleted with the element (2026-08-14). See
+   MmmShell for why: the module label printed over the pane's own content at
+   the bottom of a phone screen, and named the module already on screen. */
+
 
 /* The player is a pill to the right of the logo. Opening the nav dims
    everything including the player — it fades and drops rather than being
@@ -2134,35 +2154,10 @@ html.mmm-locked .site-shell > main {
   padding: 4px 2px;
 }
 
-/* ADMIN MODE — the one piece of chrome that is role-gated.
-   Fixed top-RIGHT, permanently visible for an administrator. This shell has no
-   header to put it in and SHELL_LOCK is final on that, so it sits where a
-   header button would. The safe-area inset keeps it clear of the Dynamic
-   Island the same way `--mmm-bottom` keeps the logo clear of the home
-   indicator; the logo trigger is bottom-left, so the two never collide. */
-.mmm-admin-mode {
-  position: absolute;
-  top: calc(14px + env(safe-area-inset-top, 0px));
-  right: calc(14px + env(safe-area-inset-right, 0px));
-  z-index: 40;
-  display: inline-flex;
-  align-items: center;
-  /* 44px floor, per MOBILE.md — grown with padding, never with font size. */
-  min-height: 44px;
-  padding: 11px 16px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--accent);
-  background: rgba(var(--bg-base-rgb), 0.72);
-  backdrop-filter: blur(8px);
-  color: var(--accent-text);
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  text-decoration: none;
-}
-.mmm-admin-mode:hover { background: rgba(var(--accent-rgb), 0.16); }
-.mmm-admin-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* `.mmm-admin-mode` was here and is deleted with the element (2026-08-14,
+   from device screenshots). Fixed top-right on every screen, it covered the
+   MUSIC tab strip, the MAP layer chips and a ME stat tile — and told an
+   administrator the one thing they already knew. */
 
 /* ═══════════════════════════════════════════════════════════════════════════
    QUEUE AND HISTORY — `PlayerPill`'s panel.

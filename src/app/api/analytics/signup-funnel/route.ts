@@ -23,7 +23,30 @@ export async function POST(request: Request) {
   const clientAddress = readClientAddress(request);
   const rateLimit = await consumeRateLimit(`signup-funnel:${clientAddress}`, {
     limit: 60,
-    windowMs: 15 * 60 * 1000
+    windowMs: 15 * 60 * 1000,
+    /**
+     * KV on purpose, exactly as `/api/analytics/track` is — and this bucket is
+     * the stronger case of the two.
+     *
+     * Sentry JAVASCRIPT-NEXTJS-3: "DO rate limit timed out after 750ms" on this
+     * route, 139 times in 25 days and still firing. The cause is the shape of
+     * the bucket, not a fault: it is keyed per client IP on an endpoint one
+     * person touches a handful of times while signing up, so its Durable
+     * Object is evicted between uses and nearly every call pays a cold start.
+     * That is the same reasoning that put `timeoutMs: 2500` on the auth
+     * buckets — but this one does not need atomicity at all, so the cheaper
+     * answer is the right one.
+     *
+     * What the timeout actually cost: a DO failure falls back to KV at HALF
+     * the configured limit, so this route has been quietly enforcing 30 per
+     * 15 minutes rather than 60 — and dropping signup-funnel telemetry during
+     * signup, which is the one funnel an invite-only alpha needs to see. An
+     * opted-out bucket keeps its full limit and logs nothing.
+     *
+     * Safe because the only consequence of an over-count here is a dropped
+     * analytics event: this route already answers ok on refusal.
+     */
+    atomic: false
   });
 
   if (!rateLimit.allowed) {

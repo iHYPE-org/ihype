@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
+import { isAdminSession } from '@/lib/permissions';
 import { MmmMe } from '@/components/mmm/MmmMe';
 import { loadMmmMe } from '@/lib/mmm-me';
 
@@ -15,6 +16,6 @@ export default async function MmmMePage({
   // server-side check — the same rule the legacy shell's role gates follow.
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me');
   const role = (await searchParams)?.role;
-  const data = await loadMmmMe(session.user.id, role);
+  const data = await loadMmmMe(session.user.id, role, isAdminSession(session));
   return <MmmMe data={data} />;
 }
