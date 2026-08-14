@@ -422,3 +422,30 @@
   font-size: 0.8125rem;
   color: var(--ink-2);
 }
+
+/* The rail's live count (useAdminBadges in AdminLive.tsx).
+
+   Absolutely positioned rather than in the column flow: `.ops-rail-item` is a
+   fixed-width vertical stack of glyph over label, and adding a third child
+   would re-space every item in the rail whether or not it had a count. This
+   way an item with a badge and an item without are the same height, so the
+   rail does not reflow as queues fill and empty. */
+.ops-rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 50%;
+  transform: translateX(22px);
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--warning);
+  /* Ink on the fill, never white — 3.27:1 fails AA. */
+  color: var(--ink-on-accent);
+  font-family: var(--f-m, monospace);
+  font-size: 8px;
+  line-height: 1;
+}

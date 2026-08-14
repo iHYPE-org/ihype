@@ -3,6 +3,7 @@ import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
+import { useAdminBadges } from '@/components/admin/AdminLive';
 
 type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'system'|'growth';
 
@@ -80,6 +81,8 @@ export function AdminShell({ children, name, email }: Props) {
   const active = sectionFromPathname(pathname);
   const ops = initials(name, email);
   const subnav = SUBNAV[active];
+  // Live counts, from the same endpoint the board polls — see AdminLive.tsx.
+  const badges = useAdminBadges();
 
   return (
     <div className="ops-shell">
@@ -120,6 +123,10 @@ export function AdminShell({ children, name, email }: Props) {
             >
               <span className="ops-rail-glyph">{item.glyph}</span>
               <span className="ops-rail-label">{t(`adminAdminShell.nav.${item.s}`, item.label)}</span>
+              {/* Only ever a real, non-zero count. A badge reading 0 and a
+                  badge whose count could not be read look the same, and only
+                  one of them means there is nothing to do. */}
+              {badges[item.s] ? <span className="ops-rail-badge">{badges[item.s]}</span> : null}
             </Link>
           ))}
         </aside>

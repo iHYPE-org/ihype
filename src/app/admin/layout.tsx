@@ -6,6 +6,7 @@ import { isAdminSession } from '@/lib/permissions';
 import { SESSION_EXEMPT_PATHS, WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { OpsLoginGate } from '@/components/admin/OpsLoginGate';
+import { AdminLiveRefresh } from '@/components/admin/AdminLive';
 import { db } from '@/lib/db';
 import { hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
 
@@ -59,6 +60,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <OpsLoginGate name={name} email={email}>
+      {/* Mounted here rather than in each page so every admin surface — and
+          any added later — refreshes itself. Renders nothing. */}
+      <AdminLiveRefresh />
       <AdminShell name={name} email={email}>{children}</AdminShell>
     </OpsLoginGate>
   );
