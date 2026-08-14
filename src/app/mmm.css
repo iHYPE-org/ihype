@@ -430,7 +430,16 @@ html.mmm-locked .site-shell > main {
 
 .mmm-tab {
   flex: 0 1 auto;
-  min-width: 0;
+  /* 44x44 is the floor at EVERY pointer type — MOBILE.md says "desktop
+     included" — so it lives here rather than only in `mobile-fit.css`, which is
+     gated on `(pointer: coarse)`. It used to be `min-width: 0`, which let the
+     five MUSIC tabs shrink past their own content once the strip stopped
+     fitting: at 320px they compressed to 41.9px and the responsive gate caught
+     it. `.mmm-tabs` is `overflow-x: auto`, so refusing to shrink scrolls the
+     strip rather than the page — which is the behaviour the design wants
+     anyway, since a tab squeezed under its label is not a tab you can read. */
+  min-width: 44px;
+  min-height: 44px;
   white-space: nowrap;
   /* `display` MUST stay non-inline. `mobile-fit.css` lists `.mmm-tab` in its
      `min-height: 44px` group, and min-height does nothing on an inline box —
