@@ -30,6 +30,35 @@ export const metadata: Metadata = {
   twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION },
 };
 
+/**
+ * How often the invite-gate mismatch below is reported, per isolate.
+ *
+ * The check itself is right and stays. What was wrong is that it reported on
+ * every render of `/`: Sentry JAVASCRIPT-NEXTJS-8 collected **583 events from
+ * one visitor in a single day**, because a homepage view is a homepage view.
+ *
+ * A condition that is TRUE until an operator changes a flag does not become
+ * more true by being logged 583 times. It becomes less visible — this is a
+ * standing state, and standing states reported at per-request volume are how a
+ * real error gets buried in a page of noise, which has already happened in this
+ * project once (two genuine Lighthouse failures written off as flake because
+ * nobody read a report that cried wolf).
+ *
+ * So it is throttled rather than removed or downgraded. It stays `log.error`,
+ * so it stays an issue in Sentry with a live `lastSeen`; it just says so once
+ * an hour per isolate instead of once per visit. Workers spin up many isolates,
+ * so this is a proportionality measure, not a guarantee of exactly one — which
+ * is the right trade for a signal an operator only needs to see, not count.
+ */
+const INVITE_GATE_ALERT_INTERVAL_MS = 60 * 60 * 1000;
+let lastInviteGateAlertAt = 0;
+
+function shouldReportInviteGateDrift(now = Date.now()): boolean {
+  if (now - lastInviteGateAlertAt < INVITE_GATE_ALERT_INTERVAL_MS) return false;
+  lastInviteGateAlertAt = now;
+  return true;
+}
+
 export default async function RootPage() {
   const session = await auth();
   if (session?.user?.id) redirect(WORKBENCH_PATH);
@@ -47,7 +76,7 @@ export default async function RootPage() {
   // to let the two drift unnoticed — a promise the product cannot keep is an
   // error, so it is reported as one, with the fix in the message. `log.error`
   // rather than `console.error` because only the former reaches Sentry.
-  if (!(await isInviteCodeRequiredRuntime())) {
+  if (!(await isInviteCodeRequiredRuntime()) && shouldReportInviteGateDrift()) {
     log.error(
       '[landing] invite gate is OFF while the landing page promises request-only access',
       {
