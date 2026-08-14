@@ -158,9 +158,39 @@ model User {
   weeklyDigestSentAt      DateTime?
   adminDeviceTokenHash    String?
   adminDeviceSetAt        DateTime?
+  adminDevices            AdminDevice[]
   earningsSummarySentAt   DateTime?
   advertiserAccount       AdvertiserAccount?
   hypeBalance             Int                      @default(0)
+}
+
+/// A device allowed to open the admin console.
+///
+/// Replaces `User.adminDeviceTokenHash`, which was a SINGLE column and
+/// therefore a single device: registering a phone silently revoked the laptop,
+/// because the write was an overwrite. That is not a policy anyone chose — the
+/// column just never had room for a second row — and it is why the console
+/// looked broken on a phone while working on a laptop.
+///
+/// The legacy column is deliberately NOT dropped here. It is still read as a
+/// fallback (see `isRegisteredAdminDevice`), so the device an operator is
+/// holding right now keeps working across the deploy; the migration also
+/// backfills it into this table. Dropping it is separate, gated work for after
+/// this has been live long enough to be sure.
+model AdminDevice {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// SHA-256 of the device token. The token itself only ever lives in the
+  /// httpOnly cookie on the device — the same shape the column used.
+  tokenHash  String   @unique
+  /// Operator-facing name, so a list of devices can be revoked meaningfully.
+  label      String?
+  createdAt  DateTime @default(now())
+  /// Last time this device opened the console, for spotting one to revoke.
+  lastSeenAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 // A private, non-public account for a non-"app-user" advertiser (e.g. a gear
@@ -1187,13 +1217,13 @@ model FeatureRequest {
   description           String
   votes                 Int           @default(0)
   status                String        @default("open")
-  votingOpensAt         DateTime       @default(now())
+  votingOpensAt         DateTime      @default(now())
   votingClosesAt        DateTime?
-  quorumRequired        Int            @default(1)
+  quorumRequired        Int           @default(1)
   resultPublishedAt     DateTime?
-  securityException     Boolean        @default(false)
+  securityException     Boolean       @default(false)
   securityExceptionNote String?
-  createdAt             DateTime       @default(now())
+  createdAt             DateTime      @default(now())
   featureVotes          FeatureVote[]
 
   @@index([status, votes])

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { db } from '@/lib/db';
-import { isDeviceChangeWindow, verifyDeviceOtp, generateDeviceToken, hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
+import { isDeviceChangeWindow, verifyDeviceOtp, generateDeviceToken, getDeviceCookieName, signDeviceCookieValue } from '@/lib/admin-device';
+import { registerAdminDevice } from '@/lib/admin-device-store';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,12 +28,13 @@ export async function POST(request: NextRequest) {
   }
 
   const deviceToken = generateDeviceToken();
-  const tokenHash = hashDeviceToken(deviceToken);
 
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { adminDeviceTokenHash: tokenHash, adminDeviceSetAt: new Date() },
-  });
+  // Adds a device rather than replacing the one on file. Before AdminDevice
+  // this was the ONLY way to move the console to another machine, and it is
+  // gated to Monday 8-9am Eastern — so a laptop-to-phone swap was a
+  // once-a-week, one-hour operation. Registering an additional device no
+  // longer needs this route at all; it stays for deliberate rotation.
+  await registerAdminDevice(session.user.id, deviceToken, 'Changed device');
 
   await db.auditLog.create({
     data: {
@@ -44,7 +46,7 @@ export async function POST(request: NextRequest) {
   }).catch(() => {});
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(getDeviceCookieName(), deviceToken, {
+  response.cookies.set(getDeviceCookieName(), signDeviceCookieValue(deviceToken), {
     httpOnly: true,
     secure: true,
     // Lax for the same reason as the setup path in

@@ -2,7 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { db } from '@/lib/db';
-import { verifyDeviceOtp, generateDeviceToken, hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
+import { verifyDeviceOtp, generateDeviceToken, getDeviceCookieName, signDeviceCookieValue } from '@/lib/admin-device';
+import { registerAdminDevice } from '@/lib/admin-device-store';
+
+/**
+ * A name for the device, so a list of them can be revoked meaningfully.
+ *
+ * Derived from the user agent rather than asked for: the registration link is
+ * opened once, often on a phone, and a form field there is a step between the
+ * operator and the console. Coarse on purpose — this labels a row in a list,
+ * it is not fingerprinting, and it is never used to decide access.
+ */
+function deviceLabel(request: NextRequest): string {
+  const ua = request.headers.get('user-agent') ?? '';
+  if (/iPhone/i.test(ua)) return 'iPhone';
+  if (/iPad/i.test(ua)) return 'iPad';
+  if (/Android/i.test(ua)) return 'Android device';
+  if (/Macintosh|Mac OS X/i.test(ua)) return 'Mac';
+  if (/Windows/i.test(ua)) return 'Windows PC';
+  if (/Linux/i.test(ua)) return 'Linux device';
+  return 'Unknown device';
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -18,12 +38,11 @@ export async function POST(request: NextRequest) {
   }
 
   const deviceToken = generateDeviceToken();
-  const tokenHash = hashDeviceToken(deviceToken);
 
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { adminDeviceTokenHash: tokenHash, adminDeviceSetAt: new Date() },
-  });
+  // An INSERT, not an overwrite. This write used to replace the single
+  // `User.adminDeviceTokenHash`, so registering a phone silently signed the
+  // laptop out of the console.
+  await registerAdminDevice(session.user.id, deviceToken, deviceLabel(request));
 
   await db.auditLog.create({
     data: {
@@ -35,7 +54,7 @@ export async function POST(request: NextRequest) {
   }).catch(() => {});
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(getDeviceCookieName(), deviceToken, {
+  response.cookies.set(getDeviceCookieName(), signDeviceCookieValue(deviceToken), {
     httpOnly: true,
     secure: true,
     // Lax, not Strict. Strict withholds the cookie on every cross-site

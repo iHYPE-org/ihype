@@ -7,8 +7,8 @@ import { SESSION_EXEMPT_PATHS, WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { AdminShell } from '@/components/admin/AdminShell';
 import { OpsLoginGate } from '@/components/admin/OpsLoginGate';
 import { AdminLiveRefresh } from '@/components/admin/AdminLive';
-import { db } from '@/lib/db';
-import { hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
+import { getDeviceCookieName } from '@/lib/admin-device';
+import { isRegisteredAdminDevice } from '@/lib/admin-device-store';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = (await headers()).get('x-pathname') ?? '';
@@ -44,14 +44,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // itself — that path returns above — so the redirect below cannot loop.
   const cookieStore = await cookies();
   const deviceCookie = cookieStore.get(getDeviceCookieName())?.value;
-  const admin = await db.user.findUnique({
-    where: { id: session.user.id },
-    select: { adminDeviceTokenHash: true },
-  });
-  const isDeviceValid =
-    deviceCookie &&
-    admin?.adminDeviceTokenHash &&
-    hashDeviceToken(deviceCookie) === admin.adminDeviceTokenHash;
+  // One shared answer — `admin-api.ts` asks the same question, and this used
+  // to be a hand-copied duplicate of the check. Devices are rows now, so more
+  // than one can be registered; see `admin-device-store.ts`.
+  const isDeviceValid = await isRegisteredAdminDevice(session.user.id, deviceCookie);
   if (!isDeviceValid) {
     redirect('/admin/device-register');
   }
