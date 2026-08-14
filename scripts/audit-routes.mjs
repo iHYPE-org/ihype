@@ -37,7 +37,7 @@
  *
  *     npm run audit:routes            summary
  *     npm run audit:routes -- --list  every route, grouped
- *     npm run audit:routes -- --max-legacy=51
+ *     npm run audit:routes -- --max-legacy=50
  *
  * The ratchet is the point: that count must go DOWN. Never raise it to make a
  * build pass — raising it is the whole failure this measures.

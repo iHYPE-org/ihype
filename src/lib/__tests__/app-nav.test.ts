@@ -115,9 +115,18 @@ describe('route registry', () => {
     // match it. Prefix matching is segment-aware for exactly this reason.
     expect(isShellRoute('/for-artists')).toBe(false);
     expect(resolveSection('/for-you')).toBe('EVENTS');
-    // /community-rules has its own entry; without one it would still resolve
-    // via /community's prefix, which is the right section either way.
-    expect(resolveSection('/community-rules')).toBe('SETTINGS');
+    /* /community-rules is the same shape as /for-artists above, and the case
+       that proves the matcher is segment-aware rather than a bare
+       `startsWith`: it is NOT a shell route, and it must not be dragged into
+       one by /community's prefix entry. (An earlier comment here claimed the
+       opposite — that /community's prefix would swallow it — which was wrong
+       about the matcher and would have made removing its own entry a no-op.)
+
+       It is not a shell route because it renders TrustPolicyPage, and its two
+       siblings /ticket-policy and /copyright never were. */
+    expect(isShellRoute('/community-rules')).toBe(false);
+    expect(findShellRoute('/community-rules')).toBeNull();
+    expect(isShellRoute('/community')).toBe(true);
   });
 
   it('resolves /settings and /settings/accessibility to different sections', () => {

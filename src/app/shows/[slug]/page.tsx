@@ -32,6 +32,9 @@ import { ShowSetlistEditor } from '@/components/ShowSetlistEditor';
 import { ShowRecapForm } from '@/components/ShowRecapForm';
 import { ShowTabs } from '@/components/ShowTabs';
 import { ShowComments } from '@/components/ShowComments';
+/* Shared with the shell copy of this page — see the module header for what had
+   already drifted between the two. */
+import { canViewShow, isTicketingOpen } from '@/lib/show-detail';
 
 const getShowMeta = cache((slug: string) =>
   db.show.findUnique({
@@ -138,10 +141,14 @@ export default async function ShowDetailPage({
   const show = await getShowPage(slug);
 
   if (!show) return notFound();
-  const canPreviewDraft =
-    Boolean(session?.user?.id) &&
-    (session?.user?.id === show.creatorId || (session ? isAdminSession(session) : false));
-  if (show.status === 'DRAFT' && !canPreviewDraft) {
+  /* Draft visibility is `@/lib/show-detail`'s, shared with the shell copy of
+     this page at `/app/shows/[slug]` — the rule is unchanged, it just is not
+     written out twice any more. The two had already disagreed about it: the
+     shell hid a draft from its own creator. */
+  if (!canViewShow(show, {
+    userId: session?.user?.id ?? null,
+    isAdmin: session ? isAdminSession(session) : false,
+  })) {
     return notFound();
   }
 
@@ -933,7 +940,7 @@ export default async function ShowDetailPage({
                 showId={show.id}
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
-                ticketingOpen={show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date())}
+                ticketingOpen={isTicketingOpen(show)}
                 ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}

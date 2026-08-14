@@ -13,6 +13,7 @@
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
     "audit:shell": "node scripts/audit-shell-classes.mjs",
+    "audit:design": "node scripts/audit-design-templates.mjs",
     "audit:css": "node scripts/audit-css.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",

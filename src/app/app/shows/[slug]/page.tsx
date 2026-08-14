@@ -7,6 +7,8 @@ import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
+import { isAdminSession } from '@/lib/permissions';
+import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits } from '@/lib/show-detail';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 
 export const dynamic = 'force-dynamic';
@@ -67,6 +69,10 @@ export default async function MmmShowPage({
         title: true,
         slug: true,
         status: true,
+        // Needed by `canViewShow`: a DRAFT is previewable by the account that
+        // created it. Without this column that rule cannot be applied here,
+        // which is exactly why it was not.
+        creatorId: true,
         startsAt: true,
         isTicketed: true,
         ticketPriceCents: true,
@@ -104,32 +110,30 @@ export default async function MmmShowPage({
   // this route's layout is async and has already flushed by the time the throw
   // happens — see `MmmMissing` for the full account.
   if (!show) return <MmmMissing />;
-  // A DRAFT show is private — the same rule the legacy page enforces, and what
-  // keeps a lineup-pending show unbookable while acts are still deciding. It
-  // returns the same surface as a missing one on purpose: "this show exists but
-  // is not public yet" is not something a stranger should be able to learn.
-  if (show.status === 'DRAFT') return <MmmMissing />;
-
-  const venue = show.venueProfile;
-  const where = [venue?.name, venue?.city].filter(Boolean).join(' · ');
-  const ticketingOpen =
-    show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt <= new Date());
 
   /**
-   * `venuePayoutPercent` and `artistPayoutPercent` are nullable, and the legacy
-   * page gates its split panel on both being set rather than defaulting them.
-   * Same here, for a stronger reason: this is the surface where money changes
-   * hands, so a split shown as 70/20/10 because the real one is missing would
-   * be a promise the payout engine has not agreed to.
+   * Draft visibility, ticketing and the split are `@/lib/show-detail`'s, shared
+   * with the public page at `/shows/[slug]`.
+   *
+   * They were this file's own until 2026-08-14, and one of them had already
+   * drifted: a DRAFT was hidden from EVERYONE here, including the organiser who
+   * created it, while the public page has always let its creator and an admin
+   * preview one. So the same person, on the same show, was told it did not
+   * exist in the shell and shown it on the other URL.
+   *
+   * A hidden draft still returns the same surface as a missing show, which is
+   * the part that must not change: "this show exists but is not public yet" is
+   * not something a stranger should be able to learn from the difference
+   * between two errors.
    */
-  const splits =
-    show.venuePayoutPercent !== null && show.artistPayoutPercent !== null
-      ? {
-          artist: show.artistPayoutPercent,
-          venue: show.venuePayoutPercent,
-          promoter: show.promoterPayoutPercent,
-        }
-      : null;
+  if (!canViewShow(show, { userId: session.user.id, isAdmin: isAdminSession(session) })) {
+    return <MmmMissing />;
+  }
+
+  const venue = show.venueProfile;
+  const where = formatShowWhere(venue);
+  const ticketingOpen = isTicketingOpen(show);
+  const splits = resolveShowSplits(show);
 
   return (
     <div className="mmm-show">
