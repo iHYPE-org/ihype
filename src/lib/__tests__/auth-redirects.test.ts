@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { getDeviceCookieName } from '@/lib/admin-device';
 import {
   PROTECTED_PREFIXES,
   SESSION_EXEMPT_PATHS,
@@ -7,6 +8,7 @@ import {
   isProtectedPath,
   isSafeLocalRedirect,
   resolvePostAuthRedirect,
+  ADMIN_DEVICE_COOKIE,
 } from '@/lib/auth-redirects';
 
 describe('auth redirects', () => {
@@ -95,5 +97,17 @@ describe('isProtectedPath', () => {
     for (const path of SESSION_EXEMPT_PATHS) {
       expect(PROTECTED_PREFIXES.some((prefix) => path.startsWith(`${prefix}/`))).toBe(true);
     }
+  });
+
+  // The device gate lives in two places on purpose: middleware checks the
+  // cookie is PRESENT (before the console can stream — see the block in
+  // src/middleware.ts), and the layout does the authoritative hash comparison.
+  // Middleware cannot import admin-device.ts to learn the name, so the name
+  // lives here and that module imports it. This asserts the two have not been
+  // allowed to drift back into two strings: if they do, middleware silently
+  // stops matching and the gate goes back to leaking the whole console body
+  // as a streamed 200.
+  it('shares one definition of the admin device cookie name', () => {
+    expect(getDeviceCookieName()).toBe(ADMIN_DEVICE_COOKIE);
   });
 });

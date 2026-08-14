@@ -29,6 +29,25 @@ export const WORKBENCH_PATH = '/app/map';
 export const PROTECTED_PREFIXES = ['/app', '/listen', '/dashboard', '/admin'] as const;
 
 /**
+ * The admin device-binding cookie, named here rather than in `admin-device.ts`.
+ *
+ * Middleware needs the NAME to gate `/admin` before the console renders (see
+ * the block in `src/middleware.ts`, and note the paragraph above — the admin
+ * device gate had exactly the streamed-200 bug that paragraph describes for
+ * `/app`, and it leaked the whole console body). It must not import
+ * `admin-device.ts` to learn it: that module reaches for `node:crypto` and
+ * `ADMIN_DEVICE_SECRET` at call time, neither of which belongs in the Edge
+ * middleware bundle.
+ *
+ * The alternative was a second copy of the string with a comment asking the
+ * next person to keep them aligned by hand. This file already has that problem
+ * with `public/sw.js`'s NETWORK_ONLY_PATHS and says so; one hand-aligned list
+ * is enough. `admin-device.ts` imports this instead, so there is one definition
+ * and a rename cannot half-apply.
+ */
+export const ADMIN_DEVICE_COOKIE = 'admin_device_token';
+
+/**
  * The two pages under a protected prefix that must work WITHOUT a session.
  *
  * Both are account-recovery paths, and gating them is a deadlock: each exists

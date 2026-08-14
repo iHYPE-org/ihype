@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
-import { WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
+import { ADMIN_DEVICE_COOKIE, WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
 import { MAP_TILE_HOSTS, isMapRoute } from '@/lib/csp-routes';
 
 const { auth } = NextAuth(authConfig);
@@ -108,6 +108,48 @@ const authMiddleware = auth((request) => {
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
     return applySecurityHeaders(NextResponse.redirect(loginUrl), nonce, pathname);
+  }
+
+  // THE DEVICE GATE HAS TO STOP THE REQUEST, NOT REDIRECT AFTER IT
+  // (2026-08-14).
+  //
+  // `src/app/admin/layout.tsx` calls `redirect('/admin/device-register')` when
+  // the device cookie does not match `User.adminDeviceTokenHash`. In the App
+  // Router a layout and its page render in PARALLEL, and by the time the
+  // layout's redirect is decided the page has already started streaming — so
+  // Next cannot answer 307. Measured against the real production bundle in
+  // workerd, with an admin session and no device cookie: `/admin` answers
+  // **200, chunked**, and the body carries the entire console — every count,
+  // the recent-signups list with real addresses, support requests, the audit
+  // log — followed by an instruction telling the CLIENT to navigate away. A
+  // browser obeys it and shows the register page, which is why this looked
+  // like a working gate for as long as anyone only ever tested it in a browser.
+  // `curl` with the same cookie keeps the body.
+  //
+  // That inverts the feature's whole purpose. Device binding exists for the
+  // case where a session cookie is stolen; an attacker holding one is exactly
+  // the party who reads the response instead of rendering it.
+  //
+  // So the gate moves in front of the render. Middleware only checks that the
+  // cookie is PRESENT — the authoritative comparison stays in the layout,
+  // which can hash and reach the database. Presence is enough to stop the
+  // render for the case that leaks: a device that was never registered has no
+  // cookie at all. A forged value gets a 200 and the layout's real check.
+  //
+  // `isProtectedPath` already excludes SESSION_EXEMPT_PATHS, so
+  // `/admin/device-register` and `/admin/setup` cannot be caught by this and
+  // the redirect cannot loop — the same reasoning the layout relies on.
+  if (
+    request.auth &&
+    isProtectedPath(pathname) &&
+    (pathname === '/admin' || pathname.startsWith('/admin/')) &&
+    !request.cookies.get(ADMIN_DEVICE_COOKIE)
+  ) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL('/admin/device-register', request.url)),
+      nonce,
+      pathname,
+    );
   }
 
   if (request.auth && pathname === '/login') {

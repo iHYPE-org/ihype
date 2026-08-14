@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { ADMIN_DEVICE_COOKIE } from '@/lib/auth-redirects';
 
-const COOKIE_NAME = 'admin_device_token';
 const OTP_EXPIRY_SEC = 20 * 60;
 
 function secret(): string {
@@ -19,7 +19,7 @@ export function hashDeviceToken(token: string): string {
 }
 
 export function getDeviceCookieName(): string {
-  return COOKIE_NAME;
+  return ADMIN_DEVICE_COOKIE;
 }
 
 type OtpPurpose = 'admin-device-setup' | 'admin-device-change';
