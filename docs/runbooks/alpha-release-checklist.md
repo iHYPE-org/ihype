@@ -9,7 +9,7 @@
 - [ ] The database migration has been reviewed for destructive operations.
 - [ ] Production dependencies report no high or critical vulnerabilities.
 - [ ] `npm run test:e2e:responsive` passes its phone, landscape, light,
-      reduced-motion, 200%-text, overflow, hero-budget, and touch-target gates.
+      reduced-motion, 140%-text, overflow, hero-budget, and touch-target gates.
 
 ## Before deploying
 
