@@ -6,11 +6,23 @@ import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
 import { MmmSearch } from './MmmSearch';
+import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
-type SeedCard = { id: string; hexId: string; title: string; artistName: string; artistSlug: string; meta: string };
+/**
+ * The length of a Discover clip. The design system's range is 15–30 seconds and
+ * `SeedDeck` defaults to 22; it is stated once here because the deck's ring and
+ * the playback cut-off must agree — a ring that fills at a different rate from
+ * the audio it describes is worse than no ring.
+ */
+const SEED_CLIP_SECONDS = 22;
+
+type SeedCard = MmmSeedItem & {
+  /** The playable track, for the clip. Null when the row carries no media. */
+  url: string | null;
+};
 type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number };
 type PlaylistRow = { id: string; name: string; count: number };
 type StationTrackRow = {
@@ -143,6 +155,9 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [savedCount, setSavedCount] = useState(0);
+  const [hypedIds, setHypedIds] = useState<Set<string>>(() => new Set());
+  const { currentTrack, currentTime, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const trimmedGenre = genre?.trim() ?? '';
   const trimmedCity = city?.trim() ?? '';
   const seedsQuery = new URLSearchParams();
@@ -155,30 +170,76 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
     : '/api/discover/seeds';
   const { status, data } = useJson<SeedCard[]>(seedsUrl, (payload) => {
     const seeds = (payload as { seeds?: Array<Record<string, unknown>> }).seeds ?? [];
-    return seeds.map((seed) => ({
-      id: String(seed.id ?? ''),
-      hexId: String(seed.hexId ?? ''),
-      title: String(seed.title ?? 'Untitled'),
-      artistName: String((seed.artistName as string) ?? (seed.profile as { name?: string })?.name ?? 'Unknown artist'),
-      artistSlug: String((seed.artistSlug as string) ?? (seed.profile as { slug?: string })?.slug ?? ''),
-      meta: [
-        (seed.genre as string) ?? ((seed.profile as { genres?: string[] })?.genres ?? [])[0],
-        (seed.city as string) ?? (seed.profile as { city?: string })?.city,
-      ].filter(Boolean).join(' · '),
-    }));
+    return seeds.map((seed) => {
+      const artistName = String((seed.artistName as string) ?? (seed.profile as { name?: string })?.name ?? 'Unknown artist');
+      const title = String(seed.title ?? 'Untitled');
+      return {
+        id: String(seed.id ?? ''),
+        hexId: String(seed.hexId ?? ''),
+        title,
+        artistName,
+        artistSlug: String((seed.artistSlug as string) ?? (seed.profile as { slug?: string })?.slug ?? ''),
+        /* The release line under the track. The seeds endpoint carries genre
+           and city, not an album — so this states what it actually knows
+           rather than inventing a record the row has no column for. */
+        album: [
+          (seed.genre as string) ?? ((seed.profile as { genres?: string[] })?.genres ?? [])[0],
+          (seed.city as string) ?? (seed.profile as { city?: string })?.city,
+        ].filter(Boolean).join(' · '),
+        /* Why this card is in the deck. The endpoint has always returned it and
+           this surface used to drop it — ADHERENCE 36 makes stating it a rule,
+           because a recommendation you cannot account for reads as an ad. */
+        why: typeof seed.reason === 'string' && seed.reason ? seed.reason : 'In your seed mix',
+        artworkUrl: typeof seed.artworkUrl === 'string' && seed.artworkUrl ? seed.artworkUrl : null,
+        url: typeof seed.url === 'string' && seed.url ? seed.url : null,
+        initial: (artistName || title).charAt(0).toUpperCase(),
+      };
+    });
   });
 
-  const act = useCallback(async (seed: SeedCard, action: 'hype' | 'skip') => {
+  /**
+   * A verdict. All three actions are the same endpoint — it already accepts
+   * save, skip and hype, and `save` is what writes the track into the Discover
+   * playlist. The deck previously offered only hype and skip, so the design's
+   * right-hand verdict had no implementation at all.
+   *
+   * The deck advances whatever the network does: a dropped gesture must not
+   * strand the member on a card they have already judged.
+   */
+  const act = useCallback(async (seed: SeedCard, action: 'hype' | 'skip' | 'save') => {
     setBusy(true);
+    if (action === 'hype') setHypedIds((ids) => new Set(ids).add(seed.id));
+    if (action === 'save') setSavedCount((value) => value + 1);
     try {
       await fetch(`/api/discover/seeds/${seed.id}/${action}`, { method: 'POST' });
     } catch {
-      // A dropped gesture must not strand the deck — advance regardless.
+      // Intentionally swallowed — see above.
     } finally {
       setBusy(false);
-      setIndex((value) => value + 1);
+      // HYPE is a verdict on the artist, not on the card: it stays put so the
+      // member can still save or skip the track they just hyped.
+      if (action !== 'hype') setIndex((value) => value + 1);
     }
   }, []);
+
+  /**
+   * The clip is a real clip: playback the deck started stops at
+   * `SEED_CLIP_SECONDS`, which is what makes the ring above it mean anything.
+   *
+   * Two guards keep this contained to the deck's own playback. It only fires
+   * while the current track is the card on screen — so a station or an album
+   * started anywhere else in the shell is never cut off — and it pauses rather
+   * than advancing, because the next card is the member's decision, not ours.
+   *
+   * Nothing auto-plays on arrival. A browser blocks unprompted audio without a
+   * gesture anyway, so an auto-start would be a control that works on some
+   * devices and silently does not on others.
+   */
+  const seedId = (data ?? [])[index]?.id;
+  useEffect(() => {
+    if (!seedId || currentTrack?.id !== seedId || !isPlaying) return;
+    if (currentTime >= SEED_CLIP_SECONDS) togglePlayback();
+  }, [currentTime, currentTrack?.id, isPlaying, seedId, togglePlayback]);
 
   // The active filter is always visible, and always clearable. A deck that is
   // quietly narrowed looks identical to a deck that has run out — which is the
@@ -213,26 +274,49 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
     );
   }
 
+  const clipPlaying = currentTrack?.id === seed.id && isPlaying;
+
   return (
     <>
       {filterChip}
-      <div className="mmm-card mmm-card-accent" style={{ padding: 20, marginBottom: 14, minHeight: 300, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-        <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.58rem', letterSpacing: '0.14em' }}>Seed</div>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.7rem', letterSpacing: '-0.04em', color: 'var(--ink)', lineHeight: 1.05 }}>
-          {seed.title}
-        </h2>
-        <p style={{ fontSize: '0.88rem', color: 'var(--ink-2)', marginTop: 3 }}>
-          {[seed.artistName, seed.meta].filter(Boolean).join(' · ')}
-        </p>
-        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-          <button className="mmm-btn-primary" disabled={busy} onClick={() => void act(seed, 'hype')} style={{ flex: 1 }} type="button">Hype</button>
-          <button className="mmm-btn-ghost" disabled={busy} onClick={() => void act(seed, 'skip')} type="button">Skip</button>
-          <button className="mmm-btn-ghost" onClick={() => router.push(`/app/tracks/${seed.hexId}`)} type="button">Open</button>
-        </div>
-      </div>
-      <p className="mmm-eyebrow" style={{ textAlign: 'center', letterSpacing: '0.1em' }}>
-        {seeds.length - index - 1} more waiting
-      </p>
+      <MmmSeedDeck
+        busy={busy}
+        clipSeconds={SEED_CLIP_SECONDS}
+        hyped={hypedIds.has(seed.id)}
+        index={index}
+        items={seeds}
+        onHype={(item) => void act(item as SeedCard, 'hype')}
+        onOpenArtist={(item) => router.push(
+          item.artistSlug ? `/app/artists/${item.artistSlug}` : `/app/tracks/${item.hexId}`,
+        )}
+        onSave={(item) => void act(item as SeedCard, 'save')}
+        onSkip={(item) => void act(item as SeedCard, 'skip')}
+        onTogglePlay={(item) => {
+          const card = item as SeedCard;
+          if (currentTrack?.id === card.id) {
+            togglePlayback();
+            return;
+          }
+          // No URL, nothing to play — the control is still drawn, because the
+          // card is the same shape either way, and this is the one branch where
+          // it does nothing. Send them to the track page instead of failing
+          // silently.
+          if (!card.url) {
+            router.push(`/app/tracks/${card.hexId}`);
+            return;
+          }
+          playTrack({
+            id: card.id,
+            title: card.title,
+            artistName: card.artistName,
+            url: card.url,
+            artistProfileSlug: card.artistSlug || null,
+            artworkUrl: card.artworkUrl,
+          });
+        }}
+        playing={clipPlaying}
+        savedCount={savedCount}
+      />
     </>
   );
 }

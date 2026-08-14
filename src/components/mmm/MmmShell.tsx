@@ -2,12 +2,15 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
+import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
-import { MmmPlayer } from '@/components/mmm/MmmPlayer';
+import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, navHint, type MmmModuleId } from '@/lib/mmm-nav';
+import { resolvePick, splitQueue } from '@/lib/mmm-queue';
 
 export type MmmNowPlaying = {
   title: string;
@@ -87,17 +90,57 @@ export function MmmShell({
   const {
     canGoBack,
     canGoForward,
+    currentIndex,
     currentTime,
     currentTrack,
     duration,
     isPlaying,
     playNext,
     playPrevious,
+    playTrack,
+    queue,
     seekTo,
     setVolume,
     togglePlayback,
     volume,
   } = useMediaPlayer();
+
+  /**
+   * Queue and history are ONE list split at the current index — what follows is
+   * up next, what precedes is played, most recent first. The provider also
+   * keeps a separate `history` array of listens; deriving both halves from the
+   * queue instead is the design system's rule (ADHERENCE 27), and it is the
+   * rule because two independently maintained arrays drift apart, leaving the
+   * panel describing a queue that is not the one the player will actually play.
+   */
+  const toPanelTrack = useCallback((item: { title: string; artistName: string; artworkUrl?: string | null }): MmmPlayerTrack => ({
+    title: item.title,
+    artist: item.artistName,
+    initial: (item.artistName || item.title).charAt(0).toUpperCase(),
+    artworkUrl: item.artworkUrl ?? null,
+  }), []);
+  const split = splitQueue(queue, currentIndex);
+  const upNext = split.upNext.map(toPanelTrack);
+  const played = split.played.map(toPanelTrack);
+
+  /**
+   * Resolve a panel row back to the queue entry it was cut from. The panel
+   * hands back which half it came from and the position inside that half, and
+   * the arithmetic that inverts each slice lives here rather than in the
+   * component — the component never sees the queue, only the two halves.
+   */
+  const pickTrack = useCallback((_row: MmmPlayerTrack, list: 'queue' | 'history', position: number) => {
+    const target = resolvePick(queue, currentIndex, list, position);
+    // Null means the row could not be resolved — a stale panel after the queue
+    // moved under it. Doing nothing beats playing a neighbouring track.
+    if (target) playTrack(target);
+  }, [currentIndex, playTrack, queue]);
+
+  // Chrome that is anchored to the pill: the queue panel, the artist highlight,
+  // and the phone's full-screen player.
+  const [queueOpen, setQueueOpen] = useState(false);
+  const [artistOpen, setArtistOpen] = useState(false);
+  const [fullOpen, setFullOpen] = useState(false);
 
   // The heart, which is NOT the HYPE control. SHELL_LOCK is explicit that they
   // are two acts: HYPE spends from your balance and moves the artist up the
@@ -153,6 +196,32 @@ export function MmmShell({
         artworkUrl: currentTrack.artworkUrl ?? null,
       }
     : nowPlaying;
+
+  /* The artist behind whatever the pill is showing. `currentTrack` wins when
+     the audio element holds one, for the same reason `displayTrack` does — the
+     highlight must describe the artist on screen, not the one from the last
+     server render. Null when there is no linked profile: the name then stays
+     plain text and the panel has no target to open. */
+  const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
+
+  // Every panel anchored to the pill describes THIS track. A track change (or
+  // opening the nav) invalidates all three rather than leaving them describing
+  // something that is no longer playing.
+  useEffect(() => {
+    setArtistOpen(false);
+  }, [currentTrack?.id]);
+
+  useEffect(() => {
+    if (!navOpen) return;
+    setQueueOpen(false);
+    setArtistOpen(false);
+  }, [navOpen]);
+
+  useEffect(() => {
+    setQueueOpen(false);
+    setArtistOpen(false);
+    setFullOpen(false);
+  }, [pathname]);
 
   // The phone form of the pill drops prev/next, the heart and the volume track:
   // they do not fit beside a 64px square at 393px, and each is reachable
@@ -247,6 +316,7 @@ export function MmmShell({
             can play out — the design's `data-ih-hide` behaviour. Opening the nav
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
+          artistOpen={artistOpen}
           canFavourite={Boolean(currentTrack)}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
@@ -254,13 +324,24 @@ export function MmmShell({
           canTogglePlay={Boolean(currentTrack)}
           faved={faved}
           hidden={navOpen}
+          history={played}
           hyped={hyped}
           narrow={narrow}
-          onOpenArtist={
-            nowPlaying?.artistSlug
-              ? () => router.push(`/app/artists/${nowPlaying.artistSlug}`)
-              : undefined
-          }
+          /* Phone only: the artwork opens the full player, which is where the
+             controls the phone bar drops actually live. */
+          onExpand={() => { setNavOpen(false); setFullOpen(true); }}
+          /* The name opens the highlight over the shell rather than navigating:
+             the point is to decide about the artist without losing the map, the
+             pane or your place in the queue. The panel itself carries the link
+             out to the full artist page. */
+          /* The two panels share one anchor above the pill, so opening either
+             closes the other rather than stacking two dialogs on the same
+             spot. */
+          onOpenArtist={artistSlug ? () => { setQueueOpen(false); setArtistOpen((open) => !open); } : undefined}
+          onPickTrack={pickTrack}
+          onToggleQueue={() => { setArtistOpen(false); setQueueOpen((open) => !open); }}
+          queue={upNext}
+          queueOpen={queueOpen}
           wake={playerWake}
           /* The design's `openSearch` is module: music, tab: discover, field
              focused. There is no separate search surface to open — the field
@@ -281,6 +362,42 @@ export function MmmShell({
           onVolume={(value) => setVolume(value / 100)}
           playing={Boolean(currentTrack) && isPlaying}
           progress={duration > 0 ? (currentTime / duration) * 100 : 0}
+          track={displayTrack}
+          volume={volume * 100}
+        />
+
+        {/* Anchored to the pill, so it is drawn beside it rather than inside
+            it — the pill is a capsule and clips anything nested. */}
+        {artistOpen && artistSlug && !navOpen && (
+          <MmmArtistCard onClose={() => setArtistOpen(false)} slug={artistSlug} />
+        )}
+
+        {/* Phone only, and only over a real track: with nothing playing there
+            is nothing to expand, and `onExpand` is the only way in. */}
+        <MmmFullPlayer
+          canFavourite={Boolean(currentTrack)}
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          canHype={canHype}
+          canTogglePlay={Boolean(currentTrack)}
+          durationSeconds={duration}
+          faved={faved}
+          history={played}
+          hyped={hyped}
+          onClose={() => setFullOpen(false)}
+          onNext={playNext}
+          onOpenArtist={artistSlug ? () => { setFullOpen(false); router.push(`/app/artists/${artistSlug}`); } : undefined}
+          onPickTrack={pickTrack}
+          onPrev={playPrevious}
+          onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}
+          onToggleFav={() => void toggleFav()}
+          onToggleHype={() => void toggleHype()}
+          onTogglePlay={togglePlayback}
+          onVolume={(value) => setVolume(value / 100)}
+          open={fullOpen && narrow}
+          playing={Boolean(currentTrack) && isPlaying}
+          progress={duration > 0 ? (currentTime / duration) * 100 : 0}
+          queue={upNext}
           track={displayTrack}
           volume={volume * 100}
         />

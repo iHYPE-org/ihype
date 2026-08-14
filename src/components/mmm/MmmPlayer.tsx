@@ -58,6 +58,7 @@ export type MmmPlayerTrack = {
 
 export function MmmPlayer({
   anchorHeight = 88,
+  artistOpen = false,
   canFavourite,
   canHype,
   canTogglePlay,
@@ -65,13 +66,16 @@ export function MmmPlayer({
   canGoForward,
   faved,
   hidden,
+  history = [],
   hypeCount,
   hypeLabel,
   hypeLocked,
   hyped,
   idleMs = 10000,
   narrow,
+  onExpand,
   onNext,
+  onPickTrack,
   onPrev,
   onOpenAlbum,
   onOpenArtist,
@@ -80,14 +84,24 @@ export function MmmPlayer({
   onToggleFav,
   onToggleHype,
   onTogglePlay,
+  onToggleQueue,
   onVolume,
   playing,
   progress,
+  queue = [],
+  queueOpen = false,
   track,
   volume,
   wake = 0,
 }: {
   anchorHeight?: number;
+  /**
+   * The artist highlight is open for this track. Marks the artist name as the
+   * active target and, with the queue, holds the pill awake — retiring to a
+   * 56px disc while a 340px dialog points at it leaves the dialog anchored to
+   * nothing.
+   */
+  artistOpen?: boolean;
   canFavourite: boolean;
   canHype: boolean;
   canTogglePlay: boolean;
@@ -95,6 +109,8 @@ export function MmmPlayer({
   canGoForward: boolean;
   faved: boolean;
   hidden: boolean;
+  /** Already played, most recent first. See `queue`. */
+  history?: MmmPlayerTrack[];
   hypeCount?: string | number;
   hypeLabel?: string;
   hypeLocked?: boolean;
@@ -105,7 +121,19 @@ export function MmmPlayer({
    */
   idleMs?: number;
   narrow: boolean;
+  /**
+   * Phone only: the artwork opens the full-screen player. Omitted, the artwork
+   * is not a button — an inert control is worse than none, and until this
+   * existed the phone bar had no route to seek, volume, the heart or the queue
+   * at all.
+   */
+  onExpand?: () => void;
   onNext: () => void;
+  /**
+   * Jump to a row in the queue panel. `list` says which half it came from, so
+   * the caller can resolve it against the one array both halves are cut from.
+   */
+  onPickTrack?: (track: MmmPlayerTrack, list: 'queue' | 'history', index: number) => void;
   onPrev: () => void;
   /**
    * The artist name in the meta line. A SEPARATE destination from the release —
@@ -124,10 +152,20 @@ export function MmmPlayer({
   onToggleFav: () => void;
   onToggleHype: () => void;
   onTogglePlay: () => void;
+  /** Omitted, the queue control is not drawn. */
+  onToggleQueue?: () => void;
   onVolume: (value: number) => void;
   playing: boolean;
   /** 0–100. */
   progress: number;
+  /**
+   * What follows the current track. Queue and history are ONE list split at the
+   * current index — "up next" is what follows, "played" is what precedes — so
+   * both of these are cut from the same array by the caller. Two independently
+   * maintained arrays drift apart.
+   */
+  queue?: MmmPlayerTrack[];
+  queueOpen?: boolean;
   track: MmmPlayerTrack | null;
   /** 0–100. */
   volume: number;
@@ -161,11 +199,14 @@ export function MmmPlayer({
   useEffect(() => { setAwake(true); }, [wake]);
 
   useEffect(() => {
-    if (narrow || hidden || !awake) return undefined;
+    // An open queue or artist panel holds the pill awake. Both are anchored to
+    // the pill's box, so retiring to a 56px disc underneath them would leave a
+    // 340px dialog pointing at nothing — the design system's own guard.
+    if (narrow || hidden || !awake || queueOpen || artistOpen) return undefined;
     const timer = window.setTimeout(() => setAwake(false), idleMs);
     return () => window.clearTimeout(timer);
     // Every value that means "something is happening" restarts the countdown.
-  }, [awake, hidden, idleMs, narrow, playing, progress, volume, hyped, faved, track?.title]);
+  }, [artistOpen, awake, hidden, idleMs, narrow, playing, progress, queueOpen, volume, hyped, faved, track?.title]);
 
   // null renders nothing. Never invent a placeholder track.
   if (!track) return null;
@@ -180,9 +221,13 @@ export function MmmPlayer({
      targets. One run of grey text that silently opens one of two different
      pages is the thing this replaces — and a name with no handler stays plain
      text rather than becoming a target that goes nowhere. */
-  const nameLink = (text: string, onClick?: () => void) =>
+  const nameLink = (text: string, onClick?: () => void, active?: boolean) =>
     onClick
-      ? <button className="mmm-player-name" onClick={onClick} type="button">{text}</button>
+      ? (
+        <button className="mmm-player-name" data-active={active || undefined} onClick={onClick} type="button">
+          {text}
+        </button>
+      )
       : <span className="mmm-player-name" data-plain="">{text}</span>;
 
   // The retired disc. Same squircle ratio as the logo trigger and the artwork,
@@ -235,6 +280,64 @@ export function MmmPlayer({
   }
 
   return (
+    <>
+      {/* A SIBLING of the pill, never a child: the pill is a capsule with
+          `overflow: hidden` and a 9999px radius, so a 320px panel nested inside
+          it is clipped to a curve. Wide screens only — on a phone the same list
+          is in the full player, which has room to show it. */}
+      {queueOpen && !hidden && !narrow && (
+        <div aria-label="Queue and history" className="mmm-player-queue" role="dialog">
+          <p className="mmm-queue-eyebrow">Now playing</p>
+          <div className="mmm-queue-now">
+            <span aria-hidden="true" className="mmm-queue-now-bar" />
+            <span className="mmm-queue-now-body">
+              <span className="mmm-queue-now-title">{track.title}</span>
+              <span className="mmm-queue-now-meta">
+                {[track.artist, track.album].filter(Boolean).join(' · ')}
+              </span>
+            </span>
+          </div>
+
+          {queue.length > 0 && <p className="mmm-queue-eyebrow">Up next</p>}
+          {queue.map((item, position) => (
+            <button
+              className="mmm-queue-row"
+              key={`q${position}-${item.title}`}
+              onClick={() => onPickTrack?.(item, 'queue', position)}
+              type="button"
+            >
+              <span className="mmm-queue-index">{String(position + 1).padStart(2, '0')}</span>
+              <span className="mmm-queue-title">{item.title}</span>
+              <span className="mmm-queue-artist">{item.artist}</span>
+            </button>
+          ))}
+
+          {/* Played sits below a rule and greyed: already heard, still
+              reachable. Same list, cut at the current index. */}
+          {history.length > 0 && (
+            <div className="mmm-queue-played">
+              <p className="mmm-queue-eyebrow">Played</p>
+              {history.map((item, position) => (
+                <button
+                  className="mmm-queue-row"
+                  key={`h${position}-${item.title}`}
+                  onClick={() => onPickTrack?.(item, 'history', position)}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="mmm-queue-index">·</span>
+                  <span className="mmm-queue-title">{item.title}</span>
+                  <span className="mmm-queue-artist">{item.artist}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {queue.length === 0 && history.length === 0 && (
+            <p className="mmm-queue-empty">Nothing queued. Play an album or a station to fill this.</p>
+          )}
+        </div>
+      )}
+
     <div
       aria-hidden={hidden}
       className="mmm-player"
@@ -264,24 +367,47 @@ export function MmmPlayer({
         </button>
       )}
 
-      <div
-        className="mmm-player-art"
-        style={{ width: art, height: art, borderRadius: artRadius }}
-      >
-        {track.artworkUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
-          // R2/remote and already sized by the uploader; next/image would add a
-          // loader round trip for a 64px square that is on screen constantly.
-          <img alt="" height={art} src={track.artworkUrl} width={art} />
-        ) : (
-          <span aria-hidden="true">{track.initial}</span>
-        )}
-      </div>
+      {/* On a phone the artwork IS the way into the full player — that is the
+          design's own route to seek, volume, the heart and the queue, none of
+          which fit in a 393px bar. With no handler it stays a plain div rather
+          than becoming a button that does nothing. */}
+      {narrow && onExpand ? (
+        <button
+          aria-label="Open the full player"
+          className="mmm-player-art"
+          data-expand=""
+          onClick={onExpand}
+          style={{ width: art, height: art, borderRadius: artRadius }}
+          tabIndex={hidden ? -1 : 0}
+          type="button"
+        >
+          {track.artworkUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- see below.
+            <img alt="" height={art} src={track.artworkUrl} width={art} />
+          ) : (
+            <span aria-hidden="true">{track.initial}</span>
+          )}
+        </button>
+      ) : (
+        <div
+          className="mmm-player-art"
+          style={{ width: art, height: art, borderRadius: artRadius }}
+        >
+          {track.artworkUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
+            // R2/remote and already sized by the uploader; next/image would add a
+            // loader round trip for a 64px square that is on screen constantly.
+            <img alt="" height={art} src={track.artworkUrl} width={art} />
+          ) : (
+            <span aria-hidden="true">{track.initial}</span>
+          )}
+        </div>
+      )}
 
       <div className="mmm-player-body">
         <Marquee className="mmm-player-track" text={track.title} />
         <div className="mmm-player-artist">
-          {nameLink(track.artist, onOpenArtist)}
+          {nameLink(track.artist, onOpenArtist, artistOpen)}
           {track.album ? <span aria-hidden="true"> · </span> : null}
           {track.album ? nameLink(track.album, onOpenAlbum) : null}
         </div>
@@ -386,8 +512,22 @@ export function MmmPlayer({
             ) : null}
           </button>
         )}
+
+        {/* Wide only, same gate as the rest of the transport: on a phone the
+            queue lives in the full player. */}
+        {!narrow && onToggleQueue && (
+          <IconButton
+            active={queueOpen}
+            hidden={hidden}
+            label={queueOpen ? 'Close the queue' : 'Open the queue'}
+            onClick={onToggleQueue}
+            pressed={queueOpen}
+            glyph="≡"
+          />
+        )}
       </div>
     </div>
+    </>
   );
 }
 

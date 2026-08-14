@@ -332,6 +332,22 @@ html.mmm-locked .site-shell > main {
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
   font-size: 0.8rem;
 }
+/* A city bubble is NOT a cluster bubble, and until now they were drawn
+   identically — same accent circle, same weight — so "3 artists from Portland"
+   and "3 things here, zoom in" were indistinguishable.
+
+   An artist carries a city of origin and nothing finer; the product never
+   collects an address for one. So this pin must not read as a place the way a
+   venue's does: dashed, softer, in the fan hue (ADHERENCE 17). The dash is what
+   carries the distinction where colour cannot — a colourblind member cannot
+   separate purple from orange, but a dashed edge from a solid one is not a
+   colour judgement. */
+.mmm-bubble-city {
+  background: rgba(var(--role-fan-rgb), 0.22);
+  border: 2px dashed rgba(var(--role-fan-rgb), 0.85);
+  color: var(--ink);
+  box-shadow: 0 3px 14px rgba(var(--scrim-rgb), 0.45);
+}
 
 /* ── Module panes ──────────────────────────────────────────────────────── */
 
@@ -1676,6 +1692,13 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-name[data-plain] { text-decoration: none; cursor: inherit; }
 .mmm-player-name:hover:not([data-plain]) { color: var(--accent-text); }
+/* The name is the control that opened the artist highlight, so while that
+   panel is up the name says so — otherwise the panel is a card with no visible
+   origin, and tapping the name again to close it is a guess. */
+.mmm-player-name[data-active] {
+  color: var(--accent-text);
+  text-decoration-color: currentColor;
+}
 
 /* ── My Tickets, inside ME ────────────────────────────────────────────────
    The ticket path used to leave MMM entirely for the legacy shell. These rows
@@ -2131,3 +2154,655 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-admin-mode:hover { background: rgba(var(--accent-rgb), 0.16); }
 .mmm-admin-mode:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   QUEUE AND HISTORY — `PlayerPill`'s panel.
+
+   A SIBLING of the pill, never a child: the pill is a 9999px capsule with
+   `overflow: hidden`, so a 320px panel nested inside it is clipped to a curve.
+   It clears the pill by the pill's own height, read from the geometry table
+   rather than restated — the whole point of `--mmm-chrome-size` living once.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-player-queue {
+  position: absolute;
+  left: var(--mmm-player-left);
+  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
+  z-index: 29;
+  box-sizing: border-box;
+  width: min(460px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 14px 16px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  background: rgba(var(--bg-base-rgb), 0.86);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  box-shadow: 0 20px 50px rgba(var(--scrim-rgb), 0.6);
+  pointer-events: auto;
+}
+.mmm-queue-eyebrow {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-queue-now { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; }
+.mmm-queue-now-bar {
+  flex: 0 0 auto;
+  width: 3px;
+  height: 26px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+.mmm-queue-now-body { min-width: 0; display: flex; flex-direction: column; }
+.mmm-queue-now-title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+.mmm-queue-now-meta { font-size: 0.75rem; color: var(--ink-2); }
+.mmm-queue-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  /* 44px floor per MOBILE.md — grown with padding, never with font size. */
+  min-height: 44px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.mmm-queue-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-queue-index {
+  flex: 0 0 auto;
+  width: 18px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+}
+.mmm-queue-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.8125rem;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mmm-queue-artist { flex: 0 0 auto; font-size: 0.75rem; color: var(--ink-2); }
+/* Played sits below a rule and greyed: already heard, still reachable. */
+.mmm-queue-played { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-2); }
+.mmm-queue-played .mmm-queue-row { opacity: 0.55; }
+.mmm-queue-empty { margin: 0; font-size: 0.8125rem; line-height: 1.6; color: var(--ink-3); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE FULL PLAYER — phone only, from `components/shell/FullPlayer.jsx`.
+
+   Everything the phone bar drops lives here. It owns its own safe area because
+   it is fixed and covers the frame, so the shell's offsets do not apply to it.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-full {
+  /* The tail that clears the fixed way-out square, and the fade behind that
+     square. One figure, so the last queue row can always be scrolled clear of
+     the corner rather than resting under it. */
+  --mmm-tail-fade: 96px;
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-top: var(--mmm-safe-top);
+  padding-bottom: var(--mmm-safe-bottom);
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* `.mmm-chrome`, which this is mounted inside, is `pointer-events: none` so
+     the map stays draggable under the chrome. Every interactive descendant has
+     to opt back in — without this the whole screen is click-through and every
+     control on it silently does nothing. */
+  pointer-events: auto;
+}
+.mmm-full-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 18px 20px 8px;
+}
+.mmm-full-state {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: center;
+}
+.mmm-full-art {
+  width: min(72vw, 300px);
+  aspect-ratio: 1;
+  margin: 18px auto 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-3);
+  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.55);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 6rem;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+}
+.mmm-full-art img { width: 100%; height: 100%; object-fit: cover; }
+.mmm-full-titles { text-align: center; margin-top: 22px; }
+.mmm-full-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.625rem;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.mmm-full-meta {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  margin: 7px 0 0;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+.mmm-full-name {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.mmm-full-name[data-plain] { text-decoration: none; cursor: default; }
+.mmm-full-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-full-seek, .mmm-full-volume { display: flex; align-items: center; gap: 11px; }
+.mmm-full-seek { margin-top: 22px; }
+.mmm-full-volume { margin-top: 18px; }
+.mmm-full-clock {
+  min-width: 34px;
+  font-family: var(--font-mono);
+  font-size: 0.65625rem;
+  color: var(--ink-3);
+}
+.mmm-full-clock[data-right] { text-align: right; }
+.mmm-full-transport {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  margin-top: 20px;
+}
+.mmm-full-step {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink);
+  font-size: 1.375rem;
+  cursor: pointer;
+}
+.mmm-full-step:disabled { opacity: 0.35; cursor: default; }
+.mmm-full-play {
+  position: relative;
+  flex: 0 0 auto;
+  width: 78px;
+  height: 78px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-size: 1.5rem;
+  cursor: pointer;
+  box-shadow: 0 0 32px rgba(var(--accent-rgb), 0.4);
+}
+.mmm-full-play svg { position: absolute; inset: 0; }
+.mmm-full-play span { position: relative; }
+.mmm-full-play[data-paused] span { padding-left: 5px; }
+.mmm-full-step:focus-visible,
+.mmm-full-play:focus-visible,
+.mmm-full-hype:focus-visible,
+.mmm-full-fav:focus-visible,
+.mmm-full-back:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mmm-full-acts { display: flex; align-items: center; gap: 12px; margin-top: 22px; }
+.mmm-full-hype {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 52px;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mmm-full-hype[data-hyped] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--ink-on-accent);
+}
+.mmm-full-hype[data-locked] {
+  background: rgba(var(--accent-rgb), 0.08);
+  border-color: rgba(var(--accent-rgb), 0.28);
+  cursor: default;
+}
+.mmm-full-hype-wait {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.71875rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.mmm-full-fav {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink);
+  font-size: 1.375rem;
+  cursor: pointer;
+}
+.mmm-full-fav[data-active] { color: var(--accent-text); }
+.mmm-full-list { margin-top: 24px; }
+.mmm-full-list[data-played] {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line-2);
+}
+.mmm-full-list[data-played] .mmm-queue-row { opacity: 0.55; }
+/* Clears the fixed way-out square below the scrolling column. The fade behind
+   that square is the same height by construction — see --mmm-tail-fade. */
+.mmm-full-tail { height: var(--mmm-tail-fade); }
+.mmm-full-exit {
+  position: absolute;
+  left: 18px;
+  bottom: calc(18px + var(--mmm-safe-bottom));
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+/* The way out is fixed over a scrolling column, so queue rows pass underneath
+   it — and a 9.5px mono label over a track title is unreadable for both. The
+   fade gives the corner a ground of its own without hiding what is behind it.
+   `--mmm-tail-fade` is the same height as `.mmm-full-tail`, so the last row can
+   always be scrolled clear of the square rather than resting under it. */
+.mmm-full-exit::before {
+  content: '';
+  position: absolute;
+  left: -18px;
+  right: -18px;
+  bottom: calc(-18px - var(--mmm-safe-bottom));
+  height: var(--mmm-tail-fade);
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(var(--bg-base-rgb), 0) 0%, var(--bg) 62%);
+}
+.mmm-full-back {
+  width: 62px;
+  height: 62px;
+  flex: 0 0 auto;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  /* The same squircle ratio as the logo trigger and the pill's artwork, so the
+     three read as one family — round(62 × 0.342). */
+  border-radius: 21px;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  cursor: pointer;
+  box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.38);
+}
+.mmm-full-exit-label {
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE ARTIST HIGHLIGHT — opened by the player's artist name.
+
+   Anchored to the pill, above it, so it plainly belongs to what is playing.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-artist-card {
+  position: absolute;
+  left: var(--mmm-player-left);
+  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
+  z-index: 30;
+  box-sizing: border-box;
+  width: min(340px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
+  padding: 20px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-card);
+  background: var(--bg-2);
+  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.62);
+  pointer-events: auto;
+}
+.mmm-artist-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
+.mmm-artist-avatar {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg-3);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3125rem;
+  color: var(--ink);
+}
+.mmm-artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mmm-artist-ident { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.mmm-artist-name {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3125rem;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.mmm-artist-meta {
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-artist-close {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: var(--hair-70);
+  color: var(--ink-2);
+  font-size: 0.8125rem;
+  cursor: pointer;
+}
+.mmm-artist-close:focus-visible,
+.mmm-artist-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-artist-bio { margin: 0 0 14px; font-size: 0.8125rem; line-height: 1.6; color: var(--ink-2); }
+.mmm-artist-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+.mmm-artist-stat { padding: 11px 13px; border-radius: 12px; background: var(--bg-3); }
+.mmm-artist-stat-value {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.mmm-artist-stat-value[data-heat] { color: var(--warning-text); }
+.mmm-artist-stat-label {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-artist-open {
+  display: block;
+  /* 44px floor, grown with padding. */
+  min-height: 44px;
+  padding: 12px 18px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-align: center;
+  text-decoration: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE SEED DECK — Discover itself, from `components/shell/SeedDeck.jsx`.
+
+   The card's copy sits on the artist's own graphic, so it uses the on-media
+   tokens rather than the page ink ramp: those are white and black in BOTH
+   themes on purpose, because the veil below guarantees a dark backdrop
+   whatever the page theme is.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.mmm-deck { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 4px; }
+.mmm-deck-stack { position: relative; width: 328px; max-width: 100%; }
+.mmm-deck-behind {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-2);
+  box-shadow: 0 18px 44px rgba(var(--scrim-rgb), 0.45);
+}
+.mmm-deck-behind > span { position: absolute; inset: 0; opacity: 0.5; }
+.mmm-deck-card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--line-2);
+  border-radius: 26px;
+  background: var(--bg-2);
+  box-shadow: 0 26px 60px rgba(var(--scrim-rgb), 0.6);
+  cursor: grab;
+  /* The card is dragged, so the browser must not claim the gesture for a scroll. */
+  touch-action: none;
+  user-select: none;
+}
+.mmm-deck-art {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.mmm-deck-initial {
+  position: absolute;
+  right: -46px;
+  bottom: -70px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 18.75rem;
+  line-height: 0.8;
+  letter-spacing: -0.06em;
+  color: rgba(var(--ink-on-media-rgb), 0.13);
+}
+/* Guarantees a dark backdrop under the copy whatever the artwork is. */
+.mmm-deck-veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(var(--scrim-rgb), 0.42) 0%,
+    rgba(var(--scrim-rgb), 0) 34%,
+    rgba(var(--scrim-rgb), 0.86) 100%
+  );
+}
+.mmm-deck-clip { position: absolute; top: 18px; left: 18px; display: flex; align-items: center; gap: 9px; }
+.mmm-deck-clip span {
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-on-media-rgb), 0.82);
+}
+.mmm-deck-clip-track { fill: rgba(var(--scrim-rgb), 0.45); stroke: rgba(var(--ink-on-media-rgb), 0.28); }
+.mmm-deck-clip-fill { stroke: var(--ink-on-media); }
+.mmm-deck-play {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(var(--ink-on-media-rgb), 0.28);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--scrim-rgb), 0.5);
+  color: var(--ink-on-media);
+  font-size: 0.6875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-deck-play[data-paused] { padding-left: 3px; font-size: 0.75rem; }
+.mmm-deck-verdict {
+  position: absolute;
+  top: 22px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-on-media);
+}
+.mmm-deck-verdict[data-side='save'] { left: 22px; background: var(--accent); transform: rotate(-8deg); }
+.mmm-deck-verdict[data-side='skip'] { right: 22px; background: rgba(var(--scrim-rgb), 0.86); transform: rotate(8deg); }
+.mmm-deck-body { position: absolute; left: 22px; right: 22px; bottom: 22px; }
+.mmm-deck-artist {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.875rem;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--ink-on-media);
+  cursor: pointer;
+}
+.mmm-deck-song {
+  margin: 7px 0 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: -0.015em;
+  color: rgba(var(--ink-on-media-rgb), 0.94);
+}
+.mmm-deck-album { margin: 2px 0 0; font-size: 0.8125rem; color: rgba(var(--ink-on-media-rgb), 0.72); }
+/* Why this card is in the deck. Never optional — see ADHERENCE 36. */
+.mmm-deck-why {
+  margin: 11px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(var(--ink-on-media-rgb), 0.6);
+}
+.mmm-deck-controls { display: flex; align-items: center; gap: 16px; }
+.mmm-deck-round {
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 1.3125rem;
+  cursor: pointer;
+}
+.mmm-deck-round:disabled, .mmm-deck-hype:disabled { opacity: 0.45; cursor: default; }
+.mmm-deck-hype {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 56px;
+  padding: 0 30px;
+  border: 1px solid rgba(var(--accent-rgb), 0.45);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.14);
+  color: var(--accent-text);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.0625rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+.mmm-deck-hype[data-hyped] { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); }
+.mmm-deck-hype[data-locked] { background: rgba(var(--accent-rgb), 0.08); border-color: rgba(var(--accent-rgb), 0.28); }
+.mmm-deck-hype-wait {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 0.6875rem;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+}
+.mmm-deck-round:focus-visible,
+.mmm-deck-hype:focus-visible,
+.mmm-deck-play:focus-visible,
+.mmm-deck-artist:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.mmm-deck-count {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.59375rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-deck-empty { text-align: center; padding: 80px 20px; }
+.mmm-deck-empty-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.03em;
+  color: var(--ink);
+}
+.mmm-deck-empty-body { margin: 6px 0 0; font-size: 0.84375rem; color: var(--ink-2); }
