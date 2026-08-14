@@ -47,6 +47,16 @@ export type MmmMeData = {
    */
   hasAdvertiser: boolean;
   /**
+   * Whether this account may open the admin console.
+   *
+   * Passed in rather than derived here: the allowlist rule lives in
+   * `isAdminSession()`, which needs the Session, and this loader is given a
+   * user id. Deriving it from `User.role` alone would re-create exactly the
+   * hole `admin-allowlist.ts` closed — the role on the row is granted, the
+   * address on it is what ALLOWS it.
+   */
+  isAdmin: boolean;
+  /**
    * Valid tickets this account holds, for the My Tickets summary line.
    *
    * `null` means the count could not be read, and renders as no line at all
@@ -90,7 +100,7 @@ export type MmmMeTicket = {
  * role, leaving no way back to Fan without editing the URL. Naming the seam in
  * the type is what stops that returning.
  */
-type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount' | 'tickets'>;
+type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount' | 'tickets' | 'isAdmin'>;
 
 const money = (cents: number) => `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
 const count = (value: number) => value.toLocaleString('en-US');
@@ -111,7 +121,7 @@ export function resolveAvailableRoles(profileTypes: readonly string[]): MmmMeRol
   return roles;
 }
 
-export async function loadMmmMe(userId: string, requestedRole: string | undefined, now = new Date()): Promise<MmmMeData> {
+export async function loadMmmMe(userId: string, requestedRole: string | undefined, isAdmin = false, now = new Date()): Promise<MmmMeData> {
   const profiles = await db.profile.findMany({
     where: { ownerId: userId },
     orderBy: { createdAt: 'asc' },
@@ -221,6 +231,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     ...data,
     availableRoles,
     hasAdvertiser: advertiser !== null,
+    isAdmin,
     ticketCount,
     tickets,
   });

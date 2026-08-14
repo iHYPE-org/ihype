@@ -708,6 +708,11 @@ html.mmm-locked .site-shell > main {
 /* The -text variant, not the fill: amber on this ground is 2.63:1 as copy,
    which is why --role-advertiser-text exists as its own token. */
 .mmm-me-add[data-kind='advertiser'] > [aria-hidden] { color: var(--role-advertiser-text); }
+/* The admin console row. Accent rather than a role hue on purpose: admin is
+   not one of the four account types, and giving it a role colour would put a
+   fifth role in a list the design system says has four. */
+.mmm-me-add[data-kind='admin']:hover { border-color: var(--accent); }
+.mmm-me-add[data-kind='admin'] > [aria-hidden] { color: var(--accent-text); }
 .mmm-me-add-chip {
   font-family: var(--font-mono);
   font-size: 0.55rem;
