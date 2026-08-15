@@ -11,6 +11,7 @@ import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
 import { AdminWorkbench } from '@/components/admin/AdminWorkbench';
 import { AdminPulse } from '@/components/admin/AdminPulse';
+import { AdminDevices } from '@/components/admin/AdminDevices';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBetaMetrics } from '@/lib/beta-metrics';
@@ -381,6 +382,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           actions, user search) and each carries wiring that took sessions to
           build. This is additive on purpose. */}
       {pulse && <AdminPulse initial={pulse} />}
+
+      {/* Which machines can open this console. Sits with the workbench rather
+          than in the flags below because it is an operational fact about the
+          console itself, not a setting. */}
+      <AdminDevices />
 
       {/* Everything waiting on a human, before anything else on the page.
           The stats below are for reading; this is for doing. */}
