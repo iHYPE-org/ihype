@@ -44,3 +44,7 @@ public/i18n/*.json
 .wrangler-e2e-workerd.toml
 # Same shape, written by hand when running audit:mobile against a local build.
 .wrangler-audit.toml
+
+# Regenerable design-handoff snapshots (scripts/export-legacy-for-design.mjs).
+# Large binaries of a moving target — regenerate, do not review.
+design/export/
