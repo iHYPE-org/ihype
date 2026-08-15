@@ -307,12 +307,24 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
-      {/* Creating an artist or venue profile is a real POST /api/profiles, and
-          the full form already exists on /pages — so these link there instead of
+      {/* Artist, venue, advertiser. Those are the things an account can ADD,
+          and they are the whole list.
+
+          Creating an artist or venue profile is a real POST /api/profiles and
+          the full form already exists on /pages, so these link there instead of
           growing a second creator. The chip is not decoration: both types go
           through the verification queue all three onboarding wizards promise a
           48-hour turnaround on. Fan is absent because every account already is
-          one — it is implicit and permanent. */}
+          one — it is implicit and permanent.
+
+          The ADMIN CONSOLE IS NOT HERE, and must not come back (2026-08-15).
+          It was added to this row on 2026-08-14 because removing the fixed
+          ADMIN MODE chip had left an administrator with no way into the console
+          from inside the shell. That reasoning was about routing, and this is
+          the wrong place to solve it: this row is "what this account can BE",
+          and admin is not an account type any more than promoter is — the same
+          rule DS8 states for the role picker. It now lives under Account, which
+          is where destinations that are not profiles belong. */}
       <div className="mmm-me-add-row">
         <Link className="mmm-me-add" data-kind="artist" href="/pages?create=artist">
           <span aria-hidden="true">＋</span>
@@ -334,29 +346,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             <span aria-hidden="true">＋</span>
             Add advertiser profile
             <span className="mmm-me-add-chip">Verified</span>
-          </Link>
-        )}
-        {data.isAdmin && (
-          /* The admin console, for the one account allowed to hold ADMIN.
-             
-             It sits with the profiles because that is what it is from the
-             member's side — another thing this account can BE — and because
-             the shell has nowhere else to put it: SHELL_LOCK gives MMM no
-             header, and the fixed ADMIN MODE chip that used to carry this link
-             was removed on 2026-08-14 for covering content on every screen.
-             Removing that chip left an administrator with no route into the
-             console from inside the shell at all; this is that route.
-             
-             Not an "add" — it is not created, it is entered — so it carries a
-             chevron rather than a plus, and says where it goes: the console is
-             the legacy shell, which is a departure worth labelling rather than
-             discovering. `isAdmin` is resolved server-side through
-             `isAdminSession()`, so this row is never drawn for an account the
-             console would refuse. */
-          <Link className="mmm-me-add" data-kind="admin" href="/admin">
-            <span aria-hidden="true">›</span>
-            Admin console
-            <span className="mmm-me-add-chip">Admin</span>
           </Link>
         )}
       </div>
@@ -482,6 +471,33 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             </div>
           );
         })}
+
+        {/* The admin console, for the one account allowed to hold ADMIN.
+
+            It lives HERE and not in the Profiles row above. Profiles is "what
+            this account can be" — artist, venue, advertiser — and admin is not
+            an account type; putting it there implied a fifth one, which is the
+            same mistake DS8 rules out for promoter. Account is where
+            destinations that are not profiles belong.
+
+            Still gated on `isAdmin`, which is resolved server-side through
+            `isAdminSession()` — both the ADMIN role and the allowlisted
+            address — so this is never drawn for an account the console would
+            refuse. That is the same no-dead-ends rule the player's heart
+            follows, and it is why removing this row entirely was not an
+            option: the shell has no header, so without it an administrator has
+            no route into the console at all. */}
+        {data.isAdmin && (
+          <div className="mmm-me-section">
+            <Link className="mmm-me-accordion" href="/admin">
+              <span className="mmm-me-accordion-text">
+                <span className="mmm-me-accordion-label">Admin console</span>
+                <span className="mmm-me-accordion-detail">Platform operations · opens the ops shell</span>
+              </span>
+              <span aria-hidden="true" className="mmm-me-accordion-chevron">›</span>
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );
