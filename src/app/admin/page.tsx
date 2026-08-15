@@ -10,10 +10,12 @@ import { FeatureToggle } from '@/components/admin/FeatureToggle';
 import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
 import { AdminWorkbench } from '@/components/admin/AdminWorkbench';
+import { AdminPulse } from '@/components/admin/AdminPulse';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBetaMetrics } from '@/lib/beta-metrics';
 import { getHealthSnapshot } from '@/lib/health';
+import { getAdminPulse } from '@/lib/admin-pulse-data';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
@@ -68,6 +70,11 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
 
   const t = await getServerT();
   const { userSearch } = searchParams ? await searchParams : {};
+  // Rendered on the server so the board is populated on first paint rather
+  // than flashing empty while the first poll lands. Guarded like every other
+  // read here: a snapshot that could not be built must not take the console
+  // down with it, so the board simply does not mount.
+  const pulse = await getAdminPulse().catch(() => null);
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
     userCount,
@@ -364,6 +371,16 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </Link>
         </div>
       </section>
+
+      {/* The live board. Six sections behind a tab strip, refreshing
+          themselves every 20s — this is the surface an operator actually
+          watches, so it comes before the static bands below.
+
+          It does NOT replace anything under it: the panels further down are
+          the console's interactive tools (feature flags, invite minting, bulk
+          actions, user search) and each carries wiring that took sessions to
+          build. This is additive on purpose. */}
+      {pulse && <AdminPulse initial={pulse} />}
 
       {/* Everything waiting on a human, before anything else on the page.
           The stats below are for reading; this is for doing. */}

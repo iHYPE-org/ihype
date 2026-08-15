@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 
-import type { ReactNode } from 'react';
+import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
 
 type TabId = 'trust' | 'transparency' | 'privacy' | 'terms' | 'charter' | 'dmca';
 
@@ -31,7 +31,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   const paramTab = searchParams.get('tab');
   const initialTab = TABS.some((tb) => tb.id === paramTab) ? (paramTab as TabId) : 'trust';
   const [tab, setTab] = useState<TabId>(initialTab);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   // Arriving at /info?tab=privacy from somewhere else on /info is a soft nav:
   // the route is unchanged, so React keeps this component mounted and the
@@ -42,36 +42,77 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
     if (TABS.some((tb) => tb.id === paramTab)) setTab(paramTab as TabId);
   }, [paramTab]);
 
+  const activeIndex = TABS.findIndex((tb) => tb.id === tab);
+  const tabLabel = (i: number) => t(`legalPage.tabLabel${i}`, TABS[i].label);
+
+  // Roving focus, per the design system's ARIA-patterns card: a tablist is one
+  // tab stop and the arrow keys move within it. Home/End jump to the ends.
+  const onTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const delta = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+    let next = -1;
+    if (delta !== 0) next = (activeIndex + delta + TABS.length) % TABS.length;
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = TABS.length - 1;
+    if (next < 0) return;
+    event.preventDefault();
+    setTab(TABS[next].id);
+    document.getElementById(`legal-tab-${TABS[next].id}`)?.focus();
+  };
+
   return (
     <div className="legal-wrap">
       <div className="legal-label">{t('infoPage.label', 'Info')}</div>
-      <h1 className="legal-h1">{t('infoPage.heading', 'How iHYPE works, in public.')}</h1>
+      {/* The heading names the DOCUMENT, not the hub. It used to read "How
+          iHYPE works, in public." on all six tabs, which is a hierarchy
+          problem on screen and a correctness one on paper: the print rules
+          below hide the tab strip, so "Print / Save as PDF" on the Privacy tab
+          produced a PDF that named the policy nowhere at all. The hub sentence
+          is not lost — it is the standfirst underneath, which is what
+          Instrument Serif is reserved for (editorial only). */}
+      <h1 className="legal-h1">{tabLabel(activeIndex)}</h1>
+      <p className="legal-standfirst">{t('infoPage.heading', 'How iHYPE works, in public.')}</p>
       <div className="legal-updated-row">
         <p className="legal-updated">{t('legalPage.lastUpdated', 'Last updated: June 20, 2026 · iHYPE · Portland, ME')}</p>
         <button className="legal-print-btn" onClick={() => window.print()} type="button">{t('legalPage.printButton', 'Print / Save as PDF')}</button>
       </div>
 
-      <div className="legal-seg">
+      <div className="legal-seg" role="tablist" aria-label={t('infoPage.label', 'Info')}>
         {TABS.map((tb, i) => (
           <button
             key={tb.id}
+            id={`legal-tab-${tb.id}`}
+            role="tab"
+            type="button"
+            aria-selected={tab === tb.id}
+            aria-controls={`legal-panel-${tb.id}`}
+            tabIndex={tab === tb.id ? 0 : -1}
             className={`legal-seg-btn${tab === tb.id ? ' active' : ''}`}
             onClick={() => setTab(tb.id)}
+            onKeyDown={onTabKeyDown}
           >
-            {t(`legalPage.tabLabel${i}`, tb.label)}
+            {tabLabel(i)}
           </button>
         ))}
       </div>
 
-      <div className={`legal-doc${tab === 'trust' ? ' active' : ''}`}>
+      {/* The policies are translated into 12 locales and only one of them is
+          the text that binds. Specified by `templates/legal/` (`lgTransNotice`)
+          and rendered by nothing until now. */}
+      {locale !== 'en' && (
+        <div className="legal-trans-notice">
+          <p>{t('infoPage.translationNotice', 'This translation is provided for convenience. The English version of these policies is the legally binding text.')}</p>
+        </div>
+      )}
+
+      <div className={`legal-doc${tab === 'trust' ? ' active' : ''}`} role="tabpanel" id="legal-panel-trust" aria-labelledby="legal-tab-trust">
         {trustPanel}
       </div>
 
-      <div className={`legal-doc${tab === 'transparency' ? ' active' : ''}`}>
+      <div className={`legal-doc${tab === 'transparency' ? ' active' : ''}`} role="tabpanel" id="legal-panel-transparency" aria-labelledby="legal-tab-transparency">
         {transparencyPanel}
       </div>
 
-      <div className={`legal-doc${tab === 'privacy' ? ' active' : ''}`}>
+      <div className={`legal-doc legal-doc-prose${tab === 'privacy' ? ' active' : ''}`} role="tabpanel" id="legal-panel-privacy" aria-labelledby="legal-tab-privacy">
         <h2>{t('legalPage.privacy.collectTitle', 'What we collect')}</h2>
         <p>{t('legalPage.privacy.collectBody', 'iHYPE collects the minimum data necessary to operate: your email address, display name, account role, city, genre preferences, and ticket purchase history. We do not sell this data. We do not share it with advertisers. We do not use it to train AI models.')}</p>
         <h2>{t('legalPage.privacy.paymentTitle', 'Payment data')}</h2>
@@ -94,7 +135,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <p>{t('legalPage.privacy.contactBody', 'Privacy questions:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
       </div>
 
-      <div className={`legal-doc${tab === 'terms' ? ' active' : ''}`}>
+      <div className={`legal-doc legal-doc-prose${tab === 'terms' ? ' active' : ''}`} role="tabpanel" id="legal-panel-terms" aria-labelledby="legal-tab-terms">
         <h2>{t('legalPage.terms.whoTitle', 'Who can use iHYPE')}</h2>
         <p>{t('legalPage.terms.whoBody', 'You must be 13 or older to use iHYPE. To purchase tickets, you must be 18 or the age of majority in your jurisdiction. By creating an account you agree to these terms.')}</p>
         <h2>{t('legalPage.terms.ticketsTitle', 'Tickets')}</h2>
@@ -117,7 +158,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <p>{t('legalPage.terms.contactBody', 'Legal questions:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
       </div>
 
-      <div className={`legal-doc${tab === 'charter' ? ' active' : ''}`}>
+      <div className={`legal-doc legal-doc-prose${tab === 'charter' ? ' active' : ''}`} role="tabpanel" id="legal-panel-charter" aria-labelledby="legal-tab-charter">
         <h2>{t('legalPage.charter.problemTitle', 'The problem we built this to fix')}</h2>
         <p>{t('legalPage.charter.problemBody', "We built iHYPE after living this problem as a band that went to New York City to try to make it. We had to pay to play, accept exposure-only gigs, find fans ourselves, find venues ourselves, and watch everyone take a piece. That system asks musicians to do every job except make music, while fans still struggle to discover them. iHYPE connects local discovery, genuine fan demand, booking, and ticket income so artists, venues, and DJs can spend less time fighting the system and more time building the scene.")}</p>
         <h2>{t('legalPage.charter.constraintTitle', 'The founding constraint')}</h2>
@@ -182,7 +223,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         </p>
       </div>
 
-      <div className={`legal-doc${tab === 'dmca' ? ' active' : ''}`}>
+      <div className={`legal-doc legal-doc-prose${tab === 'dmca' ? ' active' : ''}`} role="tabpanel" id="legal-panel-dmca" aria-labelledby="legal-tab-dmca">
         <h2>{t('legalPage.dmca.title', 'DMCA & copyright takedown')}</h2>
         <p>{t('legalPage.dmca.intro', 'iHYPE is built for independent music, so rights handling is clear and serious. Do not upload songs, artwork, samples, or logos unless you own them or have permission to use them on iHYPE. Uploads are screened by AI on submission, and rights holders can report unauthorized media at any time.')}</p>
         <h2>{t('legalPage.dmca.howToFileTitle', 'How to file a takedown')}</h2>
@@ -200,7 +241,16 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         @media (max-width: 480px) {
           .legal-wrap { padding: 2rem 1.1rem 4rem; }
         }
+        /* Instrument Serif, italic — the design system reserves it for
+           editorial voice, and the hub's one-line statement of intent is
+           exactly that. It was the h1 until the heading was given to the
+           document; nothing about the sentence changed. */
+        .legal-standfirst { font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem; line-height: 1.45; color: var(--ink-2); margin: 0 0 1.1rem; }
         .legal-updated { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: 0; }
+        /* Reads before any policy text, so it is not inside the reading
+           measure below — a caveat about the whole page, not a section of one. */
+        .legal-trans-notice { border: 1px solid var(--line); border-radius: var(--radius-card, 18px); background: rgba(var(--surface-tint-rgb),.04); padding: 14px 16px; margin-bottom: 2rem; }
+        .legal-trans-notice p { font-size: .8rem; color: var(--ink-2); line-height: 1.6; margin: 0; }
         .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
         .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
         .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
@@ -224,6 +274,28 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
         .legal-doc { display: none; }
         .legal-doc.active { display: block; }
+        /* A READING MEASURE, on the four documents that are prose.
+           The .legal-wrap box is the template's 760px and stays that — it is
+           the frame for the masthead and the tab strip. But 760 less 2rem of
+           padding either side sets body text on a 696px line, and measured in
+           Chromium against the real Work Sans face at .9rem that is a MEDIAN
+           OF 99 CHARACTERS per line, against the ~66-80 prose is read at. The
+           six longest documents on the site were the widest-set ones.
+           35rem is 560px, measured at 79 characters — the top of that band,
+           and as narrow as the column can go without looking thin inside a
+           760px frame. rem rather than px so the measure still holds when
+           Settings → Text size scales the root font.
+           (a7aa5d5 set /community-rules, /ticket-policy and /copyright to the
+           trust-policy template's 640px on the same .9rem body. Measured the
+           same way that is 89 characters, not the ~72 that commit estimated —
+           those three want the same narrowing, and are not this component.)
+           Left-aligned inside the wrap rather than re-centred, so the eyebrow,
+           heading, tab strip and body all share one left edge.
+           Trust & Safety and Transparency are deliberately NOT in this class —
+           they are stat grids and card rows from a different template, not
+           prose, and a 560px box would collapse their three- and four-column
+           layouts. */
+        .legal-doc-prose { max-width: 35rem; }
         .legal-doc h2 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
@@ -234,7 +306,9 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            when it was folded into this tab. */
         .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }
         .charter-split-bar div { border-radius: var(--radius-pill, 9999px); }
-        .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: 16px; padding: 20px 24px; margin: 0 0 1rem; }
+        /* --radius-card, not a literal 16px: it is the radius Design System 8
+           added for exactly this shape, and rule 35 asks new work to use it. */
+        .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: var(--radius-card, 18px); padding: 20px 24px; margin: 0 0 1rem; }
         .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
         .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {
@@ -243,7 +317,13 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           html, body { background: #fff !important; color: #111 !important; }
           .legal-wrap { max-width: 100% !important; padding: 1.5rem !important; }
           .legal-h1, .legal-doc h2 { color: #111 !important; }
-          .legal-doc p { color: #333 !important; }
+          .legal-doc p, .legal-standfirst { color: #333 !important; }
+          /* The measure is the browser's page box on paper, not a CSS width. */
+          .legal-doc-prose { max-width: none !important; }
+          /* Prints with the policy it qualifies — a PDF of a translated policy
+             is exactly the artifact someone would read as the binding text. */
+          .legal-trans-notice { border-color: #999 !important; background: none !important; }
+          .legal-trans-notice p { color: #111 !important; }
           .legal-doc a { color: #111 !important; text-decoration: underline; }
           .charter-callout p { color: #111 !important; }
           /* A flat bar prints as three grey blocks with no legend — the

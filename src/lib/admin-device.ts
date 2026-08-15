@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { ADMIN_DEVICE_COOKIE } from '@/lib/auth-redirects';
 
-const COOKIE_NAME = 'admin_device_token';
 const OTP_EXPIRY_SEC = 20 * 60;
 
 function secret(): string {
@@ -19,7 +19,7 @@ export function hashDeviceToken(token: string): string {
 }
 
 export function getDeviceCookieName(): string {
-  return COOKIE_NAME;
+  return ADMIN_DEVICE_COOKIE;
 }
 
 type OtpPurpose = 'admin-device-setup' | 'admin-device-change';
@@ -64,4 +64,39 @@ export function isDeviceChangeWindow(): boolean {
   const weekday = parts.find(p => p.type === 'weekday')?.value;
   const hour = parseInt(parts.find(p => p.type === 'hour')?.value ?? '-1', 10);
   return weekday === 'Monday' && hour === 8;
+}
+
+/**
+ * The device cookie carries its own signature.
+ *
+ * WHY: the console's device gate lives in `admin/layout.tsx`, and a layout's
+ * `redirect()` cannot answer 307 once the page has begun streaming — so an
+ * invalid device cookie still received **200 with the whole console in the
+ * body** (measured: 115KB including real member addresses). Middleware can
+ * stop the request before any of that renders, but only if it can judge the
+ * cookie WITHOUT a database round-trip, which the Edge runtime cannot do here.
+ *
+ * So the cookie is `<token>.<hmac>`. Middleware verifies the HMAC statelessly
+ * with Web Crypto; the database still stores only SHA-256 of the raw token, so
+ * what is at rest is unchanged. The signature authenticates "this cookie was
+ * issued by us", which is exactly enough to refuse a forged one before the
+ * console renders. Whether that token is still REGISTERED remains the
+ * database's question, asked in the layout as before.
+ */
+export function signDeviceCookieValue(token: string): string {
+  const sig = crypto.createHmac('sha256', secret()).update(token).digest('base64url');
+  return `${token}.${sig}`;
+}
+
+/**
+ * Pulls the raw token out of a cookie value, accepting the unsigned form.
+ *
+ * Lenient on purpose: this runs server-side where the database is the real
+ * authority, and a device registered before the cookie was signed must still
+ * resolve to its token so the operator is not locked out by a format change
+ * alone. Middleware is where the signature is REQUIRED.
+ */
+export function extractDeviceToken(cookieValue: string): string {
+  const dot = cookieValue.indexOf('.');
+  return dot === -1 ? cookieValue : cookieValue.slice(0, dot);
 }

@@ -219,3 +219,233 @@
 }
 .ops-topbar-app:hover,
 .ops-topbar-app:focus-visible { border-color: var(--accent); color: var(--accent-text); }
+
+/* ── PULSE ─────────────────────────────────────────────────────────────────
+   The console's live board (AdminPulse.tsx). Six sections behind a tab strip
+   so the number of sections stops deciding how far a thumb travels — the
+   scroll complaint this exists to fix.
+
+   Tokens only. `npm run audit:shell --strict` fails on a literal that already
+   has a token and on any theme-inverting #fff/#000, and this surface has a
+   light theme like every other. */
+.pulse {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card, 18px);
+  background: var(--bg-2);
+  padding: 14px;
+  margin-bottom: 18px;
+}
+.pulse-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.pulse-title {
+  font-family: var(--f-d, sans-serif);
+  font-size: 1.125rem;
+  margin: 0;
+}
+/* The age of the snapshot is never decoration: a board whose numbers might be
+   stale is only trustworthy if it says how old they are. */
+.pulse-age {
+  margin: 2px 0 0;
+  font-family: var(--f-m, monospace);
+  font-size: 0.6875rem;
+  color: var(--ink-2);
+}
+.pulse-refresh {
+  flex: 0 0 auto;
+  /* 44px floor on every control, desktop included — MOBILE.md, and the same
+     rule mobile-fit.css applies as a floor rather than a size. */
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--f-m, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.pulse-refresh:hover:not(:disabled),
+.pulse-refresh:focus-visible { border-color: var(--accent); color: var(--accent-text); }
+.pulse-refresh:disabled { opacity: 0.55; cursor: default; }
+
+/* Scrolls sideways rather than wrapping, and says so at the edge — the same
+   decision, and the same fade, as the map's layer chips. */
+.pulse-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+  mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent 100%);
+}
+.pulse-tabs::-webkit-scrollbar { display: none; }
+.pulse-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--f-m, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.pulse-tab[data-active] {
+  border-color: var(--accent);
+  background: var(--accent);
+  /* Ink ON the accent fill, never white: white measures 3.27:1 and fails AA.
+     This token is the measured 6.03:1 value. */
+  color: var(--ink-on-accent);
+}
+.pulse-tab[data-urgent]:not([data-active]) { border-color: var(--warning); color: var(--warning-text); }
+.pulse-tab-glyph { font-size: 0.8125rem; }
+.pulse-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--warning);
+  color: var(--ink-on-accent);
+  font-size: 0.625rem;
+}
+.pulse-tab[data-active] .pulse-tab-badge { background: var(--bg); color: var(--ink); }
+
+.pulse-panel { padding-top: 12px; }
+.pulse-summary {
+  margin: 0 0 12px;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+.pulse-summary[data-urgent] { color: var(--warning-text); }
+
+/* auto-fit rather than a fixed column count: the same grid holds three stats
+   on a 375px phone and eight on a laptop with no breakpoint of its own. */
+.pulse-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.pulse-stat {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card, 18px);
+  padding: 10px;
+  background: var(--bg);
+}
+.pulse-stat-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--f-d, sans-serif);
+  font-size: 1.25rem;
+  line-height: 1.1;
+}
+.pulse-stat-trend { font-family: var(--f-m, monospace); font-size: 0.625rem; }
+.pulse-stat-trend[data-direction="up"] { color: var(--ok, var(--role-venue)); }
+.pulse-stat-trend[data-direction="down"] { color: var(--warning-text); }
+.pulse-stat-trend[data-direction="flat"] { color: var(--ink-2); }
+.pulse-stat-label {
+  margin-top: 4px;
+  font-family: var(--f-m, monospace);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.pulse-items { list-style: none; margin: 0; padding: 0; }
+.pulse-item + .pulse-item { border-top: 1px solid var(--line); }
+.pulse-item-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 8px 0;
+  color: inherit;
+  text-decoration: none;
+}
+.pulse-item-dot {
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-2);
+}
+.pulse-item-dot[data-tone="bad"] { background: var(--danger, var(--accent)); }
+.pulse-item-dot[data-tone="warn"] { background: var(--warning); }
+.pulse-item-dot[data-tone="ok"] { background: var(--role-venue); }
+.pulse-item-text { flex: 1 1 auto; min-width: 0; }
+.pulse-item-label {
+  display: block;
+  font-size: 0.8125rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pulse-item-detail {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pulse-item-at {
+  flex: 0 0 auto;
+  font-family: var(--f-m, monospace);
+  font-size: 0.625rem;
+  color: var(--ink-2);
+}
+.pulse-empty {
+  margin: 0;
+  padding: 12px 0;
+  font-size: 0.8125rem;
+  color: var(--ink-2);
+}
+
+/* The rail's live count (useAdminBadges in AdminLive.tsx).
+
+   Absolutely positioned rather than in the column flow: `.ops-rail-item` is a
+   fixed-width vertical stack of glyph over label, and adding a third child
+   would re-space every item in the rail whether or not it had a count. This
+   way an item with a badge and an item without are the same height, so the
+   rail does not reflow as queues fill and empty. */
+.ops-rail-badge {
+  position: absolute;
+  top: 4px;
+  right: 50%;
+  transform: translateX(22px);
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--warning);
+  /* Ink on the fill, never white — 3.27:1 fails AA. */
+  color: var(--ink-on-accent);
+  font-family: var(--f-m, monospace);
+  font-size: 8px;
+  line-height: 1;
+}

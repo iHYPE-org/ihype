@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
-import { db } from '@/lib/db';
-import { hashDeviceToken, getDeviceCookieName } from '@/lib/admin-device';
+import { getDeviceCookieName } from '@/lib/admin-device';
+import { isRegisteredAdminDevice } from '@/lib/admin-device-store';
 
 // Exempt paths: device setup/register/change endpoints don't require an already-registered device
 const DEVICE_EXEMPT = [
@@ -31,14 +31,7 @@ export async function requireAdminApi(request?: NextRequest) {
     const isExempt = DEVICE_EXEMPT.some(p => pathname === p || pathname.startsWith(p + '/'));
     if (!isExempt) {
       const deviceCookie = request.cookies.get(getDeviceCookieName())?.value;
-      const admin = await db.user.findUnique({
-        where: { id: session.user.id },
-        select: { adminDeviceTokenHash: true },
-      });
-      const isDeviceValid =
-        deviceCookie &&
-        admin?.adminDeviceTokenHash &&
-        hashDeviceToken(deviceCookie) === admin.adminDeviceTokenHash;
+      const isDeviceValid = await isRegisteredAdminDevice(session.user.id, deviceCookie);
       if (!isDeviceValid) {
         return {
           session: null,

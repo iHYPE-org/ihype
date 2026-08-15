@@ -34,11 +34,16 @@ things DS8 deleted come back at once: `.site-background` colour orbs,
 raster logo instead of the wordmark. ~50 routes plus `/admin`. Touches no page
 content or wiring.
 
-**2. `/info` to the Bulletin layout** — best value per hour in the whole
-remodel. Terms, Privacy, Charter, Transparency, Trust & Safety and DMCA are six
-tabs of ONE component, with seven URLs redirecting in. Already a 760px column,
-so it is spacing and hierarchy. Precedent: `a7aa5d5` did the same for three
-routes in one CSS block.
+**2. `/info` to the Bulletin layout** — ✅ **done 2026-08-14, DESIGN_SYNC row
+285.** Reading measure (99 characters per line → 79), a heading that names the
+document rather than the hub (a printed policy named itself nowhere), the
+translation notice `templates/legal/` specifies and nothing rendered, and a
+real tablist. Two things it turned up for whoever picks up the next item:
+**`a7aa5d5`'s 640px measures at 89 characters, not the ~72 that commit
+estimated** — /community-rules, /ticket-policy and /copyright want the same
+narrowing this got; and **Trust & Safety and Transparency were left alone on
+purpose** — they are stat grids from `templates/transparency/` and
+`templates/audit/`, a separate job from the four prose documents.
 
 **3a. The admin console** — ~18 routes behind `AdminShell`. Its template
 (`templates/ops-console/`) is one of the ten with zero adherence findings, so
