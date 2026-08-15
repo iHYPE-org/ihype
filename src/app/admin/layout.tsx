@@ -5,7 +5,6 @@ import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { SESSION_EXEMPT_PATHS, WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { AdminShell } from '@/components/admin/AdminShell';
-import { OpsLoginGate } from '@/components/admin/OpsLoginGate';
 import { AdminLiveRefresh } from '@/components/admin/AdminLive';
 import { getDeviceCookieName } from '@/lib/admin-device';
 import { isRegisteredAdminDevice } from '@/lib/admin-device-store';
@@ -55,11 +54,29 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const { name, email } = session.user;
 
   return (
-    <OpsLoginGate name={name} email={email}>
+    /* OpsLoginGate was removed here on 2026-08-15.
+
+       It rendered a six-step ceremony — "Attesting device", "Resolving
+       operator role", "Satisfying MFA", "Minting session token" — on a timer,
+       then set `sessionStorage.ops_provisioned` and revealed the console. Not
+       one of those steps did anything. Nothing was attested, no role was
+       resolved and no MFA was satisfied; the flag it set was writable from the
+       browser console by anyone who could read the page.
+
+       The real gates are three, and all of them run on the server above this
+       line: the session, `isAdminSession()` (the ADMIN role AND the allowlisted
+       address), and the device check. This added a click and a wait in front of
+       them every new browser session, and it cost real time — three attempts to
+       render this console during development found an empty page, because the
+       page had rendered and the ceremony was covering it.
+
+       A control that performs security without providing any is worse than no
+       control: it teaches the operator that the delay IS the protection. */
+    <>
       {/* Mounted here rather than in each page so every admin surface — and
           any added later — refreshes itself. Renders nothing. */}
       <AdminLiveRefresh />
       <AdminShell name={name} email={email}>{children}</AdminShell>
-    </OpsLoginGate>
+    </>
   );
 }
