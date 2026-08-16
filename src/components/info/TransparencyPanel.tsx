@@ -59,7 +59,7 @@ export async function TransparencyPanel() {
       </section>
 
       {/* Stats grid */}
-      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '40px' }}>
+      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px', marginBottom: '40px' }}>
         {STATS.map((s) => (
           <div key={s.label} className="lp-stat">
             <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>

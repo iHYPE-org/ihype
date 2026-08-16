@@ -88,7 +88,19 @@ export default async function VenueCalendarPage({ params }: Props) {
       </h1>
       <p className="meta" style={{ marginBottom: 24 }}>{monthName} — {shows.length} {shows.length !== 1 ? t('venuesSlugCalendarPage.showsPlural', 'shows') : t('venuesSlugCalendarPage.showSingular', 'show')}</p>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2, marginBottom: 8 }}>
+      {/*
+        `minmax(0, 1fr)`, never a bare `1fr` — the same spelling the design
+        system moved its own date strip to (`templates/simplified-app/map.html`,
+        `#dow,#grid`). A bare `1fr` is `minmax(auto, 1fr)`, and `auto` floors the
+        track at the cell's min-content width. The event links below set
+        `white-space: nowrap`, so their min-content IS the full untruncated show
+        title: one long title widened its column and blew the whole seven-column
+        grid out sideways, ellipsis and all. Measured in Chromium at 393px with a
+        62-character title: the grid reported a 558px scrollWidth inside a 361px
+        container and pushed the document to 574px. With this floor it measures
+        361px and the ellipsis does its job.
+      */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2, marginBottom: 8 }}>
         {dayNames.map((d) => (
           <div key={d} style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', fontWeight: 600, color: 'var(--ink-3)', textAlign: 'center', padding: '4px 0', letterSpacing: '.08em', textTransform: 'uppercase' }}>
             {d}
@@ -96,7 +108,7 @@ export default async function VenueCalendarPage({ params }: Props) {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 2 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2 }}>
         {cells.map((day, idx) => {
           const dayShows = day ? (showsByDay.get(day) ?? []) : [];
           const isToday = day === now.getDate();

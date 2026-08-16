@@ -455,7 +455,7 @@ export function PagesHome({
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
             {t('pagesHome.yourNetworkLabel', 'YOUR NETWORK')}
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10, marginBottom: 18 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(following.length).padStart(2, '0')}
@@ -688,7 +688,7 @@ export function PagesHome({
       </div>
       </PullToRefresh>
       <style>{`
-        .pages-create-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+        .pages-create-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
         @media (max-width: 640px) {
           .pages-create-grid { grid-template-columns: 1fr; }
         }

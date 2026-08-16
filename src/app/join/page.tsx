@@ -49,7 +49,7 @@ export default async function JoinChooserPage() {
         .join-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
         .join-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
         .join-sub { font-size: 15px; color: var(--ink-a65); line-height: 1.6; max-width: 52ch; margin: 0 auto 40px; }
-        .join-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 28px; }
+        .join-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
         .join-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; padding: 22px 20px; border-radius: 16px; border: 1px solid var(--line); border-top: 3px solid var(--jc-color); background: var(--bg2); text-decoration: none; }
         /* A glyph takes its colour from CSS where an emoji ignored it — so the
            role token that already tints the label now tints the mark too. */

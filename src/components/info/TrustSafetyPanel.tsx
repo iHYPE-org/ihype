@@ -97,7 +97,7 @@ export async function TrustSafetyPanel() {
         </p>
       </section>
 
-      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '32px' }}>
+      <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px', marginBottom: '32px' }}>
         {ENFORCEMENT_STATS.map((s) => (
           <div key={s.label} className="lp-stat">
             <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>
@@ -110,7 +110,7 @@ export async function TrustSafetyPanel() {
         <section className="lp-hype-explainer">
           <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
           <h2 className="lp-section-head">{t('auditPage.byCategoryTitle', 'What gets reported')}</h2>
-          <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
             {categoryRows.map((r) => (
               <div key={r.label} className="lp-reason-card">
                 <h3 className="lp-reason-head">{r.count.toLocaleString()}</h3>
@@ -136,7 +136,7 @@ export async function TrustSafetyPanel() {
         <p className="lp-hero-sub" style={{ margin: '8px 0 20px' }}>
           {t('auditPage.adVettingBody', 'iHYPE only ever runs radio-style audio ad spots — no banners, no visual placements. Every campaign is screened by AI before it can run.')}
         </p>
-        <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px' }}>
+        <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: '20px' }}>
           {AD_STATS.map((s) => (
             <div key={s.label} className="lp-stat">
               <span className="lp-stat-val" style={{ color: s.c }}>{s.val}</span>

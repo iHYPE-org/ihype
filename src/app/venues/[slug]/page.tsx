@@ -294,7 +294,7 @@ export default async function VenuePage({
           .venue-info { width: 100%; }
           .venue-info h1 { max-width: 100%; }
           .venue-badges { justify-content: center; }
-          .venue-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; width: 100%; }
+          .venue-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; width: 100%; }
           .venue-capacity-row { max-width: 100%; }
           .venue-hero-actions { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: flex-start; }
           .venue-hero-actions::-webkit-scrollbar { display: none; }
