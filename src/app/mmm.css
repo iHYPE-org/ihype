@@ -542,6 +542,18 @@ html.mmm-locked .site-shell > main {
    pill, not its label. Making it conditional needs a resize observer in JS,
    which is a lot of machinery for the difference between a crisp pill edge and
    a slightly soft one. */
+/* …and on the MAP row that machinery now exists, so the cost is paid there
+   (2026-08-16, reported as "clicking Artists covers up the Artists button").
+   `MmmMap` already scrolls the pressed chip back into view, and sets
+   `data-scroll-end` when the row has nothing further right. The fade means
+   "there is more this way"; at the end of the scroll there is not, and with
+   three layer chips the one it was softening was the ACTIVE one every time the
+   row overflowed. `.mmm-tabs` keeps the unconditional fade — it has no script
+   and five destinations, so it is rarely the active tab that sits last. */
+.mmm-map-chips[data-scroll-end] {
+  mask-image: none;
+  -webkit-mask-image: none;
+}
 
 /* ── MAP date strip ───────────────────────────────────────────────────────
    Events only — an event has a date and a venue or an artist does not, which is
