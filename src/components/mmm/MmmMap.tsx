@@ -105,6 +105,7 @@ export function MmmMap({
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>('events');
+  const chipsRef = useRef<HTMLDivElement | null>(null);
 
   // The date strip. A SET of days, not a span — Design System 8's map document
   // is explicit that Friday and Sunday with nothing between them is a legal
@@ -243,6 +244,67 @@ export function MmmMap({
   // sheet asks first, in our own words, and only an accept reaches the
   // browser. Declining is remembered and never re-asked.
   const [home, setHome] = useState<[number, number] | null>(null);
+  /**
+   * Keep the chip you just pressed on screen.
+   *
+   * Reported as "clicking Artists covers up the Artists button", and it is
+   * the selection itself that does it. `.mmm-map-chips` is the only shrinkable
+   * item in the row, and choosing ARTISTS is the one layer that adds the count
+   * readout to the pinned `.mmm-map-near` pill — up to 50% of the row. So the
+   * row loses ~120px at the exact moment the rightmost chip becomes the active
+   * one, and ARTISTS slides under the 22px fade mask with nothing to bring it
+   * back: the member is left looking at a sliver of the control they just used,
+   * with no feedback that their tap registered.
+   *
+   * Above 620px this is not a phone problem — `.mmm-map-controls` is capped at
+   * 420px there by design (a full-bleed control bar at 1900px is what made the
+   * map read as unfinished), so the squeeze happens at every width.
+   *
+   * `scrollIntoView` honours `scroll-padding-inline-end`, which those chips
+   * already set to the fade width — so "nearest" lands the chip clear of the
+   * mask rather than flush against it, and the fade keeps meaning "there is
+   * more this way" instead of hiding the answer.
+   */
+  useEffect(() => {
+    const active = chipsRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
+    if (!active) return;
+    // The row is chrome over a map, not a document: an animated scroll here
+    // reads as the map moving. Honour the same reduced-motion preference the
+    // token block already zeroes every other duration for.
+    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    active.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
+  }, [layer, total]);
+
+  /**
+   * Drop the overflow fade once there is nothing left to scroll to.
+   *
+   * The fade's whole meaning is "there is more content this way". At the end
+   * of the scroll there is not, so it stops being an affordance and becomes a
+   * gradient sitting on the last chip — which, with only three layers, is the
+   * ACTIVE one every time the row overflows. That is the other half of what
+   * was reported as Artists being covered up: scrolling it into view leaves it
+   * fully on screen, and this is what makes it crisp rather than half-faded.
+   *
+   * `mmm.css` notes that a conditional fade "needs a resize observer, which is
+   * a lot of machinery" — that was true when the row had no script attached to
+   * it at all. It has one now for the reason above, so this is a listener, not
+   * a new mechanism. Tolerance of 1px because scroll offsets are fractional at
+   * fractional zoom and an exact equality never fires.
+   */
+  useEffect(() => {
+    const chips = chipsRef.current;
+    if (!chips) return;
+    const sync = () => {
+      const atEnd = chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 1;
+      chips.toggleAttribute('data-scroll-end', atEnd);
+    };
+    sync();
+    chips.addEventListener('scroll', sync, { passive: true });
+    const observer = new ResizeObserver(sync);
+    observer.observe(chips);
+    return () => { chips.removeEventListener('scroll', sync); observer.disconnect(); };
+  }, [layer, total]);
+
   const flownHome = useRef(false);
   const [geolocationSettled, setGeolocationSettled] = useState(false);
   const locationPrimer = usePermissionPrimer('location', geolocationSettled);
@@ -420,7 +482,7 @@ export function MmmMap({
               backend — only from a control surface that never had it. */}
           <div className="mmm-map-controls">
             <div className="mmm-control-row">
-              <div className="mmm-map-chips">
+              <div className="mmm-map-chips" ref={chipsRef}>
                 {LAYERS.map((entry) => (
                   <button
                     aria-pressed={layer === entry.id}
