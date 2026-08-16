@@ -1228,24 +1228,12 @@ html.mmm-locked .site-shell > main {
    text ramp: the tile does not grow with the Text size control, so a rem mark
    would overflow it at 140% — and a fixed px mark would not follow the tile
    between its 88px and 56px sizes. */
+/* Everything except the size now comes from `.brand-wordmark` in globals.css,
+   which the three other pieces of chrome share. The bolt's box is unchanged:
+   that rule is `.756em × 1.24em`, and 0.235 × 0.756 = 0.1777, 0.235 × 1.24 =
+   0.2914 — the two figures this block used to compute by hand. */
 .mmm-logo-mark {
-  display: flex;
-  align-items: center;
-  font-family: var(--font-display);
-  font-weight: 800;
   font-size: calc(var(--mmm-chrome-size) * 0.235);
-  letter-spacing: 0.01em;
-  line-height: 1;
-}
-/* The bolt is cropped to its own ink (the 512 artboard is mostly air, which at
-   wordmark scale breaks the word into three pieces) and takes currentColor, so
-   it needs no second colour variant. */
-/* 1.24 of the cap height, and 0.61 of that wide — LogoTrigger's own ratios. */
-.mmm-logo-mark svg {
-  display: block;
-  width: calc(var(--mmm-chrome-size) * 0.1777);
-  height: calc(var(--mmm-chrome-size) * 0.2914);
-  margin: 0 0.06em;
 }
 .mmm-logo:hover { opacity: 0.92; }
 /* Open state tips the logo, so the trigger reads as "engaged". */

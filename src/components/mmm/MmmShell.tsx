@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { BrandWordmark } from '@/components/BrandWordmark';
 import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
@@ -434,16 +435,10 @@ export function MmmShell({
           {/* The full wordmark, per `components/shell/LogoTrigger.jsx`: iH, the
               bolt standing in for the Y, PE. It rendered as the plain word
               before, which lost the mark on the one square that is always on
-              screen. Drawn inline rather than loaded from `assets/logo/` so it
-              takes `currentColor` (`--ink-on-accent`) instead of shipping a
-              second colour variant. */}
-          <span className="mmm-logo-mark">
-            <span>iH</span>
-            <svg aria-hidden="true" viewBox="148 92 200 328">
-              <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="currentColor" />
-            </svg>
-            <span>PE</span>
-          </span>
+              screen. Shared with the other three pieces of chrome since the
+              brand sync — `.mmm-logo-mark` now supplies only the size, and the
+              rendered box is unchanged (see the note in mmm.css). */}
+          <BrandWordmark className="mmm-logo-mark" />
           {isPlaying && currentTrack && (
             <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
           )}

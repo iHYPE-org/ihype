@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
+import { BrandWordmark } from '@/components/BrandWordmark';
 import Link from 'next/link';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
@@ -44,7 +45,7 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
         <Link aria-label="iHYPE home" className="fan-entry-logo" href="/">
-          <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+          <BrandWordmark variant="brand" />
         </Link>
         <nav aria-label="Account" className="fan-entry-nav">
           <ThemeToggle />

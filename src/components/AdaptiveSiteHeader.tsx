@@ -1,11 +1,11 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
+import { BrandWordmark } from '@/components/BrandWordmark';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
 import { SearchBar } from '@/components/SearchBar';
@@ -123,7 +123,7 @@ export function AdaptiveSiteHeader({
                 onClick={() => setMenuOpen((current) => !current)}
                 type="button"
               >
-                <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+                <BrandWordmark />
                 <span className="app-menu-logo-signal" aria-hidden="true" />
               </button>
               {menuDemo ? <span className="app-menu-demo-label" role="status">Everything lives here</span> : null}

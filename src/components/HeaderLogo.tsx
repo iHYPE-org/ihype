@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useI18n } from '@/components/I18nProvider';
+import { BrandWordmark } from '@/components/BrandWordmark';
 
 export function HeaderLogo() {
   const pathname = usePathname();
@@ -14,10 +15,11 @@ export function HeaderLogo() {
 
   return (
     <Link href={href} className="nav-logo nav-logo-right" aria-label={t('headerLogo.ariaLabel', 'iHYPE home')}>
-      <span className="nav-logo-mark">
-        <span className="nav-logo-word">i</span>
-        <span className="nav-logo-dot">HYPE</span>
-      </span>
+      {/* The wordmark, per `guidelines/brand-wordmark-svg.card.html`: `i` in
+          ink, `HYPE` — bolt included — in the accent. This used to be plain
+          uppercase text whose winning rule painted `color: #fff`, so on a
+          light page the `i` disappeared entirely. */}
+      <BrandWordmark variant="brand" />
     </Link>
   );
 }

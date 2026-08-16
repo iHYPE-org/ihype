@@ -860,36 +860,19 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 /* stats */
 /* panels */
 /* track cards */
+/* The marketing header's wordmark. ONE definition, on purpose: `.nav-logo-mark`
+   was declared five times down this file and the winner set `color: #fff` with
+   `letter-spacing: .17em` and `text-transform: uppercase` — white on a light
+   page, and spaced-out capitals where Design System 8's wordmark is tight
+   mixed case. `.nav-logo-word` carried `#fff7ec`, the retired warm cream, in
+   the first block and `#f8fbff` in the second. All of it is gone; the mark
+   itself is `.brand-wordmark`, shared with the shell triggers. */
 .nav-logo {
-  display: inline-grid;
-  gap: 0.14rem;
-  align-items: start;
-  justify-items: start;
-  text-decoration: none;
-}
-.nav-logo-mark {
   display: inline-flex;
   align-items: center;
-  gap: 0.12rem;
-  font-size: 1.05rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.nav-logo-word {
-  color: #fff7ec;
-}
-.nav-logo-dot {
-  background: var(--accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.nav-logo:hover .nav-logo-discover,
-.nav-logo:focus-visible .nav-logo-discover {
-  background:
-    linear-gradient(90deg, rgba(35,208,216,0.34), rgba(255,103,196,0.3), rgba(255,196,87,0.34));
-  color: #fff8ec;
+  color: var(--ink-1);
+  font-size: 20px;
+  text-decoration: none;
 }
 .fan-playlist-manager {
   position: relative;
@@ -2877,24 +2860,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
   gap: 1.15rem;
   padding: 0.82rem 0 0.78rem;
 }
-.nav-logo {
-  gap: 0.28rem;
-}
-.nav-logo-mark {
-  gap: 0.18rem;
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-}
-.nav-logo-word {
-  color: #f8fbff;
-}
-.nav-logo-dot {
-  background: linear-gradient(135deg, #8ddfff, #ffe0a2);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 .media-player-button {
   border-color: var(--hair-80);
   background: var(--hair-45);
@@ -3014,10 +2979,7 @@ body:has(.authcard-page) #main-content { width: 100%; }
     width: 100%;
     justify-content: center;
   }
-  .nav-logo-mark {
-    font-size: 0.86rem;
-    letter-spacing: 0.05em;
-  }
+  .nav-logo { font-size: 17px; }
   .fan-playlist-panel {
     right: -0.1rem;
     width: min(94vw, 400px);
@@ -3117,9 +3079,7 @@ body {
   padding: 0.72rem 0;
 }
 
-.nav-logo-mark {
-  letter-spacing: 0.14em;
-}.button,
+.button,
 .directory-switcher-link,
 
 .panel,
@@ -3216,39 +3176,7 @@ body {
   padding: 0 28px;
 }
 
-.nav-logo,
-
-.nav-logo-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  color: #fff;
-  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.17em;
-  line-height: 1;
-  text-transform: uppercase;
-  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-}
-
-.nav-logo-word {
-  color: #fff;
-  transition: color 150ms;
-}
-
-.nav-logo-dot {
-  color: var(--accent, var(--accent));
-  transition: color 150ms;
-}
-
-.nav-logo:hover .nav-logo-dot,
-.nav-logo:focus-visible .nav-logo-dot {
-  background: linear-gradient(90deg, #ff4635, #ff3d87 35%, #7c5cff 68%, #39d8df);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
+.nav-logo:hover { opacity: .9; }
 .nav-a11y-button{
   min-height: 38px;
   display: inline-flex;
@@ -4680,16 +4608,19 @@ body:has(.scene-landing) .site-shell { padding: 0 !important; }
   background: rgba(var(--bg-base-rgb),.84);
   backdrop-filter: blur(18px);
 }
+/* The wordmark itself, not a tile: this is a link home, not a menu trigger, so
+   it takes `guidelines/brand-wordmark-svg.card.html`'s two-tone treatment on
+   the page ground rather than LogoTrigger's accent square. */
 .fan-entry-logo {
-  width: 54px;
-  height: 54px;
-  display: block;
+  display: flex;
+  align-items: center;
   flex: 0 0 auto;
-  border-radius: 14px;
-  transition: transform .2s ease, filter .2s ease;
+  color: var(--fan-entry-paper);
+  font-size: 30px;
+  text-decoration: none;
+  transition: transform .2s ease, opacity .2s ease;
 }
-.fan-entry-logo img { width: 100%; height: 100%; display: block; border-radius: inherit; }
-.fan-entry-logo:hover { transform: translateY(-2px) rotate(-1deg); filter: brightness(1.08); }
+.fan-entry-logo:hover { transform: translateY(-2px); opacity: .88; }
 .fan-entry-nav { display: flex; align-items: center; gap: clamp(8px,1.4vw,18px); }
 .fan-entry-nav a {
   min-height: 42px;
@@ -4905,7 +4836,9 @@ body:has(.fan-entry) #main-content { width: 100%; }
 @media (max-width: 680px) {
   .fan-entry::before { top: 64px; }
   .fan-entry-header { height: 64px; padding: 8px 12px; }
-  .fan-entry-logo { width: 46px; height: 46px; border-radius: 12px; }
+  /* 21px, not 23: at 23 the wordmark and the nav sit flush at 320px — no
+     overflow, but nothing between them. Measured, not estimated. */
+  .fan-entry-logo { font-size: 21px; }
   .fan-entry-nav { gap: 8px; }
   .fan-entry-nav .theme-toggle { width: 36px; height: 36px; }
   .fan-entry-nav a { min-height: 44px; font-size: .78rem; }
@@ -4933,6 +4866,13 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-stats > div:nth-child(n+3) { border-top: 1px solid var(--hair-100); }
   /* The light-theme border restatement that used to sit here is gone with the
      rest of the parallel palette — --hair-100 is already black-on-light. */
+}
+/* The narrowest phones still leave no air between the wordmark and the theme
+   toggle at 21px: the nav's three controls already take 229 of the 296px of
+   content a 320px viewport has after the header padding. Nothing overflows,
+   but the two touch, so this is the one width where the mark gives way. */
+@media (max-width: 360px) {
+  .fan-entry-logo { font-size: 17px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .fan-entry-art { animation: none; }
@@ -4977,6 +4917,34 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .site-dock-title:hover span, .site-dock-artist:hover span { animation: none; }
 }
 
+/* ── Brand wordmark ─────────────────────────────────────────────────
+   Design System 8's mark, rendered as type plus one path (see
+   `src/components/BrandWordmark.tsx` for why it replaced a raster sticker).
+   Sized entirely in `em` — a host sets `font-size` and nothing else — using
+   `components/shell/LogoTrigger.jsx`'s own ratios: the bolt is 1.24 of the cap
+   height and 0.61 of that wide, with a .06em gap either side. */
+.brand-wordmark {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+.brand-wordmark svg {
+  display: block;
+  width: 0.756em;
+  height: 1.24em;
+  margin: 0 0.06em;
+}
+/* The bolt IS the Y, so it belongs to the accent half of the word — it takes
+   `currentColor`, so setting the colour on this span carries it. */
+.brand-wordmark-accent {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+}
+
 /* ── Authenticated local-scene shell ────────────────────────────────
    One compact, persistent landmark across Listen, Events, Pages and every
    creator surface. The logo is the menu; search owns the remaining space and
@@ -4994,12 +4962,20 @@ body:has(.fan-entry) #main-content { width: 100%; }
   place-items: center;
   overflow: visible;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-2));
-  border-radius: 17px;
-  background: #070605;
-  box-shadow: 0 9px 24px rgba(0,0,0,.22);
+  /* The solid accent squircle of `components/shell/LogoTrigger.jsx`: no
+     border, a corner of 0.342 of the box (54 × 0.342 = 18.5, which is
+     --radius-card), and the mark in the ink that measures 6.03:1 on it. The
+     `#070605` matte this replaced was never a design colour — it was the dark
+     edge of the raster sticker, and it stayed dark on a light page. */
+  border: 0;
+  border-radius: var(--radius-card);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  /* 0.235 of the box, per LogoTrigger. The mark sizes itself from here. */
+  font-size: 12.7px;
+  box-shadow: 0 9px 24px rgba(var(--accent-rgb),.28);
   cursor: pointer;
-  transition: transform .2s var(--ease-out), border-color .2s ease, box-shadow .2s ease;
+  transition: transform .2s var(--ease-out), box-shadow .2s ease;
 }
 .app-menu-logo::after {
   content: "";
@@ -5014,20 +4990,13 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .app-menu-logo:hover,
 .app-menu-logo[aria-expanded="true"] {
-  border-color: rgba(var(--role-venue-rgb),.62);
-  box-shadow: 0 0 0 3px rgba(var(--role-venue-rgb),.08), 0 14px 32px rgba(0,0,0,.3);
+  box-shadow: 0 0 0 3px rgba(var(--role-venue-rgb),.28), 0 14px 32px rgba(var(--accent-rgb),.34);
   transform: translateY(-1px);
 }
 .app-menu-logo:hover::after,
 .app-menu-logo[aria-expanded="true"]::after {
   opacity: 1;
   transform: scale(1);
-}
-.app-menu-logo img {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  object-fit: cover;
 }
 .app-menu-logo-signal {
   width: 8px;

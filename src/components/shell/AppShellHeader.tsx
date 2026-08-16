@@ -1,10 +1,10 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
+import { BrandWordmark } from '@/components/BrandWordmark';
 
 /**
  * The persistent top bar. Height 82px, padding 0 22px, gap 18px,
@@ -62,7 +62,7 @@ export function AppShellHeader({
         title={t('appShell.menuAriaLabel', 'Menu')}
         type="button"
       >
-        <Image alt="" height={48} priority src="/brand/ihype-menu-logo.webp" width={48} />
+        <BrandWordmark />
       </button>
 
       <form

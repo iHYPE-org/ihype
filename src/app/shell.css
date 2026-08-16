@@ -109,19 +109,26 @@ html.ihype-shell-locked .site-shell > footer {
 }
 .shell-root[data-header-hidden='true'] .shell-header { transform: translateY(-100%); }
 
+/* The solid accent squircle of `components/shell/LogoTrigger.jsx`, which is
+   what this affordance is: the only menu trigger in the shell. Corner is 0.342
+   of the box (48 × 0.342 = 16) and the mark's size 0.235 of it, both the
+   trigger's own ratios. The `#000` this replaced was the raster sticker's own
+   matte — it had to be there to hide the asset's black edge, and it stayed
+   black on a light page. Nothing paints a literal here now. */
 .shell-logo-tile {
   flex: 0 0 auto;
-  display: block;
+  display: grid;
+  place-items: center;
   width: 48px;
   height: 48px;
   padding: 0;
-  overflow: hidden;
-  border: 1px solid var(--line-2);
-  border-radius: 12px;
-  background: #000; /* The sticker logo is authored on black; this is the asset's own matte, not a theme color. */
+  border: 0;
+  border-radius: 16px;
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  font-size: 11.3px;
   cursor: pointer;
 }
-.shell-logo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .shell-logo-tile:hover { box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.28); }
 
 .shell-search { flex: 1 1 auto; max-width: 620px; min-width: 0; }

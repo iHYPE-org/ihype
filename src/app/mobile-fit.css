@@ -198,6 +198,15 @@
     min-height: 44px;
   }
 
+  /* The two brand wordmarks — the landing header's and the marketing header's.
+     They met the floor by accident while they were 46–54px raster squares; as
+     type they are only as tall as their line box (28.5px at 21px, 21.1px at
+     17px). Both are already flex containers, so this is the floor alone. */
+  .fan-entry-logo,
+  .nav-logo {
+    min-height: 44px;
+  }
+
   /* A skip link is keyboard-only, but it measured 16px and is the first thing
      in the tab order on every page — including for a switch-control user on a
      phone, who taps it. */
