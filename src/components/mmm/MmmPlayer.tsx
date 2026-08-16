@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 
 /**
@@ -208,8 +209,60 @@ export function MmmPlayer({
     // Every value that means "something is happening" restarts the countdown.
   }, [artistOpen, awake, hidden, idleMs, narrow, playing, progress, queueOpen, volume, hyped, faved, track?.title]);
 
-  // null renders nothing. Never invent a placeholder track.
-  if (!track) return null;
+  /**
+   * Idle. The bar stays docked with nothing loaded — explicit product decision,
+   * 2026-08-16, and a DEPARTURE from the design source. Do not "correct" it.
+   *
+   * `PlayerPill.d.ts` documents `track: null` as "renders nothing — never
+   * invent a placeholder track", and `PlayerPill.jsx:199` returns null. That
+   * rule is kept where it actually bites: nothing below fabricates a title, an
+   * artist, artwork, a duration or a progress position, and there are no
+   * transport controls, because there is genuinely nothing to transport. An
+   * idle bar states that it is idle; a placeholder track would claim something
+   * false, and those are different things.
+   *
+   * What returning null cost: `SHELL_LOCK` opens by describing the trigger and
+   * the player as the same height on the same baseline, "one piece of
+   * furniture" bottom-left. On a platform with no playable audio yet — which is
+   * every pre-launch environment — half that furniture was simply missing, so
+   * the shell read as broken chrome rather than as an empty library. It was
+   * reported that way twice.
+   *
+   * `PlayerPill.jsx` should gain this state in Claude Design so the two stop
+   * disagreeing; until it does, this comment is the record of why they do.
+   */
+  if (!track) {
+    if (hidden) return null;
+    const idleArt = narrow ? 40 : Math.max(40, anchorHeight - 24);
+    return (
+      <div
+        className="mmm-player"
+        data-idle=""
+        ref={rootRef}
+        style={{ minHeight: anchorHeight }}
+      >
+        <div
+          aria-hidden="true"
+          className="mmm-player-art"
+          data-empty=""
+          style={{ width: idleArt, height: idleArt, borderRadius: narrow ? 14 : Math.round(idleArt * 0.342) }}
+        >
+          {/* A Unicode glyph, not an emoji — DS8 §29. It takes `currentColor`,
+              so it dims with the rest of the idle bar instead of shipping a
+              second asset. */}
+          ♪
+        </div>
+        <div className="mmm-player-body">
+          <div className="mmm-player-idle-title">Nothing playing</div>
+          {/* The one thing worth offering here is a way out of the empty state,
+              so the bar is a route rather than a readout. */}
+          <Link className="mmm-player-idle-link" href="/app/music/discover">
+            Find something to play
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // 64 in an 88px pill leaves exactly 12px above and below, which is the pill's
   // own padding. On a phone the bar also carries search at its left edge, so the

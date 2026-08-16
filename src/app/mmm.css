@@ -1448,6 +1448,45 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-player-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
+/* ── The idle bar ─────────────────────────────────────────────────────────
+   The player stays docked with nothing loaded (2026-08-16, product decision —
+   see the long note in `MmmPlayer.tsx`). It must read as an empty library, not
+   as a track that failed to load, so the accent artwork gives way to a plain
+   surface and the whole bar sits back a step in the hierarchy. Nothing here
+   fabricates a title, an artist or a position. */
+.mmm-player[data-idle] { pointer-events: auto; }
+.mmm-player-art[data-empty] {
+  background: var(--hair-30);
+  border: 1px solid var(--line-2);
+  color: var(--ink-3);
+  /* The glyph is furniture, not display type — the accent artwork's 800 weight
+     would make an empty square shout louder than a real one. */
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 1.25rem;
+}
+.mmm-player-idle-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--ink-2);
+}
+.mmm-player-idle-link {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+  text-decoration: none;
+  /* The only control on the bar, so it carries the touch floor itself rather
+     than relying on `mobile-fit.css` to find it. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+}
+.mmm-player-idle-link:hover { color: var(--ink); }
+
 .mmm-player-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 
 .mmm-player-track {
