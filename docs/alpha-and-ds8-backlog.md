@@ -24,6 +24,20 @@ Every item here was found by measuring something, and each says what it costs.
    migration failure that stopped production shipping for a day while three PRs
    merged green. `docs/monitoring.md`.
 4. **An `sk_test_` Stripe key.** Unblocks the rehearsal below.
+5. **Run `npm run seed:preview` against production.** This is why every surface
+   still looks broken. Measured 2026-08-16: production holds **1 user, 2
+   profiles, 0 shows, 0 tracks** — so `/app/music/discover` says "No seeds
+   waiting", the map has no pins and the charts are blank, and all three are
+   *correct*. No page change fixes it; there is nothing to render.
+   `scripts/seed-preview-content.mjs` was written for exactly this and had
+   **never been run** — it was not in `package.json`, which is most of why.
+   It now is (`seed:preview`, `seed:preview:remove`). Needs a `DATABASE_URL`
+   pointing at production, which no sandbox session has. Everything it writes
+   lives under the reserved `preview-` / `@preview.ihype.org` namespace, so
+   `npm run seed:preview:remove` takes it all back out again — verified against
+   a real Postgres to leave **zero** residue. **Re-run it monthly, or whenever
+   the charts look empty:** `/api/charts` only counts hypes from the last seven
+   days, and re-running re-dates them.
 
 ## The DS8 remodel, in the order that costs least
 
@@ -100,7 +114,12 @@ faithfully would REGRESS the homepage.**
 - **"Me > Settings > Tickets duplicates My Tickets."** No Tickets entry exists
   in the ME panel route or the legacy settings page; the visible "Ticket drops"
   there is a notification preference. Needs to be pointed at.
-- **Placeholder content while surfaces are empty.** Asked for, not built. This
-  codebase never fabricates data — every stat is real or an em dash. The way to
-  do it is rows that are unmistakably examples (greyed, labelled EXAMPLE,
+- **Placeholder content while surfaces are empty.** Asked for twice. Resolved a
+  different way, and the difference matters: rather than fabricating rows in the
+  UI, `npm run seed:preview` puts **real** rows in the database under a reserved
+  namespace, so every surface exercises its real query and a working screen is
+  distinguishable from a broken one. Nothing renders fake data, which keeps the
+  "every stat is real or an em dash" rule intact. See operator item 5 — it still
+  has to be run. If a surface must show something while genuinely empty, the
+  original constraint stands: unmistakably examples (greyed, labelled EXAMPLE,
   non-interactive), never anything that could read as real.

@@ -18,6 +18,8 @@
     "audit:routes": "node scripts/audit-routes.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",
     "seed:admin-preview": "node --import dotenv/config scripts/seed-admin-preview-profiles.mjs",
+    "seed:preview": "node --import dotenv/config scripts/seed-preview-content.mjs",
+    "seed:preview:remove": "node --import dotenv/config scripts/seed-preview-content.mjs --remove",
     "audit:mobile": "node scripts/audit-mobile.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",

@@ -140,6 +140,8 @@ async function main() {
     const now = Date.now();
     const venueProfiles = [];
     const artistProfiles = [];
+    const previewUserIds = [];
+    const trackIds = [];
 
     for (const venue of VENUES) {
       const slug = `${PREVIEW_PREFIX}${venue.slug}`;
@@ -156,6 +158,7 @@ async function main() {
         },
         select: { id: true },
       });
+      previewUserIds.push(owner.id);
       const profile = await prisma.profile.upsert({
         where: { slug },
         update: {},
@@ -197,6 +200,7 @@ async function main() {
         },
         select: { id: true },
       });
+      previewUserIds.push(owner.id);
       const profile = await prisma.profile.upsert({
         where: { slug },
         update: {},
@@ -222,7 +226,7 @@ async function main() {
 
       for (const [index, title] of (TRACKS[artist.slug] ?? []).entries()) {
         const trackSeed = `${slug}-${index}`;
-        await prisma.artistMediaAsset.upsert({
+        const track = await prisma.artistMediaAsset.upsert({
           where: { hexId: hexFor(trackSeed) },
           update: {},
           create: {
@@ -239,7 +243,9 @@ async function main() {
             sortOrder: index,
             isPublished: true,
           },
+          select: { id: true },
         });
+        trackIds.push(track.id);
       }
     }
 
@@ -276,11 +282,74 @@ async function main() {
       });
     }
 
+    /**
+     * Engagement. Without this the catalogue exists and the surfaces that RANK
+     * it are still blank, which is the half that was missing: profiles, tracks
+     * and shows were seeded, and `/app/music/charts` stayed empty because
+     * nothing ranks a track except a hype.
+     *
+     * `Seed` does double duty in this schema. A row means "this member has
+     * already acted on this track", which is what keeps it out of their own
+     * discover deck — and a row with `action: 'hype'` is ALSO the only input
+     * `/api/charts` has. Seeding hypes from preview accounts therefore fills
+     * the charts without touching any real member's deck, because the deck
+     * filter is scoped to the viewer's own rows.
+     *
+     * **These rows are re-dated on every run, and that is the point.** Charts
+     * only counts hypes from the last 7 days (`since` in `/api/charts`), so a
+     * one-shot seed would light the charts up and then silently empty them a
+     * week later — the exact "why is it blank again" this script exists to
+     * prevent. `update` refreshes `createdAt`, so re-running is a refresh.
+     */
+    const hypeSpread = [];
+    for (const [trackIndex, mediaId] of trackIds.entries()) {
+      // A deterministic, decreasing number of hypers per track, so the chart
+      // has a real ranking rather than 26 tracks tied on one hype each.
+      const hypers = Math.max(1, previewUserIds.length - Math.floor(trackIndex / 2));
+      for (let u = 0; u < hypers; u++) {
+        const userId = previewUserIds[(trackIndex + u) % previewUserIds.length];
+        hypeSpread.push({ userId, mediaId, trackIndex, u });
+      }
+    }
+    for (const { userId, mediaId, trackIndex, u } of hypeSpread) {
+      // Spread across the last six days, never in the future and never older
+      // than the seven-day chart window.
+      const createdAt = new Date(now - (((trackIndex + u) % 6) * day + 3600_000));
+      await prisma.seed.upsert({
+        where: { userId_mediaId: { userId, mediaId } },
+        update: { createdAt, action: 'hype' },
+        create: { userId, mediaId, action: 'hype', createdAt },
+      });
+    }
+
+    // Profile-level hype and follows: what makes an artist page read as
+    // followed-by-somebody, and what the station context reads for its
+    // personalised kinds.
+    for (const [artistIndex, artist] of artistProfiles.entries()) {
+      const supporters = Math.max(2, previewUserIds.length - artistIndex);
+      for (let u = 0; u < supporters; u++) {
+        const userId = previewUserIds[(artistIndex + u) % previewUserIds.length];
+        await prisma.profileHypeEvent.upsert({
+          where: { userId_profileId: { userId, profileId: artist.id } },
+          update: {},
+          create: { userId, profileId: artist.id },
+        });
+        await prisma.follow.upsert({
+          where: { followerId_followeeProfileId: { followerId: userId, followeeProfileId: artist.id } },
+          update: {},
+          create: { followerId: userId, followeeProfileId: artist.id },
+        });
+      }
+    }
+
     const counts = {
       previewUsers: await prisma.user.count({ where: { email: { endsWith: `@${PREVIEW_DOMAIN}` } } }),
       profiles: await prisma.profile.count({ where: { slug: { startsWith: PREVIEW_PREFIX } } }),
       tracks: await prisma.artistMediaAsset.count({ where: { profile: { slug: { startsWith: PREVIEW_PREFIX } } } }),
       shows: await prisma.show.count({ where: { slug: { startsWith: PREVIEW_PREFIX } } }),
+      chartHypes: await prisma.seed.count({ where: { action: 'hype', user: { email: { endsWith: `@${PREVIEW_DOMAIN}` } } } }),
+      profileHypes: await prisma.profileHypeEvent.count({ where: { profile: { slug: { startsWith: PREVIEW_PREFIX } } } }),
+      follows: await prisma.follow.count({ where: { followeeProfile: { slug: { startsWith: PREVIEW_PREFIX } } } }),
     };
     console.log(JSON.stringify(counts, null, 2));
     console.log('\nRemove it all again with: node scripts/seed-preview-content.mjs --remove');
