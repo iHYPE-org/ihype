@@ -294,7 +294,7 @@ export default async function ArtistPage({
           .artist-hero-actions { width: 100%; flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-content: flex-start; }
           .artist-hero-actions::-webkit-scrollbar { display: none; }
           .artist-hero-actions > * { flex-shrink: 0; white-space: nowrap; min-height: 44px; }
-          .artist-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; text-align: center; width: 100%; }
+          .artist-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; text-align: center; width: 100%; }
           .artist-content { padding: 0 20px; }
           .artist-tabs { gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
           .artist-tabs::-webkit-scrollbar { display: none; }

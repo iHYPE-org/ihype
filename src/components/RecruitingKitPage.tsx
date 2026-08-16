@@ -186,7 +186,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-features-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
         .rk-features-eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rk-tint); }
         .rk-features-h2 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2rem, 4vw, 3rem); letter-spacing: -.03em; line-height: 1.06; margin: 14px 0 0; }
-        .rk-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 44px; }
+        .rk-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 44px; }
         .rk-feature { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; }
         .rk-feature-title { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 8px; }
         .rk-feature-body { font-size: .92rem; line-height: 1.55; color: var(--ink-a70); margin: 0; }

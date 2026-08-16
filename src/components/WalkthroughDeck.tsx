@@ -295,7 +295,7 @@ function Slide02Problem() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg-2)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Kick>{t('walkthroughDeck.slide02Kick', 'The status quo')}</Kick>
       <H size={60} style={{ maxWidth: '20ch', marginTop: 26 }}>{t('walkthroughDeck.slide02Title', 'The middle takes the most.')}</H>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 24, marginTop: 48 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 24, marginTop: 48 }}>
         <StepCard>
           <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '3.25rem', letterSpacing: '-.04em', color: 'var(--accent)', lineHeight: .95 }}>27%</div>
           <Body style={{ marginTop: 10, fontSize: '1.0625rem' }}>{t('walkthroughDeck.slide02Card1', 'Ticketmaster fees on top of face value.')}</Body>
@@ -460,7 +460,7 @@ function Slide10Surfaces() {
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg-2)', padding: 88, flexDirection: 'column', justifyContent: 'center' }}>
       <Kick>{t('walkthroughDeck.slide10Kick', 'What ships today')}</Kick>
       <H size={54} style={{ marginTop: 26, marginBottom: 40 }}>{t('walkthroughDeck.slide10Title', 'Every surface, designed.')}</H>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 18 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 18 }}>
         {surfaces.map(s => (
           <StepCard key={s.key} style={{ padding: 26 }}>
             <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95 }}>{s.title}</div>

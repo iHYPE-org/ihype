@@ -45,6 +45,21 @@ narrowing this got; and **Trust & Safety and Transparency were left alone on
 purpose** — they are stat grids from `templates/transparency/` and
 `templates/audit/`, a separate job from the four prose documents.
 
+**2b. The 2026-08-14 re-vendor is fully ported** — ✅ **audited 2026-08-16,
+DESIGN_SYNC row 286.** `345569e` re-vendored the design system and ported the
+MMM chrome; the same export changed 20 other templates, and nobody had checked
+those. They are almost entirely design-source hygiene with no code half
+(`--role-dj` → `--role-promoter` in 46 places against **0** uses in `src/`, a
+component-namespace rename, dead `fan-app/` links, hex → token *inside the
+templates*). **Both of `PORT_TO_APP.md`'s explicitly-unverified items came back
+clean**: the DJ role is gone from every role picker, and the rigid
+`1fr <fixed>px` hero grids it fixed have no counterpart here — the kit pages and
+`/shows/[slug]` already collapse via `minmax(0, 1fr)` plus a media query. One
+real defect fell out and is fixed: a bare `1fr` track floors at min-content, so
+the venue calendar's `nowrap` show titles blew the seven-column grid out to
+558px inside a 361px container. **Do not re-derive this from the templates —
+read row 286.** The next DS8 item is 3a below.
+
 **3a. The admin console** — ~18 routes behind `AdminShell`. Its template
 (`templates/ops-console/`) is one of the ten with zero adherence findings, so
 it can be followed faithfully. Do step 1 first; the console improves before a
