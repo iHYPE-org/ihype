@@ -45,10 +45,9 @@ export function getAdminEmail(): string {
 /**
  * Every address that should receive an operational alert.
  *
- * Accepts a comma-separated ADMIN_ALERT_EMAIL so alerts are not a bus factor
- * of one. iHYPE is run by two people; until now every alert — payout
- * failures, cron outages, backup verification, the workbench digest — went to
- * a single mailbox, so one person on a plane meant nobody was watching.
+ * Accepts a comma-separated ADMIN_ALERT_EMAIL so the project can add backup
+ * recipients later without changing alert call sites. A shared operational
+ * mailbox is also valid for a single-operator alpha.
  *
  * Empty entries are dropped and the default is always kept as a floor: a
  * typo'd env var must not silently result in alerts going nowhere, which is
