@@ -6,7 +6,7 @@ import {
   clampTextScale, useAccessibilitySettings,
 } from '@/components/AccessibilityControls';
 import { useI18n } from '@/components/I18nProvider';
-import { SegmentedTabs } from '@/components/shell/SegmentedTabs';
+import { MmmSegmentedTabs } from '@/components/mmm/MmmSegmentedTabs';
 import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
 
 /**
@@ -29,7 +29,7 @@ import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
  * The prototype offers three languages; this renders the twelve the product
  * actually ships dictionaries for.
  */
-export function AccessibilitySettingsPanel() {
+export function MmmAccessibilitySettings() {
   const { t, locale, setLocale } = useI18n();
   const { settings, updateSetting } = useAccessibilitySettings();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -58,20 +58,20 @@ export function AccessibilitySettingsPanel() {
   const offLabel = t('appShell.a11y.off', 'Off');
 
   return (
-    <div className="shell-route shell-route-narrow">
-      <span className="shell-eyebrow" style={{ color: 'var(--role-fan)' }}>
+    <div className="mmm-settings-route mmm-settings-route-narrow">
+      <span className="mmm-eyebrow" style={{ color: 'var(--role-fan)' }}>
         {t('appShell.section.settings', 'Settings')}
       </span>
-      <h1 className="shell-route-title">{t('appShell.nav.accessibility', 'Accessibility')}</h1>
+      <h1 className="mmm-settings-title">{t('appShell.nav.accessibility', 'Accessibility')}</h1>
 
-      <div className="shell-card-stack">
-        <section className="shell-card">
-          <h2 className="shell-card-title">{t('appShell.a11y.appearance', 'Appearance')}</h2>
-          <p className="shell-card-hint">
+      <div className="mmm-settings-stack">
+        <section className="mmm-settings-card">
+          <h2 className="mmm-settings-card-title">{t('appShell.a11y.appearance', 'Appearance')}</h2>
+          <p className="mmm-settings-card-hint">
             {t('appShell.a11y.appearanceHint', 'Light and dark both ship from the same tokens.')}
           </p>
-          <SegmentedTabs
-            className="shell-card-controls"
+          <MmmSegmentedTabs
+            className="mmm-settings-card-controls"
             items={[
               { id: 'dark', label: t('appShell.a11y.dark', 'Dark'), active: theme === 'dark', onSelect: () => applyTheme('dark') },
               { id: 'light', label: t('appShell.a11y.light', 'Light'), active: theme === 'light', onSelect: () => applyTheme('light') },
@@ -81,13 +81,13 @@ export function AccessibilitySettingsPanel() {
           />
         </section>
 
-        <section className="shell-card">
-          <h2 className="shell-card-title">{t('appShell.a11y.language', 'Language')}</h2>
-          <p className="shell-card-hint">
+        <section className="mmm-settings-card">
+          <h2 className="mmm-settings-card-title">{t('appShell.a11y.language', 'Language')}</h2>
+          <p className="mmm-settings-card-hint">
             {t('appShell.a11y.languageHint', 'Interface text follows this choice everywhere.')}
           </p>
-          <SegmentedTabs
-            className="shell-card-controls"
+          <MmmSegmentedTabs
+            className="mmm-settings-card-controls"
             items={SUPPORTED_LOCALES.map((code) => ({
               id: code,
               label: LOCALE_NAMES[code],
@@ -99,14 +99,14 @@ export function AccessibilitySettingsPanel() {
           />
         </section>
 
-        <section className="shell-card">
-          <h2 className="shell-card-title">{t('appShell.a11y.textSize', 'Text size')}</h2>
+        <section className="mmm-settings-card">
+          <h2 className="mmm-settings-card-title">{t('appShell.a11y.textSize', 'Text size')}</h2>
           {/* The percentage is the card's live value, announced on change. */}
-          <p className="shell-card-hint" role="status">{scalePercent}%</p>
-          <div className="shell-card-controls">
+          <p className="mmm-settings-card-hint" role="status">{scalePercent}%</p>
+          <div className="mmm-settings-card-controls">
             <button
               aria-label={t('appShell.a11y.textSmaller', 'Smaller text')}
-              className="shell-pill"
+              className="mmm-settings-pill"
               disabled={settings.textScale <= TEXT_SCALE_MIN}
               onClick={() => stepScale(-TEXT_SCALE_STEP)}
               type="button"
@@ -115,29 +115,29 @@ export function AccessibilitySettingsPanel() {
             </button>
             <button
               aria-label={t('appShell.a11y.textBigger', 'Larger text')}
-              className="shell-pill"
+              className="mmm-settings-pill"
               disabled={settings.textScale >= TEXT_SCALE_MAX}
               onClick={() => stepScale(TEXT_SCALE_STEP)}
               type="button"
             >
               A +
             </button>
-            <button className="shell-pill" onClick={() => updateSetting('textScale', 1)} type="button">
+            <button className="mmm-settings-pill" onClick={() => updateSetting('textScale', 1)} type="button">
               {t('appShell.a11y.reset', 'Reset')}
             </button>
           </div>
         </section>
 
-        <section className="shell-card shell-card-split">
+        <section className="mmm-settings-card mmm-settings-card-split">
           <div>
-            <h2 className="shell-card-title">{t('appShell.a11y.contrast', 'High contrast')}</h2>
-            <p className="shell-card-hint">
+            <h2 className="mmm-settings-card-title">{t('appShell.a11y.contrast', 'High contrast')}</h2>
+            <p className="mmm-settings-card-hint">
               {t('appShell.a11y.contrastHint', 'Stronger borders and brighter secondary text.')}
             </p>
           </div>
           <button
             aria-pressed={settings.highContrast}
-            className="shell-pill"
+            className="mmm-settings-pill"
             data-active={settings.highContrast ? 'true' : 'false'}
             onClick={() => updateSetting('highContrast', !settings.highContrast)}
             type="button"
@@ -146,16 +146,16 @@ export function AccessibilitySettingsPanel() {
           </button>
         </section>
 
-        <section className="shell-card shell-card-split">
+        <section className="mmm-settings-card mmm-settings-card-split">
           <div>
-            <h2 className="shell-card-title">{t('appShell.a11y.motion', 'Reduce motion')}</h2>
-            <p className="shell-card-hint">
+            <h2 className="mmm-settings-card-title">{t('appShell.a11y.motion', 'Reduce motion')}</h2>
+            <p className="mmm-settings-card-hint">
               {t('appShell.a11y.motionHint', 'Removes the shell transitions.')}
             </p>
           </div>
           <button
             aria-pressed={settings.reduceMotion}
-            className="shell-pill"
+            className="mmm-settings-pill"
             data-active={settings.reduceMotion ? 'true' : 'false'}
             onClick={() => updateSetting('reduceMotion', !settings.reduceMotion)}
             type="button"

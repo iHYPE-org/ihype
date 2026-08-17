@@ -41,8 +41,7 @@
      broken, which is why it survived this long. */
   .ihype-btn-primary,
   .ihype-btn-ghost,
-  .shell-icon-button,
-  .shell-pill,
+  .mmm-settings-pill,
   /* `.mmm-tab` was here for its min-height and is not any more — see the note
      below: both its floors are unconditional in `mmm.css` now. */
   .mmm-sheet-cta,

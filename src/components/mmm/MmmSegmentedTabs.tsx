@@ -14,7 +14,7 @@ import type { ReactNode } from 'react';
  *   - `mode="toggle"`→ buttons with `aria-pressed` (account role chips)
  *
  * Active pill: `background: var(--ink-1)`, `color: var(--bg-base)`, matching
- * border — see `.shell-pill` in shell.css. Nothing here paints a hex value.
+ * border — see `.mmm-settings-pill` in mmm-workflows.css.
  */
 
 export type SegmentedTabItem = {
@@ -27,7 +27,7 @@ export type SegmentedTabItem = {
   disabled?: boolean;
 };
 
-export function SegmentedTabs({
+export function MmmSegmentedTabs({
   items,
   mode = 'nav',
   label,
@@ -41,7 +41,7 @@ export function SegmentedTabs({
   return (
     <div
       aria-label={label}
-      className={`shell-pill-row${className ? ` ${className}` : ''}`}
+      className={`mmm-settings-pill-row${className ? ` ${className}` : ''}`}
       role={mode === 'nav' ? 'navigation' : 'group'}
     >
       {items.map((item) => {
@@ -49,7 +49,7 @@ export function SegmentedTabs({
           return (
             <Link
               aria-current={item.active ? 'page' : undefined}
-              className="shell-pill"
+              className="mmm-settings-pill"
               data-active={item.active ? 'true' : 'false'}
               href={item.href}
               key={item.id}
@@ -63,7 +63,7 @@ export function SegmentedTabs({
           <button
             aria-current={mode === 'nav' && item.active ? 'true' : undefined}
             aria-pressed={mode === 'toggle' ? item.active : undefined}
-            className="shell-pill"
+            className="mmm-settings-pill"
             data-active={item.active ? 'true' : 'false'}
             disabled={item.disabled}
             key={item.id}

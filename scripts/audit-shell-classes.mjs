@@ -2,7 +2,7 @@
 /**
  * Audits the app shell's subpage conversion.
  *
- * `src/app/shell-surfaces.css` converts the signed-in subpages to the design
+ * `src/app/mmm-primitives.css` converts authenticated workflows to the design
  * system by pointing each page's own class names at one shared primitive. That
  * only stays true if new pages either use the primitives or get added to the
  * alias lists — otherwise a page quietly drifts back to its own look and
@@ -10,8 +10,8 @@
  *
  * So this reports, for every page inside the shell's route registry:
  *   - class names that look like one of the nine primitives (by suffix) but
- *     are NOT covered by shell-surfaces.css — the drift set;
- *   - alias entries in shell-surfaces.css that no longer match any markup —
+ *     are NOT covered by mmm-primitives.css — the drift set;
+ *   - alias entries in mmm-primitives.css that no longer match any markup —
  *     the dead set.
  *
  * Advisory by default. `--strict` exits non-zero when the drift set is
@@ -28,7 +28,7 @@ const SHELL_DIRS = [join('src/app', 'app')];
 
 /**
  * Suffixes that mark a class as one of the design system's primitives. Kept in
- * step with the groups shell-surfaces.css is organised into.
+ * step with the groups mmm-primitives.css is organised into.
  */
 const PRIMITIVE_PATTERNS = [
   { role: 'stat-value', re: /stats?-(?:val|value)$/ },
@@ -77,9 +77,9 @@ for (const file of files) {
   }
 }
 
-const css = readFileSync('src/app/shell-surfaces.css', 'utf8');
+const css = readFileSync('src/app/mmm-primitives.css', 'utf8');
 const covered = new Set(
-  [...css.matchAll(/\.shell-content [^,{]*?\.([a-z0-9-]+)/g)].map((m) => m[1]),
+  [...css.matchAll(/\.mmm-migrated-surface [^,{]*?\.([a-z0-9-]+)/g)].map((m) => m[1]),
 );
 
 const drift = [];
@@ -102,7 +102,7 @@ if (drift.length) {
   for (const entry of drift.sort((a, b) => a.role.localeCompare(b.role))) {
     console.log(`  [${entry.role}] .${entry.name}  — ${entry.files[0]}`);
   }
-  console.log('\nAdd them to the matching group in src/app/shell-surfaces.css.');
+  console.log('\nAdd them to the matching group in src/app/mmm-primitives.css.');
 } else {
   console.log('\nNo unconverted primitives. Every card/row/stat/eyebrow in the shell paints from the design system.');
 }

@@ -314,10 +314,10 @@ export function MmmShell({
       {!mapActive && (
         <div className="mmm-pane">
           {/* The migrated workflows already use the shared primitive aliases
-              scoped beneath .shell-content. This nested surface activates
-              those paint-only aliases without reviving AppShell's layout or
-              chrome; mmm.css neutralizes every layout property on this node. */}
-          <div className="shell-content mmm-migrated-surface">{children}</div>
+              scoped beneath .mmm-migrated-surface. This nested surface
+              activates those paint-only aliases without reviving any retired
+              layout or chrome. */}
+          <div className="mmm-migrated-surface">{children}</div>
         </div>
       )}
 

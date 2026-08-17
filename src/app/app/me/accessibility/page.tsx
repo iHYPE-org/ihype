@@ -1,5 +1,5 @@
-import { AccessibilitySettingsPanel } from '@/components/shell/AccessibilitySettingsPanel';
+import { MmmAccessibilitySettings } from '@/components/mmm/MmmAccessibilitySettings';
 
 export default function MmmAccessibilityPage() {
-  return <AccessibilitySettingsPanel />;
+  return <MmmAccessibilitySettings />;
 }

@@ -1,0 +1,617 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   iHYPE MMM workflow — subpage surfaces
+   ──────────────────────────────────────────────────────────────────────────
+   The shell handoff describes ~20 routes as one small vocabulary repeated:
+   a card, a row, a stat card, an eyebrow, a Syne 800 title, a tile grid, a
+   pill, an empty state. The product had already built all twenty routes —
+   but each one invented its own names for those primitives (`promo-stat-card`,
+   `pa-stat-card`, `fan-dash-stat-card`, `ad-dash-stat-card`, `aa-stat-card`,
+   … nine of them for one component). 607 distinct class names across 63 pages,
+   ~208 of which are one of these nine primitives wearing a different prefix.
+
+   This file defines each primitive ONCE, from the handoff's own values, and
+   points every existing name at it. That is why the conversion is a
+   stylesheet rather than 63 rewritten components: the markup already has the
+   right shape, so re-authoring it would risk the auth gates and Prisma queries
+   those pages carry for no visual gain.
+
+   Two rules make it work:
+
+   1. Every selector is scoped under `.mmm-migrated-surface`, so nothing outside the
+      MMM workflow is touched — marketing, auth and the phone shell keep
+      exactly what they had.
+   2. That scope is also what makes it WIN. 29 of the 63 pages carry their own
+      inline `<style>` block, which sits later in the document than any
+      stylesheet. `.mmm-migrated-surface .promo-stat-card` is (0,2,0) against the
+      page's own `.promo-stat-card` at (0,1,0), and specificity beats document
+      order — so the conversion applies without deleting a single page's CSS.
+
+   Deliberately paint-only: colour, surface, border, radius, type, spacing.
+   No `display`, no `grid-template`, no `position`. Those carry each page's
+   real layout, and overriding them from here would break pages sight-unseen.
+
+   Regenerate the alias lists with scripts/audit-shell-classes.mjs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Primitive: Eyebrow ──────────────────────────────────────────────────
+   JetBrains Mono, 10px, 0.16em, uppercase. Colour stays whatever the page
+   set — the handoff tints eyebrows per route (accent on Charts and the
+   dashboards, --role-venue on Near Me, --role-promoter on Radio and Promote). */
+
+.mmm-migrated-surface .aa-eyebrow,
+.mmm-migrated-surface .ad-eyebrow,
+.mmm-migrated-surface .believers-eyebrow,
+.mmm-migrated-surface .booking-eyebrow,
+.mmm-migrated-surface .community-eyebrow,
+.mmm-migrated-surface .fa-eyebrow,
+.mmm-migrated-surface .fan-dash-eyebrow,
+.mmm-migrated-surface .fan-ref-label,
+.mmm-migrated-surface .foryou-eyebrow,
+.mmm-migrated-surface .kicker,
+.mmm-migrated-surface .lsp-eyebrow,
+.mmm-migrated-surface .promo-referral-label,
+.mmm-migrated-surface .station-page-eyebrow,
+.mmm-migrated-surface .track-eyebrow,
+.mmm-migrated-surface .track-radio-status-label,
+.mmm-migrated-surface .vaa-card-label,
+.mmm-migrated-surface .vaa-eyebrow,
+.mmm-migrated-surface .vdash-card-label,
+.mmm-migrated-surface .vdash-eyebrow,
+.mmm-migrated-surface .venue-seg-label,
+.mmm-migrated-surface .weekend-eyebrow {
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+
+/* ── Primitive: Title ────────────────────────────────────────────────────
+   Syne 800, -0.02em. Size is left to the element (h1 32px / h2 26px / h3
+   below), set by the element rules further down, so a card title does not
+   become a page title. */
+.mmm-migrated-surface .aa-event-title,
+.mmm-migrated-surface .aa-title,
+.mmm-migrated-surface .ad-event-title,
+.mmm-migrated-surface .ad-title,
+.mmm-migrated-surface .artist-show-title,
+.mmm-migrated-surface .believers-title,
+.mmm-migrated-surface .booking-title,
+.mmm-migrated-surface .fa-title,
+.mmm-migrated-surface .fan-dash-show-title,
+.mmm-migrated-surface .foryou-title,
+.mmm-migrated-surface .ihype-hero-heading,
+.mmm-migrated-surface .lsp-title,
+.mmm-migrated-surface .pa-chart-title,
+.mmm-migrated-surface .promo-section-title,
+.mmm-migrated-surface .settings-section-title,
+.mmm-migrated-surface .station-page-title,
+.mmm-migrated-surface .ticket-title,
+.mmm-migrated-surface .track-more-title,
+.mmm-migrated-surface .track-title,
+.mmm-migrated-surface .vaa-event-title,
+.mmm-migrated-surface .vdash-show-title,
+.mmm-migrated-surface .venue-split-title,
+.mmm-migrated-surface .weekend-card-title,
+.mmm-migrated-surface .weekend-title {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: Card ─────────────────────────────────────────────────────
+   radius 12px, 1px solid var(--line), background var(--bg-surface). */
+.mmm-migrated-surface .artist-show-card,
+.mmm-migrated-surface .artist-split-card,
+.mmm-migrated-surface .believers-cta-card,
+.mmm-migrated-surface .community-card,
+.mmm-migrated-surface .community-channel-card,
+.mmm-migrated-surface .composer-card,
+.mmm-migrated-surface .composer-media-card,
+.mmm-migrated-surface .composer-plan-panel,
+.mmm-migrated-surface .composer-sample-card,
+.mmm-migrated-surface .composer-sequence-card,
+.mmm-migrated-surface .composer-voice-card,
+.mmm-migrated-surface .fan-ref-box,
+.mmm-migrated-surface .foryou-card,
+.mmm-migrated-surface .ihype-card,
+.mmm-migrated-surface .lsp-card,
+.mmm-migrated-surface .pa-chart-card,
+.mmm-migrated-surface .pa-links-card,
+.mmm-migrated-surface .payout-card,
+.mmm-migrated-surface .promo-referral-box,
+.mmm-migrated-surface .settings-payout-card,
+.mmm-migrated-surface .ticket-card,
+.mmm-migrated-surface .ticket-verification-panel,
+.mmm-migrated-surface .track-card,
+.mmm-migrated-surface .vaa-card,
+.mmm-migrated-surface .vdash-card,
+.mmm-migrated-surface .venue-show-card,
+.mmm-migrated-surface .venue-split-card,
+.mmm-migrated-surface .community-cta {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+
+/* ── Primitive: Row ──────────────────────────────────────────────────────
+   Same surface as a card, tighter padding — the shape Charts, the radio
+   schedule, My Tickets, settlements, notifications and Top Tracks all use. */
+.mmm-migrated-surface .aa-event-row,
+.mmm-migrated-surface .ad-activity-row,
+.mmm-migrated-surface .ad-event-row,
+.mmm-migrated-surface .fa-artist-row,
+.mmm-migrated-surface .fan-dash-activity-row,
+.mmm-migrated-surface .fan-dash-show-row,
+.mmm-migrated-surface .fan-payout-row,
+.mmm-migrated-surface .fan-show-row,
+.mmm-migrated-surface .fan-top5-row,
+.mmm-migrated-surface .pa-link-row,
+.mmm-migrated-surface .promo-event-row,
+.mmm-migrated-surface .settings-row,
+.mmm-migrated-surface .track-credit-row,
+.mmm-migrated-surface .track-more-row,
+.mmm-migrated-surface .vaa-event-row,
+.mmm-migrated-surface .vdash-activity-row,
+.mmm-migrated-surface .vdash-show-row,
+.mmm-migrated-surface .venue-capacity-row {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+.mmm-migrated-surface a.aa-event-row,
+.mmm-migrated-surface a.ad-activity-row,
+.mmm-migrated-surface a.ad-event-row,
+.mmm-migrated-surface a.fa-artist-row,
+.mmm-migrated-surface a.fan-dash-activity-row,
+.mmm-migrated-surface a.fan-dash-show-row,
+.mmm-migrated-surface a.fan-payout-row,
+.mmm-migrated-surface a.fan-show-row,
+.mmm-migrated-surface a.fan-top5-row,
+.mmm-migrated-surface a.pa-link-row,
+.mmm-migrated-surface a.promo-event-row,
+.mmm-migrated-surface a.settings-row,
+.mmm-migrated-surface a.track-credit-row,
+.mmm-migrated-surface a.track-more-row,
+.mmm-migrated-surface a.vaa-event-row,
+.mmm-migrated-surface a.vdash-activity-row,
+.mmm-migrated-surface a.vdash-show-row,
+.mmm-migrated-surface a.venue-capacity-row {
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: StatCard ─────────────────────────────────────────────────
+   Centred, per screenshot 06: value in Syne 800 --accent, label in mono
+   uppercase --ink-2, delta below in --accent. */
+.mmm-migrated-surface .aa-stat-card,
+.mmm-migrated-surface .ad-dash-stat-card,
+.mmm-migrated-surface .ad-stat-card,
+.mmm-migrated-surface .fa-stat-card,
+.mmm-migrated-surface .fan-dash-stat-card,
+.mmm-migrated-surface .pa-stat-card,
+.mmm-migrated-surface .promo-stat-card,
+.mmm-migrated-surface .stat,
+.mmm-migrated-surface .venue-stat {
+  padding: 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-align: center;
+}
+.mmm-migrated-surface .aa-stat-val,
+.mmm-migrated-surface .ad-dash-stat-val,
+.mmm-migrated-surface .ad-stat-val,
+.mmm-migrated-surface .artist-stat-val,
+.mmm-migrated-surface .fa-stat-val,
+.mmm-migrated-surface .fan-dash-stat-value,
+.mmm-migrated-surface .fan-stat-val,
+.mmm-migrated-surface .pa-stat-value,
+.mmm-migrated-surface .promo-stat-value,
+.mmm-migrated-surface .track-stat-val,
+.mmm-migrated-surface .venue-stat-val {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--accent);
+}
+.mmm-migrated-surface .aa-stat-label,
+.mmm-migrated-surface .ad-dash-stat-label,
+.mmm-migrated-surface .ad-stat-label,
+.mmm-migrated-surface .artist-stat-label,
+.mmm-migrated-surface .fa-stat-label,
+.mmm-migrated-surface .fan-dash-stat-label,
+.mmm-migrated-surface .fan-stat-label,
+.mmm-migrated-surface .pa-stat-label,
+.mmm-migrated-surface .promo-stat-label,
+.mmm-migrated-surface .track-stat-label,
+.mmm-migrated-surface .venue-stat-label {
+  margin-top: 6px;
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mmm-migrated-surface .aa-stat-sub,
+.mmm-migrated-surface .ad-dash-stat-sub,
+.mmm-migrated-surface .ad-stat-sub,
+.mmm-migrated-surface .fa-stat-sub,
+.mmm-migrated-surface .fan-dash-stat-sub,
+.mmm-migrated-surface .pa-stat-sub,
+.mmm-migrated-surface .promo-stat-sub {
+  /* The handoff's StatCard tints this line --accent because there it is a
+     short delta ("+38%", "+22%"). In this codebase the same slot carries a
+     descriptive sentence ("Total ticket revenue via your link"), and 10px
+     uppercase mono in accent turns a sentence into a wrapped orange ribbon.
+     Kept as quiet supporting copy; a page that wants the delta treatment can
+     add .is-delta. */
+  margin-top: 4px;
+  font-family: var(--f-b);
+  font-size: 0.7812rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+
+/* ── Primitive: section head ─────────────────────────────────────────────
+   A title beside a "View all ›" affordance. These are containers, so only
+   the heading inside them is typed — setting Syne 800 on the container
+   itself would swallow the link sitting next to it. */
+.mmm-migrated-surface .ad-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .believers-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .booking-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .community-post-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .community-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .fa-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .fan-dash-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .foryou-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .pa-chart-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .pa-links-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .station-page-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .track-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vaa-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vaa-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vdash-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vdash-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .weekend-head > :is(h1, h2, h3, strong) {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.mmm-migrated-surface .ad-section-head :is(a, button),
+.mmm-migrated-surface .believers-head :is(a, button),
+.mmm-migrated-surface .booking-head :is(a, button),
+.mmm-migrated-surface .community-post-head :is(a, button),
+.mmm-migrated-surface .community-section-head :is(a, button),
+.mmm-migrated-surface .fa-section-head :is(a, button),
+.mmm-migrated-surface .fan-dash-section-head :is(a, button),
+.mmm-migrated-surface .foryou-head :is(a, button),
+.mmm-migrated-surface .pa-chart-head :is(a, button),
+.mmm-migrated-surface .pa-links-head :is(a, button),
+.mmm-migrated-surface .station-page-head :is(a, button),
+.mmm-migrated-surface .track-section-head :is(a, button),
+.mmm-migrated-surface .vaa-head :is(a, button),
+.mmm-migrated-surface .vaa-section-head :is(a, button),
+.mmm-migrated-surface .vdash-head :is(a, button),
+.mmm-migrated-surface .vdash-section-head :is(a, button),
+.mmm-migrated-surface .weekend-head :is(a, button) {
+  color: var(--role-venue-text);
+  font-family: var(--f-b);
+  font-size: 0.8438rem;
+}
+
+
+/* ── Primitive: Pill / badge ─────────────────────────────────────────────
+   Radius 9999px, 1px var(--line-2). A page that set its own colour keeps it
+   — role tints on these are meaningful (LIVE, SCHEDULED, verification). */
+.mmm-migrated-surface .ad-pill,
+.mmm-migrated-surface .artist-badge,
+.mmm-migrated-surface .believers-early-tag,
+.mmm-migrated-surface .believers-you-tag,
+.mmm-migrated-surface .community-badge,
+.mmm-migrated-surface .community-page-badge,
+.mmm-migrated-surface .fan-badge,
+.mmm-migrated-surface .fan-chip,
+.mmm-migrated-surface .fan-dash-pill,
+.mmm-migrated-surface .vdash-pill,
+.mmm-migrated-surface .venue-badge,
+.mmm-migrated-surface .weekend-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9999px;
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+
+/* ── Primitive: EmptyState ───────────────────────────────────────────────
+   Backlog item 5 asks for empty states everywhere; the product already had
+   22 of them under 22 names. This makes them one component. */
+.mmm-migrated-surface .aa-empty,
+.mmm-migrated-surface .ad-empty,
+.mmm-migrated-surface .artist-empty,
+.mmm-migrated-surface .booking-empty,
+.mmm-migrated-surface .community-empty,
+.mmm-migrated-surface .empty,
+.mmm-migrated-surface .fa-empty,
+.mmm-migrated-surface .fan-dash-empty,
+.mmm-migrated-surface .fan-empty,
+.mmm-migrated-surface .foryou-empty,
+.mmm-migrated-surface .ihype-empty-state,
+.mmm-migrated-surface .lsp-empty,
+.mmm-migrated-surface .pa-chart-empty,
+.mmm-migrated-surface .pa-links-empty,
+.mmm-migrated-surface .promo-empty,
+.mmm-migrated-surface .track-empty,
+.mmm-migrated-surface .vaa-empty,
+.mmm-migrated-surface .vdash-empty,
+.mmm-migrated-surface .weekend-empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  background: transparent;
+  text-align: center;
+  color: var(--ink-2);
+}
+.mmm-migrated-surface .aa-empty :is(h2, h3, strong),
+.mmm-migrated-surface .ad-empty :is(h2, h3, strong),
+.mmm-migrated-surface .artist-empty :is(h2, h3, strong),
+.mmm-migrated-surface .booking-empty :is(h2, h3, strong),
+.mmm-migrated-surface .community-empty :is(h2, h3, strong),
+.mmm-migrated-surface .empty :is(h2, h3, strong),
+.mmm-migrated-surface .fa-empty :is(h2, h3, strong),
+.mmm-migrated-surface .fan-dash-empty :is(h2, h3, strong),
+.mmm-migrated-surface .fan-empty :is(h2, h3, strong),
+.mmm-migrated-surface .foryou-empty :is(h2, h3, strong),
+.mmm-migrated-surface .ihype-empty-state :is(h2, h3, strong),
+.mmm-migrated-surface .lsp-empty :is(h2, h3, strong),
+.mmm-migrated-surface .pa-chart-empty :is(h2, h3, strong),
+.mmm-migrated-surface .pa-links-empty :is(h2, h3, strong),
+.mmm-migrated-surface .promo-empty :is(h2, h3, strong),
+.mmm-migrated-surface .track-empty :is(h2, h3, strong),
+.mmm-migrated-surface .vaa-empty :is(h2, h3, strong),
+.mmm-migrated-surface .vdash-empty :is(h2, h3, strong),
+.mmm-migrated-surface .weekend-empty :is(h2, h3, strong) {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.mmm-migrated-surface .aa-empty p,
+.mmm-migrated-surface .ad-empty p,
+.mmm-migrated-surface .artist-empty p,
+.mmm-migrated-surface .booking-empty p,
+.mmm-migrated-surface .community-empty p,
+.mmm-migrated-surface .empty p,
+.mmm-migrated-surface .fa-empty p,
+.mmm-migrated-surface .fan-dash-empty p,
+.mmm-migrated-surface .fan-empty p,
+.mmm-migrated-surface .foryou-empty p,
+.mmm-migrated-surface .ihype-empty-state p,
+.mmm-migrated-surface .lsp-empty p,
+.mmm-migrated-surface .pa-chart-empty p,
+.mmm-migrated-surface .pa-links-empty p,
+.mmm-migrated-surface .promo-empty p,
+.mmm-migrated-surface .track-empty p,
+.mmm-migrated-surface .vaa-empty p,
+.mmm-migrated-surface .vdash-empty p,
+.mmm-migrated-surface .weekend-empty p {
+  margin: 0;
+  font-size: 0.8438rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ── Element ramp ────────────────────────────────────────────────────────
+   "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne
+   800 32px h1." Every shell page already writes a real <h1>, so the ramp is
+   applied to the page's own heading rather than a second one being injected
+   from the chrome — a duplicate h1 would be a real accessibility regression.
+
+   Prefixed `.shell-root` on purpose. Nine pages style their heading through
+   a descendant selector (`.promo-page-header h1`, `.fan-dash-header h1`,
+   `.settings-page h1`), which is (0,1,1) — exactly what `.mmm-migrated-surface h1`
+   scores. A tie goes to whichever comes later in the document, and those
+   rules live in an inline <style> block inside the page, so they would all
+   win. `.shell-root .mmm-migrated-surface h1` is (0,2,1) and settles it. */
+.shell-root .mmm-migrated-surface h1 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  margin: 8px 0 18px;
+}
+.shell-root .mmm-migrated-surface h2 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.625rem;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.shell-root .mmm-migrated-surface h3 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+/* A heading INSIDE a row or card is not a section heading — the handoff types
+   it 15px/500 DM Sans with the supporting line at 13px --ink-2 (Charts, the
+   radio schedule, settlements, Top Tracks all read this way). Without this the
+   ramp above would turn every row into a stack of 18px Syne. */
+.shell-root .mmm-migrated-surface :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) :is(h2, h3, h4),
+.shell-root .mmm-migrated-surface :is(.aa-event-row, .ad-activity-row, .ad-event-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) :is(h2, h3, h4) {
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 0.9375rem;
+  letter-spacing: 0;
+  line-height: 1.3;
+  margin: 0;
+}
+.shell-root .mmm-migrated-surface :is(.artist-show-card, .artist-split-card, .community-card, .community-channel-card, .composer-card, .composer-media-card, .composer-plan-panel, .composer-sample-card, .composer-sequence-card, .composer-voice-card, .fan-ref-box, .foryou-card, .ihype-card, .lsp-card, .pa-chart-card, .pa-links-card, .payout-card, .promo-referral-box, .settings-payout-card, .ticket-card, .ticket-verification-panel, .track-card, .vaa-card, .vdash-card, .venue-show-card, .venue-split-card, .community-cta) p,
+.shell-root .mmm-migrated-surface :is(.aa-event-row, .ad-activity-row, .ad-event-row, .fa-artist-row, .fan-dash-activity-row, .fan-dash-show-row, .fan-payout-row, .fan-show-row, .fan-top5-row, .pa-link-row, .promo-event-row, .settings-row, .track-credit-row, .track-more-row, .vaa-event-row, .vdash-activity-row, .vdash-show-row, .venue-capacity-row) p {
+  margin: 2px 0 0;
+  font-size: 0.8438rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.shell-root .mmm-migrated-surface h1 + p { color: var(--ink-2); font-size: 0.9062rem; }
+.mmm-migrated-surface :is(.meta, .small) { color: var(--ink-2); }
+
+/* ── Controls ────────────────────────────────────────────────────────────
+   Three tones. Solid = accent fill; outline = 1px accent at 10–14% fill on
+   hover; ghost = no border. Page-specific gradients are replaced: the design
+   system has no gradient buttons. */
+.mmm-migrated-surface :is(.ihype-btn-primary, .promo-cta, .promote-share-btn, .believers-cta, .foryou-cta, .weekend-cta, .booking-cta) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 11px 20px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-migrated-surface :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .ad-btn, .artist-hero-btn, .venue-hero-btn, .fan-hero-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-1);
+  font-family: var(--f-b);
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-migrated-surface :is(.ihype-btn-outline, .settings-btn, .vdash-btn, .ad-btn, .artist-hero-btn, .venue-hero-btn, .fan-hero-btn):hover {
+  background: rgba(var(--surface-tint-rgb), 0.06);
+}
+.mmm-migrated-surface :is(.settings-btn-ghost, .text-link, .promo-analytics-link, .weekend-card-link, .foryou-card-link, .believers-artist-link) {
+  border: 0;
+  background: transparent;
+  color: var(--role-venue-text);
+  font-family: var(--f-b);
+  font-size: 0.8438rem;
+  cursor: pointer;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────────────────
+   Per screenshot 07: mono uppercase label above a radius-8 field with a
+   var(--line-2) hairline on the page surface. */
+.mmm-migrated-surface :is(input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="number"], input[type="tel"], input[type="password"], input[type="date"], input[type="time"], input[type="datetime-local"], select, textarea) {
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--ink-1);
+  font-family: var(--f-b);
+  font-size: 0.875rem;
+}
+.mmm-migrated-surface :is(input, select, textarea)::placeholder { color: var(--ink-3); }
+.mmm-migrated-surface :is(input, select, textarea):focus-visible {
+  border-color: var(--role-venue);
+  outline: 2px solid var(--role-venue);
+  outline-offset: 2px;
+}
+
+/* ── Route back pill ─────────────────────────────────────────────────────
+   Rendered by the shell, not by each page: it is pure navigation and no page
+   knows what it is a sub-route of. Suppressed on the section-home routes
+   (Discover, Near Me, My Dashboard…), which the strip already reaches. */
+.shell-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding: 8px 14px 8px 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--f-b);
+  font-size: 0.8438rem;
+}
+.shell-back:hover { color: var(--ink-1); background: rgba(var(--surface-tint-rgb), 0.05); }
+
+/* ── Page containers ─────────────────────────────────────────────────────
+   Every page wrote its own max-width and outer padding against the document
+   scroller. Inside the shell the content region already supplies both
+   (max-width 1620px, padding 26px), so a second one nests a narrow column
+   inside a narrow column and pushes the first card below the fold. */
+.mmm-migrated-surface :is(.container, .promo-page, .tickets-container, .settings-page, .community-page, .fan-dash, .weekend-page, .foryou-page, .payout-page, .track-page, .booking-page, .believers-page, .lsp-page) {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: 0;
+}
+
+/* Opt-in delta treatment, for the short +38%/+22% form the handoff shows. */
+.mmm-migrated-surface .is-delta {
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ── Primitive: Skeleton ─────────────────────────────────────────────────
+   Backlog item 5 pairs EmptyState with Skeleton. Both already existed — the
+   empty state under 22 names (converted above) and the skeleton under three:
+   `.skeleton`, `.ihype-skeleton`, and an inline `Shimmer` in
+   src/app/shows/loading.tsx whose hex fallback (#1a1712) is not even the
+   token it claims to fall back from. Same treatment: one definition, every
+   name pointed at it.
+
+   Radius 12px to match the card and row it stands in for — a loading
+   placeholder that is a different shape from the thing it becomes is a
+   layout shift waiting to happen. Animation is gated by the reduce-motion
+   block in shell.css, which covers `.shell-root *`. */
+.mmm-migrated-surface :is(.skeleton, .ihype-skeleton, [data-skeleton]) {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--surface-tint-rgb), 0.04) 25%,
+    rgba(var(--surface-tint-rgb), 0.09) 50%,
+    rgba(var(--surface-tint-rgb), 0.04) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
+}

@@ -37,22 +37,23 @@
  * Usage: npm run audit:css [-- --max=N] [-- --strict] [-- --dead]
  */
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { globSync } from 'glob';
 
 const STRICT = process.argv.includes('--strict');
 const SHOW_DEAD = process.argv.includes('--dead');
 const maxArg = process.argv.find((a) => a.startsWith('--max='));
 const MAX = maxArg ? Number(maxArg.slice('--max='.length)) : null;
 
-const CSS_FILES = execSync('find src -name "*.css"', { encoding: 'utf8' })
-  .trim().split('\n').filter(Boolean).sort();
+const CSS_FILES = globSync('src/**/*.css')
+  .map((file) => file.replaceAll('\\', '/'))
+  .sort();
 
 /**
- * `shell-surfaces.css` is exempt from the OVERRIDE check by design: its entire
+ * `mmm-primitives.css` is exempt from the OVERRIDE check by design: its entire
  * purpose is to alias many legacy class names onto one primitive, so the same
  * primitive intentionally appears in several grouped rules. See its header.
  */
-const OVERRIDE_EXEMPT = new Set(['src/app/shell-surfaces.css']);
+const OVERRIDE_EXEMPT = new Set(['src/app/mmm-primitives.css']);
 
 function stripComments(css) {
   // Preserve newlines so reported line numbers stay honest.
@@ -131,14 +132,8 @@ function findOverrides(rules) {
 }
 
 function buildHaystack() {
-  const src = execSync(
-    'find src e2e -type f \\( -name "*.tsx" -o -name "*.ts" -o -name "*.md" -o -name "*.mdx" \\) 2>/dev/null',
-    { encoding: 'utf8' },
-  ).trim().split('\n').filter(Boolean);
-  const pub = execSync(
-    'find public -type f \\( -name "*.js" -o -name "*.html" -o -name "*.json" \\) 2>/dev/null',
-    { encoding: 'utf8' },
-  ).trim().split('\n').filter(Boolean);
+  const src = globSync(['src/**/*.{tsx,ts,md,mdx}', 'e2e/**/*.{tsx,ts,md,mdx}']);
+  const pub = globSync('public/**/*.{js,html,json}');
   return [...src, ...pub]
     .map((f) => { try { return readFileSync(f, 'utf8'); } catch { return ''; } })
     .join('\n');

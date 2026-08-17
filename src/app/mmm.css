@@ -387,9 +387,8 @@ html.mmm-locked .site-shell > main {
 }
 
 /* Paint scope for workflows migrated from the retired AppShell. The
-   shell-surfaces stylesheet intentionally scopes its shared card/row/type
-   vocabulary under .shell-content for specificity. Here that class is only a
-   descendant scope: the MMM pane remains the one and only scroll container. */
+   MMM primitives stylesheet scopes its shared card/row/type vocabulary under
+   this node for specificity. The MMM pane remains the one scroll container. */
 .mmm-pane > .mmm-migrated-surface {
   position: static;
   inset: auto;

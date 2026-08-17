@@ -628,7 +628,7 @@ export function MmmSettings() {
            group goes transparent inside it. Same result as the template, and no
            JSX moved, which matters on a page whose rows carry real mutations.
 
-           (2) ".settings-page" is in shell-surfaces.css's page-container group,
+           (2) ".settings-page" is in mmm-primitives.css's page-container group,
            which sets "max-width: none" at (0,2,0) — deliberately, so a page does
            not nest a narrow column inside the shell's own. Editing the
            max-width here therefore did nothing inside the shell, and settings

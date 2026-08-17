@@ -60,7 +60,7 @@ assertNotIncludes(
 );
 assertIncludes(
   'src/components/mmm/MmmShell.tsx',
-  'shell-content mmm-migrated-surface',
+  'className="mmm-migrated-surface"',
   'Migrated backend workflows must receive the shared MMM surface vocabulary inside the MMM pane.'
 );
 assertIncludes(
@@ -117,6 +117,8 @@ assertIncludes(
   'All successful auth paths should resolve to the canonical app surface.'
 );
 for (const retiredShellFile of [
+  'src/app/shell.css',
+  'src/app/shell-surfaces.css',
   'src/components/shell/AppShell.tsx',
   'src/components/shell/AppShellDrawer.tsx',
   'src/components/shell/AppShellHeader.tsx',
@@ -130,6 +132,16 @@ for (const retiredShellFile of [
     'The retired authenticated shell implementation must not remain available for reuse.'
   );
 }
+assertIncludes(
+  'src/app/layout.tsx',
+  "import './mmm-workflows.css'",
+  'Authenticated workflow controls must load from the MMM stylesheet.'
+);
+assertIncludes(
+  'src/app/layout.tsx',
+  "import './mmm-primitives.css'",
+  'Migrated workflow primitives must load from the MMM stylesheet.'
+);
 
 // A route can survive as an old bookmark without surviving as an old page.
 // This ratchet counts only legacy URLs that still render JSX; redirect-only

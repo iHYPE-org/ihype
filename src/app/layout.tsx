@@ -1,6 +1,6 @@
 import './globals.css';
-import './shell.css';
-import './shell-surfaces.css';
+import './mmm-workflows.css';
+import './mmm-primitives.css';
 // Last, on purpose: the phone-fit floors are minimums that must survive the
 // three files above, and source order is what gives an equal-specificity rule
 // the win. It touches nothing at `pointer: fine`.
@@ -175,10 +175,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <span className="site-background-orb site-background-orb-b" />
             <span className="site-background-grid" />
           </div>
-          {/* Marketing nav. On shell routes the signed-in app shell replaces
-              it outright — hidden by `html.ihype-shell-locked` in shell.css.
-              (The old comment here named `.wb-shell`, a class that no longer
-              exists anywhere in the codebase.) */}
+          {/* Public-site navigation. The /app layout supplies MMM's own
+              persistent chrome and locks this header while it is active. */}
           <AdaptiveSiteHeader
             inviteOnly={inviteOnly}
             label={t('layout.primarySiteHeader', 'Primary site header')}
