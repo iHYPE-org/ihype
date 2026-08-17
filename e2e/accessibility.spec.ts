@@ -32,6 +32,11 @@ const SEEDED_SHOW_SLUG = 'signal-yard-launch-night';
 async function assertNoSeriousViolations(page: Page, path: string, response: Response | null) {
   expect(response?.status(), `${path} should return a successful response`).toBeLessThan(400);
 
+  // Protected routes may complete their initial response before Auth.js performs
+  // the client-side redirect to /login. Let that navigation settle before axe
+  // injects its evaluation script so its execution context stays alive.
+  await page.waitForLoadState('networkidle');
+
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])
     .exclude('[data-axe-ignore]')
