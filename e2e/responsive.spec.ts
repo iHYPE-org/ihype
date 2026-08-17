@@ -51,9 +51,7 @@ const WIDTHS = [
 /**
  * "Every module" — MAP, MUSIC and ME are the whole signed-in app in MMM.
  *
- * `frame` is the container that proves the surface rendered in the right
- * shell, and the two shells use different ones. Asserting the MMM frame on a
- * legacy page would fail every time and teach everyone to ignore the suite.
+ * `frame` is the container that proves the canonical MMM surface rendered.
  */
 type Surface = { path: string; name: string; frame: string };
 
@@ -61,31 +59,6 @@ const MODULES: Surface[] = [
   { path: '/app/map', name: 'MAP', frame: '.mmm-frame' },
   { path: '/app/music/discover', name: 'MUSIC', frame: '.mmm-frame' },
   { path: '/app/me', name: 'ME', frame: '.mmm-frame' },
-];
-
-/**
- * The LEGACY shell's own surfaces, which no audit has ever measured.
- *
- * Every check built for phone fit — this suite, `audit:mobile`, the tap-target
- * floor — has pointed at `/app` only, while roughly sixty pages render in the
- * older shell and get none of it. These five are the ones a member in alpha
- * actually reaches: their tickets, their pages, events, settings, and the
- * discovery index.
- *
- * They are asserted at 375 only, rather than at all four widths. The point is
- * to find the systematic breakages — a table that will not fit, a control
- * under the floor — not to quadruple a suite that already takes a minute. If
- * 375 is clean, the others rarely are not.
- */
-const LEGACY_SURFACES: Surface[] = [
-  { path: '/shows', name: 'Events', frame: '.shell-content' },
-  { path: '/tickets', name: 'Tickets', frame: '.shell-content' },
-  { path: '/pages', name: 'Pages', frame: '.shell-content' },
-  { path: '/settings', name: 'Settings', frame: '.shell-content' },
-  { path: '/discover', name: 'Discover', frame: '.shell-content' },
-  { path: '/payouts', name: 'Payouts', frame: '.shell-content' },
-  { path: '/support', name: 'Support', frame: '.shell-content' },
-  { path: '/this-weekend', name: 'This weekend', frame: '.shell-content' },
 ];
 
 test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to seed a session.');
@@ -113,13 +86,13 @@ async function signIn(context: BrowserContext) {
  * The page must not scroll sideways.
  *
  * Measured on the scrolling element rather than `window`, because inside this
- * shell the document does not scroll — `.shell-content` and `.mmm-pane` do.
+ * shell the document does not scroll — `.mmm-pane` does.
  * A 1px tolerance absorbs sub-pixel rounding at fractional device ratios,
  * which is noise rather than a bug a member could ever see.
  */
 async function expectNoHorizontalOverflow(page: Page, label: string) {
   const result = await page.evaluate(() => {
-    const roots = [document.documentElement, document.body, ...document.querySelectorAll('.mmm-pane, .shell-content')];
+    const roots = [document.documentElement, document.body, ...document.querySelectorAll('.mmm-pane')];
     let worst = 0;
     for (const node of roots) {
       const el = node as HTMLElement;
@@ -149,7 +122,7 @@ async function expectNoHorizontalOverflow(page: Page, label: string) {
      * past the viewport by design and contribute nothing to the page's own
      * scrollWidth. It was named in every single failure report above the real
      * cause, and a report that cries wolf is one people stop reading. The walk
-     * stops at the measured roots, because an element inside `.shell-content`
+     * stops at the measured roots, because an element inside `.mmm-pane`
      * DOES count toward the number being asserted.
      */
     const measuredRoots = new Set<Element>(roots);
@@ -323,7 +296,7 @@ test.describe('responsive — runbook gate 6', () => {
   });
 
   /**
-   * The legacy detail pages, which need a real row to render at all.
+   * Canonical detail panes need a real row to render at all.
    *
    * These are separated from the static list above because a profile or a show
    * with no seeded record renders the not-found surface, and a not-found page
@@ -335,7 +308,7 @@ test.describe('responsive — runbook gate 6', () => {
    * shared link lands on, so it is the first thing most people ever see of
    * iHYPE, and it has never been measured at phone width.
    */
-  test('legacy detail pages at 375', async ({ context, page }) => {
+  test('canonical detail panes at 375', async ({ context, page }) => {
     const seededUser = await applySessionCookie(context, EMAIL);
     const show = await seedShowWithTicket({
       buyerUserId: seededUser.user.id,
@@ -345,35 +318,17 @@ test.describe('responsive — runbook gate 6', () => {
 
     await page.setViewportSize({ width: 375, height: 812 });
     for (const [name, path] of [
-      ['Artist', `/artists/${show.artistSlug}`],
-      ['Venue', `/venues/${show.venueSlug}`],
-      ['Show', `/shows/${show.slug}`],
+      ['Artist', `/app/artists/${show.artistSlug}`],
+      ['Venue', `/app/venues/${show.venueSlug}`],
+      ['Show', `/app/shows/${show.slug}`],
     ] as const) {
       await page.goto(path);
-      await expectRendered(page, `${name} @375`, '.shell-content');
+      await expectRendered(page, `${name} @375`, '.mmm-frame');
       await expectNoHorizontalOverflow(page, `${name} @375`);
       await expectTapTargets(page, `${name} @375`);
-      await shoot(page, `legacy-${name}-375`);
+      await shoot(page, `mmm-${name}-375`);
     }
   });
-
-  /**
-   * The legacy shell, at the design width.
-   *
-   * Sixty-odd pages render here and no phone-fit check has ever pointed at
-   * them. Same three assertions as the modules above — the shell's own frame,
-   * no sideways scroll, and every control clearing the floor.
-   */
-  for (const surface of LEGACY_SURFACES) {
-    test(`${surface.name} (legacy shell) at 375`, async ({ page }) => {
-      await page.setViewportSize({ width: 375, height: 812 });
-      await page.goto(surface.path);
-      await expectRendered(page, `${surface.name} @375`, surface.frame);
-      await expectNoHorizontalOverflow(page, `${surface.name} @375`);
-      await expectTapTargets(page, `${surface.name} @375`);
-      await shoot(page, `legacy-${surface.name}-375`);
-    });
-  }
 
   /**
    * The largest text the product can actually produce, driven the way a member

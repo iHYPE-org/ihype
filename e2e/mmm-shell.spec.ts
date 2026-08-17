@@ -570,11 +570,11 @@ test.describe('Music · Map · Me shell', () => {
     });
   });
 
-  // The ticket path lives in ME now, not behind a link into the legacy shell.
+  // The ticket path lives in ME now, not behind a compatibility URL.
   // Asserted on the section rather than on rows, because a seeded account with
   // no tickets is the normal state for this suite — what must not come back is
   // the pair of buttons that left MMM.
-  test('My Tickets renders in ME rather than linking out to the legacy shell', async ({ page }) => {
+  test('My Tickets renders in ME rather than linking to a compatibility URL', async ({ page }) => {
     await page.goto('/app/me');
     const drawer = page.locator('.mmm-me-accordion:visible').filter({
       has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),

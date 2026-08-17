@@ -23,11 +23,10 @@
  * fails while the standing set does not block every merge. Lower them as the
  * type-ramp work lands. Never raise one to make a build green.
  *
- * Known limit: this measures signed-OUT pages. The signed-in shells (AppShell,
- * MmmShell) carry the fixed chrome where the safe-area insets matter most, and
- * reaching them needs the e2e session fixture — see e2e/fixtures/session.ts.
- * Those are covered by the geometry assertions in e2e/app-shell.spec.ts
- * instead.
+ * Known limit: this measures signed-OUT pages. The signed-in MMM shell carries
+ * the fixed chrome where safe-area insets matter most and requires the e2e
+ * session fixture. Its geometry is covered by e2e/mmm-shell.spec.ts and
+ * e2e/responsive.spec.ts.
  */
 
 import { chromium, devices } from 'playwright';

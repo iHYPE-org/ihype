@@ -161,14 +161,6 @@
     min-height: 44px;
   }
 
-  /* These two are already block-level flex containers with their own width and
-     padding — they need the floor but NOT the display change. Switching them to
-     inline-flex would drop them into inline layout inside the drawer and add
-     baseline whitespace between every row. Same floor, no layout change. */
-  .shell-drawer-card-head {
-    min-height: 44px;
-  }
-
   /* A skip link is keyboard-only, but it measured 16px and is the first thing
      in the tab order on every page — including for a switch-control user on a
      phone, who taps it. */

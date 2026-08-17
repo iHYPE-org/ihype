@@ -19,9 +19,9 @@ test.describe('Public application smoke', () => {
     expect(hydrationErrors, 'public auth surfaces should hydrate without React mismatches').toEqual([]);
   });
 
-  test('protected home redirects anonymous visitors to login', async ({ page }) => {
+  test('the home alias enters canonical MMM and anonymous MMM requires login', async ({ page }) => {
     await page.goto('/home');
-    await expect(page).toHaveURL(/\/login(?:\?|$)/, { timeout: 8_000 });
+    await expect(page).toHaveURL(/\/login(?:\?|$)/, { timeout: 20_000 });
   });
 
   test('anonymous landing does not expose playback controls', async ({ page }) => {

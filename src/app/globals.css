@@ -3069,59 +3069,6 @@ html.high-contrast p {
 
 /* ── Skeleton / shimmer loader ───────────────────────────────── */
 
-/* 2. Nav drawer */
-.nav-drawer-trigger {
-  display: none;
-  background: none;
-  border: none;
-  color: var(--ink);
-  font-size: 20px;
-  cursor: pointer;
-  min-width: 44px;
-  min-height: 44px;
-  align-items: center;
-  justify-content: center;
-}
-@keyframes drawer-backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-.nav-drawer {
-  position: fixed;
-  top: 0; right: 0; bottom: 0;
-  z-index: 950;
-  width: min(300px, 86vw);
-  background: var(--bg-2);
-  border-left: 1px solid var(--line-2);
-  border-radius: 18px 0 0 18px;
-  box-shadow: -24px 0 60px rgba(0,0,0,.35);
-  padding: 14px 14px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  /* The Settings disclosure can push the drawer past the viewport on a short
-     screen; without this the accessibility toggles at the bottom are simply
-     unreachable. overscroll-behavior keeps the scroll from chaining to the
-     page underneath once the drawer hits its end. */
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  animation: drawer-slide-in .28s cubic-bezier(.32,.72,.24,1);
-}
-@keyframes drawer-slide-in {
-  from { transform: translateX(40px); opacity: 0; }
-  to   { transform: translateX(0); opacity: 1; }
-}
-/* The inline accessibility panel already carries its own border and padding,
-   so it needs none added here — only its heading scaled to the drawer. */
-
-@media (max-width: 768px) {
-  .nav-drawer-trigger { display: inline-flex; }
-  /* Keep the 44px touch-target rule on mobile */
-}
-@media (prefers-reduced-motion: reduce) {
-  .nav-drawer { animation: none; }
-}
-
 /* Shared pill sub-tab — the sub-menu strips on Listen / Events / Pages /
    Show / the page editor all use this instead of per-file inline styles,
    so hover, focus, press, and active states animate consistently. */

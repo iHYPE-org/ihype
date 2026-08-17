@@ -6,9 +6,8 @@
  * it and `/listen`'s six-module deck was an operator decision rather than a
  * code one. That call has now been made: `/app` is the product.
  *
- * `/listen` still exists and still works — nothing was deleted here, so the
- * deck remains reachable and this is a one-line reversal if the call changes.
- * It is deliberately still gated below, for that reason.
+ * `/listen` and `/home` survive only as protected compatibility aliases. They
+ * cannot render either retired surface and both lead back into MMM.
  */
 export const WORKBENCH_PATH = '/app/map';
 
@@ -26,7 +25,7 @@ export const WORKBENCH_PATH = '/app/map';
  * the body. Browsers follow that; crawlers and monitors do not. Checking it in
  * middleware, before render, is what makes it a real 307 (row 268, item g).
  */
-export const PROTECTED_PREFIXES = ['/app', '/listen', '/dashboard', '/admin'] as const;
+export const PROTECTED_PREFIXES = ['/app', '/home', '/listen', '/dashboard', '/admin'] as const;
 
 /**
  * The admin device-binding cookie, named here rather than in `admin-device.ts`.

@@ -275,13 +275,13 @@
    applied to the page's own heading rather than a second one being injected
    from the chrome — a duplicate h1 would be a real accessibility regression.
 
-   Prefixed `.shell-root` on purpose. Nine pages style their heading through
+   Prefixed `.mmm-frame` on purpose. Some workflows style their heading through
    a descendant selector (`.promo-page-header h1`, `.fan-dash-header h1`,
    `.settings-page h1`), which is (0,1,1) — exactly what `.mmm-migrated-surface h1`
    scores. A tie goes to whichever comes later in the document, and those
    rules live in an inline \3c style> block inside the page, so they would all
-   win. `.shell-root .mmm-migrated-surface h1` is (0,2,1) and settles it. */
-.shell-root .mmm-migrated-surface h1 {
+   win. `.mmm-frame .mmm-migrated-surface h1` is (0,2,1) and settles it. */
+.mmm-frame .mmm-migrated-surface h1 {
   font-family: var(--f-d);
   font-weight: 800;
   font-size: 2rem;
@@ -290,7 +290,7 @@
   color: var(--ink-1);
   margin: 8px 0 18px;
 }
-.shell-root .mmm-migrated-surface h2 {
+.mmm-frame .mmm-migrated-surface h2 {
   font-family: var(--f-d);
   font-weight: 800;
   font-size: 1.625rem;
@@ -298,7 +298,7 @@
   letter-spacing: -0.02em;
   color: var(--ink-1);
 }
-.shell-root .mmm-migrated-surface h3 {
+.mmm-frame .mmm-migrated-surface h3 {
   font-family: var(--f-d);
   font-weight: 800;
   font-size: 1.125rem;
@@ -311,7 +311,7 @@
    radio schedule, settlements, Top Tracks all read this way). Without this the
    ramp above would turn every row into a stack of 18px Syne. */
 
-.shell-root .mmm-migrated-surface h1 + p { color: var(--ink-2); font-size: 0.9062rem; }
+.mmm-frame .mmm-migrated-surface h1 + p { color: var(--ink-2); font-size: 0.9062rem; }
 .mmm-migrated-surface :is(.meta, .small) { color: var(--ink-2); }
 
 /* ── Controls ────────────────────────────────────────────────────────────
@@ -362,7 +362,7 @@
    Radius 12px to match the card and row it stands in for — a loading
    placeholder that is a different shape from the thing it becomes is a
    layout shift waiting to happen. Animation is gated by the reduce-motion
-   block in shell.css, which covers `.shell-root *`. */
+   block in mmm.css, which covers the canonical shell. */
 .mmm-migrated-surface :is(.skeleton, .ihype-skeleton, [data-skeleton]) {
   background: linear-gradient(
     90deg,

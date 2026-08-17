@@ -67,12 +67,9 @@ const REQUESTED_TESTS = process.argv.slice(2);
 // nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
-  ['e2e/app-shell-a11y.spec.ts'],
-  ['e2e/app-shell.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
-  ['e2e/phone-chrome.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
 ];
