@@ -322,7 +322,7 @@ html.mmm-locked .site-shell > main {
 }
 /* A show over 75% sold inverts to a solid accent fill. */
 .mmm-pin[data-hot='true'] .mmm-pin-pill {
-  background: var(--accent);
+  background: #030305;
   color: var(--ink-on-accent);
   border-color: var(--ink-a85);
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
@@ -1218,6 +1218,8 @@ html.mmm-locked .site-shell > main {
   /* No border: the trigger is a solid accent fill and a hairline over it reads
      as a seam at this radius. Per LogoTrigger. */
   border: 0;
+  padding: 0;
+  overflow: hidden;
   background: var(--accent);
   color: var(--ink-on-accent);
   cursor: pointer;
@@ -1231,32 +1233,12 @@ html.mmm-locked .site-shell > main {
   pointer-events: auto;
 }
 
-/* The full wordmark — iH, the bolt standing in for the Y, PE — not the letters
-   alone, which is what this rendered before. With no header anywhere in the
-   shell this square is the only place the product says its own name.
-
-   The sizes are a RATIO of the tile (0.235 of it, per LogoTrigger), not the
-   text ramp: the tile does not grow with the Text size control, so a rem mark
-   would overflow it at 140% — and a fixed px mark would not follow the tile
-   between its 88px and 56px sizes. */
-.mmm-logo-mark {
-  display: flex;
-  align-items: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: calc(var(--mmm-chrome-size) * 0.235);
-  letter-spacing: 0.01em;
-  line-height: 1;
-}
-/* The bolt is cropped to its own ink (the 512 artboard is mostly air, which at
-   wordmark scale breaks the word into three pieces) and takes currentColor, so
-   it needs no second colour variant. */
-/* 1.24 of the cap height, and 0.61 of that wide — LogoTrigger's own ratios. */
-.mmm-logo-mark svg {
+.mmm-logo-image {
   display: block;
-  width: calc(var(--mmm-chrome-size) * 0.1777);
-  height: calc(var(--mmm-chrome-size) * 0.2914);
-  margin: 0 0.06em;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 .mmm-logo:hover { opacity: 0.92; }
 /* Open state tips the logo, so the trigger reads as "engaged". */

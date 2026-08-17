@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
@@ -442,19 +443,16 @@ export function MmmShell({
              It also made the consent lift impossible to apply. */
           type="button"
         >
-          {/* The full wordmark, per `components/shell/LogoTrigger.jsx`: iH, the
-              bolt standing in for the Y, PE. It rendered as the plain word
-              before, which lost the mark on the one square that is always on
-              screen. Drawn inline rather than loaded from `assets/logo/` so it
-              takes `currentColor` (`--ink-on-accent`) instead of shipping a
-              second colour variant. */}
-          <span className="mmm-logo-mark">
-            <span>iH</span>
-            <svg aria-hidden="true" viewBox="148 92 200 328">
-              <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="currentColor" />
-            </svg>
-            <span>PE</span>
-          </span>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="mmm-logo-image"
+            height={1600}
+            priority
+            sizes="(max-width: 720px) 56px, 88px"
+            src="/brand/ihype-logo.png"
+            width={1600}
+          />
           {isPlaying && currentTrack && (
             <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
           )}
