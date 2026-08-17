@@ -668,7 +668,7 @@ html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
-html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--f-b, 'Work Sans', 'Segoe UI', sans-serif); }
+html, body { margin: 0; padding: 0; }
 /* Bricolage Grotesque carries an optical-size axis and is loaded as the
    variable face, so the browser can feed `opsz` the used font-size itself —
    which is what Design System 8 asks for ("Bricolage needs opsz fed the pixel
@@ -730,18 +730,6 @@ body:has(.site-dock) .site-shell {
   width: 60vmax;
   height: 60vmax;
   border-radius: 50%;
-  filter: blur(120px);
-  opacity: 0.5;
-}
-.site-background-orb-a {
-  top: -20vmax;
-  left: -10vmax;
-  background: radial-gradient(circle, rgba(var(--accent-rgb),.22), transparent 70%);
-}
-.site-background-orb-b {
-  bottom: -25vmax;
-  right: -10vmax;
-  background: radial-gradient(circle, rgba(var(--role-fan-rgb),.18), transparent 70%);
 }
 .site-background-grid {
   position: absolute;
@@ -749,8 +737,6 @@ body:has(.site-dock) .site-shell {
   background-image:
     linear-gradient(var(--hair-22) 1px, transparent 1px),
     linear-gradient(90deg, var(--hair-22) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(circle at 50% 30%, #000, transparent 80%);
 }
 /* ── Mobile bottom nav ── */
 @media (max-width: 768px) {
@@ -2783,10 +2769,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
 .site-background {
   opacity: 0.92;
 }
-.site-background-orb {
-  filter: blur(90px);
-  opacity: 0.32;
-}
 .site-background-orb-a {
   top: -180px;
   left: -120px;
@@ -3001,13 +2983,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
 .tag,
 .badge{
   box-shadow: none;
-}
-
-body {
-  background:
-    radial-gradient(circle at top, rgba(96, 142, 255, 0.14), transparent 24%),
-    radial-gradient(circle at 82% 18%, rgba(113, 217, 255, 0.1), transparent 20%),
-    linear-gradient(180deg, #09111a 0%, #06090f 42%, #04060b 100%);
 }
 
 .site-background {
