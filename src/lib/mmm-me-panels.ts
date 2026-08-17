@@ -38,11 +38,9 @@ export function canonicalMePanelId(value: string | null | undefined): MePanelId 
 
 export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   settings: [
-    { label: 'Account and privacy', detail: 'Profile, visibility, data export', href: '/app/me/settings' },
+    { label: 'Account and privacy', detail: 'Profile, payouts, visibility and data export', href: '/app/me/settings' },
     { label: 'Notifications', detail: 'Email and push, per category', href: '/app/me/settings#notifications' },
     { label: 'Accessibility', detail: 'Appearance, text size, contrast, motion and language', href: '/app/me/accessibility' },
-    { label: 'Payouts', detail: 'Stripe Connect status and history', href: '/payouts' },
-    { label: 'Tickets and wallet', detail: 'Your tickets, transfers, QR codes', href: '/tickets' },
   ],
   info: [
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },

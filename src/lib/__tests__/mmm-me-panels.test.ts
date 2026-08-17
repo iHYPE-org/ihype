@@ -41,6 +41,11 @@ describe('ME account panels', () => {
       .toBe('/app/me/info/transparency');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Terms of service')?.href)
       .toBe('/app/me/info/terms');
+    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toEqual(
+      expect.arrayContaining(['Payouts', 'Tickets and wallet']),
+    );
+    expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Account and privacy')?.detail)
+      .toContain('payouts');
   });
 
   // Every row is a bridge to a surface that already exists and does its own

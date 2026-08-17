@@ -52,6 +52,33 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
   { id: 'history', label: 'Your history', kinds: ['for_you'] },
 ];
 
+/* Preview-only rows make empty local accounts useful for design review. They
+   never enter an API response or the database, and every surface carrying
+   them is visibly labelled DEMO CONTENT. Real rows always replace them. */
+const DEMO_CHARTS: ChartRow[] = [
+  { id: 'demo-chart-1', title: 'Neon Weather', artistName: 'Velvet Static', artistSlug: '', hypeCount: 2841 },
+  { id: 'demo-chart-2', title: 'Southbound Signals', artistName: 'June Arcade', artistSlug: '', hypeCount: 2317 },
+  { id: 'demo-chart-3', title: 'Borrowed Light', artistName: 'Harborline', artistSlug: '', hypeCount: 1986 },
+  { id: 'demo-chart-4', title: 'No Fixed Address', artistName: 'Mara North', artistSlug: '', hypeCount: 1642 },
+  { id: 'demo-chart-5', title: 'Glassroom', artistName: 'Afterimage Club', artistSlug: '', hypeCount: 1298 },
+  { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044 },
+];
+
+const DEMO_RECOMMENDED: StationTrackRow[] = [
+  { id: 'demo-rec-1', hexId: '', title: 'Blue Hour Practice', artistName: 'North Common', artistSlug: '', mediaUrl: null, artworkUrl: null },
+  { id: 'demo-rec-2', hexId: '', title: 'Open Late', artistName: 'The Side Streets', artistSlug: '', mediaUrl: null, artworkUrl: null },
+  { id: 'demo-rec-3', hexId: '', title: 'Paper Satellites', artistName: 'Lena Vale', artistSlug: '', mediaUrl: null, artworkUrl: null },
+  { id: 'demo-rec-4', hexId: '', title: 'Room Tone', artistName: 'Signal Fires', artistSlug: '', mediaUrl: null, artworkUrl: null },
+  { id: 'demo-rec-5', hexId: '', title: 'Sunday Receiver', artistName: 'Low Current', artistSlug: '', mediaUrl: null, artworkUrl: null },
+];
+
+const DEMO_PLAYLISTS: PlaylistRow[] = [
+  { id: 'demo-list-1', name: 'Saved from Discover', count: 18 },
+  { id: 'demo-list-2', name: 'Portland After Dark', count: 12 },
+  { id: 'demo-list-3', name: 'New Local Releases', count: 24 },
+  { id: 'demo-list-4', name: 'Friday Show Shortlist', count: 7 },
+];
+
 /**
  * The MUSIC module — five tabs, each wired to a real endpoint.
  *
@@ -121,6 +148,15 @@ function Empty({ children }: { children: React.ReactNode }) {
 
 function Loading() {
   return <p className="mmm-eyebrow" role="status" style={{ padding: '10px 2px' }}>Loading…</p>;
+}
+
+function DemoHeader({ description }: { description: string }) {
+  return (
+    <div className="mmm-demo-head">
+      <span className="mmm-demo-badge">Demo content</span>
+      <p>{description}</p>
+    </div>
+  );
 }
 
 function useJson<T>(url: string, map: (payload: unknown) => T) {
@@ -457,15 +493,24 @@ function RecommendedTab() {
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Recommendations are unavailable right now.</Empty>;
-  const tracks = data ?? [];
-  if (!tracks.length) {
-    return <Empty>Nothing recommended yet — this fills in from the accounts you follow. Follow an artist and their uploads land here.</Empty>;
-  }
+  const realTracks = data ?? [];
+  const demo = realTracks.length === 0;
+  const tracks = demo ? DEMO_RECOMMENDED : realTracks;
 
   return (
-    <div>
+    <div className="mmm-music-list">
+      {demo && <DemoHeader description="A preview of recommendations from artists and listeners you follow." />}
       {tracks.map((track) => (
-        <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
+        demo ? (
+          <div aria-disabled="true" className="mmm-row mmm-demo-row" key={track.id}>
+            <span className="mmm-demo-art" aria-hidden="true">{track.artistName.charAt(0)}</span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
+              <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
+            </span>
+            <span className="mmm-row-meta">From people you follow</span>
+          </div>
+        ) : <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
@@ -491,16 +536,26 @@ function ChartsTab() {
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Charts are unavailable right now.</Empty>;
-  const rows = data ?? [];
-  if (!rows.length) {
-    return <Empty>The chart needs a week of hypes before it can rank anything. Hype a few tracks in Discover and it will fill in.</Empty>;
-  }
+  const realRows = data ?? [];
+  const demo = realRows.length === 0;
+  const rows = demo ? DEMO_CHARTS : realRows;
 
   return (
-    <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <div className="mmm-music-list">
+      {demo && <DemoHeader description="A preview of the weekly chart once local HYPE activity can be ranked." />}
+      <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {rows.map((row, index) => (
         <li key={row.id}>
-          <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
+          {demo ? <div aria-disabled="true" className="mmm-row mmm-demo-row">
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
+              <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
+            </span>
+            <span className="mmm-row-meta">{row.hypeCount.toLocaleString()} HYPE</span>
+          </div> : <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
               {String(index + 1).padStart(2, '0')}
             </span>
@@ -509,10 +564,11 @@ function ChartsTab() {
               <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
             </span>
             <span className="mmm-row-meta">{row.hypeCount.toLocaleString()}</span>
-          </Link>
+          </Link>}
         </li>
       ))}
-    </ol>
+      </ol>
+    </div>
   );
 }
 
@@ -528,10 +584,9 @@ function PlaylistsTab() {
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Playlists are unavailable right now.</Empty>;
-  const lists = data ?? [];
-  if (!lists.length) {
-    return <Empty>No playlists yet. A right-swipe in Discover files a track into your Discover playlist and it will appear here.</Empty>;
-  }
+  const realLists = data ?? [];
+  const demo = realLists.length === 0;
+  const lists = demo ? DEMO_PLAYLISTS : realLists;
 
   // Each row links to its own playlist. /playlists never existed, so every
   // row used to point at the same dead URL. The real route is
@@ -539,9 +594,17 @@ function PlaylistsTab() {
   // it up with findUnique({ id }), and that id is exactly what
   // /api/fan-playlists returns.
   return (
-    <div>
+    <div className="mmm-music-list">
+      {demo && <DemoHeader description="A preview of personal and automatically assembled playlists." />}
       {lists.map((list) => (
-        <Link className="mmm-row" href={`/app/playlists/${list.id}`} key={list.id} style={{ display: 'flex' }}>
+        demo ? <div aria-disabled="true" className="mmm-row mmm-demo-row" key={list.id}>
+          <span className="mmm-demo-art mmm-demo-playlist-art" aria-hidden="true">≡</span>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
+            <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} tracks</span>
+          </span>
+          <span className="mmm-row-meta">Preview</span>
+        </div> : <Link className="mmm-row" href={`/app/playlists/${list.id}`} key={list.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>

@@ -424,9 +424,13 @@ test.describe('Music · Map · Me shell', () => {
       });
 
     await page.goto('/app/me');
-    // Profiles is the one showing before anyone has chosen.
+    // Entering ME is a clean four-row index. Nothing chooses itself.
+    for (const label of ['Profiles', 'My Tickets', 'Info', 'Settings']) {
+      await expect(drawer(label)).toHaveAttribute('aria-expanded', 'false');
+    }
+
+    await drawer('Profiles').click();
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
 
     // A section closes the other sections.
     await drawer('My Tickets').click();

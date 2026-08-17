@@ -427,6 +427,48 @@ html.mmm-locked .site-shell > main {
    between search and Discover. The field is one natural-height row here. */
 .mmm-music-controls > .mmm-search-wrap { flex: 0 0 auto; }
 
+/* Empty-account previews. Demo rows are intentionally inert and visually
+   labelled so fake names can never be mistaken for live chart or library
+   data. Real API rows render through the existing interactive links. */
+.mmm-music-list { padding-top: 4px; }
+.mmm-demo-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px 14px;
+  border-bottom: 1px solid var(--line-2);
+}
+.mmm-demo-head p { margin: 0; color: var(--ink-3); font-size: 0.72rem; line-height: 1.4; }
+.mmm-demo-badge {
+  flex: 0 0 auto;
+  padding: 6px 9px;
+  border: 1px solid rgba(var(--accent-rgb), 0.42);
+  border-radius: var(--radius-pill);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent-text);
+  font: 0.56rem var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.mmm-demo-row { display: flex; align-items: center; gap: 12px; cursor: default; }
+.mmm-demo-art {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: 13px;
+  background: linear-gradient(145deg, rgba(var(--accent-rgb), 0.32), var(--bg-2));
+  color: var(--ink);
+  font: 800 0.9rem var(--font-display);
+}
+.mmm-demo-playlist-art { color: var(--accent-text); font-size: 1.2rem; }
+@media (max-width: 520px) {
+  .mmm-demo-head { align-items: flex-start; flex-direction: column; gap: 7px; }
+  .mmm-demo-row .mmm-row-meta { max-width: 92px; text-align: right; }
+}
+
 /* A PILL STRIP, and it is back on purpose (2026-08-14).
 
    `PORT_TO_APP.md` in the 2026-08-12 export asked for the opposite — a link

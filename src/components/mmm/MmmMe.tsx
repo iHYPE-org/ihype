@@ -12,8 +12,8 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
 
 /**
  * The drawers above the account panels. Order is the design system's —
- * Profiles · My Tickets · Info · Settings — and Profiles is `first`, the
- * one showing before anyone has chosen.
+ * Profiles · My Tickets · Info · Settings. All four start closed so ME opens
+ * as a clean index rather than choosing a destination for the member.
  */
 type MeSectionId = 'profiles' | 'tickets';
 const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets'];
@@ -21,7 +21,6 @@ const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets'];
 function isMeSectionId(value: string | null): value is MeSectionId {
   return value !== null && (ME_SECTION_IDS as readonly string[]).includes(value);
 }
-const FIRST_ME_SECTION: MeSectionId = 'profiles';
 
 /**
  * The ME surface — a role-aware dashboard.
@@ -56,11 +55,9 @@ const FIRST_ME_SECTION: MeSectionId = 'profiles';
  * Account rows, which are what most visits are actually for. Collapsed, the
  * whole surface is one screen.
  *
- * Profiles opens by default, and is first: it is the only section that changes
- * what the account IS, and its add buttons are what a new member came for. The
- * stats it carries used to be a separate "Your year" section above everything
- * else, which put a screen of numbers between the member and the thing they
- * opened ME to do.
+ * Every drawer starts closed. Profiles remains first because it changes what
+ * the account IS, but entering ME should show the four choices without making
+ * one choice on the member's behalf.
  *
  * **One drawer open at a time, page-wide** — the sections here and the account
  * panels below are ONE group, not two. Each section used to hold its own
@@ -161,27 +158,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
    * Which of the two profile/ticket sections above the Info and Settings
    * panels is open.
    *
-   * `undefined` means nobody has chosen yet, so the section marked first
-   * (Profiles) is the one showing; `''` means someone chose to close what was
-   * open, or opened a panel instead, and nothing above is showing. That
-   * three-valued shape is the design system's own `meSection(id, first)` helper
-   * — a plain `'profiles' | null` cannot tell "not chosen yet" from "closed",
-   * and would either re-open Profiles or never open it.
+   * An empty string means all four drawers are closed. A `section` deep link
+   * can still open Profiles or My Tickets explicitly.
    */
-  const [meGroup, setMeGroup] = useState<MeSectionId | '' | undefined>(
-    linkedSection ?? undefined,
-  );
+  const [meGroup, setMeGroup] = useState<MeSectionId | ''>(linkedSection ?? '');
 
-  /**
-   * The default only applies when nothing else is open. Arriving on
-   * `/app/me?panel=settings` — a deep link, and where retired
-   * `/app/me/[panel]` routes redirect to — must not also open Profiles, or the
-   * page loads with two drawers open and the one the URL asked for pushed a
-   * screen down. The design system's helper has no equivalent guard because
-   * its panels cannot be open on arrival; ours can.
-   */
-  const openSection: MeSectionId | null =
-    meGroup === undefined ? (openPanel ? null : linkedSection ?? FIRST_ME_SECTION) : meGroup || null;
+  const openSection: MeSectionId | null = meGroup || null;
 
   /**
    * `push`, not `replace` — closing a drawer should be what Back does, which
@@ -398,7 +380,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </Accordion>
 
       <Accordion
-        detail={data.ticketCount === null ? null : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · transfer at face value`}
+        detail={data.ticketCount === null ? 'Wallet · QR codes · transfers' : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · wallet, QR and transfers`}
         label="My Tickets"
         onToggle={() => toggleSection('tickets')}
         open={openSection === 'tickets'}

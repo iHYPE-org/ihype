@@ -177,7 +177,12 @@ export function MmmSeedDeck({
      is empty, and the pane scrolls instead. */
   const CHROME = 4 + 34 + 18 + 56;
   const available = room ?? 0;
-  const cardHeight = available ? Math.max(200, Math.min(560, available - CHROME)) : 560;
+  /* 480px is the desktop ceiling. At 560px the card itself fit a 900px
+     viewport, but its verdict controls landed behind the persistent player
+     and made the pane scroll for a few pixels. Narrow viewports still use the
+     measured room below, so iOS and Android continue to size to their actual
+     visible viewport. */
+  const cardHeight = available ? Math.max(200, Math.min(480, available - CHROME)) : 480;
   const rotation = Math.max(-14, Math.min(14, dx / 14));
   const intent = Math.min(1, Math.abs(dx) / 108);
   const colors = palette(item.artistSlug || item.artistName || item.id);
