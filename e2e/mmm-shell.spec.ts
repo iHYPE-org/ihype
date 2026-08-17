@@ -368,12 +368,12 @@ test.describe('Music · Map · Me shell', () => {
     await expect(field).toHaveValue('');
   });
 
-  // The four panels are ACCORDIONS, not links. They were four routes under
-  // /app/me/[panel] until the 2026-08-10 template made ME one column of
-  // drawers that open in place — the old routes now redirect onto
-  // /app/me?panel=<id>, so this asserts the control that exists rather than
-  // the navigation that was removed.
-  test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
+  // The canonical panels are ACCORDIONS, not links. Legal now lives under
+  // Info and Accessibility under Settings, so neither is repeated at this
+  // level. Their retired routes still resolve to these parent drawers.
+  // The old routes redirect onto their canonical parent drawer, so this
+  // asserts the controls that exist rather than the navigation that moved.
+  test('the ME surface carries Settings and Info as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
     // Matched on the LABEL SPAN, not on the button's text and not on its
     // accessible name. Both of those are the label and the detail line
@@ -391,12 +391,14 @@ test.describe('Music · Map · Me shell', () => {
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
-    for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
+    for (const label of ['Settings', 'Info']) {
       await expect(panelFor(label), `no ${label} panel`).toBeVisible();
     }
+    await expect(panelFor('Legal')).toHaveCount(0);
+    await expect(panelFor('Accessibility')).toHaveCount(0);
     // Deliberately no count assertion: `.mmm-me-accordion` is also the class
     // on the Profiles / My Tickets / About Me drawers above, so the page
-    // carries seven of them and pinning a number here would break the next
+    // carries several of them and pinning a number here would break the next
     // time ME grows a section — which is not what this test is about.
     //
     // Collapsed until asked: a drawer that starts open is not a drawer.
@@ -411,8 +413,8 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
-  // One drawer open at a time, page-wide — the three sections and the four
-  // account panels are ONE group. This is the invariant that cannot be seen by
+  // One drawer open at a time, page-wide — the three sections and the account
+  // panels are ONE group. This is the invariant that cannot be seen by
   // reading either half alone: the sections are component state and the panels
   // are the URL, so nothing about the types stops both being open at once.
   test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
@@ -454,7 +456,7 @@ test.describe('Music · Map · Me shell', () => {
       page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
-    await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Info')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
   });
 

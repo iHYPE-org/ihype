@@ -12,7 +12,8 @@
  *   2. **MUSIC's items are** Discover · Radio · Charts · Recommended ·
  *      Playlists. There is no Search item.
  *   3. **ME has no submenu at all.** It navigates straight to the ME surface,
- *      which carries Settings · Info · Legal · Accessibility as in-page rows.
+ *      which carries Settings and Info as in-page rows. Accessibility belongs
+ *      to Settings; Legal belongs to Info.
  *
  * Module, tab and panel are ROUTES, not component state — the module structure
  * is a natural URL hierarchy. Only `navOpen`, `sheet`, `playing` and `hyped`
@@ -63,10 +64,8 @@ export const MMM_MUSIC_TABS = MMM_NAV.find((module) => module.id === 'music')!.i
  * fan-out destinations — the redesign moved them off the radial nav.
  */
 export const MMM_ME_PANELS: ReadonlyArray<MmmNavItem & { detail: string }> = [
-  { id: 'settings', label: 'Settings', detail: 'Account · notifications · payments', href: `${MMM_BASE}/me/settings` },
-  { id: 'info', label: 'Info', detail: 'How iHYPE works', href: `${MMM_BASE}/me/info` },
-  { id: 'legal', label: 'Legal', detail: 'Charter · terms · privacy', href: `${MMM_BASE}/me/legal` },
-  { id: 'accessibility', label: 'Accessibility', detail: 'Motion · contrast · text', href: `${MMM_BASE}/me/accessibility` },
+  { id: 'settings', label: 'Settings', detail: 'Account · notifications · accessibility', href: `${MMM_BASE}/me/settings` },
+  { id: 'info', label: 'Info', detail: 'How iHYPE works · legal', href: `${MMM_BASE}/me/info` },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────────
@@ -201,6 +200,8 @@ export function itemForPath(pathname: string): string | null {
 /** The active ME panel id, or null when the ME surface is at its root. */
 export function panelForPath(pathname: string): string | null {
   if (moduleForPath(pathname) !== 'me') return null;
+  if (pathname === `${MMM_BASE}/me/accessibility`) return 'settings';
+  if (pathname === `${MMM_BASE}/me/legal`) return 'info';
   const match = [...MMM_ME_PANELS]
     .sort((a, b) => b.href.length - a.href.length)
     .find((panel) => pathname === panel.href || pathname.startsWith(`${panel.href}/`));

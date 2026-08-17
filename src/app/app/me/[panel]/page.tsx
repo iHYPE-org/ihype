@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation';
-import { isMePanelId } from '@/lib/mmm-me-panels';
+import { canonicalMePanelId } from '@/lib/mmm-me-panels';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * The four ME panels used to be pages here. The 2026-08-10 shell revision makes
+ * The ME panels used to be pages here. The current shell revision makes
  * ME one column whose Account rows open **in place**, so the panel is a drawer
  * on `/app/me` and this route is the way the old URLs keep working.
  *
@@ -19,5 +19,6 @@ export const dynamic = 'force-dynamic';
  */
 export default async function MmmMePanelPage({ params }: { params: Promise<{ panel: string }> }) {
   const { panel } = await params;
-  redirect(isMePanelId(panel) ? `/app/me?panel=${panel}` : '/app/me');
+  const canonical = canonicalMePanelId(panel);
+  redirect(canonical ? `/app/me?panel=${canonical}` : '/app/me');
 }

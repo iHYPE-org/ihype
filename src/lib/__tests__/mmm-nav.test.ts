@@ -37,9 +37,9 @@ describe('MMM_NAV manifest', () => {
     expect(MMM_NAV.filter((module) => module.items.length > 0).map((module) => module.id)).toEqual(['music']);
   });
 
-  it('carries the four ME panels as in-page rows', () => {
+  it('carries the two canonical ME panels as in-page rows', () => {
     expect(MMM_ME_PANELS.map((panel) => panel.label))
-      .toEqual(['Settings', 'Info', 'Legal', 'Accessibility']);
+      .toEqual(['Settings', 'Info']);
   });
 
   it('gives every ME panel a detail line, since the rows are drawn with one', () => {
@@ -199,7 +199,8 @@ describe('itemForPath', () => {
 describe('panelForPath', () => {
   it('resolves an open ME panel', () => {
     expect(panelForPath('/app/me/settings')).toBe('settings');
-    expect(panelForPath('/app/me/accessibility')).toBe('accessibility');
+    expect(panelForPath('/app/me/accessibility')).toBe('settings');
+    expect(panelForPath('/app/me/legal')).toBe('info');
   });
 
   it('is null at the ME root and outside ME', () => {

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
 import { MmmTickets } from './MmmTickets';
-import { ME_PANEL_ROWS, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
+import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
 const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
@@ -26,8 +26,9 @@ const FIRST_ME_SECTION: MeSectionId = 'profiles';
 /**
  * The ME surface — a role-aware dashboard.
  *
- * From the app-shell redesign: ME has no fan-out submenu; Settings, Info, Legal
- * and Accessibility are rows on this surface. The role switcher shows only the
+ * From the app-shell redesign: ME has no fan-out submenu; Settings and Info
+ * are rows on this surface. Accessibility is grouped under Settings and Legal
+ * under Info so neither the Charter nor preferences have duplicate homes. The role switcher shows only the
  * roles the account actually holds, and **Fan is always present and always
  * first** because it is implicit and permanent (`BACKEND_REWRITE.md` §1).
  *
@@ -49,7 +50,7 @@ const FIRST_ME_SECTION: MeSectionId = 'profiles';
  * `templates/simplified-app/`: a labelled button carrying `aria-expanded`, a
  * chevron, `--radius-card` corners, and the body underneath.
  *
- * Why accordions rather than four stacked cards: ME is the only surface in this
+ * Why accordions rather than stacked cards: ME is the only surface in this
  * shell with no search and no tabs, so everything an account has lives on one
  * scroll. Left open, three screens of stats sit between the member and the
  * Account rows, which are what most visits are actually for. Collapsed, the
@@ -121,7 +122,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
   };
 
   const rawPanel = searchParams?.get('panel');
-  const openPanel = isMePanelId(rawPanel) ? rawPanel : null;
+  const openPanel = canonicalMePanelId(rawPanel);
   const rawSection = searchParams?.get('section');
   const linkedSection = isMeSectionId(rawSection) ? rawSection : null;
 
@@ -141,7 +142,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
   /**
    * The default only applies when nothing else is open. Arriving on
-   * `/app/me?panel=settings` — a deep link, and where the four retired
+   * `/app/me?panel=settings` — a deep link, and where retired
    * `/app/me/[panel]` routes redirect to — must not also open Profiles, or the
    * page loads with two drawers open and the one the URL asked for pushed a
    * screen down. The design system's helper has no equivalent guard because
@@ -427,7 +428,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
       </Accordion>
 
-      {/* Account panels open IN PLACE, one at a time. They used to be four
+      {/* Account panels open IN PLACE, one at a time. They used to be separate
           routes under /app/me/[panel]; the 2026-08-10 template makes ME one
           column of drawers, and each panel is only a menu of bridge links —
           no form state — so nothing is lost by not navigating.
