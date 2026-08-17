@@ -378,7 +378,7 @@ html.mmm-locked .site-shell > main {
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,
      which the handoff's 430px rectangle has neither of. */
-  padding: calc(14px + var(--mmm-safe-top)) 16px calc(96px + var(--mmm-safe-bottom));
+  padding: calc(14px + var(--mmm-safe-top)) 16px calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
 }
 
 /* Paint scope for workflows migrated from the retired AppShell. The
@@ -1459,27 +1459,6 @@ html.mmm-locked .site-shell > main {
   pointer-events: none;
 }
 
-/* Search rides at the bar's LEFT EDGE on a phone, divided off by a hairline so
-   it plainly is not a transport control. `PlayerPill` records why it is not a
-   square of its own between the trigger and the bar: floating there it read as
-   part of the nav trigger, and it cost the row the 52px the title needs. */
-.mmm-player-search {
-  flex: 0 0 auto;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  margin-right: -4px;
-  border: 0;
-  border-right: 1px solid var(--hair-70);
-  border-radius: 12px;
-  background: transparent;
-  color: var(--ink-2);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-.mmm-player-search svg { display: block; }
-
 /* The artwork is the row's FIRST CHILD, so it centres against the pill's whole
    height and the scrub row aligns with the title by construction. A squircle,
    not a circle: the square holds the artist's logo and a circle crops a mark.
@@ -1637,6 +1616,20 @@ html.mmm-locked .site-shell > main {
   cursor: pointer;
 }
 
+.mmm-player-expand {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 1px solid var(--hair-100);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
 
 /* The scrim dims the frame under the fan. */
 .mmm-nav-scrim {
@@ -1697,6 +1690,9 @@ html.mmm-locked .site-shell > main {
   /* The pill is 56px tall here, so its padding tightens with it: a 40px
      artwork in 56px leaves 8px, matching the inset on the sides it touches. */
   .mmm-player { padding: 0 8px; gap: 10px; }
+  .mmm-player-body { display: none; }
+  .mmm-player-controls { flex: 1; justify-content: space-between; gap: 6px; }
+  .mmm-player-icon { width: 30px; height: 34px; font-size: 1.25rem; }
 }
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
@@ -1706,7 +1702,7 @@ html.mmm-locked .site-shell > main {
    nothing. The chrome stays bottom-left, which is where a thumb is on a phone
    and where the eye has learned to look on a desktop after one use. */
 @media (min-width: 900px) {
-  .mmm-pane { padding: 20px calc(50% - 340px) 96px; }
+  .mmm-pane { padding: 20px calc(50% - 340px) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px); }
   .mmm-sheet { left: 50%; right: auto; width: 720px; transform: translateX(-50%); border-radius: 18px 18px 0 0; }
   @keyframes mmmSheetUpWide {
     from { transform: translate(-50%, 18px); opacity: 0; }

@@ -323,8 +323,7 @@ export function MmmShell({
           history={played}
           hyped={hyped}
           narrow={narrow}
-          /* Phone only: the artwork opens the full player, which is where the
-             controls the phone bar drops actually live. */
+          /* Phone only: a visible expand control opens the full player. */
           onExpand={() => { setNavOpen(false); setFullOpen(true); }}
           onOpenArtist={artistSlug ? () => {
             setQueueOpen(false);
@@ -334,13 +333,6 @@ export function MmmShell({
           onToggleQueue={() => setQueueOpen((open) => !open)}
           queue={upNext}
           queueOpen={queueOpen}
-          /* The design's `openSearch` is module: music, tab: discover, field
-             focused. There is no separate search surface to open — the field
-             lives at the top of every MUSIC tab — so this is that navigation,
-             and `focus=search` is what tells the field to take focus on
-             arrival. Phone only; on a wider frame the field is already on
-             screen whenever MUSIC is. */
-          onSearch={() => router.push('/app/music/discover?focus=search')}
           onNext={playNext}
           onPrev={playPrevious}
           // The pill speaks 0-100; the audio element speaks seconds. Converted

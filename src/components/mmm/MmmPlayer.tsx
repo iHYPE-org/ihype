@@ -76,7 +76,6 @@ export function MmmPlayer({
   onPickTrack,
   onPrev,
   onOpenArtist,
-  onSearch,
   onSeek,
   onToggleFav,
   onToggleHype,
@@ -105,12 +104,7 @@ export function MmmPlayer({
   hypeLocked?: boolean;
   hyped: boolean;
   narrow: boolean;
-  /**
-   * Phone only: the artwork opens the full-screen player. Omitted, the artwork
-   * is not a button — an inert control is worse than none, and until this
-   * existed the phone bar had no route to seek, volume, the heart or the queue
-   * at all.
-   */
+  /** Phone only: opens the full-screen player from a visible expand control. */
   onExpand?: () => void;
   onNext: () => void;
   /**
@@ -126,11 +120,6 @@ export function MmmPlayer({
    */
   onOpenArtist?: () => void;
   onSeek: (value: number) => void;
-  /**
-   * Phone only, per `PlayerPill`: search rides at the bar's left edge. Omitted,
-   * it is not drawn — a search control with nowhere to go is worse than none.
-   */
-  onSearch?: () => void;
   onToggleFav: () => void;
   onToggleHype: () => void;
   onTogglePlay: () => void;
@@ -158,9 +147,8 @@ export function MmmPlayer({
   if (!track) return null;
 
   // 64 in an 88px pill leaves exactly 12px above and below, which is the pill's
-  // own padding. On a phone the bar also carries search at its left edge, so the
-  // artwork drops to the design's 40px with a 14px corner — a 64px square there
-  // leaves the title about a word wide.
+  // own padding. On a phone the artwork drops to 40px with a 14px corner so
+  // previous, play/pause, next and expand remain real touch targets.
   const art = narrow ? 40 : Math.max(40, anchorHeight - 24);
   const artRadius = narrow ? 14 : Math.round(art * 0.342);
   return (
@@ -227,61 +215,19 @@ export function MmmPlayer({
       className="mmm-player"
       data-hidden={hidden}
       ref={rootRef}
-      style={{ minHeight: anchorHeight }}
+      style={{ minHeight: narrow ? 56 : anchorHeight }}
     >
-      {/* Phone only: search rides at the bar's LEFT EDGE, divided off by a
-          hairline so it plainly is not a transport control. Floating between
-          the trigger and the bar it read as part of the nav trigger and cost
-          the row the 52px the title needs. Omitted when there is nowhere to
-          send it — a search button that does nothing is worse than none. */}
-      {narrow && onSearch && (
-        <button
-          aria-label="Search artists, venues and shows"
-          className="mmm-player-search"
-          onClick={onSearch}
-          type="button"
-        >
-          <svg aria-hidden="true" height={18} viewBox="0 0 24 24" width={18}>
-            <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={1.9}>
-              <circle cx={10.6} cy={10.6} r={6.4} />
-              <path d="m15.4 15.4 4.3 4.3" />
-            </g>
-          </svg>
-        </button>
-      )}
-
-      {/* On a phone the artwork IS the way into the full player — that is the
-          design's own route to seek, volume, the heart and the queue, none of
-          which fit in a 393px bar. With no handler it stays a plain div rather
-          than becoming a button that does nothing. */}
-      {narrow && onExpand ? (
-        <button
-          aria-label="Open the full player"
-          className="mmm-player-art"
-          data-expand=""
-          onClick={onExpand}
-          style={{ width: art, height: art, borderRadius: artRadius }}
-          tabIndex={hidden ? -1 : 0}
-          type="button"
-        >
-          {track.artworkUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- see below.
-            <img alt="" height={art} src={track.artworkUrl} width={art} />
-          )}
-        </button>
-      ) : (
-        <div
-          className="mmm-player-art"
-          style={{ width: art, height: art, borderRadius: artRadius }}
-        >
-          {track.artworkUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
-            // R2/remote and already sized by the uploader; next/image would add a
-            // loader round trip for a 64px square that is on screen constantly.
-            <img alt="" height={art} src={track.artworkUrl} width={art} />
-          )}
-        </div>
-      )}
+      <div
+        className="mmm-player-art"
+        style={{ width: art, height: art, borderRadius: artRadius }}
+      >
+        {track.artworkUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
+          // R2/remote and already sized by the uploader; next/image would add a
+          // loader round trip for a 64px square that is on screen constantly.
+          <img alt="" height={art} src={track.artworkUrl} width={art} />
+        )}
+      </div>
 
       <div className="mmm-player-body">
         <Marquee className="mmm-player-track" onClick={onOpenArtist} text={track.title} />
@@ -313,6 +259,16 @@ export function MmmPlayer({
       </div>
 
       <div className="mmm-player-controls">
+        {narrow && (
+          <IconButton
+            disabled={!canGoBack}
+            hidden={hidden}
+            label="Previous track"
+            onClick={onPrev}
+            glyph="‹"
+          />
+        )}
+
         {!narrow && (
           <IconButton
             disabled={!canGoBack}
@@ -334,6 +290,16 @@ export function MmmPlayer({
           >
             <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
           </button>
+        )}
+
+        {narrow && (
+          <IconButton
+            disabled={!canGoForward}
+            hidden={hidden}
+            label="Next track"
+            onClick={onNext}
+            glyph="›"
+          />
         )}
 
         {!narrow && (
@@ -403,6 +369,20 @@ export function MmmPlayer({
             pressed={queueOpen}
             glyph="≡"
           />
+        )}
+
+        {narrow && onExpand && (
+          <button
+            aria-label="Open the full player"
+            className="mmm-player-expand"
+            onClick={onExpand}
+            tabIndex={hidden ? -1 : 0}
+            type="button"
+          >
+            <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 20 20" width="16">
+              <path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+            </svg>
+          </button>
         )}
       </div>
     </div>
