@@ -46,6 +46,11 @@ describe('ME account panels', () => {
     );
     expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Account and privacy')?.detail)
       .toContain('payouts');
+    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toContain('Notifications');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Privacy policy')?.href)
+      .toBe('/app/me/info/privacy');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'DMCA')?.href)
+      .toBe('/app/me/info/dmca');
   });
 
   // Every row is a bridge to a surface that already exists and does its own

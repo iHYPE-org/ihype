@@ -39,14 +39,13 @@ export function canonicalMePanelId(value: string | null | undefined): MePanelId 
 export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   settings: [
     { label: 'Account and privacy', detail: 'Profile, payouts, visibility and data export', href: '/app/me/settings' },
-    { label: 'Notifications', detail: 'Email and push, per category', href: '/app/me/settings#notifications' },
     { label: 'Accessibility', detail: 'Appearance, text size, contrast, motion and language', href: '/app/me/accessibility' },
   ],
   info: [
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
     { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
     { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },
-    { label: 'Privacy policy', detail: 'What is collected, and what never is', href: '/info?tab=privacy' },
-    { label: 'DMCA', detail: 'Takedown and counter-notice process', href: '/info?tab=dmca' },
+    { label: 'Privacy policy', detail: 'What is collected, and what never is', href: '/app/me/info/privacy' },
+    { label: 'DMCA', detail: 'Takedown and counter-notice process', href: '/app/me/info/dmca' },
   ],
 };

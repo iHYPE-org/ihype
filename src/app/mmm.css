@@ -464,6 +464,8 @@ html.mmm-locked .site-shell > main {
   font: 800 0.9rem var(--font-display);
 }
 .mmm-demo-playlist-art { color: var(--accent-text); font-size: 1.2rem; }
+.mmm-ticket-demo-head { margin-bottom: 4px; }
+.mmm-ticket-transfer[aria-disabled='true'] { opacity: 0.55; cursor: default; }
 @media (max-width: 520px) {
   .mmm-demo-head { align-items: flex-start; flex-direction: column; gap: 7px; }
   .mmm-demo-row .mmm-row-meta { max-width: 92px; text-align: right; }

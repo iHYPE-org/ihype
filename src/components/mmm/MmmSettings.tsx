@@ -410,6 +410,7 @@ export function MmmSettings() {
 
   return (
     <div className="settings-page settings-col">
+      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Me</Link>
       <h1>{t('settingsPage.title', 'Settings')}</h1>
 
       {loading ? (
