@@ -844,31 +844,6 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 /* stats */
 /* panels */
 /* track cards */
-.nav-logo {
-  display: inline-grid;
-  gap: 0.14rem;
-  align-items: start;
-  justify-items: start;
-  text-decoration: none;
-}
-.nav-logo-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.12rem;
-  font-size: 1.05rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-.nav-logo-word {
-  color: #fff7ec;
-}
-.nav-logo-dot {
-  background: var(--accent);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
 .nav-logo:hover .nav-logo-discover,
 .nav-logo:focus-visible .nav-logo-discover {
   background:
@@ -3163,6 +3138,10 @@ body {
   line-height: 1;
   text-transform: uppercase;
   text-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.nav-logo {
+  text-decoration: none;
 }
 
 .nav-logo-word {
