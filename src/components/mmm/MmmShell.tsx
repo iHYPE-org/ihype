@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
@@ -137,10 +136,9 @@ export function MmmShell({
     if (target) playTrack(target);
   }, [currentIndex, playTrack, queue]);
 
-  // Chrome that is anchored to the pill: the queue panel, the artist highlight,
-  // and the phone's full-screen player.
+  // Chrome that is anchored to the pill: the queue panel and the phone's
+  // full-screen player.
   const [queueOpen, setQueueOpen] = useState(false);
-  const [artistOpen, setArtistOpen] = useState(false);
   const [fullOpen, setFullOpen] = useState(false);
 
   // The heart, which is NOT the HYPE control. SHELL_LOCK is explicit that they
@@ -205,22 +203,13 @@ export function MmmShell({
      plain text and the panel has no target to open. */
   const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
 
-  // Every panel anchored to the pill describes THIS track. A track change (or
-  // opening the nav) invalidates all three rather than leaving them describing
-  // something that is no longer playing.
-  useEffect(() => {
-    setArtistOpen(false);
-  }, [currentTrack?.id]);
-
   useEffect(() => {
     if (!navOpen) return;
     setQueueOpen(false);
-    setArtistOpen(false);
   }, [navOpen]);
 
   useEffect(() => {
     setQueueOpen(false);
-    setArtistOpen(false);
     setFullOpen(false);
   }, [pathname]);
 
@@ -324,7 +313,6 @@ export function MmmShell({
             can play out — the design's `data-ih-hide` behaviour. Opening the nav
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
-          artistOpen={artistOpen}
           canFavourite={Boolean(currentTrack)}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
@@ -338,16 +326,12 @@ export function MmmShell({
           /* Phone only: the artwork opens the full player, which is where the
              controls the phone bar drops actually live. */
           onExpand={() => { setNavOpen(false); setFullOpen(true); }}
-          /* The name opens the highlight over the shell rather than navigating:
-             the point is to decide about the artist without losing the map, the
-             pane or your place in the queue. The panel itself carries the link
-             out to the full artist page. */
-          /* The two panels share one anchor above the pill, so opening either
-             closes the other rather than stacking two dialogs on the same
-             spot. */
-          onOpenArtist={artistSlug ? () => { setQueueOpen(false); setArtistOpen((open) => !open); } : undefined}
+          onOpenArtist={artistSlug ? () => {
+            setQueueOpen(false);
+            router.push(`/app/artists/${artistSlug}`);
+          } : undefined}
           onPickTrack={pickTrack}
-          onToggleQueue={() => { setArtistOpen(false); setQueueOpen((open) => !open); }}
+          onToggleQueue={() => setQueueOpen((open) => !open)}
           queue={upNext}
           queueOpen={queueOpen}
           /* The design's `openSearch` is module: music, tab: discover, field
@@ -372,12 +356,6 @@ export function MmmShell({
           track={displayTrack}
           volume={volume * 100}
         />
-
-        {/* Anchored to the pill, so it is drawn beside it rather than inside
-            it — the pill is a capsule and clips anything nested. */}
-        {artistOpen && artistSlug && !navOpen && (
-          <MmmArtistCard onClose={() => setArtistOpen(false)} slug={artistSlug} />
-        )}
 
         {/* Phone only, and only over a real track: with nothing playing there
             is nothing to expand, and `onExpand` is the only way in. */}

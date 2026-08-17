@@ -12,11 +12,11 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
 
 /**
  * The drawers above the account panels. Order is the design system's —
- * Profiles · My Tickets · About Me · Settings — and Profiles is `first`, the
+ * Profiles · My Tickets · Info · Settings — and Profiles is `first`, the
  * one showing before anyone has chosen.
  */
-type MeSectionId = 'profiles' | 'tickets' | 'about';
-const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets', 'about'];
+type MeSectionId = 'profiles' | 'tickets';
+const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets'];
 
 function isMeSectionId(value: string | null): value is MeSectionId {
   return value !== null && (ME_SECTION_IDS as readonly string[]).includes(value);
@@ -110,6 +110,37 @@ function Accordion({
   );
 }
 
+function AboutMeActivity({ data }: { data: MmmMeData }) {
+  return (
+    <div className="mmm-me-about-in-profiles">
+      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>About me · visible activity</div>
+      {data.activity.length === 0 ? (
+        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: 0 }}>
+          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
+          shows up here—this is the activity artists and venues can see.
+        </p>
+      ) : (
+        <div>
+          {data.activity.map((row) => (
+            <div
+              key={`${row.title}-${row.sub}`}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
+            >
+              <div>
+                <div style={{ fontSize: '0.86rem', color: 'var(--ink)' }}>{row.title}</div>
+                <div style={{ fontSize: '0.73rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)' }}>
+                {row.amount}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MmmMe({ data }: { data: MmmMeData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -127,7 +158,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
   const linkedSection = isMeSectionId(rawSection) ? rawSection : null;
 
   /**
-   * Which of the three sections above the account panels is open.
+   * Which of the two profile/ticket sections above the Info and Settings
+   * panels is open.
    *
    * `undefined` means nobody has chosen yet, so the section marked first
    * (Profiles) is the one showing; `''` means someone chose to close what was
@@ -216,12 +248,10 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
 
 
-      {/* The HYPE link is NOT a drawer. `templates/simplified-app/`: "ME pane.
-          Six things, in one column: HYPE Link, Profiles, My Tickets, About Me,
-          Settings, Log Out. Everything BELOW the link is a drawer" — so the
-          link sits above them, always on screen.
+      {/* The HYPE link is not a drawer. It stays above the four drawers and
+          remains visible without opening a section.
 
-          It had been nested inside the About Me drawer since the accordion
+          It had been nested inside the old About Me drawer since the accordion
           rebuild, which hid a fan's primary surface behind a collapsed panel
           labelled "What artists and venues see" — the one thing the HYPE link
           is not. Two e2e tests had been asserting it visible all along. */}
@@ -364,6 +394,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         Promoting is not a profile. Every account can promote by sharing its HYPE Link,
         and earns from the 10% promoter pool when a ticket sells through it.
       </p>
+      <AboutMeActivity data={data} />
       </Accordion>
 
       <Accordion
@@ -379,55 +410,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         <MmmTickets tickets={data.tickets} />
       </Accordion>
 
-      <Accordion
-        detail="What artists and venues see"
-        label="About Me"
-        onToggle={() => toggleSection('about')}
-        open={openSection === 'about'}
-      >
-
-      {/* Never an empty drawer (2026-08-14, from device screenshots). "About Me"
-          opened onto nothing at all when a member had no activity yet — which
-          is every member on day one, and exactly who is most likely to open it.
-          A drawer that opens onto blank space reads as broken rather than as
-          empty, and it is the one state a new account is guaranteed to see. */}
-      {data.activity.length === 0 && (
-        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: '0 0 4px' }}>
-          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
-          shows up here — this is the activity artists and venues can see.
-        </p>
-      )}
-
-      {data.activity.length > 0 && (
-        <>
-          <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{data.activityLabel}</div>
-          <div style={{ marginBottom: 20 }}>
-            {data.activity.map((row) => (
-              <div
-                key={`${row.title}-${row.sub}`}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.86rem', color: 'var(--ink)' }}>{row.title}</div>
-                  <div style={{ fontSize: '0.73rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.8rem',
-                    color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)',
-                  }}
-                >
-                  {row.amount}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      </Accordion>
-
       {/* Account panels open IN PLACE, one at a time. They used to be separate
           routes under /app/me/[panel]; the 2026-08-10 template makes ME one
           column of drawers, and each panel is only a menu of bridge links —
@@ -438,7 +420,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           deep-linkable (the old routes redirect onto it, so existing links
           keep working), Back closes the drawer instead of leaving ME, and
           "one at a time" is structural — a single value cannot hold two. */}
-      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>Account</div>
       <div>
         {MMM_ME_PANELS.map((panel) => {
           // The nav list types `id` as a plain string, so this is the narrowing

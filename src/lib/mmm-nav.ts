@@ -64,8 +64,8 @@ export const MMM_MUSIC_TABS = MMM_NAV.find((module) => module.id === 'music')!.i
  * fan-out destinations — the redesign moved them off the radial nav.
  */
 export const MMM_ME_PANELS: ReadonlyArray<MmmNavItem & { detail: string }> = [
-  { id: 'settings', label: 'Settings', detail: 'Account · notifications · accessibility', href: `${MMM_BASE}/me/settings` },
   { id: 'info', label: 'Info', detail: 'How iHYPE works · legal', href: `${MMM_BASE}/me/info` },
+  { id: 'settings', label: 'Settings', detail: 'Account · notifications · accessibility', href: `${MMM_BASE}/me/settings` },
 ];
 
 /* ────────────────────────────────────────────────────────────────────────────

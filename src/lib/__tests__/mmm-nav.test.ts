@@ -39,7 +39,7 @@ describe('MMM_NAV manifest', () => {
 
   it('carries the two canonical ME panels as in-page rows', () => {
     expect(MMM_ME_PANELS.map((panel) => panel.label))
-      .toEqual(['Settings', 'Info']);
+      .toEqual(['Info', 'Settings']);
   });
 
   it('gives every ME panel a detail line, since the rows are drawn with one', () => {

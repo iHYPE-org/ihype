@@ -36,6 +36,11 @@ describe('ME account panels', () => {
     expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('How iHYPE works');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'The charter')?.href)
       .toBe('/app/me/info/charter');
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('Trust and safety');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Transparency report')?.href)
+      .toBe('/app/me/info/transparency');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Terms of service')?.href)
+      .toBe('/app/me/info/terms');
   });
 
   // Every row is a bridge to a surface that already exists and does its own

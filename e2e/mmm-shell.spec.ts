@@ -391,13 +391,13 @@ test.describe('Music · Map · Me shell', () => {
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
-    for (const label of ['Settings', 'Info']) {
+    for (const label of ['Info', 'Settings']) {
       await expect(panelFor(label), `no ${label} panel`).toBeVisible();
     }
     await expect(panelFor('Legal')).toHaveCount(0);
     await expect(panelFor('Accessibility')).toHaveCount(0);
     // Deliberately no count assertion: `.mmm-me-accordion` is also the class
-    // on the Profiles / My Tickets / About Me drawers above, so the page
+    // on the Profiles / My Tickets drawers above, so the page
     // carries several of them and pinning a number here would break the next
     // time ME grows a section — which is not what this test is about.
     //
@@ -407,13 +407,13 @@ test.describe('Music · Map · Me shell', () => {
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     // `exact` is load-bearing: accessible-name matching is substring by
     // default, and since the account panels became accordion BUTTONS, a loose
-    // 'ME' also matches "About Me · What artists and venues see".
+    // 'ME' also appears in other copy on the page.
     await page.getByRole('button', { name: 'ME', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me$/);
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
-  // One drawer open at a time, page-wide — the three sections and the account
+  // One drawer open at a time, page-wide — the two sections and the account
   // panels are ONE group. This is the invariant that cannot be seen by
   // reading either half alone: the sections are component state and the panels
   // are the URL, so nothing about the types stops both being open at once.
@@ -442,9 +442,9 @@ test.describe('Music · Map · Me shell', () => {
 
     // And a section closes the panel — including its search param, or the drawer
     // would reopen on the next render from a URL nobody cleared.
-    await drawer('About Me').click();
+    await drawer('Profiles').click();
     await expect(page).not.toHaveURL(/panel=/);
-    await expect(drawer('About Me')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'false');
   });
 

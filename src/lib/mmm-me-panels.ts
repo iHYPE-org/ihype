@@ -46,9 +46,8 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   ],
   info: [
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
-    { label: 'Transparency report', detail: 'Live platform numbers', href: '/info?tab=transparency' },
-    { label: 'Trust and safety', detail: 'Reporting, moderation, appeals', href: '/info?tab=trust' },
-    { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/info?tab=terms' },
+    { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
+    { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },
     { label: 'Privacy policy', detail: 'What is collected, and what never is', href: '/info?tab=privacy' },
     { label: 'DMCA', detail: 'Takedown and counter-notice process', href: '/info?tab=dmca' },
   ],

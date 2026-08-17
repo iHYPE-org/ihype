@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 
 /**
  * The persistent player, rebuilt to Design System 8's `PlayerPill` contract
@@ -49,7 +49,7 @@ import { useEffect, useRef, useState } from 'react';
 export type MmmPlayerTrack = {
   title: string;
   artist: string;
-  /** Shown after the artist as "artist · album", as its own destination. */
+  /** Shown after the artist as "artist · album" and linked to that artist. */
   album?: string;
   /** Fallback when there is no artwork URL. */
   initial: string;
@@ -58,7 +58,6 @@ export type MmmPlayerTrack = {
 
 export function MmmPlayer({
   anchorHeight = 88,
-  artistOpen = false,
   canFavourite,
   canHype,
   canTogglePlay,
@@ -76,7 +75,6 @@ export function MmmPlayer({
   onNext,
   onPickTrack,
   onPrev,
-  onOpenAlbum,
   onOpenArtist,
   onSearch,
   onSeek,
@@ -93,13 +91,6 @@ export function MmmPlayer({
   volume,
 }: {
   anchorHeight?: number;
-  /**
-   * The artist highlight is open for this track. Marks the artist name as the
-   * active target and, with the queue, holds the pill awake — retiring to a
-   * 56px disc while a 340px dialog points at it leaves the dialog anchored to
-   * nothing.
-   */
-  artistOpen?: boolean;
   canFavourite: boolean;
   canHype: boolean;
   canTogglePlay: boolean;
@@ -134,8 +125,6 @@ export function MmmPlayer({
    * nothing.
    */
   onOpenArtist?: () => void;
-  /** The release name in the meta line. Separate from the artist. */
-  onOpenAlbum?: () => void;
   onSeek: (value: number) => void;
   /**
    * Phone only, per `PlayerPill`: search rides at the bar's left edge. Omitted,
@@ -174,19 +163,6 @@ export function MmmPlayer({
   // leaves the title about a word wide.
   const art = narrow ? 40 : Math.max(40, anchorHeight - 24);
   const artRadius = narrow ? 14 : Math.round(art * 0.342);
-  /* Artist and release are separate destinations, so they are separate
-     targets. One run of grey text that silently opens one of two different
-     pages is the thing this replaces — and a name with no handler stays plain
-     text rather than becoming a target that goes nowhere. */
-  const nameLink = (text: string, onClick?: () => void, active?: boolean) =>
-    onClick
-      ? (
-        <button className="mmm-player-name" data-active={active || undefined} onClick={onClick} type="button">
-          {text}
-        </button>
-      )
-      : <span className="mmm-player-name" data-plain="">{text}</span>;
-
   return (
     <>
       {/* A SIBLING of the pill, never a child: the pill is a capsule with
@@ -308,12 +284,12 @@ export function MmmPlayer({
       )}
 
       <div className="mmm-player-body">
-        <Marquee className="mmm-player-track" text={track.title} />
-        <div className="mmm-player-artist">
-          {nameLink(track.artist, onOpenArtist, artistOpen)}
-          {track.album ? <span aria-hidden="true"> · </span> : null}
-          {track.album ? nameLink(track.album, onOpenAlbum) : null}
-        </div>
+        <Marquee className="mmm-player-track" onClick={onOpenArtist} text={track.title} />
+        <Marquee
+          className="mmm-player-artist"
+          onClick={onOpenArtist}
+          text={[track.artist, track.album].filter(Boolean).join(' · ')}
+        />
 
         {!narrow && (
           <div className="mmm-player-scrub">
@@ -520,8 +496,8 @@ function IconButton({
  * reveals, because an unadvanced document timeline holds a from-state forever).
  * This one is safe: its from-state is the readable one and it never fills.
  */
-function Marquee({ className, text }: { className: string; text: string }) {
-  const wrap = useRef<HTMLDivElement | null>(null);
+function Marquee({ className, onClick, text }: { className: string; onClick?: () => void; text: string }) {
+  const wrap = useRef<HTMLElement | null>(null);
   const inner = useRef<HTMLDivElement | null>(null);
   const [over, setOver] = useState(false);
 
@@ -537,8 +513,7 @@ function Marquee({ className, text }: { className: string; text: string }) {
   // Duration scales with length so long and short titles travel at one speed.
   const duration = Math.max(6, text.length * 0.34);
 
-  return (
-    <div className={className} data-over={over || undefined} ref={wrap}>
+  const contents = (
       <div
         data-ih-marquee={over ? '' : undefined}
         ref={inner}
@@ -547,6 +522,14 @@ function Marquee({ className, text }: { className: string; text: string }) {
         <span>{text}</span>
         {over ? <span aria-hidden="true">{text}</span> : null}
       </div>
+  );
+  return onClick ? (
+    <button aria-label={`Open ${text} artist profile`} className={`${className} mmm-player-link`} data-over={over || undefined} onClick={onClick} ref={wrap as Ref<HTMLButtonElement>} type="button">
+      {contents}
+    </button>
+  ) : (
+    <div className={className} data-over={over || undefined} ref={wrap as Ref<HTMLDivElement>}>
+      {contents}
     </div>
   );
 }
