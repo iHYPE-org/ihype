@@ -331,14 +331,12 @@ html.mmm-locked .site-shell > main {
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
 }
 .mmm-pin-venue .mmm-pin-pill { border-radius: 8px; border-color: rgba(var(--role-venue-rgb), 0.8); }
-.mmm-pin-artist .mmm-pin-pill { border-color: rgba(var(--role-fan-rgb), 0.8); padding-left: 3px; }
 /* Leader line. A de-collided pin gets a longer one so its true location stays
    readable — see placePins()'s `offset`. */
 .mmm-pin-leader { width: 2px; height: 7px; background: rgba(var(--accent-rgb), 0.75); }
 .mmm-pin[data-offset='true'] .mmm-pin-leader { height: 12px; }
 .mmm-pin[data-hot='true'] .mmm-pin-leader { background: var(--accent); }
 .mmm-pin-venue .mmm-pin-leader { background: rgba(var(--role-venue-rgb), 0.8); }
-.mmm-pin-artist .mmm-pin-leader { background: rgba(var(--role-fan-rgb), 0.8); }
 
 .mmm-bubble {
   border-radius: 50%;
@@ -1041,14 +1039,6 @@ html.mmm-locked .site-shell > main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.mmm-title {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3rem;
-  letter-spacing: -0.035em;
-  color: var(--ink);
 }
 
 /* ── Bottom sheet ──────────────────────────────────────────────────────── */
@@ -2064,14 +2054,6 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-3);
 }
 .mmm-show-sale { margin-top: 20px; }
-.mmm-show-more {
-  margin-top: 22px;
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.85rem;
-  color: var(--ink-3);
-}
 /* Sales are final, restated where the holder looks for a way out. */
 .mmm-ticket-final {
   margin: 16px 0 0;
@@ -2167,14 +2149,6 @@ html.mmm-locked .site-shell > main {
   color: var(--ink);
 }
 .mmm-profile-show-where { margin-top: 2px; font-size: 0.75rem; color: var(--ink-2); }
-
-.mmm-profile-full {
-  display: inline-block;
-  margin-top: 24px;
-  font-size: 0.82rem;
-  color: var(--accent-text);
-  text-decoration: none;
-}
 
 /* Track copyright line. Tone is an attribute rather than two class names —
    the states are mutually exclusive and one of them is always present. */
