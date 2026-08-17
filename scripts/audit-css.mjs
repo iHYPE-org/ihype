@@ -34,13 +34,14 @@
  * Dead classes stay advisory — a class can legitimately be added by a library
  * or by markup this scan cannot see.
  *
- * Usage: npm run audit:css [-- --max=N] [-- --strict] [-- --dead]
+ * Usage: npm run audit:css [-- --max=N] [-- --strict] [-- --dead] [-- --all]
  */
 import { readFileSync } from 'node:fs';
 import { globSync } from 'glob';
 
 const STRICT = process.argv.includes('--strict');
 const SHOW_DEAD = process.argv.includes('--dead');
+const SHOW_ALL = process.argv.includes('--all');
 const maxArg = process.argv.find((a) => a.startsWith('--max='));
 const MAX = maxArg ? Number(maxArg.slice('--max='.length)) : null;
 
@@ -151,11 +152,12 @@ for (const file of CSS_FILES) {
     const overrides = findOverrides(rules);
     if (overrides.length) {
       console.log(`\n${file} — ${overrides.length} overriding redefinition(s):`);
-      for (const o of overrides.slice(0, 20)) {
+      const reportedOverrides = SHOW_ALL ? overrides : overrides.slice(0, 20);
+      for (const o of reportedOverrides) {
         console.log(`  ${o.selector}  [${o.context}]`);
         console.log(`     line ${o.earlier} is overridden by line ${o.later} — re-declares ${o.overlap.length}: ${o.overlap.slice(0, 6).join(', ')}${o.overlap.length > 6 ? ' …' : ''}`);
       }
-      if (overrides.length > 20) console.log(`  … ${overrides.length - 20} more`);
+      if (!SHOW_ALL && overrides.length > 20) console.log(`  … ${overrides.length - 20} more`);
       overrideCount += overrides.length;
     }
   }
