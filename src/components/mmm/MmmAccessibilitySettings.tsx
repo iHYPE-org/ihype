@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import {
   TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP,
   clampTextScale, useAccessibilitySettings,
@@ -59,6 +60,7 @@ export function MmmAccessibilitySettings() {
 
   return (
     <div className="mmm-settings-route mmm-settings-route-narrow">
+      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Me</Link>
       <span className="mmm-eyebrow" style={{ color: 'var(--role-fan)' }}>
         {t('appShell.section.settings', 'Settings')}
       </span>

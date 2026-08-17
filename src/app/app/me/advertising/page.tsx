@@ -62,9 +62,11 @@ export default async function AdvertiserDashboard() {
   const maxDaily = Math.max(1, ...dailyRows.map(([, n]) => n));
 
   return (
-    <div className="container ad-dash" style={{ paddingTop: 24, paddingBottom: 60 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+    <div className="mmm-advertiser ad-dash">
+      <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ Profiles</Link>
+      <div className="mmm-advertiser-head">
         <div>
+          <p className="mmm-eyebrow mmm-eyebrow-accent">Advertiser profile</p>
           <h1>{t('advertiseDashboardPage.title', 'My Ad Campaigns')}</h1>
           {advertiserAccount && (
             <p className="meta" style={{ marginTop: 4 }}>
@@ -78,7 +80,7 @@ export default async function AdvertiserDashboard() {
             </p>
           )}
         </div>
-        <Link href="/app/me/advertising/new" className="button small">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
+        <Link href="/app/me/advertising/new" className="mmm-btn-primary mmm-advertiser-new">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
       </div>
 
       {campaigns.length > 0 && (
