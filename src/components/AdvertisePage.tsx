@@ -694,6 +694,61 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 }
 
 /* ── Main page ───────────────────────────────────────────── */
+export function MmmCampaignBuilderPage() {
+  const { t } = useI18n();
+
+  return (
+    <div className="adv-compact adv-shell">
+      <style>{`
+        .adv-btn-solid { background:var(--accent); color:var(--bg); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
+        .adv-btn-solid:hover { filter:brightness(1.08) }
+        .adv-compact { width:100%; max-width:1180px; margin:0 auto; padding:20px 40px 72px }
+        .adv-compact-head { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:22px }
+        .adv-compact h1 { margin:6px 0 0; font-family:var(--f-d,'Bricolage Grotesque',sans-serif); font-size:clamp(2rem,5vw,3.4rem); line-height:.95; letter-spacing:-.04em }
+        .adv-compact-intro { max-width:52ch; margin:10px 0 0; color:var(--ink-2); line-height:1.5 }
+        .adv-compact-note { flex:0 0 290px; padding:13px 15px; border:1px solid var(--hair-70); border-radius:12px; background:var(--bg-2); color:var(--ink-2); font-size:.75rem; line-height:1.45 }
+        .adv-compact-note b { color:var(--ink) }
+        .adv-compact-details { margin-top:18px; border:1px solid var(--hair-70); border-radius:14px; background:var(--bg-2); overflow:hidden }
+        .adv-compact-details summary { cursor:pointer; padding:15px 18px; font-family:var(--f-m,monospace); font-size:.6875rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase }
+        .adv-compact-rules { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 18px 18px }
+        .adv-compact-rules div { color:var(--ink-2); font-size:.75rem; line-height:1.5 }
+        .adv-compact-rules b { display:block; margin-bottom:3px; color:var(--ink); font-size:.8125rem }
+        @media (max-width:1040px) { .adv-builder { grid-template-columns:1fr !important } }
+        @media (max-width:760px) {
+          .adv-compact { padding:14px 16px 56px }
+          .adv-compact-head { display:block }
+          .adv-compact-note { margin-top:16px }
+          .adv-compact-rules { grid-template-columns:1fr }
+        }
+      `}</style>
+      <header className="adv-compact-head">
+        <div>
+          <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}</p>
+          <h1>{t('advertisePage.compactTitle', 'Build a campaign')}</h1>
+          <p className="adv-compact-intro">
+            {t('advertisePage.compactIntro', 'Choose who hears it, set the schedule, upload your audio and review the live price. You will confirm payment only after the campaign passes screening.')}
+          </p>
+        </div>
+        <div className="adv-compact-note">
+          <b>{t('advertisePage.musicOnlyShort', 'Music-related advertising only.')}</b>{' '}
+          {t('advertisePage.compactNote', 'No copyrighted music, unlicensed artist references, unsafe claims or unrelated products.')}
+        </div>
+      </header>
+
+      <CoverageBuilder />
+
+      <details className="adv-compact-details">
+        <summary>{t('advertisePage.screeningAndBilling', 'Screening, eligibility and billing')}</summary>
+        <div className="adv-compact-rules">
+          <div><b>{t('advertisePage.compactEligibleTitle', 'Who can advertise')}</b>{t('advertisePage.compactEligibleBody', 'Verified artists, venues, promoters and music-related businesses. Non-music campaigns are rejected.')}</div>
+          <div><b>{t('advertisePage.compactScreenTitle', 'What gets screened')}</b>{t('advertisePage.compactScreenBody', 'Business eligibility, audio relevance, listener safety, copyright and misleading claims are checked before checkout.')}</div>
+          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'Passing campaigns continue to secure checkout. Rejected spots never run and do not consume campaign budget.')}</div>
+        </div>
+      </details>
+    </div>
+  );
+}
+
 export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
   const { t } = useI18n();
   const eyebrow = (text: string, accent = true): React.CSSProperties => ({
