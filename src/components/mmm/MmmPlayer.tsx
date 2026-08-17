@@ -274,7 +274,6 @@ export function MmmPlayer({
             y={inset}
           />
         </svg>
-        <span>{track.initial}</span>
       </button>
     );
   }
@@ -381,11 +380,9 @@ export function MmmPlayer({
           tabIndex={hidden ? -1 : 0}
           type="button"
         >
-          {track.artworkUrl ? (
+          {track.artworkUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- see below.
             <img alt="" height={art} src={track.artworkUrl} width={art} />
-          ) : (
-            <span aria-hidden="true">{track.initial}</span>
           )}
         </button>
       ) : (
@@ -393,13 +390,11 @@ export function MmmPlayer({
           className="mmm-player-art"
           style={{ width: art, height: art, borderRadius: artRadius }}
         >
-          {track.artworkUrl ? (
+          {track.artworkUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
             // R2/remote and already sized by the uploader; next/image would add a
             // loader round trip for a 64px square that is on screen constantly.
             <img alt="" height={art} src={track.artworkUrl} width={art} />
-          ) : (
-            <span aria-hidden="true">{track.initial}</span>
           )}
         </div>
       )}

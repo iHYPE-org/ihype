@@ -147,13 +147,11 @@ export function MmmFullPlayer({
         <p className="mmm-full-state">{playing ? 'Now playing' : 'Paused'}</p>
 
         <div className="mmm-full-art">
-          {track.artworkUrl ? (
+          {track.artworkUrl && (
             // eslint-disable-next-line @next/next/no-img-element -- an R2/remote
             // URL already sized by the uploader; next/image would add a loader
             // round trip for one image that is the whole point of this screen.
             <img alt="" src={track.artworkUrl} />
-          ) : (
-            <span aria-hidden="true">{track.initial}</span>
           )}
         </div>
 
