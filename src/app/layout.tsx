@@ -184,8 +184,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <MobileBottomNav />
           {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
               Every route outside /app is now marketing, auth, admin, or a
-              temporary compatibility surface: none may resurrect the retired
-              signed-in AppShell. */}
+              redirect-only compatibility route: none may render another
+              signed-in shell. */}
           <div className="site-shell">
             <main id="main-content">{children}</main>
             <SiteFooter />

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
  * and must survive navigation between modules so returning to MAP keeps your pan
  * and zoom, and a layout is the only place the App Router guarantees a subtree
  * is preserved. Moving this into a page re-mounts the map on every module
- * change. Same reasoning as `AppShell` living in the root layout.
+ * change.
  */
 export default async function MmmLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

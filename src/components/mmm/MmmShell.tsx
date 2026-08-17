@@ -44,8 +44,7 @@ export type MmmNowPlaying = {
  * 2. **The map is the base layer and stays mounted.** Music and Me are panes
  *    over it, so returning to MAP keeps your pan and zoom. This component is
  *    rendered by the `/app` LAYOUT, which is the only place the App Router
- *    guarantees a subtree survives navigation — the same reason `AppShell` sits
- *    in the root layout.
+ *    guarantees a subtree survives navigation.
  * 3. **Module, tab and view are routes, not state.** The handoff says so
  *    explicitly. Only `navOpen`, `sheet`, `playing` and `hyped` live here.
  * 4. **Opening the nav dims everything, player included.** The player fades and

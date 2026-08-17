@@ -11,7 +11,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - Music · Map · Me is the only design system permitted in the application. Do not use, restore, extend, or expose an older shell, design generation, visual language, or component system in any runtime interface.
 - `/app/map` is the canonical authenticated landing route. `/app/music/*`, `/app/map/*`, and `/app/me/*` are modules of the same authenticated application and must use the Music · Map · Me shell, tokens, primitives, and interaction patterns.
 - Keep authentication redirects pointed at `/app/map`. Treat `/listen`, `/home`, `/workbench`, and `/dashboard` only as compatibility aliases that redirect into the canonical Music · Map · Me application; they must never render an alternate or legacy authenticated experience.
-- Retire or port any remaining runtime surface that uses `ModuleDeckMockup`, the older full-screen module deck, or another superseded design. Legacy implementation code may remain temporarily only when it is unreachable from runtime routes and clearly scheduled for removal.
+- Delete or port every implementation of `ModuleDeckMockup`, the older full-screen module deck, or another superseded design. Do not retain legacy shell components, styles, fixtures, or browser contracts as dormant code; compatibility routes may contain redirects only.
 
 ## Stack expectations
 - Framework: Next.js App Router

@@ -4114,15 +4114,9 @@ body:has(.fan-entry) #main-content { width: 100%; }
   background: var(--hair-50);
 }
 
-/* The scene menu's stylesheet lived here — ~300 lines of `.app-nav-*` for
- * `NavDrawer`, the second drawer. It is gone with the component: the marketing
- * header now renders `AppShellDrawer`, styled from shell.css, so there is one
- * drawer and one stylesheet.
- *
- * Removed rather than left dead because two of these rules referenced
- * `--menu-group-index` and `--menu-group-color`, which only that component set
- * inline. With it deleted the references resolved to nothing, which is exactly
- * what `audit:shell --strict` exists to catch — and did. */
+/* The retired scene-menu and authenticated-drawer layers were deleted here.
+ * Navigation styling belongs to MMM; the public header owns only public-site
+ * navigation. */
 @media (max-width: 470px) {
   .adaptive-site-header .search-bar-desktop input {
     height: 40px;
