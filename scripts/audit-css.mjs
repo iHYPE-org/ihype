@@ -56,6 +56,14 @@ const CSS_FILES = globSync('src/**/*.css')
  */
 const OVERRIDE_EXEMPT = new Set(['src/app/mmm-primitives.css']);
 
+// MapLibre creates this DOM outside React, so these classes cannot appear in
+// the source haystack even though the live map requires their CSS.
+const RUNTIME_CLASSES = new Set([
+  'maplibregl-canvas',
+  'maplibregl-ctrl-attrib',
+  'maplibregl-ctrl-logo',
+]);
+
 function stripComments(css) {
   // Preserve newlines so reported line numbers stay honest.
   return css.replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '));
@@ -164,7 +172,9 @@ for (const file of CSS_FILES) {
 
   const classes = new Set();
   for (const m of css.matchAll(/\.(-?[_a-zA-Z][-\w]*)/g)) classes.add(m[1]);
-  const dead = [...classes].filter((c) => !haystack.includes(c)).sort();
+  const dead = [...classes]
+    .filter((c) => !RUNTIME_CLASSES.has(c) && !haystack.includes(c))
+    .sort();
   if (dead.length) {
     deadCount += dead.length;
     console.log(`\n${file} — ${dead.length} class(es) referenced by no source file${SHOW_DEAD ? ':' : ' (run with --dead to list)'}`);
