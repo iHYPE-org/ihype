@@ -295,11 +295,8 @@ test.describe('Music · Map · Me shell', () => {
       await page.getByRole('button', { name: label, exact: true }).click();
       await expect(nearMe, `Near me is missing on ${label}`).toBeVisible();
     }
-    // The count is artists-only: an artist pin is a city, so "how many here" is
-    // the only reading it has. Events and venues answer that with their pins.
-    await page.getByRole('button', { name: 'Artists', exact: true }).click();
-    await expect(page.locator('.mmm-map-near')).toHaveAttribute('data-count', 'true');
-    await page.getByRole('button', { name: 'Events', exact: true }).click();
+    // The redundant artists count was removed; Near me stays a stable action
+    // in the same position without changing shape between layers.
     await expect(page.locator('.mmm-map-near')).not.toHaveAttribute('data-count', 'true');
   });
 
@@ -619,6 +616,7 @@ test.describe('ME with a real profile', () => {
   // switcher only appears once an account holds more than the implicit Fan role.
   test('an artist account gets a page card and a role switcher', async ({ page }) => {
     await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
     await expect(page.getByText(/Your page/i)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fan', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
