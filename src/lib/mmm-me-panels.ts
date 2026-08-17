@@ -30,8 +30,8 @@ export function isMePanelId(value: string | null | undefined): value is MePanelI
 
 export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   settings: [
-    { label: 'Account and privacy', detail: 'Profile, visibility, data export', href: '/settings' },
-    { label: 'Notifications', detail: 'Email and push, per category', href: '/settings#notifications' },
+    { label: 'Account and privacy', detail: 'Profile, visibility, data export', href: '/app/me/settings' },
+    { label: 'Notifications', detail: 'Email and push, per category', href: '/app/me/settings#notifications' },
     { label: 'Payouts', detail: 'Stripe Connect status and history', href: '/payouts' },
     { label: 'Tickets and wallet', detail: 'Your tickets, transfers, QR codes', href: '/tickets' },
   ],
@@ -48,7 +48,7 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
     { label: 'DMCA', detail: 'Takedown and counter-notice process', href: '/info?tab=dmca' },
   ],
   accessibility: [
-    { label: 'Appearance, text size, motion', detail: 'Theme, 85–140% text scale, reduce motion, high contrast', href: '/settings/accessibility' },
-    { label: 'Language', detail: 'The 12 locales iHYPE ships', href: '/settings/accessibility' },
+    { label: 'Appearance, text size, motion', detail: 'Theme, 85–140% text scale, reduce motion, high contrast', href: '/app/me/accessibility' },
+    { label: 'Language', detail: 'The 12 locales iHYPE ships', href: '/app/me/accessibility' },
   ],
 };

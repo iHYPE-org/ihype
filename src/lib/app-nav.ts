@@ -115,7 +115,6 @@ export const SHELL_ROUTES: ShellRouteEntry[] = [
   { path: '/promoters', kind: 'prefix', section: 'PAGES' },
   { path: '/venues', kind: 'prefix', section: 'PAGES' },
   { path: '/fans', kind: 'prefix', section: 'PAGES' },
-  { path: '/advertise', kind: 'prefix', section: 'PAGES', itemId: 'adcreator' },
   { path: '/settings', kind: 'exact', section: 'PAGES', itemId: 'account' },
 
   // ── SETTINGS ──────────────────────────────────────────────────────────
@@ -132,9 +131,7 @@ export const SHELL_ROUTES: ShellRouteEntry[] = [
      bought shell chrome and nothing else. Dropping it settles the three
      policy documents on one chrome and takes the legacy count down by one,
      which is the only direction that number is allowed to move. */
-  { path: '/info', kind: 'prefix', section: 'SETTINGS', itemId: 'info' },
   { path: '/legal', kind: 'prefix', section: 'SETTINGS', itemId: 'legal' },
-  { path: '/support', kind: 'prefix', section: 'SETTINGS' },
 ];
 
 /** Fallback section for a shell route with no registry entry. */

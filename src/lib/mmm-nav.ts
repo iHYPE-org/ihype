@@ -171,6 +171,7 @@ export function isMmmRoute(pathname: string | null | undefined): boolean {
 const MMM_DETAIL_PREFIXES = [
   `${MMM_BASE}/shows/`,
   `${MMM_BASE}/artists/`,
+  `${MMM_BASE}/fans/`,
   `${MMM_BASE}/venues/`,
   `${MMM_BASE}/tracks/`,
   `${MMM_BASE}/playlists/`,

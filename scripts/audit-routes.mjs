@@ -45,6 +45,7 @@
 
 import { readFileSync } from 'node:fs';
 import { globSync } from 'glob';
+import ts from 'typescript';
 
 const ARGS = process.argv.slice(2);
 const WANT_LIST = ARGS.includes('--list');
@@ -98,9 +99,18 @@ function routes() {
  */
 function isRedirectOnly(file) {
   const source = readFileSync(file, 'utf8');
-  return /from ['"]next\/navigation['"]/.test(source)
-    && /\bredirect\s*\(/.test(source)
-    && !/(?:<\/?[A-Za-z]|<>|<\/>)\s*/.test(source);
+  if (!/from ['"]next\/navigation['"]/.test(source) || !/\bredirect\s*\(/.test(source)) return false;
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let hasJsx = false;
+  const visit = (node) => {
+    if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
+      hasJsx = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return !hasJsx;
 }
 
 /** Source text with comments stripped, for the reachability scan. */

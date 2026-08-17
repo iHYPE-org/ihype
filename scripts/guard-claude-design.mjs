@@ -71,6 +71,16 @@ for (const [relativePath, destination] of [
   ['src/app/tickets/page.tsx', '/app/me?section=tickets'],
   ['src/app/for-you/page.tsx', '/app/music/recommended'],
   ['src/app/this-weekend/page.tsx', '/app/map'],
+  ['src/app/settings/page.tsx', '/app/me/settings'],
+  ['src/app/settings/accessibility/page.tsx', '/app/me/accessibility'],
+  ['src/app/pages/page.tsx', '/app/me/profiles'],
+  ['src/app/payouts/page.tsx', '/app/me/payouts'],
+  ['src/app/tickets/[serializedId]/page.tsx', '/app/me/tickets'],
+  ['src/app/me/dashboard/page.tsx', '/app/me'],
+  ['src/app/me/analytics/page.tsx', '/app/me'],
+  ['src/app/me/promote/page.tsx', '/app/me'],
+  ['src/app/me/promote/analytics/page.tsx', '/app/me'],
+  ['src/app/community/page.tsx', '/app/me'],
 ]) {
   assertIncludes(
     relativePath,
@@ -100,7 +110,7 @@ assertIncludes(
 // A route can survive as an old bookmark without surviving as an old page.
 // This ratchet counts only legacy URLs that still render JSX; redirect-only
 // aliases are reported separately and do not paint the retired design.
-execFileSync(process.execPath, ['scripts/audit-routes.mjs', '--max-legacy=34'], {
+execFileSync(process.execPath, ['scripts/audit-routes.mjs', '--max-legacy=0'], {
   cwd: root,
   stdio: 'pipe',
 });

@@ -307,7 +307,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link className="mmm-btn-primary" href="/pages" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
+            <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
             {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
                 shell — so previewing your own page no longer means leaving the
                 design to look at it. */}
@@ -335,12 +335,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           rule DS8 states for the role picker. It now lives under Account, which
           is where destinations that are not profiles belong. */}
       <div className="mmm-me-add-row">
-        <Link className="mmm-me-add" data-kind="artist" href="/pages?create=artist">
+        <Link className="mmm-me-add" data-kind="artist" href="/app/me/profiles?create=artist">
           <span aria-hidden="true">＋</span>
           Add artist profile
           <span className="mmm-me-add-chip">Verified</span>
         </Link>
-        <Link className="mmm-me-add" data-kind="venue" href="/pages?create=venue">
+        <Link className="mmm-me-add" data-kind="venue" href="/app/me/profiles?create=venue">
           <span aria-hidden="true">＋</span>
           Add venue profile
           <span className="mmm-me-add-chip">Verified</span>
@@ -351,7 +351,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
              /advertise/dashboard, not a dashboard of this shape. Hidden once
              the account has one: this is an ADD button and there is nothing to
              add twice. */
-          <Link className="mmm-me-add" data-kind="advertiser" href="/advertise/register">
+          <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/new">
             <span aria-hidden="true">＋</span>
             Add advertiser profile
             <span className="mmm-me-add-chip">Verified</span>

@@ -171,7 +171,7 @@ function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTi
             with a new serializedId, so the old QR dies on transfer. It lives on
             the legacy ticket page for now; this links there rather than
             pretending to do it here. */}
-        <a className="mmm-ticket-transfer" href={`/tickets/${ticket.serializedId}`}>
+        <a className="mmm-ticket-transfer" href={`/app/me/tickets/${ticket.serializedId}`}>
           Transfer this ticket
         </a>
       </div>
