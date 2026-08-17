@@ -80,9 +80,6 @@ export function MmmShell({
     requestedLayer === 'venues' || requestedLayer === 'artists' ? requestedLayer : 'events';
 
   const [navOpen, setNavOpen] = useState(false);
-  // Tapping the logo also wakes the player: on a wide screen it has usually
-  // retired to its disc by then, and the logo is the one control always there.
-  const [playerWake, setPlayerWake] = useState(0);
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
@@ -303,7 +300,6 @@ export function MmmShell({
 
   const toggleNav = useCallback(() => {
     setSheet(null);
-    setPlayerWake((value) => value + 1);
     setNavOpen((open) => !open);
   }, []);
 
@@ -354,7 +350,6 @@ export function MmmShell({
           onToggleQueue={() => { setArtistOpen(false); setQueueOpen((open) => !open); }}
           queue={upNext}
           queueOpen={queueOpen}
-          wake={playerWake}
           /* The design's `openSearch` is module: music, tab: discover, field
              focused. There is no separate search surface to open — the field
              lives at the top of every MUSIC tab — so this is that navigation,

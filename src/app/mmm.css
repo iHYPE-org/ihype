@@ -422,6 +422,10 @@ html.mmm-locked .site-shell > main {
   padding: 2px 0 14px;
 }
 .mmm-music-controls .mmm-tabs { padding: 0; }
+/* `.mmm-search-wrap` uses a 300px flex basis when it shares a horizontal row.
+   In this column that basis becomes HEIGHT, creating the large blank block
+   between search and Discover. The field is one natural-height row here. */
+.mmm-music-controls > .mmm-search-wrap { flex: 0 0 auto; }
 
 /* A PILL STRIP, and it is back on purpose (2026-08-14).
 
@@ -1697,27 +1701,6 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-2);
   border: 1px solid var(--line-2);
 }
-
-/* The retired player. Same squircle ratio as the logo trigger and the artwork
-   (0.342) so the three read as one family; the progress ring is drawn on the
-   perimeter rather than as a bar, because at this size a bar is a smudge. */
-.mmm-player-mini {
-  position: relative;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  cursor: pointer;
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 18px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(18px);
-}
-.mmm-player-mini svg { position: absolute; inset: 0; overflow: visible; }
-.mmm-player-mini span { position: relative; }
 
 /* Artist and release are separate destinations, so they are separate targets.
    Underlined rather than coloured: the meta line is already --ink-2, and a
