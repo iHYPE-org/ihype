@@ -244,37 +244,37 @@ const nextConfig = {
       },
       {
         source: '/ihype-rec-engine.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-ticketing.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-show-creator.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-page-customizer.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-profile.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-media.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/ihype-show.html',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
@@ -299,17 +299,17 @@ const nextConfig = {
       },
       {
         source: '/trending',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/leaderboard',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/playlists/curated',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
@@ -334,77 +334,77 @@ const nextConfig = {
       },
       {
         source: '/settings/notifications',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/settings/data',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/workbench/analytics',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/workbench/tickets',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/artists',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/fans',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/promoters',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/venues',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/playlists',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/workbench',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/workbench/:path*',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/collab',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/customizer',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/show-creator',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
         source: '/media',
-        destination: '/home',
+        destination: '/app/map',
         permanent: false
       },
       {
@@ -444,12 +444,12 @@ const nextConfig = {
       },
       {
         source: '/dashboard',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {
         source: '/listeners',
-        destination: '/home',
+        destination: '/app/map',
         permanent: true
       },
       {

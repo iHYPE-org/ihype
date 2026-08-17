@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 export default async function MmmMePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ role?: string }>;
+  searchParams?: Promise<{ role?: string; panel?: string; section?: string }>;
 }) {
   const session = await auth();
   // The layout already gated this, but every destination keeps its own

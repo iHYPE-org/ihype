@@ -80,16 +80,15 @@ describe('badges', () => {
   });
 });
 
-describe('creator hrefs resolve against the owned profile', () => {
-  it('points Tour Creator at the artist profile and Event Creator at the venue', () => {
+describe('creator hrefs stay inside Music · Map · Me', () => {
+  it('opens the matching role in ME instead of the retired creator pages', () => {
     const items = buildShellNav(EVERYTHING);
-    expect(items.find((item) => item.id === 'tourcreator')?.href).toContain('profile=artist-1');
-    expect(items.find((item) => item.id === 'eventcreator')?.href).toContain('venue=venue-1');
+    expect(items.find((item) => item.id === 'tourcreator')?.href).toBe('/app/me?role=artist&section=profiles');
+    expect(items.find((item) => item.id === 'eventcreator')?.href).toBe('/app/me?role=venue&section=profiles');
   });
 
-  it('url-encodes ids so a slug with reserved characters cannot break the href', () => {
-    const items = buildShellNav({ ...EVERYTHING, venueProfileId: 'a&b=c' });
-    expect(items.find((item) => item.id === 'eventcreator')?.href).toBe('/events/new?venue=a%26b%3Dc');
+  it('never emits a destination outside /app', () => {
+    expect(buildShellNav(EVERYTHING).every((item) => item.href.startsWith('/app/'))).toBe(true);
   });
 });
 
@@ -145,17 +144,11 @@ describe('route registry', () => {
 describe('active item resolution', () => {
   const items = buildShellNav(EVERYTHING);
 
-  it('matches a tabbed hub on its ?tab= value', () => {
-    expect(resolveActiveItemId(items, '/shows', 'tickets')).toBe('tickets');
-    expect(resolveActiveItemId(items, '/pages', 'creator')).toBe('pagecreator');
-  });
-
-  it('falls back to the section default when a hub carries no tab', () => {
-    expect(resolveActiveItemId(items, '/shows', null)).toBe('nearme');
-  });
-
-  it('falls back to the default for an unknown tab rather than lighting nothing', () => {
-    expect(resolveActiveItemId(items, '/shows', 'nonsense')).toBe('nearme');
+  it('lights nothing on retired hubs while their redirects run', () => {
+    expect(resolveActiveItemId(items, '/shows', 'tickets')).toBeNull();
+    expect(resolveActiveItemId(items, '/pages', 'creator')).toBeNull();
+    expect(resolveActiveItemId(items, '/shows', null)).toBeNull();
+    expect(resolveActiveItemId(items, '/shows', 'nonsense')).toBeNull();
   });
 
   // `/listen` used to be the third hub asserted above. Since DESIGN_SYNC row

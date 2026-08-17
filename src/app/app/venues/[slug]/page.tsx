@@ -160,9 +160,6 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
         )}
       </section>
 
-      <Link className="mmm-profile-full" href={`/venues/${profile.slug}`}>
-        Full calendar, photos and booking on the venue page →
-      </Link>
     </div>
   );
 }

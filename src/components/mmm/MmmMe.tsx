@@ -16,6 +16,11 @@ const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', v
  * one showing before anyone has chosen.
  */
 type MeSectionId = 'profiles' | 'tickets' | 'about';
+const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets', 'about'];
+
+function isMeSectionId(value: string | null): value is MeSectionId {
+  return value !== null && (ME_SECTION_IDS as readonly string[]).includes(value);
+}
 const FIRST_ME_SECTION: MeSectionId = 'profiles';
 
 /**
@@ -117,6 +122,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
   const rawPanel = searchParams?.get('panel');
   const openPanel = isMePanelId(rawPanel) ? rawPanel : null;
+  const rawSection = searchParams?.get('section');
+  const linkedSection = isMeSectionId(rawSection) ? rawSection : null;
 
   /**
    * Which of the three sections above the account panels is open.
@@ -128,7 +135,9 @@ export function MmmMe({ data }: { data: MmmMeData }) {
    * — a plain `'profiles' | null` cannot tell "not chosen yet" from "closed",
    * and would either re-open Profiles or never open it.
    */
-  const [meGroup, setMeGroup] = useState<MeSectionId | '' | undefined>(undefined);
+  const [meGroup, setMeGroup] = useState<MeSectionId | '' | undefined>(
+    linkedSection ?? undefined,
+  );
 
   /**
    * The default only applies when nothing else is open. Arriving on
@@ -139,7 +148,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
    * its panels cannot be open on arrival; ours can.
    */
   const openSection: MeSectionId | null =
-    meGroup === undefined ? (openPanel ? null : FIRST_ME_SECTION) : meGroup || null;
+    meGroup === undefined ? (openPanel ? null : linkedSection ?? FIRST_ME_SECTION) : meGroup || null;
 
   /**
    * `push`, not `replace` — closing a drawer should be what Back does, which

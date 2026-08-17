@@ -170,12 +170,6 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
         )}
       </section>
 
-      {/* Named rather than hidden. Tracks, insights and the owner's own tools
-          live on the full profile; saying so is better than a member wondering
-          where the music went. */}
-      <Link className="mmm-profile-full" href={`/artists/${profile.slug}`}>
-        Tracks, releases and more on the full profile →
-      </Link>
     </div>
   );
 }

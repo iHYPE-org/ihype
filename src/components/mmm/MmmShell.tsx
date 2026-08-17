@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
-import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
+import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
@@ -64,6 +64,7 @@ export function MmmShell({
   isAdmin?: boolean;
 }) {
   const pathname = usePathname() ?? '/app/map';
+  const searchParams = useSearchParams();
   const router = useRouter();
   const activeModule = moduleForPath(pathname);
   const activeItemId = itemForPath(pathname);
@@ -74,6 +75,9 @@ export function MmmShell({
    */
   const detailOpen = isMmmDetailPath(pathname);
   const mapActive = activeModule === 'map' && !detailOpen;
+  const requestedLayer = searchParams?.get('layer');
+  const initialMapLayer: MapLayer =
+    requestedLayer === 'venues' || requestedLayer === 'artists' ? requestedLayer : 'events';
 
   const [navOpen, setNavOpen] = useState(false);
   // Tapping the logo also wakes the player: on a wide screen it has usually
@@ -305,7 +309,7 @@ export function MmmShell({
 
   return (
     <div className="mmm-frame">
-      <MmmMap active={mapActive && !navOpen} onOpenSheet={setSheet} />
+      <MmmMap active={mapActive && !navOpen} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
 
       {!mapActive && <div className="mmm-pane">{children}</div>}
 

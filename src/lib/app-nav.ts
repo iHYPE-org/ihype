@@ -195,17 +195,17 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
 
     // ── EVENTS ──────────────────────────────────────────────────────────
     {
-      id: 'nearme', section: 'EVENTS', href: '/shows?tab=local',
+      id: 'nearme', section: 'EVENTS', href: '/app/map?layer=events',
       labelKey: 'appShell.nav.nearMe', labelFallback: 'Near Me',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'recommended', section: 'EVENTS', href: '/shows?tab=foryou',
+      id: 'recommended', section: 'EVENTS', href: '/app/music/recommended',
       labelKey: 'appShell.nav.recommended', labelFallback: 'Recommended',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'tickets', section: 'EVENTS', href: '/shows?tab=tickets',
+      id: 'tickets', section: 'EVENTS', href: '/app/me?section=tickets',
       labelKey: 'appShell.nav.myTickets', labelFallback: 'My Tickets',
       // The design's static "2" is a real count here, and disappears at zero
       // rather than rendering a badge that says nothing.
@@ -215,7 +215,7 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'promote', section: 'EVENTS', href: '/me/promote',
+      id: 'promote', section: 'EVENTS', href: '/app/me?role=promoter',
       labelKey: 'appShell.nav.promote', labelFallback: 'Promote',
       badge: { text: '10% POOL', tone: 'promoter' }, gate: 'PROMOTER',
       inDrawer: true, inTabs: true,
@@ -223,35 +223,31 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
 
     // ── PAGES ───────────────────────────────────────────────────────────
     {
-      id: 'dashboard', section: 'PAGES', href: '/me/dashboard',
+      id: 'dashboard', section: 'PAGES', href: '/app/me',
       labelKey: 'appShell.nav.dashboard', labelFallback: 'My Dashboard',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'pagecreator', section: 'PAGES', href: '/pages?tab=creator',
+      id: 'pagecreator', section: 'PAGES', href: '/app/me?section=profiles',
       labelKey: 'appShell.nav.pageCreator', labelFallback: 'Page Creator',
       inDrawer: true, inTabs: true,
     },
     {
       id: 'tourcreator', section: 'PAGES',
-      href: account.artistProfileId
-        ? `/pages?tab=mypage&profile=${encodeURIComponent(account.artistProfileId)}&tool=tour`
-        : '/pages?tab=mypage',
+      href: '/app/me?role=artist&section=profiles',
       labelKey: 'appShell.nav.tourCreator', labelFallback: 'Tour Creator',
       badge: { text: 'ARTIST', tone: 'artist' }, gate: 'ARTIST',
       inDrawer: true, inTabs: true,
     },
     {
       id: 'eventcreator', section: 'PAGES',
-      href: account.venueProfileId
-        ? `/events/new?venue=${encodeURIComponent(account.venueProfileId)}`
-        : '/events/new',
+      href: '/app/me?role=venue&section=profiles',
       labelKey: 'appShell.nav.eventCreator', labelFallback: 'Event Creator',
       badge: { text: 'VENUE', tone: 'venue' }, gate: 'VENUE',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'adcreator', section: 'PAGES', href: '/advertise',
+      id: 'adcreator', section: 'PAGES', href: '/app/me',
       labelKey: 'appShell.nav.adCreator', labelFallback: 'Ad Creator',
       badge: { text: 'ADVERTISER', tone: 'advertiser' }, gate: 'ADVERTISER',
       inDrawer: true, inTabs: true,
@@ -259,24 +255,24 @@ export function buildShellNav(account: ShellAccount): ShellNavItem[] {
     {
       // The design ends the PAGES tab row with the member's own name, routing
       // to Account. Drawer-invisible, exactly as in the prototype.
-      id: 'account', section: 'PAGES', href: '/settings',
+      id: 'account', section: 'PAGES', href: '/app/me?panel=settings',
       labelKey: 'appShell.nav.account', labelFallback: account.name,
       inDrawer: false, inTabs: true,
     },
 
     // ── SETTINGS ────────────────────────────────────────────────────────
     {
-      id: 'community', section: 'SETTINGS', href: '/community',
+      id: 'community', section: 'SETTINGS', href: '/app/me?section=about',
       labelKey: 'appShell.nav.community', labelFallback: 'Community',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'a11y', section: 'SETTINGS', href: '/settings/accessibility',
+      id: 'a11y', section: 'SETTINGS', href: '/app/me?panel=accessibility',
       labelKey: 'appShell.nav.accessibility', labelFallback: 'Accessibility',
       inDrawer: true, inTabs: true,
     },
     {
-      id: 'info', section: 'SETTINGS', href: '/info',
+      id: 'info', section: 'SETTINGS', href: '/app/me?panel=info',
       labelKey: 'appShell.nav.info', labelFallback: 'Info',
       inDrawer: true, inTabs: true,
     },

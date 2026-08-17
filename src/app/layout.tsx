@@ -23,7 +23,6 @@ import { getCspNonce } from '@/lib/csp-nonce';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
-import { AppShell } from '@/components/shell/AppShell';
 import { getShellViewer } from '@/lib/shell-account';
 
 /**
@@ -156,7 +155,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
   // A layout is the only place in the App Router that guarantees that.
-  const { account: shellAccount, unreadCount } = await getShellViewer();
+  const { account: shellAccount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
@@ -188,14 +187,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             label={t('layout.primarySiteHeader', 'Primary site header')}
           />
           <MobileBottomNav />
-          {/* Off shell routes (marketing and auth) AppShell renders exactly
-              what this layout rendered before — site-shell + footer — so
-              nothing about the signed-out experience changes. The footer
-              crosses as a slot, not a render prop: a function cannot be
-              serialized to a client component. */}
-          <AppShell account={shellAccount} footer={<SiteFooter />} unreadCount={unreadCount}>
-            {children}
-          </AppShell>
+          {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
+              Every route outside /app is now marketing, auth, admin, or a
+              temporary compatibility surface: none may resurrect the retired
+              signed-in AppShell. */}
+          <div className="site-shell">
+            <main id="main-content">{children}</main>
+            <SiteFooter />
+          </div>
           <SitePlayerDock />
           {/* Above every shell, on every route: an operator must never be
               able to forget whose account they are looking at. */}

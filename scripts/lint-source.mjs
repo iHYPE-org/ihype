@@ -181,7 +181,8 @@ if (!firstPasskeyRoute.includes('passkeyBootstrapToken.updateMany')) {
 }
 
 const showPage = await text('src/app/shows/[slug]/page.tsx');
-if (showPage.includes('void canWatch') || !showPage.includes('protectShowProductionPlan')) {
+const showPageIsAlias = showPage.includes("redirect(`/app/shows/");
+if (!showPageIsAlias && (showPage.includes('void canWatch') || !showPage.includes('protectShowProductionPlan'))) {
   fail('src/app/shows/[slug]/page.tsx', 'ticketed production plans must be entitlement-gated and URL-protected.');
 }
 
