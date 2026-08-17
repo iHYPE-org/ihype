@@ -2920,6 +2920,16 @@ html.mmm-locked .site-shell > main {
   text-transform: uppercase;
 }
 .mmm-me-route-back { margin-bottom: 12px; }
+.mmm-me-route-context { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.mmm-me-route-context .mmm-me-route-back { margin-bottom: 0; }
+.mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.594rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmm-me-route-trail span { display: inline-flex; gap: 7px; }
+.mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
+.mmm-empty-state { padding: 18px; border: 1px dashed var(--hair-160); border-radius: var(--radius-lg); background: var(--hair-30); }
+.mmm-empty-state strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 1rem; }
+.mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.8rem; line-height: 1.55; }
+.mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mmm-empty-actions a { text-decoration: none; }
 .mmm-charter-head { padding: 28px 0 22px; }
 .mmm-charter-head h1 { margin: 8px 0 6px; font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 0.92; }
 .mmm-charter-lead { margin: 0; color: var(--ink-2); font-size: 1rem; }

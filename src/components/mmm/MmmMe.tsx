@@ -112,10 +112,14 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
     <div className="mmm-me-about-in-profiles">
       <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>About me · visible activity</div>
       {data.activity.length === 0 ? (
-        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: 0 }}>
-          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
-          shows up here—this is the activity artists and venues can see.
-        </p>
+        <div className="mmm-empty-state">
+          <strong>Build your visible activity</strong>
+          <p>HYPE a track, follow local artists or save a show. This is the activity artists and venues can see.</p>
+          <div className="mmm-empty-actions">
+            <Link className="mmm-btn-primary" href="/app/music/discover">Discover music</Link>
+            <Link className="mmm-btn-ghost" href="/app/map">Explore the map</Link>
+          </div>
+        </div>
       ) : (
         <div>
           {data.activity.map((row) => (

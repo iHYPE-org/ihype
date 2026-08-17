@@ -109,7 +109,13 @@ export default async function AdvertiserDashboard() {
       )}
 
       {campaigns.length === 0 && (
-        <p className="meta">{t('advertiseDashboardPage.noCampaigns', 'No campaigns yet.')} <Link href="/app/me/advertising/new">{t('advertiseDashboardPage.submitFirstAd', 'Submit your first ad')}</Link>.</p>
+        <div className="mmm-empty-state">
+          <strong>{t('advertiseDashboardPage.noCampaigns', 'No campaigns yet.')}</strong>
+          <p>Choose an audience, upload a radio-style spot and see the full price before checkout.</p>
+          <div className="mmm-empty-actions">
+            <Link className="mmm-btn-primary" href="/app/me/advertising/new">{t('advertiseDashboardPage.submitFirstAd', 'Build your first campaign')}</Link>
+          </div>
+        </div>
       )}
 
       {campaigns.length > 0 && (

@@ -1,10 +1,11 @@
 'use client';
 
 import type { CSSProperties } from 'react';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
+import { useFormDraft } from '@/lib/use-form-draft';
 
 type Step = 0 | 1 | 2 | 3 | 4;
 type TicketType = 'ga' | 'vip';
@@ -142,6 +143,31 @@ export default function EventsNewPage() {
   const [error, setError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
 
+  const draft = useMemo(() => ({
+    step, title, date, time, venueProfile, headliner, price, capacity,
+    ticketType, description, ageRequirement, notes,
+  }), [ageRequirement, capacity, date, description, headliner, notes, price, step, ticketType, time, title, venueProfile]);
+  const draftDirty = Boolean(title.trim() || date || venueProfile || headliner || description.trim() || notes.trim() || step > 0);
+  const clearDraft = useFormDraft({
+    dirty: draftDirty && !publishedSlug,
+    key: 'ihype-draft-event',
+    onRestore: (saved: typeof draft) => {
+      setStep(saved.step >= 0 && saved.step <= 3 ? saved.step : 0);
+      setTitle(saved.title ?? '');
+      setDate(saved.date ?? '');
+      setTime(saved.time ?? '');
+      setVenueProfile(saved.venueProfile ?? null);
+      setHeadliner(saved.headliner ?? null);
+      setPrice(saved.price ?? '18');
+      setCapacity(saved.capacity ?? '300');
+      setTicketType(saved.ticketType === 'vip' ? 'vip' : 'ga');
+      setDescription(saved.description ?? '');
+      setAgeRequirement(saved.ageRequirement ?? 'All ages');
+      setNotes(saved.notes ?? '');
+    },
+    value: draft,
+  });
+
   const priceDollars = parseFloat(price || '0');
   const cap = parseInt(capacity, 10) || 0;
   const gross = priceDollars * cap;
@@ -193,6 +219,7 @@ export default function EventsNewPage() {
         setSubmitting(false);
         return;
       }
+      clearDraft();
       setPublishedSlug(data.slug);
       setStep(4);
     } catch {
@@ -308,26 +335,30 @@ export default function EventsNewPage() {
               </div>
             </div>
             <div className="field"><label>{t('eventsNewPage.ticketTypesLabel', 'Ticket types')}</label></div>
-            <div
+            <button
+              aria-pressed={ticketType === 'ga'}
               className={`ticket-type-btn${ticketType === 'ga' ? ' selected' : ''}`}
               onClick={() => setTicketType('ga')}
+              type="button"
             >
               <span style={{ fontSize: '1.25rem' }}>◇</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.gaTitle', 'General Admission')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
               </div>
-            </div>
-            <div
+            </button>
+            <button
+              aria-pressed={ticketType === 'vip'}
               className={`ticket-type-btn${ticketType === 'vip' ? ' selected' : ''}`}
               onClick={() => setTicketType('vip')}
+              type="button"
             >
               <span style={{ fontSize: '1.25rem' }}>★</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.vipTitle', 'VIP')}</div>
                 <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
               </div>
-            </div>
+            </button>
             <button className="btn-primary" onClick={() => setStep(2)} style={{ marginTop: 12 }} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
             <button className="btn-ghost" onClick={() => setStep(0)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>
@@ -391,7 +422,9 @@ export default function EventsNewPage() {
                 {t('eventsNewPage.ihypeChip', 'iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately')}
               </div>
             </div>
-            {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
+            <div aria-atomic="true" aria-live="polite">
+              {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
+            </div>
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
               {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}
             </button>
@@ -439,7 +472,7 @@ export default function EventsNewPage() {
         .btn-ghost { width: 100%; padding: 11px; border-radius: 999px; background: transparent; color: var(--ink-2); border: none; font-family: var(--font-display); font-weight: 700; font-size: .88rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
         .card { background: var(--bg2, #0e0b08); border: 1px solid var(--line, var(--hair-80)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
         .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
-        .ticket-type-btn { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
+        .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
         .ticket-type-btn:hover { border-color: rgba(var(--accent-rgb),.3); }
         .ticket-type-btn.selected { border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
         .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }

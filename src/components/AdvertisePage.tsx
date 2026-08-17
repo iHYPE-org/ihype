@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { postJson } from '@/lib/api-client';
 import {
@@ -9,6 +9,7 @@ import {
   type AdScope, type AdCampaignQuote,
 } from '@/lib/ad-pricing';
 import { useI18n } from '@/components/I18nProvider';
+import { useFormDraft } from '@/lib/use-form-draft';
 
 /* ── Types ───────────────────────────────────────────────── */
 type ScanSub = { n: string; k: string; tag: string; copy: string; body: string; gates: [string, string, 'pass' | 'fail'][]; ok: boolean };
@@ -151,6 +152,21 @@ function CoverageBuilder() {
   const [clickUrl, setClickUrl] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
   const [audio, setAudio] = useState<{ phase: 'idle' | 'uploading' | 'done' | 'error'; url?: string; durationSecs?: number | null; fileName?: string; error?: string }>({ phase: 'idle' });
+  const draft = useMemo(() => ({ scope, spots, days, title, clickUrl, audio }), [audio, clickUrl, days, scope, spots, title]);
+  const draftDirty = Boolean(title.trim() || clickUrl.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || spots !== 6 || days !== 14);
+  const clearDraft = useFormDraft({
+    dirty: draftDirty,
+    key: 'ihype-draft-ad-campaign',
+    onRestore: (saved: typeof draft) => {
+      if (AD_SCOPES.includes(saved.scope)) setScope(saved.scope);
+      if (Number.isFinite(saved.spots)) setSpots(Math.max(MIN_SPOTS_PER_DAY, Math.min(MAX_SPOTS_PER_DAY, saved.spots)));
+      if (AD_RUN_LENGTHS_DAYS.includes(saved.days)) setDays(saved.days);
+      setTitle(saved.title ?? '');
+      setClickUrl(saved.clickUrl ?? '');
+      if (saved.audio?.phase === 'done' && saved.audio.url) setAudio(saved.audio);
+    },
+    value: draft,
+  });
 
   async function handleAudioChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -218,6 +234,7 @@ function CoverageBuilder() {
         audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined,
       });
       if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
+        clearDraft();
         setSubmit({ phase: 'redirecting' });
         window.location.href = result.checkoutUrl;
         return;
@@ -395,6 +412,7 @@ function CoverageBuilder() {
               {submit.phase === 'submitting' ? t('advertisePage.screening', 'Screening…') : submit.phase === 'redirecting' ? t('advertisePage.redirecting', 'Redirecting to payment…') : t('advertisePage.submitCampaign', 'Submit campaign →')}
             </button>
 
+            <div aria-atomic="true" aria-live="polite">
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
@@ -415,6 +433,7 @@ function CoverageBuilder() {
                 {submit.error}
               </div>
             )}
+            </div>
 
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '0.875rem', color: 'var(--ink-2)', marginTop: 14, lineHeight: 1.45 }}>
               {t('advertisePage.nothingChargesNote', 'Nothing charges until your creative clears the AI screen.')}

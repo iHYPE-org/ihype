@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mmmMeBackTarget } from '@/lib/mmm-me-back';
+import { mmmMeBackTarget, mmmMeRouteTrail } from '@/lib/mmm-me-back';
 
 describe('MMM Me subpage backstop', () => {
   it('adds a Me return path to nested tools that do not own one', () => {
@@ -36,5 +36,12 @@ describe('MMM Me subpage backstop', () => {
       '/app/me/venues/example/booking-inbox',
       '/app/me/shows/example/lineup',
     ]) expect(mmmMeBackTarget(path), path).toBeNull();
+  });
+
+  it('labels the active workspace without exposing profile ids', () => {
+    expect(mmmMeRouteTrail('/app/me/artists/private-slug/dashboard')).toEqual(['Artist workspace', 'Dashboard']);
+    expect(mmmMeRouteTrail('/app/me/venues/private-slug/booking-inbox')).toEqual(['Venue workspace', 'Booking inbox']);
+    expect(mmmMeRouteTrail('/app/me/advertising/new')).toEqual(['Advertiser', 'New campaign']);
+    expect(mmmMeRouteTrail('/app/me/tickets/TICKET-1')).toEqual(['My Tickets', 'Ticket detail']);
   });
 });
