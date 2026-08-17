@@ -150,7 +150,7 @@ execFileSync(process.execPath, ['scripts/audit-routes.mjs', '--max-legacy=0'], {
   cwd: root,
   stdio: 'pipe',
 });
-execFileSync(process.execPath, ['scripts/audit-css.mjs', '--max=110'], {
+execFileSync(process.execPath, ['scripts/audit-css.mjs', '--max=88'], {
   cwd: root,
   stdio: 'pipe',
 });

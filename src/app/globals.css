@@ -921,10 +921,6 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 .fan-playlist-create input {
   width: 100%;
   padding: 0.58rem 0.74rem;
-  border-radius: 14px;
-  border: 1px solid var(--hair-100);
-  background: var(--hair-40);
-  color: var(--text);
 }
 .fan-playlist-current {
   display: grid;
@@ -1099,7 +1095,7 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 .stat { padding: 1rem; border-radius: 18px; background: var(--hair-30); }
 .stat strong { display: block; font-size: 1.6rem; }
 .tag-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.tag { padding: 0.35rem 0.7rem; border-radius: 999px; background: rgba(35,208,216,0.12); color: #aef4f6; border: 1px solid rgba(35,208,216,0.22); font-size: 0.85rem; }
+.tag { padding: 0.35rem 0.7rem; border-radius: 999px; }
 .form { display: grid; gap: 1rem; }
 .field {
   display: grid;
@@ -1117,17 +1113,6 @@ body:has(.standalone-page) .site-shell { padding-top: 0; }
 .field textarea {
   width: 100%;
   padding: 0.9rem 1rem;
-  border-radius: 18px;
-  border: 1px solid var(--hair-100);
-  background: var(--hair-40);
-  color: var(--text);
-}
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-  outline: none;
-  border-color: rgba(255,122,24,.5);
-  box-shadow: 0 0 0 3px rgba(255,122,24,.12);
 }
 .field input::placeholder,
 .field textarea::placeholder {
@@ -2167,10 +2152,6 @@ body:has(.authcard-page) #main-content { width: 100%; }
 }
 .explanation-block {
   margin-top: 1.25rem;
-}
-.field { display: grid; gap: 0.4rem; }
-.field input, .field textarea, .field select {
-  padding: 0.9rem 1rem; border-radius: 14px; border: 1px solid var(--line); background: #0b1120; color: var(--text);
 }
 .field textarea { resize: vertical; min-height: 120px; }
 .request-history { margin-top: 1.5rem; }
