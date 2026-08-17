@@ -502,31 +502,10 @@ export function MmmMap({
                   </button>
                 ))}
               </div>
-              {/* "Near me" is on EVERY layer, by explicit product decision
-                  (2026-08-12). The design's `#near` rides beside the chips on
-                  the artists layer alone, and while location was only askable
-                  from this control that made it unreachable for a fan browsing
-                  events on a phone — the single most obvious use of a map.
-
-                  The COUNT stays artists-only, which is the half of the design's
-                  reasoning that still holds: an artist pin is a city of origin
-                  rather than an address, so "how many are around here" is the
-                  only reading it has. Events and venues answer that with their
-                  own pins, and a count beside them would be a second, worse
-                  answer to a question the map already shows. */}
-              <div className="mmm-map-near" data-count={layer === 'artists' || undefined}>
-                {layer === 'artists' && (
-                  <span aria-live="polite">
-                    {total > 0
-                      ? `${total} artist${total === 1 ? '' : 's'} here`
-                      : 'None in view — zoom out'}
-                  </span>
-                )}
-                {/* Tapping this IS a request for the capability, so it opens
-                    the primer if it has never been shown. It does NOT reopen
-                    for someone who already declined — `ask()` returns false
-                    there and the camera falls back to the seeded city, which is
-                    the designed refusal path rather than a dead button. */}
+              {/* Keep location available on every layer. Artists place this
+                  action before the shared tabs so it cannot widen the row on
+                  their trailing edge; the redundant artists count stays gone. */}
+              <div className="mmm-map-near" data-before-tabs={layer === 'artists' || undefined}>
                 <button
                   className="mmm-map-recentre"
                   onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}

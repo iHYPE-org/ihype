@@ -1682,23 +1682,9 @@ html.mmm-locked .site-shell > main {
   background: var(--bg-2);
   border: 1px solid var(--line-2);
   border-radius: var(--radius-pill);
-  /* The 14px on the left is the count text's inset. */
-  padding: 7px 7px 7px 14px;
+  padding: 7px;
 }
-/* Without the count — every layer but artists — the pill holds only the button,
-   so the inset would read as a lopsided gap on its left. */
-.mmm-map-near:not([data-count]) { padding-left: 7px; }
-/* The pill is pinned (see `.mmm-map-chips`), so on the artists layer its count
-   would otherwise push the three layer chips into a sliver. Half the row is the
-   most a readout may take from the map's primary selector; past that the count
-   elides and the button — the part that DOES something — keeps its full size. */
-.mmm-map-near[data-count] { max-width: 50%; }
-.mmm-map-near > span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+.mmm-map-near[data-before-tabs] { order: -1; }
 .mmm-map-recentre { flex: 0 0 auto; }
 .mmm-map-recentre {
   font-family: inherit;
