@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
-import { constructWebhookEvent, isStripeConfigured } from '@/lib/stripe';
+import { constructWebhookEvent, getStripe, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
@@ -34,6 +34,32 @@ export async function POST(request: NextRequest) {
   let authorizedAdId: string | null = null;
   let cancelledAdId: string | null = null;
   let duplicate = false;
+  let savedPaymentMethod: {
+    userId: string;
+    paymentMethodId: string;
+    brand: string | null;
+    last4: string | null;
+  } | null = null;
+
+  if (event.type === 'checkout.session.completed') {
+    const checkoutSession = event.data.object;
+    if (checkoutSession.mode === 'setup' && checkoutSession.metadata?.purpose === 'ticket_payment_method') {
+      const userId = checkoutSession.metadata.userId;
+      const setupIntentId = typeof checkoutSession.setup_intent === 'string' ? checkoutSession.setup_intent : null;
+      if (userId && setupIntentId) {
+        const setupIntent = await getStripe().setupIntents.retrieve(setupIntentId, { expand: ['payment_method'] });
+        const paymentMethod = typeof setupIntent.payment_method === 'string' ? null : setupIntent.payment_method;
+        if (paymentMethod?.id) {
+          savedPaymentMethod = {
+            userId,
+            paymentMethodId: paymentMethod.id,
+            brand: paymentMethod.card?.brand ?? null,
+            last4: paymentMethod.card?.last4 ?? null,
+          };
+        }
+      }
+    }
+  }
 
   try {
     const result = await db.$transaction(async (tx) => {
@@ -54,7 +80,62 @@ export async function POST(request: NextRequest) {
       let authorizedAdId: string | null = null;
       let cancelledAdId: string | null = null;
 
+      if (savedPaymentMethod) {
+        await tx.user.updateMany({
+          where: { id: savedPaymentMethod.userId },
+          data: {
+            storedPaymentTokenRef: savedPaymentMethod.paymentMethodId,
+            storedPaymentTokenBrand: savedPaymentMethod.brand,
+            storedPaymentTokenLast4: savedPaymentMethod.last4,
+          },
+        });
+      }
+
       switch (event.type) {
+        case 'checkout.session.completed': {
+          const checkoutSession = event.data.object;
+          if (
+            checkoutSession.mode === 'payment' &&
+            checkoutSession.payment_status === 'paid' &&
+            checkoutSession.metadata?.purpose === 'ticket_purchase'
+          ) {
+            const confirmationCode = checkoutSession.metadata.confirmationCode;
+            const paymentIntentId = typeof checkoutSession.payment_intent === 'string'
+              ? checkoutSession.payment_intent
+              : null;
+            if (confirmationCode && paymentIntentId) {
+              const order = await tx.ticketOrder.findUnique({
+                where: { confirmationCode },
+                select: { id: true },
+              });
+              if (order) {
+                await tx.ticketOrder.update({
+                  where: { id: order.id },
+                  data: { stripePaymentIntentId: paymentIntentId },
+                });
+                const finalized = await finalizeCapturedTicketOrder(tx, order.id, new Date(event.created * 1000));
+                if (finalized.changed) capturedOrderId = order.id;
+              }
+            }
+          }
+          break;
+        }
+
+        case 'checkout.session.expired': {
+          const checkoutSession = event.data.object;
+          if (checkoutSession.metadata?.purpose === 'ticket_purchase') {
+            const confirmationCode = checkoutSession.metadata.confirmationCode;
+            if (confirmationCode) {
+              const order = await tx.ticketOrder.findUnique({
+                where: { confirmationCode },
+                select: { id: true },
+              });
+              if (order) await voidReservedTicketOrder(tx, order.id);
+            }
+          }
+          break;
+        }
+
         case 'payment_intent.amount_capturable_updated': {
           // Fires when a manual-capture PaymentIntent's amount_capturable
           // changes — including the moment it first becomes capturable,

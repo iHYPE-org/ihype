@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   const { type, role, body: text, contact } = body ?? {};
   if (!type || !role || !text) return NextResponse.json({ error: 'type, role, and body are required' }, { status: 400 });
   if (!['looking-for', 'available'].includes(type)) return NextResponse.json({ error: 'Invalid type' }, { status: 400 });
-  const validRoles = ['drummer', 'venue', 'vocalist', 'producer', 'guitarist', 'bassist', 'DJ', 'other'];
+  const validRoles = ['drummer', 'venue', 'vocalist', 'producer', 'guitarist', 'bassist', 'other'];
   if (!validRoles.includes(role)) return NextResponse.json({ error: 'Invalid role' }, { status: 400 });
 
   const post = await db.collabBoardPost.create({

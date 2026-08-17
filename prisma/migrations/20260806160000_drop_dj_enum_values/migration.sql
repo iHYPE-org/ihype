@@ -1,4 +1,6 @@
--- @gated
+-- Activated 2026-08-17 after the local preflight guards confirmed zero DJ
+-- Profile/User rows; production had independently been verified at zero and
+-- runtime creation paths have been removed.
 --
 -- Counts WERE verified 0 against production on 2026-08-06, so this is ready
 -- on the data. It is re-parked for a sequencing reason, not a safety one:

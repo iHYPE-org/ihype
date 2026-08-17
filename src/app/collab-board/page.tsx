@@ -27,7 +27,6 @@ const ROLES = [
   { value: 'producer', label: 'Producer' },
   { value: 'guitarist', label: 'Guitarist' },
   { value: 'bassist', label: 'Bassist' },
-  { value: 'DJ', label: 'DJ' },
   { value: 'other', label: 'Other' },
 ];
 

@@ -52,7 +52,7 @@ describe('GET /api/me/dashboard', () => {
     const payload = await response.json();
     expect(payload.build.title).toBe('Your listening profile');
     expect(payload.nextAction.href).toBe('/app/music/discover');
-    expect(payload.insights).toContain('3 artists, DJs, or venues currently carry your HYPE signal');
+    expect(payload.insights).toContain('3 artists or venues currently carry your HYPE signal');
   });
 
   it('returns creator-owned workspace data and only public recommendations', async () => {

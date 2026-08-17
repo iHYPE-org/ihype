@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       });
 
       if (!artistProfile || !['ARTIST'].includes(artistProfile.type)) {
-        return NextResponse.json({ error: 'Choose an artist or promoter profile' }, { status: 400 });
+        return NextResponse.json({ error: 'Choose an artist profile' }, { status: 400 });
       }
 
       artistProfileName = artistProfile.name;

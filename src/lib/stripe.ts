@@ -38,6 +38,33 @@ export async function getOrCreateStripeCustomer({
   return customer.id;
 }
 
+export async function createPaymentMethodSetupSession({
+  userId,
+  stripeCustomerId,
+  returnPath,
+}: {
+  userId: string;
+  stripeCustomerId: string;
+  returnPath: string;
+}): Promise<string> {
+  const stripe = getStripe();
+  const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'setup',
+      customer: stripeCustomerId,
+      setup_intent_data: { metadata: { userId } },
+      metadata: { purpose: 'ticket_payment_method', userId },
+      success_url: `${baseUrl}${returnPath}${returnPath.includes('?') ? '&' : '?'}payment_method=saved`,
+      cancel_url: `${baseUrl}${returnPath}${returnPath.includes('?') ? '&' : '?'}payment_method=cancelled`,
+    },
+    { idempotencyKey: `payment-method-setup:${userId}:${Date.now()}` },
+  );
+
+  if (!session.url) throw new Error('Stripe did not return a payment-method setup URL.');
+  return session.url;
+}
+
 export async function createStripeConnectAccount({
   email,
   profileId,
@@ -130,9 +157,61 @@ export async function createTicketPaymentIntent({
   return { paymentIntentId: paymentIntent.id, status: paymentIntent.status };
 }
 
+export async function createTicketCheckoutSession({
+  amountCents,
+  stripeCustomerId,
+  showId,
+  showSlug,
+  showTitle,
+  quantity,
+  ticketOrderConfirmationCode,
+}: {
+  amountCents: number;
+  stripeCustomerId: string;
+  showId: string;
+  showSlug: string;
+  showTitle: string;
+  quantity: number;
+  ticketOrderConfirmationCode: string;
+}): Promise<{ checkoutUrl: string; checkoutSessionId: string }> {
+  const stripe = getStripe();
+  const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      customer: stripeCustomerId,
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          unit_amount: amountCents,
+          product_data: {
+            name: `${quantity} × ${showTitle}`,
+            metadata: { showId },
+          },
+        },
+      }],
+      payment_intent_data: {
+        metadata: { confirmationCode: ticketOrderConfirmationCode, showId },
+      },
+      metadata: {
+        purpose: 'ticket_purchase',
+        confirmationCode: ticketOrderConfirmationCode,
+        showId,
+      },
+      success_url: `${baseUrl}/shows/${showSlug}?checkout=success`,
+      cancel_url: `${baseUrl}/shows/${showSlug}?checkout=cancelled`,
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+    },
+    { idempotencyKey: `ticket-checkout:${ticketOrderConfirmationCode}` },
+  );
+  if (!session.url) throw new Error('Stripe did not return a ticket checkout URL.');
+  return { checkoutUrl: session.url, checkoutSessionId: session.id };
+}
+
 /**
  * Real per-party payout — one Stripe transfer from the platform balance to
- * a venue/artist/promoter's Connect account, for exactly their share of one
+ * a venue or artist Connect account, for exactly their payable share of one
  * captured ticket order (an `AccountsPayableEntry` row). Idempotent per
  * entry via `transfer_group` + the entry's own id as the idempotency key,
  * so a retried payout run can never double-pay the same entry.

@@ -20,6 +20,7 @@ This repository contains a production-oriented Next.js app for local-music disco
 - Database: PostgreSQL
 - Auth: Auth.js
 - Media: audio only; video hosting and live-streaming providers are outside the product scope
+- Profiles: artist, venue, listener, and private advertiser accounts only. DJ and promoter roles/profiles are retired and must not be reintroduced.
 - Hosting target: Cloudflare
 
 ## Before changing code

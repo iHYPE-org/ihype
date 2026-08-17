@@ -38,6 +38,7 @@ const ticketOrderFindUnique = vi.fn();
 const adFindUnique = vi.fn();
 const profileUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
 const ticketOrderFindMany = vi.fn().mockResolvedValue([]);
+const ticketOrderUpdate = vi.fn().mockResolvedValue({});
 const dbTicketOrderFindUniqueTopLevel = vi.fn();
 const dbAdFindUniqueTopLevel = vi.fn();
 
@@ -65,7 +66,7 @@ vi.mock('@/lib/db', () => ({
           }),
         },
         ad: { findUnique: (...a: unknown[]) => adFindUnique(...a), update: vi.fn().mockResolvedValue({}) },
-        ticketOrder: { findUnique: (...a: unknown[]) => ticketOrderFindUnique(...a), findMany: (...a: unknown[]) => ticketOrderFindMany(...a) },
+        ticketOrder: { findUnique: (...a: unknown[]) => ticketOrderFindUnique(...a), findMany: (...a: unknown[]) => ticketOrderFindMany(...a), update: (...a: unknown[]) => ticketOrderUpdate(...a) },
         profile: { updateMany: (...a: unknown[]) => profileUpdateMany(...a) },
         notificationJob: { upsert: vi.fn().mockResolvedValue({}) },
       };
@@ -144,6 +145,41 @@ describe('POST /api/stripe/webhook', () => {
     expect(res.status).toBe(200);
     expect(json.duplicate).toBe(false);
     expect(finalizeCapturedTicketOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it('finalizes a hosted ticket checkout and stores its PaymentIntent', async () => {
+    const event = {
+      id: 'evt_checkout',
+      type: 'checkout.session.completed',
+      created: Math.floor(Date.now() / 1000),
+      data: { object: {
+        id: 'cs_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_checkout',
+        metadata: { purpose: 'ticket_purchase', confirmationCode: 'ABCD1234', showId: 'show_1' },
+      } },
+    };
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(ticketOrderUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'order_1' },
+      data: { stripePaymentIntentId: 'pi_checkout' },
+    }));
+    expect(finalizeCapturedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1', expect.any(Date));
+  });
+
+  it('releases inventory when hosted checkout expires', async () => {
+    const event = {
+      id: 'evt_expired', type: 'checkout.session.expired', created: Math.floor(Date.now() / 1000),
+      data: { object: { id: 'cs_expired', metadata: { purpose: 'ticket_purchase', confirmationCode: 'ABCD1234' } } },
+    };
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(voidReservedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1');
   });
 
   it('is idempotent: the same event ID replayed does not re-finalize or re-email', async () => {

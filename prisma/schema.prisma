@@ -237,7 +237,7 @@ model Profile {
   merchContent                  String?
   requestContent                String?
   recommendContent              String?
-  // Artist/DJ press kit (JSON: tagline, quotes, achievements, contactEmail)
+  // Artist press kit (JSON: tagline, quotes, achievements, contactEmail)
   // rendered on /artists/[slug]/epk.
   pressKitContent               String?
   topFiveContent                String?
@@ -1010,11 +1010,9 @@ model NotificationPreference {
   journalPosts    Boolean  @default(true)
   milestones      Boolean  @default(true)
   weeklyDigest    Boolean  @default(true)
-  // Added for the per-role settings pages (Artist/DJ/Venue/Fan/Promoter
-  // Settings.dc.html templates) — categories with no honest match among the
-  // 4 fields above. Everything else in those templates reuses the fields
-  // above with role-contextual copy rather than growing this table further.
-  radioLive       Boolean  @default(true) // a followed DJ goes live
+  // Creator notification categories that have no honest match among the
+  // four general preference fields above.
+  radioLive       Boolean  @default(true) // a followed artist is featured on radio
   crateUploads    Boolean  @default(true) // your own track/crate upload clears vetting
   bookingRequests Boolean  @default(true) // a venue receives a new booking request
   updatedAt       DateTime @updatedAt
@@ -1198,7 +1196,7 @@ model CollabBoardPost {
   id        String   @id @default(cuid())
   userId    String
   type      String // "looking-for" | "available"
-  role      String // "drummer" | "venue" | "vocalist" | "producer" | "guitarist" | "bassist" | "DJ" | "other"
+  role      String // "drummer" | "venue" | "vocalist" | "producer" | "guitarist" | "bassist" | "other"
   body      String   @db.Text
   contact   String?
   createdAt DateTime @default(now())
