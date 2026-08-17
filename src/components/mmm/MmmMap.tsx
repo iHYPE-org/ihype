@@ -502,10 +502,10 @@ export function MmmMap({
                   </button>
                 ))}
               </div>
-              {/* Keep location available on every layer. Artists place this
-                  action before the shared tabs so it cannot widen the row on
-                  their trailing edge; the redundant artists count stays gone. */}
-              <div className="mmm-map-near" data-before-tabs={layer === 'artists' || undefined}>
+              {/* Keep location available on every layer and in one predictable
+                  position after the shared layer controls. The redundant
+                  artists count stays gone. */}
+              <div className="mmm-map-near">
                 <button
                   className="mmm-map-recentre"
                   onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}

@@ -1684,7 +1684,6 @@ html.mmm-locked .site-shell > main {
   border-radius: var(--radius-pill);
   padding: 7px;
 }
-.mmm-map-near[data-before-tabs] { order: -1; }
 .mmm-map-recentre { flex: 0 0 auto; }
 .mmm-map-recentre {
   font-family: inherit;
