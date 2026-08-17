@@ -1543,8 +1543,6 @@
   "pageEditor.designPresetHint": "Bestimmt den Gesamtlook deiner öffentlichen Seite",
   "pageEditor.designPresetLabel": "Design-Vorlage",
   "pageEditor.discard": "Verwerfen",
-  "pageEditor.featureVideoHint": "Link zu einem Video (YouTube o. Ä.), das auf deiner Seite hervorgehoben wird",
-  "pageEditor.featureVideoLabel": "URL des Feature-Videos",
   "pageEditor.fontPairingHint": "Tauscht die Schriften für Überschrift und Fließtext auf deiner öffentlichen Seite — leer lassen, um die Standardschriften der Website zu behalten",
   "pageEditor.fontPairingLabel": "Schriftkombination",
   "pageEditor.galleryCoverLabel": "Galerie-Titelbild",

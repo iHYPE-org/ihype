@@ -1542,8 +1542,6 @@
   "pageEditor.designPresetHint": "आपके सार्वजनिक पेज का समग्र रूप तय करता है",
   "pageEditor.designPresetLabel": "डिज़ाइन प्रीसेट",
   "pageEditor.discard": "छोड़ दें",
-  "pageEditor.featureVideoHint": "आपके पेज पर दिखाए जाने वाले वीडियो (YouTube आदि) का लिंक",
-  "pageEditor.featureVideoLabel": "फ़ीचर वीडियो का URL",
   "pageEditor.fontPairingHint": "आपके सार्वजनिक पेज के शीर्षक और मुख्य टेक्स्ट के फ़ॉन्ट बदलता है — खाली छोड़ने पर साइट के डिफ़ॉल्ट फ़ॉन्ट बने रहेंगे",
   "pageEditor.fontPairingLabel": "फ़ॉन्ट जोड़ी",
   "pageEditor.galleryCoverLabel": "गैलरी कवर",

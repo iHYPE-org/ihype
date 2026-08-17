@@ -1538,8 +1538,6 @@
   "pageEditor.designPresetHint": "公開ページ全体の見た目を決めます",
   "pageEditor.designPresetLabel": "デザインプリセット",
   "pageEditor.discard": "破棄",
-  "pageEditor.featureVideoHint": "ページで大きく見せる動画（YouTubeなど）のリンク",
-  "pageEditor.featureVideoLabel": "フィーチャー動画のURL",
   "pageEditor.fontPairingHint": "公開ページの見出しと本文の書体を差し替えます。未設定ならサイト標準のフォントのままです",
   "pageEditor.fontPairingLabel": "フォントの組み合わせ",
   "pageEditor.galleryCoverLabel": "ギャラリーのカバー",

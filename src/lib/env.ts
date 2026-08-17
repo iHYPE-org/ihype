@@ -26,8 +26,7 @@ const envSchema = z.object({
   SMTP_FROM: optEmail,
   EMAIL_FROM: optEmail,
   RESEND_API_KEY: optStr,
-  /* No MUX_* here: iHYPE hosts no video (brand constant), nothing read these,
-     and declaring them made the launch check advertise video streaming. */
+  // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
   STRIPE_SECRET_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('sk_') ? s : undefined; }),
   STRIPE_WEBHOOK_SECRET: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('whsec_') ? s : undefined; }),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('pk_') ? s : undefined; }),

@@ -69,8 +69,8 @@ const BASE = arg('base', 'https://ihype.org');
 // deliberately not in CI, so a wrong number here misleads a person rather than
 // blocking a merge.
 const BUDGET = {
-  smallTaps: 68,
-  tinyBodyText: 297,
+  smallTaps: 44,
+  tinyBodyText: 246,
   overflowingPages: 0,
 };
 

@@ -44,7 +44,7 @@ export const feedHeuristicsLedger = [
     id: 'RADIO-001',
     title: 'Radio Show Boost',
     summary: 'Curated radio shows receive a small visibility lift when live to distinguish them from standard streams.',
-    userImpact: 'A live radio set surfaces slightly ahead of a live stream with the same hype, reflecting the additional curation effort.'
+    userImpact: 'A live radio set surfaces slightly ahead of an on-demand upload with the same hype, reflecting the additional curation effort.'
   }
 ] as const;
 

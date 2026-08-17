@@ -36,7 +36,6 @@ describe('profile-editor PATCH schema', () => {
       avatarImage: null,
       logoImage: null,
       galleryImage: null,
-      featureVideoUrl: null,
       themePreset: 'midnight-neon',
       themeAccentTone: null,
       themeBackdropTone: null,

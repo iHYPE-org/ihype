@@ -1537,8 +1537,6 @@
   "pageEditor.designPresetHint": "决定你公开页面的整体外观",
   "pageEditor.designPresetLabel": "设计预设",
   "pageEditor.discard": "放弃",
-  "pageEditor.featureVideoHint": "在你页面上重点展示的视频（YouTube 等）链接",
-  "pageEditor.featureVideoLabel": "主打视频链接",
   "pageEditor.fontPairingHint": "更换公开页面的标题与正文字体——留空则沿用站点默认字体",
   "pageEditor.fontPairingLabel": "字体搭配",
   "pageEditor.galleryCoverLabel": "相册封面",

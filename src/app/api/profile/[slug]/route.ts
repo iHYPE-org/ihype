@@ -40,7 +40,6 @@ export async function GET(
       heroImage: true,
       logoImage: true,
       galleryImage: true,
-      featureVideoUrl: true,
       parkingDetails: true,
       fanShareEnabled: true,
       createdAt: true,

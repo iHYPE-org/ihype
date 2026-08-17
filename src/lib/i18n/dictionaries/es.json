@@ -1544,8 +1544,6 @@
   "pageEditor.designPresetHint": "Define el aspecto general de tu página pública",
   "pageEditor.designPresetLabel": "Preajuste de diseño",
   "pageEditor.discard": "Descartar",
-  "pageEditor.featureVideoHint": "Enlace a un vídeo (YouTube, etc.) destacado en tu página",
-  "pageEditor.featureVideoLabel": "URL del vídeo destacado",
   "pageEditor.fontPairingHint": "Cambia las tipografías de titular y texto de tu página pública — déjalo sin definir para conservar las fuentes por defecto del sitio",
   "pageEditor.fontPairingLabel": "Combinación tipográfica",
   "pageEditor.galleryCoverLabel": "Portada de la galería",

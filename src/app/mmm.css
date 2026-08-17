@@ -2930,6 +2930,32 @@ html.mmm-locked .site-shell > main {
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.8rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .mmm-empty-actions a { text-decoration: none; }
+
+.mmm-ad-landing { width: min(100% - 32px, 1040px); margin: 0 auto; padding: 72px 0 96px; color: var(--ink); }
+.mmm-ad-hero { max-width: 760px; padding: 36px 0 72px; }
+.mmm-ad-hero h1 { margin: 12px 0 0; font-family: var(--font-display); font-size: clamp(3rem, 9vw, 6.5rem); line-height: 0.88; letter-spacing: -0.055em; }
+.mmm-ad-lead { max-width: 58ch; margin: 24px 0 0; color: var(--ink-2); font-size: 1.05rem; line-height: 1.65; }
+.mmm-ad-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
+.mmm-ad-actions a, .mmm-ad-final a { text-decoration: none; }
+.mmm-ad-section { padding: 64px 0; border-top: 1px solid var(--hair-100); }
+.mmm-ad-section h2, .mmm-ad-final h2 { margin: 10px 0 0; font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.6rem); line-height: 0.98; letter-spacing: -0.04em; }
+.mmm-ad-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
+.mmm-ad-steps article { padding: 20px; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); background: var(--bg-2); }
+.mmm-ad-steps span { color: var(--accent-text); font-family: var(--font-mono); font-size: 0.75rem; }
+.mmm-ad-steps h3 { margin: 18px 0 0; font-family: var(--font-display); font-size: 1.1rem; }
+.mmm-ad-steps p, .mmm-ad-eligibility p, .mmm-ad-final p { margin: 8px 0 0; color: var(--ink-2); font-size: 0.875rem; line-height: 1.6; }
+.mmm-ad-eligibility { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+.mmm-ad-eligibility ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.mmm-ad-eligibility li { padding: 13px 15px; border: 1px solid var(--hair-100); border-radius: var(--radius-md); background: var(--bg-2); font-size: 0.875rem; }
+.mmm-ad-final { margin-top: 36px; padding: 32px; border: 1px solid rgba(var(--accent-rgb), 0.35); border-radius: var(--radius-xl); background: rgba(var(--accent-rgb), 0.06); }
+.mmm-ad-final p { max-width: 60ch; margin-bottom: 20px; }
+@media (max-width: 680px) {
+  .mmm-ad-landing { padding-top: 32px; }
+  .mmm-ad-hero { padding-bottom: 52px; }
+  .mmm-ad-steps, .mmm-ad-eligibility { grid-template-columns: 1fr; }
+  .mmm-ad-section { padding: 48px 0; }
+  .mmm-ad-final { padding: 22px; }
+}
 .mmm-charter-head { padding: 28px 0 22px; }
 .mmm-charter-head h1 { margin: 8px 0 6px; font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 0.92; }
 .mmm-charter-lead { margin: 0; color: var(--ink-2); font-size: 1rem; }

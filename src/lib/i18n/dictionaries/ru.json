@@ -1544,8 +1544,6 @@
   "pageEditor.designPresetHint": "Задаёт общий вид вашей публичной страницы",
   "pageEditor.designPresetLabel": "Пресет оформления",
   "pageEditor.discard": "Отменить",
-  "pageEditor.featureVideoHint": "Ссылка на видео (YouTube и т. п.), вынесенное на вашу страницу",
-  "pageEditor.featureVideoLabel": "URL главного видео",
   "pageEditor.fontPairingHint": "Меняет шрифты заголовков и текста на вашей публичной странице — оставьте пустым, чтобы сохранить шрифты сайта по умолчанию",
   "pageEditor.fontPairingLabel": "Сочетание шрифтов",
   "pageEditor.galleryCoverLabel": "Обложка галереи",

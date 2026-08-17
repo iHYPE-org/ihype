@@ -15,7 +15,7 @@ export function getProfileCopy(type: ProfileType, name: string) {
       bio: 'Add your story, current focus, and favorite way to move a room.',
       aboutContent: 'Tell people who you are, what you make, and what drives your work.',
       journalContent: 'Share updates, studio notes, release thoughts, or behind-the-scenes moments.',
-      mediaContent: 'Drop video links, press pull quotes, playlists, or embed-ready media notes here.',
+      mediaContent: 'Add press pull quotes, playlists, release notes, or audio highlights here.',
       tourContent: 'List upcoming dates, routing plans, and travel notes for booking conversations.',
       merchContent: 'Point fans to limited drops, vinyl, bundles, or whatever your merch table is cooking.'
     };
