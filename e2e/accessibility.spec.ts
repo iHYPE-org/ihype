@@ -33,9 +33,23 @@ async function assertNoSeriousViolations(page: Page, path: string, response: Res
   expect(response?.status(), `${path} should return a successful response`).toBeLessThan(400);
 
   // Protected routes may complete their initial response before Auth.js performs
-  // the client-side redirect to /login. Let that navigation settle before axe
-  // injects its evaluation script so its execution context stays alive.
-  await page.waitForLoadState('networkidle');
+  // a client-side redirect. Background analytics and service-worker requests
+  // mean this app may never reach Playwright's `networkidle` state, so wait for
+  // a visible document whose URL has remained stable instead.
+  let lastUrl = page.url();
+  let stableSince = Date.now();
+  const deadline = Date.now() + 5_000;
+  while (Date.now() < deadline) {
+    await page.waitForLoadState('domcontentloaded');
+    await expect(page.locator('body')).toBeVisible();
+    const currentUrl = page.url();
+    if (currentUrl !== lastUrl) {
+      lastUrl = currentUrl;
+      stableSince = Date.now();
+    }
+    if (Date.now() - stableSince >= 500) break;
+    await page.waitForTimeout(100);
+  }
 
   const results = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa'])

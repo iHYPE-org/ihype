@@ -1,7 +1,7 @@
 # iHYPE Codex project instructions
 
 ## Project goal
-This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, and Prisma/Postgres data storage.
+This repository contains a production-oriented Next.js app for local-music discovery, artist and venue profiles, audio hosting, events, account support, hype voting, and Prisma/Postgres data storage.
 
 ## Working agreements
 - Prefer small, reviewable changes over broad refactors.
@@ -19,7 +19,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - ORM: Prisma
 - Database: PostgreSQL
 - Auth: Auth.js
-- Streaming: Mux
+- Media: audio only; video hosting and live-streaming providers are outside the product scope
 - Hosting target: Cloudflare
 
 ## Before changing code
@@ -40,7 +40,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 
 ## Safety / deployment rules
 - Do not commit `.env` files or real credentials.
-- Keep `DATABASE_URL`, Mux credentials, and auth secrets in environment variables only.
+- Keep `DATABASE_URL`, media-storage credentials, and auth secrets in environment variables only.
 - Do not disable webhook verification in production code.
 - Keep preview and production environment assumptions separate.
 
