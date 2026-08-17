@@ -352,9 +352,9 @@ function CoverageBuilder() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          <div className="adv-quote-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginTop: 20 }}>
             {[{ v: fmt(quote.dailyImpressions), l: t('advertisePage.dailyImpressions', 'Daily impressions') }, { v: fmt(quote.totalImpressions), l: t('advertisePage.totalOverRun', 'Total over run') }, { v: '$' + cpm.toFixed(2), l: t('advertisePage.effectiveCpm', 'Effective CPM') }].map(s => (
-              <div key={s.l} style={{ flex: 1, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
+              <div key={s.l} style={{ minWidth: 0, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
                 <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.3125rem', letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.5312rem', letterSpacing: '.1em', color: '#5a5048', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
               </div>
@@ -374,12 +374,12 @@ function CoverageBuilder() {
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
             {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.base', 'base')}`, v: `${money(perSpot)} ${t('advertisePage.perSpot', '/ spot')}` }, { k: `${spots} ${t('advertisePage.spotsSlashDay', 'spots/day')} × ${days} ${t('advertisePage.days', 'days')}`, v: `${money(dailyCost)} ${t('advertisePage.perDay', '/ day')}` }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
-              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.75rem' }}>
+              <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.75rem' }}>
                 <span style={{ color: '#5a5048', letterSpacing: '.06em' }}>{r.k}</span>
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
               </div>
             ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
+            <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a60)' }}>{t('advertisePage.total', 'Total')}</span>
               <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent)' }}>
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}{t('advertisePage.slashDay', '/day')}</small>
@@ -713,7 +713,11 @@ export function MmmCampaignBuilderPage() {
         .adv-compact-rules { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 18px 18px }
         .adv-compact-rules div { color:var(--ink-2); font-size:.75rem; line-height:1.5 }
         .adv-compact-rules b { display:block; margin-bottom:3px; color:var(--ink); font-size:.8125rem }
-        @media (max-width:1040px) { .adv-builder { grid-template-columns:1fr !important } }
+        @media (max-width:1180px) { .adv-builder { grid-template-columns:1fr !important } }
+        @media (max-width:520px) {
+          .adv-quote-stats { grid-template-columns:1fr !important }
+          .adv-receipt-row, .adv-receipt-total { align-items:flex-start !important; flex-direction:column; gap:4px !important }
+        }
         @media (max-width:760px) {
           .adv-compact { padding:14px 16px 56px }
           .adv-compact-head { display:block }
