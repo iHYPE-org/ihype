@@ -2619,8 +2619,20 @@ html.mmm-locked .site-shell > main {
    themes on purpose, because the veil below guarantees a dark backdrop
    whatever the page theme is.
    ═══════════════════════════════════════════════════════════════════════════ */
-.mmm-deck { display: flex; flex-direction: column; align-items: center; gap: 18px; padding-top: 4px; }
-.mmm-deck-stack { position: relative; width: 328px; max-width: 100%; }
+.mmm-deck {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 18px;
+  /* Discover begins immediately after the controls. The old narrow prototype
+     card left the useful desktop area looking like an empty stage. */
+  padding-top: 12px;
+}
+.mmm-deck-stack {
+  position: relative;
+  width: min(480px, 100%);
+}
 .mmm-deck-behind {
   position: absolute;
   left: 0;
