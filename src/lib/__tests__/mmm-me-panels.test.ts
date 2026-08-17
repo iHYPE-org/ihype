@@ -33,6 +33,9 @@ describe('ME account panels', () => {
       'DMCA',
     ]));
     expect(Object.values(ME_PANEL_ROWS).flat().filter((row) => row.label === 'The charter')).toHaveLength(1);
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('How iHYPE works');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'The charter')?.href)
+      .toBe('/app/me/info/charter');
   });
 
   // Every row is a bridge to a surface that already exists and does its own

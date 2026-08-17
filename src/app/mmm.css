@@ -2808,3 +2808,53 @@ html.mmm-locked .site-shell > main {
   color: var(--ink);
 }
 .mmm-deck-empty-body { margin: 6px 0 0; font-size: 0.84375rem; color: var(--ink-2); }
+
+/* ── ME · Info · Charter ──────────────────────────────────────────────── */
+.mmm-charter { max-width: 920px; margin-inline: auto; padding-bottom: 24px; }
+.mmm-charter-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-pill);
+  color: var(--ink-2);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.mmm-charter-head { padding: 28px 0 22px; }
+.mmm-charter-head h1 { margin: 8px 0 6px; font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 0.92; }
+.mmm-charter-lead { margin: 0; color: var(--ink-2); font-size: 1rem; }
+.mmm-charter-updated { margin: 13px 0 0; color: var(--ink-3); font: 0.625rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.mmm-charter-split { padding: 22px; border: 1px solid rgba(var(--accent-rgb), 0.38); border-radius: var(--radius-card); background: rgba(var(--accent-rgb), 0.07); }
+.mmm-charter-split-bar { display: flex; gap: 4px; height: 12px; margin-top: 16px; }
+.mmm-charter-split-bar span { border-radius: var(--radius-pill); }
+.mmm-charter-split-bar [data-share='artist'] { flex: 70; background: var(--accent); }
+.mmm-charter-split-bar [data-share='venue'] { flex: 20; background: var(--role-venue); }
+.mmm-charter-split-bar [data-share='promoter'] { flex: 10; background: var(--role-fan); }
+.mmm-charter-shares { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
+.mmm-charter-shares div { display: flex; flex-direction: column; gap: 4px; }
+.mmm-charter-shares strong { color: var(--ink); font: 800 clamp(1.45rem, 4vw, 2.2rem) var(--font-display); }
+.mmm-charter-shares span { color: var(--ink-3); font: 0.6rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.mmm-charter-callout { margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line-2); color: var(--ink-2); line-height: 1.6; }
+.mmm-charter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.mmm-charter-card { position: relative; padding: 22px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
+.mmm-charter-card h2 { margin: 8px 0 10px; font-size: 1.25rem; }
+.mmm-charter-card p, .mmm-charter-card li { color: var(--ink-2); font-size: 0.875rem; line-height: 1.65; }
+.mmm-charter-card p { margin: 0; }
+.mmm-charter-index { color: var(--accent-text); font: 0.625rem var(--font-mono); letter-spacing: 0.12em; }
+.mmm-charter-revenue { margin-top: 12px; }
+.mmm-charter-revenue ol { margin: 12px 0 16px; padding-left: 20px; }
+.mmm-charter-revenue li + li { margin-top: 9px; }
+.mmm-charter-revenue p + p { margin-top: 12px; }
+.mmm-charter-footer { padding: 24px 2px; color: var(--ink-3); font-size: 0.75rem; line-height: 1.7; }
+.mmm-charter-footer p { margin: 0; }
+.mmm-charter-footer a { color: var(--accent-text); }
+@media (max-width: 620px) {
+  .mmm-charter-grid { grid-template-columns: 1fr; }
+  .mmm-charter-split { padding: 18px; }
+  .mmm-charter-shares { grid-template-columns: repeat(2, 1fr); }
+}
