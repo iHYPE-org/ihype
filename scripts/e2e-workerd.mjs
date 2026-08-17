@@ -51,7 +51,8 @@ const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
-const REQUESTED_TESTS = process.argv.slice(2);
+const SERVE_ONLY = process.argv.includes('--serve');
+const REQUESTED_TESTS = process.argv.slice(2).filter((argument) => argument !== '--serve');
 // Each default shard gets a fresh workerd process:
 // the production bundle is intentionally large and a single long-lived local
 // isolate can retain compiled route modules until it reaches workerd's V8 heap
@@ -74,7 +75,9 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
 ];
-const TEST_SHARDS = REQUESTED_TESTS.length > 0
+const TEST_SHARDS = SERVE_ONLY
+  ? [[]]
+  : REQUESTED_TESTS.length > 0
   ? [REQUESTED_TESTS]
   : DEFAULT_TEST_SHARDS;
 
@@ -249,8 +252,14 @@ async function runShard(tests, index) {
   let exitCode = 1;
   try {
     await waitForBoot(child);
-    console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
-    exitCode = await runPlaywright(tests);
+    if (SERVE_ONLY) {
+      console.log(`[e2e-workerd] Local authenticated preview ready on ${BASE}`);
+      await new Promise((resolve) => child.once('exit', resolve));
+      exitCode = child.exitCode ?? 0;
+    } else {
+      console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
+      exitCode = await runPlaywright(tests);
+    }
   } catch (error) {
     console.error('[e2e-workerd]', error);
     exitCode = 1;
