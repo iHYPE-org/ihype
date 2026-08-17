@@ -59,6 +59,16 @@ assertNotIncludes(
   'The retired signed-in AppShell must never wrap runtime routes again.'
 );
 assertIncludes(
+  'src/components/mmm/MmmShell.tsx',
+  'shell-content mmm-migrated-surface',
+  'Migrated backend workflows must receive the shared MMM surface vocabulary inside the MMM pane.'
+);
+assertIncludes(
+  'src/app/mmm.css',
+  '.mmm-pane > .mmm-migrated-surface',
+  'The migrated surface scope must not inherit the retired AppShell layout.'
+);
+assertIncludes(
   'src/app/layout.tsx',
   '<main id="main-content">{children}</main>',
   'Non-MMM routes keep the public site frame without a second app shell.'
@@ -106,6 +116,20 @@ assertIncludes(
   "WORKBENCH_PATH = '/app/map'",
   'All successful auth paths should resolve to the canonical app surface.'
 );
+for (const retiredShellFile of [
+  'src/components/shell/AppShell.tsx',
+  'src/components/shell/AppShellDrawer.tsx',
+  'src/components/shell/AppShellHeader.tsx',
+  'src/components/shell/AppShellContextStrip.tsx',
+  'src/lib/app-nav.ts',
+  'src/lib/shell-account.ts',
+  'src/lib/shell-chrome.ts',
+]) {
+  assertMissing(
+    retiredShellFile,
+    'The retired authenticated shell implementation must not remain available for reuse.'
+  );
+}
 
 // A route can survive as an old bookmark without surviving as an old page.
 // This ratchet counts only legacy URLs that still render JSX; redirect-only

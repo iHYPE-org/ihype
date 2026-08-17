@@ -23,7 +23,6 @@ import { getCspNonce } from '@/lib/csp-nonce';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
-import { getShellViewer } from '@/lib/shell-account';
 
 /**
  * Design System 8 ("Bulletin") type, served from files IN THIS REPO.
@@ -155,7 +154,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
   // A layout is the only place in the App Router that guarantees that.
-  const { account: shellAccount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
@@ -182,7 +180,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
               (The old comment here named `.wb-shell`, a class that no longer
               exists anywhere in the codebase.) */}
           <AdaptiveSiteHeader
-            account={shellAccount}
             inviteOnly={inviteOnly}
             label={t('layout.primarySiteHeader', 'Primary site header')}
           />

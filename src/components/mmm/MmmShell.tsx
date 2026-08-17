@@ -311,7 +311,15 @@ export function MmmShell({
     <div className="mmm-frame">
       <MmmMap active={mapActive && !navOpen} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
 
-      {!mapActive && <div className="mmm-pane">{children}</div>}
+      {!mapActive && (
+        <div className="mmm-pane">
+          {/* The migrated workflows already use the shared primitive aliases
+              scoped beneath .shell-content. This nested surface activates
+              those paint-only aliases without reviving AppShell's layout or
+              chrome; mmm.css neutralizes every layout property on this node. */}
+          <div className="shell-content mmm-migrated-surface">{children}</div>
+        </div>
+      )}
 
       {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
 

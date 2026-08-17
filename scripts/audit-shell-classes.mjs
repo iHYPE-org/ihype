@@ -21,12 +21,10 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
-const SHELL_DIRS = [
-  'listen', 'radio', 'discover', 'search', 'tracks', 'playlist', 'shows',
-  'tickets', 'events', 'this-weekend', 'for-you', 'me', 'payout', 'payouts',
-  'pages', 'artists', 'promoters', 'venues', 'fans', 'advertise', 'settings',
-  'community', 'community-rules', 'info', 'legal', 'support',
-].map((dir) => join('src/app', dir));
+// The authenticated product is /app/*. Auditing the old URL families made
+// this script report a clean shell after those files became redirect-only
+// aliases, while the real migrated workflows under /app/me/* were invisible.
+const SHELL_DIRS = [join('src/app', 'app')];
 
 /**
  * Suffixes that mark a class as one of the design system's primitives. Kept in
@@ -86,7 +84,7 @@ const covered = new Set(
 
 const drift = [];
 for (const [name, owners] of used) {
-  if (EXCLUDED.has(name) || covered.has(name) || name.startsWith('shell-')) continue;
+  if (EXCLUDED.has(name) || covered.has(name) || name.startsWith('shell-') || name.startsWith('mmm-')) continue;
   const hit = PRIMITIVE_PATTERNS.find((pattern) => pattern.re.test(name));
   if (hit) drift.push({ name, role: hit.role, files: [...owners] });
 }

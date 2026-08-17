@@ -54,26 +54,16 @@ const MAX_LEGACY = (() => {
   return raw ? Number(raw.split('=')[1]) : null;
 })();
 
-/**
- * `SHELL_ROUTES` is parsed out of `app-nav.ts` rather than duplicated here.
- *
- * A second copy of the registry would drift, and a drifted inventory is worse
- * than none because it is quoted in decisions. Parsing is the lesser evil, and
- * it FAILS LOUDLY on zero entries — a format change must break this script
- * rather than silently reclassify every route as OUTSIDE and report a
- * triumphant drop in legacy pages.
- */
-function shellRoutes() {
-  const source = readFileSync('src/lib/app-nav.ts', 'utf8');
-  const block = source.slice(source.indexOf('SHELL_ROUTES'));
-  const entries = [...block.matchAll(/\{\s*path:\s*'([^']+)',\s*kind:\s*'(exact|prefix)'/g)]
-    .map((m) => ({ path: m[1], kind: m[2] }));
-  if (entries.length === 0) {
-    console.error('[audit:routes] Parsed 0 SHELL_ROUTES entries — app-nav.ts changed shape.');
-    process.exit(1);
-  }
-  return entries;
-}
+// Tombstones for URL families that once rendered the retired authenticated
+// shell. This is intentionally audit-only: no runtime navigation registry may
+// claim them again. Public marketing/auth/admin routes are absent.
+const RETIRED_APP_ROUTES = [
+  '/radio', '/discover', '/search', '/tracks', '/playlist',
+  '/shows', '/tickets', '/events', '/this-weekend', '/for-you',
+  '/me/promote', '/payout', '/payouts', '/pages', '/me/dashboard',
+  '/me/analytics', '/me/booking', '/artists', '/promoters', '/venues',
+  '/fans', '/settings', '/community', '/legal',
+].map((path) => ({ path, kind: 'prefix' }));
 
 function routes() {
   return globSync('src/app/**/page.tsx')
@@ -125,7 +115,7 @@ function sourceCorpus() {
 }
 
 function main() {
-  const entries = shellRoutes();
+  const entries = RETIRED_APP_ROUTES;
   const corpus = sourceCorpus();
 
   const inShell = (path) =>

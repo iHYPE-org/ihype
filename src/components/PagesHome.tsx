@@ -6,7 +6,6 @@ import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
@@ -29,7 +28,6 @@ const profileRoute = (type: string, slug: string) =>
  * Tour Creator, 'creator' via Page Creator). Inside the shell they come off this
  * strip; 'search' and 'network' stay, because the strip does not carry them.
  */
-const SHELL_TABS: readonly string[] = ['mypage', 'creator'];
 
 const TABS = [
   { id: 'search', label: 'Search' },
@@ -130,8 +128,7 @@ export function PagesHome({
     if (!validInitialTab) return;
     setTab(validInitialTab);
   }, [validInitialTab]);
-  const shellDrivesTabs = useAppShellActive();
-  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
+  const visibleTabs = TABS;
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
@@ -155,9 +152,8 @@ export function PagesHome({
   // parked 141px down. Verified by e2e: expected 0, got 141. Outside the shell
   // (phone swipe shell, marketing) this is still the only thing that resets it.
   useEffect(() => {
-    if (shellDrivesTabs) return;
     contentTopRef.current?.scrollIntoView({ block: 'start' });
-  }, [tab, shellDrivesTabs]);
+  }, [tab]);
 
   useEffect(() => {
     if (initialProfileId) setSelectedPageId(initialProfileId);

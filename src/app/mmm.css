@@ -386,6 +386,19 @@ html.mmm-locked .site-shell > main {
   padding: calc(14px + var(--mmm-safe-top)) 16px calc(96px + var(--mmm-safe-bottom));
 }
 
+/* Paint scope for workflows migrated from the retired AppShell. The
+   shell-surfaces stylesheet intentionally scopes its shared card/row/type
+   vocabulary under .shell-content for specificity. Here that class is only a
+   descendant scope: the MMM pane remains the one and only scroll container. */
+.mmm-pane > .mmm-migrated-surface {
+  position: static;
+  inset: auto;
+  overflow: visible;
+  padding: 0;
+  transition: none;
+  overscroll-behavior: auto;
+}
+
 /* ── MUSIC control row: tabs + universal search ───────────────────────────
    NOT `.mmm-control-row` — that name is taken by the MAP module's layer-chip
    rows above, and reusing it here would restyle the map's chrome as a side
