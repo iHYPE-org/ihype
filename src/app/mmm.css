@@ -1689,7 +1689,11 @@ html.mmm-locked .site-shell > main {
   }
   /* The pill is 56px tall here, so its padding tightens with it: a 40px
      artwork in 56px leaves 8px, matching the inset on the sides it touches. */
-  .mmm-player { padding: 0 8px; gap: 10px; }
+  /* The wide pill is replaced by `.mmm-mini` at this width — see
+     MmmMiniPlayer.tsx. These rules stay because the pill is still what a
+     narrow DESKTOP window gets above 620px, and because `.mmm-player-body`
+     being hidden here is the thing the mini exists to stop doing. */
+  .mmm-player { display: none; }
   .mmm-player-body { display: none; }
   .mmm-player-controls { flex: 1; justify-content: space-between; gap: 6px; }
   .mmm-player-icon { width: 30px; height: 34px; font-size: 1.25rem; }
@@ -3020,4 +3024,169 @@ html.mmm-locked .site-shell > main {
 @media (max-width: 620px) {
   .mmm-info-report .lp-stats, .mmm-info-report .lp-reason-grid { grid-template-columns: 1fr !important; }
   .mmm-info-report .lp-hype-explainer { padding: 18px; }
+}
+
+
+/* ── The phone player ─────────────────────────────────────────────────────
+   One button, the size and shape of the logo trigger, in the opposite corner.
+   Every measurement comes from the chrome tokens rather than a literal, so it
+   stays on the trigger's baseline when those change — that is the same rule
+   the pill follows, and why `--mmm-chrome-size` exists. */
+.mmm-mini {
+  position: absolute;
+  display: none; /* the 620px block above turns it on */
+  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
+  bottom: var(--mmm-bottom);
+  width: var(--mmm-chrome-size);
+  height: var(--mmm-chrome-size);
+  z-index: 29;
+  place-items: center;
+  padding: 0;
+  /* The trigger's squircle ratio, not a radius of its own — `.mmm-logo` uses
+     `chrome-size × 0.342` so the corner follows the 88px/56px figure, and the
+     two only read as one piece of furniture if this one does too. */
+  border-radius: calc(var(--mmm-chrome-size) * 0.342);
+  /* The trigger carries no border because it is a solid accent fill. This one
+     is arbitrary album artwork over a map, so it keeps a hairline — without it
+     a dark cover has no edge at all. */
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-2));
+  background: var(--bg-2);
+  box-shadow: 0 9px 24px rgba(0, 0, 0, .38);
+  /* We own every gesture on this control; without this the browser takes the
+     horizontal drag for a back-swipe and the vertical one for a scroll. */
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .26s var(--ease-out), border-color .18s ease;
+}
+.mmm-mini:active { border-color: rgba(var(--role-venue-rgb), .62); }
+.mmm-mini[data-hyped] { border-color: rgba(var(--role-promoter-rgb), .55); }
+
+.mmm-mini-art {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--bg-3, var(--bg-2));
+}
+.mmm-mini-art img { width: 100%; height: 100%; object-fit: cover; }
+.mmm-mini-art::after {
+  /* The glyph sits on arbitrary artwork, so it needs its own ground. */
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(var(--bg-base-rgb), .38);
+}
+.mmm-mini-initial {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: var(--ink-2);
+}
+.mmm-mini-glyph {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .6));
+}
+
+/* Fills while a hold is in progress and completes as the hype fires. A hold
+   has no affordance of its own; this is it. */
+.mmm-mini-ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: calc(var(--mmm-chrome-size) * 0.342 + 5px);
+  pointer-events: none;
+  opacity: 0;
+  background: conic-gradient(var(--role-promoter) var(--fill, 0turn), transparent 0);
+}
+.mmm-mini[data-holding] .mmm-mini-ring {
+  opacity: .95;
+  animation: mmmHoldFill 460ms linear forwards;
+}
+@keyframes mmmHoldFill { from { --fill: 0turn; } to { --fill: 1turn; } }
+@property --fill { syntax: '<angle>'; inherits: false; initial-value: 0turn; }
+
+.mmm-mini-burst { position: absolute; inset: 0; pointer-events: none; }
+.mmm-mini[data-burst] .mmm-mini-burst i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--role-promoter);
+  animation: mmmHypeFly .72s cubic-bezier(.2, .7, .3, 1) forwards;
+  animation-delay: calc(var(--i) * 14ms);
+  transform: rotate(calc(var(--i) * 36deg)) translateX(0);
+}
+.mmm-mini[data-burst] .mmm-mini-burst i:nth-child(3n) { background: var(--accent); }
+.mmm-mini[data-burst] .mmm-mini-burst i:nth-child(3n + 1) { background: var(--role-fan); }
+@keyframes mmmHypeFly {
+  to { transform: rotate(calc(var(--i) * 36deg)) translateX(52px) scale(.2); opacity: 0; }
+}
+
+/* Names the gesture before you commit to it, and carries the HYPE window's
+   remaining wait when a hold is refused. */
+.mmm-mini-hint {
+  position: absolute;
+  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
+  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 12px);
+  z-index: 29;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  color: var(--ink);
+  font-family: var(--f-m);
+  font-size: .64rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.mmm-mini-hint[data-refused] { border-color: rgba(var(--role-promoter-rgb), .5); color: var(--role-promoter); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mmm-mini,
+  .mmm-mini[data-holding] .mmm-mini-ring,
+  .mmm-mini[data-burst] .mmm-mini-burst i { animation: none; transition: none; }
+  /* The ring still has to show the hold is registering, it just does not sweep. */
+  .mmm-mini[data-holding] .mmm-mini-ring { opacity: .95; background: var(--role-promoter); }
+}
+
+/* Search inside the full player. It leaves for discovery on submit, so it is a
+   form rather than a live filter — see MmmFullPlayer. */
+.mmm-full-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0 18px;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--bg-2);
+  color: var(--ink-3);
+}
+.mmm-full-search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--f-b);
+  font-size: 0.95rem;
+  outline: none;
+}
+.mmm-full-search input::placeholder { color: var(--ink-3); }
+.mmm-full-search:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
+
+/* Turned on here rather than in the 620px block further up, and the order is
+   the whole reason: `.mmm-mini`'s base rule is defined BELOW that block, so a
+   `display: grid` up there loses to this file's own later `display: none` at
+   equal specificity — the control would never appear, with no error anywhere. */
+@media (max-width: 620px) {
+  .mmm-mini { display: grid; }
 }

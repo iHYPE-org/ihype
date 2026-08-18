@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  hypeWaitUntil,
   canHype, formatHypeWait, HYPE_WINDOW_MS, hypeWaitMs, nextHypeAt,
 } from '@/lib/hype-window';
 
@@ -61,5 +62,35 @@ describe('hype window', () => {
 
   it('puts nextHypeAt exactly one window after the hype', () => {
     expect(nextHypeAt(T0)?.getTime()).toBe(T0.getTime() + HYPE_WINDOW_MS);
+  });
+});
+
+describe('hypeWaitUntil', () => {
+  const NOW = Date.parse('2026-08-18T12:00:00.000Z');
+
+  it('counts down to the moment the window reopens', () => {
+    expect(hypeWaitUntil('2026-08-18T19:00:00.000Z', NOW)).toBe(7 * 60 * 60 * 1000);
+  });
+
+  it('is zero once the window has reopened, never negative', () => {
+    expect(hypeWaitUntil('2026-08-18T11:00:00.000Z', NOW)).toBe(0);
+  });
+
+  // Never hyped, and a malformed value from the API, both mean "go ahead" —
+  // the API is the enforcement point, so a control that cannot read the wait
+  // must not invent a lock the server would not apply.
+  it('treats missing and unparseable values as no wait', () => {
+    expect(hypeWaitUntil(null, NOW)).toBe(0);
+    expect(hypeWaitUntil(undefined, NOW)).toBe(0);
+    expect(hypeWaitUntil('not a date', NOW)).toBe(0);
+  });
+
+  // The pairing that matters: what the API returns as nextHypeAt is exactly
+  // what this reads, so the control's countdown and the server's refusal end
+  // at the same instant.
+  it('agrees with hypeWaitMs given the same hype', () => {
+    const lastHypedAt = new Date(NOW - 60 * 60 * 1000);
+    const nextAt = new Date(lastHypedAt.getTime() + HYPE_WINDOW_MS);
+    expect(hypeWaitUntil(nextAt, NOW)).toBe(hypeWaitMs(lastHypedAt, NOW));
   });
 });

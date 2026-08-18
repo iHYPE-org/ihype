@@ -6,10 +6,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
+import { MmmMiniPlayer } from '@/components/mmm/MmmMiniPlayer';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, type MmmModuleId } from '@/lib/mmm-nav';
+import { formatHypeWait, hypeWaitUntil, HYPE_WINDOW_MS } from '@/lib/hype-window';
 import { resolvePick, splitQueue } from '@/lib/mmm-queue';
 
 export type MmmNowPlaying = {
@@ -82,6 +84,14 @@ export function MmmShell({
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
+  /**
+   * When this artist can be hyped again. The API already returns it on the
+   * 429 it sends inside the window, and returned it to nobody: the pill and
+   * the full player both accept `hypeLocked`/`hypeLabel` and neither was ever
+   * given them, so a spent hype looked identical to an available one and the
+   * only feedback was a refusal with no reason.
+   */
+  const [hypeNextAt, setHypeNextAt] = useState<string | null>(null);
 
   // Real playback, not local state. The pill used to own a `playing` boolean
   // that toggled nothing — DESIGN_SYNC row 268 open item (d). /app sits inside
@@ -276,9 +286,15 @@ export function MmmShell({
         body: JSON.stringify({ targetType: 'profile', targetId: profileId }),
       });
       // A 429 from the 24h window is not a failure to reflect: the hype IS
-      // spent for this target, which is what the filled heart says.
-      if (!res.ok && res.status !== 429) {
+      // spent for this target, which is what the filled heart says. What it
+      // also carries is WHEN — captured here so the controls can say it.
+      if (res.status === 429) {
+        const body = (await res.json().catch(() => null)) as { nextHypeAt?: string } | null;
+        if (body?.nextHypeAt) setHypeNextAt(body.nextHypeAt);
+      } else if (!res.ok) {
         setHyped(false);
+      } else {
+        setHypeNextAt(new Date(Date.now() + HYPE_WINDOW_MS).toISOString());
       }
     } catch {
       setHyped(false);
@@ -286,6 +302,16 @@ export function MmmShell({
       setHypePending(false);
     }
   }, [hyped, hypePending, nowPlaying?.artistProfileId]);
+
+  // The window is per artist, so it resets with the artist rather than the
+  // track: two songs by the same act share one hype.
+  useEffect(() => {
+    setHypeNextAt(null);
+  }, [nowPlaying?.artistProfileId]);
+
+  const hypeWait = hypeWaitUntil(hypeNextAt);
+  const hypeLocked = hypeWait > 0;
+  const hypeLabel = formatHypeWait(hypeWait);
 
   const toggleNav = useCallback(() => {
     setSheet(null);
@@ -322,6 +348,8 @@ export function MmmShell({
           hidden={navOpen}
           history={played}
           hyped={hyped}
+          hypeLabel={hypeLabel}
+          hypeLocked={hypeLocked}
           narrow={narrow}
           /* Phone only: a visible expand control opens the full player. */
           onExpand={() => { setNavOpen(false); setFullOpen(true); }}
@@ -349,6 +377,27 @@ export function MmmShell({
           volume={volume * 100}
         />
 
+        {/* The phone player. It and the pill are both mounted; the 620px
+            block in mmm.css decides which one is visible, so neither has to
+            know the viewport and there is no hydration mismatch to manage. */}
+        <MmmMiniPlayer
+          canGoBack={canGoBack}
+          canGoForward={canGoForward}
+          canHype={canHype}
+          canTogglePlay={Boolean(currentTrack)}
+          hidden={navOpen}
+          hyped={hyped}
+          hypeLabel={hypeLabel}
+          hypeLocked={hypeLocked}
+          onExpand={() => { setNavOpen(false); setFullOpen(true); }}
+          onNext={playNext}
+          onPrev={playPrevious}
+          onToggleHype={() => void toggleHype()}
+          onTogglePlay={togglePlayback}
+          playing={Boolean(currentTrack) && isPlaying}
+          track={displayTrack}
+        />
+
         {/* Phone only, and only over a real track: with nothing playing there
             is nothing to expand, and `onExpand` is the only way in. */}
         <MmmFullPlayer
@@ -361,7 +410,13 @@ export function MmmShell({
           faved={faved}
           history={played}
           hyped={hyped}
+          hypeLabel={hypeLabel}
+          hypeLocked={hypeLocked}
           onClose={() => setFullOpen(false)}
+          onSearch={(query) => {
+            setFullOpen(false);
+            router.push(`/app/music/discover?q=${encodeURIComponent(query)}`);
+          }}
           onNext={playNext}
           onOpenArtist={artistSlug ? () => { setFullOpen(false); router.push(`/app/artists/${artistSlug}`); } : undefined}
           onPickTrack={pickTrack}

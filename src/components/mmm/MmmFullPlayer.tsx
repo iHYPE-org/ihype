@@ -59,6 +59,7 @@ export function MmmFullPlayer({
   hypeLocked,
   hyped,
   onClose,
+  onSearch,
   onNext,
   onOpenAlbum,
   onOpenArtist,
@@ -90,6 +91,8 @@ export function MmmFullPlayer({
   hypeLocked?: boolean;
   hyped: boolean;
   onClose: () => void;
+  /** Submitting the search field leaves for discovery with the query. */
+  onSearch?: (query: string) => void;
   onNext: () => void;
   onOpenAlbum?: () => void;
   onOpenArtist?: () => void;
@@ -302,6 +305,34 @@ export function MmmFullPlayer({
           <span className="mmm-full-clock" data-right="">{Math.round(volume)}%</span>
         </div>
 
+        {onSearch ? (
+          /* Search leaves for discovery rather than filtering in place: this
+             sheet is what is playing, and a result list inside it would be a
+             second, smaller music module competing with the real one. */
+          <form
+            className="mmm-full-search"
+            onSubmit={(event) => {
+              event.preventDefault();
+              const query = new FormData(event.currentTarget).get('q');
+              const text = typeof query === 'string' ? query.trim() : '';
+              if (text) onSearch(text);
+            }}
+            role="search"
+          >
+            <svg aria-hidden="true" fill="none" height="16" stroke="currentColor" strokeLinecap="round" strokeWidth="2" viewBox="0 0 24 24" width="16">
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input
+              aria-label="Search tracks and artists"
+              enterKeyHint="search"
+              name="q"
+              placeholder="Search tracks and artists"
+              type="search"
+            />
+          </form>
+        ) : null}
+
         {queue.length > 0 && (
           <div className="mmm-full-list">
             <p className="mmm-queue-eyebrow">Up next</p>
@@ -346,16 +377,16 @@ export function MmmFullPlayer({
           square, in the same place, as the shell's nav trigger. Here it means
           back, so it carries its own label. */}
       <div className="mmm-full-exit">
-        <button aria-label="Back to iHYPE" className="mmm-full-back" onClick={onClose} ref={closeRef} type="button">
-          <span className="mmm-logo-mark">
-            <span>iH</span>
-            <svg aria-hidden="true" viewBox="148 92 200 328">
-              <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="currentColor" />
-            </svg>
-            <span>PE</span>
-          </span>
+        {/* A down arrow, not the mark. This sheet is pulled UP from the mini
+            player and shrinks back down to it, so the control that closes it
+            should be the inverse of the gesture that opened it. The mark read
+            as "go to iHYPE" — a destination — which is not what this does. */}
+        <button aria-label="Shrink back to the mini player" className="mmm-full-back" onClick={onClose} ref={closeRef} type="button">
+          <svg aria-hidden="true" fill="none" height="22" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="22">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
         </button>
-        <span className="mmm-full-exit-label">Back</span>
+        <span className="mmm-full-exit-label">Close</span>
       </div>
     </div>
   );

@@ -53,6 +53,27 @@ export function canHype(
  * "1m" rather than "0m", because a control that says zero and refuses the tap
  * reads as broken.
  */
+/**
+ * Milliseconds left, given the moment the window REOPENS rather than the moment
+ * it was spent.
+ *
+ * The API's 429 hands back `nextHypeAt`, not `lastHypedAt`, so a caller holding
+ * that had to subtract the window to use `hypeWaitMs` — reconstructing a
+ * timestamp it never had in order to derive one it already did. Same rule as
+ * everything else here: the API and the controls compute from these functions,
+ * so the conversion belongs in them.
+ */
+export function hypeWaitUntil(
+  nextAt: Date | string | null | undefined,
+  now: Date | number = Date.now(),
+): number {
+  if (!nextAt) return 0;
+  const at = nextAt instanceof Date ? nextAt : new Date(nextAt);
+  if (Number.isNaN(at.getTime())) return 0;
+  const nowMs = typeof now === 'number' ? now : now.getTime();
+  return Math.max(0, at.getTime() - nowMs);
+}
+
 export function formatHypeWait(waitMs: number): string {
   if (waitMs <= 0) return '';
   const minutes = Math.max(1, Math.ceil(waitMs / MINUTE_MS));
