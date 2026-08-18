@@ -5,56 +5,83 @@ import { useI18n } from '@/components/I18nProvider';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { useAdminBadges } from '@/components/admin/AdminLive';
 
-type AdminSection = 'overview'|'users'|'content'|'finance'|'ads'|'support'|'system'|'growth';
+/**
+ * The console's sections, as the operator describes the job rather than as the
+ * routes happened to accumulate.
+ *
+ * It used to be eight rail items — Overview, Users, Content, Finance, Ads,
+ * Support, System, Growth — which named the code's layout, not the work: ad
+ * billing sat under Ads while every other payment sat under Finance, and
+ * "Content" and "Support" both meant "someone reported a problem".
+ *
+ * Nothing is dropped. Every page the old rail reached is still one click away;
+ * pages without a section of their own hang off the closest one in SUBNAV
+ * below. `system` is kept off the requested list on purpose: setup, the audit
+ * log and status are operating the console itself, not any of the six subjects.
+ */
+type AdminSection = 'overview'|'users'|'tickets'|'payments'|'verifications'|'authorizations'|'stats'|'system';
 
 function sectionFromPathname(p: string): AdminSection {
   if (p === '/admin' || p === '/admin/') return 'overview';
-  if (p.startsWith('/admin/users')) return 'users';
-  if (p.startsWith('/admin/review') || p.startsWith('/admin/media')) return 'content';
-  if (p.startsWith('/admin/finance')) return 'finance';
-  if (p.startsWith('/admin/ads')) return 'ads';
-  if (p.startsWith('/admin/moderation') || p.startsWith('/admin/feedback') || p.startsWith('/admin/dmca')) return 'support';
+  if (p.startsWith('/admin/users') || p.startsWith('/admin/broadcast') || p.startsWith('/admin/moderation') || p.startsWith('/admin/feedback') || p.startsWith('/admin/dmca')) return 'users';
+  if (p.startsWith('/admin/tickets')) return 'tickets';
+  if (p.startsWith('/admin/finance') || p.startsWith('/admin/ads')) return 'payments';
+  if (p.startsWith('/admin/review') || p.startsWith('/admin/verifications') || p.startsWith('/admin/media')) return 'verifications';
+  if (p.startsWith('/admin/authorizations')) return 'authorizations';
+  if (p.startsWith('/admin/analytics') || p.startsWith('/admin/growth') || p.startsWith('/admin/journal') || p.startsWith('/admin/collab') || p.startsWith('/admin/playlists') || p.startsWith('/admin/community')) return 'stats';
   if (p.startsWith('/admin/setup') || p.startsWith('/admin/audit') || p.startsWith('/admin/rate-limits') || p.startsWith('/admin/invite') || p.startsWith('/admin/feature') || p.startsWith('/admin/device-register')) return 'system';
-  if (p.startsWith('/admin/growth') || p.startsWith('/admin/journal') || p.startsWith('/admin/collab') || p.startsWith('/admin/playlists')) return 'growth';
   return 'overview';
 }
 
 const NAV: Array<{s: AdminSection; label: string; href: string; glyph: string}> = [
-  {s:'overview', label:'Overview', href:'/admin',            glyph:'⬡'},
-  {s:'users',    label:'Users',    href:'/admin/users',      glyph:'◎'},
-  {s:'content',  label:'Content',  href:'/admin/review',     glyph:'♪'},
-  {s:'finance',  label:'Finance',  href:'/admin/finance',    glyph:'◈'},
-  {s:'ads',      label:'Ads',      href:'/admin/ads',        glyph:'▣'},
-  {s:'support',  label:'Support',  href:'/admin/moderation', glyph:'⬟'},
-  {s:'system',   label:'System',   href:'/admin/setup',      glyph:'⚙'},
-  {s:'growth',   label:'Growth',   href:'/admin/growth',     glyph:'△'},
+  {s:'overview',       label:'Overview',        href:'/admin',                glyph:'⬡'},
+  {s:'users',          label:'Users',           href:'/admin/users',          glyph:'◎'},
+  {s:'tickets',        label:'Tickets',         href:'/admin/tickets',        glyph:'▤'},
+  {s:'payments',       label:'Payments',        href:'/admin/finance',        glyph:'◈'},
+  {s:'verifications',  label:'Verifications',   href:'/admin/review',         glyph:'✓'},
+  {s:'authorizations', label:'Authorizations',  href:'/admin/authorizations', glyph:'⚿'},
+  {s:'stats',          label:'Site statistics', href:'/admin/analytics',      glyph:'△'},
+  {s:'system',         label:'System',          href:'/admin/setup',          glyph:'⚙'},
 ];
 
 // Every real /admin/* subpage that doesn't have its own primary rail item —
 // grouped under the section sectionFromPathname() already assigns it to, so
 // every page in the app is reachable by a click, not just a typed URL.
-// (device-register is deliberately excluded: it's only ever reached via a
+// (device-register is deliberately excluded: it's only ever reached via an
 // emailed one-time-token link during device re-registration, never a nav
-// destination.)
+// destination. It is *listed* under Authorizations, which is where an operator
+// looks for it, but as the Devices tab that can actually revoke one.)
 const SUBNAV: Partial<Record<AdminSection, Array<{label: string; href: string}>>> = {
-  overview: [
-    {label: 'Broadcast', href: '/admin/broadcast'},
-    {label: 'Community', href: '/admin/community'},
-  ],
-  support: [
-    {label: 'Moderation Queue', href: '/admin/moderation'},
+  users: [
+    {label: 'Roles', href: '/admin/users'},
+    {label: 'Notifications out', href: '/admin/broadcast'},
+    {label: 'Stats', href: '/admin/users?tab=stats'},
+    {label: 'Issues', href: '/admin/moderation'},
     {label: 'Feedback', href: '/admin/feedback'},
+  ],
+  tickets: [
+    {label: 'Events', href: '/admin/tickets'},
+    {label: 'Support', href: '/admin/tickets/support'},
+  ],
+  payments: [
+    {label: 'Finance', href: '/admin/finance'},
+    {label: 'Ad campaigns', href: '/admin/ads'},
+  ],
+  authorizations: [
+    {label: 'Devices', href: '/admin/authorizations'},
+    {label: 'Payment holds', href: '/admin/authorizations/holds'},
+  ],
+  stats: [
+    {label: 'Analytics', href: '/admin/analytics'},
+    {label: 'Growth', href: '/admin/growth'},
+    {label: 'Journal', href: '/admin/journal'},
+    {label: 'Playlists', href: '/admin/playlists'},
+    {label: 'Community', href: '/admin/community'},
   ],
   system: [
     {label: 'Setup', href: '/admin/setup'},
     {label: 'Audit Log', href: '/admin/audit'},
     {label: 'Status', href: '/status'},
-  ],
-  growth: [
-    {label: 'Analytics', href: '/admin/analytics'},
-    {label: 'Growth', href: '/admin/growth'},
-    {label: 'Journal', href: '/admin/journal'},
-    {label: 'Playlists', href: '/admin/playlists'},
   ],
 };
 
@@ -139,7 +166,7 @@ export function AdminShell({ children, name, email }: Props) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`ops-subnav-link${pathname.startsWith(item.href) ? ' ops-subnav-active' : ''}`}
+                  className={`ops-subnav-link${pathname === item.href.split('?')[0] ? ' ops-subnav-active' : ''}`}
                 >
                   {t(`adminAdminShell.subnav.${item.href}`, item.label)}
                 </Link>

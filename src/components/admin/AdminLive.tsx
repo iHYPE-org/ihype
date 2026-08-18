@@ -105,11 +105,11 @@ export function useAdminBadges(): Record<string, number> {
           // it lives here rather than in the data so the board stays a
           // description of the platform rather than of this menu.
           const rail = {
-            attention: 'support',
-            comms: 'support',
-            money: 'finance',
+            attention: 'users',
+            comms: 'users',
+            money: 'payments',
             live: 'users',
-            growth: 'growth',
+            growth: 'stats',
             system: 'system',
           }[section.id];
           if (rail) next[rail] = (next[rail] ?? 0) + section.badge;
