@@ -33,15 +33,21 @@ function sectionFromPathname(p: string): AdminSection {
   return 'overview';
 }
 
-const NAV: Array<{s: AdminSection; label: string; href: string; glyph: string}> = [
-  {s:'overview',       label:'Overview',        href:'/admin',                glyph:'⬡'},
-  {s:'users',          label:'Users',           href:'/admin/users',          glyph:'◎'},
-  {s:'tickets',        label:'Tickets',         href:'/admin/tickets',        glyph:'▤'},
-  {s:'payments',       label:'Payments',        href:'/admin/finance',        glyph:'◈'},
-  {s:'verifications',  label:'Verifications',   href:'/admin/review',         glyph:'✓'},
-  {s:'authorizations', label:'Authorizations',  href:'/admin/authorizations', glyph:'⚿'},
-  {s:'stats',          label:'Site statistics', href:'/admin/analytics',      glyph:'△'},
-  {s:'system',         label:'System',          href:'/admin/setup',          glyph:'⚙'},
+// `rail` is the label the 56px rail shows; `label` is the section's real name
+// and is what the tooltip and the accessible name use. Three of these names do
+// not fit a 56px column at 8px — "Verifications" and "Authorizations" are one
+// long word each, so they cannot wrap and were rendering clipped to
+// "erification" and "uthorization". Truncating in CSS would have produced the
+// same unreadable stub with an ellipsis; a shorter word is the fix.
+const NAV: Array<{s: AdminSection; label: string; rail?: string; href: string; glyph: string}> = [
+  {s:'overview',       label:'Overview',                        href:'/admin',                glyph:'⬡'},
+  {s:'users',          label:'Users',                           href:'/admin/users',          glyph:'◎'},
+  {s:'tickets',        label:'Tickets',                         href:'/admin/tickets',        glyph:'▤'},
+  {s:'payments',       label:'Payments',                        href:'/admin/finance',        glyph:'◈'},
+  {s:'verifications',  label:'Verifications',   rail:'Verify',  href:'/admin/review',         glyph:'✓'},
+  {s:'authorizations', label:'Authorizations',  rail:'Access',  href:'/admin/authorizations', glyph:'⚿'},
+  {s:'stats',          label:'Site statistics', rail:'Stats',   href:'/admin/analytics',      glyph:'△'},
+  {s:'system',         label:'System',                          href:'/admin/setup',          glyph:'⚙'},
 ];
 
 // Every real /admin/* subpage that doesn't have its own primary rail item —
@@ -149,7 +155,7 @@ export function AdminShell({ children, name, email }: Props) {
               title={t(`adminAdminShell.nav.${item.s}`, item.label)}
             >
               <span className="ops-rail-glyph">{item.glyph}</span>
-              <span className="ops-rail-label">{t(`adminAdminShell.nav.${item.s}`, item.label)}</span>
+              <span className="ops-rail-label">{t(`adminAdminShell.rail.${item.s}`, item.rail ?? item.label)}</span>
               {/* Only ever a real, non-zero count. A badge reading 0 and a
                   badge whose count could not be read look the same, and only
                   one of them means there is nothing to do. */}

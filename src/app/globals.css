@@ -1578,6 +1578,31 @@ body:has(.ops-shell) .site-shell > footer { display: none !important; }
 body:has(.ops-shell) .site-shell { padding: 0 !important; }
 body:has(.ops-shell) #main-content { width: 100%; }
 
+/* THE ONE THAT MATTERS — the console rendered at 1280x0 without it.
+ *
+ * `.site-shell > main` carries `animation: page-enter .4s … both`, and
+ * `fill-mode: both` holds the final keyframe forever, so the computed transform
+ * stays `matrix(1,0,0,1,0,0)` — non-`none` — for the life of the page. A
+ * transformed ancestor is the containing block for `position: fixed`
+ * descendants, so `.ops-shell`'s `inset: 0` resolved against `#main-content`
+ * rather than the viewport. `#main-content` wraps only the shell, whose own
+ * children are inside that fixed box, so it measures ZERO height — and the
+ * console collapsed to nothing.
+ *
+ * Nothing about this looks broken: the markup is correct, the CSS loads, the
+ * rail and every section are in the DOM, and `getComputedStyle` says
+ * `display: flex; visibility: visible; opacity: 1`. Only the measured rect
+ * gives it away. Found by walking the ancestor chain for
+ * transform/filter/contain in a real browser.
+ *
+ * `.mmm-frame` hit this exact bug and mmm.css documents it at length; this is
+ * the same fix for the same reason, scoped the same way the rules above are,
+ * so every other route keeps its page-enter transition. */
+body:has(.ops-shell) .site-shell > main {
+  animation: none !important;
+  transform: none !important;
+}
+
 /* Invite-code panel (RequestBetaAccessForm) on /register. These five rules
    are the only styling those class names have anywhere, so they are kept
    here rather than dropped with the layer that used to hold them — retoned
