@@ -183,13 +183,37 @@ const PAGES = [
   // slot moved to the hub that actually renders the marketing prose now — and
   // carries the data-backed tier's budget, because that is what /info is.
   { path: '/info', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/discover', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  { path: '/shows', budget: { performance: 0.65, lcp: 4800, cls: 0.1, tbt: 550 } },
-  // The signed-in module deck is intentionally richer than the public pages.
-  // Its first budget is conservative while collecting a real CI baseline;
-  // it still catches catastrophic regressions and, crucially, measures the
-  // authenticated experience instead of assuming public-page speed covers it.
-  { path: '/listen', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
+  // '/discover', '/shows' and '/listen' used to sit here. All three became
+  // redirect aliases into '/app/*' when MMM took over the signed-in app, and
+  // the rule one entry up then applied to them: what got measured was the
+  // destination, filed under the retired URL.
+  //
+  // It was worse than mislabelling, because none of them measured a
+  // destination either. A `redirect()` under a `loading.tsx` boundary — and
+  // `src/app/loading.tsx` is one, for every route in the app — cannot answer
+  // with a 307: the shell is already streaming, so Next emits a 200 carrying
+  // `<meta http-equiv="refresh" content="1;url=…">`. Lighthouse therefore
+  // scored an almost-empty shell, and then the refresh replaced the whole
+  // document mid-run. That is what the 2026-08-17 figures on PR #716 are:
+  //
+  //     '/shows'     perf 0.32   LCP 6510ms   CLS 0.753
+  //     '/discover'  perf 0.39   LCP 6472ms   CLS 0.371
+  //     '/listen'    perf 0.92   LCP 2901ms   CLS 0.000   <- "PASS"
+  //
+  // The CLS is the document swap, not a page. The '/listen' PASS is the same
+  // artefact wearing the opposite face: a blank shell scores 0.92 and proves
+  // nothing, which is how an entry that measured nothing at all stayed green
+  // and unnoticed. A budget cannot be calibrated from any of these.
+  //
+  // So the two real MMM surfaces are measured directly and authenticated,
+  // which is also the only way to reach them — both are behind the auth gate.
+  // The budgets are deliberately conservative first values with no trustworthy
+  // baseline behind them yet, exactly as '/listen' carried when it was added:
+  // they catch a catastrophic regression and nothing finer. Calibrate them
+  // from real CI samples once a few have accumulated, and do not read an early
+  // pass as evidence the surface is fast.
+  { path: '/app/map', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } },
+  { path: '/app/music/discover', authenticated: true, budget: { performance: 0.35, lcp: 8000, cls: 0.15, tbt: 2500 } }
 ];
 
 const METRICS = [
