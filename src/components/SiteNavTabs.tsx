@@ -16,7 +16,7 @@ const TABS = [
     ),
   },
   {
-    id: 'events', labelKey: 'siteNavTabs.events', label: 'Events', href: '/shows', color: 'var(--role-venue)',
+    id: 'events', labelKey: 'siteNavTabs.events', label: 'Events', href: '/app/map?layer=events', color: 'var(--role-venue)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <rect height="16" rx="3" width="18" x="3" y="5" />
@@ -37,8 +37,8 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/app/music') || pathname.startsWith('/discover') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
-  if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
+  if (pathname.startsWith('/app/music') || pathname.startsWith('/radio') || pathname === '/') return 'listen';
+  if (pathname.startsWith('/shows') || pathname.startsWith('/events') || pathname.startsWith('/app/map')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
 }

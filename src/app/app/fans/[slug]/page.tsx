@@ -181,7 +181,7 @@ export default async function FanProfilePage({
 
         {activeSection === 'shows' && (
           upcomingShows.length === 0 ? (
-            <div className="fan-empty"><p>{t('fansSlugPage.noUpcomingShows', 'No upcoming shows.')} <Link href="/shows" style={{ color: 'var(--accent)' }}>{t('fansSlugPage.browseEvents', 'Browse events →')}</Link></p></div>
+            <div className="fan-empty"><p>{t('fansSlugPage.noUpcomingShows', 'No upcoming shows.')} <Link href="/app/map?layer=events" style={{ color: 'var(--accent)' }}>{t('fansSlugPage.browseEvents', 'Browse events →')}</Link></p></div>
           ) : (
             <div className="fan-show-list">
               {upcomingShows.map((show) => (

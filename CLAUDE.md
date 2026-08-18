@@ -285,7 +285,7 @@ item, not an oversight — do not treat a marketing page's spacing as drift.
 | .dc.html | Route | src/app path |
 |---|---|---|
 | FanHome.dc.html | **retired** | `/listen` is a redirect to `/app/music/discover`. DS8's route map has no `/listen`; the music surfaces are `templates/simplified-app/`'s MUSIC module. |
-| Discover.dc.html | /discover | src/app/discover/page.tsx |
+| Discover.dc.html | **retired** | `/discover` is **deleted**, not a redirect (2026-08-18). It was a redirect-only alias, and a `redirect()` under the root `loading.tsx` boundary cannot answer with a 307 — it renders a 200 carrying a one-second `<meta refresh>`, so the alias was slower than a link and invisible to anything that does not run the refresh. Discovery is `/app/music/discover`; callers point there directly. `guard:design` asserts the file stays gone. |
 | Search.dc.html | /search | src/app/search/page.tsx |
 | Notifications.dc.html | /me/dashboard | **Merged into the fan dashboard (2026-07-29)** — `NotificationsList.tsx` is now a section of `src/app/me/dashboard/page.tsx`, using the same query. `/me/notifications` stays a redirect because the link ships inside real notification emails and push payloads already delivered. `/api/me/notifications` (GET feed, POST mark-read) is unchanged. |
 | FanProfile.dc.html | /fans/[slug] | src/app/fans/[slug]/page.tsx |
@@ -295,7 +295,7 @@ item, not an oversight — do not treat a marketing page's spacing as drift.
 ### Events
 | .dc.html | Route | src/app path |
 |---|---|---|
-| Events.dc.html | /shows | src/app/shows/page.tsx (renders `EventsHome.tsx`) |
+| Events.dc.html | **retired** | `/shows` (the index) is **deleted**, same reason and same date as `/discover` above. Events are `/app/map?layer=events`, and the Events tab in `SiteNavTabs` and `MobileBottomNav` links straight there. **`/shows/[slug]` is untouched and must stay** — it is the public URL people share to sell tickets, and it still renders logged out. Removing the index also required pulling `/shows` out of `public/sw.js`'s `CORE_PAGES`: `cache.addAll()` rejects wholesale on any 404, so a dead entry there breaks service-worker install rather than degrading a precache. |
 | Show.dc.html | /shows/[slug] | src/app/shows/[slug]/page.tsx |
 | EventCreator.dc.html | /events/new | src/app/events/new/page.tsx |
 | Payout.dc.html | /payout/[eventId] | src/app/payout/[id]/page.tsx — per-event 70/20/10 breakdown. Since 2026-07-26 (DESIGN_SYNC row 249), also reachable via `/payouts?tab=show`'s show picker |

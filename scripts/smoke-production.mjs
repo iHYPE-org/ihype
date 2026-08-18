@@ -10,7 +10,7 @@ const requireLaunchReady = process.env.SMOKE_REQUIRE_LAUNCH_READY === '1';
 const checks = [
   { path: '/', expect: [200] },
   { path: '/login', expect: [200] },
-  { path: '/shows', expect: [200] },
+  { path: '/info', expect: [200] },
   { path: '/listen', expect: [200] },
   { path: '/pages', expect: [200] },
   { path: '/status', expect: [200] },

@@ -27,7 +27,7 @@ const TABS = [
   {
     id: 'events',
     label: 'Events',
-    href: '/shows',
+    href: '/app/map?layer=events',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="2"/>
@@ -51,8 +51,8 @@ const TABS = [
 ];
 
 function matchTab(pathname: string): string {
-  if (pathname.startsWith('/discover') || pathname.startsWith('/radio')) return 'listen';
-  if (pathname.startsWith('/shows') || pathname.startsWith('/events')) return 'events';
+  if (pathname.startsWith('/app/music') || pathname.startsWith('/radio')) return 'listen';
+  if (pathname.startsWith('/shows') || pathname.startsWith('/events') || pathname.startsWith('/app/map')) return 'events';
   if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
 }

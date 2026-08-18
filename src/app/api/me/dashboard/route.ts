@@ -8,10 +8,10 @@ export const dynamic = 'force-dynamic';
 type DashboardRole = 'fan' | 'artist' | 'venue' | 'advertiser';
 
 const roleWorkspace: Record<DashboardRole, { title: string; href: string; next: string; actions: Array<{ title: string; href: string }> }> = {
-  fan: { title: 'Your listening profile', href: '/me/dashboard', next: 'Open your next local discovery', actions: [{ title: 'Open my Discovery playlist', href: '/playlists' }, { title: 'Share my HYPE link', href: '/me/promote' }, { title: 'See nearby events', href: '/shows' }] },
+  fan: { title: 'Your listening profile', href: '/me/dashboard', next: 'Open your next local discovery', actions: [{ title: 'Open my Discovery playlist', href: '/playlists' }, { title: 'Share my HYPE link', href: '/me/promote' }, { title: 'See nearby events', href: '/app/map?layer=events' }] },
   artist: { title: 'Artist page and release workspace', href: '/pages', next: 'Strengthen your artist page', actions: [{ title: 'Edit artist page', href: '/pages' }, { title: 'Create recommended tour', href: '/tour-planner' }, { title: 'Review song insights', href: '/profile-insights' }] },
   venue: { title: 'Venue page and event workspace', href: '/pages', next: 'Create your next event', actions: [{ title: 'Create an event', href: '/events/new' }, { title: 'Edit venue page', href: '/pages' }, { title: 'Review booking interest', href: '/tour-planner' }] },
-  advertiser: { title: 'Music-only advertising workspace', href: '/advertise/dashboard', next: 'Review your aggregate scene matches', actions: [{ title: 'Open advertiser dashboard', href: '/advertise/dashboard' }, { title: 'Review aggregate heat map', href: '/shows' }, { title: 'Update advertiser profile', href: '/advertise' }] },
+  advertiser: { title: 'Music-only advertising workspace', href: '/advertise/dashboard', next: 'Review your aggregate scene matches', actions: [{ title: 'Open advertiser dashboard', href: '/advertise/dashboard' }, { title: 'Review aggregate heat map', href: '/app/map?layer=events' }, { title: 'Update advertiser profile', href: '/advertise' }] },
 };
 
 function labelForNotification(type: string) {

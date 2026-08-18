@@ -431,7 +431,7 @@ async function run() {
     );
 
     // 6. Core pages render.
-    for (const path of ['/', '/discover', '/login']) {
+    for (const path of ['/', '/info', '/login']) {
       const page = await probe(path);
       check(`GET ${path} returns 200`, page.status === 200, `status=${page.status}`);
     }

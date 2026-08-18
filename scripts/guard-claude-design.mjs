@@ -74,10 +74,8 @@ assertIncludes(
   'Non-MMM routes keep the public site frame without a second app shell.'
 );
 for (const [relativePath, destination] of [
-  ['src/app/discover/page.tsx', '/app/music/discover'],
   ['src/app/radio/page.tsx', '/app/music/radio'],
   ['src/app/search/page.tsx', '/app/music/discover'],
-  ['src/app/shows/page.tsx', '/app/map'],
   ['src/app/tickets/page.tsx', '/app/me?section=tickets'],
   ['src/app/for-you/page.tsx', '/app/music/recommended'],
   ['src/app/this-weekend/page.tsx', '/app/map'],
@@ -243,6 +241,22 @@ assertIncludes(
   'src/app/robots.ts',
   "'/home'",
   'The authenticated workbench should remain noindex via robots.'
+);
+
+// '/shows' and '/discover' were compatibility aliases into MMM and are now
+// deleted outright: both were redirect-only pages, and a redirect under the
+// root loading.tsx boundary cannot answer with a 307 — it renders a 200 with a
+// one-second <meta refresh>, so they were slower than a link and invisible to
+// anything that does not run the refresh. Their callers point at the MMM
+// destinations directly. Assert they stay gone; a page re-added here reopens a
+// second route to a surface that already has one.
+assertMissing(
+  'src/app/shows/page.tsx',
+  'Events live at /app/map?layer=events; nav links there directly.'
+);
+assertMissing(
+  'src/app/discover/page.tsx',
+  'Discovery lives at /app/music/discover; nav links there directly.'
 );
 
 console.log('Design guard passed: one signed-in app surface, no retired shells resurrected.');

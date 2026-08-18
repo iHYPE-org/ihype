@@ -75,7 +75,7 @@ const BUDGET = {
 };
 
 const PAGES = [
-  '/', '/info', '/login', '/register', '/join', '/discover', '/shows',
+  '/', '/info', '/login', '/register', '/join',
   '/for-artists', '/for-venues', '/advertise', '/walkthrough', '/community',
   '/journal', '/status', '/launch', '/this-weekend',
 ];
