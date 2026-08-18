@@ -263,7 +263,14 @@ jobs:
 
       - name: Mandatory authenticated Workerd performance budget
         if: env.FULL_CI == 'true'
-        timeout-minutes: 20
+        # 20 was not enough on 2026-08-17 (PR #716): four of six pages went
+        # over budget, each one paying a second full audit to confirm a breach
+        # that could not fail the build, and the step was killed five seconds
+        # after its own script printed "all checks passed". The confirmation
+        # pass is now skipped unless LIGHTHOUSE_BUDGET_ENFORCE=1
+        # (scripts/lighthouse-budget.mjs), which is the real fix; this is the
+        # margin so that a slow runner alone cannot reproduce the same failure.
+        timeout-minutes: 30
         run: |
           set -o pipefail
           node scripts/workerd-smoke.mjs 2>&1 | tee workerd-performance-smoke.log

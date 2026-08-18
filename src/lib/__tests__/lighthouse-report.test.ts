@@ -149,6 +149,28 @@ describe('renderSummaryMarkdown', () => {
     expect(md).toContain('| `/info` | second | 0.73 |');
   });
 
+  it('does not claim two samples for a breach that was only measured once', () => {
+    // The shape produced in reporting-only mode, where a page over budget is
+    // no longer re-sampled: confirming a breach costs a second full audit of
+    // the slowest pages in the set and cannot change an outcome when nothing
+    // is gating. That is what took the CI step past its 20-minute cap on
+    // 2026-08-17. The finding still has to be reported — but as what it is.
+    const single = {
+      ...passing,
+      path: '/shows',
+      metrics: { lcp: 6510, cls: 0.753, tbt: 572 },
+      performance: 0.32,
+      resample: null,
+      failures: checkBudget(BUDGET, sample(0.32, 6510, 0.753, 572)),
+    };
+    const md = renderSummaryMarkdown([single]);
+    expect(md).toContain('### Over budget');
+    expect(md).toContain('`/shows` — CLS 0.753 > budget 0.100 *(single sample, not confirmed)*');
+    expect(md).not.toContain('exceeded in both samples');
+    // Nothing to put in a two-sample comparison table, so it stays out.
+    expect(md).not.toContain('### Re-sampled pages');
+  });
+
   it('surfaces an unconfirmed breach as a warning without claiming a failure', () => {
     const warned = {
       ...passing,

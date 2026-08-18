@@ -231,6 +231,12 @@ const RUNS_PER_PAGE = 5;
  * summary on every run — that is the part that had value. What is removed is
  * their ability to hold a merge hostage over a 4x-amplified CPU hiccup.
  *
+ * One consequence lives in the audit loop below: when this is off, a page
+ * over budget is NOT re-sampled. Confirming a breach only matters if the
+ * breach can fail something, and the confirmation pass is a second full
+ * RUNS_PER_PAGE audit of whichever pages are slowest — which is what pushed
+ * the CI step past its 20-minute cap on 2026-08-17.
+ *
  * Set LIGHTHOUSE_BUDGET_ENFORCE=1 to restore gating. Worth doing once the
  * measurement is trustworthy — running against a production-mode server, or
  * with `throttlingMethod: 'provided'` so runner noise is not multiplied, or
@@ -437,6 +443,27 @@ export async function runLighthouseBudget({ baseUrl, chromePath, authenticatedHe
 
       if (firstFailures.length) {
         for (const f of firstFailures) console.log(`  - ${f.message}`);
+      }
+
+      if (firstFailures.length && !ENFORCE) {
+        // The re-sample exists to stop a flake FAILING A BUILD. When nothing
+        // is gating, it cannot change a single outcome — the breach is
+        // reported either way — so it buys nothing and costs a second full
+        // RUNS_PER_PAGE audit of the slowest pages in the set.
+        //
+        // That is not a small cost. On 2026-08-17 (PR #716) four of six pages
+        // were over budget, and the step hit its 20-minute cap five seconds
+        // after finishing: '/discover' took 7.5 minutes and '/shows' 8.75,
+        // against ~35s for a page that passed. Roughly half of each was the
+        // re-sample nobody could act on. The audits still run, the numbers are
+        // still logged and annotated; only the confirmation pass is skipped,
+        // and it comes straight back when LIGHTHOUSE_BUDGET_ENFORCE=1.
+        failures = firstFailures;
+        for (const f of failures) console.log(`  OVER ${f.message} (single sample — reporting only, not re-sampled)`);
+        if (failures.some((f) => f.metric === 'lcp')) {
+          console.log(`  LCP element: ${formatLcpElement(first.lcpElement)}`);
+        }
+      } else if (firstFailures.length) {
         // Re-sample before failing the build. A median of 5 still straddles
         // the line when a page's true value sits near its budget, and this
         // gate has failed twice in one day on exactly that — same page, same
