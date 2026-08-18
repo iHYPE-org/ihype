@@ -3034,8 +3034,15 @@ html.mmm-locked .site-shell > main {
    the pill follows, and why `--mmm-chrome-size` exists. */
 .mmm-mini {
   position: absolute;
-  display: none; /* the 620px block above turns it on */
-  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
+  display: none; /* the phone block at the end of this file turns it on */
+  /* Docked immediately right of the trigger, on its baseline — the same
+     `--mmm-player-left` the wide pill uses, because it is the same slot. The
+     token's own note says the pill docks there "at EVERY width, which is what
+     the design draws on a phone too", so the two pieces of chrome read as one
+     unit at any size and the player never moves corner to corner between
+     breakpoints. This sat bottom-right for one release and that was wrong. */
+  left: var(--mmm-player-left);
+  right: auto;
   bottom: var(--mmm-bottom);
   width: var(--mmm-chrome-size);
   height: var(--mmm-chrome-size);
@@ -3132,7 +3139,9 @@ html.mmm-locked .site-shell > main {
    remaining wait when a hold is refused. */
 .mmm-mini-hint {
   position: absolute;
-  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
+  /* Above the button it describes, sharing its left edge. */
+  left: var(--mmm-player-left);
+  right: auto;
   bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 12px);
   z-index: 29;
   padding: 7px 11px;
