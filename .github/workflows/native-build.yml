@@ -197,6 +197,7 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PROFILE_UUID" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
             archive
 
       - name: Export .ipa
