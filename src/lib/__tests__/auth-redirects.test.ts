@@ -70,6 +70,75 @@ describe('isProtectedPath', () => {
     expect(isProtectedPath('/shows/my-show')).toBe(false);
   });
 
+  // The point of the inversion. A route nobody classified is PROTECTED, so
+  // forgetting produces a login redirect rather than an exposed page. If this
+  // ever goes back to false, the gate has been turned inside out again and
+  // every future page ships public by default.
+  it('protects a route nobody has classified', () => {
+    expect(isProtectedPath('/some-page-added-next-year')).toBe(true);
+    expect(isProtectedPath('/internal/tooling')).toBe(true);
+    expect(isProtectedPath('/artists/some-band')).toBe(true);
+    expect(isProtectedPath('/tracks/abc123')).toBe(true);
+  });
+
+  // The funnel. Gating any of these is a deadlock: the charter's 10% promoter
+  // share is attributed by a link a stranger clicks, and a stranger has no
+  // session by definition.
+  it('leaves the funnel and referral entry points open', () => {
+    for (const path of ['/', '/join', '/launch', '/for-artists', '/register', '/login']) {
+      expect(isProtectedPath(path), path).toBe(false);
+    }
+    expect(isProtectedPath('/h/abc123')).toBe(false);
+    expect(isProtectedPath('/invite/abc123')).toBe(false);
+    expect(isProtectedPath('/shows/signal-yard')).toBe(false);
+    expect(isProtectedPath('/embed/deadbeef')).toBe(false);
+  });
+
+  // Apple and Google both require a publicly reachable privacy policy URL for
+  // a store listing, and a consent link nobody can open is not consent.
+  it('leaves legal and policy reachable without an account', () => {
+    for (const path of ['/info', '/info/anything', '/privacy', '/terms', '/charter', '/community-rules']) {
+      expect(isProtectedPath(path), path).toBe(false);
+    }
+  });
+
+  // Static files under public/ come through the same matcher as pages. A
+  // default-deny gate that redirects the service worker or the app icons to a
+  // login page breaks installability and offline, silently.
+  it('never gates a static asset', () => {
+    for (const path of ['/manifest.json', '/sw.js', '/robots.txt', '/sitemap.xml',
+                        '/icons/icon-192.png', '/.well-known/security.txt', '/brand/logo.webp']) {
+      expect(isProtectedPath(path), path).toBe(false);
+    }
+  });
+
+  // The public part of /shows is exactly the show page. Door-staff and
+  // organiser tooling lives one segment deeper and must stay gated, even
+  // though each of those routes also defends itself.
+  it('opens the show page but not the tooling beneath it', () => {
+    expect(isProtectedPath('/shows/signal-yard')).toBe(false);
+    expect(isProtectedPath('/shows/signal-yard/opengraph-image')).toBe(false);
+    for (const deep of ['scan', 'checkin', 'qr', 'poster', 'cancel', 'lineup']) {
+      expect(isProtectedPath(`/shows/signal-yard/${deep}`), deep).toBe(true);
+    }
+  });
+
+  it('depth-limits the other single-segment public entry points', () => {
+    expect(isProtectedPath('/h/abc')).toBe(false);
+    expect(isProtectedPath('/h/abc/anything')).toBe(true);
+    expect(isProtectedPath('/invite/abc')).toBe(false);
+    expect(isProtectedPath('/embed/abc')).toBe(false);
+    expect(isProtectedPath('/embed/abc/admin')).toBe(true);
+  });
+
+  // A member's own data is not the front door, even where the front door is.
+  it('gates the private surface behind a public sibling', () => {
+    expect(isProtectedPath('/advertise')).toBe(false);
+    expect(isProtectedPath('/advertise/dashboard')).toBe(true);
+    expect(isProtectedPath('/support')).toBe(false);
+    expect(isProtectedPath('/support/tickets')).toBe(true);
+  });
+
   // The deadlock this exemption exists to break: /admin/setup creates the
   // administrator account, and gating it behind a session meant the only
   // credential that could reach it was the one it existed to create. Signing up

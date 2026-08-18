@@ -1559,6 +1559,25 @@ body:has(.authcard-page) .site-shell > footer { display: none !important; }
 body:has(.authcard-page) .site-shell { padding: 0 !important; }
 body:has(.authcard-page) #main-content { width: 100%; }
 
+/* The admin console is a full-screen shell of its own — `.ops-shell` is
+   position:fixed;inset:0 — but it renders inside the root layout like every
+   other route, so the public site header, the background orbs, the player dock
+   and the site footer were all still mounted around it. On /admin that meant
+   the Listen/Events/Pages tabs and a "Nothing playing" dock framing an
+   operations console, with the header painting over the ops top bar.
+
+   Same mechanism the auth card above uses, and for the same reason: the root
+   layout has no path awareness, so a page that owns the whole screen has to say
+   so in markup rather than the layout guessing. `.ihype-mobile-nav` is included
+   because the console has its own bottom bar and two would stack. */
+body:has(.ops-shell) .adaptive-site-header,
+body:has(.ops-shell) .site-background,
+body:has(.ops-shell) .site-dock,
+body:has(.ops-shell) .ihype-mobile-nav,
+body:has(.ops-shell) .site-shell > footer { display: none !important; }
+body:has(.ops-shell) .site-shell { padding: 0 !important; }
+body:has(.ops-shell) #main-content { width: 100%; }
+
 /* Invite-code panel (RequestBetaAccessForm) on /register. These five rules
    are the only styling those class names have anywhere, so they are kept
    here rather than dropped with the layer that used to hold them — retoned
