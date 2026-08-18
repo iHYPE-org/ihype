@@ -65,6 +65,22 @@ const RETIRED_APP_ROUTES = [
   '/fans', '/settings', '/community', '/legal',
 ].map((path) => ({ path, kind: 'prefix' }));
 
+/**
+ * Public surfaces that sit under a retired prefix and are NOT the retired shell.
+ *
+ * `/shows/[slug]` is the URL people share to sell tickets. It renders logged
+ * out, it is indexed, and it carries the ticket purchase card — so it belongs
+ * with `/`, `/info` and `/login` in OUTSIDE, not in the retirement target.
+ *
+ * This is not a loophole for porting work: it is an exact path, and the test
+ * for adding another is whether the page must serve a signed-out stranger. If
+ * it only ever serves a signed-in member, it is shell work and belongs in the
+ * ratchet. Getting this wrong once already cost real money — the page was
+ * turned into an alias into `/app/*`, which is auth-gated, so every shared
+ * ticket link bounced a buyer to the login screen.
+ */
+const PUBLIC_EXCEPTIONS = new Set(['/shows/[slug]']);
+
 function routes() {
   return globSync('src/app/**/page.tsx')
     .map((file) => {
@@ -119,6 +135,7 @@ function main() {
   const corpus = sourceCorpus();
 
   const inShell = (path) =>
+    !PUBLIC_EXCEPTIONS.has(path) &&
     entries.some((e) => (e.kind === 'exact' ? path === e.path : path === e.path || path.startsWith(`${e.path}/`)));
 
   const linked = (path) => {
