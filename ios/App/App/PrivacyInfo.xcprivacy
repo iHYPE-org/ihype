@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Privacy manifest. Required since May 2024: App Store Connect REJECTS THE
+  UPLOAD without one, so this fails at submission time rather than in review.
+
+  What this file is and is not. It declares what the BINARY does — the native
+  shell and the SDKs compiled into it. It is not the App Privacy questionnaire,
+  which is filled in by hand in App Store Connect and covers what iHYPE the
+  service collects (account, tickets, payment via Stripe, listening history).
+  Filling one does not fill the other, and they must not contradict each other.
+
+  Accessed API reasons: Capacitor's iOS bridge reads and writes UserDefaults
+  for its own configuration and plugin state. CA92.1 is the reason code for
+  accessing values written by this same app — which is the only thing it does
+  with them.
+
+  NSPrivacyTracking is false and the tracking-domain list is empty on purpose:
+  iHYPE runs no cross-app tracking and no ad SDK. Setting this true, or listing
+  a domain here, would require App Tracking Transparency and a prompt the
+  product does not have.
+-->
+<plist version="1.0">
+<dict>
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>CA92.1</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>

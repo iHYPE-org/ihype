@@ -26,6 +26,15 @@
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>iHYPE uses your approximate location while the app is open to show nearby local music, venues, and events.</string>
+	<!-- Declared ahead of the scanner it is for. Ticket check-in is a text
+	     field today and nothing calls getUserMedia, but a WKWebView camera
+	     request with no usage string does not fail — iOS kills the app. The
+	     string has to be in the binary BEFORE the first camera call ships,
+	     and it costs nothing until then: iOS only ever surfaces it at the
+	     moment of the prompt. Wording is the camera primer's own promise in
+	     src/lib/permission-primers.ts; if that copy changes, change this. -->
+	<key>NSCameraUsageDescription</key>
+	<string>iHYPE uses the camera to scan ticket codes at the door. The frame is read and dropped — nothing is recorded and no image is stored.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
