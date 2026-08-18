@@ -135,8 +135,13 @@ export function renderSummaryMarkdown(report) {
     lines.push('### Over budget');
     lines.push('');
     for (const entry of failing) {
+      // Only claim two samples when two were actually taken. A page over
+      // budget is re-sampled solely to avoid failing a build on a flake, so
+      // when nothing is gating there is no second sample to appeal to — and
+      // saying otherwise overstates the evidence behind the number.
+      const provenance = entry.resample ? 'exceeded in both samples' : 'single sample, not confirmed';
       for (const failure of entry.failures) {
-        lines.push(`- \`${entry.path}\` — ${failure.message} *(exceeded in both samples)*`);
+        lines.push(`- \`${entry.path}\` — ${failure.message} *(${provenance})*`);
       }
     }
     lines.push('');
