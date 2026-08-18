@@ -278,6 +278,9 @@ const RUNTIME_DEFINED = [
   // Set inline by MmmPlayer on each range input — it is the seek/volume fill
   // percentage, a per-element value that cannot be a token by definition.
   /^--fill$/,
+  // Set inline by MmmMiniPlayer on each burst particle: the particle's index,
+  // which is what fans them out. Per-element by definition, same as --fill.
+  /^--i$/,
 ];
 // walk() above deliberately collects only .tsx — but tokens are DEFINED in
 // .css, so reusing it here would report every real token as undefined.
