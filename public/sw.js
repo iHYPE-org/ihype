@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-02b07209';
+const CACHE_VERSION = 'ihype-16fd53c';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -17,7 +17,6 @@ const STATIC_ASSETS = [
 
 const CORE_PAGES = [
   '/',
-  '/shows',
   '/hype',
   '/tickets',
   // Precached so the real offline page is available when there is no network.
