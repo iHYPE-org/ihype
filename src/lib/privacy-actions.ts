@@ -339,7 +339,6 @@ export async function executeAccountErasure(
         avatarImage: null,
         logoImage: null,
         galleryImage: null,
-        featureVideoUrl: null,
         companionSpriteSheet: null,
         links: null,
         merchUrl: null,

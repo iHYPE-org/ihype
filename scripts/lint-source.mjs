@@ -30,7 +30,7 @@ const sourceFiles = await walk('src');
  * Inline `fontSize` in px does not scale.
  *
  * Settings → Accessibility → Text size writes `--ihype-text-scale`, and
- * `shell.css` applies it as `:root { font-size: calc(100% * var(...)) }` — so
+ * `mmm-workflows.css` applies it as `:root { font-size: calc(100% * var(...)) }` — so
  * `rem` follows it and `px` cannot. 691 inline px sizes across 77 files were
  * therefore invisible to that control, which is an accessibility setting that
  * silently did nothing on most of the app.
@@ -181,7 +181,8 @@ if (!firstPasskeyRoute.includes('passkeyBootstrapToken.updateMany')) {
 }
 
 const showPage = await text('src/app/shows/[slug]/page.tsx');
-if (showPage.includes('void canWatch') || !showPage.includes('protectShowProductionPlan')) {
+const showPageIsAlias = showPage.includes("redirect(`/app/shows/");
+if (!showPageIsAlias && (showPage.includes('void canWatch') || !showPage.includes('protectShowProductionPlan'))) {
   fail('src/app/shows/[slug]/page.tsx', 'ticketed production plans must be entitlement-gated and URL-protected.');
 }
 

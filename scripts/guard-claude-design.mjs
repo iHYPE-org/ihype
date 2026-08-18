@@ -1,4 +1,5 @@
 import { readFileSync, existsSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
 const root = process.cwd();
@@ -52,6 +53,51 @@ assertMissing(
   'src/app/ui-preview/page.tsx',
   'The module-deck preview harness went with the deck it previewed.'
 );
+assertNotIncludes(
+  'src/app/layout.tsx',
+  "@/components/shell/AppShell",
+  'The retired signed-in AppShell must never wrap runtime routes again.'
+);
+assertIncludes(
+  'src/components/mmm/MmmShell.tsx',
+  'className="mmm-migrated-surface"',
+  'Migrated backend workflows must receive the shared MMM surface vocabulary inside the MMM pane.'
+);
+assertIncludes(
+  'src/app/mmm.css',
+  '.mmm-pane > .mmm-migrated-surface',
+  'The migrated surface scope must not inherit the retired AppShell layout.'
+);
+assertIncludes(
+  'src/app/layout.tsx',
+  '<main id="main-content">{children}</main>',
+  'Non-MMM routes keep the public site frame without a second app shell.'
+);
+for (const [relativePath, destination] of [
+  ['src/app/discover/page.tsx', '/app/music/discover'],
+  ['src/app/radio/page.tsx', '/app/music/radio'],
+  ['src/app/search/page.tsx', '/app/music/discover'],
+  ['src/app/shows/page.tsx', '/app/map'],
+  ['src/app/tickets/page.tsx', '/app/me?section=tickets'],
+  ['src/app/for-you/page.tsx', '/app/music/recommended'],
+  ['src/app/this-weekend/page.tsx', '/app/map'],
+  ['src/app/settings/page.tsx', '/app/me/settings'],
+  ['src/app/settings/accessibility/page.tsx', '/app/me/accessibility'],
+  ['src/app/pages/page.tsx', '/app/me/profiles'],
+  ['src/app/payouts/page.tsx', '/app/me/payouts'],
+  ['src/app/tickets/[serializedId]/page.tsx', '/app/me/tickets'],
+  ['src/app/me/dashboard/page.tsx', '/app/me'],
+  ['src/app/me/analytics/page.tsx', '/app/me'],
+  ['src/app/me/promote/page.tsx', '/app/me'],
+  ['src/app/me/promote/analytics/page.tsx', '/app/me'],
+  ['src/app/community/page.tsx', '/app/me'],
+]) {
+  assertIncludes(
+    relativePath,
+    destination,
+    'Overlapping product URLs are compatibility aliases into Music · Map · Me.'
+  );
+}
 assertMissing(
   'src/components/MobileAppShell.tsx',
   'The phone swipe shell is retired: DS8 has no separate mobile build.'
@@ -70,6 +116,44 @@ assertIncludes(
   "WORKBENCH_PATH = '/app/map'",
   'All successful auth paths should resolve to the canonical app surface.'
 );
+for (const retiredShellFile of [
+  'src/app/shell.css',
+  'src/app/shell-surfaces.css',
+  'src/components/shell/AppShell.tsx',
+  'src/components/shell/AppShellDrawer.tsx',
+  'src/components/shell/AppShellHeader.tsx',
+  'src/components/shell/AppShellContextStrip.tsx',
+  'src/lib/app-nav.ts',
+  'src/lib/shell-account.ts',
+  'src/lib/shell-chrome.ts',
+]) {
+  assertMissing(
+    retiredShellFile,
+    'The retired authenticated shell implementation must not remain available for reuse.'
+  );
+}
+assertIncludes(
+  'src/app/layout.tsx',
+  "import './mmm-workflows.css'",
+  'Authenticated workflow controls must load from the MMM stylesheet.'
+);
+assertIncludes(
+  'src/app/layout.tsx',
+  "import './mmm-primitives.css'",
+  'Migrated workflow primitives must load from the MMM stylesheet.'
+);
+
+// A route can survive as an old bookmark without surviving as an old page.
+// This ratchet counts only legacy URLs that still render JSX; redirect-only
+// aliases are reported separately and do not paint the retired design.
+execFileSync(process.execPath, ['scripts/audit-routes.mjs', '--max-legacy=0'], {
+  cwd: root,
+  stdio: 'pipe',
+});
+execFileSync(process.execPath, ['scripts/audit-css.mjs', '--max=0'], {
+  cwd: root,
+  stdio: 'pipe',
+});
 assertIncludes(
   'src/components/AuthLogin.tsx',
   'resolvePostAuthRedirect',
@@ -125,10 +209,20 @@ if (!nextConfig.includes("source: '/home'") || !nextConfig.includes("value: 'no-
   throw new Error('next.config.mjs must keep /home on Cache-Control: no-store.');
 }
 for (const legacySource of ["source: '/workbench'", "source: '/workbench/:path*'", "source: '/dashboard'"]) {
-  if (!nextConfig.includes(legacySource) || !nextConfig.includes("destination: '/home'")) {
-    throw new Error(`next.config.mjs must keep ${legacySource} redirecting to /home.`);
+  if (!nextConfig.includes(legacySource) || !nextConfig.includes("destination: '/app/map'")) {
+    throw new Error(`next.config.mjs must keep ${legacySource} redirecting directly to /app/map.`);
   }
 }
+assertNotIncludes(
+  'next.config.mjs',
+  "destination: '/home'",
+  'Compatibility redirects must not bounce through the retired /home alias.'
+);
+assertIncludes(
+  'src/components/HeaderLogo.tsx',
+  "session?.user ? '/app/map' : '/'",
+  'The signed-in logo must return directly to the canonical MMM map.'
+);
 
 assertIncludes(
   'public/sw.js',

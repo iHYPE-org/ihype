@@ -50,7 +50,6 @@ type EditorProfile = {
   avatarImage: string | null;
   logoImage: string | null;
   galleryImage: string | null;
-  featureVideoUrl: string | null;
   themePreset: string | null;
   themeAccentTone: string | null;
   themeBackdropTone: string | null;
@@ -540,9 +539,6 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
           <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
           <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
           <ImageField label={t('pageEditor.galleryCoverLabel', 'Gallery cover')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
-          <Field hint={t('pageEditor.featureVideoHint', 'Link to a video (YouTube, etc.) featured on your page')} label={t('pageEditor.featureVideoLabel', 'Feature video URL')}>
-            <TextField onChange={(v) => set('featureVideoUrl', v)} placeholder="https://…" value={data.featureVideoUrl ?? ''} />
-          </Field>
         </div>
       )}
 

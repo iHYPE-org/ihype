@@ -17,7 +17,7 @@ const schema = z.object({
  * POST /api/stripe/connect/onboard
  *
  * Creates (or resumes) a Stripe Connect Express onboarding session for an
- * artist, venue, or promoter profile. Returns { onboardingUrl } to redirect
+ * artist or venue profile. Returns { onboardingUrl } to redirect
  * the owner to Stripe's hosted onboarding flow.
  */
 export async function POST(request: Request) {
@@ -60,7 +60,7 @@ export async function POST(request: Request) {
   }
 
   if (!['ARTIST', 'VENUE'].includes(profile.type)) {
-    return NextResponse.json({ error: 'Only artist, promoter, and venue profiles can connect payouts.' }, { status: 400 });
+    return NextResponse.json({ error: 'Only artist and venue profiles can connect payouts.' }, { status: 400 });
   }
 
   let connectAccountId = profile.stripeConnectAccountId;

@@ -295,11 +295,8 @@ test.describe('Music · Map · Me shell', () => {
       await page.getByRole('button', { name: label, exact: true }).click();
       await expect(nearMe, `Near me is missing on ${label}`).toBeVisible();
     }
-    // The count is artists-only: an artist pin is a city, so "how many here" is
-    // the only reading it has. Events and venues answer that with their pins.
-    await page.getByRole('button', { name: 'Artists', exact: true }).click();
-    await expect(page.locator('.mmm-map-near')).toHaveAttribute('data-count', 'true');
-    await page.getByRole('button', { name: 'Events', exact: true }).click();
+    // The redundant artists count was removed; Near me stays a stable action
+    // in the same position without changing shape between layers.
     await expect(page.locator('.mmm-map-near')).not.toHaveAttribute('data-count', 'true');
   });
 
@@ -368,12 +365,12 @@ test.describe('Music · Map · Me shell', () => {
     await expect(field).toHaveValue('');
   });
 
-  // The four panels are ACCORDIONS, not links. They were four routes under
-  // /app/me/[panel] until the 2026-08-10 template made ME one column of
-  // drawers that open in place — the old routes now redirect onto
-  // /app/me?panel=<id>, so this asserts the control that exists rather than
-  // the navigation that was removed.
-  test('the ME surface carries the four account panels as rows, not a fan-out', async ({ page }) => {
+  // The canonical panels are ACCORDIONS, not links. Legal now lives under
+  // Info and Accessibility under Settings, so neither is repeated at this
+  // level. Their retired routes still resolve to these parent drawers.
+  // The old routes redirect onto their canonical parent drawer, so this
+  // asserts the controls that exist rather than the navigation that moved.
+  test('the ME surface carries Settings and Info as rows, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
     // Matched on the LABEL SPAN, not on the button's text and not on its
     // accessible name. Both of those are the label and the detail line
@@ -391,12 +388,14 @@ test.describe('Music · Map · Me shell', () => {
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
 
-    for (const label of ['Settings', 'Info', 'Legal', 'Accessibility']) {
+    for (const label of ['Info', 'Settings']) {
       await expect(panelFor(label), `no ${label} panel`).toBeVisible();
     }
+    await expect(panelFor('Legal')).toHaveCount(0);
+    await expect(panelFor('Accessibility')).toHaveCount(0);
     // Deliberately no count assertion: `.mmm-me-accordion` is also the class
-    // on the Profiles / My Tickets / About Me drawers above, so the page
-    // carries seven of them and pinning a number here would break the next
+    // on the Profiles / My Tickets drawers above, so the page
+    // carries several of them and pinning a number here would break the next
     // time ME grows a section — which is not what this test is about.
     //
     // Collapsed until asked: a drawer that starts open is not a drawer.
@@ -405,14 +404,14 @@ test.describe('Music · Map · Me shell', () => {
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     // `exact` is load-bearing: accessible-name matching is substring by
     // default, and since the account panels became accordion BUTTONS, a loose
-    // 'ME' also matches "About Me · What artists and venues see".
+    // 'ME' also appears in other copy on the page.
     await page.getByRole('button', { name: 'ME', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me$/);
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
   });
 
-  // One drawer open at a time, page-wide — the three sections and the four
-  // account panels are ONE group. This is the invariant that cannot be seen by
+  // One drawer open at a time, page-wide — the two sections and the account
+  // panels are ONE group. This is the invariant that cannot be seen by
   // reading either half alone: the sections are component state and the panels
   // are the URL, so nothing about the types stops both being open at once.
   test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
@@ -422,9 +421,13 @@ test.describe('Music · Map · Me shell', () => {
       });
 
     await page.goto('/app/me');
-    // Profiles is the one showing before anyone has chosen.
+    // Entering ME is a clean four-row index. Nothing chooses itself.
+    for (const label of ['Profiles', 'My Tickets', 'Info', 'Settings']) {
+      await expect(drawer(label)).toHaveAttribute('aria-expanded', 'false');
+    }
+
+    await drawer('Profiles').click();
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
 
     // A section closes the other sections.
     await drawer('My Tickets').click();
@@ -440,9 +443,9 @@ test.describe('Music · Map · Me shell', () => {
 
     // And a section closes the panel — including its search param, or the drawer
     // would reopen on the next render from a URL nobody cleared.
-    await drawer('About Me').click();
+    await drawer('Profiles').click();
     await expect(page).not.toHaveURL(/panel=/);
-    await expect(drawer('About Me')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -454,7 +457,7 @@ test.describe('Music · Map · Me shell', () => {
       page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
-    await expect(drawer('Legal')).toHaveAttribute('aria-expanded', 'true');
+    await expect(drawer('Info')).toHaveAttribute('aria-expanded', 'true');
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -570,11 +573,11 @@ test.describe('Music · Map · Me shell', () => {
     });
   });
 
-  // The ticket path lives in ME now, not behind a link into the legacy shell.
+  // The ticket path lives in ME now, not behind a compatibility URL.
   // Asserted on the section rather than on rows, because a seeded account with
   // no tickets is the normal state for this suite — what must not come back is
   // the pair of buttons that left MMM.
-  test('My Tickets renders in ME rather than linking out to the legacy shell', async ({ page }) => {
+  test('My Tickets renders in ME rather than linking to a compatibility URL', async ({ page }) => {
     await page.goto('/app/me');
     const drawer = page.locator('.mmm-me-accordion:visible').filter({
       has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
@@ -613,6 +616,7 @@ test.describe('ME with a real profile', () => {
   // switcher only appears once an account holds more than the implicit Fan role.
   test('an artist account gets a page card and a role switcher', async ({ page }) => {
     await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
     await expect(page.getByText(/Your page/i)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fan', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();

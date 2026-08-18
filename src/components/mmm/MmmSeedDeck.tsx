@@ -116,11 +116,24 @@ export function MmmSeedDeck({
       const styles = getComputedStyle(document.documentElement);
       const px = (name: string) => parseFloat(styles.getPropertyValue(name)) || 0;
       const reserved = px('--mmm-bottom') + px('--mmm-chrome-size') + 20;
-      setRoom(Math.max(0, window.innerHeight - top - reserved));
+      /* visualViewport follows the actually visible WebView when iOS browser
+         chrome or the keyboard changes size; innerHeight can continue to
+         report the larger layout viewport and put the actions behind it. */
+      const viewport = window.visualViewport;
+      const visibleBottom = viewport
+        ? viewport.offsetTop + viewport.height
+        : window.innerHeight;
+      setRoom(Math.max(0, visibleBottom - top - reserved));
     };
     measure();
     window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
+    window.visualViewport?.addEventListener('resize', measure);
+    window.visualViewport?.addEventListener('scroll', measure);
+    return () => {
+      window.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('resize', measure);
+      window.visualViewport?.removeEventListener('scroll', measure);
+    };
   }, [index]);
 
   // Interval, not rAF — see the header. Restarts on every card.
@@ -164,7 +177,12 @@ export function MmmSeedDeck({
      is empty, and the pane scrolls instead. */
   const CHROME = 4 + 34 + 18 + 56;
   const available = room ?? 0;
-  const cardHeight = available ? Math.max(200, Math.min(436, available - CHROME)) : 436;
+  /* 480px is the desktop ceiling. At 560px the card itself fit a 900px
+     viewport, but its verdict controls landed behind the persistent player
+     and made the pane scroll for a few pixels. Narrow viewports still use the
+     measured room below, so iOS and Android continue to size to their actual
+     visible viewport. */
+  const cardHeight = available ? Math.max(200, Math.min(480, available - CHROME)) : 480;
   const rotation = Math.max(-14, Math.min(14, dx / 14));
   const intent = Math.min(1, Math.abs(dx) / 108);
   const colors = palette(item.artistSlug || item.artistName || item.id);

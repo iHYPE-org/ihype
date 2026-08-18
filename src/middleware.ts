@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { authConfig } from '@/lib/auth.config';
 import { ADMIN_DEVICE_COOKIE, WORKBENCH_PATH, isProtectedPath } from '@/lib/auth-redirects';
 import { MAP_TILE_HOSTS, isMapRoute } from '@/lib/csp-routes';
+import { isLocalAuthSkipEnabled } from '@/lib/local-auth-skip';
 
 const { auth } = NextAuth(authConfig);
 
@@ -161,6 +162,11 @@ const authMiddleware = auth(async (request) => {
     isProtectedPath(pathname) &&
     !request.auth
   ) {
+    if (isLocalAuthSkipEnabled(hostHeader, process.env.LOCAL_AUTH_SKIP)) {
+      const skipUrl = new URL('/api/dev/auth-skip', request.url);
+      skipUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
+      return applySecurityHeaders(NextResponse.redirect(skipUrl), nonce, pathname);
+    }
     const loginUrl = new URL('/login', request.url);
     loginUrl.searchParams.set('callbackUrl', `${pathname}${request.nextUrl.search}`);
     return applySecurityHeaders(NextResponse.redirect(loginUrl), nonce, pathname);

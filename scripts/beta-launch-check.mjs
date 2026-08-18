@@ -17,7 +17,7 @@ const REQUIRED = [
   { key: 'CRON_SECRET', hint: 'Protects /api/cron/* routes; generate with: openssl rand -hex 32' },
   { key: 'TURNSTILE_SECRET_KEY', hint: 'Required for production signup abuse protection' },
   { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects admin-device registration; generate with: openssl rand -hex 32' },
-  { key: 'ADMIN_ALERT_EMAIL', hint: 'Comma-separated operational alert recipients' },
+  { key: 'ADMIN_ALERT_EMAIL', hint: 'Operational alert recipient' },
   { key: 'RESTORE_DRILL_VERIFIED_AT', hint: 'ISO timestamp from a successful isolated backup restore drill' },
   { key: 'VAPID_PUBLIC_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_PRIVATE_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
@@ -88,8 +88,9 @@ const alertRecipients = (process.env.ADMIN_ALERT_EMAIL ?? '')
   .split(',')
   .map((email) => email.trim())
   .filter(Boolean);
-if (alertRecipients.length < 2) {
-  console.error('  INVALID  ADMIN_ALERT_EMAIL must contain both operator addresses for alpha.');
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+if (alertRecipients.length < 1 || alertRecipients.some((email) => !emailPattern.test(email))) {
+  console.error('  INVALID  ADMIN_ALERT_EMAIL must contain at least one valid operator address.');
   failed = true;
 }
 

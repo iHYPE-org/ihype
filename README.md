@@ -1,6 +1,6 @@
 # iHYPE
 
-iHYPE is a Next.js application for artist, DJ, venue, promoter, and fan pages, event discovery, media uploads, audience engagement, and ticketing. It uses Prisma with PostgreSQL and deploys to Cloudflare Workers through OpenNext.
+iHYPE is a Next.js application for artist, venue, and fan profiles, event discovery, audio uploads, audience engagement, and paid ticketing. It uses Prisma with PostgreSQL and deploys to Cloudflare Workers through OpenNext.
 
 ## Stack
 
@@ -50,7 +50,7 @@ Pull requests also run a mandatory Chromium smoke test against scratch PostgreSQ
 
 ## Demo accounts
 
-The seed creates local development accounts for fan, artist, promoter, venue, and admin roles. Shared demo credentials are for local or controlled staging use only. Production disables demo login unless `FEATURE_ENABLE_DEMO_LOGINS=true` is deliberately configured.
+The seed creates local development accounts for fan, artist, venue, and admin roles. Shared demo credentials are for local or controlled staging use only. Production disables demo login unless `FEATURE_ENABLE_DEMO_LOGINS=true` is deliberately configured.
 
 ## Paid ticketing launch gate
 

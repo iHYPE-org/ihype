@@ -49,6 +49,10 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
       name: true,
       type: true,
       headline: true,
+      bio: true,
+      heroImage: true,
+      avatarImage: true,
+      logoImage: true,
       genres: true,
       city: true,
       stateRegion: true,
@@ -101,12 +105,23 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
   const sub = [profile.genres.slice(0, 3).join(' · ') || null, where || null].filter(Boolean).join(' · ');
 
   return (
-    <div className="mmm-show">
+    <div className="mmm-show mmm-public-profile" data-profile-type="artist">
       <Link className="mmm-show-back" href="/app/music/charts">← Music</Link>
 
-      <div className="mmm-show-eyebrow">Artist</div>
-      <h1 className="mmm-show-title">{profile.name}</h1>
-      {sub && <div className="mmm-show-where">{sub}</div>}
+      <header className="mmm-profile-hero">
+        {profile.heroImage ? <img alt="" className="mmm-profile-cover" src={profile.heroImage} /> : <span aria-hidden="true" className="mmm-profile-cover mmm-profile-cover-fallback" />}
+        <span aria-hidden="true" className="mmm-profile-cover-veil" />
+        <div className="mmm-profile-identity">
+          <div className="mmm-profile-avatar">
+            {profile.avatarImage || profile.logoImage ? <img alt="" src={profile.avatarImage || profile.logoImage || ''} /> : <span>{profile.name.charAt(0)}</span>}
+          </div>
+          <div>
+            <div className="mmm-show-eyebrow">Artist profile</div>
+            <h1 className="mmm-show-title">{profile.name}</h1>
+            {sub && <div className="mmm-show-where">{sub}</div>}
+          </div>
+        </div>
+      </header>
 
       <div className="mmm-profile-badges">
         {profile.verificationStatus === 'VERIFIED' && (
@@ -120,7 +135,13 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
         </span>
       </div>
 
-      {profile.headline && <p className="mmm-me-note">{profile.headline}</p>}
+      {(profile.headline || profile.bio) && (
+        <section className="mmm-profile-about mmm-card">
+          <span className="mmm-eyebrow">About</span>
+          {profile.headline && <h2>{profile.headline}</h2>}
+          {profile.bio && <p>{profile.bio}</p>}
+        </section>
+      )}
 
       {/* The two things a listener actually does here. Both are the real
           components the legacy page mounts — the hype cooldown, the optimistic
@@ -170,12 +191,6 @@ export default async function MmmArtistPage({ params }: { params: Promise<{ slug
         )}
       </section>
 
-      {/* Named rather than hidden. Tracks, insights and the owner's own tools
-          live on the full profile; saying so is better than a member wondering
-          where the music went. */}
-      <Link className="mmm-profile-full" href={`/artists/${profile.slug}`}>
-        Tracks, releases and more on the full profile →
-      </Link>
     </div>
   );
 }

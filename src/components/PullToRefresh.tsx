@@ -11,11 +11,11 @@ const RESISTANCE = 0.5;
  * very top, so it never fights normal scrolling.
  *
  * "Scrolled to the top" is read from the nearest SCROLLABLE ANCESTOR, not from
- * `window.scrollY`. Inside the app shell the document does not scroll at all —
- * `html`/`body` are locked and `.shell-content` is the scroll container — so
+ * `window.scrollY`. Inside MMM the document does not scroll at all —
+ * `html`/`body` are locked and `.mmm-pane` is the scroll container — so
  * `window.scrollY` is permanently 0 there, and this armed on every touch no
  * matter how far down the page the finger started. That is the same trap the
- * shell's own contract rule 3 names: read the content container's scrollTop,
+ * MMM's own contract rule 3 names: read the content container's scrollTop,
  * never the window's. Off the shell there is no scrollable ancestor and the
  * walk falls through to the document, which is the old behaviour exactly.
  */

@@ -5,17 +5,12 @@ import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
-type DashboardRole = 'fan' | 'artist' | 'venue' | 'promoter' | 'advertiser';
+type DashboardRole = 'fan' | 'artist' | 'venue' | 'advertiser';
 
 const roleWorkspace: Record<DashboardRole, { title: string; href: string; next: string; actions: Array<{ title: string; href: string }> }> = {
   fan: { title: 'Your listening profile', href: '/me/dashboard', next: 'Open your next local discovery', actions: [{ title: 'Open my Discovery playlist', href: '/playlists' }, { title: 'Share my HYPE link', href: '/me/promote' }, { title: 'See nearby events', href: '/shows' }] },
   artist: { title: 'Artist page and release workspace', href: '/pages', next: 'Strengthen your artist page', actions: [{ title: 'Edit artist page', href: '/pages' }, { title: 'Create recommended tour', href: '/tour-planner' }, { title: 'Review song insights', href: '/profile-insights' }] },
-  // The DJ role is being removed and the Radio Show Creator is gone — radio is
-  // computed per listener now. Kept keyed as `dj` only because three profiles
-  // still carry that type until the data migration; it points at what a DJ
-  // account can actually still do.
   venue: { title: 'Venue page and event workspace', href: '/pages', next: 'Create your next event', actions: [{ title: 'Create an event', href: '/events/new' }, { title: 'Edit venue page', href: '/pages' }, { title: 'Review booking interest', href: '/tour-planner' }] },
-  promoter: { title: 'HYPE link promotion workspace', href: '/me/promote', next: 'Find an event your network will love', actions: [{ title: 'Open HYPE link analytics', href: '/me/promote' }, { title: 'Find events to promote', href: '/shows' }, { title: 'Review ticket assists', href: '/tickets' }] },
   advertiser: { title: 'Music-only advertising workspace', href: '/advertise/dashboard', next: 'Review your aggregate scene matches', actions: [{ title: 'Open advertiser dashboard', href: '/advertise/dashboard' }, { title: 'Review aggregate heat map', href: '/shows' }, { title: 'Update advertiser profile', href: '/advertise' }] },
 };
 
@@ -48,16 +43,15 @@ export async function GET(request: Request) {
     if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     const allowed = new Set<DashboardRole>(['fan']);
-    if (user.role === 'ADMIN') ['artist', 'venue', 'promoter', 'advertiser'].forEach((role) => allowed.add(role as DashboardRole));
+    if (user.role === 'ADMIN') ['artist', 'venue', 'advertiser'].forEach((role) => allowed.add(role as DashboardRole));
     if (user.role === 'ARTIST' || profiles.some((profile) => profile.type === 'ARTIST')) allowed.add('artist');
     if (user.role === 'VENUE' || profiles.some((profile) => profile.type === 'VENUE')) allowed.add('venue');
-    if (user.role === 'FAN') allowed.add('promoter');
     if (user.role === 'ADVERTISER' || advertiser) allowed.add('advertiser');
     const role = requested && allowed.has(requested) ? requested : [...allowed][0];
     const workspace = roleWorkspace[role];
     const creatorProfile = profiles.find((profile) => profile.type.toLowerCase() === role);
     const filledFields = creatorProfile ? [creatorProfile.headline, creatorProfile.bio, creatorProfile.heroImage || creatorProfile.avatarImage, creatorProfile.genres.length ? 'genres' : null, creatorProfile.onboardedAt].filter(Boolean).length : 0;
-    const completeness = creatorProfile ? Math.round((filledFields / 5) * 100) : role === 'fan' || role === 'promoter' ? Math.min(100, 35 + follows * 5 + hypes * 5) : 0;
+    const completeness = creatorProfile ? Math.round((filledFields / 5) * 100) : role === 'fan' ? Math.min(100, 35 + follows * 5 + hypes * 5) : 0;
 
     const recommendations = role === 'fan' ? [] : (await db.profile.findMany({
       where: { discoverable: true, ownerId: { not: userId }, type: role === 'venue' ? 'ARTIST' : role === 'artist' ? 'VENUE' : 'ARTIST' },
@@ -81,7 +75,7 @@ export async function GET(request: Request) {
       upcoming: upcoming.map((show) => ({ id: show.id, label: showDate(show.startsAt).split(',')[0].toUpperCase(), title: show.title, detail: `${showDate(show.startsAt)}${show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}`, href: `/shows/${show.slug}`, action: show.isTicketed ? 'Tickets' : 'View' })),
       recommendations,
       insights: [
-        `${hypes} artists, DJs, or venues currently carry your HYPE signal`,
+        `${hypes} artists or venues currently carry your HYPE signal`,
         `${follows} followed pages shape your local recommendations`,
         creatorProfile ? `${creatorProfile.hypeCount.toLocaleString()} HYPES are attached to ${creatorProfile.name}` : `${ticketOrders} ticket orders connect listening to real attendance`,
       ],

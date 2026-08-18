@@ -61,33 +61,6 @@
 /* ── iH/OPS Login Gate ────────────────────────────────── */
 @keyframes opsFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes opsSpin{to{transform:rotate(360deg)}}
-.ops-gate{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;padding:16px}
-.ops-login-card,.ops-provisioning-card{width:100%;max-width:360px;background:var(--bg-2);border:1px solid var(--hair-80);border-radius:var(--radius-card);padding:28px;display:flex;flex-direction:column;gap:20px;animation:opsFade .3s ease}
-.ops-login-top{display:flex;align-items:center;justify-content:space-between}
-.ops-identity{display:flex;align-items:center;gap:12px;padding:14px;background:var(--hair-30);border:1px solid var(--line);border-radius:8px}
-.ops-avatar{width:40px;height:40px;border-radius:50%;background:rgba(var(--accent-rgb),.12);border:1px solid rgba(var(--accent-rgb),.25);display:flex;align-items:center;justify-content:center;font-family:var(--f-m,monospace);font-weight:700;font-size:13px;color:var(--accent);flex-shrink:0}
-.ops-identity-text{display:flex;flex-direction:column;gap:2px;min-width:0}
-.ops-identity-text strong{font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ops-identity-text span{font-size:11px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ops-trust-facts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.ops-trust-fact{display:flex;flex-direction:column;gap:3px;padding:10px;background:var(--hair-20);border:1px solid var(--hair-50);border-radius:6px}
-.ops-trust-label{font-family:var(--f-m,monospace);font-size:9px;color:var(--ink-3);letter-spacing:.1em;text-transform:uppercase}
-.ops-trust-value{font-size:12px;font-weight:600;color:var(--ink-2)}
-.ops-trust-ok{color:var(--role-venue)}
-.ops-login-sub{font-size:12px;color:var(--ink-3);line-height:1.5;text-align:center}
-.ops-cta{width:100%;padding:12px;background:var(--accent);color:var(--ink-on-accent);border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;letter-spacing:.01em}
-.ops-cta:hover{opacity:.9}
-.ops-cta:active{transform:scale(.98)}
-.ops-governance{display:flex;flex-direction:column;align-items:center;gap:3px;font-family:var(--f-m,monospace);font-size:9px;color:var(--ink-4);letter-spacing:.06em;text-align:center}
-.ops-prov-title{font-size:13px;color:var(--ink-2);text-align:center;font-family:var(--f-m,monospace);letter-spacing:.04em}
-.ops-steps{display:flex;flex-direction:column;gap:10px}
-.ops-step{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-4);transition:color .2s}
-.ops-step.ops-step-done{color:var(--ink-2)}
-.ops-step.ops-step-active{color:var(--ink)}
-.ops-step-icon{width:18px;text-align:center;font-family:var(--f-m,monospace);font-size:12px;color:var(--ink-3);flex-shrink:0}
-.ops-step.ops-step-done .ops-step-icon{color:var(--role-venue)}
-.ops-step.ops-step-active .ops-step-icon{color:var(--accent)}
-.ops-spin{display:inline-block;animation:opsSpin .6s linear infinite}
 
 /* ── Admin console content re-theme ──────────────────────
    Every /admin/* page.tsx still composes the sitewide pre-rebrand
@@ -190,9 +163,6 @@
   line-height: 1.45;
   color: var(--ink-a50);
 }
-.admin-workbench-overdue .admin-workbench-count,
-.admin-workbench-overdue .admin-workbench-age { color: var(--accent); }
-.admin-workbench-clear .admin-workbench-count { color: var(--ink-a50); }
 @media (prefers-reduced-motion: reduce) {
   .admin-workbench-card { transition: none; }
   .admin-workbench-card:hover { transform: none; }

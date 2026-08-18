@@ -6,7 +6,6 @@ import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 const TYPE_COLOR: Record<string, string> = {
@@ -29,7 +28,6 @@ const profileRoute = (type: string, slug: string) =>
  * Tour Creator, 'creator' via Page Creator). Inside the shell they come off this
  * strip; 'search' and 'network' stay, because the strip does not carry them.
  */
-const SHELL_TABS: readonly string[] = ['mypage', 'creator'];
 
 const TABS = [
   { id: 'search', label: 'Search' },
@@ -130,8 +128,7 @@ export function PagesHome({
     if (!validInitialTab) return;
     setTab(validInitialTab);
   }, [validInitialTab]);
-  const shellDrivesTabs = useAppShellActive();
-  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
+  const visibleTabs = TABS;
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
@@ -149,15 +146,17 @@ export function PagesHome({
   const [justCreatedName, setJustCreatedName] = useState<string | null>(null);
   const contentTopRef = useRef<HTMLDivElement>(null);
 
-  // Inside the app shell the shell owns scroll position across navigation
-  // (ShellScrollManager) — the context strip's pills ARE the tab switch, so a
-  // second owner here fights it and wins by running later, leaving the region
-  // parked 141px down. Verified by e2e: expected 0, got 141. Outside the shell
-  // (phone swipe shell, marketing) this is still the only thing that resets it.
+  // These are local tabs, not route navigation, so the shell's route scroll
+  // manager never runs. `scrollIntoView()` was also the wrong primitive here:
+  // it aligned the zero-height marker inside this component's 32px padding and
+  // left `.mmm-pane` visibly scrolled down. Reset the actual scroll owner in
+  // MMM, and fall back to the document when PagesHome is rendered elsewhere.
   useEffect(() => {
-    if (shellDrivesTabs) return;
-    contentTopRef.current?.scrollIntoView({ block: 'start' });
-  }, [tab, shellDrivesTabs]);
+    const marker = contentTopRef.current;
+    const pane = marker?.closest<HTMLElement>('.mmm-pane');
+    if (pane) pane.scrollTo({ top: 0, behavior: 'auto' });
+    else window.scrollTo({ top: 0, behavior: 'auto' });
+  }, [tab]);
 
   useEffect(() => {
     if (initialProfileId) setSelectedPageId(initialProfileId);

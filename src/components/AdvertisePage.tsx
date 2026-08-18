@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { postJson } from '@/lib/api-client';
 import {
@@ -9,6 +9,7 @@ import {
   type AdScope, type AdCampaignQuote,
 } from '@/lib/ad-pricing';
 import { useI18n } from '@/components/I18nProvider';
+import { useFormDraft } from '@/lib/use-form-draft';
 
 /* ── Types ───────────────────────────────────────────────── */
 type ScanSub = { n: string; k: string; tag: string; copy: string; body: string; gates: [string, string, 'pass' | 'fail'][]; ok: boolean };
@@ -151,6 +152,21 @@ function CoverageBuilder() {
   const [clickUrl, setClickUrl] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
   const [audio, setAudio] = useState<{ phase: 'idle' | 'uploading' | 'done' | 'error'; url?: string; durationSecs?: number | null; fileName?: string; error?: string }>({ phase: 'idle' });
+  const draft = useMemo(() => ({ scope, spots, days, title, clickUrl, audio }), [audio, clickUrl, days, scope, spots, title]);
+  const draftDirty = Boolean(title.trim() || clickUrl.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || spots !== 6 || days !== 14);
+  const clearDraft = useFormDraft({
+    dirty: draftDirty,
+    key: 'ihype-draft-ad-campaign',
+    onRestore: (saved: typeof draft) => {
+      if (AD_SCOPES.includes(saved.scope)) setScope(saved.scope);
+      if (Number.isFinite(saved.spots)) setSpots(Math.max(MIN_SPOTS_PER_DAY, Math.min(MAX_SPOTS_PER_DAY, saved.spots)));
+      if (AD_RUN_LENGTHS_DAYS.includes(saved.days)) setDays(saved.days);
+      setTitle(saved.title ?? '');
+      setClickUrl(saved.clickUrl ?? '');
+      if (saved.audio?.phase === 'done' && saved.audio.url) setAudio(saved.audio);
+    },
+    value: draft,
+  });
 
   async function handleAudioChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -218,6 +234,7 @@ function CoverageBuilder() {
         audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined,
       });
       if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
+        clearDraft();
         setSubmit({ phase: 'redirecting' });
         window.location.href = result.checkoutUrl;
         return;
@@ -352,9 +369,9 @@ function CoverageBuilder() {
           </div>
 
           {/* Stats */}
-          <div style={{ display: 'flex', gap: 10, marginTop: 20 }}>
+          <div className="adv-quote-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginTop: 20 }}>
             {[{ v: fmt(quote.dailyImpressions), l: t('advertisePage.dailyImpressions', 'Daily impressions') }, { v: fmt(quote.totalImpressions), l: t('advertisePage.totalOverRun', 'Total over run') }, { v: '$' + cpm.toFixed(2), l: t('advertisePage.effectiveCpm', 'Effective CPM') }].map(s => (
-              <div key={s.l} style={{ flex: 1, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
+              <div key={s.l} style={{ minWidth: 0, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
                 <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.3125rem', letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.5312rem', letterSpacing: '.1em', color: '#5a5048', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
               </div>
@@ -374,12 +391,12 @@ function CoverageBuilder() {
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
             {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.base', 'base')}`, v: `${money(perSpot)} ${t('advertisePage.perSpot', '/ spot')}` }, { k: `${spots} ${t('advertisePage.spotsSlashDay', 'spots/day')} × ${days} ${t('advertisePage.days', 'days')}`, v: `${money(dailyCost)} ${t('advertisePage.perDay', '/ day')}` }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
-              <div key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.75rem' }}>
+              <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.75rem' }}>
                 <span style={{ color: '#5a5048', letterSpacing: '.06em' }}>{r.k}</span>
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
               </div>
             ))}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
+            <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a60)' }}>{t('advertisePage.total', 'Total')}</span>
               <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent)' }}>
                 {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', color: '#5a5048', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}{t('advertisePage.slashDay', '/day')}</small>
@@ -395,6 +412,7 @@ function CoverageBuilder() {
               {submit.phase === 'submitting' ? t('advertisePage.screening', 'Screening…') : submit.phase === 'redirecting' ? t('advertisePage.redirecting', 'Redirecting to payment…') : t('advertisePage.submitCampaign', 'Submit campaign →')}
             </button>
 
+            <div aria-atomic="true" aria-live="polite">
             {submit.phase === 'done' && (
               <div style={{
                 marginTop: 12, padding: '12px 14px', borderRadius: 10,
@@ -415,6 +433,7 @@ function CoverageBuilder() {
                 {submit.error}
               </div>
             )}
+            </div>
 
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '0.875rem', color: 'var(--ink-2)', marginTop: 14, lineHeight: 1.45 }}>
               {t('advertisePage.nothingChargesNote', 'Nothing charges until your creative clears the AI screen.')}
@@ -694,6 +713,65 @@ function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
 }
 
 /* ── Main page ───────────────────────────────────────────── */
+export function MmmCampaignBuilderPage() {
+  const { t } = useI18n();
+
+  return (
+    <div className="adv-compact adv-shell">
+      <style>{`
+        .adv-btn-solid { background:var(--accent); color:var(--bg); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size:11.5px; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
+        .adv-btn-solid:hover { filter:brightness(1.08) }
+        .adv-compact { width:100%; max-width:1180px; margin:0 auto; padding:20px 40px 72px }
+        .adv-compact-head { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:22px }
+        .adv-compact h1 { margin:6px 0 0; font-family:var(--f-d,'Bricolage Grotesque',sans-serif); font-size:clamp(2rem,5vw,3.4rem); line-height:.95; letter-spacing:-.04em }
+        .adv-compact-intro { max-width:52ch; margin:10px 0 0; color:var(--ink-2); line-height:1.5 }
+        .adv-compact-note { flex:0 0 290px; padding:13px 15px; border:1px solid var(--hair-70); border-radius:12px; background:var(--bg-2); color:var(--ink-2); font-size:.75rem; line-height:1.45 }
+        .adv-compact-note b { color:var(--ink) }
+        .adv-compact-details { margin-top:18px; border:1px solid var(--hair-70); border-radius:14px; background:var(--bg-2); overflow:hidden }
+        .adv-compact-details summary { cursor:pointer; padding:15px 18px; font-family:var(--f-m,monospace); font-size:.6875rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase }
+        .adv-compact-rules { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 18px 18px }
+        .adv-compact-rules div { color:var(--ink-2); font-size:.75rem; line-height:1.5 }
+        .adv-compact-rules b { display:block; margin-bottom:3px; color:var(--ink); font-size:.8125rem }
+        @media (max-width:1180px) { .adv-builder { grid-template-columns:1fr !important } }
+        @media (max-width:520px) {
+          .adv-quote-stats { grid-template-columns:1fr !important }
+          .adv-receipt-row, .adv-receipt-total { align-items:flex-start !important; flex-direction:column; gap:4px !important }
+        }
+        @media (max-width:760px) {
+          .adv-compact { padding:14px 16px 56px }
+          .adv-compact-head { display:block }
+          .adv-compact-note { margin-top:16px }
+          .adv-compact-rules { grid-template-columns:1fr }
+        }
+      `}</style>
+      <header className="adv-compact-head">
+        <div>
+          <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}</p>
+          <h1>{t('advertisePage.compactTitle', 'Build a campaign')}</h1>
+          <p className="adv-compact-intro">
+            {t('advertisePage.compactIntro', 'Choose who hears it, set the schedule, upload your audio and review the live price. You will confirm payment only after the campaign passes screening.')}
+          </p>
+        </div>
+        <div className="adv-compact-note">
+          <b>{t('advertisePage.musicOnlyShort', 'Music-related advertising only.')}</b>{' '}
+          {t('advertisePage.compactNote', 'No copyrighted music, unlicensed artist references, unsafe claims or unrelated products.')}
+        </div>
+      </header>
+
+      <CoverageBuilder />
+
+      <details className="adv-compact-details">
+        <summary>{t('advertisePage.screeningAndBilling', 'Screening, eligibility and billing')}</summary>
+        <div className="adv-compact-rules">
+          <div><b>{t('advertisePage.compactEligibleTitle', 'Who can advertise')}</b>{t('advertisePage.compactEligibleBody', 'Verified artists, venues, promoters and music-related businesses. Non-music campaigns are rejected.')}</div>
+          <div><b>{t('advertisePage.compactScreenTitle', 'What gets screened')}</b>{t('advertisePage.compactScreenBody', 'Business eligibility, audio relevance, listener safety, copyright and misleading claims are checked before checkout.')}</div>
+          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'Passing campaigns continue to secure checkout. Rejected spots never run and do not consume campaign budget.')}</div>
+        </div>
+      </details>
+    </div>
+  );
+}
+
 export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
   const { t } = useI18n();
   const eyebrow = (text: string, accent = true): React.CSSProperties => ({

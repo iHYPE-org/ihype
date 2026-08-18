@@ -12,48 +12,28 @@ import {
   isSuspiciousPurchase,
   resolvePurchaseAllowance,
 } from '@/lib/ticket-purchase-guard';
-import { sendIssuedTicketEmail } from '@/lib/mailer';
-import { notifyUser } from '@/lib/notify';
 import { getPaymentProcessingReadiness } from '@/lib/payments';
 import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
-  cancelTicketPaymentIntent,
-  captureTicketPaymentIntent,
-  createTicketPaymentIntent,
+  createTicketCheckoutSession,
   getOrCreateStripeCustomer,
 } from '@/lib/stripe';
 import {
   calculateTicketOrderFinancials,
-  formatCurrencyFromCents,
 } from '@/lib/ticketing';
 import { readClientAddress } from '@/lib/request-meta';
-import {
-  buildTicketQrCodeDataUrl,
-  buildTicketVerificationUrl,
-  formatTicketStatus,
-} from '@/lib/tickets';
-import {
-  finalizeCapturedTicketOrder,
-  voidReservedTicketOrder,
-} from '@/lib/ticket-order-state';
+import { voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { arePaymentsEnabledRuntime, isTicketingEnabledRuntime } from '@/lib/runtime-flags';
 
 const schema = z.object({
   quantity: z.coerce.number().int().min(1).max(MAX_TICKETS_PER_SHOW_PER_ACCOUNT),
   turnstileToken: z.string().min(1).optional(),
   affiliatePromoterProfileId: z.string().cuid().optional(),
-  stripePaymentMethodId: z.string().startsWith('pm_').optional(),
 });
 
 class TicketAvailabilityError extends Error {}
 /** Per-account, per-show cap — a refusal the buyer can act on, not a fault. */
 class TicketPurchaseLimitError extends Error {}
-class PaymentAuthorizationError extends Error {}
-
-function shouldCaptureTicketsNow(show: { status: string; ticketingOpensAt: Date | null }) {
-  const now = Date.now();
-  return show.status === 'LIVE' || Boolean(show.ticketingOpensAt && show.ticketingOpensAt.getTime() <= now);
-}
 
 export async function POST(
   request: Request,
@@ -108,8 +88,6 @@ export async function POST(
   }
 
   let reservedOrderId: string | null = null;
-  let paymentIntentId: string | null = null;
-  let paymentCaptured = false;
 
   try {
     const { showId } = await params;
@@ -207,17 +185,6 @@ export async function POST(
       return NextResponse.json({ error: 'Tickets are only available for scheduled or live shows' }, { status: 400 });
     }
 
-    const storedPaymentMethod = user.storedPaymentTokenRef?.startsWith('pm_')
-      ? user.storedPaymentTokenRef
-      : null;
-    const paymentMethodId = body.stripePaymentMethodId ?? storedPaymentMethod;
-    if (!paymentMethodId) {
-      return NextResponse.json(
-        { error: 'Add a valid Stripe payment method before reserving tickets.' },
-        { status: 400 },
-      );
-    }
-
     let affiliatePromoterProfile: {
       id: string;
       type: string;
@@ -266,12 +233,7 @@ export async function POST(
     if (!user.stripeCustomerId) {
       await db.user.update({
         where: { id: user.id },
-        data: { stripeCustomerId: customerId, storedPaymentTokenRef: paymentMethodId },
-      });
-    } else if (body.stripePaymentMethodId && body.stripePaymentMethodId !== user.storedPaymentTokenRef) {
-      await db.user.update({
-        where: { id: user.id },
-        data: { storedPaymentTokenRef: paymentMethodId },
+        data: { stripeCustomerId: customerId },
       });
     }
 
@@ -360,7 +322,7 @@ export async function POST(
           buyerEmail: user.email?.trim().toLowerCase() ?? '',
           quantity: body.quantity,
           status: TicketOrderStatus.RESERVED,
-          paymentTokenRef: paymentMethodId,
+          paymentTokenRef: null,
           affiliatePromoterProfileId: affiliatePromoterProfile?.id,
           subtotalCents: financials.subtotalCents,
           taxLocalCents: financials.localCents,
@@ -382,115 +344,28 @@ export async function POST(
     });
     reservedOrderId = order.id;
 
-    const authorization = await createTicketPaymentIntent({
+    const checkout = await createTicketCheckoutSession({
       amountCents: financials.totalChargeCents,
       stripeCustomerId: customerId,
-      paymentMethodId,
       showId: show.id,
+      showSlug: show.slug,
+      showTitle: show.title,
+      quantity: body.quantity,
       ticketOrderConfirmationCode: order.confirmationCode,
-      venuePayoutCents: financials.venuePayoutCents,
-      artistPayoutCents: financials.artistPayoutCents,
     });
-    paymentIntentId = authorization.paymentIntentId;
-
-    if (authorization.status !== 'requires_capture') {
-      throw new PaymentAuthorizationError(
-        authorization.status === 'requires_action'
-          ? 'The payment method requires additional authentication.'
-          : `The payment authorization was not accepted (${authorization.status}).`,
-      );
-    }
-
-    await db.ticketOrder.update({
-      where: { id: order.id },
-      data: { stripePaymentIntentId: paymentIntentId },
-    });
-
-    const captureNow = shouldCaptureTicketsNow(show);
-    if (!captureNow) {
-      return NextResponse.json(
-        {
-          order: { ...order, stripePaymentIntentId: paymentIntentId },
-          tickets: [],
-          financials,
-          captureMode: 'reserved',
-          message: `Your ticket request is reserved for ${show.title}. The authorized payment will be captured only when the event opens.`,
-        },
-        { status: 201 },
-      );
-    }
-
-    await captureTicketPaymentIntent(paymentIntentId);
-    paymentCaptured = true;
-
-    let finalized;
-    try {
-      finalized = await db.$transaction((tx) => finalizeCapturedTicketOrder(tx, order.id));
-    } catch (error) {
-      log.error(
-        '[ticket-purchase]',
-        error instanceof Error ? error : null,
-        `Stripe captured order ${order.id}, but database finalization is pending webhook reconciliation`,
-      );
-      return NextResponse.json(
-        {
-          orderId: order.id,
-          confirmationCode: order.confirmationCode,
-          captureMode: 'reconciling',
-          message: 'Payment was captured and ticket issuance is being reconciled. Do not submit another order.',
-        },
-        { status: 202 },
-      );
-    }
-
-    const tickets = await Promise.all(
-      finalized.tickets.map(async (ticket, index) => ({
-        id: ticket.id,
-        serializedId: ticket.serializedId,
-        status: formatTicketStatus(ticket.status),
-        verificationUrl: buildTicketVerificationUrl(ticket.serializedId),
-        qrCodeDataUrl: await buildTicketQrCodeDataUrl(ticket.serializedId),
-        label: `Ticket ${index + 1}`,
-      })),
-    );
-
-    try {
-      await sendIssuedTicketEmail({
-        email: order.buyerEmail,
-        name: order.buyerName,
-        showTitle: show.title,
-        venueName: show.venueProfile?.name,
-        eventOpensAtLabel: show.ticketingOpensAt?.toLocaleString('en-US') ?? null,
-        totalChargeLabel: formatCurrencyFromCents(financials.totalChargeCents),
-        tickets,
-      });
-    } catch (error) {
-      log.error('[ticket-purchase]', error instanceof Error ? error : null, `Ticket email failed for order ${order.id}`);
-    }
-
-    if (affiliatePromoterProfile) {
-      const qty = body.quantity;
-      await notifyUser(affiliatePromoterProfile.ownerId, {
-        type: 'PROMOTER_SALE',
-        title: 'Your link sold a ticket',
-        body: `${qty === 1 ? 'A ticket' : `${qty} tickets`} to ${show.title} sold through your promo link.`,
-        link: '/me/promote',
-      }).catch(() => {});
-    }
-
     return NextResponse.json(
       {
-        order: { ...order, status: TicketOrderStatus.CAPTURED, chargedAt: new Date(), stripePaymentIntentId: paymentIntentId },
-        tickets,
+        order: { id: order.id, confirmationCode: order.confirmationCode, status: order.status },
+        tickets: [],
         financials,
-        captureMode: 'captured',
-        message: `Payment captured and ${tickets.length} ticket${tickets.length === 1 ? '' : 's'} issued for ${show.title}.`,
+        captureMode: 'checkout',
+        checkoutUrl: checkout.checkoutUrl,
+        message: 'Continue to Stripe to pay securely. Tickets are issued only after Stripe confirms payment.',
       },
       { status: 201 },
     );
   } catch (error) {
-    if (reservedOrderId && !paymentCaptured) {
-      if (paymentIntentId) await cancelTicketPaymentIntent(paymentIntentId).catch(() => {});
+    if (reservedOrderId) {
       await db.$transaction((tx) => voidReservedTicketOrder(tx, reservedOrderId!)).catch((cleanupError) => {
         log.error('[ticket-purchase]', cleanupError instanceof Error ? cleanupError : null, `Failed to void order ${reservedOrderId}`);
       });
@@ -510,10 +385,6 @@ export async function POST(
     if (error instanceof TicketAvailabilityError) {
       return NextResponse.json({ error: 'Not enough tickets remain, or ticket availability changed. Please retry.' }, { status: 409 });
     }
-    if (error instanceof PaymentAuthorizationError) {
-      return NextResponse.json({ error: error.message, code: 'PAYMENT_AUTHORIZATION_FAILED' }, { status: 402 });
-    }
-
     log.error('[ticket-purchase]', error instanceof Error ? error : null, 'Ticket order failed');
     return NextResponse.json({ error: 'Could not complete this ticket order' }, { status: 500 });
   }

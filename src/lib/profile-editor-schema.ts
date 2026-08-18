@@ -36,7 +36,6 @@ export const editorSchema = z.object({
   avatarImage: urlText,
   logoImage: urlText,
   galleryImage: urlText,
-  featureVideoUrl: urlText,
   themePreset: text(80),
   themeAccentTone: text(80),
   themeBackdropTone: text(80),

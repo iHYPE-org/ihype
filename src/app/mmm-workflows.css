@@ -1,0 +1,60 @@
+/* MMM workflow controls shared by account and accessibility surfaces. */
+
+.mmm-settings-route { min-width: 0; }
+.mmm-settings-route-narrow { max-width: 760px; margin-inline: auto; }
+.mmm-settings-title {
+  margin: 8px 0 20px;
+  color: var(--ink);
+  font: 800 2rem var(--f-d);
+  letter-spacing: -0.02em;
+}
+
+.mmm-settings-stack { display: flex; flex-direction: column; gap: 14px; }
+.mmm-settings-card {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--bg-surface);
+}
+.mmm-settings-card-split {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.mmm-settings-card-split > div { min-width: 220px; }
+.mmm-settings-card-title { margin: 0; color: var(--ink); font: 600 0.9375rem var(--f-b); }
+.mmm-settings-card-hint { margin: 4px 0 0; color: var(--ink-2); font-size: 0.8125rem; }
+.mmm-settings-card-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.mmm-settings-card-split .mmm-settings-card-controls { margin-top: 0; }
+
+.mmm-settings-pill-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.mmm-settings-pill {
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 600 0.75rem var(--f-b);
+  cursor: pointer;
+  transition: color 170ms var(--ease), background 170ms var(--ease);
+}
+.mmm-settings-pill:hover { color: var(--ink); }
+.mmm-settings-pill[data-active='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--bg);
+}
+.mmm-settings-pill:disabled { cursor: default; opacity: 0.6; }
+
+html.high-contrast .mmm-settings-pill[data-active='true'] {
+  background: var(--ink) !important;
+  border-color: var(--ink) !important;
+  color: var(--bg) !important;
+}
+html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
+
+/* Content scale is typography, not a transformed layout. */
+:root { font-size: calc(100% * var(--ihype-text-scale, 1)); }

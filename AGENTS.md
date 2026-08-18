@@ -1,15 +1,17 @@
 # iHYPE Codex project instructions
 
 ## Project goal
-This repository contains a production-oriented Next.js app for hosting artist, DJ, and venue pages with live streaming shows, account support, hype voting, and Prisma/Postgres data storage.
+This repository contains a production-oriented Next.js app for local-music discovery, artist and venue profiles, audio hosting, events, account support, hype voting, and Prisma/Postgres data storage.
 
 ## Working agreements
 - Prefer small, reviewable changes over broad refactors.
 - Keep the app compatible with Prisma migrations.
 - Preserve the current stack unless a task explicitly requires a replacement.
 - Treat environment variables and secrets as external configuration. Never hardcode secrets.
-- Preserve the full-screen signed-in module deck. `/listen` is the canonical authenticated experience and must render `ModuleDeckMockup` in production mode with live backend adapters.
-- Keep auth redirects pointed at `/listen`. Treat `/home`, `/workbench`, and `/dashboard` as legacy aliases, not separate authenticated applications.
+- Music · Map · Me is the only design system permitted in the application. Do not use, restore, extend, or expose an older shell, design generation, visual language, or component system in any runtime interface.
+- `/app/map` is the canonical authenticated landing route. `/app/music/*`, `/app/map/*`, and `/app/me/*` are modules of the same authenticated application and must use the Music · Map · Me shell, tokens, primitives, and interaction patterns.
+- Keep authentication redirects pointed at `/app/map`. Treat `/listen`, `/home`, `/workbench`, and `/dashboard` only as compatibility aliases that redirect into the canonical Music · Map · Me application; they must never render an alternate or legacy authenticated experience.
+- Delete or port every implementation of `ModuleDeckMockup`, the older full-screen module deck, or another superseded design. Do not retain legacy shell components, styles, fixtures, or browser contracts as dormant code; compatibility routes may contain redirects only.
 
 ## Stack expectations
 - Framework: Next.js App Router
@@ -17,7 +19,8 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 - ORM: Prisma
 - Database: PostgreSQL
 - Auth: Auth.js
-- Streaming: Mux
+- Media: audio only; video hosting and live-streaming providers are outside the product scope
+- Profiles: artist, venue, listener, and private advertiser accounts only. DJ and promoter roles/profiles are retired and must not be reintroduced.
 - Hosting target: Cloudflare
 
 ## Before changing code
@@ -38,7 +41,7 @@ This repository contains a production-oriented Next.js app for hosting artist, D
 
 ## Safety / deployment rules
 - Do not commit `.env` files or real credentials.
-- Keep `DATABASE_URL`, Mux credentials, and auth secrets in environment variables only.
+- Keep `DATABASE_URL`, media-storage credentials, and auth secrets in environment variables only.
 - Do not disable webhook verification in production code.
 - Keep preview and production environment assumptions separate.
 

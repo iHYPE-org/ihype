@@ -50,7 +50,7 @@ describe('invite code sharing flag', () => {
  * this flag nearly did exactly that.
  */
 describe('admin feature flag wiring', () => {
-  const source = readFileSync(join(process.cwd(), 'src/app/admin/page.tsx'), 'utf8');
+  const source = readFileSync(join(process.cwd(), 'src/app/admin/page.tsx'), 'utf8').replaceAll('\r\n', '\n');
 
   // Anchored on the destructuring, which appears once — `] = await
   // Promise.all([` alone does not, and matching the first one reads a

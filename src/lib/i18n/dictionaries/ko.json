@@ -1542,8 +1542,6 @@
   "pageEditor.designPresetHint": "공개 페이지의 전체적인 느낌을 정합니다",
   "pageEditor.designPresetLabel": "디자인 프리셋",
   "pageEditor.discard": "버리기",
-  "pageEditor.featureVideoHint": "페이지에 크게 소개할 영상(YouTube 등) 링크",
-  "pageEditor.featureVideoLabel": "대표 영상 URL",
   "pageEditor.fontPairingHint": "공개 페이지의 제목/본문 서체를 바꿉니다 — 비워 두면 사이트 기본 글꼴을 유지합니다",
   "pageEditor.fontPairingLabel": "글꼴 조합",
   "pageEditor.galleryCoverLabel": "갤러리 표지",

@@ -34,25 +34,35 @@
  * Dead classes stay advisory — a class can legitimately be added by a library
  * or by markup this scan cannot see.
  *
- * Usage: npm run audit:css [-- --max=N] [-- --strict] [-- --dead]
+ * Usage: npm run audit:css [-- --max=N] [-- --strict] [-- --dead] [-- --all]
  */
 import { readFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+import { globSync } from 'glob';
 
 const STRICT = process.argv.includes('--strict');
 const SHOW_DEAD = process.argv.includes('--dead');
+const SHOW_ALL = process.argv.includes('--all');
 const maxArg = process.argv.find((a) => a.startsWith('--max='));
 const MAX = maxArg ? Number(maxArg.slice('--max='.length)) : null;
 
-const CSS_FILES = execSync('find src -name "*.css"', { encoding: 'utf8' })
-  .trim().split('\n').filter(Boolean).sort();
+const CSS_FILES = globSync('src/**/*.css')
+  .map((file) => file.replaceAll('\\', '/'))
+  .sort();
 
 /**
- * `shell-surfaces.css` is exempt from the OVERRIDE check by design: its entire
+ * `mmm-primitives.css` is exempt from the OVERRIDE check by design: its entire
  * purpose is to alias many legacy class names onto one primitive, so the same
  * primitive intentionally appears in several grouped rules. See its header.
  */
-const OVERRIDE_EXEMPT = new Set(['src/app/shell-surfaces.css']);
+const OVERRIDE_EXEMPT = new Set(['src/app/mmm-primitives.css']);
+
+// MapLibre creates this DOM outside React, so these classes cannot appear in
+// the source haystack even though the live map requires their CSS.
+const RUNTIME_CLASSES = new Set([
+  'maplibregl-canvas',
+  'maplibregl-ctrl-attrib',
+  'maplibregl-ctrl-logo',
+]);
 
 function stripComments(css) {
   // Preserve newlines so reported line numbers stay honest.
@@ -131,14 +141,8 @@ function findOverrides(rules) {
 }
 
 function buildHaystack() {
-  const src = execSync(
-    'find src e2e -type f \\( -name "*.tsx" -o -name "*.ts" -o -name "*.md" -o -name "*.mdx" \\) 2>/dev/null',
-    { encoding: 'utf8' },
-  ).trim().split('\n').filter(Boolean);
-  const pub = execSync(
-    'find public -type f \\( -name "*.js" -o -name "*.html" -o -name "*.json" \\) 2>/dev/null',
-    { encoding: 'utf8' },
-  ).trim().split('\n').filter(Boolean);
+  const src = globSync(['src/**/*.{tsx,ts,md,mdx}', 'e2e/**/*.{tsx,ts,md,mdx}']);
+  const pub = globSync('public/**/*.{js,html,json}');
   return [...src, ...pub]
     .map((f) => { try { return readFileSync(f, 'utf8'); } catch { return ''; } })
     .join('\n');
@@ -156,18 +160,21 @@ for (const file of CSS_FILES) {
     const overrides = findOverrides(rules);
     if (overrides.length) {
       console.log(`\n${file} — ${overrides.length} overriding redefinition(s):`);
-      for (const o of overrides.slice(0, 20)) {
+      const reportedOverrides = SHOW_ALL ? overrides : overrides.slice(0, 20);
+      for (const o of reportedOverrides) {
         console.log(`  ${o.selector}  [${o.context}]`);
         console.log(`     line ${o.earlier} is overridden by line ${o.later} — re-declares ${o.overlap.length}: ${o.overlap.slice(0, 6).join(', ')}${o.overlap.length > 6 ? ' …' : ''}`);
       }
-      if (overrides.length > 20) console.log(`  … ${overrides.length - 20} more`);
+      if (!SHOW_ALL && overrides.length > 20) console.log(`  … ${overrides.length - 20} more`);
       overrideCount += overrides.length;
     }
   }
 
   const classes = new Set();
   for (const m of css.matchAll(/\.(-?[_a-zA-Z][-\w]*)/g)) classes.add(m[1]);
-  const dead = [...classes].filter((c) => !haystack.includes(c)).sort();
+  const dead = [...classes]
+    .filter((c) => !RUNTIME_CLASSES.has(c) && !haystack.includes(c))
+    .sort();
   if (dead.length) {
     deadCount += dead.length;
     console.log(`\n${file} — ${dead.length} class(es) referenced by no source file${SHOW_DEAD ? ':' : ' (run with --dead to list)'}`);

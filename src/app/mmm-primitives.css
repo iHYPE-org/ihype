@@ -1,0 +1,375 @@
+/* ══════════════════════════════════════════════════════════════════════════
+   iHYPE MMM workflow — subpage surfaces
+   ──────────────────────────────────────────────────────────────────────────
+   The authenticated workflows repeat one small vocabulary: cards, rows,
+   statistics, eyebrows, display titles, tile grids, pills and empty states.
+   The routes retain a limited set of domain-oriented class names while this
+   stylesheet makes their visual language identical.
+
+   This file defines each primitive ONCE, from the handoff's own values, and
+   points every existing name at it. That is why the conversion is a
+   stylesheet rather than rewritten components: the markup already has the
+   right shape, so re-authoring it would risk the auth gates and Prisma queries
+   those pages carry for no visual gain.
+
+   Two rules make it work:
+
+   1. Every selector is scoped under `.mmm-migrated-surface`, so nothing outside the
+      MMM workflow is touched — marketing, auth and the phone shell keep
+      exactly what they had.
+   2. The scope provides enough specificity to beat workflow-local paint
+      declarations without changing their backend behavior or layout rules.
+
+   Deliberately paint-only: colour, surface, border, radius, type, spacing.
+   No `display`, no `grid-template`, no `position`. Those carry each page's
+   real layout, and overriding them from here would break pages sight-unseen.
+
+   Regenerate the alias lists with scripts/audit-shell-classes.mjs.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Primitive: Eyebrow ──────────────────────────────────────────────────
+   JetBrains Mono, 10px, 0.16em, uppercase. Colour stays whatever the page
+   set — the handoff tints eyebrows per route (accent on Charts and the
+   dashboards, --role-venue on Near Me, --role-promoter on Radio and Promote). */
+
+.mmm-migrated-surface .aa-eyebrow,
+.mmm-migrated-surface .ad-eyebrow,
+.mmm-migrated-surface .believers-eyebrow,
+.mmm-migrated-surface .booking-eyebrow,
+.mmm-migrated-surface .fan-ref-label,
+.mmm-migrated-surface .lsp-eyebrow,
+.mmm-migrated-surface .vaa-card-label,
+.mmm-migrated-surface .vaa-eyebrow,
+.mmm-migrated-surface .vdash-card-label,
+.mmm-migrated-surface .vdash-eyebrow {
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+
+/* ── Primitive: Title ────────────────────────────────────────────────────
+   Syne 800, -0.02em. Size is left to the element (h1 32px / h2 26px / h3
+   below), set by the element rules further down, so a card title does not
+   become a page title. */
+.mmm-migrated-surface .aa-event-title,
+.mmm-migrated-surface .aa-title,
+.mmm-migrated-surface .ad-event-title,
+.mmm-migrated-surface .ad-title,
+.mmm-migrated-surface .believers-title,
+.mmm-migrated-surface .booking-title,
+.mmm-migrated-surface .lsp-title,
+.mmm-migrated-surface .vaa-event-title,
+.mmm-migrated-surface .vdash-show-title {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: Card ─────────────────────────────────────────────────────
+   radius 12px, 1px solid var(--line), background var(--bg-surface). */
+.mmm-migrated-surface .believers-cta-card,
+.mmm-migrated-surface .fan-ref-box,
+.mmm-migrated-surface .lsp-card,
+.mmm-migrated-surface .payout-card,
+.mmm-migrated-surface .ticket-verification-panel,
+.mmm-migrated-surface .vaa-card,
+.mmm-migrated-surface .vdash-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+
+
+/* ── Primitive: Row ──────────────────────────────────────────────────────
+   Same surface as a card, tighter padding — the shape Charts, the radio
+   schedule, My Tickets, settlements, notifications and Top Tracks all use. */
+.mmm-migrated-surface .aa-event-row,
+.mmm-migrated-surface .ad-activity-row,
+.mmm-migrated-surface .ad-event-row,
+.mmm-migrated-surface .fan-payout-row,
+.mmm-migrated-surface .fan-show-row,
+.mmm-migrated-surface .fan-top5-row,
+.mmm-migrated-surface .vaa-event-row,
+.mmm-migrated-surface .vdash-activity-row,
+.mmm-migrated-surface .vdash-show-row {
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+}
+.mmm-migrated-surface a.aa-event-row,
+.mmm-migrated-surface a.ad-activity-row,
+.mmm-migrated-surface a.ad-event-row,
+.mmm-migrated-surface a.fan-payout-row,
+.mmm-migrated-surface a.fan-show-row,
+.mmm-migrated-surface a.fan-top5-row,
+.mmm-migrated-surface a.vaa-event-row,
+.mmm-migrated-surface a.vdash-activity-row,
+.mmm-migrated-surface a.vdash-show-row {
+  color: var(--ink-1);
+}
+
+
+/* ── Primitive: StatCard ─────────────────────────────────────────────────
+   Centred, per screenshot 06: value in Syne 800 --accent, label in mono
+   uppercase --ink-2, delta below in --accent. */
+.mmm-migrated-surface .aa-stat-card,
+.mmm-migrated-surface .ad-dash-stat-card,
+.mmm-migrated-surface .ad-stat-card,
+.mmm-migrated-surface .stat {
+  padding: 18px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-align: center;
+}
+.mmm-migrated-surface .aa-stat-val,
+.mmm-migrated-surface .ad-dash-stat-val,
+.mmm-migrated-surface .ad-stat-val,
+.mmm-migrated-surface .fan-stat-val {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 2.6vw, 1.875rem);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  color: var(--accent);
+}
+.mmm-migrated-surface .aa-stat-label,
+.mmm-migrated-surface .ad-dash-stat-label,
+.mmm-migrated-surface .ad-stat-label,
+.mmm-migrated-surface .fan-stat-label {
+  margin-top: 6px;
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+.mmm-migrated-surface .aa-stat-sub,
+.mmm-migrated-surface .ad-dash-stat-sub,
+.mmm-migrated-surface .ad-stat-sub {
+  /* The handoff's StatCard tints this line --accent because there it is a
+     short delta ("+38%", "+22%"). In this codebase the same slot carries a
+     descriptive sentence ("Total ticket revenue via your link"), and 10px
+     uppercase mono in accent turns a sentence into a wrapped orange ribbon.
+     Kept as quiet supporting copy; a page that wants the delta treatment can
+     add .is-delta. */
+  margin-top: 4px;
+  font-family: var(--f-b);
+  font-size: 0.7812rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink-2);
+}
+
+
+/* ── Primitive: section head ─────────────────────────────────────────────
+   A title beside a "View all ›" affordance. These are containers, so only
+   the heading inside them is typed — setting Syne 800 on the container
+   itself would swallow the link sitting next to it. */
+.mmm-migrated-surface .ad-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .believers-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .booking-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vaa-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vaa-section-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vdash-head > :is(h1, h2, h3, strong),
+.mmm-migrated-surface .vdash-section-head > :is(h1, h2, h3, strong) {
+  font-family: var(--f-d);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.mmm-migrated-surface .ad-section-head :is(a, button),
+.mmm-migrated-surface .believers-head :is(a, button),
+.mmm-migrated-surface .booking-head :is(a, button),
+.mmm-migrated-surface .vaa-head :is(a, button),
+.mmm-migrated-surface .vaa-section-head :is(a, button),
+.mmm-migrated-surface .vdash-head :is(a, button),
+.mmm-migrated-surface .vdash-section-head :is(a, button) {
+  color: var(--role-venue-text);
+  font-family: var(--f-b);
+  font-size: 0.8438rem;
+}
+
+
+/* ── Primitive: Pill / badge ─────────────────────────────────────────────
+   Radius 9999px, 1px var(--line-2). A page that set its own colour keeps it
+   — role tints on these are meaningful (LIVE, SCHEDULED, verification). */
+.mmm-migrated-surface .ad-pill,
+.mmm-migrated-surface .believers-early-tag,
+.mmm-migrated-surface .believers-you-tag,
+.mmm-migrated-surface .fan-badge,
+.mmm-migrated-surface .fan-chip,
+.mmm-migrated-surface .vdash-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 9999px;
+  font-family: var(--f-m);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+
+/* ── Primitive: EmptyState ───────────────────────────────────────────────
+   Backlog item 5 asks for empty states everywhere; the product already had
+   22 of them under 22 names. This makes them one component. */
+.mmm-migrated-surface .aa-empty,
+.mmm-migrated-surface .ad-empty,
+.mmm-migrated-surface .booking-empty,
+.mmm-migrated-surface .fan-empty,
+.mmm-migrated-surface .lsp-empty,
+.mmm-migrated-surface .vaa-empty,
+.mmm-migrated-surface .vdash-empty {
+  padding: 40px 24px;
+  border: 1px dashed var(--line-2);
+  border-radius: 12px;
+  background: transparent;
+  text-align: center;
+  color: var(--ink-2);
+}
+.mmm-migrated-surface .aa-empty :is(h2, h3, strong),
+.mmm-migrated-surface .ad-empty :is(h2, h3, strong),
+.mmm-migrated-surface .booking-empty :is(h2, h3, strong),
+.mmm-migrated-surface .fan-empty :is(h2, h3, strong),
+.mmm-migrated-surface .lsp-empty :is(h2, h3, strong),
+.mmm-migrated-surface .vaa-empty :is(h2, h3, strong),
+.mmm-migrated-surface .vdash-empty :is(h2, h3, strong) {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.mmm-migrated-surface .aa-empty p,
+.mmm-migrated-surface .ad-empty p,
+.mmm-migrated-surface .booking-empty p,
+.mmm-migrated-surface .fan-empty p,
+.mmm-migrated-surface .lsp-empty p,
+.mmm-migrated-surface .vaa-empty p,
+.mmm-migrated-surface .vdash-empty p {
+  margin: 0;
+  font-size: 0.8438rem;
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+/* ── Element ramp ────────────────────────────────────────────────────────
+   "Each non-Discover route opens with a back pill, an Eyebrow, and a Syne
+   800 32px h1." Every shell page already writes a real <h1>, so the ramp is
+   applied to the page's own heading rather than a second one being injected
+   from the chrome — a duplicate h1 would be a real accessibility regression.
+
+   Prefixed `.mmm-frame` on purpose. Some workflows style their heading through
+   a descendant selector (`.promo-page-header h1`, `.fan-dash-header h1`,
+   `.settings-page h1`), which is (0,1,1) — exactly what `.mmm-migrated-surface h1`
+   scores. A tie goes to whichever comes later in the document, and those
+   rules live in an inline \3c style> block inside the page, so they would all
+   win. `.mmm-frame .mmm-migrated-surface h1` is (0,2,1) and settles it. */
+.mmm-frame .mmm-migrated-surface h1 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 2rem;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+  margin: 8px 0 18px;
+}
+.mmm-frame .mmm-migrated-surface h2 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.625rem;
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+.mmm-frame .mmm-migrated-surface h3 {
+  font-family: var(--f-d);
+  font-weight: 800;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  color: var(--ink-1);
+}
+
+/* A heading INSIDE a row or card is not a section heading — the handoff types
+   it 15px/500 DM Sans with the supporting line at 13px --ink-2 (Charts, the
+   radio schedule, settlements, Top Tracks all read this way). Without this the
+   ramp above would turn every row into a stack of 18px Syne. */
+
+.mmm-frame .mmm-migrated-surface h1 + p { color: var(--ink-2); font-size: 0.9062rem; }
+.mmm-migrated-surface :is(.meta, .small) { color: var(--ink-2); }
+
+/* ── Controls ────────────────────────────────────────────────────────────
+   Three tones. Solid = accent fill; outline = 1px accent at 10–14% fill on
+   hover; ghost = no border. Page-specific gradients are replaced: the design
+   system has no gradient buttons. */
+
+/* ── Inputs ──────────────────────────────────────────────────────────────
+   Per screenshot 07: mono uppercase label above a radius-8 field with a
+   var(--line-2) hairline on the page surface. */
+.mmm-migrated-surface :is(input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="number"], input[type="tel"], input[type="password"], input[type="date"], input[type="time"], input[type="datetime-local"], select, textarea) {
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm);
+  background: var(--bg-base);
+  color: var(--ink-1);
+  font-family: var(--f-b);
+  font-size: 0.875rem;
+}
+.mmm-migrated-surface :is(input, select, textarea)::placeholder { color: var(--ink-3); }
+.mmm-migrated-surface :is(input, select, textarea):focus-visible {
+  border-color: var(--role-venue);
+  outline: 2px solid var(--role-venue);
+  outline-offset: 2px;
+}
+
+/* ── Route back pill ─────────────────────────────────────────────────────
+   Rendered by the shell, not by each page: it is pure navigation and no page
+   knows what it is a sub-route of. Suppressed on the section-home routes
+   (Discover, Near Me, My Dashboard…), which the strip already reaches. */
+
+/* ── Page containers ─────────────────────────────────────────────────────
+   Every page wrote its own max-width and outer padding against the document
+   scroller. Inside the shell the content region already supplies both
+   (max-width 1620px, padding 26px), so a second one nests a narrow column
+   inside a narrow column and pushes the first card below the fold. */
+
+/* Opt-in delta treatment, for the short +38%/+22% form the handoff shows. */
+
+/* ── Primitive: Skeleton ─────────────────────────────────────────────────
+   Backlog item 5 pairs EmptyState with Skeleton. Both already existed — the
+   empty state under 22 names (converted above) and the skeleton under three:
+   `.skeleton`, `.ihype-skeleton`, and an inline `Shimmer` in
+   src/app/shows/loading.tsx whose hex fallback (#1a1712) is not even the
+   token it claims to fall back from. Same treatment: one definition, every
+   name pointed at it.
+
+   Radius 12px to match the card and row it stands in for — a loading
+   placeholder that is a different shape from the thing it becomes is a
+   layout shift waiting to happen. Animation is gated by the reduce-motion
+   block in mmm.css, which covers the canonical shell. */
+.mmm-migrated-surface :is(.skeleton, .ihype-skeleton, [data-skeleton]) {
+  background: linear-gradient(
+    90deg,
+    rgba(var(--surface-tint-rgb), 0.04) 25%,
+    rgba(var(--surface-tint-rgb), 0.09) 50%,
+    rgba(var(--surface-tint-rgb), 0.04) 75%
+  );
+  background-size: 200% 100%;
+  border-radius: 12px;
+}

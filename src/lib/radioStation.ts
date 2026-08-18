@@ -102,7 +102,7 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
   }
 
   // Advertising. Until now the only place a purchased spot could air was
-  // inside a DJ's show, and the DJ role is going away
+  // inside a manually authored show, which is no longer part of radio
   // (docs/dj-role-removal-scope.md) — so without this, self-serve campaigns
   // holding real pre-authorised Stripe funds would have nowhere left to run.
   //

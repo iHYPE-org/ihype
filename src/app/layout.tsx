@@ -1,6 +1,6 @@
 import './globals.css';
-import './shell.css';
-import './shell-surfaces.css';
+import './mmm-workflows.css';
+import './mmm-primitives.css';
 // Last, on purpose: the phone-fit floors are minimums that must survive the
 // three files above, and source order is what gives an equal-specificity rule
 // the win. It touches nothing at `pointer: fine`.
@@ -23,8 +23,6 @@ import { getCspNonce } from '@/lib/csp-nonce';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
-import { AppShell } from '@/components/shell/AppShell';
-import { getShellViewer } from '@/lib/shell-account';
 
 /**
  * Design System 8 ("Bulletin") type, served from files IN THIS REPO.
@@ -156,7 +154,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
   // A layout is the only place in the App Router that guarantees that.
-  const { account: shellAccount, unreadCount } = await getShellViewer();
   const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
@@ -178,24 +175,21 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <span className="site-background-orb site-background-orb-b" />
             <span className="site-background-grid" />
           </div>
-          {/* Marketing nav. On shell routes the signed-in app shell replaces
-              it outright — hidden by `html.ihype-shell-locked` in shell.css.
-              (The old comment here named `.wb-shell`, a class that no longer
-              exists anywhere in the codebase.) */}
+          {/* Public-site navigation. The /app layout supplies MMM's own
+              persistent chrome and locks this header while it is active. */}
           <AdaptiveSiteHeader
-            account={shellAccount}
             inviteOnly={inviteOnly}
             label={t('layout.primarySiteHeader', 'Primary site header')}
           />
           <MobileBottomNav />
-          {/* Off shell routes (marketing and auth) AppShell renders exactly
-              what this layout rendered before — site-shell + footer — so
-              nothing about the signed-out experience changes. The footer
-              crosses as a slot, not a render prop: a function cannot be
-              serialized to a client component. */}
-          <AppShell account={shellAccount} footer={<SiteFooter />} unreadCount={unreadCount}>
-            {children}
-          </AppShell>
+          {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
+              Every route outside /app is now marketing, auth, admin, or a
+              redirect-only compatibility route: none may render another
+              signed-in shell. */}
+          <div className="site-shell">
+            <main id="main-content">{children}</main>
+            <SiteFooter />
+          </div>
           <SitePlayerDock />
           {/* Above every shell, on every route: an operator must never be
               able to forget whose account they are looking at. */}

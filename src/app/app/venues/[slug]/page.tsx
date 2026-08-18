@@ -39,6 +39,10 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
       name: true,
       type: true,
       headline: true,
+      bio: true,
+      heroImage: true,
+      avatarImage: true,
+      logoImage: true,
       city: true,
       stateRegion: true,
       capacity: true,
@@ -94,12 +98,23 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
 
   return (
-    <div className="mmm-show">
+    <div className="mmm-show mmm-public-profile" data-profile-type="venue">
       <Link className="mmm-show-back" href="/app/map">← Map</Link>
 
-      <div className="mmm-show-eyebrow">Venue</div>
-      <h1 className="mmm-show-title">{profile.name}</h1>
-      {where && <div className="mmm-show-where">{where}</div>}
+      <header className="mmm-profile-hero">
+        {profile.heroImage ? <img alt="" className="mmm-profile-cover" src={profile.heroImage} /> : <span aria-hidden="true" className="mmm-profile-cover mmm-profile-cover-fallback" />}
+        <span aria-hidden="true" className="mmm-profile-cover-veil" />
+        <div className="mmm-profile-identity">
+          <div className="mmm-profile-avatar">
+            {profile.logoImage || profile.avatarImage ? <img alt="" src={profile.logoImage || profile.avatarImage || ''} /> : <span>{profile.name.charAt(0)}</span>}
+          </div>
+          <div>
+            <div className="mmm-show-eyebrow">Venue profile</div>
+            <h1 className="mmm-show-title">{profile.name}</h1>
+            {where && <div className="mmm-show-where">{where}</div>}
+          </div>
+        </div>
+      </header>
 
       <div className="mmm-profile-badges">
         {profile.verificationStatus === 'VERIFIED' && (
@@ -114,7 +129,13 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
         </span>
       </div>
 
-      {profile.headline && <p className="mmm-me-note">{profile.headline}</p>}
+      {(profile.headline || profile.bio) && (
+        <section className="mmm-profile-about mmm-card">
+          <span className="mmm-eyebrow">About</span>
+          {profile.headline && <h2>{profile.headline}</h2>}
+          {profile.bio && <p>{profile.bio}</p>}
+        </section>
+      )}
 
       <div className="mmm-profile-actions">
         <HypeButton
@@ -160,9 +181,6 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
         )}
       </section>
 
-      <Link className="mmm-profile-full" href={`/venues/${profile.slug}`}>
-        Full calendar, photos and booking on the venue page →
-      </Link>
     </div>
   );
 }

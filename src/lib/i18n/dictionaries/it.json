@@ -1543,8 +1543,6 @@
   "pageEditor.designPresetHint": "Definisce l'aspetto complessivo della tua pagina pubblica",
   "pageEditor.designPresetLabel": "Preset di design",
   "pageEditor.discard": "Scarta",
-  "pageEditor.featureVideoHint": "Link a un video (YouTube ecc.) in evidenza sulla tua pagina",
-  "pageEditor.featureVideoLabel": "URL del video in evidenza",
   "pageEditor.fontPairingHint": "Cambia i caratteri di titolo e testo della tua pagina pubblica — lascia vuoto per mantenere i font predefiniti del sito",
   "pageEditor.fontPairingLabel": "Abbinamento dei caratteri",
   "pageEditor.galleryCoverLabel": "Copertina della galleria",

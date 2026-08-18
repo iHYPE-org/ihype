@@ -35,6 +35,12 @@ describe('in-app anchor links', () => {
       } catch {
         throw new Error(`${row.label} links to ${row.href}, but ${pageFor(route)} does not exist`);
       }
+      // App Router pages are intentionally thin. Follow direct component
+      // imports so moving a working surface under the MMM layout does not make
+      // this test confuse the route wrapper with the rendered subtree.
+      for (const match of source.matchAll(/from ['"]@\/components\/([^'"]+)['"]/g)) {
+        source += readFileSync(`src/components/${match[1]}.tsx`, 'utf8');
+      }
       const hasId =
         source.includes(`id="${fragment}"`) ||
         source.includes(`id={'${fragment}'}`) ||

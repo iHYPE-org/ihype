@@ -45,6 +45,7 @@
 
 import { readFileSync } from 'node:fs';
 import { globSync } from 'glob';
+import ts from 'typescript';
 
 const ARGS = process.argv.slice(2);
 const WANT_LIST = ARGS.includes('--list');
@@ -53,41 +54,59 @@ const MAX_LEGACY = (() => {
   return raw ? Number(raw.split('=')[1]) : null;
 })();
 
-/**
- * `SHELL_ROUTES` is parsed out of `app-nav.ts` rather than duplicated here.
- *
- * A second copy of the registry would drift, and a drifted inventory is worse
- * than none because it is quoted in decisions. Parsing is the lesser evil, and
- * it FAILS LOUDLY on zero entries — a format change must break this script
- * rather than silently reclassify every route as OUTSIDE and report a
- * triumphant drop in legacy pages.
- */
-function shellRoutes() {
-  const source = readFileSync('src/lib/app-nav.ts', 'utf8');
-  const block = source.slice(source.indexOf('SHELL_ROUTES'));
-  const entries = [...block.matchAll(/\{\s*path:\s*'([^']+)',\s*kind:\s*'(exact|prefix)'/g)]
-    .map((m) => ({ path: m[1], kind: m[2] }));
-  if (entries.length === 0) {
-    console.error('[audit:routes] Parsed 0 SHELL_ROUTES entries — app-nav.ts changed shape.');
-    process.exit(1);
-  }
-  return entries;
-}
+// Tombstones for URL families that once rendered the retired authenticated
+// shell. This is intentionally audit-only: no runtime navigation registry may
+// claim them again. Public marketing/auth/admin routes are absent.
+const RETIRED_APP_ROUTES = [
+  '/radio', '/discover', '/search', '/tracks', '/playlist',
+  '/shows', '/tickets', '/events', '/this-weekend', '/for-you',
+  '/me/promote', '/payout', '/payouts', '/pages', '/me/dashboard',
+  '/me/analytics', '/me/booking', '/artists', '/promoters', '/venues',
+  '/fans', '/settings', '/community', '/legal',
+].map((path) => ({ path, kind: 'prefix' }));
 
-function routePaths() {
+function routes() {
   return globSync('src/app/**/page.tsx')
     .map((file) => {
-      const dir = file.slice('src/app'.length).replace(/\/page\.tsx$/, '');
+      // `glob` returns native separators on Windows. Normalize before parsing
+      // routes or every `/app/*` page becomes a literal `\app\...\page.tsx`
+      // string and the audit reports a false zero for both MMM and legacy
+      // shells — exactly the failure this inventory exists to prevent.
+      const normalized = file.replaceAll('\\', '/');
+      const dir = normalized.slice('src/app'.length).replace(/\/page\.tsx$/, '');
       // Route groups `(marketing)` are organisational and not part of the URL.
       const path = dir.replace(/\/\([^/]+\)/g, '');
-      return path === '' ? '/' : path;
+      return { file: normalized, path: path === '' ? '/' : path };
     })
-    .sort();
+    .sort((a, b) => a.path.localeCompare(b.path));
+}
+
+/**
+ * Compatibility aliases are not rendered legacy surfaces. Keep this
+ * deliberately conservative: a redirect import plus no JSX means the page
+ * cannot paint the retired shell before navigating. A page containing any JSX
+ * remains in the rendered count even when it also redirects for auth.
+ */
+function isRedirectOnly(file) {
+  const source = readFileSync(file, 'utf8');
+  if (!/from ['"]next\/navigation['"]/.test(source) || !/\bredirect\s*\(/.test(source)) return false;
+  const tree = ts.createSourceFile(file, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let hasJsx = false;
+  const visit = (node) => {
+    if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node)) {
+      hasJsx = true;
+      return;
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(tree);
+  return !hasJsx;
 }
 
 /** Source text with comments stripped, for the reachability scan. */
 function sourceCorpus() {
   return globSync('src/**/*.{ts,tsx}')
+    .map((file) => file.replaceAll('\\', '/'))
     .filter((f) => !f.includes('__tests__'))
     .map((f) => readFileSync(f, 'utf8'))
     .join('\n')
@@ -96,7 +115,7 @@ function sourceCorpus() {
 }
 
 function main() {
-  const entries = shellRoutes();
+  const entries = RETIRED_APP_ROUTES;
   const corpus = sourceCorpus();
 
   const inShell = (path) =>
@@ -111,29 +130,32 @@ function main() {
     return new RegExp(`["'\`]${stat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[/"'\`?]`).test(corpus);
   };
 
-  const groups = { mmm: [], legacyShell: [], outside: [] };
-  for (const path of routePaths()) {
+  const groups = { mmm: [], legacyShell: [], legacyRedirect: [], outside: [] };
+  for (const { file, path } of routes()) {
     const row = { path, linked: linked(path) };
     if (path === '/app' || path.startsWith('/app/')) groups.mmm.push(row);
+    else if (inShell(path) && isRedirectOnly(file)) groups.legacyRedirect.push(row);
     else if (inShell(path)) groups.legacyShell.push(row);
     else groups.outside.push(row);
   }
 
-  const total = groups.mmm.length + groups.legacyShell.length + groups.outside.length;
+  const total = groups.mmm.length + groups.legacyShell.length + groups.legacyRedirect.length + groups.outside.length;
   console.log('\n  ROUTE INVENTORY\n');
   console.log(`  ${String(groups.mmm.length).padStart(4)}  MMM (/app/*)            the design system's shell`);
-  console.log(`  ${String(groups.legacyShell.length).padStart(4)}  legacy app shell        ← the retirement target`);
+  console.log(`  ${String(groups.legacyShell.length).padStart(4)}  rendered legacy pages   ← the retirement target`);
+  console.log(`  ${String(groups.legacyRedirect.length).padStart(4)}  compatibility redirects safe aliases into MMM`);
   console.log(`  ${String(groups.outside.length).padStart(4)}  outside both shells     marketing, legal, auth, admin`);
   console.log(`  ${String(total).padStart(4)}  total\n`);
 
-  const unlinked = [...groups.mmm, ...groups.legacyShell, ...groups.outside].filter((r) => !r.linked);
+  const unlinked = [...groups.mmm, ...groups.legacyShell, ...groups.legacyRedirect, ...groups.outside].filter((r) => !r.linked);
   console.log(`  ${unlinked.length} route(s) with no inbound link in src/ — a question, not a verdict;`);
   console.log('  most are deliberate redirect aliases for URLs already in sent email.\n');
 
   if (WANT_LIST) {
     for (const [label, rows] of [
       ['MMM', groups.mmm],
-      ['LEGACY APP SHELL', groups.legacyShell],
+      ['RENDERED LEGACY PAGES', groups.legacyShell],
+      ['COMPATIBILITY REDIRECTS', groups.legacyRedirect],
       ['OUTSIDE BOTH SHELLS', groups.outside],
     ]) {
       console.log(`  ── ${label} ${'─'.repeat(Math.max(0, 52 - label.length))}`);

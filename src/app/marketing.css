@@ -97,8 +97,4 @@
   display: flex; flex-direction: column; align-items: center; gap: 24px;
 }
 
-/* Hide Shows/Artists/Venues nav on marketing and auth pages */
-body:has(.lp-wrap) .nav-links-primary,
-body:has(.auth-signal-page) .nav-links-primary { display: none !important; }
-
 .lp-footer-cta .lp-hero-actions { justify-content: center; }

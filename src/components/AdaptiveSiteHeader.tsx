@@ -1,66 +1,24 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
-import { AppShellDrawer } from '@/components/shell/AppShellDrawer';
 import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import {
-  buildShellNav, resolveActiveItemId, resolveSection,
-  type ShellAccount, type ShellSectionId,
-} from '@/lib/app-nav';
-import { useAppShellChromeActive } from '@/lib/shell-chrome';
 
 export function AdaptiveSiteHeader({
-  account,
   inviteOnly,
   label,
 }: {
-  /**
-   * The viewer, for the drawer's nav. Null when signed out or unreadable, in
-   * which case the menu has nothing to list and is not rendered — the header's
-   * sign-in links are the whole menu for a visitor.
-   */
-  account: ShellAccount | null;
   inviteOnly: boolean;
   label: string;
 }) {
-  const { data: session, status: sessionStatus } = useSession();
+  const { status: sessionStatus } = useSession();
   const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [menuDemo, setMenuDemo] = useState(false);
-  const pathname = usePathname();
-  // Opens on the section you are already in, so the menu answers "where else
-  // can I go from here" rather than making you find your own place first.
-  const [openSection, setOpenSection] = useState<ShellSectionId | null>(null);
-  // One source for both drawers. Memoised on `account` because buildShellNav
-  // walks the registry and the header re-renders on every scroll tick.
-  const navItems = useMemo(() => (account ? buildShellNav(account) : []), [account]);
-  const activeItemId = resolveActiveItemId(navItems, pathname, null);
-  const currentSection = resolveSection(pathname);
-  // Both components render `AppShellDrawer` — which is right, they should be
-  // the same drawer from the same registry — but rendering it twice puts two
-  // `role="dialog" aria-modal="true"` nodes with the same label in the
-  // document. That is an a11y defect on its own (a screen reader is offered
-  // two identical menus, and `aria-modal` on the hidden one is a lie), and it
-  // broke the app-shell contract suite, where `.shell-drawer` stopped
-  // resolving to one element.
-  //
-  // `AppShell` PUBLISHES whether its chrome is up rather than this component
-  // re-deriving it: an earlier attempt duplicated the condition here, and the
-  // two copies drifted — the header stood down on a route where the shell was
-  // rendering nothing, leaving a phone with no menu at all.
-  //
-  // The header's copy is not redundant: the shell's chrome only exists on
-  // shell routes, so on everything else this is the only drawer a phone has.
-  // It steps aside rather than being removed.
-  const appShellOwnsDrawer = useAppShellChromeActive();
   const signedIn = sessionStatus === 'authenticated';
 
   useEffect(() => {
@@ -80,33 +38,6 @@ export function AdaptiveSiteHeader({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  useEffect(() => {
-    const storageKey = 'ihype-menu-introduced-this-signin';
-    if (!signedIn) {
-      try { window.sessionStorage.removeItem(storageKey); } catch {}
-      return;
-    }
-    try {
-      if (window.sessionStorage.getItem(storageKey) === session?.user?.id) return;
-      window.sessionStorage.setItem(storageKey, session?.user?.id ?? 'signed-in');
-    } catch {
-      // Storage can be disabled; the sign-in demo still works for this view.
-    }
-
-    const openTimer = window.setTimeout(() => {
-      setMenuDemo(true);
-      setMenuOpen(true);
-    }, 300);
-    const closeTimer = window.setTimeout(() => {
-      setMenuOpen(false);
-      setMenuDemo(false);
-    }, 3500);
-    return () => {
-      window.clearTimeout(openTimer);
-      window.clearTimeout(closeTimer);
-    };
-  }, [session?.user?.id, signedIn]);
-
   return (
     <header
       aria-label={label}
@@ -116,17 +47,9 @@ export function AdaptiveSiteHeader({
         {signedIn ? (
           <>
             <div className="app-menu-trigger-wrap">
-              <button
-                aria-expanded={menuOpen}
-                aria-label="Open iHYPE menu"
-                className={`app-menu-logo${menuDemo ? ' is-demoing' : ''}`}
-                onClick={() => setMenuOpen((current) => !current)}
-                type="button"
-              >
+              <Link aria-label="Open Music Map Me" className="app-menu-logo" href="/app/map">
                 <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
-                <span className="app-menu-logo-signal" aria-hidden="true" />
-              </button>
-              {menuDemo ? <span className="app-menu-demo-label" role="status">Everything lives here</span> : null}
+              </Link>
             </div>
             <SearchBar compact={scrolled} />
             <div className="adaptive-site-header-tabs">
@@ -142,26 +65,6 @@ export function AdaptiveSiteHeader({
             <div className="adaptive-site-header-auth">
               <HeaderAuthLinks inviteOnly={inviteOnly} />
             </div>
-            {/* The SAME drawer the app shell renders, from the SAME nav
-                registry. It used to be `NavDrawer`, a second drawer with its
-                own hand-written destination list — which still pointed LISTEN
-                at `/listen?tab=…` months after DESIGN_SYNC row 273 moved those
-                four to `/app/music/*`. Row 273 closed the one-way door in the
-                shell's drawer and left this one open, and this is the drawer a
-                phone actually sees, because the shell's chrome only exists on
-                shell routes. */}
-            {account && !appShellOwnsDrawer && (
-              <AppShellDrawer
-                activeItemId={activeItemId}
-                items={navItems}
-                onClose={() => setMenuOpen(false)}
-                onToggleSection={(section) =>
-                  setOpenSection((current) => (current === section ? null : section))
-                }
-                open={menuOpen}
-                openSection={openSection ?? currentSection}
-              />
-            )}
           </>
         ) : (
           <>

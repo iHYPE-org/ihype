@@ -160,6 +160,10 @@ export function TicketSaleCard({
     const data = await response.json();
 
     if (response.ok) {
+      if (data.checkoutUrl) {
+        window.location.assign(data.checkoutUrl);
+        return;
+      }
       setQuantity('1');
       setIssuedTickets((data.tickets ?? []) as IssuedTicket[]);
       setMessage(
@@ -266,42 +270,10 @@ export function TicketSaleCard({
         <div className="empty">{t('ticketSaleCard.soldOut', 'This ticket allocation is sold out.')}</div>
       ) : !currentFan ? (
         <div className="empty">
-          {t('ticketSaleCard.signInPrompt', 'Sign in with a fan account to reserve tickets against your stored payment token.')}
+          {t('ticketSaleCard.signInPrompt', 'Sign in with a fan account to buy tickets securely through Stripe.')}
           <div className="cta-row">
             <Link className="button small secondary" href="/login">
               {t('ticketSaleCard.signInButton', 'Sign in')}
-            </Link>
-          </div>
-        </div>
-      ) : !currentFan.hasStoredPaymentToken ? (
-        <div className="empty">
-          <strong style={{ display: 'block', marginBottom: '0.5rem' }}>{t('ticketSaleCard.paymentMethodRequiredTitle', 'Payment method required')}</strong>
-          {/* The previous copy here promised two things nothing backs: a
-              delivery date ("being finalised for beta launch") and a
-              notification ("your account will be notified when it opens") that
-              no code path sends. Saying less is the honest option until the
-              flow exists.
-
-              What it needs: POST /api/stripe/setup-intent is written and
-              correct, but it returns a clientSecret for Stripe.js, and there
-              is deliberately no Stripe.js or Elements anywhere in this
-              codebase. The route to finish this is the one ad billing already
-              took — a hosted Stripe Checkout session in mode: 'setup' (see
-              createAdCampaignCheckoutSession in src/lib/stripe.ts), plus a
-              checkout.session.completed branch in the Stripe webhook to store
-              the resulting payment method on User.storedPaymentTokenRef. That
-              needs no new client dependency. It is deliberately not built yet:
-              the Stripe integration has never executed against Stripe at all
-              (live mode holds zero PaymentIntents and zero connected
-              accounts), so scripts/stripe-payout-rehearsal.mjs should run
-              first. */}
-          {t(
-            'ticketSaleCard.paymentMethodRequiredBody',
-            'Saving a payment method is not open yet, so tickets cannot be reserved from this account. Nothing is charged and nothing is held in the meantime.'
-          )}
-          <div className="cta-row" style={{ marginTop: '1rem' }}>
-            <Link className="button small secondary" href="/tickets">
-              {t('ticketSaleCard.ticketingEngineButton', 'Ticketing Engine')}
             </Link>
           </div>
         </div>
@@ -313,7 +285,7 @@ export function TicketSaleCard({
                 <div className="signal-card">
                   <strong>{currentFan.name ?? t('ticketSaleCard.signedInFanFallback', 'Signed-in fan')}</strong>
                   <span>{currentFan.email}</span>
-                  <span>{fanPaymentLabel ?? t('ticketSaleCard.storedTokenOnFile', 'Stored payment token on file.')}</span>
+                  <span>{fanPaymentLabel ?? t('ticketSaleCard.secureStripeCheckout', 'Payment collected securely by Stripe Checkout.')}</span>
                 </div>
               ) : null}
               {viewerTaxRegion ? (
@@ -339,8 +311,8 @@ export function TicketSaleCard({
               {t('ticketSaleCard.fanAccountLabel', 'Fan account')}
             </div>
             <div className="stat">
-              <strong>{fanPaymentLabel ?? t('ticketSaleCard.storedTokenOnFileShort', 'Stored token on file')}</strong>
-              {t('ticketSaleCard.paymentSourceLabel', 'Payment source')}
+              <strong>{fanPaymentLabel ?? t('ticketSaleCard.stripeCheckoutLabel', 'Stripe Checkout')}</strong>
+              {t('ticketSaleCard.paymentSourceLabel', 'Secure payment')}
             </div>
           </div>
 
@@ -425,8 +397,8 @@ export function TicketSaleCard({
                   ? t('ticketSaleCard.chargingButton', 'Charging...')
                   : t('ticketSaleCard.reservingButton', 'Reserving...')
                 : ticketingOpen
-                  ? t('ticketSaleCard.chargeStoredTokenButton', 'Charge stored token now')
-                  : t('ticketSaleCard.reserveTicketsButton', 'Reserve tickets')}
+                  ? t('ticketSaleCard.continueToStripeButton', 'Continue to Stripe')
+                  : t('ticketSaleCard.continueToStripeButton', 'Continue to Stripe')}
             </button>
             {message ? (
               <span className="meta">

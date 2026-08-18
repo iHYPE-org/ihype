@@ -1,5 +1,5 @@
 /**
- * Tests for the webhook idempotency pattern used in the Mux and Stripe webhook
+ * Tests for the webhook idempotency pattern used in payment webhooks
  * handlers. The DB constraint is the lock — we test the in-memory logic that
  * wraps a Prisma create + unique-violation catch, using a Map-backed mock so no
  * real database is required.
@@ -44,7 +44,7 @@ describe('webhook idempotency store', () => {
 
   it('does not confuse events with the same ID from different sources', async () => {
     await store.process('stripe', 'evt_001');
-    const result = await store.process('mux', 'evt_001');
+    const result = await store.process('resend', 'evt_001');
     expect(result.duplicate).toBe(false);
   });
 

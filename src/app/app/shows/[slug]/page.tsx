@@ -221,10 +221,6 @@ export default async function MmmShowPage({
         </p>
       )}
 
-      {/* Honest about what is not here yet, rather than a bare link. */}
-      <Link className="mmm-show-more" href={`/shows/${show.slug}`}>
-        Comments, setlist and recap →
-      </Link>
     </div>
   );
 }

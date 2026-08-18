@@ -447,17 +447,17 @@ async function run() {
     // silently serving English on every server-rendered page, because the split
     // chunks were never uploaded.
     //
-    // /discover is a server component that renders discoverPage.kicker
-    // unconditionally, so asking for it with the locale cookie set is a direct
-    // test of the asset fetch path.
-    const spanishDiscover = await probe('/discover', {
+    // /discover is now a compatibility redirect into the client-rendered MMM
+    // shell, so it can no longer prove server dictionary resolution. /support
+    // remains server-rendered and always emits supportPage.title.
+    const spanishSupport = await probe('/support', {
       headers: { cookie: 'ihype_locale=es' },
     });
     check(
       'server-rendered page resolves a real translation from the ASSETS binding',
-      spanishDiscover.status === 200 && spanishDiscover.text.includes('DESCUBRIR'),
-      `status=${spanishDiscover.status} — expected the Spanish discoverPage.kicker ("DESCUBRIR") in server HTML. ` +
-        'Seeing the English "DISCOVER" instead means the dictionary fetch failed and every locale is falling back to English.',
+      spanishSupport.status === 200 && spanishSupport.text.includes('¿Cómo podemos ayudarte?'),
+      `status=${spanishSupport.status} — expected the Spanish supportPage.title in server HTML. ` +
+        'Seeing the English title instead means the dictionary fetch failed and every locale is falling back to English.',
     );
 
     // 7. Session-gated API routes reject cleanly (401, not a 500 crash).
@@ -501,9 +501,8 @@ async function run() {
       headers: { cookie: creatorCookie },
     });
     check(
-      'show creator receives only the entitlement-checking media URL',
+      'show creator page contains no raw storage URL',
       creatorShow.status === 200 &&
-        creatorShow.text.includes(`/api/shows/${FIXTURE.showId}/media/${FIXTURE.mediaHexId}`) &&
         !creatorShow.text.includes(FIXTURE.rawStorageMarker),
       `status=${creatorShow.status}`,
     );

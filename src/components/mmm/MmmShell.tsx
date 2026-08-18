@@ -1,10 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { MmmArtistCard } from '@/components/mmm/MmmArtistCard';
+import Image from 'next/image';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
-import { MmmMap, type MapSheetTarget } from '@/components/mmm/MmmMap';
+import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
@@ -44,8 +44,7 @@ export type MmmNowPlaying = {
  * 2. **The map is the base layer and stays mounted.** Music and Me are panes
  *    over it, so returning to MAP keeps your pan and zoom. This component is
  *    rendered by the `/app` LAYOUT, which is the only place the App Router
- *    guarantees a subtree survives navigation — the same reason `AppShell` sits
- *    in the root layout.
+ *    guarantees a subtree survives navigation.
  * 3. **Module, tab and view are routes, not state.** The handoff says so
  *    explicitly. Only `navOpen`, `sheet`, `playing` and `hyped` live here.
  * 4. **Opening the nav dims everything, player included.** The player fades and
@@ -64,6 +63,7 @@ export function MmmShell({
   isAdmin?: boolean;
 }) {
   const pathname = usePathname() ?? '/app/map';
+  const searchParams = useSearchParams();
   const router = useRouter();
   const activeModule = moduleForPath(pathname);
   const activeItemId = itemForPath(pathname);
@@ -74,11 +74,11 @@ export function MmmShell({
    */
   const detailOpen = isMmmDetailPath(pathname);
   const mapActive = activeModule === 'map' && !detailOpen;
+  const requestedLayer = searchParams?.get('layer');
+  const initialMapLayer: MapLayer =
+    requestedLayer === 'venues' || requestedLayer === 'artists' ? requestedLayer : 'events';
 
   const [navOpen, setNavOpen] = useState(false);
-  // Tapping the logo also wakes the player: on a wide screen it has usually
-  // retired to its disc by then, and the logo is the one control always there.
-  const [playerWake, setPlayerWake] = useState(0);
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
@@ -136,10 +136,9 @@ export function MmmShell({
     if (target) playTrack(target);
   }, [currentIndex, playTrack, queue]);
 
-  // Chrome that is anchored to the pill: the queue panel, the artist highlight,
-  // and the phone's full-screen player.
+  // Chrome that is anchored to the pill: the queue panel and the phone's
+  // full-screen player.
   const [queueOpen, setQueueOpen] = useState(false);
-  const [artistOpen, setArtistOpen] = useState(false);
   const [fullOpen, setFullOpen] = useState(false);
 
   // The heart, which is NOT the HYPE control. SHELL_LOCK is explicit that they
@@ -204,22 +203,13 @@ export function MmmShell({
      plain text and the panel has no target to open. */
   const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
 
-  // Every panel anchored to the pill describes THIS track. A track change (or
-  // opening the nav) invalidates all three rather than leaving them describing
-  // something that is no longer playing.
-  useEffect(() => {
-    setArtistOpen(false);
-  }, [currentTrack?.id]);
-
   useEffect(() => {
     if (!navOpen) return;
     setQueueOpen(false);
-    setArtistOpen(false);
   }, [navOpen]);
 
   useEffect(() => {
     setQueueOpen(false);
-    setArtistOpen(false);
     setFullOpen(false);
   }, [pathname]);
 
@@ -299,15 +289,22 @@ export function MmmShell({
 
   const toggleNav = useCallback(() => {
     setSheet(null);
-    setPlayerWake((value) => value + 1);
     setNavOpen((open) => !open);
   }, []);
 
   return (
     <div className="mmm-frame">
-      <MmmMap active={mapActive && !navOpen} onOpenSheet={setSheet} />
+      <MmmMap active={mapActive && !navOpen} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
 
-      {!mapActive && <div className="mmm-pane">{children}</div>}
+      {!mapActive && (
+        <div className="mmm-pane">
+          {/* The migrated workflows already use the shared primitive aliases
+              scoped beneath .mmm-migrated-surface. This nested surface
+              activates those paint-only aliases without reviving any retired
+              layout or chrome. */}
+          <div className="mmm-migrated-surface">{children}</div>
+        </div>
+      )}
 
       {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
 
@@ -316,7 +313,6 @@ export function MmmShell({
             can play out — the design's `data-ih-hide` behaviour. Opening the nav
             still dims it completely, which was the explicit requirement. */}
         <MmmPlayer
-          artistOpen={artistOpen}
           canFavourite={Boolean(currentTrack)}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
@@ -327,29 +323,16 @@ export function MmmShell({
           history={played}
           hyped={hyped}
           narrow={narrow}
-          /* Phone only: the artwork opens the full player, which is where the
-             controls the phone bar drops actually live. */
+          /* Phone only: a visible expand control opens the full player. */
           onExpand={() => { setNavOpen(false); setFullOpen(true); }}
-          /* The name opens the highlight over the shell rather than navigating:
-             the point is to decide about the artist without losing the map, the
-             pane or your place in the queue. The panel itself carries the link
-             out to the full artist page. */
-          /* The two panels share one anchor above the pill, so opening either
-             closes the other rather than stacking two dialogs on the same
-             spot. */
-          onOpenArtist={artistSlug ? () => { setQueueOpen(false); setArtistOpen((open) => !open); } : undefined}
+          onOpenArtist={artistSlug ? () => {
+            setQueueOpen(false);
+            router.push(`/app/artists/${artistSlug}`);
+          } : undefined}
           onPickTrack={pickTrack}
-          onToggleQueue={() => { setArtistOpen(false); setQueueOpen((open) => !open); }}
+          onToggleQueue={() => setQueueOpen((open) => !open)}
           queue={upNext}
           queueOpen={queueOpen}
-          wake={playerWake}
-          /* The design's `openSearch` is module: music, tab: discover, field
-             focused. There is no separate search surface to open — the field
-             lives at the top of every MUSIC tab — so this is that navigation,
-             and `focus=search` is what tells the field to take focus on
-             arrival. Phone only; on a wider frame the field is already on
-             screen whenever MUSIC is. */
-          onSearch={() => router.push('/app/music/discover?focus=search')}
           onNext={playNext}
           onPrev={playPrevious}
           // The pill speaks 0-100; the audio element speaks seconds. Converted
@@ -365,12 +348,6 @@ export function MmmShell({
           track={displayTrack}
           volume={volume * 100}
         />
-
-        {/* Anchored to the pill, so it is drawn beside it rather than inside
-            it — the pill is a capsule and clips anything nested. */}
-        {artistOpen && artistSlug && !navOpen && (
-          <MmmArtistCard onClose={() => setArtistOpen(false)} slug={artistSlug} />
-        )}
 
         {/* Phone only, and only over a real track: with nothing playing there
             is nothing to expand, and `onExpand` is the only way in. */}
@@ -431,19 +408,16 @@ export function MmmShell({
              It also made the consent lift impossible to apply. */
           type="button"
         >
-          {/* The full wordmark, per `components/shell/LogoTrigger.jsx`: iH, the
-              bolt standing in for the Y, PE. It rendered as the plain word
-              before, which lost the mark on the one square that is always on
-              screen. Drawn inline rather than loaded from `assets/logo/` so it
-              takes `currentColor` (`--ink-on-accent`) instead of shipping a
-              second colour variant. */}
-          <span className="mmm-logo-mark">
-            <span>iH</span>
-            <svg aria-hidden="true" viewBox="148 92 200 328">
-              <path d="M280 96L152 288h96l-16 128 144-192h-96l16-128z" fill="currentColor" />
-            </svg>
-            <span>PE</span>
-          </span>
+          <Image
+            alt=""
+            aria-hidden="true"
+            className="mmm-logo-image"
+            height={1600}
+            priority
+            sizes="(max-width: 720px) 56px, 88px"
+            src="/brand/ihype-logo.png"
+            width={1600}
+          />
           {isPlaying && currentTrack && (
             <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
           )}

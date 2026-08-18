@@ -7,7 +7,6 @@ import { HEAT_LABEL, HEAT_TOKEN, heatLevel } from '@/lib/heat-level';
 import { TicketCardActions } from '@/components/TicketCardActions';
 import { PagesReferralTab } from '@/components/PagesReferralTab';
 import { PullToRefresh } from '@/components/PullToRefresh';
-import { useAppShellActive } from '@/components/shell/AppShellContext';
 import { useI18n } from '@/components/I18nProvider';
 
 type Tab = 'search' | 'local' | 'foryou' | 'tickets' | 'referral';
@@ -16,7 +15,6 @@ type Tab = 'search' | 'local' | 'foryou' | 'tickets' | 'referral';
  * shell they come off this strip; 'search' and 'referral' stay, because the
  * strip does not carry them and nothing else links to them from here.
  */
-const SHELL_TABS: readonly string[] = ['local', 'foryou', 'tickets'];
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'search', label: 'Search' },
@@ -158,8 +156,7 @@ export function EventsHome({
     if (!validInitialTab) return;
     setTab(validInitialTab);
   }, [validInitialTab]);
-  const shellDrivesTabs = useAppShellActive();
-  const visibleTabs = shellDrivesTabs ? TABS.filter((d) => !SHELL_TABS.includes(d.id)) : TABS;
+  const visibleTabs = TABS;
   const [q, setQ] = useState('');
   const [shows, setShows] = useState<Show[] | null>(null);
   const [forYouShows, setForYouShows] = useState<Show[] | null>(null);
@@ -176,9 +173,8 @@ export function EventsHome({
   // parked 141px down. Verified by e2e: expected 0, got 141. Outside the shell
   // (phone swipe shell, marketing) this is still the only thing that resets it.
   useEffect(() => {
-    if (shellDrivesTabs) return;
     contentTopRef.current?.scrollIntoView({ block: 'start' });
-  }, [tab, shellDrivesTabs]);
+  }, [tab]);
 
   const refreshDirectory = useCallback(() => {
     return fetch('/api/shows/directory')

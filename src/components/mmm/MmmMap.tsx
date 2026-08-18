@@ -93,10 +93,12 @@ const SEARCH_PLACEHOLDER: Record<SearchableLayer, string> = {
  */
 export function MmmMap({
   active,
+  initialLayer,
   onOpenSheet,
 }: {
   /** False while a module pane covers the map: skip fetches and repaints. */
   active: boolean;
+  initialLayer: MapLayer;
   onOpenSheet: (target: MapSheetTarget) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -104,8 +106,13 @@ export function MmmMap({
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
-  const [layer, setLayer] = useState<MapLayer>('events');
+  const [layer, setLayer] = useState<MapLayer>(initialLayer);
   const chipsRef = useRef<HTMLDivElement | null>(null);
+
+  // The shell layout persists across navigation. A compatibility URL can
+  // therefore arrive after the map has already mounted; keep the requested
+  // URL layer authoritative instead of treating it as a one-time default.
+  useEffect(() => setLayer(initialLayer), [initialLayer]);
 
   // The date strip. A SET of days, not a span — Design System 8's map document
   // is explicit that Friday and Sunday with nothing between them is a legal
@@ -495,31 +502,10 @@ export function MmmMap({
                   </button>
                 ))}
               </div>
-              {/* "Near me" is on EVERY layer, by explicit product decision
-                  (2026-08-12). The design's `#near` rides beside the chips on
-                  the artists layer alone, and while location was only askable
-                  from this control that made it unreachable for a fan browsing
-                  events on a phone — the single most obvious use of a map.
-
-                  The COUNT stays artists-only, which is the half of the design's
-                  reasoning that still holds: an artist pin is a city of origin
-                  rather than an address, so "how many are around here" is the
-                  only reading it has. Events and venues answer that with their
-                  own pins, and a count beside them would be a second, worse
-                  answer to a question the map already shows. */}
-              <div className="mmm-map-near" data-count={layer === 'artists' || undefined}>
-                {layer === 'artists' && (
-                  <span aria-live="polite">
-                    {total > 0
-                      ? `${total} artist${total === 1 ? '' : 's'} here`
-                      : 'None in view — zoom out'}
-                  </span>
-                )}
-                {/* Tapping this IS a request for the capability, so it opens
-                    the primer if it has never been shown. It does NOT reopen
-                    for someone who already declined — `ask()` returns false
-                    there and the camera falls back to the seeded city, which is
-                    the designed refusal path rather than a dead button. */}
+              {/* Keep location available on every layer and in one predictable
+                  position after the shared layer controls. The redundant
+                  artists count stays gone. */}
+              <div className="mmm-map-near">
                 <button
                   className="mmm-map-recentre"
                   onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}

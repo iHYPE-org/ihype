@@ -11,7 +11,7 @@ export type SimilarArtist = {
 
 /**
  * AI-assisted "similar artists" lookup behind the "Similar artists" section on
- * /artists/[slug] and /promoters/[slug], which call this directly as server
+ * Artist profile pages call this directly as server
  * components. There used to be a GET /api/artists/[slug]/sounds-like wrapper
  * too; nothing ever fetched it, so it was removed rather than left as a second,
  * unauthenticated way into the same query.

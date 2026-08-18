@@ -33,7 +33,8 @@
  * Example: node scripts/e2e-workerd.mjs e2e/auth.spec.ts
  */
 import { spawn, spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const PORT = Number(process.env.E2E_WORKERD_PORT || 8787);
@@ -50,7 +51,8 @@ const SHUTDOWN_TIMEOUT_MS = 5_000;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
-const REQUESTED_TESTS = process.argv.slice(2);
+const SERVE_ONLY = process.argv.includes('--serve');
+const REQUESTED_TESTS = process.argv.slice(2).filter((argument) => argument !== '--serve');
 // Each default shard gets a fresh workerd process:
 // the production bundle is intentionally large and a single long-lived local
 // isolate can retain compiled route modules until it reaches workerd's V8 heap
@@ -67,16 +69,15 @@ const REQUESTED_TESTS = process.argv.slice(2);
 // nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
-  ['e2e/app-shell-a11y.spec.ts'],
-  ['e2e/app-shell.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
-  ['e2e/phone-chrome.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
 ];
-const TEST_SHARDS = REQUESTED_TESTS.length > 0
+const TEST_SHARDS = SERVE_ONLY
+  ? [[]]
+  : REQUESTED_TESTS.length > 0
   ? [REQUESTED_TESTS]
   : DEFAULT_TEST_SHARDS;
 
@@ -84,6 +85,8 @@ if (!DB_URL) {
   console.error('[e2e-workerd] E2E_WORKERD_DATABASE_URL is required');
   process.exit(1);
 }
+
+const PERSIST_ROOT = mkdtempSync(join(tmpdir(), 'ihype-e2e-workerd-'));
 
 function tomlString(value) {
   return value.replaceAll('\\', '\\\\').replaceAll('"', '\\"');
@@ -194,6 +197,10 @@ function runPlaywright(tests) {
         stdio: 'inherit',
         env: {
           ...process.env,
+          // Keep Playwright non-interactive and aligned with the Workerd
+          // process. In particular, the HTML reporter must not hold this
+          // orchestrator open after a failing shard.
+          CI: 'true',
           PLAYWRIGHT_BASE_URL: BASE,
           PLAYWRIGHT_EXTERNAL_SERVER: 'true',
           // The built worker always runs with production semantics
@@ -215,12 +222,25 @@ async function runShard(tests, index) {
     // avoids platform-specific npx/.cmd process handling and guarantees the
     // runtime suite exercises the dependency versions in package-lock.json.
     process.execPath,
-    [WRANGLER_CLI, 'dev', '--config', TMP_CONFIG, '--port', String(PORT), '--show-interactive-dev-session=false'],
+    [
+      WRANGLER_CLI,
+      'dev',
+      '--config', TMP_CONFIG,
+      '--port', String(PORT),
+      '--persist-to', join(PERSIST_ROOT, `shard-${index + 1}`),
+      '--show-interactive-dev-session=false',
+    ],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: process.platform !== 'win32',
       env: {
         ...process.env,
+        // The developer's .env normally points at next dev on :3000. This
+        // isolated Worker owns :8787, so all server-side auth/WebAuthn origin
+        // checks must use the same origin Playwright is exercising.
+        AUTH_URL: BASE,
+        NEXT_PUBLIC_APP_URL: BASE,
+        NEXT_PUBLIC_BASE_URL: BASE,
         // See workerd-smoke.mjs for why this specific (deprecated-but-working)
         // variable name is used instead of the documented CLOUDFLARE_ prefix.
         WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: DB_URL,
@@ -232,8 +252,14 @@ async function runShard(tests, index) {
   let exitCode = 1;
   try {
     await waitForBoot(child);
-    console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
-    exitCode = await runPlaywright(tests);
+    if (SERVE_ONLY) {
+      console.log(`[e2e-workerd] Local authenticated preview ready on ${BASE}`);
+      await new Promise((resolve) => child.once('exit', resolve));
+      exitCode = child.exitCode ?? 0;
+    } else {
+      console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
+      exitCode = await runPlaywright(tests);
+    }
   } catch (error) {
     console.error('[e2e-workerd]', error);
     exitCode = 1;
@@ -258,6 +284,14 @@ async function run() {
     }
   } finally {
     rmSync(TMP_CONFIG, { force: true });
+    try {
+      rmSync(PERSIST_ROOT, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    } catch (error) {
+      // Windows may briefly retain a Miniflare SQLite handle after the
+      // process tree exits. Do not replace the actual test result with a
+      // best-effort temporary-directory cleanup error.
+      console.warn(`[e2e-workerd] Could not remove temporary state: ${error.message}`);
+    }
   }
 
   process.exit(exitCode);

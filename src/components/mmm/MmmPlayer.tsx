@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 
 /**
  * The persistent player, rebuilt to Design System 8's `PlayerPill` contract
@@ -49,7 +49,7 @@ import { useEffect, useRef, useState } from 'react';
 export type MmmPlayerTrack = {
   title: string;
   artist: string;
-  /** Shown after the artist as "artist · album", as its own destination. */
+  /** Shown after the artist as "artist · album" and linked to that artist. */
   album?: string;
   /** Fallback when there is no artwork URL. */
   initial: string;
@@ -58,7 +58,6 @@ export type MmmPlayerTrack = {
 
 export function MmmPlayer({
   anchorHeight = 88,
-  artistOpen = false,
   canFavourite,
   canHype,
   canTogglePlay,
@@ -71,15 +70,12 @@ export function MmmPlayer({
   hypeLabel,
   hypeLocked,
   hyped,
-  idleMs = 10000,
   narrow,
   onExpand,
   onNext,
   onPickTrack,
   onPrev,
-  onOpenAlbum,
   onOpenArtist,
-  onSearch,
   onSeek,
   onToggleFav,
   onToggleHype,
@@ -92,16 +88,8 @@ export function MmmPlayer({
   queueOpen = false,
   track,
   volume,
-  wake = 0,
 }: {
   anchorHeight?: number;
-  /**
-   * The artist highlight is open for this track. Marks the artist name as the
-   * active target and, with the queue, holds the pill awake — retiring to a
-   * 56px disc while a 340px dialog points at it leaves the dialog anchored to
-   * nothing.
-   */
-  artistOpen?: boolean;
   canFavourite: boolean;
   canHype: boolean;
   canTogglePlay: boolean;
@@ -115,18 +103,8 @@ export function MmmPlayer({
   hypeLabel?: string;
   hypeLocked?: boolean;
   hyped: boolean;
-  /**
-   * How long the pill waits before retiring to its disc. The design's own
-   * default; exposed so a test does not have to wait ten seconds.
-   */
-  idleMs?: number;
   narrow: boolean;
-  /**
-   * Phone only: the artwork opens the full-screen player. Omitted, the artwork
-   * is not a button — an inert control is worse than none, and until this
-   * existed the phone bar had no route to seek, volume, the heart or the queue
-   * at all.
-   */
+  /** Phone only: opens the full-screen player from a visible expand control. */
   onExpand?: () => void;
   onNext: () => void;
   /**
@@ -141,14 +119,7 @@ export function MmmPlayer({
    * nothing.
    */
   onOpenArtist?: () => void;
-  /** The release name in the meta line. Separate from the artist. */
-  onOpenAlbum?: () => void;
   onSeek: (value: number) => void;
-  /**
-   * Phone only, per `PlayerPill`: search rides at the bar's left edge. Omitted,
-   * it is not drawn — a search control with nowhere to go is worse than none.
-   */
-  onSearch?: () => void;
   onToggleFav: () => void;
   onToggleHype: () => void;
   onTogglePlay: () => void;
@@ -169,116 +140,17 @@ export function MmmPlayer({
   track: MmmPlayerTrack | null;
   /** 0–100. */
   volume: number;
-  /**
-   * Bump to bring the pill back from its retired disc and restart the idle
-   * countdown. Any number will do — only a CHANGE is read. The shell bumps it
-   * when the logo is tapped, because on a wide screen the player has usually
-   * retired by then and the logo is the control that is always there.
-   */
-  wake?: number;
 }) {
-  /**
-   * The pill retires to a disc after `idleMs` of nothing happening, and comes
-   * back when it is touched or when `wake` changes.
-   *
-   * Two things about this are the design's and are easy to get backwards:
-   *
-   *  - **It is a WIDE-screen behaviour.** `PlayerPill.jsx` computes
-   *    `mini = !narrow && !awake && !dimmed` and returns early from the timer
-   *    on `narrow`, so a phone never retires. The `wake` prop's own comment
-   *    says "wake the player on a phone", which is a summary that disagrees
-   *    with the implementation — the implementation wins.
-   *  - **One timer, not a CSS animation and not the document timeline.** That
-   *    timeline does not advance in every context this runs in, and a
-   *    both-filled animation then holds its from-state forever.
-   */
-  const [awake, setAwake] = useState(true);
   const rootRef = useRef<HTMLDivElement | null>(null);
-  const rouse = () => setAwake(true);
-
-  useEffect(() => { setAwake(true); }, [wake]);
-
-  useEffect(() => {
-    // An open queue or artist panel holds the pill awake. Both are anchored to
-    // the pill's box, so retiring to a 56px disc underneath them would leave a
-    // 340px dialog pointing at nothing — the design system's own guard.
-    if (narrow || hidden || !awake || queueOpen || artistOpen) return undefined;
-    const timer = window.setTimeout(() => setAwake(false), idleMs);
-    return () => window.clearTimeout(timer);
-    // Every value that means "something is happening" restarts the countdown.
-  }, [artistOpen, awake, hidden, idleMs, narrow, playing, progress, queueOpen, volume, hyped, faved, track?.title]);
 
   // null renders nothing. Never invent a placeholder track.
   if (!track) return null;
 
   // 64 in an 88px pill leaves exactly 12px above and below, which is the pill's
-  // own padding. On a phone the bar also carries search at its left edge, so the
-  // artwork drops to the design's 40px with a 14px corner — a 64px square there
-  // leaves the title about a word wide.
+  // own padding. On a phone the artwork drops to 40px with a 14px corner so
+  // previous, play/pause, next and expand remain real touch targets.
   const art = narrow ? 40 : Math.max(40, anchorHeight - 24);
   const artRadius = narrow ? 14 : Math.round(art * 0.342);
-  /* Artist and release are separate destinations, so they are separate
-     targets. One run of grey text that silently opens one of two different
-     pages is the thing this replaces — and a name with no handler stays plain
-     text rather than becoming a target that goes nowhere. */
-  const nameLink = (text: string, onClick?: () => void, active?: boolean) =>
-    onClick
-      ? (
-        <button className="mmm-player-name" data-active={active || undefined} onClick={onClick} type="button">
-          {text}
-        </button>
-      )
-      : <span className="mmm-player-name" data-plain="">{text}</span>;
-
-  // The retired disc. Same squircle ratio as the logo trigger and the artwork,
-  // so the three read as one family.
-  if (!narrow && !awake && !hidden) {
-    const size = anchorHeight;
-    const radius = Math.round(size * 0.342);
-    const inset = 2;
-    const pct = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
-    return (
-      <button
-        aria-label={`Show the player — ${track.title} by ${track.artist}`}
-        className="mmm-player-mini"
-        onClick={rouse}
-        style={{ width: size, height: size, borderRadius: radius }}
-        type="button"
-      >
-        {/* `pathLength` normalises the rounded rectangle's perimeter to 100, so
-            progress maps straight onto it with no arc-length maths — and stays
-            correct if the corner radius changes. */}
-        <svg aria-hidden="true" height={size} viewBox={`0 0 ${size} ${size}`} width={size}>
-          <rect
-            fill="none"
-            height={size - inset * 2}
-            rx={radius - inset}
-            stroke="var(--hair-100)"
-            strokeWidth={2}
-            width={size - inset * 2}
-            x={inset}
-            y={inset}
-          />
-          <rect
-            fill="none"
-            height={size - inset * 2}
-            pathLength={100}
-            rx={radius - inset}
-            stroke="var(--accent)"
-            strokeDasharray={100}
-            strokeDashoffset={100 - pct}
-            strokeLinecap="round"
-            strokeWidth={2}
-            width={size - inset * 2}
-            x={inset}
-            y={inset}
-          />
-        </svg>
-        <span>{track.initial}</span>
-      </button>
-    );
-  }
-
   return (
     <>
       {/* A SIBLING of the pill, never a child: the pill is a capsule with
@@ -342,75 +214,28 @@ export function MmmPlayer({
       aria-hidden={hidden}
       className="mmm-player"
       data-hidden={hidden}
-      onPointerDown={rouse}
       ref={rootRef}
-      style={{ minHeight: anchorHeight }}
+      style={{ minHeight: narrow ? 56 : anchorHeight }}
     >
-      {/* Phone only: search rides at the bar's LEFT EDGE, divided off by a
-          hairline so it plainly is not a transport control. Floating between
-          the trigger and the bar it read as part of the nav trigger and cost
-          the row the 52px the title needs. Omitted when there is nowhere to
-          send it — a search button that does nothing is worse than none. */}
-      {narrow && onSearch && (
-        <button
-          aria-label="Search artists, venues and shows"
-          className="mmm-player-search"
-          onClick={onSearch}
-          type="button"
-        >
-          <svg aria-hidden="true" height={18} viewBox="0 0 24 24" width={18}>
-            <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth={1.9}>
-              <circle cx={10.6} cy={10.6} r={6.4} />
-              <path d="m15.4 15.4 4.3 4.3" />
-            </g>
-          </svg>
-        </button>
-      )}
-
-      {/* On a phone the artwork IS the way into the full player — that is the
-          design's own route to seek, volume, the heart and the queue, none of
-          which fit in a 393px bar. With no handler it stays a plain div rather
-          than becoming a button that does nothing. */}
-      {narrow && onExpand ? (
-        <button
-          aria-label="Open the full player"
-          className="mmm-player-art"
-          data-expand=""
-          onClick={onExpand}
-          style={{ width: art, height: art, borderRadius: artRadius }}
-          tabIndex={hidden ? -1 : 0}
-          type="button"
-        >
-          {track.artworkUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- see below.
-            <img alt="" height={art} src={track.artworkUrl} width={art} />
-          ) : (
-            <span aria-hidden="true">{track.initial}</span>
-          )}
-        </button>
-      ) : (
-        <div
-          className="mmm-player-art"
-          style={{ width: art, height: art, borderRadius: artRadius }}
-        >
-          {track.artworkUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
-            // R2/remote and already sized by the uploader; next/image would add a
-            // loader round trip for a 64px square that is on screen constantly.
-            <img alt="" height={art} src={track.artworkUrl} width={art} />
-          ) : (
-            <span aria-hidden="true">{track.initial}</span>
-          )}
-        </div>
-      )}
+      <div
+        className="mmm-player-art"
+        style={{ width: art, height: art, borderRadius: artRadius }}
+      >
+        {track.artworkUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- artwork URLs are
+          // R2/remote and already sized by the uploader; next/image would add a
+          // loader round trip for a 64px square that is on screen constantly.
+          <img alt="" height={art} src={track.artworkUrl} width={art} />
+        )}
+      </div>
 
       <div className="mmm-player-body">
-        <Marquee className="mmm-player-track" text={track.title} />
-        <div className="mmm-player-artist">
-          {nameLink(track.artist, onOpenArtist, artistOpen)}
-          {track.album ? <span aria-hidden="true"> · </span> : null}
-          {track.album ? nameLink(track.album, onOpenAlbum) : null}
-        </div>
+        <Marquee className="mmm-player-track" onClick={onOpenArtist} text={track.title} />
+        <Marquee
+          className="mmm-player-artist"
+          onClick={onOpenArtist}
+          text={[track.artist, track.album].filter(Boolean).join(' · ')}
+        />
 
         {!narrow && (
           <div className="mmm-player-scrub">
@@ -434,6 +259,16 @@ export function MmmPlayer({
       </div>
 
       <div className="mmm-player-controls">
+        {narrow && (
+          <IconButton
+            disabled={!canGoBack}
+            hidden={hidden}
+            label="Previous track"
+            onClick={onPrev}
+            glyph="‹"
+          />
+        )}
+
         {!narrow && (
           <IconButton
             disabled={!canGoBack}
@@ -455,6 +290,16 @@ export function MmmPlayer({
           >
             <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
           </button>
+        )}
+
+        {narrow && (
+          <IconButton
+            disabled={!canGoForward}
+            hidden={hidden}
+            label="Next track"
+            onClick={onNext}
+            glyph="›"
+          />
         )}
 
         {!narrow && (
@@ -524,6 +369,20 @@ export function MmmPlayer({
             pressed={queueOpen}
             glyph="≡"
           />
+        )}
+
+        {narrow && onExpand && (
+          <button
+            aria-label="Open the full player"
+            className="mmm-player-expand"
+            onClick={onExpand}
+            tabIndex={hidden ? -1 : 0}
+            type="button"
+          >
+            <svg aria-hidden="true" fill="none" height="16" viewBox="0 0 20 20" width="16">
+              <path d="M3 8V3h5M12 3h5v5M17 12v5h-5M8 17H3v-5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.6" />
+            </svg>
+          </button>
         )}
       </div>
     </div>
@@ -617,8 +476,8 @@ function IconButton({
  * reveals, because an unadvanced document timeline holds a from-state forever).
  * This one is safe: its from-state is the readable one and it never fills.
  */
-function Marquee({ className, text }: { className: string; text: string }) {
-  const wrap = useRef<HTMLDivElement | null>(null);
+function Marquee({ className, onClick, text }: { className: string; onClick?: () => void; text: string }) {
+  const wrap = useRef<HTMLElement | null>(null);
   const inner = useRef<HTMLDivElement | null>(null);
   const [over, setOver] = useState(false);
 
@@ -634,8 +493,7 @@ function Marquee({ className, text }: { className: string; text: string }) {
   // Duration scales with length so long and short titles travel at one speed.
   const duration = Math.max(6, text.length * 0.34);
 
-  return (
-    <div className={className} data-over={over || undefined} ref={wrap}>
+  const contents = (
       <div
         data-ih-marquee={over ? '' : undefined}
         ref={inner}
@@ -644,6 +502,14 @@ function Marquee({ className, text }: { className: string; text: string }) {
         <span>{text}</span>
         {over ? <span aria-hidden="true">{text}</span> : null}
       </div>
+  );
+  return onClick ? (
+    <button aria-label={`Open ${text} artist profile`} className={`${className} mmm-player-link`} data-over={over || undefined} onClick={onClick} ref={wrap as Ref<HTMLButtonElement>} type="button">
+      {contents}
+    </button>
+  ) : (
+    <div className={className} data-over={over || undefined} ref={wrap as Ref<HTMLDivElement>}>
+      {contents}
     </div>
   );
 }

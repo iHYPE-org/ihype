@@ -26,8 +26,7 @@ const envSchema = z.object({
   SMTP_FROM: optEmail,
   EMAIL_FROM: optEmail,
   RESEND_API_KEY: optStr,
-  /* No MUX_* here: iHYPE hosts no video (brand constant), nothing read these,
-     and declaring them made the launch check advertise video streaming. */
+  // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
   STRIPE_SECRET_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('sk_') ? s : undefined; }),
   STRIPE_WEBHOOK_SECRET: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('whsec_') ? s : undefined; }),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('pk_') ? s : undefined; }),
@@ -46,10 +45,9 @@ export function getAdminEmail(): string {
 /**
  * Every address that should receive an operational alert.
  *
- * Accepts a comma-separated ADMIN_ALERT_EMAIL so alerts are not a bus factor
- * of one. iHYPE is run by two people; until now every alert — payout
- * failures, cron outages, backup verification, the workbench digest — went to
- * a single mailbox, so one person on a plane meant nobody was watching.
+ * Accepts a comma-separated ADMIN_ALERT_EMAIL so the project can add backup
+ * recipients later without changing alert call sites. A shared operational
+ * mailbox is also valid for a single-operator alpha.
  *
  * Empty entries are dropped and the default is always kept as a floor: a
  * typo'd env var must not silently result in alerts going nowhere, which is

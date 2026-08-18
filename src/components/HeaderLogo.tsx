@@ -10,7 +10,7 @@ export function HeaderLogo() {
   const { data: session } = useSession();
   const { t } = useI18n();
 
-  const href = session?.user ? '/home' : '/';
+  const href = session?.user ? '/app/map' : '/';
 
   return (
     <Link href={href} className="nav-logo nav-logo-right" aria-label={t('headerLogo.ariaLabel', 'iHYPE home')}>

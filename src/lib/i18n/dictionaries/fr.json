@@ -1544,8 +1544,6 @@
   "pageEditor.designPresetHint": "Définit l'allure générale de votre page publique",
   "pageEditor.designPresetLabel": "Préréglage de design",
   "pageEditor.discard": "Abandonner",
-  "pageEditor.featureVideoHint": "Lien vers une vidéo (YouTube, etc.) mise en avant sur votre page",
-  "pageEditor.featureVideoLabel": "URL de la vidéo mise en avant",
   "pageEditor.fontPairingHint": "Change les polices de titre et de texte de votre page publique — laissez vide pour garder les polices par défaut du site",
   "pageEditor.fontPairingLabel": "Association de polices",
   "pageEditor.galleryCoverLabel": "Couverture de la galerie",

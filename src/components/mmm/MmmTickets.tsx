@@ -3,6 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
 
+const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
+
+const DEMO_TICKETS: MmmMeTicket[] = [
+  { serializedId: 'DEMO-7F3A-2026', title: 'Harbor Lights', where: 'Signal Hall · Portland', startsAt: '2026-10-09T19:30:00-04:00', faceValue: '$18', processingFee: '$0.82', scannedAt: null, qrDataUrl: DEMO_QR },
+  { serializedId: 'DEMO-2C91-2026', title: 'Static Bloom', where: 'The Foundry · Biddeford', startsAt: '2026-06-14T20:00:00-04:00', faceValue: '$14', processingFee: '$0.70', scannedAt: '2026-06-14T19:42:00-04:00', qrDataUrl: DEMO_QR },
+];
+
 /**
  * My Tickets, inside ME.
  *
@@ -30,20 +37,19 @@ function dayParts(iso: string) {
 
 export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
   const [open, setOpen] = useState<MmmMeTicket | null>(null);
-
-  if (tickets.length === 0) {
-    return (
-      <p className="mmm-me-note">
-        No tickets yet. When you buy one it lives here — and it opens with no signal,
-        so a basement with no bars is not a problem at the door.
-      </p>
-    );
-  }
+  const demo = tickets.length === 0;
+  const visibleTickets = demo ? DEMO_TICKETS : tickets;
 
   return (
     <>
+      {demo && (
+        <div className="mmm-demo-head mmm-ticket-demo-head">
+          <span className="mmm-demo-badge">Demo content</span>
+          <p>Your real tickets, entry codes and transfer status will appear here.</p>
+        </div>
+      )}
       <div className="mmm-ticket-list">
-        {tickets.map((ticket) => {
+        {visibleTickets.map((ticket) => {
           const when = dayParts(ticket.startsAt);
           const attended = Boolean(ticket.scannedAt);
           return (
@@ -82,12 +88,12 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
         })}
       </div>
 
-      {open && <TicketSheet onClose={() => setOpen(null)} ticket={open} />}
+      {open && <TicketSheet demo={demo} onClose={() => setOpen(null)} ticket={open} />}
     </>
   );
 }
 
-function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTicket }) {
+function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () => void; ticket: MmmMeTicket }) {
   const when = dayParts(ticket.startsAt);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -123,7 +129,7 @@ function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTi
         </button>
 
         <div className="mmm-ticket-eyebrow">
-          {ticket.scannedAt ? 'Attended' : 'Upcoming'} · {when.full}
+          {demo ? 'Demo ticket · ' : ''}{ticket.scannedAt ? 'Attended' : 'Upcoming'} · {when.full}
         </div>
         <h3 className="mmm-ticket-sheet-title" id="mmm-ticket-title">{ticket.title}</h3>
         {ticket.where && <div className="mmm-ticket-sheet-where">{ticket.where}</div>}
@@ -171,9 +177,13 @@ function TicketSheet({ onClose, ticket }: { onClose: () => void; ticket: MmmMeTi
             with a new serializedId, so the old QR dies on transfer. It lives on
             the legacy ticket page for now; this links there rather than
             pretending to do it here. */}
-        <a className="mmm-ticket-transfer" href={`/tickets/${ticket.serializedId}`}>
-          Transfer this ticket
-        </a>
+        {demo ? (
+          <span aria-disabled="true" className="mmm-ticket-transfer">Transfer preview</span>
+        ) : (
+          <a className="mmm-ticket-transfer" href={`/app/me/tickets/${ticket.serializedId}`}>
+            Transfer this ticket
+          </a>
+        )}
       </div>
     </div>
   );

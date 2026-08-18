@@ -43,21 +43,15 @@ vi.mock('@/lib/ticketing', () => ({
   formatCurrencyFromCents: vi.fn((cents: number) => `$${(cents / 100).toFixed(2)}`),
 }));
 
-const createTicketPaymentIntent = vi.fn();
-const captureTicketPaymentIntent = vi.fn().mockResolvedValue(undefined);
-const cancelTicketPaymentIntent = vi.fn().mockResolvedValue(undefined);
+const createTicketCheckoutSession = vi.fn();
 const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
 vi.mock('@/lib/stripe', () => ({
-  createTicketPaymentIntent: (...args: unknown[]) => createTicketPaymentIntent(...args),
-  captureTicketPaymentIntent: (...args: unknown[]) => captureTicketPaymentIntent(...args),
-  cancelTicketPaymentIntent: (...args: unknown[]) => cancelTicketPaymentIntent(...args),
+  createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
 }));
 
-const finalizeCapturedTicketOrder = vi.fn();
 const voidReservedTicketOrder = vi.fn().mockResolvedValue(true);
 vi.mock('@/lib/ticket-order-state', () => ({
-  finalizeCapturedTicketOrder: (...args: unknown[]) => finalizeCapturedTicketOrder(...args),
   voidReservedTicketOrder: (...args: unknown[]) => voidReservedTicketOrder(...args),
 }));
 
@@ -125,6 +119,7 @@ function baseUser(overrides: Partial<Record<string, unknown>> = {}) {
 function baseShow(overrides: Partial<Record<string, unknown>> = {}) {
   return {
     id: 'show_1',
+    slug: 'neon-night',
     title: 'Neon Night',
     status: 'LIVE', // captures immediately (shouldCaptureTicketsNow)
     ticketingOpensAt: null,
@@ -173,56 +168,40 @@ describe('POST /api/shows/[showId]/tickets', () => {
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(503);
-    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
   });
 
-  it('authorizes, captures, and finalizes on a successful charge', async () => {
-    createTicketPaymentIntent.mockResolvedValue({ paymentIntentId: 'pi_ok', status: 'requires_capture' });
-    finalizeCapturedTicketOrder.mockResolvedValue({
-      tickets: [{ id: 't1', serializedId: 'ser1', status: 'CAPTURED' }],
-    });
+  it('reserves inventory and returns secure hosted checkout', async () => {
+    createTicketCheckoutSession.mockResolvedValue({ checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test' });
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
     const json = await res.json();
 
     expect(res.status).toBe(201);
-    expect(json.captureMode).toBe('captured');
-    expect(captureTicketPaymentIntent).toHaveBeenCalledWith('pi_ok');
-    expect(finalizeCapturedTicketOrder).toHaveBeenCalledTimes(1);
-    // A successful charge must never trigger the decline-rollback path.
+    expect(json.captureMode).toBe('checkout');
+    expect(json.checkoutUrl).toBe('https://checkout.stripe.com/test');
+    expect(createTicketCheckoutSession).toHaveBeenCalledTimes(1);
     expect(voidReservedTicketOrder).not.toHaveBeenCalled();
-    expect(cancelTicketPaymentIntent).not.toHaveBeenCalled();
   });
 
-  it('rolls back the reservation and cancels the hold when the card is declined', async () => {
-    // Stripe returning anything other than 'requires_capture' after confirm
-    // means the charge was NOT authorized (e.g. a decline) — the route must
-    // treat this as a failure, not a success.
-    createTicketPaymentIntent.mockResolvedValue({ paymentIntentId: 'pi_declined', status: 'requires_payment_method' });
+  it('rolls back the reservation when hosted checkout creation fails', async () => {
+    createTicketCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
     const json = await res.json();
 
-    expect(res.status).toBe(402);
-    expect(json.code).toBe('PAYMENT_AUTHORIZATION_FAILED');
-    // The reservation made just before authorization must be unwound, and
-    // the (never-to-be-captured) payment intent hold released — otherwise a
-    // declined card would silently eat ticket inventory forever.
-    expect(cancelTicketPaymentIntent).toHaveBeenCalledWith('pi_declined');
+    expect(res.status).toBe(500);
+    expect(json.error).toBeTruthy();
     expect(voidReservedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1');
-    expect(captureTicketPaymentIntent).not.toHaveBeenCalled();
-    expect(finalizeCapturedTicketOrder).not.toHaveBeenCalled();
   });
 
   it('rolls back the reservation when Stripe authorization itself throws', async () => {
-    createTicketPaymentIntent.mockRejectedValue(new Error('Stripe API unreachable'));
+    createTicketCheckoutSession.mockRejectedValue(new Error('Stripe API unreachable'));
 
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(500);
     expect(voidReservedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1');
-    // No payment intent id was ever obtained, so there's nothing to cancel.
-    expect(cancelTicketPaymentIntent).not.toHaveBeenCalled();
   });
 
   it('rejects non-fan accounts before ever calling Stripe', async () => {
@@ -231,7 +210,7 @@ describe('POST /api/shows/[showId]/tickets', () => {
     const res = await POST(makeRequest({ quantity: 1 }), params);
 
     expect(res.status).toBe(403);
-    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
   });
 });
 
@@ -256,7 +235,7 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
     expect((await response.json()).code).toBe('BOT_CHECK_FAILED');
     // The point of ordering the check first: no customer created, no hold.
     expect(getOrCreateStripeCustomer).not.toHaveBeenCalled();
-    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('refuses when either rate-limit bucket is exhausted', async () => {
@@ -277,7 +256,7 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
 
     expect(response.status).toBe(429);
     expect(response.headers.get('Retry-After')).toBe('900');
-    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
   });
 
   it('refuses once the account already holds the per-show maximum', async () => {
@@ -327,6 +306,6 @@ describe('POST /api/shows/[showId]/tickets — anti-bot guards', () => {
     );
 
     expect(response.status).toBeGreaterThanOrEqual(400);
-    expect(createTicketPaymentIntent).not.toHaveBeenCalled();
+    expect(createTicketCheckoutSession).not.toHaveBeenCalled();
   });
 });

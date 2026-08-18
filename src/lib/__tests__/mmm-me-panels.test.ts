@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ME_PANEL_IDS, ME_PANEL_ROWS, isMePanelId } from '@/lib/mmm-me-panels';
+import {
+  ME_PANEL_IDS,
+  ME_PANEL_ROWS,
+  canonicalMePanelId,
+  isMePanelId,
+} from '@/lib/mmm-me-panels';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
 
 describe('ME account panels', () => {
@@ -17,6 +22,35 @@ describe('ME account panels', () => {
     for (const id of ME_PANEL_IDS) {
       expect(ME_PANEL_ROWS[id].length).toBeGreaterThan(0);
     }
+  });
+
+  it('nests accessibility under Settings and Legal under Info without repeating the charter', () => {
+    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).toContain('Accessibility');
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).toEqual(expect.arrayContaining([
+      'The charter',
+      'Terms of service',
+      'Privacy policy',
+      'DMCA',
+    ]));
+    expect(Object.values(ME_PANEL_ROWS).flat().filter((row) => row.label === 'The charter')).toHaveLength(1);
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('How iHYPE works');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'The charter')?.href)
+      .toBe('/app/me/info/charter');
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('Trust and safety');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Transparency report')?.href)
+      .toBe('/app/me/info/transparency');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Terms of service')?.href)
+      .toBe('/app/me/info/terms');
+    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toEqual(
+      expect.arrayContaining(['Payouts', 'Tickets and wallet']),
+    );
+    expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Account and privacy')?.detail)
+      .toContain('payouts');
+    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toContain('Notifications');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Privacy policy')?.href)
+      .toBe('/app/me/info/privacy');
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'DMCA')?.href)
+      .toBe('/app/me/info/dmca');
   });
 
   // Every row is a bridge to a surface that already exists and does its own
@@ -46,6 +80,15 @@ describe('ME account panels', () => {
       }
       expect(isMePanelId(null)).toBe(false);
       expect(isMePanelId(undefined)).toBe(false);
+    });
+  });
+
+  describe('canonicalMePanelId', () => {
+    it('keeps retired deep links inside their new parent drawer', () => {
+      expect(canonicalMePanelId('accessibility')).toBe('settings');
+      expect(canonicalMePanelId('legal')).toBe('info');
+      expect(canonicalMePanelId('settings')).toBe('settings');
+      expect(canonicalMePanelId('unknown')).toBeNull();
     });
   });
 });

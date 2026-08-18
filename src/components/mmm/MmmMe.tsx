@@ -5,24 +5,29 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
 import { MmmTickets } from './MmmTickets';
-import { ME_PANEL_ROWS, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
+import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
 const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
 
 /**
  * The drawers above the account panels. Order is the design system's —
- * Profiles · My Tickets · About Me · Settings — and Profiles is `first`, the
- * one showing before anyone has chosen.
+ * Profiles · My Tickets · Info · Settings. All four start closed so ME opens
+ * as a clean index rather than choosing a destination for the member.
  */
-type MeSectionId = 'profiles' | 'tickets' | 'about';
-const FIRST_ME_SECTION: MeSectionId = 'profiles';
+type MeSectionId = 'profiles' | 'tickets';
+const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets'];
+
+function isMeSectionId(value: string | null): value is MeSectionId {
+  return value !== null && (ME_SECTION_IDS as readonly string[]).includes(value);
+}
 
 /**
  * The ME surface — a role-aware dashboard.
  *
- * From the app-shell redesign: ME has no fan-out submenu; Settings, Info, Legal
- * and Accessibility are rows on this surface. The role switcher shows only the
+ * From the app-shell redesign: ME has no fan-out submenu; Settings and Info
+ * are rows on this surface. Accessibility is grouped under Settings and Legal
+ * under Info so neither the Charter nor preferences have duplicate homes. The role switcher shows only the
  * roles the account actually holds, and **Fan is always present and always
  * first** because it is implicit and permanent (`BACKEND_REWRITE.md` §1).
  *
@@ -44,17 +49,15 @@ const FIRST_ME_SECTION: MeSectionId = 'profiles';
  * `templates/simplified-app/`: a labelled button carrying `aria-expanded`, a
  * chevron, `--radius-card` corners, and the body underneath.
  *
- * Why accordions rather than four stacked cards: ME is the only surface in this
+ * Why accordions rather than stacked cards: ME is the only surface in this
  * shell with no search and no tabs, so everything an account has lives on one
  * scroll. Left open, three screens of stats sit between the member and the
  * Account rows, which are what most visits are actually for. Collapsed, the
  * whole surface is one screen.
  *
- * Profiles opens by default, and is first: it is the only section that changes
- * what the account IS, and its add buttons are what a new member came for. The
- * stats it carries used to be a separate "Your year" section above everything
- * else, which put a screen of numbers between the member and the thing they
- * opened ME to do.
+ * Every drawer starts closed. Profiles remains first because it changes what
+ * the account IS, but entering ME should show the four choices without making
+ * one choice on the member's behalf.
  *
  * **One drawer open at a time, page-wide** — the sections here and the account
  * panels below are ONE group, not two. Each section used to hold its own
@@ -104,6 +107,41 @@ function Accordion({
   );
 }
 
+function AboutMeActivity({ data }: { data: MmmMeData }) {
+  return (
+    <div className="mmm-me-about-in-profiles">
+      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>About me · visible activity</div>
+      {data.activity.length === 0 ? (
+        <div className="mmm-empty-state">
+          <strong>Build your visible activity</strong>
+          <p>HYPE a track, follow local artists or save a show. This is the activity artists and venues can see.</p>
+          <div className="mmm-empty-actions">
+            <Link className="mmm-btn-primary" href="/app/music/discover">Discover music</Link>
+            <Link className="mmm-btn-ghost" href="/app/map">Explore the map</Link>
+          </div>
+        </div>
+      ) : (
+        <div>
+          {data.activity.map((row) => (
+            <div
+              key={`${row.title}-${row.sub}`}
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
+            >
+              <div>
+                <div style={{ fontSize: '0.86rem', color: 'var(--ink)' }}>{row.title}</div>
+                <div style={{ fontSize: '0.73rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
+              </div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)' }}>
+                {row.amount}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function MmmMe({ data }: { data: MmmMeData }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -116,30 +154,20 @@ export function MmmMe({ data }: { data: MmmMeData }) {
   };
 
   const rawPanel = searchParams?.get('panel');
-  const openPanel = isMePanelId(rawPanel) ? rawPanel : null;
+  const openPanel = canonicalMePanelId(rawPanel);
+  const rawSection = searchParams?.get('section');
+  const linkedSection = isMeSectionId(rawSection) ? rawSection : null;
 
   /**
-   * Which of the three sections above the account panels is open.
+   * Which of the two profile/ticket sections above the Info and Settings
+   * panels is open.
    *
-   * `undefined` means nobody has chosen yet, so the section marked first
-   * (Profiles) is the one showing; `''` means someone chose to close what was
-   * open, or opened a panel instead, and nothing above is showing. That
-   * three-valued shape is the design system's own `meSection(id, first)` helper
-   * — a plain `'profiles' | null` cannot tell "not chosen yet" from "closed",
-   * and would either re-open Profiles or never open it.
+   * An empty string means all four drawers are closed. A `section` deep link
+   * can still open Profiles or My Tickets explicitly.
    */
-  const [meGroup, setMeGroup] = useState<MeSectionId | '' | undefined>(undefined);
+  const [meGroup, setMeGroup] = useState<MeSectionId | ''>(linkedSection ?? '');
 
-  /**
-   * The default only applies when nothing else is open. Arriving on
-   * `/app/me?panel=settings` — a deep link, and where the four retired
-   * `/app/me/[panel]` routes redirect to — must not also open Profiles, or the
-   * page loads with two drawers open and the one the URL asked for pushed a
-   * screen down. The design system's helper has no equivalent guard because
-   * its panels cannot be open on arrival; ours can.
-   */
-  const openSection: MeSectionId | null =
-    meGroup === undefined ? (openPanel ? null : FIRST_ME_SECTION) : meGroup || null;
+  const openSection: MeSectionId | null = meGroup || null;
 
   /**
    * `push`, not `replace` — closing a drawer should be what Back does, which
@@ -206,12 +234,10 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
 
 
-      {/* The HYPE link is NOT a drawer. `templates/simplified-app/`: "ME pane.
-          Six things, in one column: HYPE Link, Profiles, My Tickets, About Me,
-          Settings, Log Out. Everything BELOW the link is a drawer" — so the
-          link sits above them, always on screen.
+      {/* The HYPE link is not a drawer. It stays above the four drawers and
+          remains visible without opening a section.
 
-          It had been nested inside the About Me drawer since the accordion
+          It had been nested inside the old About Me drawer since the accordion
           rebuild, which hid a fan's primary surface behind a collapsed panel
           labelled "What artists and venues see" — the one thing the HYPE link
           is not. Two e2e tests had been asserting it visible all along. */}
@@ -298,7 +324,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
           <div style={{ fontSize: '0.78rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link className="mmm-btn-primary" href="/pages" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
+            <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
             {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
                 shell — so previewing your own page no longer means leaving the
                 design to look at it. */}
@@ -326,12 +352,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           rule DS8 states for the role picker. It now lives under Account, which
           is where destinations that are not profiles belong. */}
       <div className="mmm-me-add-row">
-        <Link className="mmm-me-add" data-kind="artist" href="/pages?create=artist">
+        <Link className="mmm-me-add" data-kind="artist" href="/app/me/profiles?create=artist">
           <span aria-hidden="true">＋</span>
           Add artist profile
           <span className="mmm-me-add-chip">Verified</span>
         </Link>
-        <Link className="mmm-me-add" data-kind="venue" href="/pages?create=venue">
+        <Link className="mmm-me-add" data-kind="venue" href="/app/me/profiles?create=venue">
           <span aria-hidden="true">＋</span>
           Add venue profile
           <span className="mmm-me-add-chip">Verified</span>
@@ -342,7 +368,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
              /advertise/dashboard, not a dashboard of this shape. Hidden once
              the account has one: this is an ADD button and there is nothing to
              add twice. */
-          <Link className="mmm-me-add" data-kind="advertiser" href="/advertise/register">
+          <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/new">
             <span aria-hidden="true">＋</span>
             Add advertiser profile
             <span className="mmm-me-add-chip">Verified</span>
@@ -354,10 +380,11 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         Promoting is not a profile. Every account can promote by sharing its HYPE Link,
         and earns from the 10% promoter pool when a ticket sells through it.
       </p>
+      <AboutMeActivity data={data} />
       </Accordion>
 
       <Accordion
-        detail={data.ticketCount === null ? null : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · transfer at face value`}
+        detail={data.ticketCount === null ? 'Wallet · QR codes · transfers' : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · wallet, QR and transfers`}
         label="My Tickets"
         onToggle={() => toggleSection('tickets')}
         open={openSection === 'tickets'}
@@ -369,56 +396,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         <MmmTickets tickets={data.tickets} />
       </Accordion>
 
-      <Accordion
-        detail="What artists and venues see"
-        label="About Me"
-        onToggle={() => toggleSection('about')}
-        open={openSection === 'about'}
-      >
-
-      {/* Never an empty drawer (2026-08-14, from device screenshots). "About Me"
-          opened onto nothing at all when a member had no activity yet — which
-          is every member on day one, and exactly who is most likely to open it.
-          A drawer that opens onto blank space reads as broken rather than as
-          empty, and it is the one state a new account is guaranteed to see. */}
-      {data.activity.length === 0 && (
-        <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, margin: '0 0 4px' }}>
-          Nothing here yet. Hype a track, follow an artist or buy a ticket and it
-          shows up here — this is the activity artists and venues can see.
-        </p>
-      )}
-
-      {data.activity.length > 0 && (
-        <>
-          <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{data.activityLabel}</div>
-          <div style={{ marginBottom: 20 }}>
-            {data.activity.map((row) => (
-              <div
-                key={`${row.title}-${row.sub}`}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
-              >
-                <div>
-                  <div style={{ fontSize: '0.86rem', color: 'var(--ink)' }}>{row.title}</div>
-                  <div style={{ fontSize: '0.73rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
-                </div>
-                <div
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.8rem',
-                    color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)',
-                  }}
-                >
-                  {row.amount}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-
-      </Accordion>
-
-      {/* Account panels open IN PLACE, one at a time. They used to be four
+      {/* Account panels open IN PLACE, one at a time. They used to be separate
           routes under /app/me/[panel]; the 2026-08-10 template makes ME one
           column of drawers, and each panel is only a menu of bridge links —
           no form state — so nothing is lost by not navigating.
@@ -428,7 +406,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           deep-linkable (the old routes redirect onto it, so existing links
           keep working), Back closes the drawer instead of leaving ME, and
           "one at a time" is structural — a single value cannot hold two. */}
-      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>Account</div>
       <div>
         {MMM_ME_PANELS.map((panel) => {
           // The nav list types `id` as a plain string, so this is the narrowing

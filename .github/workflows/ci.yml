@@ -165,7 +165,7 @@ jobs:
       - name: Gated migration guard
         run: npm run guard:migrations
 
-      - name: App shell conversion audit
+      - name: MMM workflow primitive audit
         # Fails when a page inside the signed-in shell grows a card/row/stat/
         # eyebrow of its own instead of using the design system's primitive.
         # Strict is safe to enable because the drift set is currently zero.
@@ -181,7 +181,7 @@ jobs:
         # this landed; they render correctly today only because the right rule
         # happens to come last. Existing debt passes, a NEW duplicate fails.
         # Lower this number as they get fixed. Never raise it.
-        run: npm run audit:css -- --max=139
+        run: npm run audit:css -- --max=0
 
       - name: Unit tests
         run: npm test
