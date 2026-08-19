@@ -87,7 +87,7 @@ export default async function AdvertiserDashboard() {
         <div className="ad-dash-stats">
           <div className="ad-dash-stat-card">
             <div className="ad-dash-stat-label">{t('advertiseDashboardPage.spend', 'Spend')}</div>
-            <div className="ad-dash-stat-val" style={{ color: 'var(--accent)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
+            <div className="ad-dash-stat-val" style={{ color: 'var(--accent-text)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.acrossCampaigns', 'Across')} {campaigns.length} {campaigns.length === 1 ? t('advertiseDashboardPage.campaignSingular', 'campaign') : t('advertiseDashboardPage.campaignPlural', 'campaigns')}</div>
           </div>
           <div className="ad-dash-stat-card">

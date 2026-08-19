@@ -68,7 +68,7 @@ export function ShowSetlistVote({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
           <h2 style={{ margin: 0 }}>{t('showSetlistVote.title', 'Vote on the setlist')}</h2>
           {isLive ? (
-            <span className="badge" style={{ color: 'var(--accent)' }}>{t('showSetlistVote.liveBadge', '● LIVE')}</span>
+            <span className="badge" style={{ color: 'var(--accent-text)' }}>{t('showSetlistVote.liveBadge', '● LIVE')}</span>
           ) : null}
         </div>
         <p className="meta" style={{ marginTop: 0 }}>

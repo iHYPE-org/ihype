@@ -7,7 +7,7 @@ import { useI18n } from '@/components/I18nProvider';
 
 const TABS = [
   {
-    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/app/music/discover', color: 'var(--accent)',
+    id: 'listen', labelKey: 'siteNavTabs.listen', label: 'Listen', href: '/app/music/discover', color: 'var(--accent-text)',
     icon: (
       <svg fill="none" height="17" viewBox="0 0 24 24" width="17" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8">
         <path d="M4 15v-3a8 8 0 0 1 16 0v3" />

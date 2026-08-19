@@ -117,14 +117,14 @@ function TourRecsBody() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
       {data.aiPlan && (
         <div style={{ borderLeft: '2px solid var(--accent)', paddingLeft: 12 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 6 }}>
             {t('pageRoleModules.aiRouteLabel', 'AI ROUTE')}
           </div>
           <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a75)', margin: '0 0 10px', lineHeight: 1.5 }}>{data.aiPlan.summary}</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.aiPlan.route.map((r) => (
               <div key={`${r.order}-${r.city}`} style={{ display: 'flex', gap: 10 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--accent)', flexShrink: 0, width: 18 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--accent-text)', flexShrink: 0, width: 18 }}>
                   {String(r.order).padStart(2, '0')}
                 </span>
                 <div style={{ minWidth: 0 }}>

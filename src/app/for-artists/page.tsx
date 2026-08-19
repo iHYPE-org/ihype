@@ -15,7 +15,7 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   glow: 'var(--accent)',
   navCta: t('forArtistsPage.navCta', 'Apply as artist →'),
   eyebrow: t('forArtistsPage.eyebrow', 'For Artists'),
-  headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
+  headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
   heroBody: (
     <>{t('forArtistsPage.heroBodyLead', 'iHYPE gives you')} <strong>{t('forArtistsPage.heroBodyStrong', '70% of every ticket')}</strong>{t('forArtistsPage.heroBodyRest', ', your fans’ contact info, and tools to run your own shows — no agent, no Ticketmaster, no platform that owns the relationship.')}</>
   ),

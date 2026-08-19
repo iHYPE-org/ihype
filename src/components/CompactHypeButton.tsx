@@ -87,7 +87,7 @@ export function CompactHypeButton({ targetType, targetId, initialCount, lastHype
         borderRadius: 20,
         border: `1px solid ${waiting ? 'var(--accent)' : 'var(--hair-100)'}`,
         background: waiting ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-40)',
-        color: waiting ? 'var(--accent)' : 'var(--ink-a65)',
+        color: waiting ? 'var(--accent-text)' : 'var(--ink-a65)',
         fontFamily: 'var(--font-mono)',
         fontSize: '0.7813rem',
         fontWeight: 600,

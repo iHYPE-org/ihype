@@ -97,7 +97,7 @@ export default async function PayoutsHubPage({
             href={`/app/me/payouts?tab=${tabDef.id}`}
             style={{
               padding: '10px 4px', marginRight: 16, fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.875rem',
-              textDecoration: 'none', color: tab === tabDef.id ? 'var(--accent)' : 'var(--ink-a65)',
+              textDecoration: 'none', color: tab === tabDef.id ? 'var(--accent-text)' : 'var(--ink-a65)',
               borderBottom: tab === tabDef.id ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >

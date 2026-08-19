@@ -171,7 +171,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </Link>
 
-                {error && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', marginTop: 8 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', marginTop: 8 }}>{error}</p>}
               </div>
             )}
           </div>

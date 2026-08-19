@@ -385,7 +385,7 @@ export default async function ShowDetailPage({
           <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'center', marginBottom: 20, fontSize: '0.875rem', color: 'var(--ink-a75)' }}>
             <span className="badge">{show.status}</span>
             {show.venueProfile && <span className="badge" style={{ color: 'var(--role-venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
-            {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
+            {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
             {date && (
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="14"><rect height="18" rx="2" width="18" x="3" y="4" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
@@ -408,7 +408,7 @@ export default async function ShowDetailPage({
               free text, normalised server-side, and is never treated as markup. */}
           {show.status === 'CANCELED' && (show.cancellationReason || show.cancellationMessage) && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(var(--accent-rgb),.25)', background: 'rgba(var(--accent-rgb),.06)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 6 }}>
                 {t('showsSlugPage.canceledLabel', 'Event cancelled')}
                 {show.cancellationReason ? ` · ${show.cancellationReason}` : ''}
               </div>
@@ -450,8 +450,8 @@ export default async function ShowDetailPage({
           {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
               <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
               <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
                 <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
@@ -478,7 +478,7 @@ export default async function ShowDetailPage({
             }}
           >
             <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className="badge" style={{ color: 'var(--accent)' }}>● LIVE</span>
+              <span className="badge" style={{ color: 'var(--accent-text)' }}>● LIVE</span>
               <strong>{t('showsSlugPage.liveVoteBanner', 'The show is live — vote on the setlist and shape what plays next.')}</strong>
             </span>
             <span className="button small">{t('showsSlugPage.voteOnSetlist', 'Vote on the setlist')}</span>
@@ -720,7 +720,7 @@ export default async function ShowDetailPage({
                     <Link href={`/payout/${show.slug}`} className="meta">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
                     <Link href={`/shows/${show.slug}/scan`} className="meta">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
                     )}
                   </div>
                 </div>
@@ -879,7 +879,7 @@ export default async function ShowDetailPage({
           {/* TICKET BOX */}
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
             <aside style={{ border: '1px solid var(--hair-80)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
-              <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
+              <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--accent-text)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
 
               {cap !== null && (

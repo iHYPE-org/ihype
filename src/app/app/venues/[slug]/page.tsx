@@ -9,6 +9,9 @@ import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
 import { upcomingShowWhere } from '@/lib/profile-detail';
+import { ProfileTabs } from '@/components/profile/ProfileTabs';
+import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
+import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,8 +29,15 @@ export const dynamic = 'force-dynamic';
  * calendar. The booking inbox, analytics, owner tooling and the full calendar
  * stay on the legacy page, linked once and labelled.
  */
-export default async function MmmVenuePage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function MmmVenuePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ tab?: string }>;
+}) {
   const { slug } = await params;
+  const { tab: requestedTab } = await searchParams;
   const session = await auth();
   if (!session?.user?.id) redirect(`/login?callbackUrl=/app/venues/${slug}`);
 
@@ -48,6 +58,14 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
       capacity: true,
       hypeCount: true,
       verificationStatus: true,
+      /* The fixed subnav's content — all existing columns. `requestContent`
+         backs Rules & FAQs; see the note in @/lib/profile-tabs about why that
+         is a borrowed field and what it would take to give it its own. */
+      roomType: true,
+      addressLine1: true,
+      hoursText: true,
+      contactInfo: true,
+      requestContent: true,
       owner: { select: { email: true, username: true } },
       _count: { select: { followers: true } },
     },
@@ -62,6 +80,8 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
   // Returned, not thrown — see `MmmMissing`.
   if (!profile || profile.type !== 'VENUE') return missing;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
+
+  const activeTab = resolveTab(VENUE_TABS, requestedTab);
 
   const now = new Date();
   const [userHype, upcoming] = await Promise.all([
@@ -148,11 +168,14 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
         <FollowButton profileId={profile.id} />
       </div>
 
-      <section className="mmm-profile-section">
-        <h2 className="mmm-profile-section-title">What&rsquo;s on</h2>
-        {upcoming.length === 0 ? (
-          <p className="mmm-me-note">Nothing on the calendar yet.</p>
-        ) : (
+      <ProfileTabs active={activeTab} label="Venue sections" tabs={VENUE_TABS} />
+
+      {activeTab === 'calendar' && (
+        <ProfilePanel
+          empty="Nothing on the calendar yet."
+          isEmpty={upcoming.length === 0}
+          title="Event Calendar"
+        >
           <ul className="mmm-profile-shows">
             {upcoming.map((show) => {
               const heat = heatLevel(show.hypeCount);
@@ -169,17 +192,64 @@ export default async function MmmVenuePage({ params }: { params: Promise<{ slug:
                     <span className="mmm-profile-show-main">
                       <span className="mmm-profile-show-when">{formatShowTime(show.startsAt)}</span>
                       <span className="mmm-profile-show-title">{show.title}</span>
-                      {show.headlinerProfile?.name && (
-                        <span className="mmm-profile-show-where">{show.headlinerProfile.name}</span>
-                      )}
+                      <span className="mmm-profile-show-where">
+                        {show.headlinerProfile?.name ?? ''}
+                      </span>
                     </span>
                   </Link>
                 </li>
               );
             })}
           </ul>
-        )}
-      </section>
+        </ProfilePanel>
+      )}
+
+      {activeTab === 'info' && (
+        <ProfilePanel
+          empty={`${profile.name} has not added room details yet.`}
+          isEmpty={
+            !profile.capacity && !profile.roomType && !profile.addressLine1
+            && !profile.hoursText && !profile.bio && !profile.headline
+          }
+          title="Venue Info"
+        >
+          {profile.headline && <p className="profile-standfirst">{profile.headline}</p>}
+          <dl className="profile-facts">
+            {profile.capacity && (
+              <div><dt>Capacity</dt><dd>{profile.capacity.toLocaleString()}</dd></div>
+            )}
+            {profile.roomType && <div><dt>Room</dt><dd>{profile.roomType}</dd></div>}
+            {profile.addressLine1 && (
+              <div>
+                <dt>Address</dt>
+                <dd>{[profile.addressLine1, profile.city, profile.stateRegion].filter(Boolean).join(', ')}</dd>
+              </div>
+            )}
+            {profile.hoursText && <div><dt>Hours</dt><dd>{profile.hoursText}</dd></div>}
+          </dl>
+          <RichContent value={profile.bio} />
+        </ProfilePanel>
+      )}
+
+      {activeTab === 'rules' && (
+        <ProfilePanel
+          empty={`${profile.name} has not published house rules yet. Ask them through Contact.`}
+          isEmpty={!unwrap(profile.requestContent)}
+          title="Rules & FAQs"
+        >
+          <RichContent value={profile.requestContent} />
+        </ProfilePanel>
+      )}
+
+      {activeTab === 'contact' && (
+        <ProfilePanel
+          empty={`${profile.name} has not added contact details yet.`}
+          isEmpty={!unwrap(profile.contactInfo)}
+          title="Contact"
+        >
+          <RichContent value={profile.contactInfo} />
+        </ProfilePanel>
+      )}
 
     </div>
   );

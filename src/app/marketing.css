@@ -27,7 +27,7 @@
 .lp-btn-primary {
   display: inline-flex; align-items: center;
   padding: 12px 22px;
-  background: var(--accent); color: #fff;
+  background: var(--accent); color: var(--ink-on-accent);
   border-radius: 8px; font-size: 0.875rem; font-weight: 700;
   text-decoration: none; letter-spacing: .04em;
   border: none; cursor: pointer;

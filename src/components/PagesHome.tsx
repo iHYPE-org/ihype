@@ -55,7 +55,7 @@ const NET_FILTERS = [
 
 const CREATE_CARDS: { type: string; color: string; bg: string; name: string; desc: string; icon: React.ReactNode }[] = [
   {
-    type: 'ARTIST', color: 'var(--accent)', bg: 'rgba(var(--accent-rgb),.12)', name: 'Artist Page',
+    type: 'ARTIST', color: 'var(--accent-text)', bg: 'rgba(var(--accent-rgb),.12)', name: 'Artist Page',
     desc: 'Upload tracks, list shows, sell tickets. Keep 70%.',
     icon: (
       <svg fill="none" height="20" stroke="var(--accent)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="20">
@@ -413,7 +413,7 @@ export function PagesHome({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
                       fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase',
-                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent)',
+                      marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent-text)',
                     }}>
                       {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
                     </div>
@@ -636,7 +636,7 @@ export function PagesHome({
                         <span>{t('pagesHome.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
                       </label>
                     )}
-                    {createError && <div style={{ fontSize: '0.7813rem', color: 'var(--accent)' }}>{createError}</div>}
+                    {createError && <div style={{ fontSize: '0.7813rem', color: 'var(--accent-text)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         disabled={creating || !creatingName.trim() || (card.type === 'ARTIST' && !acceptedUploadPolicy)}

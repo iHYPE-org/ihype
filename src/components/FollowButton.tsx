@@ -88,7 +88,7 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
         ...(variant === 'hero' ? heroStyle : chipStyle),
         border: following ? '1px solid rgba(var(--accent-rgb),.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
         background: following ? 'rgba(var(--accent-rgb),.1)' : variant === 'hero' ? 'var(--line)' : 'var(--hair-50)',
-        color: following ? 'var(--accent)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
+        color: following ? 'var(--accent-text)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
         cursor: busy ? 'default' : 'pointer',
         transition: 'all 150ms ease',
         opacity: busy ? 0.6 : 1,

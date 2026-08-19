@@ -180,8 +180,8 @@ export function VenueLineupComposer({
         .vlc-btn-solid { background: var(--accent); color: var(--ink-on-accent); width: 100%; }
         .vlc-btn:disabled { opacity: 0.6; cursor: default; }
         .vlc-total { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--role-venue); }
-        .vlc-total-off { color: var(--accent); }
-        .vlc-error { color: var(--accent); font-size: 0.7813rem; margin: 0 0 12px; }
+        .vlc-total-off { color: var(--accent-text); }
+        .vlc-error { color: var(--accent-text); font-size: 0.7813rem; margin: 0 0 12px; }
       `}</style>
     </div>
   );

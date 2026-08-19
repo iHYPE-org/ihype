@@ -108,7 +108,7 @@ export default function DmcaPage() {
               style={{ resize: 'vertical' }}
             />
           </label>
-          {status === 'error' && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
+          {status === 'error' && <p style={{ color: 'var(--accent-text)' }}>{errorMsg}</p>}
           <button className="ihype-btn-primary" type="submit" disabled={status === 'submitting'}>
             {status === 'submitting' ? t('dmcaPage.submitting', 'Submitting…') : t('dmcaPage.submit', 'Submit DMCA request')}
           </button>

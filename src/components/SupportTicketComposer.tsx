@@ -124,7 +124,7 @@ export function SupportTicketComposer() {
               boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
             }}
           />
-          {error ? <p style={{ fontSize: '0.7813rem', color: 'var(--accent)', margin: 0 }}>{error}</p> : null}
+          {error ? <p style={{ fontSize: '0.7813rem', color: 'var(--accent-text)', margin: 0 }}>{error}</p> : null}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               type="button"

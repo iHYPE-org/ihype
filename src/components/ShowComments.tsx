@@ -102,7 +102,7 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
               maxLength={1500}
             />
           </label>
-          {errorMsg && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
+          {errorMsg && <p style={{ color: 'var(--accent-text)' }}>{errorMsg}</p>}
           <button className="button small" type="submit" disabled={posting || !text.trim()}>
             {posting ? t('showComments.posting', 'Posting…') : t('showComments.postButton', 'Post comment')}
           </button>

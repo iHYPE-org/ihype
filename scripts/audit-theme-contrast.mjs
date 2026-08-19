@@ -96,6 +96,18 @@ for (const [name, tokens] of blocks) {
         + ' — the theme inherits or sets a copy accent that fails on its own ground');
     }
   }
+
+  /* The other two copy tokens, for exactly the same reason. --warning-text
+     and --danger-text each pair with a translucent fill of their own hue, so
+     the value is tuned to the ground behind that fill — an amber or a coral
+     that reads on navy is barely there on cream, and both are already set per
+     theme precisely because of that. Test them rather than trust them. */
+  for (const token of ['--warning-text', '--danger-text', '--success-text']) {
+    const value = tokens.get(token);
+    if (!value || !bg || !value.startsWith('#')) continue;
+    const r = ratio(value, bg);
+    if (r < AA) failures.push(`${name}: ${token} ${value} on --bg ${bg} = ${r.toFixed(2)}:1`);
+  }
 }
 
 if (failures.length) {

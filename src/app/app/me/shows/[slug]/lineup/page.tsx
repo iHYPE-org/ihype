@@ -193,7 +193,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         .lsp-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
         .lsp-pill-pending { background: rgba(var(--warning-rgb),.15); color: var(--warning-text); }
         .lsp-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
-        .lsp-pill-declined { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
+        .lsp-pill-declined { background: rgba(var(--accent-rgb),.15); color: var(--accent-text); }
         .lsp-card-actions { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .lsp-status-note { margin-top: 20px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); }
         .lsp-status-note p { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin: 6px 0 0; }
@@ -201,7 +201,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
         .lsp-status-note-accepted { border-color: rgba(var(--role-venue-rgb),.25); background: rgba(var(--role-venue-rgb),.06); }
         .lsp-status-note-accepted .lsp-status-label { color: var(--role-venue); }
         .lsp-status-note-declined { border-color: rgba(var(--accent-rgb),.25); background: rgba(var(--accent-rgb),.06); }
-        .lsp-status-note-declined .lsp-status-label { color: var(--accent); }
+        .lsp-status-note-declined .lsp-status-label { color: var(--accent-text); }
         .lsp-foot { margin-top: 24px; font-size: 0.8125rem; }
         .lsp-foot a { color: var(--ink-a65); text-decoration: none; }
         .lsp-foot a:hover { color: var(--ink); text-decoration: underline; }

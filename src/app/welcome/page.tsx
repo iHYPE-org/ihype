@@ -207,7 +207,7 @@ export default async function WelcomePage() {
         .welcome-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; color: var(--ink-a70); }
         .welcome-steps { display: flex; flex-direction: column; }
         .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font: inherit; }
-        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.7813rem; display: flex; align-items: center; justify-content: center; }
+        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent-text); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.7813rem; display: flex; align-items: center; justify-content: center; }
         .welcome-step.done .welcome-step-num { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .welcome-step-title { font-weight: 700; font-size: 0.875rem; color: var(--ink); }
         .welcome-step.done .welcome-step-title { color: var(--ink-a70); text-decoration: line-through; }

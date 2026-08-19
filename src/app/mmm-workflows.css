@@ -77,3 +77,162 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 :root {
   font-size: calc(100% * min(1.6, var(--ihype-text-scale, 1) * var(--ihype-os-text-scale, 1) * var(--ihype-large-text-scale, 1)));
 }
+
+/* ══ Public profile: the fixed subnav and its panels ═══════════════════
+   Console direction (design/console-2026-08). The strip is a row of brass-
+   collared keys on the cabinet; a panel is a cream card with an engraved
+   rule under its title.
+
+   EVERY size here is at or above the 12.5px body floor, and the tab labels
+   are 15px on a 44px control. This strip is precisely the kind of chrome
+   that used to get the tracked 10px "eyebrow" treatment — a nav label is a
+   control's name, not metadata, which is the distinction PR #727 was about. */
+.profile-tabs {
+  /* Full-bleed to the pane edge, then padded back. This is not decoration:
+     six tabs measure 617px against 361px of pane, so two of them — Contact
+     and Press Kit on an artist — start off-screen. Ending the strip flush
+     with the container makes four tabs look like the whole set, and a reader
+     who has to guess there is more will not scroll. Bleeding it means the
+     next chip is CLIPPED by the viewport edge instead, which is the only
+     honest signal available without adding chrome. */
+  margin: 18px calc(var(--mmm-pane-pad, 16px) * -1) 0;
+  padding-inline: var(--mmm-pane-pad, 16px);
+  /* The strip scrolls rather than wrapping to two rows: six fixed tabs at a
+     readable size do not fit 375px, and shrinking the type to make them fit
+     is the trade this whole redesign exists to refuse. */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.profile-tabs::-webkit-scrollbar { display: none; }
+.profile-tabs ul {
+  display: flex;
+  gap: 8px;
+  margin: 0;
+  padding: 0 0 2px;
+  list-style: none;
+  width: max-content;
+}
+.profile-tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 3px;
+  border: 2px solid var(--line-2);
+  background: var(--bg-2);
+  color: var(--ink-2);
+  font-family: var(--f-m);
+  font-size: 0.9375rem;      /* 15px */
+  letter-spacing: .06em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
+}
+.profile-tab:hover { color: var(--ink); border-color: var(--ink-3); }
+.profile-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* The selected key is pressed in: the ink inverts rather than the accent
+   being used as copy, which on this ground is 2.48:1 and fails. */
+.profile-tab[data-active='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--bg);
+}
+
+.profile-panel { margin-top: 20px; }
+.profile-panel-title {
+  font-family: var(--f-d);
+  font-size: 1.375rem;       /* 22px */
+  line-height: 1.15;
+  margin: 0 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--line-2);
+  color: var(--ink);
+}
+.profile-panel-empty {
+  margin: 0;
+  font-size: 1rem;           /* 16px — an empty state is read, not skimmed */
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+.profile-standfirst {
+  margin: 0 0 12px;
+  font-family: var(--f-s, Georgia, serif);
+  font-size: 1.1875rem;      /* 19px */
+  line-height: 1.4;
+  color: var(--ink);
+}
+.profile-prose p {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  line-height: 1.65;
+  color: var(--ink-2);
+  max-width: 62ch;
+}
+.profile-prose p:last-child { margin-bottom: 0; }
+
+/* Facts read as a printed spec plate. */
+.profile-facts { margin: 0 0 14px; display: flex; flex-direction: column; gap: 10px; }
+.profile-facts > div {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.profile-facts dt {
+  flex: none;
+  min-width: 8.5rem;
+  font-family: var(--f-m);
+  font-size: 0.875rem;       /* 14px */
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.profile-facts dd { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+
+/* Releases: a shelf of sleeves. */
+.profile-releases {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.profile-release {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 13px;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--bg-2);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 160ms var(--ease), background 160ms var(--ease);
+}
+.profile-release:hover { border-color: var(--ink-3); background: var(--bg-3); }
+.profile-release:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.profile-release-art {
+  width: 56px; height: 56px;
+  flex: none;
+  border-radius: 2px;
+  object-fit: cover;
+  background: var(--bg-4);
+  box-shadow: inset 0 0 0 1px var(--line-2);
+}
+.profile-release-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.profile-release-title {
+  /* Family, weight, tracking and ink come from the Title primitive in
+     mmm-primitives.css — only the size and the truncation are local. */
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-release-meta {
+  font-family: var(--f-m);
+  font-size: 0.8125rem;      /* 13px */
+  letter-spacing: .06em;
+  color: var(--ink-3);
+}

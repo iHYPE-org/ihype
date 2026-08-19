@@ -143,7 +143,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-page { background: radial-gradient(1100px 560px at 50% -12%, color-mix(in srgb, var(--rk-glow) 9%, transparent), transparent 62%), var(--bg); color: var(--ink); }
         .rk-nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(16px); background: color-mix(in srgb, var(--bg) 75%, transparent); border-bottom: 1px solid var(--line); }
         .rk-nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 62px; }
-        .rk-logo { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em; color: var(--accent); text-decoration: none; }
+        .rk-logo { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em; color: var(--accent-text); text-decoration: none; }
         .rk-nav-cta { font-family: var(--font-display); font-weight: 800; font-size: .88rem; background: var(--rk-tint); color: var(--bg); padding: 9px 18px; border-radius: 999px; text-decoration: none; }
         .rk-hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
         .rk-hero-glow { position: absolute; top: -160px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, color-mix(in srgb, var(--rk-glow) 20%, transparent), transparent 65%); pointer-events: none; }

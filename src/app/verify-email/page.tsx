@@ -99,7 +99,7 @@ function VerifyEmailForm() {
           </p>
         )}
         {status === 'error' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent)', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent-text)', marginBottom: 16 }}>
             {t('verifyEmailPage.genericError', 'Something went wrong. Please try again.')}
           </p>
         )}
@@ -125,7 +125,7 @@ function VerifyEmailForm() {
             }}
           />
           {confirmStatus === 'error' && (
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent)', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent-text)', margin: 0 }}>
               {t('verifyEmailPage.codeInvalid', 'That code is invalid or expired. Request a new one below.')}
             </p>
           )}
@@ -134,7 +134,7 @@ function VerifyEmailForm() {
             disabled={confirmStatus === 'confirming' || code.length !== 6}
             style={{
               background: 'var(--accent)',
-              color: '#fff',
+              color: 'var(--ink-on-accent)',
               border: 'none',
               borderRadius: 8,
               padding: '12px 28px',

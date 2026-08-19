@@ -528,7 +528,7 @@ export function MmmSettings() {
                 }
                 label={t('settingsPage.pushLabel', 'Push notifications (this browser)')}
               />
-              {pushError && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', padding: '0 20px 14px' }}>{pushError}</p>}
+              {pushError && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', padding: '0 20px 14px' }}>{pushError}</p>}
             </div>
           </div>
 
@@ -605,7 +605,7 @@ export function MmmSettings() {
             </div>
           </div>
 
-          {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem' }}>{error}</p>}
+          {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.8125rem' }}>{error}</p>}
           {saved && <p style={{ color: 'var(--role-venue)', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)' }}>{t('settingsPage.savedConfirm', '✓ Saved')}</p>}
 
           <button className="settings-btn settings-btn-accent" disabled={saving} onClick={save} style={{ width: '100%' }} type="button">
