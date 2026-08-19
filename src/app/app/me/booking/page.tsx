@@ -77,7 +77,7 @@ export default async function BookingPage() {
 
 const BOOKING_CSS = `
 .booking-page { max-width: 720px; margin: 0 auto; padding: 32px 16px 64px; }
-.booking-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.625rem; letter-spacing: 0.16em; color: var(--role-venue); }
+.booking-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.6875rem; letter-spacing: 0.16em; color: var(--role-venue); }
 .booking-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2.125rem; line-height: 1.0; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 10px; }
 .booking-sub { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-a65); max-width: 56ch; margin: 0 0 24px; }
 .booking-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -87,11 +87,11 @@ const BOOKING_CSS = `
 .booking-card-body { flex: 1; min-width: 0; }
 .booking-card-name { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 1rem; color: var(--ink); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .booking-card-name:hover { color: var(--role-venue); }
-.booking-card-meta { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-a65); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.booking-card-meta { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .booking-card-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.booking-reason { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--role-venue); background: rgba(var(--role-venue-rgb),0.12); border-radius: 4px; padding: 3px 7px; }
-.booking-hype { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-a65); background: var(--hair-40); border-radius: 4px; padding: 3px 7px; }
-.booking-card-cta { flex-shrink: 0; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.8125rem; color: var(--ink-on-accent); background: var(--accent-grad-warm); border-radius: 9999px; padding: 9px 16px; text-decoration: none; }
+.booking-reason { font-family: 'JetBrains Mono', monospace; font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--role-venue); background: rgba(var(--role-venue-rgb),0.12); border-radius: 4px; padding: 3px 7px; }
+.booking-hype { font-family: 'JetBrains Mono', monospace; font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-a65); background: var(--hair-40); border-radius: 4px; padding: 3px 7px; }
+.booking-card-cta { flex-shrink: 0; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.9375rem; color: var(--ink-on-accent); background: var(--accent-grad-warm); border-radius: 9999px; padding: 9px 16px; text-decoration: none; }
 .booking-empty { text-align: center; padding: 32px; background: var(--bg-2); border: 1px solid var(--line); border-radius: 16px; }
 .booking-empty p { font-family: 'Work Sans', sans-serif; color: var(--ink-a65); margin: 0 0 14px; }
 .booking-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.9375rem; padding: 12px 22px; border-radius: 9999px; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }

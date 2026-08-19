@@ -55,8 +55,8 @@ export default async function JoinChooserPage() {
            role token that already tints the label now tints the mark too. */
         .join-card-icon { font-size: 1.6rem; color: var(--jc-color); line-height: 1; }
         .join-card-label { font-family: var(--font-display); font-weight: 800; font-size: 1rem; color: var(--jc-color); }
-        .join-card-help { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.5; }
-        .join-skip { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); text-decoration: underline; }
+        .join-card-help { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.5; }
+        .join-skip { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); text-decoration: underline; }
         @media (max-width: 560px) { .join-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>

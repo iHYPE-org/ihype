@@ -151,8 +151,23 @@ function whiteOnAccent(source) {
  * style really is a tracked mono run, tested the same way audit:mobile tests
  * it: monospace family AND tracking >= 0.14em.
  */
-const BODY_FLOOR_REM = 12.5 / 16;
-const EYEBROW_FLOOR_REM = 9 / 16;
+/* Both floors were RAISED on 2026-08-19, and the reason is worth keeping.
+ *
+ * 12.5px was Design System 8's minimum, and after PR #727 raised everything up
+ * to it, it quietly became the DESIGN: 536 of 1406 type sizes in the codebase
+ * sat at exactly 12.5px and 1003 of them were 14px or smaller. A floor that
+ * everything piles onto is not a floor, it is a default — and the reader this
+ * work started with, who could not read the small text, was being handed a
+ * whole app set one pixel above "violation".
+ *
+ * 15px is the content floor now. 979 sizes moved.
+ *
+ * The tracked-mono eyebrow exemption survives, because metadata really is a
+ * different thing from prose, but its floor moved 9px -> 11px: 9px is legible
+ * only if you already know what it says, which makes it decoration wearing a
+ * label's clothes. 85 sizes moved. */
+const BODY_FLOOR_REM = 15 / 16;
+const EYEBROW_FLOOR_REM = 11 / 16;
 const MONO_FAMILY = /--f-m\b|--font-mono\b|monospace|JetBrains/i;
 const TRACKING_EM = /letter-?[sS]pacing: *'?(-?\.?[0-9.]+)em/;
 
