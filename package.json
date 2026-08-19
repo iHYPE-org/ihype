@@ -15,6 +15,7 @@
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:design": "node scripts/audit-design-templates.mjs",
     "audit:css": "node scripts/audit-css.mjs",
+    "audit:contrast": "node scripts/audit-theme-contrast.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",
     "seed:admin-preview": "node --import dotenv/config scripts/seed-admin-preview-profiles.mjs",

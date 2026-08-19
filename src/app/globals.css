@@ -620,6 +620,91 @@
    dark-on-light. Mirror that rule's structure — two soft brand-tinted
    radials over a vertical base — in warm light tones so the shipped theme
    toggle actually works. Dark mode is untouched. */
+/* ── Console theme (design/console-2026-08) ──────────────────────────────
+   A third ground: warm cream board and walnut, against the navy of the
+   default theme and the cool paper of light. Source and the measured
+   reasoning are in design/console-2026-08/DIRECTION.md.
+
+   THE ONE THING TO KNOW BEFORE USING THIS THEME: `--accent` is 2.48:1 on
+   this ground and cannot be copy. It was 5.73:1 on navy, so every existing
+   use of the accent as TEXT silently inverts from passing to failing here.
+   `--accent-text` is the copy form and `--ink-on-accent` is the label on the
+   fill — in this theme that label is dark ink, not cream, which is the
+   opposite of both other themes. Same class of trap as the #5a5048 grey the
+   DS8 repaint left behind, and just as invisible in review.
+
+   Worst-case measured ratios across all four grounds: --ink 10.72,
+   --ink-2 7.50, --ink-3 5.00. --ink-4 is 2.65 and is hairlines only. */
+[data-theme="console"] {
+  color-scheme: light;
+  --bg:    #f0dfb8;
+  --bg-2:  #e9dcc0;
+  --bg-3:  #dfd0ac;
+  --bg-4:  #d2c6a4;
+  --ink:   #1c1408;
+  --ink-2: #3f3018;
+  --ink-3: #5d4a26;
+  /* Hairlines and rules only — 2.65:1 at worst. Never put a word in this. */
+  --ink-4: #8a7442;
+  --line:   rgba(28,20,8,.16);
+  --line-2: rgba(28,20,8,.26);
+
+  /* Alpha ink is the dark engraving at the same opacities, so anything that
+     was translucent near-white on navy becomes translucent ink here rather
+     than disappearing into the board. */
+  --ink-a10: rgba(28,20,8,.1);
+  --ink-a20: rgba(28,20,8,.2);
+  --ink-a22: rgba(28,20,8,.22);
+  --ink-a25: rgba(28,20,8,.25);
+  --ink-a28: rgba(28,20,8,.28);
+  --ink-a30: rgba(28,20,8,.3);
+  --ink-a32: rgba(28,20,8,.32);
+  --ink-a35: rgba(28,20,8,.35);
+  --ink-a38: rgba(28,20,8,.38);
+  --ink-a40: rgba(28,20,8,.4);
+  --ink-a42: rgba(28,20,8,.42);
+  --ink-a45: rgba(28,20,8,.45);
+  --ink-a50: rgba(28,20,8,.5);
+  --ink-a55: rgba(28,20,8,.55);
+  --ink-a60: rgba(28,20,8,.6);
+  --ink-a65: rgba(28,20,8,.65);
+  --ink-a70: rgba(28,20,8,.7);
+  --ink-a72: rgba(28,20,8,.72);
+  --ink-a75: rgba(28,20,8,.75);
+  --ink-a80: rgba(28,20,8,.8);
+  --ink-a85: rgba(28,20,8,.85);
+  --ink-a90: rgba(28,20,8,.9);
+
+  /* The RGB triplets have to be restated per theme — a custom property cannot
+     be decomposed in CSS, so a missing one here paints every composed-alpha
+     surface with the other theme's ink. This is the bug that made light theme
+     render near-black scrims; it is written down so it is not repeated. */
+  --bg-base-rgb: 240,223,184;
+  --ink-1-rgb: 28,20,8;
+  --surface-tint-rgb: 28,20,8;
+
+  /* Brand. The accent is UNCHANGED as a fill, because the pointer and the
+     pilot lamp are the reason the direction works. Its copy form is not. */
+  --accent-text: #923319;
+  --ink-on-accent: #1c1408;
+
+  /* Role hues darkened until each clears AA as copy on the board: the DS8
+     values are tuned for a dark ground and 4 of 5 fail on cream. */
+  --role-venue: #0f6b62;
+  --role-fan: #5b3d8f;
+  --role-promoter: #a3175f;
+  --role-advertiser: #8a5a06;
+  --warning-text: #8a5a06;
+
+  /* Brass, walnut and lamp — materials this theme needs and the others
+     do not. Named for what they are, not where they are used. */
+  --brass: #c9a54e;
+  --brass-deep: #8a6a2c;
+  --walnut: #4a2b16;
+  --walnut-2: #34200f;
+  --lamp: #ffb84a;
+}
+
 [data-theme="light"] body {
   background:
     radial-gradient(circle at top, rgba(var(--accent-rgb), 0.06), transparent 24%),
