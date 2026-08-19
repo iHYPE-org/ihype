@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { globSync } from 'glob';
 
@@ -154,11 +154,17 @@ describe('MMM escapes into the legacy shell', () => {
     expect(music).toContain('playTrack');
   });
 
-  it('still has no station selection on the legacy radio page', () => {
-    // If `/radio` ever DOES learn to read a station, this fails and the comment
-    // above needs rewriting rather than quietly becoming untrue.
-    const radio = stripComments(readFileSync('src/app/radio/page.tsx', 'utf8'));
-    expect(radio).not.toContain('searchParams');
+  it('still has no station selection on the legacy radio route', () => {
+    // Stronger than the file check this replaces. `/radio` is no longer a page
+    // at all — it is a redirect in next.config.mjs — so it cannot read a
+    // station even in principle, and there is no file left to grow the
+    // ability. If someone reinstates the page, `guard:design`'s assertMissing
+    // fails first; if someone points the redirect at a station-aware URL, the
+    // destination assertion below fails.
+    expect(existsSync('src/app/radio/page.tsx')).toBe(false);
+    const config = stripComments(readFileSync('next.config.mjs', 'utf8'));
+    expect(config).toContain("source: '/radio', destination: '/app/music/radio'");
+    expect(config).not.toContain('/app/music/radio?station=');
   });
 
   /**

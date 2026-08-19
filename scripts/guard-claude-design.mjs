@@ -73,28 +73,60 @@ assertIncludes(
   '<main id="main-content">{children}</main>',
   'Non-MMM routes keep the public site frame without a second app shell.'
 );
-for (const [relativePath, destination] of [
-  ['src/app/radio/page.tsx', '/app/music/radio'],
-  ['src/app/search/page.tsx', '/app/music/discover'],
-  ['src/app/tickets/page.tsx', '/app/me?section=tickets'],
-  ['src/app/for-you/page.tsx', '/app/music/recommended'],
-  ['src/app/this-weekend/page.tsx', '/app/map'],
-  ['src/app/settings/page.tsx', '/app/me/settings'],
-  ['src/app/settings/accessibility/page.tsx', '/app/me/accessibility'],
-  ['src/app/pages/page.tsx', '/app/me/profiles'],
-  ['src/app/payouts/page.tsx', '/app/me/payouts'],
-  ['src/app/tickets/[serializedId]/page.tsx', '/app/me/tickets'],
-  ['src/app/me/dashboard/page.tsx', '/app/me'],
-  ['src/app/me/analytics/page.tsx', '/app/me'],
-  ['src/app/me/promote/page.tsx', '/app/me'],
-  ['src/app/me/promote/analytics/page.tsx', '/app/me'],
-  ['src/app/community/page.tsx', '/app/me'],
+// The compatibility aliases moved from pages into `next.config.mjs` on
+// 2026-08-19, so the assertion moves with them — the invariant is unchanged
+// (these URLs must keep leading into MMM), only the place that guarantees it.
+//
+// It is a stronger check than the one it replaces. That one asserted a page
+// FILE mentioned its destination, which a redirect-only page did while still
+// answering 200 with a meta refresh instead of a 307. This asserts the routing
+// rule exists, which is the thing that actually redirects.
+const nextConfigSource = read('next.config.mjs');
+for (const [source, destination] of [
+  ['/artists/:slug', '/app/artists/:slug'],
+  ['/venues/:slug', '/app/venues/:slug'],
+  ['/fans/:slug', '/app/fans/:slug'],
+  ['/tracks/:hexId', '/app/tracks/:hexId'],
+  ['/playlist/:slug', '/app/playlists/:slug'],
+  ['/radio', '/app/music/radio'],
+  ['/search', '/app/music/discover?focus=search'],
+  ['/tickets', '/app/me?section=tickets'],
+  ['/for-you', '/app/music/recommended'],
+  ['/this-weekend', '/app/map?layer=events'],
+  ['/settings', '/app/me/settings'],
+  ['/settings/accessibility', '/app/me/accessibility'],
+  ['/pages', '/app/me/profiles'],
+  ['/payouts', '/app/me/payouts'],
+  ['/me/dashboard', '/app/me'],
+  ['/community', '/app/me?section=about'],
 ]) {
-  assertIncludes(
-    relativePath,
-    destination,
-    'Overlapping product URLs are compatibility aliases into Music · Map · Me.'
-  );
+  const rule = `source: '${source}', destination: '${destination}'`;
+  if (!nextConfigSource.includes(rule)) {
+    throw new Error(
+      `next.config.mjs is missing the redirect \`${rule}\`. Overlapping product ` +
+      'URLs are compatibility aliases into Music · Map · Me, and they have to be ' +
+      'config redirects: a redirect() in a page cannot answer with a 307 under ' +
+      'the root loading.tsx boundary — it renders a 200 with a meta refresh.'
+    );
+  }
+}
+
+// And the pages they replaced must stay gone. A page reinstated at one of these
+// paths would shadow its own redirect, silently restoring the meta-refresh
+// behaviour the move exists to end.
+for (const alias of [
+  'src/app/artists/[slug]/page.tsx',
+  'src/app/venues/[slug]/page.tsx',
+  'src/app/fans/[slug]/page.tsx',
+  'src/app/tracks/[hexId]/page.tsx',
+  'src/app/radio/page.tsx',
+  'src/app/search/page.tsx',
+  'src/app/tickets/page.tsx',
+  'src/app/settings/page.tsx',
+  'src/app/pages/page.tsx',
+  'src/app/payouts/page.tsx',
+]) {
+  assertMissing(alias, 'It is a redirect in next.config.mjs now; a page here would shadow it.');
 }
 assertMissing(
   'src/components/MobileAppShell.tsx',

@@ -100,6 +100,91 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // ── Compatibility aliases into Music · Map · Me ────────────────────
+      //
+      // Every one of these was a page whose whole body was `redirect(...)`, and
+      // not one of them redirected. A `redirect()` under a `loading.tsx`
+      // boundary cannot answer with a 307 — the shell is already streaming, so
+      // Next emits a 200 carrying `<meta http-equiv="refresh" content="1;url=…">`
+      // — and `src/app/loading.tsx` is such a boundary for EVERY route in the
+      // app. Measured on production: `/shows/<slug>` returned 200 with a 42KB
+      // body and a one-second meta refresh.
+      //
+      // So each of these was slower than a link, and invisible to anything that
+      // does not execute the refresh: crawlers and link unfurlers saw an empty
+      // shell. The `/app`, `/radio/live` and `/for-djs` entries above already
+      // say this; these 39 are the rest of the set.
+      //
+      // A config redirect resolves in the router before any rendering, so it
+      // cannot depend on render or streaming order.
+      //
+      // `permanent: false` throughout, matching `/promoters/:path*` above and
+      // for the same reason: these are slug and section mappings, and a 308 is
+      // cached by browsers effectively forever. If MMM's route shapes move
+      // again, a permanent redirect would be unrecallable.
+      //
+      // Query strings carry across on their own — Next appends the incoming
+      // query to the destination — so `/payouts?tab=history` and
+      // `/legal?tab=privacy` keep their tab without an entry per value.
+      { source: '/artists/:slug/analytics', destination: '/app/me/artists/:slug/analytics', permanent: false },
+      { source: '/artists/:slug/believers', destination: '/app/me/artists/:slug/believers', permanent: false },
+      { source: '/artists/:slug/dashboard', destination: '/app/me/artists/:slug/dashboard', permanent: false },
+      { source: '/artists/:slug/epk', destination: '/app/me/artists/:slug/epk', permanent: false },
+      { source: '/artists/:slug/onboarding', destination: '/app/me/artists/:slug/onboarding', permanent: false },
+      { source: '/artists/:slug/presskit', destination: '/app/me/artists/:slug/epk', permanent: false },
+      { source: '/artists/:slug', destination: '/app/artists/:slug', permanent: false },
+      { source: '/venues/:slug/analytics', destination: '/app/me/venues/:slug/analytics', permanent: false },
+      { source: '/venues/:slug/booking-inbox', destination: '/app/me/venues/:slug/booking-inbox', permanent: false },
+      { source: '/venues/:slug/calendar', destination: '/app/me/venues/:slug/calendar', permanent: false },
+      { source: '/venues/:slug/dashboard', destination: '/app/me/venues/:slug/dashboard', permanent: false },
+      { source: '/venues/:slug/onboarding', destination: '/app/me/venues/:slug/onboarding', permanent: false },
+      { source: '/venues/:slug', destination: '/app/venues/:slug', permanent: false },
+      { source: '/fans/:slug', destination: '/app/fans/:slug', permanent: false },
+      { source: '/shows/:slug/cancel', destination: '/app/me/shows/:slug/cancel', permanent: false },
+      { source: '/shows/:slug/lineup', destination: '/app/me/shows/:slug/lineup', permanent: false },
+      { source: '/shows/:slug/scan', destination: '/app/me/shows/:slug/scan', permanent: false },
+      { source: '/shows/map', destination: '/app/map?layer=events', permanent: false },
+      { source: '/playlist/:slug', destination: '/app/playlists/:slug', permanent: false },
+      { source: '/tracks/:hexId', destination: '/app/tracks/:hexId', permanent: false },
+      { source: '/tickets/:serializedId', destination: '/app/me/tickets/:serializedId', permanent: false },
+      { source: '/tickets', destination: '/app/me?section=tickets', permanent: false },
+      { source: '/payout/:id', destination: '/app/me/payouts/:id', permanent: false },
+      { source: '/payouts', destination: '/app/me/payouts', permanent: false },
+      { source: '/settings/accessibility', destination: '/app/me/accessibility', permanent: false },
+      { source: '/settings', destination: '/app/me/settings', permanent: false },
+      { source: '/pages', destination: '/app/me/profiles', permanent: false },
+      { source: '/search', destination: '/app/music/discover?focus=search', permanent: false },
+      { source: '/radio/station', destination: '/app/music/radio', permanent: false },
+      { source: '/radio', destination: '/app/music/radio', permanent: false },
+      { source: '/for-you', destination: '/app/music/recommended', permanent: false },
+      { source: '/this-weekend', destination: '/app/map?layer=events', permanent: false },
+      { source: '/community', destination: '/app/me?section=about', permanent: false },
+      { source: '/events/new', destination: '/app/me/events/new', permanent: false },
+      { source: '/me/analytics', destination: '/app/me', permanent: false },
+      { source: '/me/booking', destination: '/app/me/booking', permanent: false },
+      { source: '/me/dashboard', destination: '/app/me', permanent: false },
+      { source: '/me/promote/analytics', destination: '/app/me', permanent: false },
+      { source: '/me/promote', destination: '/app/me', permanent: false },
+      {
+        // A real `?tab=` is carried across explicitly. It has to be captured
+        // and re-emitted rather than left to Next's query pass-through,
+        // because the fallback below names `tab` in its OWN destination and a
+        // destination's query wins over the incoming one — `/legal?tab=privacy`
+        // landed on `terms`. Caught by curling every alias after the build;
+        // nothing about the rule looks wrong reading it.
+        source: '/legal',
+        has: [{ type: 'query', key: 'tab', value: '(?<tab>.*)' }],
+        destination: '/info?tab=:tab',
+        permanent: false
+      },
+      {
+        // Bare `/legal` keeps the page's old default of `terms`. The config
+        // cannot validate a value against the tab list the way the page did;
+        // `/info` falls back on its own for one it does not recognise.
+        source: '/legal',
+        destination: '/info?tab=terms',
+        permanent: false
+      },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.ihype.org' }],
