@@ -1,20 +1,30 @@
 #!/usr/bin/env node
 /**
- * Every theme's ink must be readable on every one of its own grounds.
+ * Every ink must be readable on every ground it can land on.
  *
- * This exists because of a bug the console theme surfaced and no other check
- * could have caught: `--accent` measures 5.73:1 on the navy ground and
- * **2.48:1** on cream. A token that is a correct, tokenised, AA-passing colour
- * in one theme becomes a failing one in another, with no literal to grep for
- * and nothing for `audit:shell` to flag — it only inspects hardcoded values.
+ * This exists because of a bug no other check could have caught: `--accent`
+ * measures 5.73:1 on the old navy ground and **2.48:1** on cream. A token that
+ * is a correct, tokenised, AA-passing colour against one ground becomes a
+ * failing one against another, with no literal to grep for and nothing for
+ * `audit:shell` to flag — it only inspects hardcoded values.
  *
- * The light theme has already been bitten by the same shape twice: `--ink-3`
- * was darkened after measuring 3.24:1 on light surfaces, and the alpha ramp
- * had to be restated per theme after composed-alpha surfaces painted
- * near-black over a light page. Both were found by eye, late.
+ * There is ONE theme now, which removes most of the ways that can happen and
+ * is a large part of why the themes were dropped. It does not remove all of
+ * them, because there are still two grounds in the product:
  *
- * So: parse each `[data-theme]` block out of globals.css, pair every ink with
- * every ground, and fail below 4.5:1.
+ *   1. the page — `--bg`..`--bg-4`, read by `--ink`..`--ink-3`
+ *   2. the WALNUT MATERIAL — the player dock and the station, deliberately
+ *      dark, read by `--ink-on-walnut`..`-3`
+ *
+ * (2) is now the whole risk surface: it is dark furniture standing on a light
+ * page, so the page's ink ramp is exactly wrong on it and vice versa. That is
+ * not hypothetical — it is what `.site-dock` shipped, dark ink on a near-black
+ * bar. `lint-source.mjs` stops the ramps being crossed; this measures that
+ * each ramp actually clears AA on its own ground.
+ *
+ * Walnut is measured against `--walnut`, the LIGHTEST stop of the gradient:
+ * copy can land anywhere on a gradient, so the worst case is the only one
+ * that means anything.
  */
 import { readFile } from 'node:fs/promises';
 
@@ -38,7 +48,15 @@ const ratio = (a, b) => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-const css = await readFile('src/app/globals.css', 'utf8');
+/* Comments are stripped FIRST, and that is not tidiness.
+ *
+ * The block scan below finds `:root {` and reads to the next `}`. A `}` inside
+ * a comment ends it early — and one does: a comment quoting a template
+ * literal (`${color}22`) sits ~10KB into :root, so everything past it was
+ * silently invisible to this script. It "passed" for as long as the tokens it
+ * needed happened to be declared above that line, and reported a token as
+ * UNDEFINED the moment one was declared below it. */
+const css = (await readFile('src/app/globals.css', 'utf8')).replace(/\/\*[\s\S]*?\*\//g, '');
 
 /** Collect `--name: #hex;` pairs from one block. */
 function tokensIn(body) {
@@ -110,8 +128,32 @@ for (const [name, tokens] of blocks) {
   }
 }
 
+/* The walnut material. Its ink ramp is checked against the lightest stop of
+   its gradient — see the header. --ink-on-walnut-3 is the dimmest rank a WORD
+   may use, so it is in; the --rule-on-walnut pair are hairlines and are not. */
+{
+  const walnut = base.get('--walnut');
+  const inks = ['--ink-on-walnut', '--ink-on-walnut-2', '--ink-on-walnut-3'];
+  if (!walnut) failures.push('walnut: --walnut is not defined — the material lost its ground');
+  else {
+    for (const name of inks) {
+      const value = base.get(name);
+      if (!value) { failures.push(`walnut: ${name} is not defined`); continue; }
+      const r = ratio(value, walnut);
+      if (r < AA) failures.push(`walnut: ${name} ${value} on --walnut ${walnut} = ${r.toFixed(2)}:1`);
+    }
+    /* The two controls the material paints: brass disc, dark glyph. */
+    for (const [fill, label] of [['--brass', '--walnut-3'], ['--lamp', '--walnut-3']]) {
+      const f = base.get(fill), l = base.get(label);
+      if (!f || !l) continue;
+      const r = ratio(l, f);
+      if (r < AA) failures.push(`walnut: ${label} on ${fill} = ${r.toFixed(2)}:1`);
+    }
+  }
+}
+
 if (failures.length) {
   console.error('Theme contrast failures:\n' + failures.map((f) => '  - ' + f).join('\n'));
   process.exit(1);
 }
-console.log(`Theme contrast passed: ${blocks.length} themes, every ink clears ${AA}:1 on every ground.`);
+console.log(`Contrast passed: ${blocks.length} theme + the walnut material, every ink clears ${AA}:1 on its own ground.`);

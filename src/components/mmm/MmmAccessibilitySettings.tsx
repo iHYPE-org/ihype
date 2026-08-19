@@ -11,21 +11,29 @@ import { MmmSegmentedTabs } from '@/components/mmm/MmmSegmentedTabs';
 import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
 
 /**
- * The Accessibility route from the app-shell handoff — five cards, each of
+ * The Accessibility route from the app-shell handoff — four cards, each of
  * which applies a real effect and persists:
  *
  *   | Card          | Control              | Applied effect                        |
- *   | Appearance    | Dark / Light         | data-theme on <html>                  |
  *   | Language      | locale buttons       | UI string table + <html lang>         |
  *   | Text size     | A − / A + / Reset    | root font scale 85–140%, not a scale()|
  *   | High contrast | On / Off             | stronger --line/--line-2/--ink-2/-3   |
  *   | Reduce motion | On / Off             | chrome transitions AND DS keyframes    |
  *
- * The handoff notes all five persist to a localStorage key and says "in code
- * move to a preferences provider". They do: theme through the existing theme
- * bootstrap, locale through I18nProvider (cookie + storage, so server
- * components see it too), and the other three through AccessibilityProvider —
- * three stores that already existed, rather than a fourth parallel one.
+ * It was five. The Appearance card is gone with the light and dark themes:
+ * the product has one ground, so there was nothing left for it to switch
+ * between, and a control that offers a single option is worse than no control.
+ *
+ * That deliberately leaves HIGH CONTRAST as the escape hatch for a reader the
+ * cream board does not suit — it is a real black ground with its own tokens,
+ * it is not a theme, and it is the reason removing the themes does not strand
+ * anyone.
+ *
+ * The handoff notes these persist to a localStorage key and says "in code move
+ * to a preferences provider". They do: locale through I18nProvider (cookie +
+ * storage, so server components see it too) and the rest through
+ * AccessibilityProvider — stores that already existed, rather than a parallel
+ * one.
  *
  * The prototype offers three languages; this renders the twelve the product
  * actually ships dictionaries for.
@@ -33,7 +41,6 @@ import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
 export function MmmAccessibilitySettings() {
   const { t, locale, setLocale } = useI18n();
   const { settings, updateSetting } = useAccessibilitySettings();
-  const [theme, setTheme] = useState<'console' | 'dark' | 'light'>('console');
   // The reader's SYSTEM text size, which multiplies with the control below.
   // Without this the card's percentage would be a half-truth on a phone: a
   // reader at iOS 130% and the app at 100% would be told "100%" while looking
@@ -43,19 +50,6 @@ export function MmmAccessibilitySettings() {
   useEffect(() => {
     setSystemScale(refreshSystemTextScale());
   }, []);
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem('theme');
-    // Mirrors the bootstrap in layout.tsx: console is the default ground, and
-    // the fallback is a constant rather than the OS preference.
-    setTheme(stored === 'dark' || stored === 'light' || stored === 'console' ? stored : 'console');
-  }, []);
-
-  function applyTheme(next: 'console' | 'dark' | 'light') {
-    setTheme(next);
-    window.localStorage.setItem('theme', next);
-    document.documentElement.setAttribute('data-theme', next);
-  }
 
   function stepScale(delta: number) {
     updateSetting('textScale', clampTextScale(settings.textScale + delta));
@@ -74,23 +68,6 @@ export function MmmAccessibilitySettings() {
       <h1 className="mmm-settings-title">{t('appShell.nav.accessibility', 'Accessibility')}</h1>
 
       <div className="mmm-settings-stack">
-        <section className="mmm-settings-card">
-          <h2 className="mmm-settings-card-title">{t('appShell.a11y.appearance', 'Appearance')}</h2>
-          <p className="mmm-settings-card-hint">
-            {t('appShell.a11y.appearanceHint', 'Light and dark both ship from the same tokens.')}
-          </p>
-          <MmmSegmentedTabs
-            className="mmm-settings-card-controls"
-            items={[
-              { id: 'console', label: t('appShell.a11y.console', 'Console'), active: theme === 'console', onSelect: () => applyTheme('console') },
-              { id: 'dark', label: t('appShell.a11y.dark', 'Dark'), active: theme === 'dark', onSelect: () => applyTheme('dark') },
-              { id: 'light', label: t('appShell.a11y.light', 'Light'), active: theme === 'light', onSelect: () => applyTheme('light') },
-            ]}
-            label={t('appShell.a11y.appearance', 'Appearance')}
-            mode="toggle"
-          />
-        </section>
-
         <section className="mmm-settings-card">
           <h2 className="mmm-settings-card-title">{t('appShell.a11y.language', 'Language')}</h2>
           <p className="mmm-settings-card-hint">

@@ -101,6 +101,33 @@ const ACCENT_AS_TEXT = /(?:^|[{,;\s])color: *'?var\(--accent[,)]/;
 const ACCENT_FILL = /background(?:-color)?: *[^;{}]*var\(--accent[,)]/g;
 const WHITE_LITERAL = /(?:^|[{;\s])(?:-webkit-text-fill-)?color: *'?(?:#fff(?:f{3})?\b|white\b|rgba?\( *255 *, *255 *, *255)/i;
 
+/*
+ * Walnut is a DARK material in every theme. The page's ink is not.
+ *
+ * `.walnut-panel` paints the cabinet face — a three-stop brown gradient —
+ * whichever theme is active, so a rule that also sets `--ink*` on that surface
+ * puts the console theme's DARK ink on dark timber. That is not hypothetical:
+ * it is precisely what `.site-dock` was doing before the material existed,
+ * with `background: rgba(9,8,6,.96)` and `color: var(--ink-1)`, and it was
+ * invisible to every page scan because the dock only renders while something
+ * is playing.
+ *
+ * The ramp is --ink-on-walnut / -2 / -3, measured against the LIGHTEST stop.
+ */
+const WALNUT_SURFACE = /\.walnut-panel\b|walnut-panel/;
+const PAGE_INK_AS_COLOR = /(?:^|[{;\s])color: *'?var\(--ink(?:-[1-4]|-a\d\d)?\)/;
+
+/** Rules inside a walnut block that reach for the page's ink ramp. */
+function pageInkOnWalnut(source) {
+  const hits = [];
+  for (const match of source.matchAll(/\.walnut-panel[^{]*\{/g)) {
+    const block = enclosingBlock(source, match.index + match[0].length - 1);
+    if (PAGE_INK_AS_COLOR.test(block)) hits.push(match.index);
+  }
+  return hits;
+}
+void WALNUT_SURFACE;
+
 /** Rules that fill with the accent and then hardcode a white label on it. */
 function whiteOnAccent(source) {
   const hits = [];
@@ -310,6 +337,12 @@ for (const file of await walkStyles('src')) {
   for (const index of whiteOnAccent(content)) {
     const line = content.slice(0, index).split('\n').length;
     fail(file, `line ${line}: white hardcoded on an --accent fill is 3.27:1 and fails AA. Use var(--ink-on-accent), which is dark ink in the console theme.`);
+    break;
+  }
+
+  for (const index of pageInkOnWalnut(content)) {
+    const line = content.slice(0, index).split('\n').length;
+    fail(file, `line ${line}: the page ink ramp on a .walnut-panel surface — walnut is dark in every theme, so --ink is dark-on-dark under console. Use var(--ink-on-walnut), -2 or -3.`);
     break;
   }
 

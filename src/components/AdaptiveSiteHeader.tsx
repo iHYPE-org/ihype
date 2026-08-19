@@ -8,7 +8,6 @@ import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { SearchBar } from '@/components/SearchBar';
 import { SiteNavTabs } from '@/components/SiteNavTabs';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 export function AdaptiveSiteHeader({
   inviteOnly,
@@ -70,7 +69,6 @@ export function AdaptiveSiteHeader({
           <>
             <HeaderLogo />
             <div className="adaptive-site-header-spacer" />
-            <ThemeToggle />
             <div className="adaptive-site-header-auth">
               <HeaderAuthLinks inviteOnly={inviteOnly} />
             </div>

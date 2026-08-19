@@ -71,11 +71,29 @@ describe('design facts', () => {
   /**
    * `viewportFit: 'cover'` plus a translucent status bar is a promise to tell
    * the OS what colour it is painting its own chrome over.
+   *
+   * This used to assert a `prefers-color-scheme` PAIR. There is one ground
+   * now, so it asserts something stronger instead: that all three places
+   * naming that ground AGREE. They did not — dropping the themes left the web
+   * app manifest on the retired navy, which is the PWA splash screen and the
+   * installed app's chrome, so an installed app would have flashed navy before
+   * painting a cream page. Nothing renders the manifest during development,
+   * which is exactly why it needs a test rather than an eye.
    */
-  it('declares a theme colour for both schemes', () => {
-    expect(layout).toMatch(/themeColor:\s*\[/);
-    expect(layout).toMatch(/prefers-color-scheme:\s*light/);
-    expect(layout).toMatch(/prefers-color-scheme:\s*dark/);
+  it('paints one ground, and every declaration of it agrees', () => {
+    const ground = /--bg:\s*(#[0-9a-f]{6})/i.exec(readFileSync('src/app/globals.css', 'utf8'))?.[1];
+    expect(ground).toBeDefined();
+
+    expect(layout).toMatch(new RegExp(`themeColor:\\s*'${ground}'`, 'i'));
+    // A scheme-conditional pair would mean the OS chrome still tracks a
+    // preference the product no longer honours.
+    expect(layout).not.toMatch(/prefers-color-scheme/);
+
+    const manifest = JSON.parse(readFileSync('public/manifest.json', 'utf8')) as {
+      theme_color: string; background_color: string;
+    };
+    expect(manifest.theme_color.toLowerCase()).toBe(ground!.toLowerCase());
+    expect(manifest.background_color.toLowerCase()).toBe(ground!.toLowerCase());
   });
 
   /**

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ThemeToggle } from '@/components/ThemeToggle';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
 
 /**
@@ -47,7 +46,6 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
           <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
         </Link>
         <nav aria-label="Account" className="fan-entry-nav">
-          <ThemeToggle />
           <Link className="fan-entry-signin" href="/login">Sign in</Link>
           {/* An in-page anchor, not /register: the header must not offer a door
               that is currently closed. */}
