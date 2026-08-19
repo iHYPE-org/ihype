@@ -94,7 +94,7 @@ function StatTile({ value, label, color = 'var(--accent)' }: { value: string; la
       minWidth: 190,
     }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.62rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 7 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 7 }}>{label}</div>
     </div>
   );
 }
@@ -122,7 +122,7 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.72rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
+        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
       </div>
     </div>
   );
@@ -226,7 +226,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed var(--hair-100)' }}>
         <QRCode value={serial} />
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '0.1em', color: 'var(--ink-2)' }}>{serial}</div>
-        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.78rem', color: 'var(--ink-3)', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
+        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.7813rem', color: 'var(--ink-3)', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
       </div>
     </div>
   );
@@ -545,9 +545,9 @@ export function WalkthroughDeck() {
         #wt-wrap { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; z-index: 9999; background: #060504; }
         #wt-stage { width: 1280px; height: 720px; transform-origin: center; flex-shrink: 0; position: relative; }
         #wt-nav { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 10000; }
-        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 16px; cursor: pointer; display: grid; place-items: center; }
+        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 1rem; cursor: pointer; display: grid; place-items: center; }
         #wt-nav button:hover { background: var(--hair-120); }
-        #wt-count { font-family: var(--f-m); font-size: 13px; letter-spacing: .14em; color: var(--ink-3); min-width: 64px; text-align: center; }
+        #wt-count { font-family: var(--f-m); font-size: 0.8125rem; letter-spacing: .14em; color: var(--ink-3); min-width: 64px; text-align: center; }
         @media print {
           @page { size: 1280px 720px; margin: 0; }
           #wt-wrap { position: static; display: block; background: #060504; }

@@ -338,24 +338,24 @@ export function ArtistOnboardingWizard({
         .aow-card { width: 100%; max-width: 440px; border: 1px solid var(--line); border-radius: var(--radius-2xl); background: var(--bg2); padding: 22px 18px 18px; }
         .aow-progress-track { width: 100%; height: 10px; border-radius: var(--radius-pill); background: var(--line); overflow: hidden; margin-bottom: 28px; }
         .aow-progress-fill { height: 100%; border-radius: var(--radius-pill); background: var(--accent); transition: width .25s ease; }
-        .aow-eyebrow { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
-        .aow-title { font-family: var(--font-display); font-weight: 800; font-size: 26px; letter-spacing: -.03em; margin: 0 0 8px; color: var(--ink); }
-        .aow-sub { font-size: 14px; color: var(--ink-a50, var(--ink-2)); line-height: 1.65; margin: 0 0 24px; }
+        .aow-eyebrow { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+        .aow-title { font-family: var(--font-display); font-weight: 800; font-size: 1.625rem; letter-spacing: -.03em; margin: 0 0 8px; color: var(--ink); }
+        .aow-sub { font-size: 0.875rem; color: var(--ink-a65, var(--ink-2)); line-height: 1.65; margin: 0 0 24px; }
         .aow-field { display: block; margin-bottom: 14px; }
-        .aow-label { display: block; font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a50, var(--ink-2)); margin-bottom: 6px; }
-        .aow-input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg3, transparent); color: var(--ink); font-size: 14px; font-family: inherit; }
+        .aow-label { display: block; font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65, var(--ink-2)); margin-bottom: 6px; }
+        .aow-input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 10px 14px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg3, transparent); color: var(--ink); font-size: 0.875rem; font-family: inherit; }
         .aow-input:focus { outline: none; border-color: var(--accent); }
-        .aow-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px 20px; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; text-decoration: none; border: none; cursor: pointer; box-sizing: border-box; margin-top: 20px; }
+        .aow-btn { display: flex; align-items: center; justify-content: center; width: 100%; min-height: 44px; padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 700; text-decoration: none; border: none; cursor: pointer; box-sizing: border-box; margin-top: 20px; }
         .aow-btn:disabled { opacity: .55; cursor: default; }
         .aow-btn-solid { background: var(--accent); color: var(--ink-on-accent); }
-        .aow-btn-ghost { background: transparent; color: var(--ink-a50, var(--ink-2)); margin-top: 8px; }
+        .aow-btn-ghost { background: transparent; color: var(--ink-a65, var(--ink-2)); margin-top: 8px; }
         .aow-btn-ghost:hover { color: var(--ink); }
-        .aow-alt-link { text-align: center; margin-top: 14px; font-size: 12px; color: var(--ink-a35, var(--ink-3)); }
+        .aow-alt-link { text-align: center; margin-top: 14px; font-size: 0.7813rem; color: var(--ink-a65, var(--ink-3)); }
         .aow-alt-link a { color: var(--accent); text-decoration: none; }
-        .aow-error { font-size: 12.5px; color: var(--accent); margin-bottom: 4px; }
+        .aow-error { font-size: 0.7813rem; color: var(--accent); margin-bottom: 4px; }
         .aow-reminder-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg3, transparent); padding: 20px; }
-        .aow-reminder-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a35, var(--ink-3)); margin-bottom: 10px; }
-        .aow-reminder-text { font-family: var(--font-mono); font-size: 12px; color: var(--ink-a50, var(--ink-2)); line-height: 1.6; }
+        .aow-reminder-label { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65, var(--ink-3)); margin-bottom: 10px; }
+        .aow-reminder-text { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65, var(--ink-2)); line-height: 1.6; }
         .aow-done { text-align: center; }
         .aow-done-icon { width: 60px; height: 60px; border-radius: var(--radius-lg); background: rgba(var(--accent-rgb),.12); border: 2px solid var(--accent); display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
       `}</style>

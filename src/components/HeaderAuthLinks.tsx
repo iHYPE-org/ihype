@@ -73,7 +73,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           <span
             style={{
               fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-              fontSize: '0.5rem',
+              fontSize: '0.5625rem',
               letterSpacing: '.14em',
               textTransform: 'uppercase',
               color: 'var(--role-venue)',
@@ -83,7 +83,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           </span>
           <span
             style={{
-              fontSize: '0.75rem',
+              fontSize: '0.7813rem',
               fontWeight: 600,
               color: 'var(--ink)',
               overflow: 'hidden',

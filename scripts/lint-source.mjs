@@ -46,6 +46,88 @@ const PX_FONT_SIZE_EXEMPT = [
 ];
 const inlinePxFontSize = /fontSize: (?:'\d+(?:\.\d+)?px'|\d+(?:\.\d+)?)(?=[,}\s])/;
 
+/*
+ * The same rule, for the OTHER syntax that carries type in this codebase.
+ *
+ * 29 pages ship a `<style>` block inside the .tsx rather than a class in a
+ * stylesheet, and the rule above cannot see them: it matches the JSX prop
+ * `fontSize:`, while a style block writes CSS `font-size:`. 247 px sizes were
+ * sitting in those blocks across 31 files, immune to Text size for exactly the
+ * reason the comment above gives — which made the accessibility setting look
+ * like it worked (most of the app moved) while a page built this way did not.
+ */
+const styleBlockPxFontSize = /font-size: *\d+(?:\.\d+)?px/;
+
+/*
+ * The floor, in source rather than in a browser.
+ *
+ * `audit:mobile` measures rendered boxes and is the real instrument, but it is
+ * deliberately not in CI (it drives Chromium). This catches the common case
+ * statically, and it encodes the distinction that actually went wrong:
+ * Design System 8's MOBILE.md exempts the tracked mono eyebrow scale (9-12px,
+ * 0.14-0.22em) because "it is metadata, never content" — and that exemption
+ * leaked onto sentences, so error messages and hints were shipping at 9-10px.
+ * A size under the body floor is therefore allowed only where the surrounding
+ * style really is a tracked mono run, tested the same way audit:mobile tests
+ * it: monospace family AND tracking >= 0.14em.
+ */
+const BODY_FLOOR_REM = 12.5 / 16;
+const EYEBROW_FLOOR_REM = 9 / 16;
+const MONO_FAMILY = /--f-m\b|--font-mono\b|monospace|JetBrains/i;
+const TRACKING_EM = /letter-?[sS]pacing: *'?(-?\.?[0-9.]+)em/;
+
+/** The innermost `{ … }` around an index — a JSX style object or a CSS rule. */
+function enclosingBlock(source, index) {
+  let depth = 0;
+  let start = -1;
+  for (let i = index; i >= 0; i -= 1) {
+    const c = source[i];
+    if (c === '}') depth += 1;
+    else if (c === '{') {
+      if (depth === 0) { start = i; break; }
+      depth -= 1;
+    }
+  }
+  if (start < 0) return '';
+  depth = 0;
+  for (let i = start; i < source.length; i += 1) {
+    const c = source[i];
+    if (c === '{') depth += 1;
+    else if (c === '}') {
+      depth -= 1;
+      if (depth === 0) return source.slice(start, i + 1);
+    }
+  }
+  return source.slice(start);
+}
+
+function isTrackedMono(block) {
+  if (!MONO_FAMILY.test(block)) return false;
+  const tracking = TRACKING_EM.exec(block);
+  return Boolean(tracking) && Math.abs(Number(tracking[1])) >= 0.14;
+}
+
+/**
+ * Every rem type size in a file, in all THREE syntaxes.
+ *
+ * The third one is the trap: the `font:` shorthand carries the size as a bare
+ * length among the other components, so a check written against `font-size:`
+ * cannot see it. 14 sizes were hiding there, including the homepage's own
+ * "Sign in" link and the sentence under it — and they went on hiding through a
+ * sweep that fixed both other syntaxes. For a `clamp()` size the MINIMUM is
+ * what matters here, because that is what a narrow phone actually gets.
+ */
+function remFontSizes(source) {
+  const hits = [];
+  for (const re of [/fontSize: '([0-9.]+)rem'/g, /font-size: ([0-9.]+)rem/g]) {
+    for (const m of source.matchAll(re)) hits.push({ rem: Number(m[1]), index: m.index });
+  }
+  for (const m of source.matchAll(/font: *[^;{}]*?(?:clamp\( *([0-9.]+)rem|([0-9.]+)rem)/g)) {
+    hits.push({ rem: Number(m[1] ?? m[2]), index: m.index });
+  }
+  return hits;
+}
+
 /**
  * No emoji in the UI (Design System 8, ADHERENCE rule 29).
  *
@@ -76,9 +158,24 @@ for (const file of sourceFiles) {
   if (/\bnew\s+Function\s*\(/.test(content)) fail(file, 'new Function() is forbidden.');
 
   const portable = file.split(path.sep).join('/');
-  if (portable.endsWith('.tsx') && !PX_FONT_SIZE_EXEMPT.some((x) => portable.includes(x))
-      && inlinePxFontSize.test(content)) {
-    fail(file, 'inline fontSize in px ignores the Text size accessibility setting — use rem (px / 16).');
+  if (portable.endsWith('.tsx') && !PX_FONT_SIZE_EXEMPT.some((x) => portable.includes(x))) {
+    if (inlinePxFontSize.test(content)) {
+      fail(file, 'inline fontSize in px ignores the Text size accessibility setting — use rem (px / 16).');
+    }
+    if (styleBlockPxFontSize.test(content)) {
+      fail(file, 'font-size in px inside a <style> block ignores the Text size accessibility setting — use rem (px / 16).');
+    }
+    for (const hit of remFontSizes(content)) {
+      const block = enclosingBlock(content, hit.index);
+      const floor = isTrackedMono(block) ? EYEBROW_FLOOR_REM : BODY_FLOOR_REM;
+      if (hit.rem < floor) {
+        const line = content.slice(0, hit.index).split('\n').length;
+        fail(file, `line ${line}: ${(hit.rem * 16).toFixed(2)}px type is below the ${(floor * 16).toFixed(1)}px floor. `
+          + 'Design System 8 exempts the tracked mono eyebrow scale (monospace + letter-spacing >= .14em) down to 9px; '
+          + 'everything else is content and must clear 12.5px.');
+        break;
+      }
+    }
   }
 
   if (portable.endsWith('.tsx') && !EMOJI_EXEMPT.some((x) => portable.includes(x))) {
@@ -92,6 +189,68 @@ for (const file of sourceFiles) {
       }
     }
   }
+}
+
+/*
+ * The same type floor, over the stylesheets.
+ *
+ * `walk('src')` collects only .ts/.tsx/.js/.mjs, so every rule in globals.css,
+ * mmm.css and the rest was outside every check above — and that is where a
+ * third of the sub-floor type was living, including the auth card's 9-10px
+ * labels on the platform's only sign-in path. A ratchet that cannot see the
+ * stylesheets would have let all of it grow straight back.
+ *
+ * @media print is skipped: paper has no root font size to scale against, and
+ * px is the correct unit there.
+ */
+async function walkStyles(directory) {
+  const entries = await readdir(path.join(root, directory), { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const relative = path.join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...(await walkStyles(relative)));
+    else if (entry.name.endsWith('.css')) files.push(relative);
+  }
+  return files;
+}
+
+/** Character range of a file's @media print block, or null. */
+function printRange(source) {
+  const open = /@media\s+print\s*\{/.exec(source);
+  if (!open) return null;
+  let depth = 0;
+  for (let i = open.index + open[0].length - 1; i < source.length; i += 1) {
+    if (source[i] === '{') depth += 1;
+    else if (source[i] === '}') {
+      depth -= 1;
+      if (depth === 0) return [open.index, i];
+    }
+  }
+  return [open.index, source.length];
+}
+
+for (const file of await walkStyles('src')) {
+  const content = await text(file);
+  const portable = file.split(path.sep).join('/');
+  const print = printRange(content);
+
+  if (styleBlockPxFontSize.test(content.replace(/@media\s+print\s*\{[\s\S]*?\n\}/, ''))) {
+    fail(file, 'font-size in px ignores the Text size accessibility setting — use rem (px / 16).');
+  }
+
+  for (const hit of remFontSizes(content)) {
+    if (print && hit.index >= print[0] && hit.index <= print[1]) continue;
+    const block = enclosingBlock(content, hit.index);
+    const floor = isTrackedMono(block) ? EYEBROW_FLOOR_REM : BODY_FLOOR_REM;
+    if (hit.rem < floor) {
+      const line = content.slice(0, hit.index).split('\n').length;
+      fail(file, `line ${line}: ${(hit.rem * 16).toFixed(2)}px type is below the ${(floor * 16).toFixed(1)}px floor. `
+        + 'Design System 8 exempts the tracked mono eyebrow scale (monospace + letter-spacing >= .14em) down to 9px; '
+        + 'everything else is content and must clear 12.5px.');
+      break;
+    }
+  }
+  void portable;
 }
 
 const readme = await text('README.md');

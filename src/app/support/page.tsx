@@ -39,7 +39,7 @@ export default async function SupportPage({
         href="/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)',
-          fontSize: '0.6875rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink)',
+          fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink)',
           border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--bg2)',
           padding: '10px 16px', textDecoration: 'none', marginBottom: 40,
         }}

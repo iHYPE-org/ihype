@@ -631,7 +631,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           {rateLimitMetrics.length ? (
             rateLimitMetrics.map((row) => (
               <div className="admin-list-row" key={row.bucket}>
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem' }}>{row.bucket}</span>
+                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem' }}>{row.bucket}</span>
                 <strong>{row.hits}</strong>
               </div>
             ))
@@ -881,7 +881,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               <div key={post.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <pre style={{ fontFamily: 'inherit', fontSize: '0.8125rem', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
-                  <small style={{ color: 'var(--ink-3)', fontSize: '0.6875rem' }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
+                  <small style={{ color: 'var(--ink-3)', fontSize: '0.7813rem' }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
                 </div>
                 <SocialPostCopy text={post.text} />
               </div>
@@ -911,7 +911,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               }, {})
             ).map(([date, shows]) => (
               <div key={date} style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
+                <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
                 {shows.map((show) => (
                   <div key={show.id} className="admin-list-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ flex: 1 }}>{show.title}</span>
@@ -1069,7 +1069,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                     AdminAdsClient already does it properly. The i18n pass
                     wrapped the old forms' labels; those strings went with
                     the forms. */}
-                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: '0.75rem' }}>
+                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: '0.7813rem' }}>
                   {t('adminPage.review', 'Review')}
                 </Link>
               </div>

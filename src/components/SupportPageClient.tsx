@@ -28,7 +28,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
 
   return (
     <>
-      <p className="eyebrow" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', margin: '0 0 14px' }}>
+      <p className="eyebrow" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', margin: '0 0 14px' }}>
         {t('supportPageClient.commonTopics', 'Common Topics')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14, marginBottom: 40 }}>
@@ -37,18 +37,18 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a2 2 0 0 1 2-2 2 2 0 0 0 2-2V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 1 0 4 2 2 0 0 0-2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2 2 2 0 0 1-2-2Z" /><path d="M13 6v12" strokeDasharray="2 2" /></svg>
           </div>
           <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.myTickets', 'My Tickets')}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPageClient.myTicketsDescription', 'Transfer, share, or get a QR code')}</div>
+          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)' }}>{t('supportPageClient.myTicketsDescription', 'Transfer, share, or get a QR code')}</div>
         </Link>
         <SupportPrivacyPanel onReportProblem={reportProblem} />
         <Link href="/verify" style={quickCardStyle}>
           <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">✓</div>
           <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.verification', 'Verification')}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPageClient.verificationDescription', 'Artist/venue/DJ verification status')}</div>
+          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)' }}>{t('supportPageClient.verificationDescription', 'Artist/venue/DJ verification status')}</div>
         </Link>
         <Link href="/me/promote" style={quickCardStyle}>
           <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">◈</div>
           <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.payouts', 'Payouts')}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)' }}>{t('supportPageClient.payoutsDescription', 'Settlement, earnings, referrals')}</div>
+          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)' }}>{t('supportPageClient.payoutsDescription', 'Settlement, earnings, referrals')}</div>
         </Link>
         <BugReportPanel />
       </div>
@@ -58,7 +58,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
         style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 32, background: 'var(--bg-2)' }}
       >
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, marginBottom: 24 }}>{t('supportPageClient.sendMessage', 'Send a Message')}</h2>
-        {alphaModule && <p style={{ color: 'var(--ink-a55)', fontSize: '0.75rem', margin: '-12px 0 18px' }}>This report will include the current module, screen size, and online status. It never includes your location or listening history.</p>}
+        {alphaModule && <p style={{ color: 'var(--ink-a65)', fontSize: '0.7813rem', margin: '-12px 0 18px' }}>This report will include the current module, screen size, and online status. It never includes your location or listening history.</p>}
         <SupportForm alphaModule={alphaModule} key={formKey} initialType={initialType} initialSubject={initialSubject} />
       </div>
     </>

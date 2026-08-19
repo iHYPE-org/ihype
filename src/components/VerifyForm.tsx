@@ -38,7 +38,7 @@ const fieldStyle: React.CSSProperties = {
   marginBottom: 14, boxSizing: 'border-box',
 };
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '.12em',
+  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em',
   textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6,
 };
 

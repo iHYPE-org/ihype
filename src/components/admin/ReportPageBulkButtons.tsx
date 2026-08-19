@@ -51,7 +51,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         disabled={loading !== null}
         onClick={() => void run('resolve_reports')}
         type="button"
-        style={{ background: 'rgba(var(--role-venue-rgb),.1)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.25)', borderRadius: 6, padding: '5px 14px', fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
+        style={{ background: 'rgba(var(--role-venue-rgb),.1)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.25)', borderRadius: 6, padding: '5px 14px', fontSize: '0.7813rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
         {loading === 'resolve_reports' ? t('reportPageBulkButtons.resolving', 'Resolving…') : `${t('reportPageBulkButtons.resolveAllOnPage', 'Resolve all on page')} (${ids.length})`}
       </button>
@@ -59,11 +59,11 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         disabled={loading !== null}
         onClick={() => void run('dismiss_reports')}
         type="button"
-        style={{ background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
+        style={{ background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: '0.7813rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
       >
         {loading === 'dismiss_reports' ? t('reportPageBulkButtons.dismissing', 'Dismissing…') : t('reportPageBulkButtons.dismissAllOnPage', 'Dismiss all on page')}
       </button>
-      {error && <span style={{ fontSize: '0.6875rem', color: 'var(--danger)', fontFamily: 'var(--f-m)' }}>{error}</span>}
+      {error && <span style={{ fontSize: '0.7813rem', color: 'var(--danger)', fontFamily: 'var(--f-m)' }}>{error}</span>}
       {pendingReauth && (
         <AdminReauthPrompt
           onCancel={() => setPendingReauth(null)}

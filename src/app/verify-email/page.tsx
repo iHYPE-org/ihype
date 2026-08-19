@@ -94,12 +94,12 @@ function VerifyEmailForm() {
           {t('verifyEmailPage.body', 'We sent a 6-digit verification code to your email address. Enter it below to verify your account and continue.')}
         </p>
         {status === 'sent' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--role-venue)', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--role-venue)', marginBottom: 16 }}>
             {t('verifyEmailPage.codeSent', 'Verification code sent! Check your inbox.')}
           </p>
         )}
         {status === 'error' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--accent)', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent)', marginBottom: 16 }}>
             {t('verifyEmailPage.genericError', 'Something went wrong. Please try again.')}
           </p>
         )}
@@ -125,7 +125,7 @@ function VerifyEmailForm() {
             }}
           />
           {confirmStatus === 'error' && (
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--accent)', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent)', margin: 0 }}>
               {t('verifyEmailPage.codeInvalid', 'That code is invalid or expired. Request a new one below.')}
             </p>
           )}
@@ -174,7 +174,7 @@ function VerifyEmailForm() {
             display: 'block',
             marginTop: 16,
             fontFamily: 'var(--f-m)',
-            fontSize: '0.75rem',
+            fontSize: '0.7813rem',
             color: 'var(--ink-3)',
           }}
         >

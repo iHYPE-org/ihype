@@ -155,18 +155,18 @@ const STATION_CSS = `
 .station { background: var(--bg-2); border: 1px solid var(--hair-80); border-radius: 20px; padding: 22px; max-width: 460px; }
 .station-head { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
 .station-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.station-status { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--accent); }
+.station-status { font-family: 'JetBrains Mono', monospace; font-size: 0.625rem; letter-spacing: 0.16em; color: var(--accent); }
 .station-now { display: flex; align-items: center; gap: 14px; }
 .station-art { flex-shrink: 0; width: 64px; height: 64px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--role-fan)); background-size: cover; background-position: center; }
 .station-now-text { flex: 1; min-width: 0; }
-.station-track { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 18px; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.station-artist { font-family: 'Work Sans', sans-serif; font-size: 14px; color: var(--ink-a60); text-decoration: none; }
+.station-track { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-artist { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-a65); text-decoration: none; }
 .station-artist:hover { color: var(--accent); }
-.station-toggle { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; background: var(--accent-grad-warm); color: var(--ink-on-accent); font-size: 16px; display: flex; align-items: center; justify-content: center; }
+.station-toggle { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; background: var(--accent-grad-warm); color: var(--ink-on-accent); font-size: 1rem; display: flex; align-items: center; justify-content: center; }
 .station-next { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 9px; letter-spacing: 0.14em; color: var(--ink-a40); margin-bottom: 2px; }
-.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 13px; color: var(--ink-a55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.station-live-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px; color: var(--ink); margin: 0 0 12px; }
-.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }
-.station-empty { font-family: 'Work Sans', sans-serif; font-size: 14px; color: var(--ink-a50); margin: 0; }
+.station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 0.5625rem; letter-spacing: 0.14em; color: var(--ink-a65); margin-bottom: 2px; }
+.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-a65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-live-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--ink); margin: 0 0 12px; }
+.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 10px 18px; border-radius: 9999px; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }
+.station-empty { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-a65); margin: 0; }
 `;

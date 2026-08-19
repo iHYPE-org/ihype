@@ -38,7 +38,7 @@ export default async function InviteLandingPage({ params }: Props) {
 
   return (
     <div style={{ maxWidth: 480, margin: '80px auto', padding: '0 24px', textAlign: 'center' }}>
-      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
+      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 8 }}>
         {t('inviteCodePage.eyebrow', "You're invited")}
       </p>
       <h1 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', color: 'var(--ink)', marginBottom: 8 }}>
@@ -60,7 +60,7 @@ export default async function InviteLandingPage({ params }: Props) {
       >
         {t('inviteCodePage.joinFree', 'Join iHYPE free')}
       </Link>
-      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-3)' }}>
+      <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>
         {t('inviteCodePage.alreadyHaveAccount', 'Already have an account?')}{' '}
         <Link href="/login" className="text-link">{t('inviteCodePage.signIn', 'Sign in')}</Link>
       </p>

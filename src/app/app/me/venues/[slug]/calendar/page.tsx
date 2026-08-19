@@ -102,7 +102,7 @@ export default async function VenueCalendarPage({ params }: Props) {
       */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: 2, marginBottom: 8 }}>
         {dayNames.map((d) => (
-          <div key={d} style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', fontWeight: 600, color: 'var(--ink-3)', textAlign: 'center', padding: '4px 0', letterSpacing: '.08em', textTransform: 'uppercase' }}>
+          <div key={d} style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', fontWeight: 600, color: 'var(--ink-3)', textAlign: 'center', padding: '4px 0', letterSpacing: '.08em', textTransform: 'uppercase' }}>
             {d}
           </div>
         ))}
@@ -125,7 +125,7 @@ export default async function VenueCalendarPage({ params }: Props) {
             >
               {day ? (
                 <>
-                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--ink-2)' }}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--ink-2)' }}>
                     {day}
                   </span>
                   {dayShows.map((s) => (
@@ -135,7 +135,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                       style={{
                         display: 'block',
                         marginTop: 4,
-                        fontSize: '0.625rem',
+                        fontSize: '0.7813rem',
                         fontFamily: 'var(--f-m)',
                         color: 'var(--ink)',
                         background: 'rgba(var(--role-fan-rgb),.15)',
@@ -170,7 +170,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                 <Link href={`/app/shows/${s.slug}`} style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--ink)', textDecoration: 'none' }}>
                   {s.title}
                 </Link>
-                <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
+                <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
                   {s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
               </div>

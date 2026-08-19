@@ -469,7 +469,7 @@ function RadioTab() {
           {/* A null count means the query failed. Rendering "0 tracks" beside a
               station that may be full is worse than rendering nothing. */}
           {station.trackCount !== null && (
-            <span className="mmm-row-meta" style={{ color: 'var(--ink-3)', fontSize: '0.58rem', letterSpacing: '0.06em' }}>
+            <span className="mmm-row-meta" style={{ color: 'var(--ink-3)', fontSize: '0.7813rem', letterSpacing: '0.06em' }}>
               {station.trackCount} track{station.trackCount === 1 ? '' : 's'}
             </span>
           )}

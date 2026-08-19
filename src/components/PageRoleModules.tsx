@@ -41,9 +41,9 @@ function ModuleHead({ icon, color, title, sub, trailing }: {
         <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, letterSpacing: '-.01em', color: 'var(--ink)', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
           {title}
         </div>
-        <div style={{ fontSize: '0.75rem', color: 'var(--ink-a50)', marginTop: 2, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{sub}</div>
+        <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', marginTop: 2, overflowWrap: 'break-word', wordBreak: 'break-word' }}>{sub}</div>
       </div>
-      <div style={{ flexShrink: 0, color: 'var(--ink-a45)', display: 'flex', alignItems: 'center' }}>{trailing}</div>
+      <div style={{ flexShrink: 0, color: 'var(--ink-a65)', display: 'flex', alignItems: 'center' }}>{trailing}</div>
     </>
   );
 }
@@ -89,7 +89,7 @@ function LinkModule({ icon, color, title, sub, href }: {
 }
 
 function LoadNote({ text }: { text: string }) {
-  return <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)', margin: '8px 0 0' }}>{text}</p>;
+  return <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: '8px 0 0' }}>{text}</p>;
 }
 
 /**
@@ -124,14 +124,14 @@ function TourRecsBody() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {data.aiPlan.route.map((r) => (
               <div key={`${r.order}-${r.city}`} style={{ display: 'flex', gap: 10 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--accent)', flexShrink: 0, width: 18 }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--accent)', flexShrink: 0, width: 18 }}>
                   {String(r.order).padStart(2, '0')}
                 </span>
                 <div style={{ minWidth: 0 }}>
                   <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)' }}>
-                    {r.city}{r.targetVenue ? <span style={{ fontWeight: 400, color: 'var(--ink-a55)' }}> · {r.targetVenue}</span> : null}
+                    {r.city}{r.targetVenue ? <span style={{ fontWeight: 400, color: 'var(--ink-a65)' }}> · {r.targetVenue}</span> : null}
                   </span>
-                  {r.why && <div style={{ fontSize: '0.75rem', color: 'var(--ink-a50)', marginTop: 2, lineHeight: 1.45 }}>{r.why}</div>}
+                  {r.why && <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', marginTop: 2, lineHeight: 1.45 }}>{r.why}</div>}
                 </div>
               </div>
             ))}
@@ -139,7 +139,7 @@ function TourRecsBody() {
         </div>
       )}
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a40)', marginBottom: 8 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 8 }}>
           {t('pageRoleModules.demandRankedCitiesLabel', 'DEMAND-RANKED CITIES')}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -147,9 +147,9 @@ function TourRecsBody() {
             <div key={s.city} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--line)' }}>
               <div style={{ minWidth: 0 }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>{s.city}</span>
-                {s.venues[0] && <span style={{ fontSize: '0.75rem', color: 'var(--ink-a50)' }}> · {s.venues.map((v) => v.name).slice(0, 2).join(', ')}</span>}
+                {s.venues[0] && <span style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)' }}> · {s.venues.map((v) => v.name).slice(0, 2).join(', ')}</span>}
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', color: 'var(--ink-a55)', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-a65)', flexShrink: 0 }}>
                 {s.score} · {s.reach} {t('pageRoleModules.reachSuffix', 'reach')}
               </span>
             </div>
@@ -185,16 +185,16 @@ function AdRecsBody({ profileId }: { profileId: string }) {
       {recs.map((r, i) => (
         <div key={i} style={{ border: '1px solid var(--hair-70)', borderRadius: 12, padding: '12px 14px', background: 'var(--hair-20)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5 }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color: 'var(--role-fan)', background: 'rgba(var(--role-fan-rgb),.14)' }}>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color: 'var(--role-fan)', background: 'rgba(var(--role-fan-rgb),.14)' }}>
               {r.channel}
             </span>
           </div>
           <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--ink)', marginBottom: 3 }}>{r.headline}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--ink-a55)', lineHeight: 1.5 }}>{r.body}</div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--role-fan)', marginTop: 6 }}>{r.cta}</div>
+          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', lineHeight: 1.5 }}>{r.body}</div>
+          <div style={{ fontSize: '0.7813rem', fontWeight: 600, color: 'var(--role-fan)', marginTop: 6 }}>{r.cta}</div>
         </div>
       ))}
-      <Link href="/advertise" style={{ fontSize: '0.75rem', color: 'var(--ink-a55)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
+      <Link href="/advertise" style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', textDecoration: 'underline', textUnderlineOffset: 3 }}>
         {t('pageRoleModules.runCampaignCta', 'Run a campaign on iHYPE →')}
       </Link>
     </div>
@@ -283,7 +283,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
 
   return (
     <div style={{ marginBottom: 36 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a35)', marginBottom: 14 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
         {t('pageRoleModules.pageToolkitLabel', 'PAGE TOOLKIT')}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

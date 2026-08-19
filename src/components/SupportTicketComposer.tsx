@@ -124,7 +124,7 @@ export function SupportTicketComposer() {
               boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
             }}
           />
-          {error ? <p style={{ fontSize: '0.7812rem', color: 'var(--accent)', margin: 0 }}>{error}</p> : null}
+          {error ? <p style={{ fontSize: '0.7813rem', color: 'var(--accent)', margin: 0 }}>{error}</p> : null}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               type="button"
@@ -142,6 +142,11 @@ export function SupportTicketComposer() {
               style={{
                 padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none',
                 background: canSubmit ? 'var(--accent)' : 'rgba(var(--accent-rgb),.3)',
+                // The disabled branch stays below the --ink-a65 text floor on
+                // purpose, and is the only site that does. WCAG 1.4.3 exempts
+                // disabled controls, and "cannot be read" is precisely what a
+                // disabled control is meant to signal — raising it to the floor
+                // would make this button look submittable when it is not.
                 color: canSubmit ? 'var(--ink-on-accent)' : 'var(--ink-a50)', fontSize: '0.8125rem', fontWeight: 600,
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}

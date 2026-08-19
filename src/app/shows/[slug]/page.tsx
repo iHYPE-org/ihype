@@ -408,7 +408,7 @@ export default async function ShowDetailPage({
               free text, normalised server-side, and is never treated as markup. */}
           {show.status === 'CANCELED' && (show.cancellationReason || show.cancellationMessage) && (
             <div style={{ marginBottom: 20, padding: '14px 16px', borderRadius: 'var(--radius-md)', border: '1px solid rgba(var(--accent-rgb),.25)', background: 'rgba(var(--accent-rgb),.06)' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 6 }}>
                 {t('showsSlugPage.canceledLabel', 'Event cancelled')}
                 {show.cancellationReason ? ` · ${show.cancellationReason}` : ''}
               </div>
@@ -519,7 +519,7 @@ export default async function ShowDetailPage({
           <ShowTabs
             venueTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
                 <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 {show.venueProfile && (
                   <p style={{ fontSize: '0.875rem', color: 'var(--ink-a70)' }}>
@@ -552,9 +552,9 @@ export default async function ShowDetailPage({
             }
             lineupTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
                 <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a35)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
                 <p style={{ fontSize: '0.875rem' }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
@@ -770,7 +770,7 @@ export default async function ShowDetailPage({
                     style={{ width: 96, height: 96, background: '#fff', borderRadius: 8, padding: 6 }}
                   />
                   <div>
-                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 4 }}>
+                    <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 4 }}>
                       {t('showsSlugPage.showDoorQr', 'Show door QR')}
                     </p>
                     <p className="meta" style={{ margin: 0, marginBottom: 8 }}>
@@ -816,7 +816,7 @@ export default async function ShowDetailPage({
                     {blocks.map((block, bi) => (
                       <div key={bi}>
                         {block.label && (
-                          <div style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '0.4rem', paddingLeft: '0.75rem' }}>
+                          <div style={{ fontSize: '0.7813rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '0.4rem', paddingLeft: '0.75rem' }}>
                             {block.label}
                           </div>
                         )}
@@ -835,7 +835,7 @@ export default async function ShowDetailPage({
                                   </span>
                                 )}
                                 {track.externalUrl && (
-                                  <a className="button small secondary" href={track.externalUrl} rel="noreferrer" style={{ fontSize: '0.75rem' }} target="_blank">{t('showsSlugPage.playTrack', 'Play ↗')}</a>
+                                  <a className="button small secondary" href={track.externalUrl} rel="noreferrer" style={{ fontSize: '0.7813rem' }} target="_blank">{t('showsSlugPage.playTrack', 'Play ↗')}</a>
                                 )}
                               </div>
                             </li>
@@ -880,21 +880,21 @@ export default async function ShowDetailPage({
           {show.isTicketed && show.venueProfile && show.headlinerProfile && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null ? (
             <aside style={{ border: '1px solid var(--hair-80)', borderRadius: 12, padding: 28, background: 'var(--bg2)', position: 'sticky', top: 80, alignSelf: 'flex-start' }}>
               <div style={{ fontSize: '2.25rem', fontWeight: 800, color: 'var(--accent)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>${price.toFixed(2)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a50)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', marginBottom: 20 }}>{t('showsSlugPage.zeroFeesFaceValueOnly', '$0 fees · face value only')}</div>
 
               {cap !== null && (
                 <>
                   <div style={{ height: 6, borderRadius: 3, background: 'var(--hair-100)', margin: '16px 0', overflow: 'hidden' }}>
                     <div style={{ height: '100%', borderRadius: 3, background: 'var(--accent)', width: `${pct}%` }} />
                   </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--ink-a60)', marginBottom: 16 }}>{sold} / {cap} {t('showsSlugPage.soldLabel', 'sold')} · {cap - sold} {t('showsSlugPage.remainingLabel', 'remaining')}</div>
+                  <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', marginBottom: 16 }}>{sold} / {cap} {t('showsSlugPage.soldLabel', 'sold')} · {cap - sold} {t('showsSlugPage.remainingLabel', 'remaining')}</div>
                 </>
               )}
 
               <div style={{ marginBottom: 18 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5938rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a40)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: demandLabelColor }}>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('showsSlugPage.demandLast12h', 'Demand — last 12h')}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: demandLabelColor }}>
                     {demandLabel === 'Fire' ? t('showsSlugPage.fireLabel', 'Fire') : demandLabel}
                   </span>
                 </div>
@@ -966,14 +966,14 @@ export default async function ShowDetailPage({
               )}
 
               <div style={{ background: 'var(--hair-40)', borderRadius: 8, padding: 14, marginTop: 16 }}>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a50)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: 6, color: 'var(--ink-a50)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7813rem', marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7813rem', marginBottom: 6, color: 'var(--ink-a65)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7813rem', marginBottom: 6, color: 'var(--ink-a65)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7813rem', fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
               </div>
 
-              <div style={{ marginTop: 16, fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
+              <div style={{ marginTop: 16, fontSize: '0.7813rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '.12em', lineHeight: 1.5 }}>
                 {t('showsSlugPage.splitLockedByCharter', 'Split locked by charter · iHYPE takes 0%')}
               </div>
             </aside>

@@ -95,7 +95,7 @@ export function PasskeyManager() {
 
       {!loadingList && passkeys && passkeys.length > 0 ? (
         <div style={{ marginTop: 20 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-a50)', marginBottom: 10 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase', letterSpacing: '.08em', color: 'var(--ink-a65)', marginBottom: 10 }}>
             {t('authPasskeyManager.registeredPasskeys', 'Registered passkeys')}
           </div>
           <div style={{ border: '1px solid var(--line)', borderRadius: 12, overflow: 'hidden' }}>
@@ -110,7 +110,7 @@ export function PasskeyManager() {
                 <button
                   disabled={removingId === pk.id}
                   onClick={() => void removePasskey(pk.id)}
-                  style={{ ...ghostButton, padding: '6px 14px', fontSize: '0.75rem', opacity: removingId === pk.id ? 0.7 : 1 }}
+                  style={{ ...ghostButton, padding: '6px 14px', fontSize: '0.7813rem', opacity: removingId === pk.id ? 0.7 : 1 }}
                   type="button"
                 >
                   {removingId === pk.id ? t('authPasskeyManager.removing', 'Removing...') : t('authPasskeyManager.remove', 'Remove')}

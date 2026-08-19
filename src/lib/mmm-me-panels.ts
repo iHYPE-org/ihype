@@ -38,8 +38,12 @@ export function canonicalMePanelId(value: string | null | undefined): MePanelId 
 
 export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   settings: [
+    // Accessibility leads this panel deliberately. It is the row a reader who
+    // cannot read the app needs, and it was second — under a row about payouts
+    // and data export, which nobody reaches this panel to find in a hurry.
+    // Text size is named first in the detail for the same reason.
+    { label: 'Accessibility', detail: 'Text size, appearance, contrast, motion and language', href: '/app/me/accessibility' },
     { label: 'Account and privacy', detail: 'Profile, payouts, visibility and data export', href: '/app/me/settings' },
-    { label: 'Accessibility', detail: 'Appearance, text size, contrast, motion and language', href: '/app/me/accessibility' },
   ],
   info: [
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },

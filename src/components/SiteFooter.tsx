@@ -17,7 +17,7 @@ export async function SiteFooter() {
         marginTop: '2rem',
         borderTop: '1px solid var(--line)',
         fontFamily: "var(--font-mono, 'JetBrains Mono', monospace)",
-        fontSize: '0.75rem',
+        fontSize: '0.7813rem',
         letterSpacing: '0.04em',
         color: 'var(--ink-3)',
       }}

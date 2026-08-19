@@ -24,16 +24,16 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, letterSpacing: '-.03em', lineHeight: .95, margin: '0 0 16px', color: 'var(--ink)' }}>
         {t('error.title', 'Something broke.')}
       </h1>
-      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a60)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
+      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', maxWidth: 380, lineHeight: 1.6, margin: '0 0 24px' }}>
         {t('error.description', 'An unexpected error occurred. If it keeps happening, email admin@ihype.org.')}
       </p>
       {error.digest && (
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a30)', marginBottom: 24 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 24 }}>
           {t('error.errorIdLabel', 'Error ID:')} {error.digest}
         </p>
       )}
       {isDev && error.message && (
-        <pre style={{ fontSize: '0.75rem', textAlign: 'left', background: 'var(--surface-2, #1a1a2e)', padding: 12, borderRadius: 6, maxWidth: '100%', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 16 }}>
+        <pre style={{ fontSize: '0.7813rem', textAlign: 'left', background: 'var(--surface-2, #1a1a2e)', padding: 12, borderRadius: 6, maxWidth: '100%', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 16 }}>
           {error.message}
           {error.stack ? `\n\n${error.stack}` : ''}
         </pre>

@@ -16,8 +16,14 @@
    So the phone problem is NOT width blowout — layouts do fit. It is DENSITY:
    the design is drawn at desktop reading distance and shipped to a phone
    unchanged. This file sets the two floors a touch device needs and nothing
-   else. It is deliberately not a redesign; the type ramp is a separate,
-   larger piece of work tracked in DESIGN_SYNC.
+   else. It is deliberately not a redesign.
+
+   The type ramp used to be listed here as separate, larger work. It landed on
+   2026-08-19 and it is NOT in this file: a type floor belongs at every pointer
+   type (a desktop reader with poor vision is not served by a rule gated on
+   `pointer: coarse`), so it lives in the type declarations themselves and is
+   held by `lint-source.mjs`. See the Text scaling note at the foot of this
+   file for what moved and what the measured figures now are.
 
    TWO RULES, both load-bearing:
 
@@ -216,10 +222,29 @@
 }
 
 /* ── Text scaling ─────────────────────────────────────────────────────────
-   Both platforms let a reader enlarge system text, and both expose it to a
-   WebView. This opts the app in rather than fighting it: `-webkit-text-size-
-   adjust: 100%` (set in globals.css) prevents Safari's own heuristic reflow,
-   but the accessibility setting still applies to rem-authored type. Nothing to
-   add here yet — noted so the next person does not "fix" it by disabling it.
-   The 282 sub-12px nodes are inline px and therefore immune to all of this;
-   that is the type-ramp work, not a line of CSS. */
+   Both platforms let a reader enlarge system text. This opts the app in rather
+   than fighting it: `-webkit-text-size-adjust: 100%` (globals.css) prevents
+   Safari's own heuristic reflow while leaving the reader's setting alone.
+   Nothing to add HERE — the mechanism lives in three places and none of them
+   is this file: the `:root` font-size in `mmm-workflows.css` multiplies the
+   in-app control, the OS scale and the large-text class; the bootstrap in
+   `layout.tsx` applies all of it before first paint and probes Dynamic Type;
+   `AccessibilityControls.tsx` re-probes on resume. Do not "fix" any of that by
+   disabling text-size-adjust.
+
+   THE TWO CLAIMS THIS BLOCK USED TO MAKE ARE BOTH OBSOLETE (2026-08-19) and
+   the wording is kept so nobody re-derives them from memory.
+
+   (1) "Android and iOS both expose it to a WebView" — Android does; **WKWebView
+   does not**. Dynamic Type never reaches CSS there, so for the whole life of
+   the iOS app a reader who had already enlarged system text got nothing, and
+   had no reason to suspect a second in-app control existed. The bridge is the
+   `-apple-system-body` probe in `layout.tsx`; see it for the three guards.
+
+   (2) "The 282 sub-12px nodes are inline px, and that is the type-ramp work,
+   not a line of CSS." The px half was converted to rem in 2026-08-12. The
+   SIZE half is now done too: every non-eyebrow text in the app clears 12.5px,
+   across all three type syntaxes, and `audit:mobile` measures 3 rather than
+   246. It turned out to be mostly lines of CSS after all — what made it look
+   like a redesign was that the debt was spread over three syntaxes, one of
+   which (`font:` shorthand) no `font-size` search can see. */

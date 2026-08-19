@@ -179,38 +179,38 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       <style>{`
         .ad-page { max-width: 1000px; margin: 0 auto; padding: 40px 24px 100px; }
         .ad-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
-        .ad-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); margin-bottom: 6px; }
-        .ad-title { font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
+        .ad-eyebrow { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
+        .ad-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .ad-header-actions { display: flex; gap: 10px; }
-        .ad-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 10px 20px; border-radius: var(--radius-md); font-size: 13px; font-weight: 700; min-height: 44px; }
+        .ad-btn { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; padding: 10px 20px; border-radius: var(--radius-md); font-size: 0.8125rem; font-weight: 700; min-height: 44px; }
         .ad-btn-solid { background: var(--accent); color: var(--ink-on-accent); }
         .ad-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line-2); }
         .ad-btn-outline:hover { background: var(--line); }
         .ad-btn-full { width: 100%; }
         .ad-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .ad-stat-card { display: block; text-decoration: none; color: inherit; padding: 18px 20px; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--bg2); }
-        .ad-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
-        .ad-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 24px; color: var(--ink); }
-        .ad-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
+        .ad-stat-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
+        .ad-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--ink); }
+        .ad-stat-sub { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
         /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
            unbreakable token — a venue name, a URL — pushes this column past its
            share and scrolls the page sideways above the breakpoint below. */
         .ad-columns { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 20px; }
         .ad-section-head { display: flex; justify-content: space-between; align-items: baseline; }
-        .ad-eyebrow-sm { font-family: var(--font-mono); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a50); }
-        .ad-empty { text-align: center; padding: 40px 24px; color: var(--ink-a50); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; }
+        .ad-eyebrow-sm { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); }
+        .ad-empty { text-align: center; padding: 40px 24px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; }
         .ad-events-list { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; overflow: hidden; }
         .ad-event-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
         .ad-event-row:last-child { border-bottom: none; }
         .ad-event-row:hover { background: var(--bg3); }
-        .ad-event-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ad-event-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ad-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
+        .ad-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ad-event-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ad-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .ad-activity-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
         .ad-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); }
         .ad-activity-row:last-child { border-bottom: none; }
         .ad-activity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
-        .ad-activity-text { font-size: 13px; color: var(--ink-a80); }
+        .ad-activity-text { font-size: 0.8125rem; color: var(--ink-a80); }
         .ad-actions-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
 
         @media (max-width: 760px) {

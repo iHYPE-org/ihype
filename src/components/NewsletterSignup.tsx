@@ -89,7 +89,7 @@ export function NewsletterSignup() {
         {profile ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(var(--accent-rgb),.07)', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 10 }}>
             <div style={{ flex: 1, fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{profile.name}</div>
-            <button onClick={() => setProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
+            <button onClick={() => setProfile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a65)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
           </div>
         ) : (
           <input
@@ -114,7 +114,7 @@ export function NewsletterSignup() {
                 type="button"
               >
                 <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
-                <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
+                <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
               </button>
             ))}
           </div>

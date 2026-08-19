@@ -77,9 +77,9 @@ export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
       {error ? <p className="beta-access-error">{error}</p> : null}
 
       <style>{`
-        .beta-access-toggle { background: none; border: none; padding: 0; color: var(--ink-2); font-family: var(--font-mono); font-size: .78rem; text-decoration: underline; cursor: pointer; }
+        .beta-access-toggle { background: none; border: none; padding: 0; color: var(--ink-2); font-family: var(--font-mono); font-size: 0.7813rem; text-decoration: underline; cursor: pointer; }
         .beta-access-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--hair-30); }
-        .beta-access-label { font-family: var(--font-mono); font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+        .beta-access-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
         .beta-access-row { display: flex; gap: 8px; }
         .beta-access-row input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: var(--font-body); font-size: max(16px, .9rem); }
         /* max(16px, …) is functional, not typographic: Safari zooms the page
@@ -91,7 +91,7 @@ export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
            row past the viewport. */
         .beta-access-row button { background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-display); font-weight: 700; font-size: .85rem; cursor: pointer; white-space: nowrap; }
         .beta-access-row button:disabled { opacity: .6; cursor: default; }
-        .beta-access-error { font-size: .78rem; color: var(--accent); margin: 0; }
+        .beta-access-error { font-size: 0.7813rem; color: var(--accent); margin: 0; }
         .beta-access-sent p { margin: 0; font-size: .85rem; color: var(--ink-2); }
       `}</style>
     </form>

@@ -252,7 +252,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-trans-notice { border: 1px solid var(--line); border-radius: var(--radius-card, 18px); background: rgba(var(--surface-tint-rgb),.04); padding: 14px 16px; margin-bottom: 2rem; }
         .legal-trans-notice p { font-size: .8rem; color: var(--ink-2); line-height: 1.6; margin: 0; }
         .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
-        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .68rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
         .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
         /* Wraps rather than scrolls. This was overflow-x:auto with
            width:fit-content, written when there were four tabs; at six it
@@ -269,7 +269,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
              being squeezed into six ~60px columns, which overlapped the
              labels into an unreadable smear. The scrollbar-hiding rules that
              used to live here are gone with the scrolling. */
-          .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: .7rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: 0.7813rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
         }
         .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
         .legal-doc { display: none; }
@@ -310,7 +310,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            added for exactly this shape, and rule 35 asks new work to use it. */
         .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: var(--radius-card, 18px); padding: 20px 24px; margin: 0 0 1rem; }
         .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
-        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .72rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
+        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {
           .legal-seg { display: none !important; }
           .legal-print-btn { display: none !important; }

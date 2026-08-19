@@ -72,7 +72,7 @@ export default async function AdminAnalyticsPage({
               className={option === range ? 'badge' : 'button secondary'}
               href={`/admin/analytics?range=${option}`}
               key={option}
-              style={{ textDecoration: 'none', fontSize: '0.75rem', padding: '6px 12px' }}
+              style={{ textDecoration: 'none', fontSize: '0.7813rem', padding: '6px 12px' }}
             >
               {RANGE_LABEL[option]}
             </Link>

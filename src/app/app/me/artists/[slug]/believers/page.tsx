@@ -88,26 +88,26 @@ function ordinal(n: number): string {
 
 const BELIEVERS_CSS = `
 .believers-page { max-width: 640px; margin: 0 auto; padding: 32px 16px 64px; }
-.believers-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 10px; letter-spacing: 0.16em; color: var(--accent); }
-.believers-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 32px; line-height: 1.05; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 10px; }
+.believers-eyebrow { font-family: 'JetBrains Mono', monospace; font-size: 0.625rem; letter-spacing: 0.16em; color: var(--accent); }
+.believers-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 2rem; line-height: 1.05; letter-spacing: -0.03em; color: var(--ink); margin: 10px 0 10px; }
 .believers-artist-link { color: var(--accent); text-decoration: none; }
-.believers-sub { font-family: 'Work Sans', sans-serif; font-size: 14px; line-height: 1.5; color: var(--ink-a55); margin: 0 0 24px; }
+.believers-sub { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; line-height: 1.5; color: var(--ink-a65); margin: 0 0 24px; }
 .believers-you, .believers-cta-card { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 16px; background: var(--bg-2); border: 1px solid var(--hair-80); margin-bottom: 22px; }
 .believers-you-early { border-color: rgba(var(--accent-rgb),0.5); box-shadow: 0 0 50px rgba(var(--accent-rgb),0.10); }
-.believers-you-rank { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 30px; color: var(--accent); letter-spacing: -0.03em; }
+.believers-you-rank { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.875rem; color: var(--accent); letter-spacing: -0.03em; }
 .believers-you-text { flex: 1; display: flex; flex-direction: column; gap: 2px; }
-.believers-you-text strong { font-family: 'Work Sans', sans-serif; font-size: 15px; color: var(--ink); }
-.believers-you-text span { font-family: 'Work Sans', sans-serif; font-size: 13px; color: var(--ink-a55); }
-.believers-share-btn, .believers-cta { flex-shrink: 0; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 14px; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }
-.believers-cta-card span { flex: 1; font-family: 'Work Sans', sans-serif; font-size: 14px; color: var(--ink-a70); }
+.believers-you-text strong { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink); }
+.believers-you-text span { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-a65); }
+.believers-share-btn, .believers-cta { flex-shrink: 0; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 10px 18px; border-radius: 9999px; border: none; cursor: pointer; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }
+.believers-cta-card span { flex: 1; font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-a70); }
 .believers-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
 .believers-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
 .believers-row-you { background: rgba(var(--accent-rgb),0.08); }
-.believers-rank { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-a40); width: 24px; }
-.believers-avatar { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--role-fan), var(--accent-2)); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 12px; color: var(--ink-on-accent); }
-.believers-name { flex: 1; font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 8px; }
+.believers-rank { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; color: var(--ink-a65); width: 24px; }
+.believers-avatar { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--role-fan), var(--accent-2)); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.7813rem; color: var(--ink-on-accent); }
+.believers-name { flex: 1; font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.9375rem; color: var(--ink); display: flex; align-items: center; gap: 8px; }
 .believers-name a { color: var(--ink); text-decoration: none; }
 .believers-name a:hover { color: var(--accent); }
-.believers-you-tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em; color: var(--accent); background: rgba(var(--accent-rgb),0.14); border-radius: 4px; padding: 2px 6px; }
-.believers-early-tag { font-family: 'JetBrains Mono', monospace; font-size: 8px; letter-spacing: 0.1em; color: var(--role-fan); background: rgba(var(--role-fan-rgb),0.12); border-radius: 4px; padding: 3px 7px; }
+.believers-you-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.1em; color: var(--accent); background: rgba(var(--accent-rgb),0.14); border-radius: 4px; padding: 2px 6px; }
+.believers-early-tag { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.1em; color: var(--role-fan); background: rgba(var(--role-fan-rgb),0.12); border-radius: 4px; padding: 3px 7px; }
 `;
