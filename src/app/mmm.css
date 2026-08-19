@@ -1237,6 +1237,59 @@ html.mmm-locked .site-shell > main {
 
 .mmm-chrome { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
 
+/* ── The console cabinet ───────────────────────────────────────────────────
+   The walnut face the logo trigger and the player pill sit ON.
+
+   Additive by construction: it is a panel BEHIND them (z-index below both),
+   sized entirely from the tokens they are already positioned by, so the
+   geometry table SHELL_LOCK signed off is untouched. --mmm-console-pad is the
+   only new number, and it is the cabinet's own bezel, not a shell measurement
+   — it expands the panel outward from the chrome band rather than moving
+   anything within it.
+
+   The grain is three periods of irregular stripe over a warm base. One period
+   reads as corduroy; three reads as wood — which is the whole difference
+   between a brown rectangle and a cabinet. */
+.mmm-console {
+  --mmm-console-pad: 7px;
+  position: absolute;
+  left: calc(var(--mmm-left) - var(--mmm-console-pad));
+  bottom: calc(var(--mmm-bottom) - var(--mmm-console-pad));
+  height: calc(var(--mmm-chrome-size) + var(--mmm-console-pad) * 2);
+  /* Spans the trigger, the gap and the pill — the same three terms
+     --mmm-player-left is built from, plus the pill's own max width. */
+  width: min(
+    calc(var(--mmm-chrome-size) + var(--mmm-chrome-gap) + 760px + var(--mmm-console-pad) * 2),
+    calc(100vw - var(--mmm-left) - var(--mmm-inset) - var(--mmm-safe-right) + var(--mmm-console-pad) * 2)
+  );
+  z-index: 26;              /* under the trigger (31) and the pill (28) */
+  border-radius: 7px;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(88deg,
+      rgba(30, 14, 4, .30) 0 1px, transparent 1px 4px,
+      rgba(94, 56, 26, .22) 4px 6px, transparent 6px 13px),
+    repeating-linear-gradient(91deg,
+      rgba(20, 9, 2, .22) 0 2px, transparent 2px 9px),
+    repeating-linear-gradient(89deg,
+      rgba(120, 74, 38, .16) 0 1px, transparent 1px 27px),
+    linear-gradient(180deg, #6b4426 0%, #52301a 30%, #432612 46%, #3a2110 60%, #4a2c17 74%, #5c3a1f 90%, #6f4728 100%);
+  background-color: var(--walnut);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 160, .34),
+    inset 0 -1px 0 rgba(0, 0, 0, .7),
+    0 4px 14px -4px rgba(0, 0, 0, .85),
+    0 1px 0 rgba(255, 214, 160, .1);
+  transition: opacity .24s var(--ease-default);
+}
+/* Opening the nav dims the chrome; the cabinet dims with it rather than
+   staying lit under a scrim, which would read as a hole in the dimming.
+   `data-hidden` is the player's own attribute, driven by the same `navOpen`
+   — matching it rather than inventing a second state is what keeps the two
+   from ever disagreeing about whether the chrome is up. */
+.mmm-console[data-hidden='true'] { opacity: 0; }
+
+
 /* Vignette and film grain over the whole frame. Decorative, non-interactive,
    and above the modules but below the chrome. */
 .mmm-frame::before {
@@ -1294,10 +1347,22 @@ html.mmm-locked .site-shell > main {
   border: 0;
   padding: 0;
   overflow: hidden;
-  background: var(--accent);
-  color: var(--ink-on-accent);
+  /* Bakelite, in a brass collar, sitting on the cabinet. The accent fill it
+     carried was correct when the trigger floated over a map on its own; on
+     walnut it reads as a sticker rather than a control. Size, position,
+     radius and behaviour are untouched — this is paint. */
+  background:
+    radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .5), transparent 70%),
+    radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  color: var(--ink-on-walnut);
   cursor: pointer;
-  box-shadow: 0 14px 34px rgba(var(--accent-rgb), 0.3);
+  box-shadow:
+    0 0 0 2px var(--brass-deep),
+    0 0 0 3px var(--brass),
+    0 0 0 4px #6d5222,
+    inset 0 1px 0 rgba(255, 226, 175, .4),
+    inset 0 -3px 9px rgba(0, 0, 0, .8),
+    0 4px 10px -2px rgba(0, 0, 0, .85);
   transition: transform 0.3s var(--ease-default);
   display: flex;
   flex-direction: column;
@@ -1441,7 +1506,12 @@ html.mmm-locked .site-shell > main {
      what keeps its own text legible at .74, not the alpha. Composed off
      --bg-base-rgb, which is a real per-theme triplet — --bg-2 has no triplet
      and inventing one would mean restating it in both theme blocks. */
-  background: rgba(var(--bg-base-rgb), 0.74);
+  /* Cream dial glass, lit from behind, rather than a translucent slab. The
+     blur stays: SHELL_LOCK is explicit that the pill must not read as "a
+     solid bar cutting the frame in half", and a lit glass over a blur is
+     still glass. What changed is what it is made OF. */
+  background:
+    radial-gradient(150% 200% at 50% 130%, #fff3d4 0%, var(--bg) 42%, #e2cea0 78%, #d4bd8c 100%);
   backdrop-filter: blur(22px) saturate(1.3);
   -webkit-backdrop-filter: blur(22px) saturate(1.3);
   /* THE accent ring — a continuous hairline is the pill's own border, not a
@@ -1449,11 +1519,20 @@ html.mmm-locked .site-shell > main {
      gradient strip child, which is the partial top bar the lock rejected: it
      competed with the scrub row for the same job and, measured against the
      rectangular box, hung past the capsule at each end. */
-  border: 1px solid rgba(var(--accent-rgb), 0.42);
+  /* A brass bezel, not an accent hairline — the glass is set INTO the
+     cabinet. Still one continuous ring, which is the rule the lock actually
+     stated: never a line drawn across the top edge. */
+  border: 0;
   border-radius: 9999px;
   /* 0 12px, so a 64px square in an 88px pill insets equally on every side. */
   padding: 0 12px;
-  box-shadow: 0 16px 40px rgba(var(--scrim-rgb), 0.5), 0 0 18px rgba(var(--accent-rgb), 0.12);
+  box-shadow:
+    0 0 0 1px var(--brass-deep),
+    0 0 0 3px var(--brass),
+    0 0 0 4px #6d5222,
+    inset 0 2px 5px rgba(92, 62, 20, .4),
+    inset 0 -1px 0 rgba(255, 252, 235, .75),
+    0 16px 40px rgba(var(--scrim-rgb), 0.5);
   pointer-events: auto;
   overflow: hidden;
   transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
