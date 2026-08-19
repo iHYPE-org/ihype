@@ -208,6 +208,47 @@
   --heat-warm-rgb: 255, 184, 74;
   --heat-cold-rgb: 64, 80, 107;
 
+  /* ── Materials: brass, walnut, lamp ───────────────────────────────────
+     These arrived with the console theme and lived inside its block, which
+     was right while they were a theme's private palette and wrong the moment
+     a component wanted one: a rule using --walnut outside that block resolved
+     to nothing in dark and light, and CSS drops the declaration silently.
+     They sit in :root for the same reason the brand fills do — a material is
+     not a ground. Walnut is a DARK panel in every theme, deliberately: it is
+     the cabinet the machine is built out of, and a cabinet does not turn
+     cream because the room did.
+
+     That is exactly why --ink-on-walnut exists and why nothing painted on
+     walnut may use --ink. The dock proved the point before this token did:
+     it painted a near-black bar and set its own copy to var(--ink-1), which
+     is dark ink on the console board — dark on near-black, invisible, and
+     invisible only while music was playing, which is why no page scan
+     ever caught it. Ink on a material comes from the material. */
+  --brass: #c9a54e;
+  --brass-deep: #8a6a2c;
+  --walnut: #4a2b16;
+  --walnut-2: #34200f;
+  --walnut-3: #1a1206;
+  --lamp: #ffb84a;
+
+  /* Every ratio below is measured against --walnut, the LIGHTEST stop of the
+     gradient, not the average or the darkest: a panel is a gradient and copy
+     can land anywhere on it, so the worst case is the only one worth quoting.
+     Each is comfortably better further down the panel.
+
+     Warm, not white — white on walnut reads as a screen laid over furniture
+     rather than ink printed on it. */
+  --ink-on-walnut:   #f6ecd9;  /* 10.87:1 on --walnut */
+  --ink-on-walnut-2: #d8c6a6;  /*  7.61:1 — secondary copy */
+  /* The dimmest rank a WORD may use. Anything fainter is a hairline, and the
+     hairline tokens below are where that belongs. */
+  --ink-on-walnut-3: #bda882;  /*  5.51:1 — the floor */
+  /* Hairlines and rails ON the material. The page's --line/--hair-* are dark
+     alphas under the console theme, so a scrub rail drawn with them vanishes
+     into the timber — the same class of mistake as the ink, one layer down. */
+  --rule-on-walnut:   rgba(246, 236, 217, .22);
+  --rule-on-walnut-2: rgba(246, 236, 217, .38);
+
   /* ── Status ──────────────────────────────────────────────────────── */
   --live:    #ff3c3c;
   --success: #22e5d4;
@@ -719,13 +760,6 @@
   --danger-text: #9c2707;   /* 5.89:1 on the cream board */
   --success-text: #0a655e;  /* 5.25:1 on the cream board */
 
-  /* Brass, walnut and lamp — materials this theme needs and the others
-     do not. Named for what they are, not where they are used. */
-  --brass: #c9a54e;
-  --brass-deep: #8a6a2c;
-  --walnut: #4a2b16;
-  --walnut-2: #34200f;
-  --lamp: #ffb84a;
 
   /* ── The material pass ─────────────────────────────────────────────────
      Everything below is retuned TOKENS, not a second set of rules. That is
@@ -3086,6 +3120,66 @@ html.high-contrast p {
    ghost. Found by screenshotting the shell against an empty database in light
    theme, which is also the alpha condition. Rule 8 of the chrome contract:
    never hardcode a colour. */
+/* ── Material: the walnut panel ──────────────────────────────────────────
+   The cabinet face from the console prototype's full player, as ONE class so
+   a surface opts into the material rather than copying a four-stop gradient
+   and a grain that will drift the second time it is pasted.
+
+   Three parts, and each is doing a job:
+     · the 88deg repeating grain — not 90, because a grain that is exactly
+       vertical reads as a UI stripe pattern; a couple of degrees off reads as
+       cut timber. Two weights of streak at different intervals, so it does
+       not tile visibly.
+     · the three-stop gradient, lit from the top, so the panel has a top and
+       a bottom instead of being a flat brown rectangle.
+     · the brass edge and the inset highlight — the machined lip. This is what
+       stops it reading as "dark mode happened to this element".
+
+   ANY surface carrying this is dark in EVERY theme, so its copy must come
+   from --ink-on-walnut*, never --ink*. There is a lint guard for that. */
+.walnut-panel {
+  background:
+    repeating-linear-gradient(88deg,
+      rgba(30, 14, 4, .22) 0 1px, transparent 1px 5px,
+      rgba(94, 56, 26, .14) 5px 7px, transparent 7px 15px),
+    linear-gradient(180deg, var(--walnut) 0%, var(--walnut-2) 34%, var(--walnut-3) 100%);
+  color: var(--ink-on-walnut);
+}
+/* The lip, as its own class: a panel pinned to the bottom of the viewport
+   wears it on top, a sheet that slides up wears it underneath, and a framed
+   plate wears it all the way round. Splitting them is what keeps the brass
+   from being re-declared at every call site. */
+.walnut-lip-top {
+  border-top: 3px solid var(--brass);
+  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18);
+}
+/* A panel that is a free-standing box rather than an edge of the viewport
+   wears the brass all the way round. */
+.walnut-frame {
+  border: 2px solid var(--brass-deep);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 214, 160, .22),
+    0 18px 40px -18px rgba(0, 0, 0, .55);
+}
+/* Artwork, recessed into the faceplate rather than floating on it. The stacked
+   rings are a machined bezel — deep brass, bright brass, deep again — and the
+   inner top shadow is what makes it read as cut IN. Straight from the
+   prototype's .player-cover, kept as a class so a second surface showing
+   artwork does not re-derive five shadow layers by eye. */
+.walnut-plate {
+  border-radius: 2px;
+  overflow: hidden;
+  background-color: var(--walnut-3);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    0 0 0 2px var(--brass-deep),
+    0 0 0 5px var(--brass),
+    0 0 0 6px #6d5222,
+    inset 0 3px 12px rgba(0, 0, 0, .7),
+    0 20px 44px -16px rgba(0, 0, 0, .85);
+}
+
 .site-dock {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -3093,8 +3187,8 @@ html.high-contrast p {
   display: flex;
   align-items: center;
   gap: 18px;
-  border-top: 1px solid var(--hair-80);
-  backdrop-filter: blur(12px);
+  /* No page hairline and no blur: this is a solid piece of furniture, and it
+     carries the brass lip from .walnut-lip-top instead. */
   font-family: var(--f-m);
 }
 .site-dock-l {
@@ -3112,7 +3206,7 @@ html.high-contrast p {
   font-family: var(--f-d, 'Bricolage Grotesque', sans-serif);
   font-weight: 700;
   font-size: 0.8125rem;
-  color: var(--ink-1);
+  color: var(--ink-on-walnut);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3122,7 +3216,9 @@ html.high-contrast p {
 .site-dock-artist.site-dock-error { color: var(--accent-text); }
 .site-dock-artist {
   font-size: 0.7813rem;
-  color: rgba(242,237,232,.45);
+  /* Was rgba(242,237,232,.45) — 3.9:1 on the panel. A percentage of a light
+     is not a contrast decision; the ramp is. */
+  color: var(--ink-on-walnut-2);
   margin-top: 2px;
   letter-spacing: .04em;
   white-space: nowrap;
@@ -3146,7 +3242,7 @@ html.high-contrast p {
 .site-dock-btn {
   background: none;
   border: none;
-  color: rgba(242,237,232,.45);
+  color: var(--ink-on-walnut-2);
   cursor: pointer;
   padding: 4px;
   display: flex;
@@ -3155,13 +3251,15 @@ html.high-contrast p {
   border-radius: 4px;
   transition: color .15s;
 }
-.site-dock-btn:hover { color: var(--ink-1); }
+.site-dock-btn:hover { color: var(--ink-on-walnut); }
 .site-dock-play {
   width: 30px;
   height: 30px;
   border-radius: 50%;
-  background: var(--ink-1);
-  color: var(--bg-base);
+  /* Brass, not the page's ink: this is the one control on the panel and the
+     material already has a vocabulary for one. 7.92:1 for the glyph. */
+  background: var(--brass);
+  color: var(--walnut-3);
   border: none;
   cursor: pointer;
   display: flex;
@@ -3169,7 +3267,7 @@ html.high-contrast p {
   justify-content: center;
   transition: background .15s;
 }
-.site-dock-play:hover { background: var(--ink-1); }
+.site-dock-play:hover { background: var(--lamp); }
 .site-dock-scrub {
   display: flex;
   align-items: center;
@@ -3178,7 +3276,7 @@ html.high-contrast p {
 }
 .site-dock-time {
   font-size: 0.7813rem;
-  color: rgba(242,237,232,.35);
+  color: var(--ink-on-walnut-3);
   width: 32px;
   text-align: center;
   flex-shrink: 0;
@@ -3186,12 +3284,12 @@ html.high-contrast p {
 .site-dock-track {
   flex: 1;
   height: 3px;
-  background: var(--hair-80);
+  background: var(--rule-on-walnut);
   border-radius: 2px;
   position: relative;
   cursor: pointer;
 }
-.site-dock-track:hover { background: var(--line-2); }
+.site-dock-track:hover { background: var(--rule-on-walnut-2); }
 .site-dock-waveform {
   height: 24px;
   background: none;
@@ -4224,12 +4322,15 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 
 
-.site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); background: rgba(9,8,6,.96); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
+.site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
 .site-dock-l { min-width: min(30vw,340px); }
 .site-dock-art { width: 58px; height: 58px; border-radius: 10px; transition: width .3s ease, height .3s ease; }
 .site-dock-settled .site-dock-art { width: 42px; height: 42px; }
 .site-dock-meta { max-width: 230px; overflow: hidden; }
-.site-dock-now-playing { margin-bottom: 3px; color: var(--accent-3,var(--role-venue)); font: 700 0.625rem/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
+/* The pilot lamp. It borrowed --role-venue, which the console theme darkens
+   to #0f6b62 to survive the cream board — dark teal on dark walnut. A panel's
+   accents come from the panel. 7.41:1. */
+.site-dock-now-playing { margin-bottom: 3px; color: var(--lamp); font: 700 0.7813rem/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
 .site-dock-title span,
 .site-dock-artist span { display: inline-block; min-width: 100%; }
 .site-dock-title:hover span,

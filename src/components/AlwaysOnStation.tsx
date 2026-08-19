@@ -106,7 +106,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
   const np = state.nowPlaying;
 
   return (
-    <div className="station">
+    <div className="station walnut-panel walnut-frame">
       <style>{STATION_CSS}</style>
       <audio ref={audioRef} preload="none" onEnded={() => { /* timer drives advance */ }} />
 
@@ -125,7 +125,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
       ) : np ? (
         <>
           <div className="station-now">
-            <div className="station-art" style={np.artworkUrl ? { backgroundImage: `url(${np.artworkUrl})` } : undefined} aria-hidden="true" />
+            <div className="station-art walnut-plate" style={np.artworkUrl ? { backgroundImage: `url(${np.artworkUrl})` } : undefined} aria-hidden="true" />
             <div className="station-now-text">
               <div className="station-track">{np.title}</div>
               <Link href={`/artists/${np.artistSlug}`} className="station-artist">{np.artistName}</Link>
@@ -152,21 +152,40 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
 }
 
 const STATION_CSS = `
-.station { background: var(--bg-2); border: 1px solid var(--hair-80); border-radius: 20px; padding: 22px; max-width: 460px; }
+/*
+ * The station is a radio, so it is built out of the radio's materials rather
+ * than out of page tokens: walnut cabinet, brass bezel, amber pilot lamp.
+ * .walnut-panel / -frame / -plate carry the material; everything below is
+ * this component's own geometry plus the ink ramp that material requires.
+ * Nothing here may use --ink*: walnut is dark in every theme, and the console
+ * theme's --ink is dark. lint-source.mjs enforces that.
+ */
+.station { border-radius: 20px; padding: 22px; max-width: 460px; }
 .station-head { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
-.station-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 10px var(--accent); }
-.station-status { font-family: 'JetBrains Mono', monospace; font-size: 0.625rem; letter-spacing: 0.16em; color: var(--accent-text); }
+/* The pilot lamp, and it is lit rather than tinted — a glow is the whole
+   reason this dot exists on a piece of audio equipment. */
+.station-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 10px var(--lamp), 0 0 3px #fff6; }
+/* 12.5px, not the 10px this was. It is the only readout saying whether the
+   station is live, and the tracked-mono eyebrow exemption is for metadata —
+   "OFF AIR" is the state of the thing you came to listen to. */
+.station-status { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.16em; color: var(--lamp); }
 .station-now { display: flex; align-items: center; gap: 14px; }
-.station-art { flex-shrink: 0; width: 64px; height: 64px; border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--role-fan)); background-size: cover; background-position: center; }
+.station-art { flex-shrink: 0; width: 64px; height: 64px; }
 .station-now-text { flex: 1; min-width: 0; }
-.station-track { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: -0.02em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.station-artist { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-a65); text-decoration: none; }
-.station-artist:hover { color: var(--accent-text); }
-.station-toggle { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; background: var(--accent-grad-warm); color: var(--ink-on-accent); font-size: 1rem; display: flex; align-items: center; justify-content: center; }
-.station-next { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
-.station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 0.5625rem; letter-spacing: 0.14em; color: var(--ink-a65); margin-bottom: 2px; }
-.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-a65); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.station-live-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--ink); margin: 0 0 12px; }
-.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 10px 18px; border-radius: 9999px; background: var(--accent-grad-warm); color: var(--ink-on-accent); text-decoration: none; }
-.station-empty { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-a65); margin: 0; }
+.station-track { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: -0.02em; color: var(--ink-on-walnut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-artist { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-on-walnut-2); text-decoration: none; }
+.station-artist:hover { color: var(--ink-on-walnut); text-decoration: underline; }
+/* Brass, like the dock's transport: the material has one vocabulary for a
+   control and this is it. 7.92:1 for the glyph. */
+.station-toggle { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; border: none; cursor: pointer; background: var(--brass); color: var(--walnut-3); font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: background .15s; }
+.station-toggle:hover { background: var(--lamp); }
+.station-next { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--brass-deep); }
+/* Was 9px — the very bottom of the eyebrow range, on a label a reader has to
+   find before the list under it means anything. */
+.station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.14em; color: var(--ink-on-walnut-3); margin-bottom: 2px; }
+.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-on-walnut-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-live-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--ink-on-walnut); margin: 0 0 12px; }
+.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 10px 18px; border-radius: 9999px; background: var(--brass); color: var(--walnut-3); text-decoration: none; }
+.station-cta:hover { background: var(--lamp); }
+.station-empty { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-on-walnut-2); margin: 0; }
 `;

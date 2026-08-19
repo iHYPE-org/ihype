@@ -781,8 +781,12 @@ export function SitePlayerDock() {
   if (sessionStatus !== 'authenticated') return null;
 
   return (
+    // walnut-panel + walnut-lip-top are the material, not decoration: the dock
+    // is the one piece of the player always on screen, and it is the same
+    // cabinet face the full player uses. Everything painted on it takes its
+    // ink from --ink-on-walnut*, which is why that class also carries a colour.
     <div
-      className={`site-dock${mobileExpanded ? ' site-dock-expanded' : ''}${playerSettled ? ' site-dock-settled' : ''}`}
+      className={`site-dock walnut-panel walnut-lip-top${mobileExpanded ? ' site-dock-expanded' : ''}${playerSettled ? ' site-dock-settled' : ''}`}
       role="region"
       aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}
       style={{ '--dock-progress': `${Math.round(progress * 1000) / 10}%` } as React.CSSProperties}
@@ -902,7 +906,9 @@ export function SitePlayerDock() {
                 className="site-dock-wave-bar"
                 style={{
                   height: `${h * 100}%`,
-                  background: i / waveform.length <= progress ? 'var(--accent)' : 'var(--line-2)',
+                  // On the walnut panel, not on the page: --line-2 is a dark alpha under the
+                  // console theme and an unplayed bar drawn with it disappears into the timber.
+                  background: i / waveform.length <= progress ? 'var(--accent)' : 'var(--rule-on-walnut)',
                 }}
               />
             ))}
