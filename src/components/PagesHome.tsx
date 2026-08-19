@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TunerDial } from '@/components/TunerDial';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
@@ -255,18 +256,19 @@ export function PagesHome({
       <div ref={contentTopRef} />
       <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Dashboard')}</h1>
 
-      <nav className="section-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 26 }} aria-label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}>
-        {visibleTabs.map((tabItem) => (
-          <button
-            key={tabItem.id}
-            className={tab === tabItem.id ? 'sub-tab active' : 'sub-tab'}
-            onClick={() => setTab(tabItem.id)}
-            type="button"
-          >
-            {t(`pagesHome.tabLabel.${tabItem.id}`, tabItem.label)}
-          </button>
-        ))}
-      </nav>
+      {/* The tuner, not a strip of wrapping pills. This set can reach seven
+          entries depending on the member's roles, which on a phone wrapped to
+          two and sometimes three rows of 13px buttons before any content
+          appeared. The dial is one row whatever the count. */}
+      <TunerDial
+        active={tab}
+        label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}
+        onSelect={(id) => setTab(id as typeof tab)}
+        stops={visibleTabs.map((tabItem) => ({
+          id: tabItem.id,
+          label: t(`pagesHome.tabLabel.${tabItem.id}`, tabItem.label),
+        }))}
+      />
 
       {tab === 'search' && (
         <div className="sub-panel">

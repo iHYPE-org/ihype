@@ -72,7 +72,7 @@ html.mmm-locked, html.mmm-locked body {
 html.mmm-locked .adaptive-site-header,
 html.mmm-locked .site-background,
 html.mmm-locked .site-shell > footer,
-html.mmm-locked .ihype-mobile-nav,
+html.mmm-locked .site-tabbar,
 html.mmm-locked .site-dock {
   display: none !important;
 }

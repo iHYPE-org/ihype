@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { TunerDial } from '@/components/TunerDial';
 import Link from 'next/link';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { HEAT_LABEL, HEAT_TOKEN, heatLevel } from '@/lib/heat-level';
@@ -254,18 +255,15 @@ export function EventsHome({
         </p>
       </header>
 
-      <div className="section-tabstrip" style={{ gap: 8, flexWrap: 'wrap', marginBottom: 24 }}>
-        {visibleTabs.map((tabItem) => (
-          <button
-            key={tabItem.id}
-            className={tab === tabItem.id ? 'sub-tab active' : 'sub-tab'}
-            onClick={() => setTab(tabItem.id)}
-            type="button"
-          >
-            {t(`eventsHome.tab.${tabItem.id}`, tabItem.label)}
-          </button>
-        ))}
-      </div>
+      <TunerDial
+        active={tab}
+        label={t('eventsHome.tabstripAriaLabel', 'Events sections')}
+        onSelect={(id) => setTab(id as typeof tab)}
+        stops={visibleTabs.map((tabItem) => ({
+          id: tabItem.id,
+          label: t(`eventsHome.tab.${tabItem.id}`, tabItem.label),
+        }))}
+      />
 
       {tab === 'search' && (
         <div className="sub-panel">

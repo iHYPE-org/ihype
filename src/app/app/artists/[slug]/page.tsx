@@ -208,6 +208,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'albums' && (
         <ProfilePanel
+          tabId="albums"
           empty={`${profile.name} has not published any releases yet.`}
           isEmpty={releases.length === 0}
           title="Albums"
@@ -239,6 +240,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'tour' && (
         <ProfilePanel
+          tabId="tour"
           empty="No dates announced yet."
           isEmpty={upcoming.length === 0 && !unwrap(profile.tourContent)}
           title="Tour"
@@ -276,6 +278,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'bio' && (
         <ProfilePanel
+          tabId="bio"
           empty={`${profile.name} has not written a bio yet.`}
           isEmpty={!profile.headline && !profile.bio}
           title="Bio"
@@ -287,6 +290,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'merch' && (
         <ProfilePanel
+          tabId="merch"
           empty={`${profile.name} is not selling merch through iHYPE yet.`}
           isEmpty={!unwrap(profile.merchContent)}
           title="Merch"
@@ -297,6 +301,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'contact' && (
         <ProfilePanel
+          tabId="contact"
           empty={`${profile.name} has not added contact details. Hype the profile and they will see the interest.`}
           isEmpty={!unwrap(profile.contactInfo)}
           title="Contact"
@@ -307,6 +312,7 @@ export default async function MmmArtistPage({
 
       {activeTab === 'press' && (
         <ProfilePanel
+          tabId="press"
           empty={`${profile.name} has not published a press kit yet.`}
           isEmpty={!unwrap(profile.pressKitContent)}
           title="Press Kit"

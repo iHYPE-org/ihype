@@ -291,4 +291,28 @@ assertMissing(
   'Discovery lives at /app/music/discover; nav links there directly.'
 );
 
-console.log('Design guard passed: one signed-in app surface, no retired shells resurrected.');
+/* The section switcher is the tuner dial, and there is one of it.
+ *
+ * Three separate horizontal tab strips used to sit at the top of a page —
+ * `SiteNavTabs` in the site header, and `.section-tabstrip` on Events and
+ * Pages. Each divided one row by the number of tabs, so every tab added made
+ * every label smaller: they had all settled at 10-13px, two of the artist
+ * profile's six started off-screen at 393px, and the Pages set wrapped to
+ * three rows before any content appeared.
+ *
+ * They are gone, and the reason to assert it is that re-adding one is the
+ * obvious thing to do when a page grows a section — it is what every other
+ * codebase does. The dial costs the same row and names ONE destination at
+ * 26px, which is the whole reason the type could get bigger.
+ */
+assertMissing(
+  'src/components/SiteNavTabs.tsx',
+  'The header no longer carries a section selector; the site tab bar and the tuner dial do.'
+);
+assertNotIncludes(
+  'src/app/globals.css',
+  '.section-tabstrip',
+  'The wrapping pill strip is retired — use TunerDial for a section switcher.'
+);
+
+console.log('Design guard passed: one signed-in app surface, one section switcher, no retired shells resurrected.');

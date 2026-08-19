@@ -129,6 +129,20 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
         <section aria-label="Live iHYPE platform statistics" className="fan-entry-stats">
           {stats}
         </section>
+
+        {/* The obligations, and they are obligations rather than decoration:
+            the App Store and Play listings both require a policy URL that
+            resolves without an account, and a consent link nobody can open is
+            not consent. They used to ride on the sitewide `SiteFooter`, which
+            was old-design chrome on every page; this is the logged-out front
+            door, so they live here now. A signed-in member reaches the same
+            destinations through ME. */}
+        <footer aria-label="Site information" className="fan-entry-legal">
+          <Link href="/info">Info &amp; legal</Link>
+          <Link href="/support">Support</Link>
+          <Link href="/advertise">Advertise</Link>
+          <span>A 501(c)(3) nonprofit &middot; &copy; 2026 ihype.org</span>
+        </footer>
       </main>
     </div>
   );

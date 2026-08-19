@@ -46,6 +46,16 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
     { label: 'Account and privacy', detail: 'Profile, payouts, visibility and data export', href: '/app/me/settings' },
   ],
   info: [
+    /* Support leads this panel. It is here because the sitewide footer that
+       used to carry it was deleted as old-design chrome, and ME had no other
+       route to it — a ROW in an existing panel rather than a panel of its own,
+       since a panel is a drawer of destinations and Support is one. (Advertise
+       needed nothing; `MmmMe` already links it.)
+
+       First, not last: everything below is reference material a member reads
+       once, and this is the row someone opens Info to find when something has
+       actually gone wrong. */
+    { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support' },
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
     { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
     { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },

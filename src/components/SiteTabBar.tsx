@@ -9,7 +9,7 @@ const TABS = [
   {
     id: 'listen',
     // Into the Music · Map · Me shell, which is where listening lives. This
-    // bar only renders on legacy routes (mmm.css hides `.ihype-mobile-nav`
+    // bar only renders on legacy routes (mmm.css hides `.site-tabbar`
     // inside `/app`), so tapping Listen hands off to MMM's own navigation
     // rather than stacking two bars.
     // `/app/music/discover` rather than `/app/map`, so the label stays honest;
@@ -76,7 +76,7 @@ const tabButtonStyle = {
   WebkitTapHighlightColor: 'transparent',
 };
 
-export function MobileBottomNav() {
+export function SiteTabBar() {
   const { t } = useI18n();
   const pathname = usePathname();
   const { status: sessionStatus } = useSession();
@@ -92,7 +92,7 @@ export function MobileBottomNav() {
   return (
       <nav
         aria-label="Mobile navigation"
-        className="ihype-mobile-nav"
+        className="site-tabbar"
         style={{
           display: 'none',
           position: 'fixed',

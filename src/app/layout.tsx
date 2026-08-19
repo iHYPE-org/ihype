@@ -11,11 +11,10 @@ import localFont from 'next/font/local';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { MobileBottomNav } from '@/components/MobileBottomNav';
+import { SiteTabBar } from '@/components/SiteTabBar';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
-import { SiteFooter } from '@/components/SiteFooter';
 import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
@@ -213,14 +212,13 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
             inviteOnly={inviteOnly}
             label={t('layout.primarySiteHeader', 'Primary site header')}
           />
-          <MobileBottomNav />
+          <SiteTabBar />
           {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
               Every route outside /app is now marketing, auth, admin, or a
               redirect-only compatibility route: none may render another
               signed-in shell. */}
           <div className="site-shell">
             <main id="main-content">{children}</main>
-            <SiteFooter />
           </div>
           <SitePlayerDock />
           {/* Above every shell, on every route: an operator must never be
