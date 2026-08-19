@@ -189,7 +189,7 @@ export default async function WelcomePage() {
            with the page that needs it and costs no JS. */
         body:has(.welcome-body) .adaptive-site-header,
         body:has(.welcome-body) .site-dock,
-        body:has(.welcome-body) .ihype-mobile-nav { display: none; }
+        body:has(.welcome-body) .site-tabbar { display: none; }
 
         .welcome-body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
         .welcome-card { max-width: 560px; width: 100%; text-align: center; }

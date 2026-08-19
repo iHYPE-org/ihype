@@ -704,11 +704,17 @@ body:has(.site-dock) .site-shell {
     linear-gradient(var(--hair-22) 1px, transparent 1px),
     linear-gradient(90deg, var(--hair-22) 1px, transparent 1px);
 }
-/* ── Mobile bottom nav ── */
-@media (max-width: 768px) {
-  .ihype-mobile-nav { display: flex !important; }
-  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
-}
+/* ── The site tab bar ──
+   It was `.ihype-mobile-nav`, shown only at <=768px, while the SAME three
+   destinations sat in the header as `SiteNavTabs` for everyone wider. Two
+   implementations of one nav, and the desktop one cost a row at the top of
+   every page — the row the tuner dial now wants for a 26px section name.
+
+   So the header selector is gone and this is the nav at every width. The
+   rename came with it: a control called "mobile" that renders on a desktop is
+   the kind of name that makes the next reader wrong before they start. */
+.site-tabbar { display: flex !important; }
+body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 
 /* ── Bottom sheet on mobile: centered dialog on desktop, anchored to the
    bottom edge with a drag-handle affordance on phones — shared pattern for
@@ -1533,12 +1539,12 @@ body:has(.authcard-page) #main-content { width: 100%; }
 
    Same mechanism the auth card above uses, and for the same reason: the root
    layout has no path awareness, so a page that owns the whole screen has to say
-   so in markup rather than the layout guessing. `.ihype-mobile-nav` is included
+   so in markup rather than the layout guessing. `.site-tabbar` is included
    because the console has its own bottom bar and two would stack. */
 body:has(.ops-shell) .adaptive-site-header,
 body:has(.ops-shell) .site-background,
 body:has(.ops-shell) .site-dock,
-body:has(.ops-shell) .ihype-mobile-nav,
+body:has(.ops-shell) .site-tabbar,
 body:has(.ops-shell) .site-shell > footer { display: none !important; }
 body:has(.ops-shell) .site-shell { padding: 0 !important; }
 body:has(.ops-shell) #main-content { width: 100%; }
@@ -3608,9 +3614,10 @@ a.ihype-card {
   100% { transform: scale(1); }
 }
 
-/* Nav link animated underline — .nav-menu-trigger is the Menu <button> in
-   SiteNavTabs; it sits beside the Listen/Events/Pages <a> pills and gets the
-   same treatment (an `a`-only selector silently skipped it). */
+/* Nav link animated underline. `.nav-menu-trigger` is the Menu <button>; it
+   gets the same treatment as the links beside it, which an `a`-only selector
+   silently skipped. (It used to sit beside the Listen/Events/Pages pills from
+   SiteNavTabs — those moved to the site tab bar at the bottom.) */
 .site-nav a:not(.nav-logo):not(.ihype-btn-primary):not(.ihype-btn-ghost) {
   position: relative;
 }
@@ -3667,7 +3674,7 @@ h2 {
    (light background, card borders, etc). */
 @media print {
   .site-nav,
-.ihype-mobile-nav,
+.site-tabbar,
 .ihype-footer,
 .ihype-cookie-consent,
 .site-dock-l {
@@ -3744,8 +3751,6 @@ h2 {
 
    `display: flex` must live here rather than inline: the shell hides an EMPTY
    strip (shell.css), and an inline display would beat a stylesheet's. */
-.section-tabstrip { display: flex; }
-
 /* Fan-first home and adaptive listening chrome. */
 .adaptive-site-header {
   position: sticky;
@@ -3788,9 +3793,7 @@ h2 {
 }
 .search-bar-desktop input:focus { border-color: color-mix(in srgb, var(--accent-text) 70%, transparent); box-shadow: 0 0 0 3px rgba(var(--role-venue-rgb),.1); }
 .adaptive-site-header.is-scrolled .search-bar-desktop { max-width: 0; opacity: 0; overflow: hidden; pointer-events: none; }
-.adaptive-site-header-tabs { margin-left: auto; min-width: 0; }
 .adaptive-site-header-spacer { flex: 1 1 auto; }
-.adaptive-site-header.is-scrolled .adaptive-site-header-tabs { display: none; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
 .theme-toggle {
   width: 40px;
@@ -4139,9 +4142,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
 100% { transform: translateX(calc(-100% + 180px)); } }
 .site-shell { padding-bottom: 82px; }
 
-@media (max-width: 1050px) {
-  .adaptive-site-header-tabs { display: none; }
-}
+@media (max-width: 1050px) {}
 @media (max-width: 768px) {
   .adaptive-site-header { display: block !important; height: 62px; }
   .adaptive-site-header-inner { width: calc(100% - 24px); gap: 10px; }
@@ -4454,3 +4455,187 @@ body:has(.fan-entry) #main-content { width: 100%; }
   color: var(--ink-2);
   text-wrap: pretty;
 }
+
+/* ── The tuner dial: a section switcher shaped like a slide-rule scale ────
+   Paired with src/components/TunerDial.tsx, which carries the reasoning for
+   why this replaces a tab strip. In short: a strip divides one row by the
+   number of tabs, so every strip in this codebase had drifted to 10-13px
+   labels and two of the artist profile's six started off-screen at 393px.
+   The dial spends the same row on ONE destination at 26px.
+
+   Cream glass in a brass bezel, lit from behind — on cream glass that means
+   the paper glows rather than the ink, the opposite of how a dark-faced
+   version of this control would work. Built from the material tokens, so it
+   is the same brass as the dock's transport and the station's frame. */
+.tuner-mount {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  margin: 0 0 18px;
+}
+.tuner-dial {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: 3px;
+  padding: 5px 12px 6px;
+  overflow: hidden;
+  cursor: grab;
+  /* Both are needed and they do different jobs: touch-action stops the browser
+     scrolling the page instead of tuning, user-select stops a native text-drag
+     firing pointercancel mid-gesture and killing the drag in one direction. */
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background:
+    radial-gradient(150% 200% at 50% 130%, #fff3d4 0%, var(--bg) 42%, #e2cea0 78%, #d4bd8c 100%);
+  background-color: #eeddb4;
+  box-shadow:
+    0 0 0 1px var(--brass-deep),
+    0 0 0 3px var(--brass),
+    0 0 0 4px #6d5222,
+    inset 0 2px 5px rgba(92, 62, 20, .45),
+    inset 0 -1px 0 rgba(255, 252, 235, .8);
+}
+.tuner-dial:active { cursor: grabbing; }
+.tuner-dial:focus-within { outline: 2px solid var(--accent); outline-offset: 5px; }
+
+/* Curved reflection on the glass. Decorative, so it must never eat a pointer
+   event — the whole face is the drag target. */
+.tuner-dial::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(150% 90% at 18% -34%, rgba(255, 255, 255, .55), transparent 56%),
+    linear-gradient(174deg, rgba(255, 255, 255, .3) 0%, transparent 30%);
+}
+
+/* The tuned station, engraved. Serif on cream is the classic move and it
+   measures 13.8:1 — the most legible thing on the page, which is the point of
+   the whole control. rem, not px: this follows the Text size setting like
+   everything else. */
+.tuner-station {
+  display: none;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: var(--font-instrument, 'Instrument Serif', serif);
+  font-size: 1.625rem;
+  line-height: 1.12;
+  letter-spacing: .005em;
+  text-align: center;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: inherit;
+}
+.tuner-station[data-current="true"] { display: block; }
+
+/* The slide-rule scale. Graduations only — the station is already set at 26px
+   directly above, so printing it again small would say the same thing twice
+   and say it worse the second time. */
+.tuner-scale {
+  position: relative;
+  display: block;
+  height: 20px;
+  margin-top: 2px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+/* Two repeating gradients: a major graduation per station, four minors
+   between. Because a repeating gradient has no end the scale is infinite in
+   both directions for free — no cloned strip, no seam, and the stations wrap.
+   The 46px major pitch is the same number as PITCH in TunerDial.tsx; they are
+   one measurement and must move together. */
+.tuner-ticks {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(28,20,8,.85) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(90deg, rgba(28,20,8,.42) 0 1px, transparent 1px 9.2px);
+  background-size: auto 15px, auto 8px;
+  background-repeat: repeat-x, repeat-x;
+  background-position-y: 0, 0;
+  will-change: background-position;
+}
+/* The snap back to a station is eased; the drag itself is not, or the scale
+   lags the thumb. `--duration-slow` is zeroed by the token-level
+   reduced-motion block, so this needs no media query of its own. */
+.tuner-dial:not(.is-tuning) .tuner-ticks {
+  transition: background-position var(--duration-slow, 420ms) cubic-bezier(.22, 1, .3, 1);
+}
+
+/* The pointer: a hairline with a lozenge head, fixed while the scale moves
+   under it. --accent is a FILL here, which is the one job it is right for. */
+.tuner-needle {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 1.5px;
+  margin-left: -.75px;
+  background: var(--accent);
+  z-index: 3;
+  box-shadow: 0 0 3px rgba(var(--accent-rgb), .8);
+}
+.tuner-needle::before {
+  content: "";
+  position: absolute;
+  top: -2px; left: 50%;
+  width: 7px; height: 7px;
+  margin-left: -3.5px;
+  border-radius: 1px;
+  background: var(--accent);
+  transform: rotate(45deg);
+  box-shadow: 0 0 4px rgba(var(--accent-rgb), .7);
+}
+
+/* Step buttons. A dial you can only drag is a dial a mouse user has to
+   discover; these are the detents. 44px wide so they clear the touch floor
+   without mobile-fit.css having to rescue them. */
+.tuner-step {
+  flex: 0 0 auto;
+  width: 44px;
+  min-height: 44px;
+  border-radius: 3px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--brass) 0%, var(--brass-deep) 100%);
+  color: var(--walnut-3);
+  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55);
+}
+.tuner-step:hover { background: linear-gradient(180deg, var(--lamp) 0%, var(--brass) 100%); }
+.tuner-step:active { box-shadow: inset 0 2px 5px rgba(92, 62, 20, .5); }
+
+/* The logged-out front door's legal line. It replaces the sitewide
+   `SiteFooter`, which was old-design chrome rendered on every page including
+   the signed-in ones; a member reaches these through ME instead. 12.5px, not
+   the footer's tracked 10px — a privacy link is content, not metadata. */
+.fan-entry-legal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px 20px;
+  margin: 34px 0 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--line);
+  font-family: var(--f-m);
+  font-size: 0.7813rem;
+  letter-spacing: .04em;
+  color: var(--ink-3);
+}
+.fan-entry-legal a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  /* 44px of target without 44px of box, so the line stays one row. */
+  padding: 12px 0;
+}
+.fan-entry-legal a:hover { color: var(--ink); }

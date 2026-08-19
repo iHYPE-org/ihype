@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
+import { TunerDial } from '@/components/TunerDial';
 
 /**
  * The fixed subnav for a public artist or venue profile.
@@ -22,12 +23,18 @@ import { useRouter, useSearchParams } from 'next/navigation';
  * searchParams. `scroll: false` keeps the strip still while the panel swaps —
  * a tab that jumps you to the top of the page is a tab that feels broken.
  *
- * ## Sizing
+ * ## Why it is a dial and not a strip
  *
- * Every label is 15px on a 44px-tall control. This strip is the one piece of
- * chrome on a profile that a member reads at arm's length, and it is exactly
- * the sort of surface that historically got the tracked 10px "eyebrow"
- * treatment — which is what the 12.5px floor in PR #727 exists to stop.
+ * It WAS a strip: six 15px labels on a 44px row, of which two did not fit
+ * 393px and were clipped off the edge. That is the structural problem with a
+ * tab strip — it divides one row by the number of tabs, so every tab added
+ * makes every label smaller or pushes one out of sight, and the usual fix is
+ * to shrink the type. Every strip in this codebase had already lost that
+ * argument and sat at 10-13px.
+ *
+ * `TunerDial` spends the same row on ONE destination at 26px, and adding a
+ * seventh section costs nothing because only one is ever shown. See that file
+ * for the interaction and accessibility model.
  */
 export type ProfileTab = { id: string; label: string };
 
@@ -53,23 +60,5 @@ export function ProfileTabs({
     router.replace(query ? `?${query}` : '?', { scroll: false });
   }
 
-  return (
-    <nav aria-label={label} className="profile-tabs">
-      <ul>
-        {tabs.map((tab) => (
-          <li key={tab.id}>
-            <button
-              aria-current={tab.id === active ? 'page' : undefined}
-              className="profile-tab"
-              data-active={tab.id === active}
-              onClick={() => select(tab.id)}
-              type="button"
-            >
-              {tab.label}
-            </button>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
+  return <TunerDial active={active} label={label} onSelect={select} stops={tabs} />;
 }

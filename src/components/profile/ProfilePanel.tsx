@@ -10,18 +10,30 @@ import type { ReactNode } from 'react';
  * whether this artist sells none, not that a container has no children.
  */
 export function ProfilePanel({
+  tabId,
   title,
   empty,
   isEmpty,
   children,
 }: {
+  tabId: string;
   title: string;
   empty: string;
   isEmpty: boolean;
   children?: ReactNode;
 }) {
   return (
-    <section aria-label={title} className="profile-panel">
+    /* A real tabpanel, named by the dial's current tab. `tabId` is required
+       rather than optional so a new panel cannot be added without one — an
+       unlabelled panel is the failure that is invisible until someone
+       navigates here with a screen reader. */
+    <section
+      aria-labelledby={`tunertab-${tabId}`}
+      className="profile-panel"
+      id={`tunerpanel-${tabId}`}
+      role="tabpanel"
+      tabIndex={0}
+    >
       <h2 className="profile-panel-title">{title}</h2>
       {isEmpty ? <p className="profile-panel-empty">{empty}</p> : children}
     </section>

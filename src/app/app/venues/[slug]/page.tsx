@@ -172,6 +172,7 @@ export default async function MmmVenuePage({
 
       {activeTab === 'calendar' && (
         <ProfilePanel
+          tabId="calendar"
           empty="Nothing on the calendar yet."
           isEmpty={upcoming.length === 0}
           title="Event Calendar"
@@ -206,6 +207,7 @@ export default async function MmmVenuePage({
 
       {activeTab === 'info' && (
         <ProfilePanel
+          tabId="info"
           empty={`${profile.name} has not added room details yet.`}
           isEmpty={
             !profile.capacity && !profile.roomType && !profile.addressLine1
@@ -233,6 +235,7 @@ export default async function MmmVenuePage({
 
       {activeTab === 'rules' && (
         <ProfilePanel
+          tabId="rules"
           empty={`${profile.name} has not published house rules yet. Ask them through Contact.`}
           isEmpty={!unwrap(profile.requestContent)}
           title="Rules & FAQs"
@@ -243,6 +246,7 @@ export default async function MmmVenuePage({
 
       {activeTab === 'contact' && (
         <ProfilePanel
+          tabId="contact"
           empty={`${profile.name} has not added contact details yet.`}
           isEmpty={!unwrap(profile.contactInfo)}
           title="Contact"

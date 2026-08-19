@@ -7,7 +7,6 @@ import { useSession } from 'next-auth/react';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { SearchBar } from '@/components/SearchBar';
-import { SiteNavTabs } from '@/components/SiteNavTabs';
 
 export function AdaptiveSiteHeader({
   inviteOnly,
@@ -51,9 +50,6 @@ export function AdaptiveSiteHeader({
               </Link>
             </div>
             <SearchBar compact={scrolled} />
-            <div className="adaptive-site-header-tabs">
-              <SiteNavTabs />
-            </div>
             <div className="adaptive-site-header-spacer" />
             <Link aria-label="Open settings" className="app-settings-link" href="/me/settings" title="Settings">
               <svg aria-hidden="true" fill="none" height="19" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="19">

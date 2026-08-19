@@ -78,66 +78,15 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   font-size: calc(100% * min(1.6, var(--ihype-text-scale, 1) * var(--ihype-os-text-scale, 1) * var(--ihype-large-text-scale, 1)));
 }
 
-/* ══ Public profile: the fixed subnav and its panels ═══════════════════
-   Console direction (design/console-2026-08). The strip is a row of brass-
-   collared keys on the cabinet; a panel is a cream card with an engraved
-   rule under its title.
+/* ══ Public profile panels ═════════════════════════════════════════════
+   Console direction (design/console-2026-08). A panel is a cream card with
+   an engraved rule under its title.
 
-   EVERY size here is at or above the 12.5px body floor, and the tab labels
-   are 15px on a 44px control. This strip is precisely the kind of chrome
-   that used to get the tracked 10px "eyebrow" treatment — a nav label is a
-   control's name, not metadata, which is the distinction PR #727 was about. */
-.profile-tabs {
-  /* Full-bleed to the pane edge, then padded back. This is not decoration:
-     six tabs measure 617px against 361px of pane, so two of them — Contact
-     and Press Kit on an artist — start off-screen. Ending the strip flush
-     with the container makes four tabs look like the whole set, and a reader
-     who has to guess there is more will not scroll. Bleeding it means the
-     next chip is CLIPPED by the viewport edge instead, which is the only
-     honest signal available without adding chrome. */
-  margin: 18px calc(var(--mmm-pane-pad, 16px) * -1) 0;
-  padding-inline: var(--mmm-pane-pad, 16px);
-  /* The strip scrolls rather than wrapping to two rows: six fixed tabs at a
-     readable size do not fit 375px, and shrinking the type to make them fit
-     is the trade this whole redesign exists to refuse. */
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.profile-tabs::-webkit-scrollbar { display: none; }
-.profile-tabs ul {
-  display: flex;
-  gap: 8px;
-  margin: 0;
-  padding: 0 0 2px;
-  list-style: none;
-  width: max-content;
-}
-.profile-tab {
-  min-height: 44px;
-  padding: 0 18px;
-  border-radius: 3px;
-  border: 2px solid var(--line-2);
-  background: var(--bg-2);
-  color: var(--ink-2);
-  font-family: var(--f-m);
-  font-size: 0.9375rem;      /* 15px */
-  letter-spacing: .06em;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 160ms var(--ease), color 160ms var(--ease), border-color 160ms var(--ease);
-}
-.profile-tab:hover { color: var(--ink); border-color: var(--ink-3); }
-.profile-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-/* The selected key is pressed in: the ink inverts rather than the accent
-   being used as copy, which on this ground is 2.48:1 and fails. */
-.profile-tab[data-active='true'] {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--bg);
-}
-
+   The subnav that used to live here is gone: it was a strip of six 15px
+   labels on a 44px row, and two of them started off-screen at 393px. It is
+   `TunerDial` now (styles in globals.css), which spends the same row on one
+   destination at 26px. Every size below is at or above the 12.5px body
+   floor. */
 .profile-panel { margin-top: 20px; }
 .profile-panel-title {
   font-family: var(--f-d);
