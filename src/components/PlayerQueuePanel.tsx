@@ -40,7 +40,7 @@ export function PlayerQueuePanel({
     <div style={{
       position: 'absolute', bottom: '100%', right: 0, width: 300, maxHeight: 340,
       display: 'flex', flexDirection: 'column',
-      background: 'var(--surface-1, #1a1714)', border: '1px solid var(--hair-100)',
+      background: 'var(--bg-2)', border: '1px solid var(--hair-100)',
       borderRadius: '8px 8px 0 0', zIndex: 10,
     }}>
       {/* Tab bar */}

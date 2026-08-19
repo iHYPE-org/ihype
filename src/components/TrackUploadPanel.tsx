@@ -128,7 +128,7 @@ export function TrackUploadPanel({
       </div>
 
       <div className="artist-media-upload-form">
-        {error ? <p className="meta" style={{ color: 'var(--danger, #ff5a5a)' }}>{error}</p> : null}
+        {error ? <p className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
         <input
           accept="audio/*"
           disabled={submitting}
