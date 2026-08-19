@@ -72,7 +72,7 @@ export default async function CollabBoardPage({
   return (
     <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 100px' }}>
       <div style={{ marginBottom: 28 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 8 }}>
           {t('collabBoardPage.eyebrow', 'COLLAB BOARD')}
         </p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
@@ -143,7 +143,7 @@ export default async function CollabBoardPage({
                       style={{
                         fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase',
                         padding: '4px 10px', borderRadius: 999,
-                        color: p.type === 'looking-for' ? 'var(--accent)' : 'var(--role-venue)',
+                        color: p.type === 'looking-for' ? 'var(--accent-text)' : 'var(--role-venue)',
                         background: p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.1)' : 'rgba(var(--role-venue-rgb),.1)',
                         border: `1px solid ${p.type === 'looking-for' ? 'rgba(var(--accent-rgb),.3)' : 'rgba(var(--role-venue-rgb),.3)'}`,
                       }}

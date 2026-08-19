@@ -52,7 +52,7 @@ export default async function LaunchPage() {
               fontFamily: 'var(--f-m)',
               fontSize: '0.75rem',
               letterSpacing: '.2em',
-              color: 'var(--accent)',
+              color: 'var(--accent-text)',
               textTransform: 'uppercase',
               marginBottom: '0.8rem',
             }}
@@ -93,7 +93,7 @@ export default async function LaunchPage() {
                 padding: '0.9rem 1.6rem',
                 borderRadius: 999,
                 background: 'var(--accent)',
-                color: '#fff',
+                color: 'var(--ink-on-accent)',
                 fontFamily: 'var(--f-d)',
                 fontWeight: 700,
                 textDecoration: 'none',
@@ -138,7 +138,7 @@ export default async function LaunchPage() {
                     fontFamily: 'var(--f-m)',
                     fontSize: '0.72rem',
                     letterSpacing: '.14em',
-                    color: 'var(--accent)',
+                    color: 'var(--accent-text)',
                     textTransform: 'uppercase',
                     margin: '0 0 0.55rem',
                   }}
@@ -165,7 +165,7 @@ export default async function LaunchPage() {
                 >
                   {t(`launchPage.cohortCopy${i}`, cohort.copy)}
                 </p>
-                <Link href={cohort.href} style={{ color: 'var(--accent)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>
+                <Link href={cohort.href} style={{ color: 'var(--accent-text)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>
                   {t(`launchPage.cohortCta${i}`, cohort.cta)} →
                 </Link>
               </article>
@@ -181,7 +181,7 @@ export default async function LaunchPage() {
               fontFamily: 'var(--f-m)',
               fontSize: '0.75rem',
               letterSpacing: '.2em',
-              color: 'var(--accent)',
+              color: 'var(--accent-text)',
               textTransform: 'uppercase',
               marginBottom: '0.6rem',
             }}
@@ -214,7 +214,7 @@ export default async function LaunchPage() {
                   background: 'var(--hair-25)',
                 }}
               >
-                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent)', fontSize: '0.8rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
+                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent-text)', fontSize: '0.8rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
                 <div>
                   <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{t(`launchPage.sprintStepTitle${i}`, title)}</strong>
                   <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
@@ -259,7 +259,7 @@ export default async function LaunchPage() {
                 padding: '0.9rem 1.6rem',
                 borderRadius: 999,
                 background: 'var(--accent)',
-                color: '#fff',
+                color: 'var(--ink-on-accent)',
                 fontFamily: 'var(--f-d)',
                 fontWeight: 700,
                 textDecoration: 'none',

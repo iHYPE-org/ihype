@@ -250,11 +250,11 @@ export default async function AdminReviewPage({
                         <td style={tdStyle}>{r.reason}</td>
                         <td style={tdStyle}>{r.targetType}</td>
                         <td style={{ ...tdStyle, fontSize: '0.7813rem' }}>
-                          {entityHref ? <Link href={entityHref} style={{ color: 'var(--accent)', textDecoration: 'none' }} target="_blank">{entityLabel}</Link> : <span style={{ fontFamily: 'monospace', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{entityLabel}</span>}
+                          {entityHref ? <Link href={entityHref} style={{ color: 'var(--accent-text)', textDecoration: 'none' }} target="_blank">{entityLabel}</Link> : <span style={{ fontFamily: 'monospace', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{entityLabel}</span>}
                         </td>
                         <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>{t('adminReviewPage.anonymous', 'Anonymous')}</span>}</td>
                         <td style={tdStyle}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.7813rem', letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : 'var(--role-venue)' }}>{r.status}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.7813rem', letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent-text)' : 'var(--role-venue)' }}>{r.status}</span>
                         </td>
                         <td style={tdStyle}>
                           {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}

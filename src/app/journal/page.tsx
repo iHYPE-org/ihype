@@ -59,7 +59,7 @@ export default async function JournalIndex() {
                     fontWeight: 800,
                     fontSize: '1.2rem',
                     letterSpacing: '-.02em',
-                    color: 'var(--accent)'
+                    color: 'var(--accent-text)'
                   }}
                 >
                   {p.meta.title}

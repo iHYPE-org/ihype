@@ -68,7 +68,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
   const activity: { color: string; text: React.ReactNode }[] = [];
   if (dashStats.hypesThisWeek > 0) {
     activity.push({
-      color: 'var(--accent)',
+      color: 'var(--accent-text)',
       text: <><strong>{dashStats.hypesThisWeek.toLocaleString()}</strong> {dashStats.hypesThisWeek === 1 ? t('artistsSlugDashboardPage.fanHypedSingular', 'fan hyped your profile this week') : t('artistsSlugDashboardPage.fanHypedPlural', 'fans hyped your profile this week')}</>,
     });
   }
@@ -100,7 +100,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       <div className="ad-stats-grid">
         <Link className="ad-stat-card" href={`/app/me/artists/${profile.slug}/analytics`}>
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.thisMonthLabel', 'This Month')}</div>
-          <div className="ad-stat-val" style={{ color: 'var(--accent)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents)}</div>
+          <div className="ad-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents)}</div>
           <div className="ad-stat-sub">{t('artistsSlugDashboardPage.yourShare', 'Your 70% share · $0 iHYPE fee')}</div>
         </Link>
         <div className="ad-stat-card">

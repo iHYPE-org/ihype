@@ -113,7 +113,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
                   style={{ width: 7, height: 7, borderRadius: '50%', background: HEAT_TOKEN[heat], flexShrink: 0 }}
                   title={HEAT_LABEL[heat]}
                 />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.06em', textTransform: 'uppercase', color: isLive ? 'var(--accent)' : 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.06em', textTransform: 'uppercase', color: isLive ? 'var(--accent-text)' : 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {isLive ? t('eventsHome.liveNow', '● LIVE NOW') : fmtDate(show.startsAt)}
                 </span>
               </div>
@@ -129,7 +129,7 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
               {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
             </div>
             {show.reason?.text && (
-              <div style={{ fontSize: '0.7813rem', color: 'var(--accent)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.reason.text}</div>
+              <div style={{ fontSize: '0.7813rem', color: 'var(--accent-text)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.reason.text}</div>
             )}
           </Link>
         );
@@ -243,7 +243,7 @@ export function EventsHome({
           straight onto a tab strip with no statement of what it was, which is
           the single biggest reason it did not read as a designed surface. */}
       <header style={{ marginBottom: 32 }}>
-        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent)', marginBottom: 8 }}>
+        <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--accent-text)', marginBottom: 8 }}>
           {t('eventsHome.pageHeading', 'Events')}
         </p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
@@ -370,7 +370,7 @@ export function EventsHome({
                     const unitPriceCents = order.quantity > 0 ? Math.round((order.totalChargeCents || order.subtotalCents) / order.quantity) : (order.totalChargeCents || order.subtotalCents);
                     return (
                       <div key={order.id} style={{ border: '1px solid var(--hair-80)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent)' : 'var(--role-venue)', marginBottom: 6 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent-text)' : 'var(--role-venue)', marginBottom: 6 }}>
                           ● {order.status === 'VOID' ? t('eventsHome.statusCancelled', 'CANCELLED') : ticketView === 'archive' ? t('eventsHome.statusUsed', 'USED') : t('eventsHome.statusValid', 'VALID')} · {formatCurrencyFromCents(unitPriceCents)} {t('eventsHome.faceValue', 'FACE VALUE')}
                         </div>
                         <Link href={`/shows/${order.show.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>

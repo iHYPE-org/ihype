@@ -163,7 +163,7 @@ export function AdvertiserRegisterForm() {
 const styles = `
   .aar-page { max-width: 460px; margin: 0 auto; padding: 60px 20px 80px; }
   .aar-card { display: flex; flex-direction: column; }
-  .aar-eyebrow { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+  .aar-eyebrow { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
   .aar-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
   .aar-sub { font-size: 0.8438rem; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
   .aar-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin: 14px 0 6px; }
@@ -177,7 +177,7 @@ const styles = `
   .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
   .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 0.7813rem; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
   .aar-cat.active { border-color: var(--role-advertiser); background: rgba(var(--role-advertiser-rgb),.13); color: var(--role-advertiser-text); }
-  .aar-error { color: var(--accent); font-size: 0.7813rem; margin: 14px 0 0; }
+  .aar-error { color: var(--accent-text); font-size: 0.7813rem; margin: 14px 0 0; }
   .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: var(--ink-on-accent); cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }
   .aar-fineprint { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin-top: 16px; }

@@ -161,6 +161,7 @@
      on the light one, whose surface is that same teal at 10% over a light
      page — the colour and its background converge. Fills keep --role-venue. */
   --role-venue-text: var(--role-venue);
+  --role-fan-text: var(--role-fan);
   /* The 10% promoter slice in every split bar. Was #ffb84a, which is the same
      amber as --warning and --role-advertiser — so this token was doing three
      unrelated jobs and ~20 of its ~28 call sites were "pending"/"warning"
@@ -270,6 +271,15 @@
      what --role-advertiser-text already discovered independently. One token
      now, so the next amber label does not rediscover it. */
   --warning-text:     var(--warning);
+  /* Danger AS COPY. --danger is #ff5029, i.e. the accent, and carries the
+     same trap: fine as a fill, 2.48:1 as a word on the console board. Every
+     theme restates this one. 8.14:1 here. */
+  --danger-text:      #ff8a72;
+  /* Success AS COPY, for the same reason as the two above. --success is the
+     teal #22e5d4: 11.79:1 on navy, 1.21:1 on the cream board — one of the
+     worst inversions in the palette, and it was carrying the signup page's
+     "Free forever. We never sell your data." line. */
+  --success-text:     var(--success);
   --color-warning:    var(--warning-text);
   --color-warning-bg: rgba(var(--warning-rgb), .10);
   --color-info:       var(--blue);
@@ -404,6 +414,11 @@
      work; leave the sm/md/lg/xl ramp to the surfaces already built on it. */
   --radius-card:    18px;
   --radius-trigger: 26px;
+  /* The radius the shared card/row/stat primitives actually use, named so a
+     theme can retune every card in both shells at once instead of a theme
+     having to restate a class list it does not own. The primitives carried a
+     hardcoded 12px until 2026-08-19; this is that 12px, now with a name. */
+  --radius-panel:   12px;
 
   /* ── Shadows ─────────────────────────────────────────────────────── */
   /* Re-anchored to the navy ground (Design System 8). Pure black over
@@ -577,9 +592,12 @@
      Darkened until it holds 4.92:1 on every light surface. A pre-existing
      defect the re-measure surfaced, not a regression from it. */
   --role-venue-text: #0a655e;
+  --role-fan-text: #5b3d8f;
   --role-promoter-text: #920044;
   --role-artist-text: var(--accent-text);
   --warning-text: #735000;
+  --danger-text: #9c2707;   /* 7.17:1 on #f4f6fa */
+  --success-text: #0a655e;  /* 6.39:1 on #f4f6fa */
 
   /* Utility and semantic colours calibrated for a light background. Unlike
      --accent/--role-* these are not brand fills — a #7fb3ff series line or a
@@ -620,13 +638,122 @@
    dark-on-light. Mirror that rule's structure — two soft brand-tinted
    radials over a vertical base — in warm light tones so the shipped theme
    toggle actually works. Dark mode is untouched. */
+/* ── Console theme (design/console-2026-08) ──────────────────────────────
+   A third ground: warm cream board and walnut, against the navy of the
+   default theme and the cool paper of light. Source and the measured
+   reasoning are in design/console-2026-08/DIRECTION.md.
+
+   THE ONE THING TO KNOW BEFORE USING THIS THEME: `--accent` is 2.48:1 on
+   this ground and cannot be copy. It was 5.73:1 on navy, so every existing
+   use of the accent as TEXT silently inverts from passing to failing here.
+   `--accent-text` is the copy form and `--ink-on-accent` is the label on the
+   fill — in this theme that label is dark ink, not cream, which is the
+   opposite of both other themes. Same class of trap as the #5a5048 grey the
+   DS8 repaint left behind, and just as invisible in review.
+
+   Worst-case measured ratios across all four grounds: --ink 10.72,
+   --ink-2 7.50, --ink-3 5.00. --ink-4 is 2.65 and is hairlines only. */
+[data-theme="console"] {
+  color-scheme: light;
+  --bg:    #f0dfb8;
+  --bg-2:  #e9dcc0;
+  --bg-3:  #dfd0ac;
+  --bg-4:  #d2c6a4;
+  --ink:   #1c1408;
+  --ink-2: #3f3018;
+  --ink-3: #5d4a26;
+  /* Hairlines and rules only — 2.65:1 at worst. Never put a word in this. */
+  --ink-4: #8a7442;
+  /* --line / --line-2 are set in the material pass at the end of this
+     block — brass, not diluted ink. Defined once, there. */
+
+  /* Alpha ink is the dark engraving at the same opacities, so anything that
+     was translucent near-white on navy becomes translucent ink here rather
+     than disappearing into the board. */
+  --ink-a10: rgba(28,20,8,.1);
+  --ink-a20: rgba(28,20,8,.2);
+  --ink-a22: rgba(28,20,8,.22);
+  --ink-a25: rgba(28,20,8,.25);
+  --ink-a28: rgba(28,20,8,.28);
+  --ink-a30: rgba(28,20,8,.3);
+  --ink-a32: rgba(28,20,8,.32);
+  --ink-a35: rgba(28,20,8,.35);
+  --ink-a38: rgba(28,20,8,.38);
+  --ink-a40: rgba(28,20,8,.4);
+  --ink-a42: rgba(28,20,8,.42);
+  --ink-a45: rgba(28,20,8,.45);
+  --ink-a50: rgba(28,20,8,.5);
+  --ink-a55: rgba(28,20,8,.55);
+  --ink-a60: rgba(28,20,8,.6);
+  --ink-a65: rgba(28,20,8,.65);
+  --ink-a70: rgba(28,20,8,.7);
+  --ink-a72: rgba(28,20,8,.72);
+  --ink-a75: rgba(28,20,8,.75);
+  --ink-a80: rgba(28,20,8,.8);
+  --ink-a85: rgba(28,20,8,.85);
+  --ink-a90: rgba(28,20,8,.9);
+
+  /* The RGB triplets have to be restated per theme — a custom property cannot
+     be decomposed in CSS, so a missing one here paints every composed-alpha
+     surface with the other theme's ink. This is the bug that made light theme
+     render near-black scrims; it is written down so it is not repeated. */
+  --bg-base-rgb: 240,223,184;
+  --ink-1-rgb: 28,20,8;
+  --surface-tint-rgb: 28,20,8;
+
+  /* Brand. The accent is UNCHANGED as a fill, because the pointer and the
+     pilot lamp are the reason the direction works. Its copy form is not. */
+  --accent-text: #923319;
+  --ink-on-accent: #1c1408;
+
+  /* Role hues darkened until each clears AA as copy on the board: the DS8
+     values are tuned for a dark ground and 4 of 5 fail on cream. */
+  --role-venue: #0f6b62;
+  --role-fan: #5b3d8f;
+  --role-promoter: #a3175f;
+  --role-advertiser: #8a5a06;
+  /* Not the same value as --role-advertiser above, and that is deliberate:
+     #8a5a06 measures 4.499:1 on the board, which fails AA by a rounding
+     error. A fill and a word are different tokens even when the hex matched. */
+  --warning-text: #7d5205;  /* 5.18:1 on the cream board */
+  --danger-text: #9c2707;   /* 5.89:1 on the cream board */
+  --success-text: #0a655e;  /* 5.25:1 on the cream board */
+
+  /* Brass, walnut and lamp — materials this theme needs and the others
+     do not. Named for what they are, not where they are used. */
+  --brass: #c9a54e;
+  --brass-deep: #8a6a2c;
+  --walnut: #4a2b16;
+  --walnut-2: #34200f;
+  --lamp: #ffb84a;
+
+  /* ── The material pass ─────────────────────────────────────────────────
+     Everything below is retuned TOKENS, not a second set of rules. That is
+     deliberate and it is the only version of this that scales: the shared
+     card/row/stat primitives already paint from --radius-panel, --line and
+     --bg-surface, so retuning three values here re-materialises every card
+     in both shells and on every public page at once. The alternative — a
+     `[data-theme="console"] .some-card` block — would have to restate class
+     lists this theme does not own, and would be wrong the moment a page
+     added a card.
+
+     A console is machined, not moulded: panels have a cut edge (3px), not a
+     soft one, and their hairline is brass rather than diluted ink. The pill
+     radius is untouched, because a button that reads as a key still reads as
+     a key. */
+  --radius-panel: 3px;
+  --radius-card: 3px;
+  --line:   rgba(138,106,44,.34);
+  --line-2: rgba(138,106,44,.52);
+}
+
 [data-theme="light"] body {
   background:
     radial-gradient(circle at top, rgba(var(--accent-rgb), 0.06), transparent 24%),
     radial-gradient(circle at 82% 18%, rgba(var(--role-fan-rgb), 0.05), transparent 20%),
     linear-gradient(180deg, #f8f9fc 0%, #f2f5fa 42%, #e9eef6 100%);
-  /* A later `body` rule hardcodes near-white text; restore dark ink so
-     default/inherited copy is readable on the light background. */
+  /* Light keeps its own cool gradient rather than the token ground; the
+     generic `body` rule below now paints from tokens either way. */
   color: var(--ink);
 }
 /* The decorative background grid draws near-white lines for the dark UI;
@@ -976,12 +1103,12 @@ body:has(.site-dock) .site-shell {
   border-radius: 999px;
   border: 1px solid var(--hair-80);
   background: var(--hair-40);
-  color: #fff2df;
+  color: var(--ink);
   font-size: 0.7813rem;
   font-weight: 700;
 }
 .hero { padding: 4rem 0 2rem; display: grid; gap: 1.5rem; } .panel{ border: 1px solid var(--line); }
-.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,.38); background: rgba(255,122,24,.1); color: #ffe2d0; padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 700; letter-spacing: .04em; }
+.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,.38); background: rgba(255,122,24,.1); color: var(--accent-text); padding: 0.3rem 0.8rem; font-size: 0.8rem; font-weight: 700; letter-spacing: .04em; }
 .title { font-size: clamp(2rem, 5vw, 4rem); margin: 0.75rem 0; line-height: 1; }
 .subtitle { max-width: 60ch; line-height: 1.6; }
 .grid { display: grid; gap: 1rem; }
@@ -1019,7 +1146,7 @@ body:has(.site-dock) .site-shell {
 }
 .button.secondary {
   border-color: var(--hair-100);
-  color: #edf5ff;
+  color: var(--ink);
 }
 .button.secondary:hover,
 .button.secondary:focus-visible {
@@ -1173,7 +1300,7 @@ body:has(.site-dock) .site-shell {
   font-size: 0.625rem;
   letter-spacing: .18em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--accent-text);
   margin-bottom: 10px;
   text-align: center;
 }
@@ -1370,7 +1497,10 @@ fieldset.authcard-field { border: 0; padding: 0; }
   padding: 14px;
   border: none;
   background: var(--accent);
-  color: #fff;
+  /* The label ON the accent fill, never #fff. White measures 3.27:1 on
+     #ff5029 and fails AA; --ink-on-accent is the token that resolves per
+     theme to something that passes. This is the primary sign-in button. */
+  color: var(--ink-on-accent);
   border-radius: 999px;
   font-family: var(--font-display);
   font-weight: 800;
@@ -1426,8 +1556,8 @@ fieldset.authcard-field { border: 0; padding: 0; }
 .authcard-consent a:hover { text-decoration: underline; }
 .authcard-privacy-promise {
   margin: 4px 0 14px;
-  color: var(--success);
-  font: 600 12px/1.5 var(--font-mono);
+  color: var(--success-text);
+  font: 600 0.7813rem/1.5 var(--font-mono);
   text-align: center;
 }
 
@@ -1437,7 +1567,7 @@ fieldset.authcard-field { border: 0; padding: 0; }
   color: var(--ink-3);
   margin-top: 22px;
 }
-.authcard-fine a { color: var(--accent); text-decoration: none; }
+.authcard-fine a { color: var(--accent-text); text-decoration: none; }
 .authcard-fine a:hover { text-decoration: underline; }
 .authcard-charter {
   text-align: center;
@@ -1603,8 +1733,16 @@ body:has(.ops-shell) #main-content { width: 100%; }
  *
  * `.mmm-frame` hit this exact bug and mmm.css documents it at length; this is
  * the same fix for the same reason, scoped the same way the rules above are,
- * so every other route keeps its page-enter transition. */
-body:has(.ops-shell) .site-shell > main {
+ * so every other route keeps its page-enter transition.
+ *
+ * THIRD occurrence, found the same way on 2026-08-19: `#wt-wrap`, the
+ * /walkthrough deck. Same signature — `position: fixed; inset: 0` measuring
+ * 0px tall — and the same visible result, a page that renders as nothing at
+ * all while every check passes and no error is logged. Any full-viewport
+ * fixed shell rendered inside `#main-content` will hit this; it is the page
+ * transition that is unusual, not the shell. */
+body:has(.ops-shell) .site-shell > main,
+body:has(#wt-wrap) .site-shell > main {
   animation: none !important;
   transform: none !important;
 }
@@ -1649,7 +1787,7 @@ body:has(.ops-shell) .site-shell > main {
 .status-note-error {
   border-color: rgba(255,90,90,0.24);
   background: rgba(255,90,90,0.1);
-  color: #ffd8d8;
+  color: var(--danger-text);
 }
 .admin-console {
   display: grid;
@@ -1735,7 +1873,7 @@ body:has(.ops-shell) .site-shell > main {
 }
 .admin-health-status.warn {
   background: rgba(245, 158, 11, 0.16);
-  color: #fde68a;
+  color: var(--warning-text);
 }
 .admin-health-grid {
   display: grid;
@@ -1759,7 +1897,7 @@ body:has(.ops-shell) .site-shell > main {
   border: 1px solid rgba(255,184,74,0.22);
   border-radius: 999px;
   background: rgba(255,184,74,0.1);
-  color: #ffe2b0;
+  color: var(--warning-text);
   padding: 0.35rem 0.7rem;
   font-size: 0.7813rem;
   font-weight: 800;
@@ -1799,7 +1937,7 @@ body:has(.ops-shell) .site-shell > main {
   color: var(--muted);
 }
 .admin-diagnostic-row em {
-  color: #ffe2b0;
+  color: var(--warning-text);
   font-style: normal;
 }
 .admin-health-card {
@@ -2164,7 +2302,7 @@ body:has(.ops-shell) .site-shell > main {
   font-size: 0.7813rem;
 }
 .track-scan-layer-note-flag {
-  color: #ff9d5c;
+  color: var(--danger-text);
 }
 .track-scan-final {
   margin-top: 0.4rem;
@@ -2316,7 +2454,7 @@ body:has(.ops-shell) .site-shell > main {
 .media-player-button {
   border-color: var(--hair-80);
   background: var(--hair-45);
-  color: #f3f8ff;
+  color: var(--ink);
 }
 .button:hover,
 .button:focus-visible {
@@ -2348,7 +2486,7 @@ body:has(.ops-shell) .site-shell > main {
 .fan-playlist-create input {
   border-radius: 18px;
   border: 1px solid var(--hair-80);
-  color: #f4f8ff;
+  color: var(--ink);
   box-shadow: inset 0 1px 0 var(--hair-30);
 }
 .field input:focus,
@@ -2468,13 +2606,28 @@ body:has(.ops-shell) .site-shell > main {
 
 /* Current iHYPE launch scheme: dark signal grid, restrained glass panels, gradient action language. */
 
+/*
+ * The site ground.
+ *
+ * This rule used to hardcode a purple-black gradient, near-white ink and
+ * "Avenir Next" — a retired launch scheme, still the LAST `body` rule in the
+ * file and therefore still the winner. Two consequences it hid in plain
+ * sight: every public page painted a ground the token system did not choose
+ * (which is why `[data-theme="light"] body` exists at all — it was written to
+ * counteract this rule, not to define light mode), and the whole site's body
+ * copy rendered in a font Design System 8 does not name. Same duplicate-rule
+ * failure as the `.authcard-*` block: valid CSS, no error, later wins.
+ *
+ * It paints from tokens now, so a theme changes the ground by changing its
+ * tokens and nothing has to be counteracted anywhere.
+ */
 body {
   background:
-    radial-gradient(circle at 8% 16%, rgba(255, 68, 45, 0.2), transparent 24rem),
-    radial-gradient(circle at 92% 35%, rgba(36, 218, 225, 0.16), transparent 30rem),
-    linear-gradient(115deg, #0d0610 0%, #060813 48%, #051014 100%);
-  color: #f5f3ff;
-  font-family: "Avenir Next", Montserrat, "Segoe UI", sans-serif;
+    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), 0.10), transparent 24rem),
+    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), 0.08), transparent 30rem),
+    var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
 }
 
 .site-shell {
@@ -2509,7 +2662,12 @@ body {
   top: 0;
   z-index: 50;
   border-bottom: 1px solid var(--hair-80);
-  background: rgba(4, 6, 15, 0.86);
+  /* Composed from the ground's own triplet rather than a navy literal. The
+     literal was #0b1220 at .86 in every theme, so the public header stayed a
+     dark navy bar across the top of the cream console board — the one piece
+     of chrome on every marketing page, wrong on all of them. Each theme
+     restates --bg-base-rgb, so this follows the ground it sits on. */
+  background: rgba(var(--bg-base-rgb), 0.86);
   backdrop-filter: blur(22px);
 }
 
@@ -2518,14 +2676,16 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  color: #fff;
+  /* Follows the ground, same reason as .nav above. */
+  color: var(--ink);
   font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: 0.17em;
   line-height: 1;
   text-transform: uppercase;
-  text-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  /* No lift shadow: it was a glow for white type on a navy bar, and under a
+     theme where the wordmark is dark ink on cream it only smears the letters. */
 }
 
 .nav-logo {
@@ -2533,12 +2693,12 @@ body {
 }
 
 .nav-logo-word {
-  color: #fff;
+  color: var(--ink);
   transition: color 150ms;
 }
 
 .nav-logo-dot {
-  color: var(--accent, var(--accent));
+  color: var(--accent-text);
   transition: color 150ms;
 }
 
@@ -2677,7 +2837,7 @@ body {
   width: 19px;
   height: 19px;
   margin-top: 2px;
-  accent-color: var(--accent, var(--accent));
+  accent-color: var(--accent-text);
 }
 
 .a11y-option strong {
@@ -2959,7 +3119,7 @@ html.high-contrast p {
 }
 /* Playback failure state for the dock's status line. Uses the accent rather
    than a new colour token so it reads as "attention" in both themes. */
-.site-dock-artist.site-dock-error { color: var(--accent, var(--accent)); }
+.site-dock-artist.site-dock-error { color: var(--accent-text); }
 .site-dock-artist {
   font-size: 0.7813rem;
   color: rgba(242,237,232,.45);
@@ -3284,7 +3444,7 @@ textarea { min-height: 44px; }
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  color: var(--accent, var(--accent));
+  color: var(--accent-text);
   transition: height .2s ease, opacity .2s ease;
 }
 .pull-to-refresh-spinner {
@@ -3424,7 +3584,12 @@ a.ihype-card {
 .ihype-btn-ghost {
   padding: 11px 16px;
   background: transparent;
-  color: var(--ink-a65);
+  /* a85, not a65. This is the "decline" half of every accept/decline pair on
+     the site — including the cookie banner's "Essential only", which every
+     first-time visitor sees. At .65 over the banner's own surface it reads as
+     the greyed-out option rather than the equal one, which is both a
+     legibility problem and the wrong thing to imply about a consent choice. */
+  color: var(--ink-a85);
   border: 1px solid var(--hair-120);
   border-radius: 8px;
   font-size: 0.8125rem;
@@ -3635,7 +3800,7 @@ h2 {
   padding: 10px 18px;
   border-radius: 8px;
   background: var(--accent, var(--accent));
-  color: #fff;
+  color: var(--ink-on-accent);
   font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
   font-weight: 800;
   font-size: 0.85rem;
@@ -3777,6 +3942,13 @@ h2 {
   --fan-entry-paper: var(--ink);
   --fan-entry-teal: var(--role-venue);
   --fan-entry-orange: var(--accent);
+  /* The same split the rest of the codebase makes, made here too: this local
+     alias was ONE name doing both jobs, which is how the hero headline ended
+     up painting #ff5029 on the cream board at 2.48:1 — under even the 3:1
+     large-text bar — while every guard passed, because the guards look for
+     `var(--accent)` and this says `var(--fan-entry-orange)`. Fill below,
+     copy here. */
+  --fan-entry-orange-text: var(--accent-text);
   --fan-entry-ground: var(--bg);
   width: 100%;
   min-height: 100svh;
@@ -3874,7 +4046,7 @@ h2 {
   letter-spacing: -.065em;
   text-wrap: balance;
 }
-.fan-entry-copy h1 span { color: var(--fan-entry-orange); }
+.fan-entry-copy h1 span { color: var(--fan-entry-orange-text); }
 .fan-entry-lead {
   max-width: 49ch;
   margin: clamp(22px,2.2vw,30px) 0 0;
@@ -3912,7 +4084,7 @@ h2 {
   font: 600 clamp(0.7813rem,.58vw,.78rem)/1.5 var(--f-m);
   letter-spacing: .06em;
 }
-.fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange); font-style: normal; }
+.fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange-text); font-style: normal; }
 .fan-entry-visual {
   min-width: 0;
   position: relative;
@@ -3963,7 +4135,7 @@ h2 {
 .fan-entry-steps article { min-width: 0; padding: 4px clamp(18px,3vw,42px); display: flex; align-items: flex-start; gap: 16px; }
 .fan-entry-steps article:first-child { padding-left: 0; }
 .fan-entry-steps article + article { border-left: 1px solid var(--hair-100); }
-.fan-entry-steps article > span { color: var(--fan-entry-orange); font: 700 0.7813rem/1.2 var(--f-m); letter-spacing: .12em; }
+.fan-entry-steps article > span { color: var(--fan-entry-orange-text); font: 700 0.7813rem/1.2 var(--f-m); letter-spacing: .12em; }
 .fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1 var(--f-d); text-transform: uppercase; }
 .fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: var(--ink-a65); font-size: .82rem; line-height: 1.45; }
 .fan-entry-stats {
@@ -4057,7 +4229,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .site-dock-art { width: 58px; height: 58px; border-radius: 10px; transition: width .3s ease, height .3s ease; }
 .site-dock-settled .site-dock-art { width: 42px; height: 42px; }
 .site-dock-meta { max-width: 230px; overflow: hidden; }
-.site-dock-now-playing { margin-bottom: 3px; color: var(--accent-3,var(--role-venue)); font: 700 8px/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
+.site-dock-now-playing { margin-bottom: 3px; color: var(--accent-3,var(--role-venue)); font: 700 0.625rem/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
 .site-dock-title span,
 .site-dock-artist span { display: inline-block; min-width: 100%; }
 .site-dock-title:hover span,

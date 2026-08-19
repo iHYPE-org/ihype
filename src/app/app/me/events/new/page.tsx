@@ -299,7 +299,7 @@ export default function EventsNewPage() {
               </div>
               <div style={{ display: 'flex', gap: 0 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent)' }}>{fmt$(gross * .7)}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-text)' }}>{fmt$(gross * .7)}</div>
                   <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitArtist', '70% Artist')}</div>
                 </div>
                 <div style={{ flex: 1 }}>
@@ -319,7 +319,7 @@ export default function EventsNewPage() {
             <div className="card">
               <div className="label" style={{ marginBottom: 12 }}>{t('eventsNewPage.payoutPreviewLabel', 'Payout preview · per ticket')}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
-                <span style={{ color: 'var(--accent)' }}>{t('eventsNewPage.payoutArtist', 'Artist · 70%')}</span><b>{fmtCents(priceDollars * .7)}</b>
+                <span style={{ color: 'var(--accent-text)' }}>{t('eventsNewPage.payoutArtist', 'Artist · 70%')}</span><b>{fmtCents(priceDollars * .7)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0' }}>
                 <span style={{ color: 'var(--role-venue)' }}>{t('eventsNewPage.payoutVenue', 'Venue · 20%')}</span><b>{fmtCents(priceDollars * .2)}</b>
@@ -414,7 +414,7 @@ export default function EventsNewPage() {
                 ⚠ {t('eventsNewPage.reviewWarningTitle', 'Review before you lock')}
               </div>
               <div style={{ fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
-                {t('eventsNewPage.reviewWarningLead', 'Publishing freezes the charter:')} <b style={{ color: 'var(--ink)' }}>{t('eventsNewPage.chartersSplit', '70% artist · 20% venue · 10% promoters · 0% iHYPE')}</b> {t('eventsNewPage.reviewWarningAt', 'at')} <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> {t('eventsNewPage.reviewWarningFaceValue', 'face value,')} {cap || 0} {t('eventsNewPage.reviewWarningTickets', 'serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the')} <Link href="/ticket-policy" style={{ color: 'var(--accent)' }}>{t('eventsNewPage.ticketPolicyLink', 'ticket policy')}</Link> {t('eventsNewPage.reviewWarningTerms', 'for refund and transfer terms.')}
+                {t('eventsNewPage.reviewWarningLead', 'Publishing freezes the charter:')} <b style={{ color: 'var(--ink)' }}>{t('eventsNewPage.chartersSplit', '70% artist · 20% venue · 10% promoters · 0% iHYPE')}</b> {t('eventsNewPage.reviewWarningAt', 'at')} <b style={{ color: 'var(--ink)' }}>${priceDollars || 0}</b> {t('eventsNewPage.reviewWarningFaceValue', 'face value,')} {cap || 0} {t('eventsNewPage.reviewWarningTickets', 'serialized QR tickets. The split can never change after the first sale. Resale is limited to face value — see the')} <Link href="/ticket-policy" style={{ color: 'var(--accent-text)' }}>{t('eventsNewPage.ticketPolicyLink', 'ticket policy')}</Link> {t('eventsNewPage.reviewWarningTerms', 'for refund and transfer terms.')}
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--role-venue-rgb),.2)', background: 'rgba(var(--role-venue-rgb),.04)', marginBottom: 14 }}>
@@ -423,7 +423,7 @@ export default function EventsNewPage() {
               </div>
             </div>
             <div aria-atomic="true" aria-live="polite">
-              {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
+              {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
             </div>
             <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
               {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}

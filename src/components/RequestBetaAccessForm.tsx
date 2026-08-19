@@ -91,7 +91,7 @@ export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
            row past the viewport. */
         .beta-access-row button { background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-display); font-weight: 700; font-size: .85rem; cursor: pointer; white-space: nowrap; }
         .beta-access-row button:disabled { opacity: .6; cursor: default; }
-        .beta-access-error { font-size: 0.7813rem; color: var(--accent); margin: 0; }
+        .beta-access-error { font-size: 0.7813rem; color: var(--accent-text); margin: 0; }
         .beta-access-sent p { margin: 0; font-size: .85rem; color: var(--ink-2); }
       `}</style>
     </form>

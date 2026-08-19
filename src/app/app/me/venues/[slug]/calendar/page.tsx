@@ -125,7 +125,7 @@ export default async function VenueCalendarPage({ params }: Props) {
             >
               {day ? (
                 <>
-                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent)' : 'var(--ink-2)' }}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', fontWeight: isToday ? 700 : 400, color: isToday ? 'var(--accent-text)' : 'var(--ink-2)' }}>
                     {day}
                   </span>
                   {dayShows.map((s) => (
@@ -163,7 +163,7 @@ export default async function VenueCalendarPage({ params }: Props) {
           <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.125rem', marginBottom: 12 }}>{t('venuesSlugCalendarPage.upcomingShowsHeading', 'Upcoming shows')}</h2>
           {shows.map((s) => (
             <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '12px 0', borderBottom: '1px solid var(--line)' }}>
-              <div style={{ minWidth: 60, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--accent)' }}>
+              <div style={{ minWidth: 60, fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '1.25rem', color: 'var(--accent-text)' }}>
                 {s.startsAt.getDate()}
               </div>
               <div>

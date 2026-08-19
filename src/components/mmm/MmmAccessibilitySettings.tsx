@@ -33,7 +33,7 @@ import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
 export function MmmAccessibilitySettings() {
   const { t, locale, setLocale } = useI18n();
   const { settings, updateSetting } = useAccessibilitySettings();
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'console' | 'dark' | 'light'>('console');
   // The reader's SYSTEM text size, which multiplies with the control below.
   // Without this the card's percentage would be a half-truth on a phone: a
   // reader at iOS 130% and the app at 100% would be told "100%" while looking
@@ -46,14 +46,12 @@ export function MmmAccessibilitySettings() {
 
   useEffect(() => {
     const stored = window.localStorage.getItem('theme');
-    setTheme(
-      stored === 'dark' || stored === 'light'
-        ? stored
-        : window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark',
-    );
+    // Mirrors the bootstrap in layout.tsx: console is the default ground, and
+    // the fallback is a constant rather than the OS preference.
+    setTheme(stored === 'dark' || stored === 'light' || stored === 'console' ? stored : 'console');
   }, []);
 
-  function applyTheme(next: 'dark' | 'light') {
+  function applyTheme(next: 'console' | 'dark' | 'light') {
     setTheme(next);
     window.localStorage.setItem('theme', next);
     document.documentElement.setAttribute('data-theme', next);
@@ -84,6 +82,7 @@ export function MmmAccessibilitySettings() {
           <MmmSegmentedTabs
             className="mmm-settings-card-controls"
             items={[
+              { id: 'console', label: t('appShell.a11y.console', 'Console'), active: theme === 'console', onSelect: () => applyTheme('console') },
               { id: 'dark', label: t('appShell.a11y.dark', 'Dark'), active: theme === 'dark', onSelect: () => applyTheme('dark') },
               { id: 'light', label: t('appShell.a11y.light', 'Light'), active: theme === 'light', onSelect: () => applyTheme('light') },
             ]}

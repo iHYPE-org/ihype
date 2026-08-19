@@ -142,7 +142,7 @@ export function FanMailButton({
         .fm-field input, .fm-field textarea { font: inherit; font-size: 0.8125rem; font-weight: 400; color: var(--ink); background: var(--line); border: 1px solid var(--hair-100); border-radius: 9px; padding: 10px 12px; resize: vertical; }
         .fm-field input:focus, .fm-field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
         .fm-status { font-size: 0.7813rem; margin: 0; }
-        .fm-status-error { color: var(--accent); }
+        .fm-status-error { color: var(--accent-text); }
         .fm-status-ok { color: var(--ink); }
         .fm-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); }
         .fm-btn { padding: 9px 16px; border-radius: 8px; font-size: 0.8125rem; font-weight: 700; border: 1px solid var(--hair-100); background: var(--line); color: var(--ink); cursor: pointer; }

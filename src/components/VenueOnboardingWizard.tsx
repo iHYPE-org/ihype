@@ -330,7 +330,7 @@ export default function VenueOnboardingWizard({
         .von-label { display: block; font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin: 0 0 6px; }
         .von-input { width: 100%; box-sizing: border-box; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line-2); background: var(--bg-3); color: var(--ink); font-size: 0.9375rem; margin-bottom: 14px; }
         .von-select { appearance: auto; }
-        .von-error { color: var(--accent); font-size: 0.8125rem; margin: -6px 0 14px; }
+        .von-error { color: var(--accent-text); font-size: 0.8125rem; margin: -6px 0 14px; }
         .von-btn { display: flex; align-items: center; justify-content: center; width: 100%; text-decoration: none; padding: 12px 20px; border-radius: var(--radius-md); font-size: 0.875rem; font-weight: 700; min-height: 44px; border: none; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
         .von-btn:disabled { opacity: .5; cursor: not-allowed; }
         .von-btn-solid { background: var(--role-venue); color: #08211f; }

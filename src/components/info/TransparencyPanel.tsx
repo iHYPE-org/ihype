@@ -70,7 +70,7 @@ export async function TransparencyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-text)' }}>{t('transparencyPage.howItWorksEyebrow', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('transparencyPage.fullPictureHeading', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[

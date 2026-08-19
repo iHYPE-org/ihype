@@ -84,7 +84,7 @@ export function SendBookingRequestButton({ toProfileId, defaultMessage }: { toPr
         .send-booking-textarea { width: 100%; box-sizing: border-box; font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink); background: var(--bg2, var(--bg)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; }
         .send-booking-actions { display: flex; gap: 8px; }
         .send-booking-done { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--role-venue); }
-        .send-booking-error { font-size: 0.7813rem; color: var(--accent); margin: 0; }
+        .send-booking-error { font-size: 0.7813rem; color: var(--accent-text); margin: 0; }
       `}</style>
     </div>
   );

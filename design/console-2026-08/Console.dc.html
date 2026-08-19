@@ -1,0 +1,2585 @@
+<title>Tuner Dial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;600&family=Work+Sans:wght@400;500;600&display=swap">
+
+<style>
+  /* ── Page chrome: theme-aware. The phone inside it never is — the app is
+     navy, and a mockup that repainted the product would be lying. ───────── */
+  :root {
+    --page-bg: #eef0f4;
+    --page-surface: #ffffff;
+    --page-ink: #14192a;
+    --page-ink-2: #56607a;
+    --page-line: rgba(20, 25, 42, .14);
+
+    /* iHYPE Design System 8 — verbatim, not re-derived. */
+    --bg: #0b1220;
+    --bg-2: #121b2e;
+    --bg-3: #18233a;
+    --ink: #eef1f6;
+    --ink-a65: rgba(238, 241, 246, .65);
+    --ink-a35: rgba(238, 241, 246, .35);
+    --ink-a12: rgba(238, 241, 246, .12);
+    --accent: #ff5029;
+    --venue: #22e5d4;
+    --fan: #b983ff;
+    --ink-on-accent: #0b1220;
+    --lamp: #ffb84a;
+
+    --f-d: 'Bricolage Grotesque', 'Trebuchet MS', sans-serif;
+    --f-b: 'Work Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    --f-m: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+    --f-s: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+
+    /* Film grain, as an inline SVG filter — no external asset, and it is the
+       single cheapest thing that stops flat CSS reading as flat CSS. */
+    --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --page-bg: #07090f;
+      --page-surface: #10141f;
+      --page-ink: #e7eaf2;
+      --page-ink-2: #98a2b8;
+      --page-line: rgba(231, 234, 242, .14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --page-bg: #07090f;
+    --page-surface: #10141f;
+    --page-ink: #e7eaf2;
+    --page-ink-2: #98a2b8;
+    --page-line: rgba(231, 234, 242, .14);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--page-bg);
+    color: var(--page-ink);
+    font-family: var(--f-b);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(24px, 5vw, 56px) clamp(18px, 4vw, 32px) 72px;
+    display: flex;
+    flex-direction: column;
+    gap: 34px;
+  }
+
+  /* ── Masthead ───────────────────────────────────────────────────────── */
+  .eyebrow {
+    font-family: var(--f-m);
+    font-size: .75rem;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 10px;
+  }
+  h1 {
+    font-family: var(--f-d);
+    font-weight: 800;
+    font-size: clamp(2.1rem, 5vw, 3.1rem);
+    line-height: 1.03;
+    letter-spacing: -.02em;
+    margin: 0 0 14px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 1.0625rem;
+    color: var(--page-ink-2);
+  }
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 18px;
+    padding: 7px 14px;
+    border: 1px solid var(--page-line);
+    border-radius: 999px;
+    font-family: var(--f-m);
+    font-size: .7rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--page-ink-2);
+  }
+  .status::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+
+  .stage {
+    display: grid;
+    grid-template-columns: minmax(0, 393px) minmax(0, 1fr);
+    gap: clamp(28px, 5vw, 56px);
+    align-items: start;
+  }
+  @media (max-width: 900px) {
+    .stage { grid-template-columns: minmax(0, 1fr); justify-items: center; }
+  }
+
+  /* ── The phone ──────────────────────────────────────────────────────── */
+  .phone {
+    width: min(393px, 94vw);
+    aspect-ratio: 393 / 852;
+    background: var(--bg);
+    border-radius: 44px;
+    border: 1px solid rgba(238, 241, 246, .1);
+    box-shadow: 0 0 0 10px #05080f, 0 40px 80px -30px rgba(0, 0, 0, .85);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    color: var(--ink);
+    /* The base every `em` inside the phone resolves against. The Text size
+       toggle multiplies THIS, which is how the real app's --ihype-text-scale
+       behaves against :root — and why the type inside had to stop being rem,
+       which is root-relative and ignored the toggle completely. */
+    font-size: 16px;
+    /* How much of the phone the bottom chrome owns. The player sheet stops
+       here AND hides itself past here, so the two can never disagree.
+       MEASURED at runtime, not guessed: the hardcoded 150 was 6px short of the
+       real 156, which left a sliver of the sheet over the chrome — and the
+       Text size toggle grows the chrome well past either number. */
+    --chrome-h: 156px;
+  }
+
+  /* Grain sits over the lot. 3% is the difference between "vintage" and
+     "dirty" — it should be felt rather than seen. */
+  .phone::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 9;
+    pointer-events: none;
+    background-image: var(--grain);
+    background-size: 140px 140px;
+    opacity: .038;
+    mix-blend-mode: overlay;
+  }
+
+  .notch {
+    position: absolute;
+    top: 11px; left: 50%;
+    transform: translateX(-50%);
+    width: 104px; height: 26px;
+    background: #05080f;
+    border-radius: 999px;
+    z-index: 8;
+  }
+
+  /* ── The browsing screen ────────────────────────────────────────────── */
+  .screen {
+    flex: 1;
+    min-height: 0;
+    padding: 58px 20px 8px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .screen-eyebrow {
+    font-family: var(--f-m);
+    font-size: .5625em;   /* 9px — the tracked mono metadata scale */
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--venue);
+    margin: 0;
+  }
+  .screen-title {
+    font-family: var(--f-d);
+    font-weight: 800;
+    font-size: 1.75em;
+    line-height: 1.05;
+    letter-spacing: -.02em;
+    margin: 8px 0 0;
+  }
+  .screen-sub {
+    margin: 6px 0 0;
+    font-size: .8125em;   /* 13px — clears the 12.5px body floor */
+    color: var(--ink-a65);
+  }
+
+  .panel { display: none; flex-direction: column; min-height: 0; }
+  .panel[data-active="true"] { display: flex; animation: rise 340ms cubic-bezier(.2, .8, .3, 1) both; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .rows { display: flex; flex-direction: column; gap: 8px; overflow: hidden; margin-top: 14px; }
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 13px;
+    background: var(--bg-2);
+    border: 1px solid var(--ink-a12);
+    border-radius: 14px;
+  }
+  .row-art {
+    width: 38px; height: 38px;
+    flex: none;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--accent), #7a2412);
+  }
+  .row.alt .row-art { background: linear-gradient(135deg, var(--venue), #0d6b64); }
+  .row.alt2 .row-art { background: linear-gradient(135deg, var(--fan), #4a2a80); }
+  .row-body { min-width: 0; flex: 1; }
+  .row-title {
+    font-size: .875em;
+    font-weight: 600;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .row-meta {
+    font-family: var(--f-m);
+    font-size: .625em;    /* 10px, tracked — metadata, not content */
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-a65);
+    margin: 2px 0 0;
+  }
+  .row-num {
+    font-family: var(--f-m);
+    font-size: .8125em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-a35);
+    flex: none;
+  }
+
+  /* ══ The chart ═══════════════════════════════════════════════════════
+     MAP is the base layer of the shell, so in this cabinet it is not a slippy
+     tile map with a sepia filter over it — it is a PRINTED CHART: engraved
+     coastline, bathymetry in the bay, a street grid, a compass rose and a
+     cartouche. Drawn rather than tiled, which also means no external tile
+     host, no attribution bar, and no CSP allowance to re-open.
+
+     Ink on cream again, for the same reason the dial is: this is the most
+     legible thing the app could put under a place name.                    */
+  .map-wrap {
+    position: absolute;
+    inset: 0 0 var(--chrome-h) 0;
+    z-index: 2;
+    display: none;
+    background: #ece0c4;
+    overflow: hidden;
+  }
+  .map-wrap[data-on="true"] { display: block; }
+  .map-wrap { user-select: none; -webkit-user-select: none; touch-action: none; }
+  .map-wrap canvas { display: block; width: 100%; height: 100%; }
+  /* Paper tooth over the whole chart, and a printer's vignette at the edges. */
+  .map-wrap::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image: var(--grain);
+    background-size: 130px 130px;
+    opacity: .11;
+    mix-blend-mode: multiply;
+  }
+  .map-wrap::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 2;
+    box-shadow: inset 0 0 70px rgba(74, 48, 14, .3);
+  }
+
+  /* Brass zoom controls, screwed to the sheet. */
+  .map-zoom {
+    position: absolute;
+    right: 12px; bottom: 14px;
+    z-index: 3;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .map-zoom button {
+    width: 44px; height: 44px;
+    border-radius: 3px;
+    border: 2px solid #8a6a2c;
+    background: linear-gradient(180deg, #f0e2bc, #d9c79a);
+    color: #2a1c08;
+    font-family: var(--f-m);
+    font-size: 1.125em;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 252, 235, .9), 0 2px 5px rgba(40, 22, 4, .45);
+  }
+  .map-zoom button:hover { background: linear-gradient(180deg, #fff3d4, #e6d3a6); }
+  .map-zoom button:active { transform: translateY(1px); }
+  .map-zoom button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* The place card: a printed slip laid on the chart. */
+  .place-card {
+    position: absolute;
+    left: 14px; right: 14px; bottom: 14px;
+    z-index: 4;
+    padding: 14px 16px 13px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, #f6ecd0, #e6d8b4);
+    border: 1px solid #8a6a2c;
+    box-shadow: 0 10px 26px -8px rgba(30, 16, 2, .7), inset 0 1px 0 rgba(255, 252, 235, .9);
+    animation: slipIn 260ms cubic-bezier(.2, .9, .3, 1.05) both;
+  }
+  @keyframes slipIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .place-name {
+    font-family: var(--f-s);
+    font-size: 1.375em;
+    line-height: 1.06;
+    color: #1c1408;
+    margin: 0;
+  }
+  .place-meta {
+    font-family: var(--f-m);
+    font-size: .8125em;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(28, 20, 8, .72);
+    margin: 5px 0 0;
+  }
+  .place-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .place-actions button {
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 2px;
+    font-family: var(--f-m);
+    font-size: .75em;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .place-go {
+    flex: 1;
+    border: 2px solid #8a6a2c;
+    background: linear-gradient(180deg, #ff6b45, var(--accent) 55%, #c53a17);
+    color: #2a0d03;
+  }
+  .place-close {
+    border: 2px solid #8a6a2c;
+    background: transparent;
+    color: rgba(28, 20, 8, .8);
+  }
+  .place-actions button:focus-visible { outline: 2px solid #1c1408; outline-offset: 2px; }
+
+  /* The arc nav, fanning off the iH knob. */
+  .arc[hidden] { display: none; }
+  .arc {
+    position: absolute;
+    left: 0; bottom: 52px;
+    z-index: 6;
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 7px;
+  }
+  .arc-item {
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 2px;
+    border: 2px solid #8a6a2c;
+    background: linear-gradient(180deg, #f0e2bc, #d9c79a);
+    color: #2a1c08;
+    font-family: var(--f-m);
+    font-size: .75em;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 3px 9px -2px rgba(30, 16, 2, .7), inset 0 1px 0 rgba(255, 252, 235, .9);
+    animation: fanOut 240ms cubic-bezier(.2, .9, .3, 1.2) both;
+    animation-delay: calc(var(--i) * 45ms);
+  }
+  @keyframes fanOut {
+    from { opacity: 0; transform: translateY(12px) scale(.9); }
+    to   { opacity: 1; transform: none; }
+  }
+  .arc-item:hover { background: linear-gradient(180deg, #fff3d4, #e6d3a6); }
+  .arc-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* ══ The console ═════════════════════════════════════════════════════
+     A 1950s hi-fi console, not a 70s receiver: walnut cheeks, grille cloth,
+     a cream slide-rule dial behind brass, and bakelite knobs.
+
+     The palette shift is the point and it is also the accessible choice.
+     Real dials were cream with black engraving BECAUSE that is what stays
+     readable under a lamp at arm's length — #1c1408 on #f0dfb8 measures about
+     13:1, against the 4.6:1 the dark-glass version managed. Leaning into the
+     period made the readability thesis stronger, not weaker.
+
+     `--accent` #ff5029 stays the pointer, which is what a tuning pointer
+     actually was. The role hues move to the tick that marks each station. */
+  .chrome {
+    flex: none;
+    padding: 8px 10px 13px;
+    position: relative;
+    z-index: 5;
+    background: linear-gradient(to top, rgba(11, 18, 32, .98) 58%, rgba(11, 18, 32, 0));
+  }
+
+  /* Walnut. Grain is three periods of irregular stripe over a warm base —
+     one period reads as corduroy, three reads as wood. */
+  .console {
+    position: relative;
+    border-radius: 7px;
+    padding: 7px;
+    background:
+      repeating-linear-gradient(88deg,
+        rgba(30, 14, 4, .30) 0 1px, transparent 1px 4px,
+        rgba(94, 56, 26, .22) 4px 6px, transparent 6px 13px),
+      repeating-linear-gradient(91deg,
+        rgba(20, 9, 2, .22) 0 2px, transparent 2px 9px),
+      repeating-linear-gradient(89deg,
+        rgba(120, 74, 38, .16) 0 1px, transparent 1px 27px),
+      linear-gradient(180deg, #6b4426 0%, #52301a 30%, #432612 46%, #3a2110 60%, #4a2c17 74%, #5c3a1f 90%, #6f4728 100%);
+    background-color: #4a2b16;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 214, 160, .34),
+      inset 0 -1px 0 rgba(0, 0, 0, .7),
+      0 4px 14px -4px rgba(0, 0, 0, .85),
+      0 1px 0 rgba(255, 214, 160, .1);
+  }
+
+  /* The face: grille cloth, woven. Two crossed periods at low contrast — a
+     single direction reads as pinstripe, crossed reads as textile. */
+  .console-face {
+    position: relative;
+    border-radius: 3px;
+    padding: 6px 8px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 9px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(0, 0, 0, .5) 0 1px, rgba(214, 186, 140, .05) 1px 3px),
+      repeating-linear-gradient(0deg,
+        rgba(0, 0, 0, .42) 0 1px, rgba(214, 186, 140, .045) 1px 3px),
+      linear-gradient(180deg, #2b2118, #191209 55%, #241a11);
+    box-shadow:
+      inset 0 2px 5px rgba(0, 0, 0, .85),
+      inset 0 -1px 0 rgba(255, 214, 160, .1);
+  }
+
+  /* ── Bakelite knobs with brass collars ─────────────────────────────── */
+  .knob {
+    width: 46px; height: 46px;
+    flex: none;
+    user-select: none;
+    -webkit-user-select: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    border-radius: 50%;
+    position: relative;
+    cursor: pointer;
+    background:
+      radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .5), transparent 70%),
+      radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+    box-shadow:
+      /* Brass collar. */
+      0 0 0 2px #8a6a2c,
+      0 0 0 3px #c9a54e,
+      0 0 0 4px #6d5222,
+      inset 0 1px 0 rgba(255, 226, 175, .4),
+      inset 0 -3px 9px rgba(0, 0, 0, .8),
+      0 4px 10px -2px rgba(0, 0, 0, .85);
+    display: grid;
+    place-items: center;
+    transition: transform 220ms cubic-bezier(.34, 1.4, .5, 1);
+  }
+  /* Fluted rim, the way a bakelite control knob was moulded. */
+  .knob::before {
+    content: "";
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: repeating-conic-gradient(
+      from 0deg,
+      rgba(0, 0, 0, .42) 0deg 3deg,
+      rgba(255, 214, 160, .12) 3deg 6deg,
+      transparent 6deg 15deg
+    );
+    -webkit-mask-image: radial-gradient(circle, transparent 58%, #000 64%);
+    mask-image: radial-gradient(circle, transparent 58%, #000 64%);
+  }
+  /* Index mark, brass. */
+  .knob::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 5px;
+    width: 2px; height: 7px;
+    margin-left: -1px;
+    border-radius: 1px;
+    background: #e0c078;
+    box-shadow: 0 0 3px rgba(224, 192, 120, .8);
+  }
+  .knob:active { transform: scale(.94); }
+  .knob:focus-visible { outline: 2px solid #e0c078; outline-offset: 5px; }
+
+  .knob-face, .knob-play {
+    position: relative;
+    z-index: 2;
+    font-family: var(--f-s);
+    font-size: .9375em;
+    color: #f2ddb4;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .9);
+  }
+  .knob-play { font-family: var(--f-b); font-size: .8125em; }
+
+  /* The pilot lamp still lives in the play knob, now as a warm bulb. */
+  .transport[data-playing="true"] {
+    background:
+      radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 255, 255, .55), transparent 70%),
+      radial-gradient(circle at 38% 30%, #ffb08c, var(--accent) 56%, #8d2f13 100%);
+    box-shadow:
+      0 0 0 2px #8a6a2c,
+      0 0 0 3px #c9a54e,
+      0 0 0 4px #6d5222,
+      inset 0 1px 0 rgba(255, 255, 255, .45),
+      inset 0 -3px 9px rgba(0, 0, 0, .5),
+      0 0 20px -1px var(--accent),
+      0 4px 10px -2px rgba(0, 0, 0, .8);
+  }
+
+  .nav-mount, .transport-mount { position: relative; width: 46px; height: 46px; }
+
+  .nav-pip {
+    position: absolute;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: #e0c078;
+    top: 21px; left: 21px;
+    opacity: 0;
+    transition: transform 300ms cubic-bezier(.2, .9, .3, 1.3), opacity 220ms ease;
+    pointer-events: none;
+  }
+  .nav-mount:hover .nav-pip { opacity: 1; }
+  .nav-mount:hover .nav-pip:nth-child(2) { transform: translate(1px, -30px); }
+  .nav-mount:hover .nav-pip:nth-child(3) { transform: translate(22px, -22px); }
+  .nav-mount:hover .nav-pip:nth-child(4) { transform: translate(31px, -2px); }
+
+  /* ── The dial: cream glass in a brass bezel ─────────────────────────
+     Lit from behind by a warm bulb, which on cream glass means the paper
+     glows rather than the ink — the opposite of the dark-glass version.    */
+  .dial {
+    position: relative;
+    min-width: 0;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    border-radius: 3px;
+    padding: 5px 12px 4px;
+    overflow: hidden;
+    cursor: grab;
+    touch-action: none;
+    background:
+      radial-gradient(150% 200% at 50% 130%, #fff3d4 0%, #f0dfb8 42%, #e2cea0 78%, #d4bd8c 100%);
+    background-color: #eeddb4;
+    box-shadow:
+      /* Brass bezel, then the glass sitting down inside it. */
+      0 0 0 1px #8a6a2c,
+      0 0 0 3px #c9a54e,
+      0 0 0 4px #6d5222,
+      inset 0 2px 5px rgba(92, 62, 20, .45),
+      inset 0 -1px 0 rgba(255, 252, 235, .8);
+  }
+  .dial:active { cursor: grabbing; }
+  .dial:focus-visible { outline: 2px solid #ff5029; outline-offset: 5px; }
+
+  /* Curved reflection on the glass over the cream. */
+  .dial::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(150% 90% at 18% -34%, rgba(255, 255, 255, .55), transparent 56%),
+      linear-gradient(174deg, rgba(255, 255, 255, .3) 0%, transparent 30%);
+  }
+  /* Foxing: the faint age-spotting of old dial paper. */
+  .dial::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    background-image: var(--grain);
+    background-size: 120px 120px;
+    opacity: .09;
+    mix-blend-mode: multiply;
+  }
+
+  /* The tuned station, engraved. Serif on cream is the classic move and it
+     measures ~13:1, which is the most legible thing in the whole mockup. */
+  .dial-station {
+    display: block;
+    font-family: var(--f-s);
+    font-size: 1.625em;        /* 26px */
+    line-height: 1.06;
+    letter-spacing: .005em;
+    text-align: center;
+    color: #1c1408;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: opacity 170ms ease, transform 170ms ease;
+  }
+  .dial-station.swapping { opacity: 0; transform: translateY(3px); }
+
+  /* The slide-rule scale. Graduations only — the station name is already set
+     at 26px directly above, so printing it again at 9px was saying the same
+     thing twice and saying it worse the second time.
+
+     The ruling is two repeating gradients, minor and major, whose horizontal
+     background-position is driven by the drag. Because a repeating gradient
+     has no end, the scale is INFINITE in both directions for free — no
+     cloned strip to keep in sync, no seam to hide, and the stations simply
+     wrap. */
+  .dial-scale {
+    position: relative;
+    display: block;
+    height: 20px;
+    margin-top: 2px;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+  .dial-ticks {
+    position: absolute;
+    inset: 0;
+    background-image:
+      /* Major: one per station. */
+      repeating-linear-gradient(90deg, rgba(28,20,8,.85) 0 2px, transparent 2px 46px),
+      /* Minor: four between each pair. */
+      repeating-linear-gradient(90deg, rgba(28,20,8,.42) 0 1px, transparent 1px 9.2px);
+    background-size: auto 15px, auto 8px;
+    background-repeat: repeat-x, repeat-x;
+    background-position-y: 0, 0;
+    will-change: background-position;
+  }
+  /* The snap back to a station is eased; dragging is not, or it lags the thumb. */
+  .dial:not(.tuning) .dial-ticks { transition: background-position 420ms cubic-bezier(.22, 1, .3, 1); }
+
+  /* The pointer: a red hairline with a lozenge head, over the scale. */
+  .dial-needle {
+    position: absolute;
+    top: 0; bottom: 0; left: 50%;
+    width: 1.5px;
+    margin-left: -.75px;
+    background: var(--accent);
+    z-index: 3;
+    box-shadow: 0 0 3px rgba(255, 80, 41, .8);
+  }
+  .dial-needle::before {
+    content: "";
+    position: absolute;
+    top: -2px; left: 50%;
+    width: 7px; height: 7px;
+    margin-left: -3.5px;
+    border-radius: 1px;
+    background: var(--accent);
+    transform: rotate(45deg);
+    box-shadow: 0 0 4px rgba(255, 80, 41, .7);
+  }
+
+  /* ── The station readout, printed on the same dial ──────────────────
+     The player is a line on the dial rather than a second bar — the same
+     integration as before, in ink instead of amber light.                 */
+  .dial-now {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 2px;
+    padding-top: 3px;
+    border-top: 1px solid rgba(28, 20, 8, .26);
+    min-width: 0;
+  }
+  .dial-now-text {
+    font-family: var(--f-m);
+    font-size: .8125em;        /* 13px — clears the body floor */
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(28, 20, 8, .78);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+    min-width: 0;
+  }
+  /* Ticker. Only runs when the text overruns the glass, never under reduced
+     motion — where it falls back to the ellipsis. */
+  .dial-now-text[data-scroll="true"] { text-overflow: clip; }
+  .dial-now-text[data-scroll="true"] > span {
+    display: inline-block;
+    padding-right: 2.5em;
+    animation: ticker var(--ticker-dur, 12s) linear infinite;
+  }
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dial-now-text[data-scroll="true"] { text-overflow: ellipsis; }
+    .dial-now-text[data-scroll="true"] > span { animation: none; padding-right: 0; }
+  }
+
+  /* Magic-eye tuning indicator, in place of the LED meter. */
+  .vu {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 10px;
+    width: 14px;
+    flex: none;
+  }
+  .vu i {
+    flex: 1;
+    border-radius: 0;
+    height: 22%;
+    background: #6b4a12;
+    transition: height 240ms ease;
+  }
+  .vu[data-playing="true"] i { animation: vu 820ms ease-in-out infinite; background: #1c1408; }
+  .vu[data-playing="true"] i:nth-child(2) { animation-delay: 140ms; }
+  .vu[data-playing="true"] i:nth-child(3) { animation-delay: 300ms; }
+  @keyframes vu {
+    0%, 100% { height: 22%; }
+    50%      { height: 100%; }
+  }
+
+  /* ── The maker's plate ──────────────────────────────────────────────
+     A console had a badge. It also gives the walnut something to be, and it
+     is the only place a mockup can put a wordmark honestly.               */
+  .console-plate {
+    position: absolute;
+    bottom: -1px; left: 50%;
+    transform: translateX(-50%);
+    padding: 1px 9px 2px;
+    border-radius: 0 0 3px 3px;
+    font-family: var(--f-m);
+    font-size: .5625em;
+    letter-spacing: .3em;
+    text-transform: uppercase;
+    color: #2a1c08;
+    background: linear-gradient(180deg, #e6c478, #c9a54e 45%, #a5842f);
+    box-shadow: inset 0 1px 0 rgba(255, 244, 214, .7), 0 1px 2px rgba(0, 0, 0, .6);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  /* ── Gesture affordances, in brass ──────────────────────────────────── */
+  .transport-compass {
+    position: absolute;
+    inset: -12px;
+    pointer-events: none;
+    opacity: .4;
+    transition: opacity 200ms ease;
+  }
+  .transport-mount:hover .transport-compass,
+  .transport-mount:focus-within .transport-compass { opacity: .9; }
+  .transport-compass i {
+    position: absolute;
+    background: #c9a54e;
+    border-radius: 1px;
+    transition: background 180ms ease, transform 180ms ease;
+  }
+  .transport-compass i[data-dir="up"]   { width: 2px; height: 6px; top: 0; left: 50%; margin-left: -1px; }
+  .transport-compass i[data-dir="left"] { width: 6px; height: 2px; left: 0; top: 50%; margin-top: -1px; }
+  .transport-compass i[data-dir="right"]{ width: 6px; height: 2px; right: 0; top: 50%; margin-top: -1px; }
+  .transport-compass i[data-armed="true"] { background: var(--accent); transform: scale(1.7); }
+
+  .gesture-chip {
+    position: absolute;
+    bottom: 58px;
+    right: 0;
+    white-space: nowrap;
+    font-family: var(--f-m);
+    font-size: .5625em;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: #2a1c08;
+    background: linear-gradient(180deg, #e6c478, #c9a54e);
+    padding: 5px 9px;
+    border-radius: 2px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .6);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 160ms ease, transform 160ms ease;
+    pointer-events: none;
+    z-index: 3;
+  }
+  .gesture-chip[data-show="true"] { opacity: 1; transform: none; }
+
+
+  /* ══ The full player ════════════════════════════════════════════════
+     Pulled up from the transport button, and stopping above the chrome so the
+     tuner stays reachable underneath rather than being covered by an overlay
+     that only LOOKS like it stops.                                         */
+  .player {
+    position: absolute;
+    inset: 0 0 var(--chrome-h) 0;
+    z-index: 7;
+    background:
+      repeating-linear-gradient(88deg,
+        rgba(30, 14, 4, .22) 0 1px, transparent 1px 5px,
+        rgba(94, 56, 26, .14) 5px 7px, transparent 7px 15px),
+      linear-gradient(180deg, #4a2b16 0%, #34200f 34%, #1a1206 100%);
+    border-bottom: 3px solid #c9a54e;
+    box-shadow: inset 0 1px 0 rgba(255, 214, 160, .3);
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 46px 22px 20px;   /* clears the notch — the grab handle was under it */
+    transform: translateY(calc(100% + var(--chrome-h) + 2px));
+    transition: transform 420ms cubic-bezier(.22, 1, .3, 1);
+    touch-action: none;
+  }
+  .player[data-open="true"] { transform: none; }
+
+  .player-grab {
+    width: 42px; height: 4px;
+    border-radius: 2px;
+    background: var(--ink-a35);
+    flex: none;
+    align-self: center;
+    margin-bottom: 14px;
+    cursor: grab;
+  }
+
+  /* The graphic carries the naming, so the two are one block rather than a
+     picture with a caption floating under it. */
+  .player-cover {
+    position: relative;
+    flex: none;
+    width: 100%;
+    /* Capped so the credits, transport, seek and action row all still fit the
+       sheet — measured, not guessed. */
+    max-width: 300px;
+    align-self: center;
+    aspect-ratio: 1;
+    border-radius: 2px;
+    overflow: hidden;
+    background-color: #1a1206;
+    background-size: cover;
+    background-position: center;
+    /* Recessed into the faceplate rather than floating on it — the same
+       inner top shadow that makes the dial window read as cut in. */
+    box-shadow:
+      0 0 0 2px #8a6a2c,
+      0 0 0 5px #c9a54e,
+      0 0 0 6px #6d5222,
+      inset 0 3px 12px rgba(0, 0, 0, .7),
+      0 20px 44px -16px rgba(0, 0, 0, .85);
+    transition: background 300ms ease, box-shadow 300ms ease;
+  }
+  /* No scrim: the credits are printed on the board the sleeve already leaves
+     below the plate, so there is nothing to rescue them from. */
+  /* Credits, on the cabinet under the cover. */
+  .player-naming {
+    width: 100%;
+    min-width: 0;
+    margin-top: 16px;
+    text-align: center;
+    flex: none;
+  }
+  .player-song {
+    font-family: var(--f-s);
+    font-size: 1.75em;
+    line-height: 1.02;
+    letter-spacing: .002em;
+    color: #fff3d4;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-artist {
+    font-family: var(--f-m);
+    font-size: .8125em;
+    font-weight: 600;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: rgba(255, 232, 190, .88);
+    margin: 6px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .player-album {
+    font-family: var(--f-s);
+    font-style: italic;
+    font-size: .9375em;      /* 15px — a serif at 10px would be unreadable */
+    letter-spacing: .01em;
+    text-transform: none;
+    color: rgba(255, 232, 190, .62);
+    margin: 3px 0 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ── Transport: play/pause with fwd and rev either side ─────────────── */
+  .player-transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    margin-top: 18px;
+    flex: none;
+  }
+  .player-transport button {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: none;
+    background:
+      radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%),
+      radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+    box-shadow:
+      0 0 0 2px #8a6a2c,
+      0 0 0 3px #c9a54e,
+      inset 0 1px 0 rgba(255, 226, 175, .35),
+      inset 0 -2px 7px rgba(0, 0, 0, .75),
+      0 3px 8px -1px rgba(0, 0, 0, .8);
+    color: #e8d4a8;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 1em;
+    transition: color 180ms ease, transform 200ms cubic-bezier(.34, 1.4, .5, 1);
+  }
+  .player-transport button:hover { color: #fff3d4; }
+  .player-transport button:active { transform: scale(.9); }
+  .player-transport button:focus-visible { outline: 2px solid var(--venue); outline-offset: 2px; }
+  .player-transport .big {
+    width: 68px; height: 68px;
+    background: radial-gradient(circle at 38% 28%, #fff6dd, #e0c078 56%, #a5842f);
+    color: #2a1c08;
+    font-size: 1.125em;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .9),
+      inset 0 -3px 8px rgba(0, 0, 0, .3),
+      0 3px 10px -2px rgba(0, 0, 0, .75);
+  }
+  .player-transport .big[data-playing="true"] {
+    background: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+    color: var(--ink-on-accent);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .5),
+      inset 0 -3px 8px rgba(0, 0, 0, .35),
+      0 0 20px -2px var(--accent);
+  }
+
+  /* ── Seek ───────────────────────────────────────────────────────────── */
+  .player-seek { margin-top: auto; padding-top: 24px; flex: none; }
+  .seek-rail {
+    position: relative;
+    user-select: none;
+    -webkit-user-select: none;
+    height: 22px;                 /* 22px of grab area around a 4px rail */
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+  }
+  .seek-rail::before {
+    content: "";
+    position: absolute;
+    left: 0; right: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 232, 190, .22);
+  }
+  .seek-fill {
+    position: absolute;
+    left: 0;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--hue);
+    transition: background 260ms ease;
+  }
+  /* A milled slider thumb, not a dot. */
+  .seek-knob {
+    position: absolute;
+    width: 13px; height: 18px;
+    border-radius: 3px;
+    margin-left: -6.5px;
+    background:
+      repeating-linear-gradient(90deg,
+        rgba(0, 0, 0, .38) 0 1px, transparent 1px 3px),
+      linear-gradient(180deg, #f4e3b6, #c9a54e 52%, #8a6a2c);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 2px 6px rgba(0, 0, 0, .7);
+  }
+  .seek-times {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 5px;
+    font-family: var(--f-m);
+    font-size: .8125em;      /* 13px — clears the body floor */
+    letter-spacing: .1em;
+    color: rgba(255, 232, 190, .8);   /* cream, like the dial lettering */
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Bottom row: heart · hype · queue ───────────────────────────────── */
+  .player-actions {
+    margin-top: 18px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    flex: none;
+  }
+  .player-actions .act {
+    width: 52px; height: 52px;
+    border-radius: 50%;
+    border: 2px solid #8a6a2c;
+    background: transparent;
+    color: #e8d4a8;
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 1.0625em;
+    transition: color 180ms ease, border-color 180ms ease, transform 200ms cubic-bezier(.34, 1.4, .5, 1);
+  }
+  .player-actions .act:hover { color: #fff3d4; border-color: #c9a54e; }
+  .player-actions .act:active { transform: scale(.92); }
+  .player-actions .act:focus-visible { outline: 2px solid var(--venue); outline-offset: 2px; }
+  .player-actions .heart { justify-self: start; }
+  .player-actions .queue { justify-self: end; }
+  .player-actions .heart[data-on="true"] {
+    color: var(--accent-2, #ff3e9a);
+    border-color: color-mix(in oklab, #ff3e9a 55%, transparent);
+  }
+
+  /* HYPE is the product's own verb, so it is the widest thing in the row and
+     the only filled one — not a third equal icon. */
+  .player-hype {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 52px;
+    padding: 0 26px;
+    border-radius: 999px;
+    border: none;
+    background: linear-gradient(180deg, #ff6b45, var(--accent) 55%, #c53a17);
+    color: #2a0d03;
+    box-shadow: 0 0 0 2px #8a6a2c, 0 0 0 3px #c9a54e, inset 0 1px 0 rgba(255, 255, 255, .4);
+    font-family: var(--f-m);
+    font-size: .75em;
+    font-weight: 600;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 200ms cubic-bezier(.34, 1.4, .5, 1), filter 180ms ease;
+  }
+  .player-hype:hover { filter: brightness(1.08); }
+  .player-hype:active { transform: scale(.95); }
+  .player-hype:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .player-hype[data-on="true"] { background: var(--ink); color: var(--bg); }
+  .player-hype b { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+
+  /* ── Annotation column ─────────────────────────────────────────────── */
+  .notes { display: flex; flex-direction: column; gap: 20px; padding-top: 4px; }
+  .note h2 {
+    font-family: var(--f-d);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    letter-spacing: -.01em;
+    margin: 0 0 6px;
+  }
+  .note p { margin: 0; color: var(--page-ink-2); font-size: .9375rem; max-width: 56ch; }
+  .note p + p { margin-top: 8px; }
+  code {
+    font-family: var(--f-m);
+    font-size: .85em;
+    background: var(--page-surface);
+    border: 1px solid var(--page-line);
+    border-radius: 4px;
+    padding: 1px 5px;
+  }
+
+  .gestures {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .875rem;
+  }
+  .gestures th,
+  .gestures td {
+    text-align: left;
+    padding: 9px 12px 9px 0;
+    border-bottom: 1px solid var(--page-line);
+    vertical-align: top;
+  }
+  .gestures th {
+    font-family: var(--f-m);
+    font-size: .625rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--page-ink-2);
+    font-weight: 400;
+  }
+  .gestures td:first-child {
+    font-family: var(--f-m);
+    font-size: .8125rem;
+    white-space: nowrap;
+    padding-right: 18px;
+  }
+  .gestures td:last-child { color: var(--page-ink-2); }
+
+  .divider { height: 1px; background: var(--page-line); border: 0; margin: 0; }
+
+  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .controls button {
+    font-family: var(--f-m);
+    font-size: .6875rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    min-height: 44px;
+    border-radius: 999px;
+    border: 1px solid var(--page-line);
+    background: var(--page-surface);
+    color: var(--page-ink);
+    cursor: pointer;
+  }
+  .controls button[aria-pressed="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--ink-on-accent);
+  }
+  .hint {
+    font-family: var(--f-m);
+    font-size: .6875rem;
+    letter-spacing: .06em;
+    color: var(--page-ink-2);
+    margin: 0;
+  }
+  kbd {
+    font-family: var(--f-m);
+    font-size: .6875rem;
+    border: 1px solid var(--page-line);
+    border-bottom-width: 2px;
+    border-radius: 5px;
+    padding: 1px 5px;
+  }
+
+  .caveat { border-left: 3px solid var(--accent); padding: 2px 0 2px 16px; }
+  .caveat p { color: var(--page-ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: .001ms !important;
+    }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">Mockup · not wired for production</p>
+    <h1>A tuner dial for the MUSIC submenu</h1>
+    <p class="standfirst">
+      Three controls in the bottom chrome, one job each: the nav disc opens the arc, the ball rolls
+      through the five MUSIC destinations, and the transport button owns playback through four
+      gestures. Pull the transport up and the full player carries the same switcher as an analog
+      instrument. The selection is printed at 28px throughout — a little over three times the size
+      of the 9px mono labels the arc nav uses for the same job today.
+    </p>
+    <span class="status">Interactive prototype</span>
+  </header>
+
+  <div class="stage">
+    <div class="phone">
+      <div class="notch"></div>
+
+      <div class="screen">
+        <section class="panel" data-panel="discover" data-active="true">
+          <p class="screen-eyebrow">Music · Discover</p>
+          <h2 class="screen-title">New in Portland</h2>
+          <p class="screen-sub">Artists who released something this week within 40 miles.</p>
+          <div class="rows">
+            <div class="row"><span class="row-art"></span><div class="row-body"><p class="row-title">Harbor Static</p><p class="row-meta">Released Tuesday</p></div></div>
+            <div class="row alt"><span class="row-art"></span><div class="row-body"><p class="row-title">The Longfellow Set</p><p class="row-meta">Released Monday</p></div></div>
+            <div class="row alt2"><span class="row-art"></span><div class="row-body"><p class="row-title">Casco Bay Choir</p><p class="row-meta">Released Sunday</p></div></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="radio">
+          <p class="screen-eyebrow">Music · Radio</p>
+          <h2 class="screen-title">The station</h2>
+          <p class="screen-sub">Always on. Local first, with a break every fifteen minutes.</p>
+          <div class="rows">
+            <div class="row alt"><span class="row-art"></span><div class="row-body"><p class="row-title">Now playing — Harbor Static</p><p class="row-meta">On air</p></div></div>
+            <div class="row"><span class="row-art"></span><div class="row-body"><p class="row-title">Up next — Pine &amp; Ash</p><p class="row-meta">In 3 minutes</p></div></div>
+            <div class="row alt2"><span class="row-art"></span><div class="row-body"><p class="row-title">Then — Deering Oaks</p><p class="row-meta">In 7 minutes</p></div></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="charts">
+          <p class="screen-eyebrow">Music · Charts</p>
+          <h2 class="screen-title">Most hyped</h2>
+          <p class="screen-sub">Ranked by hype from real accounts over the last seven days.</p>
+          <div class="rows">
+            <div class="row"><span class="row-num">01</span><span class="row-art"></span><div class="row-body"><p class="row-title">Harbor Static</p><p class="row-meta">Up 4</p></div></div>
+            <div class="row alt"><span class="row-num">02</span><span class="row-art"></span><div class="row-body"><p class="row-title">Pine &amp; Ash</p><p class="row-meta">Up 1</p></div></div>
+            <div class="row alt2"><span class="row-num">03</span><span class="row-art"></span><div class="row-body"><p class="row-title">Casco Bay Choir</p><p class="row-meta">New entry</p></div></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="recommended">
+          <p class="screen-eyebrow">Music · Recommended</p>
+          <h2 class="screen-title">Because you hyped</h2>
+          <p class="screen-sub">Each suggestion says why it is here — no unexplained picks.</p>
+          <div class="rows">
+            <div class="row alt2"><span class="row-art"></span><div class="row-body"><p class="row-title">Deering Oaks</p><p class="row-meta">Shares a venue</p></div></div>
+            <div class="row"><span class="row-art"></span><div class="row-body"><p class="row-title">Pine &amp; Ash</p><p class="row-meta">Played your show</p></div></div>
+            <div class="row alt"><span class="row-art"></span><div class="row-body"><p class="row-title">Eastern Prom</p><p class="row-meta">Hyped by people you follow</p></div></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="playlists">
+          <p class="screen-eyebrow">Music · Playlists</p>
+          <h2 class="screen-title">Your playlists</h2>
+          <p class="screen-sub">Anyone with the link can open these.</p>
+          <div class="rows">
+            <div class="row alt2"><span class="row-art"></span><div class="row-body"><p class="row-title">Friday walk-in</p><p class="row-meta">14 tracks</p></div></div>
+            <div class="row"><span class="row-art"></span><div class="row-body"><p class="row-title">Load-out</p><p class="row-meta">22 tracks</p></div></div>
+            <div class="row alt"><span class="row-art"></span><div class="row-body"><p class="row-title">Sunday slow</p><p class="row-meta">9 tracks</p></div></div>
+          </div>
+        </section>
+      </div>
+
+      <div class="map-wrap" id="mapWrap" data-on="false" role="img"
+           aria-label="Printed chart of Portland and Casco Bay">
+        <canvas id="mapCanvas"></canvas>
+      </div>
+
+      <!-- The full player. Sits above the screen, below the chrome. -->
+      <div class="player" id="player" data-open="false" aria-hidden="true">
+        <span class="player-grab" id="playerGrab" aria-hidden="true"></span>
+
+        <div class="player-cover" role="img" aria-label="Album artwork"></div>
+
+        <div class="player-naming">
+          <p class="player-song" id="playerSong">Cold Front</p>
+          <p class="player-artist" id="playerArtist">Harbor Static</p>
+          <p class="player-album" id="playerAlbum">Off Season · 2026</p>
+        </div>
+
+        <div class="player-transport">
+          <button type="button" id="playerPrev" aria-label="Previous track">&#9664;&#9664;</button>
+          <button class="big" type="button" id="playerPlay" aria-label="Play" data-playing="false">&#9654;</button>
+          <button type="button" id="playerNext" aria-label="Next track">&#9654;&#9654;</button>
+        </div>
+
+        <div class="player-seek">
+          <div
+            class="seek-rail"
+            id="seek"
+            role="slider"
+            tabindex="0"
+            aria-label="Seek"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="32"
+            aria-valuetext="1 minute 12 seconds of 3 minutes 44 seconds">
+            <span class="seek-fill" id="seekFill"></span>
+            <span class="seek-knob" id="seekKnob"></span>
+          </div>
+          <div class="seek-times">
+            <span id="seekElapsed">1:12</span>
+            <span id="seekTotal">3:44</span>
+          </div>
+        </div>
+
+        <div class="player-actions">
+          <button class="act heart" type="button" id="heart" data-on="false" aria-label="Save this track" aria-pressed="false">&#9825;</button>
+          <button class="player-hype" type="button" id="hype" data-on="false" aria-pressed="false">
+            Hype <b id="hypeCount">128</b>
+          </button>
+          <button class="act queue" type="button" id="queueBtn" aria-label="Open the queue">&#9776;</button>
+        </div>
+      </div>
+
+      <div class="chrome">
+        <div class="console">
+          <div class="console-face">
+            <div class="nav-mount">
+              <button class="knob" type="button" aria-label="Open navigation">
+                <span class="knob-face">iH</span>
+              </button>
+              <span class="nav-pip"></span><span class="nav-pip"></span><span class="nav-pip"></span>
+            </div>
+
+            <div
+              class="dial"
+              id="tuner"
+              role="slider"
+              tabindex="0"
+              aria-label="Tune to a MUSIC destination"
+              aria-valuemin="1"
+              aria-valuemax="5"
+              aria-valuenow="1"
+              aria-valuetext="Discover">
+              <span class="dial-station" id="tunerName">Discover</span>
+              <span class="dial-scale">
+                <span class="dial-ticks" id="ticks"></span>
+                <span class="dial-needle"></span>
+              </span>
+              <span class="dial-now">
+                <span class="vu" id="vu" aria-hidden="true"><i></i><i></i><i></i></span>
+                <span class="dial-now-text" id="nowText">Cold Front · Harbor Static</span>
+              </span>
+            </div>
+
+            <div class="transport-mount">
+              <span class="transport-compass" id="compass" aria-hidden="true">
+                <i data-dir="up"></i><i data-dir="left"></i><i data-dir="right"></i>
+              </span>
+              <span class="gesture-chip" id="chip" data-show="false" aria-hidden="true">Play</span>
+              <button
+                class="knob transport"
+                id="transport"
+                type="button"
+                data-playing="false"
+                aria-label="Play. Drag right for the next track, left for the previous one, up for the full player.">
+                <span class="knob-play">&#9654;</span>
+              </button>
+            </div>
+          </div>
+          <span class="console-plate" aria-hidden="true">iHYPE &middot; Portland</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <div class="note">
+        <h2>The transport button</h2>
+        <p>
+          Four outcomes on one control, and each direction means exactly one thing. Nothing fires
+          until you let go, and the armed action is named in a chip above your thumb while you drag —
+          so a wrong direction can be walked back to centre and cancelled rather than undone. The
+          three drag directions are drawn faintly around the button at rest, because a gesture set
+          nobody can see is a gesture set nobody uses.
+        </p>
+      </div>
+
+      <table class="gestures">
+        <thead>
+          <tr><th>Gesture</th><th>Result</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Tap</td><td>Play / pause</td></tr>
+          <tr><td>Drag right</td><td>Next track</td></tr>
+          <tr><td>Drag left</td><td>Previous track</td></tr>
+          <tr><td>Drag up</td><td>Open the full player</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note">
+        <h2>The analog switcher</h2>
+        <p>
+          In the middle of the full player, the same five destinations become an instrument: a milled
+          bezel, an engraved arc, and a needle that swings to the one you picked. Turn the hub, or
+          focus it and use the arrow keys.
+        </p>
+        <p>
+          It reads and writes the same state as the ball in the chrome — one <code>index</code>, two
+          bodies — so the two switchers can never disagree, and the chrome stays visible under the
+          player rather than being covered by it.
+        </p>
+      </div>
+
+      <div class="controls">
+        <button type="button" id="scale-toggle" aria-pressed="false">Text size 140%</button>
+        <button type="button" id="motion-toggle" aria-pressed="false">Slow the motion</button>
+      </div>
+      <p class="hint">Keyboard: focus the ball or the hub, then <kbd>&larr;</kbd> <kbd>&rarr;</kbd>, or <kbd>Home</kbd> / <kbd>End</kbd>.</p>
+
+      <hr class="divider">
+
+      <div class="note">
+        <h2>Why this might help the readability problem</h2>
+        <p>
+          The arc nav labels every destination at once, which forces each label small. Showing one at
+          a time lets that one be large — 28px here, against 9px today — and gives colour as a second
+          channel alongside the word, which helps when the word itself is still hard to read. All
+          five hues clear AA on the navy ground (5.71–11.79:1), so the label can safely take the
+          selection's colour.
+        </p>
+        <p>
+          Every control here is at or over the 44px touch floor in <code>mobile-fit.css</code>: the
+          ball is 58px, both discs 52px, the analog hub 74px.
+        </p>
+      </div>
+
+      <div class="note caveat">
+        <h2>What I would want to test before building it</h2>
+        <p>
+          Gestures on one button is still the risk, even now that each direction means one thing.
+          The armed-action chip is what makes it honest — you see the outcome named before you commit
+          — but whether that survives a real thumb on a real phone is a question for a device, not a
+          mockup. Worth noting there is no longer any way to restart the current track from the
+          chrome; if that turns out to matter, it belongs in the full player rather than as a second
+          meaning for a direction that already has one.
+        </p>
+        <p>
+          Two switchers for one setting is also a bet. They share state here so they cannot drift,
+          but a member still has to learn that the ball and the dial are the same control wearing
+          different clothes.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* The real manifest, from src/lib/mmm-nav.ts — MUSIC's five level-2 items. */
+  /* TWO BANDS on one dial. The set is exactly what `mmm-nav.ts` carries for
+     MUSIC, and what `/app/map?layer=…` already accepts for MAP — so switching
+     bands is switching module, not inventing a second control. A receiver did
+     the same thing: one dial, FM or AM, different scale printed on the glass. */
+  const BANDS = {
+    music: {
+      stops: ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'],
+      panels: ['discover', 'radio', 'charts', 'recommended', 'playlists'],
+      hues: ['#ff5029', '#22e5d4', '#ff3e9a', '#b983ff', '#ffb84a'],
+    },
+    map: {
+      stops: ['Tonight', 'Events', 'Venues', 'Artists', 'All'],
+      panels: [],
+      hues: ['#ff5029', '#ffb84a', '#22e5d4', '#b983ff', '#ff3e9a'],
+    },
+  };
+  let band = 'music';
+  let STOPS = BANDS.music.stops;
+  let PANELS = BANDS.music.panels;
+
+  /* Each stop owns a brand hue, so colour IS the selection. All five clear AA
+     on the navy ground (5.71-11.79:1), which is what lets the tuned name take
+     the same colour rather than staying neutral. */
+  let HUES = BANDS.music.hues;
+
+  const QUEUE = [
+    { title: 'Cold Front',   artist: 'Harbor Static',   album: 'Off Season · 2026',  secs: 224 },
+    { title: 'Long Wharf',   artist: 'Pine & Ash',      album: 'Dockside · 2026',    secs: 191 },
+    { title: 'Evening Bell', artist: 'Casco Bay Choir', album: 'Vespers · 2025',     secs: 267 },
+    { title: 'Second Shift', artist: 'Deering Oaks',    album: 'Night Route · 2026', secs: 203 },
+  ];
+
+  const PITCH = 46;   // px of drag per station
+
+  const phone = document.querySelector('.phone');
+  const chromeEl = document.querySelector('.chrome');
+
+  const tuner = document.getElementById('tuner');
+  const tunerName = document.getElementById('tunerName');
+  const ticks = document.getElementById('ticks');
+  const nowText = document.getElementById('nowText');
+  const vu = document.getElementById('vu');
+  const panels = [...document.querySelectorAll('.panel')];
+
+  const transport = document.getElementById('transport');
+  const compass = document.getElementById('compass');
+  const chip = document.getElementById('chip');
+
+  const player = document.getElementById('player');
+  const grab = document.getElementById('playerGrab');
+  const playerSong = document.getElementById('playerSong');
+  const playerArtist = document.getElementById('playerArtist');
+  const playerAlbum = document.getElementById('playerAlbum');
+  const playerPlay = document.getElementById('playerPlay');
+  const seek = document.getElementById('seek');
+  const seekFill = document.getElementById('seekFill');
+  const seekKnob = document.getElementById('seekKnob');
+  const seekElapsed = document.getElementById('seekElapsed');
+  const seekTotal = document.getElementById('seekTotal');
+
+  let index = 0;      // the tuned MUSIC destination — one source of truth
+  let queueAt = 0;
+  let playing = false;
+  let progress = 0;
+
+  /* ══ The chart ══════════════════════════════════════════════════════ */
+  const mapWrap = document.getElementById('mapWrap');
+  const mapCanvas = document.getElementById('mapCanvas');
+
+  /* Places are hand-placed in normalised coordinates rather than generated:
+     a procedural city reads as noise, and the point of a map is that the
+     shapes mean something. These sit where Portland's actually do. */
+  const PLACES = [
+    { x: .30, y: .30, name: 'State Theatre',   kind: 'venue'  },
+    { x: .52, y: .40, name: 'Port City',       kind: 'venue'  },
+    { x: .40, y: .53, name: 'Old Port',        kind: 'event'  },
+    { x: .66, y: .49, name: 'Thompson’s Pt', kind: 'event' },
+    { x: .22, y: .47, name: 'Deering Oaks',    kind: 'artist' },
+    { x: .58, y: .64, name: 'Eastern Prom',    kind: 'artist' },
+    { x: .46, y: .24, name: 'Longfellow Sq',   kind: 'venue'  },
+  ];
+
+  let mapPan = { x: 0, y: 0 };
+  let mapZoom = 1;
+  let pinHits = [];
+
+  const ZOOM_MIN = 0.75;
+  const ZOOM_MAX = 3.2;
+
+  function drawMap() {
+    const box = mapWrap.getBoundingClientRect();
+    if (!box.width) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = Math.round(box.width);
+    const h = Math.round(box.height);
+    mapCanvas.width = w * dpr;
+    mapCanvas.height = h * dpr;
+    const g = mapCanvas.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const paper = '#ece0c4';
+    const ink = '#3d2e14';
+    const sea = '#d2c6a4';
+    const hue = HUES[index];
+    const layer = STOPS[index];
+    const z = mapZoom;
+
+    g.fillStyle = paper;
+    g.fillRect(0, 0, w, h);
+
+    /* ── The sheet ────────────────────────────────────────────────────
+       Geography is drawn inside the pan/zoom transform; every stroke divides
+       its width by the zoom so the engraving stays a hairline instead of
+       fattening into a marker line as you close in. */
+    g.save();
+    g.translate(mapPan.x, mapPan.y);
+    g.scale(z, z);
+
+    const land = new Path2D();
+    land.moveTo(0, h * 0.10);
+    land.bezierCurveTo(w * 0.30, h * 0.12, w * 0.44, h * 0.18, w * 0.56, h * 0.30);
+    land.bezierCurveTo(w * 0.68, h * 0.42, w * 0.74, h * 0.52, w * 0.70, h * 0.62);
+    land.bezierCurveTo(w * 0.66, h * 0.72, w * 0.48, h * 0.74, w * 0.34, h * 0.70);
+    land.bezierCurveTo(w * 0.20, h * 0.66, w * 0.08, h * 0.60, 0, h * 0.56);
+    land.closePath();
+
+    // Bathymetry, stepping out into the bay from the shore.
+    g.save();
+    g.strokeStyle = 'rgba(61,46,20,.2)';
+    g.lineWidth = 1 / z;
+    for (let i = 1; i <= 7; i += 1) {
+      const k = 1 + i * 0.055;
+      g.save();
+      g.translate(w * 0.42, h * 0.44);
+      g.scale(k, k);
+      g.translate(-w * 0.42, -h * 0.44);
+      g.stroke(land);
+      g.restore();
+    }
+    g.restore();
+
+    // Water, behind everything already drawn, over the whole sheet.
+    g.save();
+    g.globalCompositeOperation = 'destination-over';
+    g.fillStyle = sea;
+    g.fillRect(-w * 4, -h * 4, w * 9, h * 9);
+    g.restore();
+
+    // Water stipple, laid before the land so it never speckles the streets.
+    g.save();
+    g.clip(new Path2D(`M${-w * 2} ${-h * 2} h${w * 5} v${h * 5} h${-w * 5} Z`));
+    g.fillStyle = 'rgba(61,46,20,.16)';
+    const dot = 9;
+    for (let y = -h; y < h * 2; y += dot) {
+      for (let x = ((y / dot) % 2 ? dot / 2 : 0) - w; x < w * 2; x += dot) {
+        g.beginPath();
+        g.arc(x, y, 0.7 / z + 0.35, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+    g.restore();
+
+    // Land.
+    g.fillStyle = paper;
+    g.fill(land);
+    g.strokeStyle = ink;
+    g.lineWidth = 1.6 / z;
+    g.stroke(land);
+
+    // Street grid, clipped to the shore, set off the compass.
+    g.save();
+    g.clip(land);
+    g.strokeStyle = 'rgba(61,46,20,.34)';
+    g.lineWidth = 0.8 / z;
+    g.translate(w * 0.4, h * 0.4);
+    g.rotate(-0.32);
+    g.translate(-w * 0.4, -h * 0.4);
+    for (let x = -w; x < w * 2; x += 17) {
+      g.beginPath(); g.moveTo(x, -h); g.lineTo(x, h * 2); g.stroke();
+    }
+    for (let y = -h; y < h * 2; y += 17) {
+      g.beginPath(); g.moveTo(-w, y); g.lineTo(w * 2, y); g.stroke();
+    }
+    g.strokeStyle = 'rgba(61,46,20,.6)';
+    g.lineWidth = 2.4 / z;
+    g.beginPath(); g.moveTo(-w, h * 0.34); g.lineTo(w * 2, h * 0.34); g.stroke();
+    g.beginPath(); g.moveTo(w * 0.46, -h); g.lineTo(w * 0.46, h * 2); g.stroke();
+    g.restore();
+
+    // Casco Bay islands.
+    const islands = [[.86, .30, 26], [.80, .52, 17], [.90, .68, 22], [.70, .82, 15], [.30, .86, 20]];
+    for (const [ix, iy, ir] of islands) {
+      g.beginPath();
+      g.ellipse(w * ix, h * iy, ir, ir * 0.62, ix * 3, 0, Math.PI * 2);
+      g.fillStyle = paper;
+      g.fill();
+      g.strokeStyle = ink;
+      g.lineWidth = 1.2 / z;
+      g.stroke();
+      g.save();
+      g.strokeStyle = 'rgba(61,46,20,.28)';
+      g.lineWidth = 0.8 / z;
+      g.beginPath();
+      g.ellipse(w * ix, h * iy, ir + 3.5, ir * 0.62 + 3.5, ix * 3, 0, Math.PI * 2);
+      g.stroke();
+      g.restore();
+    }
+    g.restore();   // end pan/zoom
+
+    /* ── Pins and labels, at FIXED screen size ─────────────────────────
+       Deliberately outside the transform. If a label scaled with the chart it
+       would drop under the 12.5px floor the moment anyone zoomed out — and a
+       place name is the one thing on a map that must stay readable. Real map
+       apps do the same, and it makes the hit-test exact rather than derived. */
+    const want = { Venues: 'venue', Events: 'event', Artists: 'artist' }[layer];
+    const shown = PLACES.filter((pl) => (layer === 'All' || layer === 'Tonight') ? true : pl.kind === want);
+
+    g.font = '600 13px JetBrains Mono, monospace';
+    pinHits = [];
+    for (const pl of shown) {
+      const x = w * pl.x * z + mapPan.x;
+      const y = h * pl.y * z + mapPan.y;
+      if (x < -40 || x > w + 40 || y < -40 || y > h + 40) continue;   // off-sheet
+
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x, y - 13);
+      g.strokeStyle = ink;
+      g.lineWidth = 1.2;
+      g.stroke();
+
+      g.beginPath();
+      g.arc(x, y - 17, 6.5, 0, Math.PI * 2);
+      g.fillStyle = hue;
+      g.fill();
+      g.lineWidth = 1.6;
+      g.strokeStyle = ink;
+      g.stroke();
+
+      const tw = g.measureText(pl.name).width;
+      g.fillStyle = 'rgba(236,224,196,.92)';
+      g.fillRect(x + 11, y - 27, tw + 9, 18);
+      g.strokeStyle = 'rgba(61,46,20,.45)';
+      g.lineWidth = 1;
+      g.strokeRect(x + 11, y - 27, tw + 9, 18);
+      g.fillStyle = ink;
+      g.fillText(pl.name, x + 15.5, y - 14);
+
+      pinHits.push({ x, y: y - 17, r: 16, place: pl });
+    }
+
+    /* ── Sheet furniture ──────────────────────────────────────────────
+       Compass, scale and cartouche are printed on the sheet edge, so they do
+       not slide or grow with the chart. */
+    const cx = w * 0.845;
+    const cy = h * 0.115;
+    g.save();
+    g.translate(cx, cy);
+    g.strokeStyle = ink;
+    g.lineWidth = 1;
+    g.beginPath(); g.arc(0, 0, 21, 0, Math.PI * 2); g.stroke();
+    g.beginPath(); g.arc(0, 0, 15, 0, Math.PI * 2); g.stroke();
+    for (let i = 0; i < 4; i += 1) {
+      g.save();
+      g.rotate((Math.PI / 2) * i);
+      g.beginPath();
+      g.moveTo(0, -21); g.lineTo(5, 0); g.lineTo(0, 21); g.lineTo(-5, 0);
+      g.closePath();
+      g.fillStyle = i === 0 ? ink : 'rgba(61,46,20,.18)';
+      g.fill();
+      g.stroke();
+      g.restore();
+    }
+    g.restore();
+    g.fillStyle = ink;
+    g.font = '600 11px JetBrains Mono, monospace';
+    g.textAlign = 'center';
+    g.fillText('N', cx, cy - 26);
+    g.textAlign = 'left';
+
+    // Scale bar — the distance it represents changes with the zoom, which is
+    // the whole reason a chart carries one.
+    const sx = w * 0.07;
+    const sy = h * 0.93;
+    for (let i = 0; i < 4; i += 1) {
+      g.fillStyle = i % 2 ? paper : ink;
+      g.fillRect(sx + i * 17, sy, 17, 5);
+      g.strokeStyle = ink;
+      g.lineWidth = 1;
+      g.strokeRect(sx + i * 17, sy, 17, 5);
+    }
+    g.fillStyle = ink;
+    g.font = '600 12px JetBrains Mono, monospace';
+    const miles = 0.5 / z;
+    g.fillText(`${miles < 0.3 ? miles.toFixed(2) : miles.toFixed(1)} MILE`, sx + 76, sy + 5);
+
+    // Cartouche.
+    g.save();
+    g.fillStyle = 'rgba(236,224,196,.92)';
+    g.strokeStyle = ink;
+    g.lineWidth = 1.4;
+    g.fillRect(w * 0.06, h * 0.045, 150, 44);
+    g.strokeRect(w * 0.06, h * 0.045, 150, 44);
+    g.strokeRect(w * 0.06 + 3, h * 0.045 + 3, 144, 38);
+    g.fillStyle = ink;
+    g.font = 'italic 17px "Instrument Serif", Georgia, serif';
+    g.fillText('Portland', w * 0.06 + 12, h * 0.045 + 22);
+    g.font = '600 9px JetBrains Mono, monospace';
+    g.fillText('CASCO BAY · MAINE', w * 0.06 + 12, h * 0.045 + 35);
+    g.restore();
+  }
+
+  /* Zoom about a focal point, so the sheet grows under the finger rather than
+     under the middle of the screen. */
+  function zoomAt(nextZoom, fx, fy) {
+    const z0 = mapZoom;
+    const z1 = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, nextZoom));
+    if (z1 === z0) return;
+    mapPan = {
+      x: fx - (fx - mapPan.x) * (z1 / z0),
+      y: fy - (fy - mapPan.y) * (z1 / z0),
+    };
+    mapZoom = z1;
+    drawMap();
+  }
+
+  window.addEventListener('resize', () => { if (band === 'map') drawMap(); });
+
+  /* ══ Cover art ══════════════════════════════════════════════════════
+     Drawn rather than gradient-filled. A flat two-stop gradient was the
+     weakest thing on the screen — it read as a placeholder because it was
+     one. This is a screen-printed sleeve: flat duotone ink, a halftone
+     screen, a big geometric motif, and a misregistered second pass, which is
+     what actually makes old print look old. Deterministic from the title, so
+     a track always gets the same sleeve.
+
+     Canvas rather than hand-authored SVG paths: halftone means hundreds of
+     dots of varying radius, and that is a loop, not a path string. */
+  const ART_CACHE = new Map();
+
+  function coverArt(title, hue, size = 512) {
+    const key = `${title}|${hue}|${size}`;
+    if (ART_CACHE.has(key)) return ART_CACHE.get(key);
+
+    const canvas = document.createElement('canvas');
+    canvas.width = canvas.height = size;
+    const g = canvas.getContext('2d');
+
+    let seed = 0;
+    for (let i = 0; i < title.length; i += 1) seed = (seed * 31 + title.charCodeAt(i)) >>> 0;
+    const rnd = () => {
+      seed = (seed * 1664525 + 1013904223) >>> 0;
+      return seed / 4294967296;
+    };
+
+    const ink = hue;
+    const deep = '#160f06';
+
+    /* FULL BLEED. The artist's graphic IS the cover, so it runs edge to edge —
+       the cream margin and printed plate that made the last pass read as a
+       sleeve-in-a-frame have gone, along with the ring wear and corner bumps,
+       which belong to the object rather than the artwork. What stays is the
+       PRINT: halftone, misregistration, board tooth. */
+    g.fillStyle = deep;
+    g.fillRect(0, 0, size, size);
+
+    // One of three motifs, chosen by the title — so two artists on the same
+    // screen never get the same picture in different colours.
+    const motif = Math.floor(rnd() * 3);
+    const horizon = size * (0.44 + rnd() * 0.2);
+
+    g.fillStyle = ink;
+    g.fillRect(0, 0, size, horizon);
+
+    if (motif === 0) {
+      // Sun breaking the horizon, knocked out of the ink.
+      const cx = size * (0.26 + rnd() * 0.48);
+      const r = size * (0.15 + rnd() * 0.1);
+      g.fillStyle = deep;
+      g.beginPath();
+      g.arc(cx, horizon, r, Math.PI, Math.PI * 2);
+      g.fill();
+
+      g.strokeStyle = deep;
+      g.lineWidth = Math.max(1, size / 200);
+      const bands = 6 + Math.floor(rnd() * 4);
+      for (let i = 0; i < bands; i += 1) {
+        const y = horizon - r * ((i + 1) / (bands + 1));
+        g.beginPath();
+        g.moveTo(0, y);
+        g.lineTo(size, y);
+        g.stroke();
+      }
+    } else if (motif === 1) {
+      // Radiating arcs from a point on the horizon — a broadcast bloom.
+      const cx = size * (0.2 + rnd() * 0.6);
+      g.save();
+      g.strokeStyle = deep;
+      g.lineWidth = Math.max(2, size / 46);
+      const rings = 5 + Math.floor(rnd() * 4);
+      for (let i = 1; i <= rings; i += 1) {
+        g.beginPath();
+        g.arc(cx, horizon, (size * 0.5) * (i / rings), Math.PI, Math.PI * 2);
+        g.stroke();
+      }
+      g.restore();
+    } else {
+      // Stacked ranges — hills, or a waveform read as one.
+      g.save();
+      g.fillStyle = deep;
+      const peaks = 3 + Math.floor(rnd() * 3);
+      for (let p = 0; p < peaks; p += 1) {
+        const px0 = size * (p / peaks) + size * rnd() * 0.1;
+        const h = size * (0.12 + rnd() * 0.22);
+        g.beginPath();
+        g.moveTo(px0 - size * 0.22, horizon);
+        g.lineTo(px0, horizon - h);
+        g.lineTo(px0 + size * 0.22, horizon);
+        g.closePath();
+        g.fill();
+      }
+      g.restore();
+    }
+
+    // Halftone: fine screen through the ink, falling off toward the horizon.
+    const step = Math.max(3, size / 68);
+    for (let y = step / 2; y < horizon; y += step) {
+      const t = y / horizon;
+      for (let x = step / 2; x < size; x += step) {
+        g.beginPath();
+        g.fillStyle = deep;
+        g.arc(x + (y / step % 2 ? step / 2 : 0), y, (1 - t) * step * 0.4 + step * 0.06, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+
+    // Ground below the horizon, screened the other way.
+    for (let y = horizon + step / 2; y < size; y += step) {
+      const t = (y - horizon) / (size - horizon);
+      for (let x = step / 2; x < size; x += step) {
+        g.beginPath();
+        g.fillStyle = ink;
+        g.globalAlpha = 0.45 * (1 - t) + 0.06;
+        g.arc(x + (y / step % 2 ? step / 2 : 0), y, step * 0.34 * (1 - t) + 0.5, 0, Math.PI * 2);
+        g.fill();
+      }
+    }
+    g.globalAlpha = 1;
+
+    // The second ink pass, off by a hair. This is the tell.
+    g.save();
+    g.globalCompositeOperation = 'screen';
+    g.globalAlpha = 0.26;
+    g.fillStyle = ink;
+    g.fillRect(-size * 0.006, -size * 0.005, size, horizon);
+    g.restore();
+
+    // Board tooth.
+    const grain = g.getImageData(0, 0, size, size);
+    const px = grain.data;
+    for (let i = 0; i < px.length; i += 4) {
+      const n = (rnd() - 0.5) * 28;
+      px[i] += n; px[i + 1] += n; px[i + 2] += n;
+    }
+    g.putImageData(grain, 0, 0);
+
+    const vign = g.createRadialGradient(size / 2, size / 2, size * 0.36, size / 2, size / 2, size * 0.8);
+    vign.addColorStop(0, 'rgba(0,0,0,0)');
+    vign.addColorStop(1, 'rgba(18,10,0,.3)');
+    g.fillStyle = vign;
+    g.fillRect(0, 0, size, size);
+
+    const url = canvas.toDataURL('image/png');
+    ART_CACHE.set(key, url);
+    return url;
+  }
+
+  /* ── The scale's stations ───────────────────────────────────────────── */
+  /* The dial's position, in pixels, unbounded in both directions. This is the
+     source of truth the ticks are drawn from; `index` is derived from it. */
+  let tuneOffset = 0;
+
+  /* Changing band re-prints the scale on the glass and re-tunes to the first
+     station, because station 3 of MUSIC means nothing on the MAP band. */
+  function setBand(next) {
+    if (band === next) return;
+    band = next;
+    STOPS = BANDS[next].stops;
+    PANELS = BANDS[next].panels;
+    HUES = BANDS[next].hues;
+    tuneOffset = 0;
+    mapWrap.dataset.on = String(next === 'map');
+    index = 0;
+    render(0);
+    if (next === 'map') drawMap();
+  }
+
+  /* ── Colour ─────────────────────────────────────────────────────────── */
+  const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  function mix(a, b, t) {
+    const [x, y] = [hex(a), hex(b)];
+    const c = x.map((v, i) => Math.round(v + (y[i] - v) * t));
+    return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+  }
+  function hueAt(pos) {
+    const lo = Math.floor(pos);
+    return mix(HUES[wrapIndex(lo)], HUES[wrapIndex(lo + 1)], pos - lo);
+  }
+
+  /* Stations wrap, because a scale with no ends cannot have a first or last
+     one. Past Playlists is Discover again, in either direction. */
+  const wrapIndex = (i) => ((i % STOPS.length) + STOPS.length) % STOPS.length;
+
+  /* ── Render ─────────────────────────────────────────────────────────── */
+  function render(nextIndex, posOverride) {
+    const changed = nextIndex !== index;
+    index = nextIndex;
+
+    const pos = posOverride ?? index;
+    phone.style.setProperty('--hue', hueAt(pos));
+
+    // The scale slides under the fixed needle, the way a receiver's dial does.
+    // Both rulings move together; the pointer above them does not move at all.
+    const px = `${-pos * PITCH}px`;
+    ticks.style.backgroundPositionX = `${px}, ${px}`;
+
+    tuner.setAttribute('aria-valuenow', String(index + 1));
+    tuner.setAttribute('aria-valuetext', STOPS[index]);
+
+    if (changed || tunerName.textContent !== STOPS[index]) {
+      tunerName.classList.add('swapping');
+      window.setTimeout(() => {
+        tunerName.textContent = STOPS[index];
+        tunerName.classList.remove('swapping');
+      }, 150);
+      panels.forEach((p) => { p.dataset.active = String(p.dataset.panel === PANELS[index]); });
+      if (band === 'map') drawMap();
+    }
+  }
+
+  /* ── Tuning: drag anywhere on the column ────────────────────────────── */
+  let tuning = false;
+  let tuneStart = { x: 0, offset: 0 };
+
+  tuner.addEventListener('pointerdown', (event) => {
+    tuning = true;
+    tuner.classList.add('tuning');
+    tuner.setPointerCapture(event.pointerId);
+    tuneStart = { x: event.clientX, offset: tuneOffset };
+  });
+
+  tuner.addEventListener('pointermove', (event) => {
+    if (!tuning) return;
+    // No clamp: dragging left advances forever, the way a tuning scale runs
+    // past its last station and comes back round to the first.
+    tuneOffset = tuneStart.offset - (event.clientX - tuneStart.x);
+    const pos = tuneOffset / PITCH;
+    render(wrapIndex(Math.round(pos)), pos);
+  });
+
+  function endTune() {
+    if (!tuning) return;
+    tuning = false;
+    tuner.classList.remove('tuning');
+    // Snap to the nearest graduation, keeping whichever lap we are on.
+    tuneOffset = Math.round(tuneOffset / PITCH) * PITCH;
+    render(wrapIndex(tuneOffset / PITCH), tuneOffset / PITCH);
+  }
+  tuner.addEventListener('pointerup', endTune);
+  tuner.addEventListener('pointercancel', endTune);
+
+  function step(by) {
+    tuneOffset += by * PITCH;
+    render(wrapIndex(tuneOffset / PITCH), tuneOffset / PITCH);
+  }
+
+  tuner.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    step(event.deltaY > 0 ? 1 : -1);
+  }, { passive: false });
+
+  tuner.addEventListener('keydown', (event) => {
+    const moves = { ArrowRight: 1, ArrowUp: 1, ArrowLeft: -1, ArrowDown: -1 };
+    if (event.key === 'Home') {
+      // Back to station one on this lap, rather than to some arbitrary lap.
+      tuneOffset -= index * PITCH;
+      render(0, tuneOffset / PITCH);
+    } else if (event.key in moves) {
+      step(moves[event.key]);
+    } else return;
+    event.preventDefault();
+  });
+
+  /* ══ Playback ═══════════════════════════════════════════════════════ */
+  const clock = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, '0')}`;
+  const spoken = (t) => {
+    const m = Math.floor(t / 60);
+    const r = Math.floor(t % 60);
+    return `${m} minute${m === 1 ? '' : 's'} ${r} second${r === 1 ? '' : 's'}`;
+  };
+
+  function setSeek(fraction) {
+    progress = Math.max(0, Math.min(1, fraction));
+    const total = QUEUE[queueAt].secs;
+    const at = progress * total;
+    seekFill.style.width = `${progress * 100}%`;
+    seekKnob.style.left = `${progress * 100}%`;
+    seekElapsed.textContent = clock(at);
+    seekTotal.textContent = clock(total);
+    seek.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+    // A time, not a percentage — that is what a scrubber has to announce.
+    seek.setAttribute('aria-valuetext', `${spoken(at)} of ${spoken(total)}`);
+  }
+
+  /* The ticker only earns its motion when the text does not fit — measured,
+     not assumed, because most titles do fit and a permanently crawling
+     readout would be noise. The text is doubled so the loop is seamless at
+     -50%, and the duration scales with length so long and short titles crawl
+     at the same speed rather than the same duration. */
+  function setNowPlaying(text) {
+    nowText.dataset.scroll = 'false';
+    nowText.textContent = text;
+    // Measure against the untruncated single copy before deciding.
+    if (nowText.scrollWidth <= nowText.clientWidth + 1) return;
+    const span = document.createElement('span');
+    span.textContent = text;
+    const twin = span.cloneNode(true);
+    twin.setAttribute('aria-hidden', 'true');
+    nowText.textContent = '';
+    nowText.append(span, twin);
+    nowText.dataset.scroll = 'true';
+    nowText.style.setProperty('--ticker-dur', `${Math.max(8, text.length * 0.42)}s`);
+  }
+
+  function paintTrack() {
+    const t = QUEUE[queueAt];
+    playerSong.textContent = t.title;
+    playerArtist.textContent = t.artist;
+    playerAlbum.textContent = t.album;
+    // The deck's readout is the same fact as the sheet's, so it repaints here
+    // rather than being a second thing to remember to update.
+    setNowPlaying(`${t.title} · ${t.artist}`);
+    const sleeve = coverArt(t.title, HUES[index]);
+    document.querySelector('.player-cover').style.backgroundImage = `url("${sleeve}")`;
+    setSeek(0);
+  }
+
+  function setPlaying(next) {
+    playing = next;
+    transport.dataset.playing = String(playing);
+    transport.querySelector('.knob-play').innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    transport.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    playerPlay.dataset.playing = String(playing);
+    playerPlay.innerHTML = playing ? '&#10074;&#10074;' : '&#9654;';
+    playerPlay.setAttribute('aria-label', playing ? 'Pause' : 'Play');
+    vu.dataset.playing = String(playing);
+  }
+  function nextTrack() { queueAt = (queueAt + 1) % QUEUE.length; paintTrack(); setPlaying(true); }
+  function prevTrack() { queueAt = (queueAt - 1 + QUEUE.length) % QUEUE.length; paintTrack(); setPlaying(true); }
+
+  function openPlayer(open) {
+    player.dataset.open = String(open);
+    player.setAttribute('aria-hidden', String(!open));
+    if (open) playerPlay.focus({ preventScroll: true });
+  }
+
+  /* ── The transport button's four gestures ───────────────────────────
+     Armed on move, committed on release. Each direction means exactly one
+     thing — an earlier draft made a second left drag within two seconds mean
+     "previous", which is a hidden mode with a timer attached. */
+  const THRESH = 26;
+  let dragging = false;
+  let armed = null;
+  let dragStart = { x: 0, y: 0 };
+
+  const CHIP_TEXT = { next: 'Next track', prev: 'Previous track', open: 'Open player' };
+
+  function arm(action) {
+    if (armed === action) return;
+    armed = action;
+    chip.dataset.show = String(Boolean(action));
+    if (action) chip.textContent = CHIP_TEXT[action];
+    for (const i of compass.children) {
+      const dir = i.dataset.dir;
+      i.dataset.armed = String(
+        (action === 'next' && dir === 'right')
+        || (action === 'prev' && dir === 'left')
+        || (action === 'open' && dir === 'up'),
+      );
+    }
+  }
+
+  transport.addEventListener('pointerdown', (event) => {
+    dragging = true;
+    transport.classList.add('dragging');
+    transport.setPointerCapture(event.pointerId);
+    dragStart = { x: event.clientX, y: event.clientY };
+  });
+
+  transport.addEventListener('pointermove', (event) => {
+    if (!dragging) return;
+    const dx = event.clientX - dragStart.x;
+    const dy = event.clientY - dragStart.y;
+
+    if (-dy >= THRESH && Math.abs(dy) > Math.abs(dx)) arm('open');
+    else if (dx >= THRESH) arm('next');
+    else if (-dx >= THRESH) arm('prev');
+    else arm(null);
+
+    const lean = (v) => Math.max(-14, Math.min(14, v / 2));
+    transport.style.transform = `translate(${lean(dx)}px, ${lean(dy)}px)`;
+  });
+
+  function endDrag() {
+    if (!dragging) return;
+    dragging = false;
+    transport.classList.remove('dragging');
+    transport.style.transform = '';
+
+    if (armed === 'next') nextTrack();
+    else if (armed === 'prev') prevTrack();
+    else if (armed === 'open') openPlayer(true);
+    else setPlaying(!playing);   // no direction committed — it was a tap
+
+    arm(null);
+  }
+  transport.addEventListener('pointerup', endDrag);
+  transport.addEventListener('pointercancel', () => {
+    dragging = false;
+    transport.classList.remove('dragging');
+    transport.style.transform = '';
+    arm(null);
+  });
+
+  /* A gesture-only control is unreachable without these. */
+  transport.addEventListener('keydown', (event) => {
+    const actions = {
+      ArrowRight: nextTrack,
+      ArrowLeft: prevTrack,
+      ArrowUp: () => openPlayer(true),
+    };
+    if (!(event.key in actions)) return;
+    event.preventDefault();
+    actions[event.key]();
+  });
+
+  /* ── Player transport ───────────────────────────────────────────────── */
+  document.getElementById('playerPrev').addEventListener('click', prevTrack);
+  document.getElementById('playerNext').addEventListener('click', nextTrack);
+  playerPlay.addEventListener('click', () => setPlaying(!playing));
+
+  /* ── Seek ───────────────────────────────────────────────────────────
+     Nothing is actually playing, but the control still behaves like a real
+     one: draggable, keyboard-operable, and announcing a time. The 22px rail
+     is grab area around a 4px line. */
+  const seekFrom = (clientX) => {
+    const box = seek.getBoundingClientRect();
+    setSeek((clientX - box.left) / box.width);
+  };
+  let seeking = false;
+  seek.addEventListener('pointerdown', (event) => {
+    seeking = true;
+    seek.setPointerCapture(event.pointerId);
+    seekFrom(event.clientX);
+  });
+  seek.addEventListener('pointermove', (event) => { if (seeking) seekFrom(event.clientX); });
+  seek.addEventListener('pointerup', () => { seeking = false; });
+  seek.addEventListener('pointercancel', () => { seeking = false; });
+  seek.addEventListener('keydown', (event) => {
+    const step = { ArrowRight: 0.02, ArrowLeft: -0.02, Home: -1, End: 1 }[event.key];
+    if (step === undefined) return;
+    event.preventDefault();
+    setSeek(Math.abs(step) === 1 ? (step > 0 ? 1 : 0) : progress + step);
+  });
+
+  /* ── Heart · hype · queue ───────────────────────────────────────────
+     Two different verbs, deliberately not two matching icons: saving is
+     private and reversible, hyping is public and is the thing iHYPE is
+     actually for — so it is the only filled control in the row, it is wider
+     than the other two, and it carries a live count. */
+  const heart = document.getElementById('heart');
+  heart.addEventListener('click', () => {
+    const on = heart.dataset.on === 'true';
+    heart.dataset.on = String(!on);
+    heart.setAttribute('aria-pressed', String(!on));
+    heart.innerHTML = on ? '&#9825;' : '&#9829;';
+    heart.setAttribute('aria-label', on ? 'Save this track' : 'Saved');
+  });
+
+  const hype = document.getElementById('hype');
+  const hypeCount = document.getElementById('hypeCount');
+  let hypes = 128;
+  hype.addEventListener('click', () => {
+    const on = hype.dataset.on === 'true';
+    hype.dataset.on = String(!on);
+    hype.setAttribute('aria-pressed', String(!on));
+    hypes += on ? -1 : 1;
+    hypeCount.textContent = String(hypes);
+  });
+
+  const queueBtn = document.getElementById('queueBtn');
+  queueBtn.addEventListener('click', () => {
+    // The queue surface itself is out of scope here; the control is present so
+    // the row is honest about what the design contains.
+    queueBtn.animate(
+      [{ transform: 'scale(1)' }, { transform: 'scale(.9)' }, { transform: 'scale(1)' }],
+      { duration: 260, easing: 'cubic-bezier(.3,1.2,.4,1)' },
+    );
+  });
+
+  /* ── Dismissing the sheet ───────────────────────────────────────────
+     The Close button went with the layout rewrite, so the grab handle is the
+     only tap target that dismisses the player — which means it has to be a
+     real control, not a decorative pill. */
+  grab.setAttribute('role', 'button');
+  grab.setAttribute('tabindex', '0');
+  grab.setAttribute('aria-label', 'Close the player');
+  grab.removeAttribute('aria-hidden');
+
+  function closePlayer() {
+    openPlayer(false);
+    transport.focus({ preventScroll: true });
+  }
+  grab.addEventListener('click', closePlayer);
+  grab.addEventListener('keydown', (event) => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    closePlayer();
+  });
+
+  /* Drag it down to dismiss, matching the way it came up. */
+  let sheetFrom = null;
+  grab.addEventListener('pointerdown', (event) => {
+    sheetFrom = event.clientY;
+    grab.setPointerCapture(event.pointerId);
+  });
+  grab.addEventListener('pointermove', (event) => {
+    if (sheetFrom === null) return;
+    player.style.transform = `translateY(${Math.max(0, event.clientY - sheetFrom)}px)`;
+  });
+  grab.addEventListener('pointerup', (event) => {
+    if (sheetFrom === null) return;
+    const dy = event.clientY - sheetFrom;
+    player.style.transform = '';
+    sheetFrom = null;
+    if (dy > 70) openPlayer(false);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && player.dataset.open === 'true') openPlayer(false);
+  });
+
+  /* ══ Making it run ══════════════════════════════════════════════════
+     Everything below is what separates a prototype you can look at from one
+     you can use: a clock that actually advances, tracks you can start from
+     the list, a chart you can drag, pins that answer, and a nav that opens. */
+
+  /* ── The transport clock ────────────────────────────────────────────
+     Driven by real elapsed time rather than a fixed increment per tick, so a
+     throttled or backgrounded tab does not silently run the track slow — the
+     seek reflects the wall clock either way. */
+  let lastTick = null;
+  function clockTick(now) {
+    if (playing) {
+      if (lastTick !== null) {
+        const elapsed = (now - lastTick) / 1000;
+        const total = QUEUE[queueAt].secs;
+        if (progress + elapsed / total >= 1) nextTrack();       // auto-advance
+        else setSeek(progress + elapsed / total);
+      }
+      lastTick = now;
+    } else {
+      lastTick = null;
+    }
+    requestAnimationFrame(clockTick);
+  }
+  requestAnimationFrame(clockTick);
+
+  /* ── Start a track from the list ────────────────────────────────────
+     The rows were decorative; a prototype where the content does nothing is
+     the thing people mean when they say it does not feel real. Each row is a
+     real control — focusable, Enter/Space, and it announces what it does. */
+  document.querySelectorAll('.row').forEach((row) => {
+    const name = row.querySelector('.row-title').textContent.trim();
+    row.setAttribute('role', 'button');
+    row.setAttribute('tabindex', '0');
+    row.setAttribute('aria-label', `Play ${name}`);
+    row.style.cursor = 'pointer';
+
+    const start = () => {
+      // The rows name artists; the queue names tracks. Match on either, and
+      // fall back to the first entry rather than doing nothing visible.
+      const at = QUEUE.findIndex((t) => t.artist === name || t.title === name);
+      queueAt = at >= 0 ? at : 0;
+      paintTrack();
+      setPlaying(true);
+      row.animate(
+        [{ transform: 'scale(1)' }, { transform: 'scale(.985)' }, { transform: 'scale(1)' }],
+        { duration: 240, easing: 'cubic-bezier(.3,1.2,.4,1)' },
+      );
+    };
+    row.addEventListener('click', start);
+    row.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      start();
+    });
+  });
+
+  /* ── Dragging the chart ─────────────────────────────────────────────── */
+  let panFrom = null;
+  let panMoved = 0;
+  /* Controls that sit ON the sheet are not the sheet. */
+  const onChartControl = (event) => Boolean(event.target.closest('.map-zoom, .place-card'));
+
+  mapWrap.addEventListener('pointerdown', (event) => {
+    if (onChartControl(event)) return;
+    panFrom = { x: event.clientX - mapPan.x, y: event.clientY - mapPan.y };
+    panMoved = 0;
+    mapWrap.setPointerCapture(event.pointerId);
+  });
+  mapWrap.addEventListener('pointermove', (event) => {
+    if (!panFrom) return;
+    const nx = event.clientX - panFrom.x;
+    const ny = event.clientY - panFrom.y;
+    panMoved = Math.max(panMoved, Math.abs(nx - mapPan.x) + Math.abs(ny - mapPan.y));
+    // Bounded, or the chart can be dragged off the sheet entirely.
+    mapPan = { x: Math.max(-90, Math.min(90, nx)), y: Math.max(-90, Math.min(90, ny)) };
+    drawMap();
+  });
+  mapWrap.addEventListener('pointerup', (event) => {
+    if (onChartControl(event)) return;
+    const wasDrag = panMoved > 6;
+    panFrom = null;
+    if (wasDrag) return;                 // a drag is not a tap on a pin
+    const box = mapWrap.getBoundingClientRect();
+    const x = event.clientX - box.left;
+    const y = event.clientY - box.top;
+    const hit = pinHits.find((pin) => Math.hypot(pin.x - x, pin.y - y) <= pin.r);
+    openPlace(hit ? hit.place : null);
+  });
+  mapWrap.addEventListener('pointercancel', () => { panFrom = null; });
+
+  // Wheel / trackpad.
+  mapWrap.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    const box = mapWrap.getBoundingClientRect();
+    zoomAt(mapZoom * (event.deltaY > 0 ? 0.88 : 1.14), event.clientX - box.left, event.clientY - box.top);
+  }, { passive: false });
+
+  /* Pinch. Two pointers are tracked by id — using only the latest event would
+     make the second finger look like the first one teleporting. */
+  const touches = new Map();
+  let pinchFrom = null;
+  mapWrap.addEventListener('pointerdown', (event) => {
+    if (onChartControl(event)) return;
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touches.size === 2) {
+      const [a, b] = [...touches.values()];
+      pinchFrom = { dist: Math.hypot(a.x - b.x, a.y - b.y), zoom: mapZoom };
+      panFrom = null;                     // a pinch is not a pan
+    }
+  });
+  mapWrap.addEventListener('pointermove', (event) => {
+    if (!touches.has(event.pointerId)) return;
+    touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (touches.size !== 2 || !pinchFrom) return;
+    const [a, b] = [...touches.values()];
+    const box = mapWrap.getBoundingClientRect();
+    zoomAt(
+      pinchFrom.zoom * (Math.hypot(a.x - b.x, a.y - b.y) / pinchFrom.dist),
+      (a.x + b.x) / 2 - box.left,
+      (a.y + b.y) / 2 - box.top,
+    );
+  });
+  for (const type of ['pointerup', 'pointercancel']) {
+    mapWrap.addEventListener(type, (event) => {
+      touches.delete(event.pointerId);
+      if (touches.size < 2) pinchFrom = null;
+    });
+  }
+
+  // Brass zoom controls, and keys — pinch alone is unreachable by keyboard.
+  const zoomBox = document.createElement('div');
+  zoomBox.className = 'map-zoom';
+  zoomBox.innerHTML =
+    '<button type="button" data-z="in" aria-label="Zoom in">+</button>'
+    + '<button type="button" data-z="out" aria-label="Zoom out">&minus;</button>';
+  mapWrap.appendChild(zoomBox);
+  zoomBox.addEventListener('click', (event) => {
+    const btn = event.target.closest('button');
+    if (!btn) return;
+    const box = mapWrap.getBoundingClientRect();
+    zoomAt(mapZoom * (btn.dataset.z === 'in' ? 1.3 : 1 / 1.3), box.width / 2, box.height / 2);
+  });
+  mapWrap.setAttribute('tabindex', '0');
+  mapWrap.addEventListener('keydown', (event) => {
+    const box = mapWrap.getBoundingClientRect();
+    const step = 26;
+    if (event.key === '+' || event.key === '=') { zoomAt(mapZoom * 1.3, box.width / 2, box.height / 2); }
+    else if (event.key === '-') { zoomAt(mapZoom / 1.3, box.width / 2, box.height / 2); }
+    else if (event.key === 'ArrowLeft')  { mapPan.x += step; drawMap(); }
+    else if (event.key === 'ArrowRight') { mapPan.x -= step; drawMap(); }
+    else if (event.key === 'ArrowUp')    { mapPan.y += step; drawMap(); }
+    else if (event.key === 'ArrowDown')  { mapPan.y -= step; drawMap(); }
+    else return;
+    event.preventDefault();
+  });
+
+  /* ── The place card ─────────────────────────────────────────────────
+     Built once and moved, rather than created per tap — a card that is torn
+     down and rebuilt loses focus and cannot animate out. */
+  const placeCard = document.createElement('div');
+  placeCard.className = 'place-card';
+  placeCard.setAttribute('role', 'dialog');
+  placeCard.setAttribute('aria-modal', 'false');
+  placeCard.hidden = true;
+  mapWrap.appendChild(placeCard);
+
+  const KIND_LINE = {
+    venue: 'Venue · capacity 480',
+    event: 'Doors 8:00 PM · $12',
+    artist: 'Playing here Friday',
+  };
+
+  function openPlace(place) {
+    setArc(false);
+    if (!place) { placeCard.hidden = true; return; }
+    placeCard.innerHTML = `
+      <p class="place-name"></p>
+      <p class="place-meta"></p>
+      <div class="place-actions">
+        <button class="place-go" type="button">Tickets</button>
+        <button class="place-close" type="button" aria-label="Close">Close</button>
+      </div>`;
+    placeCard.querySelector('.place-name').textContent = place.name;
+    placeCard.querySelector('.place-meta').textContent = KIND_LINE[place.kind];
+    placeCard.hidden = false;
+    placeCard.querySelector('.place-close').addEventListener('click', () => {
+      placeCard.hidden = true;
+    });
+    placeCard.querySelector('.place-go').focus({ preventScroll: true });
+  }
+
+  /* ── The arc nav ────────────────────────────────────────────────────
+     The iH knob opened a band toggle, which is not what that control is: it
+     is the nav. It fans MAP · MUSIC · ME the way the shell's arc does, and
+     the first two set the band the dial is tuned to. */
+  const navKnob = document.querySelector('.nav-mount .knob');
+  const arc = document.createElement('div');
+  arc.className = 'arc';
+  arc.hidden = true;
+  document.querySelector('.nav-mount').appendChild(arc);
+
+  const ARC_ITEMS = [
+    { id: 'map', label: 'Map' },
+    { id: 'music', label: 'Music' },
+    { id: 'me', label: 'Me' },
+  ];
+  arc.innerHTML = ARC_ITEMS.map((it, i) =>
+    `<button class="arc-item" type="button" data-id="${it.id}" style="--i:${i}">${it.label}</button>`).join('');
+
+  function setArc(open) {
+    arc.hidden = !open;
+    navKnob.setAttribute('aria-expanded', String(open));
+    if (open) arc.querySelector('.arc-item').focus({ preventScroll: true });
+  }
+  navKnob.setAttribute('aria-expanded', 'false');
+  navKnob.addEventListener('click', () => setArc(arc.hidden));
+
+  arc.addEventListener('click', (event) => {
+    const item = event.target.closest('.arc-item');
+    if (!item) return;
+    if (item.dataset.id === 'map' || item.dataset.id === 'music') setBand(item.dataset.id);
+    setArc(false);
+    navKnob.focus({ preventScroll: true });
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !arc.hidden) { setArc(false); navKnob.focus(); }
+  });
+  // A click anywhere else closes it, which is what a member expects of a menu.
+  document.addEventListener('pointerdown', (event) => {
+    if (arc.hidden) return;
+    if (!event.target.closest('.nav-mount')) setArc(false);
+  }, true);
+
+  /* ── Demo toggles ───────────────────────────────────────────────────── */
+  const scaleToggle = document.getElementById('scale-toggle');
+  scaleToggle.addEventListener('click', () => {
+    const on = scaleToggle.getAttribute('aria-pressed') === 'true';
+    scaleToggle.setAttribute('aria-pressed', String(!on));
+    // Mirrors --ihype-text-scale: a font-size multiplier, never a transform,
+    // so the mockup reflows exactly as the app does.
+    phone.style.fontSize = on ? '' : '140%';
+  });
+
+  const motionToggle = document.getElementById('motion-toggle');
+  motionToggle.addEventListener('click', () => {
+    const on = motionToggle.getAttribute('aria-pressed') === 'true';
+    motionToggle.setAttribute('aria-pressed', String(!on));
+    for (const el of [ticks, tunerName]) {
+      el.style.transitionDuration = on ? '' : '1200ms';
+    }
+  });
+
+  /* Keep --chrome-h honest. The player's height and its hidden offset both
+     derive from it, so a stale value shows a sliver of the sheet on top of the
+     chrome — which is exactly what a hardcoded guess did. The Text size toggle
+     changes this height, so it is observed rather than read once. */
+  const syncChromeHeight = () => {
+    phone.style.setProperty('--chrome-h', `${Math.ceil(chromeEl.getBoundingClientRect().height)}px`);
+  };
+  if ('ResizeObserver' in window) new ResizeObserver(syncChromeHeight).observe(chromeEl);
+  syncChromeHeight();
+
+  /* The list thumbnails were flat gradients for the same reason the cover was.
+     Drawn at 128px: big enough to hold the halftone, small enough to be cheap. */
+  document.querySelectorAll('.row').forEach((row, i) => {
+    const art = row.querySelector('.row-art');
+    const title = row.querySelector('.row-title').textContent;
+    art.style.backgroundImage = `url("${coverArt(title, HUES[i % HUES.length], 128)}")`;
+    art.style.backgroundSize = 'cover';
+  });
+
+  paintTrack();
+  render(0);
+  // The scale measures its own children, which are not laid out until the font
+  // loads — re-centre once it has, or the tuned station sits off the index.
+  if (document.fonts?.ready) document.fonts.ready.then(() => render(index));
+</script>

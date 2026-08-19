@@ -76,7 +76,7 @@ export function ConnectPayoutButton({ profileId, connected, hasStarted }: Props)
         .connect-payout-copy { font-size: .85rem; color: var(--ink-2); line-height: 1.5; margin: 8px 0 0; }
         .connect-payout-btn { align-self: flex-start; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 20px; font-family: var(--font-display); font-weight: 700; font-size: .85rem; cursor: pointer; }
         .connect-payout-btn:disabled { opacity: .6; cursor: default; }
-        .connect-payout-error { font-size: 0.7813rem; color: var(--accent); margin: 0; }
+        .connect-payout-error { font-size: 0.7813rem; color: var(--accent-text); margin: 0; }
       `}</style>
     </div>
   );

@@ -271,7 +271,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
              used to live here are gone with the scrolling. */
           .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: 0.7813rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
         }
-        .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent); }
+        .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent-text); }
         .legal-doc { display: none; }
         .legal-doc.active { display: block; }
         /* A READING MEASURE, on the four documents that are prose.
@@ -300,7 +300,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
         .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
         .legal-doc li + li { margin-top: .65rem; }
-        .legal-doc a { color: var(--accent); }
+        .legal-doc a { color: var(--accent-text); }
         .legal-split-display { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block
            when it was folded into this tab. */

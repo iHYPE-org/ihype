@@ -144,6 +144,11 @@ html.mmm-locked .site-shell > main {
      out (108px hint, 100/186px result line, 118px dock) is derived here. */
   --mmm-chrome-size: 88px;
   --mmm-chrome-gap: 12px;
+  /* The pane's own horizontal padding, named because a surface inside the
+     pane sometimes has to cancel it — a horizontally scrolling strip has to
+     reach the viewport edge or its overflow is invisible. Written once here
+     rather than as a 16 repeated at each such site. */
+  --mmm-pane-pad: 16px;
   --mmm-inset: 26px;
   --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
@@ -378,7 +383,7 @@ html.mmm-locked .site-shell > main {
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,
      which the handoff's 430px rectangle has neither of. */
-  padding: calc(14px + var(--mmm-safe-top)) 16px calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
+  padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
 }
 
 /* Paint scope for workflows migrated from the retired AppShell. The

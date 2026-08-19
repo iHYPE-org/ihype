@@ -59,6 +59,59 @@ const inlinePxFontSize = /fontSize: (?:'\d+(?:\.\d+)?px'|\d+(?:\.\d+)?)(?=[,}\s]
 const styleBlockPxFontSize = /font-size: *\d+(?:\.\d+)?px/;
 
 /*
+ * And the THIRD syntax, for px this time.
+ *
+ * `remFontSizes()` below already reads the `font:` shorthand, because that is
+ * where 14 rem sizes were hiding from a `font-size:` search. The px rules did
+ * not, so `font: 600 12px/1.5 var(--font-mono)` was invisible to every check
+ * in this file — which is how the signup page's privacy line shipped at a
+ * fixed 12px, immune to the Text size setting, directly under a comment
+ * explaining that px cannot follow it.
+ */
+const shorthandPxFontSize = /font: *(?:[a-z0-9-]+ +)*?\d+(?:\.\d+)?px[ /]/;
+
+/*
+ * `--accent` is a FILL. It must never be a word.
+ *
+ * On the navy ground #ff5029 measures 5.73:1 as copy, so using it for an
+ * eyebrow or a link passed. On the console theme's cream board it is 2.48:1,
+ * and every one of those uses inverted from passing to failing the moment the
+ * theme was applied — 149 of them, across 67 files, none of which would look
+ * wrong in a diff. `--accent-text` is the copy form and is defined per theme
+ * (#ff6a44 dark, #9c2707 light, #923319 console); `--ink-on-accent` is the
+ * label ON the fill. Same trap the #5a5048 grey set after the DS8 repaint.
+ */
+// The `var(--accent, …)` fallback form counts: two of these hid behind it.
+const ACCENT_AS_TEXT = /(?:^|[{,;\s])color: *'?var\(--accent[,)]/;
+
+/*
+ * The inverse of the trap above, and the one that survived it.
+ *
+ * `--accent` as a FILL is correct. Hardcoding the label on top of it is not:
+ * white measures 3.27:1 on #ff5029 and fails AA in every theme, including the
+ * two it was written for. `--ink-on-accent` is the token, and in the console
+ * theme it resolves to dark ink — the opposite of what a hardcoded #fff
+ * assumes, which is why this could not be found by looking for something that
+ * changed. Found by measuring rendered colour on /login: the primary
+ * "Continue" button and the skip link were both painting white on orange.
+ *
+ * Block-scoped rather than line-scoped, because the fill and the label are two
+ * declarations in the same rule and neither is wrong on its own.
+ */
+const ACCENT_FILL = /background(?:-color)?: *[^;{}]*var\(--accent[,)]/g;
+const WHITE_LITERAL = /(?:^|[{;\s])(?:-webkit-text-fill-)?color: *'?(?:#fff(?:f{3})?\b|white\b|rgba?\( *255 *, *255 *, *255)/i;
+
+/** Rules that fill with the accent and then hardcode a white label on it. */
+function whiteOnAccent(source) {
+  const hits = [];
+  for (const match of source.matchAll(ACCENT_FILL)) {
+    const block = enclosingBlock(source, match.index);
+    if (WHITE_LITERAL.test(block)) hits.push(match.index);
+  }
+  return hits;
+}
+
+/*
  * The floor, in source rather than in a browser.
  *
  * `audit:mobile` measures rendered boxes and is the real instrument, but it is
@@ -165,6 +218,17 @@ for (const file of sourceFiles) {
     if (styleBlockPxFontSize.test(content)) {
       fail(file, 'font-size in px inside a <style> block ignores the Text size accessibility setting — use rem (px / 16).');
     }
+    if (shorthandPxFontSize.test(content)) {
+      fail(file, 'a px size in the `font:` shorthand ignores the Text size accessibility setting — use rem (px / 16).');
+    }
+    if (ACCENT_AS_TEXT.test(content)) {
+      fail(file, '--accent is a fill, not copy: 2.48:1 on the console ground. Use --accent-text for a word, --ink-on-accent for a label on the fill.');
+    }
+    for (const index of whiteOnAccent(content)) {
+      const line = content.slice(0, index).split('\n').length;
+      fail(file, `line ${line}: white hardcoded on an --accent fill is 3.27:1 and fails AA. Use var(--ink-on-accent), which is dark ink in the console theme.`);
+      break;
+    }
     for (const hit of remFontSizes(content)) {
       const block = enclosingBlock(content, hit.index);
       const floor = isTrackedMono(block) ? EYEBROW_FLOOR_REM : BODY_FLOOR_REM;
@@ -236,6 +300,17 @@ for (const file of await walkStyles('src')) {
 
   if (styleBlockPxFontSize.test(content.replace(/@media\s+print\s*\{[\s\S]*?\n\}/, ''))) {
     fail(file, 'font-size in px ignores the Text size accessibility setting — use rem (px / 16).');
+  }
+  if (shorthandPxFontSize.test(content.replace(/@media\s+print\s*\{[\s\S]*?\n\}/, ''))) {
+    fail(file, 'a px size in the `font:` shorthand ignores the Text size accessibility setting — use rem (px / 16).');
+  }
+  if (ACCENT_AS_TEXT.test(content)) {
+    fail(file, '--accent is a fill, not copy: 2.48:1 on the console ground. Use --accent-text for a word, --ink-on-accent for a label on the fill.');
+  }
+  for (const index of whiteOnAccent(content)) {
+    const line = content.slice(0, index).split('\n').length;
+    fail(file, `line ${line}: white hardcoded on an --accent fill is 3.27:1 and fails AA. Use var(--ink-on-accent), which is dark ink in the console theme.`);
+    break;
   }
 
   for (const hit of remFontSizes(content)) {

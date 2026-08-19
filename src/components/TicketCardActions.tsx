@@ -159,7 +159,7 @@ export function TicketCardActions({
         )}
       </div>
       {(resendDone || resendError) && (
-        <p style={{ fontSize: '0.7813rem', marginTop: 8, color: resendError ? 'var(--accent)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
+        <p style={{ fontSize: '0.7813rem', marginTop: 8, color: resendError ? 'var(--accent-text)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
       {showQr && (
@@ -218,7 +218,7 @@ export function TicketCardActions({
                   type="email"
                   value={email}
                 />
-                {error && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', marginBottom: 12 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
@@ -258,7 +258,7 @@ export function TicketCardActions({
                   type="number"
                   value={resalePrice}
                 />
-                {resaleError && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', marginBottom: 12 }}>{resaleError}</p>}
+                {resaleError && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">

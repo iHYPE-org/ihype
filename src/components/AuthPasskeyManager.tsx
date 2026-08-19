@@ -90,7 +90,7 @@ export function PasskeyManager() {
       <button disabled={busy} onClick={registerPasskey} style={{ ...ghostButton, background: 'var(--accent)', color: 'var(--ink-on-accent)', opacity: busy ? 0.7 : 1 }} type="button">
         {busy ? t('authPasskeyManager.registering', 'Registering...') : t('authPasskeyManager.addPasskey', 'Add a passkey')}
       </button>
-      {status ? <p style={{ marginTop: 8, fontSize: '0.8125rem', color: 'var(--accent)' }}>{status}</p> : null}
+      {status ? <p style={{ marginTop: 8, fontSize: '0.8125rem', color: 'var(--accent-text)' }}>{status}</p> : null}
       {error ? <p style={{ marginTop: 8, fontSize: '0.8125rem', color: '#ef4444' }}>{error}</p> : null}
 
       {!loadingList && passkeys && passkeys.length > 0 ? (

@@ -108,7 +108,7 @@ export async function TrustSafetyPanel() {
 
       {categoryRows.length > 0 && (
         <section className="lp-hype-explainer">
-          <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
+          <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-text)' }}>{t('auditPage.eyebrowByCategory', 'BY CATEGORY')}</p>
           <h2 className="lp-section-head">{t('auditPage.byCategoryTitle', 'What gets reported')}</h2>
           <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
             {categoryRows.map((r) => (
@@ -163,7 +163,7 @@ export async function TrustSafetyPanel() {
 
       {/* How this works */}
       <section className="lp-hype-explainer">
-        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent)' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
+        <p className="lp-hype-eyebrow" style={{ color: 'var(--accent-text)' }}>{t('auditPage.eyebrowHowItWorks', 'HOW IT WORKS')}</p>
         <h2 className="lp-section-head">{t('auditPage.fullPictureTitle', 'The full picture')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           {[

@@ -30,7 +30,7 @@ export default async function NotFound() {
         letterSpacing: '-0.03em',
         marginBottom: 24,
       }}>
-        i<span style={{ color: 'var(--accent)' }}>HYPE</span>
+        i<span style={{ color: 'var(--accent-text)' }}>HYPE</span>
       </div>
       <div style={{
         fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",
@@ -38,7 +38,7 @@ export default async function NotFound() {
         fontSize: '3rem',
         letterSpacing: '-0.05em',
         lineHeight: 0.85,
-        color: 'var(--accent)',
+        color: 'var(--accent-text)',
         marginBottom: 20,
         animation: 'notFoundGlitch 2.4s infinite',
       }}>
@@ -59,7 +59,7 @@ export default async function NotFound() {
       </p>
       <Link href="/" style={{
         background: 'var(--accent)',
-        color: '#fff',
+        color: 'var(--ink-on-accent)',
         padding: '13px 28px',
         borderRadius: 9999,
         fontFamily: "var(--font-display, 'Bricolage Grotesque', sans-serif)",

@@ -57,7 +57,7 @@ export function LineupSplitResponder({ showId, splitPercent }: { showId: string;
         .lsr-btn-accept { background: var(--accent); color: var(--ink-on-accent); }
         .lsr-btn-decline { background: transparent; color: var(--ink-a65); border: 1px solid var(--line); }
         .lsr-btn:disabled { opacity: 0.6; cursor: default; }
-        .lsr-error { color: var(--accent); font-size: 0.7813rem; margin: 10px 0 0; }
+        .lsr-error { color: var(--accent-text); font-size: 0.7813rem; margin: 10px 0 0; }
       `}</style>
     </div>
   );

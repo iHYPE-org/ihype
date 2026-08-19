@@ -108,7 +108,7 @@ export function PlayerQueuePanel({
           <button
             onClick={toggleAutoplay}
             type="button"
-            style={{ ...btnBase, fontSize: '0.7813rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent)' : 'inherit' }}
+            style={{ ...btnBase, fontSize: '0.7813rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent-text)' : 'inherit' }}
           >
             {isAutoplay ? t('playerQueuePanel.on', 'On') : t('playerQueuePanel.off', 'Off')}
           </button>

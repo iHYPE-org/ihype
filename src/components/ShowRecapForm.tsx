@@ -45,7 +45,7 @@ export function ShowRecapForm({ showId, initialRecap }: { showId: string; initia
           maxLength={5000}
         />
       </label>
-      {status === 'error' && <p style={{ color: 'var(--accent)' }}>{errorMsg}</p>}
+      {status === 'error' && <p style={{ color: 'var(--accent-text)' }}>{errorMsg}</p>}
       {status === 'saved' && <p style={{ color: 'var(--role-venue)' }}>{t('showRecapForm.savedMessage', 'Recap saved.')}</p>}
       <button className="button small" type="submit" disabled={status === 'saving'}>
         {status === 'saving' ? t('showRecapForm.saving', 'Saving…') : t('showRecapForm.saveButton', 'Save recap')}

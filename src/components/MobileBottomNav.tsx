@@ -112,7 +112,7 @@ export function MobileBottomNav() {
           <Link
             key={tabDef.id}
             href={tabDef.href}
-            style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent)' : 'rgba(240,240,240,0.45)' }}
+            style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent-text)' : 'rgba(240,240,240,0.45)' }}
           >
             {tabDef.icon}
             <span>{t(`mobileBottomNav.tab.${tabDef.id}`, tabDef.label)}</span>

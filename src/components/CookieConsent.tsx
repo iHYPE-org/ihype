@@ -119,21 +119,22 @@ export function CookieConsent() {
             touch floor on the one dialog every first-time visitor must dismiss
             before they can use the app. See the <style> block below for the
             second half of that rule, which is where it was actually failing.
-            `fontSize: 12` is the 12px legibility floor, not a design size — at
-            11px these two buttons were the single largest contributor to
-            audit:mobile's tinyText count, appearing on all 16 measured pages
-            because the banner is sitewide. */}
+            The size is 14px now, not the 12.5px floor. These two buttons were
+            the largest contributor to audit:mobile's tinyText count at 11px,
+            were raised to the floor, and sat there — but the floor is the
+            point below which text is a defect, not the size a sitewide
+            consent control should be. */}
         <button
           onClick={() => choose('essential')}
           className="ihype-btn-ghost ihype-consent-btn"
-          style={{ fontSize: '0.7813rem' }}
+          style={{ fontSize: '0.875rem' }}
         >
           {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
           className="ihype-btn-primary ihype-consent-btn"
-          style={{ fontSize: '0.7813rem', padding: '8px 14px' }}
+          style={{ fontSize: '0.875rem', padding: '8px 14px' }}
         >
           {t('cookieConsent.acceptAll', 'Accept all')}
         </button>

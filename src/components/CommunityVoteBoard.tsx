@@ -136,7 +136,7 @@ export function CommunityVoteBoard() {
           onChange={(e) => setDescription(e.target.value)}
           maxLength={2000}
         />
-        {message && <p style={{ fontSize: '0.8125rem', color: 'var(--accent)', margin: 0 }}>{message}</p>}
+        {message && <p style={{ fontSize: '0.8125rem', color: 'var(--accent-text)', margin: 0 }}>{message}</p>}
         <button className="ihype-btn-primary" type="submit" style={{ alignSelf: 'flex-start', padding: '11px 22px' }}>
           {t('communityVoteBoard.submitButton', 'Submit idea')}
         </button>

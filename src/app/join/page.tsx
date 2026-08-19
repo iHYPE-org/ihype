@@ -17,10 +17,10 @@ export const metadata: Metadata = {
 // same glyph the map draws its venue pins with), and each is tinted by its role
 // token through --jc-color, so shape and colour both separate them.
 const ROLES = [
-  { label: 'Fan', color: 'var(--role-fan)', icon: '\u25CF', href: '/for-fans', help: 'Discover, hype, and buy tickets fee-free.' },
-  { label: 'Artist', color: 'var(--accent)', icon: '\u25B2', href: '/for-artists', help: '70% of every ticket, your own page and shows.' },
-  { label: 'Venue', color: 'var(--role-venue)', icon: '\u25C6', href: '/for-venues', help: '20% of every gate and real demand data.' },
-  { label: 'Advertiser', color: 'var(--role-advertiser)', icon: '\u25A0', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
+  { label: 'Fan', color: 'var(--role-fan-text)', icon: '\u25CF', href: '/for-fans', help: 'Discover, hype, and buy tickets fee-free.' },
+  { label: 'Artist', color: 'var(--accent-text)', icon: '\u25B2', href: '/for-artists', help: '70% of every ticket, your own page and shows.' },
+  { label: 'Venue', color: 'var(--role-venue-text)', icon: '\u25C6', href: '/for-venues', help: '20% of every gate and real demand data.' },
+  { label: 'Advertiser', color: 'var(--role-advertiser-text)', icon: '\u25A0', href: '/advertise/register', help: 'Music-only campaigns with no access to personal user data.' },
 ];
 
 export default async function JoinChooserPage() {
@@ -46,7 +46,7 @@ export default async function JoinChooserPage() {
 
       <style>{`
         .join-wrap { max-width: 720px; margin: 0 auto; padding: 80px 24px 100px; text-align: center; }
-        .join-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+        .join-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
         .join-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
         .join-sub { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; max-width: 52ch; margin: 0 auto 40px; }
         .join-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }

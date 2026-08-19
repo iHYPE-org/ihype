@@ -119,7 +119,7 @@ function OfflinePageInner() {
       <style>{`
         .offline-body { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
         .offline-wordmark { font-family: var(--font-display); font-size: 1.375rem; font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin-bottom: 56px; }
-        .offline-wordmark span { color: var(--accent); }
+        .offline-wordmark span { color: var(--accent-text); }
         .offline-icon { width: 72px; height: 72px; border-radius: 20px; background: rgba(var(--accent-rgb),.08); border: 1px solid rgba(var(--accent-rgb),.18); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; animation: offline-softpulse 2s ease-in-out infinite; }
         @keyframes offline-softpulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .offline-title { font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -.03em; line-height: .95; text-align: center; margin-bottom: 16px; color: var(--ink); }

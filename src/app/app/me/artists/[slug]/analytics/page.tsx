@@ -248,13 +248,13 @@ export default async function ArtistAnalyticsPage({
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossLabel', 'Gross (70% share)')}</div>
-          <div className="aa-stat-val" style={{ color: 'var(--accent)' }}>{formatCurrencyFromCents(grossArtistShareCents)}</div>
+          <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(grossArtistShareCents)}</div>
           <div className="aa-stat-sub">{t('artistsSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>
       </div>
 
       <div className="aa-eyebrow-row">
-        <span className="aa-eyebrow-sm" style={{ color: 'var(--accent)' }}>{t('artistsSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</span>
+        <span className="aa-eyebrow-sm" style={{ color: 'var(--accent-text)' }}>{t('artistsSlugAnalyticsPage.listenersOverTime', 'Listeners over time')}</span>
       </div>
       {hasChartActivity ? (
         <div className="aa-chart">
@@ -314,7 +314,7 @@ export default async function ArtistAnalyticsPage({
         .aa-event-row:hover { background: var(--bg3); }
         .aa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .aa-event-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
-        .aa-event-gross { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--accent); font-weight: 700; flex-shrink: 0; }
+        .aa-event-gross { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--accent-text); font-weight: 700; flex-shrink: 0; }
 
         @media (max-width: 600px) {
           .aa-page { padding: 28px 20px 100px; }

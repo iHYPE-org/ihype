@@ -871,7 +871,7 @@ export function SitePlayerDock() {
       <div className="site-dock-c">
         <div className="site-dock-ctrls">
           <button className="site-dock-btn" onClick={toggleShuffle} aria-label={t('globalMediaPlayer.toggleShuffle', 'Toggle shuffle')} title={t('globalMediaPlayer.shuffle', 'Shuffle')} type="button"
-            style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent)' : 'inherit' }}>
+            style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent-text)' : 'inherit' }}>
             <DkShuffle />
           </button>
           <button className="site-dock-btn" onClick={playPrevious} aria-label={t('globalMediaPlayer.previous', 'Previous')} type="button"><DkSkipP /></button>
@@ -881,7 +881,7 @@ export function SitePlayerDock() {
           <button className="site-dock-btn" onClick={playNext} aria-label={t('globalMediaPlayer.next', 'Next')} type="button"><DkSkipN /></button>
           <button className="site-dock-btn" onClick={cycleRepeat} aria-label={t('globalMediaPlayer.cycleRepeat', 'Cycle repeat')}
             title={t(...repeatTitleKey(repeatMode))} type="button"
-            style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent)' : 'inherit', position: 'relative' }}>
+            style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent-text)' : 'inherit', position: 'relative' }}>
             <DkRepeat />
             {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.7813rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
           </button>
@@ -936,20 +936,20 @@ export function SitePlayerDock() {
         {/* Sleep timer */}
         <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
           aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
-          style={{ fontSize: '0.7813rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
+          style={{ fontSize: '0.7813rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
           {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
         </button>
 
         {/* Share */}
         <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button"
-          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7813rem', color: copied ? 'var(--accent)' : 'inherit' }}
+          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7813rem', color: copied ? 'var(--accent-text)' : 'inherit' }}
           disabled={!currentTrack}>
           {copied ? '✓' : '⬆'}
         </button>
 
         {/* Queue / History toggle */}
         <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button"
-          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
+          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent-text)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
           ≡
           {upcomingTracks.length > 0 && (
             <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.7813rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>

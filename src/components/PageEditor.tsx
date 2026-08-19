@@ -502,7 +502,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 >
                   {genresSaving ? t('pageEditor.saving', 'Saving…') : t('pageEditor.saveGenres', 'Save genres')}
                 </button>
-                {genresError && <span style={{ color: 'var(--accent)', fontSize: '0.7813rem' }}>{genresError}</span>}
+                {genresError && <span style={{ color: 'var(--accent-text)', fontSize: '0.7813rem' }}>{genresError}</span>}
                 {genresSavedAt && !genresError && <span style={{ color: 'var(--role-venue)', fontSize: '0.7813rem', fontFamily: 'var(--font-mono)' }}>✓ {t('pageEditor.saved', 'Saved')}</span>}
               </div>
             </Field>
@@ -579,7 +579,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 {availSaving ? t('pageEditor.adding', 'Adding…') : t('pageEditor.addDate', 'Add date')}
               </button>
             </div>
-            {availError && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', margin: '0 0 10px' }}>{availError}</p>}
+            {availError && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', margin: '0 0 10px' }}>{availError}</p>}
             {availDates.length === 0 ? (
               <p style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
             ) : (
@@ -922,7 +922,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             {aiBusy ? t('pageEditor.thinking', 'Thinking…') : t('pageEditor.customizeWithAi', 'Customize with AI')}
           </button>
 
-          {aiError && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginTop: 14 }}>{aiError}</p>}
+          {aiError && <p style={{ color: 'var(--accent-text)', fontSize: '0.8125rem', marginTop: 14 }}>{aiError}</p>}
           {aiApplied && (
             <p style={{ color: 'var(--role-venue)', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', marginTop: 14 }}>
               ✓ {t('pageEditor.aiAppliedNote', 'Applied — review the sections, then hit Save changes.')}
@@ -943,7 +943,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                     border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 12, padding: '12px 14px',
                     background: 'rgba(var(--accent-rgb),.05)',
                   }}>
-                    <div style={{ fontSize: '0.7813rem', fontWeight: 700, color: 'var(--accent)', marginBottom: 6 }}>
+                    <div style={{ fontSize: '0.7813rem', fontWeight: 700, color: 'var(--accent-text)', marginBottom: 6 }}>
                       {t(`pageEditor.aiFieldLabel.${field}`, AI_FIELD_LABELS[field] ?? field)}
                     </div>
                     <div style={{
@@ -978,7 +978,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
         </div>
       )}
 
-      {error && <p style={{ color: 'var(--accent)', fontSize: '0.8125rem', marginTop: 16 }}>{error}</p>}
+      {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.8125rem', marginTop: 16 }}>{error}</p>}
       {savedAt && !error && <p style={{ color: 'var(--role-venue)', fontSize: '0.8125rem', fontFamily: 'var(--font-mono)', marginTop: 16 }}>✓ {t('pageEditor.saved', 'Saved')}</p>}
 
       <button
