@@ -131,15 +131,15 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: 'cover',
   /**
-   * Both variants, because `viewportFit: 'cover'` plus a translucent status bar
-   * means the OS paints its own chrome behind the page and needs to know what
-   * colour it is sitting on. These are the two grounds from the brand
-   * constants — DS8's ink navy and its light counterpart — not new values.
+   * One value, because there is one ground. `viewportFit: 'cover'` plus a
+   * translucent status bar means the OS paints its own chrome behind the page
+   * and needs to know what colour it is sitting on — and the answer no longer
+   * depends on the reader's OS preference. This is `--bg`, the cream board.
+   *
+   * Leaving the old pair here would have been the quiet half of this change:
+   * an OS-dark phone would have painted a navy notch above a cream page.
    */
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4f6fa' },
-    { media: '(prefers-color-scheme: dark)', color: '#0b1220' },
-  ],
+  themeColor: '#f0dfb8',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
@@ -156,12 +156,10 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // A layout is the only place in the App Router that guarantees that.
   // Applied before first paint, in <head>, for the same reason the theme is.
   //
-  // `console` is the default ground as of the 2026-08-19 redesign, and the
-  // fallback is now a constant rather than `prefers-color-scheme`. That is a
-  // deliberate loss: the console theme is a warm cream board with no dark
-  // counterpart, so honouring an OS dark preference would have handed a
-  // first-time visitor a theme the product is no longer designed in. Dark and
-  // light both remain selectable and a stored choice still wins.
+  // There is no theme line here any more, and its absence is the point. The
+  // product has ONE ground — the cream board — so there is nothing to restore
+  // before first paint and no stored choice to read. `html.high-contrast` is
+  // still applied below; it is an accessibility mode, not a theme.
   //
   // Text size, high contrast and reduce motion all used to be applied by
   // AccessibilityProvider's useEffect, which runs AFTER hydration — so every
@@ -187,8 +185,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // Math.max(1, …) makes it a floor and never a shrink, which also disposes of
   // desktop Safari, where the same keyword computes to 13px and means nothing
   // about anyone's preference. The cap lives in CSS with the multiply.
-  const accessibilityBootstrap = `(function(){var d=document.documentElement;try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'&&t!=='console'){t='console'}d.setAttribute('data-theme',t)}catch(e){}
-try{var s=JSON.parse(localStorage.getItem('ihype-accessibility-settings')||'{}');var n=Number(s.textScale);if(isFinite(n))d.style.setProperty('--ihype-text-scale',String(Math.min(1.4,Math.max(0.85,n))));if(s.highContrast)d.classList.add('high-contrast');if(s.largeText)d.classList.add('a11y-large-text');if(s.reduceMotion)d.classList.add('a11y-reduce-motion');if(s.underlineLinks)d.classList.add('a11y-underline-links');if(s.readableFont)d.classList.add('a11y-readable-font')}catch(e){}
+  const accessibilityBootstrap = `(function(){var d=document.documentElement;try{var s=JSON.parse(localStorage.getItem('ihype-accessibility-settings')||'{}');var n=Number(s.textScale);if(isFinite(n))d.style.setProperty('--ihype-text-scale',String(Math.min(1.4,Math.max(0.85,n))));if(s.highContrast)d.classList.add('high-contrast');if(s.largeText)d.classList.add('a11y-large-text');if(s.reduceMotion)d.classList.add('a11y-reduce-motion');if(s.underlineLinks)d.classList.add('a11y-underline-links');if(s.readableFont)d.classList.add('a11y-readable-font')}catch(e){}
 try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.createElement('div');p.style.cssText='font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';d.appendChild(p);var px=parseFloat(getComputedStyle(p).fontSize);p.remove();if(px>0)d.style.setProperty('--ihype-os-text-scale',String(Math.max(1,px/17)))}}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
