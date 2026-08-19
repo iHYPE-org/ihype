@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
   TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP,
-  clampTextScale, useAccessibilitySettings,
+  clampTextScale, refreshSystemTextScale, useAccessibilitySettings,
 } from '@/components/AccessibilityControls';
 import { useI18n } from '@/components/I18nProvider';
 import { MmmSegmentedTabs } from '@/components/mmm/MmmSegmentedTabs';
@@ -34,6 +34,15 @@ export function MmmAccessibilitySettings() {
   const { t, locale, setLocale } = useI18n();
   const { settings, updateSetting } = useAccessibilitySettings();
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  // The reader's SYSTEM text size, which multiplies with the control below.
+  // Without this the card's percentage would be a half-truth on a phone: a
+  // reader at iOS 130% and the app at 100% would be told "100%" while looking
+  // at type a third larger than the number claims.
+  const [systemScale, setSystemScale] = useState(1);
+
+  useEffect(() => {
+    setSystemScale(refreshSystemTextScale());
+  }, []);
 
   useEffect(() => {
     const stored = window.localStorage.getItem('theme');
@@ -104,7 +113,22 @@ export function MmmAccessibilitySettings() {
         <section className="mmm-settings-card">
           <h2 className="mmm-settings-card-title">{t('appShell.a11y.textSize', 'Text size')}</h2>
           {/* The percentage is the card's live value, announced on change. */}
-          <p className="mmm-settings-card-hint" role="status">{scalePercent}%</p>
+          <p className="mmm-settings-card-hint" role="status">
+            {systemScale > 1.005
+              ? t('appShell.a11y.textSizeCombined', '{app}% here · {system}% from your device · {total}% in total')
+                  .replace('{app}', String(scalePercent))
+                  .replace('{system}', String(Math.round(systemScale * 100)))
+                  .replace('{total}', String(Math.min(160, Math.round(settings.textScale * systemScale * 100))))
+              : `${scalePercent}%`}
+          </p>
+          {systemScale > 1.005 ? (
+            <p className="mmm-settings-card-hint">
+              {t(
+                'appShell.a11y.textSizeSystemHint',
+                'Your device is already set to larger text and the app follows it. This control adjusts on top of that.',
+              )}
+            </p>
+          ) : null}
           <div className="mmm-settings-card-controls">
             <button
               aria-label={t('appShell.a11y.textSmaller', 'Smaller text')}

@@ -46,17 +46,17 @@ export default async function JoinChooserPage() {
 
       <style>{`
         .join-wrap { max-width: 720px; margin: 0 auto; padding: 80px 24px 100px; text-align: center; }
-        .join-eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
+        .join-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 10px; }
         .join-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(1.8rem, 5vw, 2.6rem); letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
-        .join-sub { font-size: 15px; color: var(--ink-a65); line-height: 1.6; max-width: 52ch; margin: 0 auto 40px; }
+        .join-sub { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; max-width: 52ch; margin: 0 auto 40px; }
         .join-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 28px; }
         .join-card { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; text-align: left; padding: 22px 20px; border-radius: 16px; border: 1px solid var(--line); border-top: 3px solid var(--jc-color); background: var(--bg2); text-decoration: none; }
         /* A glyph takes its colour from CSS where an emoji ignored it — so the
            role token that already tints the label now tints the mark too. */
         .join-card-icon { font-size: 1.6rem; color: var(--jc-color); line-height: 1; }
-        .join-card-label { font-family: var(--font-display); font-weight: 800; font-size: 16px; color: var(--jc-color); }
-        .join-card-help { font-size: 12.5px; color: var(--ink-a60); line-height: 1.5; }
-        .join-skip { font-family: var(--font-mono); font-size: 12px; color: var(--ink-a55); text-decoration: underline; }
+        .join-card-label { font-family: var(--font-display); font-weight: 800; font-size: 1rem; color: var(--jc-color); }
+        .join-card-help { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.5; }
+        .join-skip { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); text-decoration: underline; }
         @media (max-width: 560px) { .join-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>

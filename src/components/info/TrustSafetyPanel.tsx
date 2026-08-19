@@ -124,7 +124,7 @@ export async function TrustSafetyPanel() {
               </div>
             )}
           </div>
-          <p style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.6875rem', color: '#5a5048', marginTop: '14px', lineHeight: 1.7 }}>
+          <p style={{ fontFamily: 'var(--font-mono, monospace)', fontSize: '0.7813rem', color: 'var(--ink-2)', marginTop: '14px', lineHeight: 1.7 }}>
             {t('auditPage.categoryFloorNote', 'Categories with fewer than 5 reports are folded into "Other" — a small count can never identify a specific user or piece of content.')}
           </p>
         </section>

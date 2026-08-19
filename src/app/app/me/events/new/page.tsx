@@ -70,9 +70,9 @@ function ProfilePicker({
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px', background: 'rgba(var(--accent-rgb),.07)', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 10 }}>
           <div style={{ flex: 1 }}>
             <div style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>{value.name}</div>
-            <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
+            <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)' }}>{value.type}</div>
           </div>
-          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a50)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
+          <button onClick={() => onChange(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ink-a65)', fontSize: '1.125rem', lineHeight: 1, padding: '0 4px' }} type="button">×</button>
         </div>
       </div>
     );
@@ -106,7 +106,7 @@ function ProfilePicker({
               type="button"
             >
               <div style={{ fontSize: '0.8125rem', color: 'var(--ink)', fontWeight: 600 }}>{p.name}</div>
-              <div style={{ fontSize: '0.6875rem', color: 'var(--ink-a50)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
+              <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)' }}>{p.type}</div>
             </button>
           ))}
         </div>
@@ -330,7 +330,7 @@ export default function EventsNewPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '.88rem', padding: '6px 0', borderTop: '1px solid var(--hair-50)', marginTop: 4 }}>
                 <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutIhype', 'iHYPE · 0%')}</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.62rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
                 {t('eventsNewPage.payoutFinePrint', 'Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross:')} {fmt$(gross)}.
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function EventsNewPage() {
               <span style={{ fontSize: '1.25rem' }}>◇</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.gaTitle', 'General Admission')}</div>
-                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
+                <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.gaSubtitle', 'Single entry, face value')}</div>
               </div>
             </button>
             <button
@@ -356,7 +356,7 @@ export default function EventsNewPage() {
               <span style={{ fontSize: '1.25rem' }}>★</span>
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '.9rem' }}>{t('eventsNewPage.vipTitle', 'VIP')}</div>
-                <div style={{ fontSize: '.78rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
+                <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{t('eventsNewPage.vipSubtitle', 'Early entry + extras (custom price)')}</div>
               </div>
             </button>
             <button className="btn-primary" onClick={() => setStep(2)} style={{ marginTop: 12 }} type="button">{t('eventsNewPage.continueCta', 'Continue →')}</button>
@@ -397,7 +397,7 @@ export default function EventsNewPage() {
             <p className="sub">{t('eventsNewPage.reviewSubtitle', 'Once published, your event goes live and tickets are available immediately.')}</p>
             <div className="card">
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{title || t('eventsNewPage.untitledEvent', 'Untitled Event')}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-3)', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-3)', marginBottom: 14 }}>
                 {date || t('eventsNewPage.tbd', 'TBD')} · {venueProfile?.name ?? t('eventsNewPage.tbd', 'TBD')} · ${priceDollars || 0} · {cap || 0} {t('eventsNewPage.capAbbrev', 'cap')}
               </div>
               <div className="split-bar" style={{ marginBottom: 12 }}>
@@ -405,12 +405,12 @@ export default function EventsNewPage() {
                 <div style={{ flex: 20, background: 'var(--role-venue)' }} />
                 <div style={{ flex: 10, background: 'var(--role-fan)', borderRadius: '0 999px 999px 0' }} />
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--ink-3)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>
                 {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb),.25)', background: 'rgba(var(--warning-rgb),.06)', marginBottom: 14 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.68rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 8 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)', marginBottom: 8 }}>
                 ⚠ {t('eventsNewPage.reviewWarningTitle', 'Review before you lock')}
               </div>
               <div style={{ fontSize: '.85rem', color: 'var(--ink-2)', lineHeight: 1.6 }}>
@@ -418,7 +418,7 @@ export default function EventsNewPage() {
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--role-venue-rgb),.2)', background: 'rgba(var(--role-venue-rgb),.04)', marginBottom: 14 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '.72rem', color: 'var(--role-venue)', lineHeight: 1.5 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--role-venue)', lineHeight: 1.5 }}>
                 {t('eventsNewPage.ihypeChip', 'iHYPE takes $0 · 70/20/10 split locked in charter · tickets go on sale immediately')}
               </div>
             </div>
@@ -461,7 +461,7 @@ export default function EventsNewPage() {
         .progress-wrap { height: 3px; background: var(--bg3, var(--bg)); border-radius: 999px; margin-bottom: 28px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s ease; }
         .field { margin-bottom: 14px; }
-        .field label { display: block; font-family: var(--font-mono); font-size: .65rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+        .field label { display: block; font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
         .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--hair-80); background: var(--bg3, var(--bg)); color: var(--ink); font-size: .9rem; outline: none; transition: border-color .15s; box-sizing: border-box; }
         .field input:focus, .field select:focus, .field textarea:focus { border-color: rgba(var(--accent-rgb),.4); }
         .field textarea { resize: vertical; min-height: 70px; }
@@ -475,7 +475,7 @@ export default function EventsNewPage() {
         .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
         .ticket-type-btn:hover { border-color: rgba(var(--accent-rgb),.3); }
         .ticket-type-btn.selected { border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
-        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .1em; text-transform: uppercase; }
       `}</style>
     </div>
   );

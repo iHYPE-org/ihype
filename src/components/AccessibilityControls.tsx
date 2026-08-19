@@ -35,6 +35,40 @@ export function clampTextScale(value: unknown): number {
   return Number(bounded.toFixed(2));
 }
 
+/**
+ * Re-reads the reader's SYSTEM text size and republishes it as
+ * `--ihype-os-text-scale`.
+ *
+ * The bootstrap in `layout.tsx` does this once before first paint, which is
+ * what a cold launch needs; this exists for the other case. Inside the
+ * Capacitor WebView the app is very often resumed rather than launched, and a
+ * reader who goes to Settings to make text bigger comes BACK to a page that
+ * was never reloaded — so without a re-probe the change they just made would
+ * appear not to work, which is the failure this whole mechanism exists to fix.
+ *
+ * Deliberately duplicates the bootstrap's logic rather than sharing it: the
+ * bootstrap is a string injected into <head> and cannot import. The three
+ * guards are the same and the reasoning for them is written out there.
+ */
+export function refreshSystemTextScale(): number {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return 1;
+  const root = document.documentElement;
+  try {
+    if (!window.CSS?.supports('font', '-apple-system-body')) return 1;
+    const probe = document.createElement('div');
+    probe.style.cssText = 'font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';
+    root.appendChild(probe);
+    const px = Number.parseFloat(getComputedStyle(probe).fontSize);
+    probe.remove();
+    if (!Number.isFinite(px) || px <= 0) return 1;
+    const scale = Math.max(1, px / 17);
+    root.style.setProperty('--ihype-os-text-scale', String(scale));
+    return scale;
+  } catch {
+    return 1;
+  }
+}
+
 const defaultSettings: AccessibilitySettings = {
   highContrast: false,
   largeText: false,
@@ -113,6 +147,19 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     }
   }, [hasLoaded, settings]);
+
+  // A resumed WebView never re-runs the <head> bootstrap, so the system text
+  // size is re-read whenever the app comes back to the foreground.
+  useEffect(() => {
+    const reprobe = () => refreshSystemTextScale();
+    reprobe();
+    document.addEventListener('visibilitychange', reprobe);
+    window.addEventListener('pageshow', reprobe);
+    return () => {
+      document.removeEventListener('visibilitychange', reprobe);
+      window.removeEventListener('pageshow', reprobe);
+    };
+  }, []);
 
   function updateSetting<Key extends keyof AccessibilitySettings>(
     key: Key,
@@ -265,7 +312,7 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="button"
             style={{
               background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none',
-              borderRadius: 999, padding: '8px 16px', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer',
+              borderRadius: 999, padding: '8px 16px', fontSize: '0.7813rem', fontWeight: 700, cursor: 'pointer',
             }}
           >
             {t('accessibilityControls.apply', 'Apply')}

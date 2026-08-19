@@ -175,35 +175,35 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
 
       <style>{`
         .lsp-page { max-width: 640px; margin: 0 auto; padding: 32px 24px 100px; }
-        .lsp-empty { text-align: center; padding: 60px 24px; color: var(--ink-a50); }
+        .lsp-empty { text-align: center; padding: 60px 24px; color: var(--ink-a65); }
         .lsp-empty a { color: var(--ink-a70); }
-        .lsp-eyebrow { font-family: var(--font-mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a50); }
-        .lsp-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -.03em; margin: 6px 0; color: var(--ink); }
-        .lsp-sub { font-size: 13px; color: var(--ink-a55); margin: 0 0 24px; }
+        .lsp-eyebrow { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); }
+        .lsp-title { font-family: var(--font-display); font-size: 1.625rem; font-weight: 800; letter-spacing: -.03em; margin: 6px 0; color: var(--ink); }
+        .lsp-sub { font-size: 0.8125rem; color: var(--ink-a65); margin: 0 0 24px; }
         .lsp-splitbar { display: flex; height: 8px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; margin-bottom: 8px; }
         .lsp-splitbar-seg { min-width: 2px; }
-        .lsp-splitbar-legend { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-a50); gap: 12px; flex-wrap: wrap; }
+        .lsp-splitbar-legend { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); gap: 12px; flex-wrap: wrap; }
         .lsp-list { display: flex; flex-direction: column; gap: 12px; }
         .lsp-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg2); padding: 18px 20px; }
         .lsp-card-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
         .lsp-card-who { display: flex; gap: 12px; align-items: center; }
         .lsp-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--line); display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; color: var(--ink); flex-shrink: 0; }
-        .lsp-name { font-family: var(--font-display); font-weight: 800; font-size: 15px; color: var(--ink); }
-        .lsp-meta { font-size: 12px; color: var(--ink-a55); margin-top: 2px; }
-        .lsp-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
+        .lsp-name { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
+        .lsp-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
+        .lsp-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
         .lsp-pill-pending { background: rgba(var(--warning-rgb),.15); color: var(--warning-text); }
         .lsp-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .lsp-pill-declined { background: rgba(var(--accent-rgb),.15); color: var(--accent); }
         .lsp-card-actions { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
         .lsp-status-note { margin-top: 20px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); }
-        .lsp-status-note p { font-size: 12.5px; color: var(--ink-a60); line-height: 1.6; margin: 6px 0 0; }
-        .lsp-status-label { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase; }
+        .lsp-status-note p { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin: 6px 0 0; }
+        .lsp-status-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; }
         .lsp-status-note-accepted { border-color: rgba(var(--role-venue-rgb),.25); background: rgba(var(--role-venue-rgb),.06); }
         .lsp-status-note-accepted .lsp-status-label { color: var(--role-venue); }
         .lsp-status-note-declined { border-color: rgba(var(--accent-rgb),.25); background: rgba(var(--accent-rgb),.06); }
         .lsp-status-note-declined .lsp-status-label { color: var(--accent); }
-        .lsp-foot { margin-top: 24px; font-size: 13px; }
-        .lsp-foot a { color: var(--ink-a60); text-decoration: none; }
+        .lsp-foot { margin-top: 24px; font-size: 0.8125rem; }
+        .lsp-foot a { color: var(--ink-a65); text-decoration: none; }
         .lsp-foot a:hover { color: var(--ink); text-decoration: underline; }
       `}</style>
     </div>

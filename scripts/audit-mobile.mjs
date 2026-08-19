@@ -68,9 +68,25 @@ const BASE = arg('base', 'https://ihype.org');
 // a starting ratchet, not a verified production floor — and this script is
 // deliberately not in CI, so a wrong number here misleads a person rather than
 // blocking a merge.
+//
+// RE-BASELINED 2026-08-19, after the type-floor sweep. `tinyBodyText` went
+// 246 -> 3 because the floor was applied to all THREE syntaxes that carry type
+// in this codebase — the JSX `fontSize` prop, CSS `font-size` (in stylesheets
+// AND in the <style> blocks 29 pages embed), and the `font:` shorthand, which
+// hides the size among its other components and is why an earlier pass that
+// fixed the first two still left the homepage's own "Sign in" link under the
+// floor. `lint-source.mjs` now fails the build on all three, so this number is
+// a record rather than the only thing holding the line.
+//
+// The remaining 3 are on /register and / and are genuinely small labels the
+// eyebrow rule does not cover; they are worth a look, not a blocker.
+//
+// Measured the same way as the figures they replace: a LOCAL production build
+// with an empty database. The slack on tinyBodyText is for /this-weekend and
+// /community, which render live rows.
 const BUDGET = {
-  smallTaps: 44,
-  tinyBodyText: 246,
+  smallTaps: 39,
+  tinyBodyText: 6,
   overflowingPages: 0,
 };
 

@@ -65,7 +65,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         href="/app/me/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
-          fontSize: '0.625rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a50)',
+          fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)',
           textDecoration: 'none', marginBottom: 18,
         }}
       >
@@ -81,7 +81,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         </h1>
         <span style={{
           display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)',
-          fontSize: '0.625rem', letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(ticket.status),
+          fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: statusColor(ticket.status),
           border: `1px solid ${statusColor(ticket.status)}`, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap',
         }}>
           <span style={{ width: 6, height: 6, borderRadius: '50%', background: statusColor(ticket.status), display: 'inline-block' }} />
@@ -89,8 +89,8 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         </span>
       </div>
       <div style={{
-        fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', letterSpacing: '.1em', textTransform: 'uppercase',
-        color: 'var(--ink-a50)', marginBottom: 28,
+        fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase',
+        color: 'var(--ink-a65)', marginBottom: 28,
       }}>
         {ticket.type} · {ticket.priority} {t('supportTicketsIdPage.priorityLabel', 'priority')} · {t('supportTicketsIdPage.openedLabel', 'Opened')} {fmtDateTime(ticket.createdAt)}
       </div>
@@ -108,7 +108,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         padding: '12px 14px', borderRadius: 'var(--radius-sm)', background: 'var(--bg2)',
         border: '1px solid var(--line)',
       }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6562rem', color: 'var(--ink-a50)' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-a65)' }}>
           {t('supportTicketsIdPage.lastUpdated', 'Last updated')} {fmtDateTime(ticket.updatedAt)}. {t('supportTicketsIdPage.replyWithin24h', 'We reply within 24h.')}
         </div>
       </div>

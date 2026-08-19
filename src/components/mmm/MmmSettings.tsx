@@ -414,7 +414,7 @@ export function MmmSettings() {
       <h1>{t('settingsPage.title', 'Settings')}</h1>
 
       {loading ? (
-        <p style={{ color: 'var(--ink-a30)', fontFamily: 'var(--font-mono)', fontSize: '0.75rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
+        <p style={{ color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', fontSize: '0.7813rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
       ) : (
         <>
           {/* Payout / Payment (role-aware) */}
@@ -432,8 +432,8 @@ export function MmmSettings() {
                       <div className="settings-row-detail">{t('settingsPage.payoutsLandDetail', 'Payouts land within 2 business days of a show closing')}</div>
                       <div className="settings-split-mini">
                         <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
-                        <span style={{ color: 'var(--ink-a50)' }}>{role === 'VENUE' ? t('settingsPage.splitArtist', '70% artist') : t('settingsPage.splitVenue', '20% venue')}</span>
-                        <span style={{ color: 'var(--ink-a50)' }}>{t('settingsPage.splitPromoters', '10% promoters')}</span>
+                        <span style={{ color: 'var(--ink-a65)' }}>{role === 'VENUE' ? t('settingsPage.splitArtist', '70% artist') : t('settingsPage.splitVenue', '20% venue')}</span>
+                        <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitPromoters', '10% promoters')}</span>
                       </div>
                     </div>
                     <Link className="settings-btn settings-btn-ghost" href="/app/me?role=promoter">{t('settingsPage.connect', 'Connect')}</Link>
@@ -528,7 +528,7 @@ export function MmmSettings() {
                 }
                 label={t('settingsPage.pushLabel', 'Push notifications (this browser)')}
               />
-              {pushError && <p style={{ color: 'var(--accent)', fontSize: '0.75rem', padding: '0 20px 14px' }}>{pushError}</p>}
+              {pushError && <p style={{ color: 'var(--accent)', fontSize: '0.7813rem', padding: '0 20px 14px' }}>{pushError}</p>}
             </div>
           </div>
 
@@ -654,8 +654,8 @@ export function MmmSettings() {
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(var(--surface-tint-rgb), .13); gap: 16px; }
         .settings-row:last-child { border-bottom: none; }
         .settings-row-label { font-size: 0.875rem; font-weight: 500; color: var(--ink); }
-        .settings-row-detail { font-size: 0.75rem; color: var(--ink-2); margin-top: 2px; }
-        .settings-invite-note { font-size: 0.71875rem; color: var(--ink-a50); line-height: 1.5; margin: 10px 2px 0; }
+        .settings-row-detail { font-size: 0.7813rem; color: var(--ink-2); margin-top: 2px; }
+        .settings-invite-note { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.5; margin: 10px 2px 0; }
 
         .settings-toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; display: block; }
         .settings-toggle input { opacity: 0; width: 0; height: 0; }
@@ -677,7 +677,7 @@ export function MmmSettings() {
         .settings-recovery { align-items: flex-start; }
         .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
         .settings-recovery-controls .settings-input-inline { width: 190px; max-width: 100%; }
-        .settings-recovery-error { margin-top: 6px; font-size: 0.75rem; color: var(--warning-text); }
+        .settings-recovery-error { margin-top: 6px; font-size: 0.7813rem; color: var(--warning-text); }
         /* Still the one card that reads as dangerous, now that the border it
            used to override belongs to the section rather than the group. */
         .settings-section:has(.settings-danger-zone) { border-color: rgba(239,68,68,.2); }
@@ -686,7 +686,7 @@ export function MmmSettings() {
         .settings-payout-card { align-items: center; gap: 14px; }
         .settings-payout-ic { width: 40px; height: 40px; border-radius: 10px; background: rgba(var(--surface-tint-rgb), .08); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .settings-split-mini { display: flex; gap: 10px; margin-top: 10px; }
-        .settings-split-mini span { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(var(--surface-tint-rgb), .07); }
+        .settings-split-mini span { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .08em; padding: 3px 8px; border-radius: 6px; background: rgba(var(--surface-tint-rgb), .07); }
 
         @media (max-width: 600px) {
           .settings-page { padding: 24px 16px 100px; }

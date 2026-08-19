@@ -262,7 +262,7 @@ export function ArtistMediaPlaylist({
                       {playCount ? ` · ${playCount} ${playCount === 1 ? t('artistMediaPlaylist.play', 'play') : t('artistMediaPlaylist.plays', 'plays')}` : ''}
                     </p>
                     {canEdit && freeUse[entry.hexId] && (
-                      <span className="meta" style={{ fontSize: '0.7rem', opacity: 0.6 }}>{t('artistMediaPlaylist.freeUseOn', 'Free use on')}</span>
+                      <span className="meta" style={{ fontSize: '0.7813rem', opacity: 0.6 }}>{t('artistMediaPlaylist.freeUseOn', 'Free use on')}</span>
                     )}
                   </>
                 )}

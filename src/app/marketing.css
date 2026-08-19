@@ -28,7 +28,7 @@
   display: inline-flex; align-items: center;
   padding: 12px 22px;
   background: var(--accent); color: #fff;
-  border-radius: 8px; font-size: 14px; font-weight: 700;
+  border-radius: 8px; font-size: 0.875rem; font-weight: 700;
   text-decoration: none; letter-spacing: .04em;
   border: none; cursor: pointer;
   transition: opacity .15s;
@@ -38,7 +38,7 @@
   display: inline-flex; align-items: center;
   padding: 12px 22px;
   border: 1px solid rgba(255,255,255,.14); color: var(--muted);
-  border-radius: 8px; font-size: 14px;
+  border-radius: 8px; font-size: 0.875rem;
   text-decoration: none; letter-spacing: .04em;
   transition: border-color .15s, color .15s;
 }
@@ -59,7 +59,7 @@
   background: rgba(255,255,255,.025);
 }
 .lp-stat-val { font-size: 2rem; font-weight: 800; letter-spacing: -.02em; line-height: 1; }
-.lp-stat-label { font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.lp-stat-label { font-size: 0.7813rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
 /* Reasons */
 .lp-section-head {
   font-size: 1.5rem; font-weight: 800; letter-spacing: -.02em;
@@ -73,9 +73,9 @@
   background: rgba(255,255,255,.025);
   display: flex; flex-direction: column; gap: 8px;
 }
-.lp-reason-icon { font-size: 22px; }
-.lp-reason-head { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
-.lp-reason-body { font-size: 13px; color: var(--muted); line-height: 1.65; margin: 0; }
+.lp-reason-icon { font-size: 1.375rem; }
+.lp-reason-head { font-size: 0.9375rem; font-weight: 700; color: var(--text); margin: 0; }
+.lp-reason-body { font-size: 0.8125rem; color: var(--muted); line-height: 1.65; margin: 0; }
 
 /* Hype explainer */
 .lp-hype-explainer {
@@ -83,7 +83,7 @@
   border-top: 1px solid rgba(255,255,255,.06);
 }
 .lp-hype-eyebrow {
-  font-size: 10px;
+  font-size: 0.7813rem;
   font-weight: 700;
   letter-spacing: .12em;
   color: var(--role-venue);

@@ -20,7 +20,7 @@ export const dynamic = 'force-dynamic';
 
 type Tab = 'reports' | 'verifications' | 'duplicates';
 
-const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: '0.625rem' };
+const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: '0.7813rem' };
 const tdStyle: React.CSSProperties = { padding: '10px 12px', color: 'var(--ink)', verticalAlign: 'middle' };
 
 async function resolveReport(reportId: string) {
@@ -33,7 +33,7 @@ async function resolveReport(reportId: string) {
 function ResolveButton({ reportId, label }: { reportId: string; label: string }) {
   return (
     <form action={resolveReport.bind(null, reportId)}>
-      <button type="submit" style={{ background: 'rgba(var(--role-venue-rgb),.12)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.2)', borderRadius: 6, padding: '4px 12px', fontSize: '0.6875rem', cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
+      <button type="submit" style={{ background: 'rgba(var(--role-venue-rgb),.12)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.2)', borderRadius: 6, padding: '4px 12px', fontSize: '0.7813rem', cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
         {label}
       </button>
     </form>
@@ -198,11 +198,11 @@ export default async function AdminReviewPage({
               <option value="track">{t('adminReviewPage.typeTrack', 'Track')}</option>
             </select>
             <label style={{ display: 'grid', gap: 2 }}>
-              <span className="meta" style={{ fontSize: '0.625rem' }}>{t('adminReviewPage.from', 'From')}</span>
+              <span className="meta" style={{ fontSize: '0.7813rem' }}>{t('adminReviewPage.from', 'From')}</span>
               <input className="input" type="date" name="from" defaultValue={resolved.from ?? ''} />
             </label>
             <label style={{ display: 'grid', gap: 2 }}>
-              <span className="meta" style={{ fontSize: '0.625rem' }}>{t('adminReviewPage.to', 'To')}</span>
+              <span className="meta" style={{ fontSize: '0.7813rem' }}>{t('adminReviewPage.to', 'To')}</span>
               <input className="input" type="date" name="to" defaultValue={resolved.to ?? ''} />
             </label>
             <input type="hidden" name="page" value="1" />
@@ -223,7 +223,7 @@ export default async function AdminReviewPage({
             <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.875rem', color: 'var(--ink-3)' }}>{t('adminReviewPage.noReports', 'No reports found.')}</p>
           ) : (
             <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: '0.75rem' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontFamily: 'var(--f-m)', fontSize: '0.7813rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--line-2)', color: 'var(--ink-3)', letterSpacing: '.08em', textTransform: 'uppercase' }}>
                     <th style={thStyle}>{t('adminReviewPage.colDate', 'Date')}</th>
@@ -249,15 +249,15 @@ export default async function AdminReviewPage({
                         <td style={tdStyle}>{new Date(r.createdAt).toLocaleDateString()}</td>
                         <td style={tdStyle}>{r.reason}</td>
                         <td style={tdStyle}>{r.targetType}</td>
-                        <td style={{ ...tdStyle, fontSize: '0.75rem' }}>
-                          {entityHref ? <Link href={entityHref} style={{ color: 'var(--accent)', textDecoration: 'none' }} target="_blank">{entityLabel}</Link> : <span style={{ fontFamily: 'monospace', fontSize: '0.6875rem', color: 'var(--ink-3)' }}>{entityLabel}</span>}
+                        <td style={{ ...tdStyle, fontSize: '0.7813rem' }}>
+                          {entityHref ? <Link href={entityHref} style={{ color: 'var(--accent)', textDecoration: 'none' }} target="_blank">{entityLabel}</Link> : <span style={{ fontFamily: 'monospace', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{entityLabel}</span>}
                         </td>
                         <td style={tdStyle}>{r.reporter ? <span title={r.reporter.email ?? ''}>{r.reporter.name ?? r.reporter.email}</span> : <span style={{ color: 'var(--ink-3)' }}>{t('adminReviewPage.anonymous', 'Anonymous')}</span>}</td>
                         <td style={tdStyle}>
-                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.625rem', letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : 'var(--role-venue)' }}>{r.status}</span>
+                          <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: '0.7813rem', letterSpacing: '.08em', background: r.status === 'OPEN' ? 'rgba(var(--accent-rgb),.15)' : 'rgba(var(--role-venue-rgb),.1)', color: r.status === 'OPEN' ? 'var(--accent)' : 'var(--role-venue)' }}>{r.status}</span>
                         </td>
                         <td style={tdStyle}>
-                          {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}
+                          {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}
                           {r.status === 'OPEN' && <ResolveButton reportId={r.id} label={t('adminReviewPage.resolve', 'Resolve')} />}
                         </td>
                       </tr>
@@ -270,7 +270,7 @@ export default async function AdminReviewPage({
           {reportPages > 1 && (
             <div style={{ display: 'flex', gap: 8, marginTop: 16, alignItems: 'center' }}>
               {rPage > 1 && <Link className="button small secondary" href={rpHref({ page: String(rPage - 1) })}>{t('adminReviewPage.prev', '← Prev')}</Link>}
-              <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.75rem', color: 'var(--ink-3)' }}>{t('adminReviewPage.pageOf', 'Page')} {rPage} {t('adminReviewPage.of', 'of')} {reportPages}</span>
+              <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{t('adminReviewPage.pageOf', 'Page')} {rPage} {t('adminReviewPage.of', 'of')} {reportPages}</span>
               {rPage < reportPages && <Link className="button small secondary" href={rpHref({ page: String(rPage + 1) })}>{t('adminReviewPage.next', 'Next →')}</Link>}
             </div>
           )}
@@ -319,7 +319,7 @@ export default async function AdminReviewPage({
                     {profiles.map((p) => (
                       <li key={p.id} style={{ display: 'flex', gap: 12, alignItems: 'center', fontSize: '0.8125rem' }}>
                         <Link href={`/artists/${p.slug}`} target="_blank">{p.name}</Link>
-                        <span className="badge" style={{ fontSize: '0.625rem' }}>{p.type}</span>
+                        <span className="badge" style={{ fontSize: '0.7813rem' }}>{p.type}</span>
                         <span className="meta">{p.owner?.email ?? t('adminReviewPage.noEmail', 'no email')}</span>
                         <span className="meta"><Link href={`/admin/users?q=${encodeURIComponent(p.owner?.id ?? '')}`}>{t('adminReviewPage.adminLink', 'admin')}</Link></span>
                         <span className="meta">{new Date(p.createdAt).toLocaleDateString()}</span>

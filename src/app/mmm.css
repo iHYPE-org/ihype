@@ -170,7 +170,7 @@ html.mmm-locked .site-shell > main {
   bottom: 4px;
   z-index: 15;
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.7813rem;
   color: var(--ink-3);
   pointer-events: none;
 }
@@ -253,7 +253,7 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-3);
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.76rem;
+  font-size: 0.7813rem;
   cursor: pointer;
   backdrop-filter: blur(8px);
   white-space: nowrap;
@@ -267,7 +267,7 @@ html.mmm-locked .site-shell > main {
 .mmm-chip-genre {
   padding: 5px 11px;
   font-family: var(--font-mono);
-  font-size: 0.63rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.04em;
 }
 
@@ -286,7 +286,7 @@ html.mmm-locked .site-shell > main {
   backdrop-filter: blur(10px);
   border: 1px solid var(--hair-100);
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -313,7 +313,7 @@ html.mmm-locked .site-shell > main {
   border: 1.5px solid rgba(var(--accent-rgb), 0.75);
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.72rem;
+  font-size: 0.7813rem;
   white-space: nowrap;
   box-shadow: 0 3px 12px rgba(var(--scrim-rgb), 0.55);
   display: flex;
@@ -438,7 +438,7 @@ html.mmm-locked .site-shell > main {
   padding: 8px 2px 14px;
   border-bottom: 1px solid var(--line-2);
 }
-.mmm-demo-head p { margin: 0; color: var(--ink-3); font-size: 0.72rem; line-height: 1.4; }
+.mmm-demo-head p { margin: 0; color: var(--ink-3); font-size: 0.7813rem; line-height: 1.4; }
 .mmm-demo-badge {
   flex: 0 0 auto;
   padding: 6px 9px;
@@ -446,7 +446,7 @@ html.mmm-locked .site-shell > main {
   border-radius: var(--radius-pill);
   background: rgba(var(--accent-rgb), 0.1);
   color: var(--accent-text);
-  font: 0.56rem var(--font-mono);
+  font: 0.7813rem var(--font-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -478,14 +478,14 @@ html.mmm-locked .site-shell > main {
 .mmm-advertiser-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin: 20px 0 24px; }
 .mmm-advertiser h1 { margin: 6px 0 0; color: var(--ink); font: 800 clamp(2rem, 6vw, 3.6rem)/0.95 var(--font-display); letter-spacing: -0.045em; }
 .mmm-advertiser a { color: var(--accent-text); }
-.mmm-advertiser .meta { color: var(--ink-3); font-size: 0.75rem; line-height: 1.5; }
+.mmm-advertiser .meta { color: var(--ink-3); font-size: 0.7813rem; line-height: 1.5; }
 .mmm-advertiser-new { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
 .mmm-advertiser .ad-dash-stats { gap: 10px; }
 .mmm-advertiser .ad-dash-stat-card,
 .mmm-advertiser .panel { border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); box-shadow: none; }
 .mmm-advertiser .ad-dash-stat-label { color: var(--ink-3); }
 .mmm-advertiser .ad-dash-stat-sub { color: var(--ink-3); }
-.mmm-advertiser .badge { padding: 6px 9px; border: 1px solid var(--line-2); border-radius: var(--radius-pill); background: transparent; color: var(--ink-2); font: 0.56rem var(--font-mono); letter-spacing: 0.08em; }
+.mmm-advertiser .badge { padding: 6px 9px; border: 1px solid var(--line-2); border-radius: var(--radius-pill); background: transparent; color: var(--ink-2); font: 0.7813rem var(--font-mono); letter-spacing: 0.08em; }
 .mmm-advertiser .badge.success { border-color: rgba(var(--role-venue-rgb), 0.45); color: var(--role-venue); }
 .mmm-advertiser .badge.warning { border-color: rgba(var(--accent-rgb), 0.4); color: var(--accent-text); }
 @media (max-width: 620px) {
@@ -673,7 +673,7 @@ html.mmm-locked .site-shell > main {
 .mmm-date-dow,
 .mmm-date-mon {
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.1em;
   line-height: 1.2;
   color: var(--ink-3);
@@ -700,12 +700,12 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-date-label {
   font-family: var(--font-mono);
-  font-size: 0.52rem;
+  font-size: 0.5625rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.mmm-date-value { flex: 1; min-width: 0; font-size: 0.78rem; color: var(--ink); }
+.mmm-date-value { flex: 1; min-width: 0; font-size: 0.7813rem; color: var(--ink); }
 .mmm-date-clear {
   flex: 0 0 auto;
   background: none;
@@ -713,7 +713,7 @@ html.mmm-locked .site-shell > main {
   padding: 0;
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-2);
@@ -758,7 +758,7 @@ html.mmm-locked .site-shell > main {
 .mmm-me-accordion-detail {
   display: block;
   margin-top: 3px;
-  font-size: 0.78rem;
+  font-size: 0.7813rem;
   line-height: 1.35;
   color: var(--ink-2);
   overflow: hidden;
@@ -832,7 +832,7 @@ html.mmm-locked .site-shell > main {
 .mmm-me-add[data-kind='admin'] > [aria-hidden] { color: var(--accent-text); }
 .mmm-me-add-chip {
   font-family: var(--font-mono);
-  font-size: 0.55rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -909,7 +909,7 @@ html.mmm-locked .site-shell > main {
 .mmm-search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
 .mmm-search-key {
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.5625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -928,7 +928,7 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-search-scope {
   font-family: var(--font-mono);
-  font-size: 0.62rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-2);
@@ -982,7 +982,7 @@ html.mmm-locked .site-shell > main {
 .mmm-search-result-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .mmm-search-kind {
   font-family: var(--font-mono);
-  font-size: 0.56rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -991,7 +991,7 @@ html.mmm-locked .site-shell > main {
 
 .mmm-eyebrow {
   font-family: var(--font-mono);
-  font-size: 0.6rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -1025,8 +1025,8 @@ html.mmm-locked .site-shell > main {
   cursor: pointer;
 }
 .mmm-row-title { font-family: var(--font-body); font-weight: 600; font-size: 0.88rem; color: var(--ink); }
-.mmm-row-sub { font-size: 0.74rem; color: var(--ink-3); margin-top: 1px; }
-.mmm-row-meta { font-family: var(--font-mono); font-size: 0.76rem; color: var(--accent-text); white-space: nowrap; }
+.mmm-row-sub { font-size: 0.7813rem; color: var(--ink-3); margin-top: 1px; }
+.mmm-row-meta { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--accent-text); white-space: nowrap; }
 
 .mmm-station-art {
   width: 44px;
@@ -1056,7 +1056,7 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-stat-label {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -1100,7 +1100,7 @@ html.mmm-locked .site-shell > main {
   flex: 1;
   min-width: 0;
   font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 0.7813rem;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
@@ -1174,7 +1174,7 @@ html.mmm-locked .site-shell > main {
   border-radius: 50%;
   background: var(--accent);
   color: var(--ink-on-accent);
-  font-size: 0.6rem;
+  font-size: 0.7813rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1514,7 +1514,7 @@ html.mmm-locked .site-shell > main {
 
 .mmm-player-artist {
   font-family: var(--font-mono);
-  font-size: 0.57rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.05em;
   color: var(--ink-3);
   white-space: nowrap;
@@ -1583,7 +1583,7 @@ html.mmm-locked .site-shell > main {
   color: var(--accent-text);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 0.68rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.06em;
   cursor: pointer;
 }
@@ -1596,7 +1596,7 @@ html.mmm-locked .site-shell > main {
 .mmm-player-hype-wait,
 .mmm-player-hype-count {
   font-family: var(--font-mono);
-  font-size: 0.58rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.04em;
   opacity: 0.85;
 }
@@ -1612,7 +1612,7 @@ html.mmm-locked .site-shell > main {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.72rem;
+  font-size: 0.7813rem;
   cursor: pointer;
 }
 
@@ -1723,7 +1723,7 @@ html.mmm-locked .site-shell > main {
    translucent chip is unreadable in a way the same chip over a pane is not. */
 .mmm-map-chip {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   border-radius: var(--radius-pill);
@@ -1762,7 +1762,7 @@ html.mmm-locked .site-shell > main {
 .mmm-map-recentre { flex: 0 0 auto; }
 .mmm-map-recentre {
   font-family: inherit;
-  font-size: 0.563rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   border-radius: var(--radius-pill);
@@ -1802,7 +1802,7 @@ html.mmm-locked .site-shell > main {
   display: block;
   margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   color: var(--ink-3);
 }
@@ -1818,7 +1818,7 @@ html.mmm-locked .site-shell > main {
 .mmm-ticket-meta {
   margin-top: 5px;
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.06em;
   color: var(--ink-3);
   overflow-wrap: anywhere;
@@ -1833,14 +1833,14 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-ticket-status {
   font-family: var(--font-mono);
-  font-size: 0.5rem;
+  font-size: 0.5625rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--accent-text);
 }
 /* An attended ticket is history, not a call to action. */
 .mmm-ticket-status[data-attended] { color: var(--ink-3); }
-.mmm-ticket-checkin { font-size: 0.75rem; color: var(--ink-3); }
+.mmm-ticket-checkin { font-size: 0.7813rem; color: var(--ink-3); }
 .mmm-ticket-view {
   min-height: 34px;
   padding: 7px 14px;
@@ -1931,7 +1931,7 @@ html.mmm-locked .site-shell > main {
 .mmm-ticket-rule {
   margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -2023,7 +2023,7 @@ html.mmm-locked .site-shell > main {
   padding: 9px 6px;
   text-align: center;
   font-family: var(--font-mono);
-  font-size: 0.5625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -2037,7 +2037,7 @@ html.mmm-locked .site-shell > main {
 .mmm-show-fee {
   margin-top: 8px;
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -2124,7 +2124,7 @@ html.mmm-locked .site-shell > main {
 .mmm-profile-show-main { display: flex; flex-direction: column; min-width: 0; }
 .mmm-profile-show-when {
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -2137,7 +2137,7 @@ html.mmm-locked .site-shell > main {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.mmm-profile-show-where { margin-top: 2px; font-size: 0.75rem; color: var(--ink-2); }
+.mmm-profile-show-where { margin-top: 2px; font-size: 0.7813rem; color: var(--ink-2); }
 
 /* Track copyright line. Tone is an attribute rather than two class names —
    the states are mutually exclusive and one of them is always present. */
@@ -2150,7 +2150,7 @@ html.mmm-locked .site-shell > main {
   flex-shrink: 0;
   min-width: 22px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.08em;
   color: var(--ink-3);
   padding-top: 3px;
@@ -2169,7 +2169,7 @@ html.mmm-locked .site-shell > main {
   border-radius: var(--radius-pill);
   background: rgba(var(--accent-rgb), 0.12);
   font-family: var(--font-mono);
-  font-size: 0.625rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--accent-text);
@@ -2236,7 +2236,7 @@ html.mmm-locked .site-shell > main {
   font-size: 0.875rem;
   color: var(--ink);
 }
-.mmm-queue-now-meta { font-size: 0.75rem; color: var(--ink-2); }
+.mmm-queue-now-meta { font-size: 0.7813rem; color: var(--ink-2); }
 .mmm-queue-row {
   display: flex;
   width: 100%;
@@ -2255,7 +2255,7 @@ html.mmm-locked .site-shell > main {
   flex: 0 0 auto;
   width: 18px;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.7813rem;
   color: var(--ink-3);
 }
 .mmm-queue-title {
@@ -2267,7 +2267,7 @@ html.mmm-locked .site-shell > main {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mmm-queue-artist { flex: 0 0 auto; font-size: 0.75rem; color: var(--ink-2); }
+.mmm-queue-artist { flex: 0 0 auto; font-size: 0.7813rem; color: var(--ink-2); }
 /* Played sits below a rule and greyed: already heard, still reachable. */
 .mmm-queue-played { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-2); }
 .mmm-queue-played .mmm-queue-row { opacity: 0.55; }
@@ -2372,7 +2372,7 @@ html.mmm-locked .site-shell > main {
 .mmm-full-clock {
   min-width: 34px;
   font-family: var(--font-mono);
-  font-size: 0.65625rem;
+  font-size: 0.7813rem;
   color: var(--ink-3);
 }
 .mmm-full-clock[data-right] { text-align: right; }
@@ -2453,7 +2453,7 @@ html.mmm-locked .site-shell > main {
 .mmm-full-hype-wait {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 0.71875rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.04em;
   opacity: 0.85;
 }
@@ -2793,11 +2793,11 @@ html.mmm-locked .site-shell > main {
   border-radius: var(--radius-pill);
   background: rgba(var(--scrim-rgb), 0.5);
   color: var(--ink-on-media);
-  font-size: 0.6875rem;
+  font-size: 0.7813rem;
   line-height: 1;
   cursor: pointer;
 }
-.mmm-deck-play[data-paused] { padding-left: 3px; font-size: 0.75rem; }
+.mmm-deck-play[data-paused] { padding-left: 3px; font-size: 0.7813rem; }
 .mmm-deck-verdict {
   position: absolute;
   top: 22px;
@@ -2880,7 +2880,7 @@ html.mmm-locked .site-shell > main {
 .mmm-deck-hype-wait {
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 0.6875rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.04em;
   opacity: 0.85;
 }
@@ -2919,14 +2919,14 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-2);
   text-decoration: none;
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.7813rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 .mmm-me-route-back { margin-bottom: 12px; }
 .mmm-me-route-context { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .mmm-me-route-context .mmm-me-route-back { margin-bottom: 0; }
-.mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.594rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mmm-me-route-trail span { display: inline-flex; gap: 7px; }
 .mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
 .mmm-empty-state { padding: 18px; border: 1px dashed var(--hair-160); border-radius: var(--radius-lg); background: var(--hair-30); }
@@ -2945,7 +2945,7 @@ html.mmm-locked .site-shell > main {
 .mmm-ad-section h2, .mmm-ad-final h2 { margin: 10px 0 0; font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.6rem); line-height: 0.98; letter-spacing: -0.04em; }
 .mmm-ad-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 28px; }
 .mmm-ad-steps article { padding: 20px; border: 1px solid var(--hair-100); border-radius: var(--radius-lg); background: var(--bg-2); }
-.mmm-ad-steps span { color: var(--accent-text); font-family: var(--font-mono); font-size: 0.75rem; }
+.mmm-ad-steps span { color: var(--accent-text); font-family: var(--font-mono); font-size: 0.7813rem; }
 .mmm-ad-steps h3 { margin: 18px 0 0; font-family: var(--font-display); font-size: 1.1rem; }
 .mmm-ad-steps p, .mmm-ad-eligibility p, .mmm-ad-final p { margin: 8px 0 0; color: var(--ink-2); font-size: 0.875rem; line-height: 1.6; }
 .mmm-ad-eligibility { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
@@ -2963,7 +2963,7 @@ html.mmm-locked .site-shell > main {
 .mmm-charter-head { padding: 28px 0 22px; }
 .mmm-charter-head h1 { margin: 8px 0 6px; font-size: clamp(2.4rem, 8vw, 5.5rem); line-height: 0.92; }
 .mmm-charter-lead { margin: 0; color: var(--ink-2); font-size: 1rem; }
-.mmm-charter-updated { margin: 13px 0 0; color: var(--ink-3); font: 0.625rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
+.mmm-charter-updated { margin: 13px 0 0; color: var(--ink-3); font: 0.7813rem var(--font-mono); letter-spacing: 0.08em; text-transform: uppercase; }
 .mmm-charter-split { padding: 22px; border: 1px solid rgba(var(--accent-rgb), 0.38); border-radius: var(--radius-card); background: rgba(var(--accent-rgb), 0.07); }
 .mmm-charter-split-bar { display: flex; gap: 4px; height: 12px; margin-top: 16px; }
 .mmm-charter-split-bar span { border-radius: var(--radius-pill); }
@@ -2973,19 +2973,19 @@ html.mmm-locked .site-shell > main {
 .mmm-charter-shares { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 18px; }
 .mmm-charter-shares div { display: flex; flex-direction: column; gap: 4px; }
 .mmm-charter-shares strong { color: var(--ink); font: 800 clamp(1.45rem, 4vw, 2.2rem) var(--font-display); }
-.mmm-charter-shares span { color: var(--ink-3); font: 0.6rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.mmm-charter-shares span { color: var(--ink-3); font: 0.7813rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .mmm-charter-callout { margin: 20px 0 0; padding-top: 18px; border-top: 1px solid var(--line-2); color: var(--ink-2); line-height: 1.6; }
 .mmm-charter-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
 .mmm-charter-card { position: relative; padding: 22px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
 .mmm-charter-card h2 { margin: 8px 0 10px; font-size: 1.25rem; }
 .mmm-charter-card p, .mmm-charter-card li { color: var(--ink-2); font-size: 0.875rem; line-height: 1.65; }
 .mmm-charter-card p { margin: 0; }
-.mmm-charter-index { color: var(--accent-text); font: 0.625rem var(--font-mono); letter-spacing: 0.12em; }
+.mmm-charter-index { color: var(--accent-text); font: 0.7813rem var(--font-mono); letter-spacing: 0.12em; }
 .mmm-charter-revenue { margin-top: 12px; }
 .mmm-charter-revenue ol { margin: 12px 0 16px; padding-left: 20px; }
 .mmm-charter-revenue li + li { margin-top: 9px; }
 .mmm-charter-revenue p + p { margin-top: 12px; }
-.mmm-charter-footer { padding: 24px 2px; color: var(--ink-3); font-size: 0.75rem; line-height: 1.7; }
+.mmm-charter-footer { padding: 24px 2px; color: var(--ink-3); font-size: 0.7813rem; line-height: 1.7; }
 .mmm-charter-footer p { margin: 0; }
 .mmm-charter-footer a { color: var(--accent-text); }
 .mmm-me-about-in-profiles { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line-2); }
@@ -3007,7 +3007,7 @@ html.mmm-locked .site-shell > main {
 .mmm-info-report .lp-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; margin: 0 0 12px !important; }
 .mmm-info-report .lp-stat, .mmm-info-report .lp-reason-card { padding: 18px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
 .mmm-info-report .lp-stat-val { display: block; font: 800 1.75rem var(--font-display); }
-.mmm-info-report .lp-stat-label { display: block; margin-top: 6px; color: var(--ink-3); font: 0.6rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
+.mmm-info-report .lp-stat-label { display: block; margin-top: 6px; color: var(--ink-3); font: 0.7813rem var(--font-mono); letter-spacing: 0.1em; text-transform: uppercase; }
 .mmm-info-report .lp-hype-explainer { margin-top: 12px; padding: 22px; border: 1px solid var(--line-2); border-radius: var(--radius-card); background: var(--bg-2); }
 .mmm-info-report .lp-reason-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px; }
 .mmm-info-report .lp-section-head, .mmm-info-report .lp-reason-head { color: var(--ink); font-family: var(--font-display); }
@@ -3017,7 +3017,7 @@ html.mmm-locked .site-shell > main {
 .mmm-info-report-divider h2 { margin: 8px 0; font-size: 1.75rem; }
 .mmm-document-sections { border-top: 1px solid var(--line-2); }
 .mmm-document-section { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 14px; padding: 22px 0; border-bottom: 1px solid var(--line-2); }
-.mmm-document-section > span { color: var(--accent-text); font: 0.625rem var(--font-mono); letter-spacing: 0.12em; }
+.mmm-document-section > span { color: var(--accent-text); font: 0.7813rem var(--font-mono); letter-spacing: 0.12em; }
 .mmm-document-section h2 { margin: 0 0 8px; font-size: 1.25rem; }
 .mmm-document-section p { margin: 0; color: var(--ink-2); font-size: 0.875rem; line-height: 1.7; }
 .mmm-document-section a { color: var(--accent-text); }

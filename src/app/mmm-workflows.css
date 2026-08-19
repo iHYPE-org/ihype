@@ -37,7 +37,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--ink-2);
-  font: 600 0.75rem var(--f-b);
+  font: 600 0.7813rem var(--f-b);
   cursor: pointer;
   transition: color 170ms var(--ease), background 170ms var(--ease);
 }
@@ -56,5 +56,24 @@ html.high-contrast .mmm-settings-pill[data-active='true'] {
 }
 html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 
-/* Content scale is typography, not a transformed layout. */
-:root { font-size: calc(100% * var(--ihype-text-scale, 1)); }
+/* Content scale is typography, not a transformed layout.
+   
+   TWO scales multiply here and they answer different questions.
+   `--ihype-text-scale` is the app's own Text size control (0.85-1.4, written
+   by AccessibilityProvider and pre-applied by the bootstrap in layout.tsx).
+   `--ihype-os-text-scale` is the reader's SYSTEM setting, and it is only ever
+   >= 1 — see the bootstrap for why it is a floor rather than a ratio, and why
+   iOS needs it at all when Android's WebView does this by itself.
+
+   They multiply rather than max() so the in-app control still does something
+   for a reader who has already enlarged text system-wide and is still
+   squinting — with max(), every press below their OS setting would appear to
+   do nothing. The product is capped at 1.6: iOS accessibility sizes run far
+   past that, and at some point an unbounded root size stops being legibility
+   and starts being a broken layout. A reader who needs more than 1.6 is
+   better served by the OS zoom, which scales the whole surface rather than
+   reflowing it. Both custom properties default to 1, so a browser that sets
+   neither renders exactly as before. */
+:root {
+  font-size: calc(100% * min(1.6, var(--ihype-text-scale, 1) * var(--ihype-os-text-scale, 1) * var(--ihype-large-text-scale, 1)));
+}

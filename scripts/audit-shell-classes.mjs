@@ -152,6 +152,16 @@ const TOKENED = new Map(Object.entries({
   // before it was raised to clear AA. A hardcoded copy keeps the failing
   // contrast forever and looks correct next to the token name.
   '#7a7060': '--ink-3', '#7a6e64': '--ink-3',
+  // Warm-era greys the DS8 navy repaint left behind. `#5a5048` was secondary
+  // copy on the old cream ground and reads at 2.39:1 on `#0b1220` — it was
+  // carrying 27 live labels, most of them mono metadata at 9-10px, i.e. the
+  // exact combination an older reader reports as "I can't read the small
+  // text". Nothing flagged it: this table is a lookup of KNOWN literals, and a
+  // dead value belongs to no token, so it matched neither the tokened list nor
+  // the theme-inverting one. That is the general hazard — a superseded palette
+  // goes quiet rather than loud — so a retired value earns an entry here on
+  // the way out, pointed at whatever replaced it.
+  '#5a5048': '--ink-2',
   '255,80,41': '--accent-rgb', '255,62,154': '--accent-2-rgb',
   '185,131,255': '--role-fan-rgb', '34,229,212': '--role-venue-rgb',
   '255,184,74': '--warning-rgb',

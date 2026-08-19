@@ -30,7 +30,7 @@ export function DeleteCollabPostButton({ id }: { id: string }) {
       onClick={handleDelete}
       disabled={deleting}
       className="ihype-btn-ghost"
-      style={{ padding: '4px 10px', fontSize: '0.6875rem', flexShrink: 0 }}
+      style={{ padding: '4px 10px', fontSize: '0.7813rem', flexShrink: 0 }}
     >
       {deleting ? t('deleteCollabPostButton.deleting', 'Deleting…') : t('deleteCollabPostButton.delete', 'Delete')}
     </button>

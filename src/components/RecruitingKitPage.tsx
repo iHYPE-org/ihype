@@ -159,15 +159,15 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-apply-heading { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 10px; }
         .rk-apply-sub { font-size: .92rem; color: var(--ink-a70); line-height: 1.6; margin-bottom: 22px; }
         .rk-apply-btn { display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 14px; border-radius: 12px; background: var(--rk-tint); color: var(--bg); font-family: var(--font-display); font-weight: 800; font-size: 1rem; text-decoration: none; }
-        .rk-fineprint { font-family: var(--font-mono); font-size: .68rem; color: var(--ink-a45); margin-top: 12px; text-align: center; letter-spacing: .04em; }
+        .rk-fineprint { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); margin-top: 12px; text-align: center; letter-spacing: .04em; }
         .rk-stats-wrap { max-width: 1080px; margin: 64px auto 0; padding: 0 32px; }
         .rk-stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; }
         .rk-stat { flex: 1; min-width: 90px; padding: 24px 0; text-align: center; border-right: 1px solid var(--line); }
         .rk-stat:last-child { border-right: none; }
         .rk-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; color: var(--rk-tint); }
-        .rk-stat-label { font-family: var(--font-mono); font-size: .64rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a55); margin-top: 6px; }
+        .rk-stat-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 6px; }
         .rk-heat { padding: 28px 0; border-bottom: 1px solid var(--line); }
-        .rk-heat-label { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a45); margin-bottom: 14px; }
+        .rk-heat-label { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 14px; }
         .rk-heat-rows { display: flex; flex-direction: column; gap: 9px; max-width: 420px; }
         .rk-heat-row { display: flex; align-items: center; gap: 10px; }
         .rk-heat-city { width: 96px; flex-shrink: 0; font-size: .82rem; color: var(--ink-a70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

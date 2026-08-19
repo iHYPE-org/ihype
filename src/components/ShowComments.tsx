@@ -124,7 +124,7 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
                 <strong>{comment.author}</strong>
-                <span className="meta" style={{ fontSize: '0.75rem' }}>
+                <span className="meta" style={{ fontSize: '0.7813rem' }}>
                   {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               </div>
@@ -142,7 +142,7 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
                       disabled={!canComment}
                       title={canComment ? undefined : t('showComments.signInToReactTitle', 'Sign in to react')}
                       onClick={() => void toggleReaction(comment.id, emoji)}
-                      style={{ fontSize: '0.75rem', padding: '2px 10px' }}
+                      style={{ fontSize: '0.7813rem', padding: '2px 10px' }}
                     >
                       {emoji} {found ? found.count : ''}
                     </button>

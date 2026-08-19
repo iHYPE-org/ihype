@@ -199,7 +199,7 @@ export function ShowSetlistEditor({
                     border: '1px solid var(--line)',
                     color: 'var(--ink)',
                     fontFamily: 'var(--f-b)',
-                    fontSize: '0.75rem'
+                    fontSize: '0.7813rem'
                   }}
                 />
                 <button
@@ -212,7 +212,7 @@ export function ShowSetlistEditor({
                 </button>
               </div>
               {templates.length === 0 ? (
-                <p style={{ fontSize: '0.75rem', color: 'var(--ink-3)', margin: 0 }}>{t('showSetlistEditor.noTemplatesSaved', 'No templates saved yet.')}</p>
+                <p style={{ fontSize: '0.7813rem', color: 'var(--ink-3)', margin: 0 }}>{t('showSetlistEditor.noTemplatesSaved', 'No templates saved yet.')}</p>
               ) : (
                 templates.map((tmpl) =>
                   editingTemplateId === tmpl.id ? (
@@ -232,7 +232,7 @@ export function ShowSetlistEditor({
                           border: '1px solid var(--line)',
                           color: 'var(--ink)',
                           fontFamily: 'var(--f-b)',
-                          fontSize: '0.75rem',
+                          fontSize: '0.7813rem',
                           marginBottom: 6
                         }}
                       />
@@ -249,7 +249,7 @@ export function ShowSetlistEditor({
                           border: '1px solid var(--line)',
                           color: 'var(--ink)',
                           fontFamily: 'var(--f-b)',
-                          fontSize: '0.75rem',
+                          fontSize: '0.7813rem',
                           marginBottom: 6
                         }}
                       />

@@ -107,9 +107,9 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
                 borderRadius: 20,
                 border: '1px solid var(--hair-100)',
                 background: 'var(--hair-40)',
-                color: 'var(--ink-a50)',
+                color: 'var(--ink-a65)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.6875rem',
+                fontSize: '0.7813rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }

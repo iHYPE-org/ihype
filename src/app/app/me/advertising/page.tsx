@@ -178,9 +178,9 @@ export default async function AdvertiserDashboard() {
       <style>{`
         .ad-dash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 24px; }
         .ad-dash-stat-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 16px 18px; }
-        .ad-dash-stat-label { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a50); margin-bottom: 6px; }
-        .ad-dash-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 22px; color: var(--ink); }
-        .ad-dash-stat-sub { font-size: 11.5px; color: var(--ink-a50); margin-top: 2px; }
+        .ad-dash-stat-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
+        .ad-dash-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; color: var(--ink); }
+        .ad-dash-stat-sub { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
       `}</style>
     </div>
   );

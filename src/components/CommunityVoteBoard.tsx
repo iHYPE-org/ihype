@@ -115,7 +115,7 @@ export function CommunityVoteBoard() {
 
   return (
     <div>
-      <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', lineHeight: 1.55 }}>
+      <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', lineHeight: 1.55 }}>
         {t('communityVoteBoard.governanceNote', 'One fan account gets one vote per proposal. Results, quorum, voting windows, and any emergency security exception remain public. Security fixes may ship immediately when disclosure or delay would put people or the platform at risk.')}
       </p>
       {eligible ? <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
@@ -141,16 +141,16 @@ export function CommunityVoteBoard() {
           {t('communityVoteBoard.submitButton', 'Submit idea')}
         </button>
       </form> : (
-        <p style={{ marginBottom: 24, fontSize: '0.8125rem', color: 'var(--ink-a60)' }}>
+        <p style={{ marginBottom: 24, fontSize: '0.8125rem', color: 'var(--ink-a65)' }}>
           <Link href="/login?callbackUrl=/community">{t('communityVoteBoard.signIn', 'Sign in with a fan account')}</Link>{' '}
           {t('communityVoteBoard.signInSuffix', 'to propose changes and vote.')}
         </p>
       )}
 
       {loading ? (
-        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
       ) : requests.length === 0 ? (
-        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a45)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
       ) : (
         <div>
           {requests.map((fr) => (
@@ -175,13 +175,13 @@ export function CommunityVoteBoard() {
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--ink)' }}>{fr.title}</div>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a60)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', color: 'var(--ink-a45)', margin: '7px 0 0' }}>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
+                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-a65)', margin: '7px 0 0' }}>
                   {fr.quorumMet ? 'Quorum met' : `${fr.quorumRequired - fr.votes} more vote${fr.quorumRequired - fr.votes === 1 ? '' : 's'} for quorum`}
                   {fr.votingClosesAt ? ` · voting closes ${new Date(fr.votingClosesAt).toLocaleDateString()}` : ''}
                 </p>
                 {fr.securityException && (
-                  <p style={{ fontSize: '0.75rem', color: 'var(--warning)', margin: '7px 0 0' }}>
+                  <p style={{ fontSize: '0.7813rem', color: 'var(--warning)', margin: '7px 0 0' }}>
                     Security exception: {fr.securityExceptionNote ?? 'Emergency protection applied; details will be published when safe.'}
                   </p>
                 )}
@@ -189,10 +189,10 @@ export function CommunityVoteBoard() {
               {fr.status !== 'open' && (
                 <span
                   style={{
-                    flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase',
+                    flexShrink: 0, fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', textTransform: 'uppercase',
                     letterSpacing: '.08em', padding: '4px 9px', borderRadius: 999,
                     border: `1px solid ${STATUS_COLOR[fr.status] ?? 'var(--line-2)'}`,
-                    color: STATUS_COLOR[fr.status] ?? 'var(--ink-a60)',
+                    color: STATUS_COLOR[fr.status] ?? 'var(--ink-a65)',
                   }}
                 >
                   {fr.status.replace(/_/g, ' ')}

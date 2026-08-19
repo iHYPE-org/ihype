@@ -76,7 +76,7 @@ export default async function JournalPost({
         style={{
           display: 'inline-block',
           fontFamily: 'var(--f-m)',
-          fontSize: '.7rem',
+          fontSize: '0.7813rem',
           letterSpacing: '.1em',
           textTransform: 'uppercase',
           marginBottom: 26
@@ -95,7 +95,7 @@ export default async function JournalPost({
       >
         {meta.title}
       </h1>
-      <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '.68rem', margin: '14px 0 30px' }}>
+      <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', margin: '14px 0 30px' }}>
         {meta.author ?? 'iHYPE'} · {found.createdAt.toLocaleDateString()}
       </p>
       {meta.excerpt ? (

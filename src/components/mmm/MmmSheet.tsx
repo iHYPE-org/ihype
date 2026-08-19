@@ -61,7 +61,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
             {content.initial}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 5, fontSize: '0.56rem', letterSpacing: '0.14em' }}>
+            <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 5, fontSize: '0.7813rem', letterSpacing: '0.14em' }}>
               {content.eyebrow}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -85,7 +85,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>
                   {stat.value}
                 </div>
-                <div className="mmm-stat-label" style={{ marginTop: 2, fontSize: '0.56rem' }}>{stat.label}</div>
+                <div className="mmm-stat-label" style={{ marginTop: 2, fontSize: '0.7813rem' }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -93,7 +93,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
 
         {content.list.length > 0 && (
           <>
-            <div className="mmm-eyebrow" style={{ margin: '13px 0 7px', fontSize: '0.55rem', letterSpacing: '0.11em' }}>
+            <div className="mmm-eyebrow" style={{ margin: '13px 0 7px', fontSize: '0.7813rem', letterSpacing: '0.11em' }}>
               {content.listTitle}
             </div>
             <div>
@@ -104,7 +104,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--ink)' }}>{row.a}</div>
-                    <div style={{ fontSize: '0.72rem', color: 'var(--ink-3)' }}>{row.b}</div>
+                    <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{row.b}</div>
                   </div>
                   <div className="mmm-row-meta">{row.c}</div>
                 </div>
@@ -113,7 +113,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
           </>
         )}
 
-        <div className="mmm-eyebrow" style={{ margin: '11px 0 0', fontSize: '0.6rem', letterSpacing: 0, textTransform: 'none' }}>
+        <div className="mmm-eyebrow" style={{ margin: '11px 0 0', fontSize: '0.7813rem', letterSpacing: 0, textTransform: 'none' }}>
           {SPLIT_LINE}
         </div>
 

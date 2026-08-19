@@ -118,22 +118,22 @@ function OfflinePageInner() {
 
       <style>{`
         .offline-body { min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; }
-        .offline-wordmark { font-family: var(--font-display); font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin-bottom: 56px; }
+        .offline-wordmark { font-family: var(--font-display); font-size: 1.375rem; font-weight: 800; letter-spacing: -.02em; color: var(--ink); margin-bottom: 56px; }
         .offline-wordmark span { color: var(--accent); }
         .offline-icon { width: 72px; height: 72px; border-radius: 20px; background: rgba(var(--accent-rgb),.08); border: 1px solid rgba(var(--accent-rgb),.18); display: flex; align-items: center; justify-content: center; margin-bottom: 28px; animation: offline-softpulse 2s ease-in-out infinite; }
         @keyframes offline-softpulse { 0%, 100% { opacity: 1; } 50% { opacity: .5; } }
         .offline-title { font-family: var(--font-display); font-size: clamp(28px, 5vw, 40px); font-weight: 800; letter-spacing: -.03em; line-height: .95; text-align: center; margin-bottom: 16px; color: var(--ink); }
-        .offline-sub { font-size: 15px; color: var(--ink-a60); text-align: center; max-width: 380px; line-height: 1.6; margin-bottom: 48px; }
-        .offline-code { font-family: var(--font-mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a30); margin-bottom: 48px; }
+        .offline-sub { font-size: 0.9375rem; color: var(--ink-a65); text-align: center; max-width: 380px; line-height: 1.6; margin-bottom: 48px; }
+        .offline-code { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 48px; }
         .offline-actions { display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 320px; }
-        .offline-btn-primary { padding: 14px; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 16px; font-weight: 800; cursor: pointer; transition: opacity 150ms; text-align: center; }
+        .offline-btn-primary { padding: 14px; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 150ms; text-align: center; }
         .offline-btn-primary:hover { opacity: .88; }
         .offline-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-        .offline-btn-ghost { padding: 13px; background: transparent; color: var(--ink-a60); border: 1px solid var(--hair-100); border-radius: 10px; font-family: var(--font-body); font-size: 14px; cursor: pointer; transition: all 150ms; text-align: center; text-decoration: none; display: block; }
+        .offline-btn-ghost { padding: 13px; background: transparent; color: var(--ink-a65); border: 1px solid var(--hair-100); border-radius: 10px; font-family: var(--font-body); font-size: 0.875rem; cursor: pointer; transition: all 150ms; text-align: center; text-decoration: none; display: block; }
         .offline-btn-ghost:hover { background: var(--hair-40); color: var(--ink); }
         .offline-status-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 3px; background: var(--line); overflow: hidden; }
         .offline-status-fill { height: 100%; width: 0%; background: var(--accent); }
-        .offline-retry-msg { font-family: var(--font-mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a30); margin-top: 32px; min-height: 16px; }
+        .offline-retry-msg { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 32px; min-height: 16px; }
       `}</style>
     </div>
   );

@@ -154,14 +154,42 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
   // A layout is the only place in the App Router that guarantees that.
-  const themeBootstrap = `(function(){try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}document.documentElement.setAttribute('data-theme',t)}catch(e){}})();`;
+  // Applied before first paint, in <head>, for the same reason the theme is.
+  //
+  // Text size, high contrast and reduce motion all used to be applied by
+  // AccessibilityProvider's useEffect, which runs AFTER hydration — so every
+  // cold launch painted the app at 100% and then jumped. On the web that reads
+  // as a flicker; inside the Capacitor WebView, where a cold launch is the
+  // normal way in, it is the first thing a reader who needs 140% sees, every
+  // single time. A preference that only arrives after the page is drawn is not
+  // really applied.
+  //
+  // The OS half is here too, and it is the only mechanism that reaches iOS.
+  // Android's WebView scales web text with the system font-size setting on its
+  // own; WKWebView does not — Dynamic Type simply does not reach CSS, so a
+  // reader who had already enlarged text system-wide got nothing from us and
+  // had no reason to suspect a second, in-app control existed. `-apple-system-
+  // body` is the one thing that does carry the setting into the page: it is a
+  // WebKit system-font keyword whose computed size tracks Dynamic Type, and
+  // 17px is its value at the default ("Large") setting, so the ratio is the
+  // reader's own enlargement.
+  //
+  // Three guards, each load-bearing. CSS.supports gates it to engines that
+  // actually parse the keyword — elsewhere it silently computes to the
+  // inherited 16px and a naive ratio would SHRINK the whole app by 6%. The
+  // Math.max(1, …) makes it a floor and never a shrink, which also disposes of
+  // desktop Safari, where the same keyword computes to 13px and means nothing
+  // about anyone's preference. The cap lives in CSS with the multiply.
+  const accessibilityBootstrap = `(function(){var d=document.documentElement;try{var t=localStorage.getItem('theme');if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}d.setAttribute('data-theme',t)}catch(e){}
+try{var s=JSON.parse(localStorage.getItem('ihype-accessibility-settings')||'{}');var n=Number(s.textScale);if(isFinite(n))d.style.setProperty('--ihype-text-scale',String(Math.min(1.4,Math.max(0.85,n))));if(s.highContrast)d.classList.add('high-contrast');if(s.largeText)d.classList.add('a11y-large-text');if(s.reduceMotion)d.classList.add('a11y-reduce-motion');if(s.underlineLinks)d.classList.add('a11y-underline-links');if(s.readableFont)d.classList.add('a11y-readable-font')}catch(e){}
+try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.createElement('div');p.style.cssText='font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';d.appendChild(p);var px=parseFloat(getComputedStyle(p).fontSize);p.remove();if(px>0)d.style.setProperty('--ihype-os-text-scale',String(Math.max(1,px/17)))}}catch(e){}})();`;
   return (
     <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
       <head>
         <script
           nonce={nonce}
           suppressHydrationWarning
-          dangerouslySetInnerHTML={{ __html: themeBootstrap }}
+          dangerouslySetInnerHTML={{ __html: accessibilityBootstrap }}
         />
       </head>
       <body>
