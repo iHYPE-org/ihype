@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
+import { MmmChromeDial } from '@/components/mmm/MmmChromeDial';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmMiniPlayer } from '@/components/mmm/MmmMiniPlayer';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
@@ -356,6 +357,11 @@ export function MmmShell({
             half-hidden behind the pill reads as a bug; moving the shell to
             fit an ornament is the thing SHELL_LOCK exists to prevent. */}
         <span aria-hidden="true" className="mmm-console" data-hidden={navOpen} />
+
+        {/* The tuner, on the cabinet between the knobs. It navigates the
+            current module's destinations, so the pane below it no longer
+            carries a tab strip of its own. */}
+        <MmmChromeDial pathname={pathname} />
 
         {/* The player fades and drops rather than unmounting, so its transition
             can play out — the design's `data-ih-hide` behaviour. Opening the nav

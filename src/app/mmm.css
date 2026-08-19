@@ -152,9 +152,18 @@ html.mmm-locked .site-shell > main {
   --mmm-inset: 26px;
   --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
-  /* The pill docks immediately right of the trigger — at EVERY width, which is
-     what the design draws on a phone too. */
-  --mmm-player-left: calc(var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap));
+  /* The tuner sits on the cabinet between the trigger and the pill, which is
+     where the console direction draws it. Its width is a token so the pill's
+     offset stays DERIVED rather than restated — the rule SHELL_LOCK actually
+     cares about is that these figures are load-bearing on each other, not that
+     they never change. Change this one and the pill follows on its own. */
+  --mmm-dial-w: 244px;
+  /* The pill docks right of the trigger and the dial — at EVERY width, which
+     is what the design draws on a phone too. */
+  --mmm-player-left: calc(
+    var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap)
+    + var(--mmm-dial-w) + var(--mmm-chrome-gap)
+  );
   /* Anything that must clear the chrome band sits above the trigger's top edge. */
   --mmm-chrome-top: calc(var(--mmm-bottom) + var(--mmm-chrome-size));
 }
@@ -426,8 +435,7 @@ html.mmm-locked .site-shell > main {
   gap: var(--tab-row-gap, 10px);
   padding: 2px 0 14px;
 }
-.mmm-music-controls .mmm-tabs { padding: 0; }
-/* `.mmm-search-wrap` uses a 300px flex basis when it shares a horizontal row.
+.mmm-music-controls /* `.mmm-search-wrap` uses a 300px flex basis when it shares a horizontal row.
    In this column that basis becomes HEIGHT, creating the large blank block
    between search and Discover. The field is one natural-height row here. */
 .mmm-music-controls > .mmm-search-wrap { flex: 0 0 auto; }
@@ -497,87 +505,8 @@ html.mmm-locked .site-shell > main {
   .mmm-advertiser-head { align-items: flex-start; flex-direction: column; }
 }
 
-/* A PILL STRIP, and it is back on purpose (2026-08-14).
 
-   `PORT_TO_APP.md` in the 2026-08-12 export asked for the opposite — a link
-   bar with a sliding underline — and this file carried it. The design project
-   has since moved past that export: the shipped shell now draws the subnav as
-   filled capsules again, confirmed against the current MobileApp frames, which
-   are an iframe of `templates/simplified-app/` at 393px rather than a separate
-   mockup. A design document that a later revision overtook is not a rule; the
-   rendered shell is. Do not re-flip this from `PORT_TO_APP.md` alone — check
-   what the shell actually draws first.
 
-   The active tab is a SOLID accent capsule, the rest are outlined. That is the
-   part the underline lost: the selection used to be a 2.5px rule under a word
-   in a row of same-weight words, which on a phone reads as decoration rather
-   than as state.
-
-   Sized to content and allowed to shrink, with the type/padding table below —
-   `e2e/mmm-shell.spec.ts` asserts all five MUSIC items are on screen at 390px
-   (handoff §9, "no clipping"), written after a real bug where three of seven
-   rendered off-screen and unreachable. Five capsules only fit that width if
-   the strip tightens, which is what the table is for. `overflow-x: auto` is
-   the backstop for the eleven other locales. */
-.mmm-tabs {
-  display: flex;
-  gap: var(--tab-gap, 10px);
-  align-items: stretch;
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  padding: 2px 0 14px;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.mmm-tabs::-webkit-scrollbar { display: none; }
-
-.mmm-tab {
-  flex: 0 1 auto;
-  /* 44x44 is the floor at EVERY pointer type — MOBILE.md says "desktop
-     included" — so it lives here rather than only in `mobile-fit.css`, which is
-     gated on `(pointer: coarse)`. It used to be `min-width: 0`, which let the
-     five MUSIC tabs shrink past their own content once the strip stopped
-     fitting: at 320px they compressed to 41.9px and the responsive gate caught
-     it. `.mmm-tabs` is `overflow-x: auto`, so refusing to shrink scrolls the
-     strip rather than the page — which is the behaviour the design wants
-     anyway, since a tab squeezed under its label is not a tab you can read. */
-  min-width: 44px;
-  min-height: 44px;
-  white-space: nowrap;
-  /* `display` MUST stay non-inline. `mobile-fit.css` lists `.mmm-tab` in its
-     `min-height: 44px` group, and min-height does nothing on an inline box —
-     `.mmm-tab` is an <a> (Next <Link>), so an inline display would drop the
-     touch floor silently, with no error anywhere. */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: var(--tab-pad, 9px 17px);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--line-2);
-  background: transparent;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: var(--tab-fs, 14px);
-  letter-spacing: -0.01em;
-  color: var(--ink-2);
-  cursor: pointer;
-  transition:
-    color 160ms cubic-bezier(0.2, 0.7, 0.3, 1),
-    transform 110ms cubic-bezier(0.2, 0.7, 0.3, 1);
-}
-.mmm-tab:hover { color: var(--ink); }
-.mmm-tab:active { transform: scale(0.94); }
-
-.mmm-tab[aria-current='page'] {
-  background: var(--accent);
-  border-color: var(--accent);
-  /* NOT #fff, which is what the template writes. White measures 3.27:1 on this
-     accent and fails AA; `--ink-on-accent` is the measured 6.03:1 value and is
-     what every other accent fill in this codebase puts its label in. This is
-     the standing exception recorded in CLAUDE.md — do not "restore" white. */
-  color: var(--ink-on-accent);
-}
 
 /* The strip holds one line; below this width the type and padding tighten
    rather than the row wrapping or three tabs vanishing off the edge. The
@@ -585,38 +514,8 @@ html.mmm-locked .site-shell > main {
    survives the tightening — shrinking both axes together is what once put
    these at 31px. */
 @media (max-width: 460px) {
-  .mmm-tabs { --tab-gap: 4px; --tab-fs: 11px; --tab-pad: 15px 9px; }
-}
+  }
 
-/* A SCROLLABLE ROW HAS TO LOOK SCROLLABLE (2026-08-14, from device
-   screenshots).
-
-   `.mmm-tabs` and `.mmm-map-chips` both hold one line at every width and
-   scroll sideways when they overrun — which is the design's own behaviour, and
-   correct. What they did not do is SAY so: the last chip was cut dead at the
-   frame edge, so "ARTISTS" and "Recommended" read as broken layout rather than
-   as more content to the right. Reported from a phone as "map not fitting
-   selectors" and "Recommended doesn't quite fit in button".
-
-   The map half of this was on `.mmm-control-row` until 2026-08-14, when the
-   scroller moved down to `.mmm-map-chips` so that "Near me" stops being the
-   thing that scrolls away — see the note beside those two rules. The fade
-   moved with it, and is better placed for it: it now sits between the chips
-   and the pill, marking the chips' overflow, instead of blurring the right
-   edge of a button.
-
-   The fade is a mask on the row, not an element: an overlay would sit above
-   the chips and eat their taps at exactly the edge the member is reaching for.
-   `scroll-padding-inline-end` keeps a keyboard-focused chip clear of the fade,
-   and `scroll-snap` is deliberately NOT used — snapping a filter row fights a
-   member who is nudging it a few pixels to read one label. */
-.mmm-tabs,
-.mmm-map-chips {
-  --mmm-row-fade: 22px;
-  mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
-  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - var(--mmm-row-fade)), transparent 100%);
-  scroll-padding-inline-end: var(--mmm-row-fade);
-}
 /* Known cost, stated rather than hidden: CSS cannot ask "am I overflowing",
    so the fade also applies to a row that fits, softening the last 22px of its
    final chip. At 22px against a 44px-minimum chip that is the tail of the
@@ -629,13 +528,7 @@ html.mmm-locked .site-shell > main {
    `data-scroll-end` when the row has nothing further right. The fade means
    "there is more this way"; at the end of the scroll there is not, and with
    three layer chips the one it was softening was the ACTIVE one every time the
-   row overflowed. `.mmm-tabs` keeps the unconditional fade — it has no script
-   and five destinations, so it is rarely the active tab that sits last. */
-.mmm-map-chips[data-scroll-end] {
-  mask-image: none;
-  -webkit-mask-image: none;
-}
-
+   row overflowed. `
 /* ── MAP date strip ───────────────────────────────────────────────────────
    Events only — an event has a date and a venue or an artist does not, which is
    also why the API is never sent a `dates` param on those layers.
@@ -1237,6 +1130,25 @@ html.mmm-locked .site-shell > main {
 
 .mmm-chrome { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
 
+/* The tuner's slot on the cabinet, between the two knobs. The dial itself is
+   `.tuner-*` in globals.css — this only places it, so the control looks the
+   same here as it does inside a page. */
+.mmm-chrome-dial {
+  position: absolute;
+  left: calc(var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap));
+  bottom: var(--mmm-bottom);
+  width: var(--mmm-dial-w);
+  height: var(--mmm-chrome-size);
+  z-index: 28;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+/* The mount's page margin is wrong on a cabinet — it is furniture here, not a
+   block in a document. The step keys keep their 44px target. */
+.mmm-chrome-dial .tuner-mount { margin: 0; width: 100%; gap: 6px; }
+.mmm-chrome-dial .tuner-step { width: 34px; min-height: 44px; }
+
 /* ── The console cabinet ───────────────────────────────────────────────────
    The walnut face the logo trigger and the player pill sit ON.
 
@@ -1258,8 +1170,14 @@ html.mmm-locked .site-shell > main {
   height: calc(var(--mmm-chrome-size) + var(--mmm-console-pad) * 2);
   /* Spans the trigger, the gap and the pill — the same three terms
      --mmm-player-left is built from, plus the pill's own max width. */
+  /* Spans the trigger, the dial and the pill with their gaps — the same terms
+     --mmm-player-left is built from, plus the pill's own max width. Adding the
+     dial without adding it here is what left the pill hanging 180px past the
+     cabinet's right edge on a 1100px viewport: caught by measuring, not by
+     reading. */
   width: min(
-    calc(var(--mmm-chrome-size) + var(--mmm-chrome-gap) + 760px + var(--mmm-console-pad) * 2),
+    calc(var(--mmm-chrome-size) + var(--mmm-chrome-gap) + var(--mmm-dial-w)
+         + var(--mmm-chrome-gap) + 760px + var(--mmm-console-pad) * 2),
     calc(100vw - var(--mmm-left) - var(--mmm-inset) - var(--mmm-safe-right) + var(--mmm-console-pad) * 2)
   );
   z-index: 26;              /* under the trigger (31) and the pill (28) */
@@ -1770,6 +1688,15 @@ html.mmm-locked .site-shell > main {
     --mmm-chrome-size: 56px;
     --mmm-chrome-gap: 10px;
     --mmm-inset: 14px;
+    /* The dial fills what is left between the trigger and the right-anchored
+       mini player, rather than keeping its desktop width — at 393px a fixed
+       244px overlapped the mini by 1px. Derived from the same terms as the
+       band, so it stays correct at every narrow width rather than at the one
+       that was measured. */
+    --mmm-dial-w: calc(
+      100vw - var(--mmm-left) - var(--mmm-chrome-size) - var(--mmm-chrome-gap) * 2
+      - var(--mmm-chrome-size) - var(--mmm-inset) - var(--mmm-safe-right)
+    );
   }
   /* The pill is 56px tall here, so its padding tightens with it: a 40px
      artwork in 56px leaves 8px, matching the inset on the sides it touches. */

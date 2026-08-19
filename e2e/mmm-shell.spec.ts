@@ -139,52 +139,60 @@ test.describe('Music · Map · Me shell', () => {
     // The fan closes behind it, and nothing has grown a sub-level.
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
     await expect(page.locator('.mmm-nav-anchor')).not.toHaveAttribute('data-sub', 'true');
-    // The five sections live here instead, as tabs.
-    await expect(page.getByRole('navigation', { name: 'Music' })).toBeVisible();
+    // The five sections live on the chrome dial instead of a pane tab strip.
+    await expect(page.getByRole('tablist', { name: 'Music destinations' })).toBeVisible();
   });
 
   // §9: "All 5 MUSIC items are visible and reachable, no clipping." §4 is the
   // bug this guards — three of seven items were off-screen and unreachable
   // because an ancestor's overflow clipped the transform.
   //
-  // Measured only once the fan has SETTLED. The items transition out from behind
-  // the logo over .42s with a per-index delay, and `toBeVisible()` resolves the
-  // moment opacity lifts — so reading boundingBox() straight after it samples a
-  // pill still in flight, near the logo, and the hit test then returns the logo.
-  // That is the test measuring an animation, not the layout being wrong.
-  test('every MUSIC item is on screen and hit-testable', async ({ page }) => {
+  // The items moved again: from a level-2 arc, to the Music pane's tab strip,
+  // and now to the tuner on the cabinet. So the MECHANISM this checks has
+  // changed twice while the requirement has not, and the requirement is what
+  // is written here — every destination reachable, none clipped, none covered.
+  //
+  // A dial shows one station at a time, so "visible" cannot mean "all five are
+  // painted at once" any more. It means: five real tabs exist, exactly one is
+  // in the tab order (roving tabindex), and stepping the dial actually arrives
+  // at each of them with the engraved name on screen and hit-testable. That is
+  // a stronger check than the strip version — it proves the control WORKS,
+  // where the old one only proved five pills had boxes.
+  test('every MUSIC destination is reachable on the dial, unclipped', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    // The five items moved from a level-2 arc to the Music pane's tab strip,
-    // so the guard follows them there. The bug it protects against is the same
-    // one — an item rendered but off-screen or covered — and a horizontally
-    // scrolling strip on a 390px phone is exactly where that recurs.
     await page.goto('/app/music/discover');
 
     const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
-    for (const label of labels) {
-      await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
-    }
+    const dial = page.getByRole('tablist', { name: 'Music destinations' });
+    await expect(dial).toBeVisible();
+    await expect(dial.getByRole('tab', { includeHidden: true })).toHaveCount(labels.length);
 
-    // One poll over the whole set: each pill fully inside the viewport, and the
-    // point at its own centre hitting itself rather than something above it.
-    await expect.poll(async () => page.evaluate((names) => {
-      const problems: string[] = [];
-      for (const name of names) {
-        const node = [...document.querySelectorAll('.mmm-tab')]
-          .find((candidate) => candidate.textContent?.trim() === name);
-        if (!node) { problems.push(`${name}: not rendered`); continue; }
-        const box = node.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0) { problems.push(`${name}: zero box`); continue; }
-        if (box.left < 0) problems.push(`${name}: off the left edge (${Math.round(box.left)})`);
-        if (box.top < 0) problems.push(`${name}: off the top edge (${Math.round(box.top)})`);
-        if (box.right > window.innerWidth) problems.push(`${name}: overflows right (${Math.round(box.right)} > ${window.innerWidth})`);
-        if (box.bottom > window.innerHeight) problems.push(`${name}: overflows bottom (${Math.round(box.bottom)} > ${window.innerHeight})`);
+    // Roving tabindex: one tab in the order, never five.
+    await expect.poll(async () => dial.evaluate((node) =>
+      [...node.querySelectorAll('[role="tab"]')].filter((t) => (t as HTMLElement).tabIndex === 0).length,
+    )).toBe(1);
+
+    // Step all the way round. Starting at Discover, five steps returns there,
+    // which also proves the scale wraps rather than stopping at the last one.
+    for (let i = 0; i < labels.length; i += 1) {
+      const expected = labels[(i + 1) % labels.length];
+      await page.getByRole('button', { name: /Next section in Music/i }).click();
+
+      await expect.poll(async () => dial.evaluate(() => {
+        const current = document.querySelector('.tuner-station[data-current="true"]');
+        if (!current) return 'no current station';
+        const box = current.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) return 'zero box';
+        if (box.left < 0) return `off the left edge (${Math.round(box.left)})`;
+        if (box.right > window.innerWidth) return `overflows right (${Math.round(box.right)} > ${window.innerWidth})`;
+        if (box.bottom > window.innerHeight) return `overflows bottom (${Math.round(box.bottom)})`;
+        // The point at its own centre must hit itself, not the cabinet or the
+        // player sitting beside it — the covering half of §4's bug.
         const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-        const hitText = hit?.textContent?.trim() ?? '';
-        if (hitText !== name) problems.push(`${name}: centre hits "${hitText}"`);
-      }
-      return problems;
-    }, labels), { timeout: 10_000 }).toEqual([]);
+        if (!hit || !current.contains(hit) && hit !== current) return `centre hits "${hit?.className ?? 'nothing'}"`;
+        return current.textContent?.trim() ?? '';
+      }), { timeout: 10_000 }).toBe(expected);
+    }
   });
 
   // §9: "Items fan out with a visible stagger, not all at once." §5's bug made
