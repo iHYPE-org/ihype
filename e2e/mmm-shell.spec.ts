@@ -237,14 +237,23 @@ test.describe('Music · Map · Me shell', () => {
 
   // The module tab is a route, not state: it must survive a reload and a
   // back-button press, which the prototype's local state did not.
-  test('the MUSIC tab is a real route', async ({ page }) => {
+  test('the MUSIC destination is a real route', async ({ page }) => {
     await page.goto('/app/music/discover');
-    await page.getByRole('link', { name: 'Charts' }).click();
+    // Discover -> Radio -> Charts. The destinations are stations on the chrome
+    // dial now, not links in a pane strip, so this steps rather than clicks.
+    const next = page.getByRole('button', { name: /Next section in Music/i });
+    await next.click();
+    await next.click();
     await expect(page).toHaveURL(/\/app\/music\/charts$/);
+
+    // Survives a reload: the needle is re-homed from the URL, not from state.
     await page.reload();
-    await expect(page.getByRole('link', { name: 'Charts' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('tab', { name: 'Charts' })).toHaveAttribute('aria-selected', 'true');
+
+    // And Back walks the destinations, which is why the dial pushes rather
+    // than replaces.
     await page.goBack();
-    await expect(page).toHaveURL(/\/app\/music\/discover$/);
+    await expect(page).toHaveURL(/\/app\/music\/radio$/);
   });
 
   // The requirement is that a typo does not silently render Discover. Asserted on
@@ -256,7 +265,12 @@ test.describe('Music · Map · Me shell', () => {
   test('an unknown MUSIC tab shows not-found, not a silent fallback to Discover', async ({ page }) => {
     await page.goto('/app/music/nonsense');
     await expect(page.getByRole('heading', { name: /no such tab/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Discover' })).toHaveCount(0);
+    /* There used to be a `link named Discover has count 0` assertion here. It
+       became VACUOUS when the destinations stopped being links — an assertion
+       that a thing is absent passes for free once the thing cannot exist, and
+       a test that cannot fail is worse than no test because it reads as
+       coverage. The heading above is what actually proves "not a silent
+       fallback to Discover"; the pane rendering not-found is the requirement. */
     // And it stays inside MMM — exactly one shell, not the marketing 404 and
     // not two shells stacked (which is what `notFound()` produced here, since
     // the layout has already flushed by the time it throws).
@@ -282,8 +296,10 @@ test.describe('Music · Map · Me shell', () => {
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
-    // Radio is a TAB in the Music pane now, not a second-level arc item.
-    await page.getByRole('link', { name: 'Radio', exact: true }).click();
+    // Radio is a STATION on the chrome dial now — it was a second-level arc
+    // item, then a tab in the Music pane. The map's survival is the point of
+    // this test and has not changed through any of that.
+    await page.getByRole('button', { name: /Next section in Music/i }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });

@@ -2303,8 +2303,8 @@ html.mmm-locked .site-shell > main {
   overflow: hidden;
   padding-top: var(--mmm-safe-top);
   padding-bottom: var(--mmm-safe-bottom);
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--walnut-2);
+  color: var(--ink-on-walnut);
   font-family: var(--font-body);
   /* `.mmm-chrome`, which this is mounted inside, is `pointer-events: none` so
      the map stays draggable under the chrome. Every interactive descendant has
@@ -2325,7 +2325,7 @@ html.mmm-locked .site-shell > main {
   font-size: 0.59375rem;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-on-walnut-3);
   text-align: center;
 }
 .mmm-full-art {
@@ -2335,15 +2335,15 @@ html.mmm-locked .site-shell > main {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--rule-on-walnut-2);
   border-radius: 26px;
-  background: var(--bg-3);
+  background: var(--walnut-3);
   box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.55);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 6rem;
   letter-spacing: -0.04em;
-  color: var(--ink);
+  color: var(--ink-on-walnut);
 }
 .mmm-full-art img { width: 100%; height: 100%; object-fit: cover; }
 .mmm-full-titles { text-align: center; margin-top: 22px; }
@@ -2354,7 +2354,7 @@ html.mmm-locked .site-shell > main {
   font-size: 1.625rem;
   letter-spacing: -0.03em;
   line-height: 1.15;
-  color: var(--ink);
+  color: var(--ink-on-walnut);
 }
 .mmm-full-meta {
   display: flex;
@@ -2363,14 +2363,14 @@ html.mmm-locked .site-shell > main {
   gap: 7px;
   margin: 7px 0 0;
   font-size: 0.875rem;
-  color: var(--ink-2);
+  color: var(--ink-on-walnut-2);
 }
 .mmm-full-name {
   padding: 0;
   border: 0;
   background: transparent;
   font: inherit;
-  color: var(--ink-2);
+  color: var(--ink-on-walnut-2);
   text-decoration: underline;
   text-underline-offset: 3px;
   cursor: pointer;
@@ -2384,7 +2384,7 @@ html.mmm-locked .site-shell > main {
   min-width: 34px;
   font-family: var(--font-mono);
   font-size: 0.7813rem;
-  color: var(--ink-3);
+  color: var(--ink-on-walnut-3);
 }
 .mmm-full-clock[data-right] { text-align: right; }
 .mmm-full-transport {
@@ -2401,10 +2401,10 @@ html.mmm-locked .site-shell > main {
   padding: 0;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--rule-on-walnut-2);
   border-radius: var(--radius-pill);
-  background: var(--hair-70);
-  color: var(--ink);
+  background: var(--rule-on-walnut);
+  color: var(--ink-on-walnut);
   font-size: 1.375rem;
   cursor: pointer;
 }
@@ -2475,10 +2475,10 @@ html.mmm-locked .site-shell > main {
   padding: 0;
   display: grid;
   place-items: center;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--rule-on-walnut-2);
   border-radius: var(--radius-pill);
-  background: var(--hair-70);
-  color: var(--ink);
+  background: var(--rule-on-walnut);
+  color: var(--ink-on-walnut);
   font-size: 1.375rem;
   cursor: pointer;
 }
@@ -2487,7 +2487,7 @@ html.mmm-locked .site-shell > main {
 .mmm-full-list[data-played] {
   margin-top: 20px;
   padding-top: 14px;
-  border-top: 1px solid var(--line-2);
+  border-top: 1px solid var(--rule-on-walnut-2);
 }
 .mmm-full-list[data-played] .mmm-queue-row { opacity: 0.55; }
 /* Clears the fixed way-out square below the scrolling column. The fade behind
@@ -2538,7 +2538,7 @@ html.mmm-locked .site-shell > main {
   font-size: 0.59375rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  color: var(--ink-on-walnut-3);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -3176,22 +3176,22 @@ html.mmm-locked .site-shell > main {
   gap: 10px;
   margin: 4px 0 18px;
   padding: 11px 13px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--rule-on-walnut);
   border-radius: 14px;
-  background: var(--bg-2);
-  color: var(--ink-3);
+  background: var(--walnut);
+  color: var(--ink-on-walnut-3);
 }
 .mmm-full-search input {
   flex: 1;
   min-width: 0;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--ink-on-walnut);
   font-family: var(--f-b);
   font-size: 0.95rem;
   outline: none;
 }
-.mmm-full-search input::placeholder { color: var(--ink-3); }
+.mmm-full-search input::placeholder { color: var(--ink-on-walnut-3); }
 .mmm-full-search:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
 
 /* Turned on here rather than in the 620px block further up, and the order is

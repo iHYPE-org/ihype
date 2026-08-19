@@ -129,6 +129,22 @@ history on disk gets read: code comments cited them as their source, and every
 few sessions something got rebuilt from the older of the two. If a question
 seems to need them, it is answered in DS8 or it is not a design question.
 
+**SUPERSEDED IN PART, 2026-08-19 — the console direction.** The owner
+directed the app to be rebuilt to the hi-fi console prototype ("I want the app
+to look like that mockup"). That is a live instruction and it outranks the two
+lines below that say the overhaul required "nothing structural" and that the
+shell geometry is frozen. The chrome IS being restructured: the trigger and
+the player sit on a walnut cabinet, and a tuner dial occupies the band between
+them (`design/console-2026-08/`, and the amendment at the top of
+`SHELL_LOCK_2026-08-08.md`).
+
+What survives from those two rules, and what matters more than either: the
+shell's figures are load-bearing on each other. Both bugs that came out of
+adding the dial were a dependent nobody re-derived — the pill hung 181px past
+the cabinet at 1100px, the dial overlapped the mini player at 393px, and
+neither was visible in the source. **Re-derive downstream, then measure at
+393px and at a desktop width.** Do not read "superseded" as "free to nudge".
+
 Read these three files, in this order, before touching any surface:
 
 1. `design/design-system-8/SYNC_AUDIT_2026-08-07-overhaul.md` — the drift table

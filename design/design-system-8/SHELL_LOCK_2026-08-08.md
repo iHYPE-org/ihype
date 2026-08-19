@@ -1,4 +1,28 @@
-# App shell — locked 2026-08-08
+# App shell — locked 2026-08-08, amended 2026-08-19
+
+> ## AMENDMENT — the console direction supersedes the SHAPE, not the METHOD
+>
+> The owner directed the app to be rebuilt to the hi-fi console prototype
+> ("I want the app to look like that mockup"), and the chrome has changed
+> accordingly: the trigger and the player now sit on a walnut cabinet, and a
+> tuner dial occupies the band between them.
+>
+> **What that changed:** `--mmm-player-left` gained a term (`--mmm-dial-w`),
+> and the cabinet's width is derived from the same set.
+>
+> **What it did NOT change, and must not:** the rule directly below this box.
+> Every figure here is still load-bearing on the others, and the two bugs that
+> came out of adding the dial were both a dependent that was not re-derived —
+> the pill hung 181px past the cabinet at 1100px, and the dial overlapped the
+> mini player at 393px. Neither was visible in the source; both were found by
+> measuring rendered boxes.
+>
+> So: this document is no longer a freeze, and it is still the method. Change a
+> figure only by re-deriving everything downstream of it, and measure the
+> result at 393px and at a desktop width before believing it.
+>
+> The rest of the document stands as written and describes the geometry the
+> cabinet is built around.
 
 Signed off by the user as final. Treat the numbers below as fixed: they are
 load-bearing on each other, and several were arrived at by fixing a specific bug.
