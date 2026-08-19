@@ -1,6 +1,0 @@
-import { redirect } from 'next/navigation';
-
-export default async function ArtistToolAlias({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
-  redirect(`/app/me/artists/${encodeURIComponent(slug)}/believers`);
-}
