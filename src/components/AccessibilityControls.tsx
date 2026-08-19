@@ -312,7 +312,7 @@ export function AccessibilityControls({ inline = false }: { inline?: boolean } =
             type="button"
             style={{
               background: 'var(--accent)', color: 'var(--ink-on-accent)', border: 'none',
-              borderRadius: 999, padding: '8px 16px', fontSize: '0.7813rem', fontWeight: 700, cursor: 'pointer',
+              borderRadius: 999, padding: '8px 16px', fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer',
             }}
           >
             {t('accessibilityControls.apply', 'Apply')}
