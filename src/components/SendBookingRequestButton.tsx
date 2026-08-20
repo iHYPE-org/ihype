@@ -77,14 +77,14 @@ export function SendBookingRequestButton({ toProfileId, defaultMessage }: { toPr
 
       <style>{`
         .send-booking-wrap { margin-top: 10px; }
-        .send-booking-btn { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.7813rem; color: var(--ink-on-accent); background: var(--accent-grad-warm); border: none; border-radius: 9999px; padding: 8px 14px; cursor: pointer; }
+        .send-booking-btn { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.9375rem; color: var(--ink-on-accent); background: var(--accent-grad-warm); border: none; border-radius: 9999px; padding: 8px 14px; cursor: pointer; }
         .send-booking-btn:disabled { opacity: 0.6; cursor: default; }
-        .send-booking-cancel { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.7813rem; color: var(--ink-a65); background: transparent; border: 1px solid var(--line); border-radius: 9999px; padding: 8px 14px; cursor: pointer; }
+        .send-booking-cancel { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.9375rem; color: var(--ink-a65); background: transparent; border: 1px solid var(--line); border-radius: 9999px; padding: 8px 14px; cursor: pointer; }
         .send-booking-panel { display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
-        .send-booking-textarea { width: 100%; box-sizing: border-box; font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink); background: var(--bg2, var(--bg)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; }
+        .send-booking-textarea { width: 100%; box-sizing: border-box; font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink); background: var(--bg2, var(--bg)); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; resize: vertical; }
         .send-booking-actions { display: flex; gap: 8px; }
-        .send-booking-done { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--role-venue); }
-        .send-booking-error { font-size: 0.7813rem; color: var(--accent-text); margin: 0; }
+        .send-booking-done { font-family: 'JetBrains Mono', monospace; font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--role-venue); }
+        .send-booking-error { font-size: 0.9375rem; color: var(--accent-text); margin: 0; }
       `}</style>
     </div>
   );

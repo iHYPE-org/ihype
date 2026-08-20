@@ -166,22 +166,22 @@ export function VenueLineupComposer({
 
       <style>{`
         .vlc { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg2); padding: 20px; margin-top: 20px; }
-        .vlc-eyebrow { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
-        .vlc-hint { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin: 0 0 16px; }
+        .vlc-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
+        .vlc-hint { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0 0 16px; }
         .vlc-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
-        .vlc-input { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 9px 12px; color: var(--ink); font-size: 0.8125rem; }
+        .vlc-input { background: var(--bg); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 9px 12px; color: var(--ink); font-size: 0.9375rem; }
         .vlc-input-slug { flex: 1; min-width: 140px; }
         .vlc-input-pct { width: 60px; }
-        .vlc-headliner { display: flex; align-items: center; gap: 6px; font-size: 0.7813rem; color: var(--ink-a65); white-space: nowrap; }
-        .vlc-remove { font-size: 0.7813rem; color: var(--ink-a65); background: none; border: none; cursor: pointer; text-decoration: underline; }
+        .vlc-headliner { display: flex; align-items: center; gap: 6px; font-size: 0.9375rem; color: var(--ink-a65); white-space: nowrap; }
+        .vlc-remove { font-size: 0.9375rem; color: var(--ink-a65); background: none; border: none; cursor: pointer; text-decoration: underline; }
         .vlc-actions { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 16px; }
-        .vlc-btn { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .06em; padding: 10px 18px; border-radius: var(--radius-pill); border: none; cursor: pointer; }
+        .vlc-btn { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .06em; padding: 10px 18px; border-radius: var(--radius-pill); border: none; cursor: pointer; }
         .vlc-btn-outline { background: transparent; color: var(--ink-a70); border: 1px solid var(--line); }
         .vlc-btn-solid { background: var(--accent); color: var(--ink-on-accent); width: 100%; }
         .vlc-btn:disabled { opacity: 0.6; cursor: default; }
-        .vlc-total { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--role-venue); }
+        .vlc-total { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--role-venue); }
         .vlc-total-off { color: var(--accent-text); }
-        .vlc-error { color: var(--accent-text); font-size: 0.7813rem; margin: 0 0 12px; }
+        .vlc-error { color: var(--accent-text); font-size: 0.9375rem; margin: 0 0 12px; }
       `}</style>
     </div>
   );

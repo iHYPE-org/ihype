@@ -11,7 +11,7 @@ export function PinnedStatTiles({ stats, accent }: { stats: PinnedStatValue[]; a
           <div style={{ fontSize: '1.375rem', fontWeight: 700, color: accent, fontFamily: 'var(--font-display)' }}>
             {s.isPercent ? `${Math.round(s.value * 100)}%` : s.value.toLocaleString()}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', marginTop: 2 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', marginTop: 2 }}>
             {s.label}
           </div>
         </div>

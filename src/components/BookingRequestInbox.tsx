@@ -18,7 +18,7 @@ const rowStyle: React.CSSProperties = {
 };
 
 const btnBase: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase',
+  fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase',
   borderRadius: 9999, padding: '7px 14px', border: 'none', cursor: 'pointer',
 };
 
@@ -61,31 +61,31 @@ export function BookingRequestInbox({ profileId }: { profileId: string }) {
 
   if (error) return null;
   if (!requests) {
-    return <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: 0 }}>{t('bookingRequestInbox.loading', 'Loading booking requests…')}</p>;
+    return <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('bookingRequestInbox.loading', 'Loading booking requests…')}</p>;
   }
 
   const pending = requests.filter((r) => r.status === 'pending');
 
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>
         {t('bookingRequestInbox.heading', 'Booking requests — inbox')}
       </div>
       {pending.length === 0 ? (
-        <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: 0 }}>{t('bookingRequestInbox.empty', 'No pending booking requests right now.')}</p>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('bookingRequestInbox.empty', 'No pending booking requests right now.')}</p>
       ) : (
         <div>
           {pending.map((r) => (
             <div key={r.id} style={rowStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--ink)' }}>
+                <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--ink)' }}>
                   {r.fromUser.name ?? r.fromUser.username ?? t('bookingRequestInbox.aUser', 'A user')}
                 </span>
-                <span style={{ fontSize: '0.7813rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a65)', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a65)', whiteSpace: 'nowrap' }}>
                   {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                 </span>
               </div>
-              <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: 0, lineHeight: 1.5 }}>{r.message}</p>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0, lineHeight: 1.5 }}>{r.message}</p>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
                   type="button"

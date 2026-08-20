@@ -25,7 +25,7 @@
 }
 .mmm-settings-card-split > div { min-width: 220px; }
 .mmm-settings-card-title { margin: 0; color: var(--ink); font: 600 0.9375rem var(--f-b); }
-.mmm-settings-card-hint { margin: 4px 0 0; color: var(--ink-2); font-size: 0.8125rem; }
+.mmm-settings-card-hint { margin: 4px 0 0; color: var(--ink-2); font-size: 0.9375rem; }
 .mmm-settings-card-controls { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
 .mmm-settings-card-split .mmm-settings-card-controls { margin-top: 0; }
 
@@ -37,7 +37,7 @@
   border-radius: 999px;
   background: transparent;
   color: var(--ink-2);
-  font: 600 0.7813rem var(--f-b);
+  font: 600 0.9375rem var(--f-b);
   cursor: pointer;
   transition: color 170ms var(--ease), background 170ms var(--ease);
 }
@@ -89,7 +89,10 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
    floor. */
 .profile-panel { margin-top: 20px; }
 .profile-panel-title {
-  font-family: var(--f-d);
+  /* Serif, matching the dial's engraved station directly above it — the panel
+     title and the tuned section name are the same idea said twice, so they
+     should be the same voice. */
+  font-family: var(--f-s);
   font-size: 1.375rem;       /* 22px */
   line-height: 1.15;
   margin: 0 0 12px;
@@ -132,7 +135,7 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   flex: none;
   min-width: 8.5rem;
   font-family: var(--f-m);
-  font-size: 0.875rem;       /* 14px */
+  font-size: 0.9375rem;       /* 14px */
   letter-spacing: .1em;
   text-transform: uppercase;
   color: var(--ink-3);
@@ -181,7 +184,7 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 }
 .profile-release-meta {
   font-family: var(--f-m);
-  font-size: 0.8125rem;      /* 13px */
+  font-size: 0.9375rem;      /* 13px */
   letter-spacing: .06em;
   color: var(--ink-3);
 }

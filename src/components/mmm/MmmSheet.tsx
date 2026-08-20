@@ -61,21 +61,21 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
             {content.initial}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 5, fontSize: '0.7813rem', letterSpacing: '0.14em' }}>
+            <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 5, fontSize: '0.9375rem', letterSpacing: '0.14em' }}>
               {content.eyebrow}
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <h2 className="mmm-sheet-title" id="mmm-sheet-title">{content.title}</h2>
               {content.verified && <span aria-label="Verified" className="mmm-verified" role="img">✓</span>}
             </div>
-            <div style={{ fontSize: '0.82rem', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
+            <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
               {content.subtitle}
             </div>
           </div>
         </div>
 
         {content.about && (
-          <p style={{ fontSize: '0.83rem', color: 'var(--ink-3)', marginTop: 11, lineHeight: 1.6 }}>{content.about}</p>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 11, lineHeight: 1.6 }}>{content.about}</p>
         )}
 
         {content.stats.length > 0 && (
@@ -85,7 +85,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
                 <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)' }}>
                   {stat.value}
                 </div>
-                <div className="mmm-stat-label" style={{ marginTop: 2, fontSize: '0.7813rem' }}>{stat.label}</div>
+                <div className="mmm-stat-label" style={{ marginTop: 2, fontSize: '0.9375rem' }}>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -93,7 +93,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
 
         {content.list.length > 0 && (
           <>
-            <div className="mmm-eyebrow" style={{ margin: '13px 0 7px', fontSize: '0.7813rem', letterSpacing: '0.11em' }}>
+            <div className="mmm-eyebrow" style={{ margin: '13px 0 7px', fontSize: '0.9375rem', letterSpacing: '0.11em' }}>
               {content.listTitle}
             </div>
             <div>
@@ -103,8 +103,8 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
                   style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 0', borderBottom: '1px solid var(--hair-70)' }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--ink)' }}>{row.a}</div>
-                    <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)' }}>{row.b}</div>
+                    <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--ink)' }}>{row.a}</div>
+                    <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)' }}>{row.b}</div>
                   </div>
                   <div className="mmm-row-meta">{row.c}</div>
                 </div>
@@ -113,7 +113,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
           </>
         )}
 
-        <div className="mmm-eyebrow" style={{ margin: '11px 0 0', fontSize: '0.7813rem', letterSpacing: 0, textTransform: 'none' }}>
+        <div className="mmm-eyebrow" style={{ margin: '11px 0 0', fontSize: '0.9375rem', letterSpacing: 0, textTransform: 'none' }}>
           {SPLIT_LINE}
         </div>
 

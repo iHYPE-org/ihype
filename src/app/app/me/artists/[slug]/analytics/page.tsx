@@ -293,18 +293,18 @@ export default async function ArtistAnalyticsPage({
       <style>{`
         .aa-page { max-width: 1000px; margin: 0 auto; padding: 40px 24px 100px; }
         .aa-header { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; }
-        .aa-eyebrow { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
+        .aa-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
         .aa-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .aa-tabs { display: flex; gap: 4px; margin-bottom: 28px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px; width: fit-content; }
-        .aa-tab { padding: 8px 18px; border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 700; color: var(--ink-a65); text-decoration: none; }
+        .aa-tab { padding: 8px 18px; border-radius: var(--radius-pill); font-size: 0.9375rem; font-weight: 700; color: var(--ink-a65); text-decoration: none; }
         .aa-tab.active { background: var(--accent); color: var(--ink-on-accent); }
         .aa-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .aa-stat-card { padding: 18px 20px; border-radius: var(--radius-lg); border: 1px solid var(--line); background: var(--bg2); }
-        .aa-stat-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
+        .aa-stat-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
         .aa-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--ink); }
-        .aa-stat-sub { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
+        .aa-stat-sub { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
         .aa-eyebrow-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; }
-        .aa-eyebrow-sm { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); }
+        .aa-eyebrow-sm { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); }
         .aa-chart { display: flex; align-items: flex-end; gap: 6px; height: 100px; margin-bottom: 32px; padding: 0 4px; }
         .aa-bar { flex: 1; min-width: 2px; border-radius: 4px 4px 0 0; background: var(--accent); }
         .aa-empty { text-align: center; padding: 40px 24px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); }
@@ -312,9 +312,9 @@ export default async function ArtistAnalyticsPage({
         .aa-event-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
         .aa-event-row:last-child { border-bottom: none; }
         .aa-event-row:hover { background: var(--bg3); }
-        .aa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .aa-event-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
-        .aa-event-gross { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--accent-text); font-weight: 700; flex-shrink: 0; }
+        .aa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .aa-event-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
+        .aa-event-gross { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--accent-text); font-weight: 700; flex-shrink: 0; }
 
         @media (max-width: 600px) {
           .aa-page { padding: 28px 20px 100px; }

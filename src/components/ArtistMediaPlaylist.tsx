@@ -233,7 +233,7 @@ export function ArtistMediaPlaylist({
                       disabled={editState.saving}
                       onChange={(e) => setEditing((prev) => ({ ...prev, [entry.hexId]: { ...editState, title: e.target.value } }))}
                       placeholder={t('artistMediaPlaylist.trackTitlePlaceholder', 'Track title')}
-                      style={{ fontSize: '0.875rem', padding: '4px 8px' }}
+                      style={{ fontSize: '0.9375rem', padding: '4px 8px' }}
                       value={editState.title}
                     />
                     <textarea
@@ -241,7 +241,7 @@ export function ArtistMediaPlaylist({
                       onChange={(e) => setEditing((prev) => ({ ...prev, [entry.hexId]: { ...editState, notes: e.target.value } }))}
                       placeholder={t('artistMediaPlaylist.notesPlaceholder', 'Version notes, live room details, release context…')}
                       rows={2}
-                      style={{ fontSize: '0.8rem', padding: '4px 8px', resize: 'vertical' }}
+                      style={{ fontSize: '0.9375rem', padding: '4px 8px', resize: 'vertical' }}
                       value={editState.notes}
                     />
                     <div style={{ display: 'flex', gap: 6 }}>
@@ -262,7 +262,7 @@ export function ArtistMediaPlaylist({
                       {playCount ? ` · ${playCount} ${playCount === 1 ? t('artistMediaPlaylist.play', 'play') : t('artistMediaPlaylist.plays', 'plays')}` : ''}
                     </p>
                     {canEdit && freeUse[entry.hexId] && (
-                      <span className="meta" style={{ fontSize: '0.7813rem', opacity: 0.6 }}>{t('artistMediaPlaylist.freeUseOn', 'Free use on')}</span>
+                      <span className="meta" style={{ fontSize: '0.9375rem', opacity: 0.6 }}>{t('artistMediaPlaylist.freeUseOn', 'Free use on')}</span>
                     )}
                   </>
                 )}

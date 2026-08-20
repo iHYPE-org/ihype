@@ -89,7 +89,7 @@ export function CompactHypeButton({ targetType, targetId, initialCount, lastHype
         background: waiting ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-40)',
         color: waiting ? 'var(--accent-text)' : 'var(--ink-a65)',
         fontFamily: 'var(--font-mono)',
-        fontSize: '0.7813rem',
+        fontSize: '0.9375rem',
         fontWeight: 600,
         cursor: pending || waiting ? 'default' : 'pointer',
         opacity: pending ? 0.6 : 1,

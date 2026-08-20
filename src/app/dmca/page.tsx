@@ -48,7 +48,7 @@ export default function DmcaPage() {
         </p>
       </section>
 
-      <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: '0.875rem' }}>
+      <p style={{ marginTop: 12, padding: '10px 14px', background: 'var(--hair-40)', borderRadius: 8, fontSize: '0.9375rem' }}>
         {t('dmcaPage.emailIntro', 'For DMCA takedown requests, email')}{' '}
         {/* admin@ihype.org is the only contact address (CLAUDE.md brand rule).
             dmca@ihype.org was never a real mailbox — takedown notices sent

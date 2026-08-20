@@ -114,23 +114,23 @@ function EventList({ shows, emptyTitle, emptyBody }: { shows: Show[]; emptyTitle
                   style={{ width: 7, height: 7, borderRadius: '50%', background: HEAT_TOKEN[heat], flexShrink: 0 }}
                   title={HEAT_LABEL[heat]}
                 />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.06em', textTransform: 'uppercase', color: isLive ? 'var(--accent-text)' : 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.06em', textTransform: 'uppercase', color: isLive ? 'var(--accent-text)' : 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                   {isLive ? t('eventsHome.liveNow', '● LIVE NOW') : fmtDate(show.startsAt)}
                 </span>
               </div>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--role-venue)', flexShrink: 0 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--role-venue)', flexShrink: 0 }}>
                 {show.isTicketed ? formatCurrencyFromCents(show.ticketPriceCents) : t('eventsHome.free', 'Free')}
               </span>
             </div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', letterSpacing: '-.01em', marginBottom: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {show.headlinerProfile ? `${show.headlinerProfile.name} @ ${show.venueProfile?.name ?? show.title}` : show.title}
             </div>
-            <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {show.venueProfile?.name ?? ''}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}
               {show.isRegional && <span style={{ color: 'var(--role-venue)' }}> · {t('eventsHome.regionalTag', 'Regional')}</span>}
             </div>
             {show.reason?.text && (
-              <div style={{ fontSize: '0.7813rem', color: 'var(--accent-text)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.reason.text}</div>
+              <div style={{ fontSize: '0.9375rem', color: 'var(--accent-text)', marginTop: 6, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{show.reason.text}</div>
             )}
           </Link>
         );
@@ -250,7 +250,7 @@ export function EventsHome({
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 'clamp(1.8rem, 4vw, 2.6rem)', fontWeight: 800, letterSpacing: '-.03em', margin: '0 0 8px' }}>
           {t('eventsHome.pageTitle', 'Shows near you')}
         </h1>
-        <p style={{ color: 'var(--ink-a65)', fontSize: '0.875rem', margin: 0 }}>
+        <p style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', margin: 0 }}>
           {t('eventsHome.pageSub', 'Every ticket at face value — 70% artist, 20% venue, 10% promoters. iHYPE keeps none of it; card processing is Stripe’s and is shown before you pay.')}
         </p>
       </header>
@@ -295,12 +295,12 @@ export function EventsHome({
         shows === null ? <div style={emptyStyle}><p>{t('eventsHome.loadingEvents', 'Loading events…')}</p></div> : (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 10 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>
                 {nearCity || nearRegion
                   ? `${t('eventsHome.nearLabel', 'NEAR')} ${(nearCity ?? nearRegion)!.toUpperCase()}`
                   : t('eventsHome.allCitiesLabel', 'ALL CITIES — SET YOUR HOMETOWN IN SETTINGS TO LOCALIZE')}
               </div>
-              <Link href="/shows/map" style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
+              <Link href="/shows/map" style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', flexShrink: 0 }}>{t('eventsHome.viewOnMap', 'View on map →')}</Link>
             </div>
             <EventList
               emptyBody={t('eventsHome.localEmptyBody', 'No shows in your city or region right now — check For You or Search instead.')}
@@ -326,7 +326,7 @@ export function EventsHome({
           {!loggedIn ? (
             <div style={emptyStyle}>
               <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, color: 'var(--ink-a65)', margin: '14px 0 6px' }}>{t('eventsHome.signInHeading', 'Sign in to see your tickets')}</h3>
-              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.8125rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
+              <Link href="/login?callbackUrl=/shows" style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.9375rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, textDecoration: 'none', fontWeight: 700 }}>{t('eventsHome.logIn', 'Log in')}</Link>
             </div>
           ) : (
             <>
@@ -339,7 +339,7 @@ export function EventsHome({
                       flex: 1, textAlign: 'center', padding: 12, borderRadius: 10, cursor: 'pointer',
                       border: `1px solid ${ticketView === v ? 'var(--accent)' : 'var(--hair-120)'}`,
                       background: ticketView === v ? 'rgba(var(--accent-rgb),.08)' : 'transparent',
-                      fontFamily: 'var(--font-display)', fontSize: '0.875rem', fontWeight: 800, color: 'var(--ink)',
+                      fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, color: 'var(--ink)',
                     }}
                   >
                     {v === 'active' ? t('eventsHome.ticketsActive', 'Active') : t('eventsHome.ticketsArchive', 'Archive')}
@@ -356,7 +356,7 @@ export function EventsHome({
                   </h3>
                   <p>{ticketView === 'archive' ? t('eventsHome.archiveEmptyBody', "Shows you've attended or cancelled tickets land here.") : t('eventsHome.activeEmptyBody', 'Tickets you buy show up here with a QR for entry.')}</p>
                   {ticketView === 'active' && (
-                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.8125rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
+                    <button onClick={() => { setTab('local'); }} style={{ display: 'inline-block', marginTop: 16, padding: '11px 20px', fontSize: '0.9375rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, border: 'none', fontWeight: 700, cursor: 'pointer' }} type="button">{t('eventsHome.browseEvents', 'Browse events')}</button>
                   )}
                 </div>
               ) : (
@@ -368,13 +368,13 @@ export function EventsHome({
                     const unitPriceCents = order.quantity > 0 ? Math.round((order.totalChargeCents || order.subtotalCents) / order.quantity) : (order.totalChargeCents || order.subtotalCents);
                     return (
                       <div key={order.id} style={{ border: '1px solid var(--hair-80)', borderRadius: 16, padding: 20, background: 'var(--hair-30)', opacity: ticketView === 'archive' ? 0.6 : 1 }}>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent-text)' : 'var(--role-venue)', marginBottom: 6 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: order.status === 'VOID' ? 'var(--accent-text)' : 'var(--role-venue)', marginBottom: 6 }}>
                           ● {order.status === 'VOID' ? t('eventsHome.statusCancelled', 'CANCELLED') : ticketView === 'archive' ? t('eventsHome.statusUsed', 'USED') : t('eventsHome.statusValid', 'VALID')} · {formatCurrencyFromCents(unitPriceCents)} {t('eventsHome.faceValue', 'FACE VALUE')}
                         </div>
                         <Link href={`/shows/${order.show.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3 }}>{order.show.title}</div>
                         </Link>
-                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+                        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
                           {dateStr} · {timeStr}
                         </div>
                         {ticketView === 'active' && order.status !== 'VOID' && (

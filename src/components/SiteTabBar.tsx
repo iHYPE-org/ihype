@@ -69,7 +69,7 @@ const tabButtonStyle = {
   flex: 1,
   textDecoration: 'none',
   fontFamily: "var(--font-body, 'Work Sans', sans-serif)",
-  fontSize: '0.7813rem',
+  fontSize: '0.9375rem',
   fontWeight: 500,
   letterSpacing: '0.02em',
   transition: 'color 0.15s',

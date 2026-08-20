@@ -129,11 +129,11 @@ function OfflinePageInner() {
         .offline-btn-primary { padding: 14px; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 10px; font-family: var(--font-display); font-size: 1rem; font-weight: 800; cursor: pointer; transition: opacity 150ms; text-align: center; }
         .offline-btn-primary:hover { opacity: .88; }
         .offline-btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-        .offline-btn-ghost { padding: 13px; background: transparent; color: var(--ink-a65); border: 1px solid var(--hair-100); border-radius: 10px; font-family: var(--font-body); font-size: 0.875rem; cursor: pointer; transition: all 150ms; text-align: center; text-decoration: none; display: block; }
+        .offline-btn-ghost { padding: 13px; background: transparent; color: var(--ink-a65); border: 1px solid var(--hair-100); border-radius: 10px; font-family: var(--font-body); font-size: 0.9375rem; cursor: pointer; transition: all 150ms; text-align: center; text-decoration: none; display: block; }
         .offline-btn-ghost:hover { background: var(--hair-40); color: var(--ink); }
         .offline-status-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 3px; background: var(--line); overflow: hidden; }
         .offline-status-fill { height: 100%; width: 0%; background: var(--accent); }
-        .offline-retry-msg { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 32px; min-height: 16px; }
+        .offline-retry-msg { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 32px; min-height: 16px; }
       `}</style>
     </div>
   );

@@ -83,7 +83,7 @@ export function SupportTicketComposer() {
           type="button"
           onClick={() => setComposing((c) => !c)}
           style={{
-            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.8125rem', cursor: 'pointer',
+            fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer',
             padding: '10px 18px', borderRadius: 'var(--radius-md)', border: 'none',
             background: 'var(--accent)', color: 'var(--ink-on-accent)',
           }}
@@ -109,7 +109,7 @@ export function SupportTicketComposer() {
             placeholder={t('supportTicketComposer.subjectPlaceholder', 'Subject')}
             style={{
               width: '100%', height: 42, background: 'var(--bg)', border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-sm)', padding: '0 14px', color: 'var(--ink)', fontSize: '0.875rem',
+              borderRadius: 'var(--radius-sm)', padding: '0 14px', color: 'var(--ink)', fontSize: '0.9375rem',
               boxSizing: 'border-box', fontFamily: 'inherit',
             }}
           />
@@ -120,18 +120,18 @@ export function SupportTicketComposer() {
             placeholder={t('supportTicketComposer.detailsPlaceholder', 'Describe your issue')}
             style={{
               width: '100%', background: 'var(--bg)', border: '1px solid var(--line)',
-              borderRadius: 'var(--radius-sm)', padding: '10px 14px', color: 'var(--ink)', fontSize: '0.875rem',
+              borderRadius: 'var(--radius-sm)', padding: '10px 14px', color: 'var(--ink)', fontSize: '0.9375rem',
               boxSizing: 'border-box', resize: 'vertical', fontFamily: 'inherit',
             }}
           />
-          {error ? <p style={{ fontSize: '0.7813rem', color: 'var(--accent-text)', margin: 0 }}>{error}</p> : null}
+          {error ? <p style={{ fontSize: '0.9375rem', color: 'var(--accent-text)', margin: 0 }}>{error}</p> : null}
           <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end' }}>
             <button
               type="button"
               onClick={cancelNew}
               style={{
                 padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--line)',
-                background: 'transparent', color: 'var(--ink)', fontSize: '0.8125rem', fontWeight: 600, cursor: 'pointer',
+                background: 'transparent', color: 'var(--ink)', fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer',
               }}
             >
               {t('supportTicketComposer.cancelButton', 'Cancel')}
@@ -147,7 +147,7 @@ export function SupportTicketComposer() {
                 // disabled controls, and "cannot be read" is precisely what a
                 // disabled control is meant to signal — raising it to the floor
                 // would make this button look submittable when it is not.
-                color: canSubmit ? 'var(--ink-on-accent)' : 'var(--ink-a50)', fontSize: '0.8125rem', fontWeight: 600,
+                color: canSubmit ? 'var(--ink-on-accent)' : 'var(--ink-a50)', fontSize: '0.9375rem', fontWeight: 600,
                 cursor: canSubmit ? 'pointer' : 'not-allowed',
               }}
             >

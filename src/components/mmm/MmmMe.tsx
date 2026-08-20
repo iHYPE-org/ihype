@@ -128,10 +128,10 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
             >
               <div>
-                <div style={{ fontSize: '0.86rem', color: 'var(--ink)' }}>{row.title}</div>
-                <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
+                <div style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{row.title}</div>
+                <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.8rem', color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)' }}>
                 {row.amount}
               </div>
             </div>
@@ -243,9 +243,9 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           is not. Two e2e tests had been asserting it visible all along. */}
       {data.hypeLink && (
         <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.7813rem' }}>Your HYPE link</div>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.9375rem' }}>Your HYPE link</div>
           {data.role === 'fan' && (
-            <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 9 }}>
+            <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 9 }}>
               Share it — friends see what you hype, and shows you can go to together.
             </div>
           )}
@@ -254,7 +254,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             <button
               className="mmm-btn-primary"
               onClick={() => void copy()}
-              style={{ flexShrink: 0, padding: '5px 11px', borderRadius: 7, fontSize: '0.7813rem' }}
+              style={{ flexShrink: 0, padding: '5px 11px', borderRadius: 7, fontSize: '0.9375rem' }}
               type="button"
             >
               {copied ? 'Copied' : 'Copy'}
@@ -269,7 +269,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
                     {data.hypeLink.tickets}
                   </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.7813rem' }}>Tickets</div>
+                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.9375rem' }}>Tickets</div>
                 </div>
               )}
               {data.hypeLink.earnedCents !== null && (
@@ -277,12 +277,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
                   <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
                     ${(data.hypeLink.earnedCents / 100).toFixed(0)}
                   </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.7813rem' }}>Earned</div>
+                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.9375rem' }}>Earned</div>
                 </div>
               )}
             </div>
           )}
-          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>
+          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>
             Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool —
             never the artist&rsquo;s 70%. Promoting needs no role and no signup.
           </div>
@@ -320,9 +320,9 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.7813rem' }}>Your page</div>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.9375rem' }}>Your page</div>
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
-          <div style={{ fontSize: '0.7813rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
+          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
           <div style={{ display: 'flex', gap: 8 }}>
             <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
             {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
