@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
-import { MMM_MUSIC_TABS } from '@/lib/mmm-nav';
 import { MmmSearch } from './MmmSearch';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
@@ -107,30 +106,11 @@ export function MmmMusic({
 }: { tab: MusicTabId; genre?: string; city?: string; q?: string; focusSearch?: boolean }) {
   return (
     <>
-      {/* Tabs on one row, search on the next — the 2026-08-10 template moved
-          them apart. Sharing a row read as tighter and was not: five tabs plus
-          a field wrap to two rows of chips on a phone, which costs more height
-          than the field saved AND shifts the first card by a different amount
-          on each tab, so the module reads as a different page per tab.
-
-          The wrapper is now a column; `.mmm-tabs` holds one line at every
-          width. The strip keeps its `nav` semantics and search is still not a
-          tab. There is deliberately no eyebrow, headline or dek above this:
-          the tab already names the surface, and a standing description of a
-          screen you visit daily is furniture by the third visit. */}
+      {/* The tab strip that used to head this pane is gone: the module's
+          destinations are tuned from the dial on the cabinet now, which is
+          where the console direction puts them. Search stays here — it is not
+          a destination, and it never was a tab. */}
       <div className="mmm-music-controls">
-        <nav aria-label="Music" className="mmm-tabs">
-          {MMM_MUSIC_TABS.map((item) => (
-            <Link
-              aria-current={item.id === tab ? 'page' : undefined}
-              className="mmm-tab"
-              href={item.href}
-              key={item.id}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
         <MmmSearch autoFocus={focusSearch} initialQuery={q ?? ''} />
       </div>
       {tab === 'discover' && <DiscoverTab city={city} genre={genre} />}

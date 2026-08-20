@@ -139,52 +139,60 @@ test.describe('Music · Map · Me shell', () => {
     // The fan closes behind it, and nothing has grown a sub-level.
     await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
     await expect(page.locator('.mmm-nav-anchor')).not.toHaveAttribute('data-sub', 'true');
-    // The five sections live here instead, as tabs.
-    await expect(page.getByRole('navigation', { name: 'Music' })).toBeVisible();
+    // The five sections live on the chrome dial instead of a pane tab strip.
+    await expect(page.getByRole('tablist', { name: 'Music destinations' })).toBeVisible();
   });
 
   // §9: "All 5 MUSIC items are visible and reachable, no clipping." §4 is the
   // bug this guards — three of seven items were off-screen and unreachable
   // because an ancestor's overflow clipped the transform.
   //
-  // Measured only once the fan has SETTLED. The items transition out from behind
-  // the logo over .42s with a per-index delay, and `toBeVisible()` resolves the
-  // moment opacity lifts — so reading boundingBox() straight after it samples a
-  // pill still in flight, near the logo, and the hit test then returns the logo.
-  // That is the test measuring an animation, not the layout being wrong.
-  test('every MUSIC item is on screen and hit-testable', async ({ page }) => {
+  // The items moved again: from a level-2 arc, to the Music pane's tab strip,
+  // and now to the tuner on the cabinet. So the MECHANISM this checks has
+  // changed twice while the requirement has not, and the requirement is what
+  // is written here — every destination reachable, none clipped, none covered.
+  //
+  // A dial shows one station at a time, so "visible" cannot mean "all five are
+  // painted at once" any more. It means: five real tabs exist, exactly one is
+  // in the tab order (roving tabindex), and stepping the dial actually arrives
+  // at each of them with the engraved name on screen and hit-testable. That is
+  // a stronger check than the strip version — it proves the control WORKS,
+  // where the old one only proved five pills had boxes.
+  test('every MUSIC destination is reachable on the dial, unclipped', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    // The five items moved from a level-2 arc to the Music pane's tab strip,
-    // so the guard follows them there. The bug it protects against is the same
-    // one — an item rendered but off-screen or covered — and a horizontally
-    // scrolling strip on a 390px phone is exactly where that recurs.
     await page.goto('/app/music/discover');
 
     const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
-    for (const label of labels) {
-      await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
-    }
+    const dial = page.getByRole('tablist', { name: 'Music destinations' });
+    await expect(dial).toBeVisible();
+    await expect(dial.getByRole('tab', { includeHidden: true })).toHaveCount(labels.length);
 
-    // One poll over the whole set: each pill fully inside the viewport, and the
-    // point at its own centre hitting itself rather than something above it.
-    await expect.poll(async () => page.evaluate((names) => {
-      const problems: string[] = [];
-      for (const name of names) {
-        const node = [...document.querySelectorAll('.mmm-tab')]
-          .find((candidate) => candidate.textContent?.trim() === name);
-        if (!node) { problems.push(`${name}: not rendered`); continue; }
-        const box = node.getBoundingClientRect();
-        if (box.width === 0 || box.height === 0) { problems.push(`${name}: zero box`); continue; }
-        if (box.left < 0) problems.push(`${name}: off the left edge (${Math.round(box.left)})`);
-        if (box.top < 0) problems.push(`${name}: off the top edge (${Math.round(box.top)})`);
-        if (box.right > window.innerWidth) problems.push(`${name}: overflows right (${Math.round(box.right)} > ${window.innerWidth})`);
-        if (box.bottom > window.innerHeight) problems.push(`${name}: overflows bottom (${Math.round(box.bottom)} > ${window.innerHeight})`);
+    // Roving tabindex: one tab in the order, never five.
+    await expect.poll(async () => dial.evaluate((node) =>
+      [...node.querySelectorAll('[role="tab"]')].filter((t) => (t as HTMLElement).tabIndex === 0).length,
+    )).toBe(1);
+
+    // Step all the way round. Starting at Discover, five steps returns there,
+    // which also proves the scale wraps rather than stopping at the last one.
+    for (let i = 0; i < labels.length; i += 1) {
+      const expected = labels[(i + 1) % labels.length];
+      await page.getByRole('button', { name: /Next section in Music/i }).click();
+
+      await expect.poll(async () => dial.evaluate(() => {
+        const current = document.querySelector('.tuner-station[data-current="true"]');
+        if (!current) return 'no current station';
+        const box = current.getBoundingClientRect();
+        if (box.width === 0 || box.height === 0) return 'zero box';
+        if (box.left < 0) return `off the left edge (${Math.round(box.left)})`;
+        if (box.right > window.innerWidth) return `overflows right (${Math.round(box.right)} > ${window.innerWidth})`;
+        if (box.bottom > window.innerHeight) return `overflows bottom (${Math.round(box.bottom)})`;
+        // The point at its own centre must hit itself, not the cabinet or the
+        // player sitting beside it — the covering half of §4's bug.
         const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-        const hitText = hit?.textContent?.trim() ?? '';
-        if (hitText !== name) problems.push(`${name}: centre hits "${hitText}"`);
-      }
-      return problems;
-    }, labels), { timeout: 10_000 }).toEqual([]);
+        if (!hit || !current.contains(hit) && hit !== current) return `centre hits "${hit?.className ?? 'nothing'}"`;
+        return current.textContent?.trim() ?? '';
+      }), { timeout: 10_000 }).toBe(expected);
+    }
   });
 
   // §9: "Items fan out with a visible stagger, not all at once." §5's bug made
@@ -229,14 +237,23 @@ test.describe('Music · Map · Me shell', () => {
 
   // The module tab is a route, not state: it must survive a reload and a
   // back-button press, which the prototype's local state did not.
-  test('the MUSIC tab is a real route', async ({ page }) => {
+  test('the MUSIC destination is a real route', async ({ page }) => {
     await page.goto('/app/music/discover');
-    await page.getByRole('link', { name: 'Charts' }).click();
+    // Discover -> Radio -> Charts. The destinations are stations on the chrome
+    // dial now, not links in a pane strip, so this steps rather than clicks.
+    const next = page.getByRole('button', { name: /Next section in Music/i });
+    await next.click();
+    await next.click();
     await expect(page).toHaveURL(/\/app\/music\/charts$/);
+
+    // Survives a reload: the needle is re-homed from the URL, not from state.
     await page.reload();
-    await expect(page.getByRole('link', { name: 'Charts' })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('tab', { name: 'Charts' })).toHaveAttribute('aria-selected', 'true');
+
+    // And Back walks the destinations, which is why the dial pushes rather
+    // than replaces.
     await page.goBack();
-    await expect(page).toHaveURL(/\/app\/music\/discover$/);
+    await expect(page).toHaveURL(/\/app\/music\/radio$/);
   });
 
   // The requirement is that a typo does not silently render Discover. Asserted on
@@ -248,7 +265,12 @@ test.describe('Music · Map · Me shell', () => {
   test('an unknown MUSIC tab shows not-found, not a silent fallback to Discover', async ({ page }) => {
     await page.goto('/app/music/nonsense');
     await expect(page.getByRole('heading', { name: /no such tab/i })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'Discover' })).toHaveCount(0);
+    /* There used to be a `link named Discover has count 0` assertion here. It
+       became VACUOUS when the destinations stopped being links — an assertion
+       that a thing is absent passes for free once the thing cannot exist, and
+       a test that cannot fail is worse than no test because it reads as
+       coverage. The heading above is what actually proves "not a silent
+       fallback to Discover"; the pane rendering not-found is the requirement. */
     // And it stays inside MMM — exactly one shell, not the marketing 404 and
     // not two shells stacked (which is what `notFound()` produced here, since
     // the layout has already flushed by the time it throws).
@@ -274,8 +296,10 @@ test.describe('Music · Map · Me shell', () => {
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
     await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
     await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
-    // Radio is a TAB in the Music pane now, not a second-level arc item.
-    await page.getByRole('link', { name: 'Radio', exact: true }).click();
+    // Radio is a STATION on the chrome dial now — it was a second-level arc
+    // item, then a tab in the Music pane. The map's survival is the point of
+    // this test and has not changed through any of that.
+    await page.getByRole('button', { name: /Next section in Music/i }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
