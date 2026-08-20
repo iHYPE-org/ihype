@@ -33,7 +33,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         </p>
       )}
       {isDev && error.message && (
-        <pre style={{ fontSize: '0.9375rem', textAlign: 'left', background: 'var(--surface-2, #1a1a2e)', padding: 12, borderRadius: 6, maxWidth: '100%', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 16 }}>
+        <pre style={{ fontSize: '0.9375rem', textAlign: 'left', background: 'var(--bg-3)', padding: 12, borderRadius: 6, maxWidth: '100%', overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-word', marginBottom: 16 }}>
           {error.message}
           {error.stack ? `\n\n${error.stack}` : ''}
         </pre>
