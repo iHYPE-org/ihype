@@ -148,22 +148,22 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
 
       <style>{`
         .vbi-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 3px; margin-bottom: 20px; width: fit-content; }
-        .vbi-tab { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px; border-radius: var(--radius-pill); border: none; background: transparent; color: var(--ink-a65); cursor: pointer; }
+        .vbi-tab { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .08em; padding: 8px 16px; border-radius: var(--radius-pill); border: none; background: transparent; color: var(--ink-a65); cursor: pointer; }
         .vbi-tab-active { background: var(--role-venue); color: var(--bg); }
-        .vbi-empty, .vbi-empty-card { font-size: 0.8125rem; color: var(--ink-a65); margin: 0; }
+        .vbi-empty, .vbi-empty-card { font-size: 0.9375rem; color: var(--ink-a65); margin: 0; }
         .vbi-empty-card { text-align: center; padding: 48px 24px; border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); }
         .vbi-list { display: flex; flex-direction: column; gap: 12px; }
         .vbi-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 18px 20px; }
         .vbi-card-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
         .vbi-name { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
-        .vbi-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
-        .vbi-message { font-size: 0.8125rem; color: var(--ink-a75); line-height: 1.5; margin: 8px 0; }
-        .vbi-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
+        .vbi-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
+        .vbi-message { font-size: 0.9375rem; color: var(--ink-a75); line-height: 1.5; margin: 8px 0; }
+        .vbi-pill { flex-shrink: 0; font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; padding: 5px 10px; border-radius: var(--radius-pill); }
         .vbi-pill-pending { background: rgba(var(--warning-rgb),.15); color: var(--warning-text); }
         .vbi-pill-accepted { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
         .vbi-pill-declined { background: var(--line); color: var(--ink-a65); }
         .vbi-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-        .vbi-btn { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; border-radius: var(--radius-pill); border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
+        .vbi-btn { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .06em; padding: 9px 16px; border-radius: var(--radius-pill); border: none; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; }
         .vbi-btn-accept { background: var(--role-venue); color: var(--bg); }
         .vbi-btn-decline { background: transparent; color: var(--ink-a65); border: 1px solid var(--line); }
         .vbi-btn-outline { background: transparent; color: var(--ink-a70); border: 1px solid var(--line); }

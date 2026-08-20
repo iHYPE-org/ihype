@@ -30,7 +30,7 @@ export default async function SupportPage({
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800, letterSpacing: '-.02em', margin: '18px 0 8px', color: 'var(--ink)' }}>
         {t('supportPage.title', 'How can we help?')}
       </h1>
-      <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
+      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
         {t('supportPage.intro', 'Two people run iHYPE (plus a lot of automation) — we read everything, in order.')}
       </p>
 
@@ -39,7 +39,7 @@ export default async function SupportPage({
         href="/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)',
-          fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink)',
+          fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink)',
           border: '1px solid var(--line)', borderRadius: 'var(--radius-md)', background: 'var(--bg2)',
           padding: '10px 16px', textDecoration: 'none', marginBottom: 40,
         }}

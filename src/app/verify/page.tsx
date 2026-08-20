@@ -45,7 +45,7 @@ export default async function VerifyPage() {
       <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px', textAlign: 'center' }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 12 }}>{t('verifyPage.nothingToVerify', 'Nothing to verify yet.')}</h1>
-        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
           {t('verifyPage.noProfilesBody', "Fan accounts don't need verification. Create an Artist or Venue page to get started.")}
         </p>
         <Link href="/pages?tab=creator" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
@@ -68,7 +68,7 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifiedHeading', "You're verified.")}</h1>
-        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)' }}>{profile.name} {t('verifyPage.isVerifiedPrefix', 'is a verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.isVerifiedSuffix', 'on iHYPE.')}</p>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{profile.name} {t('verifyPage.isVerifiedPrefix', 'is a verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.isVerifiedSuffix', 'on iHYPE.')}</p>
       </div>
     );
   }
@@ -86,23 +86,23 @@ export default async function VerifyPage() {
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--role-venue)" strokeWidth="2.5" strokeLinecap="round"><polyline points="20 6 9 17 4 12" /></svg>
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.submittedHeading', 'Submitted.')}</h1>
-        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', maxWidth: '34ch', margin: '0 auto 24px', lineHeight: 1.65 }}>
           {t('verifyPage.submittedBody', "We'll review your application within 48 hours and email you at the address on your account. While you wait, you can use iHYPE as a Fan.")}
         </p>
         <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 24 }}>
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 18px', borderRadius: 999,
             background: badge.bg, border: `1px solid ${badge.border}`, color: badge.text,
-            fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', fontWeight: 700, textTransform: 'uppercase',
+            fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', fontWeight: 700, textTransform: 'uppercase',
           }}>
             {t('verifyPage.verifiedPendingPrefix', 'Verified')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifiedPendingSuffix', '· Pending')}
           </span>
         </div>
         <div style={{ textAlign: 'left', background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 24 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.65rem', letterSpacing: '.14em', textTransform: 'uppercase', color: badge.text, marginBottom: 8 }}>{t('verifyPage.whileYouWait', 'While you wait')}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: badge.text, marginBottom: 8 }}>{t('verifyPage.whileYouWait', 'While you wait')}</div>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', marginBottom: 6 }}>{nextStep.title}</div>
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 14 }}>{nextStep.body}</p>
-          <Link href={nextStep.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.85rem', fontWeight: 700, color: badge.text, textDecoration: 'none' }}>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.6, marginBottom: 14 }}>{nextStep.body}</p>
+          <Link href={nextStep.href} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: '0.9375rem', fontWeight: 700, color: badge.text, textDecoration: 'none' }}>
             {nextStep.cta} →
           </Link>
         </div>
@@ -117,7 +117,7 @@ export default async function VerifyPage() {
     <div style={{ maxWidth: 480, margin: '40px auto', padding: '0 24px 100px' }}>
       <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 12 }}>{t('verifyPage.label', 'Verification')}</p>
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.7rem', fontWeight: 800, marginBottom: 8 }}>{t('verifyPage.verifyYourPagePrefix', 'Verify your')} {TYPE_LABEL[profile.type]} {t('verifyPage.verifyYourPageSuffix', 'page.')}</h1>
-      <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', marginBottom: 24, lineHeight: 1.6 }}>
+      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24, lineHeight: 1.6 }}>
         {t('verifyPage.instantVsVerification', 'Fan accounts are instant. Artist and Venue accounts require verification — it protects everyone in the 70/20/10 ecosystem.')}
       </p>
       <VerifyForm

@@ -66,15 +66,15 @@ export function VenueRequestForm({ venueProfileId }: { venueProfileId: string })
       <button className="venue-submit-btn" disabled={pending} type="submit">
         {pending ? t('venueRequestForm.submitting', 'Submitting…') : t('venueRequestForm.submitRequest', 'Submit Request')}
       </button>
-      {message && <p style={{ marginTop: 12, fontSize: '0.8125rem', color: 'var(--role-venue)' }}>{message}</p>}
+      {message && <p style={{ marginTop: 12, fontSize: '0.9375rem', color: 'var(--role-venue)' }}>{message}</p>}
 
       <style>{`
         .venue-request-form { border: 1px solid var(--line); border-radius: 10px; padding: 28px; background: var(--bg2); }
         .venue-form-group { margin-bottom: 20px; }
-        .venue-form-group label { display: block; font-size: 0.8125rem; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
-        .venue-form-group input, .venue-form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 0.875rem; font-family: var(--font-body); box-sizing: border-box; }
+        .venue-form-group label { display: block; font-size: 0.9375rem; font-weight: 600; margin-bottom: 8px; color: var(--ink); }
+        .venue-form-group input, .venue-form-group textarea { width: 100%; padding: 10px 14px; border: 1px solid var(--hair-100); border-radius: 8px; background: var(--bg); color: var(--ink); font-size: 0.9375rem; font-family: var(--font-body); box-sizing: border-box; }
         .venue-form-group textarea { min-height: 100px; resize: vertical; }
-        .venue-submit-btn { padding: 13px 28px; background: var(--role-venue); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; font-size: 0.875rem; cursor: pointer; }
+        .venue-submit-btn { padding: 13px 28px; background: var(--role-venue); color: var(--bg); border: none; border-radius: 8px; font-weight: 700; font-size: 0.9375rem; cursor: pointer; }
         .venue-submit-btn:disabled { opacity: .6; cursor: default; }
       `}</style>
     </form>

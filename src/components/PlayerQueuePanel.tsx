@@ -50,7 +50,7 @@ export function PlayerQueuePanel({
             key={p}
             onClick={() => setPanel(p)}
             style={{
-              ...btnBase, flex: 1, padding: '6px 8px', fontSize: '0.7813rem',
+              ...btnBase, flex: 1, padding: '6px 8px', fontSize: '0.9375rem',
               textTransform: 'uppercase', letterSpacing: '0.06em',
               opacity: panel === p ? 1 : 0.4,
               borderBottom: panel === p ? '2px solid var(--accent)' : '2px solid transparent',
@@ -61,40 +61,40 @@ export function PlayerQueuePanel({
             {p === 'queue' ? `${t('playerQueuePanel.upNext', 'Up next')} (${upcomingTracks.length})` : `${t('playerQueuePanel.history', 'History')} (${history.length})`}
           </button>
         ))}
-        <button onClick={() => setPanel(null)} style={{ ...btnBase, padding: '6px 10px', opacity: 0.4, fontSize: '0.8rem' }} type="button">✕</button>
+        <button onClick={() => setPanel(null)} style={{ ...btnBase, padding: '6px 10px', opacity: 0.4, fontSize: '0.9375rem' }} type="button">✕</button>
       </div>
 
       {/* Content */}
       <div style={{ overflowY: 'auto', flex: 1, padding: '0.4rem' }}>
         {panel === 'queue' && (
           upcomingTracks.length === 0
-            ? <p style={{ fontSize: '0.7813rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? t('playerQueuePanel.radioWillLoadMore', 'Radio will load more when queue ends.') : t('playerQueuePanel.queueEmpty', 'Queue is empty.')}</p>
+            ? <p style={{ fontSize: '0.9375rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{isAutoplay ? t('playerQueuePanel.radioWillLoadMore', 'Radio will load more when queue ends.') : t('playerQueuePanel.queueEmpty', 'Queue is empty.')}</p>
             : upcomingTracks.map((track, i) => (
               <div key={track.id} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span style={{ fontSize: '0.7813rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                <span style={{ fontSize: '0.9375rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track, queue)}>
-                  <div style={{ fontSize: '0.7813rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-                  <div style={{ fontSize: '0.7813rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
+                  <div style={{ fontSize: '0.9375rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
                 </div>
-                <button onClick={() => removeFromQueue(track.id)} style={{ ...btnBase, opacity: 0.3, fontSize: '0.7813rem' }} title={t('playerQueuePanel.remove', 'Remove')} type="button">✕</button>
+                <button onClick={() => removeFromQueue(track.id)} style={{ ...btnBase, opacity: 0.3, fontSize: '0.9375rem' }} title={t('playerQueuePanel.remove', 'Remove')} type="button">✕</button>
               </div>
             ))
         )}
         {panel === 'history' && (
           history.length === 0
-            ? <p style={{ fontSize: '0.7813rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{t('playerQueuePanel.nothingPlayedYet', 'Nothing played yet this session.')}</p>
+            ? <p style={{ fontSize: '0.9375rem', opacity: 0.4, margin: '0.5rem 0.25rem' }}>{t('playerQueuePanel.nothingPlayedYet', 'Nothing played yet this session.')}</p>
             : history.map((track, i) => (
               <div key={`${track.id}-${i}`} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px', borderRadius: 4 }}
                 onMouseEnter={e => (e.currentTarget.style.background = 'var(--hair-50)')}
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
-                <span style={{ fontSize: '0.7813rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
+                <span style={{ fontSize: '0.9375rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
                 <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track)}>
-                  <div style={{ fontSize: '0.7813rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
-                  <div style={{ fontSize: '0.7813rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
+                  <div style={{ fontSize: '0.9375rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
+                  <div style={{ fontSize: '0.9375rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
                 </div>
               </div>
             ))
@@ -104,11 +104,11 @@ export function PlayerQueuePanel({
       {/* Autoplay toggle footer (queue panel only) */}
       {panel === 'queue' && (
         <div style={{ borderTop: '1px solid var(--hair-80)', padding: '6px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '0.7813rem', opacity: 0.6 }}>{t('playerQueuePanel.autoplayRadio', 'Autoplay radio')}</span>
+          <span style={{ fontSize: '0.9375rem', opacity: 0.6 }}>{t('playerQueuePanel.autoplayRadio', 'Autoplay radio')}</span>
           <button
             onClick={toggleAutoplay}
             type="button"
-            style={{ ...btnBase, fontSize: '0.7813rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent-text)' : 'inherit' }}
+            style={{ ...btnBase, fontSize: '0.9375rem', fontWeight: 700, opacity: isAutoplay ? 1 : 0.4, color: isAutoplay ? 'var(--accent-text)' : 'inherit' }}
           >
             {isAutoplay ? t('playerQueuePanel.on', 'On') : t('playerQueuePanel.off', 'Off')}
           </button>

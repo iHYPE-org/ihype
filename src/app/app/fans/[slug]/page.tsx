@@ -190,7 +190,7 @@ export default async function FanProfilePage({
                     <h4>{show.title}</h4>
                     <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
-                  <span style={{ fontSize: '0.7813rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
+                  <span style={{ fontSize: '0.9375rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>
               ))}
             </div>
@@ -204,7 +204,7 @@ export default async function FanProfilePage({
                 <div className="fan-ref-label">{t('fansSlugPage.referralLinkLabel', 'Referral Link')}</div>
                 <div className="fan-ref-url">{`${baseUrl}/h/${promoterDashboard.refHexId}`}</div>
                 <PromoteShareButton link={`${baseUrl}/h/${promoterDashboard.refHexId}`} slug="referral" title="iHYPE" />
-                <p style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', marginTop: 12 }}>
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 12 }}>
                   {t('fansSlugPage.referralExplainer', 'Earn a proportional share of the 10% promoter pool for every ticket your link drives.')}
                 </p>
               </div>
@@ -238,30 +238,30 @@ export default async function FanProfilePage({
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
         .fan-badge { display: inline-block; padding: 5px 12px; border-radius: 4px; font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; }
         .fan-hero-actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-        .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 0.8125rem; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
+        .fan-hero-btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 18px; border-radius: 9px; font-size: 0.9375rem; font-weight: 700; text-decoration: none; background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }
         .fan-hero-btn:hover { background: var(--hair-100); }
         .fan-stats { display: flex; gap: 32px; margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--line); flex-wrap: wrap; }
         .fan-stat-val { font-size: 1.375rem; font-weight: 700; color: var(--profile-accent, var(--role-fan)); font-family: var(--profile-font-display, var(--font-display)); }
-        .fan-stat-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-top: 2px; }
+        .fan-stat-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-top: 2px; }
         .fan-content { padding: 0 32px; }
         .fan-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin: 28px 0; flex-wrap: wrap; }
-        .fan-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 0.875rem; color: var(--ink-a65); text-decoration: none; }
+        .fan-tab { padding: 10px 0; border-bottom: 2px solid transparent; cursor: pointer; font-weight: 600; font-size: 0.9375rem; color: var(--ink-a65); text-decoration: none; }
         .fan-tab.active { color: var(--ink); border-color: var(--profile-accent, var(--role-fan)); }
         .fan-chip-row { display: flex; gap: 10px; flex-wrap: wrap; }
-        .fan-chip { padding: 8px 16px; border-radius: 9999px; background: rgba(var(--role-fan-rgb),.1); border: 1px solid rgba(var(--role-fan-rgb),.25); color: var(--profile-accent, var(--role-fan)); font-size: 0.8125rem; font-weight: 600; }
+        .fan-chip { padding: 8px 16px; border-radius: 9999px; background: rgba(var(--role-fan-rgb),.1); border: 1px solid rgba(var(--role-fan-rgb),.25); color: var(--profile-accent, var(--role-fan)); font-size: 0.9375rem; font-weight: 600; }
         .fan-top5-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
         .fan-top5-row { display: flex; gap: 16px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg2); color: var(--ink); }
-        .fan-top5-rank { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); width: 20px; text-align: center; flex-shrink: 0; }
+        .fan-top5-rank { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); width: 20px; text-align: center; flex-shrink: 0; }
         .fan-show-list { display: flex; flex-direction: column; gap: 12px; }
         .fan-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg2); text-decoration: none; color: inherit; }
         .fan-show-row:hover { background: var(--bg3); }
-        .fan-show-row h4 { font-family: var(--profile-font-display, var(--font-display)); font-size: 0.875rem; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
-        .fan-show-row p { font-size: 0.7813rem; color: var(--ink-a65); }
+        .fan-show-row h4 { font-family: var(--profile-font-display, var(--font-display)); font-size: 0.9375rem; font-weight: 800; margin-bottom: 2px; color: var(--ink); }
+        .fan-show-row p { font-size: 0.9375rem; color: var(--ink-a65); }
         .fan-ref-box { background: rgba(var(--role-fan-rgb),.06); border: 1px solid rgba(var(--role-fan-rgb),.2); border-radius: 10px; padding: 24px; margin-bottom: 24px; }
         .fan-ref-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--profile-accent, var(--role-fan)); margin-bottom: 10px; }
-        .fan-ref-url { font-family: var(--font-mono); font-size: 0.8125rem; background: var(--bg); border: 1px solid var(--hair-100); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
+        .fan-ref-url { font-family: var(--font-mono); font-size: 0.9375rem; background: var(--bg); border: 1px solid var(--hair-100); border-radius: 6px; padding: 10px 14px; margin-bottom: 12px; word-break: break-all; color: var(--ink); }
         .fan-payout-list { border: 1px solid var(--line); border-radius: 10px; padding: 0 20px; background: var(--bg2); }
-        .fan-payout-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 0.875rem; }
+        .fan-payout-row { display: flex; justify-content: space-between; padding: 14px 0; font-size: 0.9375rem; }
         .fan-empty { text-align: center; padding: 48px 24px; color: var(--ink-a65); }
       `}</style>
     </div>

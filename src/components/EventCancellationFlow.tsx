@@ -183,28 +183,28 @@ export function EventCancellationFlow({
 
       <style>{`
         .ecf-page { max-width: 440px; margin: 0 auto; padding: 40px 20px 80px; }
-        .ecf-eyebrow { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
+        .ecf-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
         .ecf-title { font-family: var(--font-display); font-size: 1.625rem; font-weight: 800; letter-spacing: -.03em; margin: 0 0 20px; color: var(--ink); }
         .ecf-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: var(--bg2); padding: 18px 20px; margin-bottom: 20px; }
         .ecf-card-title { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
-        .ecf-card-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 3px; }
+        .ecf-card-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 3px; }
         .ecf-reasons { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-        .ecf-reason-row { display: flex; align-items: center; gap: 10px; font-size: 0.8438rem; color: var(--ink); padding: 10px 4px; }
+        .ecf-reason-row { display: flex; align-items: center; gap: 10px; font-size: 0.9375rem; color: var(--ink); padding: 10px 4px; }
         .ecf-message { margin-bottom: 18px; }
-        .ecf-message-label { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a70); margin-bottom: 8px; }
+        .ecf-message-label { display: flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a70); margin-bottom: 8px; }
         .ecf-message-optional { color: var(--ink-a65); letter-spacing: .06em; }
-        .ecf-message-input { width: 100%; box-sizing: border-box; resize: vertical; font-family: var(--font-body, inherit); font-size: 0.8438rem; line-height: 1.55; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; }
+        .ecf-message-input { width: 100%; box-sizing: border-box; resize: vertical; font-family: var(--font-body, inherit); font-size: 0.9375rem; line-height: 1.55; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; }
         .ecf-message-input:focus { outline: none; border-color: var(--accent); }
-        .ecf-message-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 0.7813rem; color: var(--ink-a65); }
+        .ecf-message-foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; font-size: 0.9375rem; color: var(--ink-a65); }
         .ecf-message-count { font-family: var(--font-mono); flex-shrink: 0; }
         .ecf-done-message { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 14px 16px; margin: 0 auto 24px; max-width: 34ch; text-align: left; }
-        .ecf-done-message-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
-        .ecf-done-message-body { font-size: 0.8125rem; color: var(--ink-a75); line-height: 1.6; margin: 0; white-space: pre-wrap; }
+        .ecf-done-message-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
+        .ecf-done-message-body { font-size: 0.9375rem; color: var(--ink-a75); line-height: 1.6; margin: 0; white-space: pre-wrap; }
         .ecf-warning { margin-top: 4px; margin-bottom: 20px; padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid rgba(var(--accent-rgb),.25); background: rgba(var(--accent-rgb),.06); }
-        .ecf-warning-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 4px; }
-        .ecf-warning p { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }
-        .ecf-error { color: var(--accent-text); font-size: 0.7813rem; margin: 0 0 12px; }
-        .ecf-btn { display: block; text-align: center; font-family: var(--font-mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: .06em; padding: 12px 20px; border-radius: var(--radius-pill); border: none; cursor: pointer; text-decoration: none; margin-bottom: 8px; }
+        .ecf-warning-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 4px; }
+        .ecf-warning p { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }
+        .ecf-error { color: var(--accent-text); font-size: 0.9375rem; margin: 0 0 12px; }
+        .ecf-btn { display: block; text-align: center; font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .06em; padding: 12px 20px; border-radius: var(--radius-pill); border: none; cursor: pointer; text-decoration: none; margin-bottom: 8px; }
         .ecf-btn-danger { background: var(--accent); color: var(--ink-on-accent); width: 100%; }
         .ecf-btn-outline { background: transparent; color: var(--ink-a70); border: 1px solid var(--line); }
         .ecf-btn:disabled { opacity: 0.6; cursor: default; }
@@ -212,7 +212,7 @@ export function EventCancellationFlow({
         .ecf-done { text-align: center; }
         .ecf-done-icon { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(var(--accent-rgb),.12); border: 2px solid var(--accent); color: var(--accent-text); font-size: 1.5rem; }
         .ecf-done-title { font-family: var(--font-display); font-weight: 800; font-size: 1.625rem; letter-spacing: -.03em; color: var(--ink); margin: 0; }
-        .ecf-done-body { font-size: 0.875rem; color: var(--ink-a65); line-height: 1.65; max-width: 34ch; margin: 8px auto 24px; }
+        .ecf-done-body { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.65; max-width: 34ch; margin: 8px auto 24px; }
       `}</style>
     </div>
   );

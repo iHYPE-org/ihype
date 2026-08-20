@@ -48,10 +48,10 @@ export function PagesReferralTab() {
   if (ageGated) {
     return (
       <div style={{ background: 'rgba(var(--role-fan-rgb),.06)', border: '1px solid rgba(var(--role-fan-rgb),.18)', borderRadius: 16, padding: 24, textAlign: 'center' }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 10 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 10 }}>
           {t('pagesReferralTab.ageGateBadge', 'HYPE Link · 18+')}
         </div>
-        <p style={{ fontSize: '0.875rem', color: 'var(--ink-a75)', lineHeight: 1.6, margin: '0 0 16px' }}>
+        <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a75)', lineHeight: 1.6, margin: '0 0 16px' }}>
           {t('pagesReferralTab.ageGateBody', "Referral links are for members 18 and older. If that's you, confirm your age once in Settings and your HYPE Link unlocks right away.")}
         </p>
         <Link className="ihype-btn-primary" href="/me/settings">{t('pagesReferralTab.ageGateCta', 'Confirm my age in Settings')}</Link>
@@ -70,7 +70,7 @@ export function PagesReferralTab() {
 
   return (
     <div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
         {t('pagesReferralTab.sectionLabel', 'HYPE LINK')}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 12 }}>
@@ -78,27 +78,27 @@ export function PagesReferralTab() {
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats ? money(stats.estimatedCommissionCents) : '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.estEarned', 'Est. earned')}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.estEarned', 'Est. earned')}</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.ticketSales ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.ticketsDriven', 'Tickets driven')}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.ticketsDriven', 'Tickets driven')}</div>
         </div>
         <div style={statBox}>
           <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
             {stats?.clicks ?? '—'}
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.clicks', 'Clicks')}</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesReferralTab.clicks', 'Clicks')}</div>
         </div>
       </div>
       <div style={{ background: 'rgba(var(--role-fan-rgb),.06)', border: '1px solid rgba(var(--role-fan-rgb),.18)', borderRadius: 16, padding: 20 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 12 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--role-fan)', marginBottom: 12 }}>
           {t('pagesReferralTab.linkSectionLabel', 'Your HYPE Link · your unique fan ID — earn on every ticket you drive')}
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginBottom: 14 }}>
-          <div style={{ flex: 1, background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <div style={{ flex: 1, background: 'var(--hair-40)', border: '1px solid var(--hair-80)', borderRadius: 9, padding: '11px 14px', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-a70)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {link || t('pagesReferralTab.loading', 'Loading…')}
           </div>
           <button onClick={copy} className="ihype-btn-primary" style={{ flexShrink: 0 }}>

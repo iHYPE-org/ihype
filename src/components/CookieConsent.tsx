@@ -109,7 +109,7 @@ export function CookieConsent() {
       {/* 12px, not 11: the same legibility floor as the buttons. This banner
           renders on every page, so one sub-floor paragraph here was counted 16
           times over. */}
-      <p style={{ flex: '1 1 230px', margin: 0, fontSize: '0.7813rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
+      <p style={{ flex: '1 1 230px', margin: 0, fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
         <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, var(--accent))', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
@@ -127,14 +127,14 @@ export function CookieConsent() {
         <button
           onClick={() => choose('essential')}
           className="ihype-btn-ghost ihype-consent-btn"
-          style={{ fontSize: '0.875rem' }}
+          style={{ fontSize: '0.9375rem' }}
         >
           {t('cookieConsent.essentialOnly', 'Essential only')}
         </button>
         <button
           onClick={() => choose('all')}
           className="ihype-btn-primary ihype-consent-btn"
-          style={{ fontSize: '0.875rem', padding: '8px 14px' }}
+          style={{ fontSize: '0.9375rem', padding: '8px 14px' }}
         >
           {t('cookieConsent.acceptAll', 'Accept all')}
         </button>

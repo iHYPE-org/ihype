@@ -79,13 +79,13 @@ export function AdminSetupClient() {
       }}
     >
       <h1 style={{ margin: '0 0 6px', fontSize: '1.375rem' }}>{t('adminSetupClient.heading', 'Admin setup')}</h1>
-      <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: '0.875rem' }}>
+      <p style={{ margin: '0 0 18px', opacity: 0.75, fontSize: '0.9375rem' }}>
         {t('adminSetupClient.descriptionPrefix', 'Set up admin access for')} <strong>admin@ihype.org</strong>. {t('adminSetupClient.descriptionSuffix', 'Requires')} <code>ALLOW_ADMIN_SETUP=true</code> {t('adminSetupClient.descriptionSuffix2', 'and should be disabled after the first passkey is registered.')}
       </p>
 
       <form onSubmit={handleSubmit}>
         <label style={{ display: 'block', marginBottom: 14 }}>
-          <span style={{ display: 'block', fontSize: '0.8125rem', marginBottom: 6 }}>ADMIN_SETUP_SECRET</span>
+          <span style={{ display: 'block', fontSize: '0.9375rem', marginBottom: 6 }}>ADMIN_SETUP_SECRET</span>
           <input
             type="password"
             required
@@ -100,7 +100,7 @@ export function AdminSetupClient() {
               border: '1px solid var(--hair-150)',
               background: 'var(--bg-2)',
               color: 'inherit',
-              fontSize: '0.875rem'
+              fontSize: '0.9375rem'
             }}
           />
         </label>
@@ -131,10 +131,10 @@ export function AdminSetupClient() {
       </form>
 
       {status ? (
-        <p style={{ marginTop: 16, fontSize: '0.8125rem', opacity: 0.85 }}>{status}</p>
+        <p style={{ marginTop: 16, fontSize: '0.9375rem', opacity: 0.85 }}>{status}</p>
       ) : null}
       {error ? (
-        <p style={{ marginTop: 12, fontSize: '0.8125rem', color: 'var(--danger)' }}>{error}</p>
+        <p style={{ marginTop: 12, fontSize: '0.9375rem', color: 'var(--danger)' }}>{error}</p>
       ) : null}
     </div>
   );

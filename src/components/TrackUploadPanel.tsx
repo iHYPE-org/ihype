@@ -135,7 +135,7 @@ export function TrackUploadPanel({
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           type="file"
         />
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.9375rem' }}>
           {t('trackUploadPanel.coverArtLabel', 'Cover art (optional)')}
           <input
             accept="image/jpeg,image/png,image/gif,image/webp"
@@ -161,7 +161,7 @@ export function TrackUploadPanel({
           rows={2}
           value={notes}
         />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.85rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9375rem' }}>
           <input
             checked={freeUseEnabled}
             disabled={submitting}

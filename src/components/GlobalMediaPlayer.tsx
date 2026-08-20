@@ -887,7 +887,7 @@ export function SitePlayerDock() {
             title={t(...repeatTitleKey(repeatMode))} type="button"
             style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent-text)' : 'inherit', position: 'relative' }}>
             <DkRepeat />
-            {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.7813rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
+            {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.9375rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
           </button>
         </div>
         <div className="site-dock-scrub">
@@ -922,7 +922,7 @@ export function SitePlayerDock() {
 
         {/* Mute + volume */}
         <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? t('globalMediaPlayer.unmute', 'Unmute') : t('globalMediaPlayer.mute', 'Mute')} title={isMuted ? t('globalMediaPlayer.unmuteShortcut', 'Unmute (M)') : t('globalMediaPlayer.muteShortcut', 'Mute (M)')} type="button"
-          style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.7813rem' }}>
+          style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.9375rem' }}>
           {isMuted ? '⊘' : '◂))'}
         </button>
         <input
@@ -935,30 +935,30 @@ export function SitePlayerDock() {
 
         {/* Speed */}
         <button className="site-dock-btn" onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button"
-          style={{ fontSize: '0.7813rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5, minWidth: 26 }}>
+          style={{ fontSize: '0.9375rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5, minWidth: 26 }}>
           {playbackRate}×
         </button>
 
         {/* Sleep timer */}
         <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
           aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
-          style={{ fontSize: '0.7813rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
+          style={{ fontSize: '0.9375rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
           {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
         </button>
 
         {/* Share */}
         <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button"
-          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.7813rem', color: copied ? 'var(--accent-text)' : 'inherit' }}
+          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.9375rem', color: copied ? 'var(--accent-text)' : 'inherit' }}
           disabled={!currentTrack}>
           {copied ? '✓' : '⬆'}
         </button>
 
         {/* Queue / History toggle */}
         <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button"
-          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent-text)' : 'inherit', fontSize: '0.85rem', position: 'relative' }}>
+          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent-text)' : 'inherit', fontSize: '0.9375rem', position: 'relative' }}>
           ≡
           {upcomingTracks.length > 0 && (
-            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.7813rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>
+            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.9375rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>
               {upcomingTracks.length}
             </span>
           )}

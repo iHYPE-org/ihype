@@ -41,7 +41,7 @@ export default async function JournalIndex() {
       </h1>
       <p
         className="meta"
-        style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', letterSpacing: '.1em', margin: '10px 0 36px' }}
+        style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', letterSpacing: '.1em', margin: '10px 0 36px' }}
       >
         {t('journalPage.subheading', 'Editorial coverage of the local scene from the iHYPE team.')}
       </p>
@@ -66,11 +66,11 @@ export default async function JournalIndex() {
                 </h2>
               </Link>
               {p.meta.excerpt ? (
-                <p style={{ fontSize: '.9rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: '8px 0 10px' }}>
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.6, margin: '8px 0 10px' }}>
                   {p.meta.excerpt}
                 </p>
               ) : null}
-              <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem' }}>
+              <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem' }}>
                 {p.meta.author ?? 'iHYPE'} · {p.createdAt.toLocaleDateString()}
               </p>
             </li>

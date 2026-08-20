@@ -137,15 +137,15 @@ export function FanMailButton({
         .fm-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; border-bottom: 1px solid var(--line); font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
         .fm-modal-close { background: none; border: none; color: var(--ink-a65); font-size: 1.25rem; line-height: 1; cursor: pointer; padding: 4px; }
         .fm-modal-body { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
-        .fm-hint { font-size: 0.7813rem; color: var(--ink-a65); margin: 0; }
-        .fm-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.7813rem; font-weight: 700; color: var(--ink-a65); }
-        .fm-field input, .fm-field textarea { font: inherit; font-size: 0.8125rem; font-weight: 400; color: var(--ink); background: var(--line); border: 1px solid var(--hair-100); border-radius: 9px; padding: 10px 12px; resize: vertical; }
+        .fm-hint { font-size: 0.9375rem; color: var(--ink-a65); margin: 0; }
+        .fm-field { display: flex; flex-direction: column; gap: 6px; font-size: 0.9375rem; font-weight: 700; color: var(--ink-a65); }
+        .fm-field input, .fm-field textarea { font: inherit; font-size: 0.9375rem; font-weight: 400; color: var(--ink); background: var(--line); border: 1px solid var(--hair-100); border-radius: 9px; padding: 10px 12px; resize: vertical; }
         .fm-field input:focus, .fm-field textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-        .fm-status { font-size: 0.7813rem; margin: 0; }
+        .fm-status { font-size: 0.9375rem; margin: 0; }
         .fm-status-error { color: var(--accent-text); }
         .fm-status-ok { color: var(--ink); }
         .fm-modal-foot { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); }
-        .fm-btn { padding: 9px 16px; border-radius: 8px; font-size: 0.8125rem; font-weight: 700; border: 1px solid var(--hair-100); background: var(--line); color: var(--ink); cursor: pointer; }
+        .fm-btn { padding: 9px 16px; border-radius: 8px; font-size: 0.9375rem; font-weight: 700; border: 1px solid var(--hair-100); background: var(--line); color: var(--ink); cursor: pointer; }
         .fm-btn:disabled { opacity: .6; cursor: default; }
         .fm-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); }
       `}</style>

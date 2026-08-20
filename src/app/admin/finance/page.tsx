@@ -149,7 +149,7 @@ export default async function AdminFinancePage({
                 <article className="card admin-metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>
               ))}
             </div>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: 8 }}>{t('adminFinancePage.monthlyRevenueHeading', 'Monthly revenue')} ({monthlyRows.length} {t('adminFinancePage.monthsInRange', 'months in range')})</h3>
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.monthlyRevenueHeading', 'Monthly revenue')} ({monthlyRows.length} {t('adminFinancePage.monthsInRange', 'months in range')})</h3>
             {monthlyRows.length === 0 ? (
               <div className="empty">{t('adminFinancePage.noCapturedOrders', 'No captured orders in this range.')}</div>
             ) : (
@@ -177,7 +177,7 @@ export default async function AdminFinancePage({
               <input type="hidden" name="page" value="1" />
               <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: 8 }}>{t('adminFinancePage.accountsPayableHeading', 'Accounts Payable')} ({payoutTotal})</h3>
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.accountsPayableHeading', 'Accounts Payable')} ({payoutTotal})</h3>
             {payoutEntries.length === 0 ? <div className="empty">{t('adminFinancePage.noPayoutEntries', 'No payout entries.')}</div> : (
               <div className="admin-list">
                 {payoutEntries.map(e => (
@@ -213,7 +213,7 @@ export default async function AdminFinancePage({
               <input type="hidden" name="page" value="1" />
               <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: 8 }}>{t('adminFinancePage.ticketOrdersHeading', 'Ticket Orders')} ({ticketOrderTotal})</h3>
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.ticketOrdersHeading', 'Ticket Orders')} ({ticketOrderTotal})</h3>
             {ticketOrders.length === 0 ? <div className="empty">{t('adminFinancePage.noTicketOrders', 'No ticket orders match this filter.')}</div> : (
               <div className="admin-list">
                 {ticketOrders.map(o => (
@@ -250,7 +250,7 @@ export default async function AdminFinancePage({
               <input type="hidden" name="page" value="1" />
               <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: '0.875rem', marginBottom: 8 }}>{t('adminFinancePage.promoCodesHeading', 'Promo Codes')} ({promoTotal})</h3>
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.promoCodesHeading', 'Promo Codes')} ({promoTotal})</h3>
             {recentPromos.length === 0 ? <div className="empty">{t('adminFinancePage.noPromoCodes', 'No promo codes.')}</div> : (
               <div className="admin-list">
                 {recentPromos.map(p => (

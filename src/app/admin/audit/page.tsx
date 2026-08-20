@@ -99,12 +99,12 @@ export default async function AdminAuditPage({ searchParams }: { searchParams?: 
                 <td>{r.actor?.username ?? r.actor?.email ?? t('adminAuditPage.systemActor', 'system')}</td>
                 <td>{r.action}</td>
                 <td>{r.entityType}</td>
-                <td style={{ fontFamily: 'monospace', fontSize: '0.7813rem' }}>{r.entityId ? r.entityId.slice(0, 12) + '…' : '—'}</td>
+                <td style={{ fontFamily: 'monospace', fontSize: '0.9375rem' }}>{r.entityId ? r.entityId.slice(0, 12) + '…' : '—'}</td>
                 <td>
                   {r.metadata ? (
                     <details style={{ cursor: 'pointer' }}>
-                      <summary style={{ fontSize: '0.7813rem', opacity: 0.6 }}>{t('adminAuditPage.viewDetails', 'view')}</summary>
-                      <pre style={{ fontSize: '0.7813rem', maxWidth: 300, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                      <summary style={{ fontSize: '0.9375rem', opacity: 0.6 }}>{t('adminAuditPage.viewDetails', 'view')}</summary>
+                      <pre style={{ fontSize: '0.9375rem', maxWidth: 300, overflow: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                         {JSON.stringify(r.metadata, null, 2)}
                       </pre>
                     </details>

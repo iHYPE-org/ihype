@@ -161,31 +161,31 @@ export default async function VenueAnalyticsPage({
         .vaa-head { margin-bottom: 20px; }
         .vaa-head h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .vaa-tabs { display: flex; gap: 4px; border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 4px; width: fit-content; margin-bottom: 28px; }
-        .vaa-tab { padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 700; color: var(--ink-a65); text-decoration: none; }
+        .vaa-tab { padding: 8px 16px; border-radius: var(--radius-pill); font-size: 0.9375rem; font-weight: 700; color: var(--ink-a65); text-decoration: none; }
         .vaa-tab.active { background: var(--role-venue); color: var(--bg); }
         .vaa-tab:not(.active):hover { background: var(--hair-40); }
         .vaa-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .vaa-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 18px 20px; }
-        .vaa-card-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
+        .vaa-card-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
         .vaa-card-val { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--ink); }
         .vaa-card-val-accent { color: var(--role-venue); }
-        .vaa-card-sub { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
+        .vaa-card-sub { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
         .vaa-card-sub-accent { color: var(--role-venue); }
-        .vaa-eyebrow { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; color: var(--role-venue); margin-bottom: 14px; }
-        .vaa-eyebrow-sm { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); }
+        .vaa-eyebrow { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; color: var(--role-venue); margin-bottom: 14px; }
+        .vaa-eyebrow-sm { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); }
         .vaa-section-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 32px; margin-bottom: 4px; }
         .vaa-chart { display: flex; align-items: flex-end; gap: 6px; height: 120px; margin-bottom: 32px; padding: 0 4px; }
         .vaa-chart-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; gap: 6px; }
         .vaa-chart-bar { width: 100%; border-radius: 4px 4px 0 0; background: var(--role-venue); min-height: 4px; }
-        .vaa-chart-label { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); }
-        .vaa-empty { text-align: center; padding: 40px 24px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 24px; font-size: 0.875rem; }
+        .vaa-chart-label { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); }
+        .vaa-empty { text-align: center; padding: 40px 24px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 24px; font-size: 0.9375rem; }
         .vaa-events { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; overflow: hidden; }
         .vaa-event-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
         .vaa-event-row:last-child { border-bottom: none; }
         .vaa-event-row:hover { background: var(--bg3); }
-        .vaa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; color: var(--ink); }
-        .vaa-event-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
-        .vaa-event-gross { font-family: var(--font-mono); font-size: 0.8125rem; color: var(--role-venue); font-weight: 700; flex-shrink: 0; }
+        .vaa-event-title { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
+        .vaa-event-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
+        .vaa-event-gross { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--role-venue); font-weight: 700; flex-shrink: 0; }
       `}</style>
     </div>
   );

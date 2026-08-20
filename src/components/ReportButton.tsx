@@ -109,7 +109,7 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
                 background: 'var(--hair-40)',
                 color: 'var(--ink-a65)',
                 fontFamily: 'var(--font-mono)',
-                fontSize: '0.7813rem',
+                fontSize: '0.9375rem',
                 fontWeight: 600,
                 cursor: 'pointer',
               }
