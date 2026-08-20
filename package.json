@@ -48,6 +48,7 @@
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
     "clear:users": "node scripts/clear-all-users.mjs",
+    "audit:retro": "node scripts/audit-retro-coverage.mjs --max=8",
     "design:handoff": "node scripts/build-console-handoff.mjs"
   },
   "dependencies": {

@@ -667,7 +667,7 @@ export function MmmSettings() {
         .settings-btn { padding: 9px 18px; border-radius: 9px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
         .settings-btn-ghost { background: rgba(var(--surface-tint-rgb), .08); color: var(--ink); }
         .settings-btn-ghost:hover { background: rgba(var(--surface-tint-rgb), .14); }
-        .settings-btn-danger { background: rgba(239,68,68,.12); color: #ef4444; }
+        .settings-btn-danger { background: rgba(239,68,68,.12); color: var(--danger-text); }
         .settings-btn-danger:hover { background: rgba(239,68,68,.22); }
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
