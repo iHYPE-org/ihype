@@ -41,14 +41,14 @@ export async function SimilarArtistsRow({
       </div>
       <style>{`
         .similar-artists { margin-top: 24px; }
-        .similar-artists-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 12px; }
+        .similar-artists-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 12px; }
         .similar-artists-row { display: flex; gap: 12px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; padding-bottom: 2px; }
         .similar-artists-row::-webkit-scrollbar { display: none; }
         .similar-artist-card { flex: 0 0 108px; display: flex; flex-direction: column; align-items: center; text-align: center; padding: 14px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg2); text-decoration: none; color: inherit; }
         .similar-artist-card:hover { background: var(--bg3); }
         .similar-artist-avatar { width: 56px; height: 56px; border-radius: 50%; background: ${accent}; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); font-family: var(--font-display); font-weight: 800; font-size: 1.25rem; overflow: hidden; margin-bottom: 10px; }
-        .similar-artist-name { font-family: var(--font-display); font-size: 0.8125rem; font-weight: 800; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
-        .similar-artist-genre { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+        .similar-artist-name { font-family: var(--font-display); font-size: 0.9375rem; font-weight: 800; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
+        .similar-artist-genre { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%; }
       `}</style>
     </div>
   );

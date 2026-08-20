@@ -159,7 +159,7 @@ export function TicketCardActions({
         )}
       </div>
       {(resendDone || resendError) && (
-        <p style={{ fontSize: '0.7813rem', marginTop: 8, color: resendError ? 'var(--accent-text)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
+        <p style={{ fontSize: '0.9375rem', marginTop: 8, color: resendError ? 'var(--accent-text)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
       {showQr && (
@@ -174,7 +174,7 @@ export function TicketCardActions({
                 style={{ borderRadius: 8, background: 'var(--ink)' }}
                 width={120}
               />
-              <span style={{ fontSize: '0.7813rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a65)', letterSpacing: '.04em' }}>
+              <span style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-mono)', color: 'var(--ink-a65)', letterSpacing: '.04em' }}>
                 {ticket.serializedId}
               </span>
             </div>
@@ -204,12 +204,12 @@ export function TicketCardActions({
             </p>
             {done ? (
               <>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
+                <p style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
                 <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: '0.7813rem', color: 'var(--ink-a65)', marginBottom: 6 }}>{t('ticketCardActions.recipientEmailLabel', "Recipient's email")}</label>
+                <label htmlFor="ticket-transfer-email" style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 6 }}>{t('ticketCardActions.recipientEmailLabel', "Recipient's email")}</label>
                 <input
                   id="ticket-transfer-email"
                   onChange={(e) => setEmail(e.target.value)}
@@ -218,7 +218,7 @@ export function TicketCardActions({
                   type="email"
                   value={email}
                 />
-                {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', marginBottom: 12 }}>{error}</p>}
+                {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
@@ -242,12 +242,12 @@ export function TicketCardActions({
             <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
             {resaleDone ? (
               <>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
+                <p style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
                 <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
-                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: '0.7813rem', color: 'var(--ink-a65)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
+                <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
                 <input
                   id="ticket-resale-price"
                   min="0"
@@ -258,7 +258,7 @@ export function TicketCardActions({
                   type="number"
                   value={resalePrice}
                 />
-                {resaleError && <p style={{ color: 'var(--accent-text)', fontSize: '0.7813rem', marginBottom: 12 }}>{resaleError}</p>}
+                {resaleError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">

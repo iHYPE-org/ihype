@@ -173,7 +173,7 @@ const STATION_CSS = `
 .station-art { flex-shrink: 0; width: 64px; height: 64px; }
 .station-now-text { flex: 1; min-width: 0; }
 .station-track { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; letter-spacing: -0.02em; color: var(--ink-on-walnut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.station-artist { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-on-walnut-2); text-decoration: none; }
+.station-artist { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink-on-walnut-2); text-decoration: none; }
 .station-artist:hover { color: var(--ink-on-walnut); text-decoration: underline; }
 /* Brass, like the dock's transport: the material has one vocabulary for a
    control and this is it. 7.92:1 for the glyph. */
@@ -183,9 +183,9 @@ const STATION_CSS = `
 /* Was 9px — the very bottom of the eyebrow range, on a label a reader has to
    find before the list under it means anything. */
 .station-next-label { font-family: 'JetBrains Mono', monospace; font-size: 0.7813rem; letter-spacing: 0.14em; color: var(--ink-on-walnut-3); margin-bottom: 2px; }
-.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 0.8125rem; color: var(--ink-on-walnut-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.station-next-item { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink-on-walnut-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .station-live-title { font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.25rem; color: var(--ink-on-walnut); margin: 0 0 12px; }
-.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.875rem; padding: 10px 18px; border-radius: 9999px; background: var(--brass); color: var(--walnut-3); text-decoration: none; }
+.station-cta { display: inline-block; font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 0.9375rem; padding: 10px 18px; border-radius: 9999px; background: var(--brass); color: var(--walnut-3); text-decoration: none; }
 .station-cta:hover { background: var(--lamp); }
-.station-empty { font-family: 'Work Sans', sans-serif; font-size: 0.875rem; color: var(--ink-on-walnut-2); margin: 0; }
+.station-empty { font-family: 'Work Sans', sans-serif; font-size: 0.9375rem; color: var(--ink-on-walnut-2); margin: 0; }
 `;

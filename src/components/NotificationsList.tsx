@@ -155,17 +155,17 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
         .notifications-page { max-width: 720px; margin: 0 auto; padding: 32px 24px 100px; }
         .notifications-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; gap: 12px; }
         .notifications-header h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; color: var(--ink); }
-        .notifications-unread-sub { font-size: 0.8125rem; color: var(--ink-a65); margin-top: 4px; }
+        .notifications-unread-sub { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 4px; }
         .notifications-tabs { display: flex; gap: 24px; border-bottom: 1px solid var(--line); margin-bottom: 24px; }
-        .notifications-tab { padding: 10px 0; border: none; background: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 0.875rem; font-weight: 600; color: var(--ink-a65); transition: all 150ms; font-family: inherit; }
+        .notifications-tab { padding: 10px 0; border: none; background: none; border-bottom: 2px solid transparent; cursor: pointer; font-size: 0.9375rem; font-weight: 600; color: var(--ink-a65); transition: all 150ms; font-family: inherit; }
         .notifications-tab.active { color: var(--ink); border-color: var(--accent); }
         .notifications-item { display: flex; gap: 16px; align-items: flex-start; padding: 18px 0; border-bottom: 1px solid var(--line); cursor: pointer; transition: opacity 150ms; }
         .notifications-item:hover { opacity: .85; }
         .notifications-item.unread { background: rgba(var(--accent-rgb),.03); }
         .notifications-icon { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .notifications-body { flex: 1; min-width: 0; }
-        .notifications-text { font-size: 0.875rem; line-height: 1.5; color: var(--ink-a90, var(--ink)); margin-bottom: 4px; }
-        .notifications-time { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-a65); }
+        .notifications-text { font-size: 0.9375rem; line-height: 1.5; color: var(--ink-a90, var(--ink)); margin-bottom: 4px; }
+        .notifications-time { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .12em; color: var(--ink-a65); }
         .notifications-unread-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); flex-shrink: 0; margin-top: 6px; }
         .notifications-empty { text-align: center; padding: 60px 24px; color: var(--ink-a65); }
         .notifications-empty svg { margin-bottom: 12px; }

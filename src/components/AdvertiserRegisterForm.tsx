@@ -163,26 +163,26 @@ export function AdvertiserRegisterForm() {
 const styles = `
   .aar-page { max-width: 460px; margin: 0 auto; padding: 60px 20px 80px; }
   .aar-card { display: flex; flex-direction: column; }
-  .aar-eyebrow { font-family: var(--font-mono); font-size: 0.6562rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
+  .aar-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--accent-text); margin-bottom: 10px; }
   .aar-title { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.03em; margin: 0 0 12px; color: var(--ink); }
-  .aar-sub { font-size: 0.8438rem; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
-  .aar-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin: 14px 0 6px; }
+  .aar-sub { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0 0 28px; }
+  .aar-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin: 14px 0 6px; }
   .aar-label:first-of-type { margin-top: 0; }
-  .aar-input { width: 100%; font-size: 0.875rem; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
+  .aar-input { width: 100%; font-size: 0.9375rem; color: var(--ink); background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius-md); padding: 12px 14px; outline: none; font-family: inherit; box-sizing: border-box; }
   .aar-input:focus { border-color: var(--accent); }
   .aar-textarea { resize: vertical; }
   .aar-notice { border: 1px solid rgba(var(--role-advertiser-rgb),.25); background: rgba(var(--role-advertiser-rgb),.06); border-radius: var(--radius-md); padding: 12px 14px; margin-bottom: 24px; }
-  .aar-notice-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; color: var(--role-advertiser-text); margin-bottom: 4px; }
-  .aar-notice-body { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }
+  .aar-notice-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--role-advertiser-text); margin-bottom: 4px; }
+  .aar-notice-body { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }
   .aar-cat-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
-  .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 0.7813rem; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
+  .aar-cat { padding: 7px 13px; border-radius: var(--radius-pill); font-size: 0.9375rem; cursor: pointer; border: 1px solid var(--line); background: transparent; color: var(--ink-a65); font-family: inherit; }
   .aar-cat.active { border-color: var(--role-advertiser); background: rgba(var(--role-advertiser-rgb),.13); color: var(--role-advertiser-text); }
-  .aar-error { color: var(--accent-text); font-size: 0.7813rem; margin: 14px 0 0; }
-  .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: var(--ink-on-accent); cursor: pointer; }
+  .aar-error { color: var(--accent-text); font-size: 0.9375rem; margin: 14px 0 0; }
+  .aar-btn { margin-top: 26px; font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .06em; padding: 13px 20px; border-radius: var(--radius-pill); border: none; background: var(--accent); color: var(--ink-on-accent); cursor: pointer; }
   .aar-btn:disabled { opacity: .6; cursor: default; }
-  .aar-fineprint { font-size: 0.7813rem; color: var(--ink-a65); line-height: 1.6; margin-top: 16px; }
+  .aar-fineprint { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin-top: 16px; }
   .aar-fineprint a { color: var(--ink-a70); text-decoration: underline; }
   .aar-done { text-align: center; }
   .aar-check { width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; background: rgba(var(--role-venue-rgb),.12); border: 2px solid var(--role-venue); color: var(--role-venue); font-size: 1.5rem; }
-  .aar-link { display: inline-block; margin-top: 20px; font-size: 0.8125rem; color: var(--ink-a70); text-decoration: underline; }
+  .aar-link { display: inline-block; margin-top: 20px; font-size: 0.9375rem; color: var(--ink-a70); text-decoration: underline; }
 `;

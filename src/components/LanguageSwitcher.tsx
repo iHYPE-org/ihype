@@ -12,7 +12,7 @@ export function LanguageSwitcher() {
 
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-      <label htmlFor={selectId} style={{ fontSize: '0.8125rem', opacity: 0.7 }}>{t('languageSwitcher.label', 'Language')}</label>
+      <label htmlFor={selectId} style={{ fontSize: '0.9375rem', opacity: 0.7 }}>{t('languageSwitcher.label', 'Language')}</label>
       <select
         id={selectId}
         onChange={(e) => {
@@ -21,7 +21,7 @@ export function LanguageSwitcher() {
           setTimeout(() => setChanging(false), 300);
         }}
         style={{
-          fontSize: '0.8125rem', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)',
+          fontSize: '0.9375rem', padding: '6px 10px', borderRadius: 8, border: '1px solid var(--line)',
           background: 'var(--bg2)', color: 'var(--ink)', cursor: 'pointer',
         }}
         value={locale}

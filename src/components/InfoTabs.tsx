@@ -173,7 +173,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <div className="charter-split-bar" aria-hidden="true">
           <div style={{ flex: 70, background: 'linear-gradient(90deg, var(--accent), var(--accent-2))' }} />
           <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-          <div style={{ flex: 10, background: 'var(--role-fan)' }} />
+          <div style={{ flex: 10, background: 'var(--role-promoter)' }} />
         </div>
         <p className="legal-split-display">{t('legalPage.charter.splitDisplay', '70% artist · 20% venue · 10% promoters · 0% iHYPE.')}</p>
         <div className="charter-callout">
@@ -236,7 +236,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
 
       <style>{`
         .legal-wrap { max-width: 760px; margin: 0 auto; padding: 3rem 2rem 6rem; }
-        .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: .65rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
+        .legal-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 10px; }
         .legal-h1 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: clamp(1.75rem, 6vw, 2.4rem); letter-spacing: -.04em; line-height: .95; margin-bottom: .75rem; color: var(--ink); }
         @media (max-width: 480px) {
           .legal-wrap { padding: 2rem 1.1rem 4rem; }
@@ -246,13 +246,13 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            exactly that. It was the h1 until the heading was given to the
            document; nothing about the sentence changed. */
         .legal-standfirst { font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem; line-height: 1.45; color: var(--ink-2); margin: 0 0 1.1rem; }
-        .legal-updated { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: 0; }
+        .legal-updated { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.75; margin-bottom: 0; }
         /* Reads before any policy text, so it is not inside the reading
            measure below — a caveat about the whole page, not a section of one. */
         .legal-trans-notice { border: 1px solid var(--line); border-radius: var(--radius-card, 18px); background: rgba(var(--surface-tint-rgb),.04); padding: 14px 16px; margin-bottom: 2rem; }
-        .legal-trans-notice p { font-size: .8rem; color: var(--ink-2); line-height: 1.6; margin: 0; }
+        .legal-trans-notice p { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.6; margin: 0; }
         .legal-updated-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: .85rem; }
-        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
+        .legal-print-btn { flex-shrink: 0; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; background: transparent; border: 1px solid var(--line); color: var(--ink-2); padding: 8px 14px; border-radius: 999px; cursor: pointer; }
         .legal-print-btn:hover { color: var(--ink); border-color: var(--ink-2); }
         /* Wraps rather than scrolls. This was overflow-x:auto with
            width:fit-content, written when there were four tabs; at six it
@@ -262,14 +262,14 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            only ever showed at desktop widths. Wrapping means the strip cannot
            scroll at any width, so there is nothing to hide. */
         .legal-seg { display: flex; flex-wrap: wrap; gap: 4px; border-radius: 12px; border: 1px solid var(--line); max-width: 100%; width: 100%; padding: 4px; margin-bottom: 2.5rem; box-sizing: border-box; }
-        .legal-seg-btn { flex: 1 1 auto; padding: 9px 20px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: .82rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .legal-seg-btn { flex: 1 1 auto; padding: 9px 20px; border: none; border-radius: 9px; background: transparent; color: var(--ink-2); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.9375rem; cursor: pointer; transition: all .15s; white-space: nowrap; }
         @media (max-width: 480px) {
           .legal-seg { width: 100%; border-radius: 10px; }
           /* Six tabs at phone width wrap onto two or three rows rather than
              being squeezed into six ~60px columns, which overlapped the
              labels into an unreadable smear. The scrollbar-hiding rules that
              used to live here are gone with the scrolling. */
-          .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: 0.7813rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+          .legal-seg-btn { flex: 1 1 auto; padding: 10px 12px; font-size: 0.9375rem; line-height: 1.25; text-align: center; white-space: nowrap; min-height: 44px; display: flex; align-items: center; justify-content: center; }
         }
         .legal-seg-btn.active { background: rgba(var(--accent-rgb),.1); color: var(--accent-text); }
         .legal-doc { display: none; }
@@ -297,20 +297,23 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
            layouts. */
         .legal-doc-prose { max-width: 35rem; }
         .legal-doc h2 { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1.15rem; letter-spacing: -.02em; margin: 2.5rem 0 .6rem; color: var(--ink); }
-        .legal-doc p { font-size: .9rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
-        .legal-doc ol { color: var(--ink-2); font-size: .9rem; line-height: 1.75; padding-left: 1.25rem; }
+        .legal-doc p { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.75; margin-bottom: .85rem; }
+        .legal-doc ol { color: var(--ink-2); font-size: 0.9375rem; line-height: 1.75; padding-left: 1.25rem; }
         .legal-doc li + li { margin-top: .65rem; }
         .legal-doc a { color: var(--accent-text); }
         .legal-split-display { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block
            when it was folded into this tab. */
-        .charter-split-bar { display: flex; height: 14px; border-radius: var(--radius-pill, 9999px); overflow: hidden; margin: 1.5rem 0 0; gap: 4px; }
-        .charter-split-bar div { border-radius: var(--radius-pill, 9999px); }
+        /* A recessed meter in a brass rail, not three flat pills. This is the
+           charter's signature number and the one graphic the whole product is
+           an argument about; on a hi-fi console it is the VU meter. */
+        .charter-split-bar { display: flex; height: 18px; border-radius: 3px; overflow: hidden; margin: 1.5rem 0 0; gap: 3px; padding: 3px; background: var(--walnut-3); box-shadow: 0 0 0 1px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 2px 5px rgba(0,0,0,.55); }
+        .charter-split-bar div { border-radius: 1px; }
         /* --radius-card, not a literal 16px: it is the radius Design System 8
            added for exactly this shape, and rule 35 asks new work to use it. */
         .charter-callout { background: rgba(var(--accent-rgb),.06); border: 1px solid rgba(var(--accent-rgb),.15); border-radius: var(--radius-card, 18px); padding: 20px 24px; margin: 0 0 1rem; }
         .charter-callout p { margin: 0 !important; color: var(--ink) !important; font-family: var(--f-s, 'Instrument Serif', serif); font-style: italic; font-size: 1.12rem !important; line-height: 1.55 !important; }
-        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
+        .charter-inline-link { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; letter-spacing: .04em; border-bottom: 1px solid currentColor; }
         @media print {
           .legal-seg { display: none !important; }
           .legal-print-btn { display: none !important; }

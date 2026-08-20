@@ -123,7 +123,7 @@ export function MmmMusic({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: '0.84rem', color: 'var(--ink-3)', lineHeight: 1.6, padding: '10px 2px' }}>{children}</p>;
+  return <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.6, padding: '10px 2px' }}>{children}</p>;
 }
 
 function Loading() {
@@ -449,7 +449,7 @@ function RadioTab() {
           {/* A null count means the query failed. Rendering "0 tracks" beside a
               station that may be full is worse than rendering nothing. */}
           {station.trackCount !== null && (
-            <span className="mmm-row-meta" style={{ color: 'var(--ink-3)', fontSize: '0.7813rem', letterSpacing: '0.06em' }}>
+            <span className="mmm-row-meta" style={{ color: 'var(--ink-3)', fontSize: '0.9375rem', letterSpacing: '0.06em' }}>
               {station.trackCount} track{station.trackCount === 1 ? '' : 's'}
             </span>
           )}

@@ -144,7 +144,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(16px); background: color-mix(in srgb, var(--bg) 75%, transparent); border-bottom: 1px solid var(--line); }
         .rk-nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 62px; }
         .rk-logo { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em; color: var(--accent-text); text-decoration: none; }
-        .rk-nav-cta { font-family: var(--font-display); font-weight: 800; font-size: .88rem; background: var(--rk-tint); color: var(--bg); padding: 9px 18px; border-radius: 999px; text-decoration: none; }
+        .rk-nav-cta { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; background: var(--rk-tint); color: var(--bg); padding: 9px 18px; border-radius: 999px; text-decoration: none; }
         .rk-hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
         .rk-hero-glow { position: absolute; top: -160px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, color-mix(in srgb, var(--rk-glow) 20%, transparent), transparent 65%); pointer-events: none; }
         /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
@@ -157,20 +157,20 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-hero-body strong { color: var(--ink); }
         .rk-apply-card { background: linear-gradient(160deg, var(--bg2), var(--bg)); border: 1px solid color-mix(in srgb, var(--rk-glow) 20%, transparent); border-radius: 22px; padding: 36px 32px; }
         .rk-apply-heading { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 10px; }
-        .rk-apply-sub { font-size: .92rem; color: var(--ink-a70); line-height: 1.6; margin-bottom: 22px; }
+        .rk-apply-sub { font-size: 0.9375rem; color: var(--ink-a70); line-height: 1.6; margin-bottom: 22px; }
         .rk-apply-btn { display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 14px; border-radius: 12px; background: var(--rk-tint); color: var(--bg); font-family: var(--font-display); font-weight: 800; font-size: 1rem; text-decoration: none; }
-        .rk-fineprint { font-family: var(--font-mono); font-size: 0.7813rem; color: var(--ink-a65); margin-top: 12px; text-align: center; letter-spacing: .04em; }
+        .rk-fineprint { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); margin-top: 12px; text-align: center; letter-spacing: .04em; }
         .rk-stats-wrap { max-width: 1080px; margin: 64px auto 0; padding: 0 32px; }
         .rk-stats { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: flex; flex-wrap: wrap; }
         .rk-stat { flex: 1; min-width: 90px; padding: 24px 0; text-align: center; border-right: 1px solid var(--line); }
         .rk-stat:last-child { border-right: none; }
         .rk-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 2.2rem; letter-spacing: -.03em; color: var(--rk-tint); }
-        .rk-stat-label { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 6px; }
+        .rk-stat-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-a65); margin-top: 6px; }
         .rk-heat { padding: 28px 0; border-bottom: 1px solid var(--line); }
-        .rk-heat-label { font-family: var(--font-mono); font-size: .62rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 14px; }
+        .rk-heat-label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 14px; }
         .rk-heat-rows { display: flex; flex-direction: column; gap: 9px; max-width: 420px; }
         .rk-heat-row { display: flex; align-items: center; gap: 10px; }
-        .rk-heat-city { width: 96px; flex-shrink: 0; font-size: .82rem; color: var(--ink-a70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .rk-heat-city { width: 96px; flex-shrink: 0; font-size: 0.9375rem; color: var(--ink-a70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .rk-heat-track { flex: 1; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
         .rk-heat-bar { height: 100%; border-radius: 3px; }
         .rk-charter { background: color-mix(in srgb, var(--rk-glow) 3%, transparent); border-top: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--rk-glow) 8%, transparent); padding: 80px 0; }
@@ -189,11 +189,11 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-feature-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; margin-top: 44px; }
         .rk-feature { background: var(--bg2); border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px; }
         .rk-feature-title { font-family: var(--font-display); font-weight: 800; font-size: 1.15rem; letter-spacing: -.01em; margin-bottom: 8px; }
-        .rk-feature-body { font-size: .92rem; line-height: 1.55; color: var(--ink-a70); margin: 0; }
+        .rk-feature-body { font-size: 0.9375rem; line-height: 1.55; color: var(--ink-a70); margin: 0; }
         .rk-footer { border-top: 1px solid var(--line); padding: 44px 0 56px; }
         .rk-footer-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 20px; }
         .rk-footer-links { display: flex; gap: 22px; }
-        .rk-footer-links a { font-size: .9rem; color: var(--ink-a70); text-decoration: none; }
+        .rk-footer-links a { font-size: 0.9375rem; color: var(--ink-a70); text-decoration: none; }
         @media (max-width: 860px) {
           .rk-hero-inner { grid-template-columns: 1fr; }
           .rk-charter-inner { grid-template-columns: 1fr; }

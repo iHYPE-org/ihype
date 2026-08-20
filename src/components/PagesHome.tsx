@@ -84,7 +84,7 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
 ];
 
 const b: React.CSSProperties = {
-  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.8125rem', padding: '10px 18px',
+  fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', padding: '10px 18px',
   borderRadius: 9, cursor: 'pointer', border: 'none', textDecoration: 'none',
   display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
 };
@@ -313,11 +313,11 @@ export function PagesHome({
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
                         <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {label}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {r.subtitle}
                       </div>
                     </div>
@@ -331,7 +331,7 @@ export function PagesHome({
 
       {tab === 'mypage' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
             {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
           </div>
 
@@ -342,10 +342,10 @@ export function PagesHome({
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.25rem', marginBottom: 8, color: 'var(--ink)' }}>
                 {t('pagesHome.noPagesYet', 'No pages yet')}
               </p>
-              <p style={{ fontSize: '0.875rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
                 {t('pagesHome.noPagesYetSub', 'Create an artist, venue, or promoter page to get started.')}
               </p>
-              <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: '0.875rem', border: 'none', cursor: 'pointer' }} type="button">
+              <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: '0.9375rem', border: 'none', cursor: 'pointer' }} type="button">
                 {t('pagesHome.createFirstPage', 'Create your first page →')}
               </button>
             </div>
@@ -370,16 +370,16 @@ export function PagesHome({
                       <div style={{
                         width: 30, height: 30, borderRadius: 9999, flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.875rem', color: 'var(--ink-on-accent)',
+                        fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', color: 'var(--ink-on-accent)',
                         background: color,
                       }}>
                         {p.name.charAt(0).toUpperCase()}
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.5625rem', letterSpacing: '.14em', textTransform: 'uppercase', color }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color }}>
                           {typeLabel(p.type)}
                         </span>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
+                        <span style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--ink)' }}>{p.name}</span>
                       </div>
                     </div>
                   );
@@ -389,7 +389,7 @@ export function PagesHome({
                   style={{
                     display: 'flex', alignItems: 'center', gap: 7, padding: '11px 16px', borderRadius: 12,
                     background: 'transparent', border: '1px dashed var(--hair-180)', cursor: 'pointer',
-                    color: 'var(--ink-a65)', fontSize: '0.8125rem', fontWeight: 600,
+                    color: 'var(--ink-a65)', fontSize: '0.9375rem', fontWeight: 600,
                   }}
                   type="button"
                 >
@@ -414,7 +414,7 @@ export function PagesHome({
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{
-                      fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.14em', textTransform: 'uppercase',
+                      fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase',
                       marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent-text)',
                     }}>
                       {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
@@ -422,7 +422,7 @@ export function PagesHome({
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 3 }}>
                       {selectedProfile.name}
                     </div>
-                    <div style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)' }}>
+                    <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
                       @{selectedProfile.owner?.username ?? selectedProfile.hexId} · iHYPE
                     </div>
                   </div>
@@ -453,7 +453,7 @@ export function PagesHome({
 
       {tab === 'network' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
             {t('pagesHome.yourNetworkLabel', 'YOUR NETWORK')}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
@@ -461,19 +461,19 @@ export function PagesHome({
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(following.length).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followingStat', 'Following')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followingStat', 'Following')}</div>
             </div>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(followersCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followersStat', 'Followers')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followersStat', 'Followers')}</div>
             </div>
             <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
                 {String(mutualCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.mutualsStat', 'Mutuals')}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.mutualsStat', 'Mutuals')}</div>
             </div>
           </div>
 
@@ -483,7 +483,7 @@ export function PagesHome({
                 key={f.id}
                 onClick={() => setNetFilter(f.id)}
                 style={{
-                  fontSize: '0.7813rem', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
+                  fontSize: '0.9375rem', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
                   background: netFilter === f.id ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-30)',
                   border: `1px solid ${netFilter === f.id ? 'rgba(var(--accent-rgb),.4)' : 'var(--hair-100)'}`,
                   color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a65)',
@@ -496,7 +496,7 @@ export function PagesHome({
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netListShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a65)', fontSize: '0.8125rem', padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
+              <div style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
@@ -514,11 +514,11 @@ export function PagesHome({
                     <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
                         <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
@@ -532,13 +532,13 @@ export function PagesHome({
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '8px 0 12px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>
               {t('pagesHome.suggestedForYou', 'SUGGESTED FOR YOU')}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
             {netSuggestShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a65)', fontSize: '0.8125rem', padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
+              <div style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
@@ -556,11 +556,11 @@ export function PagesHome({
                     <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
                         <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
-                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
+                        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
@@ -581,14 +581,14 @@ export function PagesHome({
             <div style={{
               display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', marginBottom: 18,
               borderRadius: 12, border: '1px solid rgba(var(--role-venue-rgb),.3)', background: 'rgba(var(--role-venue-rgb),.08)',
-              color: 'var(--role-venue)', fontSize: '0.8125rem', fontWeight: 600,
+              color: 'var(--role-venue)', fontSize: '0.9375rem', fontWeight: 600,
             }}>
               ✓ &ldquo;{justCreatedName}&rdquo; {t('pagesHome.pageCreatedSuffix', 'page created — saved to your account. Edit it below.')}
             </div>
           )}
           {selectedProfile && (
             <>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
                 {t('pagesHome.editingLabel', 'EDITING')} · {typeLabel(selectedProfile.type).toUpperCase()}
               </div>
               <PageEditor initialSection={initialEditorSection} key={selectedProfile.id} profileId={selectedProfile.id} />
@@ -596,7 +596,7 @@ export function PagesHome({
             </>
           )}
 
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.625rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
             {selectedProfile ? t('pagesHome.addAnotherPageLabel', 'ADD ANOTHER PAGE') : t('pagesHome.pageCreatorLabel', 'PAGE CREATOR')}
           </div>
           <div className="pages-create-grid">
@@ -622,12 +622,12 @@ export function PagesHome({
                       onChange={(e) => setCreatingName(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') addProfile(card.type); }}
                       placeholder={`${cardName} ${t('pagesHome.createCardNameFieldSuffix', 'name')}`}
-                      style={{ boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-40)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: '0.875rem' }}
+                      style={{ boxSizing: 'border-box', width: '100%', padding: '10px 12px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'var(--hair-40)', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: '0.9375rem' }}
                       type="text"
                       value={creatingName}
                     />
                     {card.type === 'ARTIST' && (
-                      <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: '0.7813rem', lineHeight: 1.5, color: 'var(--ink-a70)' }}>
+                      <label style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: '0.9375rem', lineHeight: 1.5, color: 'var(--ink-a70)' }}>
                         <input
                           checked={acceptedUploadPolicy}
                           disabled={creating}
@@ -638,12 +638,12 @@ export function PagesHome({
                         <span>{t('pagesHome.uploadPolicyAttestation', 'I confirm I am authorized to upload or use the music/media I add to iHYPE.')}</span>
                       </label>
                     )}
-                    {createError && <div style={{ fontSize: '0.7813rem', color: 'var(--accent-text)' }}>{createError}</div>}
+                    {createError && <div style={{ fontSize: '0.9375rem', color: 'var(--accent-text)' }}>{createError}</div>}
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
                         disabled={creating || !creatingName.trim() || (card.type === 'ARTIST' && !acceptedUploadPolicy)}
                         onClick={() => addProfile(card.type)}
-                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: 'var(--ink-on-accent)', fontWeight: 700, fontSize: '0.8125rem', cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
+                        style={{ flex: 1, padding: '10px 0', borderRadius: 8, border: 'none', background: card.color, color: 'var(--ink-on-accent)', fontWeight: 700, fontSize: '0.9375rem', cursor: creating ? 'default' : 'pointer', opacity: creating || !creatingName.trim() ? 0.6 : 1 }}
                         type="button"
                       >
                         {creating ? t('pagesHome.creating', 'Creating…') : t('pagesHome.create', 'Create')}
@@ -651,7 +651,7 @@ export function PagesHome({
                       <button
                         disabled={creating}
                         onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); setAcceptedUploadPolicy(false); }}
-                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: '0.8125rem', cursor: 'pointer' }}
+                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: '0.9375rem', cursor: 'pointer' }}
                         type="button"
                       >
                         {t('pagesHome.cancel', 'Cancel')}
@@ -678,7 +678,7 @@ export function PagesHome({
                     <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 800, letterSpacing: '-.01em', marginBottom: 3, color: card.color }}>
                       {cardName}
                     </div>
-                    <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)', lineHeight: 1.5 }}>{cardDesc}</div>
+                    <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', lineHeight: 1.5 }}>{cardDesc}</div>
                   </div>
                 </button>
               );

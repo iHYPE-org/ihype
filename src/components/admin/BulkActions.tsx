@@ -80,7 +80,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
         <select
           value={action}
           onChange={(e) => setAction(e.target.value as BulkAction)}
-          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: '0.8125rem' }}
+          style={{ padding: '4px 8px', borderRadius: 6, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: '0.9375rem' }}
         >
           {actionOptions.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>
@@ -93,7 +93,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
         >
           {loading ? t('bulkActions.applying', 'Applying…') : `${t('bulkActions.applyTo', 'Apply to')} ${selected.size}`}
         </button>
-        {result && <span style={{ fontSize: '0.8125rem', color: result.startsWith('Error') ? 'var(--danger)' : 'var(--success)' }}>{result}</span>}
+        {result && <span style={{ fontSize: '0.9375rem', color: result.startsWith('Error') ? 'var(--danger)' : 'var(--success)' }}>{result}</span>}
       </div>
       {needsReauth && (
         <div style={{ marginBottom: 8 }}>
@@ -108,7 +108,7 @@ export function BulkActions({ items, type }: BulkActionsProps) {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
         {items.map((item) => (
-          <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.8125rem' }}>
+          <label key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: '0.9375rem' }}>
             <input
               type="checkbox"
               checked={selected.has(item.id)}

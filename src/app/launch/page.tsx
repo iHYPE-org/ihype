@@ -214,7 +214,7 @@ export default async function LaunchPage() {
                   background: 'var(--hair-25)',
                 }}
               >
-                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent-text)', fontSize: '0.8rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
+                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
                 <div>
                   <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{t(`launchPage.sprintStepTitle${i}`, title)}</strong>
                   <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
