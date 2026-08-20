@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
+import { MmmChromeDial } from '@/components/mmm/MmmChromeDial';
 import { MmmNav } from '@/components/mmm/MmmNav';
 import { MmmMiniPlayer } from '@/components/mmm/MmmMiniPlayer';
 import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
@@ -335,6 +336,33 @@ export function MmmShell({
       {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
 
       <div className="mmm-chrome">
+        {/* ── The console cabinet ──────────────────────────────────────────
+            The walnut face the trigger and the player sit ON, from the hi-fi
+            direction. It is ADDITIVE and purely decorative: a panel behind
+            them, sized from the same geometry tokens they are positioned by,
+            so the shell's signed-off geometry table is untouched and no
+            wiring moves. Every figure it uses is derived, never restated —
+            nudging one here without re-deriving the rest is exactly what
+            SHELL_LOCK forbids.
+
+            aria-hidden because it is furniture: it carries no control and no
+            text a reader needs.
+
+            The prototype engraves a brass nameplate on the cabinet's bottom
+            rail. It is NOT here, and that is a measurement rather than an
+            oversight: the pill leaves exactly 7px of cabinet visible above
+            and below it, a legible plate needs about 14, and the only way to
+            find that space is to grow the cabinet past --mmm-chrome-top —
+            which is the figure other surfaces clear the chrome by. A plate
+            half-hidden behind the pill reads as a bug; moving the shell to
+            fit an ornament is the thing SHELL_LOCK exists to prevent. */}
+        <span aria-hidden="true" className="mmm-console" data-hidden={navOpen} />
+
+        {/* The tuner, on the cabinet between the knobs. It navigates the
+            current module's destinations, so the pane below it no longer
+            carries a tab strip of its own. */}
+        <MmmChromeDial pathname={pathname} />
+
         {/* The player fades and drops rather than unmounting, so its transition
             can play out — the design's `data-ih-hide` behaviour. Opening the nav
             still dims it completely, which was the explicit requirement. */}
