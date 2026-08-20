@@ -470,12 +470,12 @@ export default function EventsNewPage() {
         .btn-primary { width: 100%; padding: 13px; border-radius: 999px; background: var(--accent); color: var(--ink-on-accent); border: none; font-family: var(--font-display); font-weight: 800; font-size: .95rem; cursor: pointer; box-shadow: 0 4px 20px rgba(var(--accent-rgb),.25); margin-top: 4px; text-align: center; text-decoration: none; display: block; }
         .btn-primary:disabled { background: var(--bg3); color: var(--ink-3); box-shadow: none; cursor: default; }
         .btn-ghost { width: 100%; padding: 11px; border-radius: 999px; background: transparent; color: var(--ink-2); border: none; font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
-        .card { background: var(--bg2, #0e0b08); border: 1px solid var(--line, var(--hair-80)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
+        .card { background: var(--bg2); border: 1px solid var(--line, var(--hair-80)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
         .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
-        .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2, #0e0b08); }
+        .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2); }
         .ticket-type-btn:hover { border-color: rgba(var(--accent-rgb),.3); }
         .ticket-type-btn.selected { border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
-        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2, #0e0b08); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .1em; text-transform: uppercase; }
+        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .1em; text-transform: uppercase; }
       `}</style>
     </div>
   );

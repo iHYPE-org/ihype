@@ -198,7 +198,7 @@ export default async function WelcomePage() {
         .welcome-sub { font-size: 1rem; color: var(--ink-a70); line-height: 1.65; margin: 14px 0 36px; }
         .welcome-panel { text-align: left; background: var(--bg2); border: 1px solid var(--line); border-radius: 18px; padding: 26px 26px 18px; }
         .welcome-identity { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
-        .welcome-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; }
+        .welcome-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); font-family: var(--f-d); font-weight: 800; }
         .welcome-name { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1rem; color: var(--ink); }
         .welcome-role { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
         .welcome-steps-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
