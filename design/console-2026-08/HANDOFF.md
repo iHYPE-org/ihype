@@ -169,7 +169,7 @@ of tabs, so each tab added shrinks every label; the dial spends the same row on
   border: 0;
   background: none;
   padding: 0;
-  font-family: var(--font-instrument, 'Instrument Serif', serif);
+  font-family: var(--f-s);
   font-size: 1.625rem;
   line-height: 1.12;
   letter-spacing: .005em;
