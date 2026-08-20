@@ -248,6 +248,12 @@
   --walnut-2: #34200f;
   --walnut-3: #1a1206;
   --lamp: #ffb84a;
+  /* Paper grain — an SVG fractal-noise tile, inlined so it costs no request.
+     Used by the map's foxing and available to any surface that needs the
+     age-spotting of printed stock. It was `var(--grain, none)` at the call
+     site with nothing defining it, which fails SILENTLY: the fallback renders
+     no texture and the surface just looks flat. */
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 
   /* Every ratio below is measured against --walnut, the LIGHTEST stop of the
      gradient, not the average or the darkest: a panel is a gradient and copy
@@ -351,7 +357,10 @@
      is how the last shell drifted. The shell's *geometry* deliberately does
      not live here — see shell.css, which owns that table. */
   --accent-deep: #7a2412;               /* gradient partner for --accent */
-  --map-void:    #0a1020;               /* behind the map tiles */
+  /* Behind the map tiles. Paper, not void — the tiles are toned to an aged
+     chart, so what shows at the edges and while they load has to be the same
+     stock or the frame reads as a hole in the cabinet. */
+  --map-void:    #e6d8b4;
   --scrim:       rgba(6, 10, 20, .74);  /* nav overlay */
   --hairline:    var(--ink-a10);        /* the design system's borders/dividers name */
 

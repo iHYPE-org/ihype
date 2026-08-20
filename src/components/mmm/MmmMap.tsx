@@ -78,7 +78,7 @@ const SEARCH_PLACEHOLDER: Record<SearchableLayer, string> = {
  *
  * ## What is kept verbatim from the design
  *
- * CARTO dark raster tiles over OSM with the required attribution; the price-pill
+ * CARTO voyager raster tiles over OSM with the required attribution; the price-pill
  * event pins with a leader line; hot inversion above 75% sold; the layer / scope
  * / genre chip rows; the result line; and — the part a map library does *not*
  * give you — screen-space collision de-clustering, computed through
@@ -158,10 +158,25 @@ export function MmmMap({
             carto: {
               type: 'raster',
               tiles: [
-                'https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                'https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                'https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
-                'https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}@2x.png',
+                /* `voyager`, not `dark_all` and not `light_all`. Same
+                   provider and the same attribution — a style swap, not a
+                   vendor change.
+
+                   dark_all is a hole cut in a cream cabinet. light_all
+                   (positron) was the first replacement and was WRONG for a
+                   different reason: it is deliberately washed out, so there is
+                   almost no ink in it to age, and the chart treatment in
+                   mmm.css rendered it as blank paper with faint smudges.
+                   Verified by pulling a real downtown Portland tile in all
+                   three styles and rendering them.
+
+                   voyager already has cream land, tan blocks and blue water —
+                   most of the way to a vintage chart before any filter. Note
+                   it lives under `rastertiles/`, unlike the other two. */
+                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
               ],
               tileSize: 256,
               attribution: '© OpenStreetMap · CARTO',

@@ -171,7 +171,47 @@ html.mmm-locked .site-shell > main {
 /* ── Map layer ─────────────────────────────────────────────────────────── */
 
 .mmm-map-layer { position: absolute; inset: 0; background: var(--map-void); }
-.mmm-map-canvas { position: absolute; inset: 0; }
+/* ── The chart ───────────────────────────────────────────────────────────
+   The prototype draws a FICTIONAL coast on a canvas; this map shows real
+   venues at real coordinates, so the geography cannot be replaced — only the
+   printing can.
+
+   ## Why this is NOT a sepia filter, which is the obvious answer
+
+   Rendered against a real downtown tile, every sepia-led variant destroyed the
+   map: `sepia()` collapses hue, so Portland's harbour became the same tan as
+   the land it borders. On a coastal city — this city — land-versus-water is
+   the most important distinction on the sheet, and a treatment that erases it
+   is not a style, it is damage. Five variants were rendered side by side
+   before this was believed.
+
+   So the tone is HUE-PRESERVING: a light warm cast, a little more contrast,
+   and a paper wash. CARTO's `voyager` basemap already has cream land, tan
+   blocks and blue water — it is most of the way to a vintage chart before we
+   touch it, which is why it replaced `positron`, whose deliberately washed-out
+   palette had nothing in it to age. */
+.mmm-map-canvas {
+  position: absolute;
+  inset: 0;
+  filter: sepia(0.22) saturate(1) contrast(1.08) brightness(0.98);
+}
+/* Paper, foxing and a vignette, over the tiles but under the pins.
+   On the LAYER rather than the canvas so the accent pins and the chips above
+   keep their own colour — toning the container would drag them to mud with the
+   basemap. Decoration, so it must never eat a drag. */
+.mmm-map-layer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(120% 92% at 50% 45%, transparent 52%, rgba(61, 46, 20, .22) 100%),
+    var(--grain),
+    linear-gradient(0deg, rgba(214, 196, 152, .28), rgba(214, 196, 152, .28));
+  background-size: auto, 140px 140px, auto;
+  mix-blend-mode: multiply;
+}
 .mmm-map-canvas .maplibregl-ctrl-attrib,
 .mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
 .mmm-map-canvas .maplibregl-canvas { outline: none; }
@@ -2335,10 +2375,21 @@ html.mmm-locked .site-shell > main {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid var(--rule-on-walnut-2);
-  border-radius: 26px;
+  /* The machined bezel: deep brass, bright brass, deep again, then the inner
+     top shadow that makes the sleeve read as cut INTO the faceplate rather
+     than floating on it. Radius 2px, not 26 — a bezel is turned metal, and a
+     26px round-rect reads as a phone app icon. Same stack as .walnut-plate;
+     it is stated here rather than composed because this one also carries the
+     drop shadow and the placeholder glyph. */
+  border: 0;
+  border-radius: 2px;
   background: var(--walnut-3);
-  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.55);
+  box-shadow:
+    0 0 0 2px var(--brass-deep),
+    0 0 0 5px var(--brass),
+    0 0 0 6px #6d5222,
+    inset 0 3px 12px rgba(0, 0, 0, .7),
+    0 24px 60px -16px rgba(0, 0, 0, .8);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 6rem;
@@ -2394,21 +2445,10 @@ html.mmm-locked .site-shell > main {
   gap: 22px;
   margin-top: 20px;
 }
-.mmm-full-step {
-  flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--rule-on-walnut-2);
-  border-radius: var(--radius-pill);
-  background: var(--rule-on-walnut);
-  color: var(--ink-on-walnut);
-  font-size: 1.375rem;
-  cursor: pointer;
-}
-.mmm-full-step:disabled { opacity: 0.35; cursor: default; }
+/* The transport, as hardware.
+   Brass while paused, LIT accent while playing — the state is the lamp, which
+   is how a receiver shows it and means the control reads at a glance without
+   a label. */
 .mmm-full-play {
   position: relative;
   flex: 0 0 auto;
@@ -2418,13 +2458,53 @@ html.mmm-locked .site-shell > main {
   display: grid;
   place-items: center;
   border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--ink-on-accent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  color: var(--walnut-3);
   font-size: 1.5rem;
   cursor: pointer;
-  box-shadow: 0 0 32px rgba(var(--accent-rgb), 0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .9),
+    inset 0 -3px 8px rgba(0, 0, 0, .3),
+    0 3px 10px -2px rgba(0, 0, 0, .75);
+  transition: background 180ms ease, box-shadow 180ms ease;
 }
+.mmm-full-play:not([data-paused]) {
+  background: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  color: var(--ink-on-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .5),
+    inset 0 -3px 8px rgba(0, 0, 0, .35),
+    0 0 24px -2px rgba(var(--accent-rgb), .8);
+}
+
+/* Bakelite, in a brass collar. Same family as the logo trigger. */
+.mmm-full-step {
+  flex: 0 0 auto;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%),
+    radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  box-shadow:
+    0 0 0 2px var(--brass-deep),
+    0 0 0 3px var(--brass),
+    inset 0 1px 0 rgba(255, 226, 175, .35),
+    inset 0 -2px 7px rgba(0, 0, 0, .75),
+    0 3px 8px -1px rgba(0, 0, 0, .8);
+  color: var(--ink-on-walnut-2);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: color 180ms ease, transform 200ms cubic-bezier(.34, 1.4, .5, 1);
+}
+.mmm-full-step:hover:not(:disabled) { color: var(--ink-on-walnut); }
+.mmm-full-step:active:not(:disabled) { transform: scale(.9); }
+.mmm-full-step:disabled { opacity: .45; cursor: default; }
 .mmm-full-play svg { position: absolute; inset: 0; }
 .mmm-full-play span { position: relative; }
 .mmm-full-play[data-paused] span { padding-left: 5px; }
