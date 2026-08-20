@@ -71,7 +71,7 @@ function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount
         border: hyped ? '1px solid transparent' : '1px solid var(--line-2)',
         background: hyped ? 'var(--accent)' : 'var(--hair-50)',
         color: hyped ? 'var(--ink-on-accent)' : 'var(--ink)',
-        fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9rem',
+        fontFamily: 'var(--f-d)', fontWeight: 700, fontSize: '0.9375rem',
         cursor: 'pointer',
         transform: pop ? 'scale(1.06)' : 'scale(1)',
         transition: 'transform .2s cubic-bezier(.34,1.56,.64,1), background .15s ease',
@@ -94,7 +94,7 @@ function StatTile({ value, label, color = 'var(--accent)' }: { value: string; la
       minWidth: 190,
     }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}>{value}</div>
-      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 7 }}>{label}</div>
+      <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 7 }}>{label}</div>
     </div>
   );
 }
@@ -121,8 +121,8 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
         </span>
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
-        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
+        <div style={{ fontFamily: 'var(--f-b)', fontWeight: 700, fontSize: '0.9375rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{title}</div>
+        {subtitle && <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 2 }}>{subtitle}</div>}
       </div>
     </div>
   );
@@ -147,7 +147,7 @@ function SplitBar({ total }: { total?: number }) {
       </div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem 1.25rem', marginTop: 10 }}>
         {SPLIT.map(s => (
-          <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: '0.8125rem', color: 'var(--ink-2)' }}>
+          <span key={s.key} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
             <span style={{ width: 8, height: 8, borderRadius: 2, background: s.color, display: 'inline-block' }} />
             {s.label}
             <b style={{ color: 'var(--ink)', fontWeight: 700 }}>{total != null ? money(s.pct) : `${s.pct}%`}</b>
@@ -213,11 +213,11 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       boxShadow: '0 32px 80px rgba(0,0,0,.5)',
     }}>
       <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}>
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.625rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
           iHYPE · {t('walkthroughDeck.admit', 'admit')} {admits}
         </div>
         <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.5rem', color: 'var(--ink-on-accent)', letterSpacing: '-0.02em', marginTop: 6, lineHeight: 1.1 }}>{artist}</div>
-        {detail && <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.85rem', color: 'rgba(var(--ink-on-media-rgb),.92)', marginTop: 4 }}>{detail}</div>}
+        {detail && <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.9375rem', color: 'rgba(var(--ink-on-media-rgb),.92)', marginTop: 4 }}>{detail}</div>}
       </div>
       <div style={{ position: 'relative', height: 0 }}>
         <span style={{ position: 'absolute', left: -10, top: -10, width: 20, height: 20, borderRadius: '50%', background: 'var(--bg)' }} />
@@ -225,8 +225,8 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       </div>
       <div style={{ padding: '1.75rem 1.5rem 1.5rem', display: 'grid', placeItems: 'center', gap: '1rem', borderTop: '2px dashed var(--hair-100)' }}>
         <QRCode value={serial} />
-        <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.8rem', letterSpacing: '0.1em', color: 'var(--ink-2)' }}>{serial}</div>
-        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.7813rem', color: 'var(--ink-3)', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
+        <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', letterSpacing: '0.1em', color: 'var(--ink-2)' }}>{serial}</div>
+        <div style={{ fontFamily: 'var(--f-b)', fontSize: '0.9375rem', color: 'var(--ink-3)', textAlign: 'center' }}>{t('walkthroughDeck.scanAtDoor', 'Scan at the door · transferable · no app required')}</div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ const fieldStyle: React.CSSProperties = {
   marginBottom: 14, boxSizing: 'border-box',
 };
 const labelStyle: React.CSSProperties = {
-  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.7813rem', letterSpacing: '.12em',
+  display: 'block', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em',
   textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 6,
 };
 
@@ -124,13 +124,13 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
       <div style={{ height: 3, background: 'var(--bg-3, var(--bg))', borderRadius: 999, marginBottom: 28, overflow: 'hidden' }}>
         <div style={{ height: '100%', width: '100%', background: 'var(--accent)', borderRadius: 999, transition: 'width .4s ease' }} />
       </div>
-      <p style={{ fontSize: '0.88rem', color: 'var(--ink-2)', lineHeight: 1.65, marginBottom: 16 }}>
+      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.65, marginBottom: 16 }}>
         {t('verifyForm.confirmWhoYouAre', 'We need to confirm you are who you say you are. This is reviewed by the iHYPE team within 48 hours.')}
       </p>
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 16 }}>
         <div style={{ ...labelStyle, color: 'var(--role-venue)', marginBottom: 10 }}>{t('verifyForm.whatCountsAsProof', 'What counts as proof')}</div>
         {PROOF[type].map((line, i) => (
-          <div key={line} style={{ fontSize: '0.85rem', color: 'var(--ink-2)', lineHeight: 1.8 }}>· {t(`verifyForm.proof${type}${i}`, line)}</div>
+          <div key={line} style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.8 }}>· {t(`verifyForm.proof${type}${i}`, line)}</div>
         ))}
       </div>
 
@@ -141,7 +141,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         }}
       >
         <input type="file" accept="image/jpeg,image/png,application/pdf" onChange={(e) => setFile(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
-        <div style={{ fontSize: '0.85rem', color: 'var(--ink-2)' }}>
+        <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
           {file ? `${t('verifyForm.fileAttached', 'File attached ✓')} ${file.name}` : t('verifyForm.tapToAttachProof', 'Tap to attach proof · PDF, JPG, or PNG')}
         </div>
       </label>
@@ -155,7 +155,7 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
         placeholder={t('verifyForm.notesPlaceholder', 'Optional — any context that helps us verify faster.')}
       />
 
-      {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.8125rem', marginBottom: 12 }}>{error}</p>}
+      {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
 
       <button onClick={submit} disabled={submitting} className="ihype-btn-primary" style={{ width: '100%' }}>
         {submitting ? t('verifyForm.submitting', 'Submitting…') : t('verifyForm.submitForReview', 'Submit for review →')}

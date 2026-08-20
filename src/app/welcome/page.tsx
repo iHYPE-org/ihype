@@ -200,21 +200,21 @@ export default async function WelcomePage() {
         .welcome-identity { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; padding-bottom: 18px; border-bottom: 1px solid var(--line); }
         .welcome-avatar { width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; }
         .welcome-name { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 1rem; color: var(--ink); }
-        .welcome-role { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
+        .welcome-role { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; margin-top: 2px; }
         .welcome-steps-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-        .welcome-steps-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.625rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-a65); }
+        .welcome-steps-label { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-a65); }
         .welcome-ring { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .welcome-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; color: var(--ink-a70); }
+        .welcome-ring span { width: 24px; height: 24px; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; color: var(--ink-a70); }
         .welcome-steps { display: flex; flex-direction: column; }
         .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font: inherit; }
-        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent-text); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.7813rem; display: flex; align-items: center; justify-content: center; }
+        .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent-text); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.9375rem; display: flex; align-items: center; justify-content: center; }
         .welcome-step.done .welcome-step-num { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
-        .welcome-step-title { font-weight: 700; font-size: 0.875rem; color: var(--ink); }
+        .welcome-step-title { font-weight: 700; font-size: 0.9375rem; color: var(--ink); }
         .welcome-step.done .welcome-step-title { color: var(--ink-a70); text-decoration: line-through; }
-        .welcome-step-desc { font-size: 0.8125rem; color: var(--ink-a70); line-height: 1.55; margin-top: 2px; }
+        .welcome-step-desc { font-size: 0.9375rem; color: var(--ink-a70); line-height: 1.55; margin-top: 2px; }
         .welcome-cta { display: inline-block; margin-top: 28px; font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.9375rem; background: var(--accent); color: var(--ink-on-accent); padding: 14px 34px; border-radius: 999px; box-shadow: 0 6px 24px rgba(var(--accent-rgb),.35); text-decoration: none; transition: opacity 150ms; }
         .welcome-cta:hover { opacity: .9; }
-        .welcome-split { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.7813rem; color: var(--ink-a65); margin-top: 16px; letter-spacing: .06em; }
+        .welcome-split { font-family: var(--f-m, 'JetBrains Mono', monospace); font-size: 0.9375rem; color: var(--ink-a65); margin-top: 16px; letter-spacing: .06em; }
       `}</style>
     </div>
   );

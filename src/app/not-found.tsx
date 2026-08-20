@@ -54,7 +54,7 @@ export default async function NotFound() {
       }}>
         {t('notFound.heading', 'This page skipped soundcheck.')}
       </h1>
-      <p style={{ color: 'var(--ink-2)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9rem' }}>
+      <p style={{ color: 'var(--ink-2)', marginBottom: 24, maxWidth: 400, lineHeight: 1.7, fontSize: '0.9375rem' }}>
         {t('notFound.body', "The page you're looking for doesn't exist, moved, or was never booked in the first place.")}
       </p>
       <Link href="/" style={{

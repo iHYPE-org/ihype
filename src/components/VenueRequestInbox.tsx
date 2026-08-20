@@ -103,10 +103,10 @@ export function VenueRequestInbox() {
         .venue-request-card { border: 1px solid var(--line); border-radius: 10px; padding: 20px; background: var(--bg2); }
         .venue-request-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
         .venue-request-artist { font-family: var(--font-display); font-size: 1rem; font-weight: 800; color: var(--ink); }
-        .venue-request-meta { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); margin-top: 4px; }
-        .venue-request-note { font-size: 0.875rem; color: var(--ink-a70); margin-top: 12px; line-height: 1.6; white-space: pre-wrap; }
+        .venue-request-meta { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); margin-top: 4px; }
+        .venue-request-note { font-size: 0.9375rem; color: var(--ink-a70); margin-top: 12px; line-height: 1.6; white-space: pre-wrap; }
         .venue-request-actions { display: flex; gap: 10px; margin-top: 16px; }
-        .venue-request-btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 0.8125rem; cursor: pointer; border: none; }
+        .venue-request-btn { padding: 10px 20px; border-radius: 8px; font-weight: 700; font-size: 0.9375rem; cursor: pointer; border: none; }
         .venue-request-btn:disabled { opacity: .6; cursor: default; }
         .venue-request-approve { background: var(--role-venue); color: var(--bg); }
         .venue-request-deny { background: var(--line); color: var(--ink); border: 1px solid var(--hair-100); }

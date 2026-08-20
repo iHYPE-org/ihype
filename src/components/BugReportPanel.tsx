@@ -75,8 +75,8 @@ export function BugReportPanel() {
         style={cardStyle}
         tabIndex={0}
       >
-        <div style={{ fontSize: '0.875rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
-        <div style={{ fontSize: '0.7813rem', color: 'var(--ink-a65)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
+        <div style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('bugReportPanel.cardTitle', 'Report a Bug')}</div>
+        <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('bugReportPanel.cardSubtitle', 'Something broken? Tell us what happened')}</div>
       </div>
 
       {open && (
@@ -93,12 +93,12 @@ export function BugReportPanel() {
             </div>
 
             {sent ? (
-              <div style={{ fontSize: '0.8125rem', color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
+              <div style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', padding: '10px 14px', background: 'rgba(var(--role-venue-rgb),.08)', borderRadius: 8 }}>
                 ✓ {t('bugReportPanel.sentConfirmation', 'Thanks — we logged it and will take a look.')}
               </div>
             ) : (
               <form className="form" onSubmit={submit}>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--ink-a65)', margin: '0 0 6px' }}>
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 6px' }}>
                   {t('bugReportPanel.dialogBody', "What happened? We'll attach only the app version, module, and coarse device category.")}
                 </p>
                 <label className="field">

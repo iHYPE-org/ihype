@@ -10,7 +10,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 16, textAlign: 'center', padding: '2rem' }}>
       <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>{t('showsSlugError.title', 'Something went wrong')}</h2>
       <p className="meta">{t('showsSlugError.body', "This page couldn't load. Try refreshing.")}</p>
-      {error.digest && <p className="meta" style={{ fontSize: '0.7813rem', opacity: 0.6 }}>{t('showsSlugError.errorId', 'Error ID:')} {error.digest}</p>}
+      {error.digest && <p className="meta" style={{ fontSize: '0.9375rem', opacity: 0.6 }}>{t('showsSlugError.errorId', 'Error ID:')} {error.digest}</p>}
       <button className="button secondary small" onClick={reset}>{t('showsSlugError.tryAgain', 'Try again')}</button>
     </div>
   );

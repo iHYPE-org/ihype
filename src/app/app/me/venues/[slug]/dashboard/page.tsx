@@ -146,42 +146,42 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
       <style>{`
         .vdash { max-width: 1000px; margin: 0 auto; padding: 32px 24px 80px; }
         .vdash-head { display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 16px; margin-bottom: 28px; }
-        .vdash-eyebrow { font-family: var(--font-mono); font-size: 0.625rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
+        .vdash-eyebrow { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 6px; }
         .vdash-head h1 { font-family: var(--font-display); font-size: 1.75rem; font-weight: 800; letter-spacing: -.02em; margin: 0; color: var(--ink); }
         .vdash-head-actions { display: flex; gap: 10px; }
-        .vdash-btn { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: var(--radius-pill); font-size: 0.8125rem; font-weight: 700; text-decoration: none; min-height: 44px; }
+        .vdash-btn { display: inline-flex; align-items: center; padding: 10px 18px; border-radius: var(--radius-pill); font-size: 0.9375rem; font-weight: 700; text-decoration: none; min-height: 44px; }
         .vdash-btn-outline { background: transparent; color: var(--ink); border: 1px solid var(--line-2); }
         .vdash-btn-outline:hover { background: var(--hair-40); }
         .vdash-btn-solid { background: var(--role-venue); color: var(--bg); border: 1px solid var(--role-venue); }
         .vdash-btn-solid:hover { opacity: .9; }
         .vdash-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
         .vdash-card { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); padding: 18px 20px; }
-        .vdash-card-label { font-family: var(--font-mono); font-size: 0.625rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
+        .vdash-card-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
         .vdash-card-val { font-family: var(--font-display); font-weight: 800; font-size: 1.5rem; color: var(--role-venue); }
-        .vdash-card-sub { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
+        .vdash-card-sub { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
         .vdash-card-sub-accent { color: var(--role-venue); }
         /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
            unbreakable token — a venue name, a URL — pushes this column past its
            share and scrolls the page sideways above the breakpoint below. */
         .vdash-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; }
         .vdash-section-head { display: flex; justify-content: space-between; align-items: baseline; }
-        .vdash-eyebrow-sm { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); }
-        .vdash-link-sm { font-family: var(--font-mono); font-size: 0.7813rem; letter-spacing: .06em; color: var(--ink-a65); text-decoration: none; }
+        .vdash-eyebrow-sm { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .1em; color: var(--ink-a65); }
+        .vdash-link-sm { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .06em; color: var(--ink-a65); text-decoration: none; }
         .vdash-link-sm:hover { color: var(--ink); }
-        .vdash-empty { text-align: center; padding: 36px 20px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 12px; font-size: 0.875rem; }
+        .vdash-empty { text-align: center; padding: 36px 20px; color: var(--ink-a65); border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 12px; font-size: 0.9375rem; }
         .vdash-shows { border: 1px solid var(--line); border-radius: var(--radius-md); background: var(--bg2); margin-top: 12px; margin-bottom: 12px; overflow: hidden; }
         .vdash-show-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
         .vdash-show-row:last-child { border-bottom: none; }
         .vdash-show-row:hover { background: var(--bg3); }
-        .vdash-show-title { font-family: var(--font-display); font-weight: 800; font-size: 0.875rem; color: var(--ink); }
-        .vdash-show-meta { font-size: 0.7813rem; color: var(--ink-a65); margin-top: 2px; }
-        .vdash-pill { font-family: var(--font-mono); font-size: 0.7813rem; text-transform: uppercase; letter-spacing: .08em; color: var(--role-venue); background: rgba(var(--role-venue-rgb),.12); border-radius: var(--radius-pill); padding: 5px 10px; flex-shrink: 0; }
+        .vdash-show-title { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; color: var(--ink); }
+        .vdash-show-meta { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
+        .vdash-pill { font-family: var(--font-mono); font-size: 0.9375rem; text-transform: uppercase; letter-spacing: .08em; color: var(--role-venue); background: rgba(var(--role-venue-rgb),.12); border-radius: var(--radius-pill); padding: 5px 10px; flex-shrink: 0; }
         .vdash-activity { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
-        .vdash-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 0.8125rem; color: var(--ink-a85); }
+        .vdash-activity-row { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--line); font-size: 0.9375rem; color: var(--ink-a85); }
         .vdash-activity-row:last-child { border-bottom: none; }
         .vdash-activity-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
         .vdash-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-        .vdash-action { display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px 16px; min-height: 44px; border-radius: var(--radius-md); border: 1px solid var(--line-2); color: var(--ink); text-decoration: none; font-size: 0.8125rem; font-weight: 700; }
+        .vdash-action { display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px 16px; min-height: 44px; border-radius: var(--radius-md); border: 1px solid var(--line-2); color: var(--ink); text-decoration: none; font-size: 0.9375rem; font-weight: 700; }
         .vdash-action:hover { background: var(--hair-40); }
 
         @media (max-width: 720px) {

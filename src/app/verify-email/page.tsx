@@ -86,7 +86,7 @@ function VerifyEmailForm() {
         </h1>
         <p style={{
           fontFamily: 'var(--f-m)',
-          fontSize: '0.8125rem',
+          fontSize: '0.9375rem',
           color: 'var(--ink-2)',
           lineHeight: 1.65,
           margin: '0 0 28px',
@@ -94,12 +94,12 @@ function VerifyEmailForm() {
           {t('verifyEmailPage.body', 'We sent a 6-digit verification code to your email address. Enter it below to verify your account and continue.')}
         </p>
         {status === 'sent' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--role-venue)', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>
             {t('verifyEmailPage.codeSent', 'Verification code sent! Check your inbox.')}
           </p>
         )}
         {status === 'error' && (
-          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent-text)', marginBottom: 16 }}>
+          <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--accent-text)', marginBottom: 16 }}>
             {t('verifyEmailPage.genericError', 'Something went wrong. Please try again.')}
           </p>
         )}
@@ -125,7 +125,7 @@ function VerifyEmailForm() {
             }}
           />
           {confirmStatus === 'error' && (
-            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.7813rem', color: 'var(--accent-text)', margin: 0 }}>
+            <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--accent-text)', margin: 0 }}>
               {t('verifyEmailPage.codeInvalid', 'That code is invalid or expired. Request a new one below.')}
             </p>
           )}
@@ -139,7 +139,7 @@ function VerifyEmailForm() {
               borderRadius: 8,
               padding: '12px 28px',
               fontFamily: 'var(--f-m)',
-              fontSize: '0.8125rem',
+              fontSize: '0.9375rem',
               letterSpacing: '.04em',
               cursor: confirmStatus === 'confirming' || code.length !== 6 ? 'not-allowed' : 'pointer',
               opacity: confirmStatus === 'confirming' || code.length !== 6 ? 0.6 : 1,
@@ -159,7 +159,7 @@ function VerifyEmailForm() {
             borderRadius: 8,
             padding: '12px 28px',
             fontFamily: 'var(--f-m)',
-            fontSize: '0.8125rem',
+            fontSize: '0.9375rem',
             letterSpacing: '.04em',
             cursor: status === 'sending' || status === 'sent' ? 'not-allowed' : 'pointer',
             opacity: status === 'sending' || status === 'sent' ? 0.6 : 1,
@@ -174,7 +174,7 @@ function VerifyEmailForm() {
             display: 'block',
             marginTop: 16,
             fontFamily: 'var(--f-m)',
-            fontSize: '0.7813rem',
+            fontSize: '0.9375rem',
             color: 'var(--ink-3)',
           }}
         >
