@@ -1,0 +1,327 @@
+<meta charset="utf-8">
+<title>iHYPE Console Spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Work+Sans:wght@400;600&display=swap">
+<style>
+:root{
+  --bg:#f0dfb8; --ink:#1c1408; --ink-2:#3f3018; --ink-3:#5d4a26;
+  --walnut:#4a2b16; --walnut-2:#34200f; --walnut-3:#1a1206;
+  --brass:#c9a54e; --brass-deep:#8a6a2c; --lamp:#ffb84a;
+  --on-walnut:#f6ecd9; --on-walnut-2:#d8c6a6; --on-walnut-3:#bda882;
+  --accent:#ff5029; --accent-text:#923319; --on-accent:#1c1408;
+  --rule:rgba(28,20,8,.18);
+  --f-d:'Bricolage Grotesque',system-ui,sans-serif;
+  --f-s:'Instrument Serif',Georgia,serif;
+  --f-b:'Work Sans',system-ui,sans-serif;
+  --f-m:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 1rem/1.65 var(--f-b);
+  -webkit-font-smoothing:antialiased}
+.wrap{width:min(78ch,calc(100% - 3rem));margin:0 auto;padding:4rem 0 6rem}
+header{border-bottom:3px solid var(--brass);padding-bottom:2rem;margin-bottom:3rem}
+.plate{display:inline-block;font:700 .75rem/1 var(--f-m);letter-spacing:.22em;
+  text-transform:uppercase;color:var(--walnut-3);background:linear-gradient(180deg,var(--brass),var(--brass-deep));
+  padding:8px 14px;border-radius:2px;box-shadow:inset 0 1px 0 rgba(255,244,214,.6)}
+h1{font:800 clamp(2.4rem,7vw,4rem)/1.02 var(--f-d);letter-spacing:-.03em;margin:1.2rem 0 .6rem;text-wrap:balance}
+.lede{font:400 1.25rem/1.5 var(--f-s);color:var(--ink-2);max-width:56ch;margin:0}
+section{margin:3.5rem 0 0}
+h2{font:400 2rem/1.15 var(--f-s);letter-spacing:.005em;margin:0 0 .3rem;text-wrap:balance}
+h2 .n{font:700 .8125rem/1 var(--f-m);letter-spacing:.2em;color:var(--accent-text);
+  display:block;margin-bottom:.7rem}
+h3{font:800 1.0625rem/1.3 var(--f-d);margin:2rem 0 .5rem}
+p{max-width:66ch}
+code{font:400 .9375rem/1.5 var(--f-m);background:rgba(28,20,8,.07);padding:1px 5px;border-radius:2px}
+b{font-weight:600}
+.rule{border:0;border-top:1px solid var(--rule);margin:3rem 0 0}
+/* Swatches */
+.sws{display:grid;gap:2px;margin:1.2rem 0;border:1px solid var(--rule);border-radius:3px;overflow:hidden}
+.sw{display:grid;grid-template-columns:44px 15rem 6.5rem 1fr;align-items:center;gap:1rem;
+  padding:.55rem .8rem;background:rgba(255,255,255,.32)}
+.sw .chip{width:30px;height:30px;border-radius:2px;box-shadow:0 0 0 1px rgba(28,20,8,.25)}
+.sw code{background:none;padding:0}
+.sw b{font:700 .9375rem/1 var(--f-m);font-variant-numeric:tabular-nums}
+.sw .note{font-size:.9375rem;color:var(--ink-3)}
+/* Specimens */
+.spec{margin:1.4rem 0;border-radius:3px;overflow:hidden}
+.walnut{background:repeating-linear-gradient(88deg,rgba(30,14,4,.22) 0 1px,transparent 1px 5px,
+  rgba(94,56,26,.14) 5px 7px,transparent 7px 15px),
+  linear-gradient(180deg,var(--walnut) 0%,var(--walnut-2) 34%,var(--walnut-3) 100%);
+  color:var(--on-walnut);padding:1.6rem;
+  box-shadow:inset 0 1px 0 rgba(255,214,160,.22),0 18px 40px -18px rgba(0,0,0,.55);
+  border:2px solid var(--brass-deep)}
+.walnut p{color:var(--on-walnut-2);margin:.4rem 0 0}
+.walnut .dim{color:var(--on-walnut-3);font:400 .9375rem/1.5 var(--f-m)}
+.plate-demo{width:120px;height:120px;border-radius:2px;background:var(--walnut-3);
+  box-shadow:0 0 0 2px var(--brass-deep),0 0 0 5px var(--brass),0 0 0 6px #6d5222,
+  inset 0 3px 12px rgba(0,0,0,.7);display:grid;place-items:center;
+  font:800 3rem/1 var(--f-d);color:var(--on-walnut);margin:1.4rem 6px}
+/* Accent demo */
+.accent-row{display:flex;flex-wrap:wrap;gap:.8rem;align-items:center;margin:1.2rem 0}
+.pill{background:var(--accent);color:var(--on-accent);font:800 .9375rem/1 var(--f-d);
+  padding:12px 20px;border-radius:999px}
+.wrong{background:var(--accent);color:#fff;font:800 .9375rem/1 var(--f-d);
+  padding:12px 20px;border-radius:999px;position:relative}
+.asword{color:var(--accent-text);font:800 1.0625rem/1 var(--f-d)}
+.verdict{font:700 .8125rem/1 var(--f-m);letter-spacing:.1em;text-transform:uppercase}
+.ok{color:#0a655e}.no{color:#9c2707}
+/* The dial */
+.dialmount{display:flex;gap:10px;align-items:stretch;margin:1.4rem 0}
+.dial{position:relative;flex:1;min-width:0;border-radius:3px;padding:5px 12px 6px;overflow:hidden;
+  cursor:grab;touch-action:none;user-select:none;
+  background:radial-gradient(150% 200% at 50% 130%,#fff3d4 0%,var(--bg) 42%,#e2cea0 78%,#d4bd8c 100%);
+  box-shadow:0 0 0 1px var(--brass-deep),0 0 0 3px var(--brass),0 0 0 4px #6d5222,
+    inset 0 2px 5px rgba(92,62,20,.45),inset 0 -1px 0 rgba(255,252,235,.8)}
+.dial:active{cursor:grabbing}
+.dial::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(150% 90% at 18% -34%,rgba(255,255,255,.55),transparent 56%),
+  linear-gradient(174deg,rgba(255,255,255,.3) 0%,transparent 30%)}
+.station{display:block;width:100%;border:0;background:none;padding:0;font:400 1.625rem/1.12 var(--f-s);
+  letter-spacing:.005em;text-align:center;color:var(--ink);white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;cursor:inherit}
+.scale{position:relative;display:block;height:20px;margin-top:2px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.ticks{position:absolute;inset:0;
+  background-image:repeating-linear-gradient(90deg,rgba(28,20,8,.85) 0 2px,transparent 2px 46px),
+   repeating-linear-gradient(90deg,rgba(28,20,8,.42) 0 1px,transparent 1px 9.2px);
+  background-size:auto 15px,auto 8px;background-repeat:repeat-x;transition:background-position .42s cubic-bezier(.22,1,.3,1)}
+.dial.tuning .ticks{transition:none}
+.needle{position:absolute;top:0;bottom:0;left:50%;width:1.5px;margin-left:-.75px;
+  background:var(--accent);z-index:3;box-shadow:0 0 3px rgba(255,80,41,.8)}
+.needle::before{content:"";position:absolute;top:-2px;left:50%;width:7px;height:7px;margin-left:-3.5px;
+  border-radius:1px;background:var(--accent);transform:rotate(45deg)}
+.step{flex:0 0 auto;width:44px;min-height:44px;border-radius:3px;border:1px solid var(--brass-deep);
+  background:linear-gradient(180deg,var(--brass),var(--brass-deep));color:var(--walnut-3);
+  font:400 1.25rem/1 var(--f-d);cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,244,214,.55)}
+.step:active{box-shadow:inset 0 2px 5px rgba(92,62,20,.5)}
+.hint{font:400 .9375rem/1.5 var(--f-b);color:var(--ink-3);margin:.4rem 0 0}
+/* Tables */
+.tbl{width:100%;overflow-x:auto;margin:1.2rem 0}
+table{border-collapse:collapse;width:100%;font-size:.9375rem}
+th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:700 .8125rem/1 var(--f-m);letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+td.num{font:700 .9375rem/1.5 var(--f-m);font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+/* Rules list */
+ol.rules{counter-reset:r;list-style:none;padding:0;margin:1.2rem 0;display:grid;gap:.7rem}
+/* NOT display:grid on the li. Grid promotes every inline child AND every bare
+   text run to its own grid item, so a rule reading "<b>Lead.</b> then prose"
+   became one word per row. The counter is positioned instead, which leaves the
+   rule text as ordinary inline flow. */
+ol.rules li{counter-increment:r;position:relative;padding-left:2.9rem}
+ol.rules li::before{content:counter(r,decimal-leading-zero);position:absolute;left:0;top:0;
+  font:700 .8125rem/1.75 var(--f-m);color:var(--accent-text);letter-spacing:.08em}
+.gap li{color:var(--ink-2)}
+footer{margin-top:4rem;padding-top:1.4rem;border-top:3px solid var(--brass);
+  font:400 .9375rem/1.6 var(--f-m);color:var(--ink-3)}
+a{color:var(--accent-text)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:640px){.sw{grid-template-columns:34px 1fr;row-gap:.2rem}.sw .note{grid-column:2}}
+</style>
+
+<div class="wrap">
+<header>
+  <span class="plate">iHYPE · Design handoff · Console</span>
+  <h1>The console spec</h1>
+  <p class="lede">Everything below was read out of the shipping stylesheets and every ratio was
+  measured, not quoted. Regenerate with <code>npm run design:handoff</code>.</p>
+</header>
+
+<section>
+  <h2><span class="n">§ 01</span>There is one ground</h2>
+  <p>Light, dark and console were collapsed into a single ground. There is no theme switcher, no
+  <code>prefers-color-scheme</code>, no <code>[data-theme]</code> block. <b>A template must not offer an
+  appearance choice.</b></p>
+  <div class="sws">
+    <div class="sw"><span class="chip" style="background:#f0dfb8"></span>
+     <code>--bg</code><b>#f0dfb8</b><span class="note">the board</span></div>
+    <div class="sw"><span class="chip" style="background:#1c1408"></span>
+     <code>--ink</code><b>#1c1408</b><span class="note">body copy — 13.84:1</span></div>
+  </div>
+  <p><code>html.high-contrast</code> still exists and is <b>not a theme</b> — it is an accessibility mode
+  with its own black ground. Do not design for it; do not remove it.</p>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 02</span>Materials</h2>
+  <p>The look is not “a warm palette”. It is three materials used for three kinds of object. Getting
+  this wrong is what makes a page read as a beige website instead of a receiver.</p>
+  <div class="sws">
+    <div class="sw"><span class="chip" style="background:#4a2b16"></span>
+     <code>--walnut</code><b>#4a2b16</b><span class="note">cabinet face, top of gradient</span></div>
+    <div class="sw"><span class="chip" style="background:#34200f"></span>
+     <code>--walnut-2</code><b>#34200f</b><span class="note">full-player ground</span></div>
+    <div class="sw"><span class="chip" style="background:#1a1206"></span>
+     <code>--walnut-3</code><b>#1a1206</b><span class="note">recessed wells, control glyphs</span></div>
+    <div class="sw"><span class="chip" style="background:#c9a54e"></span>
+     <code>--brass</code><b>#c9a54e</b><span class="note">bezels, transport, step keys</span></div>
+    <div class="sw"><span class="chip" style="background:#8a6a2c"></span>
+     <code>--brass-deep</code><b>#8a6a2c</b><span class="note">the shadow side of a bezel</span></div>
+    <div class="sw"><span class="chip" style="background:#ffb84a"></span>
+     <code>--lamp</code><b>#ffb84a</b><span class="note">pilot lamps, lit state, hover</span></div>
+  </div>
+
+  <h3>Walnut is dark everywhere — it carries its own ink</h3>
+  <p>This is the most important rule here, and it has already caused one shipped bug: the player dock
+  painted dark ink on a near-black bar for weeks.</p>
+  <div class="spec walnut">
+    <div style="font:400 1.5rem/1.2 var(--f-s)">Ink on the cabinet</div>
+    <p><code style="background:rgba(255,255,255,.1);color:var(--on-walnut-2)">--ink-on-walnut-2</code>
+      — secondary copy, 7.61:1 against the lightest stop.</p>
+    <div class="dim">--ink-on-walnut-3 · 5.51:1 · the floor for a word</div>
+  </div>
+  <div class="sws">
+    <div class="sw"><span class="chip" style="background:#f6ecd9"></span>
+     <code>--ink-on-walnut</code><b>#f6ecd9</b><span class="note">10.87:1 on --walnut</span></div>
+    <div class="sw"><span class="chip" style="background:#d8c6a6"></span>
+     <code>--ink-on-walnut-2</code><b>#d8c6a6</b><span class="note">7.61:1 — secondary</span></div>
+    <div class="sw"><span class="chip" style="background:#bda882"></span>
+     <code>--ink-on-walnut-3</code><b>#bda882</b><span class="note">5.51:1 — floor for a word</span></div>
+  </div>
+  <p>Ratios are against <code>--walnut</code>, the <b>lightest</b> stop. Copy can land anywhere on a
+  gradient, so the worst case is the only one worth quoting. <b>Never put <code>--ink</code>,
+  <code>--ink-2</code> or <code>--ink-3</code> on walnut</b> — there is a lint rule that fails the build
+  on it. Hairlines use <code>--rule-on-walnut</code>; the page's <code>--line</code> vanishes into timber.</p>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 03</span>The accent is a fill, never a word</h2>
+  <p><code>--accent</code> is #ff5029. On the board it measures <b>2.48:1</b> —
+  it fails AA as copy and fails even the 3:1 large-text bar.</p>
+  <div class="accent-row">
+    <span class="pill">Correct label</span>
+    <span class="verdict ok">5.58:1 · pass</span>
+    <span class="wrong">White label</span>
+    <span class="verdict no">3.27:1 · fails</span>
+  </div>
+  <p><span class="asword">The accent as a word</span> uses <code>--accent-text</code> #923319
+  — 5.89:1. <b><code>--ink-on-accent</code> is dark ink, not white.</b> This
+  surprises people; it is measured.</p>
+  <p>The same split exists for <code>--warning-text</code>, <code>--danger-text</code> and
+  <code>--success-text</code>. A fill token and a copy token are different tokens even when the hex matches.</p>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 04</span>The tuner — drag it</h2>
+  <p>It replaces every horizontal tab strip. A strip divides one row by the number of tabs, so each tab
+  added shrinks every label; the dial spends the same row on <b>one</b> destination at 26px and does not
+  shrink when a section is added.</p>
+  <div class="dialmount">
+    <button class="step" id="prev" type="button" aria-label="Previous">&lsaquo;</button>
+    <div class="dial" id="dial"><span class="station" id="stn">Discover</span>
+      <span class="scale"><span class="ticks" id="ticks"></span><span class="needle"></span></span></div>
+    <button class="step" id="next" type="button" aria-label="Next">&rsaquo;</button>
+  </div>
+  <p class="hint">Drag the face, use the wheel, or press the brass keys. The scale is two repeating
+  gradients driven by the drag — infinite in both directions, no cloned strip, no seam, stations wrap.
+  In the app it is a <code>role="tablist"</code> with roving tabindex, never a slider: a slider announces
+  a number where a member needs a destination.</p>
+
+  <h3>The recessed plate</h3>
+  <p>Artwork sits in a machined bezel — deep brass, bright brass, deep again, with an inner top shadow so
+  it reads as cut <i>into</i> the faceplate. Radius 2px: a bezel is turned metal, and a large round-rect
+  reads as a phone app icon.</p>
+  <div class="plate-demo">A</div>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 05</span>Type</h2>
+  <p>Three faces, three jobs — and this page is set in them.</p>
+  <div class="tbl"><table>
+    <tr><th>Role</th><th>Face</th><th>Rule</th></tr>
+    <tr><td>Page display</td><td>Bricolage Grotesque</td><td>800 weight, tight tracking</td></tr>
+    <tr><td>Section heading</td><td>Instrument Serif</td><td><code>h2</code>, via <code>--f-s</code></td></tr>
+    <tr><td>Prose</td><td>Work Sans</td><td>body</td></tr>
+    <tr><td>Eyebrow / data</td><td>JetBrains Mono</td><td>tracked, uppercase</td></tr>
+  </table></div>
+  <ol class="rules">
+    <li><b>15px is the content floor.</b> Enforced — the build fails below it.</li>
+    <li><b>11px is the eyebrow floor</b>, and only for tracked mono: monospace family <i>and</i>
+      <code>letter-spacing ≥ 0.14em</code>. Metadata only — a form label, an error message or a status
+      readout is content, not an eyebrow.</li>
+    <li><b>Sizes in <code>rem</code>, never <code>px</code></b> — the root size carries the reader's Text
+      size setting and iOS Dynamic Type, and <code>px</code> cannot follow it.</li>
+  </ol>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 06</span>Rules a template must not break</h2>
+  <ol class="rules">
+    <li><b>No emoji.</b> Unicode glyphs (▶ ❚❚ ♥ ✕ ✓ ★ ⬟ ♪) are the vocabulary.</li>
+    <li><b>There is no DJ role.</b> Deleted from the product 2026-08-06.</li>
+    <li><b>Promoter is not an account type.</b> It is a 10% payout share; <code>--role-promoter</code>
+      colours that slice and nothing else.</li>
+    <li><b>No white on the accent fill.</b> Use <code>--ink-on-accent</code>.</li>
+    <li><b>No appearance or theme switcher.</b> One ground.</li>
+    <li><b>70 / 20 / 10 / 0%</b> — artist / venue / promoters / iHYPE. Never restate it differently.</li>
+    <li><b>Audio only.</b> No video anywhere.</li>
+    <li><b>admin@ihype.org</b> and <b>ihype.org</b> are the only contact and domain.</li>
+  </ol>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 07</span>What the templates get wrong today</h2>
+  <p>Pulled from <code>npm run audit:design</code> when this page was generated. These are
+  <b>design</b> defects — fix them in Claude Design and re-vendor. Correcting them in the code is undone
+  by the next session that faithfully applies the template.</p>
+  <div class="tbl"><table>
+    <tr><th>Count</th><th>Finding</th><th>Templates</th><th>Rule</th><th>Why</th></tr>
+    <tr><td class="num">71</td><td><code>emoji</code></td><td class="num">17</td><td>ADHERENCE §29</td><td>no emoji, anywhere</td></tr>
+<tr><td class="num">39</td><td><code>dj-role</code></td><td class="num">7</td><td>ADHERENCE §4</td><td>there is no DJ role</td></tr>
+<tr><td class="num">31</td><td><code>promoter-role</code></td><td class="num">7</td><td>ADHERENCE §3</td><td>promoter is not an account role</td></tr>
+<tr><td class="num">44</td><td><code>ink-on-accent</code></td><td class="num">22</td><td>ADHERENCE §32</td><td>white on accent is 3.27:1, fails AA</td></tr>
+  </table></div>
+</section>
+
+<hr class="rule">
+<section>
+  <h2><span class="n">§ 08</span>What the code does not have</h2>
+  <p>Stated so a template does not assume a control nobody has built.</p>
+  <ol class="rules gap">
+    <li><b>Transport knob with drag gestures</b> — tap play/pause, drag for next/prev, drag up for the
+      full player. Not built.</li>
+    <li><b>The map is a real interactive map</b>, toned to an aged chart — not the prototype's drawn
+      coastline. Real venues sit at real coordinates.</li>
+    <li><b>Marketing, legal and admin routes</b> carry the palette and type but not the cabinet. Only
+      the app shell is furniture.</li>
+  </ol>
+</section>
+
+<footer>
+  Generated from the shipping stylesheets · <code>npm run design:handoff</code><br>
+  Contrast computed at generation time · single ground by design
+</footer>
+</div>
+
+<script>
+(function(){
+  var STOPS=['Discover','Radio','Charts','Recommended','Playlists'],PITCH=46;
+  var dial=document.getElementById('dial'),ticks=document.getElementById('ticks'),
+      stn=document.getElementById('stn'),off=0;
+  function wrap(i,n){return ((i%n)+n)%n;}
+  function paint(){var px=(-off)+'px';ticks.style.backgroundPositionX=px+', '+px;
+    stn.textContent=STOPS[wrap(Math.round(off/PITCH),STOPS.length)];}
+  function step(by){off+=by*PITCH;paint();}
+  document.getElementById('next').addEventListener('click',function(){step(1);});
+  document.getElementById('prev').addEventListener('click',function(){step(-1);});
+  dial.addEventListener('wheel',function(e){e.preventDefault();step(e.deltaY>0?1:-1);},{passive:false});
+  var drag=null;
+  dial.addEventListener('pointerdown',function(e){drag={x:e.clientX,from:off};
+    dial.classList.add('tuning');dial.setPointerCapture(e.pointerId);});
+  dial.addEventListener('pointermove',function(e){if(!drag)return;
+    off=drag.from-(e.clientX-drag.x);paint();});
+  function end(){if(!drag)return;drag=null;dial.classList.remove('tuning');
+    off=Math.round(off/PITCH)*PITCH;paint();}
+  dial.addEventListener('pointerup',end);dial.addEventListener('pointercancel',end);
+  dial.addEventListener('lostpointercapture',end);
+  paint();
+})();
+</script>
