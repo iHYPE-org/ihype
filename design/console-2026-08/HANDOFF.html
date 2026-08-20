@@ -1,323 +1,15 @@
-#!/usr/bin/env node
-/**
- * Generates `design/console-2026-08/HANDOFF.md` — the console/hi-fi spec that
- * goes BACK to Claude Design.
- *
- * ## Why this is generated and not written
- *
- * Every design document in this repository that was written by hand has gone
- * stale, and two of them went stale in a way that actively caused damage:
- * `SHELL_LOCK` said the shell was frozen after the owner had asked for it to
- * change, and CLAUDE.md said the overhaul required "nothing structural" while
- * the chrome was being rebuilt. A spec that names a hex, a ratio or a class
- * list is a copy of the code, and copies drift.
- *
- * So this reads the real stylesheets, extracts the real values, MEASURES the
- * contrast rather than quoting it, and runs the design audit to list what is
- * currently wrong in the templates. Re-run it and the document is true again.
- *
- * `npm run design:handoff`
- */
-import { readFile, writeFile } from 'node:fs/promises';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
-const run = promisify(execFile);
-const css = await readFile('src/app/globals.css', 'utf8');
-const mmm = await readFile('src/app/mmm.css', 'utf8');
-
-/* ── Contrast, measured ─────────────────────────────────────────────────── */
-const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-const lum = ([r, g, b]) => {
-  const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; };
-  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-};
-const ratio = (a, b) => {
-  const [hi, lo] = [lum(hex(a)), lum(hex(b))].sort((x, y) => y - x);
-  return ((hi + 0.05) / (lo + 0.05)).toFixed(2);
-};
-
-/** A `--token: #value;` lookup over the real `:root`, comments stripped. */
-const root = css.replace(/\/\*[\s\S]*?\*\//g, '');
-const tok = (name) => {
-  const m = new RegExp(`${name}\\s*:\\s*(#[0-9a-fA-F]{6}|[^;]+);`).exec(root);
-  return m ? m[1].trim() : null;
-};
-
-/** A whole rule, verbatim, so the spec ships real code rather than a summary. */
-function rule(source, selector) {
-  const i = source.indexOf(`\n${selector} {`);
-  if (i < 0) return null;
-  const end = source.indexOf('\n}', i);
-  return source.slice(i + 1, end + 2).trim();
-}
-
-/* ── What the templates currently get wrong ─────────────────────────────── */
-let findings = '(audit did not run)';
-try {
-  const { stdout } = await run('node', ['scripts/audit-design-templates.mjs']);
-  findings = stdout.split('\n')
-    .filter((l) => /ADHERENCE §/.test(l))
-    .map((l) => `- ${l.trim()}`)
-    .join('\n') || '- none';
-} catch (error) {
-  findings = `(audit failed: ${String(error).slice(0, 80)})`;
-}
-
-const GROUND = tok('--bg');
-const INK = tok('--ink');
-const WALNUT = tok('--walnut');
-const WALNUT2 = tok('--walnut-2');
-const WALNUT3 = tok('--walnut-3');
-const BRASS = tok('--brass');
-const BRASS_DEEP = tok('--brass-deep');
-const LAMP = tok('--lamp');
-const ON_WALNUT = tok('--ink-on-walnut');
-const ON_WALNUT2 = tok('--ink-on-walnut-2');
-const ON_WALNUT3 = tok('--ink-on-walnut-3');
-const ACCENT = tok('--accent');
-const ACCENT_TEXT = tok('--accent-text');
-const ON_ACCENT = tok('--ink-on-accent');
-
-const doc = `# iHYPE console / hi-fi — design handoff
-
-**Generated from the live stylesheets by \`npm run design:handoff\`. Do not edit
-by hand — re-run it.** Every hex below was read out of \`src/app/globals.css\`
-and every ratio was computed, not quoted.
-
-This document goes back to Claude Design so templates can be redesigned in the
-console scheme. It is the answer to "what does the code actually do".
-
----
-
-## 1 · There is ONE ground
-
-The light/dark/console themes were collapsed into a single ground on
-2026-08-19. There is no theme switcher, no \`prefers-color-scheme\`, and no
-\`[data-theme]\` block. A template must not offer an appearance choice.
-
-| Role | Token | Value | On ground |
-|---|---|---|---|
-| Ground | \`--bg\` | \`${GROUND}\` | — |
-| Body ink | \`--ink\` | \`${INK}\` | **${ratio(INK, GROUND)}:1** |
-
-\`html.high-contrast\` still exists and is **not a theme** — it is an
-accessibility mode with its own black ground. Do not design for it; do not
-remove it.
-
----
-
-## 2 · Materials — the part that makes it hi-fi
-
-The console look is not "a warm palette". It is **three materials** used for
-three different kinds of object. Getting this wrong is what makes a page look
-like a beige website instead of a receiver.
-
-| Material | Token | Value | Used for |
-|---|---|---|---|
-| Walnut (lightest) | \`--walnut\` | \`${WALNUT}\` | cabinet face, top of gradient |
-| Walnut mid | \`--walnut-2\` | \`${WALNUT2}\` | full-player ground |
-| Walnut dark | \`--walnut-3\` | \`${WALNUT3}\` | recessed wells, control glyphs |
-| Brass | \`--brass\` | \`${BRASS}\` | bezels, transport, step keys |
-| Brass deep | \`--brass-deep\` | \`${BRASS_DEEP}\` | the shadow side of a bezel |
-| Lamp | \`--lamp\` | \`${LAMP}\` | pilot lamps, lit state, hover |
-
-### Walnut is DARK in every context — it needs its own ink
-
-This is the single most important rule in this document, and it has already
-caused one shipped bug (the player dock painted dark ink on a near-black bar
-for weeks).
-
-| Token | Value | On \`--walnut\` |
-|---|---|---|
-| \`--ink-on-walnut\` | \`${ON_WALNUT}\` | **${ratio(ON_WALNUT, WALNUT)}:1** |
-| \`--ink-on-walnut-2\` | \`${ON_WALNUT2}\` | **${ratio(ON_WALNUT2, WALNUT)}:1** |
-| \`--ink-on-walnut-3\` | \`${ON_WALNUT3}\` | **${ratio(ON_WALNUT3, WALNUT)}:1** — the floor for a WORD |
-
-Ratios are against \`--walnut\`, the **lightest** stop of the gradient. Copy can
-land anywhere on a gradient, so the worst case is the only one worth quoting.
-
-**Never put \`--ink\`, \`--ink-2\` or \`--ink-3\` on a walnut surface.** There is a
-lint rule that fails the build on it.
-
-Hairlines and rails on walnut: \`--rule-on-walnut\` / \`--rule-on-walnut-2\`.
-The page's \`--line\` / \`--hair-*\` are dark alphas and vanish into timber.
-
----
-
-## 3 · The accent is a FILL, never a word
-
-\`--accent\` is \`${ACCENT}\`. On the cream ground it measures
-**${ratio(ACCENT, GROUND)}:1** — it fails AA as copy and fails even the 3:1
-large-text bar.
-
-| Job | Token | Value | Measured |
-|---|---|---|---|
-| The fill | \`--accent\` | \`${ACCENT}\` | — |
-| The accent as a WORD | \`--accent-text\` | \`${ACCENT_TEXT}\` | ${ratio(ACCENT_TEXT, GROUND)}:1 on ground |
-| A label ON the fill | \`--ink-on-accent\` | \`${ON_ACCENT}\` | ${ratio(ON_ACCENT, ACCENT)}:1 on accent |
-
-\`--ink-on-accent\` is **dark ink, not white**. White on this accent is 3.27:1
-and fails. This surprises people; it is measured.
-
-The same split exists for \`--warning-text\`, \`--danger-text\` and
-\`--success-text\`. A fill token and a copy token are different tokens even when
-the hex matches.
-
----
-
-## 4 · Components, as real CSS
-
-Copy these verbatim. They are what ships.
-
-### The walnut panel and its edges
-
-\`\`\`css
-${rule(css, '.walnut-panel') ?? '(missing)'}
-
-${rule(css, '.walnut-lip-top') ?? '(missing)'}
-
-${rule(css, '.walnut-frame') ?? '(missing)'}
-
-${rule(css, '.walnut-plate') ?? '(missing)'}
-\`\`\`
-
-The **88° grain is not 90°** on purpose: exactly vertical reads as a UI stripe
-pattern, a couple of degrees off reads as cut timber.
-
-### The tuner dial — the signature control
-
-It replaces every horizontal tab strip. A strip divides one row by the number
-of tabs, so each tab added shrinks every label; the dial spends the same row on
-**one** destination at 26px and does not shrink when a section is added.
-
-\`\`\`css
-${rule(css, '.tuner-dial') ?? '(missing)'}
-
-${rule(css, '.tuner-station') ?? '(missing)'}
-
-${rule(css, '.tuner-scale') ?? '(missing)'}
-
-${rule(css, '.tuner-ticks') ?? '(missing)'}
-
-${rule(css, '.tuner-needle') ?? '(missing)'}
-
-${rule(css, '.tuner-step') ?? '(missing)'}
-\`\`\`
-
-**The scale is infinite for free.** Two \`repeating-linear-gradient\`s whose
-\`background-position\` is driven by the drag — no cloned strip, no seam,
-stations wrap in both directions. The 46px major pitch is also the drag
-distance per station; the two must move together.
-
-**Semantics:** \`role="tablist"\` of \`role="tab"\` buttons with roving tabindex —
-**not** \`role="slider"\`. A slider announces a number where a member needs a
-destination name.
-
-### The cabinet (app chrome)
-
-\`\`\`css
-${rule(mmm, '.mmm-console') ?? '(not on this branch — see PR #733)'}
-\`\`\`
-
----
-
-## 5 · Type
-
-- **Content floor is 15px** (\`0.9375rem\`). Enforced; the build fails below it.
-- **Eyebrow exemption:** tracked mono only — monospace family **and**
-  \`letter-spacing >= 0.14em\` — down to **11px**. Metadata only. A form label, an
-  error message or a status readout is **content**, not an eyebrow.
-- Three-step hierarchy: **Bricolage Grotesque** display for the page,
-  **Instrument Serif** (\`--f-s\`) for section headings (\`h2\`), **Work Sans** for
-  prose, **JetBrains Mono** for eyebrows.
-- Sizes in \`rem\`, never \`px\` — the root font size carries the reader's Text
-  size setting and iOS Dynamic Type, and \`px\` cannot follow it.
-
----
-
-## 6 · Rules a template must not break
-
-1. **No emoji.** Unicode glyphs (\`▶ ❚❚ ♥ ✕ ✓ ★ ⬟ ♪\`) are the vocabulary.
-2. **There is no DJ role.** Deleted from the product 2026-08-06.
-3. **Promoter is not an account type.** It is a 10% payout share. \`--role-promoter\`
-   colours that slice and nothing else.
-4. **No white on the accent fill.** Use \`--ink-on-accent\`.
-5. **No appearance/theme switcher.** One ground.
-6. **70 / 20 / 10 / 0%** — artist / venue / promoters / iHYPE. Never restate it
-   differently.
-7. **Audio only.** No video anywhere.
-8. **admin@ihype.org** and **ihype.org** are the only contact and domain.
-
----
-
-## 7 · What is currently WRONG in the templates
-
-Run \`npm run audit:design\` for the live list. As of this generation:
-
-${findings}
-
-These are design defects and must be fixed **in Claude Design and re-vendored**
-— correcting them in \`.tsx\` is undone by the next session that faithfully
-applies the template.
-
----
-
-## 8 · What the code still does NOT have
-
-Honest gaps, so a template does not assume them:
-
-- **Transport knob** with drag gestures (tap play/pause, drag for next/prev,
-  drag up for the full player) — not built.
-- **Full player artwork in a brass bezel** — the full player is on walnut, but
-  the cover does not yet carry the \`.walnut-plate\` bezel.
-- **The map** is a real interactive map, not the prototype's stylised canvas.
-- **Marketing, legal and admin routes** carry the palette and type but not the
-  cabinet. Only the app shell is furniture.
-`;
-
-await writeFile('design/console-2026-08/HANDOFF.md', doc);
-console.log(`Wrote design/console-2026-08/HANDOFF.md (${doc.length} chars)`);
-
-/* ── The same spec, as a page ────────────────────────────────────────────
- * Markdown is the version a session reads. This is the version a DESIGNER
- * reads, and the difference is not styling: a spec about materials should
- * show the materials. Every swatch below is the real token value, every ratio
- * is computed above, and the dial is the real control — draggable, so the
- * interaction can be felt rather than described.
- *
- * Single-theme on purpose. The document's own first rule is that there is one
- * ground; a page that offered light and dark would be contradicting the thing
- * it specifies. So the palette is stated explicitly and the page holds on any
- * host background.
- */
-const findingRows = findings.split('\n').filter((l) => l.startsWith('- ')).map((l) => {
-  /* No leading `-` in this pattern: the `- ` prefix is added when the audit
-     output is collected and is stripped again by `slice(2)` right here.
-     Matching it as well left every row unparsed, so all five columns
-     collapsed into one colspan cell under five correct headers. */
-  const m = /^(\d+)\s+(\S+)\s+in (\d+) template\(s\) — (ADHERENCE §\d+) — (.+)$/.exec(l.slice(2).trim());
-  return m
-    ? `<tr><td class="num">${m[1]}</td><td><code>${m[2]}</code></td><td class="num">${m[3]}</td><td>${m[4]}</td><td>${m[5]}</td></tr>`
-    : `<tr><td colspan="5">${l.slice(2)}</td></tr>`;
-}).join('\n');
-
-const swatch = (name, value, note) =>
-  `<div class="sw"><span class="chip" style="background:${value}"></span>
-     <code>${name}</code><b>${value}</b><span class="note">${note}</span></div>`;
-
-const page = `<meta charset="utf-8">
+<meta charset="utf-8">
 <title>iHYPE Console Spec</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,800&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;700&family=Work+Sans:wght@400;600&display=swap">
 <style>
 :root{
-  --bg:${GROUND}; --ink:${INK}; --ink-2:${tok('--ink-2')}; --ink-3:${tok('--ink-3')};
-  --walnut:${WALNUT}; --walnut-2:${WALNUT2}; --walnut-3:${WALNUT3};
-  --brass:${BRASS}; --brass-deep:${BRASS_DEEP}; --lamp:${LAMP};
-  --on-walnut:${ON_WALNUT}; --on-walnut-2:${ON_WALNUT2}; --on-walnut-3:${ON_WALNUT3};
-  --accent:${ACCENT}; --accent-text:${ACCENT_TEXT}; --on-accent:${ON_ACCENT};
+  --bg:#f0dfb8; --ink:#1c1408; --ink-2:#3f3018; --ink-3:#5d4a26;
+  --walnut:#4a2b16; --walnut-2:#34200f; --walnut-3:#1a1206;
+  --brass:#c9a54e; --brass-deep:#8a6a2c; --lamp:#ffb84a;
+  --on-walnut:#f6ecd9; --on-walnut-2:#d8c6a6; --on-walnut-3:#bda882;
+  --accent:#ff5029; --accent-text:#923319; --on-accent:#1c1408;
   --rule:rgba(28,20,8,.18);
   --f-d:'Bricolage Grotesque',system-ui,sans-serif;
   --f-s:'Instrument Serif',Georgia,serif;
@@ -443,8 +135,10 @@ a{color:var(--accent-text)}
   <code>prefers-color-scheme</code>, no <code>[data-theme]</code> block. <b>A template must not offer an
   appearance choice.</b></p>
   <div class="sws">
-    ${swatch('--bg', GROUND, 'the board')}
-    ${swatch('--ink', INK, `body copy — ${ratio(INK, GROUND)}:1`)}
+    <div class="sw"><span class="chip" style="background:#f0dfb8"></span>
+     <code>--bg</code><b>#f0dfb8</b><span class="note">the board</span></div>
+    <div class="sw"><span class="chip" style="background:#1c1408"></span>
+     <code>--ink</code><b>#1c1408</b><span class="note">body copy — 13.84:1</span></div>
   </div>
   <p><code>html.high-contrast</code> still exists and is <b>not a theme</b> — it is an accessibility mode
   with its own black ground. Do not design for it; do not remove it.</p>
@@ -456,12 +150,18 @@ a{color:var(--accent-text)}
   <p>The look is not “a warm palette”. It is three materials used for three kinds of object. Getting
   this wrong is what makes a page read as a beige website instead of a receiver.</p>
   <div class="sws">
-    ${swatch('--walnut', WALNUT, 'cabinet face, top of gradient')}
-    ${swatch('--walnut-2', WALNUT2, 'full-player ground')}
-    ${swatch('--walnut-3', WALNUT3, 'recessed wells, control glyphs')}
-    ${swatch('--brass', BRASS, 'bezels, transport, step keys')}
-    ${swatch('--brass-deep', BRASS_DEEP, 'the shadow side of a bezel')}
-    ${swatch('--lamp', LAMP, 'pilot lamps, lit state, hover')}
+    <div class="sw"><span class="chip" style="background:#4a2b16"></span>
+     <code>--walnut</code><b>#4a2b16</b><span class="note">cabinet face, top of gradient</span></div>
+    <div class="sw"><span class="chip" style="background:#34200f"></span>
+     <code>--walnut-2</code><b>#34200f</b><span class="note">full-player ground</span></div>
+    <div class="sw"><span class="chip" style="background:#1a1206"></span>
+     <code>--walnut-3</code><b>#1a1206</b><span class="note">recessed wells, control glyphs</span></div>
+    <div class="sw"><span class="chip" style="background:#c9a54e"></span>
+     <code>--brass</code><b>#c9a54e</b><span class="note">bezels, transport, step keys</span></div>
+    <div class="sw"><span class="chip" style="background:#8a6a2c"></span>
+     <code>--brass-deep</code><b>#8a6a2c</b><span class="note">the shadow side of a bezel</span></div>
+    <div class="sw"><span class="chip" style="background:#ffb84a"></span>
+     <code>--lamp</code><b>#ffb84a</b><span class="note">pilot lamps, lit state, hover</span></div>
   </div>
 
   <h3>Walnut is dark everywhere — it carries its own ink</h3>
@@ -470,13 +170,16 @@ a{color:var(--accent-text)}
   <div class="spec walnut">
     <div style="font:400 1.5rem/1.2 var(--f-s)">Ink on the cabinet</div>
     <p><code style="background:rgba(255,255,255,.1);color:var(--on-walnut-2)">--ink-on-walnut-2</code>
-      — secondary copy, ${ratio(ON_WALNUT2, WALNUT)}:1 against the lightest stop.</p>
-    <div class="dim">--ink-on-walnut-3 · ${ratio(ON_WALNUT3, WALNUT)}:1 · the floor for a word</div>
+      — secondary copy, 7.61:1 against the lightest stop.</p>
+    <div class="dim">--ink-on-walnut-3 · 5.51:1 · the floor for a word</div>
   </div>
   <div class="sws">
-    ${swatch('--ink-on-walnut', ON_WALNUT, `${ratio(ON_WALNUT, WALNUT)}:1 on --walnut`)}
-    ${swatch('--ink-on-walnut-2', ON_WALNUT2, `${ratio(ON_WALNUT2, WALNUT)}:1 — secondary`)}
-    ${swatch('--ink-on-walnut-3', ON_WALNUT3, `${ratio(ON_WALNUT3, WALNUT)}:1 — floor for a word`)}
+    <div class="sw"><span class="chip" style="background:#f6ecd9"></span>
+     <code>--ink-on-walnut</code><b>#f6ecd9</b><span class="note">10.87:1 on --walnut</span></div>
+    <div class="sw"><span class="chip" style="background:#d8c6a6"></span>
+     <code>--ink-on-walnut-2</code><b>#d8c6a6</b><span class="note">7.61:1 — secondary</span></div>
+    <div class="sw"><span class="chip" style="background:#bda882"></span>
+     <code>--ink-on-walnut-3</code><b>#bda882</b><span class="note">5.51:1 — floor for a word</span></div>
   </div>
   <p>Ratios are against <code>--walnut</code>, the <b>lightest</b> stop. Copy can land anywhere on a
   gradient, so the worst case is the only one worth quoting. <b>Never put <code>--ink</code>,
@@ -487,16 +190,16 @@ a{color:var(--accent-text)}
 <hr class="rule">
 <section>
   <h2><span class="n">§ 03</span>The accent is a fill, never a word</h2>
-  <p><code>--accent</code> is ${ACCENT}. On the board it measures <b>${ratio(ACCENT, GROUND)}:1</b> —
+  <p><code>--accent</code> is #ff5029. On the board it measures <b>2.48:1</b> —
   it fails AA as copy and fails even the 3:1 large-text bar.</p>
   <div class="accent-row">
     <span class="pill">Correct label</span>
-    <span class="verdict ok">${ratio(ON_ACCENT, ACCENT)}:1 · pass</span>
+    <span class="verdict ok">5.58:1 · pass</span>
     <span class="wrong">White label</span>
     <span class="verdict no">3.27:1 · fails</span>
   </div>
-  <p><span class="asword">The accent as a word</span> uses <code>--accent-text</code> ${ACCENT_TEXT}
-  — ${ratio(ACCENT_TEXT, GROUND)}:1. <b><code>--ink-on-accent</code> is dark ink, not white.</b> This
+  <p><span class="asword">The accent as a word</span> uses <code>--accent-text</code> #923319
+  — 5.89:1. <b><code>--ink-on-accent</code> is dark ink, not white.</b> This
   surprises people; it is measured.</p>
   <p>The same split exists for <code>--warning-text</code>, <code>--danger-text</code> and
   <code>--success-text</code>. A fill token and a copy token are different tokens even when the hex matches.</p>
@@ -571,7 +274,10 @@ a{color:var(--accent-text)}
   by the next session that faithfully applies the template.</p>
   <div class="tbl"><table>
     <tr><th>Count</th><th>Finding</th><th>Templates</th><th>Rule</th><th>Why</th></tr>
-    ${findingRows}
+    <tr><td class="num">71</td><td><code>emoji</code></td><td class="num">17</td><td>ADHERENCE §29</td><td>no emoji, anywhere</td></tr>
+<tr><td class="num">39</td><td><code>dj-role</code></td><td class="num">7</td><td>ADHERENCE §4</td><td>there is no DJ role</td></tr>
+<tr><td class="num">31</td><td><code>promoter-role</code></td><td class="num">7</td><td>ADHERENCE §3</td><td>promoter is not an account role</td></tr>
+<tr><td class="num">44</td><td><code>ink-on-accent</code></td><td class="num">22</td><td>ADHERENCE §32</td><td>white on accent is 3.27:1, fails AA</td></tr>
   </table></div>
 </section>
 
@@ -618,7 +324,4 @@ a{color:var(--accent-text)}
   dial.addEventListener('lostpointercapture',end);
   paint();
 })();
-</script>`;
-
-await writeFile('design/console-2026-08/HANDOFF.html', page);
-console.log(`Wrote design/console-2026-08/HANDOFF.html (${page.length} chars)`);
+</script>
