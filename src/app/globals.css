@@ -184,14 +184,21 @@
      amber as --warning and --role-advertiser — so this token was doing three
      unrelated jobs and ~20 of its ~28 call sites were "pending"/"warning"
      badges that had nothing to do with promoters. The design system's colour
-     table settles it: promoter is #ff3e9a, renamed from --role-dj (see above),
-     used only for the 10% slice. The amber call sites moved to --warning /
+     table settles it: promoter is its own hue, renamed from --role-dj (see
+     above), used only for the 10% slice. It was #ff3e9a while the ground was
+     navy; the console conversion darkened it to the value below, because a hue
+     picked for a dark ground fails on cream (#ff3e9a is 2.49:1 there). The amber call sites moved to --warning /
      --role-advertiser in the same commit, so none of them changed colour;
      what does change colour is the split bar itself, which is the intent. */
   --role-promoter: #a3175f;
-  /* Role fills stay vivid; these aliases are the same hues calibrated for
-     readable text. Light mode overrides the aliases without dulling artwork,
-     charts, chips, or other brand fills. */
+  /* The -text aliases exist so a role can be a FILL and a WORD independently.
+     They currently resolve to the same hue, and that is correct rather than
+     lazy: the console conversion already darkened every role fill to clear AA
+     on cream (4.50-6.36:1), so no separate copy value is needed. Keep the
+     aliases — the day a fill brightens again, this is the seam that stops the
+     text following it. NOTE: this comment used to say "role fills stay vivid"
+     and describe a light mode overriding the aliases; there is no light mode,
+     and the fills are no longer vivid. */
   --role-promoter-text: var(--role-promoter);
   --role-artist-text: var(--role-artist);
   --role-advertiser-text: var(--warning-text);
