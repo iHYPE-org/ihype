@@ -258,40 +258,58 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-dock')).toBeVisible();
   });
 
-  /* The joystick can START playback, not only pause what is already playing.
-     Before MmmPlayIntent the dock passed `canTogglePlay={Boolean(currentTrack)}`
-     straight through, and the vendored component makes a tap a no-op when that
-     is false — so on a freshly opened app the entire transport was inert and the
-     only way in was a play button drawn inside a card. Reported as "media
-     joystick not connected to player".
+  /* The joystick can START playback, not only pause what is already playing —
+     and it can do it EVERYWHERE. Before MmmPlayIntent the dock passed
+     `canTogglePlay={Boolean(currentTrack)}` straight through, and the vendored
+     component makes a tap a no-op when that is false, so on a freshly opened
+     app the whole transport was inert and the only way in was a play button
+     drawn inside a card. Reported as "media joystick not connected to player",
+     then as needing "universal play ability".
 
      Asserted on the joystick's own accessible name, which the vendored
      component swaps between Play and Pause from the `playing` prop. That is the
-     shortest honest proof that the tap reached the real media player: nothing
-     in the dock computes it, and it only flips once a track is actually
-     current. */
-  test('the joystick starts playback with nothing loaded', async ({ page }) => {
-    await page.setViewportSize({ width: 393, height: 852 });
-    await page.goto('/app/music/discover');
+     shortest honest proof the tap reached the real media player: nothing in the
+     dock computes it, and it only flips once a track is actually current.
 
-    const transport = page.getByRole('button', { name: /^Play\. Drag for/ });
-    await expect(transport).toBeVisible();
+     The surfaces are checked as a SET rather than one at a time, because the
+     claim is about the transport being universal. MAP and ME have nothing of
+     their own to play and must fall through to the radio; the music tabs each
+     register something. Any of them leaving the transport dead is the bug. */
+  for (const surface of ['/app/map', '/app/me', '/app/music/discover', '/app/music/radio', '/app/music/charts'] as const) {
+    test(`the joystick starts playback on ${surface}`, async ({ page }) => {
+      await page.setViewportSize({ width: 393, height: 852 });
+      await page.goto(surface);
+      await expect(page.locator('.mmm-dock')).toBeVisible();
 
-    /* The deck needs a seeded card with a playable URL to offer an intent, and
-       this suite's fixture may have none — in which case the honest assertion
-       is that the control is present and the tap is harmless, not that audio
-       began. Skipping on an empty deck keeps the test from passing for the
-       wrong reason on a seeded run. */
-    const deck = page.locator('.mmm-deck-card');
-    if (await deck.count() === 0) {
-      test.skip(true, 'no seeded card on this deck — nothing for the transport to start');
-    }
+      const play = page.getByRole('button', { name: /^Play\. Drag for/ });
+      await expect(play, 'the transport should offer Play before anything is loaded').toBeVisible();
+      await play.click();
 
-    await transport.click();
-    // Play -> Pause is the label flip, and it comes from the media player's own
-    // state rather than from anything the dock holds.
-    await expect(page.getByRole('button', { name: /^Pause\. Drag for/ })).toBeVisible();
-  });
+      /* A seeded fixture may have no playable audio anywhere — no stations, no
+         chart, no card with a stored URL — in which case nothing can start and
+         the honest result is that the label has not flipped. Distinguished from
+         a broken transport by checking that SOMETHING is playable first, rather
+         than by accepting either outcome. */
+      const playable = await page.evaluate(async () => {
+        const response = await fetch('/api/stations', { cache: 'no-store' });
+        if (!response.ok) return false;
+        const stations = ((await response.json()) as { stations?: { slug?: string }[] }).stations ?? [];
+        for (const station of stations) {
+          if (!station.slug) continue;
+          const tracks = await fetch(`/api/stations/${station.slug}/tracks`, { cache: 'no-store' });
+          if (!tracks.ok) continue;
+          const rows = ((await tracks.json()) as { tracks?: { mediaUrl?: string | null }[] }).tracks ?? [];
+          if (rows.some((row) => row.mediaUrl)) return true;
+        }
+        return false;
+      });
+      if (!playable) {
+        test.skip(true, 'no station in this fixture has a playable track — nothing for the transport to start');
+      }
+
+      await expect(page.getByRole('button', { name: /^Pause\. Drag for/ })).toBeVisible();
+    });
+  }
 
   // The module tab is a route, not state: it must survive a reload and a
   // back-button press, which the prototype's local state did not.

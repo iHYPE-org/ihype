@@ -6,6 +6,7 @@ import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
 import { useRegisterPlayIntent } from '@/components/mmm/MmmPlayIntent';
+import { toQueue } from '@/lib/mmm-play';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
@@ -23,7 +24,7 @@ type SeedCard = MmmSeedItem & {
   /** The playable track, for the clip. Null when the row carries no media. */
   url: string | null;
 };
-type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number };
+type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number; mediaUrl: string | null; artworkUrl: string | null };
 type PlaylistRow = { id: string; name: string; count: number };
 type StationTrackRow = {
   id: string;
@@ -54,14 +55,19 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
 
 /* Preview-only rows make empty local accounts useful for design review. They
    never enter an API response or the database, and every surface carrying
-   them is visibly labelled DEMO CONTENT. Real rows always replace them. */
+   them is visibly labelled DEMO CONTENT. Real rows always replace them.
+
+   `mediaUrl: null` on every one is load-bearing now that the transport can
+   start a list: `toQueue` drops a row with no audio, so the joystick cannot
+   play demo content even on a surface that is showing it. A placeholder that
+   could be played is a placeholder that will be. */
 const DEMO_CHARTS: ChartRow[] = [
-  { id: 'demo-chart-1', title: 'Neon Weather', artistName: 'Velvet Static', artistSlug: '', hypeCount: 2841 },
-  { id: 'demo-chart-2', title: 'Southbound Signals', artistName: 'June Arcade', artistSlug: '', hypeCount: 2317 },
-  { id: 'demo-chart-3', title: 'Borrowed Light', artistName: 'Harborline', artistSlug: '', hypeCount: 1986 },
-  { id: 'demo-chart-4', title: 'No Fixed Address', artistName: 'Mara North', artistSlug: '', hypeCount: 1642 },
-  { id: 'demo-chart-5', title: 'Glassroom', artistName: 'Afterimage Club', artistSlug: '', hypeCount: 1298 },
-  { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044 },
+  { id: 'demo-chart-1', title: 'Neon Weather', artistName: 'Velvet Static', artistSlug: '', hypeCount: 2841, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-2', title: 'Southbound Signals', artistName: 'June Arcade', artistSlug: '', hypeCount: 2317, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-3', title: 'Borrowed Light', artistName: 'Harborline', artistSlug: '', hypeCount: 1986, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-4', title: 'No Fixed Address', artistName: 'Mara North', artistSlug: '', hypeCount: 1642, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-5', title: 'Glassroom', artistName: 'Afterimage Club', artistSlug: '', hypeCount: 1298, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044, mediaUrl: null, artworkUrl: null },
 ];
 
 const DEMO_RECOMMENDED: StationTrackRow[] = [
@@ -401,19 +407,11 @@ function RadioTab() {
         });
         if (!response.ok) throw new Error(String(response.status));
         const payload = (await response.json()) as { tracks?: StationTrackRow[] };
-        const queue = (payload.tracks ?? [])
-          // A row with no stored audio cannot be played; keeping it in the
-          // queue would stall the player on a dead entry.
-          .filter((row) => Boolean(row.mediaUrl))
-          .map((row) => ({
-            id: row.hexId,
-            mediaId: row.hexId,
-            title: row.title,
-            artistName: row.artistName,
-            url: row.mediaUrl as string,
-            artistProfileSlug: row.artistSlug ?? null,
-            artworkUrl: row.artworkUrl ?? null,
-          }));
+        /* `toQueue` is this mapping, moved to src/lib/mmm-play.ts so the chart,
+           the recommended list and the dock's radio fallback share it — and
+           share the filter that matters, which drops a row with no stored
+           audio rather than stalling the player on a dead entry. */
+        const queue = toQueue(payload.tracks ?? []);
         if (queue.length === 0) {
           setStationError(`${title} has no playable tracks yet.`);
           return;
@@ -427,6 +425,20 @@ function RadioTab() {
     },
     [playTrack],
   );
+
+  /* The station the joystick starts here. The first in the CURRENT filter, not
+     the first overall: the filter is what the member is looking at, so a tap
+     should start what is on screen. Registered before the early returns below,
+     because a hook cannot be called conditionally — with no data the callback
+     simply has no station to open and the dock falls through to its own radio
+     fallback. */
+  const filtered = (data ?? []).filter((station) =>
+    (RADIO_FILTERS.find((entry) => entry.id === filter) ?? RADIO_FILTERS[0]).kinds.includes(station.kind));
+  const firstStation = filtered[0];
+  useRegisterPlayIntent(useCallback(
+    () => { if (firstStation) void openStation(firstStation.slug, firstStation.title); },
+    [firstStation, openStation],
+  ));
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Radio is paused right now. Charts and Discover still work.</Empty>;
@@ -490,10 +502,24 @@ function RadioTab() {
  * than a fourth recommendation path, so the taxonomy stays one taxonomy.
  */
 function RecommendedTab() {
+  const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<StationTrackRow[]>(
     '/api/stations/friends/tracks?limit=25',
     (payload) => ((payload as { tracks?: StationTrackRow[] }).tracks ?? []),
   );
+
+  /* The whole list as one queue, started from the top by the joystick. These
+     rows have always carried `mediaUrl` and this surface only ever linked to the
+     track page with it, so a list of recommendations could be read and not
+     heard.
+
+     The ROWS stay links. Turning them into play buttons is a design change
+     nothing has asked for, and the transport is the control this is about. */
+  const queue = toQueue(data ?? []);
+  useRegisterPlayIntent(useCallback(
+    () => { if (queue[0]) playTrack(queue[0], queue); },
+    [playTrack, queue],
+  ));
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Recommendations are unavailable right now.</Empty>;
@@ -527,6 +553,7 @@ function RecommendedTab() {
 }
 
 function ChartsTab() {
+  const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<ChartRow[]>('/api/charts', (payload) => {
     const groups = payload as { national?: Array<Record<string, unknown>> };
     return (groups.national ?? []).slice(0, 20).map((row) => ({
@@ -535,8 +562,20 @@ function ChartsTab() {
       artistName: String(row.artistName ?? 'Unknown artist'),
       artistSlug: String(row.artistSlug ?? ''),
       hypeCount: Number(row.hypeCount ?? 0),
+      /* `/api/charts` has always returned these and this mapping dropped them,
+         so the chart was the one MUSIC surface with playable rows that could
+         not be played at all — not a missing feature, a discarded field. */
+      mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
+      artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
     }));
   });
+
+  // The chart from number one down. Rows stay links to the artist, as drawn.
+  const queue = toQueue(data ?? []);
+  useRegisterPlayIntent(useCallback(
+    () => { if (queue[0]) playTrack(queue[0], queue); },
+    [playTrack, queue],
+  ));
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Charts are unavailable right now.</Empty>;
