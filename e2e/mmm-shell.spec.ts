@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type BrowserContext, type Page } from '@playwright/test';
 import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
@@ -67,6 +67,45 @@ async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 
  * about the dial, so they navigate to the layer directly; the dial itself is
  * covered by its own tests above, and `?layer=` is what it pushes.
  */
+/**
+ * Whether the radio has any audio to play — asked ONCE, and cheaply.
+ *
+ * ## Why this is cached, and why it checks only the first station
+ *
+ * The first version of this walked EVERY station and fetched each one's tracks,
+ * inside `page.evaluate`, on every surface and every retry: eight stations
+ * across seven surfaces with three attempts is ~168 station-track queries
+ * through one long-lived `wrangler dev` process, on top of the rest of the
+ * suite. That run died with `V8 fatal error … JavaScript heap out of memory`
+ * after the process heap reached **1393 MB**, which killed the server and
+ * failed twenty tests with `ECONNREFUSED` — none of them about playback. The
+ * previous PR's version of this test used a DOM count and passed.
+ *
+ * So: two requests, cached for the whole file, and the FIRST station rather
+ * than any station — which is also a truer precondition, because
+ * `defaultStationSlug` is what the dock's fallback actually picks. If that
+ * station has no audio, the fallback cannot start anything, whatever the other
+ * seven hold.
+ *
+ * A test that needs a database is expensive by nature. Making the precondition
+ * cheap is the difference between expensive and fatal.
+ */
+let radioAudio: Promise<boolean> | null = null;
+function radioHasAudio(request: APIRequestContext): Promise<boolean> {
+  radioAudio ??= (async () => {
+    const list = await request.get('/api/stations');
+    if (!list.ok()) return false;
+    const stations = ((await list.json()) as { stations?: { slug?: string }[] }).stations ?? [];
+    const slug = stations.find((station) => station.slug)?.slug;
+    if (!slug) return false;
+    const tracks = await request.get(`/api/stations/${slug}/tracks`);
+    if (!tracks.ok()) return false;
+    const rows = ((await tracks.json()) as { tracks?: { mediaUrl?: string | null }[] }).tracks ?? [];
+    return rows.some((row) => row.mediaUrl);
+  })();
+  return radioAudio;
+}
+
 async function showLayer(page: Page, layer: 'events' | 'venues' | 'artists') {
   await page.goto(`/app/map?layer=${layer}`);
   /* `.first()`, because during a soft navigation React can have the outgoing
@@ -284,37 +323,25 @@ test.describe('Music · Map · Me shell', () => {
     '/app/music/discover', '/app/music/radio', '/app/music/charts',
     '/app/music/recommended', '/app/music/playlists',
   ] as const) {
-    test(`the joystick starts playback on ${surface}`, async ({ page }) => {
+    test(`the joystick starts playback on ${surface}`, async ({ page, request }) => {
+      /* Asked before the page loads, and cached across the file — see
+         `radioHasAudio`. A fixture with no playable audio cannot start
+         anything, and the honest result there is a skip rather than accepting
+         either outcome. */
+      const playable = await radioHasAudio(request);
+
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);
       await expect(page.locator('.mmm-dock')).toBeVisible();
 
       const play = page.getByRole('button', { name: /^Play\. Drag for/ });
       await expect(play, 'the transport should offer Play before anything is loaded').toBeVisible();
-      await play.click();
 
-      /* A seeded fixture may have no playable audio anywhere — no stations, no
-         chart, no card with a stored URL — in which case nothing can start and
-         the honest result is that the label has not flipped. Distinguished from
-         a broken transport by checking that SOMETHING is playable first, rather
-         than by accepting either outcome. */
-      const playable = await page.evaluate(async () => {
-        const response = await fetch('/api/stations', { cache: 'no-store' });
-        if (!response.ok) return false;
-        const stations = ((await response.json()) as { stations?: { slug?: string }[] }).stations ?? [];
-        for (const station of stations) {
-          if (!station.slug) continue;
-          const tracks = await fetch(`/api/stations/${station.slug}/tracks`, { cache: 'no-store' });
-          if (!tracks.ok) continue;
-          const rows = ((await tracks.json()) as { tracks?: { mediaUrl?: string | null }[] }).tracks ?? [];
-          if (rows.some((row) => row.mediaUrl)) return true;
-        }
-        return false;
-      });
       if (!playable) {
-        test.skip(true, 'no station in this fixture has a playable track — nothing for the transport to start');
+        test.skip(true, 'the default station has no playable track — nothing for the transport to start');
       }
 
+      await play.click();
       await expect(page.getByRole('button', { name: /^Pause\. Drag for/ })).toBeVisible();
     });
   }
