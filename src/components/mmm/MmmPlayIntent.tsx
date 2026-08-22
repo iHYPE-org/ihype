@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 /**
  * What the dock's joystick should PLAY when nothing is loaded yet.
@@ -37,6 +37,21 @@ type Registry = {
   register: (intent: (() => void) | null) => void;
 };
 
+type Held = { run: () => void } | null;
+
+/**
+ * The state transition, pure and exported so it can be tested without a DOM.
+ *
+ * Returning the SAME reference for an unchanged registration is the whole point:
+ * a new `{ run }` wrapper on every call re-renders every consumer of this
+ * context, and combined with an unstable `register` that was an unbounded loop.
+ */
+export function nextHeld(previous: Held, intent: (() => void) | null): Held {
+  if (!intent) return previous === null ? previous : null;
+  if (previous && previous.run === intent) return previous;
+  return { run: intent };
+}
+
 const MmmPlayIntentContext = createContext<Registry>({ intent: null, register: () => {} });
 
 export function MmmPlayIntentProvider({ children }: { children: ReactNode }) {
@@ -44,10 +59,29 @@ export function MmmPlayIntentProvider({ children }: { children: ReactNode }) {
      updater — `setState(fn)` would CALL it instead of storing it, which here
      means starting playback at registration time. */
   const [held, setHeld] = useState<{ run: () => void } | null>(null);
-  const value = useMemo<Registry>(() => ({
-    intent: held ? held.run : null,
-    register: (intent) => setHeld(intent ? { run: intent } : null),
-  }), [held]);
+
+  /**
+   * Two properties, and the first draft of this file had NEITHER. It shipped an
+   * unbounded render loop that took the Workerd server down in CI and failed 18
+   * tests as collateral, which is the only reason it was caught at all.
+   *
+   * 1. **`register` must be stable.** It was rebuilt inside a `useMemo` keyed on
+   *    `held`, and the consumer's effect depends on it — so every registration
+   *    changed `held`, which changed `register`, which re-ran the effect.
+   *    `MmmStations` gets this for free by handing out `setRegistered` itself;
+   *    an empty-dep `useCallback` is the same guarantee written down.
+   * 2. **Setting the same intent must be a no-op.** Even with a stable
+   *    `register`, allocating a fresh `{ run }` on every call makes `held` a new
+   *    reference each time and re-renders every consumer of this context. The
+   *    functional update compares the function it already holds and keeps the
+   *    existing wrapper, so a re-run cannot churn.
+   */
+  const register = useCallback((intent: (() => void) | null) => setHeld((previous) => nextHeld(previous, intent)), []);
+
+  const value = useMemo<Registry>(
+    () => ({ intent: held ? held.run : null, register }),
+    [held, register],
+  );
   return <MmmPlayIntentContext.Provider value={value}>{children}</MmmPlayIntentContext.Provider>;
 }
 

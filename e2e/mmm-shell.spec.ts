@@ -69,7 +69,13 @@ async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 
  */
 async function showLayer(page: Page, layer: 'events' | 'venues' | 'artists') {
   await page.goto(`/app/map?layer=${layer}`);
-  await expect(page.locator('.mmm-map-canvas')).toBeVisible();
+  /* `.first()`, because during a soft navigation React can have the outgoing
+     and incoming trees mounted at once and this resolved to TWO canvases —
+     a strict-mode violation that fails the helper rather than the test using
+     it. The claim here is "a map canvas is on screen", not "exactly one": the
+     single-instance guarantee is what `the map element is not remounted`
+     asserts, and it does so with a tagged node rather than a count. */
+  await expect(page.locator('.mmm-map-canvas').first()).toBeVisible();
 }
 
 test.describe('Music · Map · Me shell', () => {
