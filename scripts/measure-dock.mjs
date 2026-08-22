@@ -26,9 +26,14 @@
  *
  *   · **the two knobs match** — the handoff: "both knobs are 74px, matched …
  *     if one is smaller the dock looks broken";
- *   · **the cap fits** — the design system draws the module readout at 8.5px,
- *     which its own floor forbids; at the floor "MUSIC" overflowed a 74px knob's
- *     cap by 10px, which is why `mmm.css` corrects it;
+ *   · **the cap readout is not cut off and stays inside its knob** — the design
+ *     system draws it at 8.5px, which its own floor forbids, and at the floor
+ *     "MUSIC" needed 52px in a 42px cap, which is why `mmm.css` takes it to the
+ *     tracked-mono floor instead. Note what is NOT asserted: a few px of
+ *     overhang past the cap circle. The cap hides no overflow, so that is a
+ *     visible label sitting proud of the brass rather than a clipped one, and
+ *     its exact value is a function of font rasterisation — it differs between
+ *     this sandbox and a CI runner, so gating on it gates on the machine;
  *   · **the station name is not clipped** — a destination you cannot read is the
  *     exact failure the dial exists to fix;
  *   · **the chevrons still take their own taps** — the correction above widens
@@ -182,9 +187,33 @@ for (const width of WIDTHS) {
       dialW: Math.round(kids[1].width),
       cap: cap.textContent,
       capPx: parseFloat(getComputedStyle(cap).fontSize),
-      /* Letter-spacing adds space AFTER the last glyph, so 1px of overflow on a
-         tracked cap is that trailing space and clips no ink. */
-      capOverflow: Math.round(cap.scrollWidth - cap.clientWidth),
+      /* Two different questions, and the first one is the one that matters.
+ 
+         CLIPPED: is any ink actually cut off? Only if something between the text
+         and the knob hides its overflow. The vendored cap sets no `overflow`, so
+         a label wider than the cap overhangs the brass circle — visible, not
+         cut. Asserting on the raw scrollWidth delta instead measured font
+         RASTERISATION: the same cap reports 1px in one sandbox and 3px on a
+         GitHub runner, so a threshold tuned on one machine fails on the other,
+         which is exactly the trap the Lighthouse budgets in this repo already
+         document. This is an absolute measure instead.
+ 
+         SPILL: does the readout escape the knob it belongs to? That is the real
+         geometric limit — a legend running out over the dock is broken whether
+         or not it is clipped. */
+      capClipped: (() => {
+        let node = cap;
+        while (node && node !== dock) {
+          const { overflowX } = getComputedStyle(node);
+          if (overflowX === 'hidden' || overflowX === 'clip') {
+            return Math.max(0, Math.round(node.scrollWidth - node.clientWidth));
+          }
+          node = node.parentElement;
+        }
+        return 0;
+      })(),
+      capSpill: Math.max(0, Math.round(cap.scrollWidth - kids[0].width)),
+      capOverhang: Math.round(cap.scrollWidth - cap.clientWidth),
       station: station.textContent,
       stationPx: parseFloat(getComputedStyle(station).fontSize),
       stationClipped: Math.round(station.scrollWidth - station.clientWidth),
@@ -202,7 +231,7 @@ if (JSON_OUT) {
   console.log('\n  width  dock  knobs      dial   cap            station                    chevrons');
   for (const r of rows) {
     console.log(`  ${String(r.width).padStart(5)}  ${String(r.dockH).padStart(4)}  ${`${r.knobs[0]}/${r.knobs[1]}`.padEnd(9)}  ${String(r.dialW).padStart(4)}   `
-      + `"${r.cap}" ${r.capPx}px${r.capOverflow > 1 ? ` OVER ${r.capOverflow}` : ''}`.padEnd(15)
+      + `"${r.cap}" ${r.capPx}px${r.capClipped ? ` CLIPPED ${r.capClipped}` : r.capSpill ? ` SPILLS ${r.capSpill}` : ''}`.padEnd(15)
       + `  "${r.station}" ${r.stationPx}px${r.stationClipped ? ` CLIPPED ${r.stationClipped}` : ''}`.padEnd(27)
       + `  ${r.chevrons.join(' / ')}`);
   }
@@ -212,7 +241,20 @@ const problems = [];
 for (const r of rows) {
   if (!r.oneRow) problems.push(`${r.width}px: the dock wrapped onto two rows.`);
   if (r.knobs[0] !== r.knobs[1]) problems.push(`${r.width}px: the knobs disagree (${r.knobs.join(' vs ')}) — the handoff says matched.`);
-  if (r.capOverflow > 1) problems.push(`${r.width}px: the knob cap overflows by ${r.capOverflow}px on "${r.cap}".`);
+  if (r.capClipped) problems.push(`${r.width}px: "${r.cap}" is cut off in the knob cap by ${r.capClipped}px.`);
+  if (r.capSpill) problems.push(`${r.width}px: "${r.cap}" spills ${r.capSpill}px outside the knob.`);
+  /* The overhang past the cap circle, tolerated in PROPORTION TO THE TYPE rather
+     than as a fixed px. The defect this check exists for was "MUSIC" at the 15px
+     content floor needing 52px in a 42px cap — 10px proud of the brass, which
+     reads as broken. The noise it must not fail on is font rasterisation: the
+     same 11px cap measures 1px of overhang in one sandbox and 3px on a CI
+     runner. 0.4em separates them (4.4px at 11px, 6px at 15px) and scales with
+     whatever size the design system settles on, so this cannot be re-tuned into
+     a machine-specific threshold again. */
+  const overhangBudget = r.capPx * 0.4;
+  if (r.capOverhang > overhangBudget) {
+    problems.push(`${r.width}px: "${r.cap}" sits ${r.capOverhang}px proud of the knob cap (budget ${overhangBudget.toFixed(1)}px at ${r.capPx}px type).`);
+  }
   if (r.pageScrollW > r.width) problems.push(`${r.width}px: the page scrolls sideways (${r.pageScrollW}px).`);
   if (!r.chevrons.every((hit) => /station/i.test(hit))) problems.push(`${r.width}px: a step chevron is covered (${r.chevrons.join(', ')}).`);
   /* 320px is below MOBILE.md's design width and ellipsises the longest of the
