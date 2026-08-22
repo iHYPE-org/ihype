@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { resolveDoTimeoutMs } from '@/lib/rate-limit';
 
-const DEFAULT = 750;
+// Mirrors DEFAULT_DO_TIMEOUT_MS in src/lib/rate-limit.ts, which is not
+// exported. Raised 750 -> 1800 on 2026-08-22; see the comment above that
+// constant for the latency arithmetic.
+const DEFAULT = 1800;
 
 describe('resolveDoTimeoutMs', () => {
   it('falls back to the default when nothing is configured', () => {

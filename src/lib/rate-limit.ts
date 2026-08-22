@@ -62,17 +62,36 @@ export function rateLimitKey(prefix: string, userId: string | undefined, ip: str
   return userId ? `${prefix}:user:${userId}` : `${prefix}:ip:${ip ?? 'unknown'}`;
 }
 
-const DEFAULT_KV_TIMEOUT_MS = 1500;
+const DEFAULT_KV_TIMEOUT_MS = 1000;
 
 /**
- * The DO deadline is deliberately much shorter than the KV one. A rate-limit
- * check sits in front of the request it guards, so its cost is added to every
- * response; waiting 1.5s for a counter and *then* still having to run the KV
- * fallback meant a degraded limiter could add ~3s of latency to a request that
- * was going to be allowed anyway. 750ms is far above a healthy DO round-trip
- * (single-digit to low-hundreds of ms) while leaving room for the fallback.
+ * The DO deadline is deliberately shorter than the KV one, and the pair has a
+ * combined budget rather than two independent ones. A rate-limit check sits in
+ * front of the request it guards, so its cost is added to every response;
+ * waiting 1.5s for a counter and *then* still having to run the KV fallback
+ * meant a degraded limiter could add ~3s of latency to a request that was going
+ * to be allowed anyway. That reasoning still holds, and 3s is still the number
+ * being refused — the arithmetic below is what changed.
+ *
+ * Raised 750ms → 1800ms on 2026-08-22, with KV cut 1500ms → 1000ms so the worst
+ * case (DO deadline expires, KV deadline expires) is 2.8s, still under the 3s
+ * this comment has always rejected. The evidence: Sentry shows
+ * `POST /api/discover/seeds/[id]/save` timing out at 750ms 158 times and still
+ * counting, and each of those timeouts drops that bucket to the KV fallback at
+ * *half* its configured limit — a refusal the member sees, caused by the
+ * limiter rather than by their own traffic. 52 of the 57 buckets in this file
+ * run on this default; only the five auth buckets carry an explicit
+ * `timeoutMs: 2500`.
+ *
+ * 750ms was measured against a warm instance, and that is the wrong shape for
+ * most buckets here. A bucket keyed per user (or per IP) on an endpoint one
+ * person hits a handful of times a week has an object that is evicted between
+ * uses, so nearly every call pays a cold start — the same finding that put
+ * 2500ms on the auth buckets in the first place. This generalises it to the
+ * default instead of leaving 52 buckets on a deadline chosen for a case they
+ * are not in.
  */
-const DEFAULT_DO_TIMEOUT_MS = 750;
+const DEFAULT_DO_TIMEOUT_MS = 1800;
 
 function getKvTimeoutMs() {
   const parsed = Number.parseInt(process.env.RATE_LIMIT_KV_TIMEOUT_MS ?? '', 10);
