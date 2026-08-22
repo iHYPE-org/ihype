@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { JoystickTransport } from '@/components/ds/JoystickTransport';
 import { RotaryNav } from '@/components/ds/RotaryNav';
 import { MmmTuner } from '@/components/mmm/MmmTuner';
+import { usePlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { useRegisteredStations } from '@/components/mmm/MmmStations';
 import { MMM_NAV, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
 
@@ -73,6 +74,20 @@ export function MmmDock({
   /* A page's own section set wins over the module's — a profile's tabs are what
      the dial should tune while you are on a profile. See MmmStations.tsx: the
      page registers, the dock tunes, and neither draws a second control. */
+  /* What the surface on screen offers to START, when nothing is loaded. The
+     joystick is wired to the global player, but a tap does nothing while
+     `canTogglePlay` is false — so on a freshly opened app the whole transport
+     was inert and the only way in was a play button drawn inside a card. That
+     reads as "the joystick isn't connected to the player", which is what it was
+     reported as, and the wiring was never the problem.
+
+     ORed rather than replaced: with a track loaded the tap must still be
+     pause, and the intent is only the answer to "there is nothing to pause
+     yet". See MmmPlayIntent.tsx. */
+  const playIntent = usePlayIntent();
+  const canPlay = canTogglePlay || playIntent !== null;
+  const togglePlay = canTogglePlay ? onTogglePlay : (playIntent ?? onTogglePlay);
+
   const registered = useRegisteredStations();
   const fallback = stationsForPath(pathname, { layer });
   const stations = registered?.stations ?? fallback.stations;
@@ -104,12 +119,12 @@ export function MmmDock({
       <MmmTuner active={active} label={label} onSelect={select} stations={stations} />
 
       <JoystickTransport
-        canTogglePlay={canTogglePlay}
+        canTogglePlay={canPlay}
         onCollapse={onCollapse}
         onExpand={onExpand}
         onNext={onNext}
         onPrev={onPrev}
-        onTogglePlay={onTogglePlay}
+        onTogglePlay={togglePlay}
         playing={playing}
         size={KNOB}
       />

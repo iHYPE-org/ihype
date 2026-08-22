@@ -314,7 +314,7 @@ export function MmmSeedDeck({
             onPointerDown={(event) => event.stopPropagation()}
             type="button"
           >
-            <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+            <span aria-hidden="true">{playing ? '❚❚' : '▶︎'}</span>
           </button>
 
           {/* The verdict the drag is about to commit, stated before release. */}

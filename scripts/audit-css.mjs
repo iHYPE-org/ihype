@@ -148,13 +148,68 @@ function buildHaystack() {
     .join('\n');
 }
 
+/**
+ * A comment sitting INSIDE a selector, which silently changes what it matches.
+ *
+ * A comment is whitespace to a CSS parser, so this:
+ *
+ *   .a  /* why *\/  .a > .b { … }
+ *
+ * is not `.a > .b` with a note attached — it is `.a .a > .b`, a descendant
+ * combinator, and if no `.a` is ever nested inside another `.a` the rule never
+ * applies to anything. Valid CSS, no error, nothing for the override check to
+ * see, and no dead class either, because the class names are all real.
+ *
+ * That is not hypothetical: `.mmm-music-controls > .mmm-search-wrap` shipped
+ * this way, so the rule that stops a 300px flex-basis becoming 300px of HEIGHT
+ * in a column never ran. The result was 273px of empty space between the search
+ * bar on MUSIC and the first card under it, with the deck pushed below the fold
+ * — reported from a phone as "space between search and content too wide
+ * requires scroll". The comment explaining the fix was the reason the fix was
+ * absent.
+ *
+ * Detected on the RAW source, before comments are stripped: a `/*` whose line
+ * has selector-ish text before it (no `;`, `{`, `}` or `,` terminator) and which
+ * does not close on that same line has swallowed a newline into a selector.
+ */
+function commentsInsideSelectors(raw) {
+  const found = [];
+  const lines = raw.split('\n');
+  let inComment = false;
+  for (const [index, line] of lines.entries()) {
+    if (inComment) {
+      if (line.includes('*/')) inComment = false;
+      continue;
+    }
+    const at = line.indexOf('/*');
+    if (at < 0) continue;
+    const closes = line.indexOf('*/', at) >= 0;
+    if (!closes) inComment = true;
+    const before = line.slice(0, at).trim();
+    /* Terminated text is a declaration or the end of a block, and a comment
+       after it is ordinary documentation. Bare text is a selector fragment. */
+    if (!before || /[;{},]$/.test(before)) continue;
+    found.push({ line: index + 1, before: before.slice(0, 70) });
+  }
+  return found;
+}
+
 let overrideCount = 0;
 let deadCount = 0;
+let splitSelectorCount = 0;
 const haystack = buildHaystack();
 
 for (const file of CSS_FILES) {
-  const css = stripComments(readFileSync(file, 'utf8'));
+  const raw = readFileSync(file, 'utf8');
+  const css = stripComments(raw);
   const rules = parseRules(css);
+
+  const split = commentsInsideSelectors(raw);
+  if (split.length) {
+    splitSelectorCount += split.length;
+    console.log(`\n${file} — ${split.length} comment(s) inside a selector:`);
+    for (const s of split) console.log(`     line ${s.line}: after \`${s.before}\``);
+  }
 
   if (!OVERRIDE_EXEMPT.has(file)) {
     const overrides = findOverrides(rules);
@@ -183,7 +238,18 @@ for (const file of CSS_FILES) {
 }
 
 console.log('\n' + '─'.repeat(64));
-console.log(`overriding redefinitions: ${overrideCount}   dead classes: ${deadCount} (advisory)`);
+console.log(`overriding redefinitions: ${overrideCount}   comments inside selectors: ${splitSelectorCount}   dead classes: ${deadCount} (advisory)`);
+
+/* Unconditional, and not part of the --max ratchet: this is never pre-existing
+   debt to be paid down, it is a rule that does not do what it says. */
+if (splitSelectorCount > 0) {
+  console.error(
+    `\nFAIL: ${splitSelectorCount} comment(s) sit inside a selector, joining it to the next one.\n` +
+    'The rule matches something other than what it appears to. Move the comment\n' +
+    'above the whole selector.',
+  );
+  process.exit(1);
+}
 
 const FAIL_MSG =
   '\nA selector is defined more than once and the later block wins.\n' +

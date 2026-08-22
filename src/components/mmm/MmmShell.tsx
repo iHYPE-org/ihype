@@ -6,6 +6,7 @@ import { MmmDock } from '@/components/mmm/MmmDock';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
+import { MmmPlayIntentProvider } from '@/components/mmm/MmmPlayIntent';
 import { MmmStationsProvider } from '@/components/mmm/MmmStations';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { isMmmDetailPath, moduleForPath } from '@/lib/mmm-nav';
@@ -308,6 +309,7 @@ export function MmmShell({
 
   return (
     <MmmStationsProvider>
+      <MmmPlayIntentProvider>
       <div className="mmm-frame">
         <MmmMap active={mapActive} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
 
@@ -363,10 +365,10 @@ export function MmmShell({
         />
 
         {/* The whole of the chrome. One walnut dock, three controls, every
-            width — see MmmDock.tsx. `canTogglePlay` is false when there is no
-            real track: a tap then does nothing, and the drag directions still
-            work, which is the vendored component's own contract rather than a
-            disabled control that looks broken. */}
+            width — see MmmDock.tsx. `canTogglePlay` says whether there is a
+            track to pause; the dock ORs it with whatever the surface has
+            registered to start (MmmPlayIntent.tsx), so a tap on a freshly
+            opened app plays something instead of nothing. */}
         <MmmDock
           canTogglePlay={Boolean(currentTrack)}
           layer={requestedLayer ?? null}
@@ -379,6 +381,7 @@ export function MmmShell({
           playing={Boolean(currentTrack) && isPlaying}
         />
       </div>
+      </MmmPlayIntentProvider>
     </MmmStationsProvider>
   );
 }

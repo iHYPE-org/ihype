@@ -69,7 +69,13 @@ async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 
  */
 async function showLayer(page: Page, layer: 'events' | 'venues' | 'artists') {
   await page.goto(`/app/map?layer=${layer}`);
-  await expect(page.locator('.mmm-map-canvas')).toBeVisible();
+  /* `.first()`, because during a soft navigation React can have the outgoing
+     and incoming trees mounted at once and this resolved to TWO canvases —
+     a strict-mode violation that fails the helper rather than the test using
+     it. The claim here is "a map canvas is on screen", not "exactly one": the
+     single-instance guarantee is what `the map element is not remounted`
+     asserts, and it does so with a tagged node rather than a count. */
+  await expect(page.locator('.mmm-map-canvas').first()).toBeVisible();
 }
 
 test.describe('Music · Map · Me shell', () => {
@@ -250,6 +256,41 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-full')).toHaveCount(0);
     // And the gesture left the dock intact.
     await expect(page.locator('.mmm-dock')).toBeVisible();
+  });
+
+  /* The joystick can START playback, not only pause what is already playing.
+     Before MmmPlayIntent the dock passed `canTogglePlay={Boolean(currentTrack)}`
+     straight through, and the vendored component makes a tap a no-op when that
+     is false — so on a freshly opened app the entire transport was inert and the
+     only way in was a play button drawn inside a card. Reported as "media
+     joystick not connected to player".
+
+     Asserted on the joystick's own accessible name, which the vendored
+     component swaps between Play and Pause from the `playing` prop. That is the
+     shortest honest proof that the tap reached the real media player: nothing
+     in the dock computes it, and it only flips once a track is actually
+     current. */
+  test('the joystick starts playback with nothing loaded', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto('/app/music/discover');
+
+    const transport = page.getByRole('button', { name: /^Play\. Drag for/ });
+    await expect(transport).toBeVisible();
+
+    /* The deck needs a seeded card with a playable URL to offer an intent, and
+       this suite's fixture may have none — in which case the honest assertion
+       is that the control is present and the tap is harmless, not that audio
+       began. Skipping on an empty deck keeps the test from passing for the
+       wrong reason on a seeded run. */
+    const deck = page.locator('.mmm-deck-card');
+    if (await deck.count() === 0) {
+      test.skip(true, 'no seeded card on this deck — nothing for the transport to start');
+    }
+
+    await transport.click();
+    // Play -> Pause is the label flip, and it comes from the media player's own
+    // state rather than from anything the dock holds.
+    await expect(page.getByRole('button', { name: /^Pause\. Drag for/ })).toBeVisible();
   });
 
   // The module tab is a route, not state: it must survive a reload and a

@@ -255,6 +255,48 @@ const EMOJI_EXEMPT = [
   'ShowComments.tsx',
 ];
 
+
+/**
+ * `\u25c0` and `\u25b6` without a text-presentation selector.
+ *
+ * Both carry `Emoji=Yes` — an emoji variant exists — even though their default
+ * is text presentation, and WebKit serves the colour glyph from Apple Color
+ * Emoji anyway. On a real iPhone every one of these renders as a BLUE ROUNDED
+ * SQUARE, which is how the console dock's joystick shipped drawing three of
+ * them in a row, and how four play buttons across the app shipped as blue
+ * emoji on a walnut-and-brass surface. `\u25b2` and `\u25bc` have no emoji
+ * variant and are unaffected — which is exactly why the bug looked arbitrary.
+ *
+ * The fix is to follow the glyph with U+FE0E, VARIATION SELECTOR-15, which
+ * requests text presentation. That is the OPPOSITE of the U+FE0F this file's
+ * sibling emoji rules and `audit:design` are about, so it does not make these
+ * emoji under DS8 §29.
+ *
+ * A desktop browser cannot see this, no test can assert a font choice, and the
+ * glyphs are correct-looking in source. A lint rule is the only thing that
+ * catches it, and `vendor:ds` applies the same transform to the generated
+ * components so both halves of the app are covered.
+ */
+const EMOJI_CAPABLE_GLYPH = /[\u25c0\u25b6](?![\ufe0e\ufe0f])/;
+
+/**
+ * Comments collapsed to NEWLINES, not to nothing.
+ *
+ * Scoped this way because the glyph rule above is about what RENDERS, and these
+ * files describe the joystick's own directions in prose — `MmmDock.tsx`'s
+ * docstring names all four, and a comment does not need a variation selector.
+ *
+ * Newlines rather than a space, so a reported line number still points at the
+ * line it was found on. `audit:retro` collapsed block comments to a single
+ * space and silently lost every `design-exempt` marker to the resulting
+ * off-by-N; the same mistake is available here.
+ */
+function withoutComments(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, (match) => match.replace(/[^\n]/g, ''))
+    .replace(/(^|[^:])\/\/[^\n]*/g, (match, lead) => lead);
+}
+
 for (const file of sourceFiles) {
   const content = await text(file);
   if (/\beval\s*\(/.test(content)) fail(file, 'eval() is forbidden.');
@@ -270,6 +312,9 @@ for (const file of sourceFiles) {
     }
     if (shorthandPxFontSize.test(content)) {
       fail(file, 'a px size in the `font:` shorthand ignores the Text size accessibility setting — use rem (px / 16).');
+    }
+    if (EMOJI_CAPABLE_GLYPH.test(withoutComments(content))) {
+      fail(file, 'a bare \u25c0 or \u25b6 renders as a blue emoji square on iOS — follow it with \\ufe0e (VARIATION SELECTOR-15) to request text presentation.');
     }
     if (ACCENT_AS_TEXT.test(content)) {
       fail(file, '--accent is a fill, not copy: 2.48:1 on the console ground. Use --accent-text for a word, --ink-on-accent for a label on the fill.');
