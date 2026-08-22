@@ -19,6 +19,7 @@
     "audit:css": "node scripts/audit-css.mjs",
     "audit:contrast": "node scripts/audit-theme-contrast.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
+    "audit:spacing": "node scripts/audit-spacing.mjs",
     "fonts:fetch": "node scripts/fetch-fonts.mjs",
     "seed:admin-preview": "node --import dotenv/config scripts/seed-admin-preview-profiles.mjs",
     "seed:preview": "node --import dotenv/config scripts/seed-preview-content.mjs",
