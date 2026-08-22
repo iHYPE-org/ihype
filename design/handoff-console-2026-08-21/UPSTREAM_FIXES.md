@@ -227,11 +227,11 @@ below 620px and the 420px column above it.
 
 **Ask:** size it against the column rather than the viewport.
 
-## 12 · The map's tone treatment erases the coastline · **do not adopt**
+## 12 · The map filter clips before the tone lands — the ORDER is the defect
 
 `map.html` filters its tiles `sepia(.92) saturate(.52) contrast(1.06)
-brightness(1.04) hue-rotate(-8deg)`. Run over OSM's own palette — which is what
-that file loads — in sRGB, as CSS filters are specified:
+brightness(1.04) hue-rotate(-8deg)`. Run over OSM's own palette — which that
+file loads — in sRGB, as CSS filters are specified:
 
 | | before | after |
 |---|---|---|
@@ -240,19 +240,31 @@ that file loads — in sRGB, as CSS filters are specified:
 | **water/land contrast** | | **1.02:1** |
 | **hue separation** | | **0 degrees** |
 
-The harbour and the land come out the same colour. On a coastal city — this city
-— land-versus-water is the most important distinction on the sheet. On CARTO
-voyager, which this app loads deliberately for its already-cream land, the same
-filter gives 1.08:1 and 17 degrees: no better.
+The harbour and the land come out the same colour. **This entry previously
+concluded "do not adopt the sepia", and that was wrong** — the fault is not the
+sepia, it is that `brightness` is applied LAST. The sepia matrix has row sums of
+1.35 (red) and 1.20 (green), so a near-white basemap tile clips at 255 in both
+channels and emerges white with a faint yellow cast; `brightness(1.04)`
+guarantees it.
 
-**Shipped instead:** a hue-preserving tone (`sepia(.22) contrast(1.08)
-brightness(.98)`) at **1.50:1 and 147 degrees** — plus, newly adopted from
-`map.html`, its **ruled chart grid**: `repeating-linear-gradient` at 0deg and
-90deg, a hairline every 33px both ways. That grid is what reads as an old survey
-chart, and its absence was the actual complaint ("map is grainy but doesn't have
-the vintage overlay I want from design").
+**Shipped here instead:** `brightness(.72) sepia(1) saturate(1.1)
+contrast(1.15)` — darken first, so the tone has somewhere to live. Measured on
+CARTO voyager and rendered in Chromium with the grain overlay composited:
 
-**Ask:** keep the grid, drop the sepia, or state a tone that holds a coastline.
+| | water | land | water/land | land hue / sat |
+|---|---|---|---|---|
+| this bundle's order | `#fff6df` | `#ffffff` | 1.02–1.08:1 | 60° / 0% |
+| darken-then-sepia | `#c8ae7f` | `#ffe3a7` | **1.71:1** | 41° / 35% |
+
+So full sepia separates land from water BETTER than the hue-preserving tone it
+replaces, because the separation becomes tonal rather than chromatic — which is
+what a sepia print is. Pin ink stays at 12.7:1 on land and 7.5:1 on water.
+
+The ruled chart grid from the same file IS adopted verbatim and is the cue that
+makes it read as a survey chart rather than a filtered map.
+
+**Ask:** move `brightness` to the front of the chain and take it below 1. The
+tone this bundle is reaching for is available; the order is what withholds it.
 
 ## 13 · `TunerDial` cannot step twice before its `active` prop catches up
 

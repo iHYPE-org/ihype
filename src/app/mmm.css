@@ -184,64 +184,59 @@ html.mmm-locked .site-shell > main {
    venues at real coordinates, so the geography cannot be replaced — only the
    printing can.
 
-   ## Why this is NOT a sepia filter, which is the obvious answer
+   ## It IS sepia now, and the previous conclusion here was wrong
 
-   Rendered against a real downtown tile, every sepia-led variant destroyed the
-   map: `sepia()` collapses hue, so Portland's harbour became the same tan as
-   the land it borders. On a coastal city — this city — land-versus-water is
-   the most important distinction on the sheet, and a treatment that erases it
-   is not a style, it is damage. Five variants were rendered side by side
-   before this was believed.
+   This block used to argue at length that sepia was the obvious answer and the
+   wrong one, on the grounds that it collapses hue and turns Portland's harbour
+   into the same tan as the land beside it. The measurements behind that were
+   right and the conclusion drawn from them was not. What destroys the coastline
+   is not sepia — it is applying sepia to a near-white tile.
 
-   So the tone is HUE-PRESERVING: a light warm cast, a little more contrast,
-   and a paper wash. CARTO's `voyager` basemap already has cream land, tan
-   blocks and blue water — it is most of the way to a vintage chart before we
-   touch it, which is why it replaced `positron`, whose deliberately washed-out
-   palette had nothing in it to age. */
+   voyager's land is `#faf7f0`. The sepia matrix has row sums of 1.35 (red) and
+   1.20 (green), so a near-white pixel CLIPS at 255 in both and comes out white
+   with a faint yellow cast; there is no tone left to see. `map.html`'s own
+   filter ends with `brightness(1.04)`, which makes it worse, and that is why it
+   measured 1.02:1 with zero degrees of hue separation. The fault was the ORDER,
+   not the sepia.
+
+   Darkening FIRST gives the tone somewhere to live. Measured in sRGB, as CSS
+   filters are specified, and then rendered in Chromium against voyager's real
+   palette with this file's own grain overlay on top:
+
+                              water     land    water/land   land hue/sat
+     sepia .22 (before)      #b7d1e6  #fafaf2     1.50:1      60deg   3%
+     map.html's own filter   #fff6df  #ffffff     1.08:1      60deg   0%
+     brightness .72 + sepia  #c8ae7f  #ffe3a7     1.71:1      41deg  35%
+
+   So full `sepia(1)` reads as a sepia print AND separates land from water
+   BETTER than the hue-preserving version it replaces — 1.69:1 against 1.50:1
+   once the overlay is composited. The separation is tonal rather than chromatic,
+   which is what a sepia photograph is.
+
+   Legibility was checked on the composited ground rather than assumed: pin ink
+   measures 12.72:1 on land and 7.52:1 on water (was 15.07 and 10.04), both far
+   clear of AA. `--accent` as a bare fill drops 2.70 -> 2.28 against land, which
+   is why it stays a pin's stem and border and never its label.
+
+   Do not "restore" the light cast on the grounds that the map looks dark: it is
+   darker on purpose, because that is the only way a white tile can hold a tone. */
 .mmm-map-canvas {
   position: absolute;
   inset: 0;
-  filter: sepia(0.22) saturate(1) contrast(1.08) brightness(0.98);
+  /* Order is load-bearing. `brightness` LAST clips the highlights before the
+     tone lands and gives back the white map this replaced. */
+  filter: brightness(0.72) sepia(1) saturate(1.1) contrast(1.15);
 }
 /* Paper, foxing, a RULED CHART GRID and a vignette, over the tiles but under
    the pins. On the LAYER rather than the canvas so the accent pins and the
    controls above keep their own colour — toning the container would drag them
    to mud with the basemap. Decoration, so it must never eat a drag.
 
-   ## The grid is the vintage overlay, and it was the missing piece
-
-   Reported 2026-08-22: "Map is grainy but doesn't have the vintage overlay I
-   want from design." Both halves of that are exactly right. The wash, the
-   foxing and the vignette were here; the design's `.grain` also draws a ruled
-   grid — `repeating-linear-gradient` at 0deg AND 90deg, a hairline every 33px
-   in both directions — and that is the single cue that reads as an old survey
-   chart rather than as a modern map with a filter on it. Nothing else in the
-   stack was going to supply it.
-
-   Values are `templates/console-shell/map.html`'s own: 33/34px pitch,
-   `rgba(120,94,52,.09)` rules, and its stronger `rgba(120,94,52,.28)` vignette
-   in place of the flatter one that was here.
-
-   ## What is NOT adopted from that file, and this was measured
-
-   Its tone treatment — `sepia(.92) saturate(.52) contrast(1.06) brightness(1.04)
-   hue-rotate(-8deg)` — is not adopted, and the reason is arithmetic rather than
-   taste. Pushing OSM's own palette (which is what map.html loads) through that
-   pipeline in sRGB, as CSS filters are specified to run:
-
-     water  #aad3df -> #fffee4      land #f2efe9 -> #ffffff
-     water/land contrast 1.02:1     hue separation 0 degrees
-
-   The harbour and the land come out the SAME COLOUR. On a coastal city — this
-   city — land-versus-water is the most important distinction on the sheet, so
-   that is damage rather than style, and the design's own prototype has it. On
-   CARTO voyager, which this app loads deliberately for its already-cream land,
-   the same filter gives 1.08:1 and 17 degrees: no better. The shipped
-   hue-preserving tone keeps 1.50:1 and 147 degrees, so it stays.
-
-   This is the second time that conclusion has been reached here; the first was
-   by rendering five variants side by side. It is written as numbers now so the
-   third session does not have to re-render anything to know. */
+   The grid is `templates/console-shell/map.html`'s own: a hairline every 33px
+   in both directions, which is the single cue that reads as an old survey chart
+   rather than a modern map with a filter on it. Its wash and vignette values
+   are that file's too. The tone treatment above is now also sepia, so this
+   overlay and the filter finally come from the same place. */
 .mmm-map-layer::after {
   content: "";
   position: absolute;
