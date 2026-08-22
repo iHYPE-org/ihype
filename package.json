@@ -25,6 +25,8 @@
     "seed:preview:remove": "node --import dotenv/config scripts/seed-preview-content.mjs --remove",
     "audit:mobile": "node scripts/audit-mobile.mjs",
     "measure:dock": "node scripts/measure-dock.mjs",
+    "app-links:write": "node scripts/generate-app-links.mjs",
+    "check:app-links": "node scripts/generate-app-links.mjs --check",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
     "check": "npm run typecheck && npm run lint && npm test",

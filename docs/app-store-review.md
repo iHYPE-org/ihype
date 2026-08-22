@@ -118,3 +118,68 @@ icon, splash, a new native plugin.
 3. **The location fallback city.** The kit assumes Portland, ME. Confirm that is
    what the app falls back to when location is refused, and that Settings lets a
    member change it — the denied-state copy promises exactly that.
+
+---
+
+## Blocked on credentials nobody in a code session has (2026-08-22)
+
+Everything above is written; these four cannot be, because each needs a value
+that lives in an account rather than in this repository. Ordered by what they
+break.
+
+### 1 · Push cannot deliver — no APNs key, no FCM configs
+
+`@capacitor/push-notifications` is installed, `NativePushRegistration.tsx` calls
+it, and Android 13+'s `POST_NOTIFICATIONS` is declared in the manifest. What is
+absent:
+
+| File / value | Where it comes from | Consequence while absent |
+|---|---|---|
+| `ios/App/App/GoogleService-Info.plist` | Firebase console → iOS app | iOS registration fails silently |
+| `android/app/google-services.json` | Firebase console → Android app | Android build has no FCM sender |
+| APNs auth key (`.p8`) + key id + team id | Apple Developer → Keys, uploaded to Firebase | APNs cannot sign a push |
+
+This is not only a feature gap. **Push and location are the defence against
+Apple guideline 4.2** ("minimum functionality" / "just a website") — `server.url`
+points the WebView at production, which is the property that makes a web deploy
+reach both stores in two minutes and also the shape Apple rejects. Both should
+work before the first submission, not after the first rejection.
+
+### 2 · Universal links are unverified — no Team ID, no signing fingerprint
+
+`assetlinks.json` and `apple-app-site-association` are **deliberately not in the
+repository**. Both are verified by the OS against values that are not knowable
+from source: Apple's needs the 10-character Team ID, Android's needs the SHA-256
+of the certificate Play actually signs with.
+
+A placeholder would be worse than nothing: with no file, verification does not
+happen and links open in the browser — degraded but honest. With a malformed file
+present, both platforms cache the failure and the app looks broken for days.
+
+So they are generated, and the generator refuses anything it cannot verify the
+shape of (a SHA-1 fingerprint pasted from the same Play Console screen is the
+commonest mistake and is rejected by length):
+
+```bash
+npm run app-links:write -- --team-id ABCDE12345 --sha256 AA:BB:…:FF
+npm run check:app-links      # verifies what is on disk
+```
+
+Then commit both files, deploy, and confirm they serve from
+`https://ihype.org/.well-known/` with a 200 and no redirect.
+
+### 3 · The signed-release jobs have never run
+
+`.github/workflows/native-build.yml` skips with a notice until its 12 secrets are
+set (names documented inline in the workflow). The iOS build number is injected
+from `github.run_number` — App Store Connect rejects a duplicate, so the second
+TestFlight upload would have failed without it. Nothing here needs code; it needs
+the certificates and profiles.
+
+### 4 · The privacy manifest declares the binary, not the app
+
+`ios/App/App/PrivacyInfo.xcprivacy` is wired into `project.pbxproj` in four
+places including the Resources build phase — without that last one it ships in no
+`.ipa` and is rejected exactly as if it had never been written. **The App Privacy
+questionnaire in App Store Connect is separate, filled in by hand, and must not
+contradict it.** §4 above is the source for both.
