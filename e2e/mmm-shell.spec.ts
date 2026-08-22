@@ -256,11 +256,25 @@ test.describe('Music · Map · Me shell', () => {
   // back-button press, which the prototype's local state did not.
   test('the MUSIC destination is a real route', async ({ page }) => {
     await page.goto('/app/music/discover');
-    // Discover -> Radio -> Charts. The destinations are stations on the chrome
-    // dial now, not links in a pane strip, so this steps rather than clicks.
-    // The vendored dial's own chevrons, not the retired flanking step keys.
+    /* Discover -> Radio -> Charts. The destinations are stations on the chrome
+       dial now, not links in a pane strip, so this steps rather than clicks.
+       The vendored dial's own chevrons, not the retired flanking step keys.
+
+       Each step is asserted before the next, and that is not tidiness — it is
+       the fix for a real flake (seen 2026-08-22: two polls at discover, eleven
+       at radio, then a timeout waiting for charts). The vendored dial computes
+       its next station from the `active` PROP, which arrives from the URL, so
+       two clicks landing before the router settles both resolve from the same
+       stale index and both go to radio. Waiting for the URL is what makes the
+       second click see the first one's result.
+
+       Worth knowing because it is not only a test problem: a member
+       double-tapping the chevron gets the same single step. Fixing that needs
+       optimistic local state inside the vendored component, so it is recorded
+       in UPSTREAM_FIXES.md rather than forked here. */
     const next = page.getByRole('button', { name: 'Next station' });
     await next.click();
+    await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await next.click();
     await expect(page).toHaveURL(/\/app\/music\/charts$/);
 
@@ -438,15 +452,24 @@ test.describe('Music · Map · Me shell', () => {
     await selectable.nth(2).click();
     await expect(trigger).toHaveText(/2 days/i);
 
+    /* Clearing does NOT close the popover — you may want to pick again — so the
+       assertion is that it is still open, and Escape is pressed on the popover
+       that is already up. Re-clicking the trigger here TOGGLED IT SHUT, which
+       is what the first version of this test did and why it failed. */
     await pop.getByRole('button', { name: 'Any day' }).click();
     await expect(trigger).toHaveText(/Any day/i);
+    await expect(pop).toBeVisible();
 
     // Escape closes and returns focus to the trigger.
-    await trigger.click();
-    await expect(pop).toBeVisible();
     await page.keyboard.press('Escape');
     await expect(pop).toHaveCount(0);
     await expect(trigger).toBeFocused();
+
+    // And the trigger re-opens it, now that it is closed.
+    await trigger.click();
+    await expect(pop).toBeVisible();
+    await pop.getByRole('button', { name: 'Done' }).click();
+    await expect(pop).toHaveCount(0);
 
     // Not on the layers with no dates.
     for (const layer of ['venues', 'artists'] as const) {

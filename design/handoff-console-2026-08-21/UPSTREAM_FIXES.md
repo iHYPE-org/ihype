@@ -1,4 +1,4 @@
-# Back to Claude Design — twelve fixes, measured in the app
+# Back to Claude Design — thirteen fixes, measured in the app
 
 **From:** `iHYPE-org/ihype`, 2026-08-22, after adopting
 `design_handoff_ihype_console` (DESIGN_SYNC rows 288–289).
@@ -253,6 +253,24 @@ chart, and its absence was the actual complaint ("map is grainy but doesn't have
 the vintage overlay I want from design").
 
 **Ask:** keep the grid, drop the sepia, or state a tone that holds a coastline.
+
+## 13 · `TunerDial` cannot step twice before its `active` prop catches up
+
+`go()` resolves the next station from `stations[idx + 1]`, where `idx` comes from
+the `active` **prop**. In this app that prop arrives from the URL, so two clicks
+of the step chevron that land before the router settles both resolve from the
+same stale index and both go to the *same* station — one step for two taps.
+
+Caught as a CI flake (two polls at `discover`, eleven at `radio`, then a timeout
+waiting for `charts`), which is the same thing a member gets by double-tapping.
+
+**Worked around in the test** by asserting each step before the next. Not
+worked around in the app, because the fix is optimistic local state inside the
+component and forking it is the one thing `src/components/ds/` exists to prevent.
+
+**Ask:** keep a local index that leads the prop, reconciling when it arrives —
+so a second step is relative to the first rather than to whatever the parent last
+said.
 
 ## What the app fixed on its own side, for the record
 

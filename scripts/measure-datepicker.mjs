@@ -178,7 +178,23 @@ for (const width of WIDTHS) {
   await selectable.nth(2).click();
   const readout = await page.locator('.mmm-datepick-value').textContent();
 
-  rows.push({ width, readout, ...await page.evaluate((floor) => {
+  /* The open/clear/escape/reopen sequence, which is the one the e2e asserts and
+     the one that caught a bug in the TEST rather than the component: clearing
+     does not close the popover (you may want to pick again), so re-clicking the
+     trigger at that point toggles it SHUT. Exercised here because the e2e suite
+     needs a database and this probe does not. */
+  const clearButton = page.getByRole('button', { name: 'Any day', exact: true });
+  await clearButton.click();
+  const openAfterClear = await page.locator('.mmm-datepick-pop').count();
+  /* Closed with Done, not Escape: the Escape and click-out handlers are effects
+     in the real component and are asserted by the e2e suite. What this probe
+     owns is the part that needs a rendered box. */
+  await page.locator('.mmm-datepick-done').click();
+  const openAfterDone = await page.locator('.mmm-datepick-pop').count();
+  await page.click('.mmm-datepick-trigger');
+  const openAfterReopen = await page.locator('.mmm-datepick-pop').count();
+
+  rows.push({ width, readout, openAfterClear, openAfterDone, openAfterReopen, ...await page.evaluate((floor) => {
     const pop = document.querySelector('.mmm-datepick-pop').getBoundingClientRect();
     const cells = [...document.querySelectorAll('.mmm-datepick-day')];
     const boxes = cells.map((cell) => cell.getBoundingClientRect());
@@ -226,6 +242,9 @@ for (const r of rows) {
   if (r.cells !== 42) problems.push(`${r.width}px: the grid has ${r.cells} cells — it must always be six rows of seven, or the popover changes height as it pages.`);
   if (r.readout !== '2 days') problems.push(`${r.width}px: two non-adjacent days read as "${r.readout}" — it must be a count, never a range, or the label claims a day nobody picked.`);
   if (!r.inField) problems.push(`${r.width}px: the date trigger has wrapped out of the search field.`);
+  if (r.openAfterClear !== 1) problems.push(`${r.width}px: clearing the selection closed the popover — it must stay open so another date can be picked.`);
+  if (r.openAfterDone !== 0) problems.push(`${r.width}px: Done did not close the popover.`);
+  if (r.openAfterReopen !== 1) problems.push(`${r.width}px: the trigger did not re-open the popover after it was closed.`);
   if (r.offPane) problems.push(`${r.width}px: the popover hangs ${r.offPane}px off the pane (left ${r.offLeft}px, right ${r.offRight}px).`);
   if (r.pageScrollW > r.width) problems.push(`${r.width}px: the page scrolls sideways (${r.pageScrollW}px).`);
   /* Below MOBILE.md's 375px design width the popover tracks the viewport and the
