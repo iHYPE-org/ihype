@@ -51,18 +51,38 @@ export type MmmSeedItem = {
 };
 
 /**
- * The two stops of the card's fallback gradient, derived from the artist name
- * so one artist always draws the same card. Hues only — saturation and
- * lightness are fixed, so no artist can land on an unreadable card. This is the
- * design's "falls back to the artist's palette — never a stock image".
+ * The two stops of the card's fallback gradient, when an artist has no artwork.
+ *
+ * ## Why this is a fixed set and not a hue wheel
+ *
+ * It used to be `hsl(hash % 360, 62%, 34%)` — the artist's name hashed to ANY
+ * hue on the wheel. It was stable per artist and it was off-palette by
+ * construction: "Second Shift" hashes to 126, which is a flat forest green, and
+ * a green panel on a cream-and-walnut board reads as a different app. Reported
+ * from a phone, as "this looks nothing like the design system".
+ *
+ * So the wheel is replaced by the brand's own hues, still chosen by the same
+ * hash, so one artist still always draws the same card. Each pair is a brand
+ * fill mixed down into walnut: dark enough that the veil's promise holds — the
+ * card's copy is `--ink-on-media`, which is light in every theme — and tinted
+ * enough that five artists in a row do not look like one.
+ *
+ * Tokens, not literals: a card has to follow the ground it sits on, and
+ * `audit:retro` counts any route that cannot.
  */
+const CARD_SHADES: { c1: string; c2: string }[] = [
+  { c1: 'color-mix(in srgb, var(--accent) 58%, var(--walnut-3))', c2: 'var(--walnut-3)' },
+  { c1: 'color-mix(in srgb, var(--role-fan) 62%, var(--walnut-3))', c2: 'var(--walnut-2)' },
+  { c1: 'color-mix(in srgb, var(--role-venue) 62%, var(--walnut-3))', c2: 'var(--walnut-3)' },
+  { c1: 'color-mix(in srgb, var(--role-promoter) 58%, var(--walnut-3))', c2: 'var(--walnut-2)' },
+  { c1: 'color-mix(in srgb, var(--lamp) 46%, var(--walnut-3))', c2: 'var(--walnut-3)' },
+  { c1: 'color-mix(in srgb, var(--brass) 52%, var(--walnut-3))', c2: 'var(--walnut-2)' },
+];
+
 function palette(seed: string): { c1: string; c2: string } {
   let hash = 0;
-  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) % 360;
-  return {
-    c1: `hsl(${hash} 62% 34%)`,
-    c2: `hsl(${(hash + 48) % 360} 58% 22%)`,
-  };
+  for (let i = 0; i < seed.length; i += 1) hash = (hash * 31 + seed.charCodeAt(i)) % 4096;
+  return CARD_SHADES[hash % CARD_SHADES.length];
 }
 
 export function MmmSeedDeck({
@@ -113,9 +133,20 @@ export function MmmSeedDeck({
       const node = rootRef.current;
       if (!node) return;
       const top = node.getBoundingClientRect().top;
-      const styles = getComputedStyle(document.documentElement);
+      /* The geometry tokens are declared on `.mmm-frame`, not on `:root` — this
+         read was against `document.documentElement`, where they resolve to the
+         empty string, so the reservation silently collapsed to the +20 below and
+         the deck has been sizing itself as though the dock were not there. */
+      const frame = node.closest('.mmm-frame') ?? document.documentElement;
+      const styles = getComputedStyle(frame);
       const px = (name: string) => parseFloat(styles.getPropertyValue(name)) || 0;
-      const reserved = px('--mmm-bottom') + px('--mmm-chrome-size') + 20;
+      /* `--mmm-chrome-top` is the dock's full height including its safe area
+         and whatever it is riding on (the cookie banner lifts it), which is
+         exactly "how much of the bottom of the screen is not mine". It replaced
+         `--mmm-bottom + --mmm-chrome-size`, which was the old floating chrome's
+         resting offset plus its height — two terms for one measurement, and
+         `--mmm-bottom` no longer exists. */
+      const reserved = px('--mmm-chrome-top') + 20;
       /* visualViewport follows the actually visible WebView when iOS browser
          chrome or the keyboard changes size; innerHeight can continue to
          report the larger layout viewport and put the actions behind it. */

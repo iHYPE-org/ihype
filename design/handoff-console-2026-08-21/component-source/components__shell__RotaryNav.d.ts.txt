@@ -1,0 +1,10 @@
+export interface RotaryNavModule { id: string; label: string }
+export interface RotaryNavProps {
+  /** In arc order, left to right across the switch's sweep. Map · Music · Me. */
+  modules: RotaryNavModule[];
+  activeModule?: string;
+  onNavigate?: (module: RotaryNavModule) => void;
+  /** Same figure the shell sizes the joystick and the player anchor from. */
+  size?: number;
+}
+export declare function RotaryNav(props: RotaryNavProps): JSX.Element;

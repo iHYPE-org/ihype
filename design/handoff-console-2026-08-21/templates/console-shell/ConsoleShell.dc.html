@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Console Shell (mobile)" description="Mobile-first iHYPE shell: rotary MAP/MUSIC/ME knob, thumbwheel subnav, 4-way brass joystick transport, real OSM papyrus map." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+html,body{margin:0;height:100%;background:#0e0803;font-family:'Work Sans',system-ui,sans-serif;overscroll-behavior:none}
+@keyframes vuFlick{0%,100%{transform:scaleY(.55)}50%{transform:scaleY(1)}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;align-items:center;justify-content:center;background:#0e0803">
+<div style="position:relative;width:430px;max-width:100%;flex:0 0 auto;height:100%;max-height:940px;display:flex;flex-direction:column;overflow:hidden;background:linear-gradient(180deg,#5c3a1f,#3a2110 40%,#2b1a0c);box-shadow:0 30px 70px -30px rgba(0,0,0,.9)">
+
+<div style="position:relative;flex:1;min-height:0;overflow:hidden">
+<sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+<iframe src="./map.html" title="Venue map" style="position:absolute;inset:0;width:100%;height:100%;border:0;display:block"></iframe>
+</sc-if>
+<sc-if value="{{ isMusic }}">
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;background:linear-gradient(180deg,#4a2c17,#2b1a0c)">
+
+<div style="flex:none;padding:12px 16px 0">
+<div style="display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(20,12,5,.5)">
+<svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="#c9a54e" stroke-width="1.6" aria-hidden="true" style="flex:none"><circle cx="6.5" cy="6.5" r="4.5"></circle><path d="M10 10l4 4"></path></svg>
+<input onInput="{{ onQuery }}" aria-label="Search music" placeholder="SEARCH ARTISTS, TRACKS, STATIONS" style="flex:1;min-width:0;border:0;background:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.08em;color:#f6e7c8">
+</div>
+</div>
+
+<sc-if value="{{ showFilters }}">
+<div style="flex:none;padding:10px 16px 10px;border-bottom:1px solid rgba(201,165,78,.28)">
+<div style="display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-bottom:8px">
+<sc-for list="{{ genres }}" as="g" hint-placeholder-count="6">
+<button onClick="{{ g.pick }}" aria-pressed="{{ g.on }}" ref="{{ g.ref }}" style="flex:none;min-height:36px;padding:0 13px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;white-space:nowrap">{{ g.label }}</button>
+</sc-for>
+</div>
+<div style="display:flex;gap:6px">
+<sc-for list="{{ scopes }}" as="c" hint-placeholder-count="4">
+<button onClick="{{ c.pick }}" aria-pressed="{{ c.on }}" ref="{{ c.ref }}" style="flex:1;min-width:0;min-height:38px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">{{ c.label }}</button>
+</sc-for>
+</div>
+<sc-if value="{{ isRadio }}">
+<div style="display:flex;align-items:center;gap:8px;margin-top:9px">
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e">ORDER BY</span>
+<div style="flex:1;display:flex;gap:6px">
+<sc-for list="{{ sorts }}" as="o" hint-placeholder-count="2">
+<button onClick="{{ o.pick }}" aria-pressed="{{ o.on }}" ref="{{ o.ref }}" style="flex:1;min-width:0;min-height:38px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">{{ o.label }}</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+<div ref="{{ cycleRowRef }}" style="display:flex;align-items:center;gap:8px;margin-top:9px">
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e">HYPE CYCLE</span>
+<div style="flex:1;display:flex;gap:6px">
+<sc-for list="{{ cycles }}" as="w" hint-placeholder-count="3">
+<button onClick="{{ w.pick }}" aria-pressed="{{ w.on }}" ref="{{ w.ref }}" style="flex:1;min-width:0;min-height:38px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer">{{ w.label }}</button>
+</sc-for>
+</div>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDiscover }}">
+<div style="flex:1;min-height:0;display:flex;flex-direction:column;padding:14px 16px 18px">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.SeedDeck" items="{{ seedItems }}" index="{{ seedIndex }}" saved="{{ seedSaved }}" hyped="{{ seedHyped }}" saved-count="{{ savedCount }}" playing="{{ playing }}" on-hype="{{ seedHype }}" on-skip="{{ seedSkip }}" on-save="{{ seedSave }}" on-open-artist="{{ openArtist }}" on-toggle-play="{{ toggle }}" style="flex:1;min-height:0" hint-size="100%,420px"></x-import>
+</div>
+</sc-if>
+
+<sc-if value="{{ isCharts }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px 20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<sc-for list="{{ chart }}" as="c" hint-placeholder-count="6">
+<button onClick="{{ c.play }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 13px;border:1px solid rgba(201,165,78,.3);border-radius:5px;background:rgba(20,12,5,.42);cursor:pointer" style-hover="border-color:#c9a54e">
+<span style="flex:none;width:26px;font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#c9a54e">{{ c.rank }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:19px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.title }}</span>
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a54e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.artist }} · {{ c.genre }}</span>
+</span>
+<span style="flex:none;text-align:right">
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:12px;color:#f6e7c8">{{ c.hype }}</span>
+<span ref="{{ c.deltaRef }}" style="display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.06em;color:#8a7346">{{ c.delta }}</span>
+</span>
+</button>
+</sc-for>
+<sc-if value="{{ chartEmpty }}">
+<div style="padding:34px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">No entries for this cut</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isRadio }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:12px 16px 20px">
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ radio }}" as="r" hint-placeholder-count="5">
+<button onClick="{{ r.play }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:12px 13px;border:1px solid rgba(201,165,78,.3);border-radius:5px;background:rgba(20,12,5,.42);cursor:pointer" style-hover="border-color:#c9a54e">
+<span style="flex:none;width:46px;height:46px;border-radius:9999px;display:grid;place-items:center;border:1.5px solid #8a6a2c;background:radial-gradient(circle at 36% 30%,#e0c076,#c9a54e 52%,#8a6a2c);font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#2b1a0c">{{ r.dial }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:20px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</span>
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a54e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.genre }} · {{ r.scopeLabel }} · {{ r.dj }}</span>
+</span>
+<span style="flex:none;text-align:right">
+<span ref="{{ r.liveRef }}" style="display:block;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#8a7346">{{ r.state }}</span>
+<span style="display:block;margin-top:2px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#f6e7c8">{{ r.hype }}</span>
+</span>
+</button>
+</sc-for>
+<sc-if value="{{ radioEmpty }}">
+<div style="padding:34px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">No stations for this cut</div>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isPlaylists }}">
+<div style="flex:1;min-height:0;overflow-y:auto;padding:14px 16px 20px">
+
+<sc-if value="{{ noneOpen }}">
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ allLists }}" as="l" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:10px;padding:12px 13px;border:1px solid rgba(201,165,78,.3);border-radius:5px;background:rgba(20,12,5,.42)">
+<button onClick="{{ l.open }}" style="flex:1;min-width:0;display:block;text-align:left;border:0;background:none;padding:0;cursor:pointer">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:21px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ l.name }}</span>
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#c9a54e">{{ l.meta }}</span>
+</button>
+<sc-if value="{{ l.editable }}">
+<button onClick="{{ l.rename }}" aria-label="Rename playlist" style="flex:none;min-width:44px;min-height:44px;padding:0 10px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;cursor:pointer">EDIT</button>
+<button onClick="{{ l.remove }}" aria-label="Delete playlist" style="flex:none;min-width:44px;min-height:44px;padding:0 10px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;cursor:pointer">DEL</button>
+</sc-if>
+<sc-if value="{{ l.locked }}">
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">AUTO</span>
+</sc-if>
+</div>
+</sc-for>
+<button onClick="{{ addList }}" style="min-height:50px;border-radius:5px;border:2px dashed #8a6a2c;background:transparent;color:#c9a54e;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">+ New playlist</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ someOpen }}">
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+<button onClick="{{ closeList }}" aria-label="Back to playlists" style="flex:none;min-width:44px;min-height:44px;padding:0 10px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;cursor:pointer">‹ BACK</button>
+<span style="flex:1;min-width:0;font-family:'Instrument Serif',serif;font-size:24px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ openName }}</span>
+</div>
+<sc-if value="{{ editing }}">
+<div style="display:flex;gap:8px;margin-bottom:12px">
+<input onInput="{{ onRename }}" ref="{{ renameRef }}" aria-label="Playlist name" style="flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:4px;border:1.5px solid #c9a54e;background:rgba(20,12,5,.5);outline:none;font-family:'Instrument Serif',serif;font-size:19px;color:#f6e7c8">
+<button onClick="{{ doneRename }}" style="flex:none;min-height:44px;padding:0 16px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.14em;cursor:pointer">SAVE</button>
+</div>
+</sc-if>
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ openTracks }}" as="t" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;gap:11px;padding:11px 12px;border:1px solid rgba(201,165,78,.3);border-radius:5px;background:rgba(20,12,5,.42)">
+<button onClick="{{ t.play }}" style="flex:1;min-width:0;display:block;text-align:left;border:0;background:none;padding:0;cursor:pointer">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:19px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a54e">{{ t.artist }} · {{ t.genre }}</span>
+</button>
+<sc-if value="{{ t.why }}">
+<span style="flex:none;max-width:96px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;text-transform:uppercase;color:#8a7346;text-align:right">{{ t.why }}</span>
+</sc-if>
+<sc-if value="{{ t.removable }}">
+<button onClick="{{ t.remove }}" aria-label="Remove from playlist" style="flex:none;min-width:44px;min-height:44px;padding:0 10px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.1em;cursor:pointer">–</button>
+</sc-if>
+</div>
+</sc-for>
+<sc-if value="{{ openEmpty }}">
+<div style="padding:30px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">{{ openEmptyLabel }}</div>
+</sc-if>
+</div>
+<sc-if value="{{ openEditable }}">
+<button onClick="{{ toggleAdd }}" style="width:100%;margin-top:12px;min-height:48px;border-radius:5px;border:2px dashed #8a6a2c;background:transparent;color:#c9a54e;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">{{ addLabel }}</button>
+<sc-if value="{{ adding }}">
+<div style="display:flex;flex-direction:column;gap:7px;margin-top:10px;padding-top:10px;border-top:1px solid rgba(201,165,78,.28)">
+<sc-for list="{{ addable }}" as="a" hint-placeholder-count="3">
+<button onClick="{{ a.add }}" style="display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;padding:10px 12px;border:1px solid rgba(201,165,78,.26);border-radius:4px;background:rgba(20,12,5,.34);cursor:pointer" style-hover="border-color:#c9a54e">
+<span style="min-width:0;font-family:'Instrument Serif',serif;font-size:18px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.title }}</span>
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a54e">+ {{ a.artist }}</span>
+</button>
+</sc-for>
+<sc-if value="{{ addableEmpty }}">
+<div style="padding:18px 12px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">Every track is already in this playlist</div>
+</sc-if>
+</div>
+</sc-if>
+</sc-if>
+</sc-if>
+
+</div>
+</sc-if>
+
+
+
+</div>
+</sc-if>
+<sc-if value="{{ isTickets }}">
+<div style="position:absolute;inset:0;overflow-y:auto;padding:16px 16px 22px;background:linear-gradient(180deg,#4a2c17,#2b1a0c)">
+<sc-for list="{{ ticketGroups }}" as="g" hint-placeholder-count="2">
+<div style="margin-bottom:20px">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:9px">
+<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">{{ g.label }}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;color:#8a7346">{{ g.count }}</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ g.items }}" as="k" hint-placeholder-count="3">
+<div style="padding:13px 14px;border:1px solid rgba(201,165,78,.32);border-radius:5px;background:rgba(20,12,5,.44)">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:10px">
+<span style="min-width:0;font-family:'Instrument Serif',serif;font-size:22px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.show }}</span>
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:#d8b98a">{{ k.price }}</span>
+</div>
+<div style="margin-top:3px;font-family:'Work Sans',sans-serif;font-size:13px;color:#c9a54e">{{ k.act }}</div>
+<div style="margin-top:7px;display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8a7346">
+<span>{{ k.when }} · {{ k.seat }}</span>
+<span ref="{{ k.stateRef }}">{{ k.state }}</span>
+</div>
+<sc-if value="{{ k.actionable }}">
+<div style="display:flex;gap:8px;margin-top:11px">
+<button onClick="{{ k.doTransfer }}" aria-label="Transfer this ticket" style="flex:1;min-width:0;min-height:44px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer">Transfer</button>
+<button onClick="{{ k.doShare }}" aria-label="Share a HYPE Link to this show" style="flex:1;min-width:0;min-height:44px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;cursor:pointer">Hype this show</button>
+</div>
+</sc-if>
+<sc-if value="{{ k.transferring }}">
+<div style="margin-top:11px;padding-top:11px;border-top:1px solid rgba(201,165,78,.28)">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e;margin-bottom:7px">Transfer to</div>
+<div style="display:flex;gap:8px">
+<input onInput="{{ k.onHandle }}" aria-label="Recipient handle or email" placeholder="@handle or email" style="flex:1;min-width:0;min-height:44px;padding:0 12px;border-radius:4px;border:1.5px solid #c9a54e;background:rgba(20,12,5,.5);outline:none;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#f6e7c8">
+<button onClick="{{ k.confirmTransfer }}" style="flex:none;min-height:44px;padding:0 15px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;cursor:pointer">SEND</button>
+<button onClick="{{ k.cancel }}" aria-label="Cancel transfer" style="flex:none;min-width:44px;min-height:44px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer">✕</button>
+</div>
+<div style="margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8a7346">Transfers are free. The code reissues to them and yours stops scanning.</div>
+</div>
+</sc-if>
+<sc-if value="{{ k.sharing }}">
+<div style="margin-top:11px;padding-top:11px;border-top:1px solid rgba(201,165,78,.28)">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e;margin-bottom:7px">Your HYPE Link to this show</div>
+<div style="display:flex;gap:8px;align-items:center">
+<span style="flex:1;min-width:0;padding:11px 12px;border-radius:4px;border:1.5px solid #c9a54e;background:rgba(20,12,5,.5);font-family:'JetBrains Mono',monospace;font-size:11px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ k.link }}</span>
+<button onClick="{{ k.copy }}" ref="{{ k.copyRef }}" style="flex:none;min-width:64px;min-height:44px;border-radius:4px;border:1.5px solid #c9a54e;background:transparent;color:#f6e7c8;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;cursor:pointer">COPY</button>
+<button onClick="{{ k.cancel }}" aria-label="Close" style="flex:none;min-width:44px;min-height:44px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:13px;cursor:pointer">✕</button>
+</div>
+<div style="margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:#8a7346">Anyone who buys through it earns you a share of the 10% promoter pool. iHYPE takes nothing.</div>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ isMe }}">
+<div style="position:absolute;inset:0;overflow-y:auto;padding:18px 16px 22px;background:linear-gradient(180deg,#4a2c17,#2b1a0c)">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e;margin-bottom:6px">ME · {{ sub }}</div>
+<h1 style="margin:0 0 16px;font-family:'Instrument Serif',serif;font-weight:400;font-size:30px;line-height:1.08;color:#f6e7c8">{{ sub }}</h1>
+<div style="display:flex;flex-direction:column;gap:10px">
+<sc-for list="{{ meRows }}" as="r" hint-placeholder-count="4">
+<div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:13px 14px;border:1px solid rgba(201,165,78,.34);border-radius:5px;background:rgba(20,12,5,.42)">
+<span style="font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#d8b98a">{{ r.label }}</span>
+<span style="font-family:'Instrument Serif',serif;font-size:20px;color:#f6e7c8;text-align:right">{{ r.value }}</span>
+</div>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<div ref="{{ playerRef }}" style="position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;padding:20px 22px 16px;overflow-y:auto;background:repeating-linear-gradient(88deg,rgba(30,14,4,.30) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#52301a 30%,#3a2110 60%,#4a2c17 84%,#5c3a1f);background-color:#452711;transform:translateY(100%);transition:transform .34s cubic-bezier(.22,.9,.3,1)">
+<div style="flex:none;display:flex;justify-content:center"><div style="width:min(100%,40vh);aspect-ratio:1;border-radius:3px;box-shadow:0 0 0 3px #c9a54e,inset 0 2px 8px rgba(0,0,0,.6);background:repeating-radial-gradient(circle at 50% 66%,rgba(0,0,0,.55) 0 3px,transparent 3px 26px),radial-gradient(circle at 50% 66%,#ff6b33 0 34%,#e8461f 52%,#7a2412 74%,#2b1405 100%),#2b1405;background-blend-mode:multiply,normal,normal"></div></div>
+<button onClick="{{ openArtist }}" aria-label="Open artist profile" style="display:block;width:100%;margin:16px 0 0;padding:2px 0 4px;border:0;background:none;cursor:pointer;text-align:center" style-hover="opacity:.82">
+<span style="display:block;font-family:'Instrument Serif',serif;font-weight:400;font-size:32px;line-height:1.05;color:#f9edd4">{{ track.title }}</span>
+<span style="display:block;margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:#d8b98a;border-bottom:1px solid rgba(216,185,138,.42);padding-bottom:3px">{{ track.artist }}</span>
+<span style="display:block;margin-top:5px;font-family:'Instrument Serif',serif;font-style:italic;font-size:15px;color:#c9a54e">{{ track.album }}</span>
+</button>
+<div style="margin:22px 0;display:flex;align-items:center;justify-content:center;gap:26px">
+<button onClick="{{ prev }}" aria-label="Previous track" style="width:62px;height:62px;border-radius:9999px;border:2px solid #c9a54e;background:radial-gradient(circle at 38% 30%,#5c3a1f,#241505);color:#f6e7c8;font-size:17px;cursor:pointer;box-shadow:0 8px 16px -6px rgba(0,0,0,.6)">◀◀</button>
+<button onClick="{{ toggle }}" aria-label="Play or pause" style="width:82px;height:82px;border-radius:9999px;border:2px solid #c9a54e;background:radial-gradient(circle at 36% 30%,#ff8a5c,#ff5029 52%,#c9401c);color:#2b1405;font-size:24px;cursor:pointer;box-shadow:0 10px 22px -8px rgba(0,0,0,.6)">{{ playIcon }}</button>
+<button onClick="{{ next }}" aria-label="Next track" style="width:62px;height:62px;border-radius:9999px;border:2px solid #c9a54e;background:radial-gradient(circle at 38% 30%,#5c3a1f,#241505);color:#f6e7c8;font-size:17px;cursor:pointer;box-shadow:0 8px 16px -6px rgba(0,0,0,.6)">▶▶</button>
+</div>
+<div style="display:flex;align-items:center;gap:10px">
+<div style="flex:1;height:4px;border-radius:2px;background:rgba(201,165,78,.3);position:relative"><div ref="{{ seekRef }}" style="position:absolute;left:0;top:-5px;width:9px;height:14px;border-radius:2px;background:linear-gradient(90deg,#c9a54e,#8a6a2c)"></div></div>
+</div>
+<div style="display:flex;justify-content:space-between;margin-top:7px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#d8b98a"><span>{{ elapsed }}</span><span>{{ track.length }}</span></div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:14px">
+<button onClick="{{ fav }}" aria-label="Add to Favorites playlist" aria-pressed="{{ isFav }}" title="Add to Favorites playlist" ref="{{ favRef }}" style="flex:none;width:52px;height:52px;border-radius:9999px;cursor:pointer;font-size:19px;border:1.5px solid #c9a54e;background:transparent;color:#f6e7c8">{{ favIcon }}</button>
+<button onClick="{{ hype }}" aria-label="Hype this track — drives its signal" style="flex:1;min-height:52px;border-radius:9999px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:14px;letter-spacing:.2em;cursor:pointer">HYPE {{ hypeCount }}</button>
+<button onClick="{{ openQueue }}" aria-label="Show queue" title="Queue" style="flex:none;width:52px;height:52px;border-radius:9999px;border:1.5px solid #c9a54e;background:transparent;color:#f6e7c8;font-size:19px;cursor:pointer">☰</button>
+</div>
+<div style="margin-top:9px;display:flex;align-items:center;gap:8px">
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e">SIGNAL</span>
+<span style="flex:1;height:5px;border-radius:3px;background:rgba(201,165,78,.28);overflow:hidden"><span ref="{{ signalRef }}" style="display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,#c9a54e,#ff8f2d 60%,#ff5029)"></span></span>
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10px;color:#d8b98a">{{ signalLabel }}</span>
+</div>
+
+<sc-if value="{{ showArtist }}">
+<div role="dialog" aria-label="Artist profile" style="position:absolute;inset:0;z-index:50;overflow-y:auto;padding:20px 22px 22px;background:repeating-linear-gradient(88deg,rgba(30,14,4,.30) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#5c3a1f,#3a2110 55%,#241505);background-color:#3a2110">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">ARTIST PROFILE</span>
+<button onClick="{{ closeOverlay }}" aria-label="Back to player" style="min-height:38px;padding:0 14px;border:1.5px solid #c9a54e;border-radius:4px;background:transparent;color:#f6e7c8;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;cursor:pointer">BACK</button>
+</div>
+<div style="display:flex;align-items:center;gap:14px;margin-top:16px">
+<span style="flex:none;width:86px;height:86px;border-radius:3px;box-shadow:0 0 0 2px #c9a54e;background:radial-gradient(circle at 40% 34%,#ff8a52,#c9401c 58%,#42210c)"></span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:30px;line-height:1.05;color:#f9edd4">{{ track.artist }}</span>
+<span style="display:block;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#c9a54e">PORTLAND, ME · {{ artistFollowers }} FOLLOWERS</span>
+</span>
+</div>
+<div style="margin-top:18px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">RELEASES</div>
+<div style="display:flex;flex-direction:column;gap:9px;margin-top:8px">
+<sc-for list="{{ artistTracks }}" as="a" hint-placeholder-count="3">
+<button onClick="{{ a.play }}" style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;width:100%;text-align:left;padding:11px 13px;border:1px solid rgba(201,165,78,.34);border-radius:5px;background:rgba(20,12,5,.42);cursor:pointer" style-hover="border-color:#c9a54e">
+<span style="font-family:'Instrument Serif',serif;font-size:19px;color:#f6e7c8">{{ a.title }}</span>
+<span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#d8b98a">{{ a.hype }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showQueue }}">
+<div role="dialog" aria-label="Queue" style="position:absolute;inset:0;z-index:50;overflow-y:auto;padding:20px 22px 22px;background:repeating-linear-gradient(88deg,rgba(30,14,4,.30) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#5c3a1f,#3a2110 55%,#241505);background-color:#3a2110">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<span style="font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">QUEUE</span>
+<button onClick="{{ closeOverlay }}" aria-label="Back to player" style="min-height:38px;padding:0 14px;border:1.5px solid #c9a54e;border-radius:4px;background:transparent;color:#f6e7c8;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;cursor:pointer">BACK</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">
+<sc-for list="{{ queue }}" as="q" hint-placeholder-count="5">
+<button onClick="{{ q.play }}" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 13px;border:1px solid rgba(201,165,78,.3);border-radius:5px;background:rgba(20,12,5,.4);cursor:pointer" style-hover="border-color:#c9a54e">
+<span ref="{{ q.tagRef }}" style="flex:none;width:58px;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#c9a54e">{{ q.tag }}</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:19px;color:#f6e7c8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ q.title }}</span>
+<span style="display:block;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#c9a54e">{{ q.artist }}</span>
+</span>
+<span style="flex:none;font-family:'JetBrains Mono',monospace;font-size:11px;color:#d8b98a">{{ q.length }}</span>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="flex:none;position:relative;display:flex;align-items:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:3px solid #c9a54e;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 46%,#5c3a1f);box-shadow:inset 0 4px 0 -1px rgba(255,214,160,.18)">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.RotaryNav" modules="{{ modules }}" active-module="{{ modeId }}" on-navigate="{{ onModule }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TunerDial" stations="{{ stations }}" active="{{ subId }}" on-change="{{ onStation }}" style="flex:1;min-width:0" hint-size="100%,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.JoystickTransport" playing="{{ playing }}" on-toggle-play="{{ toggle }}" on-prev="{{ prev }}" on-next="{{ next }}" on-expand="{{ expand }}" on-collapse="{{ collapse }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+</div>
+
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940}}">
+const MODES = ['MAP', 'MUSIC', 'ME'];
+const SUBS = {
+  MAP: ['Tonight', 'This Week', 'Weekend', 'All Dates'],
+  MUSIC: ['Discover', 'Playlists', 'Charts', 'Radio'],
+  ME: ['Profiles', 'Tickets', 'Info', 'Settings'],
+};
+const TRACKS = [
+  { title: 'Second Shift', artist: 'Deering Oaks', album: 'Night Route · 2026', length: '3:23', hype: '128', genre: 'Dream-pop' },
+  { title: 'Harbour Lights', artist: 'Vera Sound', album: 'Casco · 2025', length: '4:02', hype: '96', genre: 'Dream-pop' },
+  { title: 'Harbor Static', artist: 'Cold Cellar', album: 'Longfellow · 2026', length: '2:58', hype: '211', genre: 'Post-punk' },
+  { title: 'Night Route', artist: 'Second Shift', album: 'Portland Tapes', length: '3:41', hype: '74', genre: 'Indie' },
+  { title: 'Eastern Prom', artist: 'Casco Brass', album: 'Bayside · 2024', length: '5:12', hype: '58', genre: 'Brass' },
+];
+const SEEDS = [
+  { title: 'Second Shift', artist: 'Deering Oaks', why: 'Because you hyped Cold Cellar. Playing Thompson’s Pt on Saturday.' },
+  { title: 'Harbour Lights', artist: 'Vera Sound', why: 'Dream-pop from Casco Bay. Three hypes from people near you this week.' },
+  { title: 'Harbor Static', artist: 'Cold Cellar', why: 'Top of the Portland chart. No paid promotion behind it.' },
+  { title: 'Night Route', artist: 'Second Shift', why: 'New to the free-use crate. Doors open at the Old Port on Friday.' },
+  { title: 'Eastern Prom', artist: 'Casco Brass', why: 'Free show on the Prom this weekend. Brass, loud, outdoors.' },
+];
+/* Chart entries carry the three axes the chart sorts on: genre, the widest
+   scope they have charted in, and their movement inside the current hype
+   cycle. Scope is a rank, so a national entry also shows in regional and
+   local — a chart that hid the bigger act from the local cut would read as
+   if it had left town. */
+const SCOPES = ['Local', 'Regional', 'National', 'Global'];
+const CHART = [
+  { title: 'Harbor Static', artist: 'Cold Cellar', genre: 'Post-punk', scope: 0, hype: 211, d: { day: 38, week: 96, month: 140 } },
+  { title: 'Second Shift', artist: 'Deering Oaks', genre: 'Dream-pop', scope: 1, hype: 128, d: { day: 12, week: 44, month: 88 } },
+  { title: 'Harbour Lights', artist: 'Vera Sound', genre: 'Dream-pop', scope: 0, hype: 96, d: { day: -4, week: 18, month: 51 } },
+  { title: 'Night Route', artist: 'Second Shift', genre: 'Indie', scope: 2, hype: 74, d: { day: 22, week: 31, month: -12 } },
+  { title: 'Eastern Prom', artist: 'Casco Brass', genre: 'Brass', genreAlt: 1, scope: 0, hype: 58, d: { day: 3, week: -8, month: 24 } },
+  { title: 'Cold Open', artist: 'Nyla', genre: 'R&B', scope: 3, hype: 402, d: { day: 61, week: 188, month: 310 } },
+  { title: 'Bayside', artist: 'Longfellow Trio', genre: 'Jazz', scope: 1, hype: 44, d: { day: -11, week: 6, month: 19 } },
+  { title: 'Franklin Arterial', artist: 'Portland Tapes', genre: 'Post-punk', scope: 2, hype: 167, d: { day: 8, week: 72, month: 121 } },
+];
+const CYCLES = [['day', '24h'], ['week', 'Week'], ['month', 'Month']];
+const RADIO = [
+  { name: 'Night Route', dj: 'DJ Casco', genre: 'Dream-pop', scope: 0, hype: 142, live: true, d: { day: 24, week: 61, month: 98 } },
+  { name: 'Harbor Static', dj: 'Cold Cellar', genre: 'Post-punk', scope: 1, hype: 208, live: true, d: { day: 41, week: 88, month: 132 } },
+  { name: 'Deering Sessions', dj: 'Nyla', genre: 'R&B', scope: 2, hype: 96, live: false, d: { day: -6, week: 22, month: 54 } },
+  { name: 'Second Shift Late', dj: 'Portland Tapes', genre: 'Indie', scope: 0, hype: 74, live: false, d: { day: 11, week: 34, month: 12 } },
+  { name: 'Prom Brass Hour', dj: 'Casco Brass', genre: 'Brass', scope: 0, hype: 38, live: false, d: { day: 2, week: -4, month: 18 } },
+  { name: 'Bayside Jazz', dj: 'Longfellow Trio', genre: 'Jazz', scope: 1, hype: 51, live: true, d: { day: 7, week: 15, month: 29 } },
+  { name: 'Global Signal', dj: 'iHYPE', genre: 'R&B', scope: 3, hype: 388, live: true, d: { day: 58, week: 171, month: 288 } },
+];
+const SORTS = [['trending', 'Trending'], ['recommended', 'Recommended']];
+/* What people you follow have played lately, by track title — the "friends
+   history" half of recommendation. */
+const FRIENDS_PLAYED = ['Harbor Static', 'Harbor Static', 'Night Route', 'Second Shift'];
+/* Tickets the member holds, split by whether the show has happened. The code
+   is what the wallet QR derives from. A ticket transfers freely until it is
+   scanned. There is no member-facing money-back path on this screen at all: a
+   ticket is a contract with the room, and only the venue can undo one, against
+   a stated reason. */
+const TICKETS = [
+  { id: 't1', show: 'Thompson\u2019s Pt', act: 'Second Shift · Cold Cellar', when: 'Tonight · 7:30 PM', seat: 'GA', price: '$12', code: 'IH-4K7Q-22', past: false, slug: 'thompsons-pt-aug21' },
+  { id: 't2', show: 'State Theatre', act: 'Deering Oaks', when: 'Sat 23 Aug · 8:00 PM', seat: 'Balcony C4', price: '$28', code: 'IH-9M2R-08', past: false, slug: 'state-theatre-aug23' },
+  { id: 't3', show: 'Old Port', act: 'Vera Sound', when: 'Fri 29 Aug · 10:00 PM', seat: 'GA', price: '$10', code: 'IH-7T1X-45', past: false, slug: 'old-port-aug29' },
+  { id: 't4', show: 'Port City', act: 'Night Route', when: '2 Aug · 9:00 PM', seat: 'GA', price: '$18', code: 'IH-2B8P-77', past: true, slug: 'port-city-aug2' },
+  { id: 't5', show: 'Eastern Prom', act: 'Casco Brass Band', when: '19 Jul · 6:00 PM', seat: 'GA', price: 'Free', code: 'IH-5C3D-19', past: true, slug: 'eastern-prom-jul19' },
+];
+const ME_ROWS = {
+  Profiles: [['Display name', 'jrs_pdx'], ['Role', 'Fan'], ['HYPE Link', 'ihype.org/h/jrs'], ['Followers', '412']],
+  Info: [['iHYPE fee', '$0'], ['Processing', 'Stripe 2.9% + $0.30'], ['Split', '70 / 20 / 10'], ['Charter', 'v1.4']],
+  Settings: [['Notifications', 'On'], ['Region', 'Portland, ME'], ['Payouts', 'Connected'], ['Data saver', 'Off']],
+};
+
+class Component extends DCLogic {
+  state = { m: 0, s: 0, playing: true, up: false, t: 0, hypeBump: 0, overlay: null, favs: [], seed: 0, saved: [], seedHypes: [], genre: 'All', scope: 0, cycle: 'week', q: '', sort: 'trending', history: [],
+    /* Likes and Recommended are derived and cannot be deleted; everything in
+       this array is the member's own and is fully editable. */
+    lists: [{ id: 'l1', name: 'Friday Load-in', tracks: [0, 3] }], open: null, editing: false, adding: false,
+    transfer: null, shared: null, handle: '', sent: [] };
+
+  listById = (id) => this.state.lists.filter((l) => l.id === id)[0];
+  mutate = (id, fn) => this.setState((s) => ({ lists: s.lists.map((l) => l.id === id ? fn(l) : l) }));
+
+  /* One painter for every chart filter: the pressed look is the same brass fill
+     wherever it appears, and it is applied through a ref rather than a style
+     hole so the control paints before the logic class lands. */
+  chip = (on) => (el) => {
+    if (!el) return;
+    el.style.background = on ? 'linear-gradient(180deg,#c9a54e,#a8862f)' : 'transparent';
+    el.style.borderColor = on ? '#c9a54e' : '#8a6a2c';
+    el.style.color = on ? '#2b1a0c' : '#d8b98a';
+  };
+
+  subs() { return SUBS[MODES[this.state.m]]; }
+  setPlayer(up) {
+    this.setState({ up });
+    if (this.player) this.player.style.transform = up ? 'translateY(0)' : 'translateY(100%)';
+  }
+  step = (d) => { const t = (this.state.t + d + TRACKS.length) % TRACKS.length; this.setState({ t }); };
+  toggle = () => this.setState((s) => ({ playing: !s.playing }));
+
+  /* The dock is RotaryNav + TunerDial + JoystickTransport straight off the
+     bundle — the gestures, detents and scale live in those components, so
+     there is nothing to bind here. */
+
+  renderVals() {
+    const mode = MODES[this.state.m], subs = this.subs(), sub = subs[this.state.s];
+    const t = this.state.t, track = TRACKS[t], n = TRACKS.length;
+    const isFav = this.state.favs.indexOf(t) > -1;
+    const signal = Math.min(100, Math.round(Number(track.hype) / 2.6) + this.state.hypeBump * 12);
+    if (this.signal) this.signal.style.width = signal + '%';
+    const queue = [
+      { i: (t - 2 + n) % n, tag: 'PLAYED', tagColor: '#8a7346' },
+      { i: (t - 1 + n) % n, tag: 'PREV', tagColor: '#c9a54e' },
+      { i: t, tag: 'NOW', tagColor: '#ff8f2d' },
+      { i: (t + 1) % n, tag: 'NEXT', tagColor: '#d8b98a' },
+      { i: (t + 2) % n, tag: 'THEN', tagColor: '#8a7346' },
+    ].map((q) => ({ ...q, ...TRACKS[q.i], tagRef: (el) => { if (el) el.style.color = q.tagColor; }, play: () => this.setState({ t: q.i, playing: true, overlay: null }) }));
+    const q = this.state.q.trim().toLowerCase();
+    const hit = (...fields) => !q || fields.join(' ').toLowerCase().indexOf(q) > -1;
+    /* Taste, derived rather than declared: the genres of what you hearted count
+       double against the genres of what you have actually played. That is the
+       whole of "recommended" — no separate profile to keep in sync. */
+    const liked = {};
+    this.state.favs.forEach((i) => { const g = TRACKS[i] && TRACKS[i].genre; if (g) liked[g] = (liked[g] || 0) + 3; });
+    this.state.history.forEach((i) => { const g = TRACKS[i] && TRACKS[i].genre; if (g) liked[g] = (liked[g] || 0) + 1; });
+
+    /* Scope filters by rank, not equality: picking Local keeps everything that
+       has charted at least locally. Trending re-ranks by movement in the chosen
+       cycle rather than by total hype, which is the whole point of a cycle. */
+    const chart = CHART
+      .filter((c) => this.state.genre === 'All' || c.genre === this.state.genre)
+      .filter((c) => c.scope >= this.state.scope)
+      .filter((c) => hit(c.title, c.artist, c.genre))
+      .sort((a, b) => b.d[this.state.cycle] - a.d[this.state.cycle])
+      .map((c, i) => ({
+        ...c, rank: String(i + 1).padStart(2, '0'),
+        hype: String(c.hype),
+        delta: (c.d[this.state.cycle] > 0 ? '▲ +' : c.d[this.state.cycle] < 0 ? '▼ ' : '– ') + Math.abs(c.d[this.state.cycle]),
+        deltaRef: (el) => { if (el) el.style.color = c.d[this.state.cycle] > 0 ? '#ff8f2d' : c.d[this.state.cycle] < 0 ? '#8a7346' : '#c9a54e'; },
+        play: () => this.setState({ t: 0, playing: true }),
+      }));
+
+    /* Radio takes the same three axes as the chart, then orders by whichever
+       the member picked: movement in the cycle, or affinity with their own
+       hearts and listening. */
+    const radio = RADIO
+      .filter((r) => this.state.genre === 'All' || r.genre === this.state.genre)
+      .filter((r) => r.scope >= this.state.scope)
+      .filter((r) => hit(r.name, r.dj, r.genre))
+      .map((r) => ({ ...r, affinity: (liked[r.genre] || 0) * 40 + r.hype / 8 + (r.live ? 12 : 0) }))
+      .sort((a, b) => this.state.sort === 'recommended' ? b.affinity - a.affinity : b.d[this.state.cycle] - a.d[this.state.cycle])
+      .map((r) => ({
+        ...r, hype: String(r.hype), scopeLabel: SCOPES[r.scope],
+        dial: (88.1 + r.scope * 2.4).toFixed(1),
+        state: r.live ? 'ON AIR' : 'OFF AIR',
+        liveRef: (el) => { if (el) el.style.color = r.live ? '#ff8f2d' : '#8a7346'; },
+        play: () => this.setState({ playing: true }),
+      }));
+    /* Recommended, scored from every signal the member actually generates:
+       their hearts and plays (genre history), what the people they follow are
+       playing, the track's own hype, and locality — a local act outranks a
+       global one at equal affinity, because the product exists to fill rooms
+       you can walk to. */
+    const score = (x, i) => {
+      const ch = CHART.filter((c) => c.title === x.title)[0];
+      const friends = FRIENDS_PLAYED.filter((t) => t === x.title).length;
+      return (liked[x.genre] || 0) * 30 + friends * 25 + Number(x.hype) / 6 + (ch ? (3 - ch.scope) * 8 : 0);
+    };
+    const whyFor = (x) => {
+      if (FRIENDS_PLAYED.indexOf(x.title) > -1) return 'Friends played';
+      if (liked[x.genre]) return 'Your ' + x.genre;
+      const ch = CHART.filter((c) => c.title === x.title)[0];
+      return ch && ch.scope === 0 ? 'Local' : 'Rising';
+    };
+    const likeTracks = TRACKS.map((x, i) => ({ ...x, i })).filter((x) => this.state.favs.indexOf(x.i) > -1);
+    const recTracks = TRACKS.map((x, i) => ({ ...x, i }))
+      .sort((a, b) => score(b) - score(a)).slice(0, 5)
+      .map((x) => ({ ...x, why: whyFor(x) }));
+    const derived = [
+      { id: 'likes', name: 'Likes', locked: true, items: likeTracks, empty: 'Heart a track and it lands here' },
+      { id: 'rec', name: 'Recommended', locked: true, items: recTracks, empty: 'Play and heart a few tracks first' },
+    ];
+    const owned = this.state.lists.map((l) => ({
+      id: l.id, name: l.name, locked: false,
+      items: l.tracks.map((i) => ({ ...TRACKS[i], i })), empty: 'Nothing in here yet',
+    }));
+    const lists = derived.concat(owned);
+    const open = this.state.open ? lists.filter((l) => l.id === this.state.open)[0] : null;
+    const openItems = open ? open.items.filter((x) => hit(x.title, x.artist, x.genre)) : [];
+    return {
+      allLists: lists.map((l) => ({
+        name: l.name, locked: l.locked, editable: !l.locked,
+        meta: l.items.length + (l.items.length === 1 ? ' track' : ' tracks') + (l.locked ? ' · auto' : ''),
+        open: () => this.setState({ open: l.id, editing: false, adding: false }),
+        rename: () => this.setState({ open: l.id, editing: true, adding: false }),
+        remove: () => this.setState((s) => ({ lists: s.lists.filter((x) => x.id !== l.id), open: null })),
+      })),
+      noneOpen: !open, someOpen: !!open,
+      openName: open ? open.name : '',
+      openEditable: !!open && !open.locked,
+      openEmpty: openItems.length === 0,
+      openEmptyLabel: open ? open.empty : '',
+      openTracks: openItems.map((x) => ({
+        ...x, why: x.why || '', removable: !!open && !open.locked,
+        play: () => this.setState((s) => ({ t: x.i, playing: true, history: s.history.concat(x.i).slice(-40) })),
+        remove: () => this.mutate(open.id, (l) => ({ ...l, tracks: l.tracks.filter((n) => n !== x.i) })),
+      })),
+      editing: this.state.editing,
+      renameRef: (el) => { if (el && el.value !== open.name) el.value = open.name; },
+      onRename: (e) => this.mutate(open.id, (l) => ({ ...l, name: e.target.value })),
+      doneRename: () => this.setState({ editing: false }),
+      adding: this.state.adding,
+      addLabel: this.state.adding ? '– Close' : '+ Add tracks',
+      toggleAdd: () => this.setState((s) => ({ adding: !s.adding })),
+      addable: open && !open.locked ? TRACKS.map((x, i) => ({ ...x, i }))
+        .filter((x) => open.items.every((o) => o.i !== x.i))
+        .map((x) => ({ ...x, add: () => this.mutate(open.id, (l) => ({ ...l, tracks: l.tracks.concat(x.i) })) })) : [],
+      addableEmpty: !!open && !open.locked && open.items.length >= TRACKS.length,
+      addList: () => this.setState((s) => {
+        const id = 'l' + (Date.now() % 100000);
+        return { lists: s.lists.concat({ id, name: 'New playlist', tracks: [] }), open: id, editing: true, adding: false };
+      }),
+      closeList: () => this.setState({ open: null, editing: false, adding: false }),
+      isFav: isFav, favIcon: isFav ? '♥' : '♡',
+      favRef: (el) => { if (!el) return; el.style.borderColor = isFav ? '#ff5029' : '#c9a54e'; el.style.background = isFav ? 'rgba(255,80,41,.18)' : 'transparent'; el.style.color = isFav ? '#ff8a5c' : '#f6e7c8'; },
+      fav: () => this.setState((s) => ({ favs: s.favs.indexOf(t) > -1 ? s.favs.filter((x) => x !== t) : s.favs.concat(t) })),
+      signalLabel: signal + '%',
+      signalRef: (el) => { this.signal = el; if (el) el.style.width = signal + '%'; },
+      showArtist: this.state.overlay === 'artist', showQueue: this.state.overlay === 'queue',
+      openArtist: () => this.setState({ overlay: 'artist' }),
+      openQueue: () => this.setState({ overlay: 'queue' }),
+      closeOverlay: () => this.setState({ overlay: null }),
+      queue,
+      artistFollowers: String(412 + Number(track.hype)),
+      artistTracks: TRACKS.filter((x) => x.artist === track.artist || x.album === track.album)
+        .map((x) => ({ ...x, play: () => this.setState({ t: TRACKS.indexOf(x), playing: true, overlay: null }) })),
+      mode, sub,
+      isMap: mode === 'MAP', isMusic: mode === 'MUSIC',
+      isMe: mode === 'ME' && sub !== 'Tickets',
+      isCharts: mode === 'MUSIC' && sub === 'Charts',
+      isTickets: mode === 'ME' && sub === 'Tickets',
+      ticketGroups: [
+        { label: 'Upcoming shows', past: false },
+        { label: 'Previous shows', past: true },
+      ].map((grp) => {
+        const items = TICKETS.filter((k) => k.past === grp.past);
+        return {
+          label: grp.label,
+          count: items.length + (items.length === 1 ? ' ticket' : ' tickets'),
+          items: items.map((k) => {
+            const gone = this.state.sent.indexOf(k.id) > -1;
+            return {
+              ...k,
+              /* Past tickets and transferred ones have nothing left to do: the
+                 room has happened, or the code now belongs to someone else. */
+              actionable: !k.past && !gone && this.state.transfer !== k.id && this.state.shared !== k.id,
+              transferring: this.state.transfer === k.id,
+              sharing: this.state.shared === k.id,
+              state: gone ? 'Transferred' : k.past ? 'Attended' : k.code,
+              stateRef: (el) => { if (el) el.style.color = gone ? '#ff8f2d' : k.past ? '#8a7346' : '#c9a54e'; },
+              link: 'ihype.org/h/jrs/' + k.slug,
+              doTransfer: () => this.setState({ transfer: k.id, shared: null, handle: '' }),
+              doShare: () => this.setState({ shared: k.id, transfer: null }),
+              cancel: () => this.setState({ transfer: null, shared: null }),
+              onHandle: (e) => this.setState({ handle: e.target.value }),
+              confirmTransfer: () => this.setState((s) => s.handle.trim()
+                ? { sent: s.sent.concat(k.id), transfer: null, handle: '' }
+                : { transfer: k.id }),
+              copy: () => { try { navigator.clipboard.writeText('https://ihype.org/h/jrs/' + k.slug); } catch (e) {} },
+              copyRef: () => {},
+            };
+          }),
+        };
+      }),
+      scopes: SCOPES.map((s, i) => ({ label: s, on: this.state.scope === i, ref: this.chip(this.state.scope === i), pick: () => this.setState({ scope: i }) })),
+      cycles: CYCLES.map(([id, label]) => ({ label, on: this.state.cycle === id, ref: this.chip(this.state.cycle === id), pick: () => this.setState({ cycle: id }) })),
+      chart: chart,
+      chartEmpty: chart.length === 0,
+      radio: radio,
+      radioEmpty: radio.length === 0,
+      isRadio: mode === 'MUSIC' && sub === 'Radio',
+      isDiscover: mode === 'MUSIC' && sub === 'Discover',
+      isPlaylists: mode === 'MUSIC' && sub === 'Playlists',
+      showFilters: mode === 'MUSIC' && (sub === 'Charts' || sub === 'Radio'),
+      sorts: SORTS.map(([id, label]) => ({ label, on: this.state.sort === id, ref: this.chip(this.state.sort === id), pick: () => this.setState({ sort: id }) })),
+      /* The cycle row only means something when the order is trending. */
+      cycleRowRef: (el) => { if (el) el.style.display = (sub === 'Radio' && this.state.sort === 'recommended') ? 'none' : 'flex'; },
+      onQuery: (e) => this.setState({ q: e.target.value }),
+      genres: ['All'].concat(CHART.concat(RADIO).map((c) => c.genre).filter((g, i, a) => a.indexOf(g) === i))
+        .map((g) => ({ label: g, on: this.state.genre === g, ref: this.chip(this.state.genre === g), pick: () => this.setState({ genre: g }) })),
+      seedSkip: () => this.setState((s) => ({ seed: (s.seed + 1) % SEEDS.length })),
+      seedSave: () => this.setState((s) => ({ seed: (s.seed + 1) % SEEDS.length, saved: s.saved.concat(SEEDS[s.seed].title) })),
+      track, elapsed: '0:00',
+      playIcon: this.state.playing ? '❙❙' : '▶',
+      hypeCount: String(Number(track.hype) + this.state.hypeBump),
+      meRows: (ME_ROWS[sub] || []).map(([label, value]) => ({ label, value })),
+      modules: MODES.map((x) => ({ id: x, label: x === 'MAP' ? 'Map' : x === 'MUSIC' ? 'Music' : 'Me' })),
+      modeId: mode,
+      onModule: (m) => { this.setState({ m: MODES.indexOf(m.id), s: 0 }); },
+      stations: subs.map((x) => ({ id: x, label: x })),
+      subId: sub,
+      onStation: (id) => this.setState({ s: subs.indexOf(id) }),
+      playing: this.state.playing,
+      expand: () => this.setPlayer(true),
+      prev: () => this.step(-1), next: () => this.step(1),
+      toggle: this.toggle,
+      seedItems: SEEDS.map((x) => ({ artist: x.artist, song: x.title, album: 'Portland · 2026', initial: x.artist.charAt(0), c1: '#ff8a52', c2: '#7a2412', why: x.why })),
+      seedIndex: this.state.seed,
+      /* The heart is grey until this card is actually in the playlist. */
+      seedSaved: this.state.saved.indexOf(SEEDS[this.state.seed].title) > -1,
+      seedHyped: this.state.seedHypes.indexOf(SEEDS[this.state.seed].title) > -1,
+      seedHype: () => this.setState((s) => ({
+        seedHypes: s.seedHypes.indexOf(SEEDS[s.seed].title) > -1 ? s.seedHypes : s.seedHypes.concat(SEEDS[s.seed].title),
+      })),
+      savedCount: this.state.saved.length,
+      hype: () => this.setState((s) => ({ hypeBump: s.hypeBump ? 0 : 1 })),
+      collapse: () => this.setPlayer(false),
+      playerRef: (el) => { this.player = el; },
+      seekRef: () => {},
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Console Ticket" description="Retro console ticket: QR stub, serialized id, status pill, holder/order/scan stats, transfer and HYPE Link. Fields match src/app/app/me/tickets/[serializedId]." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../console-shared/show-data.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0e0803;font-family:'Work Sans',system-ui,sans-serif}
+@keyframes paneIn{0%{opacity:0;transform:translateY(10px) scale(.995)}100%{opacity:1;transform:none}}
+@keyframes rowIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes lampWake{0%{opacity:.35;filter:saturate(.5)}55%{opacity:1;filter:saturate(1.25)}100%{opacity:1;filter:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;justify-content:center;background:#0e0803">
+<div style="width:430px;max-width:100%;flex:0 0 auto;height:100%;display:flex;flex-direction:column;overflow:hidden;contain:layout paint;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 40%,#2b1a0c);background-color:#452711">
+<div ref="{{ paneRef }}" style="flex:1;min-height:0;overflow-y:auto">
+
+<div style="padding:18px 16px 14px">
+<button onClick="{{ back }}" style="min-height:38px;padding:0 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.16em;cursor:pointer">‹ TICKETS</button>
+</div>
+
+<div style="padding:0 16px">
+<div style="border-radius:6px;overflow:hidden;background:linear-gradient(180deg,#f5ecd4,#e9dcb9);box-shadow:0 0 0 2px #c9a54e,0 16px 30px -16px rgba(0,0,0,.75)">
+
+<div style="padding:16px 17px 15px;border-bottom:2px dashed rgba(120,94,52,.42)">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+<div style="min-width:0">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:#8a7346">Admit one · serialized</div>
+<div style="margin-top:6px;font-family:'Instrument Serif',serif;font-size:31px;line-height:1.04;color:#2f2310">{{ show }}</div>
+<div style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#6b5327">{{ venue }} · {{ when }}</div>
+</div>
+<span ref="{{ pillRef }}" style="flex:none;padding:6px 11px;border-radius:3px;border:1.5px solid #3f7a4a;background:rgba(63,122,74,.16);font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#2f5c37">{{ status }}</span>
+</div>
+</div>
+
+<div style="padding:18px 17px;display:flex;flex-direction:column;align-items:center;border-bottom:2px dashed rgba(120,94,52,.42)">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TicketQR" code="{{ code }}" label="{{ code }}" size="{{ 196 }}" tone="light" hint-size="196px,232px"></x-import>
+<div style="margin-top:6px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">Scan at the door</div>
+</div>
+
+<div style="padding:14px 17px 16px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:1px;background:rgba(120,94,52,.3)">
+<sc-for list="{{ stats }}" as="s" hint-placeholder-count="8">
+<div ref="{{ s.animRef }}" style="padding:11px 12px;background:linear-gradient(180deg,#f5ecd4,#efe4c6)">
+<div ref="{{ s.ref }}" style="font-family:'Instrument Serif',serif;font-size:19px;line-height:1.1;color:#2f2310;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.value }}</div>
+<div style="margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.14em;text-transform:uppercase;color:#8a7346">{{ s.label }}</div>
+</div>
+</sc-for>
+</div>
+<div style="margin-top:13px;font-size:12.5px;line-height:1.6;color:#6b5327">This ticket carries a serialized token so venue staff can verify it once and block duplicate entry. Face value only — resale above it is not possible here.</div>
+</div>
+
+</div>
+</div>
+
+<div style="padding:14px 16px 0;display:flex;flex-direction:column;gap:10px">
+<button onClick="{{ openTransfer }}" ref="{{ transferBtnRef }}" style="width:100%;min-height:52px;border-radius:5px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.18);color:#f6e7c8;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">Transfer this ticket</button>
+<sc-if value="{{ transferring }}">
+<div style="padding:14px;border:1px solid rgba(201,165,78,.34);border-radius:5px;background:rgba(20,12,5,.44)">
+<div style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#c9a54e">Transfer to</div>
+<div style="display:flex;gap:8px;margin-top:8px">
+<input onInput="{{ onHandle }}" aria-label="Recipient handle or email" placeholder="@handle or email" style="flex:1;min-width:0;min-height:46px;padding:0 12px;border-radius:4px;border:1.5px solid #c9a54e;background:rgba(20,12,5,.5);outline:none;font-family:'JetBrains Mono',monospace;font-size:12px;color:#f6e7c8">
+<button onClick="{{ sendTransfer }}" style="flex:none;min-height:46px;padding:0 16px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;cursor:pointer">SEND</button>
+</div>
+<div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.5;letter-spacing:.08em;text-transform:uppercase;color:#8a7346">Free. The code reissues to them and yours stops scanning. Passed on {{ passedOn }} so far.</div>
+</div>
+</sc-if>
+
+<button onClick="{{ copyLink }}" ref="{{ hypeRef }}" style="width:100%;min-height:52px;border-radius:5px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;cursor:pointer">{{ hypeLabel }}</button>
+<div style="font-family:'JetBrains Mono',monospace;font-size:9.5px;line-height:1.55;letter-spacing:.08em;text-transform:uppercase;color:#8a7346">{{ link }} — anyone who buys through it earns a share of the 10% promoter pool. iHYPE takes nothing.</div>
+
+<div style="display:flex;gap:9px;margin-top:4px">
+<button onClick="{{ noop }}" style="flex:1;min-height:48px;border-radius:5px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Open venue</button>
+<button onClick="{{ noop }}" style="flex:1;min-height:48px;border-radius:5px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;cursor:pointer">Open show</button>
+</div>
+</div>
+</div>
+<div style="flex:none;position:relative;display:flex;align-items:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:3px solid #c9a54e;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 46%,#5c3a1f);box-shadow:inset 0 4px 0 -1px rgba(255,214,160,.18)">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.RotaryNav" modules="{{ dockModules }}" active-module="{{ dockModeId }}" on-navigate="{{ onDockModule }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TunerDial" stations="{{ dockStations }}" active="{{ dockActive }}" on-change="{{ onDockStation }}" style="flex:1;min-width:0" hint-size="100%,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.JoystickTransport" playing="{{ dockPlaying }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" on-expand="{{ dockExpand }}" on-collapse="{{ dockCollapse }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+</div>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.FullPlayer" open="{{ playerOpen }}" track="{{ nowPlaying }}" playing="{{ dockPlaying }}" progress="{{ progress }}" queue="{{ upNext }}" history="{{ played }}" on-close="{{ dockCollapse }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" hint-size="100%,100%"></x-import>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;status&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Valid&quot;,&quot;Scanned&quot;,&quot;Void&quot;],&quot;default&quot;:&quot;Valid&quot;,&quot;tsType&quot;:&quot;'Valid'|'Scanned'|'Void'&quot;,&quot;section&quot;:&quot;Ticket&quot;}}">
+/* Stat set and status vocabulary come from the shipped ticket page and
+   src/lib/tickets.ts: Valid / Scanned / Void, and the ten facts it prints.
+   Money is shown as face value plus Stripe's processing fee stated
+   separately — never merged, and never attributed to iHYPE. */
+
+/* The transport is not decoration on a subpage: the dock's joystick drives real
+   playback here exactly as it does on the shell — tap play/pause, drag for
+   prev/next, drag up for the full player, down to retire it. */
+const PLAYLIST = [
+  { title: 'Second Shift', artist: 'Deering Oaks', album: 'Night Route', initial: 'D', seconds: 203 },
+  { title: 'Harbour Lights', artist: 'Vera Sound', album: 'Casco', initial: 'V', seconds: 242 },
+  { title: 'Harbor Static', artist: 'Cold Cellar', album: 'Longfellow', initial: 'C', seconds: 178 },
+  { title: 'Night Route', artist: 'Second Shift', album: 'Portland Tapes', initial: 'S', seconds: 221 },
+];
+
+/* The dock is the app's whole navigation and belongs on every screen, so a
+   subpage feeds it the same module and station sets the shell does: the knob
+   reads out where you are, the tuner the section within it. */
+const DOCK_MODULES = [{ id: 'MAP', label: 'Map' }, { id: 'MUSIC', label: 'Music' }, { id: 'ME', label: 'Me' }];
+const DOCK_SUBS = {
+  MAP: ['Tonight', 'This Week', 'Weekend', 'All Dates'],
+  MUSIC: ['Discover', 'Playlists', 'Charts', 'Radio'],
+  ME: ['Profiles', 'Tickets', 'Info', 'Settings'],
+};
+/* Where each destination actually lives. The knob was wired to a no-op, so it
+   turned and nothing happened — the nav has to GO somewhere, and in a template
+   set that means the sibling template that owns the screen. */
+const ROUTES = {
+  MAP: '../console-shell/ConsoleShell.dc.html',
+  MUSIC: '../console-shell/ConsoleShell.dc.html',
+  ME: '../console-settings/ConsoleSettings.dc.html',
+  Profiles: '../console-profile/ConsoleProfile.dc.html',
+  Tickets: '../console-ticket/ConsoleTicket.dc.html',
+  Info: '../console-info/ConsoleInfo.dc.html',
+  Settings: '../console-settings/ConsoleSettings.dc.html',
+};
+function go(key) {
+  const href = ROUTES[key];
+  if (href) window.location.href = href;
+}
+
+function dockNav() {
+  return {
+    dockModules: DOCK_MODULES, dockModeId: 'ME', onDockModule: (m) => go(m.id),
+    dockStations: DOCK_SUBS['ME'].map((x) => ({ id: x, label: x })), dockActive: 'Tickets', onDockStation: (id) => go(id),
+  };
+}
+
+class Component extends DCLogic {
+  state = { playing: true, trackIdx: 0, playerOpen: false, status: 'Valid', transferring: false, handle: '', copied: false, passedOn: 0 };
+
+  transport() {
+    const n = PLAYLIST.length, i = this.state.trackIdx;
+    const step = (d) => this.setState({ trackIdx: (i + d + n) % n });
+    return {
+      dockPlaying: this.state.playing,
+      dockToggle: () => this.setState((s) => ({ playing: !s.playing })),
+      dockPrev: () => step(-1),
+      dockNext: () => step(1),
+      dockExpand: () => this.setState({ playerOpen: true }),
+      dockCollapse: () => this.setState({ playerOpen: false }),
+      playerOpen: this.state.playerOpen,
+      nowPlaying: PLAYLIST[i],
+      upNext: PLAYLIST.slice(i + 1).concat(PLAYLIST.slice(0, i)),
+      played: PLAYLIST.slice(0, i),
+      progress: 34,
+    };
+  }
+
+
+  /* Replays an entrance animation when `key` changes. The node persists across
+     a station change, so the animation must be cleared and the layout forced to
+     flush before it is set again — otherwise it plays once and never again. */
+  replay(slot, key, anim) {
+    return (el) => {
+      if (!el) return;
+      this._anim = this._anim || {};
+      if (this._anim[slot] === key) return;
+      this._anim[slot] = key;
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = anim;
+    };
+  }
+
+  renderVals() {
+    const st = this.state.status;
+    const tint = st === 'Valid' ? ['#3f7a4a', 'rgba(63,122,74,.16)', '#2f5c37']
+      : st === 'Scanned' ? ['#8a6a2c', 'rgba(201,165,78,.2)', '#6b5327']
+      : ['#a8452a', 'rgba(201,81,47,.16)', '#8a3a1e'];
+    const animKey = this.state.status;
+    return {
+      ...dockNav(),
+      paneRef: this.replay('pane', animKey, 'paneIn .34s cubic-bezier(.22,.9,.3,1) both'),
+      rowRef: (i) => this.replay('row' + i, animKey, 'rowIn .3s cubic-bezier(.22,.9,.3,1) ' + Math.min(i * 45, 320) + 'ms both'),
+      ...this.transport(),
+      show: "Thompson's Pt",
+      venue: 'Thompson’s Point',
+      when: 'Tonight · 7:30 PM',
+      status: st,
+      pillRef: (el) => { if (!el) return; el.style.borderColor = tint[0]; el.style.background = tint[1]; el.style.color = tint[2]; },
+      /* TicketQR derives its matrix from the code, so the block is stable per
+         ticket rather than decorative. */
+      code: 'IH-4K7Q-22',
+      stats: [
+        { label: 'Holder', value: 'jrs_pdx' },
+        { label: 'Order code', value: 'CNF-8J41' },
+        { label: 'Artist', value: 'Second Shift' },
+        { label: 'Face value', value: '$12.00' },
+        { label: 'Processing (Stripe)', value: '$0.65' },
+        { label: 'Total charge', value: '$12.65' },
+        { label: 'Scan time', value: st === 'Scanned' ? '7:34 PM' : 'Not yet' },
+        { label: 'Passed on', value: this.state.passedOn === 0 ? 'Never' : this.state.passedOn + '×' },
+      ].map((s, n) => ({ ...s,
+        ref: (el) => { if (el && s.label === 'Processing (Stripe)') el.style.color = '#8a3a1e'; },
+        animRef: this.replay('tk' + n, this.state.status, 'rowIn .28s cubic-bezier(.22,.9,.3,1) ' + n * 40 + 'ms both'),
+      })),
+      transferring: this.state.transferring,
+      transferBtnRef: () => {},
+      openTransfer: () => this.setState((s) => ({ transferring: !s.transferring })),
+      onHandle: (e) => this.setState({ handle: e.target.value }),
+      passedOn: this.state.passedOn === 0 ? 'never' : this.state.passedOn + '×',
+      sendTransfer: () => this.setState((s) => s.handle.trim()
+        ? { transferring: false, handle: '', passedOn: s.passedOn + 1, status: 'Void' }
+        : { transferring: true }),
+      link: 'ihype.org/h/jrs/thompsons-pt-aug21',
+      hypeLabel: this.state.copied ? 'Link copied ✓' : 'Hype this show',
+      hypeRef: () => {},
+      copyLink: () => {
+        try { navigator.clipboard.writeText('https://ihype.org/h/jrs/thompsons-pt-aug21'); } catch (e) {}
+        this.setState({ copied: true });
+        setTimeout(() => this.setState({ copied: false }), 1800);
+      },
+      back: () => {}, noop: () => {},
+    };
+  }
+}
+
+</script>
+</body>
+</html>

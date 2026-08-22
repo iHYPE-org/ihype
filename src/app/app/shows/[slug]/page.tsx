@@ -8,7 +8,7 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { isAdminSession } from '@/lib/permissions';
-import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits } from '@/lib/show-detail';
+import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 
 export const dynamic = 'force-dynamic';
@@ -134,6 +134,7 @@ export default async function MmmShowPage({
   const where = formatShowWhere(venue);
   const ticketingOpen = isTicketingOpen(show);
   const splits = resolveShowSplits(show);
+  const faceShares = splits ? splitFaceValueCents(show.ticketPriceCents, splits) : null;
 
   return (
     <div className="mmm-show">
@@ -166,8 +167,20 @@ export default async function MmmShowPage({
               {splits.promoter}% promoters
             </span>
           </div>
+          {/* WHAT the percentages are a share OF, which the bar above cannot
+              say on its own. The design system's money rule: the split is shown
+              against face value only — against the total it would imply the
+              artist's 70% includes money Stripe took, and the sale card
+              directly below this ends in a total carrying tax and Stripe's
+              processing. Two charges, named separately, with iHYPE's own $0
+              stated rather than implied. */}
           <div className="mmm-show-fee">
-            {show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents) : 'Free'} · $0 iHYPE fee
+            {faceShares
+              ? `${formatCurrencyFromCents(show.ticketPriceCents)} face value · ${formatCurrencyFromCents(faceShares.artist)} artist · ${formatCurrencyFromCents(faceShares.venue)} venue · ${formatCurrencyFromCents(faceShares.promoter)} promoters`
+              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents) : 'Free'}
+          </div>
+          <div className="mmm-show-fee">
+            $0 iHYPE fee · Stripe&rsquo;s processing is charged separately and shown before you pay
           </div>
         </>
       )}

@@ -69,8 +69,9 @@
      padding on 9–10px mono, which lands at 24–33px — the design's own numbers,
      and under the floor MOBILE.md sets for every control on every surface.
      Growing the vertical padding is the prescribed fix: the horizontal axis is
-     the constrained one on a phone, and these sit in a scrolling row. */
-  .mmm-map-chip,
+     the constrained one on a phone, and these sit in a scrolling row.
+     `.mmm-map-chip` was here until the layer chips retired (2026-08-22) — the
+     layer is the dock dial's now, and the dial is 74px of bar. */
   .mmm-map-recentre,
   .mmm-date-pill,
   .mmm-date-clear,
@@ -136,9 +137,8 @@
   }
 
   /* Icon-only controls need the width too — a 44px-tall, 24px-wide button is
-     still a miss. */
-  .mmm-player-icon,
-  .mmm-player-play,
+     still a miss. The player's own icon buttons were in this group and went
+     with the pill — the joystick that replaced them is 74px. */
   .mmm-sheet-dismiss {
     min-width: 44px;
   }
@@ -148,8 +148,8 @@
      to undo what they sit on — dismiss the panel, stop the audio — so a missed
      tap is not a small cost. Floored here rather than resized in mmm.css, so a
      mouse still gets the design's own geometry. Their own rule rather than the
-     group above, which already sets `min-height` for some of its members. */
-  .mmm-artist-close,
+     group above, which already sets `min-height` for some of its members.
+     The artist highlight's close went with the highlight (2026-08-22). */
   .mmm-deck-play {
     min-width: 44px;
     min-height: 44px;

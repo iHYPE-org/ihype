@@ -32,7 +32,13 @@ function Logo({ gradient = false, size = 'md' }: { gradient?: boolean; size?: 's
   const fs = size === 'lg' ? '2rem' : size === 'sm' ? '0.95rem' : '1.25rem';
   const accentStyle = gradient
     ? {
-        background: 'linear-gradient(90deg,#ff4635,#ff3d87 35%,#7c5cff 68%,#39d8df)',
+        /* The brand's four hues, from tokens. It was `#ff4635,#ff3d87,#7c5cff,
+           #39d8df` — the pre-console palette, so this wordmark kept glowing in
+           DS8 colours on a cream page nine months after the ground moved. Each
+           stop is a FILL here (the gradient is clipped to the text but the text
+           itself is transparent), which is why the fill tokens are correct and
+           the `-text` pairs are not. */
+        background: 'linear-gradient(90deg,var(--accent),var(--role-promoter) 35%,var(--role-fan) 68%,var(--role-venue))',
         WebkitBackgroundClip: 'text' as const,
         backgroundClip: 'text' as const,
         color: 'transparent',

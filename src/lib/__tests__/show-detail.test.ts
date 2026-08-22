@@ -5,6 +5,7 @@ import {
   formatShowWhere,
   isTicketingOpen,
   resolveShowSplits,
+  splitFaceValueCents,
 } from '@/lib/show-detail';
 
 const CREATOR = 'user_creator';
@@ -86,5 +87,38 @@ describe('formatShowWhere', () => {
     expect(formatShowWhere({ name: null, city: 'Portland' })).toBe('Portland');
     expect(formatShowWhere(null)).toBe('');
     expect(formatShowWhere({ name: null, city: null })).toBe('');
+  });
+});
+
+describe('splitFaceValueCents', () => {
+  const evenSplit = { artist: 70, venue: 20, promoter: 10 };
+
+  it('splits a whole-dollar face value the obvious way', () => {
+    expect(splitFaceValueCents(1800, evenSplit)).toEqual({ artist: 1260, venue: 360, promoter: 180 });
+  });
+
+  it('always sums to exactly the face value, however awkward the price', () => {
+    for (const price of [1, 7, 99, 333, 1799, 2501, 9999, 123_457]) {
+      const shares = splitFaceValueCents(price, evenSplit)!;
+      expect(shares.artist + shares.venue + shares.promoter, `price ${price}`).toBe(price);
+    }
+  });
+
+  it('sums exactly for a show that moved its own percentages', () => {
+    for (const splits of [
+      { artist: 60, venue: 30, promoter: 10 },
+      { artist: 80, venue: 20, promoter: 0 },
+      { artist: 45, venue: 45, promoter: 10 },
+      { artist: 33, venue: 33, promoter: 34 },
+    ]) {
+      const shares = splitFaceValueCents(2999, splits)!;
+      expect(shares.artist + shares.venue + shares.promoter, JSON.stringify(splits)).toBe(2999);
+    }
+  });
+
+  it('gives a free show and a nonsense split no figures rather than $0.00 rows', () => {
+    expect(splitFaceValueCents(0, evenSplit)).toBeNull();
+    expect(splitFaceValueCents(-100, evenSplit)).toBeNull();
+    expect(splitFaceValueCents(1800, { artist: 0, venue: 0, promoter: 0 })).toBeNull();
   });
 });

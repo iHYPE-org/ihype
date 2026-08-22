@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
+    "vendor:ds": "node scripts/vendor-ds-components.mjs",
+    "guard:ds": "node scripts/vendor-ds-components.mjs --check",
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:design": "node scripts/audit-design-templates.mjs",
     "audit:css": "node scripts/audit-css.mjs",
@@ -22,6 +24,9 @@
     "seed:preview": "node --import dotenv/config scripts/seed-preview-content.mjs",
     "seed:preview:remove": "node --import dotenv/config scripts/seed-preview-content.mjs --remove",
     "audit:mobile": "node scripts/audit-mobile.mjs",
+    "measure:dock": "node scripts/measure-dock.mjs",
+    "app-links:write": "node scripts/generate-app-links.mjs",
+    "check:app-links": "node scripts/generate-app-links.mjs --check",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
     "check": "npm run typecheck && npm run lint && npm test",
@@ -48,7 +53,7 @@
     "cap:open:ios": "cap open ios",
     "cap:open:android": "cap open android",
     "clear:users": "node scripts/clear-all-users.mjs",
-    "audit:retro": "node scripts/audit-retro-coverage.mjs --max=8",
+    "audit:retro": "node scripts/audit-retro-coverage.mjs --max=0",
     "design:handoff": "node scripts/build-console-handoff.mjs"
   },
   "dependencies": {

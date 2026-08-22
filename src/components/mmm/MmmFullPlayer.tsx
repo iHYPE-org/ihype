@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef } from 'react';
-import type { MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
+import type { MmmPlayerTrack } from '@/components/mmm/MmmShell';
 
 /**
  * The full-screen player. Phone only.

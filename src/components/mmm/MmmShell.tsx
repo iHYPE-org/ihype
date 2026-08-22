@@ -1,19 +1,30 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { MmmDock } from '@/components/mmm/MmmDock';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
-import { MmmChromeDial } from '@/components/mmm/MmmChromeDial';
-import { MmmNav } from '@/components/mmm/MmmNav';
-import { MmmMiniPlayer } from '@/components/mmm/MmmMiniPlayer';
-import { MmmPlayer, type MmmPlayerTrack } from '@/components/mmm/MmmPlayer';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
+import { MmmStationsProvider } from '@/components/mmm/MmmStations';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
-import { ARC_NARROW_MAX_WIDTH, isMmmDetailPath, itemForPath, moduleForPath, type MmmModuleId } from '@/lib/mmm-nav';
+import { isMmmDetailPath, moduleForPath } from '@/lib/mmm-nav';
 import { formatHypeWait, hypeWaitUntil, HYPE_WINDOW_MS } from '@/lib/hype-window';
 import { resolvePick, splitQueue } from '@/lib/mmm-queue';
+
+/**
+ * One row as the full player draws it. It used to live in `MmmPlayer.tsx` and
+ * moved here when the pill retired — the shape is the shell's, and the full
+ * player is now its only consumer.
+ */
+export type MmmPlayerTrack = {
+  title: string;
+  artist: string;
+  initial: string;
+  artworkUrl?: string | null;
+  /** Shown after the artist as "artist · album" in the full player's meta line. */
+  album?: string;
+};
 
 export type MmmNowPlaying = {
   title: string;
@@ -37,24 +48,36 @@ export type MmmNowPlaying = {
 } | null;
 
 /**
- * The Music · Map · Me frame.
+ * The Music · Map · Me frame, on the console dock.
  *
- * ## The contract, from the handoff
+ * ## The contract
  *
- * 1. **No header, no tab bar.** The only persistent chrome is the logo trigger
- *    and the player, both bottom-left. This was deliberate, to reclaim vertical
- *    space, and is the single biggest departure from the app shell it replaces.
+ * 1. **No header, no tab bar, and now no arc.** The only persistent chrome is
+ *    one walnut dock across the bottom carrying three controls — see
+ *    `MmmDock.tsx`. The logo trigger, the radial arc, the nav hint, the scrim,
+ *    the player pill and the phone mini-player are all retired (2026-08-22,
+ *    owner decision: "I don't want any previous design … Bottom hifi nav system
+ *    is the only thing I want"). Nothing they were wired to was dropped.
  * 2. **The map is the base layer and stays mounted.** Music and Me are panes
  *    over it, so returning to MAP keeps your pan and zoom. This component is
  *    rendered by the `/app` LAYOUT, which is the only place the App Router
  *    guarantees a subtree survives navigation.
- * 3. **Module, tab and view are routes, not state.** The handoff says so
- *    explicitly. Only `navOpen`, `sheet`, `playing` and `hyped` live here.
- * 4. **Opening the nav dims everything, player included.** The player fades and
- *    drops out rather than being covered by the scrim, and the scrim sits above
- *    the map and the panes but below the fan.
+ * 3. **Module, tab and view are routes, not state.** Only `sheet`, `fullOpen`,
+ *    `queueOpen`, `faved` and `hyped` live here.
+ * 4. **One dial per screen, and it is the dock's.** A page with its own section
+ *    set registers it through `MmmStationsProvider` (mounted here) rather than
+ *    drawing a selector of its own — the handoff's rule, because two
+ *    identical-looking dials on one screen mean different things.
  * 5. One scroll container: the module pane. `html`/`body` are locked by
  *    `.mmm-locked`, which this component toggles.
+ *
+ * ## What the dock cost, deliberately
+ *
+ * There is no longer a persistent readout of what is playing: the dock is three
+ * controls and no text, which is what the console template draws. The track,
+ * the artist, the queue and the scrubber are one flick up (▲ on the joystick)
+ * in `MmmFullPlayer`, which now opens at every width rather than on the phone
+ * alone. That is a real trade and it is the design's.
  */
 export function MmmShell({
   children,
@@ -69,7 +92,6 @@ export function MmmShell({
   const searchParams = useSearchParams();
   const router = useRouter();
   const activeModule = moduleForPath(pathname);
-  const activeItemId = itemForPath(pathname);
   /**
    * A detail surface (a show) renders as a pane even though `moduleForPath`
    * answers `map` for it — the map is where you reached it from, so the arc
@@ -81,7 +103,6 @@ export function MmmShell({
   const initialMapLayer: MapLayer =
     requestedLayer === 'venues' || requestedLayer === 'artists' ? requestedLayer : 'events';
 
-  const [navOpen, setNavOpen] = useState(false);
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
   const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
   const [hypePending, setHypePending] = useState(false);
@@ -215,40 +236,15 @@ export function MmmShell({
   const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
 
   useEffect(() => {
-    if (!navOpen) return;
-    setQueueOpen(false);
-  }, [navOpen]);
-
-  useEffect(() => {
     setQueueOpen(false);
     setFullOpen(false);
   }, [pathname]);
-
-  // The phone form of the pill drops prev/next, the heart and the volume track:
-  // they do not fit beside a 64px square at 393px, and each is reachable
-  // elsewhere. ARC_NARROW_MAX_WIDTH is the shell's own breakpoint, the one the
-  // arc nav already switches at — a second threshold here would let the chrome
-  // disagree with itself about how wide the frame is.
-  const [narrow, setNarrow] = useState(false);
-  useEffect(() => {
-    const query = window.matchMedia(`(max-width: ${ARC_NARROW_MAX_WIDTH}px)`);
-    const sync = () => setNarrow(query.matches);
-    sync();
-    query.addEventListener('change', sync);
-    return () => query.removeEventListener('change', sync);
-  }, []);
 
   // The hype heart resolves its target server-side, against `nowPlaying`. If
   // the audio element has since moved to a different track, that target is no
   // longer the artist on screen — so the heart is hidden rather than left
   // pointing at the wrong profile.
   const canHype = !currentTrack && Boolean(nowPlaying?.artistProfileId);
-
-  // Navigating closes the nav. There is no section to reset — the arc is one
-  // level of three discs, per ArcNav.d.ts.
-  useEffect(() => {
-    setNavOpen(false);
-  }, [pathname]);
 
   // Leaving the map closes any open pin sheet — it belongs to the map, and a
   // sheet floating over the Music pane would be orphaned chrome.
@@ -260,10 +256,6 @@ export function MmmShell({
     const root = document.documentElement;
     root.classList.add('mmm-locked');
     return () => root.classList.remove('mmm-locked');
-  }, []);
-
-  const closeNav = useCallback(() => {
-    setNavOpen(false);
   }, []);
 
   // The heart writes through to /api/hype — the same endpoint the artist
@@ -314,120 +306,28 @@ export function MmmShell({
   const hypeLocked = hypeWait > 0;
   const hypeLabel = formatHypeWait(hypeWait);
 
-  const toggleNav = useCallback(() => {
-    setSheet(null);
-    setNavOpen((open) => !open);
-  }, []);
-
   return (
-    <div className="mmm-frame">
-      <MmmMap active={mapActive && !navOpen} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
+    <MmmStationsProvider>
+      <div className="mmm-frame">
+        <MmmMap active={mapActive} initialLayer={initialMapLayer} onOpenSheet={setSheet} />
 
-      {!mapActive && (
-        <div className="mmm-pane">
-          {/* The migrated workflows already use the shared primitive aliases
-              scoped beneath .mmm-migrated-surface. This nested surface
-              activates those paint-only aliases without reviving any retired
-              layout or chrome. */}
-          <div className="mmm-migrated-surface">{children}</div>
-        </div>
-      )}
+        {!mapActive && (
+          <div className="mmm-pane">
+            {/* The migrated workflows already use the shared primitive aliases
+                scoped beneath .mmm-migrated-surface. This nested surface
+                activates those paint-only aliases without reviving any retired
+                layout or chrome. */}
+            <div className="mmm-migrated-surface">{children}</div>
+          </div>
+        )}
 
-      {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
+        {sheet && mapActive && <MmmSheet onClose={() => setSheet(null)} target={sheet} />}
 
-      <div className="mmm-chrome">
-        {/* ── The console cabinet ──────────────────────────────────────────
-            The walnut face the trigger and the player sit ON, from the hi-fi
-            direction. It is ADDITIVE and purely decorative: a panel behind
-            them, sized from the same geometry tokens they are positioned by,
-            so the shell's signed-off geometry table is untouched and no
-            wiring moves. Every figure it uses is derived, never restated —
-            nudging one here without re-deriving the rest is exactly what
-            SHELL_LOCK forbids.
-
-            aria-hidden because it is furniture: it carries no control and no
-            text a reader needs.
-
-            The prototype engraves a brass nameplate on the cabinet's bottom
-            rail. It is NOT here, and that is a measurement rather than an
-            oversight: the pill leaves exactly 7px of cabinet visible above
-            and below it, a legible plate needs about 14, and the only way to
-            find that space is to grow the cabinet past --mmm-chrome-top —
-            which is the figure other surfaces clear the chrome by. A plate
-            half-hidden behind the pill reads as a bug; moving the shell to
-            fit an ornament is the thing SHELL_LOCK exists to prevent. */}
-        <span aria-hidden="true" className="mmm-console" data-hidden={navOpen} />
-
-        {/* The tuner, on the cabinet between the knobs. It navigates the
-            current module's destinations, so the pane below it no longer
-            carries a tab strip of its own. */}
-        <MmmChromeDial pathname={pathname} />
-
-        {/* The player fades and drops rather than unmounting, so its transition
-            can play out — the design's `data-ih-hide` behaviour. Opening the nav
-            still dims it completely, which was the explicit requirement. */}
-        <MmmPlayer
-          canFavourite={Boolean(currentTrack)}
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          canHype={canHype}
-          canTogglePlay={Boolean(currentTrack)}
-          faved={faved}
-          hidden={navOpen}
-          history={played}
-          hyped={hyped}
-          hypeLabel={hypeLabel}
-          hypeLocked={hypeLocked}
-          narrow={narrow}
-          /* Phone only: a visible expand control opens the full player. */
-          onExpand={() => { setNavOpen(false); setFullOpen(true); }}
-          onOpenArtist={artistSlug ? () => {
-            setQueueOpen(false);
-            router.push(`/app/artists/${artistSlug}`);
-          } : undefined}
-          onPickTrack={pickTrack}
-          onToggleQueue={() => setQueueOpen((open) => !open)}
-          queue={upNext}
-          queueOpen={queueOpen}
-          onNext={playNext}
-          onPrev={playPrevious}
-          // The pill speaks 0-100; the audio element speaks seconds. Converted
-          // here rather than in the component, so the component stays
-          // presentation over whatever playback state it is given.
-          onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}
-          onToggleFav={() => void toggleFav()}
-          onToggleHype={() => void toggleHype()}
-          onTogglePlay={togglePlayback}
-          onVolume={(value) => setVolume(value / 100)}
-          playing={Boolean(currentTrack) && isPlaying}
-          progress={duration > 0 ? (currentTime / duration) * 100 : 0}
-          track={displayTrack}
-          volume={volume * 100}
-        />
-
-        {/* The phone player. It and the pill are both mounted; the 620px
-            block in mmm.css decides which one is visible, so neither has to
-            know the viewport and there is no hydration mismatch to manage. */}
-        <MmmMiniPlayer
-          canGoBack={canGoBack}
-          canGoForward={canGoForward}
-          canHype={canHype}
-          canTogglePlay={Boolean(currentTrack)}
-          hidden={navOpen}
-          hyped={hyped}
-          hypeLabel={hypeLabel}
-          hypeLocked={hypeLocked}
-          onExpand={() => { setNavOpen(false); setFullOpen(true); }}
-          onNext={playNext}
-          onPrev={playPrevious}
-          onToggleHype={() => void toggleHype()}
-          onTogglePlay={togglePlayback}
-          playing={Boolean(currentTrack) && isPlaying}
-          track={displayTrack}
-        />
-
-        {/* Phone only, and only over a real track: with nothing playing there
-            is nothing to expand, and `onExpand` is the only way in. */}
+        {/* Every control the retired pill and mini-player carried — seek,
+            volume, the heart, HYPE, the queue and the played list — lives here,
+            wired to exactly the same endpoints as before. What changed is the
+            way in: the joystick's ▲ opens it at EVERY width, where the phone
+            was previously the only place it could be reached. */}
         <MmmFullPlayer
           canFavourite={Boolean(currentTrack)}
           canGoBack={canGoBack}
@@ -454,7 +354,7 @@ export function MmmShell({
           onToggleHype={() => void toggleHype()}
           onTogglePlay={togglePlayback}
           onVolume={(value) => setVolume(value / 100)}
-          open={fullOpen && narrow}
+          open={fullOpen}
           playing={Boolean(currentTrack) && isPlaying}
           progress={duration > 0 ? (currentTime / duration) * 100 : 0}
           queue={upNext}
@@ -462,58 +362,23 @@ export function MmmShell({
           volume={volume * 100}
         />
 
-        {/* ADMIN MODE was here and is gone (2026-08-14, from device
-            screenshots). It was fixed top-right on every screen and covered
-            the content underneath — the MUSIC tab strip, the MAP layer chips
-            and a ME stat tile were all partly behind it. It also told an
-            administrator something they already know: that they are one. The
-            console is a drawer destination away, and `isAdmin` is still
-            resolved in the layout for anything that genuinely needs it. */}
-
-        {/* Always mounted: the arc animates between states, and unmounting it
-            would make every open a fresh mount with no closing transition. */}
-        <MmmNav
-          activeModule={activeModule}
-          onClose={closeNav}
-          open={navOpen}
+        {/* The whole of the chrome. One walnut dock, three controls, every
+            width — see MmmDock.tsx. `canTogglePlay` is false when there is no
+            real track: a tap then does nothing, and the drag directions still
+            work, which is the vendored component's own contract rather than a
+            disabled control that looks broken. */}
+        <MmmDock
+          canTogglePlay={Boolean(currentTrack)}
+          layer={requestedLayer ?? null}
+          onCollapse={() => setFullOpen(false)}
+          onExpand={() => setFullOpen(true)}
+          onNext={playNext}
+          onPrev={playPrevious}
+          onTogglePlay={togglePlayback}
+          pathname={pathname}
+          playing={Boolean(currentTrack) && isPlaying}
         />
-
-        <button
-          aria-expanded={navOpen}
-          aria-label={navOpen ? 'Close iHYPE navigation' : 'Open iHYPE navigation'}
-          className="mmm-logo"
-          onClick={toggleNav}
-          /* Positioned in mmm.css, not here. Inline styles outrank every
-             stylesheet rule, so hardcoding left/bottom made the logo the one
-             piece of chrome the <=720px breakpoint could not move: the arc
-             anchor shifted to 18/22 and the trigger stayed at 26/26, leaving
-             the fan opening from a point offset from the button it belongs to.
-             It also made the consent lift impossible to apply. */
-          type="button"
-        >
-          <Image
-            alt=""
-            aria-hidden="true"
-            className="mmm-logo-image"
-            height={1600}
-            priority
-            sizes="(max-width: 720px) 56px, 88px"
-            src="/brand/ihype-logo.png"
-            width={1600}
-          />
-          {isPlaying && currentTrack && (
-            <span aria-hidden="true" className="mmm-eq"><span /><span /><span /></span>
-          )}
-        </button>
-
-        {/* The module label that sat above the logo trigger ("MAP" / "MUSIC" /
-            "ME") is gone (2026-08-14, from device screenshots). On a phone it
-            printed over whatever the pane was showing at the bottom of the
-            screen — the empty-state sentence on MUSIC, a ME row — and it names
-            the module you are already looking at. The trigger itself is the
-            navigation; the label was furniture. `navHint()` stays in
-            `mmm-nav.ts` and stays tested: it is the arc's own labelling. */}
       </div>
-    </div>
+    </MmmStationsProvider>
   );
 }

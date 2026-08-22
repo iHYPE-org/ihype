@@ -1,0 +1,14 @@
+export interface TunerStation { id: string; label: string }
+export interface TunerDialProps {
+  /** Stations in scale order — wraps in both directions. */
+  stations: TunerStation[];
+  active: string;
+  onChange?: (id: string) => void;
+  style?: React.CSSProperties;
+}
+/**
+ * The console's signature control — replaces a horizontal tab strip.
+ * Drag or wheel the dial, or press either brass key. role="tablist" of
+ * role="tab", not role="slider": announces a destination name, not a number.
+ */
+export declare function TunerDial(props: TunerDialProps): JSX.Element;

@@ -93,7 +93,10 @@ jobs:
         # cargo-culted:
         #   *.css                     - layout and geometry; only a browser sees it
         #   components/shell, app/app - the two shells' chrome contracts
-        #   components/mmm            - the map, the panes, the player
+        #   components/mmm            - the map, the panes, the dock
+        #   components/ds             - the vendored console controls the dock
+        #                               mounts; a re-vendored knob changes its
+        #                               geometry and only a browser sees that
         #   lib/*-nav.ts              - the route registries both shells read
         #   middleware.ts             - auth redirects and CSP, Edge-runtime only
         #   public/sw.js              - caching, and it can serve a stale app
@@ -117,7 +120,7 @@ jobs:
           fi
           changed="$(git diff --name-only "$BASE" "$HEAD")"
           echo "Changed files:"; echo "$changed"
-          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^\.github/workflows/ci\.yml$)'
+          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/components/ds/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^scripts/measure-dock\.mjs$|^\.github/workflows/ci\.yml$)'
           if echo "$changed" | grep -qE "$pattern"; then
             echo "FULL_CI=true" >> "$GITHUB_ENV"
             echo "Full CI: this diff touches the shell, routing, styling or the service worker."
@@ -165,6 +168,16 @@ jobs:
       - name: Gated migration guard
         run: npm run guard:migrations
 
+      - name: Vendored design-system components guard
+        # src/components/ds/ is GENERATED from the vendored handoff's own
+        # component sources. This fails if the checked-in files no longer match
+        # what the design system would produce — which is the whole mechanism
+        # that stops a console control being quietly re-authored here (the
+        # shipped TunerDial and the design system's had already diverged that
+        # way). A deliberate change belongs in Claude Design and a re-vendored
+        # handoff, not in src/.
+        run: npm run guard:ds
+
       - name: MMM workflow primitive audit
         # Fails when a page inside the signed-in shell grows a card/row/stat/
         # eyebrow of its own instead of using the design system's primitive.
@@ -183,6 +196,22 @@ jobs:
         # Lower this number as they get fixed. Never raise it.
         run: npm run audit:css -- --max=0
 
+      - name: Route inventory ratchet
+        # `audit:routes` classifies every page.tsx three ways and --max-legacy
+        # is a ratchet that must go DOWN. It reached ZERO on 2026-08-22 — the
+        # legacy app shell has no rendered pages left — and zero is the number
+        # worth defending: a new page inside the retired shell is now a build
+        # failure rather than a note in a report nobody runs. Node-only, so it
+        # belongs in the fast lane rather than behind the browser gate.
+        run: npm run audit:routes -- --max-legacy=0
+
+      - name: Console colour coverage ratchet
+        # The other ratchet: how many member-facing routes still paint a raw
+        # colour literal instead of a token. It reached ZERO the same day — 89 of
+        # 89 paint only from tokens — so this is now a gate rather than a
+        # countdown. Same contract as the others: the number goes down, never up.
+        run: npm run audit:retro
+
       - name: Unit tests
         run: npm test
 
@@ -195,6 +224,18 @@ jobs:
       - name: Install Playwright browser
         if: env.FULL_CI == 'true'
         run: npx playwright install chromium --with-deps
+
+      - name: Dock geometry
+        if: env.FULL_CI == 'true'
+        # The dock is the whole of the app's navigation and every figure in it
+        # is load-bearing on the others (DESIGN_SYNC row 289). This drives
+        # Chromium against slices of the real stylesheets — no build and no
+        # database, since /app/* is behind auth — and fails on a wrapped bar,
+        # mismatched knobs, an overflowing knob cap, a clipped station name or
+        # a covered step chevron. It is gated with the other browser stages,
+        # and the depth step already selects them for exactly the diffs that
+        # can break it: src/components/mmm/, src/components/ds/ and any *.css.
+        run: npm run measure:dock
 
       - name: Mandatory public browser smoke
         if: env.FULL_CI == 'true'

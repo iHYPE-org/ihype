@@ -291,6 +291,48 @@ assertMissing(
   'Discovery lives at /app/music/discover; nav links there directly.'
 );
 
+/* The dock is the app's whole navigation, and nothing else may be (2026-08-22).
+ *
+ * The owner's instruction was "I don't want any previous design, retire it …
+ * Bottom hifi nav system is the only thing I want", and the failure mode is not
+ * that someone disagrees — it is that a retired control comes back one piece at
+ * a time. The logo trigger was the way into the arc; the arc was a second way to
+ * switch module; the pill and the phone mini-player were two transports for one
+ * audio element. Each was reasonable on its own and the set of them was three
+ * navigation models in one shell.
+ *
+ * So: the components are asserted GONE, not merely unmounted. A file left on
+ * disk is an import away from rendering, and this repository has already had one
+ * retired shell rebuilt from a copy nobody deleted.
+ */
+for (const retired of [
+  'src/components/mmm/MmmNav.tsx',
+  'src/components/mmm/MmmPlayer.tsx',
+  'src/components/mmm/MmmMiniPlayer.tsx',
+  'src/components/mmm/MmmChromeDial.tsx',
+  'src/components/mmm/MmmArtistCard.tsx',
+]) {
+  assertMissing(retired, 'The console dock is the only chrome — see MmmDock.tsx and DESIGN_SYNC row 289.');
+}
+assertIncludes(
+  'src/components/mmm/MmmShell.tsx',
+  '<MmmDock',
+  'The shell must mount the dock: it is the only way to reach any other module.'
+);
+assertIncludes(
+  'src/app/mmm.css',
+  '.mmm-dock {',
+  'The dock needs its bar. Without this rule the three controls stack in flow at the top of the frame.'
+);
+/* One dial per screen, and it is the dock's. A page that renders its own puts
+   two identical-looking dials on screen meaning different things — which is
+   what shipped while `ProfileTabs` drew one ten pixels above the dock's. */
+assertNotIncludes(
+  'src/components/profile/ProfileTabs.tsx',
+  '<TunerDial',
+  'A profile registers its tabs with the dock (useRegisterStations) rather than drawing a second dial.'
+);
+
 /* The section switcher is the tuner dial, and there is one of it.
  *
  * Three separate horizontal tab strips used to sit at the top of a page —

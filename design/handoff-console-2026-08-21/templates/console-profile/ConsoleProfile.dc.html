@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Console Profile" description="Retro console public profile: fixed artist/venue tab sets on a tuner dial, with honest empty states. Tabs match src/lib/profile-tabs.ts." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<script src="../console-shared/show-data.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0e0803;font-family:'Work Sans',system-ui,sans-serif}
+@keyframes paneIn{0%{opacity:0;transform:translateY(10px) scale(.995)}100%{opacity:1;transform:none}}
+@keyframes rowIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes lampWake{0%{opacity:.35;filter:saturate(.5)}55%{opacity:1;filter:saturate(1.25)}100%{opacity:1;filter:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;justify-content:center;background:#0e0803">
+<div style="width:430px;max-width:100%;flex:0 0 auto;height:100%;display:flex;flex-direction:column;overflow:hidden;contain:layout paint;display:flex;flex-direction:column;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 40%,#2b1a0c);background-color:#452711">
+
+<div style="flex:none;padding:16px 16px 0">
+<button onClick="{{ back }}" style="min-height:38px;padding:0 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.16em;cursor:pointer">‹ MAP</button>
+</div>
+
+<div style="flex:none;padding:14px 16px 0;display:flex;align-items:flex-end;gap:13px">
+<div style="flex:none;width:96px;height:96px;border-radius:3px;box-shadow:0 0 0 2px #c9a54e,inset 0 2px 8px rgba(0,0,0,.5);background:repeating-radial-gradient(circle at 50% 60%,rgba(0,0,0,.5) 0 3px,transparent 3px 22px),radial-gradient(circle at 50% 60%,#ff8a52,#c9401c 56%,#42210c);background-blend-mode:multiply,normal"></div>
+<div style="flex:1;min-width:0;padding-bottom:3px">
+<div ref="{{ roleRef }}" style="font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">{{ roleLabel }}</div>
+<div style="margin-top:5px;font-family:'Instrument Serif',serif;font-size:32px;line-height:1.02;color:#f9edd4">{{ name }}</div>
+<div style="margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#d8b98a">{{ sub }}</div>
+</div>
+</div>
+
+<div style="flex:none;padding:14px 16px 0;display:flex;gap:8px">
+<button onClick="{{ toggleFollow }}" ref="{{ followRef }}" aria-pressed="{{ following }}" style="flex:1;min-height:48px;border-radius:5px;border:1.5px solid #8a6a2c;background:transparent;color:#f6e7c8;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer">{{ followLabel }}</button>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.HypeButton" active="{{ hyped }}" count="{{ hypeCount }}" trend="{{ hypeTrend }}" size="lg" disabled="{{ hypeLocked }}" disabled-reason="{{ hypeLockedReason }}" on-toggle="{{ hype }}" dc-props="{{ hypeBoxStyle }}" hint-size="100%,48px"></x-import>
+</div>
+
+<div style="flex:none;padding:13px 16px 0;display:flex;gap:7px">
+<sc-for list="{{ counters }}" as="c" hint-placeholder-count="3">
+<div ref="{{ c.animRef }}" style="flex:1;padding:9px 8px;border-radius:4px;border:1px solid rgba(201,165,78,.32);background:rgba(20,12,5,.42);text-align:center">
+<div style="font-family:'Instrument Serif',serif;font-size:21px;line-height:1;color:#f6e7c8">{{ c.value }}</div>
+<div style="margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#c9a54e">{{ c.label }}</div>
+</div>
+</sc-for>
+</div>
+
+
+<div ref="{{ paneRef }}" style="flex:1;min-height:0;overflow-y:auto;padding:0 16px 34px">
+<h2 style="margin:0 0 10px;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">{{ panelTitle }}</h2>
+<sc-if value="{{ hasRows }}">
+<div style="display:flex;flex-direction:column;gap:9px">
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="4">
+<div ref="{{ r.animRef }}" style="display:flex;align-items:center;gap:12px;padding:12px 13px;border:1px solid rgba(201,165,78,.32);border-radius:5px;background:rgba(20,12,5,.44)">
+<sc-if value="{{ r.hasArt }}">
+<span style="flex:none;width:46px;height:46px;border-radius:2px;box-shadow:0 0 0 1.5px #c9a54e;background:radial-gradient(circle at 40% 34%,#ff8a52,#c9401c 58%,#42210c)"></span>
+</sc-if>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-family:'Instrument Serif',serif;font-size:19px;line-height:1.14;color:#f6e7c8">{{ r.title }}</span>
+<span style="display:block;margin-top:3px;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#c9a54e">{{ r.meta }}</span>
+</span>
+<sc-if value="{{ r.hasTrail }}">
+<span ref="{{ r.trailRef }}" style="flex:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#d8b98a;text-align:right">{{ r.trail }}</span>
+</sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasProse }}">
+<div style="padding:17px 16px;border-radius:5px;background:linear-gradient(180deg,#f5ecd4,#e9dcb9);box-shadow:0 0 0 2px #c9a54e">
+<sc-for list="{{ paragraphs }}" as="p" hint-placeholder-count="2">
+<div style="font-size:14px;line-height:1.65;color:#4a3a1c;margin-bottom:11px">{{ p.text }}</div>
+</sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ isEmpty }}">
+<div style="padding:34px 22px;text-align:center;border:2px dashed rgba(201,165,78,.4);border-radius:5px">
+<div style="font-family:'Instrument Serif',serif;font-size:19px;line-height:1.45;color:#d8b98a">{{ emptyNote }}</div>
+</div>
+</sc-if>
+</div>
+<div style="flex:none;position:relative;display:flex;align-items:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:3px solid #c9a54e;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 46%,#5c3a1f);box-shadow:inset 0 4px 0 -1px rgba(255,214,160,.18)">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.RotaryNav" modules="{{ dockModules }}" active-module="{{ dockModeId }}" on-navigate="{{ onDockModule }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TunerDial" stations="{{ dockStations }}" active="{{ dockActive }}" on-change="{{ onDockStation }}" style="flex:1;min-width:0" hint-size="100%,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.JoystickTransport" playing="{{ dockPlaying }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" on-expand="{{ dockExpand }}" on-collapse="{{ dockCollapse }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+</div>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.FullPlayer" open="{{ playerOpen }}" track="{{ nowPlaying }}" playing="{{ dockPlaying }}" progress="{{ progress }}" queue="{{ upNext }}" history="{{ played }}" on-close="{{ dockCollapse }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" hint-size="100%,100%"></x-import>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;ARTIST&quot;,&quot;VENUE&quot;],&quot;default&quot;:&quot;ARTIST&quot;,&quot;tsType&quot;:&quot;'ARTIST'|'VENUE'&quot;,&quot;section&quot;:&quot;Profile&quot;}}">
+/* Both tab sets are FIXED and in this order, per src/lib/profile-tabs.ts —
+   the same tabs on every profile of that type, filled in or not. An empty tab
+   says "nothing here yet"; a missing tab says nothing at all, and a member who
+   found Merch on one artist could not tell which case they were in. */
+const ARTIST_TABS = [
+  { id: 'albums', label: 'Albums' }, { id: 'tour', label: 'Tour' }, { id: 'bio', label: 'Bio' },
+  { id: 'merch', label: 'Merch' }, { id: 'contact', label: 'Contact' }, { id: 'press', label: 'Press Kit' },
+];
+const VENUE_TABS = [
+  { id: 'calendar', label: 'Event Calendar' }, { id: 'info', label: 'Venue Info' },
+  { id: 'rules', label: 'Rules & FAQs' }, { id: 'contact', label: 'Contact' },
+];
+
+/* Every panel carries a title and an `empty` sentence, both required by
+   ProfilePanel.tsx — and the sentence must say WHAT is missing, not "nothing
+   here": a member who taps Merch wants to know this artist sells none, not that
+   a container has no children.
+
+   Show rows follow profile-detail.ts: a LIVE show is upcoming however long ago
+   it started, and DRAFT or CANCELED shows are never listed to a stranger. */
+const ARTIST = {
+  albums: { title: 'Albums', empty: 'This artist has not released anything through iHYPE yet.', rows: [
+    ['Night Route', '2026 · 9 tracks · free-use crate', '211', true],
+    ['Portland Tapes', '2025 · 6 tracks', '88', true],
+    ['Second Shift EP', '2024 · 4 tracks', '54', true],
+  ] },
+  tour: { title: 'Tour', empty: 'No dates announced. Follow to hear when this artist books one.', rows: [
+    ['Thompson’s Pt', 'On stage now · started 7:30 PM', 'Live', false],
+    ['State Theatre', 'Sat 23 Aug · 8:00 PM · $28', '14 left', false],
+    ['Port City', 'Fri 29 Aug · 9:00 PM · $18', 'On sale', false],
+  ] },
+  bio: { title: 'Bio', empty: 'This artist has not written a bio yet.', prose: 'Four people from Deering Oaks who kept the load-in door propped with a paint can for six years.\n\nRecorded in a bay on Presumpscot Street, mixed in a kitchen. They play loud, early, and only in rooms you can walk to.' },
+  merch: { title: 'Merch', empty: 'This artist does not sell merch through iHYPE.' },
+  contact: { title: 'Contact', empty: 'This artist has not published contact details.', rows: [
+    ['Booking', 'Through iHYPE — request a slot or a support', 'Request', false],
+    ['Press', 'press@deeringoaks.test', 'Copy', false],
+    ['One link', 'deeringoaks.test — the only outbound link', 'Open', false],
+  ] },
+  press: { title: 'Press Kit', empty: 'No press kit yet — no tagline, quotes or achievements saved.', prose: 'Two-piece brass over a drum machine, recorded live to tape. Named after the park they grew up beside.\n\n2026 tour: 14 rooms, 11 sold out, no support slots bought.' },
+};
+
+const VENUE = {
+  calendar: { title: 'Event Calendar', empty: 'Nothing on the calendar. This room has no published dates right now.', rows: [
+    ['Second Shift · Cold Cellar', 'On stage now · started 7:30 PM', 'Live', false],
+    ['Vera Sound', 'Fri 29 Aug · 10:00 PM · $10', 'On sale', false],
+    ['Casco Brass Band', 'Sun 31 Aug · 6:00 PM · Free', 'RSVP', false],
+  ] },
+  info: { title: 'Venue Info', empty: 'This venue has not filled in its capacity, room type or address.', rows: [
+    ['Capacity', '400 standing, 220 seated', '', false],
+    ['Room', 'Converted freight shed, concrete floor', '', false],
+    ['Address', '10 Thompson’s Point Rd, Portland ME', 'Map', false],
+    ['Doors', 'Doors 7, first act 7:30, hard curfew 11', '', false],
+  ] },
+  rules: { title: 'Rules & FAQs', empty: 'This venue has not written its own house rules — so none are shown. Nothing here is invented on their behalf.' },
+  contact: { title: 'Contact', empty: 'This venue has not published contact details.', rows: [
+    ['Booking', 'Through iHYPE — artists can request a slot', 'Request', false],
+    ['Front of house', 'foh@thompsonspt.test', 'Copy', false],
+  ] },
+};
+
+/* The publicly-pinnable stats, verbatim from STAT_CATALOG — labels included.
+   Financial figures are owner-only via ProfileInsights and are never pinned to
+   a public tile, so no revenue or booking-pipeline number appears here. */
+const STATS = {
+  ARTIST: [['Total Hypes', '1,204'], ['Followers', '412'], ['Monthly Listeners', '3,880']],
+  VENUE: [['Total Hypes', '2,140'], ['Followers', '318'], ['Tickets Sold', '1,596']],
+};
+
+/* The transport is not decoration on a subpage: the dock's joystick drives real
+   playback here exactly as it does on the shell — tap play/pause, drag for
+   prev/next, drag up for the full player, down to retire it. */
+const PLAYLIST = [
+  { title: 'Second Shift', artist: 'Deering Oaks', album: 'Night Route', initial: 'D', seconds: 203 },
+  { title: 'Harbour Lights', artist: 'Vera Sound', album: 'Casco', initial: 'V', seconds: 242 },
+  { title: 'Harbor Static', artist: 'Cold Cellar', album: 'Longfellow', initial: 'C', seconds: 178 },
+  { title: 'Night Route', artist: 'Second Shift', album: 'Portland Tapes', initial: 'S', seconds: 221 },
+];
+
+/* The dock is the app's whole navigation and belongs on every screen, so a
+   subpage feeds it the same module and station sets the shell does: the knob
+   reads out where you are, the tuner the section within it. Its keys are
+   namespaced because this page has a dial of its own. */
+const DOCK_MODULES = [{ id: 'MAP', label: 'Map' }, { id: 'MUSIC', label: 'Music' }, { id: 'ME', label: 'Me' }];
+const DOCK_SUBS = {
+  MAP: ['Tonight', 'This Week', 'Weekend', 'All Dates'],
+  MUSIC: ['Discover', 'Playlists', 'Charts', 'Radio'],
+  ME: ['Profiles', 'Tickets', 'Info', 'Settings'],
+};
+/* Where each destination actually lives. The knob was wired to a no-op, so it
+   turned and nothing happened — the nav has to GO somewhere, and in a template
+   set that means the sibling template that owns the screen. */
+const ROUTES = {
+  MAP: '../console-shell/ConsoleShell.dc.html',
+  MUSIC: '../console-shell/ConsoleShell.dc.html',
+  ME: '../console-settings/ConsoleSettings.dc.html',
+  Profiles: '../console-profile/ConsoleProfile.dc.html',
+  Tickets: '../console-ticket/ConsoleTicket.dc.html',
+  Info: '../console-info/ConsoleInfo.dc.html',
+  Settings: '../console-settings/ConsoleSettings.dc.html',
+};
+function go(key) {
+  const href = ROUTES[key];
+  if (href) window.location.href = href;
+}
+
+function dockNav() {
+  return {
+    dockModules: DOCK_MODULES, dockModeId: 'MAP', onDockModule: (m) => go(m.id),
+  };
+}
+
+class Component extends DCLogic {
+  state = { playing: true, trackIdx: 0, playerOpen: false, role: 'ARTIST', tab: 'albums', following: false, hyped: false };
+
+  transport() {
+    const n = PLAYLIST.length, i = this.state.trackIdx;
+    const step = (d) => this.setState({ trackIdx: (i + d + n) % n });
+    return {
+      dockPlaying: this.state.playing,
+      dockToggle: () => this.setState((s) => ({ playing: !s.playing })),
+      dockPrev: () => step(-1),
+      dockNext: () => step(1),
+      dockExpand: () => this.setState({ playerOpen: true }),
+      dockCollapse: () => this.setState({ playerOpen: false }),
+      playerOpen: this.state.playerOpen,
+      nowPlaying: PLAYLIST[i],
+      upNext: PLAYLIST.slice(i + 1).concat(PLAYLIST.slice(0, i)),
+      played: PLAYLIST.slice(0, i),
+      progress: 34,
+    };
+  }
+
+
+  /* Replays an entrance animation when `key` changes. The node persists across
+     a station change, so the animation must be cleared and the layout forced to
+     flush before it is set again — otherwise it plays once and never again. */
+  replay(slot, key, anim) {
+    return (el) => {
+      if (!el) return;
+      this._anim = this._anim || {};
+      if (this._anim[slot] === key) return;
+      this._anim[slot] = key;
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = anim;
+    };
+  }
+
+  renderVals() {
+    const artist = this.state.role === 'ARTIST';
+    const tabs = artist ? ARTIST_TABS : VENUE_TABS;
+    const tab = tabs.some((t) => t.id === this.state.tab) ? this.state.tab : tabs[0].id;
+    const panel = (artist ? ARTIST : VENUE)[tab] || {};
+    const rows = panel.rows || [];
+    const animKey = this.state.tab + this.state.role;
+    return {
+      ...dockNav(),
+      paneRef: this.replay('pane', animKey, 'paneIn .34s cubic-bezier(.22,.9,.3,1) both'),
+      rowRef: (i) => this.replay('row' + i, animKey, 'rowIn .3s cubic-bezier(.22,.9,.3,1) ' + Math.min(i * 45, 320) + 'ms both'),
+      ...this.transport(),
+      /* One dial on the screen, and it is the dock's: it tunes the sections of
+         whatever you are looking at, which on a profile is the artist's or
+         venue's own fixed tab set. The knob still says where you are. */
+      dockStations: tabs, dockActive: tab,
+      onDockStation: (id) => this.setState({ tab: id }),
+      roleLabel: artist ? 'Artist · Portland, ME' : 'Venue · Portland, ME',
+      roleRef: (el) => { if (el) el.style.color = artist ? '#ff8f2d' : '#c9a54e'; },
+      name: artist ? 'Deering Oaks' : 'Thompson’s Point',
+      sub: artist ? 'Dream-pop · Brass' : 'Freight shed · cap. 400',
+      counters: STATS[this.state.role].map(([label, value], n) => ({ label, value, animRef: this.replay('ct' + n, this.state.role, 'lampWake .5s ease-out ' + n * 90 + 'ms both') })),
+      following: this.state.following,
+      followLabel: this.state.following ? 'Following ✓' : 'Follow',
+      followRef: (el) => {
+        if (!el) return;
+        el.style.borderColor = this.state.following ? '#c9a54e' : '#8a6a2c';
+        el.style.background = this.state.following ? 'rgba(201,165,78,.2)' : 'transparent';
+      },
+      /* HypeButton owns the tap animation and the readout; the caller owns the
+         state and the budget. Hype resets every 24 hours per target, so a hype
+         already given is a locked button with the window stated, not a toggle
+         that quietly takes another. */
+      /* The mount is display:contents, so the button is the flex item — it takes
+         its share of the row through the component's own style prop. */
+      hypeBoxStyle: { style: { flex: 1, minWidth: 0, minHeight: 48 } },
+      hyped: this.state.hyped,
+      hypeCount: (1204 + (this.state.hyped ? 1 : 0)).toLocaleString(),
+      hypeTrend: '▲ 340/hr',
+      hypeLocked: this.state.hyped,
+      hypeLockedReason: 'Hyped — resets in 24h',
+      hype: () => this.setState((s) => ({ hyped: !s.hyped })),
+      toggleFollow: () => this.setState((s) => ({ following: !s.following })),
+      hasRows: rows.length > 0,
+      rows: rows.map(([title, meta, trail, hasArt], n) => ({
+        title, meta, trail, hasArt: !!hasArt, hasTrail: !!trail,
+        animRef: this.replay('row' + n, animKey, 'rowIn .3s cubic-bezier(.22,.9,.3,1) ' + n * 55 + 'ms both'),
+        /* LIVE reads hotter than on-sale: it is the one row a member is most
+           likely to have opened this profile to find. */
+        trailRef: (el) => { if (el) el.style.color = trail === 'Live' ? '#ff5029' : (trail === 'On sale' || trail === 'RSVP') ? '#ff8f2d' : '#d8b98a'; },
+      })),
+      panelTitle: panel.title || '',
+      hasProse: !!panel.prose,
+      proseEyebrow: panel.title || '',
+      paragraphs: (panel.prose || '').split(/\n{2,}/).map((t) => t.trim()).filter(Boolean).map((text) => ({ text })),
+      /* Empty is the panel's own sentence, and every panel has one. */
+      isEmpty: !rows.length && !panel.prose,
+      emptyNote: panel.empty || '',
+      back: () => {},
+    };
+  }
+}
+
+</script>
+</body>
+</html>

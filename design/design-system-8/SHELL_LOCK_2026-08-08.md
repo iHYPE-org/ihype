@@ -1,4 +1,32 @@
-# App shell — locked 2026-08-08, amended 2026-08-19
+# App shell — locked 2026-08-08, amended 2026-08-19, SUPERSEDED 2026-08-22
+
+> ## SUPERSEDED — the geometry below is not what ships
+>
+> The owner retired the previous chrome outright ("I don't want any previous
+> design, retire it and keep the backend wiring and match to new design. Bottom
+> hifi nav system is the only thing I want", 2026-08-22). The logo trigger, the
+> radial arc, the nav hint, the scrim, the player pill and the phone
+> mini-player are all **deleted**, along with the geometry table that placed
+> them: `--mmm-chrome-gap`, `--mmm-dial-w`, `--mmm-player-left` and the resting
+> `--mmm-bottom` no longer exist.
+>
+> What ships instead is one walnut bar across the bottom of every screen —
+> `RotaryNav` (74px), `TunerDial`, `JoystickTransport` (74px) — from
+> `design/handoff-console-2026-08-21/templates/console-shell/`. Its figures live
+> in `src/app/mmm.css` (`--mmm-knob` is the origin; `--mmm-chrome-size` is what
+> content clears) and are described in `MmmDock.tsx`. DESIGN_SYNC row 289.
+>
+> **The METHOD in the amendment below is the part that survives, and it is why
+> the dock was measured rather than eyeballed:** every figure is load-bearing on
+> the others, and the two bugs from adding the tuner to the old chrome were both
+> a dependent nobody re-derived. `npm run measure:dock` is that check, now
+> repeatable — it drives Chromium against the real stylesheet slices and fails
+> on a wrapped bar, mismatched knobs, an overflowing cap, a clipped station name
+> or a covered chevron.
+>
+> Read the rest of this document as history: it describes chrome that no longer
+> exists. Do not restore a figure from it.
+
 
 > ## AMENDMENT — the console direction supersedes the SHAPE, not the METHOD
 >

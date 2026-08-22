@@ -1,23 +1,30 @@
 /**
- * The Music · Map · Me navigation manifest and radial-arc geometry.
+ * The Music · Map · Me navigation manifest, and the station sets the dock's
+ * tuner tunes.
  *
- * Source: `design/design-system-8/templates/simplified-app/` and the shell
- * contracts in `components/shell/` — `ArcNav.jsx` carries this geometry, and
- * `SHELL_LOCK_2026-08-08.md` is the signed-off figures.
+ * Source: `design/handoff-console-2026-08-21/README.md` ("The navigation
+ * model") and `templates/console-shell/`. The whole of the app's navigation is
+ * one walnut dock at the bottom of every screen: a `RotaryNav` knob stepping
+ * MAP · MUSIC · ME, a `TunerDial` tuning the sections of whatever you are
+ * looking at, and a `JoystickTransport` for playback.
  *
- * Three things the structure asserts, each of which an earlier draft got wrong:
+ * **The radial arc is retired** (2026-08-22, owner decision: "I don't want any
+ * previous design … Bottom hifi nav system is the only thing I want"). The arc
+ * tables, `arcTransform`, `arcSlotsFor`, `ARC_NARROW_MAX_WIDTH` and `navHint`
+ * went with it — they described a fan of discs opening from a logo trigger that
+ * no longer exists. Do not restore them: two ways to switch module is the thing
+ * the dock replaces, and the knob reports the module itself, so the hint chip
+ * has nothing left to say.
  *
- *   1. **The nav is a true radial arc**, not a vertical pill column. Items fan
- *      out to specific offsets from the logo, listed in ARC below.
- *   2. **MUSIC's items are** Discover · Radio · Charts · Recommended ·
- *      Playlists. There is no Search item.
- *   3. **ME has no submenu at all.** It navigates straight to the ME surface,
- *      which carries Settings and Info as in-page rows. Accessibility belongs
- *      to Settings; Legal belongs to Info.
+ * Two rules from the handoff shape what is here:
  *
- * Module, tab and panel are ROUTES, not component state — the module structure
- * is a natural URL hierarchy. Only `navOpen`, `sheet`, `playing` and `hyped`
- * are ephemeral.
+ *   1. **One dial per screen, and it is the dock's.** A page must not render a
+ *      selector of its own beside it — "an in-page tab strip alongside it puts
+ *      two identical-looking dials on screen meaning different things". A page
+ *      with its own section set hands it to the dock through
+ *      `MmmStationsProvider` instead.
+ *   2. **Module, tab and panel are ROUTES, not state.** Every station carries
+ *      an href, so the dial is navigation and Back walks it.
  *
  * Pure and dependency-light (no `@/lib/db`, no `next/*`): imported by client
  * components and by tests.
@@ -67,76 +74,6 @@ export const MMM_ME_PANELS: ReadonlyArray<MmmNavItem & { detail: string }> = [
   { id: 'info', label: 'Info', detail: 'How iHYPE works · legal', href: `${MMM_BASE}/me/info` },
   { id: 'settings', label: 'Settings', detail: 'Account · notifications · accessibility', href: `${MMM_BASE}/me/settings` },
 ];
-
-/* ────────────────────────────────────────────────────────────────────────────
- * Radial-arc geometry
- * ──────────────────────────────────────────────────────────────────────────── */
-
-export type ArcOffset = { x: number; y: number; delayMs: number };
-
-/**
- * Where each item lands, measured from the logo's own origin (`left: 0;
- * bottom: 0` inside a zero-size fixed container at the frame's lower left).
- * These are the design's literal values, not a formula fitted to them: the arc
- * is hand-placed so no two pills collide at either breakpoint, and a computed
- * arc drifted off it. Two breakpoints, as drawn.
- *
- * Level-1 delays run ME → MUSIC → MAP (0 / 30 / 60ms), so the fan unfurls
- * upward from the thumb rather than downward into it.
- */
-/**
- * Where each module disc lands, measured from the logo's own origin.
- *
- * These are the design system's tables verbatim
- * (`components/shell/ArcNav.jsx`), not values fitted by eye — the two
- * breakpoints are separately hand-placed so no two discs collide, and the
- * previous values here disagreed with the design in every slot while the
- * breakpoint and the delays happened to match. That is the signature of
- * numbers tuned locally rather than copied.
- *
- * There is NO second level. `ArcNav.d.ts` is explicit: "There is no second
- * level: Music's sections are tabs at the top of the Music pane. `items` is
- * ignored here and kept only so the shell can hold the route table in one
- * place." The five-item Music arc this file used to carry was a navigation
- * layer the design does not have, duplicating the tab strip `MmmMusic`
- * already renders.
- */
-export const ARC: Record<'wide' | 'narrow', { level1: ArcOffset[] }> = {
-  wide: {
-    level1: [
-      { x: 5, y: -192, delayMs: 60 },   // MAP
-      { x: 115, y: -152, delayMs: 30 }, // MUSIC
-      { x: 182, y: -48, delayMs: 0 },   // ME
-    ],
-  },
-  narrow: {
-    level1: [
-      { x: 4, y: -176, delayMs: 60 },
-      { x: 100, y: -132, delayMs: 30 },
-      { x: 165, y: -43, delayMs: 0 },
-    ],
-  },
-};
-
-/** The breakpoint the arc switches at — the design's own `max-width: 720px`. */
-export const ARC_NARROW_MAX_WIDTH = 720;
-
-/** Resting transform for a closed item: tucked behind the logo, scaled down. */
-export const ARC_CLOSED_TRANSFORM = 'translate(14px, -6px) scale(0.55)';
-
-export function arcTransform(offset: ArcOffset): string {
-  return `translate(${offset.x}px, ${offset.y}px)`;
-}
-
-/**
- * How many discs the arc has room for. Three, at both breakpoints — a module
- * added to `MMM_NAV` without a slot would silently never appear, which is the
- * `FRONTEND_GOTCHAS.md` §4 class of bug (present in the manifest, unreachable
- * on screen), so the count is asserted rather than trusted.
- */
-export function arcSlotsFor(breakpoint: 'wide' | 'narrow' = 'wide'): number {
-  return ARC[breakpoint].level1.length;
-}
 
 /* ────────────────────────────────────────────────────────────────────────────
  * Route resolution
@@ -208,10 +145,52 @@ export function panelForPath(pathname: string): string | null {
   return match?.id ?? null;
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * The dock's stations
+ * ──────────────────────────────────────────────────────────────────────────── */
+
 /**
- * The hint chip under the logo. With no header and no tab bar, this is the only
- * thing on screen that says where you are.
+ * MAP's stations are the map's LAYERS, not its dates.
+ *
+ * The console template gives MAP four date stations (Tonight · This Week ·
+ * Weekend · All Dates) and they are not adoptable here: the shipped date strip
+ * is a multi-select day picker — a member can pick Thursday and Saturday — and
+ * a dial names exactly one station at a time, so wiring the dial to dates would
+ * quietly delete a working filter. The layer is the set that really behaves
+ * like a section: three values, mutually exclusive, already a URL parameter
+ * (`?layer=`), and already authoritative over the map's own state. So the dial
+ * takes the layer, the date strip stays where it is, and nothing is lost.
  */
-export function navHint(pathname: string): string {
-  return MMM_NAV.find((module) => module.id === moduleForPath(pathname))!.label;
+export const MMM_MAP_LAYERS: readonly MmmNavItem[] = [
+  { id: 'events', label: 'Events', href: `${MMM_BASE}/map?layer=events` },
+  { id: 'venues', label: 'Venues', href: `${MMM_BASE}/map?layer=venues` },
+  { id: 'artists', label: 'Artists', href: `${MMM_BASE}/map?layer=artists` },
+];
+
+/**
+ * What the dock's dial tunes on this route, and which station is lit.
+ *
+ * `active` is resolved here rather than in the component because the answer is
+ * not always in the path: a module's own root (`/app/music` with no tab) is the
+ * FIRST station, not "no station", and the vendored `TunerDial` warns and falls
+ * back to index 0 when handed an `active` naming nothing — a confident, wrong
+ * readout. Resolving it once, in a tested pure function, is what keeps the
+ * needle on a real station.
+ */
+export function stationsForPath(
+  pathname: string,
+  search?: { layer?: string | null },
+): { stations: readonly MmmNavItem[]; active: string } {
+  const module = moduleForPath(pathname);
+
+  if (module === 'map') {
+    const requested = search?.layer ?? null;
+    const active = MMM_MAP_LAYERS.find((layer) => layer.id === requested)?.id ?? MMM_MAP_LAYERS[0].id;
+    return { stations: MMM_MAP_LAYERS, active };
+  }
+
+  const stations: readonly MmmNavItem[] = module === 'music' ? MMM_MUSIC_TABS : MMM_ME_PANELS;
+  const found = itemForPath(pathname) ?? panelForPath(pathname);
+  const active = stations.find((station) => station.id === found)?.id ?? stations[0].id;
+  return { stations, active };
 }

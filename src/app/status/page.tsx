@@ -55,7 +55,10 @@ async function checkKv(): Promise<{ ok: boolean; label: string }> {
 }
 
 function StatusDot({ ok }: { ok: boolean }) {
-  const color = ok ? 'var(--success)' : '#ff3e3e';
+  /* `--danger`, not a literal red: this dot is a FILL, and the token is the
+     one the rest of the app fails with. A hardcoded #ff3e3e cannot follow the
+     ground, which is what `audit:retro` counts. */
+  const color = ok ? 'var(--success)' : 'var(--danger)';
   return (
     <span
       style={{

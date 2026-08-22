@@ -1,0 +1,170 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#e8dcbd;font-family:'Work Sans',system-ui,sans-serif}
+#map{position:absolute;inset:0}
+.leaflet-tile-pane{filter:sepia(.92) saturate(.52) contrast(1.06) brightness(1.04) hue-rotate(-8deg)}
+.leaflet-container{background:#e8dcbd}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:401;mix-blend-mode:multiply;background:radial-gradient(120% 90% at 50% 40%,rgba(232,220,189,0) 40%,rgba(120,94,52,.28) 100%),repeating-linear-gradient(0deg,transparent 0 33px,rgba(120,94,52,.09) 33px 34px),repeating-linear-gradient(90deg,transparent 0 33px,rgba(120,94,52,.09) 33px 34px)}
+.leaflet-control-attribution{font-family:'JetBrains Mono',monospace;font-size:8.5px;background:rgba(232,220,189,.82);color:#5a4526}
+.leaflet-control-attribution a{color:#8a3a1e}
+.pin-wrap{position:relative}
+.pin-dot{position:absolute;left:0;top:0;width:14px;height:14px;border-radius:9999px;background:#e8461f;border:2px solid #3a2a12;box-shadow:0 2px 3px rgba(58,42,18,.5)}
+.pin-stem{position:absolute;left:6px;top:13px;width:1.5px;height:15px;background:#3a2a12}
+.pin-label{position:absolute;left:20px;top:-3px;transition:opacity .12s ease;background:#efe4c6;border:1.5px solid #3a2a12;border-radius:3px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.04em;color:#2f2310;white-space:nowrap;box-shadow:2px 3px 0 rgba(58,42,18,.2)}
+.pin-wrap.on .pin-dot{background:#ff5029;box-shadow:0 0 0 5px rgba(232,70,31,.28)}
+.pin-wrap.on .pin-label{background:#fff6de;border-width:2px}
+.pin-wrap.flip .pin-label{left:auto;right:20px}
+.pin-wrap.hide .pin-label{opacity:0;pointer-events:none}
+.hud{position:absolute;left:0;right:0;top:0;z-index:500;padding:12px 12px 0;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.hud>*{pointer-events:auto}
+.searchbar{display:flex;align-items:center;gap:8px;background:#efe4c6;border:1.5px solid #3a2a12;border-radius:4px;padding:9px 12px;box-shadow:2px 3px 0 rgba(58,42,18,.22)}
+.searchbar svg{flex:none;color:#6b5327}
+.searchbar input{flex:1;min-width:0;border:0;background:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.04em;color:#2f2310}
+.searchbar input::placeholder{color:#8a7346}
+.rangebtn{flex:none;display:flex;align-items:center;gap:6px;min-height:32px;padding:5px 9px;margin:-4px -6px -4px 0;background:#e2d3ab;border:1.5px solid #6b5327;border-radius:3px;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.06em;color:#2f2310;cursor:pointer;white-space:nowrap}
+.rangebtn[aria-expanded=true]{background:#3a2a12;border-color:#3a2a12;color:#f6ecd2}
+.cal{display:none;background:#efe4c6;border:1.5px solid #3a2a12;border-radius:4px;padding:12px;box-shadow:2px 3px 0 rgba(58,42,18,.22)}
+.cal.open{display:block}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
+.cal-head b{font-family:'Instrument Serif',serif;font-size:19px;font-weight:400;color:#2f2310}
+.cal-nav{width:32px;height:32px;border:1.5px solid #6b5327;border-radius:3px;background:#e2d3ab;color:#4a3a1c;font-family:'JetBrains Mono',monospace;cursor:pointer}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-dow{font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;text-align:center;color:#8a7346;padding-bottom:3px}
+.cal-day{min-height:34px;border:0;border-radius:2px;background:transparent;font-family:'JetBrains Mono',monospace;font-size:12px;color:#2f2310;cursor:pointer}
+.cal-day:disabled{color:#b8a882;cursor:default}
+.cal-day.in{background:rgba(255,80,41,.2)}
+.cal-day.end{background:#ff5029;color:#2b1405;font-weight:700}
+.cal-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:9px;border-top:1px solid rgba(120,94,52,.35)}
+.cal-foot span{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;color:#6b5327}
+.cal-foot button{min-height:36px;padding:0 14px;border:2px solid #8a3a1e;border-radius:3px;background:#ff5029;color:#2b1405;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;letter-spacing:.14em;cursor:pointer}
+.chartname{position:absolute;right:12px;top:110px;z-index:500;text-align:right;font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#6b5327;pointer-events:none}
+.compass{position:absolute;right:14px;bottom:58px;z-index:500;width:46px;height:46px;color:#3a2a12;opacity:.72;pointer-events:none}
+.sheet{position:absolute;left:10px;right:10px;bottom:10px;z-index:600;background:#efe4c6;border:2px solid #3a2a12;border-radius:5px;padding:14px 16px 16px;box-shadow:3px 4px 0 rgba(58,42,18,.28);transform:translateY(120%);transition:transform .26s cubic-bezier(.22,.9,.3,1)}
+.sheet.up{transform:translateY(0)}
+.sheet h2{margin:0;font-family:'Instrument Serif',serif;font-size:26px;font-weight:400;color:#2f2310;line-height:1.1}
+.sheet .meta{margin:5px 0 0;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.08em;color:#6b5327}
+.sheet .acts{margin:4px 0 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:#4a3a1c}
+.sheet .row{display:flex;gap:8px}
+.btn{flex:1;min-height:44px;border:2px solid #3a2a12;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.14em;cursor:pointer}
+.btn.primary{background:#ff5029;color:#2b1405;border-color:#8a3a1e}
+.btn.ghost{flex:0 0 96px;background:#e2d3ab;color:#4a3a1c}
+</style></head><body>
+<div id="map"></div><div class="grain"></div>
+<div class="hud">
+<div class="searchbar"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4"/></svg><input id="q" placeholder="SEARCH VENUES, ARTISTS" aria-label="Search venues and artists"><button class="rangebtn" id="rangebtn" aria-expanded="false" aria-controls="cal"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="2.5" width="10" height="8.5" rx="1"/><path d="M1 5h10M4 1v2.5M8 1v2.5"/></svg><span id="rangelabel">AUG 21 – 27</span></button></div>
+<div class="cal" id="cal" role="dialog" aria-label="Select date range"><div class="cal-head"><button class="cal-nav" id="cal-prev" aria-label="Previous month">‹</button><b id="cal-month">August 2026</b><button class="cal-nav" id="cal-next" aria-label="Next month">›</button></div><div class="cal-grid" id="cal-grid"></div><div class="cal-foot"><span id="cal-status">Pick a start date</span><button id="cal-apply">APPLY</button></div></div>
+</div>
+<div class="chartname">CASCO BAY · MAINE</div>
+<svg class="compass" viewBox="0 0 52 52" aria-hidden="true"><circle cx="26" cy="28" r="17" fill="none" stroke="currentColor" stroke-width="1"/><path d="M26 9 L30 28 L26 47 L22 28 Z" fill="currentColor"/><text x="26" y="7" text-anchor="middle" font-size="9" font-family="'JetBrains Mono',monospace" fill="currentColor">N</text></svg>
+<div class="sheet" id="sheet" role="dialog" aria-label="Venue"><h2 id="s-name">—</h2><p class="meta" id="s-meta">—</p><p class="acts" id="s-acts">—</p><div class="row"><button class="btn primary" id="s-tix">TICKETS</button><button class="btn ghost" id="s-close">CLOSE</button></div></div>
+<script>
+const VENUES=[
+ {n:"State Theatre",lat:43.65590,lng:-70.26370,t:"8:00 PM · $28",a:"Deering Oaks · Harbor Static"},
+ {n:"Port City",lat:43.65720,lng:-70.26480,t:"9:00 PM · $18",a:"Night Route"},
+ {n:"Thompson's Pt",lat:43.64320,lng:-70.28570,t:"7:30 PM · $12",a:"Second Shift · Cold Cellar"},
+ {n:"Eastern Prom",lat:43.66980,lng:-70.24520,t:"6:00 PM · Free",a:"Casco Brass Band"},
+ {n:"Old Port",lat:43.65650,lng:-70.25010,t:"10:00 PM · $10",a:"Vera Sound"},
+ {n:"Deering Oaks",lat:43.65700,lng:-70.27600,t:"5:30 PM · Free",a:"Longfellow Trio"},
+ {n:"Longfellow Sq",lat:43.65200,lng:-70.26800,t:"8:30 PM · $15",a:"Harbour Lights"}];
+const map=L.map('map',{zoomControl:false,attributionControl:true}).setView([43.6570,-70.2650],14);
+map.attributionControl.setPrefix('');
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+const sheet=document.getElementById('sheet');let cur=null;
+function show(v,el){if(cur)cur.classList.remove('on');cur=el;el.classList.add('on');
+ document.getElementById('s-name').textContent=v.n;document.getElementById('s-meta').textContent=v.t;document.getElementById('s-acts').textContent=v.a;sheet.classList.add('up');
+ el.classList.remove('hide');}
+document.getElementById('s-tix').onclick=()=>{
+ /* Out of the iframe, not inside it: the map is embedded in the shell, so
+    checkout has to replace the whole screen or it renders inside the map pane. */
+ const url='../console-checkout/ConsoleCheckout.dc.html';
+ (window.top||window).location.href=url;
+};
+document.getElementById('s-close').onclick=()=>{sheet.classList.remove('up');if(cur){cur.classList.remove('on');cur=null;}};
+VENUES.forEach(v=>{const html='<div class="pin-wrap"><div class="pin-dot"></div><div class="pin-stem"></div><div class="pin-label">'+v.n+'</div></div>';
+ const m=L.marker([v.lat,v.lng],{icon:L.divIcon({html,className:'',iconSize:[14,14],iconAnchor:[7,28]}),keyboard:true,title:v.n}).addTo(map);
+ m.on('add',()=>{});m.on('click',e=>show(v,e.target.getElement().firstElementChild));});
+const MON=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ABBR=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const TODAY=new Date(2026,7,21);
+let view={y:2026,m:7},from=new Date(2026,7,21),to=new Date(2026,7,27),pick=null;
+const cal=document.getElementById('cal'),rbtn=document.getElementById('rangebtn'),grid=document.getElementById('cal-grid'),status=document.getElementById('cal-status');
+const key=d=>d.getFullYear()*10000+d.getMonth()*100+d.getDate();
+function label(){const a=ABBR[from.getMonth()]+' '+from.getDate();if(!to||key(to)===key(from))return a;
+ return a+' – '+(to.getMonth()===from.getMonth()?to.getDate():ABBR[to.getMonth()]+' '+to.getDate());}
+function paint(){document.getElementById('cal-month').textContent=MON[view.m]+' '+view.y;grid.innerHTML='';
+ ['S','M','T','W','T','F','S'].forEach(d=>{const e=document.createElement('div');e.className='cal-dow';e.textContent=d;grid.appendChild(e);});
+ const first=new Date(view.y,view.m,1).getDay(),len=new Date(view.y,view.m+1,0).getDate();
+ for(let i=0;i<first;i++)grid.appendChild(document.createElement('div'));
+ for(let d=1;d<=len;d++){const dt=new Date(view.y,view.m,d),b=document.createElement('button');b.className='cal-day';b.textContent=d;
+  if(key(dt)<key(TODAY))b.disabled=true;
+  const s=pick||from,e=pick?null:to;
+  if(key(dt)===key(s)||(e&&key(dt)===key(e)))b.classList.add('end');
+  else if(e&&key(dt)>key(s)&&key(dt)<key(e))b.classList.add('in');
+  b.onclick=()=>{if(!pick){pick=dt;status.textContent='Pick an end date';}
+   else{if(key(dt)<key(pick)){from=dt;to=pick;}else{from=pick;to=dt;}pick=null;status.textContent=label();}paint();};
+  grid.appendChild(b);}}
+function open(v){cal.classList.toggle('open',v);rbtn.setAttribute('aria-expanded',v?'true':'false');if(v){pick=null;status.textContent=label();paint();}}
+rbtn.onclick=()=>open(!cal.classList.contains('open'));
+document.getElementById('cal-prev').onclick=()=>{view.m--;if(view.m<0){view.m=11;view.y--;}paint();};
+document.getElementById('cal-next').onclick=()=>{view.m++;if(view.m>11){view.m=0;view.y++;}paint();};
+document.getElementById('cal-apply').onclick=()=>{if(pick){from=pick;to=pick;pick=null;}document.getElementById('rangelabel').textContent=label().toUpperCase();
+
+/* A boxed label per pin collides the moment two venues sit close, and runs off
+   the frame near the edges. Place them greedily north-to-south: flip the side
+   when the label would leave the frame, drop the label (keeping the dot) when it
+   would cover one already placed or sit under the search bar. */
+function declutter(){
+  const W=innerWidth,H=innerHeight,placed=[];
+  const hud=document.querySelector('.hud');
+  const HUD=hud?hud.getBoundingClientRect().bottom+4:60;
+  [...document.querySelectorAll('.pin-wrap')]
+    .sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)
+    .forEach(w=>{
+      w.classList.remove('flip','hide');
+      const lab=w.querySelector('.pin-label'); if(!lab) return;
+      const p=w.getBoundingClientRect();
+      if(p.left<0||p.left>W||p.top<0||p.top>H){ w.classList.add('hide'); return; }
+      let r=lab.getBoundingClientRect();
+      if(r.right>W-8){ w.classList.add('flip'); r=lab.getBoundingClientRect(); }
+      if(r.left<8||r.top<HUD){ w.classList.add('hide'); return; }
+      if(placed.some(q=>!(r.right<q.left-4||r.left>q.right+4||r.bottom<q.top-2||r.top>q.bottom+2))){ w.classList.add('hide'); return; }
+      placed.push(r);
+    });
+}
+map.on('moveend',declutter);
+map.on('zoomend',declutter);
+map.whenReady(()=>setTimeout(declutter,80));
+open(false);};
+document.getElementById('rangelabel').textContent=label().toUpperCase();
+
+/* A boxed label per pin collides the moment two venues sit close, and runs off
+   the frame near the edges. Place them greedily north-to-south: flip the side
+   when the label would leave the frame, drop the label (keeping the dot) when it
+   would cover one already placed or sit under the search bar. */
+function declutter(){
+  const W=innerWidth,H=innerHeight,placed=[];
+  const hud=document.querySelector('.hud');
+  const HUD=hud?hud.getBoundingClientRect().bottom+4:60;
+  [...document.querySelectorAll('.pin-wrap')]
+    .sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)
+    .forEach(w=>{
+      w.classList.remove('flip','hide');
+      const lab=w.querySelector('.pin-label'); if(!lab) return;
+      const p=w.getBoundingClientRect();
+      if(p.left<0||p.left>W||p.top<0||p.top>H){ w.classList.add('hide'); return; }
+      let r=lab.getBoundingClientRect();
+      if(r.right>W-8){ w.classList.add('flip'); r=lab.getBoundingClientRect(); }
+      if(r.left<8||r.top<HUD){ w.classList.add('hide'); return; }
+      if(placed.some(q=>!(r.right<q.left-4||r.left>q.right+4||r.bottom<q.top-2||r.top>q.bottom+2))){ w.classList.add('hide'); return; }
+      placed.push(r);
+    });
+}
+map.on('moveend',declutter);
+map.on('zoomend',declutter);
+map.whenReady(()=>setTimeout(declutter,80));
+
+</script>
+</body></html>
