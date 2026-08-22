@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
+import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { copyrightTone, resolveCopyrightState, type CopyrightState } from '@/lib/track-detail';
 
 export const dynamic = 'force-dynamic';
@@ -50,6 +51,12 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       createdAt: true,
       profileId: true,
       freeUseEnabled: true,
+      /* Selected so the dock's joystick can play this track. The page rendered
+         without them and had no play control at all — a track's own page in a
+         music app with no way to hear it. Both are nullable in the row: a track
+         can be published before its audio is stored. */
+      storageUrl: true,
+      artworkUrl: true,
       profile: { select: { id: true, slug: true, name: true, genre: true, genres: true, hypeCount: true } },
     },
   });
@@ -97,6 +104,15 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       <Link className="mmm-show-back" href="/app/music/discover">← Music</Link>
 
       <div className="mmm-show-eyebrow">Track</div>
+      {/* Renders nothing; hands this track to the dock's transport. */}
+      <MmmPlayHere rows={[{
+        hexId: asset.hexId,
+        title: asset.title,
+        artistName: asset.profile.name,
+        artistSlug: asset.profile.slug,
+        mediaUrl: asset.storageUrl,
+        artworkUrl: asset.artworkUrl,
+      }]} />
       <h1 className="mmm-show-title">{asset.title}</h1>
       <div className="mmm-show-by">
         <Link href={`/app/artists/${asset.profile.slug}`}>{asset.profile.name}</Link>

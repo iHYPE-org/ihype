@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
+import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,7 +32,19 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
       user: { select: { username: true } },
       items: {
         orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-        select: { id: true, title: true, artistName: true, mediaId: true },
+        /* `url`, `artworkUrl` and `artistProfileSlug` are selected so the dock's
+           joystick can play the playlist. FanPlaylistItem already stores a fully
+           playable row — this page simply was not asking for the audio, so a
+           playlist could be opened and read but not heard. */
+        select: {
+          id: true,
+          title: true,
+          artistName: true,
+          mediaId: true,
+          url: true,
+          artworkUrl: true,
+          artistProfileSlug: true,
+        },
       },
     },
   });
@@ -44,6 +57,8 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
       <Link className="mmm-show-back" href="/app/music/playlists">← Playlists</Link>
 
       <div className="mmm-show-eyebrow">Playlist</div>
+      {/* Renders nothing; hands this playlist to the dock's transport. */}
+      <MmmPlayHere rows={playlist.items} />
       <h1 className="mmm-show-title">{playlist.name}</h1>
       <div className="mmm-show-where">
         by @{playlist.user.username} · {playlist.items.length} {playlist.items.length === 1 ? 'track' : 'tracks'}

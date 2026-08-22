@@ -52,6 +52,7 @@ export function MmmDock({
   onCollapse,
   onExpand,
   onNext,
+  onPlayFallback,
   onPrev,
   onTogglePlay,
   pathname,
@@ -63,6 +64,8 @@ export function MmmDock({
   onCollapse: () => void;
   onExpand: () => void;
   onNext: () => void;
+  /** Turn the radio on: the last resort when the surface offers nothing. */
+  onPlayFallback: () => void;
   onPrev: () => void;
   onTogglePlay: () => void;
   pathname: string;
@@ -85,8 +88,13 @@ export function MmmDock({
      pause, and the intent is only the answer to "there is nothing to pause
      yet". See MmmPlayIntent.tsx. */
   const playIntent = usePlayIntent();
-  const canPlay = canTogglePlay || playIntent !== null;
-  const togglePlay = canTogglePlay ? onTogglePlay : (playIntent ?? onTogglePlay);
+  /* A tap always does something, in this order: pause what is playing, start
+     what this surface offers, or turn the radio on. The fallback is always
+     available, so the vendored component's `canTogglePlay` — which it uses to
+     make a tap a no-op — is now unconditionally true. Written as a literal
+     because it is one: `canTogglePlay || intent || true` would read as a
+     mistake, and the interesting value is `togglePlay` below. */
+  const togglePlay = canTogglePlay ? onTogglePlay : (playIntent ?? onPlayFallback);
 
   const registered = useRegisteredStations();
   const fallback = stationsForPath(pathname, { layer });
@@ -119,7 +127,7 @@ export function MmmDock({
       <MmmTuner active={active} label={label} onSelect={select} stations={stations} />
 
       <JoystickTransport
-        canTogglePlay={canPlay}
+        canTogglePlay
         onCollapse={onCollapse}
         onExpand={onExpand}
         onNext={onNext}

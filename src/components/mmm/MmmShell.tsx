@@ -9,6 +9,7 @@ import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { MmmPlayIntentProvider } from '@/components/mmm/MmmPlayIntent';
 import { MmmStationsProvider } from '@/components/mmm/MmmStations';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { defaultStationSlug, toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { isMmmDetailPath, moduleForPath } from '@/lib/mmm-nav';
 import { formatHypeWait, hypeWaitUntil, HYPE_WINDOW_MS } from '@/lib/hype-window';
 import { resolvePick, splitQueue } from '@/lib/mmm-queue';
@@ -137,6 +138,41 @@ export function MmmShell({
     togglePlayback,
     volume,
   } = useMediaPlayer();
+
+  /**
+   * The transport's last resort: turn the radio on.
+   *
+   * This is what makes play UNIVERSAL rather than per-surface. A registered
+   * intent (MmmPlayIntent.tsx) is better when the surface has one — on Discover
+   * "play" means the card on screen — but MAP, ME, a profile and a ticket have
+   * nothing to offer, and on those the joystick was inert. In a music app a
+   * transport that does nothing is a broken control, so when the surface offers
+   * nothing the dock starts a station instead.
+   *
+   * Which station is `defaultStationSlug`'s decision and it is deterministic:
+   * the same tap in the same place must start the same thing.
+   *
+   * Failures are swallowed on purpose. This runs from a tap on a control whose
+   * whole promise is "something will play"; there is no surface here to render
+   * an error into, and the honest outcome of a failed fetch is that nothing
+   * starts — which is what the member already had.
+   */
+  const startRadio = useCallback(async () => {
+    try {
+      const list = await fetch('/api/stations', { cache: 'no-store' });
+      if (!list.ok) return;
+      const stations = ((await list.json()) as { stations?: { slug?: string | null }[] }).stations ?? [];
+      const slug = defaultStationSlug(stations);
+      if (!slug) return;
+      const response = await fetch(`/api/stations/${encodeURIComponent(slug)}/tracks`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const queue = toQueue(((await response.json()) as { tracks?: PlayableRow[] }).tracks ?? []);
+      if (queue.length === 0) return;
+      playTrack(queue[0], queue);
+    } catch {
+      // See above: nothing to report to, and nothing started.
+    }
+  }, [playTrack]);
 
   /**
    * Queue and history are ONE list split at the current index — what follows is
@@ -365,13 +401,15 @@ export function MmmShell({
         />
 
         {/* The whole of the chrome. One walnut dock, three controls, every
-            width — see MmmDock.tsx. `canTogglePlay` says whether there is a
-            track to pause; the dock ORs it with whatever the surface has
-            registered to start (MmmPlayIntent.tsx), so a tap on a freshly
-            opened app plays something instead of nothing. */}
+            width — see MmmDock.tsx. Three things decide what a tap does, in
+            order: pause the current track, else start whatever the surface
+            registered (MmmPlayIntent.tsx), else turn the radio on. The last one
+            is what makes the transport universal — it is never inert, on any
+            surface, which for a music app is the point. */}
         <MmmDock
           canTogglePlay={Boolean(currentTrack)}
           layer={requestedLayer ?? null}
+          onPlayFallback={startRadio}
           onCollapse={() => setFullOpen(false)}
           onExpand={() => setFullOpen(true)}
           onNext={playNext}
