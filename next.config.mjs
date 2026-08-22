@@ -172,8 +172,23 @@ const nextConfig = {
         // destination's query wins over the incoming one — `/legal?tab=privacy`
         // landed on `terms`. Caught by curling every alias after the build;
         // nothing about the rule looks wrong reading it.
+        //
+        // `.+`, NOT `.*`, and the difference was a hard 500 on production for
+        // bare `/legal` — a URL that ships in signup consent copy, the cookie
+        // banner, sent email and the app-store listings. `.*` matches the empty
+        // string, and OpenNext's `has` matcher (unlike Next's own, which
+        // rejects an absent query before it ever runs the regex) therefore
+        // accepted this rule for a request with no `tab` at all, captured
+        // `tab: ''`, and handed that to path-to-regexp's `compile` — which
+        // throws on an empty required param rather than emitting an empty one.
+        // The thrown error became the 500. So it reproduced only on Workers,
+        // and `next start` answered a clean 307 the whole time.
+        //
+        // Any `has` regex whose destination re-emits the capture must refuse
+        // the empty string. `src/lib/__tests__/next-config-redirects.test.ts`
+        // asserts that for every entry in this list.
         source: '/legal',
-        has: [{ type: 'query', key: 'tab', value: '(?<tab>.*)' }],
+        has: [{ type: 'query', key: 'tab', value: '(?<tab>.+)' }],
         destination: '/info?tab=:tab',
         permanent: false
       },

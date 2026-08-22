@@ -14,7 +14,20 @@ const checks = [
   { path: '/listen', expect: [200] },
   { path: '/pages', expect: [200] },
   { path: '/status', expect: [200] },
-  { path: '/api/health', expect: [200], json: true }
+  { path: '/api/health', expect: [200], json: true },
+  // The legacy legal aliases, which ship inside signup consent copy, the
+  // cookie banner, sent email and the app-store listings — so they are the
+  // URLs least likely to be clicked by anyone working on the app, and the most
+  // expensive to have broken. Bare `/legal` returned a hard 500 on production
+  // for weeks: a `has` regex that matched the empty string, which OpenNext
+  // accepts and `next start` does not, so it reproduced nowhere but here.
+  // Followed with -L, so a broken redirect surfaces as the alias failing
+  // rather than as its target.
+  { path: '/legal', expect: [200] },
+  { path: '/legal?tab=privacy', expect: [200] },
+  { path: '/privacy', expect: [200] },
+  { path: '/terms', expect: [200] },
+  { path: '/charter', expect: [200] }
 ];
 
 async function curl(url, json = false) {
