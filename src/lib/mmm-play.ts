@@ -23,7 +23,13 @@ export type PlayableRow = {
   title?: string | null;
   artistName?: string | null;
   artistSlug?: string | null;
+  /* The audio, under either of the two names the app's own columns use:
+     `ArtistMediaAsset.storageUrl` surfaces as `mediaUrl` through the station and
+     chart endpoints, while `FanPlaylistItem` stores it as `url`. One concept,
+     two column names, so this accepts both rather than making four callers
+     rename a field on the way in. */
   mediaUrl?: string | null;
+  url?: string | null;
   artworkUrl?: string | null;
 };
 
@@ -43,7 +49,7 @@ export type PlayableRow = {
 export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
   const queue: MediaTrack[] = [];
   for (const row of rows) {
-    const url = row.mediaUrl;
+    const url = row.mediaUrl || row.url;
     if (!url) continue;
     const id = row.hexId || row.id;
     if (!id) continue;

@@ -4,7 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
-import { MmmTrackPlayIntent } from '@/components/mmm/MmmTrackPlayIntent';
+import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { copyrightTone, resolveCopyrightState, type CopyrightState } from '@/lib/track-detail';
 
 export const dynamic = 'force-dynamic';
@@ -105,14 +105,14 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
 
       <div className="mmm-show-eyebrow">Track</div>
       {/* Renders nothing; hands this track to the dock's transport. */}
-      <MmmTrackPlayIntent
-        artistName={asset.profile.name}
-        artistSlug={asset.profile.slug}
-        artworkUrl={asset.artworkUrl}
-        hexId={asset.hexId}
-        title={asset.title}
-        url={asset.storageUrl}
-      />
+      <MmmPlayHere rows={[{
+        hexId: asset.hexId,
+        title: asset.title,
+        artistName: asset.profile.name,
+        artistSlug: asset.profile.slug,
+        mediaUrl: asset.storageUrl,
+        artworkUrl: asset.artworkUrl,
+      }]} />
       <h1 className="mmm-show-title">{asset.title}</h1>
       <div className="mmm-show-by">
         <Link href={`/app/artists/${asset.profile.slug}`}>{asset.profile.name}</Link>

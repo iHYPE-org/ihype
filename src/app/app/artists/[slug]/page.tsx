@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
+import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
@@ -142,6 +143,11 @@ export default async function MmmArtistPage({
           artworkUrl: true,
           durationSecs: true,
           createdAt: true,
+          /* Selected so the dock's joystick can play this artist. The page
+             listed their releases and offered no way to hear one. Nullable: an
+             asset can be published before its audio is stored, and `toQueue`
+             drops those rather than stalling the player on a dead entry. */
+          storageUrl: true,
         },
       })
       .catch(() => []),
@@ -203,6 +209,19 @@ export default async function MmmArtistPage({
         />
         <FollowButton profileId={profile.id} />
       </div>
+
+      {/* Renders nothing; hands this artist's published releases to the dock's
+          transport, in the artist's own order. Registered outside the tab
+          condition on purpose: the joystick should play them whichever section
+          of the profile is showing. */}
+      <MmmPlayHere rows={releases.map((release) => ({
+        hexId: release.hexId,
+        title: release.title,
+        artistName: profile.name,
+        artistSlug: profile.slug,
+        mediaUrl: release.storageUrl,
+        artworkUrl: release.artworkUrl,
+      }))} />
 
       <ProfileTabs active={activeTab} label="Artist sections" tabs={ARTIST_TABS} />
 

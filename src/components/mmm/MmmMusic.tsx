@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
-import { useRegisterPlayIntent } from '@/components/mmm/MmmPlayIntent';
-import { toQueue } from '@/lib/mmm-play';
+import { useRegisterPlayIntent, useRegisterQueue } from '@/components/mmm/MmmPlayIntent';
+import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
@@ -25,7 +25,17 @@ type SeedCard = MmmSeedItem & {
   url: string | null;
 };
 type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number; mediaUrl: string | null; artworkUrl: string | null };
-type PlaylistRow = { id: string; name: string; count: number };
+type PlaylistRow = {
+  id: string;
+  name: string;
+  count: number;
+  /* The playlist's own tracks. `FanPlaylistItem` stores a fully playable row —
+     url, title, artist, artwork — and `/api/fan-playlists` has always returned
+     them; this type dropped the lot and kept a count, so the tab whose entire
+     purpose is playlists could not play one. Same shape of bug as ChartsTab
+     discarding `mediaUrl`. */
+  items: PlayableRow[];
+};
 type StationTrackRow = {
   id: string;
   hexId: string;
@@ -79,10 +89,10 @@ const DEMO_RECOMMENDED: StationTrackRow[] = [
 ];
 
 const DEMO_PLAYLISTS: PlaylistRow[] = [
-  { id: 'demo-list-1', name: 'Saved from Discover', count: 18 },
-  { id: 'demo-list-2', name: 'Portland After Dark', count: 12 },
-  { id: 'demo-list-3', name: 'New Local Releases', count: 24 },
-  { id: 'demo-list-4', name: 'Friday Show Shortlist', count: 7 },
+  { id: 'demo-list-1', name: 'Saved from Discover', count: 18, items: [] },
+  { id: 'demo-list-2', name: 'Portland After Dark', count: 12, items: [] },
+  { id: 'demo-list-3', name: 'New Local Releases', count: 24, items: [] },
+  { id: 'demo-list-4', name: 'Friday Show Shortlist', count: 7, items: [] },
 ];
 
 /**
@@ -502,7 +512,6 @@ function RadioTab() {
  * than a fourth recommendation path, so the taxonomy stays one taxonomy.
  */
 function RecommendedTab() {
-  const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<StationTrackRow[]>(
     '/api/stations/friends/tracks?limit=25',
     (payload) => ((payload as { tracks?: StationTrackRow[] }).tracks ?? []),
@@ -515,11 +524,7 @@ function RecommendedTab() {
 
      The ROWS stay links. Turning them into play buttons is a design change
      nothing has asked for, and the transport is the control this is about. */
-  const queue = toQueue(data ?? []);
-  useRegisterPlayIntent(useCallback(
-    () => { if (queue[0]) playTrack(queue[0], queue); },
-    [playTrack, queue],
-  ));
+  useRegisterQueue(data ?? []);
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Recommendations are unavailable right now.</Empty>;
@@ -553,7 +558,6 @@ function RecommendedTab() {
 }
 
 function ChartsTab() {
-  const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<ChartRow[]>('/api/charts', (payload) => {
     const groups = payload as { national?: Array<Record<string, unknown>> };
     return (groups.national ?? []).slice(0, 20).map((row) => ({
@@ -571,11 +575,7 @@ function ChartsTab() {
   });
 
   // The chart from number one down. Rows stay links to the artist, as drawn.
-  const queue = toQueue(data ?? []);
-  useRegisterPlayIntent(useCallback(
-    () => { if (queue[0]) playTrack(queue[0], queue); },
-    [playTrack, queue],
-  ));
+  useRegisterQueue(data ?? []);
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Charts are unavailable right now.</Empty>;
@@ -622,8 +622,15 @@ function PlaylistsTab() {
       id: String(list.id ?? ''),
       name: String(list.name ?? 'Playlist'),
       count: Array.isArray(list.items) ? list.items.length : Number(list.itemCount ?? 0),
+      items: Array.isArray(list.items) ? (list.items as PlayableRow[]) : [],
     }));
   });
+
+  /* The first playlist, played from the top. The first rather than a picked one
+     because this is the joystick's fallback for the tab, not a per-row control:
+     the rows link to each playlist's own page, and that page registers its own
+     items (MmmPlayHere). */
+  useRegisterQueue((data ?? [])[0]?.items ?? []);
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Playlists are unavailable right now.</Empty>;

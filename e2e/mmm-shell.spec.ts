@@ -275,7 +275,15 @@ test.describe('Music · Map · Me shell', () => {
      claim is about the transport being universal. MAP and ME have nothing of
      their own to play and must fall through to the radio; the music tabs each
      register something. Any of them leaving the transport dead is the bug. */
-  for (const surface of ['/app/map', '/app/me', '/app/music/discover', '/app/music/radio', '/app/music/charts'] as const) {
+  for (const surface of [
+    // Nothing of their own — these must fall through to the radio.
+    '/app/map', '/app/me',
+    // Each of these registers something: the card on screen, the first station
+    // in the current filter, the chart from number one, the recommended list,
+    // the first playlist.
+    '/app/music/discover', '/app/music/radio', '/app/music/charts',
+    '/app/music/recommended', '/app/music/playlists',
+  ] as const) {
     test(`the joystick starts playback on ${surface}`, async ({ page }) => {
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);

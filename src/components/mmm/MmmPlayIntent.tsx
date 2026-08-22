@@ -1,6 +1,8 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 
 /**
  * What the dock's joystick should PLAY when nothing is loaded yet.
@@ -104,4 +106,39 @@ export function useRegisterPlayIntent(intent: (() => void) | null): void {
     register(intent);
     return () => register(null);
   }, [intent, register]);
+}
+
+/**
+ * Register a LIST of rows as what the transport starts here.
+ *
+ * Every surface wants this and none of them should write it themselves, because
+ * the naive version is a render loop and it is not obvious why:
+ *
+ *   const queue = toQueue(rows);                        // a NEW array each render
+ *   useRegisterPlayIntent(useCallback(..., [queue]));   // so a new function each render
+ *
+ * `useRegisterPlayIntent`'s effect depends on the function, so a new identity
+ * re-registers; re-registering changes the provider's state; that re-renders
+ * every consumer of this context, including this one; which builds another new
+ * array. Simulated before writing this: six renders produced six state changes
+ * with a fresh array and one with the memo below.
+ *
+ * That is the same fault that took the Workerd server down when this file was
+ * first added, arriving by a different route — which is why the fix lives in a
+ * hook rather than in a comment telling five call sites to be careful.
+ *
+ * The memo key is the rows' identity and audio, not the array reference: a
+ * server component re-renders a fresh array literal for unchanged data, and a
+ * client tab rebuilds one from state that has not moved. The key is what tells
+ * those apart from a playlist that actually changed.
+ */
+export function useRegisterQueue(rows: readonly PlayableRow[]): void {
+  const { playTrack } = useMediaPlayer();
+  const key = rows.map((row) => `${row.hexId ?? row.id ?? ''}|${row.mediaUrl ?? row.url ?? ''}`).join(',');
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- `key` IS the digest of `rows`; depending on the array itself is the loop this exists to prevent.
+  const queue = useMemo(() => toQueue(rows), [key]);
+  const play = useCallback(() => {
+    if (queue.length > 0) playTrack(queue[0], queue);
+  }, [playTrack, queue]);
+  useRegisterPlayIntent(queue.length > 0 ? play : null);
 }

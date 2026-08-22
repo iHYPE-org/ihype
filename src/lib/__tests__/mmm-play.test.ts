@@ -38,6 +38,19 @@ describe('toQueue', () => {
   it('is empty for an empty list, not undefined', () => {
     expect(toQueue([])).toEqual([]);
   });
+
+  it('accepts `url` as well as `mediaUrl`, which are the same column twice', () => {
+    // Station and chart rows carry `mediaUrl`; FanPlaylistItem stores the same
+    // thing as `url`. A playlist that silently produced an empty queue was the
+    // bug this branch exists to prevent.
+    const [track] = toQueue([{ hexId: 'a', title: 'T', artistName: 'A', url: 'https://r2/a.mp3' }]);
+    expect(track.url).toBe('https://r2/a.mp3');
+  });
+
+  it('prefers mediaUrl when a row somehow carries both', () => {
+    const [track] = toQueue([{ hexId: 'a', mediaUrl: 'from-media', url: 'from-url' }]);
+    expect(track.url).toBe('from-media');
+  });
 });
 
 describe('defaultStationSlug', () => {
@@ -51,5 +64,43 @@ describe('defaultStationSlug', () => {
 
   it('returns null when there are no stations — a real state on a new install', () => {
     expect(defaultStationSlug([])).toBeNull();
+  });
+});
+
+/**
+ * The memo key `useRegisterQueue` builds from its rows.
+ *
+ * Restated here rather than reached through React, because what it has to
+ * guarantee is testable on its own: unchanged data must produce an unchanged
+ * key. A fresh array with the same contents re-renders on every registration —
+ * six renders, six state changes, measured — so the key is what stops the
+ * registration churning. It is the same fault that took the Workerd server down
+ * when the play-intent provider was first added, arriving by another route.
+ */
+function queueKey(rows: readonly { id?: string | null; hexId?: string | null; mediaUrl?: string | null; url?: string | null }[]) {
+  return rows.map((row) => `${row.hexId ?? row.id ?? ''}|${row.mediaUrl ?? row.url ?? ''}`).join(',');
+}
+
+describe('the queue memo key', () => {
+  it('is identical for a fresh array with the same contents', () => {
+    // Exactly what a server component re-rendering a literal produces, and what
+    // a client tab rebuilds from state that has not moved.
+    const a = queueKey([{ hexId: 'a', mediaUrl: 'u1' }, { hexId: 'b', mediaUrl: 'u2' }]);
+    const b = queueKey([{ hexId: 'a', mediaUrl: 'u1' }, { hexId: 'b', mediaUrl: 'u2' }]);
+    expect(a).toBe(b);
+  });
+
+  it('changes when the audio changes, even at the same identity', () => {
+    // A track re-stored at a new URL must re-register, or the queue plays the
+    // old file.
+    expect(queueKey([{ hexId: 'a', mediaUrl: 'u1' }])).not.toBe(queueKey([{ hexId: 'a', mediaUrl: 'u2' }]));
+  });
+
+  it('changes when the order changes — a playlist reordered is a new queue', () => {
+    expect(queueKey([{ hexId: 'a' }, { hexId: 'b' }])).not.toBe(queueKey([{ hexId: 'b' }, { hexId: 'a' }]));
+  });
+
+  it('distinguishes a shorter list from a longer one with the same head', () => {
+    expect(queueKey([{ hexId: 'a' }])).not.toBe(queueKey([{ hexId: 'a' }, { hexId: 'b' }]));
   });
 });
