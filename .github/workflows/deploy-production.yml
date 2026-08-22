@@ -208,6 +208,36 @@ jobs:
           SMOKE_RELAY_URL: https://ihype-cron.colinatwood.workers.dev/smoke
           SMOKE_REQUIRE_LAUNCH_READY: '1'
 
+      - name: Install Playwright browser for the phone-fit measurement
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        # Nothing else in this workflow drives a browser — the pre-deploy smoke
+        # runs workerd and talks HTTP — so the browser has to be fetched here.
+        # `--with-deps chromium` only, not every engine: this measures one
+        # viewport in one browser.
+        continue-on-error: true
+        run: npx playwright install --with-deps chromium
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+
+      - name: Phone fit against production
+        if: env.CLOUDFLARE_API_TOKEN != '' && env.CLOUDFLARE_ACCOUNT_ID != ''
+        # `audit:mobile` measures rendered boxes at 393x852 — a control too
+        # small to hit is invisible to every static check in this repo, and iOS
+        # and Android render these same stylesheets through a WebView, so a
+        # phone-fit regression is a CSS regression that ships to both stores
+        # with no review.
+        #
+        # It runs HERE rather than in CI, and the reason is the base URL: its
+        # budgets are ratchets measured against production, and CI has no
+        # production to measure. It is also deliberately NOT a gate on the
+        # deploy — it runs after the site is live, reports, and does not fail
+        # the run. `--strict` would make a browser flake look like a broken
+        # deploy, and the deploy has already happened by this point.
+        continue-on-error: true
+        run: npm run audit:mobile -- --base=https://ihype.org
+        env:
+          PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
+
       - name: Purge Cloudflare cache
         if: env.CLOUDFLARE_CACHE_PURGE_TOKEN != '' && env.CLOUDFLARE_ZONE_ID != ''
         env:
