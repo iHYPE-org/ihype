@@ -2,9 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { PermissionPrimerSheet, usePermissionPrimer } from '@/components/PermissionPrimerSheet';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { describeSelection, stripDays, toDatesParam, toggleDay } from '@/lib/map-dates';
+import { describeDayKeys, monthGrid, shiftMonth, toDatesParam, toggleDay } from '@/lib/map-dates';
 import {
   MAP_SCOPES,
   PIN_COLLISION,
@@ -43,20 +42,21 @@ type LayerHit = {
 };
 
 /**
- * The layer search is only ever offered where the layer draws something a name
- * can identify. Events are excluded by the design source too: an event pin is a
- * price, and its date strip is the filter that layer actually has.
+ * The search bar is on every layer as of 2026-08-22, and events are the reason.
+ *
+ * It used to be venues and artists only — the design source excluded events on
+ * the grounds that an event pin is a price and the date strip was that layer's
+ * filter. The strip is gone (the dates moved into this bar), so skipping events
+ * would mean the layer that owns the date control never draws the bar holding
+ * it. An event also turns out to be the easiest of the three to search: the
+ * layer already has its title, its venue and its city in hand.
+ *
+ * `SearchableLayer` and `isSearchableLayer` are gone with the exclusion. There
+ * is nothing left for a narrowing predicate to narrow.
  */
-type SearchableLayer = 'venues' | 'artists';
-// A predicate rather than an `includes` test: this narrows, so the component
-// below takes the two layers it handles instead of every layer plus a cast.
-function isSearchableLayer(layer: MapLayer): layer is SearchableLayer {
-  return layer === 'venues' || layer === 'artists';
-}
-
-/** Both strings are the design source's, swapped with the layer. */
-const SEARCH_PLACEHOLDER: Record<SearchableLayer, string> = {
+const SEARCH_PLACEHOLDER: Record<MapLayer, string> = {
   artists: 'Search artists, genres, cities',
+  events: 'Search shows, venues, cities',
   venues: 'Search venues, streets, cities',
 };
 
@@ -111,13 +111,12 @@ export function MmmMap({
   // URL layer authoritative instead of treating it as a one-time default.
   useEffect(() => setLayer(initialLayer), [initialLayer]);
 
-  // The date strip. A SET of days, not a span — Design System 8's map document
-  // is explicit that Friday and Sunday with nothing between them is a legal
-  // selection, "which is what anyone planning a weekend actually wants".
-  // Computed once per mount rather than per render: `stripDays(new Date())`
-  // inside the body would produce a new array every render and re-run the
-  // effect below forever.
-  const [days] = useState(() => stripDays(new Date()));
+  // Still a SET of days, not a span — Design System 8's map document is
+  // explicit that Friday and Sunday with nothing between them is a legal
+  // selection, "which is what anyone planning a weekend actually wants". What
+  // changed (2026-08-22) is only the CONTROL: the five day cards are gone and
+  // the set is filled from a calendar inside the search bar, so there is no
+  // longer a bounded strip of offered days to hold in state.
   const [selectedDays, setSelectedDays] = useState<ReadonlySet<string>>(() => new Set());
   const datesParam = toDatesParam(selectedDays);
   const [genre, setGenre] = useState<string>('All');
@@ -253,15 +252,28 @@ export function MmmMap({
     return () => window.clearTimeout(timer);
   }, [active, cameraTick, load]);
 
-  // "Near me". The layer works from the seeded home until (and unless) the
-  // browser answers, and a denial or a timeout is not an error state — the
-  // control stays, it just recentres on the seeded camera instead.
+  // Location. The map STARTS where the member is, at the owner's direction
+  // (2026-08-22: "Remove near me (should always start where you are)").
   //
-  // It NO LONGER asks on mount. `getCurrentPosition` is the OS prompt on a
-  // phone, and firing it the instant the map appears spends the one prompt an
-  // install gets before the member has any idea what it buys them. The primer
-  // sheet asks first, in our own words, and only an accept reaches the
-  // browser. Declining is remembered and never re-asked.
+  // ## This reverses a deliberate decision, and the reasoning is worth keeping
+  //
+  // Until now the ask belonged to a "Near me" button, because MOBILE.md's rule
+  // is that a capability is asked for "at the moment of use and never on
+  // launch" — and this map IS the launch surface (`WORKBENCH_PATH` is
+  // `/app/map`, so `/` and every sign-in land here). The instruction overrides
+  // that rule for this one capability, and the button it hung on is gone, so
+  // there is no "moment of use" left to attach it to: starting where you are
+  // has to happen on arrival or not at all.
+  //
+  // What is NOT reinstated is auto-opening the PRIMER SHEET. That was tried and
+  // was a real bug: a scrim over the whole shell before the member had touched
+  // anything, covering the navigation, caught by the e2e that proves the map
+  // survives a module change by being unable to reach the nav at all. The OS
+  // prompt is system chrome and covers none of our DOM, so asking the browser
+  // directly is the version of this that does not re-create that.
+  //
+  // A denial or a timeout is still not an error state: the map opens on the
+  // seeded county camera, which is exactly what it did before anyone answered.
   const [home, setHome] = useState<[number, number] | null>(null);
   /* Two effects lived here and went with the chip row (2026-08-22): one
      scrolled the pressed chip back into view after the row squeezed, one dropped
@@ -270,62 +282,50 @@ export function MmmMap({
      names one station at full size with nothing to scroll. */
 
   const flownHome = useRef(false);
-  const [geolocationSettled, setGeolocationSettled] = useState(false);
-  const locationPrimer = usePermissionPrimer('location', geolocationSettled);
-
   /**
-   * `flyOnArrival` is what makes the "Near me" tap feel like it did something.
-   * The tap opens the primer and returns without moving the camera, so by the
-   * time a position arrives the gesture is long over — and on any layer but
-   * artists nothing else was watching for it, which made an accepted permission
-   * look like a dead button. The flight is requested by whoever asked.
+   * Ask the browser where we are, and fly there when it answers.
+   *
+   * The flight is unconditional now, where it used to be an opt-in argument:
+   * the only caller is the arrival effect below, and arriving IS the request.
+   * (The argument existed because the old button opened a primer and returned
+   * without moving the camera, so an accepted permission looked like a dead
+   * button unless the flight was asked for explicitly.)
+   *
+   * `flownHome` still guards the artists layer's own flight, so a member who
+   * has already panned somewhere is not yanked back by a late fix.
    */
-  const requestPosition = useCallback((flyOnArrival = false) => {
+  const requestPosition = useCallback(() => {
     if (typeof navigator === 'undefined' || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const next: [number, number] = [position.coords.longitude, position.coords.latitude];
         setHome(next);
-        if (!flyOnArrival) return;
-        flownHome.current = true; // Do not let the artists effect fly a second time.
+        if (flownHome.current) return;
+        flownHome.current = true;
         mapRef.current?.flyTo({ center: next, zoom: 12, duration: 800 });
       },
-      () => setGeolocationSettled(true),
+      // A refusal or a timeout leaves the seeded county camera up, which is the
+      // same thing the map showed before anyone answered. Nothing to report.
+      () => undefined,
       { timeout: 6000, maximumAge: 600000 },
     );
   }, []);
 
-  // If the OS already has an answer from a previous session, skip our sheet
-  // and use it — asking again would be theatre. `permissions.query` is not
-  // universal, so its absence simply leaves the primer in charge.
+  /* Asked once the canvas exists, not on mount: `getCurrentPosition` can answer
+     from cache in a few milliseconds, and a `flyTo` on a map that has not
+     finished initialising is dropped — which showed up as location being
+     granted and the camera never moving. `ready` is what makes the answer
+     land. */
+  const asked = useRef(false);
   useEffect(() => {
-    if (typeof navigator === 'undefined' || !navigator.permissions?.query) return;
-    let cancelled = false;
-    navigator.permissions.query({ name: 'geolocation' as PermissionName })
-      .then((status) => {
-        if (cancelled || status.state === 'prompt') return;
-        setGeolocationSettled(true);
-        if (status.state === 'granted') requestPosition();
-      })
-      .catch(() => undefined);
-    return () => { cancelled = true; };
-  }, [requestPosition]);
+    if (!ready || asked.current) return;
+    asked.current = true;
+    requestPosition();
+  }, [ready, requestPosition]);
 
-  // NOT asked on arrival, and this is a deliberate departure from the
-  // permissions template's "Fires on first Map open".
-  //
-  // That line assumes the map is somewhere you navigate TO. Here it is
-  // `WORKBENCH_PATH`: `/` and every sign-in resolve to `/app/map`, so the first
-  // Map open IS the launch — and MOBILE.md's rule is that a capability is asked
-  // for "at the moment of use and never on launch". Auto-opening put a sheet
-  // with a scrim over the whole shell before the member had touched anything,
-  // covering the arc nav; the e2e that proves the map survives a module change
-  // caught it by being unable to reach the navigation at all.
-  //
-  // So the ask belongs to "Near me", which is the moment of use and an explicit
-  // request. Until then the map works from the seeded camera, which is the same
-  // thing it does when location is refused.
-
+  /* Where the artists layer flies. Kept as its own callback because it falls
+     back to the seeded camera when there is no position — which is what makes
+     that layer's flight safe to run whether or not location was granted. */
   const recentre = useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -419,16 +419,6 @@ export function MmmMap({
       <div className="mmm-map-canvas" ref={containerRef} />
       <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
 
-      {/* Accepting reaches the browser; declining does not, and is remembered.
-          Either way the map is already drawn on the seeded camera behind this
-          sheet — the design's "no empty state" for a refusal. */}
-      <PermissionPrimerSheet
-        id="location"
-        onAccept={() => { locationPrimer.close(); requestPosition(true); }}
-        onDecline={() => { locationPrimer.close(); setGeolocationSettled(true); }}
-        open={locationPrimer.open}
-      />
-
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />
       ))}
@@ -446,74 +436,28 @@ export function MmmMap({
               below), so the dial pushes a route and the map follows. `setLayer`
               therefore has exactly one caller left: that effect. */}
           <div className="mmm-map-controls">
-            <div className="mmm-control-row">
-              {/* Keep location available on every layer and in one predictable
-                  position after the shared layer controls. The redundant
-                  artists count stays gone. */}
-              <div className="mmm-map-near">
-                <button
-                  className="mmm-map-recentre"
-                  onClick={() => { if (!home && locationPrimer.ask()) return; recentre(); }}
-                  type="button"
-                >
-                  Near me
-                </button>
-              </div>
-            </div>
-            {/* Under the selectors, on the venues and artists layers only —
-                where the layer draws something a name can identify. */}
-            {isSearchableLayer(layer) && (
-              <MapLayerSearch
-                cities={cities}
-                layer={layer}
-                onGoTo={goTo}
-                onOpenSheet={onOpenSheet}
-                venues={venues}
-              />
-            )}
-            {/* The date strip belongs to the events layer alone: only an event has
-                a date. Venues and artists keep the chips above and nothing else,
-                which is also why the API is not sent a `dates` param for them.
+            {/* One row of chrome over the map, and it is the search bar.
+                "Near me" is gone (2026-08-22): the map starts where you are, so
+                a button whose whole job was to ask has nothing left to do, and
+                the row it sat in went with it.
 
-                It must stay INSIDE `.mmm-map-controls`. That container is
-                `position: absolute` and a flex column — the row gap is what
-                separates the chips from whatever is under them. As a sibling it
-                sat in normal flow at the top of `.mmm-map-layer`, i.e. directly
-                beneath the absolutely-positioned chips, and the two painted on
-                top of each other on a real phone: EVENTS over WED, VENUES over
-                THU. Reported from an iPhone, not caught by any test. */}
-            {layer === 'events' && (
-              <div className="mmm-date-block">
-                <div className="mmm-date-strip" role="group" aria-label="Filter by date">
-                  {days.map((day) => (
-                    <button
-                      aria-pressed={selectedDays.has(day.key)}
-                      className="mmm-date-pill"
-                      key={day.key}
-                      onClick={() => setSelectedDays((current) => toggleDay(current, day.key))}
-                      type="button"
-                    >
-                      <span className="mmm-date-dow">{day.weekday}</span>
-                      <span className="mmm-date-day">{day.day}</span>
-                      <span className="mmm-date-mon">{day.month}</span>
-                    </button>
-                  ))}
-                </div>
-                <div className="mmm-date-summary">
-                  <span className="mmm-date-label">Dates</span>
-                  <span className="mmm-date-value">{describeSelection(selectedDays, days)}</span>
-                  {selectedDays.size > 0 && (
-                    <button
-                      className="mmm-date-clear"
-                      onClick={() => setSelectedDays(new Set())}
-                      type="button"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
+                The bar renders on EVERY layer now, where it used to be venues
+                and artists only. That is what carrying the date picker requires
+                — dates belong to events, so a bar that skipped the events layer
+                would be a bar that never showed the control. Events are
+                searchable by title, venue and city, which the layer already has
+                in hand. */}
+            <MapLayerSearch
+              cities={cities}
+              dates={layer === 'events'
+                ? { onChange: setSelectedDays, selected: selectedDays }
+                : null}
+              events={events}
+              layer={layer}
+              onGoTo={goTo}
+              onOpenSheet={onOpenSheet}
+              venues={venues}
+            />
           </div>
           {/* No standing result caption: the map's design source has none, and
               "tap a pin for their page" is an instruction the pins already
@@ -553,13 +497,19 @@ export function MmmMap({
  */
 function MapLayerSearch({
   cities,
+  dates,
+  events,
   layer,
   onGoTo,
   onOpenSheet,
   venues,
 }: {
   cities: MapArtistCity[];
-  layer: SearchableLayer;
+  /** The date filter, on the events layer only — null elsewhere, because only
+   *  an event has a date and the API is never sent `dates` for the other two. */
+  dates: { onChange: (next: ReadonlySet<string>) => void; selected: ReadonlySet<string> } | null;
+  events: MapEventPin[];
+  layer: MapLayer;
   onGoTo: (lngLat: [number, number], zoom: number) => void;
   onOpenSheet: (target: MapSheetTarget) => void;
   venues: MapVenuePin[];
@@ -607,6 +557,20 @@ function MapLayerSearch({
             target: { kind: 'artistCity', data: city } as MapSheetTarget,
           })));
     }
+    if (layer === 'events') {
+      return events
+        .filter((event) =>
+          `${event.title} ${event.venueName ?? ''} ${event.venueCity ?? ''}`.toLowerCase().includes(trimmed))
+        .map((event) => ({
+          key: `event-${event.id}`,
+          title: event.title,
+          detail: [event.venueName, event.venueCity].filter(Boolean).join(' · '),
+          lngLat: [event.longitude, event.latitude] as [number, number],
+          // A show happens at an address, so the same zoom a venue result gets.
+          zoom: 15,
+          target: { kind: 'event', data: event } as MapSheetTarget,
+        }));
+    }
     return venues
       .filter((venue) =>
         `${venue.name} ${venue.city ?? ''} ${venue.addressLine1 ?? ''}`.toLowerCase().includes(trimmed))
@@ -619,7 +583,7 @@ function MapLayerSearch({
         zoom: 15,
         target: { kind: 'venue', data: venue } as MapSheetTarget,
       }));
-  }, [cities, layer, trimmed, venues]);
+  }, [cities, events, layer, trimmed, venues]);
 
   const select = (hit: LayerHit) => {
     onGoTo(hit.lngLat, hit.zoom);
@@ -647,6 +611,12 @@ function MapLayerSearch({
           type="search"
           value={term}
         />
+        {/* Inside the field, at its right end — the owner's placement
+            ("put a date selection inside search bar to the right that pops up
+            calendar"). It is the last thing in the row rather than a sibling
+            bar, so the two filters a member combines on this layer (a name and
+            a date) read as one control. */}
+        {dates && <MapDatePicker onChange={dates.onChange} selected={dates.selected} />}
       </div>
 
       {trimmed.length > 0 && (
@@ -683,6 +653,149 @@ function MapLayerSearch({
               </button>
             ))
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The date filter — a button in the search field that opens a month calendar.
+ *
+ * Replaces the five day cards that used to sit above the map (2026-08-22, at the
+ * owner's direction). Three things it does that the strip could not: reach a
+ * date more than four days out, show the month a member is planning in, and
+ * cost one line of chrome instead of two.
+ *
+ * The SET semantics are unchanged and are the reason this is not a native
+ * `<input type="date">`: DS8's map document requires a Friday and a Sunday with
+ * nothing between them to be a legal selection, and a native date input is one
+ * value. `type="date"` also renders as a platform picker that cannot show which
+ * days are already chosen.
+ */
+function MapDatePicker({
+  onChange,
+  selected,
+}: {
+  onChange: (next: ReadonlySet<string>) => void;
+  selected: ReadonlySet<string>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [anchor, setAnchor] = useState(() => new Date());
+  const popRef = useRef<HTMLDivElement | null>(null);
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
+  const month = monthGrid(anchor);
+
+  /* Click-out and Escape both close, and the pointerdown is captured for the
+     same reason the search results use it: a drag that begins on the map should
+     close the popover before the map starts panning under it. */
+  useEffect(() => {
+    if (!open) return undefined;
+    function onPointerDown(event: PointerEvent) {
+      const target = event.target as Node;
+      if (popRef.current?.contains(target) || buttonRef.current?.contains(target)) return;
+      setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key !== 'Escape') return;
+      setOpen(false);
+      buttonRef.current?.focus();
+    }
+    document.addEventListener('pointerdown', onPointerDown, true);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown, true);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="mmm-datepick">
+      <button
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        className="mmm-datepick-trigger"
+        onClick={() => setOpen((current) => !current)}
+        ref={buttonRef}
+        type="button"
+      >
+        <span aria-hidden="true" className="mmm-datepick-glyph">▤</span>
+        {/* The readout is the button's accessible name as well as its label, so
+            a screen reader hears the current filter rather than "button". */}
+        <span className="mmm-datepick-value">{describeDayKeys(selected)}</span>
+      </button>
+
+      {open && (
+        <div
+          aria-label="Filter by date"
+          className="mmm-datepick-pop"
+          ref={popRef}
+          role="dialog"
+        >
+          <div className="mmm-datepick-head">
+            <button
+              aria-label="Previous month"
+              className="mmm-datepick-page"
+              onClick={() => setAnchor((current) => shiftMonth(current, -1))}
+              type="button"
+            >
+              ‹
+            </button>
+            <span className="mmm-datepick-month">{month.title}</span>
+            <button
+              aria-label="Next month"
+              className="mmm-datepick-page"
+              onClick={() => setAnchor((current) => shiftMonth(current, 1))}
+              type="button"
+            >
+              ›
+            </button>
+          </div>
+
+          <div className="mmm-datepick-dows" aria-hidden="true">
+            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((dow, index) => (
+              <span key={`${dow}${index}`}>{dow}</span>
+            ))}
+          </div>
+
+          <div className="mmm-datepick-grid" role="group">
+            {month.weeks.flat().map((cell) => (
+              <button
+                aria-pressed={selected.has(cell.key)}
+                className="mmm-datepick-day"
+                data-outside={cell.inMonth ? undefined : 'true'}
+                data-today={cell.isToday ? 'true' : undefined}
+                /* Past days are drawn and disabled rather than blanked: the
+                   events endpoint refuses them, so a past cell is a control
+                   that returns nothing by construction — but a calendar with
+                   holes in it stops reading as a calendar. */
+                disabled={cell.isPast}
+                key={cell.key}
+                onClick={() => onChange(toggleDay(selected, cell.key))}
+                type="button"
+              >
+                {cell.day}
+              </button>
+            ))}
+          </div>
+
+          <div className="mmm-datepick-foot">
+            <button
+              className="mmm-datepick-clear"
+              disabled={selected.size === 0}
+              onClick={() => onChange(new Set())}
+              type="button"
+            >
+              Any day
+            </button>
+            <button
+              className="mmm-datepick-done"
+              onClick={() => { setOpen(false); buttonRef.current?.focus(); }}
+              type="button"
+            >
+              Done
+            </button>
+          </div>
         </div>
       )}
     </div>

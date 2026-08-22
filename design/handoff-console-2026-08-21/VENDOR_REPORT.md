@@ -107,6 +107,26 @@ value-preserving where the faces are installed and correct where they are not.
 | `components/shell/TunerDial.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
 | `components/shell/TunerDial.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
 
+## Glyphs given text presentation (U+FE0E)
+
+`\u25c0` and `\u25b6` have `Emoji=Yes` — an emoji variant exists — even though
+their default is text presentation, and WebKit serves the colour glyph from
+Apple Color Emoji anyway. On a real iPhone `JoystickTransport` therefore drew
+its prev hint, its next hint and its play nub as three blue rounded squares in
+a row, while `\u25b2` and `\u25bc` (no emoji variant) came through as the
+intended engraved triangles. A desktop browser shows the design's own glyphs
+and cannot see it.
+
+U+FE0E is VARIATION SELECTOR-15 and requests text presentation, the opposite of
+the U+FE0F that DS8's no-emoji rule and `audit:design`'s check are about.
+The design system should carry the selector itself; then this finds nothing.
+
+| Source | Glyph | Occurrences |
+|---|---|---|
+| `components/shell/FullPlayer.jsx` | `\u25b6` | 1 |
+| `components/shell/JoystickTransport.jsx` | `\u25c0` | 1 |
+| `components/shell/JoystickTransport.jsx` | `\u25b6` | 2 |
+
 ## Hardcoded colour in the design system's components
 
 These components paint brand colour as literals rather than reading the tokens

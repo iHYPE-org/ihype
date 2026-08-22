@@ -54,6 +54,12 @@
  *     the sources assume a global `React`;
  *   · `export function X(` becomes `function XImpl(`, re-exported with the
  *     props type from the matching `.d.ts`, so call sites are type-checked;
+ *   · `\u25c0` and `\u25b6` gain U+FE0E, VARIATION SELECTOR-15. Both carry an
+ *     emoji variant, and iOS picks the colour glyph: the joystick rendered its
+ *     prev hint, next hint and play nub as three blue squares on a real iPhone
+ *     while the two triangles with no emoji variant came through correctly.
+ *     FE0E requests TEXT presentation, so it is the opposite of the FE0F that
+ *     DS8's no-emoji rule and `audit:design` are about;
  *   · every inline `fontSize` px value becomes `rem`. This app cannot ship
  *     inline px type (`--ihype-text-scale` is applied to the root font size, so
  *     rem follows the reader's Text size setting and px cannot), and
@@ -144,6 +150,49 @@ function convertFontFamilies(source, componentFile, fonts) {
     const count = out.split(literal).length - 1;
     out = out.split(literal).join(token);
     fonts.push({ componentFile, from: literal, to: token, count });
+  }
+  return out;
+}
+
+/**
+ * Glyphs the design system writes as bare text that iOS renders as EMOJI.
+ *
+ * U+25C0 ◀ and U+25B6 ▶ carry Emoji=Yes (an emoji variant exists) even though
+ * their default is text presentation, and WebKit picks the colour glyph from
+ * Apple Color Emoji anyway. On a real iPhone the joystick therefore rendered
+ * its prev hint, its next hint and its play nub as three blue rounded squares
+ * in a row, while U+25B2 ▲ and U+25BC ▼ — which have no emoji variant — came
+ * through as the intended engraved triangles. Reported from a phone; a desktop
+ * browser shows the design's own glyphs and cannot see it.
+ *
+ * The fix is U+FE0E, VARIATION SELECTOR-15, which requests text presentation
+ * explicitly. It is the opposite of U+FE0F, so this does NOT make these
+ * emoji under DS8's no-emoji rule or under `audit:design`'s check — that one
+ * flags U+2600–27BF only when followed by FE0F, and for exactly this reason.
+ *
+ * Applied here rather than in `src/components/ds/` because that directory is
+ * generated and the next run would revert it, and not in a wrapper because the
+ * glyphs are string literals inside the component body. Recorded in
+ * VENDOR_REPORT.md and in UPSTREAM_FIXES.md: the design system should carry
+ * the selector itself, at which point this transform finds nothing.
+ */
+const TEXT_PRESENTATION = ['\\u25c0', '\\u25b6'];
+
+function requestTextPresentation(source, componentFile, glyphs) {
+  let out = source;
+  for (const escape of TEXT_PRESENTATION) {
+    if (!out.includes(escape)) continue;
+    /* The source writes these as the six-character TEXT `\u25c0`, not as the
+       character itself, so the backslash has to be escaped for the regex —
+       unescaped, `\u25c0` in a pattern means the glyph and matches nothing
+       here. The lookahead keeps the transform idempotent: a run over
+       already-converted source finds no unselected glyph and reports zero. */
+    const literal = escape.replace('\\', '\\\\');
+    const pattern = new RegExp(`${literal}(?!\\\\ufe0[ef])`, 'gi');
+    const count = (out.match(pattern) ?? []).length;
+    if (!count) continue;
+    out = out.replace(pattern, `${escape}\\ufe0e`);
+    glyphs.push({ componentFile, glyph: escape, count });
   }
   return out;
 }
@@ -337,6 +386,7 @@ const raises = [];
 const converted = [];
 const colours = [];
 const fonts = [];
+const glyphs = [];
 const unresolvedTypes = [];
 const generated = [];
 
@@ -350,7 +400,8 @@ for (const file of files) {
 
   for (const literal of colourLiterals(jsx)) colours.push({ componentFile: sourcePath, ...literal });
 
-  const withFonts = convertFontFamilies(jsx, sourcePath, fonts);
+  const withText = requestTextPresentation(jsx, sourcePath, glyphs);
+  const withFonts = convertFontFamilies(withText, sourcePath, fonts);
   const { source: withRem, usesRuntime } = convertFontSizes(withFonts, sourcePath, raises, converted);
   const { body: types, returns, propsType, unresolved } = typesFromDeclaration(declaration, componentName);
   for (const entry of unresolved) unresolvedTypes.push({ componentName, ...entry });
@@ -462,6 +513,24 @@ const report = [
   fonts.length ? '|---|---|---|---|' : null,
   ...fonts.map((f) => `| \`${f.componentFile}\` | \`${f.from}\` | \`${f.to}\` | ${f.count} |`),
   '',
+  '## Glyphs given text presentation (U+FE0E)',
+  '',
+  '`\\u25c0` and `\\u25b6` have `Emoji=Yes` — an emoji variant exists — even though',
+  'their default is text presentation, and WebKit serves the colour glyph from',
+  'Apple Color Emoji anyway. On a real iPhone `JoystickTransport` therefore drew',
+  'its prev hint, its next hint and its play nub as three blue rounded squares in',
+  'a row, while `\\u25b2` and `\\u25bc` (no emoji variant) came through as the',
+  'intended engraved triangles. A desktop browser shows the design\'s own glyphs',
+  'and cannot see it.',
+  '',
+  'U+FE0E is VARIATION SELECTOR-15 and requests text presentation, the opposite of',
+  'the U+FE0F that DS8\'s no-emoji rule and `audit:design`\'s check are about.',
+  'The design system should carry the selector itself; then this finds nothing.',
+  '',
+  glyphs.length ? '| Source | Glyph | Occurrences |' : '_None._',
+  glyphs.length ? '|---|---|---|' : null,
+  ...glyphs.map((g) => `| \`${g.componentFile}\` | \`${g.glyph}\` | ${g.count} |`),
+  '',
   '## Hardcoded colour in the design system\'s components',
   '',
   'These components paint brand colour as literals rather than reading the tokens',
@@ -509,4 +578,5 @@ if (CHECK) {
   console.log(`vendor:ds — wrote ${generated.length} files from ${files.length} design-system components.`);
   console.log(`  ${raises.length} type sizes raised to the design system's own floor (see ${REPORT}).`);
   console.log(`  ${converted.length} px sizes converted to rem.`);
+  console.log(`  ${glyphs.reduce((n, g) => n + g.count, 0)} emoji-capable glyphs given text presentation.`);
 }

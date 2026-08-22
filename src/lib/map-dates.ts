@@ -10,8 +10,18 @@
  *
  * So this is a `Set`, not a `{from, to}`. Everything below follows from that.
  *
- * Dependency-light on purpose (no `@/lib/db`, no `next/*`): the strip is a
+ * Dependency-light on purpose (no `@/lib/db`, no `next/*`): the picker is a
  * client component and these are the parts worth testing.
+ *
+ * ## The five-day strip became a calendar (2026-08-22)
+ *
+ * The map used to show five day cards above a DATES readout. They are gone at
+ * the owner's direction ("Remove individual dates and put a date selection
+ * inside search bar to the right that pops up calendar for date selection"), so
+ * the set is no longer bounded by a five-item strip and the maths that assumed
+ * one had to go with it. `monthGrid` and `describeDayKeys` replace `stripDays`
+ * and `describeSelection`: a calendar can reach any date, so a summary cannot be
+ * derived by filtering a known list — it has to read the keys themselves.
  *
  * ## Local days, deliberately
  *
@@ -29,65 +39,6 @@ export function toDayKey(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
-export type StripDay = {
-  /** `YYYY-MM-DD`, the value sent to the API. */
-  key: string;
-  /** `FRI` */
-  weekday: string;
-  /** `7` */
-  day: number;
-  /** `AUG` */
-  month: string;
-};
-
-/**
- * The days the strip offers, starting today. Five, as drawn.
- *
- * Only future days: the strip is "what is on", and the events endpoint refuses
- * past dates anyway, so offering yesterday would be a control that returns
- * nothing by construction.
- */
-export function stripDays(from: Date, count = 5): StripDay[] {
-  const out: StripDay[] = [];
-  for (let index = 0; index < count; index += 1) {
-    // Date-only arithmetic via setDate, so a DST boundary shifts the clock
-    // rather than skipping a calendar day — adding 86_400_000ms would land on
-    // the same date twice in the autumn.
-    const date = new Date(from.getFullYear(), from.getMonth(), from.getDate() + index);
-    out.push({
-      key: toDayKey(date),
-      weekday: date.toLocaleDateString('en-US', { weekday: 'short' }).toUpperCase(),
-      day: date.getDate(),
-      month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-    });
-  }
-  return out;
-}
-
-/**
- * The summary line beside the DATES label.
- *
- * Three cases, and the empty one matters: with nothing selected the map shows
- * every upcoming show, so the honest word is "Any day" rather than "None" —
- * the strip is a filter, and an unset filter is not an empty result.
- */
-export function describeSelection(selected: ReadonlySet<string>, days: readonly StripDay[]): string {
-  const chosen = days.filter((day) => selected.has(day.key));
-  if (chosen.length === 0) return 'Any day';
-  if (chosen.length === 1) {
-    const [only] = chosen;
-    return `${title(only.weekday)} ${title(only.month)} ${only.day} · one day`;
-  }
-  const first = chosen[0];
-  const last = chosen[chosen.length - 1];
-  // "3 of 5" rather than a range, because the selection need not be contiguous
-  // and describing Fri–Sun would claim a Saturday nobody picked.
-  const span = `${title(first.month)} ${first.day} – ${title(last.month)} ${last.day}`;
-  return chosen.length === lengthBetween(days, first.key, last.key)
-    ? `${span} · ${chosen.length} days`
-    : `${span} · ${chosen.length} days selected`;
-}
-
 /** Toggle one day. Returns a new Set — the caller stores it in React state. */
 export function toggleDay(selected: ReadonlySet<string>, key: string): Set<string> {
   const next = new Set(selected);
@@ -101,12 +52,103 @@ export function toDatesParam(selected: ReadonlySet<string>): string {
   return [...selected].sort().join(',');
 }
 
-function title(value: string): string {
-  return value.charAt(0) + value.slice(1).toLowerCase();
+export type CalendarCell = {
+  /** `YYYY-MM-DD`, the same value the API takes. */
+  key: string;
+  /** Day of month, 1-31. */
+  day: number;
+  /** False for the leading/trailing cells that belong to the neighbouring month. */
+  inMonth: boolean;
+  /** Before today in the viewer's own zone — offered but not selectable. */
+  isPast: boolean;
+  isToday: boolean;
+};
+
+export type CalendarMonth = {
+  /** `August 2026`, for the popover's own heading. */
+  title: string;
+  /** Always six rows of seven, so the grid never changes height mid-month. */
+  weeks: CalendarCell[][];
+};
+
+/**
+ * The month grid the date popover draws.
+ *
+ * Six rows of seven, always — a five-row month rendered five rows tall makes
+ * the popover jump 40px when you page into a six-row one, and a popover that
+ * resizes under the thumb loses the day you were reaching for.
+ *
+ * Weeks start Sunday, matching the `en-US` locale the rest of this module
+ * formats in.
+ *
+ * `isPast` is computed against the LOCAL day, for the same reason `toDayKey`
+ * refuses `toISOString()`: the events endpoint rejects past dates, so a past
+ * cell is a control that returns nothing by construction. It is rendered
+ * (a calendar with holes is not a calendar) and disabled.
+ */
+export function monthGrid(anchor: Date, today: Date = new Date()): CalendarMonth {
+  const year = anchor.getFullYear();
+  const month = anchor.getMonth();
+  const first = new Date(year, month, 1);
+  // Back up to the Sunday on or before the 1st. getDay() is already local.
+  const start = new Date(year, month, 1 - first.getDay());
+  const todayKey = toDayKey(today);
+
+  const weeks: CalendarCell[][] = [];
+  for (let week = 0; week < 6; week += 1) {
+    const row: CalendarCell[] = [];
+    for (let weekday = 0; weekday < 7; weekday += 1) {
+      // Date-only arithmetic via the constructor, so a DST boundary shifts the
+      // clock rather than skipping a calendar day.
+      const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + week * 7 + weekday);
+      const key = toDayKey(date);
+      row.push({
+        key,
+        day: date.getDate(),
+        inMonth: date.getMonth() === month,
+        isPast: key < todayKey,
+        isToday: key === todayKey,
+      });
+    }
+    weeks.push(row);
+  }
+
+  return {
+    title: first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    weeks,
+  };
 }
 
-function lengthBetween(days: readonly StripDay[], fromKey: string, toKey: string): number {
-  const from = days.findIndex((day) => day.key === fromKey);
-  const to = days.findIndex((day) => day.key === toKey);
-  return from === -1 || to === -1 ? -1 : to - from + 1;
+/** Page the popover a whole month, keeping the day-of-month out of it. */
+export function shiftMonth(anchor: Date, delta: number): Date {
+  return new Date(anchor.getFullYear(), anchor.getMonth() + delta, 1);
+}
+
+/**
+ * The readout on the picker's own button.
+ *
+ * Reads the KEYS, not a strip: a calendar can reach any date, so there is no
+ * known list to filter. The empty case still matters and still says "Any day" —
+ * the picker is a filter, and an unset filter is not an empty result.
+ *
+ * One day is named in full because that is the useful thing to see. More than
+ * one is counted rather than listed: three dates do not fit the button, and a
+ * range would claim the days between, which the set semantics explicitly do not
+ * include (a Friday and a Sunday with nothing between them is legal).
+ */
+export function describeDayKeys(selected: ReadonlySet<string>): string {
+  const keys = [...selected].sort();
+  if (keys.length === 0) return 'Any day';
+  if (keys.length === 1) return formatDayKey(keys[0]);
+  return `${keys.length} days`;
+}
+
+/** `Sat, Aug 22` from `2026-08-22`, parsed as a LOCAL date rather than UTC. */
+export function formatDayKey(key: string): string {
+  const [year, month, day] = key.split('-').map(Number);
+  // `new Date('2026-08-22')` parses as UTC midnight and formats as the 21st
+  // west of Greenwich. The numeric constructor is local, which is what a
+  // calendar day means here.
+  const date = new Date(year, month - 1, day);
+  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 }

@@ -242,7 +242,7 @@ function FullPlayerImpl({
           },
         },
           ring(78, 3, progress, 'rgba(255,255,255,.9)', 'rgba(255,255,255,.22)'),
-          React.createElement('span', { 'aria-hidden': 'true' }, playing ? '\u275a\u275a' : '\u25b6')
+          React.createElement('span', { 'aria-hidden': 'true' }, playing ? '\u275a\u275a' : '\u25b6\ufe0e')
         ),
         round('\u203a', 'Next track', onNext, 52)
       ),

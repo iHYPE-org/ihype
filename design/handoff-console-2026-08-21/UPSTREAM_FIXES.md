@@ -1,4 +1,4 @@
-# Back to Claude Design — eight fixes, measured in the app
+# Back to Claude Design — thirteen fixes, measured in the app
 
 **From:** `iHYPE-org/ihype`, 2026-08-22, after adopting
 `design_handoff_ihype_console` (DESIGN_SYNC rows 288–289).
@@ -6,13 +6,20 @@
 
 The console dock is live: `RotaryNav`, `TunerDial` and `JoystickTransport` are
 mounted from the bundle's own component sources, generated on every build rather
-than ported by hand, exactly as the README asks. Six things had to be corrected
-on this side to ship them, and two more are wrong in the bundle but not yet
+than ported by hand, exactly as the README asks. Nine things had to be corrected
+on this side to ship them, and three more are wrong in the bundle but not yet
 blocking. Each one below is a defect **in the design system**, not a preference:
 fixing it upstream deletes code here.
 
-Everything is measured. Ratios are computed, not quoted; pixel figures come from
-`npm run measure:dock`, which drives Chromium against the real stylesheets.
+Items 9–12 were added on 2026-08-22 after the dock and the map were driven on a
+real iPhone. Three of the four were invisible to every check that runs here and
+to every desktop browser — an emoji glyph substitution, a missing stylesheet the
+components depend on but do not contain, and a filter whose output had to be
+computed to be believed.
+
+Everything is measured. Ratios and filter outputs are computed, not quoted; pixel
+figures come from `npm run measure:dock` and `npm run measure:datepick`, which
+drive Chromium against the real stylesheets.
 
 ---
 
@@ -47,12 +54,36 @@ stop being hints, and the 44% they cost **ellipsised "Recommended" by 18px at
 393px and 59px at 320px** — a destination name you cannot read, which is the
 exact failure the dial exists to fix ("a strip … can name none of them legibly").
 
-**Shipped instead:** the shoulders stand down and the name takes the face, inset
-16px to clear the 26px chevrons.
+**First shipped:** the shoulders stood down and the name took the face.
 
-**Ask:** a shoulder scale that is legible AND leaves a five-word station name
-readable at 375px. If the shoulders are worth their cost, the centre needs more
-room than 56%; if they are not, drop them from the component.
+**Now shipped (2026-08-22), because the owner asked for the hints back:** they
+are on the **scale row** instead of beside the name, at the ends of the
+graduations, at 11px tracked mono. The name keeps its full 24px and the whole
+width. Measured: both hints render in full from 393px up, the name is unclipped
+from 375px up.
+
+The arithmetic for why they cannot sit beside the name, measured in Chromium
+against the real faces:
+
+| | width |
+|---|---|
+| `"Recommended"`, Instrument Serif 15px / 20px / 24px | 90px / 120px / **144px** |
+| `"Playlists"`, JetBrains Mono 700 at 11px / `.14em` | **74px** |
+| dial content box at 375px / 393px / 430px | 171px / 189px / 226px |
+
+The hints sit 24px in from the content edge to clear the 26px chevrons, so two of
+them cost `2 x (24 + width)`. At **393px**, holding the name at 20px leaves each
+hint **20px — two characters**. At **375px there is no combination of sizes at
+which all three fit.** The bundle's own 22%/20% split overlaps the name; it was
+drawn at desktop width, where 1100px of dial hides the problem.
+
+**Ask:** put the hints on the scale row in the component, or state a shoulder
+scale that leaves an eleven-character station name readable at 375px. Note that
+moving them from CSS here means defeating the `overflow: hidden` on a wrapper
+with no class, selected structurally as the dial's one child that is not
+`.tuner-scale` — fragile by construction, and only safe because
+`npm run measure:dock` now fails if the hints are clipped, off the scale row, or
+raised above 11px.
 
 ## 3 · `tokens/colors.css` re-lightens four role hues below AA · **do not adopt**
 
@@ -139,6 +170,107 @@ free" signup while the product is invite-only and the live page says so, so
 translating it faithfully would regress `/`.
 
 ---
+
+## 9 · `\u25c0` and `\u25b6` render as EMOJI on iOS · **fixed here in the generator**
+
+`JoystickTransport.jsx` writes its prev hint, its next hint and its play nub as
+`\u25c0` / `\u25b6`, and `FullPlayer.jsx` writes its play button the same way.
+Both characters carry `Emoji=Yes` — an emoji variant exists — even though their
+default is text presentation, and WebKit serves the colour glyph from Apple Color
+Emoji anyway.
+
+On a real iPhone the joystick therefore drew **three blue rounded squares in a
+row**, while `\u25b2` and `\u25bc` (no emoji variant) came through as the intended
+engraved triangles. Reported from a phone with a screenshot; a desktop browser
+shows the bundle's own glyphs and cannot see it.
+
+**Fixed here:** `vendor:ds` appends **U+FE0E**, VARIATION SELECTOR-15, to those
+two glyphs — 4 occurrences across 2 components. FE0E requests *text*
+presentation and is the opposite of the FE0F that ADHERENCE §29's no-emoji rule
+is about, so this does not make them emoji.
+
+**Ask:** carry the selector in the components. Then the transform finds nothing.
+
+## 10 · `.tuner-dial`'s VU backlight is in `tokens/console.css` and in no component
+
+`tokens/console.css` calls the dock "orange backlit VU" and gives `.tuner-dial`
+a lamp gradient rising off its bottom edge plus `inset 0 -9px 16px -4px
+rgba(255,124,20,.55)`, and `.tuner-scale` an inner `rgba(255,143,45,.35)`. None
+of it is in `TunerDial.jsx`, which paints no background at all — so a consumer
+that mounts the component without also adopting that stylesheet gets flat cream
+glass in a brass ring, which is what shipped here and what was reported ("should
+be continuously flow with vu under lighting").
+
+**Fixed here:** the gradient and both inner glows are applied to the dock's dial
+in `mmm.css`, using this app's `--lamp` / `--accent` / `--bg` for the bundle's
+`#ffb066` / `#ff8f2d` / `--bg-base`.
+
+**Ask:** either put the lit face in the component, or say in the README that
+`tokens/console.css` is required rather than optional for these seven components.
+Note the bundle also references `--lamp-rgb`, which is defined in
+`tokens/colors.css` but not exported anywhere a consumer would find it — writing
+`rgba(var(--lamp-rgb), …)` against a project that lacks it drops the whole
+declaration silently.
+
+## 11 · `#search`'s `min(460px, 72vw)` overflows the control column it sits in
+
+`map.html` sizes the search field `min(460px, 72vw)`. Both halves are wrong once
+it is a real overlay, measured here:
+
+- above the bundle's own 620px breakpoint the control block caps at 420px, so a
+  **460px field overflows its column by 52px**;
+- `72vw` leaves **93px of empty pane** to the right at 375px while squeezing the
+  field, and a right-anchored popover inside it lands at **-56px**.
+
+**Fixed here:** `min(460px, calc(100% - 24px))`, which resolves against the pane
+below 620px and the 420px column above it.
+
+**Ask:** size it against the column rather than the viewport.
+
+## 12 · The map's tone treatment erases the coastline · **do not adopt**
+
+`map.html` filters its tiles `sepia(.92) saturate(.52) contrast(1.06)
+brightness(1.04) hue-rotate(-8deg)`. Run over OSM's own palette — which is what
+that file loads — in sRGB, as CSS filters are specified:
+
+| | before | after |
+|---|---|---|
+| water | `#aad3df` | `#fffee4` |
+| land | `#f2efe9` | `#ffffff` |
+| **water/land contrast** | | **1.02:1** |
+| **hue separation** | | **0 degrees** |
+
+The harbour and the land come out the same colour. On a coastal city — this city
+— land-versus-water is the most important distinction on the sheet. On CARTO
+voyager, which this app loads deliberately for its already-cream land, the same
+filter gives 1.08:1 and 17 degrees: no better.
+
+**Shipped instead:** a hue-preserving tone (`sepia(.22) contrast(1.08)
+brightness(.98)`) at **1.50:1 and 147 degrees** — plus, newly adopted from
+`map.html`, its **ruled chart grid**: `repeating-linear-gradient` at 0deg and
+90deg, a hairline every 33px both ways. That grid is what reads as an old survey
+chart, and its absence was the actual complaint ("map is grainy but doesn't have
+the vintage overlay I want from design").
+
+**Ask:** keep the grid, drop the sepia, or state a tone that holds a coastline.
+
+## 13 · `TunerDial` cannot step twice before its `active` prop catches up
+
+`go()` resolves the next station from `stations[idx + 1]`, where `idx` comes from
+the `active` **prop**. In this app that prop arrives from the URL, so two clicks
+of the step chevron that land before the router settles both resolve from the
+same stale index and both go to the *same* station — one step for two taps.
+
+Caught as a CI flake (two polls at `discover`, eleven at `radio`, then a timeout
+waiting for `charts`), which is the same thing a member gets by double-tapping.
+
+**Worked around in the test** by asserting each step before the next. Not
+worked around in the app, because the fix is optimistic local state inside the
+component and forking it is the one thing `src/components/ds/` exists to prevent.
+
+**Ask:** keep a local index that leads the prop, reconciling when it arrives —
+so a second step is relative to the first rather than to whatever the parent last
+said.
 
 ## What the app fixed on its own side, for the record
 

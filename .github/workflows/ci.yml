@@ -94,6 +94,8 @@ jobs:
         #   *.css                     - layout and geometry; only a browser sees it
         #   components/shell, app/app - the two shells' chrome contracts
         #   components/mmm            - the map, the panes, the dock
+        #   lib/map-dates             - the date picker's month maths, which
+        #                               measure:datepick renders in a browser
         #   components/ds             - the vendored console controls the dock
         #                               mounts; a re-vendored knob changes its
         #                               geometry and only a browser sees that
@@ -120,7 +122,7 @@ jobs:
           fi
           changed="$(git diff --name-only "$BASE" "$HEAD")"
           echo "Changed files:"; echo "$changed"
-          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/components/ds/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^scripts/measure-dock\.mjs$|^\.github/workflows/ci\.yml$)'
+          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/components/ds/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^scripts/measure-(dock|datepicker)\.mjs$|^src/lib/map-dates\.ts$|^\.github/workflows/ci\.yml$)'
           if echo "$changed" | grep -qE "$pattern"; then
             echo "FULL_CI=true" >> "$GITHUB_ENV"
             echo "Full CI: this diff touches the shell, routing, styling or the service worker."
@@ -236,6 +238,19 @@ jobs:
         # and the depth step already selects them for exactly the diffs that
         # can break it: src/components/mmm/, src/components/ds/ and any *.css.
         run: npm run measure:dock
+
+      - name: Measure the map's date picker
+        if: env.FULL_CI == 'true'
+        # Same method and the same reason as the dock probe above: /app/map is
+        # behind auth, so the picker is mounted against slices of the real
+        # stylesheet rather than driven end-to-end. It catches the three things
+        # reading cannot — a day cell under MOBILE.md's 44x44 (a grid track,
+        # so padding cannot rescue it), a popover hanging off the pane, and a
+        # month that renders five rows instead of six. Both real defects it
+        # found on the way in were invisible in the source: the popover's left
+        # edge at -56px, and the search field overflowing its own column by
+        # 52px above 620px.
+        run: npm run measure:datepick
 
       - name: Mandatory public browser smoke
         if: env.FULL_CI == 'true'
