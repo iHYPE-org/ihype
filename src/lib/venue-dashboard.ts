@@ -143,7 +143,10 @@ export async function getVenueDashboardData(profileId: string): Promise<VenueDas
   for (const r of recentBookingRequests) {
     const name = r.fromUser.name ?? r.fromUser.username ?? 'A fan';
     if (r.status === 'accepted') {
-      activity.push({ id: r.id, text: `${name}'s booking request was accepted`, at: r.updatedAt, color: 'var(--role-venue, #22e5d4)' });
+      activity.push({ id: r.id, text: `${name}'s booking request was accepted`, at: r.updatedAt, /* No fallback: `--role-venue` is defined, and `#22e5d4` is its
+         pre-console value — a fallback nobody reaches is a retired colour
+         waiting for the day the token is renamed. */
+        color: 'var(--role-venue)' });
     } else if (r.status === 'declined') {
       activity.push({ id: r.id, text: `Booking request from ${name} was declined`, at: r.updatedAt, color: 'var(--ink-a50)' });
     } else {
@@ -157,7 +160,11 @@ export async function getVenueDashboardData(profileId: string): Promise<VenueDas
       id: 'promoter-sales',
       text: `${promoterTicketsSold} ticket${promoterTicketsSold === 1 ? '' : 's'} sold via promoter HYPE Links this week`,
       at: now,
-      color: '#b983ff',
+      /* `--role-fan`, not `#b983ff`: that hex is the DS8 violet the console
+         conversion replaced, so this dot has been painting a retired palette's
+         colour on a cream ground. A stale literal keeps the old value forever
+         and looks correct beside the tokens around it. */
+      color: 'var(--role-fan)',
     });
   }
 

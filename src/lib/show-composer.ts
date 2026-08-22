@@ -92,38 +92,39 @@ export type ShowProductionPlan = z.infer<typeof showProductionPlanSchema>;
 export type AdvertisingScope = z.infer<typeof advertisingScopeSchema>;
 export type ShowMediaType = z.infer<typeof showMediaTypeSchema>;
 
+/* The four built-in pads carried a `colorHex` each — `#ff6b6b`, `#f59e0b`,
+   `#22c55e`, `#3b82f6` — from the retired sample-pad UI, and nothing anywhere
+   read them: they were the last four colour literals reaching four routes
+   through this module's import graph. The schema keeps the optional field, so a
+   `productionPlan` stored with one still parses exactly as before. */
 export const royaltyFreeSampleClips: ShowSamplePad[] = [
   {
     sampleId: '0x9a1b3c5d7e8f1021',
     title: 'Club Stab',
     url: '/audio/samples/club-stab.wav',
     notes: 'Generated royalty-free synth stab.',
-    category: 'drums',
-    colorHex: '#ff6b6b'
+    category: 'drums'
   },
   {
     sampleId: '0x2b4d6f8a0c1e3f55',
     title: 'Sweep Rise',
     url: '/audio/samples/sweep-rise.wav',
     notes: 'Generated royalty-free riser.',
-    category: 'fx',
-    colorHex: '#f59e0b'
+    category: 'fx'
   },
   {
     sampleId: '0x3c5e7a9c1d2f4b66',
     title: 'Impact Hit',
     url: '/audio/samples/impact-hit.wav',
     notes: 'Generated royalty-free impact hit.',
-    category: 'drums',
-    colorHex: '#22c55e'
+    category: 'drums'
   },
   {
     sampleId: '0x4d6f8b0d2e3a5c77',
     title: 'Signal Chime',
     url: '/audio/samples/signal-chime.wav',
     notes: 'Generated royalty-free transition chime.',
-    category: 'fx',
-    colorHex: '#3b82f6'
+    category: 'fx'
   }
 ];
 

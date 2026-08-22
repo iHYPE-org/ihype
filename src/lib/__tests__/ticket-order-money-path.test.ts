@@ -40,7 +40,9 @@ type Call = { model: string; method: string; args: any };
  * or `model.method#n` for the nth call — which is how a lost race is expressed:
  * the row moved between the read and the write, so the update matches nothing.
  */
-function fakeTx(rows: Record<string, any>, counts: Record<string, { count: number }> = {}) {
+/* `counts` values are whatever that call should resolve to — `{ count: n }` for
+   an updateMany, or a whole row for a re-read (`ticketOrder.findUnique#2`). */
+function fakeTx(rows: Record<string, any>, counts: Record<string, any> = {}) {
   const calls: Call[] = [];
   const seen: Record<string, number> = {};
   const model = (name: string) => new Proxy({}, {

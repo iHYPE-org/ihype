@@ -101,6 +101,18 @@ export default async function TicketPage({
                 <strong>{formatCurrencyFromCents(ticket.ticketOrder.totalTaxCents)}</strong>
                 {t('ticketsSerializedIdPage.totalTax', 'Total tax')}
               </div>
+              {/* Stripe's cut, on its own line, for the same reason the sale
+                  card states it before payment: without it the stub's own
+                  arithmetic does not close — per-ticket value plus tax does not
+                  reach the total charge, and the gap is unexplained money.
+                  Labelled as the ORDER's because Stripe's flat 30c is charged
+                  per transaction, not per ticket, so dividing it by the
+                  quantity would invent a per-ticket figure Stripe never
+                  charged. iHYPE's own fee is $0 and is not a line. */}
+              <div className="stat">
+                <strong>{formatCurrencyFromCents(ticket.ticketOrder.processingFeeCents)}</strong>
+                {t('ticketsSerializedIdPage.processingFee', 'Processing (Stripe, this order)')}
+              </div>
               <div className="stat">
                 <strong>{formatCurrencyFromCents(ticket.ticketOrder.totalChargeCents || ticket.ticketOrder.subtotalCents)}</strong>
                 {t('ticketsSerializedIdPage.totalCharge', 'Total charge')}

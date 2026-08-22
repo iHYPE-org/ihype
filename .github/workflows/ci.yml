@@ -207,8 +207,9 @@ jobs:
 
       - name: Console colour coverage ratchet
         # The other ratchet: how many member-facing routes still paint a raw
-        # colour literal instead of a token. 8 of 89 when this landed, four of
-        # them from one file. Same contract — the number goes down, never up.
+        # colour literal instead of a token. It reached ZERO the same day — 89 of
+        # 89 paint only from tokens — so this is now a gate rather than a
+        # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
       - name: Unit tests

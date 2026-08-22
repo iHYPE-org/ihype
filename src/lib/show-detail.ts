@@ -105,6 +105,37 @@ export function resolveShowSplits(show: ShowSplitSource): ShowSplits | null {
   };
 }
 
+/**
+ * What each share of the FACE VALUE is worth, in cents.
+ *
+ * The percentages alone are not enough on a purchase surface, and the design
+ * system says why: "The 70/20/10 split is shown against **face value only**.
+ * Against the total it would imply the artist's 70% includes money Stripe took."
+ * The shell's split bar sat directly above a sale card whose bottom line is a
+ * total carrying tax and Stripe's processing, and named no base at all — so a
+ * buyer read "70% artist" against the number they were about to pay.
+ *
+ * Integer cents, and the LAST share absorbs the rounding remainder, so the three
+ * always sum to exactly the face value. The same rule the payout entries follow
+ * (`splitArtistPayoutAcrossLineup`): a display that does not add up invites
+ * exactly the question the charter exists to answer.
+ */
+export function splitFaceValueCents(
+  faceValueCents: number,
+  splits: ShowSplits,
+): { artist: number; venue: number; promoter: number } | null {
+  if (!Number.isFinite(faceValueCents) || faceValueCents <= 0) return null;
+  const total = splits.artist + splits.venue + splits.promoter;
+  if (total <= 0) return null;
+
+  const artist = Math.round((faceValueCents * splits.artist) / total);
+  const venue = Math.round((faceValueCents * splits.venue) / total);
+  /* Not rounded independently: the remainder has to land somewhere, and the
+     promoter pool is the share the charter already describes as a pool rather
+     than one party's fee. */
+  return { artist, venue, promoter: faceValueCents - artist - venue };
+}
+
 /** "The Armory · Portland" — the one-line place, from whatever parts exist. */
 export function formatShowWhere(venue: { name?: string | null; city?: string | null } | null): string {
   if (!venue) return '';

@@ -824,7 +824,7 @@ export function SitePlayerDock() {
         aria-label={mobileExpanded ? t('globalMediaPlayer.collapsePlayerControls', 'Collapse player controls') : t('globalMediaPlayer.expandPlayerControls', 'Expand player controls')}
         onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileExpanded(v => !v); } }}
       >
-        <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,var(--accent),var(--accent-2)80)' : '#161310' }}>
+        <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'linear-gradient(135deg,var(--accent),var(--accent-2)80)' : 'var(--bg-3)' }}>
           {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
         </div>
         <div className="site-dock-meta">

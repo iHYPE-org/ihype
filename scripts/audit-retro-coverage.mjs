@@ -78,14 +78,22 @@ const EXEMPT_FILE = [
    It is read by a camera, not a person — the contrast is a scanning
    requirement, not a theme decision, and "fixing" it to a token is how a
    ticket stops scanning at the door. */
-const EXEMPT_LINE = /qr|<rect|quiet ?zone/i;
+const EXEMPT_LINE = /qr|<rect|quiet ?zone|design-exempt/i;
 
 const HEX = /#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b/g;
 
-/** Strip what must not be counted: comments first, then print blocks. */
+/** Strip what must not be counted: comments first, then print blocks.
+ *
+ * Block comments collapse to NEWLINES, not to a space, and that is the whole
+ * fix for a real hole: the exemption below is decided per line against the RAW
+ * source, so the stripped text has to keep the same line numbering. It did not,
+ * and the consequence was that every `design-exempt` marker written as a comment
+ * ABOVE the line it excuses was deleted before the exemption could see it — so
+ * `/shows/[slug]`'s door QR counted as a colour violation while carrying a
+ * comment explaining, correctly, that a QR must not follow the theme. */
 function strip(source) {
   return source
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')          // block comments (JS and CSS)
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => '\n'.repeat(block.split('\n').length - 1))
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1 ')      // line comments, sparing "http://"
     .replace(/@media\s+print\s*\{[\s\S]*?\n\s*\}/g, ' ');
 }
@@ -147,10 +155,16 @@ async function literalsIn(file) {
   const portable = file.split(path.sep).join('/');
   let n = 0;
   if (/\.(tsx|ts|css)$/.test(portable) && !EXEMPT_FILE.some((x) => portable.includes(x))) {
-    const source = strip(await readFile(file, 'utf8'));
-    n = source.split('\n')
-      .filter((line) => !EXEMPT_LINE.test(line))
-      .reduce((sum, line) => sum + (line.match(HEX) ?? []).length, 0);
+    const raw = (await readFile(file, 'utf8')).split('\n');
+    const source = strip(raw.join('\n')).split('\n');
+    /* A marker excuses its own line and the two below it, because a comment
+       explaining a literal is written above the literal, not beside it. */
+    const excused = new Set();
+    raw.forEach((line, i) => {
+      if (!EXEMPT_LINE.test(line)) return;
+      for (const offset of [0, 1, 2]) excused.add(i + offset);
+    });
+    n = source.reduce((sum, line, i) => (excused.has(i) ? sum : sum + (line.match(HEX) ?? []).length), 0);
   }
   literalCache.set(file, n);
   return n;
