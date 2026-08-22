@@ -131,7 +131,7 @@ export function AlwaysOnStation({ initial }: { initial: StationState }) {
               <Link href={`/artists/${np.artistSlug}`} className="station-artist">{np.artistName}</Link>
             </div>
             <button type="button" className="station-toggle" onClick={toggle} aria-label={playing ? t('alwaysOnStation.pause', 'Pause') : t('alwaysOnStation.play', 'Play')}>
-              {playing ? '❚❚' : '▶'}
+              {playing ? '❚❚' : '▶︎'}
             </button>
           </div>
 

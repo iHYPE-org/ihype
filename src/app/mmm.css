@@ -489,9 +489,23 @@ html.mmm-locked .site-shell > main {
   gap: var(--tab-row-gap, 10px);
   padding: 2px 0 14px;
 }
-.mmm-music-controls /* `.mmm-search-wrap` uses a 300px flex basis when it shares a horizontal row.
-   In this column that basis becomes HEIGHT, creating the large blank block
-   between search and Discover. The field is one natural-height row here. */
+/* `.mmm-search-wrap` uses `flex: 1 1 300px` where it shares a horizontal row
+   with a tab strip. This container is a COLUMN, so that basis becomes HEIGHT:
+   measured, a 41px field inside a 300px box, leaving 273px of empty cream
+   between the search bar and Discover's first card, and pushing the deck below
+   the fold. The field is one natural-height row here.
+
+   This rule already existed and had never once applied. The comment above it
+   was written BETWEEN the two halves of its selector:
+
+     .mmm-music-controls  <comment>  .mmm-music-controls > .mmm-search-wrap
+
+   A comment is whitespace to a CSS parser, so those two compounds joined into a
+   descendant combinator and the rule asked for a `.mmm-music-controls` nested
+   inside another one — which exists nowhere. Valid CSS, no error, no override
+   for `audit:css` to report, and the fix silently absent for as long as the
+   comment explaining it had been there. `audit:css` now fails on a comment
+   inside a selector for exactly this reason. */
 .mmm-music-controls > .mmm-search-wrap { flex: 0 0 auto; }
 
 /* Empty-account previews. Demo rows are intentionally inert and visually

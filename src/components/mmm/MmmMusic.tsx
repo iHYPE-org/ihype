@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
+import { useRegisterPlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
@@ -251,6 +252,51 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
    * gesture anyway, so an auto-start would be a control that works on some
    * devices and silently does not on others.
    */
+  /**
+   * Play a card. Lifted out of the deck's own `onTogglePlay` so the DOCK can
+   * start the same thing — see `useRegisterPlayIntent` below. It was inline
+   * before, which is why the joystick had nothing to call.
+   */
+  /**
+   * Play a card. Lifted out of the deck's own `onTogglePlay` so the DOCK can
+   * start the same thing — see `useRegisterPlayIntent` below. It was an inline
+   * arrow before, which is why the joystick had nothing it could call.
+   */
+  const playCard = useCallback((card: SeedCard) => {
+    if (currentTrack?.id === card.id) {
+      togglePlayback();
+      return;
+    }
+    // No URL, nothing to play — the control is still drawn, because the card is
+    // the same shape either way, and this is the one branch where it does
+    // nothing. Send them to the track page instead of failing silently.
+    if (!card.url) {
+      router.push(`/app/tracks/${card.hexId}`);
+      return;
+    }
+    playTrack({
+      id: card.id,
+      title: card.title,
+      artistName: card.artistName,
+      url: card.url,
+      artistProfileSlug: card.artistSlug || null,
+      artworkUrl: card.artworkUrl,
+    });
+  }, [currentTrack?.id, playTrack, router, togglePlayback]);
+
+  /* Hand the dock's joystick something to start. Without this its tap is inert
+     until a track has been loaded by some other control, which on this surface
+     means the play button inside the card — so the transport looked unwired.
+
+     The card ON SCREEN, resolved at call time through `index`: registering a
+     captured track would go stale the first time the deck advanced. The intent
+     is cleared when this pane unmounts (see MmmPlayIntent.tsx), so the joystick
+     never starts a card from a surface the member has left. */
+  const currentCard = (data ?? [])[index];
+  useRegisterPlayIntent(
+    useCallback(() => { if (currentCard) playCard(currentCard); }, [currentCard, playCard]),
+  );
+
   const seedId = (data ?? [])[index]?.id;
   useEffect(() => {
     if (!seedId || currentTrack?.id !== seedId || !isPlaying) return;
@@ -307,29 +353,7 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
         )}
         onSave={(item) => void act(item as SeedCard, 'save')}
         onSkip={(item) => void act(item as SeedCard, 'skip')}
-        onTogglePlay={(item) => {
-          const card = item as SeedCard;
-          if (currentTrack?.id === card.id) {
-            togglePlayback();
-            return;
-          }
-          // No URL, nothing to play — the control is still drawn, because the
-          // card is the same shape either way, and this is the one branch where
-          // it does nothing. Send them to the track page instead of failing
-          // silently.
-          if (!card.url) {
-            router.push(`/app/tracks/${card.hexId}`);
-            return;
-          }
-          playTrack({
-            id: card.id,
-            title: card.title,
-            artistName: card.artistName,
-            url: card.url,
-            artistProfileSlug: card.artistSlug || null,
-            artworkUrl: card.artworkUrl,
-          });
-        }}
+        onTogglePlay={(item) => playCard(item as SeedCard)}
         playing={clipPlaying}
         savedCount={savedCount}
       />
@@ -441,7 +465,7 @@ function RadioTab() {
           style={{ borderBottom: '1px solid var(--hair-100)' }}
           type="button"
         >
-          <span aria-hidden="true" className="mmm-station-art">▶</span>
+          <span aria-hidden="true" className="mmm-station-art">▶︎</span>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{station.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{station.subtitle}</span>

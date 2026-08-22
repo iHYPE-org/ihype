@@ -234,7 +234,7 @@ export function MmmFullPlayer({
                   transform="rotate(-90 39 39)"
                 />
               </svg>
-              <span aria-hidden="true">{playing ? '❚❚' : '▶'}</span>
+              <span aria-hidden="true">{playing ? '❚❚' : '▶︎'}</span>
             </button>
           )}
 
