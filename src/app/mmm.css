@@ -113,59 +113,67 @@ html.mmm-locked .site-shell > main {
   /* ── Safe areas ────────────────────────────────────────────────────────
      The handoff is drawn at 430px on a rectangle with no notch. The real
      target is a Capacitor WebView with `viewport-fit=cover`, where the bottom
-     ~34px is the home indicator and the top ~59px is the Dynamic Island. This
-     shell's ONLY persistent controls — the logo trigger that opens the arc nav
-     and the player — live in exactly that bottom band, so without this the one
-     control that navigates the whole app sits inside the iOS system swipe
-     zone and competes with it for the touch.
+     ~34px is the home indicator and the top ~59px is the Dynamic Island. The
+     dock — the app's ONLY navigation — spans that bottom band, so without this
+     the three controls that reach everything sit inside the iOS system swipe
+     zone and compete with it for the touch.
 
-     `--mmm-bottom` is the single origin for everything anchored to the bottom
-     edge. The file already warns (see the narrow breakpoint) that the anchor,
-     the logo and the player must not drift apart; one token is how that stops
-     being a thing to remember. The `max()` keeps the consent-banner lift the
-     original rule established — the inset is added to the RESTING value only,
-     because `--consent-inset` is measured from the viewport edge and already
-     includes it. */
+     `--mmm-safe-bottom` reaches the dock twice on purpose: once as its own
+     bottom padding, so the controls clear the home indicator, and once inside
+     `--mmm-chrome-size`, so the panes clear the whole bar. Both resolve to 0
+     off-device. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
   --mmm-safe-left: env(safe-area-inset-left, 0px);
   --mmm-safe-right: env(safe-area-inset-right, 0px);
 
-  /* ONE FIGURE DRIVES THE CHROME. `SimplifiedApp.dc.html` computes the whole
-     table from `chromeSize`, `gap` and `inset` (56/10/14 under 620px, 88/12/26
-     over it) and hands the results to the trigger, the player and the hint, so
-     the three cannot disagree. This block is that computation.
+  /* ONE FIGURE DRIVES THE DOCK, and it is the knob.
+     `design/handoff-console-2026-08-21/README.md`: "both knobs are 74px,
+     matched. They are the same brass body by design; if one is smaller the dock
+     looks broken." So the knob is the origin and every other figure here is
+     derived from it — the same contract the old chrome table had, with the
+     trigger swapped for the hardware that replaced it.
 
-     It replaces a set of literals that had drifted apart: the trigger was 76px
-     against a player whose min-height was 88, so the two were never the same
-     height and never shared a baseline — which is the FIRST thing SHELL_LOCK
-     says about this chrome ("the trigger and the player are the same height on
-     the same baseline, sharing edges"). Every offset that used to be written
-     out (108px hint, 100/186px result line, 118px dock) is derived here. */
-  --mmm-chrome-size: 88px;
-  --mmm-chrome-gap: 12px;
+     What this REPLACED, and why the shape changed rather than the numbers: the
+     chrome used to be three absolutely-positioned pieces (trigger, dial, pill)
+     floating bottom-left over the map, each offset from the last. The console
+     template draws a real BAR — full width, brass lip along the top, three
+     controls in a flex row — so the offsets that placed those pieces
+     (`--mmm-chrome-gap`, `--mmm-dial-w`, `--mmm-player-left`, and the resting
+     `--mmm-bottom`) have nothing left to place and are gone. Layout does the
+     work the calc chain used to.
+
+     `--mmm-chrome-size` survives with its name and its meaning intact: the
+     height of the chrome band content must clear. It is the dock's now,
+     including its safe-area padding, which is why the panes needed no change. */
+  --mmm-knob: 74px;
+  --mmm-dock-pad: 8px;
+  /* The brass lip is a real 3px border on the dock, so it is part of the height
+     content has to clear — not decoration sitting inside the padding. */
+  --mmm-dock-lip: 3px;
+  --mmm-chrome-size: calc(
+    var(--mmm-knob) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
+  );
   /* The pane's own horizontal padding, named because a surface inside the
      pane sometimes has to cancel it — a horizontally scrolling strip has to
      reach the viewport edge or its overflow is invisible. Written once here
      rather than as a 16 repeated at each such site. */
   --mmm-pane-pad: 16px;
   --mmm-inset: 26px;
-  --mmm-bottom: max(calc(var(--mmm-inset) + var(--mmm-safe-bottom)), calc(var(--consent-inset, 0px) + 12px));
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
-  /* The tuner sits on the cabinet between the trigger and the pill, which is
-     where the console direction draws it. Its width is a token so the pill's
-     offset stays DERIVED rather than restated — the rule SHELL_LOCK actually
-     cares about is that these figures are load-bearing on each other, not that
-     they never change. Change this one and the pill follows on its own. */
-  --mmm-dial-w: 244px;
-  /* The pill docks right of the trigger and the dial — at EVERY width, which
-     is what the design draws on a phone too. */
-  --mmm-player-left: calc(
-    var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap)
-    + var(--mmm-dial-w) + var(--mmm-chrome-gap)
-  );
-  /* Anything that must clear the chrome band sits above the trigger's top edge. */
-  --mmm-chrome-top: calc(var(--mmm-bottom) + var(--mmm-chrome-size));
+  /* The cookie banner is pinned to the bottom of the viewport, and so is the
+     dock. `CookieConsent.tsx` measures its own height into `--consent-inset`
+     (measured, not a constant: the copy wraps and ships in twelve locales), and
+     the dock rides up by exactly that much while it is on screen.
+
+     This matters more than it did: the old chrome floated bottom-LEFT with room
+     beside it, so an overlap covered part of one control. The dock spans the
+     width — an un-lifted dock would be covered outright, and it is now the only
+     way to navigate anywhere. The e2e suite measures the lift for that reason. */
+  --mmm-dock-lift: var(--consent-inset, 0px);
+  /* Anything that must clear the chrome sits above the dock, including whatever
+     the dock is currently riding on. */
+  --mmm-chrome-top: calc(var(--mmm-chrome-size) + var(--mmm-dock-lift));
 }
 
 /* ── Map layer ─────────────────────────────────────────────────────────── */
@@ -1160,595 +1168,130 @@ html.mmm-locked .site-shell > main {
   cursor: pointer;
 }
 
-/* ── Chrome: logo trigger, player, radial arc nav ─────────────────────────
- *
- * The nav is a zero-size fixed anchor at the frame's lower left; the logo and
- * every fan item are absolutely positioned at its origin and moved into place
- * by transform. That is what makes the fan-out a pure compositor animation
- * with no layout, and what lets a closed item tuck *behind* the logo.
- */
+/* ── The dock ─────────────────────────────────────────────────────────────
+   The whole of the app's navigation, and the only persistent chrome.
 
-.mmm-chrome { position: absolute; inset: 0; z-index: 45; pointer-events: none; }
+   `design/handoff-console-2026-08-21/templates/console-shell/` draws it as a
+   real bar: full width, a 3px brass lip along the top, walnut cabinet grain
+   under it, and three controls in a flex row — RotaryNav, TunerDial,
+   JoystickTransport (see `MmmDock.tsx`). Everything that used to float over the
+   map bottom-left is retired with it: the logo trigger, the radial arc and its
+   scrim, the nav hint, the player pill, the phone mini-player and the cabinet
+   panel that sat behind them.
 
-/* The tuner's slot on the cabinet, between the two knobs. The dial itself is
-   `.tuner-*` in globals.css — this only places it, so the control looks the
-   same here as it does inside a page. */
-.mmm-chrome-dial {
-  position: absolute;
-  left: calc(var(--mmm-left) + var(--mmm-chrome-size) + var(--mmm-chrome-gap));
-  bottom: var(--mmm-bottom);
-  width: var(--mmm-dial-w);
-  height: var(--mmm-chrome-size);
-  z-index: 28;
-  display: flex;
-  align-items: center;
-  pointer-events: auto;
-}
-/* The mount's page margin is wrong on a cabinet — it is furniture here, not a
-   block in a document. The step keys keep their 44px target. */
-.mmm-chrome-dial .tuner-mount { margin: 0; width: 100%; gap: 6px; }
-.mmm-chrome-dial .tuner-step { width: 34px; min-height: 44px; }
+   ## Two things this must keep doing
 
-/* ── The console cabinet ───────────────────────────────────────────────────
-   The walnut face the logo trigger and the player pill sit ON.
+   1. **Own the safe area.** `layout.tsx` sets `viewportFit: 'cover'`, which is a
+      promise to handle the insets yourself. The dock is the bottom-most element
+      in the app, so the home-indicator zone is its problem: the bottom padding
+      carries `--mmm-safe-bottom`, and `--mmm-chrome-size` includes it so the
+      panes clear the whole thing. Off-device both resolve to 0.
+   2. **Stay one row at 375px.** The knobs are fixed at 74px each and the dial
+      takes what is left — `flex: 1; min-width: 0` on the mount, which is what
+      stops the dial's own content from setting a floor and pushing a knob off
+      the edge. At 375px that leaves 195px of dial; measured at 393px the dial
+      is 213px and the longest station name ("Recommended") fits with room.
 
-   Additive by construction: it is a panel BEHIND them (z-index below both),
-   sized entirely from the tokens they are already positioned by, so the
-   geometry table SHELL_LOCK signed off is untouched. --mmm-console-pad is the
-   only new number, and it is the cabinet's own bezel, not a shell measurement
-   — it expands the panel outward from the chrome band rather than moving
-   anything within it.
-
-   The grain is three periods of irregular stripe over a warm base. One period
-   reads as corduroy; three reads as wood — which is the whole difference
-   between a brown rectangle and a cabinet. */
-.mmm-console {
-  --mmm-console-pad: 7px;
-  position: absolute;
-  left: calc(var(--mmm-left) - var(--mmm-console-pad));
-  bottom: calc(var(--mmm-bottom) - var(--mmm-console-pad));
-  height: calc(var(--mmm-chrome-size) + var(--mmm-console-pad) * 2);
-  /* Spans the trigger, the gap and the pill — the same three terms
-     --mmm-player-left is built from, plus the pill's own max width. */
-  /* Spans the trigger, the dial and the pill with their gaps — the same terms
-     --mmm-player-left is built from, plus the pill's own max width. Adding the
-     dial without adding it here is what left the pill hanging 180px past the
-     cabinet's right edge on a 1100px viewport: caught by measuring, not by
-     reading. */
-  width: min(
-    calc(var(--mmm-chrome-size) + var(--mmm-chrome-gap) + var(--mmm-dial-w)
-         + var(--mmm-chrome-gap) + 760px + var(--mmm-console-pad) * 2),
-    calc(100vw - var(--mmm-left) - var(--mmm-inset) - var(--mmm-safe-right) + var(--mmm-console-pad) * 2)
-  );
-  z-index: 26;              /* under the trigger (31) and the pill (28) */
-  border-radius: 7px;
-  pointer-events: none;
-  background:
-    repeating-linear-gradient(88deg,
-      rgba(30, 14, 4, .30) 0 1px, transparent 1px 4px,
-      rgba(94, 56, 26, .22) 4px 6px, transparent 6px 13px),
-    repeating-linear-gradient(91deg,
-      rgba(20, 9, 2, .22) 0 2px, transparent 2px 9px),
-    repeating-linear-gradient(89deg,
-      rgba(120, 74, 38, .16) 0 1px, transparent 1px 27px),
-    linear-gradient(180deg, #6b4426 0%, #52301a 30%, #432612 46%, #3a2110 60%, #4a2c17 74%, #5c3a1f 90%, #6f4728 100%);
-  background-color: var(--walnut);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 214, 160, .34),
-    inset 0 -1px 0 rgba(0, 0, 0, .7),
-    0 4px 14px -4px rgba(0, 0, 0, .85),
-    0 1px 0 rgba(255, 214, 160, .1);
-  transition: opacity .24s var(--ease-default);
-}
-/* Opening the nav dims the chrome; the cabinet dims with it rather than
-   staying lit under a scrim, which would read as a hole in the dimming.
-   `data-hidden` is the player's own attribute, driven by the same `navOpen`
-   — matching it rather than inventing a second state is what keeps the two
-   from ever disagreeing about whether the chrome is up. */
-.mmm-console[data-hidden='true'] { opacity: 0; }
-
-
-/* Vignette and film grain over the whole frame. Decorative, non-interactive,
-   and above the modules but below the chrome. */
-.mmm-frame::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 40;
-  pointer-events: none;
-  background: radial-gradient(120% 90% at 50% 0%, transparent 58%, rgba(var(--scrim-rgb), 0.26) 100%);
-}
-
-/* The nav trigger and the cookie-consent dialog both want the bottom of the
-   viewport, and at phone width the banner is `100vw - 32px` wide — so it lands
-   squarely on top of this 76px logo and swallows every pointer event aimed at
-   it. A first-time visitor could not open the navigation at all until they
-   dismissed consent.
-
-   Consent is a compliance surface, so it is not the thing that moves: it
-   publishes how much of the bottom edge it occupies as `--consent-inset` (see
-   `CookieConsent.tsx`) and the shell lifts its own chrome by that much, for
-   exactly as long as the dialog is on screen. `max()` means the ordinary 26px
-   resting position is unchanged once consent is answered, and the fallback of
-   0px keeps this inert on every page that never shows the banner. */
-.mmm-nav-anchor {
-  position: absolute;
-  left: 26px;
-  bottom: var(--mmm-bottom);
-  z-index: 30;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-/* The trigger sits at the arc anchor's own origin, so these offsets must track
-   `.mmm-nav-anchor` above — including its consent lift, or the fan clears the
-   consent dialog while the button that opens it stays underneath. */
-.mmm-logo {
-  position: absolute;
-  left: var(--mmm-left);
-  bottom: var(--mmm-bottom);
-  z-index: 31;
-  /* The shared chrome figure — same height as the player, on the same
-     baseline. It was a fixed 76px against an 88px pill. */
-  width: var(--mmm-chrome-size);
-  height: var(--mmm-chrome-size);
-  /* A SQUIRCLE, not a circle — `LogoTrigger.jsx` draws `round(size × 0.342)`,
-     the same corner ratio the player's artwork and its retired disc already
-     use here, which is what makes the three read as one family. It was
-     `9999px`, so the one piece of chrome that is always on screen was the only
-     one not in that family. The ratio, not a fixed radius, so the corner
-     follows the 88px/56px chrome figure. */
-  border-radius: calc(var(--mmm-chrome-size) * 0.342);
-  /* No border: the trigger is a solid accent fill and a hairline over it reads
-     as a seam at this radius. Per LogoTrigger. */
-  border: 0;
-  padding: 0;
-  overflow: hidden;
-  /* Bakelite, in a brass collar, sitting on the cabinet. The accent fill it
-     carried was correct when the trigger floated over a map on its own; on
-     walnut it reads as a sticker rather than a control. Size, position,
-     radius and behaviour are untouched — this is paint. */
-  background:
-    radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .5), transparent 70%),
-    radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
-  color: var(--ink-on-walnut);
-  cursor: pointer;
-  box-shadow:
-    0 0 0 2px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    0 0 0 4px #6d5222,
-    inset 0 1px 0 rgba(255, 226, 175, .4),
-    inset 0 -3px 9px rgba(0, 0, 0, .8),
-    0 4px 10px -2px rgba(0, 0, 0, .85);
-  transition: transform 0.3s var(--ease-default);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  pointer-events: auto;
-}
-
-.mmm-logo-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: inherit;
-  object-fit: cover;
-}
-.mmm-logo:hover { opacity: 0.92; }
-/* Open state tips the logo, so the trigger reads as "engaged". */
-/* The logo is a SIBLING of the arc anchor (both are children of `.mmm-chrome`
-   — see MmmShell), so the descendant selector this used to be never matched
-   anything and the trigger never tipped when the nav opened. `:has()` on the
-   shared parent is what actually expresses "while the nav is open". */
-.mmm-chrome:has(.mmm-nav-anchor[data-open='true']) .mmm-logo { transform: scale(0.86) rotate(-6deg); }
-
-/* The three bars are 2px wide at 5/9/6 with a 2px gap, per LogoTrigger — the
-   resting heights are declared per bar so that stopping the animation (reduced
-   motion) leaves the design's own stagger rather than three equal stubs. */
-.mmm-eq { display: flex; align-items: flex-end; gap: 2px; height: 9px; }
-.mmm-eq span { width: 2px; border-radius: 1px; background: var(--ink-on-accent); animation: mmmEq 0.9s ease-in-out infinite; }
-.mmm-eq span:nth-child(1) { height: 5px; }
-.mmm-eq span:nth-child(2) { height: 9px; animation-delay: 0.15s; }
-.mmm-eq span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
-@keyframes mmmEq { 0%, 100% { height: 3px; } 50% { height: 9px; } }
-
-/* Fan items. Closed: tucked behind the logo, scaled down, not tabbable and not
-   hit-testable. Open: translated onto the arc. The transform and delay are
-   computed per index from the ARC table in mmm-nav.ts and passed inline — the
-   handoff's guidance, and the fix for FRONTEND_GOTCHAS §5, where the prototype
-   routed the delay through an `--nd` custom property that was never declared
-   and silently invalidated the whole declaration. */
-.mmm-ray {
+   The dial's own paint is `.tuner-*` in globals.css, shared with the rest of the
+   app — this only places it. */
+.mmm-dock {
   position: absolute;
   left: 0;
-  bottom: 0;
-  white-space: nowrap;
-  cursor: pointer;
-  transform: translate(14px, -6px) scale(0.55);
-  opacity: 0;
-  pointer-events: none;
-  transition: transform 0.42s var(--ease-default), opacity 0.26s var(--ease-default);
-}
-.mmm-nav-anchor[data-open='true'] .mmm-ray { opacity: 1; pointer-events: auto; }
-
-/* An icon ray is a DISC: 66px square, nothing sets its width from content, so
-   width and height are given outright and the text padding drops out.
-   `overflow: visible` is load-bearing — the mark is 92px (the pin 100px) and
-   is MEANT to break the disc's edge on every side, so the three read as
-   objects sitting on the frame rather than buttons in a row. */
-.mmm-ray-disc {
-  width: 66px;
-  height: 66px;
-  padding: 0;
-  overflow: visible;
-  border-radius: 9999px;
-  border: 1px solid var(--hair-150);
-  background: var(--bg-2);
-  color: var(--ink);
-  /* The discs CAST — they are objects on the frame, not buttons in it, and the
-     drop shadow is the other half of what the oversized mark is doing. From
-     `ArcNav.jsx`; the navy tint is the same re-anchoring the shadow tokens got
-     (pure black reads grey-green over #0b1220). */
-  box-shadow: 0 14px 34px rgba(4, 8, 18, 0.55);
-}
-/* Hover is NOT the current page. Both used to paint the accent fill, so
-   pointing at MUSIC from the map made two discs claim to be where you are. */
-.mmm-ray-disc:hover {
-  border-color: var(--accent);
-}
-.mmm-ray-disc[aria-current='page'] {
-  background: var(--accent);
-  color: var(--ink-on-accent);
-  border-color: var(--accent);
-  /* The active disc adds an accent halo on top of a deeper cast. */
-  box-shadow: 0 16px 38px rgba(4, 8, 18, 0.6), 0 0 0 5px rgba(var(--accent-rgb), 0.2);
-}
-
-/* Absolutely centred, not laid out. `place-items: center` on a grid whose item
-   is bigger than its track resolves to the START edge — CSS's
-   overflow-alignment safety — which is exactly why an oversized mark sits down
-   and to the right of centre. Pinning 50/50 and pulling back half its own size
-   is immune to it. */
-.mmm-ray-glyph {
-  display: block;
-  overflow: visible;
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  /* Embossed: one dark stroke pushed down, one light stroke pulled up, both
-     behind the mark, so the line reads as pressed into the surface. Filters
-     rather than duplicated paths — a filter follows whatever the geometry is,
-     so a redrawn glyph needs no second copy kept in sync. Sub-pixel on purpose:
-     at 1.55 stroke a full pixel of relief becomes a visible double line. */
-  filter: drop-shadow(0 1px 0.7px rgba(4, 8, 18, 0.7)) drop-shadow(0 -0.8px 0.6px rgba(255, 255, 255, 0.3));
-}
-
-/* `.mmm-nav-hint` was here and is deleted with the element (2026-08-14). See
-   MmmShell for why: the module label printed over the pane's own content at
-   the bottom of a phone screen, and named the module already on screen. */
-
-
-/* The player is a pill to the right of the logo. Opening the nav dims
-   everything including the player — it fades and drops rather than being
-   unmounted, so its transition can play out. */
-/* ── Player pill ──────────────────────────────────────────────────────────
-   Rebuilt to SHELL_LOCK_2026-08-08.md. Every figure here is from that file and
-   several fixed a specific bug; the lock's own instruction is to change one and
-   re-derive the rest rather than nudge it in isolation.
-
-   The single figure the lock says drives the chrome — the trigger's size, the
-   player's height and the dock position — now lives ONCE in the frame's token
-   block at the top of this file, not here: a second copy is how the pill came
-   to be 88px tall beside a 76px trigger. */
-.mmm-player {
-  position: absolute;
-  /* Docked immediately right of the trigger, sharing its baseline, so the two
-     read as one piece of furniture. box-sizing: border-box on the pill is what
-     puts the two borders on one line instead of 2px apart. */
-  left: var(--mmm-player-left);
-  right: auto;
-  box-sizing: border-box;
-  width: min(760px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
-  min-height: var(--mmm-chrome-size);
-  bottom: var(--mmm-bottom);
-  z-index: 28;
+  right: 0;
+  bottom: var(--mmm-dock-lift);
+  z-index: 45;
   display: flex;
   align-items: center;
-  gap: 12px;
-  /* Translucent over a blur, not an opaque bar. `PlayerPill` is explicit that
-     at .96 the pill "was a solid bar cutting the frame in half"; the blur is
-     what keeps its own text legible at .74, not the alpha. Composed off
-     --bg-base-rgb, which is a real per-theme triplet — --bg-2 has no triplet
-     and inventing one would mean restating it in both theme blocks. */
-  /* Cream dial glass, lit from behind, rather than a translucent slab. The
-     blur stays: SHELL_LOCK is explicit that the pill must not read as "a
-     solid bar cutting the frame in half", and a lit glass over a blur is
-     still glass. What changed is what it is made OF. */
+  gap: 6px;
+  padding: var(--mmm-dock-pad) 10px calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
+  border-top: var(--mmm-dock-lip) solid var(--brass);
   background:
-    radial-gradient(150% 200% at 50% 130%, #fff3d4 0%, var(--bg) 42%, #e2cea0 78%, #d4bd8c 100%);
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  /* THE accent ring — a continuous hairline is the pill's own border, not a
-     line drawn across its top edge. This carried a neutral border plus a
-     gradient strip child, which is the partial top bar the lock rejected: it
-     competed with the scrub row for the same job and, measured against the
-     rectangular box, hung past the capsule at each end. */
-  /* A brass bezel, not an accent hairline — the glass is set INTO the
-     cabinet. Still one continuous ring, which is the rule the lock actually
-     stated: never a line drawn across the top edge. */
-  border: 0;
-  border-radius: 9999px;
-  /* 0 12px, so a 64px square in an 88px pill insets equally on every side. */
-  padding: 0 12px;
-  box-shadow:
-    0 0 0 1px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    0 0 0 4px #6d5222,
-    inset 0 2px 5px rgba(92, 62, 20, .4),
-    inset 0 -1px 0 rgba(255, 252, 235, .75),
-    0 16px 40px rgba(var(--scrim-rgb), 0.5);
+    repeating-linear-gradient(88deg,
+      rgba(30, 14, 4, .3) 0 1px, transparent 1px 4px,
+      rgba(94, 56, 26, .22) 4px 6px, transparent 6px 13px),
+    linear-gradient(180deg, #6b4426 0%, #452711 46%, #5c3a1f 100%);
+  background-color: var(--walnut);
+  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -6px 18px -8px rgba(0, 0, 0, .55);
+  /* The controls are the only interactive chrome; the bar itself swallows taps
+     rather than passing them to the map underneath, which is what a cabinet
+     face does. */
   pointer-events: auto;
-  overflow: hidden;
-  transition: opacity 0.24s var(--ease-default), transform 0.3s var(--ease-default);
-}
-.mmm-player[data-hidden='true'] {
-  opacity: 0;
-  transform: translateY(14px);
-  pointer-events: none;
 }
 
-/* The artwork is the row's FIRST CHILD, so it centres against the pill's whole
-   height and the scrub row aligns with the title by construction. A squircle,
-   not a circle: the square holds the artist's logo and a circle crops a mark.
-   Size and radius come from the component (anchorHeight - 24, ratio 0.342). */
-.mmm-player-art {
-  flex: 0 0 auto;
-  overflow: hidden;
-  background: linear-gradient(135deg, var(--accent), var(--accent-deep));
+/* The dial's slot. `flex: 1; min-width: 0` is the whole rule — see the note
+   above about why `min-width` is load-bearing rather than tidy. */
+.mmm-tuner-mount {
+  flex: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: var(--ink-on-accent);
 }
-.mmm-player-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-.mmm-player-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* The vendored dial sizes its own face and expects to fill its slot. */
+.mmm-tuner-mount .tuner-dial { width: 100%; }
 
-.mmm-player-track {
-  font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 0.9375rem;
-  color: var(--ink);
-  overflow: hidden;
-  white-space: nowrap;
+/* ── Two corrections to the vendored controls, both measured ───────────────
+   `src/components/ds/` is generated and reverted by the next `vendor:ds` run,
+   so anything this app knows and the design system does not has to live out
+   here. These are that, and they are `!important` because the values they
+   correct are INLINE in the vendored components — nothing else outranks an
+   inline style. Both are recorded in DESIGN_SYNC row 289 as design defects to
+   fix upstream, at which point these rules get shorter.
+
+   1 · The knob cap. The design system draws its module readout at 8.5px, which
+   its own 15px content floor forbids, so `vendor:ds` raises it — and at 15px
+   "MUSIC" measured 52px inside a 40px cap: a 10px overflow, on the control that
+   names where you are. It is not solvable by growing the knob (the cap would
+   need a 102px knob, taking 121px of a phone's height for the bar) and not by
+   abbreviating (the design system is explicit: the cap reads the module "by
+   NAME, not initial"). An engraved hardware legend IS the tracked-mono metadata
+   scale the floor exempts — uppercase, mono, letterspaced — so it takes that
+   floor, 11px, with the tracking the exemption requires. Measured: 41px in the
+   42px cap at 74px knobs.
+
+   2 · The station name. The vendored dial insets the current station by 22% on
+   both sides to leave room for its two neighbour hints, and the same floor
+   raises those hints from 8.5px to 15px — at which size they are no longer
+   hints, and the 44% they cost ellipsised "Recommended" by 18px at 393px and
+   59px at 320px. A destination you cannot read is the exact failure the dial
+   exists to fix, so the hints stand down and the name takes the face, inset only
+   far enough to clear the 26px step chevrons — 16px, not 26, because the inset
+   is measured from the dial's CONTENT box, which the dial's own 12px of
+   horizontal padding has already moved inward. Measured: no clipping from 375px
+   (MOBILE.md's design width) up, and the chevrons still take their own taps.
+   320px ellipsises the longest of the five MUSIC names and nothing else. When the design system gives the shoulders a scale that fits beside a
+   legible name, this comes out. */
+.mmm-dock button[aria-label^="Module:"] > span:last-child {
+  /* The family is restated rather than inherited from the component's inline
+     style, and it is load-bearing twice: it is what makes this rule's claim to
+     the tracked-mono metadata floor legible to `lint-source.mjs` (which reads
+     the family and the tracking out of the same block), and it is what keeps
+     the claim true if the vendored component's own family ever changes. */
+  font-family: var(--f-m) !important;
+  font-size: 0.6875rem !important;
+  letter-spacing: 0.14em !important;
 }
-/* Masked only when it actually scrolls — a fade on a short title reads as a
-   rendering fault. */
-.mmm-player-track[data-over],
-.mmm-player-artist[data-over] {
-  mask-image: linear-gradient(90deg, transparent, #000 12px, #000 88%, transparent);
+.mmm-tuner-mount [role="tab"][aria-selected="false"] { display: none !important; }
+.mmm-tuner-mount [role="tab"][aria-selected="true"] {
+  left: 16px !important;
+  right: 16px !important;
 }
-.mmm-player-track > div,
-.mmm-player-artist > div { display: inline-flex; gap: 28px; }
-.mmm-player-track [data-ih-marquee],
-.mmm-player-artist [data-ih-marquee] {
-  animation-name: ih-marquee;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  will-change: transform;
-}
-@keyframes ih-marquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
-}
-/* A permanently scrolling title is exactly what this setting is for. */
+
+/* Reduced motion: the sheet settles instantly. Complements the token-level
+   duration zeroing in globals.css, which cannot disable a keyframe. The arc's
+   own reduced-motion rules went with the arc. */
 @media (prefers-reduced-motion: reduce) {
-  .mmm-player-track [data-ih-marquee],
-  .mmm-player-artist [data-ih-marquee] { animation: none; transform: none; }
-}
-
-.mmm-player-artist {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.05em;
-  color: var(--ink-3);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.mmm-player-scrub { display: flex; align-items: center; gap: 10px; margin-top: 3px; }
-
-/* Seek and volume. A range input rather than a div with pointer maths: keyboard
-   operable and labelled for free, which a hand-rolled bar is not. The fill is a
-   gradient stop on the track itself, so it cannot drift from the thumb. */
-.mmm-player-range {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 3px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--ink-a30) 0 var(--fill), var(--hair-100) var(--fill) 100%);
-  cursor: pointer;
-}
-.mmm-player-range[data-accent] {
-  background: linear-gradient(90deg, var(--accent) 0 var(--fill), var(--hair-100) var(--fill) 100%);
-}
-.mmm-player-range::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--ink);
-  border: 0;
-}
-.mmm-player-range::-moz-range-thumb {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: var(--ink);
-  border: 0;
-}
-
-.mmm-player-controls { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
-
-.mmm-player-icon {
-  flex-shrink: 0;
-  font-size: 1rem;
-  cursor: pointer;
-  line-height: 1;
-  background: none;
-  border: 0;
-  padding: 0;
-  color: var(--ink-2);
-}
-.mmm-player-icon[data-active] { color: var(--accent-text); }
-.mmm-player-icon:disabled { opacity: 0.35; cursor: default; }
-
-/* HYPE. Always reads HYPE — state is the fill, the border and the wait label
-   beside the word, never a rename. */
-.mmm-player-hype {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 7px 12px;
-  border-radius: var(--radius-pill);
-  border: 1px solid rgba(var(--accent-rgb), 0.45);
-  background: transparent;
-  color: var(--accent-text);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.9375rem;
-  letter-spacing: 0.06em;
-  cursor: pointer;
-}
-.mmm-player-hype[data-hyped] {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--ink-on-accent);
-}
-.mmm-player-hype[data-locked] { cursor: default; opacity: 0.75; }
-.mmm-player-hype-wait,
-.mmm-player-hype-count {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.04em;
-  opacity: 0.85;
-}
-
-.mmm-player-play {
-  flex-shrink: 0;
-  width: 34px;
-  height: 34px;
-  border-radius: 9999px;
-  border: 0;
-  background: var(--accent);
-  color: var(--ink-on-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.9375rem;
-  cursor: pointer;
-}
-
-.mmm-player-expand {
-  flex: 0 0 34px;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 1px solid var(--hair-100);
-  border-radius: 9999px;
-  background: transparent;
-  color: var(--ink-2);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-}
-
-
-/* The scrim dims the frame under the fan. */
-.mmm-nav-scrim {
-  position: absolute;
-  inset: 0;
-  z-index: 29;
-  pointer-events: auto;
-  border: 0;
-  width: 100%;
-  background: var(--scrim);
-  backdrop-filter: blur(3px);
-  animation: mmmScrim var(--duration-default) var(--ease-default) forwards;
-  cursor: pointer;
-}
-@keyframes mmmScrim { from { opacity: 0; } to { opacity: 1; } }
-
-/* Reduced motion: the fan snaps into place and the equalizer holds still.
-   Complements the token-level duration zeroing in globals.css, which cannot
-   disable a keyframe. */
-@media (prefers-reduced-motion: reduce) {
-  .mmm-ray, .mmm-logo, .mmm-player { transition: none; }
-  /* Height is NOT reset here: each bar declares its own resting height above,
-     so the mark holds the design's stagger instead of flattening. */
-  .mmm-eq span { animation: none; }
   .mmm-sheet { animation: none; }
-  .mmm-nav-scrim { animation: none; }
 }
 
-/* The design's own narrow breakpoint. The arc coordinates themselves come from
-   the ARC table in mmm-nav.ts, which the component picks per viewport — only
-   the anchor and the player move here. */
-@media (max-width: 720px) {
-  /* Nothing to move. The trigger, the hint, the result line and the pill all
-     resolve from the frame's chrome tokens, and the phone values for those are
-     set at 620px below — which is the design system's ONE breakpoint
-     (`MOBILE.md`). 720 is the arc table's own threshold and governs the arc
-     coordinates alone; the two are deliberately different numbers and this
-     block used to conflate them by moving the chrome here as well. */
-  .mmm-nav-anchor { left: var(--mmm-left); }
-}
-
-/* The design system's single breakpoint. `SimplifiedApp.dc.html` switches the
-   whole chrome table here — `phone = viewportW < 620` → size 56, gap 10, inset
-   14 — and every offset follows from those three, so this block redefines only
-   them.
-
-   What this REPLACED matters, because it was the visible bug: the pill used to
-   detach from the trigger below 720px and stack above it full-width
-   (`left: 18px; right: 18px; bottom: 112px`). The design docks the pill
-   immediately right of the trigger at every width — one piece of furniture,
-   bottom-left, on one baseline — which is what the phone mockups show. */
-@media (max-width: 620px) {
-  .mmm-frame {
-    --mmm-chrome-size: 56px;
-    --mmm-chrome-gap: 10px;
-    --mmm-inset: 14px;
-    /* The dial fills what is left between the trigger and the right-anchored
-       mini player, rather than keeping its desktop width — at 393px a fixed
-       244px overlapped the mini by 1px. Derived from the same terms as the
-       band, so it stays correct at every narrow width rather than at the one
-       that was measured. */
-    --mmm-dial-w: calc(
-      100vw - var(--mmm-left) - var(--mmm-chrome-size) - var(--mmm-chrome-gap) * 2
-      - var(--mmm-chrome-size) - var(--mmm-inset) - var(--mmm-safe-right)
-    );
-  }
-  /* The pill is 56px tall here, so its padding tightens with it: a 40px
-     artwork in 56px leaves 8px, matching the inset on the sides it touches. */
-  /* The wide pill is replaced by `.mmm-mini` at this width — see
-     MmmMiniPlayer.tsx. These rules stay because the pill is still what a
-     narrow DESKTOP window gets above 620px, and because `.mmm-player-body`
-     being hidden here is the thing the mini exists to stop doing. */
-  .mmm-player { display: none; }
-  .mmm-player-body { display: none; }
-  .mmm-player-controls { flex: 1; justify-content: space-between; gap: 6px; }
-  .mmm-player-icon { width: 30px; height: 34px; font-size: 1.25rem; }
-}
+/* The design system's ONE breakpoint (`MOBILE.md`) has nothing left to move.
+   The dock is the same bar at every width — two 74px knobs and a dial that takes
+   what is left — which is what "there is no separate mobile build" means in
+   practice. The block that was here redefined the whole chrome table for the
+   phone (56px trigger, tighter gap, a derived dial width) because three
+   absolutely-positioned pieces had to be re-fitted at that width; a flex row
+   re-fits itself. The 44px floors in `mobile-fit.css` still apply, and both
+   knobs are 74. */
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
 
@@ -1808,8 +1351,6 @@ html.mmm-locked .site-shell > main {
   border-radius: var(--radius-pill);
   padding: 7px;
 }
-.mmm-player-link { width: 100%; padding: 0; border: 0; background: transparent; text-align: left; cursor: pointer; }
-.mmm-player-link:hover { color: var(--accent-text); }
 .mmm-map-recentre { flex: 0 0 auto; }
 .mmm-map-recentre {
   font-family: inherit;
@@ -2239,31 +1780,14 @@ html.mmm-locked .site-shell > main {
    administrator the one thing they already knew. */
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   QUEUE AND HISTORY — `PlayerPill`'s panel.
+   QUEUE AND HISTORY
 
-   A SIBLING of the pill, never a child: the pill is a 9999px capsule with
-   `overflow: hidden`, so a 320px panel nested inside it is clipped to a curve.
-   It clears the pill by the pill's own height, read from the geometry table
-   rather than restated — the whole point of `--mmm-chrome-size` living once.
+   The panel that used to anchor to the player pill is gone with the pill
+   (2026-08-22); these rules are what the FULL PLAYER draws its two lists from,
+   which is where the queue lives now. `.mmm-player-queue` (the anchored
+   container), `.mmm-queue-now*` (its own now-playing header, which the full
+   player states in its hero instead) and `.mmm-queue-empty` went with it.
    ═══════════════════════════════════════════════════════════════════════════ */
-.mmm-player-queue {
-  position: absolute;
-  left: var(--mmm-player-left);
-  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
-  z-index: 29;
-  box-sizing: border-box;
-  width: min(460px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
-  max-height: 320px;
-  overflow-y: auto;
-  padding: 14px 16px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-card);
-  background: rgba(var(--bg-base-rgb), 0.86);
-  backdrop-filter: blur(22px) saturate(1.3);
-  -webkit-backdrop-filter: blur(22px) saturate(1.3);
-  box-shadow: 0 20px 50px rgba(var(--scrim-rgb), 0.6);
-  pointer-events: auto;
-}
 .mmm-queue-eyebrow {
   margin: 0 0 10px;
   font-family: var(--font-mono);
@@ -2272,22 +1796,6 @@ html.mmm-locked .site-shell > main {
   text-transform: uppercase;
   color: var(--ink-3);
 }
-.mmm-queue-now { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; }
-.mmm-queue-now-bar {
-  flex: 0 0 auto;
-  width: 3px;
-  height: 26px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-}
-.mmm-queue-now-body { min-width: 0; display: flex; flex-direction: column; }
-.mmm-queue-now-title {
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: var(--ink);
-}
-.mmm-queue-now-meta { font-size: 0.9375rem; color: var(--ink-2); }
 .mmm-queue-row {
   display: flex;
   width: 100%;
@@ -2320,9 +1828,6 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-queue-artist { flex: 0 0 auto; font-size: 0.9375rem; color: var(--ink-2); }
 /* Played sits below a rule and greyed: already heard, still reachable. */
-.mmm-queue-played { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line-2); }
-.mmm-queue-played .mmm-queue-row { opacity: 0.55; }
-.mmm-queue-empty { margin: 0; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-3); }
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE FULL PLAYER — phone only, from `components/shell/FullPlayer.jsx`.
@@ -2624,110 +2129,11 @@ html.mmm-locked .site-shell > main {
   color: var(--ink-on-walnut-3);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   THE ARTIST HIGHLIGHT — opened by the player's artist name.
-
-   Anchored to the pill, above it, so it plainly belongs to what is playing.
+/* The ARTIST HIGHLIGHT section was here and is retired (2026-08-22). It was a
+   panel anchored to the player pill, opened by the pill's artist name, and
+   `MmmArtistCard.tsx` had already lost its only mount point — the pill was the
+   one thing that opened it. The full player links the artist directly.
    ═══════════════════════════════════════════════════════════════════════════ */
-.mmm-artist-card {
-  position: absolute;
-  left: var(--mmm-player-left);
-  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 14px);
-  z-index: 30;
-  box-sizing: border-box;
-  width: min(340px, calc(100vw - var(--mmm-player-left) - var(--mmm-inset) - var(--mmm-safe-right)));
-  padding: 20px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-card);
-  background: var(--bg-2);
-  box-shadow: 0 24px 60px rgba(var(--scrim-rgb), 0.62);
-  pointer-events: auto;
-}
-.mmm-artist-head { display: flex; align-items: center; gap: 13px; margin-bottom: 14px; }
-.mmm-artist-avatar {
-  flex: 0 0 auto;
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--bg-3);
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3125rem;
-  color: var(--ink);
-}
-.mmm-artist-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.mmm-artist-ident { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.mmm-artist-name {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.3125rem;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-  color: var(--ink);
-}
-.mmm-artist-meta {
-  margin-top: 5px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.mmm-artist-close {
-  flex: 0 0 auto;
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--hair-70);
-  color: var(--ink-2);
-  font-size: 0.9375rem;
-  cursor: pointer;
-}
-.mmm-artist-close:focus-visible,
-.mmm-artist-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.mmm-artist-bio { margin: 0 0 14px; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-2); }
-.mmm-artist-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-.mmm-artist-stat { padding: 11px 13px; border-radius: 12px; background: var(--bg-3); }
-.mmm-artist-stat-value {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1.125rem;
-  letter-spacing: -0.02em;
-  color: var(--ink);
-}
-.mmm-artist-stat-value[data-heat] { color: var(--warning-text); }
-.mmm-artist-stat-label {
-  display: block;
-  margin-top: 5px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.mmm-artist-open {
-  display: block;
-  /* 44px floor, grown with padding. */
-  min-height: 44px;
-  padding: 12px 18px;
-  border-radius: var(--radius-pill);
-  background: var(--accent);
-  color: var(--ink-on-accent);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  text-align: center;
-  text-decoration: none;
-}
 
 /* ═══════════════════════════════════════════════════════════════════════════
    THE SEED DECK — Discover itself, from `components/shell/SeedDeck.jsx`.
@@ -3126,135 +2532,11 @@ html.mmm-locked .site-shell > main {
 }
 
 
-/* ── The phone player ─────────────────────────────────────────────────────
-   One button, the size and shape of the logo trigger, in the opposite corner.
-   Every measurement comes from the chrome tokens rather than a literal, so it
-   stays on the trigger's baseline when those change — that is the same rule
-   the pill follows, and why `--mmm-chrome-size` exists. */
-.mmm-mini {
-  position: absolute;
-  display: none; /* the 620px block above turns it on */
-  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
-  bottom: var(--mmm-bottom);
-  width: var(--mmm-chrome-size);
-  height: var(--mmm-chrome-size);
-  z-index: 29;
-  place-items: center;
-  padding: 0;
-  /* The trigger's squircle ratio, not a radius of its own — `.mmm-logo` uses
-     `chrome-size × 0.342` so the corner follows the 88px/56px figure, and the
-     two only read as one piece of furniture if this one does too. */
-  border-radius: calc(var(--mmm-chrome-size) * 0.342);
-  /* The trigger carries no border because it is a solid accent fill. This one
-     is arbitrary album artwork over a map, so it keeps a hairline — without it
-     a dark cover has no edge at all. */
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-2));
-  background: var(--bg-2);
-  box-shadow: 0 9px 24px rgba(0, 0, 0, .38);
-  /* We own every gesture on this control; without this the browser takes the
-     horizontal drag for a back-swipe and the vertical one for a scroll. */
-  touch-action: none;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform .26s var(--ease-out), border-color .18s ease;
-}
-.mmm-mini:active { border-color: rgba(var(--role-venue-rgb), .62); }
-.mmm-mini[data-hyped] { border-color: rgba(var(--role-promoter-rgb), .55); }
-
-.mmm-mini-art {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  overflow: hidden;
-  display: grid;
-  place-items: center;
-  background: var(--bg-3, var(--bg-2));
-}
-.mmm-mini-art img { width: 100%; height: 100%; object-fit: cover; }
-.mmm-mini-art::after {
-  /* The glyph sits on arbitrary artwork, so it needs its own ground. */
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(var(--bg-base-rgb), .38);
-}
-.mmm-mini-initial {
-  font-family: var(--f-d);
-  font-weight: 800;
-  font-size: 1.15rem;
-  color: var(--ink-2);
-}
-.mmm-mini-glyph {
-  position: relative;
-  z-index: 2;
-  color: #fff;
-  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, .6));
-}
-
-/* Fills while a hold is in progress and completes as the hype fires. A hold
-   has no affordance of its own; this is it. */
-.mmm-mini-ring {
-  position: absolute;
-  inset: -5px;
-  border-radius: calc(var(--mmm-chrome-size) * 0.342 + 5px);
-  pointer-events: none;
-  opacity: 0;
-  background: conic-gradient(var(--role-promoter) var(--fill, 0turn), transparent 0);
-}
-.mmm-mini[data-holding] .mmm-mini-ring {
-  opacity: .95;
-  animation: mmmHoldFill 460ms linear forwards;
-}
-@keyframes mmmHoldFill { from { --fill: 0turn; } to { --fill: 1turn; } }
-@property --fill { syntax: '<angle>'; inherits: false; initial-value: 0turn; }
-
-.mmm-mini-burst { position: absolute; inset: 0; pointer-events: none; }
-.mmm-mini[data-burst] .mmm-mini-burst i {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 7px;
-  height: 7px;
-  margin: -3.5px 0 0 -3.5px;
-  border-radius: 50%;
-  background: var(--role-promoter);
-  animation: mmmHypeFly .72s cubic-bezier(.2, .7, .3, 1) forwards;
-  animation-delay: calc(var(--i) * 14ms);
-  transform: rotate(calc(var(--i) * 36deg)) translateX(0);
-}
-.mmm-mini[data-burst] .mmm-mini-burst i:nth-child(3n) { background: var(--accent); }
-.mmm-mini[data-burst] .mmm-mini-burst i:nth-child(3n + 1) { background: var(--role-fan); }
-@keyframes mmmHypeFly {
-  to { transform: rotate(calc(var(--i) * 36deg)) translateX(52px) scale(.2); opacity: 0; }
-}
-
-/* Names the gesture before you commit to it, and carries the HYPE window's
-   remaining wait when a hold is refused. */
-.mmm-mini-hint {
-  position: absolute;
-  right: calc(var(--mmm-inset) + var(--mmm-safe-right));
-  bottom: calc(var(--mmm-bottom) + var(--mmm-chrome-size) + 12px);
-  z-index: 29;
-  padding: 7px 11px;
-  border-radius: 999px;
-  border: 1px solid var(--line);
-  background: var(--bg-2);
-  color: var(--ink);
-  font-family: var(--f-m);
-  font-size: 0.6875rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  pointer-events: none;
-}
-.mmm-mini-hint[data-refused] { border-color: rgba(var(--role-promoter-rgb), .5); color: var(--role-promoter); }
-
-@media (prefers-reduced-motion: reduce) {
-  .mmm-mini,
-  .mmm-mini[data-holding] .mmm-mini-ring,
-  .mmm-mini[data-burst] .mmm-mini-burst i { animation: none; transition: none; }
-  /* The ring still has to show the hold is registering, it just does not sweep. */
-  .mmm-mini[data-holding] .mmm-mini-ring { opacity: .95; background: var(--role-promoter); }
-}
+/* The PHONE PLAYER was here and is retired (2026-08-22). It was a one-button
+   mini player in the corner opposite the logo trigger, with a press-and-hold
+   HYPE gesture and its own hint chip — a second, phone-only transport beside the
+   desktop pill. There is one transport now, the joystick on the dock, at every
+   width. Its hype gesture moved to the full player's own HYPE control. */
 
 /* Search inside the full player. It leaves for discovery on submit, so it is a
    form rather than a live filter — see MmmFullPlayer. */
@@ -3281,11 +2563,3 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-full-search input::placeholder { color: var(--ink-on-walnut-3); }
 .mmm-full-search:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
-
-/* Turned on here rather than in the 620px block further up, and the order is
-   the whole reason: `.mmm-mini`'s base rule is defined BELOW that block, so a
-   `display: grid` up there loses to this file's own later `display: none` at
-   equal specificity — the control would never appear, with no error anywhere. */
-@media (max-width: 620px) {
-  .mmm-mini { display: grid; }
-}

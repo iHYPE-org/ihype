@@ -39,7 +39,7 @@ export interface TunerDialProps {
  * role="tab", not role="slider": announces a destination name, not a number.
  */
 
-const _TD = { fs: "'Instrument Serif',serif", fm: "'JetBrains Mono',monospace" };
+const _TD = { fs: "var(--f-s)", fm: "var(--f-m)" };
 
 /**
  * The tuner dial — replaces every horizontal tab strip in the console

@@ -66,8 +66,8 @@ const _FP = {
   base: '#34200f', surf: '#4a2b16', raised: '#4a2b16',
   ink: '#f6ecd9', ink2: '#d8c6a6', ink3: '#bda882',
   acc: '#ff5029', line: 'rgba(246,236,217,.16)', hair: 'rgba(246,236,217,.08)',
-  fd: "'Instrument Serif',serif", fb: "'Work Sans',system-ui,sans-serif",
-  fm: "'JetBrains Mono',monospace",
+  fd: "var(--f-s)", fb: "'Work Sans',system-ui,sans-serif",
+  fm: "var(--f-m)",
 };
 
 /**

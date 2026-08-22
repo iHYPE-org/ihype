@@ -83,6 +83,30 @@ same floor.
 | `components/shell/TicketQR.jsx` | 105 | `11px` | `0.6875rem` |
 | `components/shell/TunerDial.jsx` | 51 | `15px` | `0.9375rem` |
 
+## Font families pointed at the app's type tokens
+
+The components hardcode family names — `'Instrument Serif',serif` — and this
+app has **no `@font-face` at all**: every face is loaded by `next/font/local`
+under a generated family name and reached through a custom property, which
+`globals.css` wires to `--f-s` / `--f-m` / `--f-b`. Left literal, the dial's
+engraved station name falls back to the browser's default serif. The tokens
+carry the same literal names as their own fallbacks, so this is
+value-preserving where the faces are installed and correct where they are not.
+
+| Source | Literal | Token | Occurrences |
+|---|---|---|---|
+| `components/core/HypeButton.jsx` | `'JetBrains Mono', monospace` | `var(--f-m)` | 1 |
+| `components/shell/FullPlayer.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
+| `components/shell/FullPlayer.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+| `components/shell/JoystickTransport.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+| `components/shell/RotaryNav.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+| `components/shell/SeedDeck.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
+| `components/shell/SeedDeck.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+| `components/shell/TicketQR.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
+| `components/shell/TicketQR.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+| `components/shell/TunerDial.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
+| `components/shell/TunerDial.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
+
 ## Hardcoded colour in the design system's components
 
 These components paint brand colour as literals rather than reading the tokens

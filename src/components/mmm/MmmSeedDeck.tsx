@@ -113,9 +113,20 @@ export function MmmSeedDeck({
       const node = rootRef.current;
       if (!node) return;
       const top = node.getBoundingClientRect().top;
-      const styles = getComputedStyle(document.documentElement);
+      /* The geometry tokens are declared on `.mmm-frame`, not on `:root` — this
+         read was against `document.documentElement`, where they resolve to the
+         empty string, so the reservation silently collapsed to the +20 below and
+         the deck has been sizing itself as though the dock were not there. */
+      const frame = node.closest('.mmm-frame') ?? document.documentElement;
+      const styles = getComputedStyle(frame);
       const px = (name: string) => parseFloat(styles.getPropertyValue(name)) || 0;
-      const reserved = px('--mmm-bottom') + px('--mmm-chrome-size') + 20;
+      /* `--mmm-chrome-top` is the dock's full height including its safe area
+         and whatever it is riding on (the cookie banner lifts it), which is
+         exactly "how much of the bottom of the screen is not mine". It replaced
+         `--mmm-bottom + --mmm-chrome-size`, which was the old floating chrome's
+         resting offset plus its height — two terms for one measurement, and
+         `--mmm-bottom` no longer exists. */
+      const reserved = px('--mmm-chrome-top') + 20;
       /* visualViewport follows the actually visible WebView when iOS browser
          chrome or the keyboard changes size; innerHeight can continue to
          report the larger layout viewport and put the actions behind it. */

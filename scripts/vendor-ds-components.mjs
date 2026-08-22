@@ -112,6 +112,42 @@ const NOTES = {
   ],
 };
 
+/**
+ * The literal font families in the design system's components, mapped to this
+ * app's type tokens.
+ *
+ * This is not a preference — without it the components render in the browser's
+ * default serif and monospace. There is no `@font-face` anywhere in this app's
+ * CSS: every face is loaded by `next/font/local` under a GENERATED family name
+ * and reached through a custom property (`--font-serif`, `--font-jb`), which
+ * `globals.css` wires to `--f-s` / `--f-m`. A hardcoded `'Instrument Serif'`
+ * matches nothing but a font the reader happens to have installed, so the dial's
+ * engraved station name — the console's signature — silently falls back.
+ *
+ * The tokens carry the same literal names as their own fallbacks, so this is
+ * value-preserving anywhere the faces ARE installed, and correct here.
+ */
+const FONT_FAMILIES = new Map(Object.entries({
+  "'Instrument Serif',serif": 'var(--f-s)',
+  "'Instrument Serif', serif": 'var(--f-s)',
+  "'JetBrains Mono',monospace": 'var(--f-m)',
+  "'JetBrains Mono', monospace": 'var(--f-m)',
+  "'Work Sans',sans-serif": 'var(--f-b)',
+  "'Work Sans', sans-serif": 'var(--f-b)',
+}));
+
+/** Swap the literal families for tokens, recording each one. */
+function convertFontFamilies(source, componentFile, fonts) {
+  let out = source;
+  for (const [literal, token] of FONT_FAMILIES) {
+    if (!out.includes(literal)) continue;
+    const count = out.split(literal).length - 1;
+    out = out.split(literal).join(token);
+    fonts.push({ componentFile, from: literal, to: token, count });
+  }
+  return out;
+}
+
 /** The innermost `{ … }` around an index — the same scan `lint-source.mjs` uses. */
 function enclosingBlock(source, index) {
   let depth = 0;
@@ -300,6 +336,7 @@ const files = (await readdir(path.join(root, SOURCE_DIR)))
 const raises = [];
 const converted = [];
 const colours = [];
+const fonts = [];
 const unresolvedTypes = [];
 const generated = [];
 
@@ -313,7 +350,8 @@ for (const file of files) {
 
   for (const literal of colourLiterals(jsx)) colours.push({ componentFile: sourcePath, ...literal });
 
-  const { source: withRem, usesRuntime } = convertFontSizes(jsx, sourcePath, raises, converted);
+  const withFonts = convertFontFamilies(jsx, sourcePath, fonts);
+  const { source: withRem, usesRuntime } = convertFontSizes(withFonts, sourcePath, raises, converted);
   const { body: types, returns, propsType, unresolved } = typesFromDeclaration(declaration, componentName);
   for (const entry of unresolved) unresolvedTypes.push({ componentName, ...entry });
 
@@ -409,6 +447,20 @@ const report = [
   '| Source | Line | Design system | Shipped |',
   '|---|---|---|---|',
   ...converted.map((c) => `| \`${c.componentFile}\` | ${c.line} | \`${c.from}\` | \`${c.to}\` |`),
+  '',
+  '## Font families pointed at the app\'s type tokens',
+  '',
+  'The components hardcode family names — `\'Instrument Serif\',serif` — and this',
+  'app has **no `@font-face` at all**: every face is loaded by `next/font/local`',
+  'under a generated family name and reached through a custom property, which',
+  '`globals.css` wires to `--f-s` / `--f-m` / `--f-b`. Left literal, the dial\'s',
+  'engraved station name falls back to the browser\'s default serif. The tokens',
+  'carry the same literal names as their own fallbacks, so this is',
+  'value-preserving where the faces are installed and correct where they are not.',
+  '',
+  fonts.length ? '| Source | Literal | Token | Occurrences |' : '_None._',
+  fonts.length ? '|---|---|---|---|' : null,
+  ...fonts.map((f) => `| \`${f.componentFile}\` | \`${f.from}\` | \`${f.to}\` | ${f.count} |`),
   '',
   '## Hardcoded colour in the design system\'s components',
   '',

@@ -12,9 +12,10 @@ const STORAGE_KEY = 'ihype_cookie_consent';
  *
  * Consent is a compliance surface: it must not be restyled, moved or hidden so
  * that something else can have the corner. So the dialog states its own extent
- * and the shell yields — see `.mmm-nav-anchor` in `mmm.css`, whose 76px trigger
- * sits in the lower-left corner this banner spans at phone width (its width is
- * `100vw - 32px` there), swallowing every pointer event aimed at the nav.
+ * and the shell yields — see `--mmm-dock-lift` in `mmm.css`. This matters more
+ * since the dock replaced the old corner chrome (2026-08-22): the dock spans the
+ * full width and is the app's ONLY navigation, so an un-lifted dock is not
+ * partly covered, it is unreachable.
  *
  * Measured rather than hardcoded, because the height is not knowable in
  * advance: the copy is 11px and wraps, the product ships twelve locales, and

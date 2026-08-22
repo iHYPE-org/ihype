@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
 
 /**
@@ -58,6 +58,20 @@ async function signIn(context: BrowserContext, email = EMAIL, profiles: { type: 
   });
 }
 
+/**
+ * Show a map layer.
+ *
+ * The layer used to be a chip row above the map and is now a station on the
+ * dock's dial (2026-08-22) — one section control per screen, which is the
+ * handoff's rule. These tests are about the MAP's own behaviour rather than
+ * about the dial, so they navigate to the layer directly; the dial itself is
+ * covered by its own tests above, and `?layer=` is what it pushes.
+ */
+async function showLayer(page: Page, layer: 'events' | 'venues' | 'artists') {
+  await page.goto(`/app/map?layer=${layer}`);
+  await expect(page.locator('.mmm-map-canvas')).toBeVisible();
+}
+
 test.describe('Music · Map · Me shell', () => {
   test.beforeEach(async ({ context }) => { await signIn(context); });
 
@@ -88,15 +102,21 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.site-dock')).toBeHidden();
   });
 
-  test('the logo trigger and the player are the only persistent chrome', async ({ page }) => {
+  test('the dock is the only persistent chrome', async ({ page }) => {
     await page.goto('/app/map');
-    await expect(page.getByRole('button', { name: /Open iHYPE navigation/i })).toBeVisible();
-    /* The module label that used to sit above the trigger is gone (2026-08-14):
-       on a phone it printed over the pane's own content at the bottom of the
-       screen, and it named the module the member was already looking at. What
-       the rule actually says is that the trigger and the player are the ONLY
-       persistent chrome — so assert exactly that, rather than the label. */
-    await expect(page.locator('.mmm-nav-hint')).toHaveCount(0);
+    /* The whole of the navigation, and the whole of the chrome: one bar with a
+       module knob, a tuner and a transport. Everything that used to float over
+       the map bottom-left is retired (2026-08-22) — assert it is GONE rather
+       than merely hidden, because a hidden logo trigger still in the DOM is a
+       second way to switch module waiting to be un-hidden. */
+    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeVisible();
+    await expect(page.getByRole('tablist')).toBeVisible();
+    await expect(page.getByRole('button', { name: /Play\. Drag for previous/i })).toBeVisible();
+
+    for (const retired of ['.mmm-logo', '.mmm-nav-anchor', '.mmm-nav-scrim', '.mmm-ray-disc', '.mmm-player', '.mmm-mini', '.mmm-nav-hint', '.mmm-console']) {
+      await expect(page.locator(retired), `${retired} is retired chrome`).toHaveCount(0);
+    }
   });
 
   // Rule 5: the module pane is the only scroll container; the document is locked.
@@ -107,132 +127,116 @@ test.describe('Music · Map · Me shell', () => {
     expect(overflow).toBe('hidden');
   });
 
-  test('tapping the logo opens the fan and tapping it again closes it', async ({ page }) => {
-    await page.goto('/app/map');
-    const logo = page.getByRole('button', { name: /Open iHYPE navigation/i });
-    await logo.click();
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'true');
-    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: /Close iHYPE navigation/i }).click();
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
+  /* "Both knobs are 74px, matched. They are the same brass body by design; if
+     one is smaller the dock looks broken." — the handoff, and the reason this is
+     measured rather than trusted: the two knobs are sized from one constant in
+     `MmmDock.tsx` and the dock's height is derived from it in `mmm.css`, so a
+     mismatch means someone has restated a figure instead of deriving it. */
+  test('the two knobs are the same size, and the dock is one row', async ({ page }) => {
+    for (const width of [390, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/app/map');
+      const box = await page.locator('.mmm-dock').evaluate((dock) => {
+        const knobs = [...dock.children].filter((child) => child.querySelector('button'));
+        const rects = knobs.map((child) => child.getBoundingClientRect());
+        return {
+          rows: new Set(rects.map((rect) => Math.round(rect.top))).size,
+          first: Math.round(rects[0].width),
+          last: Math.round(rects[rects.length - 1].width),
+          right: Math.round(dock.getBoundingClientRect().right),
+          scrollWidth: document.documentElement.scrollWidth,
+        };
+      });
+      expect(box.rows, `dock wrapped at ${width}px`).toBe(1);
+      expect(box.first, `knobs disagree at ${width}px`).toBe(box.last);
+      expect(box.scrollWidth, `page scrolls sideways at ${width}px`).toBeLessThanOrEqual(width);
+    }
   });
 
-  test('tapping the scrim closes the fan', async ({ page }) => {
+  /* The knob is the module switch: one tap steps to the next detent and
+     navigates. There is no fan to open first — that was the arc. */
+  test('the module knob steps and navigates', async ({ page }) => {
     await page.goto('/app/map');
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.locator('.mmm-nav-scrim').click();
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
-  });
-
-  // `ArcNav.d.ts`: "one 66px icon disc each … There is NO second level:
-  // Music's sections are tabs at the top of the Music pane."
-  //
-  // This test used to assert the opposite — that MUSIC opened a five-item
-  // level-2 arc and stayed on `/app/me`. That layer was removed as a second,
-  // undesigned route to five destinations the Music pane's tab strip already
-  // carries. Every module now navigates on the first tap.
-  test('every module navigates on the first tap; there is no second level', async ({ page }) => {
-    await page.goto('/app/me');
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
+    await page.getByRole('button', { name: /Module: MAP/i }).click();
     await expect(page).toHaveURL(/\/app\/music\/discover/);
-    // The fan closes behind it, and nothing has grown a sub-level.
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
-    await expect(page.locator('.mmm-nav-anchor')).not.toHaveAttribute('data-sub', 'true');
-    // The five sections live on the chrome dial instead of a pane tab strip.
-    await expect(page.getByRole('tablist', { name: 'Music destinations' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Module: MUSIC/i })).toBeVisible();
+    await page.getByRole('button', { name: /Module: MUSIC/i }).click();
+    await expect(page).toHaveURL(/\/app\/me$/);
+    await page.getByRole('button', { name: /Module: ME/i }).click();
+    await expect(page).toHaveURL(/\/app\/map$/);
   });
 
-  // §9: "All 5 MUSIC items are visible and reachable, no clipping." §4 is the
-  // bug this guards — three of seven items were off-screen and unreachable
-  // because an ancestor's overflow clipped the transform.
-  //
-  // The items moved again: from a level-2 arc, to the Music pane's tab strip,
-  // and now to the tuner on the cabinet. So the MECHANISM this checks has
-  // changed twice while the requirement has not, and the requirement is what
-  // is written here — every destination reachable, none clipped, none covered.
-  //
-  // A dial shows one station at a time, so "visible" cannot mean "all five are
-  // painted at once" any more. It means: five real tabs exist, exactly one is
-  // in the tab order (roving tabindex), and stepping the dial actually arrives
-  // at each of them with the engraved name on screen and hit-testable. That is
-  // a stronger check than the strip version — it proves the control WORKS,
-  // where the old one only proved five pills had boxes.
+  /* §9: "All 5 MUSIC items are visible and reachable, no clipping." The
+     MECHANISM has now changed three times — a level-2 arc, a pane tab strip,
+     and the dock's dial — while the requirement has not, and the requirement is
+     what is written here: every destination reachable, none clipped, none
+     covered by the hardware beside it.
+ 
+     A dial shows one station at a time, so "visible" means: stepping arrives at
+     each of the five in turn, with the engraved name on screen and
+     hit-testable at its own centre. That proves the control WORKS, where the
+     strip version only proved five pills had boxes. */
   test('every MUSIC destination is reachable on the dial, unclipped', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/app/music/discover');
 
     const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
-    const dial = page.getByRole('tablist', { name: 'Music destinations' });
+    const dial = page.getByRole('tablist', { name: /Sections in MUSIC/i });
     await expect(dial).toBeVisible();
-    await expect(dial.getByRole('tab', { includeHidden: true })).toHaveCount(labels.length);
 
-    // Roving tabindex: one tab in the order, never five.
-    await expect.poll(async () => dial.evaluate((node) =>
-      [...node.querySelectorAll('[role="tab"]')].filter((t) => (t as HTMLElement).tabIndex === 0).length,
-    )).toBe(1);
-
-    // Step all the way round. Starting at Discover, five steps returns there,
-    // which also proves the scale wraps rather than stopping at the last one.
     for (let i = 0; i < labels.length; i += 1) {
       const expected = labels[(i + 1) % labels.length];
-      await page.getByRole('button', { name: /Next section in Music/i }).click();
+      await page.getByRole('button', { name: 'Next station' }).click();
 
       await expect.poll(async () => dial.evaluate(() => {
-        const current = document.querySelector('.tuner-station[data-current="true"]');
+        const current = document.querySelector('.mmm-dock [role="tab"][aria-selected="true"]');
         if (!current) return 'no current station';
         const box = current.getBoundingClientRect();
         if (box.width === 0 || box.height === 0) return 'zero box';
         if (box.left < 0) return `off the left edge (${Math.round(box.left)})`;
         if (box.right > window.innerWidth) return `overflows right (${Math.round(box.right)} > ${window.innerWidth})`;
         if (box.bottom > window.innerHeight) return `overflows bottom (${Math.round(box.bottom)})`;
-        // The point at its own centre must hit itself, not the cabinet or the
-        // player sitting beside it — the covering half of §4's bug.
         const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-        if (!hit || !current.contains(hit) && hit !== current) return `centre hits "${hit?.className ?? 'nothing'}"`;
+        if (!hit || (!current.contains(hit) && hit !== current)) return `centre hits "${hit?.className ?? 'nothing'}"`;
         return current.textContent?.trim() ?? '';
       }), { timeout: 10_000 }).toBe(expected);
     }
   });
 
-  // §9: "Items fan out with a visible stagger, not all at once." §5's bug made
-  // every item animate simultaneously, silently.
-  test('fan items carry a per-index stagger', async ({ page }) => {
-    await page.goto('/app/map');
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    // The three discs, not the retired level-2 pills. `ARC` staggers them
-    // 60/30/0ms, and §5's bug is still the thing being guarded: the prototype
-    // routed the delay through an undeclared custom property, which silently
-    // invalidated the whole declaration and fanned everything out at once.
-    const delays = await page.locator('.mmm-ray-disc').evaluateAll(
-      (nodes) => nodes.map((node) => getComputedStyle(node).transitionDelay),
-    );
-    expect(delays.length).toBe(3);
-    expect(new Set(delays).size, `expected distinct delays, got ${delays.join(', ')}`).toBe(3);
+  /* The dial is keyboard-reachable and takes the arrows. The vendored control
+     focuses the DIAL rather than roving focus across its tabs, so this asserts
+     what it actually does: one stop in the tab order, arrows tune. */
+  test('the dial is one tab stop and the arrows tune it', async ({ page }) => {
+    await page.goto('/app/music/discover');
+    const dial = page.getByRole('tablist', { name: /Sections in MUSIC/i });
+    await dial.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page).toHaveURL(/\/app\/music\/radio$/);
+    await page.keyboard.press('ArrowLeft');
+    await expect(page).toHaveURL(/\/app\/music\/discover$/);
   });
 
-  // §9: "Nav opens, dims everything including the player."
-  test('opening the fan hides the player and takes it out of the tab order', async ({ page }) => {
-    await page.goto('/app/map');
-    const player = page.locator('.mmm-player');
-    if (await player.count()) {
-      await expect(player).toHaveAttribute('data-hidden', 'false');
-      await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-      await expect(player).toHaveAttribute('data-hidden', 'true');
-      await expect(player).toHaveAttribute('aria-hidden', 'true');
-      const focusable = await player.locator('button[tabindex="-1"]').count();
-      expect(focusable).toBeGreaterThan(0);
-    }
-  });
+  /* ▲ opens the full player, ▼ dismisses it — at every width, which is new: the
+     full player used to be reachable on the phone alone. The joystick reads a
+     drag as a direction once it crosses its own threshold, so this drags rather
+     than clicks (a click is play/pause). */
+  test('the joystick opens and dismisses the full player', async ({ page }) => {
+    await page.goto('/app/music/discover');
+    const joystick = page.getByRole('button', { name: /Drag for previous, next, or the full player/i });
+    const box = (await joystick.boundingBox())!;
+    const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
 
-  // One press, because there is one level. `MmmNav`'s own comment says it:
-  // "Escape closes. There is no level to step back to any more."
-  test('Escape closes the fan', async ({ page }) => {
-    await page.goto('/app/map');
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'true');
-    await page.keyboard.press('Escape');
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
+    await page.mouse.move(centre.x, centre.y);
+    await page.mouse.down();
+    await page.mouse.move(centre.x, centre.y - 40, { steps: 6 });
+    await page.mouse.up();
+    await expect(page.locator('.mmm-full')).toBeVisible();
+
+    await page.mouse.move(centre.x, centre.y);
+    await page.mouse.down();
+    await page.mouse.move(centre.x, centre.y + 40, { steps: 6 });
+    await page.mouse.up();
+    await expect(page.locator('.mmm-full')).toBeHidden();
   });
 
   // The module tab is a route, not state: it must survive a reload and a
@@ -294,12 +298,13 @@ test.describe('Music · Map · Me shell', () => {
   test('the map element is not remounted when switching modules', async ({ page }) => {
     await page.goto('/app/map');
     await page.locator('.mmm-map-canvas').evaluate((node) => node.setAttribute('data-mmm-probe', 'kept'));
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    await page.getByRole('button', { name: 'MUSIC', exact: true }).click();
-    // Radio is a STATION on the chrome dial now — it was a second-level arc
-    // item, then a tab in the Music pane. The map's survival is the point of
-    // this test and has not changed through any of that.
-    await page.getByRole('button', { name: /Next section in Music/i }).click();
+    // One tap on the knob steps MAP -> MUSIC and navigates; the dial then steps
+    // Discover -> Radio. Both controls have changed shape three times now
+    // (level-2 arc, pane tab strip, dock dial) and the map's survival is the
+    // point of this test through all of it.
+    await page.getByRole('button', { name: /Module: MAP/i }).click();
+    await expect(page).toHaveURL(/\/app\/music\/discover/);
+    await page.getByRole('button', { name: 'Next station' }).click();
     await expect(page).toHaveURL(/\/app\/music\/radio$/);
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
@@ -315,9 +320,9 @@ test.describe('Music · Map · Me shell', () => {
 
     // Events is the landing layer and is where this used to be missing.
     await expect(nearMe).toBeVisible();
-    for (const label of ['Venues', 'Artists', 'Events']) {
-      await page.getByRole('button', { name: label, exact: true }).click();
-      await expect(nearMe, `Near me is missing on ${label}`).toBeVisible();
+    for (const layer of ['venues', 'artists', 'events'] as const) {
+      await showLayer(page, layer);
+      await expect(page.getByRole('button', { name: 'Near me', exact: true }), `Near me is missing on ${layer}`).toBeVisible();
     }
     // The redundant artists count was removed; Near me stays a stable action
     // in the same position without changing shape between layers.
@@ -334,36 +339,16 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toBeVisible();
     await expect(page.locator('.primer-scrim')).toHaveCount(0);
     // And the navigation is reachable, which is the thing the scrim broke.
-    await expect(page.getByRole('button', { name: /Open iHYPE navigation/i })).toBeEnabled();
+    await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeEnabled();
   });
 
-  // Reported from a real iPhone: the layer chips and the date strip painted on
-  // top of each other — EVENTS over WED, VENUES over THU. The strip was a
-  // SIBLING of `.mmm-map-controls`, which is absolutely positioned, so it sat
-  // in normal flow at the top of the map layer directly beneath it.
-  //
-  // Asserted as a geometric non-overlap rather than as DOM structure: the bug
-  // is two boxes sharing pixels, and a later refactor could reintroduce that
-  // without restoring the old parentage.
-  test('the map date strip never overlaps the layer chips', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/app/map');
-
-    const chips = page.locator('.mmm-map-chips');
-    const strip = page.locator('.mmm-date-strip');
-    await expect(chips).toBeVisible();
-    // Events is the landing layer, so the strip is showing without any input.
-    await expect(strip).toBeVisible();
-
-    const [chipBox, stripBox] = await Promise.all([chips.boundingBox(), strip.boundingBox()]);
-    expect(chipBox, 'layer chips have no box').not.toBeNull();
-    expect(stripBox, 'date strip has no box').not.toBeNull();
-    // The strip sits BELOW the chips, with no shared pixels.
-    expect(
-      stripBox!.y,
-      `date strip starts at ${Math.round(stripBox!.y)} but the chips run to ${Math.round(chipBox!.y + chipBox!.height)}`,
-    ).toBeGreaterThanOrEqual(chipBox!.y + chipBox!.height);
-  });
+  /* The layer-chips-over-the-date-strip test was here and went with the chips
+     (2026-08-22). It guarded a real iPhone bug — EVENTS painted over WED,
+     because the strip was a sibling of the absolutely-positioned control block
+     — and there is nothing left above the strip to overlap it: the layer is a
+     station on the dock's dial now. The parentage that caused it is asserted by
+     the strip still living inside `.mmm-map-controls`, which the search test
+     below exercises. */
 
   // The search bar belongs to the layer that is showing. Asserted on the
   // CONTROL rather than on results: results depend on what is inside the test
@@ -376,16 +361,16 @@ test.describe('Music · Map · Me shell', () => {
     // Events is the landing layer: a price pin is not something a name finds.
     await expect(field).toHaveCount(0);
 
-    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await showLayer(page, 'venues');
     await expect(field).toHaveAttribute('placeholder', 'Search venues, streets, cities');
 
-    await page.getByRole('button', { name: 'Artists', exact: true }).click();
+    await showLayer(page, 'artists');
     await expect(field).toHaveAttribute('placeholder', 'Search artists, genres, cities');
 
     // A term typed against one layer must not survive into the next — it would
     // read as "no results" when it is really "different layer".
     await field.fill('anything');
-    await page.getByRole('button', { name: 'Venues', exact: true }).click();
+    await showLayer(page, 'venues');
     await expect(field).toHaveValue('');
   });
 
@@ -424,14 +409,12 @@ test.describe('Music · Map · Me shell', () => {
     //
     // Collapsed until asked: a drawer that starts open is not a drawer.
     await expect(panelFor('Settings')).toHaveAttribute('aria-expanded', 'false');
-    // ME must not open a submenu — only MUSIC does.
-    await page.getByRole('button', { name: /Open iHYPE navigation/i }).click();
-    // `exact` is load-bearing: accessible-name matching is substring by
-    // default, and since the account panels became accordion BUTTONS, a loose
-    // 'ME' also appears in other copy on the page.
-    await page.getByRole('button', { name: 'ME', exact: true }).click();
-    await expect(page).toHaveURL(/\/app\/me$/);
-    await expect(page.locator('.mmm-nav-anchor')).toHaveAttribute('data-open', 'false');
+    /* The knob navigates on the tap — there is no menu to open and nothing to
+       close behind it, which is the whole of what the arc's "no second level"
+       rule was protecting. Stepping ME -> MAP -> MUSIC -> ME returns here. */
+    const knob = page.getByRole('button', { name: /^Module: ME/i });
+    await knob.click();
+    await expect(page).toHaveURL(/\/app\/map$/);
   });
 
   // One drawer open at a time, page-wide — the two sections and the account
@@ -646,6 +629,24 @@ test.describe('ME with a real profile', () => {
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
   });
 
+  /* "One dial per screen, and it is the dock's." A profile has its own tab set
+     and it belongs on the dock's dial — a profile that draws its own puts two
+     identical-looking dials on screen meaning different things, which is exactly
+     what shipped before the dock existed. The seeded artist's own page is the
+     one profile this suite can reach without depending on fixture content. */
+  test('a profile hands its tabs to the dock and draws no dial of its own', async ({ page }) => {
+    await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
+    const link = page.locator('a[href^="/app/artists/"]').first();
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL(/\/app\/artists\//);
+
+    await expect(page.locator('.mmm-dock [role="tablist"]')).toBeVisible();
+    await expect(page.locator('.mmm-pane [role="tablist"]')).toHaveCount(0);
+    await expect(page.getByRole('tablist')).toHaveCount(1);
+  });
+
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
     await page.goto('/app/me?role=fan');
     await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
@@ -746,40 +747,40 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     const consent = page.getByRole('dialog', { name: /cookie preferences/i });
     await expect(consent).toBeVisible();
 
-    const trigger = page.getByRole('button', { name: /Open iHYPE navigation/i });
+    const trigger = page.getByRole('button', { name: /Module: MAP/i });
     await expect(trigger).toBeVisible();
 
     // The real assertion is hit-testing, not visibility: the failure mode was
     // a fully visible trigger sitting underneath a higher z-index dialog.
     await expect.poll(async () => page.evaluate(() => {
-      const logo = document.querySelector('.mmm-logo');
-      if (!logo) return 'trigger not rendered';
-      const box = logo.getBoundingClientRect();
+      const knob = document.querySelector('.mmm-dock button[aria-label^="Module:"]');
+      if (!knob) return 'knob not rendered';
+      const box = knob.getBoundingClientRect();
       const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
-      if (!hit) return 'nothing at the trigger centre';
-      return logo.contains(hit) || hit === logo ? 'ok' : `covered by ${hit.className || hit.tagName}`;
+      if (!hit) return 'nothing at the knob centre';
+      return knob.contains(hit) || hit === knob ? 'ok' : `covered by ${hit.className || hit.tagName}`;
     }), { timeout: 10000 }).toBe('ok');
 
-    // And it actually opens, with consent still up.
+    // And it actually works, with consent still up: one tap steps the module.
     await trigger.click();
-    await expect(page.getByRole('button', { name: 'MUSIC', exact: true })).toBeVisible();
+    await expect(page).toHaveURL(/\/app\/music\/discover/);
     await expect(consent).toBeVisible();
   });
 
-  test('the trigger returns to its resting position once consent is answered', async ({ page, context }) => {
+  test('the dock returns to its resting position once consent is answered', async ({ page, context }) => {
     // The lift must be tied to the dialog being present, not latched — a stale
     // inset would hold the nav up the page with nothing there to avoid.
     await applySessionCookie(context, EMAIL, { profiles: [] });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/app/map');
 
-    // Distance from the bottom of the viewport, which is what the CSS controls.
-    // Measured rather than compared against a constant: the resting value is
-    // 26px at the base rule and 22px inside the design's own <=720px
-    // breakpoint, so a hardcoded number here asserts the wrong thing on one
-    // side of that line — and the breakpoint is the side that matters.
+    /* Distance from the bottom of the viewport, which is what the CSS controls.
+       Measured rather than compared against a constant: the dock's resting
+       value is 0 (it is flush to the edge, with the home-indicator inset inside
+       its own padding), and the lifted value is whatever the banner measured
+       itself to be — which depends on locale and on how the copy wraps. */
     const gap = () => page.evaluate(() => {
-      const box = document.querySelector('.mmm-logo')!.getBoundingClientRect();
+      const box = document.querySelector('.mmm-dock')!.getBoundingClientRect();
       return Math.round(window.innerHeight - box.bottom);
     });
 
@@ -793,12 +794,14 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     await page.getByRole('button', { name: /Essential only/i }).click();
     await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toHaveCount(0);
 
-    await expect.poll(gap).toBeLessThan(40);
+    // Flush to the bottom edge once there is nothing to ride on.
+    await expect.poll(gap).toBeLessThan(4);
     const resting = await gap();
 
-    // The trigger really had been lifted clear of the dialog, so the assertion
-    // above is not vacuously true of a trigger that never moved. A whole
-    // banner's height separates the two states.
+    // The dock really had been lifted clear of the dialog, so the assertion
+    // above is not vacuously true of a bar that never moved. A whole banner's
+    // height separates the two states — and being covered here would leave the
+    // member with no way to navigate at all.
     expect(lifted).toBeGreaterThan(resting + 80);
   });
 });

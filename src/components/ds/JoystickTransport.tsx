@@ -43,7 +43,7 @@ export interface JoystickTransportProps {
   size?: number;
 }
 
-const _JT = { fm: "'JetBrains Mono',monospace" };
+const _JT = { fm: "var(--f-m)" };
 
 /**
  * The right-hand transport — one brass 4-way joystick standing in for five

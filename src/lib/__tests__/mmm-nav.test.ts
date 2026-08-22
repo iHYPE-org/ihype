@@ -1,20 +1,18 @@
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  isMmmDetailPath,
-  ARC,
-  ARC_NARROW_MAX_WIDTH,
   MMM_BASE,
+  MMM_MAP_LAYERS,
   MMM_ME_PANELS,
+  MMM_MODULES,
   MMM_MUSIC_TABS,
   MMM_NAV,
-  arcSlotsFor,
-  arcTransform,
+  isMmmDetailPath,
   isMmmRoute,
   itemForPath,
   moduleForPath,
-  navHint,
   panelForPath,
+  stationsForPath,
 } from '@/lib/mmm-nav';
 
 describe('MMM_NAV manifest', () => {
@@ -72,86 +70,6 @@ describe('MMM_NAV manifest', () => {
   });
 });
 
-describe('radial arc geometry', () => {
-  // The design's own tables, asserted literally. The previous values here were
-  // hand-tuned and disagreed with `components/shell/ArcNav.jsx` in every slot
-  // at both breakpoints, while the breakpoint and the delays happened to match
-  // — so nothing caught it. Copied numbers are worth pinning; derived ones are
-  // not, and these are copied.
-  it('matches the design system’s slot tables exactly', () => {
-    expect(ARC.wide.level1.map(({ x, y }) => [x, y])).toEqual([
-      [5, -192], [115, -152], [182, -48],
-    ]);
-    expect(ARC.narrow.level1.map(({ x, y }) => [x, y])).toEqual([
-      [4, -176], [100, -132], [165, -43],
-    ]);
-  });
-
-  // "There is no second level: Music's sections are tabs at the top of the
-  // Music pane" — ArcNav.d.ts. A second arc would be a duplicate route to the
-  // five destinations MmmMusic's tab strip already carries.
-  it('has exactly one level, of three discs, at both breakpoints', () => {
-    for (const breakpoint of ['wide', 'narrow'] as const) {
-      expect(arcSlotsFor(breakpoint)).toBe(3);
-      expect(Object.keys(ARC[breakpoint])).toEqual(['level1']);
-    }
-  });
-
-  it('has a disc for every module and no module without one', () => {
-    for (const breakpoint of ['wide', 'narrow'] as const) {
-      expect(ARC[breakpoint].level1.length).toBe(MMM_NAV.length);
-    }
-  });
-
-  it('unfurls upward from the thumb: ME first, then MUSIC, then MAP', () => {
-    const delays = ARC.wide.level1.map((offset) => offset.delayMs);
-    expect(delays).toEqual([60, 30, 0]);
-  });
-
-  it('fans every disc up and to the right of the logo', () => {
-    for (const breakpoint of ['wide', 'narrow'] as const) {
-      for (const offset of ARC[breakpoint].level1) {
-        expect(offset.y).toBeLessThan(0);
-        expect(offset.x).toBeGreaterThanOrEqual(0);
-      }
-    }
-  });
-
-  // A collision is the "one blob" bug in nav form: two discs stacked, one
-  // unreachable. The design's own note gives the rule — centres need roughly
-  // 104px between them, because the 92px MARK sets the footprint, not the 66px
-  // disc it sits in.
-  it('keeps every pair of disc centres about 104px apart', () => {
-    for (const breakpoint of ['wide', 'narrow'] as const) {
-      const slots = ARC[breakpoint].level1;
-      for (let i = 0; i < slots.length; i += 1) {
-        for (let j = i + 1; j < slots.length; j += 1) {
-          const dx = slots[i].x - slots[j].x;
-          const dy = slots[i].y - slots[j].y;
-          expect(Math.hypot(dx, dy)).toBeGreaterThan(104);
-        }
-      }
-    }
-  });
-
-  // The narrow arc is drawn for a 375px frame (iPhone SE 2, the smallest the
-  // design system names). A disc is 66px, but the mark overhangs it, so the
-  // 92px footprint is what has to fit.
-  it('keeps every narrow disc inside a 375px frame at its full mark width', () => {
-    for (const offset of ARC.narrow.level1) {
-      expect(offset.x + 92).toBeLessThanOrEqual(375);
-    }
-  });
-
-  it('switches at the design’s own breakpoint', () => {
-    expect(ARC_NARROW_MAX_WIDTH).toBe(720);
-  });
-
-  it('renders a transform string', () => {
-    expect(arcTransform({ x: 6, y: -186, delayMs: 0 })).toBe('translate(6px, -186px)');
-  });
-});
-
 describe('isMmmRoute', () => {
   it('claims the base and everything under it', () => {
     expect(isMmmRoute('/app')).toBe(true);
@@ -206,14 +124,6 @@ describe('panelForPath', () => {
   it('is null at the ME root and outside ME', () => {
     expect(panelForPath('/app/me')).toBeNull();
     expect(panelForPath('/app/music/radio')).toBeNull();
-  });
-});
-
-describe('navHint', () => {
-  it('names the module you are in — the only wayfinding left once the header is gone', () => {
-    expect(navHint('/app/map')).toBe('MAP');
-    expect(navHint('/app/music/charts')).toBe('MUSIC');
-    expect(navHint('/app/me')).toBe('ME');
   });
 });
 
@@ -279,5 +189,65 @@ describe('every /app detail route renders as a pane', () => {
     expect(isMmmDetailPath('/app/map')).toBe(false);
     expect(isMmmDetailPath('/app/music/discover')).toBe(false);
     expect(isMmmDetailPath('/app/me')).toBe(false);
+  });
+});
+
+/**
+ * The dock's dial, which is now the only section control in the app.
+ *
+ * Two of these are the bugs the vendored `TunerDial` warns about in its own
+ * source: an `active` naming no station makes it render a confident, wrong
+ * readout, and a module root is the FIRST station rather than no station.
+ */
+describe('stationsForPath', () => {
+  it('tunes the map by layer, defaulting to events', () => {
+    expect(stationsForPath(`${MMM_BASE}/map`)).toEqual({
+      stations: MMM_MAP_LAYERS,
+      active: 'events',
+    });
+    expect(stationsForPath(`${MMM_BASE}/map`, { layer: 'venues' }).active).toBe('venues');
+  });
+
+  it('ignores a layer the map does not have rather than lighting nothing', () => {
+    expect(stationsForPath(`${MMM_BASE}/map`, { layer: 'pubs' }).active).toBe('events');
+    expect(stationsForPath(`${MMM_BASE}/map`, { layer: null }).active).toBe('events');
+  });
+
+  it('tunes MUSIC by tab, and a module root is its first station', () => {
+    expect(stationsForPath(`${MMM_BASE}/music/charts`)).toEqual({
+      stations: MMM_MUSIC_TABS,
+      active: 'charts',
+    });
+    expect(stationsForPath(`${MMM_BASE}/music`).active).toBe(MMM_MUSIC_TABS[0].id);
+  });
+
+  it('tunes ME by panel', () => {
+    expect(stationsForPath(`${MMM_BASE}/me/settings`)).toEqual({
+      stations: MMM_ME_PANELS,
+      active: 'settings',
+    });
+    expect(stationsForPath(`${MMM_BASE}/me`).active).toBe(MMM_ME_PANELS[0].id);
+  });
+
+  it('always names a station that is in the set it returns', () => {
+    for (const path of [
+      `${MMM_BASE}`,
+      `${MMM_BASE}/map`,
+      `${MMM_BASE}/music`,
+      `${MMM_BASE}/music/nonsense`,
+      `${MMM_BASE}/me`,
+      `${MMM_BASE}/me/nonsense`,
+      `${MMM_BASE}/shows/a-show`,
+    ]) {
+      const { stations, active } = stationsForPath(path);
+      expect(stations.some((station) => station.id === active)).toBe(true);
+    }
+  });
+
+  it('gives every module at least two stations, so the dial is never a label', () => {
+    for (const module of MMM_MODULES) {
+      const href = MMM_NAV.find((entry) => entry.id === module)!.href;
+      expect(stationsForPath(href).stations.length).toBeGreaterThan(1);
+    }
   });
 });

@@ -45,7 +45,7 @@ export interface TicketQRProps {
 }
 
 const _QR = {
-  fd: "'Instrument Serif',serif", fm: "'JetBrains Mono',monospace",
+  fd: "var(--f-s)", fm: "var(--f-m)",
 };
 
 /**

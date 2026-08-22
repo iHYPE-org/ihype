@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter, useSearchParams } from 'next/navigation';
-import { TunerDial } from '@/components/TunerDial';
+import { useRegisterStations } from '@/components/mmm/MmmStations';
 
 /**
  * The fixed subnav for a public artist or venue profile.
@@ -23,18 +23,17 @@ import { TunerDial } from '@/components/TunerDial';
  * searchParams. `scroll: false` keeps the strip still while the panel swaps —
  * a tab that jumps you to the top of the page is a tab that feels broken.
  *
- * ## Why it is a dial and not a strip
+ * ## Why it renders nothing
  *
- * It WAS a strip: six 15px labels on a 44px row, of which two did not fit
- * 393px and were clipped off the edge. That is the structural problem with a
- * tab strip — it divides one row by the number of tabs, so every tab added
- * makes every label smaller or pushes one out of sight, and the usual fix is
- * to shrink the type. Every strip in this codebase had already lost that
- * argument and sat at 10-13px.
+ * It was a strip, then it was its own `TunerDial` inside the pane, and now it is
+ * neither: it hands the tab set to the dock's dial and draws no control at all.
+ * The handoff's rule is that there is **one dial per screen and it is the
+ * dock's** — "an in-page tab strip alongside it puts two identical-looking dials
+ * on screen meaning different things", which is precisely what shipped while
+ * this component drew its own dial ten pixels above the dock's.
  *
- * `TunerDial` spends the same row on ONE destination at 26px, and adding a
- * seventh section costs nothing because only one is ever shown. See that file
- * for the interaction and accessibility model.
+ * The state stays here, in `?tab=`. The dock is a remote control for it, not a
+ * second copy of it — see `MmmStations.tsx`.
  */
 export type ProfileTab = { id: string; label: string };
 
@@ -60,5 +59,10 @@ export function ProfileTabs({
     router.replace(query ? `?${query}` : '?', { scroll: false });
   }
 
-  return <TunerDial active={active} label={label} onSelect={select} stops={tabs} />;
+  /* The dock tunes this set for as long as the profile is mounted, and the
+     registration clears on the way out so the dial never offers a departed
+     profile's tabs. */
+  useRegisterStations({ active, label, onChange: select, stations: tabs });
+
+  return null;
 }

@@ -26,11 +26,9 @@ export type MapSheetTarget =
   | { kind: 'cluster'; data: MapCluster };
 
 const GENRES = ['All', 'Dream-pop', 'Indie', 'Electronic', 'Punk', 'Jazz', 'Hip-hop'] as const;
-const LAYERS: Array<{ id: MapLayer; label: string }> = [
-  { id: 'events', label: 'Events' },
-  { id: 'venues', label: 'Venues' },
-  { id: 'artists', label: 'Artists' },
-];
+/* The layer's three values live in `MMM_MAP_LAYERS` (`src/lib/mmm-nav.ts`) now
+   — the dock's tuner is what selects them, so the labels belong with the rest of
+   the nav manifest rather than in two places. */
 
 type Placed = { key: string; ax: number; ay: number; offset: boolean; target: MapSheetTarget };
 
@@ -107,7 +105,6 @@ export function MmmMap({
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>(initialLayer);
-  const chipsRef = useRef<HTMLDivElement | null>(null);
 
   // The shell layout persists across navigation. A compatibility URL can
   // therefore arrive after the map has already mounted; keep the requested
@@ -266,66 +263,11 @@ export function MmmMap({
   // sheet asks first, in our own words, and only an accept reaches the
   // browser. Declining is remembered and never re-asked.
   const [home, setHome] = useState<[number, number] | null>(null);
-  /**
-   * Keep the chip you just pressed on screen.
-   *
-   * Reported as "clicking Artists covers up the Artists button", and it is
-   * the selection itself that does it. `.mmm-map-chips` is the only shrinkable
-   * item in the row, and choosing ARTISTS is the one layer that adds the count
-   * readout to the pinned `.mmm-map-near` pill — up to 50% of the row. So the
-   * row loses ~120px at the exact moment the rightmost chip becomes the active
-   * one, and ARTISTS slides under the 22px fade mask with nothing to bring it
-   * back: the member is left looking at a sliver of the control they just used,
-   * with no feedback that their tap registered.
-   *
-   * Above 620px this is not a phone problem — `.mmm-map-controls` is capped at
-   * 420px there by design (a full-bleed control bar at 1900px is what made the
-   * map read as unfinished), so the squeeze happens at every width.
-   *
-   * `scrollIntoView` honours `scroll-padding-inline-end`, which those chips
-   * already set to the fade width — so "nearest" lands the chip clear of the
-   * mask rather than flush against it, and the fade keeps meaning "there is
-   * more this way" instead of hiding the answer.
-   */
-  useEffect(() => {
-    const active = chipsRef.current?.querySelector<HTMLElement>('[aria-pressed="true"]');
-    if (!active) return;
-    // The row is chrome over a map, not a document: an animated scroll here
-    // reads as the map moving. Honour the same reduced-motion preference the
-    // token block already zeroes every other duration for.
-    const still = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    active.scrollIntoView({ behavior: still ? 'auto' : 'smooth', block: 'nearest', inline: 'nearest' });
-  }, [layer, total]);
-
-  /**
-   * Drop the overflow fade once there is nothing left to scroll to.
-   *
-   * The fade's whole meaning is "there is more content this way". At the end
-   * of the scroll there is not, so it stops being an affordance and becomes a
-   * gradient sitting on the last chip — which, with only three layers, is the
-   * ACTIVE one every time the row overflows. That is the other half of what
-   * was reported as Artists being covered up: scrolling it into view leaves it
-   * fully on screen, and this is what makes it crisp rather than half-faded.
-   *
-   * `mmm.css` notes that a conditional fade "needs a resize observer, which is
-   * a lot of machinery" — that was true when the row had no script attached to
-   * it at all. It has one now for the reason above, so this is a listener, not
-   * a new mechanism. Tolerance of 1px because scroll offsets are fractional at
-   * fractional zoom and an exact equality never fires.
-   */
-  useEffect(() => {
-    const chips = chipsRef.current;
-    if (!chips) return;
-    const sync = () => {
-      const atEnd = chips.scrollLeft + chips.clientWidth >= chips.scrollWidth - 1;
-      chips.toggleAttribute('data-scroll-end', atEnd);
-    };
-    sync();
-    chips.addEventListener('scroll', sync, { passive: true });
-    const observer = new ResizeObserver(sync);
-    observer.observe(chips);
-    return () => { chips.removeEventListener('scroll', sync); observer.disconnect(); };
-  }, [layer, total]);
+  /* Two effects lived here and went with the chip row (2026-08-22): one
+     scrolled the pressed chip back into view after the row squeezed, one dropped
+     the overflow fade at the end of the scroll. Both were real fixes to a
+     control that no longer exists — the layer is the dock dial's now, and a dial
+     names one station at full size with nothing to scroll. */
 
   const flownHome = useRef(false);
   const [geolocationSettled, setGeolocationSettled] = useState(false);
@@ -493,30 +435,18 @@ export function MmmMap({
 
       {active && (
         <>
-          {/* One chip row: the LAYER, and nothing else.
-              `templates/simplified-app/map.html` — the map's own design source
-              — carries exactly three chips and no second row. The scope chips
-              (County/State/Country/Global) and the genre chips were built here
-              and appear in no design; two rows of filters above a map is most
-              of a phone screen spent on controls before you have seen a pin.
+          {/* The layer chips are GONE (2026-08-22): the dock's tuner tunes the
+              layer now, which is the handoff's rule that there is one section
+              control per screen and it is the dock's. A chip row above the map
+              saying EVENTS · VENUES · ARTISTS and a dial below it reading
+              "Events" are two controls for one value, and the pair drifts.
 
-              The API still accepts `genre`, so the filter is not gone from the
-              backend — only from a control surface that never had it. */}
+              `?layer=` is still what decides — this component already treats
+              the URL as authoritative (`useEffect(() => setLayer(initialLayer))`
+              below), so the dial pushes a route and the map follows. `setLayer`
+              therefore has exactly one caller left: that effect. */}
           <div className="mmm-map-controls">
             <div className="mmm-control-row">
-              <div className="mmm-map-chips" ref={chipsRef}>
-                {LAYERS.map((entry) => (
-                  <button
-                    aria-pressed={layer === entry.id}
-                    className="mmm-map-chip"
-                    key={entry.id}
-                    onClick={() => setLayer(entry.id)}
-                    type="button"
-                  >
-                    {entry.label}
-                  </button>
-                ))}
-              </div>
               {/* Keep location available on every layer and in one predictable
                   position after the shared layer controls. The redundant
                   artists count stays gone. */}

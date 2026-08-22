@@ -45,7 +45,7 @@ export interface RotaryNavProps {
   size?: number;
 }
 
-const _RN = { fm: "'JetBrains Mono',monospace" };
+const _RN = { fm: "var(--f-m)" };
 
 /**
  * The left-hand module switch — a detented rotary knob, not a menu. Map ·

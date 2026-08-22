@@ -102,7 +102,7 @@ function HypeButtonImpl({ active, count, onToggle, size = 'md', disabled, disabl
     style: {
       position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6,
       padding: S.pad, borderRadius: 999, cursor: disabled ? 'default' : 'pointer',
-      fontFamily: "'JetBrains Mono', monospace", fontSize: dsFontSize(S.font), lineHeight: 1,
+      fontFamily: "var(--f-m)", fontSize: dsFontSize(S.font), lineHeight: 1,
       /* Console tokens, not raw hex: the inactive state used pre-console navy
          ink (#eef1f6) and a dark border built for a light surface, so on walnut
          the button rendered as floating text with no visible edge. */
