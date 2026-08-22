@@ -6,6 +6,10 @@ const baseUrl = (process.env.SMOKE_BASE_URL || process.env.NEXT_PUBLIC_BASE_URL 
 const smokeBypassToken = process.env.SMOKE_BYPASS_TOKEN?.trim();
 const smokeRelayUrl = process.env.SMOKE_RELAY_URL?.trim();
 const requireLaunchReady = process.env.SMOKE_REQUIRE_LAUNCH_READY === '1';
+// Presenting this as a bearer is what makes /api/health return its full
+// snapshot rather than the public liveness probe, so it decides how deep the
+// health assertion below can legitimately go.
+const healthBearer = process.env.SMOKE_HEALTH_BEARER?.trim();
 
 const checks = [
   { path: '/', expect: [200] },
@@ -53,8 +57,8 @@ async function curl(url, json = false) {
   }
   // With a CRON_SECRET bearer, /api/health returns the full snapshot (real DB
   // counts + integration readiness) instead of the minimal public probe.
-  if (json && process.env.SMOKE_HEALTH_BEARER?.trim()) {
-    args.push('-H', `Authorization: Bearer ${process.env.SMOKE_HEALTH_BEARER.trim()}`);
+  if (json && healthBearer) {
+    args.push('-H', `Authorization: Bearer ${healthBearer}`);
   }
   args.push(url);
   const { stdout } = await execFileAsync('curl', args, {
@@ -68,7 +72,7 @@ async function curl(url, json = false) {
 }
 
 async function relaySmoke() {
-  if (!smokeRelayUrl || !process.env.SMOKE_HEALTH_BEARER?.trim()) return false;
+  if (!smokeRelayUrl || !healthBearer) return false;
   const { stdout } = await execFileAsync('curl', [
     '-sS',
     '--compressed',
@@ -79,7 +83,7 @@ async function relaySmoke() {
     '-H',
     'Accept: application/json',
     '-H',
-    `Authorization: Bearer ${process.env.SMOKE_HEALTH_BEARER.trim()}`,
+    `Authorization: Bearer ${healthBearer}`,
     '-w',
     '\n%{http_code}',
     smokeRelayUrl,
@@ -114,16 +118,48 @@ for (const check of checks) {
 
     if (check.json) {
       const payload = JSON.parse(response.body);
-      if (payload.status !== 'ok' || payload.database?.ok !== true) {
+
+      // `/api/health` answers an unauthenticated caller with a liveness-only
+      // body (`{status, scope:'liveness'}`) and hands the full snapshot —
+      // `database`, `launchReadiness` — only to a caller presenting
+      // CRON_SECRET as a bearer. So the depth of the assertion has to follow
+      // the token, not be fixed: asserting `database.ok` without the bearer
+      // reported a HEALTHY production as `health failed: {"status":"ok"}`,
+      // which names the wrong cause and is exactly how a real check gets
+      // written off as noise. The liveness branch is not a free pass — the
+      // route runs a real `db.user.count()` and answers 503/degraded when
+      // that fails, which is the whole reason it stopped returning a
+      // hardcoded 200.
+      if (payload.status !== 'ok') {
         failed = true;
         console.error(`[smoke] ${check.path} health failed: ${JSON.stringify(payload)}`);
         continue;
       }
-      if (requireLaunchReady && payload.launchReadiness?.ready !== true) {
-        failed = true;
-        console.error(
-          `[smoke] ${check.path} launch readiness failed: ${JSON.stringify(payload.launchReadiness?.blockers ?? [])}`,
-        );
+      if (healthBearer) {
+        if (payload.database?.ok !== true) {
+          failed = true;
+          console.error(`[smoke] ${check.path} health failed: ${JSON.stringify(payload)}`);
+          continue;
+        }
+        if (requireLaunchReady && payload.launchReadiness?.ready !== true) {
+          failed = true;
+          console.error(
+            `[smoke] ${check.path} launch readiness failed: ${JSON.stringify(payload.launchReadiness?.blockers ?? [])}`,
+          );
+          continue;
+        }
+      } else {
+        // Asked for a check that only exists in the deep payload, with no way
+        // to read it. That is a misconfigured run, not a healthy one, and it
+        // must not pass quietly.
+        if (requireLaunchReady) {
+          failed = true;
+          console.error(
+            `[smoke] ${check.path} launch readiness requested but SMOKE_HEALTH_BEARER is unset — the public payload cannot carry it`,
+          );
+          continue;
+        }
+        console.log(`[smoke] ${check.path} ${response.status} ${elapsed}ms (liveness only — no SMOKE_HEALTH_BEARER)`);
         continue;
       }
     }
