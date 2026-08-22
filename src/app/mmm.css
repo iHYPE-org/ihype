@@ -203,10 +203,45 @@ html.mmm-locked .site-shell > main {
   inset: 0;
   filter: sepia(0.22) saturate(1) contrast(1.08) brightness(0.98);
 }
-/* Paper, foxing and a vignette, over the tiles but under the pins.
-   On the LAYER rather than the canvas so the accent pins and the chips above
-   keep their own colour — toning the container would drag them to mud with the
-   basemap. Decoration, so it must never eat a drag. */
+/* Paper, foxing, a RULED CHART GRID and a vignette, over the tiles but under
+   the pins. On the LAYER rather than the canvas so the accent pins and the
+   controls above keep their own colour — toning the container would drag them
+   to mud with the basemap. Decoration, so it must never eat a drag.
+
+   ## The grid is the vintage overlay, and it was the missing piece
+
+   Reported 2026-08-22: "Map is grainy but doesn't have the vintage overlay I
+   want from design." Both halves of that are exactly right. The wash, the
+   foxing and the vignette were here; the design's `.grain` also draws a ruled
+   grid — `repeating-linear-gradient` at 0deg AND 90deg, a hairline every 33px
+   in both directions — and that is the single cue that reads as an old survey
+   chart rather than as a modern map with a filter on it. Nothing else in the
+   stack was going to supply it.
+
+   Values are `templates/console-shell/map.html`'s own: 33/34px pitch,
+   `rgba(120,94,52,.09)` rules, and its stronger `rgba(120,94,52,.28)` vignette
+   in place of the flatter one that was here.
+
+   ## What is NOT adopted from that file, and this was measured
+
+   Its tone treatment — `sepia(.92) saturate(.52) contrast(1.06) brightness(1.04)
+   hue-rotate(-8deg)` — is not adopted, and the reason is arithmetic rather than
+   taste. Pushing OSM's own palette (which is what map.html loads) through that
+   pipeline in sRGB, as CSS filters are specified to run:
+
+     water  #aad3df -> #fffee4      land #f2efe9 -> #ffffff
+     water/land contrast 1.02:1     hue separation 0 degrees
+
+   The harbour and the land come out the SAME COLOUR. On a coastal city — this
+   city — land-versus-water is the most important distinction on the sheet, so
+   that is damage rather than style, and the design's own prototype has it. On
+   CARTO voyager, which this app loads deliberately for its already-cream land,
+   the same filter gives 1.08:1 and 17 degrees: no better. The shipped
+   hue-preserving tone keeps 1.50:1 and 147 degrees, so it stays.
+
+   This is the second time that conclusion has been reached here; the first was
+   by rendering five variants side by side. It is written as numbers now so the
+   third session does not have to re-render anything to know. */
 .mmm-map-layer::after {
   content: "";
   position: absolute;
@@ -214,10 +249,12 @@ html.mmm-locked .site-shell > main {
   pointer-events: none;
   z-index: 1;
   background:
-    radial-gradient(120% 92% at 50% 45%, transparent 52%, rgba(61, 46, 20, .22) 100%),
+    radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(120, 94, 52, .28) 100%),
+    repeating-linear-gradient(0deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
+    repeating-linear-gradient(90deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
     var(--grain),
     linear-gradient(0deg, rgba(214, 196, 152, .28), rgba(214, 196, 152, .28));
-  background-size: auto, 140px 140px, auto;
+  background-size: auto, auto, auto, 140px 140px, auto;
   mix-blend-mode: multiply;
 }
 .mmm-map-canvas .maplibregl-ctrl-attrib,
@@ -258,53 +295,20 @@ html.mmm-locked .site-shell > main {
 @media (min-width: 620px) {
   .mmm-map-controls { max-width: 420px; }
 }
-/* `#row1` in the map's design source: the layer chips and the "Near me" pill
-   on one line, 12px apart. The chips keep their own 6px rhythm inside
-   `.mmm-map-chips`, which is why this is two nested flex rows rather than one
-   — a single gap cannot be both. */
-/* THE SCROLLER IS THE CHIPS, NOT THE ROW (2026-08-14, reported from a phone as
-   "map near me doesn't fit").
+/* `#row1` in the map's design source — the layer chips beside the "Near me"
+   pill — has no occupants left and its rules are gone (2026-08-22). The chips
+   went to the dock's tuner (one control per value); "Near me" went when the map
+   started where you are. `.mmm-control-row` and `.mmm-map-chips` were the last
+   two, and the map's only chrome now is the search bar, which brings its own
+   `margin` and its own `pointer-events: auto`.
 
-   This row used to scroll as a whole, which meant the thing that fell off its
-   right edge was "Near me" — the only control on the map that asks for
-   location, and the only one whose absence a member cannot recover from by
-   looking harder. Measured in Chromium against the real JetBrains Mono face:
-   three layer chips are 245px and the bare pill is 89px, so at 393px the row
-   ended at 369 of 393 — it FITS, by 24px, at a root font size of exactly 16px.
-   The phone it was reported from renders those chips ~22% wider, which is what
-   the text-size setting in Settings → Accessibility does (85-140%, and every
-   size here is rem). At 320px, or on the artists layer where the pill also
-   carries the count and measures 210px, it overruns at 100% too.
+   Worth keeping from that block, because it will come up again the next time
+   something is added to a row over the map: what scrolls is a DESIGN decision,
+   not a fallback. That row used to scroll as a whole, so the thing that fell off
+   the right edge was the ACTION — the one control whose absence a member cannot
+   recover from by looking harder — while the three fixed, known destinations
+   stayed put. Pin the action, push the destinations. */
 
-   So the fix is not more room, it is deciding WHAT scrolls. The layer chips
-   are three fixed, known destinations and are the right thing to push off the
-   edge; the action is pinned and always reachable. That also moves the fade
-   mask to where it now means something — it marks the chips' own overflow,
-   mid-row, rather than softening the edge of the button. */
-.mmm-control-row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  pointer-events: auto;
-  padding: 2px 12px 0;
-}
-.mmm-map-chips {
-  display: flex;
-  /* Shrinkable, and the only shrinkable thing in the row. `min-width: 0` is
-     what lets a flex item go below its content width at all. */
-  flex: 1 1 auto;
-  min-width: 0;
-  gap: 6px;
-  overflow-x: auto;
-  /* The scroller is silent, like `.mmm-tabs` and like the design system's own
-     `::-webkit-scrollbar { width: 0; height: 0 }`. A platform scrollbar was
-     rendering as a full-width grey track directly under the layer chips — on
-     the map, which is the base layer of the whole shell, so it read as a piece
-     of chrome rather than as an overflow affordance. */
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-.mmm-map-chips::-webkit-scrollbar { display: none; }
 
 .mmm-chip {
   flex-shrink: 0;
@@ -456,9 +460,11 @@ html.mmm-locked .site-shell > main {
 }
 
 /* ── MUSIC control row: tabs + universal search ───────────────────────────
-   NOT `.mmm-control-row` — that name is taken by the MAP module's layer-chip
-   rows above, and reusing it here would restyle the map's chrome as a side
-   effect of laying out a tab strip.
+   Deliberately NOT called `.mmm-control-row`. That name belonged to the MAP
+   module's layer-chip row, which is now deleted — so the collision it was
+   avoiding is gone, and the name is free. It stays unclaimed anyway: the note
+   above explains what used to live there, and a later reader finding
+   `.mmm-control-row` on a MUSIC tab strip would reasonably assume it is the map's.
    Design System 8 collapsed three stacked control rows into one. On a phone
    the two wrap onto separate lines rather than being squeezed — a 300px
    minimum on the field is what forces that wrap, and it is the same figure
@@ -577,92 +583,183 @@ html.mmm-locked .site-shell > main {
    "there is more this way"; at the end of the scroll there is not, and with
    three layer chips the one it was softening was the ACTIVE one every time the
    row overflowed. `
-/* ── MAP date strip ───────────────────────────────────────────────────────
+/* ── MAP date picker ──────────────────────────────────────────────────────
    Events only — an event has a date and a venue or an artist does not, which is
    also why the API is never sent a `dates` param on those layers.
 
-   A horizontal scroller rather than a wrap: five pills that reflow to two rows
-   push the map down by a row on a phone, and the map is the module. */
-.mmm-date-block { pointer-events: auto; padding: 0 12px 8px; }
-.mmm-date-strip {
+   This replaces the five day cards and the DATES readout that used to sit above
+   the map (2026-08-22, "Remove individual dates and put a date selection inside
+   search bar to the right that pops up calendar"). The strip cost two rows of
+   chrome over the map — the module — and could not reach past four days out.
+   The picker is one control at the end of the search field.
+
+   Everything here is inside `.mmm-search-field`, so it inherits the field's
+   own ground and border; only the popover paints a surface of its own. */
+.mmm-datepick { position: relative; flex: 0 0 auto; }
+.mmm-datepick-trigger {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  /* Silent, same reason as `.mmm-control-row` above. */
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 6px;
-}
-.mmm-date-strip::-webkit-scrollbar { display: none; }
-.mmm-date-pill {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 1px;
-  /* 52px wide keeps three glyph rows legible without the strip becoming the
-     subject of the screen; the touch floor in mobile-fit.css raises the height
-     on a coarse pointer. */
-  min-width: 52px;
-  padding: 7px 9px;
+  gap: 7px;
+  /* 44px tall on a coarse pointer comes from mobile-fit.css's floors; this is
+     the desktop padding and the floor only ever grows it. */
+  padding: 5px 10px;
   border: 1px solid var(--line-2);
-  border-radius: 12px;
-  background: var(--bg-2);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
   color: var(--ink-2);
   cursor: pointer;
+  font-family: var(--f-m);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
-.mmm-date-pill[aria-pressed='true'] {
+.mmm-datepick-trigger[aria-expanded='true'] {
+  border-color: rgba(var(--accent-rgb), 0.5);
+  color: var(--accent-text);
+}
+.mmm-datepick-glyph { color: var(--ink-3); }
+.mmm-datepick-trigger[aria-expanded='true'] .mmm-datepick-glyph { color: inherit; }
+/* The readout is the widest part and the part worth keeping: at 320px the
+   placeholder gives up room before the current filter does. */
+.mmm-datepick-value { overflow: hidden; text-overflow: ellipsis; }
+
+/* Right-aligned to the trigger, because the trigger is at the right end of the
+   field — anchored left it would hang off the pane at 375px. */
+.mmm-datepick-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  /* Sized so a day cell clears MOBILE.md's 44x44, which is the whole reason
+     this is not narrower: seven columns plus 6x1px of gap plus 2x12px of
+     padding needs 338px to give each cell 44. At 375px — MOBILE.md's design
+     width — `100vw - 28px` is 347, so the cells land at 44.7px; below that the
+     popover tracks the viewport and the floor gives way rather than the popover
+     running off the pane. The 1px gap (not the 2px the rest of this file uses)
+     is bought back to make 44 fit at 375. */
+  width: min(338px, calc(100vw - 28px));
+  padding: 12px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg-2);
+  box-shadow: 0 18px 40px rgba(28, 20, 8, 0.28);
+}
+.mmm-datepick-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.mmm-datepick-month {
+  font-family: var(--f-s);
+  font-size: 1.0625rem;
+  color: var(--ink);
+}
+.mmm-datepick-page {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg);
+  color: var(--ink-2);
+  font-size: 1.0625rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-datepick-dows,
+.mmm-datepick-grid {
+  display: grid;
+  /* `minmax(0, 1fr)`, not `1fr`: a grid track's default minimum is `auto`, so
+     a two-digit day would refuse to shrink below its content width and push
+     the row wider than the popover at 320px. */
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+}
+.mmm-datepick-dows {
+  margin-bottom: 4px;
+  font-family: var(--f-m);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-align: center;
+  color: var(--ink-3);
+}
+.mmm-datepick-day {
+  /* A square cell, with the touch floor as its own minimum rather than
+     mobile-fit.css's — the floors there are a coarse-pointer media query, and a
+     calendar cell is the one control here whose width is set by a grid track
+     and so cannot be grown by padding. */
+  aspect-ratio: 1;
+  /* MOBILE.md's 44x44, as this control's OWN minimum rather than
+     mobile-fit.css's — the floors there are a coarse-pointer media query, and a
+     calendar cell is the one control here whose width comes from a grid track
+     and so cannot be grown by padding.
+     
+     Capped rather than flat, because `aspect-ratio` makes a too-narrow popover
+     fail in the other direction: the cell holds its 44px and the ROW spills
+     instead, which clipped the whole Saturday column at 320px. The second term
+     is the track width actually available — the popover is
+     `min(338px, 100vw - 28px)` less 24px of padding and 6px of gaps, over seven
+     columns — so the cell asks for the floor and takes what there is. It
+     resolves above 44px from 366px up, which puts the full floor everywhere
+     from MOBILE.md's 375px design width and lets only the sizes below it give
+     way. Same place the station name's exception sits. */
+  min-height: min(44px, calc((100vw - 58px) / 7));
+  display: grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-panel);
+  background: none;
+  color: var(--ink);
+  font-family: var(--f-b);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+.mmm-datepick-day:hover:not(:disabled) { background: var(--bg); }
+/* A day in the neighbouring month keeps its place in the grid — the six-row
+   shape is what stops the popover resizing as you page — and recedes. */
+.mmm-datepick-day[data-outside='true'] { color: var(--ink-3); }
+.mmm-datepick-day[data-today='true'] { border-color: var(--line); font-weight: 600; }
+.mmm-datepick-day[aria-pressed='true'] {
   border-color: rgba(var(--accent-rgb), 0.5);
   background: rgba(var(--accent-rgb), 0.14);
   color: var(--accent-text);
 }
-.mmm-date-dow,
-.mmm-date-mon {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  line-height: 1.2;
-  color: var(--ink-3);
-}
-.mmm-date-pill[aria-pressed='true'] .mmm-date-dow,
-.mmm-date-pill[aria-pressed='true'] .mmm-date-mon { color: inherit; }
-.mmm-date-day {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 1rem;
-  line-height: 1.1;
-  color: var(--ink);
-}
-.mmm-date-pill[aria-pressed='true'] .mmm-date-day { color: inherit; }
-
-.mmm-date-summary {
+.mmm-datepick-day:disabled { color: var(--ink-3); cursor: default; opacity: 0.45; }
+.mmm-datepick-foot {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 10px;
-  padding: 8px 12px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--bg-2);
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line-2);
 }
-.mmm-date-label {
-  font-family: var(--font-mono);
+.mmm-datepick-clear,
+.mmm-datepick-done {
+  font-family: var(--f-m);
   font-size: 0.6875rem;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-3);
-}
-.mmm-date-value { flex: 1; min-width: 0; font-size: 0.9375rem; color: var(--ink); }
-.mmm-date-clear {
-  flex: 0 0 auto;
-  background: none;
-  border: 0;
-  padding: 0;
+  border-radius: var(--radius-pill);
+  padding: 7px 12px;
   cursor: pointer;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+}
+.mmm-datepick-clear {
+  background: none;
+  border: 1px solid var(--line-2);
   color: var(--ink-2);
+}
+.mmm-datepick-clear:disabled { opacity: 0.45; cursor: default; }
+.mmm-datepick-done {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  /* Ink ON the accent fill, never white — 3.27:1 against 5.58:1. */
+  color: var(--ink-on-accent);
 }
 
 /* ── ME accordions ────────────────────────────────────────────────────────
@@ -800,8 +897,22 @@ html.mmm-locked .site-shell > main {
 .mmm-map-search {
   position: relative;
   pointer-events: auto;
-  /* The design source's own width for `#search`. */
-  width: min(460px, 72vw);
+  /* The design source's own width for `#search` is `min(460px, 72vw)`, and both
+     halves of it are wrong here — measured, 2026-08-22:
+     
+     · `72vw` left 93px of empty pane to the right at 375px while squeezing the
+       field itself, which now carries TWO controls (the search input and the
+       date trigger) rather than one. It also put the date popover's left edge at
+       -56px: the popover is right-anchored to the field, so the field's width is
+       what decides whether it lands on the pane.
+     · `460px` is wider than the column it sits in. Above 620px
+       `.mmm-map-controls` caps at 420px, so a 460px field overflowed it by 52px
+       — pre-existing, invisible because nothing else in the block was that wide.
+
+     `100%` resolves against `.mmm-map-controls`, which is the pane below 620px
+     and the 420px column above it, so one expression is right on both sides of
+     the breakpoint and the 24px matches this rule's own margins. */
+  width: min(460px, calc(100% - 24px));
   margin: 0 12px;
 }
 /* The design gives the field over the map a deeper shadow and a tighter right
@@ -1230,6 +1341,65 @@ html.mmm-locked .site-shell > main {
 /* The vendored dial sizes its own face and expects to fill its slot. */
 .mmm-tuner-mount .tuner-dial { width: 100%; }
 
+/* ── The VU backlight ─────────────────────────────────────────────────────
+   The dock dial is lit from behind and BELOW, like the meter window on a
+   receiver: `tokens/console.css` calls the dock "orange backlit VU" and gives
+   `.tuner-dial` a lamp gradient rising off its bottom edge plus an inset glow.
+   The shipped `.tuner-dial` in globals.css never had it — that block was
+   written for the OTHER TunerDial, the hand-authored one still used by
+   `EventsHome`/`PagesHome`, and it paints warm WHITE from the bottom
+   (`#fff3d4`) where the console paints lamp orange. Which is why the dock read
+   as flat cream glass in a brass ring: the one thing making it a lit instrument
+   was missing (reported 2026-08-22, "should be continuously flow with vu under
+   lighting").
+
+   Scoped to `.mmm-tuner-mount` on purpose. The two components share the
+   `.tuner-dial` class name and only this one sits on the walnut dock; relighting
+   the other would repaint two legacy pages that are not part of this design.
+
+   Values are the design system's own, with `--lamp`, `--accent` and `--bg`
+   standing in for its `#ffb066`, `#ff8f2d` and `--bg-base` — those are the
+   tokens this app names for the same three roles. Note what is NOT here: the
+   design system's `--lamp-rgb`, which this codebase does not define. Writing
+   `rgba(var(--lamp-rgb), .95)` would have dropped the whole declaration
+   silently, which is worse than the literal it replaced, so the first stop is
+   the flat token instead. `background-image` rather than `background`, so the
+   vendored inline `background-color: #eeddb4` still shows through where the
+   gradient is transparent. */
+.mmm-tuner-mount .tuner-dial {
+  background-image:
+    radial-gradient(160% 180% at 50% 118%,
+      var(--lamp) 0%,
+      var(--accent) 14%,
+      #f3d9a0 40%,
+      var(--bg) 62%,
+      #e2cea0 84%,
+      #d4bd8c 100%);
+  box-shadow:
+    0 0 0 1px var(--brass-deep),
+    0 0 0 3px var(--brass),
+    0 0 0 4px #6d5222,
+    /* The lamp behind the glass. -4px spread keeps it a band along the bottom
+       edge instead of a wash over the whole face, which would take the
+       engraved name's contrast down with it. */
+    inset 0 -9px 16px -4px rgba(var(--accent-rgb), 0.5),
+    inset 0 2px 5px rgba(92, 62, 20, 0.4),
+    inset 0 -1px 0 rgba(255, 252, 235, 0.8);
+}
+
+/* The scale sits inside the lit band, so it glows rather than being merely
+   printed — the design system's `.tuner-scale` carries the same inner light.
+   This is what makes a continuous drag read as travel along an illuminated
+   scale: the ticks scroll THROUGH the glow instead of across dead paper. */
+.mmm-tuner-mount .tuner-scale {
+  box-shadow: inset 0 0 14px rgba(var(--accent-rgb), 0.32);
+}
+
+/* The needle is the brightest thing on the face, as on any real tuner. */
+.mmm-tuner-mount .tuner-needle {
+  box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.9);
+}
+
 /* ── Two corrections to the vendored controls, both measured ───────────────
    `src/components/ds/` is generated and reverted by the next `vendor:ds` run,
    so anything this app knows and the design system does not has to live out
@@ -1249,18 +1419,52 @@ html.mmm-locked .site-shell > main {
    floor, 11px, with the tracking the exemption requires. Measured: 41px in the
    42px cap at 74px knobs.
 
-   2 · The station name. The vendored dial insets the current station by 22% on
-   both sides to leave room for its two neighbour hints, and the same floor
-   raises those hints from 8.5px to 15px — at which size they are no longer
-   hints, and the 44% they cost ellipsised "Recommended" by 18px at 393px and
-   59px at 320px. A destination you cannot read is the exact failure the dial
-   exists to fix, so the hints stand down and the name takes the face, inset only
-   far enough to clear the 26px step chevrons — 16px, not 26, because the inset
-   is measured from the dial's CONTENT box, which the dial's own 12px of
-   horizontal padding has already moved inward. Measured: no clipping from 375px
-   (MOBILE.md's design width) up, and the chevrons still take their own taps.
-   320px ellipsises the longest of the five MUSIC names and nothing else. When the design system gives the shoulders a scale that fits beside a
-   legible name, this comes out. */
+   2 · The shoulder hints, and WHERE they go.
+
+   The vendored dial insets the current station by 22% on both sides to leave
+   room for two neighbour hints beside it, and `vendor:ds` raises those hints
+   from the design system's 8.5px to its own 15px content floor. This rule used
+   to answer the resulting collision by DELETING the hints, and that was the
+   wrong half of the trade to give up: a tuner you cannot see past gives no
+   sense of which way to turn, which is most of what makes it a dial rather than
+   a stepper. The owner asked for them back (2026-08-22, "doesn't have mini text
+   on left and right showing prev next options").
+
+   Putting them back beside the name does not fit, and that is arithmetic rather
+   than taste. Measured in Chromium against the real faces:
+
+     "Recommended" (Instrument Serif)     15px 90px · 20px 120px · 24px 144px
+     "Playlists" (JetBrains Mono 700/.14em, 11px)                        74px
+     dial content box                     375px:171 · 393px:189 · 430px:226
+
+   The hints sit 24px in from the content edge to clear the 26px chevrons, so
+   two of them cost 2x(24+width). At 393px, holding the name at 20px leaves the
+   hints 20px each — two characters. At 375px there is no size at which all
+   three fit at all. The design's own 22%/20% split overlaps the name; it was
+   drawn at desktop width, where 1100px of dial hides the problem.
+
+   So they go on the SCALE ROW instead, at the ends of the graduations. Three
+   reasons: the horizontal room is there (the scale is decoration, and printing
+   station names along a slide rule is what the physical reference actually
+   does); the name keeps its full size, which is the dial's whole justification
+   over a tab strip; and the hints slide with the drag along the scale they
+   label, so a long drag reads as travel past named stations rather than as text
+   sliding over other text.
+
+   The size stays 11px: uppercase letterspaced mono IS the tracked-mono metadata
+   scale the type floor exempts, and a peripheral readout of where the scale goes
+   next is exactly what that scale is for. The family is restated for the same
+   two reasons the knob cap restates it.
+
+   ## The fragile part, and what catches it
+
+   Moving them means defeating the `overflow: hidden` on the vendored wrapper,
+   and that wrapper has no class — it is selected structurally, as the dial's
+   one child that is not `.tuner-scale`. A re-vendor that changes the element
+   order would break that selector, so `npm run measure:dock` asserts the hints
+   are rendered, inside the dial, at the 11px floor and on the scale band. The
+   selector's fragility is real; it fails loudly instead of silently, which is
+   the trade this directory has already made everywhere else. */
 .mmm-dock button[aria-label^="Module:"] > span:last-child {
   /* The family is restated rather than inherited from the component's inline
      style, and it is load-bearing twice: it is what makes this rule's claim to
@@ -1271,7 +1475,39 @@ html.mmm-locked .site-shell > main {
   font-size: 0.6875rem !important;
   letter-spacing: 0.14em !important;
 }
-.mmm-tuner-mount [role="tab"][aria-selected="false"] { display: none !important; }
+/* The wrapper holding the name and the two hints. Its `overflow: hidden` is
+   what stops the hints reaching the scale row, and its fixed 30px height is
+   what the name needs — so the overflow opens and the height stays. The dial
+   itself still clips, so a hint sliding under a long drag disappears at the
+   dial's edge rather than escaping onto the walnut. */
+.mmm-tuner-mount .tuner-dial > div:not(.tuner-scale) {
+  overflow: visible !important;
+}
+.mmm-tuner-mount [role="tab"][aria-selected="false"] {
+  font-family: var(--f-m) !important;
+  font-size: 0.6875rem !important;
+  letter-spacing: 0.14em !important;
+  /* Down onto the scale band. 32px clears the 30px name row by 2px and lands on
+     the graduations, which start immediately below it. */
+  top: 32px !important;
+  /* Tight to the graduations' own ends: the scale is masked to transparent in
+     its outer 10%, so a hint here sits where the ticks have already faded and
+     reads as the printing at the end of the slide rule. */
+  left: auto !important;
+  right: auto !important;
+  max-width: 42% !important;
+  /* Lit like the rest of the face's engraving rather than as dead ink — the
+     scale's own printing, seen at the edge of the lamp. */
+  color: rgba(92, 62, 20, 0.66) !important;
+  /* Above the graduations and the needle, which the dial paints at z-index 3. */
+  z-index: 4 !important;
+}
+.mmm-tuner-mount [role="tab"][aria-selected="false"]:first-of-type { left: 2px !important; }
+.mmm-tuner-mount [role="tab"][aria-selected="false"]:last-of-type { right: 2px !important; }
+/* The name keeps the vendored 24px and takes the whole width back, inset only
+   far enough to clear the 26px step chevrons — 16px, not 26, because the inset
+   is measured from the dial's CONTENT box, which its own 12px of horizontal
+   padding has already moved inward. */
 .mmm-tuner-mount [role="tab"][aria-selected="true"] {
   left: 16px !important;
   right: 16px !important;
@@ -1333,37 +1569,12 @@ html.mmm-locked .site-shell > main {
   border-color: var(--accent);
 }
 
-/* "Near me" — one pill holding a reading and its remedy. The count is set in
-   the same ink as the map's own captions, not in the chip's ink: it is a
-   readout, and only the button is a control. */
-.mmm-map-near {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 9px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-pill);
-  padding: 7px;
-}
-.mmm-map-recentre { flex: 0 0 auto; }
-.mmm-map-recentre {
-  font-family: inherit;
-  font-size: 0.9375rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  border-radius: var(--radius-pill);
-  padding: 6px 12px;
-  cursor: pointer;
-  background: transparent;
-  color: var(--ink-2);
-  border: 1px solid var(--line-2);
-}
+/* "Near me" is retired (2026-08-22). The map starts where you are, so the
+   button that asked has nothing left to do — `.mmm-map-near` and
+   `.mmm-map-recentre` went with it, and so did the `.mmm-control-row` it was
+   the last occupant of. The reasoning that shaped those rules (what scrolls in
+   a row that does not fit, and why the ACTION rather than the chips should be
+   pinned) is recorded in DESIGN_SYNC and does not need a dead rule to hold it.
 
 /* ── My Tickets, inside ME ────────────────────────────────────────────────
    The ticket path used to leave MMM entirely for the legacy shell. These rows

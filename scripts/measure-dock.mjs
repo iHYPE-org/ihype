@@ -34,6 +34,9 @@
  *     visible label sitting proud of the brass rather than a clipped one, and
  *     its exact value is a function of font rasterisation — it differs between
  *     this sandbox and a CI runner, so gating on it gates on the machine;
+ *   · **both neighbour hints are on the face, at the 11px tracked-mono floor** —
+ *     they were deleted once and asked for back, so their presence is a contract
+ *     and their SIZE is the thing that made deleting them look necessary;
  *   · **the station name is not clipped** — a destination you cannot read is the
  *     exact failure the dial exists to fix;
  *   · **the chevrons still take their own taps** — the correction above widens
@@ -175,7 +178,9 @@ for (const width of WIDTHS) {
     const kids = [...dock.children].map((child) => child.getBoundingClientRect());
     const cap = dock.querySelector('button[aria-label^="Module:"] > span:last-child');
     const station = dock.querySelector('[role="tab"][aria-selected="true"]');
-    const dial = document.querySelector('.tuner-dial').getBoundingClientRect();
+    const dialNode = document.querySelector('.tuner-dial');
+    const dial = dialNode.getBoundingClientRect();
+    const scaleBox = dialNode.querySelector('.tuner-scale')?.getBoundingClientRect() ?? null;
     const at = (x) => {
       const el = document.elementFromPoint(x, dial.top + dial.height / 2);
       return el?.getAttribute('aria-label') ?? el?.tagName ?? 'nothing';
@@ -217,6 +222,54 @@ for (const width of WIDTHS) {
       station: station.textContent,
       stationPx: parseFloat(getComputedStyle(station).fontSize),
       stationClipped: Math.round(station.scrollWidth - station.clientWidth),
+      /* The two neighbour hints. They were deleted for a while and asked for
+         back (2026-08-22), so "are they on the face at all" is now a contract
+         worth measuring — a rule that hides them again would otherwise be a
+         silent regression, exactly as their absence was. Measured as RENDERED
+         geometry rather than as a CSS value: `display: none` anywhere in the
+         cascade, a zero-width box, or a hint pushed off the dial all read the
+         same way here, which is the point. */
+      shoulders: [...dock.querySelectorAll('[role="tab"][aria-selected="false"]')].map((hint) => {
+        const box = hint.getBoundingClientRect();
+        const dialBox = dial;
+        return {
+          text: hint.textContent,
+          px: parseFloat(getComputedStyle(hint).fontSize),
+          visible: getComputedStyle(hint).display !== 'none' && box.width > 0 && box.height > 0,
+          /* Ellipsised, i.e. showing a stub instead of a name. A hint may be
+             abbreviated where the name cannot, so this is reported and only
+             fails when there is nothing recognisable left. */
+          clipped: Math.round(hint.scrollWidth - hint.clientWidth),
+          insideDial: box.left >= dialBox.left - 1 && box.right <= dialBox.right + 1,
+          /* On the scale row, not beside the name. This is what the CSS moves
+             them to and it is the whole reason both a full-size name and two
+             readable hints fit at 393px — measured as an overlap of rendered
+             boxes, so the structural selector that does the moving cannot fail
+             quietly. A re-vendor that reorders the dial's children breaks the
+             selector, the hints spring back beside the name, and this is what
+             says so. */
+          onScale: scaleBox ? box.bottom > scaleBox.top && box.top < scaleBox.bottom : false,
+          /* Whether an `overflow: hidden` ancestor is CUTTING the hint, which is
+             the failure the structural selector exists to prevent and which
+             position alone cannot see: `getBoundingClientRect` reports where a
+             box was laid out, not what survives clipping, so a hint hidden by
+             the vendored wrapper still measures as being on the scale. Verified
+             by breaking the selector and watching this go from 0 to the full
+             height of the box. Walks to the dial, which clips on purpose. */
+          cutOff: (() => {
+            let node = hint.parentElement;
+            while (node && node !== dialNode) {
+              const { overflow, overflowY } = getComputedStyle(node);
+              if (/hidden|clip/.test(overflowY || overflow)) {
+                const clip = node.getBoundingClientRect();
+                return Math.max(0, Math.round(box.bottom - clip.bottom) + Math.max(0, Math.round(clip.top - box.top)));
+              }
+              node = node.parentElement;
+            }
+            return 0;
+          })(),
+        };
+      }),
       chevrons: [at(dial.left + 8), at(dial.right - 8)],
       pageScrollW: document.documentElement.scrollWidth,
     };
@@ -233,6 +286,7 @@ if (JSON_OUT) {
     console.log(`  ${String(r.width).padStart(5)}  ${String(r.dockH).padStart(4)}  ${`${r.knobs[0]}/${r.knobs[1]}`.padEnd(9)}  ${String(r.dialW).padStart(4)}   `
       + `"${r.cap}" ${r.capPx}px${r.capClipped ? ` CLIPPED ${r.capClipped}` : r.capSpill ? ` SPILLS ${r.capSpill}` : ''}`.padEnd(15)
       + `  "${r.station}" ${r.stationPx}px${r.stationClipped ? ` CLIPPED ${r.stationClipped}` : ''}`.padEnd(27)
+      + `  ${r.shoulders.map((h) => `${h.visible ? '' : 'HIDDEN '}${h.text}${h.clipped ? `+${h.clipped}` : ''}`).join(' | ')}`.padEnd(26)
       + `  ${r.chevrons.join(' / ')}`);
   }
 }
@@ -261,6 +315,33 @@ for (const r of rows) {
      five MUSIC names. Reported, not failed — the alternative is a name at a size
      the type floor forbids. */
   if (r.stationClipped && r.width >= 375) problems.push(`${r.width}px: "${r.station}" is clipped by ${r.stationClipped}px.`);
+
+  /* Both hints, on every width. There are always exactly two once more than one
+     station exists — the vendored dial renders offsets -1, 0 and +1 — so a count
+     other than two means one was hidden or never mounted. */
+  if (r.shoulders.length !== 2) {
+    problems.push(`${r.width}px: expected two neighbour hints on the dial face, measured ${r.shoulders.length}.`);
+  }
+  for (const hint of r.shoulders) {
+    if (!hint.visible) problems.push(`${r.width}px: the "${hint.text}" hint is on the dial but not rendered.`);
+    if (!hint.insideDial) problems.push(`${r.width}px: the "${hint.text}" hint sits outside the dial face.`);
+    if (hint.cutOff) {
+      problems.push(`${r.width}px: the "${hint.text}" hint is cut off by ${hint.cutOff}px — an \`overflow: hidden\` ancestor is clipping it. The structural selector in mmm.css that opens the vendored wrapper has stopped matching.`);
+    }
+    if (!hint.onScale) {
+      problems.push(`${r.width}px: the "${hint.text}" hint is not on the scale row — it has sprung back beside the station name, which is where it collides with it. Check the structural selector in mmm.css.`);
+    }
+    /* The hint takes the tracked-mono metadata floor, which is 11px, and must
+       not be raised back to the content floor by a re-vendor: at 15px the two
+       hints cost 44% of the face and the station name clips. */
+    if (hint.px > 12) {
+      problems.push(`${r.width}px: the "${hint.text}" hint is ${hint.px}px — a hint takes the 11px tracked-mono floor, not the content floor.`);
+    }
+    /* Two characters and an ellipsis is not a readout of anywhere. */
+    if (hint.clipped && hint.text.length - hint.clipped / (hint.px * 0.62) < 3) {
+      problems.push(`${r.width}px: the "${hint.text}" hint is clipped to fewer than three characters.`);
+    }
+  }
 }
 
 if (problems.length) {

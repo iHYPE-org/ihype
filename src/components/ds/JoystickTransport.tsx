@@ -111,7 +111,7 @@ function JoystickTransportImpl({
         border: '1px solid rgba(255,214,160,.2)',
       },
     }),
-    ['\u25c0', '\u25b6', '\u25b2', '\u25bc'].map((g, i) => React.createElement('span', {
+    ['\u25c0\ufe0e', '\u25b6\ufe0e', '\u25b2', '\u25bc'].map((g, i) => React.createElement('span', {
       key: i, 'aria-hidden': 'true',
       style: {
         position: 'absolute', color: 'var(--lamp)',
@@ -148,7 +148,7 @@ function JoystickTransportImpl({
         boxShadow: '0 ' + (4 + d.y * 0.3) + 'px ' + (9 + Math.hypot(d.x, d.y) * 0.4) + 'px -3px rgba(0,0,0,.65), inset 0 1px 0 rgba(255,248,224,.6)',
         transition: from.current ? 'none' : 'transform 200ms cubic-bezier(.28,1.5,.35,1), box-shadow 200ms ease',
       },
-    }, React.createElement('span', { 'aria-hidden': 'true' }, playing ? '\u275a\u275a' : '\u25b6'))
+    }, React.createElement('span', { 'aria-hidden': 'true' }, playing ? '\u275a\u275a' : '\u25b6\ufe0e'))
   );
 }
 

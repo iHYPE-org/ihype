@@ -323,31 +323,51 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.locator('.mmm-map-canvas')).toHaveAttribute('data-mmm-probe', 'kept');
   });
 
-  // "Near me" is on every layer (product decision, 2026-08-12). It is the only
-  // control that can request location, so while it lived on the artists layer
-  // alone a fan browsing events on a phone could never ask for it — the most
-  // obvious thing anyone wants from a map.
-  test('Near me is reachable on every map layer', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/app/map');
-    const nearMe = page.getByRole('button', { name: 'Near me', exact: true });
+  /* "Near me" is retired (2026-08-22, "Remove near me (should always start where
+     you are)"), and the test that guarded it — that it was reachable on every
+     layer, because it was the only control that could request location — is
+     this one. What replaced the behaviour is asserted here instead: the map asks
+     the browser itself, so there is no control left to be reachable.
 
-    // Events is the landing layer and is where this used to be missing.
-    await expect(nearMe).toBeVisible();
-    for (const layer of ['venues', 'artists', 'events'] as const) {
-      await showLayer(page, layer);
-      await expect(page.getByRole('button', { name: 'Near me', exact: true }), `Near me is missing on ${layer}`).toBeVisible();
-    }
-    // The redundant artists count was removed; Near me stays a stable action
-    // in the same position without changing shape between layers.
-    await expect(page.locator('.mmm-map-near')).not.toHaveAttribute('data-count', 'true');
+     Asserted as the ABSENCE of the button plus the presence of a position
+     request. A test that only checked the button was gone would pass just as
+     happily if the location code had been deleted with it. */
+  test('the map asks for location itself, with no button to press', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    /* Counted rather than granted. A headless grant answers from nowhere, and
+       the claim under test is that the app ASKS on arrival — and that it asks
+       exactly once, because on a phone this call IS the OS prompt.
+
+       The stub never calls back, which also exercises the case that matters
+       most: a refusal and a timeout look identical to this component, and both
+       have to leave the map usable on its seeded camera. */
+    await page.addInitScript(() => {
+      Object.assign(window, { __geoAsks: 0 });
+      navigator.geolocation.getCurrentPosition = () => {
+        (window as unknown as { __geoAsks: number }).__geoAsks += 1;
+      };
+    });
+
+    await page.goto('/app/map');
+    await expect(page.locator('.mmm-map-canvas')).toBeVisible();
+    await expect
+      .poll(() => page.evaluate(() => (window as unknown as { __geoAsks: number }).__geoAsks))
+      .toBe(1);
+
+    await expect(page.getByRole('button', { name: 'Near me', exact: true })).toHaveCount(0);
+    // And with no answer ever arriving, the map is still there and still usable.
+    await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeEnabled();
   });
 
-  // No permission sheet on arrival. /app/map is WORKBENCH_PATH — every sign-in
-  // lands here — so a primer that opens on load is a permission wall on launch,
-  // which MOBILE.md forbids outright. It also covered the arc nav: the
-  // map-not-remounted test below failed with ".primer-scrim intercepts pointer
-  // events", which is what a member would have hit too.
+  /* No permission SHEET on arrival, which is a different claim from the test
+     above and still worth its own name. The map now asks the browser directly,
+     and the thing that must never come back is our own scrim: /app/map is
+     WORKBENCH_PATH, every sign-in lands here, and an auto-opening primer put a
+     scrim over the whole shell before the member had touched anything. The
+     map-not-remounted test failed with ".primer-scrim intercepts pointer
+     events", which is exactly what a member would have hit. The OS prompt is
+     system chrome and covers none of our DOM; a sheet of ours does. */
   test('arriving on the map raises no permission sheet', async ({ page }) => {
     await page.goto('/app/map');
     await expect(page.locator('.mmm-map-canvas')).toBeVisible();
@@ -356,28 +376,27 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeEnabled();
   });
 
-  /* The layer-chips-over-the-date-strip test was here and went with the chips
-     (2026-08-22). It guarded a real iPhone bug — EVENTS painted over WED,
-     because the strip was a sibling of the absolutely-positioned control block
-     — and there is nothing left above the strip to overlap it: the layer is a
-     station on the dock's dial now. The parentage that caused it is asserted by
-     the strip still living inside `.mmm-map-controls`, which the search test
-     below exercises. */
+  /* Two tests were here and went with the controls they guarded (2026-08-22).
+     The layer-chips-over-the-date-strip test guarded a real iPhone bug — EVENTS
+     painted over WED, because the strip was a sibling of the absolutely
+     positioned control block rather than a child — and both of its subjects are
+     retired: the layer is a station on the dock's dial, and the strip is a
+     calendar inside the search bar. There is nothing left over the map but that
+     bar, so there is nothing left to overlap. */
 
-  // The search bar belongs to the layer that is showing. Asserted on the
-  // CONTROL rather than on results: results depend on what is inside the test
-  // viewport's bbox, and a test that needs seeded pins to prove a placeholder
-  // swapped would fail for reasons that are not this behaviour.
-  test('map search follows the layer, and events have none', async ({ page }) => {
+  // The search bar belongs to the layer that is showing, and now shows on all
+  // three. Asserted on the CONTROL rather than on results: results depend on
+  // what is inside the test viewport's bbox, and a test that needs seeded pins
+  // to prove a placeholder swapped would fail for reasons that are not this.
+  test('map search follows the layer, on every layer', async ({ page }) => {
     await page.goto('/app/map');
     const field = page.locator('.mmm-map-search .mmm-search-input');
 
-    // Events is the landing layer: a price pin is not something a name finds.
-    await expect(field).toHaveCount(0);
-
+    // Events is the landing layer, and it used to have no bar at all — the date
+    // picker lives in this one, so skipping events would hide the control.
+    await expect(field).toHaveAttribute('placeholder', 'Search shows, venues, cities');
     await showLayer(page, 'venues');
     await expect(field).toHaveAttribute('placeholder', 'Search venues, streets, cities');
-
     await showLayer(page, 'artists');
     await expect(field).toHaveAttribute('placeholder', 'Search artists, genres, cities');
 
@@ -386,6 +405,54 @@ test.describe('Music · Map · Me shell', () => {
     await field.fill('anything');
     await showLayer(page, 'venues');
     await expect(field).toHaveValue('');
+  });
+
+  /* The date filter. It is on the events layer alone, because only an event has
+     a date and the API is never sent `dates` for the other two — the same
+     boundary the retired strip kept, now inside the search field.
+
+     The SET semantics are what this really guards: DS8's map document requires a
+     Friday and a Sunday with nothing between them to be legal, so the readout
+     after two non-adjacent taps must be a COUNT and never a range. A range would
+     assert a Saturday nobody picked. */
+  test('the date picker opens a calendar, and only on the events layer', async ({ page }) => {
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto('/app/map');
+
+    const trigger = page.locator('.mmm-datepick-trigger');
+    await expect(trigger).toHaveText(/Any day/i);
+
+    // Inside the search field, at its right end — not a second bar below it.
+    await expect(page.locator('.mmm-search-field .mmm-datepick-trigger')).toHaveCount(1);
+
+    await trigger.click();
+    const pop = page.getByRole('dialog', { name: 'Filter by date' });
+    await expect(pop).toBeVisible();
+
+    // Six rows of seven, always, so the popover cannot change height as it pages.
+    await expect(pop.locator('.mmm-datepick-day')).toHaveCount(42);
+
+    // Two selectable days, deliberately not adjacent.
+    const selectable = pop.locator('.mmm-datepick-day:not([disabled])');
+    await selectable.nth(0).click();
+    await selectable.nth(2).click();
+    await expect(trigger).toHaveText(/2 days/i);
+
+    await pop.getByRole('button', { name: 'Any day' }).click();
+    await expect(trigger).toHaveText(/Any day/i);
+
+    // Escape closes and returns focus to the trigger.
+    await trigger.click();
+    await expect(pop).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(pop).toHaveCount(0);
+    await expect(trigger).toBeFocused();
+
+    // Not on the layers with no dates.
+    for (const layer of ['venues', 'artists'] as const) {
+      await showLayer(page, layer);
+      await expect(page.locator('.mmm-datepick-trigger'), `the date picker should not be on ${layer}`).toHaveCount(0);
+    }
   });
 
   // The canonical panels are ACCORDIONS, not links. Legal now lives under
