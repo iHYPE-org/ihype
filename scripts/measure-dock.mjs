@@ -39,7 +39,7 @@
 import { chromium } from '@playwright/test';
 import { build } from 'esbuild';
 import { mkdtemp, writeFile, copyFile, mkdir } from 'node:fs/promises';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -133,7 +133,32 @@ await build({
   logLevel: 'error',
 });
 
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium' });
+/**
+ * Launch Playwright's own browser, and only fall back to a path.
+ *
+ * This used to pass `executablePath: '/opt/pw-browsers/chromium'` as the
+ * DEFAULT, which is the pre-installed Chromium in one particular sandbox. On a
+ * GitHub runner `playwright install` puts its browser under
+ * `~/.cache/ms-playwright`, so the default launch is the correct one there and
+ * the hardcoded path does not exist — which is exactly how this script, added to
+ * CI to protect the dock, became the thing that failed CI and kept the dock from
+ * shipping. Try Playwright's resolution first; fall back only if it cannot
+ * resolve a browser and a known-good binary is on disk.
+ */
+async function launch() {
+  const override = process.env.CHROMIUM_PATH;
+  if (override) return chromium.launch({ executablePath: override });
+  try {
+    return await chromium.launch();
+  } catch (error) {
+    const fallback = '/opt/pw-browsers/chromium';
+    if (!existsSync(fallback)) throw error;
+    console.log(`  (Playwright could not resolve its own browser; using ${fallback})`);
+    return chromium.launch({ executablePath: fallback });
+  }
+}
+
+const browser = await launch();
 const rows = [];
 for (const width of WIDTHS) {
   const page = await browser.newPage({ viewport: { width, height: 852 } });
