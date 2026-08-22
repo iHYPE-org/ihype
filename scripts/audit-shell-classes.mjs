@@ -136,6 +136,20 @@ const COLOUR_EXEMPT = [
   'opengraph-image', 'twitter-image', 'apple-icon', '/icon.tsx',
   '/qr/route.tsx', '/poster/route.tsx', '/card/route.tsx', 'api/og/route.tsx',
   'artists/[slug]/epk/page.tsx',
+  /* `src/components/ds/` is GENERATED from the vendored design system's own
+     component sources (`npm run vendor:ds`), and those sources hardcode brand
+     colour — `#ff5029`, `rgba(255,80,41,…)`, white sheens — instead of reading
+     the tokens the same design system publishes. That is a real defect and it
+     is NOT being silenced: every literal is enumerated in
+     `design/handoff-console-2026-08-21/VENDOR_REPORT.md`, which is the file
+     that goes back to Claude Design.
+
+     It is exempt here for the reason `audit:design` is advisory: the fix lives
+     in another repository, so a red build in this one cannot be cleared by
+     anyone working in it, and a check that cannot be satisfied gets switched
+     off. Correcting the values in `src/components/ds/` is not an option — the
+     next `vendor:ds` run reverts it, by design. */
+  'src/components/ds/',
 ];
 /** Brand/ink values that have a token — a literal here is always convertible. */
 const TOKENED = new Map(Object.entries({

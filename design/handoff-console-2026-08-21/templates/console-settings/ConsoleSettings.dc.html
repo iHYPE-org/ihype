@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<!-- @template name="Console Settings" description="Retro console Settings: payout/payment, profile, notifications, security, privacy, invite, danger zone. Sections and rows match src/components/mmm/MmmSettings.tsx." -->
+<helmet>
+<script src="./ds-base.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>html,body{margin:0;height:100%;background:#0e0803;font-family:'Work Sans',system-ui,sans-serif}
+@keyframes paneIn{0%{opacity:0;transform:translateY(10px) scale(.995)}100%{opacity:1;transform:none}}
+@keyframes rowIn{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes lampWake{0%{opacity:.35;filter:saturate(.5)}55%{opacity:1;filter:saturate(1.25)}100%{opacity:1;filter:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</helmet>
+<div style="height:100vh;display:flex;justify-content:center;background:#0e0803">
+<div style="width:430px;max-width:100%;flex:0 0 auto;height:100%;display:flex;flex-direction:column;overflow:hidden;contain:layout paint;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 40%,#2b1a0c);background-color:#452711">
+<div ref="{{ paneRef }}" style="flex:1;min-height:0;overflow-y:auto">
+
+<div style="padding:18px 16px 14px">
+<button onClick="{{ back }}" style="min-height:38px;padding:0 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:transparent;color:#d8b98a;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.16em;cursor:pointer">‹ ME</button>
+<h1 style="margin:12px 0 0;font-family:'Instrument Serif',serif;font-weight:400;font-size:38px;line-height:1;color:#f9edd4">Settings</h1>
+<div style="margin-top:5px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:#c9a54e">{{ roleLabel }} · {{ handle }}</div>
+</div>
+
+<div style="padding:0 16px;display:flex;flex-direction:column;gap:14px">
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">{{ moneyTitle }}</div>
+<div style="padding:4px 15px 14px">
+<div style="display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="flex:none;width:42px;height:42px;border-radius:4px;display:grid;place-items:center;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.18)">
+<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#8a3a1e" stroke-width="1.7" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+</span>
+<span style="flex:1;min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">{{ moneyLabel }}</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">{{ moneyDetail }}</span>
+</span>
+<button onClick="{{ noop }}" style="flex:none;min-height:40px;padding:0 15px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer">{{ moneyAction }}</button>
+</div>
+<sc-if value="{{ isCreator }}">
+<div style="display:flex;gap:7px;padding:11px 0 12px;border-bottom:1px solid rgba(120,94,52,.3)">
+<sc-for list="{{ split }}" as="s" hint-placeholder-count="3">
+<span ref="{{ s.ref }}" style="flex:1;text-align:center;padding:6px 4px;border-radius:3px;border:1px solid rgba(120,94,52,.4);background:rgba(201,165,78,.14);font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:#5a4526">{{ s.label }}</span>
+</sc-for>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 0">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Payout history</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Every payout receipt, itemized 70/20/10</span>
+</span>
+<button onClick="{{ noop }}" style="flex:none;min-height:40px;padding:0 15px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer">VIEW</button>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">Profile</div>
+<div style="padding:4px 15px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Display name</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Shown on your profile</span>
+</span>
+<input onInput="{{ onName }}" ref="{{ nameRef }}" aria-label="Display name" style="flex:none;width:130px;min-height:42px;padding:0 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:#fff6de;outline:none;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#2f2310">
+</div>
+<sc-for list="{{ profileRows }}" as="p" hint-placeholder-count="3">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">{{ p.label }}</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">{{ p.detail }}</span>
+</span>
+<sc-if value="{{ p.hasButton }}">
+<button onClick="{{ p.act }}" style="flex:none;min-height:40px;padding:0 15px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer;white-space:nowrap">{{ p.action }}</button>
+</sc-if>
+<sc-if value="{{ p.isNote }}">
+<span ref="{{ p.noteRef }}" style="flex:none;max-width:120px;text-align:right;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;color:#3f7a4a">{{ p.action }}</span>
+</sc-if>
+</div>
+</sc-for>
+<div style="padding:12px 0 0;font-family:'JetBrains Mono',monospace;font-size:10px;line-height:1.55;letter-spacing:.06em;color:#8a7346">Email changes go through admin@ihype.org. Age confirmation cannot be undone.</div>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">Notifications</div>
+<div style="padding:4px 15px 14px">
+<sc-for list="{{ notifs }}" as="n" hint-placeholder-count="6">
+<div ref="{{ n.animRef }}" style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">{{ n.label }}</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">{{ n.detail }}</span>
+</span>
+<button onClick="{{ n.toggle }}" ref="{{ n.ref }}" role="switch" aria-checked="{{ n.on }}" aria-label="{{ n.label }}" style="flex:none;position:relative;width:56px;height:30px;border-radius:9999px;border:1.5px solid #8a6a2c;background:rgba(92,62,20,.22);cursor:pointer;padding:0">
+<span ref="{{ n.knobRef }}" style="position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:9999px;border:1px solid #8a6a2c;background:radial-gradient(circle at 36% 30%,#e0c076,#c9a54e 55%,#8a6a2c);transition:transform .18s cubic-bezier(.3,1.4,.4,1)"></span>
+</button>
+</div>
+</sc-for>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">Security · Passkeys</div>
+<div style="padding:14px 15px">
+<button onClick="{{ addPasskey }}" style="width:100%;min-height:48px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;cursor:pointer">{{ addPasskeyLabel }}</button>
+<sc-if value="{{ passkeyStatus }}">
+<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:#8a3a1e">{{ passkeyStatus }}</div>
+</sc-if>
+<sc-if value="{{ hasPasskeys }}">
+<div style="margin-top:17px;font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#8a7346">Registered passkeys</div>
+<div style="margin-top:8px;border:1px solid rgba(120,94,52,.4);border-radius:4px;overflow:hidden">
+<sc-for list="{{ passkeys }}" as="k" hint-placeholder-count="2">
+<div ref="{{ k.rowRef }}" style="display:flex;align-items:center;gap:12px;padding:12px 13px;border-bottom:1px solid rgba(120,94,52,.3);background:rgba(201,165,78,.1)">
+<span style="flex:1;min-width:0;font-size:13.5px;color:#2f2310">{{ k.summary }}</span>
+<button onClick="{{ k.remove }}" aria-label="Remove passkey" style="flex:none;min-height:40px;padding:0 14px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.22);color:#4a3a1c;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.12em;cursor:pointer">{{ k.removeLabel }}</button>
+</div>
+</sc-for>
+</div>
+</sc-if>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">Privacy</div>
+<div style="padding:4px 15px 14px">
+<sc-if value="{{ isCreator }}">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;padding:12px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">{{ discoverLabel }}</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">{{ discoverDetail }}</span>
+</span>
+<button onClick="{{ toggleDiscover }}" ref="{{ discoverRef }}" role="switch" aria-checked="{{ discoverable }}" aria-label="{{ discoverLabel }}" style="flex:none;position:relative;width:56px;height:30px;border-radius:9999px;border:1.5px solid #8a6a2c;background:rgba(92,62,20,.22);cursor:pointer;padding:0">
+<span ref="{{ discoverKnobRef }}" style="position:absolute;top:2px;left:2px;width:24px;height:24px;border-radius:9999px;border:1px solid #8a6a2c;background:radial-gradient(circle at 36% 30%,#e0c076,#c9a54e 55%,#8a6a2c);transition:transform .18s cubic-bezier(.3,1.4,.4,1)"></span>
+</button>
+</div>
+</sc-if>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(120,94,52,.3)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Early identity detachment</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Remove IP and location from your activity log now (automatic after 30 days)</span>
+</span>
+<button onClick="{{ detach }}" ref="{{ detachRef }}" style="flex:none;min-height:40px;padding:0 14px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer;white-space:nowrap">{{ detachLabel }}</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0 0">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Download my data</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Get a copy of everything we hold</span>
+</span>
+<button onClick="{{ noop }}" style="flex:none;min-height:40px;padding:0 14px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer;white-space:nowrap">EXPORT</button>
+</div>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f3e8ca,#e6d8b4);box-shadow:0 0 0 2px #c9a54e,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9a54e,#a8862f);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#2b1a0c">Invite friends</div>
+<div style="padding:14px 15px">
+<div style="display:flex;gap:8px;align-items:center">
+<span style="flex:1;min-width:0;padding:11px 12px;border-radius:4px;border:1.5px solid #8a6a2c;background:#fff6de;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#2f2310;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ inviteLink }}</span>
+<button onClick="{{ copyInvite }}" ref="{{ copyRef }}" style="flex:none;min-width:70px;min-height:44px;border-radius:4px;border:1.5px solid #8a6a2c;background:rgba(201,165,78,.2);color:#2f2310;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer">{{ copyLabel }}</button>
+</div>
+<div style="margin-top:9px;font-size:12.5px;line-height:1.5;color:#6b5327">Anyone who joins through your link skips the alpha invite code.</div>
+</div>
+</div>
+
+<div style="border-radius:5px;overflow:hidden;background:linear-gradient(180deg,#f0dfc4,#e2cdaa);box-shadow:0 0 0 2px #a8452a,0 12px 24px -14px rgba(0,0,0,.7)">
+<div style="padding:11px 15px;background:linear-gradient(180deg,#c9512f,#a8452a);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#fff2e4">Danger zone</div>
+<div style="padding:4px 15px 14px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid rgba(168,69,42,.28)">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Sign out</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Sign out of iHYPE on this device</span>
+</span>
+<button onClick="{{ noop }}" style="flex:none;min-height:40px;padding:0 15px;border-radius:4px;border:1.5px solid #a8452a;background:rgba(201,81,47,.14);color:#8a3a1e;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer">SIGN OUT</button>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 0 0">
+<span style="min-width:0">
+<span style="display:block;font-size:14.5px;font-weight:500;color:#2f2310">Delete account</span>
+<span style="display:block;margin-top:2px;font-size:12.5px;color:#6b5327">Permanent. All data removed within 30 days.</span>
+</span>
+<button onClick="{{ noop }}" style="flex:none;min-height:40px;padding:0 15px;border-radius:4px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#c9512f,#a8452a);color:#fff2e4;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;cursor:pointer">DELETE</button>
+</div>
+</div>
+</div>
+
+<button onClick="{{ save }}" ref="{{ saveRef }}" style="width:100%;min-height:54px;border-radius:5px;border:2px solid #8a3a1e;background:linear-gradient(180deg,#ff6b3d,#ff5029);color:#2b1405;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;cursor:pointer">{{ saveLabel }}</button>
+</div>
+</div>
+<div style="flex:none;position:relative;display:flex;align-items:center;gap:6px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));border-top:3px solid #c9a54e;background:repeating-linear-gradient(88deg,rgba(30,14,4,.3) 0 1px,transparent 1px 4px,rgba(94,56,26,.22) 4px 6px,transparent 6px 13px),linear-gradient(180deg,#6b4426,#452711 46%,#5c3a1f);box-shadow:inset 0 4px 0 -1px rgba(255,214,160,.18)">
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.RotaryNav" modules="{{ dockModules }}" active-module="{{ dockModeId }}" on-navigate="{{ onDockModule }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.TunerDial" stations="{{ dockStations }}" active="{{ dockActive }}" on-change="{{ onDockStation }}" style="flex:1;min-width:0" hint-size="100%,74px"></x-import>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.JoystickTransport" playing="{{ dockPlaying }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" on-expand="{{ dockExpand }}" on-collapse="{{ dockCollapse }}" size="{{ 74 }}" hint-size="74px,74px"></x-import>
+</div>
+<x-import component-from-global-scope="IHYPEDesignSystem_99d6e8.FullPlayer" open="{{ playerOpen }}" track="{{ nowPlaying }}" playing="{{ dockPlaying }}" progress="{{ progress }}" queue="{{ upNext }}" history="{{ played }}" on-close="{{ dockCollapse }}" on-toggle-play="{{ dockToggle }}" on-prev="{{ dockPrev }}" on-next="{{ dockNext }}" hint-size="100%,100%"></x-import>
+</div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;role&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;FAN&quot;,&quot;ARTIST&quot;,&quot;VENUE&quot;],&quot;default&quot;:&quot;ARTIST&quot;,&quot;tsType&quot;:&quot;'FAN'|'ARTIST'|'VENUE'&quot;,&quot;section&quot;:&quot;Account&quot;}}">
+/* Rows, labels and details are lifted from src/components/mmm/MmmSettings.tsx
+   so this template stays the retro dress of a real screen rather than a
+   plausible-looking invention. Role drives three things there and here: the
+   money section's title, the creator-only discovery toggle, and which of the
+   two role-specific notification rows exists. */
+const NOTIFS = [
+  ['newShows', 'Ticket drops', 'When artists you follow announce shows', null],
+  ['milestones', 'Hype milestones', 'When your tracks hit hype thresholds', null],
+  ['journalPosts', 'Journal posts', 'New posts from creators you follow', null],
+  ['weeklyDigest', 'Weekly digest', 'A weekly summary of upcoming shows and activity', null],
+  ['radioLive', 'Radio shows', 'When a show you follow goes live', null],
+  ['crateUploads', 'Track uploads', 'When your upload clears screening', 'ARTIST'],
+  ['bookingRequests', 'Booking requests', 'When an artist requests a slot', 'VENUE'],
+  ['push', 'Push notifications (this browser)', 'Instant alerts on this device, even when iHYPE is closed', null],
+];
+
+
+/* The transport is not decoration on a subpage: the dock's joystick drives real
+   playback here exactly as it does on the shell — tap play/pause, drag for
+   prev/next, drag up for the full player, down to retire it. */
+const PLAYLIST = [
+  { title: 'Second Shift', artist: 'Deering Oaks', album: 'Night Route', initial: 'D', seconds: 203 },
+  { title: 'Harbour Lights', artist: 'Vera Sound', album: 'Casco', initial: 'V', seconds: 242 },
+  { title: 'Harbor Static', artist: 'Cold Cellar', album: 'Longfellow', initial: 'C', seconds: 178 },
+  { title: 'Night Route', artist: 'Second Shift', album: 'Portland Tapes', initial: 'S', seconds: 221 },
+];
+
+/* The dock is the app's whole navigation and belongs on every screen, so a
+   subpage feeds it the same module and station sets the shell does: the knob
+   reads out where you are, the tuner the section within it. */
+const DOCK_MODULES = [{ id: 'MAP', label: 'Map' }, { id: 'MUSIC', label: 'Music' }, { id: 'ME', label: 'Me' }];
+const DOCK_SUBS = {
+  MAP: ['Tonight', 'This Week', 'Weekend', 'All Dates'],
+  MUSIC: ['Discover', 'Playlists', 'Charts', 'Radio'],
+  ME: ['Profiles', 'Tickets', 'Info', 'Settings'],
+};
+/* Where each destination actually lives. The knob was wired to a no-op, so it
+   turned and nothing happened — the nav has to GO somewhere, and in a template
+   set that means the sibling template that owns the screen. */
+const ROUTES = {
+  MAP: '../console-shell/ConsoleShell.dc.html',
+  MUSIC: '../console-shell/ConsoleShell.dc.html',
+  ME: '../console-settings/ConsoleSettings.dc.html',
+  Profiles: '../console-profile/ConsoleProfile.dc.html',
+  Tickets: '../console-ticket/ConsoleTicket.dc.html',
+  Info: '../console-info/ConsoleInfo.dc.html',
+  Settings: '../console-settings/ConsoleSettings.dc.html',
+};
+function go(key) {
+  const href = ROUTES[key];
+  if (href) window.location.href = href;
+}
+
+function dockNav() {
+  return {
+    dockModules: DOCK_MODULES, dockModeId: 'ME', onDockModule: (m) => go(m.id),
+    dockStations: DOCK_SUBS['ME'].map((x) => ({ id: x, label: x })), dockActive: 'Settings', onDockStation: (id) => go(id),
+  };
+}
+
+class Component extends DCLogic {
+  state = { playing: true, trackIdx: 0, playerOpen: false,
+    role: 'ARTIST', name: 'Deering Oaks', adult: true, discoverable: true,
+    prefs: { newShows: true, milestones: true, journalPosts: true, weeklyDigest: true, radioLive: true, crateUploads: true, bookingRequests: true, push: false },
+    detaching: false, copied: false, saved: false,
+    passkeyBusy: false, passkeyStatus: '', removingId: null,
+    passkeys: [
+      { id: 'p1', deviceType: 'multi-device', backedUp: true, createdAt: '2026-07-12' },
+      { id: 'p2', deviceType: 'single-device', backedUp: false, createdAt: '2026-03-03' },
+    ],
+  };
+
+  sw = (on) => (el) => { if (el) el.style.background = on ? 'rgba(255,80,41,.28)' : 'rgba(92,62,20,.22)'; };
+  swKnob = (on) => (el) => { if (el) el.style.transform = on ? 'translateX(26px)' : 'translateX(0)'; };
+
+  transport() {
+    const n = PLAYLIST.length, i = this.state.trackIdx;
+    const step = (d) => this.setState({ trackIdx: (i + d + n) % n });
+    return {
+      dockPlaying: this.state.playing,
+      dockToggle: () => this.setState((s) => ({ playing: !s.playing })),
+      dockPrev: () => step(-1),
+      dockNext: () => step(1),
+      dockExpand: () => this.setState({ playerOpen: true }),
+      dockCollapse: () => this.setState({ playerOpen: false }),
+      playerOpen: this.state.playerOpen,
+      nowPlaying: PLAYLIST[i],
+      upNext: PLAYLIST.slice(i + 1).concat(PLAYLIST.slice(0, i)),
+      played: PLAYLIST.slice(0, i),
+      progress: 34,
+    };
+  }
+
+
+  /* Replays an entrance animation when `key` changes. The node persists across
+     a station change, so the animation must be cleared and the layout forced to
+     flush before it is set again — otherwise it plays once and never again. */
+  replay(slot, key, anim) {
+    return (el) => {
+      if (!el) return;
+      this._anim = this._anim || {};
+      if (this._anim[slot] === key) return;
+      this._anim[slot] = key;
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = anim;
+    };
+  }
+
+  renderVals() {
+    const role = this.state.role;
+    const creator = role === 'ARTIST' || role === 'VENUE';
+    const p = this.state.prefs;
+    const animKey = this.state.role;
+    return {
+      ...dockNav(),
+      paneRef: this.replay('pane', animKey, 'paneIn .34s cubic-bezier(.22,.9,.3,1) both'),
+      rowRef: (i) => this.replay('row' + i, animKey, 'rowIn .3s cubic-bezier(.22,.9,.3,1) ' + Math.min(i * 45, 320) + 'ms both'),
+      ...this.transport(),
+      roleLabel: role.charAt(0) + role.slice(1).toLowerCase(),
+      handle: 'jrs_pdx',
+      isCreator: creator,
+      moneyTitle: creator ? 'Payout destination' : 'Payment methods',
+      moneyLabel: creator ? 'No payout destination connected yet' : 'No payment method on file',
+      moneyDetail: creator ? 'Payouts land within 2 business days of a show closing' : 'Used for ticket purchases — face value, $0 iHYPE fees',
+      moneyAction: creator ? 'CONNECT' : 'ADD',
+      split: (role === 'VENUE'
+        ? ['20% you', '70% artist', '10% promoters']
+        : ['70% you', '20% venue', '10% promoters'])
+        .map((label, i) => ({ label, ref: (el) => { if (el && i === 0) { el.style.color = '#8a3a1e'; el.style.borderColor = '#c9512f'; } } })),
+      nameRef: (el) => { if (el && el.value !== this.state.name) el.value = this.state.name; },
+      onName: (e) => this.setState({ name: e.target.value }),
+      profileRows: [
+        { label: 'Email', detail: 'jrs@deeringoaks.test', hasButton: false, isNote: true, action: 'VERIFIED', noteRef: (el) => { if (el) el.style.color = '#3f7a4a'; } },
+        { label: 'Role', detail: role.charAt(0) + role.slice(1).toLowerCase(), hasButton: true, isNote: false, action: 'MANAGE', act: () => {} },
+        this.state.adult
+          ? { label: 'Age verification', detail: 'Ticket purchases and referral links are unlocked', hasButton: false, isNote: true, action: '✓ 18+ CONFIRMED', noteRef: (el) => { if (el) el.style.color = '#3f7a4a'; } }
+          : { label: 'Age verification', detail: 'Required to buy tickets or share referral links (13+ to listen)', hasButton: true, isNote: false, action: "I'M 18 OR OLDER", act: () => this.setState({ adult: true }) },
+      ],
+      notifs: NOTIFS.filter(([, , , onlyRole]) => !onlyRole || onlyRole === role)
+        .map(([id, label, detail]) => ({
+          label, detail, on: !!p[id],
+          ref: this.sw(!!p[id]), knobRef: this.swKnob(!!p[id]),
+          toggle: () => this.setState((s) => ({ prefs: { ...s.prefs, [id]: !s.prefs[id] } })),
+        })).map((n, i) => ({ ...n, animRef: this.replay('nt' + i, this.state.role, 'rowIn .3s cubic-bezier(.22,.9,.3,1) ' + i * 45 + 'ms both') })),
+      hasPasskeys: this.state.passkeys.length > 0,
+      addPasskeyLabel: this.state.passkeyBusy ? 'Registering…' : 'Add a passkey',
+      addPasskey: () => {
+        this.setState({ passkeyBusy: true, passkeyStatus: '' });
+        setTimeout(() => this.setState((s) => ({
+          passkeyBusy: false,
+          passkeyStatus: 'Passkey added. You can now sign in without a password.',
+          passkeys: s.passkeys.concat({ id: 'p' + (s.passkeys.length + 1), deviceType: 'multi-device', backedUp: true, createdAt: '2026-08-21' }),
+        })), 700);
+      },
+      passkeyStatus: this.state.passkeyStatus,
+      passkeys: this.state.passkeys.map((k, i) => ({
+        summary: k.deviceType.replace(/-/g, ' ').replace(/^./, (c) => c.toUpperCase())
+          + (k.backedUp ? ' · synced' : ' · single device')
+          + ' · ' + new Date(k.createdAt).toLocaleDateString(),
+        removeLabel: this.state.removingId === k.id ? 'REMOVING…' : 'REMOVE',
+        rowRef: (el) => { if (el && i === this.state.passkeys.length - 1) el.style.borderBottom = 'none'; },
+        remove: () => {
+          this.setState({ removingId: k.id });
+          setTimeout(() => this.setState((s) => ({ removingId: null, passkeys: s.passkeys.filter((x) => x.id !== k.id) })), 400);
+        },
+      })),
+      discoverable: this.state.discoverable,
+      discoverLabel: role === 'VENUE' ? 'Show me in demand radar' : 'Show me in discovery',
+      discoverDetail: role === 'VENUE'
+        ? 'Artists can see your room in the demand radar and request a slot'
+        : 'Fans can find your profile in Discover and search',
+      discoverRef: this.sw(this.state.discoverable),
+      discoverKnobRef: this.swKnob(this.state.discoverable),
+      toggleDiscover: () => this.setState((s) => ({ discoverable: !s.discoverable })),
+      detachLabel: this.state.detaching ? 'DETACHING…' : 'DETACH NOW',
+      detachRef: () => {},
+      detach: () => { this.setState({ detaching: true }); setTimeout(() => this.setState({ detaching: false }), 1200); },
+      inviteLink: 'ihype.org/invite/7f3a9c2b',
+      copyLabel: this.state.copied ? 'COPIED ✓' : 'SHARE',
+      copyRef: () => {},
+      copyInvite: () => {
+        try { navigator.clipboard.writeText('https://ihype.org/invite/7f3a9c2b'); } catch (e) {}
+        this.setState({ copied: true });
+        setTimeout(() => this.setState({ copied: false }), 1800);
+      },
+      saveLabel: this.state.saved ? '✓ Saved' : 'Save settings',
+      saveRef: () => {},
+      save: () => { this.setState({ saved: true }); setTimeout(() => this.setState({ saved: false }), 2000); },
+      back: () => {},
+      noop: () => {},
+    };
+  }
+}
+
+</script>
+</body>
+</html>

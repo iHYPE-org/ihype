@@ -168,7 +168,15 @@ function whiteOnAccent(source) {
  * label's clothes. 85 sizes moved. */
 const BODY_FLOOR_REM = 15 / 16;
 const EYEBROW_FLOOR_REM = 11 / 16;
-const MONO_FAMILY = /--f-m\b|--font-mono\b|monospace|JetBrains/i;
+/* `\bfm\b` is here for `src/components/ds/`, and it is the narrowest change that
+   works. The design system's own components name their families through a local
+   alias — `const _FP = { fm: "'JetBrains Mono',monospace" }`, then
+   `fontFamily: _FP.fm` — so the literal family never appears in the style block
+   the scan reads. Without this, a real tracked eyebrow in vendored code is
+   indistinguishable from a sentence and gets raised to the 15px content floor,
+   which is a fidelity loss the design system would be right to reject. It only
+   loosens where a block ALSO tracks >= .14em, which is the eyebrow test itself. */
+const MONO_FAMILY = /--f-m\b|--font-mono\b|monospace|JetBrains|\bfm\b/i;
 const TRACKING_EM = /letter-?[sS]pacing: *'?(-?\.?[0-9.]+)em/;
 
 /** The innermost `{ … }` around an index — a JSX style object or a CSS rule. */

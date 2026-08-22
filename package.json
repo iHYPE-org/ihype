@@ -12,6 +12,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
+    "vendor:ds": "node scripts/vendor-ds-components.mjs",
+    "guard:ds": "node scripts/vendor-ds-components.mjs --check",
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:design": "node scripts/audit-design-templates.mjs",
     "audit:css": "node scripts/audit-css.mjs",

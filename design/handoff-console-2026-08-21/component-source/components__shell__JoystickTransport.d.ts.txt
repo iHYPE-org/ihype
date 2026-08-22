@@ -1,0 +1,17 @@
+export interface JoystickTransportProps {
+  playing?: boolean;
+  /** False when the player shows a listen record with no playable URL — a tap does nothing, but drag still reaches prev/next/expand. */
+  canTogglePlay?: boolean;
+  onTogglePlay?: () => void;
+  /** Drag left. */
+  onPrev?: () => void;
+  /** Drag right. */
+  onNext?: () => void;
+  /** Drag up: opens the full-screen player. */
+  onExpand?: () => void;
+  /** Drag down: retires the full-screen player. */
+  onCollapse?: () => void;
+  /** Same figure the shell sizes the rotary nav and the player anchor from. */
+  size?: number;
+}
+export declare function JoystickTransport(props: JoystickTransportProps): JSX.Element;

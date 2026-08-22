@@ -165,6 +165,16 @@ jobs:
       - name: Gated migration guard
         run: npm run guard:migrations
 
+      - name: Vendored design-system components guard
+        # src/components/ds/ is GENERATED from the vendored handoff's own
+        # component sources. This fails if the checked-in files no longer match
+        # what the design system would produce — which is the whole mechanism
+        # that stops a console control being quietly re-authored here (the
+        # shipped TunerDial and the design system's had already diverged that
+        # way). A deliberate change belongs in Claude Design and a re-vendored
+        # handoff, not in src/.
+        run: npm run guard:ds
+
       - name: MMM workflow primitive audit
         # Fails when a page inside the signed-in shell grows a card/row/stat/
         # eyebrow of its own instead of using the design system's primitive.
