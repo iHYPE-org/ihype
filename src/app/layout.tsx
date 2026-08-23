@@ -1,6 +1,7 @@
 import './globals.css';
 import './mmm-workflows.css';
 import './mmm-primitives.css';
+import './mmm-console.css';
 // Last, on purpose: the phone-fit floors are minimums that must survive the
 // three files above, and source order is what gives an equal-specificity rule
 // the win. It touches nothing at `pointer: fine`.

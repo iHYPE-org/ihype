@@ -24,6 +24,16 @@ export const metadata: Metadata = {
  * and zoom, and a layout is the only place the App Router guarantees a subtree
  * is preserved. Moving this into a page re-mounts the map on every module
  * change.
+ *
+ * The hi-fi console dock is rendered INSIDE `MmmShell` (`MmmDock`: RotaryNav ·
+ * TunerDial · JoystickTransport) and is the whole of this shell's navigation.
+ * Do not mount a second dock here. The console handoff's `ConsoleDock.tsx`
+ * (IMPLEMENT.md step 2) briefly stood beside it as a sibling and was retired
+ * at the 2026-08-23 merge: it was a second, thinner implementation of the same
+ * hardware — hardcoded section ring, no registered stations, an unwired
+ * transport — which is the TunerDial failure mode the vendoring row in
+ * CLAUDE.md exists to prevent. The handoff's token skin (mmm-console.css)
+ * stays; its dock component does not.
  */
 export default async function MmmLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

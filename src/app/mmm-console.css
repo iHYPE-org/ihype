@@ -1,0 +1,84 @@
+/* mmm-console.css — console skin layer for iHYPE production
+   Drop at: src/app/mmm-console.css, import AFTER mmm.css in src/app/layout.tsx.
+   Only overrides + additions; mmm.css keeps owning layout. Tokens are the
+   design system's cream/walnut/brass set verbatim. */
+
+:root {
+  --bg-base: #f0dfb8; --bg-surface: #f6ecd7; --bg-raised: #f6ecd7; --bg-overlay: #f6ecd7;
+  --ink-1: #1c1408; --ink-2: #4a3a24; --ink-3: #6b5a3e;
+  --line: rgba(28,20,8,.12); --line-2: rgba(28,20,8,.2); --line-strong: var(--line-2);
+  --walnut: #6e4c2b; --walnut-2: #4e3418; --walnut-3: #331f0c;
+  --ink-on-walnut: #f6ecd7; --ink-on-walnut-2: #d9c49a; --ink-on-walnut-3: #a98f66;
+  --brass: #c9a54e; --brass-deep: #8a6a2c; --lamp: #ff8f2d;
+  --accent: #ff5029; --accent-text: #923319; --ink-on-accent: #2b0d04;
+  /* The bundle's role-hue overrides are NOT adopted (2026-08-23, merge).
+     Measured on the cream ground they all fail AA — fan #8a4fd6 3.83:1,
+     venue #0f8f80 3.03:1, promoter #c81866 4.22:1, advertiser #a5760a
+     3.07:1 — and --role-venue-text/--role-advertiser-text are live COPY
+     tokens (mmm.css, mmm-primitives.css, AdvertiserRegisterForm), so the
+     override repainted real text below AA site-wide. globals.css keeps the
+     measured set (6.36/4.83/5.61/4.50). Same call CLAUDE.md records against
+     the 08-21 bundle's re-lightened hues: fix upstream in Claude Design,
+     never adopt here. Everything else in this file passes measurement and
+     stands. */
+  --radius-panel: 3px; --radius-card: 3px; --radius-pill: 9999px;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Work Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Instrument Serif', serif;
+  --mmm-knob: 74px; --mmm-dock-h: 93px; --mmm-dock-pad: 8px; --mmm-dock-lip: 3px;
+}
+
+/* V10 paper rules: content panes are print. */
+.mmm-pane { background: var(--bg-base); color: var(--ink-1); }
+.mmm-pane .card, .mmm-pane .panel {
+  background: var(--bg-surface); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); box-shadow: none;
+}
+.mmm-pane hr { border: 0; border-top: 1px solid var(--line); }
+
+/* The dock: the only ornate object. */
+.console-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: var(--mmm-dock-h); padding: var(--mmm-dock-pad) 10px;
+  padding-bottom: calc(var(--mmm-dock-pad) + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%);
+  border-top: var(--mmm-dock-lip) solid var(--brass);
+  box-shadow: inset 0 1px 0 rgba(255,220,160,.32);
+}
+.console-dock__knob {
+  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto;
+  border: none; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; color: #33240a;
+  background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%);
+  box-shadow: inset 0 2px 3px rgba(255,246,220,.5), inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.6);
+}
+.console-dock__knob:active { transform: translateY(1px); }
+.console-dock__dial {
+  flex: 1; height: var(--mmm-knob); border-radius: var(--radius-panel);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  touch-action: pan-y; user-select: none; cursor: grab;
+  background: radial-gradient(120% 150% at 50% 112%, #fffdf4 0%, #f6ecd0 44%, #e4d3a8 100%);
+  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.3), inset 0 -14px 22px -10px rgba(255,150,60,.3);
+}
+.console-dock__dial-label { font-family: var(--font-display); font-size: 1.1875rem; line-height: 1; color: #1c1408; }
+.console-dock__dial-ticks { width: 78%; height: 10px; opacity: .45;
+  background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 7px); }
+.console-dock__stick-well {
+  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto; border-radius: 50%;
+  display: grid; place-items: center; touch-action: none;
+  background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%);
+  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);
+}
+.console-dock__stick {
+  width: 46px; height: 46px; border-radius: 50%; cursor: grab;
+  background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%);
+  box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);
+  transition: transform 150ms cubic-bezier(.2,.7,.3,1);
+}
+
+/* Content above the dock never hides beneath it. */
+.mmm-pane { padding-bottom: calc(var(--mmm-dock-h) + env(safe-area-inset-bottom, 0px)); }
+/* Pre-auth routes render no dock: layout gates on session, not CSS. */
