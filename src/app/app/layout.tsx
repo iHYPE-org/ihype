@@ -6,6 +6,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canHype } from '@/lib/hype-window';
 import { MmmShell, type MmmNowPlaying } from '@/components/mmm/MmmShell';
+import { ConsoleDock } from '@/components/mmm/ConsoleDock';
 import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
@@ -92,8 +93,11 @@ export default async function MmmLayout({ children }: { children: React.ReactNod
    * every other role-gated destination in this codebase.
    */
   return (
-    <MmmShell isAdmin={isAdminSession(session)} nowPlaying={nowPlaying}>
-      {children}
-    </MmmShell>
+    <>
+      <MmmShell isAdmin={isAdminSession(session)} nowPlaying={nowPlaying}>
+        {children}
+      </MmmShell>
+      <ConsoleDock />
+    </>
   );
 }
