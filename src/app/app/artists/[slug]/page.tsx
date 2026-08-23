@@ -167,8 +167,8 @@ export default async function MmmArtistPage({
      Three things in the reference are deliberately NOT reproduced here, each
      because it belongs to something the app already owns:
        · the 430px card frame — a specimen chrome; the pane sets the width
-       · the walnut dock along its bottom edge — that is `ConsoleDock`,
-         mounted once in the /app layout, not painted per page
+       · the walnut dock along its bottom edge — that is the console dock
+         (`MmmDock`, rendered once by `MmmShell`), not painted per page
        · the 3-tab strip (Shows/Tracks/About) — the real tab set is
          `ARTIST_TABS` (6), routed by `ProfileTabs`; cutting it to three
          would delete four panels' worth of content */
