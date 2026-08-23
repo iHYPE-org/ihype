@@ -1,0 +1,23 @@
+/* Keyframes the three console controls need. Add to your global stylesheet —
+   they cannot live in a component's inline styles.
+
+   ihBacklight is the tuner's bulb flicker: a very slight, uneven breathe. A
+   perfectly steady glow reads as an LED panel rather than a lamp behind glass.
+   Keep it a KEYFRAME, not a transition — keyframes render in embedded contexts
+   where the document timeline never advances (ADHERENCE 23). */
+
+@keyframes ihBacklight {
+  0%, 100% { opacity: .94; }
+  43%      { opacity: 1; }
+  71%      { opacity: .97; }
+}
+
+@keyframes ihLampBreathe {
+  0%, 100% { opacity: .85; }
+  50%      { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* A dial that never stops pulsing is exactly what this setting is for. */
+  [style*="ihBacklight"], [style*="ihLampBreathe"] { animation: none !important; }
+}

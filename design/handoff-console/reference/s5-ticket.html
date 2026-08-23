@@ -1,0 +1,148 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>/* mmm-console.css — console skin layer for iHYPE production
+   Drop at: src/app/mmm-console.css, import AFTER mmm.css in src/app/layout.tsx.
+   Only overrides + additions; mmm.css keeps owning layout. Tokens are the
+   design system's cream/walnut/brass set verbatim. */
+
+:root {
+  --bg-base: #f0dfb8; --bg-surface: #f6ecd7; --bg-raised: #f6ecd7; --bg-overlay: #f6ecd7;
+  --ink-1: #1c1408; --ink-2: #4a3a24; --ink-3: #6b5a3e;
+  --line: rgba(28,20,8,.12); --line-2: rgba(28,20,8,.2); --line-strong: var(--line-2);
+  --walnut: #6e4c2b; --walnut-2: #4e3418; --walnut-3: #331f0c;
+  --ink-on-walnut: #f6ecd7; --ink-on-walnut-2: #d9c49a; --ink-on-walnut-3: #a98f66;
+  --brass: #c9a54e; --brass-deep: #8a6a2c; --lamp: #ff8f2d;
+  --accent: #ff5029; --accent-text: #923319; --ink-on-accent: #2b0d04;
+  --role-fan: #8a4fd6; --role-fan-text: #6b3aa8;
+  --role-venue: #0f8f80; --role-venue-text: #0f8f80;
+  --role-promoter: #c81866; --role-advertiser: #a5760a; --role-advertiser-text: #a5760a;
+  --radius-panel: 3px; --radius-card: 3px; --radius-pill: 9999px;
+  --font-display: 'Bricolage Grotesque', sans-serif;
+  --font-body: 'Work Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-serif: 'Instrument Serif', serif;
+  --mmm-knob: 74px; --mmm-dock-h: 93px; --mmm-dock-pad: 8px; --mmm-dock-lip: 3px;
+}
+
+/* V10 paper rules: content panes are print. */
+.mmm-pane { background: var(--bg-base); color: var(--ink-1); }
+.mmm-pane .card, .mmm-pane .panel {
+  background: var(--bg-surface); border: 1px solid var(--line);
+  border-radius: var(--radius-panel); box-shadow: none;
+}
+.mmm-pane hr { border: 0; border-top: 1px solid var(--line); }
+
+/* The dock: the only ornate object. */
+.console-dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+  height: var(--mmm-dock-h); padding: var(--mmm-dock-pad) 10px;
+  padding-bottom: calc(var(--mmm-dock-pad) + env(safe-area-inset-bottom, 0px));
+  display: flex; align-items: center; gap: 10px;
+  background: linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%);
+  border-top: var(--mmm-dock-lip) solid var(--brass);
+  box-shadow: inset 0 1px 0 rgba(255,220,160,.32);
+}
+.console-dock__knob {
+  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto;
+  border: none; border-radius: 50%; cursor: pointer;
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; color: #33240a;
+  background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%);
+  box-shadow: inset 0 2px 3px rgba(255,246,220,.5), inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.6);
+}
+.console-dock__knob:active { transform: translateY(1px); }
+.console-dock__dial {
+  flex: 1; height: var(--mmm-knob); border-radius: var(--radius-panel);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  touch-action: pan-y; user-select: none; cursor: grab;
+  background: radial-gradient(120% 150% at 50% 112%, #fffdf4 0%, #f6ecd0 44%, #e4d3a8 100%);
+  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.3), inset 0 -14px 22px -10px rgba(255,150,60,.3);
+}
+.console-dock__dial-label { font-family: var(--font-display); font-size: 1.1875rem; line-height: 1; color: #1c1408; }
+.console-dock__dial-ticks { width: 78%; height: 10px; opacity: .45;
+  background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 7px); }
+.console-dock__stick-well {
+  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto; border-radius: 50%;
+  display: grid; place-items: center; touch-action: none;
+  background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%);
+  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);
+}
+.console-dock__stick {
+  width: 46px; height: 46px; border-radius: 50%; cursor: grab;
+  background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%);
+  box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);
+  transition: transform 150ms cubic-bezier(.2,.7,.3,1);
+}
+
+/* Content above the dock never hides beneath it. */
+.mmm-pane { padding-bottom: calc(var(--mmm-dock-h) + env(safe-area-inset-bottom, 0px)); }
+/* Pre-auth routes render no dock: layout gates on session, not CSS. */
+
+body{margin:0;padding:24px;background:var(--bg-base);font-family:var(--font-body);color:var(--ink-1);display:flex;justify-content:center}</style>
+</head><body>
+<div id="s5" style="display: flex; flex-direction: column; gap: 12px;">
+      <div style="display: flex; align-items: baseline; gap: 10px;">
+        <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-on-accent); background: var(--accent); padding: 3px 7px; border-radius: 2px;">S5</span>
+        <span style="font-family: var(--font-display); font-size: 21px;">Ticket</span>
+      </div>
+      <div style="width: 430px; display: flex; flex-direction: column; background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-panel); overflow: hidden; box-shadow: 0 18px 40px -20px rgba(28,20,8,.4);">
+        <div style="padding: 26px; display: flex; flex-direction: column; gap: 20px; min-height: 720px;">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: var(--radius-pill); background: var(--color-success-bg); color: var(--color-success); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em;"><span style="width: 7px; height: 7px; border-radius: 50%; background: currentColor;"></span>VALID</span>
+            <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ink-3);">NOT YET SCANNED</span>
+          </div>
+
+          <div style="background: var(--walnut); border-radius: var(--radius-panel); padding: 22px; display: flex; flex-direction: column; gap: 18px; box-shadow: inset 0 1px 0 rgba(255,220,160,.18), 0 6px 16px -6px rgba(0,0,0,.5);">
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-on-walnut-3);">SAT 12 SEP · 9:00 PM</div>
+              <div style="font-family: var(--font-display); font-size: 27px; line-height: 1.14; color: var(--ink-on-walnut);">Vestibule</div>
+              <div style="font-size: 15px; color: var(--ink-on-walnut-2);">Sun Tiger · Portland ME</div>
+            </div>
+
+            <div style="background: var(--bg-base); border-radius: var(--radius-panel); padding: 18px; display: flex; flex-direction: column; align-items: center; gap: 14px; box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 6px rgba(92,62,20,.25);">
+              <div style="width: 168px; height: 168px; background: repeating-conic-gradient(from 0deg at 50% 50%, #1c1408 0deg 90deg, #f0dfb8 90deg 180deg); background-size: 21px 21px; border-radius: 2px; box-shadow: inset 0 0 0 8px var(--bg-base);"></div>
+              <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">SCAN AT THE DOOR</div>
+            </div>
+
+            <div style="display: flex; align-items: baseline; gap: 12px; padding-top: 4px;">
+              <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--ink-on-walnut-3);">TICKET</span>
+              <span style="font-family: var(--font-mono); font-size: 15px; letter-spacing: 0.06em; color: var(--ink-on-walnut);">IH-2026-0041-7QK</span>
+            </div>
+          </div>
+
+          <div style="border: 1px solid var(--line); border-radius: var(--radius-panel);">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+              <span style="flex: 1; font-size: 15px; color: var(--ink-2);">Holder</span>
+              <span style="font-size: 15px; font-weight: 500;">Ada Whitlock</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+              <span style="flex: 1; font-size: 15px; color: var(--ink-2);">Order</span>
+              <span style="font-family: var(--font-mono); font-size: 15px;">#8814</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px; padding: 14px 16px;">
+              <span style="flex: 1; font-size: 15px; color: var(--ink-2);">Paid</span>
+              <span style="font-family: var(--font-mono); font-size: 15px;">$18.82</span>
+            </div>
+          </div>
+
+          <div style="margin-top: auto; display: flex; flex-direction: column; gap: 10px;">
+            <button type="button" style="height: 48px; border: 1px solid var(--line-2); border-radius: var(--radius-pill); background: transparent; color: var(--ink-1); font-family: var(--font-body); font-weight: 500; font-size: 16px; cursor: pointer;">Transfer this ticket</button>
+            <button type="button" style="height: 48px; border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--ink-on-accent); font-family: var(--font-body); font-weight: 600; font-size: 16px; cursor: pointer;">Share HYPE Link</button>
+            <p style="font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 4px 0 0; text-wrap: pretty;">Anyone who buys through your link puts you in the 10% promoter pool for this show.</p>
+          </div>
+        </div>
+        <div style="margin-top: auto; flex: 0 0 auto; height: 93px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; background: linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%); border-top: 3px solid var(--brass); box-shadow: inset 0 1px 0 rgba(255,220,160,.32);">
+          <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%); box-shadow: inset 0 2px 3px rgba(255,246,220,.5), inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.6);">
+            <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: #33240a;">ME</span>
+          </div>
+          <div style="flex: 1; height: 74px; border-radius: var(--radius-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: radial-gradient(120% 150% at 50% 112%, #fffdf4 0%, #f6ecd0 44%, #e4d3a8 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.3), inset 0 -14px 22px -10px rgba(255,150,60,.3);">
+            <span style="font-family: var(--font-display); font-size: 19px; line-height: 1; color: #1c1408;">Tickets</span>
+            <div style="width: 78%; height: 10px; opacity: .45; background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 7px);"></div>
+          </div>
+          <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);">
+            <div style="width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%); box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+</body></html>

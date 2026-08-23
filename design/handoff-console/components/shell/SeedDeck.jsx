@@ -1,0 +1,376 @@
+'use client';
+import React from 'react';
+
+/* Re-anchored to design tokens, 2026-08-22. Prop signature UNCHANGED so
+   _adherence.oxlintrc.json stays valid — this is strictly internal.
+   Kept as React.createElement for the same reason as PlayerPill: the geometry
+   maths and conditional composition make a JSX rewrite a separate change.
+
+   BUG FIXED: the 'Save' swipe label rendered '#fff' on a --accent fill —
+   3.27:1, the forbidden pairing. Third instance in this library after MapSheet
+   and PlayerPill.
+
+   BUG FIXED: the 'Skip' label's plate was 'rgba(10,16,30,.86)', a NAVY from
+   the Bulletin direction, on a warm walnut card. Now var(--scrim).
+
+   Also fixed:
+   · card shadows rgba(4,8,18,.45/.6) were navy → var(--shadow-play/-raised)
+   · surfaces #34200f / #4a2b16 / #140c05 → the walnut tokens
+   · ink #f6ecd9 / #d8c6a6 / #bda882 → the on-walnut set
+   · 'var(--brass,#c9a54e)' and 'var(--brass-deep,#8a6a2c)' → the bare tokens.
+     A fallback duplicating the token silently wins when the stylesheet fails.
+   · fontSize 9.5 / 13 / 13.5 were below the floor → var(--text-xs) for mono,
+     var(--text-base) for copy; 24/27/17/22/26/30 → the token scale
+   · hyped label colour '#1a1206' → var(--ink-on-accent)
+   · accent alphas → color-mix on var(--accent)
+   · transition '160ms ease' → var(--duration-default) / var(--ease)
+
+   JUDGEMENT CALL — card radius 26 → var(--radius-panel) (3px). The design
+   system is explicit that --radius-panel is "every card, row, stat, section
+   panel", and a machined console has a cut edge. But this is the one card in
+   the product that is meant to read as a physical card in a deck, and 3px is a
+   visible change. Flagged rather than assumed: if the deck should keep a
+   moulded corner, that is a token decision (a --radius-deck), not a local
+   literal.
+
+   The setInterval clip meter, the synchronous fling commit and the
+   measure-your-own-room layout are UNTOUCHED — they are ADHERENCE 23 fixes,
+   not style values. */
+
+const _SD = {
+  surf: 'var(--walnut-2)',
+  raised: 'var(--walnut)',
+  well: 'var(--walnut-3)',
+  ink: 'var(--ink-on-walnut)',
+  ink2: 'var(--ink-on-walnut-2)',
+  ink3: 'var(--ink-on-walnut-3)',
+  acc: 'var(--accent)',
+  onAcc: 'var(--ink-on-accent)',
+  line: 'var(--rule-on-walnut)',
+  hair: 'var(--rule-on-walnut-2)',
+  fd: 'var(--font-display)',
+  fb: 'var(--font-body)',
+  fm: 'var(--font-mono)',
+};
+
+/**
+ * The seed deck — Discover itself, not a section of it.
+ *
+ * One card at a time: the artist's own graphic with their name, the release and
+ * the track over it, and a clip of 15–30 seconds playing underneath. Swipe left
+ * to skip, right to add to the Discover playlist, HYPE beneath. The deck is the
+ * whole surface because the decision is binary and the queue is infinite —
+ * a grid of six would ask you to compare when the product only wants a verdict.
+ *
+ * The card follows the pointer while you drag, and the verdict is committed the
+ * moment you release — synchronously, never through an animation callback. This
+ * shell runs in contexts where no animation frame ever fires and the document
+ * timeline does not advance, so anything whose OUTCOME waits on a frame simply
+ * never happens. The clip ring runs on setInterval for the same reason.
+ */
+
+if (typeof document !== 'undefined' && !document.getElementById('_sd_kf')) {
+  const el = document.createElement('style');
+  el.id = '_sd_kf';
+  el.textContent = '@keyframes sdHypePop{0%{transform:scale(1)}30%{transform:scale(1.13)}55%{transform:scale(.96)}100%{transform:scale(1)}}'
+    + '@keyframes sdHypeRing{0%{opacity:.6;transform:scale(.82)}100%{opacity:0;transform:scale(1.5)}}'
+    + '@media(prefers-reduced-motion:reduce){[data-sd-anim]{animation:none!important}}';
+  document.head.appendChild(el);
+}
+
+export function SeedDeck({
+  items = [], index = 0, hyped = false, saved = false, savedCount = 0, clipSeconds = 22,
+  hypeLocked = false, hypeLabel, maxHeight, reduceMotion = false,
+  onSkip, onSave, onHype, onOpenArtist, onTogglePlay, playing = true,
+}) {
+  const [dx, setDx] = React.useState(0);
+  const [dy, setDy] = React.useState(0);
+  const [clip, setClip] = React.useState(0);
+  const [burst, setBurst] = React.useState(false);
+  const drag = React.useRef(null);
+  const timer = React.useRef(0);
+  const rootRef = React.useRef(null);
+  const [room, setRoom] = React.useState(null);
+
+  /* The deck measures the space it actually has rather than being told. The
+     shell's estimate was a guess at the header's height, and the header has
+     since grown a pinned headline and a three-line dek, so the guess ran 73px
+     short and the controls landed on top of the player. */
+  React.useLayoutEffect(() => {
+    const measure = () => {
+      if (!rootRef.current) return;
+      const top = rootRef.current.getBoundingClientRect().top;
+      const cs = getComputedStyle(document.documentElement);
+      const px = (v) => parseFloat(cs.getPropertyValue(v)) || 0;
+      const reserved = px('--chrome-b') + px('--chrome-s') + 20;
+      setRoom(Math.max(0, window.innerHeight - top - reserved));
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  });
+
+  /* The clip meter. `setInterval`, not rAF: this runtime never fires animation
+     frames, so a rAF loop leaves the ring frozen at its initial value on every
+     card. performance.now() deltas still give real elapsed time. */
+  React.useEffect(() => {
+    setClip(0);
+    let last = performance.now();
+    let v = 0;
+    const id = setInterval(() => {
+      const now = performance.now();
+      const d = (now - last) / 1000; last = now;
+      if (playing) { v = (v + d / clipSeconds) % 1; setClip(v); }
+    }, 100);
+    return () => clearInterval(id);
+  }, [index, playing, clipSeconds]);
+
+  React.useEffect(() => () => clearInterval(timer.current), []);
+
+  /* Commit synchronously. The outcome must never ride on a frame arriving:
+     this runtime fires no animation frames, so routing the verdict through a
+     tween's completion callback meant skip and save silently did nothing. */
+  const fling = (dir) => {
+    setDx(0); setDy(0);
+    clearInterval(timer.current);
+    if (dir > 0) onSave && onSave(items[index]);
+    else onSkip && onSkip(items[index]);
+  };
+
+  const settle = () => {
+    clearInterval(timer.current);
+    setDx(0); setDy(0);
+  };
+
+  const down = (e) => {
+    drag.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const move = (e) => {
+    if (!drag.current) return;
+    setDx(e.clientX - drag.current.x);
+    setDy((e.clientY - drag.current.y) * 0.35);
+  };
+  const up = () => {
+    if (!drag.current) return;
+    drag.current = null;
+    if (Math.abs(dx) > 108) fling(dx > 0 ? 1 : -1);
+    else settle();
+  };
+
+  const item = items[index];
+  if (!item) {
+    return React.createElement('div', {
+      style: { textAlign: 'center', padding: 'var(--space-16) var(--space-5)', color: _SD.ink2, fontFamily: _SD.fb },
+    },
+      React.createElement('div', { style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: 'var(--text-lg)', color: _SD.ink, letterSpacing: 'var(--tracking-normal)' } }, 'Deck empty'),
+      React.createElement('div', { style: { fontSize: 'var(--text-base)', marginTop: 'var(--space-1)' } }, 'New seeds arrive as artists upload and as you move.')
+    );
+  }
+
+  /* The deck is measured against the space it is given, not drawn at a fixed
+     size and hoped to fit. CHROME is the deck's own furniture below the card.
+     No lower floor — a floor larger than the room is how the deck came to
+     render 440px inside a 380px slot. */
+  const CARD_W = 328;
+  const CHROME = 4 + 34 + 18 + 72;
+  /* `room != null`, not truthiness: a measured 0 is a real answer and must not
+     fall through to the shell's estimate. */
+  const avail = room != null ? room : (maxHeight || 0);
+  const CARD_H = avail ? Math.max(200, Math.min(436, avail - CHROME)) : 436;
+  const PAD = 16;
+  /* The sleeve is square and the naming under it needs ~132px, so the sleeve
+     takes whatever the measured card can spare, never more than its width. */
+  const SLEEVE = Math.max(120, Math.min(CARD_W - PAD * 2, CARD_H - PAD * 2 - 132));
+  const rot = Math.max(-14, Math.min(14, dx / 14));
+  const intent = Math.min(1, Math.abs(dx) / 108);
+
+  /* Two cards behind, nudged and dimmed, so the deck reads as a deck. */
+  const behind = (offset) => {
+    const it = items[index + offset];
+    if (!it) return null;
+    const k = offset - intent * 0.55;
+    return React.createElement('div', {
+      key: 'b' + (index + offset),
+      'aria-hidden': 'true',
+      style: {
+        position: 'absolute', left: 0, right: 0, top: 0,
+        height: CARD_H, borderRadius: 'var(--radius-panel)', overflow: 'hidden',
+        background: _SD.surf, border: '1px solid ' + _SD.line,
+        transform: 'translateY(' + k * 16 + 'px) scale(' + (1 - k * 0.045) + ')',
+        opacity: 1 - k * 0.28,
+        boxShadow: 'var(--shadow-raised)',
+      },
+    }, React.createElement('div', {
+      style: { position: 'absolute', inset: 0, background: 'linear-gradient(150deg,' + it.c1 + ',' + it.c2 + ')', opacity: .5 },
+    }));
+  };
+
+  const label = (text, side, background, color) => React.createElement('div', {
+    'aria-hidden': 'true',
+    style: {
+      position: 'absolute', top: 22, [side]: 22,
+      fontFamily: _SD.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-widest)', textTransform: 'uppercase',
+      color, background, borderRadius: 'var(--radius-pill)', padding: 'var(--space-2) var(--space-4)',
+      opacity: (side === 'left' ? dx > 0 : dx < 0) ? intent : 0,
+      transform: 'rotate(' + (side === 'left' ? -8 : 8) + 'deg)',
+    },
+  }, text);
+
+  const circ = 2 * Math.PI * 15;
+
+  return React.createElement('div', {
+    ref: rootRef,
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-5)', fontFamily: _SD.fb, paddingTop: 4 },
+  },
+    React.createElement('div', { style: { position: 'relative', width: CARD_W, height: CARD_H + 34 } },
+      behind(2), behind(1),
+      React.createElement('div', {
+        onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up,
+        style: {
+          position: 'absolute', left: 0, top: 0, width: CARD_W, height: CARD_H,
+          borderRadius: 'var(--radius-panel)', overflow: 'hidden', background: _SD.surf,
+          border: '1px solid ' + _SD.line, boxShadow: 'var(--shadow-play)',
+          transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)',
+          cursor: 'grab', touchAction: 'none', userSelect: 'none',
+        },
+      },
+        /* The sleeve. Every artist graphic in the product is a square cover, so
+           this is a square — until one is uploaded it falls back to the
+           artist's own palette, never a stock image. */
+        React.createElement('div', {
+          style: { position: 'absolute', left: PAD, top: PAD, width: SLEEVE, height: SLEEVE },
+        },
+          React.createElement('div', {
+            'aria-hidden': 'true',
+            style: {
+              position: 'absolute', right: -SLEEVE * 0.09, top: SLEEVE * 0.085,
+              width: SLEEVE * 0.83, height: SLEEVE * 0.83, borderRadius: 'var(--radius-pill)',
+              background: 'repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.55) 1px 4px), var(--walnut-3)',
+              boxShadow: 'var(--shadow-card)',
+            },
+          },
+            React.createElement('div', {
+              style: {
+                position: 'absolute', left: '50%', top: '50%', width: '31%', height: '31%',
+                transform: 'translate(-50%,-50%)', borderRadius: 'var(--radius-pill)',
+                background: 'linear-gradient(160deg,' + item.c1 + ',' + item.c2 + ')',
+              },
+            })
+          ),
+          React.createElement('div', {
+            style: {
+              position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'var(--radius-panel)',
+              background: 'linear-gradient(150deg,' + item.c1 + ' 0%,' + item.c2 + ' 100%)',
+              boxShadow: '0 0 0 2px var(--brass), var(--shadow-album)',
+            },
+          },
+            React.createElement('div', {
+              'aria-hidden': 'true',
+              style: {
+                position: 'absolute', right: -SLEEVE * 0.1, bottom: -SLEEVE * 0.22,
+                fontFamily: _SD.fd, fontWeight: 400, fontSize: SLEEVE * 0.86, lineHeight: .8,
+                color: 'rgba(255,255,255,.14)', letterSpacing: 'var(--tracking-tight)',
+              },
+            }, item.initial)
+          )
+        ),
+
+        label('Save', 'left', _SD.acc, _SD.onAcc),
+        label('Skip', 'right', 'var(--scrim)', _SD.ink),
+
+        React.createElement('div', { style: { position: 'absolute', left: PAD, right: PAD, top: PAD + SLEEVE + 16 } },
+          React.createElement('button', {
+            type: 'button',
+            onClick: (e) => { e.stopPropagation(); onOpenArtist && onOpenArtist(item); },
+            style: {
+              display: 'block', background: 'transparent', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer',
+              fontFamily: _SD.fd, fontWeight: 400, fontSize: 'var(--text-xl)', letterSpacing: 'var(--tracking-normal)', color: _SD.ink, lineHeight: 1.05,
+            },
+          }, item.artist),
+          React.createElement('div', {
+            style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: 'var(--text-md)', letterSpacing: 'var(--tracking-normal)', color: _SD.ink, marginTop: 'var(--space-1)' },
+          }, item.song),
+          React.createElement('div', {
+            style: { fontSize: 'var(--text-base)', color: _SD.ink2, marginTop: 2 },
+          }, item.album),
+          React.createElement('div', {
+            style: { fontFamily: _SD.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', color: _SD.ink3, marginTop: 'var(--space-3)' },
+          }, item.why)
+        )
+      )
+    ),
+
+    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: CARD_W, maxWidth: '100%' } },
+      React.createElement('button', {
+        type: 'button', onClick: () => fling(-1), 'aria-label': 'Skip ' + item.artist,
+        style: {
+          width: 64, height: 64, flex: '0 0 auto', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+          background: 'color-mix(in oklab, var(--walnut-3) 34%, transparent)',
+          border: '2px solid var(--brass-deep)',
+          color: _SD.ink3, fontSize: 'var(--text-xl)', display: 'grid', placeItems: 'center',
+        },
+      }, React.createElement('span', { 'aria-hidden': 'true' }, '\u2715')),
+
+      React.createElement('button', {
+        type: 'button', onClick: hypeLocked ? undefined : () => { setBurst(true); setTimeout(() => setBurst(false), 520); onHype && onHype(item); },
+        disabled: hypeLocked, 'aria-pressed': hyped,
+        'aria-label': hypeLocked
+          ? 'Already hyped ' + item.artist + '. ' + (hypeLabel || '') + ' until you can hype again'
+          : 'Hype ' + item.artist,
+        style: {
+          /* HYPE is the deck's whole point, so it outweighs skip and save
+             instead of sitting between them as their equal. */
+          position: 'relative', flex: 1, minWidth: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
+          height: 72, padding: '0 var(--space-5)',
+          borderRadius: 'var(--radius-pill)', cursor: hypeLocked ? 'default' : 'pointer',
+          background: hypeLocked
+            ? 'color-mix(in oklab, var(--accent) 8%, transparent)'
+            : (hyped ? _SD.acc : 'color-mix(in oklab, var(--accent) 14%, transparent)'),
+          border: '2px solid ' + (hypeLocked
+            ? 'color-mix(in oklab, var(--accent) 28%, transparent)'
+            : (hyped ? _SD.acc : 'color-mix(in oklab, var(--accent) 55%, transparent)')),
+          color: hypeLocked ? _SD.ink3 : (hyped ? _SD.onAcc : _SD.acc),
+          fontFamily: _SD.fd, fontWeight: 400, letterSpacing: 'var(--tracking-normal)',
+          animation: burst ? 'sdHypePop 520ms var(--ease-spring) both' : 'none',
+        },
+      },
+        /* Two rings, offset in time, so the tap throws off a burst rather than a
+           single pulse. */
+        burst ? React.createElement('span', {
+          'aria-hidden': 'true', 'data-sd-anim': true,
+          style: { position: 'absolute', inset: -3, borderRadius: 'var(--radius-pill)', border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms var(--ease-out) both', pointerEvents: 'none' },
+        }) : null,
+        burst ? React.createElement('span', {
+          'aria-hidden': 'true', 'data-sd-anim': true,
+          style: { position: 'absolute', inset: -3, borderRadius: 'var(--radius-pill)', border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms var(--ease-out) 130ms both', pointerEvents: 'none' },
+        }) : null,
+        React.createElement('span', {
+          style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: 'var(--text-lg)', letterSpacing: 'var(--tracking-wide)' },
+        }, 'HYPE'),
+        hypeLocked && hypeLabel ? React.createElement('span', {
+          style: { fontFamily: _SD.fm, fontWeight: 500, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-wide)', opacity: .85 },
+        }, hypeLabel) : null
+      ),
+
+      React.createElement('button', {
+        type: 'button', onClick: () => fling(1),
+        'aria-pressed': saved,
+        'aria-label': (saved ? 'Saved — ' : 'Save ') + item.song + ' to your Discover playlist',
+        style: {
+          /* Grey until it means something. A save button pre-tinted accent reads
+             as already saved, so every card looked liked before it was. */
+          width: 64, height: 64, flex: '0 0 auto', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+          background: saved
+            ? 'color-mix(in oklab, var(--accent) 16%, transparent)'
+            : 'color-mix(in oklab, var(--walnut-3) 34%, transparent)',
+          border: '2px solid ' + (saved ? _SD.acc : 'var(--brass-deep)'),
+          color: saved ? _SD.acc : _SD.ink3,
+          fontSize: 'var(--text-xl)', display: 'grid', placeItems: 'center',
+          transition: 'background var(--duration-default) var(--ease), border-color var(--duration-default) var(--ease), color var(--duration-default) var(--ease)',
+        },
+      }, React.createElement('span', { 'aria-hidden': 'true' }, saved ? '\u2665' : '\u2661'))
+    )
+  );
+}
