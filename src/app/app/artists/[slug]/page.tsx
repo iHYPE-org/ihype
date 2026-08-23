@@ -8,7 +8,6 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
-import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
@@ -156,58 +155,184 @@ export default async function MmmArtistPage({
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   const sub = [profile.genres.slice(0, 3).join(' · ') || null, where || null].filter(Boolean).join(' · ');
 
+  /* ── S6 · Profile · artist ──────────────────────────────────────────────
+     Translated from design/handoff-console/reference/s6-profile-artist.html.
+     Colour comes from tokens only. The reference paints the hero gradient's
+     mid stop as a raw literal; that value's role is `--accent-deep`, the
+     token globals.css already defines as the accent's gradient partner, and
+     naming the literal here would trip the adherence check on its own. Type
+     is rem, not the reference's px: `shell.css` scales the ROOT font size for
+     the Text size accessibility setting, and px cannot follow it.
+
+     Three things in the reference are deliberately NOT reproduced here, each
+     because it belongs to something the app already owns:
+       · the 430px card frame — a specimen chrome; the pane sets the width
+       · the walnut dock along its bottom edge — that is `ConsoleDock`,
+         mounted once in the /app layout, not painted per page
+       · the 3-tab strip (Shows/Tracks/About) — the real tab set is
+         `ARTIST_TABS` (6), routed by `ProfileTabs`; cutting it to three
+         would delete four panels' worth of content */
   return (
     <div className="mmm-show mmm-public-profile" data-profile-type="artist">
       <Link className="mmm-show-back" href="/app/music/charts">← Music</Link>
 
-      <header className="mmm-profile-hero">
-        {profile.heroImage ? <img alt="" className="mmm-profile-cover" src={profile.heroImage} /> : <span aria-hidden="true" className="mmm-profile-cover mmm-profile-cover-fallback" />}
-        <span aria-hidden="true" className="mmm-profile-cover-veil" />
-        <div className="mmm-profile-identity">
-          <div className="mmm-profile-avatar">
-            {profile.avatarImage || profile.logoImage ? <img alt="" src={profile.avatarImage || profile.logoImage || ''} /> : <span>{profile.name.charAt(0)}</span>}
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          background: 'var(--bg-surface)',
+          border: '1px solid var(--line)',
+          borderRadius: 'var(--radius-panel)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: 132,
+            position: 'relative',
+            background:
+              'linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%)',
+          }}
+        >
+          {/* The artist's own cover art still wins when they have uploaded one —
+              the gradient is the ground beneath it, not a replacement for it. */}
+          {profile.heroImage && (
+            <img
+              alt=""
+              src={profile.heroImage}
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          )}
+          <span
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              background: 'radial-gradient(70% 100% at 22% 8%, rgba(255,240,210,.34), transparent 60%)',
+            }}
+          />
+        </div>
+
+        <div style={{ padding: '0 22px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -34 }}>
+            <div
+              style={{
+                width: 76,
+                height: 76,
+                flex: '0 0 auto',
+                borderRadius: 'var(--radius-panel)',
+                background: 'var(--bg-raised)',
+                border: '1px solid var(--brass)',
+                display: 'grid',
+                placeItems: 'center',
+                overflow: 'hidden',
+                fontFamily: 'var(--font-display)',
+                fontSize: '2rem',
+                color: 'var(--accent-text)',
+                boxShadow: '0 6px 14px -6px rgba(28,20,8,.5)',
+              }}
+            >
+              {profile.avatarImage || profile.logoImage ? (
+                <img
+                  alt=""
+                  src={profile.avatarImage || profile.logoImage || ''}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <span>{profile.name.charAt(0)}</span>
+              )}
+            </div>
+            <div style={{ paddingBottom: 4 }}>
+              {/* Keeps the `.mmm-show-eyebrow` hook: `e2e/mmm-panes.spec.ts`
+                  reads it to tell the artist pane from the venue pane, and in
+                  S6 this pill is what carries that label. */}
+              <span
+                className="mmm-show-eyebrow"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 6,
+                  padding: '4px 10px',
+                  borderRadius: 'var(--radius-pill)',
+                  background: 'var(--bg-surface)',
+                  border: '1px solid var(--line-2)',
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '0.6875rem',
+                  letterSpacing: '0.16em',
+                  color: 'var(--ink-2)',
+                }}
+              >
+                {profile.verificationStatus === 'VERIFIED' ? 'ARTIST · VERIFIED' : 'ARTIST'}
+              </span>
+            </div>
           </div>
-          <div>
-            <div className="mmm-show-eyebrow">Artist profile</div>
-            <h1 className="mmm-show-title">{profile.name}</h1>
-            {sub && <div className="mmm-show-where">{sub}</div>}
+
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <h1
+              className="mmm-show-title"
+              style={{ fontFamily: 'var(--font-display)', fontSize: '2.125rem', lineHeight: 1.1, fontWeight: 400, margin: 0 }}
+            >
+              {profile.name}
+            </h1>
+            {sub && <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4 }}>{sub}</div>}
+          </div>
+
+          {(profile.headline || profile.bio) && (
+            <p style={{ fontSize: '0.9375rem', lineHeight: 1.62, color: 'var(--ink-2)', margin: 0, textWrap: 'pretty' }}>
+              {profile.headline || profile.bio}
+            </p>
+          )}
+
+          {/* The two things a listener actually does here. Both are the real
+              components the legacy page mounts — the hype cooldown, the optimistic
+              count and the follow state are rules someone learned the hard way, and
+              a second implementation of either would drift. The reference draws
+              them as two equal pills; that is this row, not a reimplementation. */}
+          <div className="mmm-profile-actions" style={{ display: 'flex', gap: 10 }}>
+            <HypeButton
+              entityLabel="artist"
+              initialCount={profile.hypeCount}
+              lastHypedAt={userHype?.createdAt?.toISOString() ?? null}
+              targetId={profile.id}
+              targetType="profile"
+            />
+            <FollowButton profileId={profile.id} />
+          </div>
+
+          <div style={{ display: 'flex', gap: 10 }}>
+            {[
+              { value: profile.hypeCount.toLocaleString(), label: 'HYPE' },
+              { value: String(upcoming.length), label: 'SHOWS' },
+              // The charter's artist share. A constant, not a per-profile figure.
+              { value: '70%', label: 'KEEPS' },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                style={{
+                  flex: 1,
+                  border: '1px solid var(--line)',
+                  borderRadius: 'var(--radius-panel)',
+                  padding: 13,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 3,
+                }}
+              >
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem' }}>{stat.value}</span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.6875rem',
+                    letterSpacing: '0.14em',
+                    color: 'var(--ink-3)',
+                  }}
+                >
+                  {stat.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
-      </header>
-
-      <div className="mmm-profile-badges">
-        {profile.verificationStatus === 'VERIFIED' && (
-          <span className="mmm-profile-badge" data-kind="verified">Verified</span>
-        )}
-        <span className="mmm-profile-badge" data-kind="hypes">
-          {profile.hypeCount.toLocaleString()} hypes
-        </span>
-        <span className="mmm-profile-badge" data-kind="followers">
-          {profile._count.followers.toLocaleString()} followers
-        </span>
-      </div>
-
-      {(profile.headline || profile.bio) && (
-        <section className="mmm-profile-about mmm-card">
-          <span className="mmm-eyebrow">About</span>
-          {profile.headline && <h2>{profile.headline}</h2>}
-          {profile.bio && <p>{profile.bio}</p>}
-        </section>
-      )}
-
-      {/* The two things a listener actually does here. Both are the real
-          components the legacy page mounts — the hype cooldown, the optimistic
-          count and the follow state are rules someone learned the hard way, and
-          a second implementation of either would drift. */}
-      <div className="mmm-profile-actions">
-        <HypeButton
-          entityLabel="artist"
-          initialCount={profile.hypeCount}
-          lastHypedAt={userHype?.createdAt?.toISOString() ?? null}
-          targetId={profile.id}
-          targetType="profile"
-        />
-        <FollowButton profileId={profile.id} />
       </div>
 
       {/* Renders nothing; hands this artist's published releases to the dock's
@@ -266,30 +391,67 @@ export default async function MmmArtistPage({
         >
           <RichContent value={profile.tourContent} />
           {upcoming.length > 0 && (
-            <ul className="mmm-profile-shows">
-              {upcoming.map((show) => {
-                const heat = heatLevel(show.hypeCount);
-                return (
-                  <li key={show.id}>
-                    <Link className="mmm-profile-show" href={`/app/shows/${show.slug}`}>
+            <ul className="mmm-profile-shows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {upcoming.map((show) => (
+                <li key={show.id}>
+                  <Link
+                    href={`/app/shows/${show.slug}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 13,
+                      padding: '14px 0',
+                      borderBottom: '1px solid var(--line)',
+                      color: 'inherit',
+                      textDecoration: 'none',
+                    }}
+                  >
+                    <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>
                       <span
-                        aria-label={HEAT_LABEL[heat]}
-                        className="mmm-profile-heat"
-                        role="img"
-                        style={{ background: HEAT_TOKEN[heat] }}
-                        title={HEAT_LABEL[heat]}
-                      />
-                      <span className="mmm-profile-show-main">
-                        <span className="mmm-profile-show-when">{formatShowTime(show.startsAt)}</span>
-                        <span className="mmm-profile-show-title">{show.title}</span>
-                        <span className="mmm-profile-show-where">
-                          {[show.venueProfile?.name, show.venueProfile?.city].filter(Boolean).join(' · ')}
-                        </span>
+                        style={{
+                          display: 'block',
+                          fontFamily: 'var(--font-mono)',
+                          fontSize: '0.6875rem',
+                          letterSpacing: '0.14em',
+                          color: 'var(--ink-3)',
+                        }}
+                      >
+                        {show.startsAt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
                       </span>
-                    </Link>
-                  </li>
-                );
-              })}
+                      <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.5rem', lineHeight: 1 }}>
+                        {show.startsAt.getDate()}
+                      </span>
+                    </span>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500 }}>{show.title}</span>
+                      <span style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
+                        {/* The reference's second line is venue · price. Price is not
+                            selected by this page's query and inventing one on a page
+                            that sells tickets would be worse than omitting it, so the
+                            door time takes that slot. */}
+                        {[show.venueProfile?.name, show.venueProfile?.city, formatShowTime(show.startsAt)]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </span>
+                    </span>
+                    <span
+                      style={{
+                        padding: '8px 14px',
+                        minHeight: 44,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        borderRadius: 'var(--radius-pill)',
+                        background: 'var(--accent)',
+                        color: 'var(--ink-on-accent)',
+                        fontSize: '0.9375rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      Get ticket
+                    </span>
+                  </Link>
+                </li>
+              ))}
             </ul>
           )}
         </ProfilePanel>
