@@ -1,7 +1,147 @@
 'use client';
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MmmPlayerTrack } from '@/components/mmm/MmmShell';
+
+/** Everything the playlist-items endpoint needs to store a playable row. */
+export type PlaylistAddTarget = {
+  mediaId: string;
+  title: string;
+  artistName: string;
+  url: string;
+  artistProfileSlug: string | null;
+  artworkUrl: string | null;
+};
+
+/**
+ * "+ Playlist" — the loop-closer between the player and the Playlists tab.
+ *
+ * Playlists existed and played, but nothing could ADD to one from where music
+ * is actually heard: building a playlist meant leaving the player entirely
+ * (owner-approved batch, 2026-08-24). Self-contained on purpose — it fetches
+ * `/api/fan-playlists` only when opened, posts to the items endpoint the
+ * playlist page already uses, and reports the endpoint's own verdicts: a 409
+ * is "already in", not an error.
+ */
+function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
+  const [open, setOpen] = useState(false);
+  const [lists, setLists] = useState<Array<{ id: string; name: string }> | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(async () => {
+    setOpen((value) => !value);
+    setNote(null);
+    if (lists) return;
+    try {
+      const response = await fetch('/api/fan-playlists', { cache: 'no-store' });
+      if (!response.ok) throw new Error(String(response.status));
+      const payload = (await response.json()) as { playlists?: Array<{ id: string; name: string }> };
+      setLists((payload.playlists ?? []).map((list) => ({ id: list.id, name: list.name })));
+    } catch {
+      setLists([]);
+      setNote('Playlists could not be loaded right now.');
+    }
+  }, [lists]);
+
+  const add = useCallback(async (playlistId: string, name: string) => {
+    if (busy) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const response = await fetch(`/api/fan-playlists/${encodeURIComponent(playlistId)}/items`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(target),
+      });
+      if (response.status === 409) setNote(`Already in ${name}.`);
+      else if (!response.ok) setNote('Could not add the track. Try again.');
+      else setNote(`Added to ${name}.`);
+    } catch {
+      setNote('Could not add the track. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, target]);
+
+  const create = useCallback(async (name: string) => {
+    if (busy || !name) return;
+    setBusy(true);
+    setNote(null);
+    try {
+      const response = await fetch('/api/fan-playlists', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const playlist = (await response.json()) as { id: string; name: string };
+      setLists((value) => [...(value ?? []), { id: playlist.id, name: playlist.name }]);
+      setBusy(false);
+      await add(playlist.id, playlist.name);
+      return;
+    } catch {
+      setNote('Could not create the playlist.');
+    }
+    setBusy(false);
+  }, [add, busy]);
+
+  return (
+    <>
+      <button
+        aria-expanded={open}
+        aria-label={`Add ${target.title} to a playlist`}
+        className="mmm-full-fav"
+        data-active={open || undefined}
+        onClick={() => void load()}
+        type="button"
+      >
+        <span aria-hidden="true">+</span>
+      </button>
+      {open && (
+        <div className="mmm-full-list" data-add-panel="" style={{ width: '100%' }}>
+          <p className="mmm-queue-eyebrow">Add to playlist</p>
+          {note && <p className="mmm-queue-eyebrow" role="status" style={{ color: 'var(--accent-text)' }}>{note}</p>}
+          {lists === null && <p className="mmm-queue-eyebrow" role="status">Loading…</p>}
+          {(lists ?? []).map((list) => (
+            <button className="mmm-queue-row" disabled={busy} key={list.id} onClick={() => void add(list.id, list.name)} type="button">
+              <span aria-hidden="true" className="mmm-queue-index">≡</span>
+              <span className="mmm-queue-title">{list.name}</span>
+            </button>
+          ))}
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              const form = event.currentTarget;
+              const value = new FormData(form).get('name');
+              const name = typeof value === 'string' ? value.trim() : '';
+              if (name) { void create(name); form.reset(); }
+            }}
+            style={{ display: 'flex', gap: 8, padding: '8px 0 0' }}
+          >
+            <input
+              aria-label="New playlist name"
+              maxLength={60}
+              name="name"
+              placeholder="New playlist"
+              style={{
+                flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 'var(--radius-card)',
+                border: '1.5px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)',
+                // max(16px, …): Safari zooms the page on a sub-16px focused
+                // input and never zooms back — mobile-fit.css's own rule.
+                fontSize: 'max(16px, 1rem)', fontFamily: 'var(--font-body)',
+              }}
+              type="text"
+            />
+            <button className="mmm-queue-row" disabled={busy} style={{ flex: '0 0 auto', width: 'auto' }} type="submit">
+              <span className="mmm-queue-title">Create</span>
+            </button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+}
 
 /**
  * The full-screen player. Phone only.
@@ -47,6 +187,7 @@ function clock(pct: number, seconds: number): string {
 }
 
 export function MmmFullPlayer({
+  addTarget,
   canGoBack,
   canGoForward,
   canFavourite,
@@ -77,6 +218,8 @@ export function MmmFullPlayer({
   track,
   volume,
 }: {
+  /** The playing track in the playlist-items endpoint's own shape. Null hides the control. */
+  addTarget?: PlaylistAddTarget | null;
   canGoBack: boolean;
   canGoForward: boolean;
   canFavourite: boolean;
@@ -249,9 +392,10 @@ export function MmmFullPlayer({
           </button>
         </div>
 
-        {/* Two acts, two controls — never one heart standing for both. */}
-        {(canHype || canFavourite) && (
-          <div className="mmm-full-acts">
+        {/* Two acts, two controls — never one heart standing for both. The
+            third square is filing, not an act: it puts the track somewhere. */}
+        {(canHype || canFavourite || addTarget) && (
+          <div className="mmm-full-acts" style={{ flexWrap: 'wrap' }}>
             {canHype && (
               <button
                 aria-label={
@@ -286,6 +430,7 @@ export function MmmFullPlayer({
                 <span aria-hidden="true">{faved ? '♥' : '♡'}</span>
               </button>
             )}
+            {addTarget && <AddToPlaylist key={addTarget.mediaId} target={addTarget} />}
           </div>
         )}
 

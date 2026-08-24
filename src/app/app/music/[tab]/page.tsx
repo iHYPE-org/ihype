@@ -25,7 +25,7 @@ export default async function MmmMusicPage({
   // has already flushed, so `notFound()` renders the shell twice (see
   // `MmmMissing`).
   if (!MMM_MUSIC_TABS.some((item) => item.id === tab)) {
-    return <MmmMissing eyebrow="Not found" title="No such tab" body="That is not one of MUSIC's tabs. Discover, Radio, Charts and Playlists are." />;
+    return <MmmMissing eyebrow="Not found" title="No such tab" body="That is not one of MUSIC's tabs. Discover, Radio, Charts, Recommended, Playlists and Library are." />;
   }
   return <MmmMusic city={city} focusSearch={focus === 'search'} genre={genre} q={q} tab={tab as MusicTabId} />;
 }

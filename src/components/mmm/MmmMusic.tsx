@@ -10,7 +10,7 @@ import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
-export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
+export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists' | 'library';
 
 /**
  * The length of a Discover clip. The design system's range is 15–30 seconds and
@@ -135,6 +135,7 @@ export function MmmMusic({
       {tab === 'charts' && <ChartsTab />}
       {tab === 'recommended' && <RecommendedTab />}
       {tab === 'playlists' && <PlaylistsTab />}
+      {tab === 'library' && <LibraryTab />}
     </>
   );
 }
@@ -184,6 +185,53 @@ function useJson<T>(url: string, map: (payload: unknown) => T) {
  * `/api/discover/seeds` already takes `?genres=` (plural, comma-separated), so
  * this is a wire-through, not a new query.
  */
+/**
+ * Recently played, above the deck — "pick up where you left off".
+ *
+ * `MediaListen` has recorded every completed listen since launch and nothing
+ * ever read it back for the listener; the rail is that history, most recent
+ * first. Tapping a card plays the recents as a queue from that card. Silent
+ * when empty, loading or failed — a rail is an extra, and an error banner for
+ * an extra would outweigh the thing it decorates.
+ */
+function RecentsRail() {
+  const { playTrack, currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
+  const { status, data } = useJson<PlayableRow[]>('/api/media-listens', (payload) =>
+    ((payload as { recents?: PlayableRow[] }).recents ?? []));
+  if (status !== 'ready' || !data || data.length === 0) return null;
+  const queue = toQueue(data);
+  if (queue.length === 0) return null;
+  return (
+    <div className="mmm-recents">
+      <p className="mmm-eyebrow">Recently played</p>
+      <div className="mmm-recents-rail">
+        {queue.map((entry, index) => {
+          const active = currentTrack?.id === entry.id;
+          return (
+            <button
+              aria-label={active && isPlaying ? `Pause ${entry.title}` : `Play ${entry.title} by ${entry.artistName}`}
+              className="mmm-recents-card"
+              data-playing={active && isPlaying ? 'true' : undefined}
+              key={entry.id}
+              onClick={() => { if (active) togglePlayback(); else playTrack(entry, queue.slice(index).concat(queue.slice(0, index))); }}
+              type="button"
+            >
+              <span aria-hidden="true" className="mmm-recents-art">
+                {entry.artworkUrl
+                  // eslint-disable-next-line @next/next/no-img-element -- uploader-sized remote artwork, same as the full player
+                  ? <img alt="" src={entry.artworkUrl} />
+                  : (entry.artistName || entry.title).charAt(0).toUpperCase()}
+              </span>
+              <span className="mmm-recents-title">{entry.title}</span>
+              <span className="mmm-recents-sub">{entry.artistName}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
@@ -340,6 +388,7 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   if (!seed) {
     return (
       <>
+        <RecentsRail />
         {filterChip}
         <Empty>
           {seeds.length === 0
@@ -356,6 +405,7 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
 
   return (
     <>
+      <RecentsRail />
       {filterChip}
       <MmmSeedDeck
         busy={busy}
@@ -611,6 +661,139 @@ function ChartsTab() {
         </li>
       ))}
       </ol>
+    </div>
+  );
+}
+
+type FavoriteRow = {
+  mediaId: string;
+  title: string;
+  artistName: string;
+  url: string;
+  artistProfileSlug: string | null;
+  artworkUrl: string | null;
+};
+type LikeRow = { targetType: 'ALBUM' | 'ARTIST' | 'VENUE' | 'ADVERTISEMENT'; targetId: string; name: string | null; slug: string | null; meta: string | null };
+
+/**
+ * LIBRARY — where the hearts land.
+ *
+ * Before this tab, a like went into the account and never came back out: the
+ * player's heart wrote `FanFavoriteMedia` (a fully playable row — url, title,
+ * artist, artwork) and the artist/venue hearts wrote `Like`, and no surface
+ * anywhere listed either. This is also what makes the Settings copy true —
+ * the HYPE link "shares liked playlists", and this list is the thing it shares.
+ *
+ * Liked tracks PLAY here — tapping a row starts the library from that row, and
+ * the joystick starts it from the top — because a library you can only read is
+ * the same bug one shelf up. Artists and venues stay links to their own pages.
+ */
+function LibraryTab() {
+  const { playTrack, currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
+  const favorites = useJson<FavoriteRow[]>('/api/fan-favorites', (payload) =>
+    ((payload as { favorites?: FavoriteRow[] }).favorites ?? []));
+  const likes = useJson<LikeRow[]>('/api/likes', (payload) =>
+    ((payload as { likes?: LikeRow[] }).likes ?? []));
+
+  const tracks = favorites.data ?? [];
+  /* `toQueue` addresses a row by hexId||id and favorites store the track's id
+     as `mediaId` — without this mapping every liked row is silently dropped
+     as unplayable and the whole library goes mute. */
+  const playableTracks = tracks.map((row) => ({
+    id: row.mediaId,
+    title: row.title,
+    artistName: row.artistName,
+    artistSlug: row.artistProfileSlug,
+    url: row.url,
+    artworkUrl: row.artworkUrl,
+  }));
+  useRegisterQueue(playableTracks);
+
+  if (favorites.status === 'loading' && likes.status === 'loading') return <Loading />;
+  if (favorites.status === 'error' && likes.status === 'error') {
+    return <Empty>Your library could not be read right now. Everything in it is safe.</Empty>;
+  }
+
+  const likedArtists = (likes.data ?? []).filter((row) => row.targetType === 'ARTIST' && row.name);
+  const likedVenues = (likes.data ?? []).filter((row) => row.targetType === 'VENUE' && row.name);
+  const empty = tracks.length === 0 && likedArtists.length === 0 && likedVenues.length === 0;
+
+  const playFrom = (index: number) => {
+    const queue = toQueue(playableTracks);
+    /* The queue drops unplayable rows, so the tapped row's position in the
+       QUEUE has to be found by identity, not assumed from the list index. */
+    const target = queue.findIndex((entry) => entry.mediaId === tracks[index].mediaId);
+    if (target < 0) return;
+    if (currentTrack?.id === queue[target].id) { togglePlayback(); return; }
+    playTrack(queue[target], queue);
+  };
+
+  if (empty) {
+    return (
+      <Empty>
+        Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue
+        pages save them here too — everything stays until you unlike it.
+      </Empty>
+    );
+  }
+
+  return (
+    <div className="mmm-music-list">
+      {tracks.length > 0 && (
+        <>
+          <p className="mmm-eyebrow" style={{ padding: '2px 2px 8px' }}>Liked tracks · {tracks.length}</p>
+          {tracks.map((row, index) => {
+            const active = currentTrack?.mediaId === row.mediaId || currentTrack?.id === row.mediaId;
+            return (
+              <button
+                aria-label={active && isPlaying ? `Pause ${row.title}` : `Play ${row.title} by ${row.artistName}`}
+                className="mmm-row"
+                data-playing={active && isPlaying ? 'true' : undefined}
+                key={row.mediaId}
+                onClick={() => playFrom(index)}
+                style={{ display: 'flex', width: '100%', textAlign: 'left' }}
+                type="button"
+              >
+                <span aria-hidden="true" style={{ color: active && isPlaying ? 'var(--accent-text)' : 'var(--ink-3)', width: 22 }}>
+                  {active && isPlaying ? '❚❚' : '▶︎'}
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
+                  <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
+                </span>
+              </button>
+            );
+          })}
+        </>
+      )}
+      {likedArtists.length > 0 && (
+        <>
+          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Liked artists · {likedArtists.length}</p>
+          {likedArtists.map((row) => (
+            <Link className="mmm-row" href={row.slug ? `/app/artists/${row.slug}` : '/app/music/discover'} key={row.targetId} style={{ display: 'flex' }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
+                {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
+              </span>
+              <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+            </Link>
+          ))}
+        </>
+      )}
+      {likedVenues.length > 0 && (
+        <>
+          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Liked venues · {likedVenues.length}</p>
+          {likedVenues.map((row) => (
+            <Link className="mmm-row" href={row.slug ? `/app/venues/${row.slug}` : '/app/map?layer=venues'} key={row.targetId} style={{ display: 'flex' }}>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
+                {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
+              </span>
+              <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+            </Link>
+          ))}
+        </>
+      )}
     </div>
   );
 }

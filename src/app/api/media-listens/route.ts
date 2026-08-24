@@ -15,6 +15,52 @@ const schema = z.object({
   artistProfileSlug: z.string().min(1).max(160).optional()
 });
 
+/**
+ * GET /api/media-listens → { recents } — the caller's recently played tracks,
+ * most recent completion first.
+ *
+ * `MediaListen` keeps ONE row per (user, track) and the completion upsert
+ * below stamps `completedAt` on every finish, so `completedAt desc` is the
+ * real recency order and `createdAt` is only "first heard". The row is
+ * denormalized (title, artist, url) but carries no artwork and no hexId, so
+ * both are hydrated from the asset in one batched query — the hexId is what
+ * `/app/tracks/[hexId]` and the player's queue address a track by.
+ */
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+  try {
+    const listens = await db.mediaListen.findMany({
+      where: { userId: session.user.id, completedAt: { not: null } },
+      orderBy: { completedAt: 'desc' },
+      take: 12,
+      select: { mediaId: true, title: true, mediaUrl: true, artistName: true, artistProfileSlug: true, completedAt: true },
+    });
+    const assets = listens.length
+      ? await db.artistMediaAsset.findMany({
+          where: { id: { in: listens.map((row) => row.mediaId) } },
+          select: { id: true, hexId: true, artworkUrl: true },
+        })
+      : [];
+    const assetById = new Map(assets.map((asset) => [asset.id, asset]));
+    const recents = listens.map((row) => ({
+      id: row.mediaId,
+      hexId: assetById.get(row.mediaId)?.hexId ?? null,
+      title: row.title,
+      artistName: row.artistName,
+      artistSlug: row.artistProfileSlug,
+      mediaUrl: row.mediaUrl,
+      artworkUrl: assetById.get(row.mediaId)?.artworkUrl ?? null,
+    }));
+    return NextResponse.json({ recents });
+  } catch (err) {
+    log.error('[media-listens] read failed', err instanceof Error ? err : { error: String(err) });
+    return NextResponse.json({ error: 'Could not read listens' }, { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {

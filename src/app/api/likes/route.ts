@@ -81,10 +81,42 @@ export async function GET(request: Request) {
       return NextResponse.json({ liked: Boolean(row) });
     }
 
-    const likes = await db.like.findMany({
+    const rows = await db.like.findMany({
       where: { userId: session.user.id },
       orderBy: { createdAt: 'desc' },
       select: { targetType: true, targetId: true, createdAt: true },
+    });
+    /* The Library tab renders this list, and a bare (type, id) pair cannot be
+       rendered — so the display fields are resolved HERE, in two batched
+       queries, rather than by N client round-trips. A like whose target has
+       since vanished (unpublished, deleted) resolves to nothing and is
+       filtered out: a row that 404s on tap is worse than absence. */
+    const profileIds = rows.filter((row) => row.targetType === 'ARTIST' || row.targetType === 'VENUE').map((row) => row.targetId);
+    const albumIds = rows.filter((row) => row.targetType === 'ALBUM').map((row) => row.targetId);
+    const [profiles, albums] = await Promise.all([
+      profileIds.length
+        ? db.profile.findMany({ where: { id: { in: profileIds } }, select: { id: true, name: true, slug: true, city: true } })
+        : Promise.resolve([]),
+      albumIds.length
+        ? db.artistMediaAsset.findMany({ where: { id: { in: albumIds } }, select: { id: true, title: true, profile: { select: { name: true, slug: true } } } })
+        : Promise.resolve([]),
+    ]);
+    const profileById = new Map(profiles.map((p) => [p.id, p]));
+    const albumById = new Map(albums.map((a) => [a.id, a]));
+    type LikeListRow = typeof rows[number] & { name: string | null; slug: string | null; meta: string | null };
+    const likes = rows.flatMap((row): LikeListRow[] => {
+      if (row.targetType === 'ARTIST' || row.targetType === 'VENUE') {
+        const profile = profileById.get(row.targetId);
+        if (!profile) return [];
+        return [{ ...row, name: profile.name, slug: profile.slug, meta: profile.city ?? null }];
+      }
+      if (row.targetType === 'ALBUM') {
+        const album = albumById.get(row.targetId);
+        if (!album) return [];
+        return [{ ...row, name: album.title, slug: album.profile?.slug ?? null, meta: album.profile?.name ?? null }];
+      }
+      // ADVERTISEMENT likes are stored but have no member-facing surface yet.
+      return [{ ...row, name: null, slug: null, meta: null }];
     });
     return NextResponse.json({ likes });
   } catch (error) {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
@@ -9,6 +9,78 @@ import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
 const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
+
+type ListeningSummary = {
+  tracksThisMonth: number | null;
+  tracksTotal: number | null;
+  topArtists: Array<{ name: string; slug: string | null; tracks: number }> | null;
+  hypesThisMonth: number | null;
+};
+
+/**
+ * The account's LISTENING, beside its admin (owner-approved batch, 2026-08-24:
+ * "a listening identity, not just an account"). Every figure is one the schema
+ * can honestly answer — `MediaListen` keeps one row per (user, track), so
+ * these count distinct tracks finished, never "plays", and the labels say so.
+ * A figure that could not be read renders an em dash, never 0 (the
+ * analytics-engine rule). Renders nothing at all for an account that has
+ * never finished a track: a scoreboard of dashes on day one is noise.
+ */
+function ListeningCard() {
+  const [summary, setSummary] = useState<ListeningSummary | null>(null);
+  useEffect(() => {
+    let stale = false;
+    void fetch('/api/me/listening-summary', { cache: 'no-store' })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (!stale && data) setSummary(data as ListeningSummary); })
+      .catch(() => { /* the card just does not render */ });
+    return () => { stale = true; };
+  }, []);
+
+  if (!summary || !summary.tracksTotal) return null;
+  const figure = (value: number | null) => (value === null ? '—' : value.toLocaleString());
+
+  return (
+    <>
+      <div className="mmm-me-stats-head">
+        <span className="mmm-eyebrow">Your listening</span>
+        <span aria-hidden="true" className="mmm-me-stats-rule" />
+      </div>
+      <div className="mmm-stat-grid" style={{ marginBottom: 12 }}>
+        <div className="mmm-card">
+          <div className="mmm-stat-value">{figure(summary.tracksThisMonth)}</div>
+          <div className="mmm-stat-label">Tracks this month</div>
+        </div>
+        <div className="mmm-card">
+          <div className="mmm-stat-value">{figure(summary.tracksTotal)}</div>
+          <div className="mmm-stat-label">Tracks all time</div>
+        </div>
+        <div className="mmm-card">
+          <div className="mmm-stat-value">{figure(summary.hypesThisMonth)}</div>
+          <div className="mmm-stat-label">HYPEs this month</div>
+        </div>
+      </div>
+      {summary.topArtists && summary.topArtists.length > 0 && (
+        <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
+          <div className="mmm-eyebrow" style={{ marginBottom: 8 }}>Most played artists</div>
+          {summary.topArtists.map((artist, index) => (
+            <div key={`${artist.name}-${index}`} style={{ display: 'flex', gap: 10, alignItems: 'baseline', padding: '4px 0' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              {artist.slug ? (
+                <Link href={`/app/artists/${artist.slug}`} style={{ flex: 1, fontWeight: 600, color: 'var(--ink)' }}>{artist.name}</Link>
+              ) : (
+                <span style={{ flex: 1, fontWeight: 600, color: 'var(--ink)' }}>{artist.name}</span>
+              )}
+              <span style={{ color: 'var(--ink-3)', fontSize: '0.9375rem' }}>{artist.tracks} track{artist.tracks === 1 ? '' : 's'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
 
 /**
  * The drawers above the account panels. Order is the design system's —
@@ -300,6 +372,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           because a figure like "Shows attended" belongs to the profile it was
           earned by — and a standing section of numbers above the thing you came
           to do was the top third of a phone screen. */}
+      <ListeningCard />
       {data.stats.length > 0 && (
         <>
           <div className="mmm-me-stats-head">
