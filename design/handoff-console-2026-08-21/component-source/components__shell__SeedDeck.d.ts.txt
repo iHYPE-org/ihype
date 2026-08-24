@@ -1,17 +1,12 @@
 export interface SeedItem {
   /** Artist name, shown largest and tappable through to the artist page. */
-  artist: string;
   /** Track title for the clip that is playing. */
-  song: string;
   /** Release the clip is from. */
-  album: string;
   /** Single letter used as the fallback graphic until an artist uploads one. */
-  initial: string;
   /** Two colours of the artist's card gradient, used until artwork exists. */
   c1: string;
   c2: string;
   /** Why this card is in the deck — proximity, or a hype in your history. */
-  why: string;
 }
 
 export interface SeedDeckProps {

@@ -257,6 +257,10 @@ html.mmm-locked .site-shell > main {
   z-index: 1;
   background:
     radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(120, 94, 52, .28) 100%),
+    /* Two fold creases — the chart has been carried. map-treasure.html's own
+       stops: a dark line, a lit ridge beside it, both hairline-soft. */
+    linear-gradient(90deg, transparent 49.6%, rgba(100, 72, 34, .2) 49.9%, rgba(255, 246, 220, .3) 50.15%, transparent 50.5%),
+    linear-gradient(0deg, transparent 63.6%, rgba(100, 72, 34, .16) 63.9%, rgba(255, 246, 220, .24) 64.15%, transparent 64.5%),
     repeating-linear-gradient(0deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
     repeating-linear-gradient(90deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
     var(--grain),
@@ -308,6 +312,46 @@ html.mmm-locked .site-shell > main {
   text-transform: uppercase;
   text-align: center;
 }
+
+/* ── The torn edge ────────────────────────────────────────────────────────
+   map-treasure.html's `.char`: a frame displaced by fractal noise (the #torn
+   SVG filter MmmMap renders), desk colour outside the tear, a charred line and
+   a scorch halo just inside it. Decoration — never eats a drag — and sits over
+   the grain, under the pins. The inset is negative so the UNdisplaced frame
+   starts past the viewport and only its noise-torn edge shows. */
+.mmm-map-char {
+  position: absolute;
+  inset: -8px;
+  pointer-events: none;
+  z-index: 2;
+  filter: url(#mmm-torn);
+}
+.mmm-map-char-desk { position: absolute; inset: 0; border: 16px solid var(--bg); }
+.mmm-map-char-scorch { position: absolute; inset: 15px; border: 9px solid rgba(110, 70, 26, .14); }
+.mmm-map-char-burn { position: absolute; inset: 13px; border: 4px solid rgba(74, 46, 14, .38); }
+
+/* ── X marks the show ── two hand-cut strokes (map-treasure.html), each pin
+   jittered a few degrees by MmmMap so no two X's sit identically — a stamped
+   X reads as UI, a drawn one as ink. Brick ink via --accent-text; the strokes
+   are marks, not copy, but the same measured token covers both readings. */
+.mmm-pin-x {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  filter: drop-shadow(1px 1.5px 0 rgba(58, 42, 18, .35));
+}
+.mmm-pin-x i {
+  position: absolute;
+  left: -1px;
+  top: 8px;
+  width: 20px;
+  height: 3.2px;
+  border-radius: 2px;
+  background: var(--accent-text);
+}
+.mmm-pin-x i:first-child { transform: rotate(43deg); }
+.mmm-pin-x i:last-child { transform: rotate(-47deg); }
 
 .mmm-map-controls {
   position: absolute;
@@ -421,9 +465,13 @@ html.mmm-locked .site-shell > main {
   align-items: center;
   gap: 5px;
 }
-/* A show over 75% sold inverts to a solid accent fill. */
+/* A show over 75% sold inverts to a solid accent fill. This painted #030305
+   until 2026-08-24 — legible when --ink-on-accent was cream on the dark
+   ground, but the console conversion made that token dark ink, so the pill
+   went near-black-on-black. The accent fill is what the comment always
+   promised, and #1c1408 on #ff5029 is the measured 5.58:1 pair. */
 .mmm-pin[data-hot='true'] .mmm-pin-pill {
-  background: #030305;
+  background: var(--accent);
   color: var(--ink-on-accent);
   border-color: var(--ink-a85);
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
@@ -446,17 +494,6 @@ html.mmm-locked .site-shell > main {
   color: var(--ink);
   white-space: nowrap;
   box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.2);
-}
-.mmm-pin-x {
-  font-family: var(--font-mono);
-  font-weight: 700;
-  font-size: 1.25rem;
-  line-height: 1;
-  /* --accent-text, not --accent: the bare accent measures 2.48:1 on the
-     ground, and the mockup's marks are the deeper brick red anyway. */
-  color: var(--accent-text);
-  text-shadow: 0 1px 0 rgba(var(--ink-1-rgb), 0.35);
-  margin-top: 2px;
 }
 /* Leader line. A de-collided pin gets a longer one so its true location stays
    readable — see placePins()'s `offset`. */

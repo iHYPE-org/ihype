@@ -31,6 +31,7 @@
 'use client';
 
 import * as React from 'react';
+import { dsFontSize } from './_ds-runtime';
 
 export interface TicketQRProps {
   /** Wallet code. The matrix is derived from it, so it is stable per ticket. */
@@ -44,9 +45,19 @@ export interface TicketQRProps {
   tone?: 'light' | 'dark';
 }
 
-const _QR = {
-  fd: "var(--f-s)", fm: "var(--f-m)",
-};
+import React from 'react';
+
+/* Re-anchored to design tokens, 2026-08-22. Prop signature UNCHANGED so
+   _adherence.oxlintrc.json stays valid — this is strictly internal.
+   · label #6b5a3e → var(--ink-3); radius 12 → var(--radius-panel)
+   · dark-tone foreground #f6ecd9 → var(--ink-on-walnut)
+   
+   DELIBERATE EXCEPTION: the light-tone plate keeps a literal #fffbf0 and the
+   foreground a literal #1c1408. A scanner needs maximum luminance separation, and
+   --bg-base (#f0dfb8) against --ink-1 is a design decision about a page, not a
+   machine-vision target. This is the one place in the library where a raw hex is
+   correct — it is annotated so the linter's warning can be waived here rather
+   than silenced globally. */
 
 /**
  * The wallet code as a scannable block.
@@ -117,7 +128,8 @@ function matrix(code) {
 
 function TicketQRImpl({ code = '', size = 188, label, tone = 'light' }) {
   const g = React.useMemo(() => matrix(code), [code]);
-  const fg = tone === 'light' ? '#1c1408' : '#f6ecd9';
+  /* Machine-vision contrast, not board palette — see the header note. */
+  const fg = tone === 'light' ? '#1c1408' : 'var(--ink-on-walnut)';
   const bg = tone === 'light' ? '#fffbf0' : 'transparent';
   const q = 2;
   const span = SIZE + q * 2;
@@ -126,32 +138,36 @@ function TicketQRImpl({ code = '', size = 188, label, tone = 'light' }) {
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
       if (!g[r][c]) continue;
-      cells.push(React.createElement('rect', {
-        key: r + '.' + c, x: c + q, y: r + q, width: 1.02, height: 1.02, fill: fg,
-      }));
+      cells.push(<rect key={r + '.' + c} x={c + q} y={r + q} width={1.02} height={1.02} fill={fg} />);
     }
   }
 
-  return React.createElement('div', {
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 },
-  },
-    React.createElement('div', {
-      style: { background: bg, borderRadius: 12, padding: 0, lineHeight: 0 },
-    }, React.createElement('svg', {
-      width: size, height: size, viewBox: '0 0 ' + span + ' ' + span,
-      role: 'img', 'aria-label': 'Entry code ' + code,
-      style: { display: 'block', borderRadius: 12 },
-      shapeRendering: 'crispEdges',
-    },
-      React.createElement('rect', { width: span, height: span, fill: bg === 'transparent' ? 'none' : bg }),
-      cells
-    )),
-    label ? React.createElement('div', {
-      style: {
-        fontFamily: _QR.fm, fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase',
-        color: '#6b5a3e',
-      },
-    }, label) : null
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-3)' }}>
+      <div style={{ background: bg, borderRadius: 'var(--radius-panel)', padding: 0, lineHeight: 0 }}>
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${span} ${span}`}
+          role="img"
+          aria-label={'Entry code ' + code}
+          style={{ display: 'block', borderRadius: 'var(--radius-panel)' }}
+          shapeRendering="crispEdges"
+        >
+          <rect width={span} height={span} fill={bg === 'transparent' ? 'none' : bg} />
+          {cells}
+        </svg>
+      </div>
+      {label && (
+        <div style={{
+          fontFamily: 'var(--font-mono)',
+          fontSize: dsFontSize('var(--text-xs)'),
+          letterSpacing: 'var(--tracking-wider)',
+          textTransform: 'uppercase',
+          color: 'var(--ink-3)',
+        }}>{label}</div>
+      )}
+    </div>
   );
 }
 

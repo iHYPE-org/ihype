@@ -28,18 +28,13 @@ import { dsFontSize } from './_ds-runtime';
 
 export interface SeedItem {
   /** Artist name, shown largest and tappable through to the artist page. */
-  artist: string;
   /** Track title for the clip that is playing. */
-  song: string;
   /** Release the clip is from. */
-  album: string;
   /** Single letter used as the fallback graphic until an artist uploads one. */
-  initial: string;
   /** Two colours of the artist's card gradient, used until artwork exists. */
   c1: string;
   c2: string;
   /** Why this card is in the deck — proximity, or a hype in your history. */
-  why: string;
 }
 
 export interface SeedDeckProps {
@@ -76,11 +71,59 @@ export interface SeedDeckProps {
   onTogglePlay?: () => void;
 }
 
+'use client';
+import React from 'react';
+
+/* Re-anchored to design tokens, 2026-08-22. Prop signature UNCHANGED so
+   _adherence.oxlintrc.json stays valid — this is strictly internal.
+   Kept as React.createElement for the same reason as PlayerPill: the geometry
+   maths and conditional composition make a JSX rewrite a separate change.
+
+   BUG FIXED: the 'Save' swipe label rendered '#fff' on a --accent fill —
+   3.27:1, the forbidden pairing. Third instance in this library after MapSheet
+   and PlayerPill.
+
+   BUG FIXED: the 'Skip' label's plate was 'rgba(10,16,30,.86)', a NAVY from
+   the Bulletin direction, on a warm walnut card. Now var(--scrim).
+
+   Also fixed:
+   · card shadows rgba(4,8,18,.45/.6) were navy → var(--shadow-play/-raised)
+   · surfaces #34200f / #4a2b16 / #140c05 → the walnut tokens
+   · ink #f6ecd9 / #d8c6a6 / #bda882 → the on-walnut set
+   · 'var(--brass,#c9a54e)' and 'var(--brass-deep,#8a6a2c)' → the bare tokens.
+     A fallback duplicating the token silently wins when the stylesheet fails.
+   · fontSize 9.5 / 13 / 13.5 were below the floor → var(--text-xs) for mono,
+     var(--text-base) for copy; 24/27/17/22/26/30 → the token scale
+   · hyped label colour '#1a1206' → var(--ink-on-accent)
+   · accent alphas → color-mix on var(--accent)
+   · transition '160ms ease' → var(--duration-default) / var(--ease)
+
+   JUDGEMENT CALL — card radius 26 → var(--radius-panel) (3px). The design
+   system is explicit that --radius-panel is "every card, row, stat, section
+   panel", and a machined console has a cut edge. But this is the one card in
+   the product that is meant to read as a physical card in a deck, and 3px is a
+   visible change. Flagged rather than assumed: if the deck should keep a
+   moulded corner, that is a token decision (a --radius-deck), not a local
+   literal.
+
+   The setInterval clip meter, the synchronous fling commit and the
+   measure-your-own-room layout are UNTOUCHED — they are ADHERENCE 23 fixes,
+   not style values. */
+
 const _SD = {
-  surf: '#34200f', raised: '#4a2b16', ink: '#f6ecd9', ink2: '#d8c6a6', ink3: '#bda882',
-  acc: '#ff5029', line: 'rgba(246,236,217,.16)', hair: 'rgba(246,236,217,.08)',
-  fd: "var(--f-s)", fb: "'Work Sans',system-ui,sans-serif",
-  fm: "var(--f-m)",
+  surf: 'var(--walnut-2)',
+  raised: 'var(--walnut)',
+  well: 'var(--walnut-3)',
+  ink: 'var(--ink-on-walnut)',
+  ink2: 'var(--ink-on-walnut-2)',
+  ink3: 'var(--ink-on-walnut-3)',
+  acc: 'var(--accent)',
+  onAcc: 'var(--ink-on-accent)',
+  line: 'var(--rule-on-walnut)',
+  hair: 'var(--rule-on-walnut-2)',
+  fd: 'var(--font-display)',
+  fb: 'var(--font-body)',
+  fm: 'var(--font-mono)',
 };
 
 /**
@@ -123,11 +166,9 @@ function SeedDeckImpl({
   const [room, setRoom] = React.useState(null);
 
   /* The deck measures the space it actually has rather than being told. The
-     shell's estimate was a guess at the header's height ("viewport − 330 −
-     142"), and the header has since grown a pinned two-line headline and a
-     three-line dek, so the guess ran 73px short and the controls landed on top
-     of the player. Reading its own top against the chrome the shell publishes
-     cannot drift, whatever the copy above it does. */
+     shell's estimate was a guess at the header's height, and the header has
+     since grown a pinned headline and a three-line dek, so the guess ran 73px
+     short and the controls landed on top of the player. */
   React.useLayoutEffect(() => {
     const measure = () => {
       if (!rootRef.current) return;
@@ -161,10 +202,7 @@ function SeedDeckImpl({
 
   /* Commit synchronously. The outcome must never ride on a frame arriving:
      this runtime fires no animation frames, so routing the verdict through a
-     tween's completion callback meant skip and save silently did nothing, and
-     the `flying` guard — set up front, cleared only in that dead callback —
-     froze the deck permanently after the first tap. The card leaves and the next
-     one arrives in the same tick, which is also what a fast swiper wants. */
+     tween's completion callback meant skip and save silently did nothing. */
   const fling = (dir) => {
     setDx(0); setDy(0);
     clearInterval(timer.current);
@@ -196,32 +234,21 @@ function SeedDeckImpl({
   const item = items[index];
   if (!item) {
     return React.createElement('div', {
-      style: { textAlign: 'center', padding: '80px 20px', color: _SD.ink2, fontFamily: _SD.fb },
+      style: { textAlign: 'center', padding: 'var(--space-16) var(--space-5)', color: _SD.ink2, fontFamily: _SD.fb },
     },
-      React.createElement('div', { style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: '1.5rem', color: _SD.ink, letterSpacing: 'normal' } }, 'Deck empty'),
-      React.createElement('div', { style: { fontSize: '0.9375rem', marginTop: 6 } }, 'New seeds arrive as artists upload and as you move.')
+      React.createElement('div', { style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: dsFontSize('var(--text-lg)'), color: _SD.ink, letterSpacing: 'var(--tracking-normal)' } }, 'Deck empty'),
+      React.createElement('div', { style: { fontSize: dsFontSize('var(--text-base)'), marginTop: 'var(--space-1)' } }, 'New seeds arrive as artists upload and as you move.')
     );
   }
 
   /* The deck is measured against the space it is given, not drawn at a fixed
-     size and hoped to fit. CHROME is the deck's own furniture below the card,
-     counted from the real boxes: 4 top padding, 34 of behind-card peeking below
-     the top card, one 18 gap, and the 56 control row. No lower floor — a floor
-     larger than the room is how the deck came to render 440px inside a 380px
-     slot, overlapping the player bar and the home indicator. If the room is
-     tight the card gets smaller, which is the correct failure. */
+     size and hoped to fit. CHROME is the deck's own furniture below the card.
+     No lower floor — a floor larger than the room is how the deck came to
+     render 440px inside a 380px slot. */
   const CARD_W = 328;
   const CHROME = 4 + 34 + 18 + 72;
-  /* The card's own content — clip ring, pause, artist, song, release, why —
-     measures ~172px. Below that the card is not small, it is empty: everything
-     inside is clipped and Discover renders as a gradient sliver. So the floor is
-     the content height, not a taste figure, and when the room is under it the
-     PANE scrolls (it is already a scroll container) rather than the card lying
-     about how much it can show.
-
-     `room != null`, not truthiness: a measured 0 is a real answer and must not
-     fall through to the shell's estimate — that fallback overriding the
-     measurement is the same bug in a different coat. */
+  /* `room != null`, not truthiness: a measured 0 is a real answer and must not
+     fall through to the shell's estimate. */
   const avail = room != null ? room : (maxHeight || 0);
   const CARD_H = avail ? Math.max(200, Math.min(436, avail - CHROME)) : 436;
   const PAD = 16;
@@ -231,8 +258,7 @@ function SeedDeckImpl({
   const rot = Math.max(-14, Math.min(14, dx / 14));
   const intent = Math.min(1, Math.abs(dx) / 108);
 
-  /* Two cards behind, nudged and dimmed, so the deck reads as a deck. They lift
-     toward their final resting place as the top card leaves. */
+  /* Two cards behind, nudged and dimmed, so the deck reads as a deck. */
   const behind = (offset) => {
     const it = items[index + offset];
     if (!it) return null;
@@ -242,23 +268,23 @@ function SeedDeckImpl({
       'aria-hidden': 'true',
       style: {
         position: 'absolute', left: 0, right: 0, top: 0,
-        height: CARD_H, borderRadius: 26, overflow: 'hidden',
+        height: CARD_H, borderRadius: 'var(--radius-panel)', overflow: 'hidden',
         background: _SD.surf, border: '1px solid ' + _SD.line,
         transform: 'translateY(' + k * 16 + 'px) scale(' + (1 - k * 0.045) + ')',
         opacity: 1 - k * 0.28,
-        boxShadow: '0 18px 44px rgba(4,8,18,.45)',
+        boxShadow: 'var(--shadow-raised)',
       },
     }, React.createElement('div', {
       style: { position: 'absolute', inset: 0, background: 'linear-gradient(150deg,' + it.c1 + ',' + it.c2 + ')', opacity: .5 },
     }));
   };
 
-  const label = (text, side, color) => React.createElement('div', {
+  const label = (text, side, background, color) => React.createElement('div', {
     'aria-hidden': 'true',
     style: {
       position: 'absolute', top: 22, [side]: 22,
-      fontFamily: _SD.fm, fontSize: '0.6875rem', letterSpacing: '.2em', textTransform: 'uppercase',
-      color: '#fff', background: color, borderRadius: 9999, padding: '8px 14px',
+      fontFamily: _SD.fm, fontSize: dsFontSize('var(--text-xs)'), letterSpacing: 'var(--tracking-widest)', textTransform: 'uppercase',
+      color, background, borderRadius: 'var(--radius-pill)', padding: 'var(--space-2) var(--space-4)',
       opacity: (side === 'left' ? dx > 0 : dx < 0) ? intent : 0,
       transform: 'rotate(' + (side === 'left' ? -8 : 8) + 'deg)',
     },
@@ -268,7 +294,7 @@ function SeedDeckImpl({
 
   return React.createElement('div', {
     ref: rootRef,
-    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 18, fontFamily: _SD.fb, paddingTop: 4 },
+    style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-5)', fontFamily: _SD.fb, paddingTop: 4 },
   },
     React.createElement('div', { style: { position: 'relative', width: CARD_W, height: CARD_H + 34 } },
       behind(2), behind(1),
@@ -276,8 +302,8 @@ function SeedDeckImpl({
         onPointerDown: down, onPointerMove: move, onPointerUp: up, onPointerCancel: up,
         style: {
           position: 'absolute', left: 0, top: 0, width: CARD_W, height: CARD_H,
-          borderRadius: 26, overflow: 'hidden', background: _SD.surf,
-          border: '1px solid ' + _SD.line, boxShadow: '0 26px 60px rgba(4,8,18,.6)',
+          borderRadius: 'var(--radius-panel)', overflow: 'hidden', background: _SD.surf,
+          border: '1px solid ' + _SD.line, boxShadow: 'var(--shadow-play)',
           transform: 'translate(' + dx + 'px,' + dy + 'px) rotate(' + rot + 'deg)',
           cursor: 'grab', touchAction: 'none', userSelect: 'none',
         },
@@ -292,24 +318,24 @@ function SeedDeckImpl({
             'aria-hidden': 'true',
             style: {
               position: 'absolute', right: -SLEEVE * 0.09, top: SLEEVE * 0.085,
-              width: SLEEVE * 0.83, height: SLEEVE * 0.83, borderRadius: '9999px',
-              background: 'repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.55) 1px 4px), #140c05',
-              boxShadow: '0 6px 16px -6px rgba(0,0,0,.8)',
+              width: SLEEVE * 0.83, height: SLEEVE * 0.83, borderRadius: 'var(--radius-pill)',
+              background: 'repeating-radial-gradient(circle at 50% 50%, rgba(255,255,255,.05) 0 1px, rgba(0,0,0,.55) 1px 4px), var(--walnut-3)',
+              boxShadow: 'var(--shadow-card)',
             },
           },
             React.createElement('div', {
               style: {
                 position: 'absolute', left: '50%', top: '50%', width: '31%', height: '31%',
-                transform: 'translate(-50%,-50%)', borderRadius: '9999px',
+                transform: 'translate(-50%,-50%)', borderRadius: 'var(--radius-pill)',
                 background: 'linear-gradient(160deg,' + item.c1 + ',' + item.c2 + ')',
               },
             })
           ),
           React.createElement('div', {
             style: {
-              position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 3,
+              position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'var(--radius-panel)',
               background: 'linear-gradient(150deg,' + item.c1 + ' 0%,' + item.c2 + ' 100%)',
-              boxShadow: '0 0 0 2px var(--brass,#c9a54e), 0 14px 26px -12px rgba(0,0,0,.75), inset 0 2px 6px rgba(0,0,0,.4)',
+              boxShadow: '0 0 0 2px var(--brass), var(--shadow-album)',
             },
           },
             React.createElement('div', {
@@ -317,14 +343,14 @@ function SeedDeckImpl({
               style: {
                 position: 'absolute', right: -SLEEVE * 0.1, bottom: -SLEEVE * 0.22,
                 fontFamily: _SD.fd, fontWeight: 400, fontSize: dsFontSize(SLEEVE * 0.86), lineHeight: .8,
-                color: 'rgba(255,255,255,.14)', letterSpacing: '-.06em',
+                color: 'rgba(255,255,255,.14)', letterSpacing: 'var(--tracking-tight)',
               },
             }, item.initial)
           )
         ),
 
-        label('Save', 'left', _SD.acc),
-        label('Skip', 'right', 'rgba(10,16,30,.86)'),
+        label('Save', 'left', _SD.acc, _SD.onAcc),
+        label('Skip', 'right', 'var(--scrim)', _SD.ink),
 
         React.createElement('div', { style: { position: 'absolute', left: PAD, right: PAD, top: PAD + SLEEVE + 16 } },
           React.createElement('button', {
@@ -332,29 +358,30 @@ function SeedDeckImpl({
             onClick: (e) => { e.stopPropagation(); onOpenArtist && onOpenArtist(item); },
             style: {
               display: 'block', background: 'transparent', border: 0, padding: 0, textAlign: 'left', cursor: 'pointer',
-              fontFamily: _SD.fd, fontWeight: 400, fontSize: '1.6875rem', letterSpacing: 'normal', color: _SD.ink, lineHeight: 1.05,
+              fontFamily: _SD.fd, fontWeight: 400, fontSize: dsFontSize('var(--text-xl)'), letterSpacing: 'var(--tracking-normal)', color: _SD.ink, lineHeight: 1.05,
             },
           }, item.artist),
           React.createElement('div', {
-            style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: '1.0625rem', letterSpacing: 'normal', color: _SD.ink, marginTop: 6 },
+            style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: dsFontSize('var(--text-md)'), letterSpacing: 'var(--tracking-normal)', color: _SD.ink, marginTop: 'var(--space-1)' },
           }, item.song),
           React.createElement('div', {
-            style: { fontSize: '0.9375rem', color: _SD.ink2, marginTop: 2 },
+            style: { fontSize: dsFontSize('var(--text-base)'), color: _SD.ink2, marginTop: 2 },
           }, item.album),
           React.createElement('div', {
-            style: { fontFamily: _SD.fm, fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: _SD.ink3, marginTop: 10 },
+            style: { fontFamily: _SD.fm, fontSize: dsFontSize('var(--text-xs)'), letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', color: _SD.ink3, marginTop: 'var(--space-3)' },
           }, item.why)
         )
       )
     ),
 
-    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 12, width: CARD_W, maxWidth: '100%' } },
+    React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: CARD_W, maxWidth: '100%' } },
       React.createElement('button', {
         type: 'button', onClick: () => fling(-1), 'aria-label': 'Skip ' + item.artist,
         style: {
-          width: 64, height: 64, flex: '0 0 auto', borderRadius: 9999, cursor: 'pointer',
-          background: 'rgba(20,12,5,.34)', border: '2px solid var(--brass-deep,#8a6a2c)',
-          color: _SD.ink3, fontSize: '1.625rem', display: 'grid', placeItems: 'center',
+          width: 64, height: 64, flex: '0 0 auto', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+          background: 'color-mix(in oklab, var(--walnut-3) 34%, transparent)',
+          border: '2px solid var(--brass-deep)',
+          color: _SD.ink3, fontSize: dsFontSize('var(--text-xl)'), display: 'grid', placeItems: 'center',
         },
       }, React.createElement('span', { 'aria-hidden': 'true' }, '\u2715')),
 
@@ -369,30 +396,34 @@ function SeedDeckImpl({
              instead of sitting between them as their equal. */
           position: 'relative', flex: 1, minWidth: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-          height: 72, padding: '0 22px',
-          borderRadius: 9999, cursor: hypeLocked ? 'default' : 'pointer',
-          background: hypeLocked ? 'rgba(255,80,41,.08)' : (hyped ? _SD.acc : 'rgba(255,80,41,.14)'),
-          border: '2px solid ' + (hypeLocked ? 'rgba(255,80,41,.28)' : (hyped ? _SD.acc : 'rgba(255,80,41,.55)')),
-          color: hypeLocked ? 'rgba(255,80,41,.6)' : (hyped ? '#1a1206' : _SD.acc),
-          fontFamily: _SD.fd, fontWeight: 400, letterSpacing: '.02em',
-          animation: burst ? 'sdHypePop 520ms cubic-bezier(.34,1.56,.64,1) both' : 'none',
+          height: 72, padding: '0 var(--space-5)',
+          borderRadius: 'var(--radius-pill)', cursor: hypeLocked ? 'default' : 'pointer',
+          background: hypeLocked
+            ? 'color-mix(in oklab, var(--accent) 8%, transparent)'
+            : (hyped ? _SD.acc : 'color-mix(in oklab, var(--accent) 14%, transparent)'),
+          border: '2px solid ' + (hypeLocked
+            ? 'color-mix(in oklab, var(--accent) 28%, transparent)'
+            : (hyped ? _SD.acc : 'color-mix(in oklab, var(--accent) 55%, transparent)')),
+          color: hypeLocked ? _SD.ink3 : (hyped ? _SD.onAcc : _SD.acc),
+          fontFamily: _SD.fd, fontWeight: 400, letterSpacing: 'var(--tracking-normal)',
+          animation: burst ? 'sdHypePop 520ms var(--ease-spring) both' : 'none',
         },
       },
         /* Two rings, offset in time, so the tap throws off a burst rather than a
            single pulse. */
         burst ? React.createElement('span', {
           'aria-hidden': 'true', 'data-sd-anim': true,
-          style: { position: 'absolute', inset: -3, borderRadius: 9999, border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms ease-out both', pointerEvents: 'none' },
+          style: { position: 'absolute', inset: -3, borderRadius: 'var(--radius-pill)', border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms var(--ease-out) both', pointerEvents: 'none' },
         }) : null,
         burst ? React.createElement('span', {
           'aria-hidden': 'true', 'data-sd-anim': true,
-          style: { position: 'absolute', inset: -3, borderRadius: 9999, border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms ease-out 130ms both', pointerEvents: 'none' },
+          style: { position: 'absolute', inset: -3, borderRadius: 'var(--radius-pill)', border: '2px solid ' + _SD.acc, animation: 'sdHypeRing 520ms var(--ease-out) 130ms both', pointerEvents: 'none' },
         }) : null,
         React.createElement('span', {
-          style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: '1.375rem', letterSpacing: '.06em' },
+          style: { fontFamily: _SD.fd, fontWeight: 400, fontSize: dsFontSize('var(--text-lg)'), letterSpacing: 'var(--tracking-wide)' },
         }, 'HYPE'),
         hypeLocked && hypeLabel ? React.createElement('span', {
-          style: { fontFamily: _SD.fm, fontWeight: 500, fontSize: '0.9375rem', letterSpacing: '.04em', opacity: .85 },
+          style: { fontFamily: _SD.fm, fontWeight: 500, fontSize: dsFontSize('var(--text-xs)'), letterSpacing: 'var(--tracking-wide)', opacity: .85 },
         }, hypeLabel) : null
       ),
 
@@ -403,12 +434,14 @@ function SeedDeckImpl({
         style: {
           /* Grey until it means something. A save button pre-tinted accent reads
              as already saved, so every card looked liked before it was. */
-          width: 64, height: 64, flex: '0 0 auto', borderRadius: 9999, cursor: 'pointer',
-          background: saved ? 'rgba(255,80,41,.16)' : 'rgba(20,12,5,.34)',
-          border: '2px solid ' + (saved ? _SD.acc : 'var(--brass-deep,#8a6a2c)'),
+          width: 64, height: 64, flex: '0 0 auto', borderRadius: 'var(--radius-pill)', cursor: 'pointer',
+          background: saved
+            ? 'color-mix(in oklab, var(--accent) 16%, transparent)'
+            : 'color-mix(in oklab, var(--walnut-3) 34%, transparent)',
+          border: '2px solid ' + (saved ? _SD.acc : 'var(--brass-deep)'),
           color: saved ? _SD.acc : _SD.ink3,
-          fontSize: '1.875rem', display: 'grid', placeItems: 'center',
-          transition: 'background 160ms ease, border-color 160ms ease, color 160ms ease',
+          fontSize: dsFontSize('var(--text-xl)'), display: 'grid', placeItems: 'center',
+          transition: 'background var(--duration-default) var(--ease), border-color var(--duration-default) var(--ease), color var(--duration-default) var(--ease)',
         },
       }, React.createElement('span', { 'aria-hidden': 'true' }, saved ? '\u2665' : '\u2661'))
     )

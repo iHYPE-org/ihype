@@ -34,7 +34,13 @@ export const DS_EYEBROW_FLOOR_PX = 11;
  * label sized from its own diameter, a trend readout three px under its row).
  * Static sizes are converted at generation time and arrive here as literals.
  */
-export function dsFontSize(px: number, floorPx: number = DS_BODY_FLOOR_PX): string {
+export function dsFontSize(px: number | string, floorPx: number = DS_BODY_FLOOR_PX): string {
+  /* The 2026-08-24 rebuilt components pass TOKENS ('var(--text-2xl)') rather
+     than px numbers. A token is already rem-based — it follows the text-scale
+     setting on its own — so it passes through inside a CSS max() that keeps
+     the floor. Before this branch existed, Number.isFinite('var(…)') was
+     false and every token-sized label silently flattened to the 15px floor. */
+  if (typeof px === 'string') return `max(${floorPx / 16}rem, ${px})`;
   const value = Number.isFinite(px) ? Math.max(floorPx, px) : floorPx;
   return `${value / 16}rem`;
 }
