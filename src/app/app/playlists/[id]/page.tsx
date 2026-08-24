@@ -54,9 +54,11 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
 
   return (
     <div className="mmm-show">
-      <Link className="mmm-show-back" href="/app/music/playlists">← Playlists</Link>
-
-      <div className="mmm-show-eyebrow">Playlist</div>
+      {/* No back link and no "Playlist" eyebrow (owner, 2026-08-24: "Don't
+          need 2ndary playlist/header — already in the subnav backlit
+          screen"): the dial reads out where you are, and a second header
+          saying the same thing is the two-controls-for-one-value drift the
+          one-dial rule exists to prevent. */}
       {/* Renders nothing; hands this playlist to the dock's transport. */}
       <MmmPlayHere rows={playlist.items} />
       <h1 className="mmm-show-title">{playlist.name}</h1>
