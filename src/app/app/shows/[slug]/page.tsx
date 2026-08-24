@@ -194,8 +194,10 @@ export default async function MmmShowPage({
       {show.headlinerProfile && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
           <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.2em', color: 'var(--ink-3)' }}>LINEUP</div>
-          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
-            <Link href={`/app/artists/${show.headlinerProfile.slug}`} style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink-1)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {/* minHeight 44: MOBILE.md's floor on every control — grow the hit
+                area, never the type. The responsive gate measures this. */}
+            <Link href={`/app/artists/${show.headlinerProfile.slug}`} style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, fontSize: '1rem', fontWeight: 600, color: 'var(--ink-1)' }}>
               {show.headlinerProfile.name}
             </Link>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'var(--ink-3)' }}>HEADLINER</span>
