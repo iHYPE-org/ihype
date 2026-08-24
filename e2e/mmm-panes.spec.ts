@@ -137,7 +137,12 @@ test.describe('MMM detail panes', () => {
 
     await page.goto(`/app/playlists/${media.playlistId}`);
     await expectInShell(page);
-    await expect(page.locator('.mmm-show-eyebrow:visible')).toHaveText(/Playlist/i);
+    /* No eyebrow and no back link, asserted as ABSENT (owner, 2026-08-24:
+       "Don't need 2ndary playlist/header — already in the subnav backlit
+       screen"): the dial reads out where you are, and a second header saying
+       the same thing is the drift the one-dial rule exists to prevent. */
+    await expect(page.locator('.mmm-show-eyebrow:visible')).toHaveCount(0);
+    await expect(page.locator('.mmm-show-back:visible')).toHaveCount(0);
     await expect(page.locator('.mmm-show-title:visible')).toContainText(media.playlistName);
     // Rows must link INTO the shell — plural `/app/playlists`, and each item
     // at `/app/tracks/<hexId>` rather than the legacy singular route.
