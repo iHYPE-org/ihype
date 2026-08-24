@@ -571,6 +571,192 @@
   --sheet-exit-dur:  120ms;
 }
 
+/* ── Themes (owner, 2026-08-24: "Can you add different themes to the app?
+   Like dark, flowery, street, metal, classical?") ─────────────────────────
+   This supersedes the one-ground rule at the top of this file, and the reason
+   it is SAFE now is the reason that rule existed: every member surface paints
+   only from tokens (audit:retro --max=0 gates it), so a theme is this block —
+   a re-anchored ground kit — and never a repaint. The rules that survive:
+
+   · every value here is MEASURED — ink and the four copy tokens clear 4.5:1
+     on --bg-4 (the worst surface), role fills clear 3:1 on --bg
+     (scripts in the session log; method identical to the console fold);
+   · the ink/bg RGB triplets are restated per theme or composed-alpha
+     surfaces paint the wrong ground — the exact bug the token comments warn
+     about; the ink-a ramp is restated whole, never partially;
+   · the three DARK themes take the DS8 role hues (measured for dark grounds;
+     the console hues are dark-on-dark there) — those hues already match the
+     --role-*-rgb tint triplets, so the triplets stay put;
+   · the walnut dock, the brass and the parchment chart do NOT theme: they are
+     the machine, not the room. Materials live in :root for that reason.
+   · `html.high-contrast` (0,1,1) beats these (0,1,0) selectors on
+     specificity, so the accessibility mode wins over any theme. Selector
+     stays BARE [data-theme] — do not "tidy" it to :root[data-theme].
+   The default (no attribute) is the console cream above. */
+[data-theme="dark"] {
+  /* After-hours: the cabinet with the room lights off. */
+  color-scheme: dark;
+  --bg: #171209; --bg-2: #1e180c; --bg-3: #271f10; --bg-4: #302715;
+  --ink: #f2ead9; --ink-2: #d9cdb4; --ink-3: #b3a482; --ink-4: #8a7c5c;
+  --bg-base-rgb: 23,18,9; --ink-1-rgb: 242,234,217; --surface-tint-rgb: 242,234,217;
+  --ink-a10: rgba(242,234,217,.1);
+  --ink-a20: rgba(242,234,217,.2);
+  --ink-a22: rgba(242,234,217,.22);
+  --ink-a25: rgba(242,234,217,.25);
+  --ink-a28: rgba(242,234,217,.28);
+  --ink-a30: rgba(242,234,217,.3);
+  --ink-a32: rgba(242,234,217,.32);
+  --ink-a35: rgba(242,234,217,.35);
+  --ink-a38: rgba(242,234,217,.38);
+  --ink-a40: rgba(242,234,217,.4);
+  --ink-a42: rgba(242,234,217,.42);
+  --ink-a45: rgba(242,234,217,.45);
+  --ink-a50: rgba(242,234,217,.5);
+  --ink-a55: rgba(242,234,217,.55);
+  --ink-a60: rgba(242,234,217,.6);
+  --ink-a65: rgba(242,234,217,.65);
+  --ink-a70: rgba(242,234,217,.7);
+  --ink-a72: rgba(242,234,217,.72);
+  --ink-a75: rgba(242,234,217,.75);
+  --ink-a80: rgba(242,234,217,.8);
+  --ink-a85: rgba(242,234,217,.85);
+  --ink-a90: rgba(242,234,217,.9);
+  --line: rgba(242,234,217,.2); --line-2: rgba(242,234,217,.36);
+  --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
+  /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
+  --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+}
+[data-theme="street"] {
+  /* Asphalt and primer grey; the poster wall at night. */
+  color-scheme: dark;
+  --bg: #141517; --bg-2: #1a1c1f; --bg-3: #222428; --bg-4: #2b2e33;
+  --ink: #eef0f2; --ink-2: #c9cdd2; --ink-3: #a2a8b0; --ink-4: #7d848e;
+  --bg-base-rgb: 20,21,23; --ink-1-rgb: 238,240,242; --surface-tint-rgb: 238,240,242;
+  --ink-a10: rgba(238,240,242,.1);
+  --ink-a20: rgba(238,240,242,.2);
+  --ink-a22: rgba(238,240,242,.22);
+  --ink-a25: rgba(238,240,242,.25);
+  --ink-a28: rgba(238,240,242,.28);
+  --ink-a30: rgba(238,240,242,.3);
+  --ink-a32: rgba(238,240,242,.32);
+  --ink-a35: rgba(238,240,242,.35);
+  --ink-a38: rgba(238,240,242,.38);
+  --ink-a40: rgba(238,240,242,.4);
+  --ink-a42: rgba(238,240,242,.42);
+  --ink-a45: rgba(238,240,242,.45);
+  --ink-a50: rgba(238,240,242,.5);
+  --ink-a55: rgba(238,240,242,.55);
+  --ink-a60: rgba(238,240,242,.6);
+  --ink-a65: rgba(238,240,242,.65);
+  --ink-a70: rgba(238,240,242,.7);
+  --ink-a72: rgba(238,240,242,.72);
+  --ink-a75: rgba(238,240,242,.75);
+  --ink-a80: rgba(238,240,242,.8);
+  --ink-a85: rgba(238,240,242,.85);
+  --ink-a90: rgba(238,240,242,.9);
+  --line: rgba(238,240,242,.18); --line-2: rgba(238,240,242,.34);
+  --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
+  /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
+  --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+}
+[data-theme="metal"] {
+  /* Cold gunmetal; stage blacks and steel. */
+  color-scheme: dark;
+  --bg: #101214; --bg-2: #16181b; --bg-3: #1d2024; --bg-4: #25292e;
+  --ink: #e8ebee; --ink-2: #c2c7cd; --ink-3: #99a1aa; --ink-4: #747d88;
+  --bg-base-rgb: 16,18,20; --ink-1-rgb: 232,235,238; --surface-tint-rgb: 232,235,238;
+  --ink-a10: rgba(232,235,238,.1);
+  --ink-a20: rgba(232,235,238,.2);
+  --ink-a22: rgba(232,235,238,.22);
+  --ink-a25: rgba(232,235,238,.25);
+  --ink-a28: rgba(232,235,238,.28);
+  --ink-a30: rgba(232,235,238,.3);
+  --ink-a32: rgba(232,235,238,.32);
+  --ink-a35: rgba(232,235,238,.35);
+  --ink-a38: rgba(232,235,238,.38);
+  --ink-a40: rgba(232,235,238,.4);
+  --ink-a42: rgba(232,235,238,.42);
+  --ink-a45: rgba(232,235,238,.45);
+  --ink-a50: rgba(232,235,238,.5);
+  --ink-a55: rgba(232,235,238,.55);
+  --ink-a60: rgba(232,235,238,.6);
+  --ink-a65: rgba(232,235,238,.65);
+  --ink-a70: rgba(232,235,238,.7);
+  --ink-a72: rgba(232,235,238,.72);
+  --ink-a75: rgba(232,235,238,.75);
+  --ink-a80: rgba(232,235,238,.8);
+  --ink-a85: rgba(232,235,238,.85);
+  --ink-a90: rgba(232,235,238,.9);
+  --line: rgba(232,235,238,.18); --line-2: rgba(232,235,238,.34);
+  --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
+  /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
+  --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+}
+[data-theme="flowery"] {
+  /* Petal pink over deep plum ink. */
+  color-scheme: light;
+  --bg: #f7e8ef; --bg-2: #f1dde7; --bg-3: #e9cfdc; --bg-4: #ddbecd;
+  --ink: #2a1220; --ink-2: #4a2438; --ink-3: #6b3a52; --ink-4: #8f5570;
+  --bg-base-rgb: 247,232,239; --ink-1-rgb: 42,18,32; --surface-tint-rgb: 42,18,32;
+  --ink-a10: rgba(42,18,32,.1);
+  --ink-a20: rgba(42,18,32,.2);
+  --ink-a22: rgba(42,18,32,.22);
+  --ink-a25: rgba(42,18,32,.25);
+  --ink-a28: rgba(42,18,32,.28);
+  --ink-a30: rgba(42,18,32,.3);
+  --ink-a32: rgba(42,18,32,.32);
+  --ink-a35: rgba(42,18,32,.35);
+  --ink-a38: rgba(42,18,32,.38);
+  --ink-a40: rgba(42,18,32,.4);
+  --ink-a42: rgba(42,18,32,.42);
+  --ink-a45: rgba(42,18,32,.45);
+  --ink-a50: rgba(42,18,32,.5);
+  --ink-a55: rgba(42,18,32,.55);
+  --ink-a60: rgba(42,18,32,.6);
+  --ink-a65: rgba(42,18,32,.65);
+  --ink-a70: rgba(42,18,32,.7);
+  --ink-a72: rgba(42,18,32,.72);
+  --ink-a75: rgba(42,18,32,.75);
+  --ink-a80: rgba(42,18,32,.8);
+  --ink-a85: rgba(42,18,32,.85);
+  --ink-a90: rgba(42,18,32,.9);
+  --line: rgba(107,58,82,.34); --line-2: rgba(107,58,82,.52);
+  --accent-text: #8f3117; --danger-text: #992508; --warning-text: #6e4703; --success-text: #09564f;
+}
+[data-theme="classical"] {
+  /* Concert-hall ivory; the display face goes serif. */
+  color-scheme: light;
+  --bg: #f4efe3; --bg-2: #ede6d5; --bg-3: #e3dac4; --bg-4: #d6ccb2;
+  --ink: #231a0e; --ink-2: #463522; --ink-3: #665033; --ink-4: #8a7048;
+  --bg-base-rgb: 244,239,227; --ink-1-rgb: 35,26,14; --surface-tint-rgb: 35,26,14;
+  --ink-a10: rgba(35,26,14,.1);
+  --ink-a20: rgba(35,26,14,.2);
+  --ink-a22: rgba(35,26,14,.22);
+  --ink-a25: rgba(35,26,14,.25);
+  --ink-a28: rgba(35,26,14,.28);
+  --ink-a30: rgba(35,26,14,.3);
+  --ink-a32: rgba(35,26,14,.32);
+  --ink-a35: rgba(35,26,14,.35);
+  --ink-a38: rgba(35,26,14,.38);
+  --ink-a40: rgba(35,26,14,.4);
+  --ink-a42: rgba(35,26,14,.42);
+  --ink-a45: rgba(35,26,14,.45);
+  --ink-a50: rgba(35,26,14,.5);
+  --ink-a55: rgba(35,26,14,.55);
+  --ink-a60: rgba(35,26,14,.6);
+  --ink-a65: rgba(35,26,14,.65);
+  --ink-a70: rgba(35,26,14,.7);
+  --ink-a72: rgba(35,26,14,.72);
+  --ink-a75: rgba(35,26,14,.75);
+  --ink-a80: rgba(35,26,14,.8);
+  --ink-a85: rgba(35,26,14,.85);
+  --ink-a90: rgba(35,26,14,.9);
+  --line: rgba(102,80,51,.36); --line-2: rgba(102,80,51,.54);
+  --accent-text: #923319; --danger-text: #9c2707; --warning-text: #6e4703; --success-text: #09564f;
+  /* The one theme that touches type: display goes to the serif the app already loads. */
+  --f-d: var(--font-serif, 'Instrument Serif', serif);
+}
+
 /* The design system ships a reduced-motion block that zeroes its durations.
    Doing it on the tokens means a surface that animates through them needs no
    media query of its own. --duration-instant is left alone: it is already

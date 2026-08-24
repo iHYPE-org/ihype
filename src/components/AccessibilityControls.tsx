@@ -4,7 +4,23 @@ import { createContext, useContext, useEffect, useId, useState, type ReactNode }
 import { usePathname } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
 
+/**
+ * The selectable grounds (owner, 2026-08-24: "Can you add different themes to
+ * the app? Like dark, flowery, street, metal, classical?"). 'console' is the
+ * default cream board and is expressed as the ABSENCE of the data-theme
+ * attribute — the token blocks in globals.css only exist for the other five.
+ * High contrast is not in this list on purpose: it is an accessibility mode,
+ * not a theme, and it wins over any of these on specificity.
+ */
+export const THEMES = ['console', 'dark', 'flowery', 'street', 'metal', 'classical'] as const;
+export type ThemeName = (typeof THEMES)[number];
+
+export function clampTheme(value: unknown): ThemeName {
+  return THEMES.includes(value as ThemeName) ? (value as ThemeName) : 'console';
+}
+
 type AccessibilitySettings = {
+  theme: ThemeName;
   highContrast: boolean;
   largeText: boolean;
   reduceMotion: boolean;
@@ -70,6 +86,7 @@ export function refreshSystemTextScale(): number {
 }
 
 const defaultSettings: AccessibilitySettings = {
+  theme: 'console',
   highContrast: false,
   largeText: false,
   reduceMotion: false,
@@ -95,7 +112,10 @@ function getStoredSettings() {
       ...parsed,
       // A stored value predating this field, or one edited by hand, must not
       // be able to shrink the UI to nothing or blow it past the design range.
-      textScale: clampTextScale(parsed.textScale ?? defaultSettings.textScale)
+      textScale: clampTextScale(parsed.textScale ?? defaultSettings.textScale),
+      // A stored theme name that no longer exists must fall back to the
+      // console board, never to a bare attribute pointing at no token block.
+      theme: clampTheme(parsed.theme)
     };
   } catch {
     window.localStorage.removeItem(STORAGE_KEY);
@@ -136,6 +156,19 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // The default ground is the ABSENCE of the attribute — a data-theme that
+    // names no block would still flip any [data-theme] selector a stylesheet
+    // grows later, so 'console' removes it rather than setting it.
+    if (settings.theme === 'console') document.documentElement.removeAttribute('data-theme');
+    else document.documentElement.setAttribute('data-theme', settings.theme);
+    // The OS status-bar/browser-chrome tint follows the ground, or a dark
+    // theme sits under a cream strip. Read back the resolved token rather
+    // than duplicating the palette here.
+    const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+    if (themeColorMeta) {
+      const ground = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim();
+      if (ground) themeColorMeta.setAttribute('content', ground);
+    }
     applyClass('high-contrast', settings.highContrast);
     applyClass('a11y-large-text', settings.largeText);
     applyClass('a11y-reduce-motion', settings.reduceMotion);

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP,
+  TEXT_SCALE_MAX, TEXT_SCALE_MIN, TEXT_SCALE_STEP, THEMES,
   clampTextScale, refreshSystemTextScale, useAccessibilitySettings,
 } from '@/components/AccessibilityControls';
 import { useI18n } from '@/components/I18nProvider';
@@ -20,14 +20,17 @@ import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
  *   | High contrast | On / Off             | stronger --line/--line-2/--ink-2/-3   |
  *   | Reduce motion | On / Off             | chrome transitions AND DS keyframes    |
  *
- * It was five. The Appearance card is gone with the light and dark themes:
- * the product has one ground, so there was nothing left for it to switch
- * between, and a control that offers a single option is worse than no control.
+ * It was five, then four, and the fifth is BACK as "Theme" (owner,
+ * 2026-08-24: "Can you add different themes to the app? Like dark, flowery,
+ * street, metal, classical?"). The old Appearance card was removed because a
+ * control offering one option is worse than no control; it now has six real
+ * options — the console board plus five measured token grounds in
+ * globals.css — so the reasoning that removed it is the reasoning that
+ * brings it back.
  *
- * That deliberately leaves HIGH CONTRAST as the escape hatch for a reader the
- * cream board does not suit — it is a real black ground with its own tokens,
- * it is not a theme, and it is the reason removing the themes does not strand
- * anyone.
+ * HIGH CONTRAST stays separate and is not in the theme list: it is an
+ * accessibility mode with its own black ground, and it wins over any theme
+ * on specificity, so a reader who needs it keeps it whatever theme is set.
  *
  * The handoff notes these persist to a localStorage key and says "in code move
  * to a preferences provider". They do: locale through I18nProvider (cookie +
@@ -68,6 +71,24 @@ export function MmmAccessibilitySettings() {
       <h1 className="mmm-settings-title">{t('appShell.nav.accessibility', 'Accessibility')}</h1>
 
       <div className="mmm-settings-stack">
+        <section className="mmm-settings-card">
+          <h2 className="mmm-settings-card-title">{t('appShell.a11y.theme', 'Theme')}</h2>
+          <p className="mmm-settings-card-hint">
+            {t('appShell.a11y.themeHint', 'The room the console sits in. The walnut deck and the chart stay the same.')}
+          </p>
+          <MmmSegmentedTabs
+            className="mmm-settings-card-controls"
+            items={THEMES.map((name) => ({
+              id: name,
+              label: t(`appShell.a11y.theme_${name}`, name === 'console' ? 'Console' : name[0].toUpperCase() + name.slice(1)),
+              active: settings.theme === name,
+              onSelect: () => updateSetting('theme', name),
+            }))}
+            label={t('appShell.a11y.theme', 'Theme')}
+            mode="toggle"
+          />
+        </section>
+
         <section className="mmm-settings-card">
           <h2 className="mmm-settings-card-title">{t('appShell.a11y.language', 'Language')}</h2>
           <p className="mmm-settings-card-hint">
