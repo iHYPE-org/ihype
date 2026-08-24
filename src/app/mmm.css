@@ -258,54 +258,44 @@ html.mmm-locked .site-shell > main {
 .mmm-map-canvas {
   position: absolute;
   inset: 0;
-  /* Order is load-bearing. `brightness` LAST clips the highlights before the
-     tone lands and gives back the white map this replaced. */
-  filter: brightness(0.8) sepia(1) saturate(0.7) contrast(1.12) hue-rotate(-6deg);
+  /* CLEAR classic, by owner instruction (2026-08-24: "want clear with classic
+     map style") — this supersedes the full-sepia print above. Chosen from four
+     variants rendered in Chromium on the real Casco Bay tile: light sepia with
+     saturation UP keeps voyager's own hues alive instead of collapsing them —
+     the harbour stays a real pale blue against cream land, so the separation
+     is chromatic again and nothing needs a darkening cast to hold a tone.
+     (Deeper sepia at .5-.65 bleached the water into the land; that is the
+     measured reason this stops at .18.) The classic read now comes from the
+     chart's furniture — the torn edge, the ruled grid, the compass, the mono
+     credits — not from staining the tiles. */
+  filter: sepia(0.18) saturate(1.1) contrast(1.04);
 }
-/* Paper, foxing, a RULED CHART GRID and a vignette, over the tiles but under
-   the pins. On the LAYER rather than the canvas so the accent pins and the
-   controls above keep their own colour — toning the container would drag them
-   to mud with the basemap. Decoration, so it must never eat a drag.
+/* A RULED CHART GRID and a vignette, over the tiles but under the pins. On
+   the LAYER rather than the canvas so the accent pins and the controls above
+   keep their own colour — toning the container would drag them to mud with
+   the basemap. Decoration, so it must never eat a drag.
 
    The grid is `templates/console-shell/map.html`'s own: a hairline every 33px
-   in both directions, which is the single cue that reads as an old survey chart
-   rather than a modern map with a filter on it. Its wash and vignette values
-   are that file's too. The tone treatment above is now also sepia, so this
-   overlay and the filter finally come from the same place. */
+   in both directions, which is the single cue that reads as an old survey
+   chart rather than a modern map with a filter on it. */
 .mmm-map-layer::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 1;
+  /* Stripped to the two cues that read as an old chart WITHOUT reading as
+     dirt (owner, 2026-08-24: "Still grainy map, want clear with classic map
+     style"): the ruled survey grid, lightened, and a faint corner vignette.
+     What went: the fractal-noise wash, the photographed film grain (a whole
+     ::before layer), the two fold creases and the flat tan tint — every one
+     of them was texture ON TOP of the tiles, and together they were the
+     "grain" being reported. Texture belongs to the cabinet, not the chart. */
   background:
-    radial-gradient(120% 90% at 50% 40%, transparent 40%, rgba(120, 94, 52, .28) 100%),
-    /* Two fold creases — the chart has been carried. map-treasure.html's own
-       stops: a dark line, a lit ridge beside it, both hairline-soft. */
-    linear-gradient(90deg, transparent 49.6%, rgba(100, 72, 34, .2) 49.9%, rgba(255, 246, 220, .3) 50.15%, transparent 50.5%),
-    linear-gradient(0deg, transparent 63.6%, rgba(100, 72, 34, .16) 63.9%, rgba(255, 246, 220, .24) 64.15%, transparent 64.5%),
-    repeating-linear-gradient(0deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
-    repeating-linear-gradient(90deg, transparent 0 33px, rgba(120, 94, 52, .09) 33px 34px),
-    var(--grain),
-    linear-gradient(0deg, rgba(214, 196, 152, .28), rgba(214, 196, 152, .28));
-  background-size: auto, auto, auto, 140px 140px, auto;
+    radial-gradient(120% 90% at 50% 40%, transparent 58%, rgba(120, 94, 52, .13) 100%),
+    repeating-linear-gradient(0deg, transparent 0 33px, rgba(120, 94, 52, .07) 33px 34px),
+    repeating-linear-gradient(90deg, transparent 0 33px, rgba(120, 94, 52, .07) 33px 34px);
   mix-blend-mode: multiply;
-}
-/* The same photographed film grain the dock and the panes wear, over the
-   tiles and under the pins — the procedural fractal noise in the ::after wash
-   above reads as digital speckle once the tiles are crisp; the photographed
-   stock is what makes the print read as paper fibre rather than pixels. */
-.mmm-map-layer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 2;
-  background-image: url('/console/grain.png');
-  background-size: 160px;
-  mix-blend-mode: overlay;
-  /* Matched to the dock's own grain — one exposure across the whole cabinet. */
-  opacity: 0.09;
 }
 
 .mmm-map-canvas .maplibregl-ctrl-attrib,
@@ -320,7 +310,11 @@ html.mmm-locked .site-shell > main {
   top: 92px;
   z-index: 15;
   font-family: var(--font-mono);
-  font-size: 0.9375rem;
+  /* Metadata, not content — the mono-eyebrow shape at its 11px floor (owner,
+     2026-08-24: "Open maps moniker too big"). A legal credit, so it shrinks;
+     it never hides. */
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
   color: var(--ink-3);
   pointer-events: none;
 }
@@ -341,10 +335,13 @@ html.mmm-locked .site-shell > main {
 .mmm-map-canvas .maplibregl-ctrl-top-right { top: 168px; right: 14px; }
 .mmm-map-canvas .maplibregl-ctrl-scale {
   background: none;
-  border: 1.5px solid var(--ink-2);
+  /* An instrument mark, not a frame (owner, 2026-08-24: "Line through map for
+     key too big") — hairline bracket, quiet ink, smaller cap. Its LENGTH is
+     MmmMap's ScaleControl maxWidth; the two shrank together. */
+  border: 1px solid var(--ink-3);
   border-top: 0;
   border-radius: 0;
-  color: var(--ink-2);
+  color: var(--ink-3);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 700;
