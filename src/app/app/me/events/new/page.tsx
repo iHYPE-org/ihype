@@ -229,15 +229,21 @@ export default function EventsNewPage() {
     }
   }
 
-  const progressPct = [25, 50, 75, 100][step] ?? 0;
-
   return (
     <div style={{ display: 'grid', placeItems: 'start center', padding: '32px 16px 80px' }}>
       <div style={wrapStyle}>
 
         {step < 4 && (
           <>
-            <div className="label" style={{ marginBottom: 10 }}>
+            {/* The reference's segmented rail: one segment per step, filled to
+                the current one. Four segments, not its three — production has
+                four steps and content wins, same call as S6's six tabs. */}
+            <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+              {[0, 1, 2, 3].map((segment) => (
+                <div key={segment} style={{ flex: 1, height: 4, borderRadius: 2, background: segment <= step ? 'var(--accent)' : 'var(--line-2)' }} />
+              ))}
+            </div>
+            <div className="label" style={{ marginBottom: 22 }}>
               {[
                 t('eventsNewPage.stepLabelBasics', 'Step 1 of 4 · Basics'),
                 t('eventsNewPage.stepLabelTickets', 'Step 2 of 4 · Tickets'),
@@ -245,7 +251,6 @@ export default function EventsNewPage() {
                 t('eventsNewPage.stepLabelReview', 'Step 4 of 4 · Review'),
               ][step]}
             </div>
-            <div className="progress-wrap"><div className="progress-fill" style={{ width: `${progressPct}%` }} /></div>
           </>
         )}
 
@@ -290,31 +295,29 @@ export default function EventsNewPage() {
                 <input id="event-capacity" max={5000} min={10} onChange={(e) => setCapacity(e.target.value)} type="number" value={capacity} />
               </div>
             </div>
-            <div className="card">
-              <div className="label" style={{ marginBottom: 10 }}>{t('eventsNewPage.ifSellsOut', 'If it sells out')}</div>
-              <div className="split-bar" style={{ marginBottom: 14 }}>
-                <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
-                <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-                <div style={{ flex: 10, background: 'var(--role-fan)', borderRadius: '0 999px 999px 0' }} />
+            {/* The reference's "IF YOU SELL OUT" ledger: brass border, a Gate
+                line, then one keyed row per share. The promoter slice is
+                --role-promoter — it was painted --role-fan here, the exact
+                fill/role confusion the brand constants warn against. */}
+            <div className="card" style={{ borderColor: 'var(--brass)', background: 'var(--bg-raised)' }}>
+              <div className="label" style={{ marginBottom: 14 }}>{t('eventsNewPage.ifSellsOut', 'If you sell out')}</div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
+                <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('eventsNewPage.gateLabel', 'Gate')}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{fmt$(gross)}</span>
               </div>
-              <div style={{ display: 'flex', gap: 0 }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--accent-text)' }}>{fmt$(gross * .7)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitArtist', '70% Artist')}</div>
+              <div style={{ height: 1, background: 'var(--line)', marginBottom: 12 }} />
+              {[
+                { key: 'var(--accent)', label: t('eventsNewPage.splitArtist', 'Artist · 70%'), value: fmt$(gross * .7), strong: true },
+                { key: 'var(--role-venue)', label: t('eventsNewPage.splitVenue', 'Venue · 20%'), value: fmt$(gross * .2) },
+                { key: 'var(--role-promoter)', label: t('eventsNewPage.splitPromoters', 'Promoter pool · 10%'), value: fmt$(gross * .1) },
+                { key: 'var(--line-2)', label: 'iHYPE', value: '$0', zero: true },
+              ].map((row) => (
+                <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
+                  <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 2, background: row.key, flex: '0 0 auto' }} />
+                  <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{row.label}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', fontWeight: row.strong || row.zero ? 600 : 400, color: row.zero ? 'var(--accent-text)' : 'var(--ink)' }}>{row.value}</span>
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--role-venue)' }}>{fmt$(gross * .2)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitVenue', '20% Venue')}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--role-fan)' }}>{fmt$(gross * .1)}</div>
-                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitPromoters', '10% Promoters')}</div>
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', color: 'var(--ink-3)' }}>$0</div>
-                  <div className="label" style={{ marginTop: 3 }}>{t('eventsNewPage.splitIhype', 'iHYPE')}</div>
-                </div>
-              </div>
+              ))}
             </div>
             <div className="card">
               <div className="label" style={{ marginBottom: 12 }}>{t('eventsNewPage.payoutPreviewLabel', 'Payout preview · per ticket')}</div>
@@ -325,7 +328,7 @@ export default function EventsNewPage() {
                 <span style={{ color: 'var(--role-venue)' }}>{t('eventsNewPage.payoutVenue', 'Venue · 20%')}</span><b>{fmtCents(priceDollars * .2)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0' }}>
-                <span style={{ color: 'var(--role-fan)' }}>{t('eventsNewPage.payoutPromoterPool', 'Promoter pool · 10%')}</span><b>{fmtCents(priceDollars * .1)}</b>
+                <span style={{ color: 'var(--role-promoter)' }}>{t('eventsNewPage.payoutPromoterPool', 'Promoter pool · 10%')}</span><b>{fmtCents(priceDollars * .1)}</b>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', padding: '6px 0', borderTop: '1px solid var(--hair-50)', marginTop: 4 }}>
                 <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutIhype', 'iHYPE · 0%')}</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
@@ -403,7 +406,7 @@ export default function EventsNewPage() {
               <div className="split-bar" style={{ marginBottom: 12 }}>
                 <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
                 <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-                <div style={{ flex: 10, background: 'var(--role-fan)', borderRadius: '0 999px 999px 0' }} />
+                <div style={{ flex: 10, background: 'var(--role-promoter)', borderRadius: '0 999px 999px 0' }} />
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
                 {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
@@ -455,27 +458,31 @@ export default function EventsNewPage() {
       </div>
 
       <style>{`
-        .label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); }
-        h1 { font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; letter-spacing: -.03em; line-height: .95; margin-bottom: .5rem; color: var(--ink); }
-        .sub { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.65; margin-bottom: 1.5rem; }
-        .progress-wrap { height: 3px; background: var(--bg3, var(--bg)); border-radius: 999px; margin-bottom: 28px; overflow: hidden; }
-        .progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width .4s ease; }
+        /* S7's paper idiom, from design/handoff-console/reference/s7-event-create.html:
+           mono tracked labels, 48px bg-base inputs on an 8px radius (the one
+           rounded thing the console keeps besides pills), 3px paper cards, and
+           pill CTAs in ink-on-accent. The undefined var(--bg2)/var(--bg3)
+           these rules used to read are gone — they resolved to nothing, so
+           every "filled" surface here was silently transparent. */
+        .label { font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .2em; text-transform: uppercase; color: var(--ink-3); }
+        h1 { font-family: var(--font-display); font-size: 1.875rem; font-weight: 400; line-height: 1.12; margin-bottom: .5rem; color: var(--ink); }
+        .sub { font-size: 0.9375rem; color: var(--ink-2); line-height: 1.6; margin-bottom: 1.4rem; text-wrap: pretty; }
         .field { margin-bottom: 14px; }
-        .field label { display: block; font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
-        .field input, .field select, .field textarea { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid var(--hair-80); background: var(--bg3, var(--bg)); color: var(--ink); font-size: 0.9375rem; outline: none; transition: border-color .15s; box-sizing: border-box; }
-        .field input:focus, .field select:focus, .field textarea:focus { border-color: rgba(var(--accent-rgb),.4); }
-        .field textarea { resize: vertical; min-height: 70px; }
-        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .field label { display: block; font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 7px; }
+        .field input, .field select, .field textarea { width: 100%; min-height: 48px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--bg-base); color: var(--ink-1); font-family: var(--font-mono); font-size: 1rem; outline: none; transition: border-color .15s; box-sizing: border-box; }
+        .field textarea { resize: vertical; min-height: 84px; padding: 12px 14px; font-family: var(--font-body); font-size: 0.9375rem; }
+        .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--brass-deep); }
+        .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
         @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
-        .btn-primary { width: 100%; padding: 13px; border-radius: 999px; background: var(--accent); color: var(--ink-on-accent); border: none; font-family: var(--font-display); font-weight: 800; font-size: .95rem; cursor: pointer; box-shadow: 0 4px 20px rgba(var(--accent-rgb),.25); margin-top: 4px; text-align: center; text-decoration: none; display: block; }
-        .btn-primary:disabled { background: var(--bg3); color: var(--ink-3); box-shadow: none; cursor: default; }
-        .btn-ghost { width: 100%; padding: 11px; border-radius: 999px; background: transparent; color: var(--ink-2); border: none; font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
-        .card { background: var(--bg2); border: 1px solid var(--line, var(--hair-80)); border-radius: 16px; padding: 1.25rem; margin-bottom: 12px; }
+        .btn-primary { width: 100%; min-height: 50px; border-radius: var(--radius-pill); background: var(--accent); color: var(--ink-on-accent); border: none; font-family: var(--font-body); font-weight: 600; font-size: 1rem; cursor: pointer; margin-top: 4px; text-align: center; text-decoration: none; display: block; }
+        .btn-primary:disabled { background: var(--bg-surface); color: var(--ink-3); cursor: default; }
+        .btn-ghost { width: 100%; min-height: 46px; border-radius: var(--radius-pill); background: transparent; color: var(--ink-2); border: 1px solid var(--line-2); font-family: var(--font-body); font-weight: 500; font-size: 0.9375rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
+        .card { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-panel); padding: 18px; margin-bottom: 12px; }
         .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
-        .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line, var(--hair-80)); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: all .15s; background: var(--bg2); }
-        .ticket-type-btn:hover { border-color: rgba(var(--accent-rgb),.3); }
-        .ticket-type-btn.selected { border-color: var(--accent); background: rgba(var(--accent-rgb),.06); }
-        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: 12px; background: var(--bg2); border: 1px dashed var(--hair-100); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .1em; text-transform: uppercase; }
+        .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius-panel); border: 1px solid var(--line); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: border-color .15s; background: var(--bg-surface); }
+        .ticket-type-btn:hover { border-color: var(--brass-deep); }
+        .ticket-type-btn.selected { border-color: var(--brass); background: var(--bg-raised); }
+        .cover-slot { width: 100%; height: 140px; margin-bottom: 20px; border-radius: var(--radius-panel); background: var(--bg-surface); border: 1px dashed var(--line-2); display: flex; align-items: center; justify-content: center; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .16em; text-transform: uppercase; }
       `}</style>
     </div>
   );

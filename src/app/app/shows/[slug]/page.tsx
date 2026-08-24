@@ -10,6 +10,7 @@ import { formatShowTime } from '@/lib/utils';
 import { isAdminSession } from '@/lib/permissions';
 import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
+import { HypeButton } from '@/components/HypeButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -79,6 +80,10 @@ export default async function MmmShowPage({
         ticketCapacity: true,
         ticketsSoldCount: true,
         ticketingOpensAt: true,
+        /* S9's stat strip and hype control. Additive selects, same as the S6
+           pane's storageUrl: the reference demanded data the query already
+           owned the row for. */
+        hypeCount: true,
         venuePayoutPercent: true,
         artistPayoutPercent: true,
         promoterPayoutPercent: true,
@@ -130,24 +135,73 @@ export default async function MmmShowPage({
     return <MmmMissing />;
   }
 
+  /* Whether the viewer has hyped THIS show inside the window — the same
+     lookup the legacy page runs, so the button opens in its true state
+     instead of resetting on every navigation. Independently caught: a failed
+     read costs the button's initial state, never the page. */
+  const userShowHype = await db.hypeEvent
+    .findUnique({
+      where: { userId_showId: { userId: session.user.id, showId: show.id } },
+      select: { createdAt: true },
+    })
+    .catch(() => null);
+
   const venue = show.venueProfile;
   const where = formatShowWhere(venue);
   const ticketingOpen = isTicketingOpen(show);
   const splits = resolveShowSplits(show);
   const faceShares = splits ? splitFaceValueCents(show.ticketPriceCents, splits) : null;
 
+  /* ── S9 · Show detail ──────────────────────────────────────────────────
+     Translated from design/handoff-console/reference/s9-show-detail.html.
+     What the reference adds over the old pane: the three-cell stat strip
+     (HYPES · SOLD · GA), a LINEUP block, the locked-split ledger row, and the
+     hype control — mounted as the real HypeButton, exactly as the legacy
+     page mounts it, never redrawn. What it does not replace: TicketSaleCard
+     is still the entire transaction (see the docstring above), so the
+     reference's single "Get ticket" CTA is the card, not a new button. The
+     LINEUP block lists the acts this query already holds — the headliner;
+     multi-act slots (ShowLineupSlot) render on /shows/[slug]/lineup and are
+     one link away, per this pane's own scope rule. */
   return (
     <div className="mmm-show">
       <Link className="mmm-show-back" href="/app/map">← Map</Link>
 
-      <div className="mmm-show-eyebrow">{formatShowTime(show.startsAt)}</div>
+      <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt)}</div>
       <h1 className="mmm-show-title">{show.title}</h1>
       {where && <div className="mmm-show-where">{where}</div>}
-      <div className="mmm-show-by">
-        {show.headlinerProfile ? (
-          <Link href={`/app/artists/${show.headlinerProfile.slug}`}>{show.headlinerProfile.name}</Link>
-        ) : null}
+
+      {/* The reference's stat strip: three cells between hairlines. SOLD only
+          renders with a capacity to be sold against, GA only with a price —
+          an empty cell is dropped rather than faked. */}
+      <div style={{ display: 'flex', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', margin: '14px 0' }}>
+        {[
+          { value: show.hypeCount.toLocaleString(), label: 'HYPES' },
+          show.ticketCapacity
+            ? { value: `${show.ticketsSoldCount} / ${show.ticketCapacity}`, label: 'SOLD' }
+            : null,
+          show.isTicketed && show.ticketPriceCents > 0
+            ? { value: formatCurrencyFromCents(show.ticketPriceCents), label: 'GA' }
+            : null,
+        ].filter((cell): cell is { value: string; label: string } => cell !== null).map((cell, index) => (
+          <div key={cell.label} style={{ flex: 1, padding: '13px 0', textAlign: 'center', borderLeft: index === 0 ? 'none' : '1px solid var(--line)' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '1.0625rem', fontWeight: 600 }}>{cell.value}</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'var(--ink-3)' }}>{cell.label}</div>
+          </div>
+        ))}
       </div>
+
+      {show.headlinerProfile && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 16 }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.2em', color: 'var(--ink-3)' }}>LINEUP</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between' }}>
+            <Link href={`/app/artists/${show.headlinerProfile.slug}`} style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--ink-1)' }}>
+              {show.headlinerProfile.name}
+            </Link>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em', color: 'var(--ink-3)' }}>HEADLINER</span>
+          </div>
+        </div>
+      )}
 
       {/* The split, stated on the surface where money changes hands rather than
           only in the charter. These are the show's OWN percentages, not the
@@ -156,24 +210,17 @@ export default async function MmmShowPage({
           this ticket does. Absent when the show has not set one. */}
       {splits && (
         <>
-          <div className="mmm-show-split" role="group" aria-label="Where the money goes">
-            <span className="mmm-show-split-part" data-role="artist" style={{ flexGrow: splits.artist }}>
-              {splits.artist}% artist
-            </span>
-            <span className="mmm-show-split-part" data-role="venue" style={{ flexGrow: splits.venue }}>
-              {splits.venue}% venue
-            </span>
-            <span className="mmm-show-split-part" data-role="promoter" style={{ flexGrow: splits.promoter }}>
-              {splits.promoter}% promoters
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
+            <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>Split locked at publish</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em' }}>
+              {splits.artist} / {splits.venue} / {splits.promoter} · iHYPE $0
             </span>
           </div>
-          {/* WHAT the percentages are a share OF, which the bar above cannot
+          {/* WHAT the percentages are a share OF, which the row above cannot
               say on its own. The design system's money rule: the split is shown
               against face value only — against the total it would imply the
-              artist's 70% includes money Stripe took, and the sale card
-              directly below this ends in a total carrying tax and Stripe's
-              processing. Two charges, named separately, with iHYPE's own $0
-              stated rather than implied. */}
+              artist's share includes money Stripe took, and the sale card
+              below this ends in a total carrying tax and Stripe's processing. */}
           <div className="mmm-show-fee">
             {faceShares
               ? `${formatCurrencyFromCents(show.ticketPriceCents)} face value · ${formatCurrencyFromCents(faceShares.artist)} artist · ${formatCurrencyFromCents(faceShares.venue)} venue · ${formatCurrencyFromCents(faceShares.promoter)} promoters`
@@ -183,6 +230,21 @@ export default async function MmmShowPage({
             $0 iHYPE fee · Stripe&rsquo;s processing is charged separately and shown before you pay
           </div>
         </>
+      )}
+
+      {/* The real hype control — cooldown, optimistic count, the same endpoint
+          and window as everywhere else. The reference's caption ("one hype per
+          show") is the button's own behaviour, so the component says it. */}
+      {show.status !== 'DRAFT' && (
+        <div style={{ margin: '14px 0 4px' }}>
+          <HypeButton
+            entityLabel="show"
+            initialCount={show.hypeCount}
+            lastHypedAt={userShowHype?.createdAt.toISOString() ?? null}
+            targetId={show.id}
+            targetType="show"
+          />
+        </div>
       )}
 
       {show.isTicketed && venue && show.headlinerProfile && splits ? (
