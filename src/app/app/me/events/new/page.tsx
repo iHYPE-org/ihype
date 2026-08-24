@@ -404,9 +404,9 @@ export default function EventsNewPage() {
                 {date || t('eventsNewPage.tbd', 'TBD')} · {venueProfile?.name ?? t('eventsNewPage.tbd', 'TBD')} · ${priceDollars || 0} · {cap || 0} {t('eventsNewPage.capAbbrev', 'cap')}
               </div>
               <div className="split-bar" style={{ marginBottom: 12 }}>
-                <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
+                <div style={{ flex: 70, background: 'var(--accent)', borderRadius: 'var(--radius-pill) 0 0 var(--radius-pill)' }} />
                 <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-                <div style={{ flex: 10, background: 'var(--role-promoter)', borderRadius: '0 999px 999px 0' }} />
+                <div style={{ flex: 10, background: 'var(--role-promoter)', borderRadius: '0 var(--radius-pill) var(--radius-pill) 0' }} />
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
                 {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
@@ -478,7 +478,7 @@ export default function EventsNewPage() {
         .btn-primary:disabled { background: var(--bg-surface); color: var(--ink-3); cursor: default; }
         .btn-ghost { width: 100%; min-height: 46px; border-radius: var(--radius-pill); background: transparent; color: var(--ink-2); border: 1px solid var(--line-2); font-family: var(--font-body); font-weight: 500; font-size: 0.9375rem; cursor: pointer; margin-top: 8px; text-align: center; text-decoration: none; display: block; }
         .card { background: var(--bg-surface); border: 1px solid var(--line); border-radius: var(--radius-panel); padding: 18px; margin-bottom: 12px; }
-        .split-bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
+        .split-bar { display: flex; height: 8px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; }
         .ticket-type-btn { display: flex; width: 100%; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--radius-panel); border: 1px solid var(--line); color: var(--ink); text-align: left; cursor: pointer; margin-bottom: 8px; transition: border-color .15s; background: var(--bg-surface); }
         .ticket-type-btn:hover { border-color: var(--brass-deep); }
         .ticket-type-btn.selected { border-color: var(--brass); background: var(--bg-raised); }
