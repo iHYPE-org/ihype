@@ -14,8 +14,38 @@ const favoriteSchema = z.object({
   artworkUrl: z.string().trim().url().optional().nullable()
 });
 
-function canUseFanPlaylists(role: string | null | undefined) {
-  return role === 'FAN' || role === 'ADMIN';
+/* Playlists stay a fan surface, but LIKING is account-wide (owner,
+   2026-08-24: likes are "stored to user's account" — an artist liking a
+   track is a listener act, not a role feature). The old FAN/ADMIN gate on
+   this route made every other role's heart silently 403. */
+function canUseFanPlaylists(_role: string | null | undefined) {
+  return true;
+}
+
+/**
+ * GET /api/fan-favorites?mediaId= → { liked } for the session user.
+ *
+ * The heart could never read its own stored state, so it re-offered a like
+ * the account already held on every track change — "liked once, stored until
+ * unliked" needs the control to light up on arrival.
+ */
+export async function GET(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+  const mediaId = new URL(request.url).searchParams.get('mediaId')?.trim();
+  if (!mediaId) return NextResponse.json({ error: 'mediaId required' }, { status: 400 });
+  try {
+    const row = await db.fanFavoriteMedia.findUnique({
+      where: { userId_mediaId: { userId: session.user.id, mediaId } },
+      select: { id: true }
+    });
+    return NextResponse.json({ liked: Boolean(row) });
+  } catch (err) {
+    log.error('[fan-favorites]', err instanceof Error ? err : { error: String(err) });
+    return NextResponse.json({ error: 'Could not read loved media' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {

@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { useI18n } from '@/components/I18nProvider';
 
 function AdminDeviceRegisterInner() {
@@ -21,6 +22,38 @@ function AdminDeviceRegisterInner() {
   // administrator can send themselves one.
   const [reissue, setReissue] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
   const [reissueMsg, setReissueMsg] = useState('');
+
+  /* The primary way in (owner, 2026-08-24: "Admin Mode needs passkey only
+     security, and doesn't need email access requirement"): a fresh WebAuthn
+     assertion with the admin's own passkey registers this device directly.
+     The emailed link below survives only as recovery for a lost
+     authenticator. */
+  const [passkeyBusy, setPasskeyBusy] = useState(false);
+  const [passkeyMsg, setPasskeyMsg] = useState('');
+
+  async function registerWithPasskey() {
+    setPasskeyBusy(true);
+    setPasskeyMsg('');
+    try {
+      const optionsRes = await fetch('/api/admin/device-passkey');
+      const options = await optionsRes.json();
+      if (!optionsRes.ok) throw new Error(options.error ?? t('adminDeviceRegisterPage.passkeyFailed', 'Could not start the passkey ceremony.'));
+      const assertion = await startAuthentication({ optionsJSON: options });
+      const verifyRes = await fetch('/api/admin/device-passkey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(assertion),
+      });
+      const data = await verifyRes.json().catch(() => ({} as { error?: string }));
+      if (!verifyRes.ok) throw new Error(data.error ?? t('adminDeviceRegisterPage.passkeyFailed', 'Passkey verification failed.'));
+      setStatus('done');
+      setTimeout(() => router.replace('/admin'), 900);
+    } catch (err) {
+      setPasskeyMsg(err instanceof Error ? err.message : t('adminDeviceRegisterPage.passkeyFailed', 'Passkey verification failed.'));
+    } finally {
+      setPasskeyBusy(false);
+    }
+  }
 
   async function requestNewLink() {
     setReissue('sending');
@@ -92,6 +125,25 @@ function AdminDeviceRegisterInner() {
             </p>
           )}
 
+          <button
+            disabled={passkeyBusy}
+            onClick={() => void registerWithPasskey()}
+            style={{
+              marginTop: 14, minHeight: 44, padding: '11px 20px', borderRadius: 9999,
+              border: '1px solid var(--accent)', background: 'var(--accent)', color: 'var(--ink-on-accent)',
+              fontFamily: 'var(--f-b)', fontSize: '0.9375rem', fontWeight: 600,
+              cursor: passkeyBusy ? 'default' : 'pointer', opacity: passkeyBusy ? 0.6 : 1,
+            }}
+            type="button"
+          >
+            {passkeyBusy
+              ? t('adminDeviceRegisterPage.passkeyChecking', 'Waiting for your passkey…')
+              : t('adminDeviceRegisterPage.passkeyRegister', 'Register this device with your passkey')}
+          </button>
+          {passkeyMsg && (
+            <p style={{ fontSize: '0.9375rem', color: 'var(--danger)', marginTop: 10, maxWidth: 460, textAlign: 'center' }}>{passkeyMsg}</p>
+          )}
+
           {reissue === 'sent' ? (
             <p style={{ fontSize: '0.9375rem', color: 'var(--success)', maxWidth: 460, textAlign: 'center' }}>
               {t('adminDeviceRegisterPage.reissueSent', 'Link sent to {email}. It expires in 20 minutes — open it on this device.').replace('{email}', reissueMsg)}
@@ -110,7 +162,7 @@ function AdminDeviceRegisterInner() {
             >
               {reissue === 'sending'
                 ? t('adminDeviceRegisterPage.reissueSending', 'Sending…')
-                : t('adminDeviceRegisterPage.reissueSend', 'Email me a registration link')}
+                : t('adminDeviceRegisterPage.reissueSend', 'Lost your passkey? Email me a registration link')}
             </button>
           )}
 

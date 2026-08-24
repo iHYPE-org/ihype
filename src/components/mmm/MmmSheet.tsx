@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
 import type { MapSheetTarget } from '@/components/mmm/MmmMap';
 
 const SPLIT_LINE = '70% artist · 20% venue · 10% promoters · $0 iHYPE fee';
@@ -19,6 +20,10 @@ type SheetContent = {
   list: Array<{ a: string; b: string; c: string }>;
   primary: { label: string; href: string } | null;
   secondary: { label: string; href: string } | null;
+  /** A heart in the action row — the venue sheet offers one; likes are held
+      on the account until unliked (/api/likes). Optional so the other pin
+      kinds change nothing. */
+  like?: { id: string; name: string } | null;
 };
 
 /**
@@ -126,6 +131,9 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
           {content.secondary && (
             <Link className="mmm-sheet-cta-2" href={content.secondary.href}>{content.secondary.label}</Link>
           )}
+          {content.like && (
+            <MmmLikeButton name={content.like.name} targetId={content.like.id} targetType="VENUE" />
+          )}
           <button className="mmm-sheet-dismiss" onClick={onClose} type="button">
             <span aria-hidden="true">✕</span>
             <span className="sr-only">Close</span>
@@ -190,6 +198,7 @@ function describe(target: MapSheetTarget): SheetContent {
       list: venue.genres.map((entry) => ({ a: entry, b: '', c: '' })),
       primary: { label: 'Open venue page', href: `/app/venues/${venue.slug}` },
       secondary: null,
+      like: { id: venue.id, name: venue.name },
     };
   }
 

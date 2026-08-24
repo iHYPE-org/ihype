@@ -109,6 +109,25 @@ html.mmm-locked .site-shell > main {
   overflow: hidden;
   /* Below a modal but above ordinary page content. */
   z-index: var(--z-sticky);
+  /* ONE layout on every screen (owner, 2026-08-24: "I want mobile and desktop
+     and ios and android to share similar layout"). Above a phone the whole
+     console — chart, panes and dock — holds the dc.html's 430px frame and
+     centres, the same rule the dock itself already follows. The transform is
+     load-bearing beyond centring: a transformed ancestor becomes the
+     containing block for FIXED descendants, so the pane's fixed grain layer
+     and anything else that says `position: fixed` stays inside the frame
+     instead of spilling across the desk. A narrower viewport takes the full
+     width via min(). This also fixes the "pixelated" desktop chart: a
+     county's worth of raster tiles stretched across 1900px is upscaled past
+     what the print filter can hide; at phone width the tiles render at their
+     natural resolution. */
+  left: 50%;
+  right: auto;
+  width: min(100vw, 430px);
+  transform: translateX(-50%);
+  /* The sheet's edge against the desk — invisible at phone width (clipped by
+     the viewport), a hairline and a lifted shadow when the desk shows. */
+  box-shadow: 0 0 0 1px var(--ink-a22), 0 24px 70px -34px rgba(28, 20, 8, .5);
 
   /* ── Safe areas ────────────────────────────────────────────────────────
      The handoff is drawn at 430px on a rectangle with no notch. The real
@@ -272,6 +291,23 @@ html.mmm-locked .site-shell > main {
   background-size: auto, auto, auto, 140px 140px, auto;
   mix-blend-mode: multiply;
 }
+/* The same photographed film grain the dock and the panes wear, over the
+   tiles and under the pins — the procedural fractal noise in the ::after wash
+   above reads as digital speckle once the tiles are crisp; the photographed
+   stock is what makes the print read as paper fibre rather than pixels. */
+.mmm-map-layer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+  background-image: url('/console/grain.png');
+  background-size: 160px;
+  mix-blend-mode: overlay;
+  /* Matched to the dock's own grain — one exposure across the whole cabinet. */
+  opacity: 0.09;
+}
+
 .mmm-map-canvas .maplibregl-ctrl-attrib,
 .mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
 .mmm-map-canvas .maplibregl-canvas { outline: none; }
@@ -1302,6 +1338,24 @@ html.mmm-locked .site-shell > main {
   font-size: 0.9375rem;
   cursor: pointer;
 }
+
+/* The heart for non-track things — a paper chip in the print vocabulary,
+   the glyph in brick ink when lit (accent-as-copy token, never the raw
+   accent: 2.48:1 on cream is the lint rule's whole point). 44px floor. */
+.mmm-like {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
+  color: var(--ink-2);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-like[data-active] { color: var(--accent-text); }
 
 .mmm-link-field {
   display: flex;

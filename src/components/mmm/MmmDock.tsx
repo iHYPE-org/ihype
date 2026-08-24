@@ -55,8 +55,12 @@ import { MMM_NAV, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
 const KNOB_ANGLES = [-50, 0, 50];
 /** Thumb travel per knob detent, px — wide enough that a tap never reads as a turn. */
 const KNOB_TRAVEL = 32;
-/** Thumb travel per dial detent, px — matches the card's 6.2762° angular pitch. */
-const DIAL_DETENT = 46;
+/** Thumb travel per dial detent, px. The dc.html's figure is 46 — one major
+ *  tick of the card per 46px of finger — but driven on a real screen that
+ *  tuned away on incidental drags (owner, 2026-08-24: "Make the subnav
+ *  switcher a little less sensitive"). 64 keeps the same card geometry and
+ *  just lowers the gearing: more finger per station. */
+const DIAL_DETENT = 64;
 /** The card the ticks and the station labels both ride: centre 420px below the window. */
 const CARD_R = 420;
 /** Horizontal pitch between neighbouring station labels at the window, px. */

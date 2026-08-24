@@ -13,7 +13,7 @@ export async function GET() {
     where: { id: session.user.id },
     select: {
       id: true, name: true, email: true, username: true, role: true,
-      isEighteenOrOlder: true, emailVerified: true,
+      isEighteenOrOlder: true, emailVerified: true, stripeCustomerId: true,
       notificationPreference: {
         select: {
           newShows: true, journalPosts: true, milestones: true, weeklyDigest: true,
@@ -42,10 +42,25 @@ export async function GET() {
   const inviteProfile = await db.profile.findFirst({
     where: { ownerId: session.user.id },
     orderBy: { createdAt: 'asc' },
-    select: { hexId: true },
+    select: { hexId: true, id: true, stripeConnectAccountId: true, stripeConnectOnboarded: true },
   });
 
-  return NextResponse.json({ ...user, creatorProfile, inviteHexId: inviteProfile?.hexId ?? null });
+  const { stripeCustomerId, ...safeUser } = user;
+  return NextResponse.json({
+    ...safeUser,
+    creatorProfile,
+    inviteHexId: inviteProfile?.hexId ?? null,
+    /* Money methods for Settings (owner, 2026-08-24: "Settings needs payment
+       method AND payout method"). Payment method = a Stripe customer with a
+       saved card exists (the setup Checkout writes it); payout method = the
+       first profile's Connect state — any account can earn the 10% promoter
+       share through its HYPE link, so this is not gated on role. The raw
+       Stripe ids stay server-side. */
+    payment: { saved: Boolean(stripeCustomerId) },
+    payout: inviteProfile
+      ? { profileId: inviteProfile.id, connected: Boolean(inviteProfile.stripeConnectOnboarded), started: Boolean(inviteProfile.stripeConnectAccountId) }
+      : null,
+  });
 }
 
 export async function PATCH(req: Request) {

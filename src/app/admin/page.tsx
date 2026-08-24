@@ -357,21 +357,32 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             {t('adminPage.subtitle', 'Platform management · iH/OPS — account growth, verification, email/MFA delivery, reports, tickets, media, and audit events during beta.')}
           </p>
         </div>
-        <div className="cta-row">
-          <Link className="button" href="/admin/users">
-            {t('adminPage.userManagement', 'User management')}
-          </Link>
-          <Link className="button" href="/admin/broadcast">
-            {t('adminPage.broadcastEmail', 'Broadcast email')}
-          </Link>
-          <Link className="button secondary" href="/admin/community">
-            {t('adminPage.communityEditor', 'Community editor')}
-          </Link>
-          <Link className="button secondary" href="/info?tab=transparency">
-            {t('adminPage.transparency', 'Transparency')}
-          </Link>
-        </div>
       </section>
+
+      {/* The consolidated console index (owner, 2026-08-24: "consolidated
+          menu buttons so I don't have to scroll down so far"): every
+          destination the shell's rail and subnav reach, in one band at the
+          top. The four hero pills this replaces covered a sixth of it. */}
+      <nav aria-label={t('adminPage.consoleIndex', 'Console index')} className="admin-index">
+        <Link href="/admin/users">{t('adminPage.idxUsers', 'Users & roles')}</Link>
+        <Link href="/admin/moderation">{t('adminPage.idxModeration', 'Moderation')}</Link>
+        <Link href="/admin/review?tab=verifications">{t('adminPage.idxVerifications', 'Verifications')}</Link>
+        <Link href="/admin/media">{t('adminPage.idxHeldTracks', 'Held tracks')}</Link>
+        <Link href="/admin/ads">{t('adminPage.idxAds', 'Ad campaigns')}</Link>
+        <Link href="/admin/finance">{t('adminPage.idxFinance', 'Finance')}</Link>
+        <Link href="/admin/tickets">{t('adminPage.idxTickets', 'Events & tickets')}</Link>
+        <Link href="/admin/tickets/support">{t('adminPage.idxSupport', 'Support')}</Link>
+        <Link href="/admin/broadcast">{t('adminPage.idxBroadcast', 'Broadcast email')}</Link>
+        <Link href="/admin/feedback">{t('adminPage.idxFeedback', 'Feedback')}</Link>
+        <Link href="/admin/analytics">{t('adminPage.idxAnalytics', 'Analytics')}</Link>
+        <Link href="/admin/growth">{t('adminPage.idxGrowth', 'Growth')}</Link>
+        <Link href="/admin/journal">{t('adminPage.idxJournal', 'Journal')}</Link>
+        <Link href="/admin/community">{t('adminPage.idxCommunity', 'Community')}</Link>
+        <Link href="/admin/playlists">{t('adminPage.idxPlaylists', 'Playlists')}</Link>
+        <Link href="/admin/authorizations">{t('adminPage.idxDevices', 'Devices & holds')}</Link>
+        <Link href="/admin/invite">{t('adminPage.idxInvites', 'Invite codes')}</Link>
+        <Link href="/admin/audit">{t('adminPage.idxAudit', 'Audit log')}</Link>
+      </nav>
 
       {/* The live board. Six sections behind a tab strip, refreshing
           themselves every 20s — this is the surface an operator actually

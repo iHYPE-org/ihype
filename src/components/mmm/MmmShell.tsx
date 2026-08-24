@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmDock } from '@/components/mmm/MmmDock';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
@@ -139,6 +139,24 @@ export function MmmShell({
     volume,
   } = useMediaPlayer();
 
+  /* The stick's LEFT throw, as a record deck behaves (owner, 2026-08-24:
+     "Left to restart track, twice in 1 second to go to prev track"): one
+     throw re-cues the needle to the top of the side; a second throw within a
+     second is the actual "back one track". `seekTo(0)` on a live track,
+     `playPrevious()` on the double — and when nothing is playing there is
+     nothing to re-cue, so the single throw falls through to previous too. */
+  const lastBackThrow = useRef(0);
+  const stickBack = useCallback(() => {
+    const now = Date.now();
+    const doubled = now - lastBackThrow.current < 1000;
+    lastBackThrow.current = doubled ? 0 : now;
+    if (doubled || !currentTrack) {
+      playPrevious();
+      return;
+    }
+    seekTo(0);
+  }, [currentTrack, playPrevious, seekTo]);
+
   /**
    * The transport's last resort: turn the radio on.
    *
@@ -218,10 +236,21 @@ export function MmmShell({
   const [faved, setFaved] = useState(false);
   const [favPending, setFavPending] = useState(false);
 
-  // A track change invalidates the heart: it describes THIS track, and leaving
-  // it lit would tell the member a song is saved when it is not.
+  // A track change re-reads the heart from the ACCOUNT: a like is stored
+  // until unliked (owner, 2026-08-24), so a track you loved last week arrives
+  // already lit. Reset first — a stale heart from the previous track is a lie
+  // while the fetch is in flight.
   useEffect(() => {
     setFaved(false);
+    const mediaId = currentTrack?.id;
+    if (!mediaId) return undefined;
+    let stale = false;
+    void fetch(`/api/fan-favorites?mediaId=${encodeURIComponent(mediaId)}`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => { if (!stale && data) setFaved(Boolean(data.liked)); })
+      .catch(() => { /* the heart just stays unlit */ });
+    return () => { stale = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the track's identity alone
   }, [currentTrack?.id]);
 
   const toggleFav = useCallback(async () => {
@@ -230,8 +259,15 @@ export function MmmShell({
     setFavPending(true);
     setFaved(!previous); // Optimistic: a heart that lags reads as a dropped tap.
     try {
+      /* DELETE carries a JSON body — the API has always parsed one, and the
+         old query-string form 400'd, which meant UNLIKE never worked: the
+         optimistic heart un-lit and then silently reverted. */
       const response = previous
-        ? await fetch(`/api/fan-favorites?mediaId=${encodeURIComponent(currentTrack.id)}`, { method: 'DELETE' })
+        ? await fetch('/api/fan-favorites', {
+            method: 'DELETE',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ mediaId: currentTrack.id }),
+          })
         : await fetch('/api/fan-favorites', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
@@ -413,7 +449,7 @@ export function MmmShell({
           onCollapse={() => setFullOpen(false)}
           onExpand={() => setFullOpen(true)}
           onNext={playNext}
-          onPrev={playPrevious}
+          onPrev={stickBack}
           onTogglePlay={togglePlayback}
           pathname={pathname}
           playing={Boolean(currentTrack) && isPlaying}

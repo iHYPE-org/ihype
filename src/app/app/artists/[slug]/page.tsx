@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
+import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
@@ -297,6 +298,9 @@ export default async function MmmArtistPage({
               targetType="profile"
             />
             <FollowButton profileId={profile.id} />
+            {/* The third act: remember this artist. One like per account,
+                held until unliked — /api/likes holds the rule. */}
+            <MmmLikeButton name={profile.name} targetId={profile.id} targetType="ARTIST" />
           </div>
 
           <div style={{ display: 'flex', gap: 10 }}>
