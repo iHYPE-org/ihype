@@ -749,11 +749,19 @@ test.describe('Music · Map · Me shell', () => {
       // absorbed by a `.first()`.
       await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
       await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
-      // The split bar draws the show's OWN percentages.
-      const split = page.locator('.mmm-show-split:visible');
-      await expect(split).toContainText('70% artist');
-      await expect(split).toContainText('20% venue');
-      await expect(split).toContainText('10% promoters');
+      // The split states the show's OWN percentages. S9 (2026-08-24) replaced
+      // the labelled bar with the locked-split ledger row, and the per-role
+      // named shares moved into the sale card's split rows — so the assertion
+      // follows the information, not the retired node: the numbers must be the
+      // show's own, and every share must still be NAMED somewhere on the pane.
+      await expect(page.getByText('Split locked at publish')).toBeVisible();
+      await expect(page.getByText('70 / 20 / 10 · iHYPE $0')).toBeVisible();
+      const saleCard = page.locator('.mmm-show-sale:visible');
+      await expect(saleCard).toContainText('· 70%');
+      await expect(saleCard).toContainText('· 20%');
+      await expect(saleCard).toContainText('· 10%');
+      // WHAT the percentages are a share of — the face-value line survives.
+      await expect(page.locator('.mmm-show-fee').first()).toContainText('face value');
       // And the disclosure that changes what the buyer is agreeing to.
       //
       // This assertion is stronger than it looks: the seeded account has no
