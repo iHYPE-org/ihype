@@ -1,6 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Work+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
-<style>/* mmm-console.css — console skin layer for iHYPE production
+<style>*, *::before, *::after { box-sizing: border-box; }
+/* mmm-console.css — console skin layer for iHYPE production
    Drop at: src/app/mmm-console.css, import AFTER mmm.css in src/app/layout.tsx.
    Only overrides + additions; mmm.css keeps owning layout. Tokens are the
    design system's cream/walnut/brass set verbatim. */
@@ -149,18 +150,27 @@ body{margin:0;padding:24px;background:var(--bg-base);font-family:var(--font-body
           </div>
         </div>
       
-        <div style="margin-top: auto; flex: 0 0 auto; height: 93px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; background: linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%); border-top: 3px solid var(--brass); box-shadow: inset 0 1px 0 rgba(255,220,160,.32);">
-          <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%); box-shadow: inset 0 2px 3px rgba(255,246,220,.5), inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.6);">
-            <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: #33240a;">MAP</span>
-          </div>
-          <div style="flex: 1; height: 74px; border-radius: var(--radius-panel); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: radial-gradient(120% 150% at 50% 112%, #fffdf4 0%, #f6ecd0 44%, #e4d3a8 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.3), inset 0 -14px 22px -10px rgba(255,150,60,.3);">
-            <span style="font-family: var(--font-display); font-size: 19px; line-height: 1; color: #1c1408;">Event create</span>
-            <div style="width: 78%; height: 10px; opacity: .45; background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 7px);"></div>
-          </div>
-          <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);">
-            <div style="width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%); box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);"></div>
-          </div>
-        </div>
-      </div>
+        
+      
+<div style="margin-top: auto; flex: 0 0 auto; height: 93px; padding: 8px 10px; display: flex; align-items: center; gap: 10px; background: repeating-linear-gradient(90deg, transparent 0 7px, rgba(0,0,0,.14) 7px 8px, transparent 8px 15px, rgba(255,200,130,.04) 15px 16px), linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%); border-top: 3px solid var(--brass); box-shadow: inset 0 1px 0 rgba(255,220,160,.32);">
+  <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; position: relative; background: repeating-conic-gradient(#241708 0deg 3deg, #4a3620 3deg 6deg); box-shadow: 0 3px 8px rgba(0,0,0,.65), inset 0 -2px 4px rgba(0,0,0,.6);">
+    <div style="position: absolute; inset: 9px; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 40%, var(--brass-deep) 82%, #4d3a15 100%); box-shadow: inset 0 2px 3px rgba(255,246,220,.55), inset 0 -3px 6px rgba(0,0,0,.5);">
+      <span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: #33240a; text-shadow: 0 1px 0 rgba(255,246,220,.4);">ME</span>
+    </div>
+    <div style="position: absolute; left: 50%; top: 3px; width: 3px; height: 9px; transform: translateX(-50%); border-radius: 2px; background: #f6ecd7; box-shadow: 0 0 3px rgba(0,0,0,.6);"></div>
+  </div>
+  <div style="flex: 1; height: 74px; border-radius: 3px; position: relative; overflow: hidden; background: radial-gradient(120% 150% at 50% 118%, #fffdf4 0%, #f6ecd0 40%, #e4d3a8 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.32);">
+    <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(60% 130% at 50% 125%, rgba(255,176,86,.55) 0%, rgba(255,146,48,.22) 40%, transparent 70%);"></div>
+    <div style="position: absolute; left: 8px; top: 50%; transform: translateY(-50%) rotate(8deg); transform-origin: left center; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; color: rgba(28,20,8,.5);">DETAILS</div>
+    <div style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%) rotate(-8deg); transform-origin: right center; font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.14em; color: rgba(28,20,8,.5);">REVIEW</div>
+    <div style="position: absolute; left: 0; right: 0; top: 12px; text-align: center; font-family: var(--font-serif, 'Instrument Serif', serif); font-size: 23px; line-height: 1; color: #1c1408;">Event create</div>
+    <div style="position: absolute; left: 11%; right: 11%; bottom: 10px; height: 12px; opacity: .5; background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 6px), repeating-linear-gradient(90deg, #1c1408 0 1.5px, transparent 1.5px 30px);"></div>
+    <div style="position: absolute; left: 50%; bottom: 6px; width: 2px; height: 20px; transform: translateX(-50%); background: #b8291a; box-shadow: 0 0 3px rgba(184,41,26,.6);"></div>
+  </div>
+  <div style="width: 74px; height: 74px; flex: 0 0 auto; border-radius: 50%; display: grid; place-items: center; background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);">
+    <div style="width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%); box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);"></div>
+  </div>
+</div>
+</div>
     </div>
 </body></html>

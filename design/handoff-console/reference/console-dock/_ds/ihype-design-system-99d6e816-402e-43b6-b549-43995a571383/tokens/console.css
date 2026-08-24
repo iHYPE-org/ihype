@@ -1,0 +1,202 @@
+/* iHYPE Console Materials — walnut / brass / lamp reusable classes.
+   Verbatim from uploads/ihype-hifi/03-handoff/HANDOFF.md §4 (what shipped),
+   re-pointed at this project's own --walnut/--brass/--accent tokens. Use
+   these on the console chrome (player dock, full player, nav, map frame) —
+   never on a plain page card, which reads from --bg-surface / --radius-panel
+   instead. Ink on any of these MUST come from --ink-on-walnut(-2/-3), never
+   from --ink-1/2/3.
+
+   Photo hooks: --walnut-photo / --tuner-photo / --brass-photo / --map-photo all
+   default to `none` (pure CSS material). Set one on :root to a real photographed
+   texture to replace the gradient approximation without touching any component —
+   the gradient stays underneath as the fallback and as the tint that keeps text
+   legible over a photo. Two rules, both learned the hard way: the file must be a
+   flat TEXTURE (veneer grain, brushed metal), never a photograph of a receiver —
+   a device photo dropped into --tuner-photo renders a whole stereo inside the
+   dial face. And url() here resolves against THIS stylesheet, not the page, so
+   a project-root file is '../uploads/x.jpg'. Effects below are intentionally
+   restrained to one shadow doing structure + one doing depth, not a stack. */
+:root {
+  --walnut-photo: none; /* @kind other */
+  --tuner-photo: none; /* @kind other */
+  --brass-photo: none; /* @kind other */
+}
+
+/* ── Bottom nav dock — two-tone walnut+ash body, brass knurled hardware,
+   orange backlit VU. Ash caps the ends of the dock, walnut is the face the
+   controls sit on — the seam is the accent hairline the dock already draws. ── */
+.dock-ash-cap {
+  background: linear-gradient(180deg, var(--ash) 0%, var(--ash-2) 100%);
+  color: var(--ink-on-ash);
+}
+.brass-hardware {
+  background: var(--brass-photo), radial-gradient(circle at 35% 30%, var(--brass) 0%, var(--brass-deep) 100%);
+  background-size: cover, auto;
+  background-position: center, 0 0;
+  background-blend-mode: overlay, normal;
+}
+
+/* Free-use photo sources for these hooks (no attribution required for
+   commercial use), found 2026-08-21 — pick a tight, warm-lit crop and set
+   as `--walnut-photo: url('assets/walnut.jpg')` etc. on :root in styles.css:
+   - Walnut veneer / cabinet grain: unsplash.com/s/photos/vintage-radio,
+     pexels.com/search/vintage%20stereo (crop to a plain wood-grain panel,
+     avoid dials/labels in frame)
+   - Brushed brass / dial bezel: pexels.com/search/vintage%20receiver
+     (macro shots of knobs/trim)
+   - Plain wood-grain texture (public domain): photos-public-domain.com
+     "Wood Grain Texture", publicdomainpictures.net "Wood Texture" */
+
+.walnut-panel {
+  background:
+    var(--walnut-photo),
+    repeating-linear-gradient(88deg,
+      rgba(30,14,4,.22) 0 1px, transparent 1px 5px,
+      rgba(94,56,26,.14) 5px 7px, transparent 7px 15px),
+    linear-gradient(180deg, var(--walnut) 0%, var(--walnut-2) 34%, var(--walnut-3) 100%);
+  background-size: cover, auto, auto;
+  background-position: center, 0 0, 0 0;
+  color: var(--ink-on-walnut);
+}
+
+.walnut-lip-top {
+  border-top: 3px solid var(--brass);
+  box-shadow: inset 0 4px 0 -1px rgba(255,214,160,.18);
+}
+
+.walnut-frame {
+  border: 2px solid var(--brass-deep);
+  box-shadow: 0 10px 22px -12px rgba(0,0,0,.5);
+}
+
+.walnut-plate {
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  background-color: var(--walnut-3);
+  background-size: cover;
+  background-position: center;
+  box-shadow:
+    0 0 0 3px var(--brass),
+    inset 0 2px 6px rgba(0,0,0,.55),
+    0 14px 28px -14px rgba(0,0,0,.7);
+}
+
+/* ── The tuner dial — the signature control, replaces horizontal tab strips.
+   role="tablist" of role="tab" with roving tabindex, NOT role="slider": a
+   slider announces a number where this needs a destination name. ── */
+.tuner-dial {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-panel);
+  padding: 5px 12px 6px;
+  overflow: hidden;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background:
+    var(--tuner-photo),
+    radial-gradient(160% 180% at 50% 118%, #ffb066 0%, #ff8f2d 14%, #f3d9a0 40%, var(--bg-base) 62%, #e2cea0 84%, #d4bd8c 100%);
+  background-size: cover, auto;
+  background-position: center, 0 0;
+  background-color: #eeddb4;
+  box-shadow:
+    0 0 0 2px var(--brass),
+    inset 0 -9px 16px -4px rgba(255,124,20,.55),
+    inset 0 2px 5px rgba(92,62,20,.4);
+}
+
+.tuner-station {
+  display: none;
+  width: 100%;
+  border: 0;
+  background: none;
+  padding: 0;
+  font-family: var(--font-serif);
+  font-size: 1.625rem;
+  line-height: 1.12;
+  letter-spacing: .005em;
+  text-align: center;
+  color: var(--ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: inherit;
+}
+
+.tuner-scale {
+  position: relative;
+  display: block;
+  height: 20px;
+  margin-top: 2px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  box-shadow: inset 0 0 14px rgba(255,143,45,.35);
+}
+
+.tuner-ticks {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(90deg, rgba(28,20,8,.85) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(90deg, rgba(28,20,8,.42) 0 1px, transparent 1px 9.2px);
+  background-size: auto 15px, auto 8px;
+  background-repeat: repeat-x, repeat-x;
+  background-position-y: 0, 0;
+  will-change: background-position;
+}
+
+.tuner-needle {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%;
+  width: 1.5px;
+  margin-left: -.75px;
+  background: #ff8f2d;
+  z-index: 3;
+  box-shadow: 0 0 6px rgba(255,143,45,.9);
+}
+
+.tuner-step {
+  flex: 0 0 auto;
+  width: 44px;
+  min-height: 44px;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--brass) 0%, var(--brass-deep) 100%);
+  color: var(--walnut-3);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,244,214,.55);
+}
+
+/* ── The cabinet — app/console chrome background. ── */
+.mmm-console {
+  border-radius: 7px;
+  background:
+    var(--walnut-photo),
+    repeating-linear-gradient(88deg,
+      rgba(30,14,4,.30) 0 1px, transparent 1px 4px,
+      rgba(94,56,26,.22) 4px 6px, transparent 6px 13px),
+    linear-gradient(180deg, #6b4426 0%, #52301a 30%, #432612 46%, #3a2110 60%, #4a2c17 74%, #5c3a1f 90%, #6f4728 100%);
+  background-size: cover, auto, auto;
+  background-position: center, 0 0, 0 0;
+  background-color: var(--walnut);
+  box-shadow: inset 0 1px 0 rgba(255,214,160,.28), 0 4px 14px -4px rgba(0,0,0,.8);
+}
+
+/* ── The map — aged chart, its own material: not walnut, not the board. ── */
+:root { --map-photo: none; /* @kind other */ }
+.map-parchment {
+  background:
+    var(--map-photo),
+    repeating-linear-gradient(0deg, transparent 0 31px, var(--map-line) 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, var(--map-line) 31px 32px),
+    var(--map-void);
+  background-size: cover, auto, auto, auto;
+  background-position: center, 0 0, 0 0, 0 0;
+  color: var(--map-ink);
+}

@@ -1,0 +1,1385 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/colors.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/typography.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/base.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/console.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/tokens/motion.css">
+<link rel="stylesheet" href="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/styles.css">
+<script src="_ds/ihype-design-system-99d6e816-402e-43b6-b549-43995a571383/_ds_bundle.js"></script>
+<style>
+  a { color: var(--accent-text); text-decoration: none; }
+  a:hover { color: var(--accent-deep); }
+  @keyframes ihSpin { to { transform: rotate(360deg); } }
+  @keyframes ihBacklight { 0%,100% { opacity: .94; } 43% { opacity: 1; } 71% { opacity: .97; } }
+</style>
+</helmet>
+
+<div style="background: var(--bg-base); color: var(--ink-1); font-family: var(--font-body); min-height: 100vh; padding: 40px 24px 96px;">
+<div style="max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px;">
+
+  <header style="display: flex; flex-direction: column; gap: 14px; padding-bottom: 24px; border-bottom: 2px solid var(--brass);">
+    <div style="font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.22em; color: var(--ink-3);">THE DOCK · RECONCILED TO SHIPPED GEOMETRY · 2026-08-22</div>
+    <h1 style="font-family: var(--font-display); font-size: 54px; line-height: 1.03; letter-spacing: normal; font-weight: 400; margin: 0;">One dock, three controls</h1>
+    <p style="font-size: 17px; line-height: 1.62; color: var(--ink-2); max-width: 62ch; margin: 0; text-wrap: pretty;">Built to the figures production already uses: 74px knobs, matched, on an 8px-padded walnut bar with a 3px brass lip. The dial takes the space between them. Everything is live — turn the knob, drag the dial, push the stick.</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 4px;">
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-1); background: var(--bg-raised); border: 1px solid var(--line-2); border-radius: var(--radius-panel); padding: 8px 12px;">--MMM-KNOB 74PX</div>
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-1); background: var(--bg-raised); border: 1px solid var(--line-2); border-radius: var(--radius-panel); padding: 8px 12px;">--MMM-DOCK-PAD 8PX</div>
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-1); background: var(--bg-raised); border: 1px solid var(--line-2); border-radius: var(--radius-panel); padding: 8px 12px;">--MMM-DOCK-LIP 3PX</div>
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-1); background: var(--bg-raised); border: 1px solid var(--line-2); border-radius: var(--radius-panel); padding: 8px 12px;">COLUMN 430PX</div>
+    </div>
+  </header>
+
+  <section style="display: flex; flex-wrap: wrap; gap: 40px; align-items: flex-start;">
+
+    <div style="flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px;">
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">IN CONTEXT · 430PX PHONE COLUMN</div>
+      <div style="position: relative; width: 430px; max-width: 100%; height: 800px; border-radius: 6px; overflow: hidden; contain: layout paint; border: 1px solid var(--line-2); background: var(--map-void);">
+        <iframe src="treasure-map.html" title="Treasure chart" style="position: absolute; inset: 0; width: 100%; height: 100%; border: 0; display: block;"></iframe>
+        <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 150px; pointer-events: none; background: linear-gradient(180deg, transparent, rgba(28,16,4,.3));"></div>
+
+        <div data-pane="music" style="position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg-base); padding: 22px 18px 140px; display: none; flex-direction: column; gap: 14px;">
+      <div data-sect="discover" style="flex-direction: column; gap: 16px;">
+        <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+          <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">30 SECONDS · THEN YOU DECIDE</div>
+          <div data-deck-left="1" style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">4 LEFT</div>
+        </div>
+
+        <div data-deck="1" style="position: relative; height: 470px; flex: 0 0 auto;">
+          <div style="position: absolute; left: 10px; right: 10px; top: 14px; height: 300px; border-radius: 3px; background: var(--bg-raised); border: 1px solid var(--line); opacity: .55;"></div>
+          <div style="position: absolute; left: 5px; right: 5px; top: 7px; height: 300px; border-radius: 3px; background: var(--bg-surface); border: 1px solid var(--line); opacity: .8;"></div>
+
+          <div data-card="1" style="position: absolute; inset: 0; cursor: grab; touch-action: pan-y; will-change: transform; background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 18px; display: flex; flex-direction: column; gap: 14px; box-shadow: 0 10px 24px -12px rgba(28,16,4,.4);">
+
+            <div data-skipbadge="1" style="position: absolute; left: 16px; top: 16px; z-index: 4; opacity: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; color: var(--ink-1); border: 2px solid var(--ink-1); border-radius: 3px; padding: 7px 11px; transform: rotate(-11deg);">SKIP</div>
+            <div data-savebadge="1" style="position: absolute; right: 16px; top: 16px; z-index: 4; opacity: 0; font-family: var(--font-mono); font-size: 11px; font-weight: 700; letter-spacing: 0.2em; color: var(--accent-text); border: 2px solid var(--accent-text); border-radius: 3px; padding: 7px 11px; transform: rotate(11deg);">SAVE</div>
+
+            <div style="position: relative; height: 244px; flex: 0 0 auto;">
+              <div data-disc="1" style="position: absolute; right: 4px; top: 22px; width: 200px; height: 200px; border-radius: 50%; will-change: transform; background: radial-gradient(circle, #cfc6b0 0 4.5%, #14100a 4.5% 20%, #0d0a06 20%), repeating-radial-gradient(circle, rgba(255,255,255,.055) 0 1px, transparent 1px 3.5px); box-shadow: 0 6px 16px -6px rgba(0,0,0,.7);">
+                <div data-disclabel="1" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 78px; height: 78px; border-radius: 50%; background: var(--accent); display: grid; place-items: center; font-family: var(--font-display); font-size: 21px; color: var(--ink-on-accent);">N</div>
+                <div style="position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: linear-gradient(118deg, rgba(255,255,255,.2) 0%, transparent 26%, transparent 68%, rgba(255,255,255,.09) 100%);"></div>
+              </div>
+              <div data-sleeve="1" style="position: absolute; left: 0; top: 0; width: 244px; height: 244px; border-radius: 2px; overflow: hidden; box-shadow: 0 8px 20px -8px rgba(28,16,4,.6), inset 0 0 0 1px rgba(0,0,0,.25);">
+                <div data-art="1" style="position: absolute; inset: 0; background: radial-gradient(circle at 30% 24%, #ffb877 0%, var(--accent) 34%, #8c2410 76%, #3d1004 100%);"></div>
+                <div style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(0,0,0,.12) 0 2px, transparent 2px 8px); opacity: .45;"></div>
+                <div style="position: absolute; left: 0; top: 0; bottom: 0; width: 13px; background: linear-gradient(90deg, rgba(0,0,0,.4), transparent);"></div>
+                <div style="position: absolute; inset: 0; pointer-events: none; background: linear-gradient(148deg, rgba(255,255,255,.16) 0%, transparent 34%);"></div>
+              </div>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex: 0 0 auto;">
+              <div style="position: relative; flex: 1 1 auto; height: 3px; border-radius: 2px; background: var(--line-2); overflow: hidden;">
+                <div data-clip="1" style="position: absolute; left: 0; top: 0; bottom: 0; width: 0%; background: var(--accent);"></div>
+              </div>
+              <div data-cliptime="1" style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.1em; color: var(--ink-3); flex: 0 0 auto;">0:30</div>
+            </div>
+
+            <div style="flex: 1 1 auto; min-height: 0;">
+              <a data-track="1" href="#artist" style="display: block; font-family: var(--font-display); font-size: 29px; line-height: 1.08; color: var(--ink-1); text-decoration: none;">Slow Exit</a>
+              <a data-artist="1" href="#artist" style="display: inline-block; margin-top: 5px; font-size: 15px; color: var(--accent-text); text-decoration: underline; text-decoration-color: var(--line-2); text-underline-offset: 3px;">Night Bus Collective</a>
+              <div data-album="1" style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">Harbor Lights · 2026</div>
+            </div>
+
+            <div style="display: flex; gap: 8px; align-items: stretch; flex: 0 0 auto;">
+              <button data-skip="1" type="button" style="flex: 0 0 auto; min-width: 52px; min-height: 44px; border-radius: 9999px; border: 1px solid var(--line-2); background: transparent; color: var(--ink-2); font-family: var(--font-body); font-size: 15px; cursor: pointer;">Skip</button>
+              <button data-heart="1" type="button" aria-label="Like" aria-pressed="false" style="flex: 0 0 auto; width: 52px; min-height: 44px; border-radius: 9999px; border: 1px solid var(--line-2); background: transparent; color: var(--ink-2); cursor: pointer; display: grid; place-items: center;">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.5s-7.5-4.7-7.5-9.7A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.5 2.8c0 5-7.5 9.7-7.5 9.7Z"></path></svg>
+              </button>
+              <button data-hype="1" type="button" style="flex: 1 1 auto; min-height: 44px; border-radius: 9999px; border: none; background: var(--accent); color: var(--ink-on-accent); font-family: var(--font-body); font-weight: 600; font-size: 15px; cursor: pointer;">Hype · <span data-hypecount="1">892</span></button>
+            </div>
+          </div>
+        </div>
+
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3); text-align: center;">DRAG LEFT TO SKIP · DRAG RIGHT TO SAVE</div>
+      </div>
+
+      <div data-sect="radio" style="flex-direction: column; gap: 12px; display: none;">
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">ON AIR NOW</div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 18px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--lamp); box-shadow: 0 0 12px 3px rgba(255,184,74,.7); flex: 0 0 auto;"></div>
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-family: var(--font-display); font-size: 25px; line-height: 1.1;">Tidewater Radio Hour</div>
+            <div style="font-size: 15px; color: var(--ink-2); margin-top: 4px;">Casco Bay sessions · 2,410 listening</div>
+          </div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px;">
+          <div style="font-family: var(--font-display); font-size: 21px;">Night Freight</div>
+          <div style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">Dub and slow techno · 11 PM</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px;">
+          <div style="font-family: var(--font-display); font-size: 21px;">Harbour Static</div>
+          <div style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">Noise and drone · Thursdays</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px;">
+          <div style="font-family: var(--font-display); font-size: 21px;">The Long Room</div>
+          <div style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">Live sets from One Longfellow · Sundays</div>
+        </div>
+      </div>
+
+      <div data-sect="charts" style="flex-direction: column; gap: 0; display: none;">
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3); padding-bottom: 12px;">HYPED THIS WEEK · PORTLAND</div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px;">
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+            <div style="font-family: var(--font-mono); font-size: 15px; color: var(--accent-text); flex: 0 0 26px;">01</div>
+            <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Analog Weather</div><div style="font-size: 15px; color: var(--ink-2);">Slow Static</div></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-2);">1.2k</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+            <div style="font-family: var(--font-mono); font-size: 15px; color: var(--ink-3); flex: 0 0 26px;">02</div>
+            <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Night Bus Collective</div><div style="font-size: 15px; color: var(--ink-2);">Last Stop North</div></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-2);">892</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+            <div style="font-family: var(--font-mono); font-size: 15px; color: var(--ink-3); flex: 0 0 26px;">03</div>
+            <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Sea Glass Choir</div><div style="font-size: 15px; color: var(--ink-2);">Tideline</div></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-2);">412</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--line);">
+            <div style="font-family: var(--font-mono); font-size: 15px; color: var(--ink-3); flex: 0 0 26px;">04</div>
+            <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Corner Booth</div><div style="font-size: 15px; color: var(--ink-2);">Blue Hour</div></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-2);">233</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px;">
+            <div style="font-family: var(--font-mono); font-size: 15px; color: var(--ink-3); flex: 0 0 26px;">05</div>
+            <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Fathom Line</div><div style="font-size: 15px; color: var(--ink-2);">Dredger</div></div>
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.12em; color: var(--ink-2);">187</div>
+          </div>
+        </div>
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3); padding-top: 14px;">ONE MEMBER, ONE VOTE · REGARDLESS OF SPEND</div>
+      </div>
+
+      <div data-sect="recommended" style="flex-direction: column; gap: 14px; display: none;">
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">BECAUSE YOU HYPED ANALOG WEATHER</div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; overflow: hidden;">
+          <div style="height: 150px; background: linear-gradient(148deg, #0f8f80 0%, #0a5d54 58%, #06332e 100%);"></div>
+          <div style="padding: 16px 18px;">
+            <div style="font-family: var(--font-display); font-size: 25px;">Fathom Line</div>
+            <div style="font-size: 15px; color: var(--ink-2); margin-top: 4px;">Playing One Longfellow · Sat</div>
+          </div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px;">
+          <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--role-fan);">FANS LIKE YOU · 84% MATCH</div>
+          <div style="font-family: var(--font-display); font-size: 21px; margin-top: 8px;">Harbour Static</div>
+          <div style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">No shows yet. Hype to bring them here.</div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 16px 18px;">
+          <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.16em; color: var(--role-venue-text);">VENUE YOU FOLLOW</div>
+          <div style="font-family: var(--font-display); font-size: 21px; margin-top: 8px;">SPACE Gallery</div>
+          <div style="font-size: 15px; color: var(--ink-2); margin-top: 3px;">Four shows announced this week</div>
+        </div>
+      </div>
+
+      <div data-sect="playlists" style="flex-direction: column; gap: 12px; display: none;">
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">YOURS · 4</div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto; background: linear-gradient(140deg, var(--accent), #6b1a05);"></div>
+          <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Winter Freight</div><div style="font-size: 15px; color: var(--ink-2);">31 tracks</div></div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto; background: linear-gradient(140deg, #8a4fd6, #3d1e6b);"></div>
+          <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Hyped &amp; Went</div><div style="font-size: 15px; color: var(--ink-2);">18 tracks · auto</div></div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto; background: linear-gradient(140deg, #0f8f80, #06332e);"></div>
+          <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Casco Bay Slow</div><div style="font-size: 15px; color: var(--ink-2);">42 tracks</div></div>
+        </div>
+        <div style="background: var(--bg-surface); border: 1px solid var(--line); border-radius: 3px; padding: 14px 16px; display: flex; align-items: center; gap: 14px;">
+          <div style="width: 52px; height: 52px; border-radius: 2px; flex: 0 0 auto; background: linear-gradient(140deg, #a5760a, #4a3208);"></div>
+          <div style="flex: 1; min-width: 0;"><div style="font-family: var(--font-display); font-size: 21px;">Seeds I Skipped</div><div style="font-size: 15px; color: var(--ink-2);">9 tracks · private</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div data-pane="me" style="position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; background: var(--bg-base); padding: 22px 18px 140px; display: none; flex-direction: column; gap: 14px;">
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-3);">SIGNED IN · FAN</div>
+      <div style="font-family: var(--font-display); font-size: 34px; line-height: 1.08;">Quinn Marsh</div>
+      <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line);">
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px;"><span>Tickets</span><span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">2 UPCOMING</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px;"><span>HYPE Link</span><span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--accent-text);">$12.40 EARNED</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px;"><span>Settings</span><span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">→</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px;"><span>Info</span><span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">→</span></div>
+        <div style="display: flex; align-items: center; justify-content: space-between; min-height: 52px; border-bottom: 1px solid var(--line); font-size: 15px;"><span>Legal</span><span style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">→</span></div>
+      </div>
+      <div style="font-size: 15px; line-height: 1.62; color: var(--ink-2); text-wrap: pretty;">0 PII sold · 24h identity detached · 12 cohort queries (k≥5)</div>
+    </div>
+
+    <div data-pill="1" role="button" tabindex="0" style="position: absolute; left: 12px; right: 12px; bottom: 104px; height: 56px; border-radius: 3px; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 0 14px; background: linear-gradient(180deg, #5c3f22 0%, #3f2a13 100%); box-shadow: inset 0 1px 0 rgba(255,220,160,.28), 0 0 0 1px rgba(201,165,78,.45), 0 8px 18px -8px rgba(28,16,4,.6);">
+      <div style="width: 38px; height: 38px; border-radius: 50%; flex: 0 0 auto; background: radial-gradient(circle at 32% 28%, #ffb877 0%, var(--accent) 40%, #6b1a05 100%); box-shadow: 0 0 0 2px var(--brass-deep), inset 0 -2px 4px rgba(0,0,0,.5);"></div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-family: var(--font-display); font-size: 17px; line-height: 1.15; color: var(--ink-on-walnut); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Last Stop North</div>
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-on-walnut-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">NIGHT BUS COLLECTIVE</div>
+      </div>
+      <div data-pill-play="1" style="width: 34px; height: 34px; border-radius: 50%; flex: 0 0 auto; display: grid; place-items: center; background: linear-gradient(180deg, #f0d9a0 0%, var(--brass) 46%, #96742c 100%); box-shadow: inset 0 1px 0 rgba(255,246,220,.8), 0 2px 4px rgba(10,6,2,.5); font-size: 13px; color: #33240a;">▶</div>
+    </div>
+
+    <div data-player="1" style="position: absolute; inset: 0; z-index: 6; display: none; flex-direction: column; transform: translateY(100%); transition: transform 300ms cubic-bezier(0.2,0.7,0.3,1); background: linear-gradient(180deg, #6e4c2b 0%, #4a3117 46%, #2c1a09 100%);">
+      <div style="position: absolute; inset: 0; opacity: .5; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0 8px, rgba(0,0,0,.16) 8px 9px, transparent 9px 17px, rgba(255,200,130,.05) 17px 18px);"></div>
+
+      <div style="position: relative; display: flex; align-items: center; justify-content: space-between; padding: 18px 18px 6px;">
+        <button type="button" data-player-close="1" style="min-width: 44px; min-height: 44px; border: none; background: transparent; color: var(--ink-on-walnut-2); font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; cursor: pointer; text-align: left; padding: 0;">CLOSE</button>
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.2em; color: var(--ink-on-walnut-3);">NOW PLAYING</div>
+        <div style="min-width: 44px;"></div>
+      </div>
+
+      <div style="position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 26px; padding: 0 26px;">
+        <div style="position: relative; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle at 30% 24%, #ffb877 0%, var(--accent) 34%, #8c2410 74%, #2e0c02 100%); box-shadow: 0 0 0 8px var(--brass-deep), 0 0 0 11px rgba(201,165,78,.35), 0 22px 44px -16px rgba(0,0,0,.85), inset -10px -14px 30px rgba(0,0,0,.5);">
+          <div style="position: absolute; inset: 0; border-radius: 50%; background: repeating-radial-gradient(circle at 50% 50%, transparent 0 3px, rgba(0,0,0,.16) 3px 4px); opacity: .55;"></div>
+          <div style="position: absolute; inset: 0; border-radius: 50%; background: linear-gradient(128deg, rgba(255,255,255,.3) 0%, transparent 34%, transparent 66%, rgba(255,255,255,.1) 100%);"></div>
+          <div style="position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%); width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 36% 30%, #f0d9a0, var(--brass-deep)); box-shadow: inset 0 -2px 5px rgba(0,0,0,.5), 0 1px 0 rgba(255,246,220,.4);"></div>
+        </div>
+
+        <div style="text-align: center;">
+          <div style="font-family: var(--font-display); font-size: 34px; line-height: 1.08; color: var(--ink-on-walnut);">Last Stop North</div>
+          <div style="font-size: 15px; color: var(--ink-on-walnut-2); margin-top: 6px;">Night Bus Collective · Slow Static</div>
+        </div>
+
+        <div style="width: 100%;">
+          <div style="position: relative; height: 4px; border-radius: 2px; background: rgba(0,0,0,.45); box-shadow: inset 0 1px 2px rgba(0,0,0,.6);">
+            <div data-scrub-fill="1" style="position: absolute; left: 0; top: 0; bottom: 0; width: 62%; border-radius: 2px; background: linear-gradient(90deg, var(--brass-deep), var(--brass));"></div>
+            <div data-scrub-thumb="1" style="position: absolute; left: 62%; top: 50%; transform: translate(-50%,-50%); width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 34% 30%, #f0d9a0, var(--brass-deep)); box-shadow: 0 0 0 6px rgba(240,235,229,0.18), 0 1px 3px rgba(0,0,0,.6);"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin-top: 10px; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-on-walnut-3);"><span>3:38</span><span>5:52</span></div>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 26px;">
+          <button type="button" style="width: 48px; height: 48px; border: none; border-radius: 50%; background: transparent; color: var(--ink-on-walnut-2); font-size: 19px; cursor: pointer;">◀◀</button>
+          <button type="button" data-player-play="1" style="width: 76px; height: 76px; border: none; border-radius: 50%; cursor: pointer; font-size: 25px; color: #33240a; background: linear-gradient(180deg, #f0d9a0 0%, var(--brass) 44%, #8a6a28 100%); box-shadow: inset 0 2px 0 rgba(255,250,232,.75), inset 0 -3px 6px rgba(40,24,4,.5), 0 8px 16px -6px rgba(0,0,0,.7);">▶</button>
+          <button type="button" style="width: 48px; height: 48px; border: none; border-radius: 50%; background: transparent; color: var(--ink-on-walnut-2); font-size: 19px; cursor: pointer;">▶▶</button>
+        </div>
+      </div>
+
+      <div style="position: relative; padding: 0 18px 26px;">
+        <button type="button" data-player-hype="1" style="width: 100%; min-height: 52px; border: none; border-radius: 9999px; cursor: pointer; background: var(--accent); color: var(--ink-on-accent); font-family: var(--font-body); font-size: 15px; font-weight: 600;">Hype this moment · 3:38</button>
+        <div style="text-align: center; font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-on-walnut-3); margin-top: 12px;">ONE HYPE PER ARTIST · RESETS IN 17H 40M</div>
+      </div>
+    </div>
+
+        <div data-dock="1" style="position: absolute; left: 0; right: 0; bottom: 0;"></div>
+      </div>
+      <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3); max-width: 430px;">DOCK HEIGHT 74 + 8·2 + 3 = 93PX · CONSTANT ON EVERY PLATFORM</div>
+      <p style="font-size: 15px; line-height: 1.62; color: var(--ink-2); max-width: 430px; margin: 0; text-wrap: pretty;">The dock is the same 93px on mobile, desktop, iOS and Android — it is derived from the knob, and the knob does not change size. Safe-area insets pad <em>beneath</em> it rather than growing it, so the content area above is the only thing that flexes and every platform gets the same layout.</p>
+    </div>
+
+    <div style="flex: 1 1 340px; min-width: 300px; display: flex; flex-direction: column; gap: 20px;">
+      <div style="border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--bg-surface); padding: 20px; display: flex; flex-direction: column; gap: 12px;">
+        <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">THE KNOB REPORTS THE MODULE</div>
+        <div data-readout="1" style="font-family: var(--font-display); font-size: 38px; line-height: 1.15; letter-spacing: normal; color: var(--ink-1);">MAP + Venues</div>
+        <p style="font-size: 15px; line-height: 1.62; color: var(--ink-2); margin: 0; text-wrap: pretty;">The dock states where you are as well as where you can go. "MAP + Albums" reads as a profile opened from the map — which is why the dial tunes the sections of whatever you are looking at, not a fixed list.</p>
+      </div>
+
+      <div style="border: 1px solid var(--line); border-radius: var(--radius-panel); background: var(--bg-surface); overflow: hidden;">
+        <sc-for list="{{ rules }}" as="r" hint-placeholder-count="4">
+          <div style="display: grid; grid-template-columns: 96px 1fr; gap: 14px; padding: 14px 18px; border-bottom: 1px solid var(--line); align-items: baseline;">
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent-text);">{{ r.k }}</div>
+            <div style="font-size: 15px; line-height: 1.5; color: var(--ink-2);">{{ r.v }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+  </section>
+
+  <section style="display: flex; flex-direction: column; gap: 16px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--accent-text);">DETAIL · 2× · SAME COMPONENTS, SCALED FOR INSPECTION</div>
+    <div class="mmm-console" style="position: relative; padding: 32px; display: flex; justify-content: center;">
+      <div data-dock2x="1" style="width: 100%; max-width: 860px;"></div>
+      <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(90% 130% at 50% -30%, rgba(255,232,190,.15) 0%, rgba(255,220,170,.05) 45%, transparent 70%);"></div>
+      <div style="position: absolute; inset: 0; pointer-events: none; background: radial-gradient(150% 150% at 50% 42%, transparent 56%, rgba(10,6,2,.36) 100%);"></div>
+    </div>
+  </section>
+
+  <footer style="border-top: 2px solid var(--brass); padding-top: 24px; display: flex; flex-direction: column; gap: 8px;">
+    <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; color: var(--ink-3);">GEOMETRY FROM SRC/APP/MMM.CSS · BEHAVIOUR FROM DESIGN/HANDOFF-CONSOLE-2026-08-21/README.MD</div>
+    <div style="font-size: 15px; color: var(--ink-2); max-width: 62ch; text-wrap: pretty;">Both knobs are the same brass body at the same size. If one is smaller the dock looks broken.</div>
+  </footer>
+
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1240,&quot;height&quot;:900}}">
+const SEEDS = [
+  { track: 'Slow Exit', artist: 'Night Bus Collective', album: 'Harbor Lights · 2026', hype: 892, href: '#artist-night-bus',
+    art: 'radial-gradient(circle at 30% 24%, #ffb877 0%, var(--accent) 34%, #8c2410 76%, #3d1004 100%)' },
+  { track: 'Paper Streets', artist: 'Marigold Sky', album: 'Second Summer · 2025', hype: 431, href: '#artist-marigold-sky',
+    art: 'radial-gradient(circle at 72% 20%, #f0d9a0 0%, var(--role-advertiser) 38%, #6b4a06 80%, #2b1d02 100%)' },
+  { track: 'Cold Open', artist: 'The Levee Hours', album: 'Dust and Radio · 2026', hype: 1240, href: '#artist-levee-hours',
+    art: 'radial-gradient(circle at 24% 74%, #7fe3d6 0%, var(--role-venue) 36%, #064a42 78%, #01211d 100%)' },
+  { track: 'Nine Volt', artist: 'Ada Vance', album: 'Filament · 2026', hype: 318, href: '#artist-ada-vance',
+    art: 'radial-gradient(circle at 66% 68%, #c9a7f5 0%, var(--role-fan) 36%, #4a1f80 78%, #1c0a33 100%)' },
+];
+
+const MODULES = [
+  { id: 'map', label: 'MAP', angle: -50, sections: ['Venues', 'Artists', 'Shows'] },
+  { id: 'music', label: 'MUSIC', angle: 0, sections: ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'] },
+  { id: 'me', label: 'ME', angle: 50, sections: ['Tickets', 'Settings', 'Info', 'Legal'] },
+];
+
+class Component extends DCLogic {
+  state = { mod: 0, knobPos: 0, knobDragging: false, pos: 0, playing: false, tilt: { x: 0, y: 0 }, dragging: false, pressed: false };
+
+  componentDidMount() {
+    this.build(document.querySelector('[data-dock="1"]'), 1);
+    this.build(document.querySelector('[data-dock2x="1"]'), 2);
+    try { this.wireDeck(); } catch (err) { console.warn('wireDeck', err); }
+    try { this.wireMusic(); } catch (err) { console.warn('wireMusic', err); }
+    this.paint();
+  }
+  componentDidUpdate() { this.paint(); }
+
+  // The dock is drawn once per scale and then only its live values are written.
+  // Rotation, tilt and barrel offset cannot exist at template-parse time, and a
+  // CSS transition on them pins the FROM value in embedded contexts.
+  build(root, k) {
+    if (!root || root.dataset.built) return;
+    root.dataset.built = '1';
+    const K = 74 * k, PAD = 8 * k, LIP = 3 * k;
+    const el = (tag, style, cls) => {
+      const n = document.createElement(tag);
+      if (cls) n.className = cls;
+      Object.assign(n.style, style);
+      return n;
+    };
+
+    // The bar is the cabinet: full width, brass lip, walnut. The hi-fi itself is
+    // a ROUNDED plate seated inside it — the console is an object sitting in the
+    // woodwork, not a colour change across the bottom of the screen.
+    const bar = el('div', {
+      position: 'relative', padding: PAD + 'px', borderTop: LIP + 'px solid var(--brass)',
+      // Real grain photographed, not a repeating stripe: irregular spacing and
+      // varying line weight are what separate wood from corduroy.
+      backgroundImage: 'linear-gradient(180deg, rgba(24,13,3,.34), rgba(24,13,3,.54)), url(tex/walnut-v3.png)',
+      backgroundSize: 'auto, ' + (300 * k) + 'px auto',
+      backgroundBlendMode: 'multiply, normal',
+      boxShadow: 'inset 0 ' + (4 * k) + 'px 0 -' + k + 'px rgba(255,214,160,.18), 0 -' + (10 * k) + 'px ' + (24 * k) + 'px -' + (12 * k) + 'px rgba(0,0,0,.55)',
+    }, 'walnut-panel');
+    // Film grain over the whole cabinet. The single strongest anti-CG cue:
+    // perfectly smooth gradients are the tell, and a little sensor noise
+    // unifies every material under one exposure.
+    bar.append(el('div', {
+      position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 3,
+      backgroundImage: 'url(tex/grain.png)', backgroundSize: (160 * k) + 'px',
+      mixBlendMode: 'overlay', opacity: 0.09,
+    }));
+    const plate = el('div', {
+      position: 'relative', zIndex: 1,
+      display: 'flex', alignItems: 'center', gap: PAD + 'px',
+      padding: (PAD * 0.75) + 'px',
+      borderRadius: (14 * k) + 'px',
+      backgroundImage: 'linear-gradient(180deg, rgba(28,16,4,.46), rgba(28,16,4,.2)), url(tex/brushed.png)',
+      backgroundSize: 'auto, ' + (120 * k) + 'px',
+      backgroundBlendMode: 'normal, overlay',
+      boxShadow: 'inset 0 ' + k + 'px ' + (2 * k) + 'px rgba(0,0,0,.6), inset 0 -' + k + 'px 0 rgba(255,214,160,.14), 0 0 0 1px var(--brass-deep)',
+    });
+
+    // ── left: rotary nav ───────────────────────────────────────────────
+    const knob = el('button', {
+      position: 'relative', width: K + 'px', height: K + 'px', flex: '0 0 auto',
+      padding: 0, border: 'none', borderRadius: '50%', cursor: 'grab',
+      touchAction: 'none', background: '#120c05',
+      boxShadow: '0 ' + (6 * k) + 'px ' + (12 * k) + 'px -' + (5 * k) + 'px rgba(0,0,0,.85), inset 0 0 0 1px var(--rule-on-walnut)',
+    });
+    knob.type = 'button';
+    knob.setAttribute('aria-label', 'Module selector');
+    const rotor = el('div', { position: 'absolute', inset: 0, borderRadius: '50%', willChange: 'transform' });
+    rotor.append(
+      el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'repeating-conic-gradient(from 0deg, #0d0904 0deg 2.4deg, #3f3325 2.4deg 3.8deg, #17110a 3.8deg 6deg)' }),
+      el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'radial-gradient(circle at 34% 24%, rgba(255,244,224,.3), transparent 54%), radial-gradient(circle at 50% 50%, transparent 58%, rgba(0,0,0,.55) 97%)' }),
+      el('div', { position: 'absolute', inset: (13 * k) + 'px', borderRadius: '50%',
+        background: 'radial-gradient(circle at 36% 28%, #f4e2ab 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%)',
+        boxShadow: 'inset 0 ' + k + 'px ' + (2 * k) + 'px rgba(255,246,220,.6), inset 0 -' + (2 * k) + 'px ' + (4 * k) + 'px rgba(0,0,0,.5)' }),
+      // Lathe rings + radial burnish. Turned brass is ANISOTROPIC — it reflects
+      // differently along the tool path than across it, and a plain radial
+      // gradient has no direction at all, which is why it reads as plastic.
+      el('div', { position: 'absolute', inset: (13 * k) + 'px', borderRadius: '50%',
+        backgroundImage: 'url(tex/brass-turned.png)', backgroundSize: '100% 100%',
+        mixBlendMode: 'overlay', opacity: 0.6, pointerEvents: 'none' }),
+      // Environment reflection: bright sky above, dark horizon line, warm bounce
+      // from the cabinet below. Metal looks like metal because of what it
+      // reflects, not because of its own colour.
+      el('div', { position: 'absolute', inset: (13 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+        background: 'linear-gradient(180deg, rgba(255,255,255,.4) 0%, rgba(255,252,240,.1) 26%, rgba(52,30,6,.34) 49%, rgba(58,34,8,.16) 56%, rgba(255,214,150,.26) 76%, rgba(255,232,190,.1) 100%)' }),
+      /* The ANISOTROPIC component. This one is correct to rotate: it is the
+         glint scattered along the lathe path, which is a property of the metal's
+         surface, so it travels with the metal. Kept faint — the bright specular
+         is a reflection of the room and must NOT turn (see screen-space layer). */
+      el('div', { position: 'absolute', inset: (13 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+        background: 'radial-gradient(' + (30 * k) + '% ' + (22 * k) + '% at 33% 22%, rgba(255,255,255,.26) 0%, rgba(255,255,255,.07) 42%, transparent 72%)' }),
+      el('div', { position: 'absolute', inset: (13 * k) + 'px', borderRadius: '50%',
+        background: 'linear-gradient(128deg, rgba(255,255,255,.38) 0%, transparent 38%, transparent 64%, rgba(255,255,255,.12) 100%)' }),
+      el('div', { position: 'absolute', left: '50%', top: (3 * k) + 'px', transform: 'translateX(-50%)',
+        width: (2.5 * k) + 'px', height: (11 * k) + 'px', borderRadius: '0 0 2px 2px',
+        background: 'linear-gradient(180deg, #fff8e6, #e8d5aa)',
+        boxShadow: '0 0 ' + (5 * k) + 'px rgba(255,240,200,.6)' })
+    );
+    // The cap reads out the module — mono at the 11px eyebrow floor, EMBOSSED:
+    // one dark edge below and one light edge above, so the letters read as
+    // stamped into the brass rather than printed on it. Sub-pixel offsets on
+    // purpose; a full pixel of relief at this size doubles the stroke.
+    const cap = el('div', {
+      position: 'absolute', left: 0, right: 0, top: '50%', transform: 'translateY(-50%)',
+      textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: (11 * k) + 'px',
+      fontWeight: 700, letterSpacing: '.1em', color: '#5d4415', pointerEvents: 'none',
+      textShadow: '0 ' + (0.75 * k) + 'px ' + (0.5 * k) + 'px rgba(255,248,224,.72), 0 -' + (0.5 * k) + 'px ' + (0.5 * k) + 'px rgba(28,16,4,.55)',
+    });
+    /* SCREEN-SPACE SPECULAR. A reflection is an image of the light source, so it
+       stays where the light is while the object turns underneath it. Painting it
+       inside the rotor made the highlight orbit with the knurling — the single
+       most legible wrongness in the old knob. Sits above the rotor and below the
+       cap text, and its origin tracks the pointer so the light appears to sit in
+       the room rather than in the texture. */
+    const spec = el('div', { position: 'absolute', inset: 0, borderRadius: '50%', pointerEvents: 'none',
+      mixBlendMode: 'screen', willChange: 'background' });
+    /* Contact shadow, driven by press. Ambient occlusion is a function of how
+       close two surfaces are, so pressing the knob into its seat must darken and
+       TIGHTEN the shadow, not just dim the knob. */
+    const ao = el('div', { position: 'absolute', inset: '-' + (3 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+      willChange: 'box-shadow', transition: 'box-shadow 90ms var(--ease)' });
+    knob.append(rotor, spec, ao, cap);
+
+    // ── centre: tuner dial ─────────────────────────────────────────────
+    const dial = el('div', {
+      position: 'relative', flex: '1 1 0', minWidth: 0, height: K + 'px',
+      borderRadius: (10 * k) + 'px', cursor: 'grab', touchAction: 'none',
+      overflow: 'hidden',
+      background: 'radial-gradient(130% 170% at 50% 6%, #f3e7c8 0%, #e8d6a8 44%, #d4bd88 82%, #b9a06a 100%)',
+      boxShadow: '0 0 0 ' + (2 * k) + 'px var(--brass), inset 0 ' + (2 * k) + 'px ' + (8 * k) + 'px rgba(92,62,20,.32), inset 0 -' + (12 * k) + 'px ' + (20 * k) + 'px -' + (8 * k) + 'px color-mix(in oklab, var(--lamp) 34%, transparent)',
+    });
+    dial.setAttribute('role', 'tablist');
+    dial.setAttribute('aria-label', 'Section');
+    // Analog backlight: three warm bulbs pooling up from the bottom edge, plus
+    // the hot line where light spills under the bezel. Turned DOWN — the
+    // brighter version washed the ticks and the station name toward the amber
+    // and cost the readout its contrast. A lamp behind glass is dim; what sells
+    // it is the unevenness and the falloff, not the output.
+    const backlight = el('div', { position: 'absolute', inset: 0, pointerEvents: 'none',
+        animation: 'ihBacklight 5.5s var(--ease-in-out) infinite',
+        background: 'radial-gradient(44% 128% at 18% 122%, rgba(214,128,44,.5) 0%, rgba(196,110,32,.26) 32%, rgba(180,100,28,.09) 56%, transparent 76%), radial-gradient(50% 136% at 50% 128%, rgba(226,148,62,.58) 0%, rgba(202,118,36,.3) 30%, rgba(180,100,28,.1) 54%, transparent 76%), radial-gradient(44% 128% at 82% 122%, rgba(214,128,44,.5) 0%, rgba(196,110,32,.26) 32%, rgba(180,100,28,.09) 56%, transparent 76%), linear-gradient(180deg, rgba(74,43,22,.26) 0%, transparent 34%)' });
+    const spill = el('div', { position: 'absolute', left: '10%', right: '10%', bottom: (-1 * k) + 'px',
+        height: (3 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+        filter: 'blur(' + (1.5 * k) + 'px)',
+        background: 'radial-gradient(ellipse, rgba(236,176,96,.62), rgba(206,132,48,.24) 58%, transparent 80%)' });
+    backlight._baseFilter = ''; spill._baseFilter = spill.style.filter;
+    (this._backlights = this._backlights || []).push(backlight, spill);
+    dial.append(
+      backlight,
+      spill,
+      // ── glass, above everything on the dial ──
+      // A dial is behind a pane, and a pane announces itself three ways: one
+      // hard-edged reflection sweep, a much fainter second sweep from the back
+      // surface, and dust. Without them the ticks look printed on the cabinet.
+      el('div', { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 6,
+        background: 'linear-gradient(107deg, rgba(255,255,255,.3) 0%, rgba(255,255,255,.13) 7%, transparent 8%, transparent 20%, rgba(255,255,255,.09) 21%, rgba(255,255,255,.03) 27%, transparent 28%)' }),
+      el('div', { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 6,
+        background: 'linear-gradient(180deg, rgba(255,255,255,.16) 0%, transparent 12%), radial-gradient(120% 90% at 50% 118%, transparent 62%, rgba(58,34,8,.22) 100%)' }),
+      el('div', { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 6,
+        backgroundImage: 'url(tex/grain.png)', backgroundSize: (110 * k) + 'px',
+        mixBlendMode: 'overlay', opacity: 0.11 })
+    );
+    // Station row: a real drum. All three labels are IDENTICAL in style and
+    // driven purely by their continuous distance from centre, so nothing about
+    // them is "the centre one" or "a wing" — they are three points on a
+    // rotating cylinder. That is what makes the turn smooth: because appearance
+    // is a pure function of |distance|, the moment the drum passes the halfway
+    // point and the labels take new text, the outgoing centre already looks
+    // exactly like the incoming neighbour did. The swap is invisible.
+    const label = () => el('div', {
+      position: 'absolute', left: '50%', top: '50%',
+      fontFamily: 'var(--font-display)', lineHeight: 1.05, letterSpacing: 'normal',
+      color: 'var(--ink-1)', whiteSpace: 'nowrap',
+      transformOrigin: '50% 50%', willChange: 'transform, opacity, font-size',
+    });
+    const wl = label(), wr = label();
+    const station = label();
+    const stationRow = el('div', {
+      position: 'absolute', left: (6 * k) + 'px', right: (6 * k) + 'px', top: (9 * k) + 'px',
+      height: (36 * k) + 'px', overflow: 'hidden', pointerEvents: 'none',
+    });
+    stationRow.append(wl, station, wr);
+    const scaleBox = el('div', {
+      position: 'absolute', left: 0, right: 0, bottom: (8 * k) + 'px', height: (14 * k) + 'px',
+      overflow: 'hidden', pointerEvents: 'none',
+      WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)',
+      maskImage: 'linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)',
+    });
+    /* A compass card, not a tape. The ticks are radial lines on a disc whose
+       centre sits R below the window, so they RADIATE — splayed at the top,
+       converging toward the hidden centre — and the whole card ROTATES instead
+       of sliding. Angular pitch is arc-length/R (46px of the old tape at
+       R=420px ≡ 6.276°), so detent spacing at the needle is unchanged. Two
+       discs because major and minor ticks hang at different depths, cut by
+       radial masks; both turn together. */
+    const R = 420 * k, D = 2 * R;
+    const card = (tickDeg, periodDeg, alpha, maskIn, maskOut) => el('div', {
+      position: 'absolute', left: '50%', top: 0, width: D + 'px', height: D + 'px',
+      marginLeft: (-R) + 'px', borderRadius: '50%', willChange: 'transform',
+      background: 'repeating-conic-gradient(from ' + (-tickDeg / 2) + 'deg, rgba(28,20,8,' + alpha + ') 0 ' + tickDeg + 'deg, transparent ' + tickDeg + 'deg ' + periodDeg + 'deg)',
+      WebkitMaskImage: 'radial-gradient(circle, transparent ' + maskIn + 'px, #000 ' + maskIn + 'px ' + maskOut + 'px, transparent ' + maskOut + 'px)',
+      maskImage: 'radial-gradient(circle, transparent ' + maskIn + 'px, #000 ' + maskIn + 'px ' + maskOut + 'px, transparent ' + maskOut + 'px)',
+    });
+    const drum = card(0.2046, 6.2762, .82, R - 10 * k, R);
+    const drum2 = card(0.1364, 1.2552, .32, R - 14 * k, R - 8 * k);
+    /* The tick rail: a printed hairline arc the ticks hang from — same circle as
+       the card, static (it is printed on the face, not on the rotor). It is what
+       turns loose radiating ticks into an instrument scale. */
+    const rail = el('div', {
+      position: 'absolute', left: '50%', top: 0, width: D + 'px', height: D + 'px',
+      marginLeft: (-R) + 'px', borderRadius: '50%', boxSizing: 'border-box',
+      border: (1.1 * k) + 'px solid rgba(28,20,8,.42)', pointerEvents: 'none',
+    });
+    scaleBox.append(rail, drum2, drum);
+    dial.append(stationRow, scaleBox,
+      /* The needle casts a shadow onto the card — the one cue that says the
+         pointer and the scale live at different depths under the same glass. */
+      el('div', { position: 'absolute', left: '50%', bottom: (7 * k) + 'px', width: (4 * k) + 'px',
+        height: (22 * k) + 'px', marginLeft: (-1.1 * k) + 'px', pointerEvents: 'none',
+        background: 'rgba(20,12,4,.32)', filter: 'blur(' + k + 'px)',
+        clipPath: 'polygon(50% 0%, 84% 100%, 16% 100%)' }),
+      /* Tapered, like a meter needle — a parallel-sided bar is a cursor, a taper
+         is an instrument. Glow via drop-shadow so the clip doesn't eat it. */
+      el('div', { position: 'absolute', left: '50%', bottom: (8 * k) + 'px', width: (4 * k) + 'px',
+        height: (22 * k) + 'px', marginLeft: (-2 * k) + 'px', pointerEvents: 'none',
+        background: 'linear-gradient(180deg, var(--live) 0%, color-mix(in oklab, var(--live) 75%, #5e0f04) 100%)',
+        clipPath: 'polygon(50% 0%, 84% 100%, 16% 100%)',
+        filter: 'drop-shadow(0 0 ' + (3 * k) + 'px color-mix(in oklab, var(--live) 55%, transparent))' }),
+      el('div', { position: 'absolute', inset: 0, pointerEvents: 'none',
+        background: 'linear-gradient(152deg, rgba(255,255,255,.4) 0%, rgba(255,255,255,.06) 26%, transparent 46%)' })
+    );
+    /* The pilot bead is dead until the transport plays; a dial with a live
+       needle and no pilot lamp doesn't say whether the set is ON. */
+    /* The iHYPE nameplate is a brass badge over the needle's pivot — the spot a
+       real meter hides its movement — and it is the dock's HOME: wherever the
+       subnav has taken you, pressing the badge re-seats the console on MAP.
+       The needle emerges from behind it. */
+    const badge = el('div', { position: 'absolute', left: '50%', top: '-' + (LIP + 9 * k) + 'px',
+      transform: 'translateX(-50%)', zIndex: 12, cursor: 'pointer', userSelect: 'none',
+      padding: (1.5 * k) + 'px ' + (7 * k) + 'px', borderRadius: (1.5 * k) + 'px',
+      boxSizing: 'border-box', border: (0.8 * k) + 'px solid rgba(61,44,12,.9)',
+      background: 'linear-gradient(180deg, #f2dca4 0%, var(--brass) 30%, var(--brass-deep) 100%)',
+      boxShadow: '0 ' + (1.5 * k) + 'px ' + (3 * k) + 'px rgba(0,0,0,.45), inset 0 ' + (0.8 * k) + 'px 0 rgba(255,250,232,.6)',
+      fontFamily: 'var(--font-display)', fontSize: (9 * k) + 'px',
+      lineHeight: 1.3, letterSpacing: '0.08em', color: '#33240a',
+      textShadow: '0 ' + (0.8 * k) + 'px 0 rgba(255,248,224,.5)' });
+    badge.textContent = 'iHYPE';
+    badge.setAttribute('role', 'button');
+    badge.tabIndex = 0;
+    badge.setAttribute('aria-label', 'iHYPE — back to the map');
+    // The dial behind it is a drag surface; the badge must not start a tune.
+    badge.addEventListener('pointerdown', (e) => { e.stopPropagation(); });
+    badge.addEventListener('click', (e) => { e.stopPropagation(); this.buzz(6); this.setMod(0); });
+    badge.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.buzz(6); this.setMod(0); } });
+    badge.addEventListener('pointerenter', () => { badge.style.filter = 'brightness(1.12)'; });
+    badge.addEventListener('pointerleave', () => { badge.style.filter = 'none'; });
+    // 44px touch floor without 44px of brass: an invisible tap skirt around the
+    // nameplate (16px visible + 28px skirt ≥ 44px at 1×). Events bubble to the
+    // badge, whose pointerdown guard already stops the dial drag.
+    badge.append(el('div', { position: 'absolute', inset: (-14 * k) + 'px ' + (-8 * k) + 'px' }));
+    const pilot = el('div', { position: 'absolute', right: (10 * k) + 'px', top: (8 * k) + 'px',
+      width: (5 * k) + 'px', height: (5 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+      background: 'rgba(58,34,8,.35)',
+      boxShadow: 'inset 0 ' + (0.8 * k) + 'px ' + k + 'px rgba(0,0,0,.5)',
+      transition: 'background 300ms var(--ease), box-shadow 300ms var(--ease)' });
+    // The nameplate belongs on the fascia, above the subnav — a maker's plate on
+    // the brass lip, straddling the top edge of the cabinet. It is not on the
+    // dial: the dial is a drag surface, and a badge sitting in it competed with
+    // the station names for the one line of type the meter has.
+    dial.append(pilot);
+    bar.append(badge);
+    bar.style.overflow = 'visible';
+
+    // ── right: joystick transport ──────────────────────────────────────
+    const gate = el('div', { position: 'relative', width: K + 'px', height: K + 'px', flex: '0 0 auto', perspective: (2.4 * K) + 'px' });
+    gate.append(
+      el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'radial-gradient(circle at 50% 30%, #050301 0%, #0e0a05 60%, #1e160c 100%)',
+        boxShadow: 'inset 0 ' + (5 * k) + 'px ' + (10 * k) + 'px rgba(0,0,0,.95), 0 0 0 ' + (2 * k) + 'px var(--brass-deep)' })
+    );
+    // Four brass detent notches at the gate's cardinals. The stick has four
+    // discrete throws and nothing on it said so — a round well reads as a
+    // free-floating analogue stick, which is a different promise.
+    for (const [i, pos] of [['top','50% 0'],['right','100% 50%'],['bottom','50% 100%'],['left','0 50%']].entries()) {
+      const vert = i % 2 === 0;
+      gate.append(el('div', {
+        position: 'absolute',
+        left: vert ? '50%' : (i === 1 ? 'auto' : (1.5 * k) + 'px'),
+        right: i === 1 ? (1.5 * k) + 'px' : 'auto',
+        top: !vert ? '50%' : (i === 0 ? (1.5 * k) + 'px' : 'auto'),
+        bottom: i === 2 ? (1.5 * k) + 'px' : 'auto',
+        transform: vert ? 'translateX(-50%)' : 'translateY(-50%)',
+        width: (vert ? 1.5 : 5) * k + 'px',
+        height: (vert ? 5 : 1.5) * k + 'px',
+        borderRadius: k + 'px',
+        background: 'var(--brass)',
+        opacity: .72,
+        pointerEvents: 'none',
+      }));
+    }
+    const shadow = el('div', {
+      position: 'absolute', left: '50%', top: '50%', width: (52 * k) + 'px', height: (52 * k) + 'px',
+      margin: (-26 * k) + 'px 0 0 ' + (-26 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+      background: 'radial-gradient(circle, rgba(0,0,0,.7) 40%, transparent 72%)',
+      transition: 'transform var(--duration-default) var(--ease-spring)',
+    });
+    const stick = el('div', {
+      position: 'absolute', left: '50%', top: '50%', width: (52 * k) + 'px', height: (52 * k) + 'px',
+      margin: (-26 * k) + 'px 0 0 ' + (-26 * k) + 'px', borderRadius: '50%',
+      transformStyle: 'preserve-3d', willChange: 'transform', cursor: 'grab', touchAction: 'none',
+      transition: 'transform var(--duration-default) var(--ease-spring)',
+    });
+    stick.setAttribute('role', 'button');
+    stick.tabIndex = 0;
+    stick.setAttribute('aria-label', 'Transport');
+    stick.append(
+      el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'radial-gradient(circle at 34% 24%, #f6e6b6 0%, var(--brass) 30%, var(--brass-deep) 72%, #4a3712 100%)',
+        boxShadow: '0 ' + (6 * k) + 'px ' + (12 * k) + 'px -' + (4 * k) + 'px rgba(0,0,0,.9), 0 ' + (2 * k) + 'px 0 #3a2a0e, inset 0 ' + k + 'px ' + k + 'px rgba(255,248,224,.5)' }),
+      el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+        background: 'repeating-conic-gradient(from 0deg, rgba(0,0,0,.3) 0deg 1.4deg, transparent 1.4deg 4.6deg)',
+        WebkitMaskImage: 'radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%)',
+        maskImage: 'radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%)' }),
+      // Concave: shadow on the near wall, light on the far wall.
+      el('div', { position: 'absolute', inset: (7 * k) + 'px', borderRadius: '50%',
+        background: 'radial-gradient(circle at 50% 4%, rgba(0,0,0,.78) 0%, rgba(0,0,0,.28) 36%, transparent 66%), radial-gradient(circle at 50% 96%, #f4dfa8 0%, #d6b26c 26%, var(--brass-deep) 64%, #38290c 100%)',
+        boxShadow: 'inset 0 ' + (6 * k) + 'px ' + (11 * k) + 'px rgba(0,0,0,.72), inset 0 -' + (5 * k) + 'px ' + (8 * k) + 'px rgba(255,242,206,.26)' }),
+      /* Machined rim: one crisp turned edge where the dish meets the cap, catching
+         light on its lower half. The dish read as moulded without it. */
+      el('div', { position: 'absolute', inset: (6.2 * k) + 'px', borderRadius: '50%', pointerEvents: 'none',
+        boxSizing: 'border-box', border: (0.8 * k) + 'px solid rgba(255,246,214,.3)',
+        WebkitMaskImage: 'linear-gradient(180deg, transparent 18%, #000 62%)',
+        maskImage: 'linear-gradient(180deg, transparent 18%, #000 62%)' })
+    );
+    const lit = el('div', { position: 'absolute', inset: (7 * k) + 'px', borderRadius: '50%',
+      pointerEvents: 'none', opacity: 0,
+      boxShadow: 'inset 0 0 ' + (10 * k) + 'px color-mix(in oklab, var(--accent) 55%, transparent), 0 0 ' + (12 * k) + 'px -' + (2 * k) + 'px color-mix(in oklab, var(--accent) 50%, transparent)' });
+    /* The cap gets the same split specular as the rotary: the reflection follows
+       the cap's POSITION (it travels with the object) but not its tilt — it is
+       an image of the room, appended above the brass and below the lamp ring. */
+    const sspec = el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+      pointerEvents: 'none', mixBlendMode: 'screen', willChange: 'background' });
+    const sao = el('div', { position: 'absolute', inset: 0, borderRadius: '50%',
+      pointerEvents: 'none', transition: 'box-shadow 90ms var(--ease)' });
+    stick.append(sspec, sao, lit);
+    gate.append(shadow, stick);
+
+    /* Dial glass sheen — flat pane, so the reflection tracks near 1:1; the knob's
+       0.34 compression here would read as bowed glass. Sits over the printed
+       face, under nothing: glass is the outermost surface of the dial. */
+    const dspec = el('div', { position: 'absolute', inset: 0, borderRadius: 'inherit', zIndex: 2,
+      pointerEvents: 'none', mixBlendMode: 'screen', willChange: 'background' });
+    /* Fingerprints on the glass — two faint smears where thumbs have tuned it.
+       At legible opacity they read as dirt; at 4% they read as use. */
+    const smudge = el('div', { position: 'absolute', inset: 0, borderRadius: 'inherit', zIndex: 2,
+      pointerEvents: 'none', mixBlendMode: 'screen',
+      background: 'radial-gradient(30% 42% at 66% 60%, rgba(255,255,255,.045) 0%, transparent 70%), radial-gradient(20% 30% at 32% 38%, rgba(255,255,255,.035) 0%, transparent 70%)' });
+    dial.append(smudge, dspec);
+    /* Wear. The polish lives ON the metal and turns with it: a thumb has rubbed
+       the lower flank of the knurl bright over months of use. */
+    rotor.append(el('div', { position: 'absolute', inset: 0, borderRadius: '50%', pointerEvents: 'none',
+      background: 'radial-gradient(46% 30% at 26% 76%, rgba(255,244,214,.11) 0%, transparent 66%)' }));
+    /* Dust in the gate recess — a machined well collects it. */
+    for (const [dxp, dyp, da] of [[30, 72, 0.13], [64, 22, 0.09], [55, 82, 0.07]]) {
+      gate.append(el('div', { position: 'absolute', left: dxp + '%', top: dyp + '%', width: k + 'px', height: k + 'px',
+        borderRadius: '50%', background: 'rgba(255,240,210,' + da + ')', pointerEvents: 'none' }));
+    }
+    plate.append(knob, dial, gate);
+    /* Fascia sheen across the whole bar — the room's light grazing the walnut and
+       brass as one continuous surface, so the three controls sit under ONE light
+       rather than three separately-lit pictures. */
+    const barspec = el('div', { position: 'absolute', inset: 0, zIndex: 3,
+      pointerEvents: 'none', mixBlendMode: 'screen', willChange: 'background' });
+    bar.append(barspec);
+    bar.append(plate);
+    root.append(bar);
+
+    root._parts = { rotor, cap, station, wl, wr, drum, drum2, pilot, stick, shadow, lit, k, spec, ao, knob, sspec, sao, dspec, barspec };
+    /* Light position is deliberately NOT React state: it changes on every pointer
+       move, and routing that through a render would rebuild the whole dock at
+       pointer frequency. It writes straight to the layer it affects. */
+    this.light = { x: 33, y: 22, pressed: false };
+    this.paintLight(root._parts);
+    root.addEventListener('pointermove', (e) => {
+      const r = root.getBoundingClientRect();
+      this.light.x = ((e.clientX - r.left) / r.width) * 100;
+      this.light.y = ((e.clientY - r.top) / r.height) * 100;
+      this.paintLight(root._parts);
+    });
+    root.addEventListener('pointerleave', () => {
+      this.light.x = 33; this.light.y = 22; this.light.pressed = false;
+      this.paintLight(root._parts);
+    });
+    /* On a phone the room doesn't follow a pointer — it follows the DEVICE. Tilt
+       the handset and the specular slides across the brass exactly as it would
+       on real metal, which is the single strongest "this is an object" cue a
+       screen can give. Falls back silently where orientation events are absent
+       or permission-gated (iOS grants pointer lighting instead). */
+    window.addEventListener('deviceorientation', (e) => {
+      if (e.gamma == null || e.beta == null || !root.isConnected) return;
+      this.light.x = 50 + Math.max(-1, Math.min(1, e.gamma / 28)) * 42;
+      this.light.y = 30 + Math.max(-1, Math.min(1, (e.beta - 40) / 30)) * 32;
+      this.paintLight(root._parts);
+    });
+    // Cold boot, once, after every dock on the page has built its lamps.
+    if (!this._bootStarted) { this._bootStarted = true; setTimeout(() => this.boot(), 80); }
+    this.wire(root, { knob, dial, stick });
+  }
+
+  SECTIONS = [
+    { id: 'discover', label: 'Discover' },
+    { id: 'radio', label: 'Radio' },
+    { id: 'charts', label: 'Charts' },
+    { id: 'recommended', label: 'Recommended' },
+    { id: 'playlists', label: 'Playlists' },
+  ];
+
+   wireMusic() {
+    const t = document.querySelector('[data-tuner="1"]');
+    if (t) {
+      let on = false, x0 = 0, i0 = 0;
+      t.addEventListener('pointerdown', (e) => {
+        on = true; x0 = e.clientX; i0 = ((Math.round(this.state.pos) % 5) + 5) % 5;
+        t.setPointerCapture(e.pointerId); t.style.cursor = 'grabbing';
+      });
+      t.addEventListener('pointermove', (e) => {
+        if (!on) return;
+        const dx = e.clientX - x0;
+        // The band follows the finger continuously; the detent only lands on the
+        // nearest station. Snapping the band too would make the drag feel dead.
+        this.dragDx = dx % 96;
+        const next = Math.max(0, Math.min(this.SECTIONS.length - 1, i0 - Math.round(dx / 96)));
+        if (next !== ((Math.round(this.state.pos) % 5) + 5) % 5) this.setState({ sect: next }, () => this.paintMusic());
+        else this.paintMusic();
+      });
+      const end = () => { on = false; this.dragDx = 0; t.style.cursor = 'grab'; this.paintMusic(); };
+      t.addEventListener('pointerup', end);
+      t.addEventListener('pointercancel', end);
+      t.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        this.setState({ sect: ((Math.round(this.state.pos) % 5) + 5) % 5 + (e.deltaY > 0 ? 1 : -1) });
+      }, { passive: false });
+    }
+
+    const pill = document.querySelector('[data-pill="1"]');
+    if (pill) {
+      pill.addEventListener('click', (e) => {
+        // The play control on the pill toggles; anywhere else expands.
+        if (e.target.closest('[data-pill-play="1"]')) {
+          this.setState({ playing: !this.state.playing }, () => this.paintPlayer());
+        } else {
+          this.setState({ playerOpen: true }, () => this.paintPlayer());
+        }
+      });
+    }
+    const close = document.querySelector('[data-player-close="1"]');
+    if (close) close.addEventListener('click', () => this.setState({ playerOpen: false }, () => this.paintPlayer()));
+    const play = document.querySelector('[data-player-play="1"]');
+    if (play) play.addEventListener('click', () => this.setState({ playing: !this.state.playing }, () => this.paintPlayer()));
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.state.playerOpen) {
+        e.preventDefault();
+        this.setState({ playerOpen: false }, () => this.paintPlayer());
+      }
+    });
+  }
+
+   paintMusic() {
+    const S = this.SECTIONS;
+    const i = Math.max(0, Math.min(S.length - 1, ((Math.round(this.state.pos) % 5) + 5) % 5));
+    for (const el of document.querySelectorAll('[data-sect]')) {
+      el.style.display = el.getAttribute('data-sect') === S[i].id ? 'flex' : 'none';
+    }
+    const name = document.querySelector('[data-tuner-name="1"]');
+    if (name) name.textContent = S[i].label;
+    // The tick band travels with the tuning, so the dial reads as one physical
+    // band moving past a fixed index mark rather than a label swap.
+    const band = document.querySelector('[data-tuner-band="1"]');
+    if (band) band.style.transform = `translateX(${-i * 96 + (this.dragDx || 0)}px)`;
+  }
+
+   paintPlayer() {
+    const p = document.querySelector('[data-player="1"]');
+    if (!p) return;
+    const open = this.state.playerOpen;
+    if (open) {
+      p.style.display = 'flex';
+      // Two frames: display must land before the transform animates, or the
+      // browser collapses both into one style resolution and nothing slides.
+      requestAnimationFrame(() => requestAnimationFrame(() => { p.style.transform = 'translateY(0)'; }));
+    } else {
+      p.style.transform = 'translateY(100%)';
+      setTimeout(() => { if (!this.state.playerOpen) p.style.display = 'none'; }, 300);
+    }
+    const glyph = this.state.playing ? '❙❙' : '▶';
+    const big = document.querySelector('[data-player-play="1"]');
+    if (big) big.textContent = glyph;
+    const small = document.querySelector('[data-pill-play="1"]');
+    if (small) small.textContent = glyph;
+  }
+
+  // The knob selects the module; the dial tunes that module's own sections, so
+  // pane visibility follows MODULES[mod].id and the section index is the dial's
+  // nearest detent rather than a second piece of state.
+  paintPanes() {
+    const id = (MODULES[this.state.mod] || {}).id || ['map', 'music', 'me'][this.state.mod] || 'map';
+    for (const p of document.querySelectorAll('[data-pane]')) {
+      p.style.display = p.getAttribute('data-pane') === id ? 'flex' : 'none';
+    }
+    // The now-playing pill belongs to MUSIC and ME; over the chart it would
+    // cover pins and fight the venue sheet for the same strip of screen.
+    const pill = document.querySelector('[data-pill="1"]');
+    if (pill) pill.style.display = id === 'map' ? 'none' : 'flex';
+    try { this.paintMusic(); } catch (err) { console.warn('paintMusic', err); }
+  }
+
+  // ── Discover deck ────────────────────────────────────────────────────
+  // A clip is 30 seconds and then you decide. The deck holds that decision in
+  // two gestures and two buttons: skip, save, like, hype.
+  wireDeck() {
+    const card = document.querySelector('[data-card="1"]');
+    if (!card || card.dataset.wired) return;
+    card.dataset.wired = '1';
+    this.deck = { i: 0, liked: false, hyped: false, t: 0, dx: 0 };
+
+    let on = false, x0 = 0, moved = 0;
+    const commit = (dir) => {
+      // The card leaves in the direction you threw it — a card that snaps back
+      // after a committed throw reads as a rejected input.
+      card.style.transition = 'transform 220ms var(--ease), opacity 220ms var(--ease)';
+      card.style.transform = `translateX(${dir * 520}px) rotate(${dir * 16}deg)`;
+      card.style.opacity = '0';
+      this.click(dir > 0 ? 'seat' : 'tick');
+      this.buzz(dir > 0 ? 6 : 3);
+      setTimeout(() => {
+        this.deck.i = (this.deck.i + 1) % SEEDS.length;
+        this.deck.liked = false; this.deck.hyped = false; this.deck.t = 0;
+        card.style.transition = 'none';
+        card.style.transform = 'translateX(0) rotate(0deg)';
+        card.style.opacity = '1';
+        this.paintDeck();
+      }, 220);
+    };
+    this._deckCommit = commit;
+
+    card.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button, a')) return;
+      on = true; moved = 0; x0 = e.clientX;
+      card.style.transition = 'none';
+      card.setPointerCapture(e.pointerId);
+      card.style.cursor = 'grabbing';
+    });
+    card.addEventListener('pointermove', (e) => {
+      if (!on) return;
+      const dx = e.clientX - x0;
+      moved = Math.max(moved, Math.abs(dx));
+      this.deck.dx = dx;
+      // Rotation is proportional to travel, pivoting from below the card, which
+      // is how a held card behaves — it does not slide flat.
+      card.style.transform = `translateX(${dx}px) rotate(${dx * 0.028}deg)`;
+      const skip = document.querySelector('[data-skipbadge="1"]');
+      const save = document.querySelector('[data-savebadge="1"]');
+      if (skip) skip.style.opacity = String(Math.max(0, Math.min(1, -dx / 90)));
+      if (save) save.style.opacity = String(Math.max(0, Math.min(1, dx / 90)));
+    });
+    const end = () => {
+      if (!on) return;
+      on = false;
+      card.style.cursor = 'grab';
+      const dx = this.deck.dx;
+      this.deck.dx = 0;
+      if (Math.abs(dx) > 100) { commit(dx > 0 ? 1 : -1); return; }
+      card.style.transition = 'transform 200ms var(--ease-spring)';
+      card.style.transform = 'translateX(0) rotate(0deg)';
+      const skip = document.querySelector('[data-skipbadge="1"]');
+      const save = document.querySelector('[data-savebadge="1"]');
+      if (skip) skip.style.opacity = '0';
+      if (save) save.style.opacity = '0';
+    };
+    card.addEventListener('pointerup', end);
+    card.addEventListener('pointercancel', end);
+
+    const skipBtn = document.querySelector('[data-skip="1"]');
+    if (skipBtn) skipBtn.addEventListener('click', () => commit(-1));
+    const heart = document.querySelector('[data-heart="1"]');
+    if (heart) heart.addEventListener('click', () => { this.deck.liked = !this.deck.liked; this.click('tick'); this.buzz(3); this.paintDeck(); });
+    const hype = document.querySelector('[data-hype="1"]');
+    if (hype) hype.addEventListener('click', () => {
+      if (this.deck.hyped) return;
+      this.deck.hyped = true; this.click('seat'); this.buzz(6); this.paintDeck();
+    });
+
+    // The 30-second clip runs on a real clock so the countdown is honest.
+    this._clip = setInterval(() => {
+      if (!this.deck) return;
+      const music = document.querySelector('[data-pane="music"]');
+      if (!music || music.style.display === 'none') return;
+      this.deck.t = Math.min(30, this.deck.t + 0.25);
+      this.paintClip();
+    }, 250);
+    this.paintDeck();
+  }
+
+  paintClip() {
+    const d = this.deck; if (!d) return;
+    const fill = document.querySelector('[data-clip="1"]');
+    if (fill) fill.style.width = (d.t / 30 * 100) + '%';
+    const t = document.querySelector('[data-cliptime="1"]');
+    const left = Math.max(0, 30 - d.t);
+    if (t) t.textContent = '0:' + String(Math.ceil(left)).padStart(2, '0');
+    const disc = document.querySelector('[data-disc="1"]');
+    if (disc) {
+      if (!disc.style.animation) disc.style.animation = 'ihSpin 1.9s linear infinite';
+      disc.style.animationPlayState = d.t < 30 ? 'running' : 'paused';
+    }
+  }
+
+  paintDeck() {
+    const d = this.deck; if (!d) return;
+    const s = SEEDS[d.i];
+    const set = (sel, fn) => { const n = document.querySelector(sel); if (n) fn(n); };
+    set('[data-art="1"]', (n) => { n.style.background = s.art; });
+    set('[data-disclabel="1"]', (n) => { n.textContent = s.track.charAt(0); });
+    set('[data-track="1"]', (n) => { n.textContent = s.track; n.setAttribute('href', s.href); });
+    set('[data-artist="1"]', (n) => { n.textContent = s.artist; n.setAttribute('href', s.href); });
+    set('[data-album="1"]', (n) => { n.textContent = s.album; });
+    set('[data-hypecount="1"]', (n) => { n.textContent = String(s.hype + (d.hyped ? 1 : 0)); });
+    set('[data-deck-left="1"]', (n) => { n.textContent = (SEEDS.length - d.i) + ' LEFT'; });
+    set('[data-skipbadge="1"]', (n) => { n.style.opacity = '0'; });
+    set('[data-savebadge="1"]', (n) => { n.style.opacity = '0'; });
+    // Liked is a filled heart in the accent, not a colour change on an outline.
+    set('[data-heart="1"]', (n) => {
+      n.setAttribute('aria-pressed', d.liked ? 'true' : 'false');
+      n.style.color = d.liked ? 'var(--accent)' : 'var(--ink-2)';
+      n.style.borderColor = d.liked ? 'var(--accent)' : 'var(--line-2)';
+      const path = n.querySelector('path');
+      if (path) path.setAttribute('fill', d.liked ? 'currentColor' : 'none');
+    });
+    // HYPE resets every 24 hours per target, so the control states the wait
+    // rather than hiding it.
+    set('[data-hype="1"]', (n) => {
+      n.style.background = d.hyped ? 'transparent' : 'var(--accent)';
+      n.style.color = d.hyped ? 'var(--accent-text)' : 'var(--ink-on-accent)';
+      n.style.border = d.hyped ? '1px solid var(--accent-text)' : 'none';
+      n.innerHTML = d.hyped
+        ? 'Hyped · 24h'
+        : 'Hype · <span data-hypecount="1">' + (s.hype) + '</span>';
+    });
+    this.paintClip();
+  }
+
+  paint() {
+    const { mod, knobPos, knobDragging, pos, playing, tilt, dragging, pressed } = this.state;
+    try { this.paintPanes(); } catch (err) { console.warn('paintPanes', err); }
+    const m = MODULES[mod];
+    // Interpolate the pointer angle across the detent table so a drag between
+    // two stations reads as the knob part-way round, not snapped to either.
+    const lo = Math.max(0, Math.min(MODULES.length - 1, Math.floor(knobPos)));
+    const hi = Math.max(0, Math.min(MODULES.length - 1, Math.ceil(knobPos)));
+    const t = knobPos - lo;
+    const knobAngle = MODULES[lo].angle + (MODULES[hi].angle - MODULES[lo].angle) * t;
+    const secs = m.sections;
+    const len = secs.length;
+    const i = ((Math.round(pos) % len) + len) % len;
+
+    for (const sel of ['[data-dock="1"]', '[data-dock2x="1"]']) {
+      const root = document.querySelector(sel);
+      if (!root || !root._parts) continue;
+      const p = root._parts, k = p.k;
+      /* The knob TURNS rather than stepping. knobPos is a continuous float and
+         the angle is interpolated across the detent table, so the brass follows
+         the thumb and then settles into the notch on release. Stepping the
+         transform between three fixed angles made a mechanical control behave
+         like a segmented button. */
+      p.rotor.style.transition = knobDragging ? 'none' : 'transform var(--duration-medium) var(--ease-spring)';
+      p.rotor.style.transform = 'rotate(' + knobAngle + 'deg)';
+      p.cap.textContent = m.label;
+      /* The drum turns CONTINUOUSLY. Text is assigned from the nearest station,
+         but every label's position and appearance come from its own fractional
+         distance from centre — so between two stations the outgoing name slides
+         out and shrinks while the incoming one grows in, rather than the set
+         snapping at the boundary. Size bottoms out at the 15px content floor,
+         never below it: a resting neighbour is something you read. */
+      const near = Math.round(pos);
+      const frac = pos - near;
+      const SP = 82 * k;
+      const slots = [[p.wl, -1], [p.station, 0], [p.wr, 1]];
+      for (const [node, slot] of slots) {
+        const d = slot - frac;
+        const ad = Math.min(1.5, Math.abs(d));
+        node.textContent = secs[((((near + slot) % len) + len) % len)];
+        node.style.transition = dragging ? 'none' : 'transform var(--duration-medium) var(--ease-spring), opacity var(--duration-medium) var(--ease), font-size var(--duration-medium) var(--ease)';
+        node.style.fontSize = (15 + 11 * (1 - Math.min(1, ad))) * k + 'px';
+        node.style.opacity = String(Math.max(0, 1 - ad / 1.45));
+        // Each label's far edge rotates away from the viewer, so the row reads as
+        // the far face of a cylinder curving back into the cabinet.
+        /* Compass drop: each label also rides the arc — sinking by the circle's
+           sagitta and rolling tangent to it, so the row reads as printed on the
+           same card the ticks radiate from. Same R as the tick disc. */
+        const Rl = 420 * k;
+        const xw = d * SP;
+        const th = xw / Rl;
+        node.style.transform = 'translate(-50%,-50%) perspective(' + (240 * k) + 'px) translateX('
+          + xw + 'px) translateY(' + (Rl * (1 - Math.cos(th))).toFixed(2) + 'px) rotate('
+          + (th * 180 / Math.PI).toFixed(2) + 'deg) rotateY(' + (d * 44) + 'deg)';
+      }
+      p.drum.style.transition = p.drum2.style.transition = dragging ? 'none' : 'transform var(--duration-medium) var(--ease-spring)';
+      /* The card ROTATES; the offset is modulo one angular tick period, so the
+         rose never runs out of scale — same seamless-wrap rule as the old tape,
+         in degrees instead of pixels. */
+      const stepDeg = 6.2762;
+      const rot = 'rotate(' + (-((pos * stepDeg) % stepDeg)).toFixed(4) + 'deg)';
+      p.drum.style.transform = rot; p.drum2.style.transform = rot;
+      p.stick.style.transform = 'translate(' + tilt.x * 9 * k + 'px,' + -tilt.y * 9 * k + 'px) rotateX(' + -tilt.y * 20 + 'deg) rotateZ(' + tilt.x * 15 + 'deg) scale(' + (pressed ? 0.94 : 1) + ')';
+      p.shadow.style.transform = 'translate(' + tilt.x * 8 * k + 'px,' + -tilt.y * 3 * k + 'px) scale(' + (pressed ? 0.82 : 1) + ')';
+      p.pilot.style.background = playing ? 'var(--lamp)' : 'rgba(58,34,8,.35)';
+      p.pilot.style.boxShadow = playing
+        ? '0 0 ' + (6 * k) + 'px ' + (1.5 * k) + 'px color-mix(in oklab, var(--lamp) 65%, transparent), inset 0 -' + (0.8 * k) + 'px ' + k + 'px rgba(120,60,10,.5), inset 0 ' + (0.8 * k) + 'px ' + (0.8 * k) + 'px rgba(255,255,255,.65)'
+        : 'inset 0 ' + (0.8 * k) + 'px ' + k + 'px rgba(0,0,0,.5)';
+      p.shadow.style.opacity = pressed ? '0.55' : '1';
+      p.lit.style.opacity = playing ? '1' : '0';
+    }
+    const out = document.querySelector('[data-readout="1"]');
+    if (out) out.textContent = m.label + ' + ' + secs[i];
+  }
+
+  /* The room, painted onto the brass. Two lobes: a tight hot specular for the
+     light itself and a wide soft one for the bounce off the cabinet. The knob is
+     a shallow dome, so the highlight's travel across it is a FRACTION of the
+     pointer's travel across the dock — a 1:1 mapping reads as a sticker sliding
+     over the surface. 0.34 is the compression that looked like curvature. */
+  paintLight(p) {
+    if (!p || !p.spec) return;
+    const k = p.k, L = this.light;
+    const hx = 50 + (L.x - 50) * 0.34, hy = 34 + (L.y - 50) * 0.22;
+    const press = L.pressed;
+    p.spec.style.background =
+      'radial-gradient(' + (26 * k) + '% ' + (19 * k) + '% at ' + hx + '% ' + hy + '%, '
+        + 'rgba(255,255,255,' + (press ? 0.62 : 0.86) + ') 0%, rgba(255,250,236,.3) 38%, transparent 70%),'
+      + 'radial-gradient(' + (62 * k) + '% ' + (52 * k) + '% at ' + (hx + 8) + '% ' + (hy + 26) + '%, '
+        + 'rgba(255,224,170,.22) 0%, transparent 74%)';
+    /* Pressed: the gap closes, so the occlusion tightens and deepens. */
+    p.ao.style.boxShadow = press
+      ? 'inset 0 ' + (1.5 * k) + 'px ' + (2.5 * k) + 'px rgba(18,10,2,.75), 0 ' + (1 * k) + 'px ' + (2 * k) + 'px rgba(18,10,2,.6)'
+      : 'inset 0 ' + (0.5 * k) + 'px ' + (1 * k) + 'px rgba(18,10,2,.3), 0 ' + (3 * k) + 'px ' + (7 * k) + 'px rgba(18,10,2,.38)';
+    p.knob.style.transform = press ? 'translateY(' + (0.75 * k) + 'px)' : 'none';
+
+    /* One light, four surfaces. Same origin, different response per material. */
+    if (p.barspec) {
+      // Fascia: broad, faint graze — it unifies, it must never read as a spotlight.
+      p.barspec.style.background =
+        'radial-gradient(34% 70% at ' + L.x + '% ' + L.y + '%, rgba(255,240,210,.12) 0%, transparent 72%)';
+    }
+    if (p.dspec) {
+      // Dial glass: flat pane, ~1:1, cool and tight — glass reflects the light
+      // itself where brass reflects the warm room.
+      p.dspec.style.background =
+        'radial-gradient(26% 62% at ' + L.x + '% ' + L.y + '%, rgba(255,255,255,.2) 0%, rgba(255,255,255,.05) 48%, transparent 72%)';
+    }
+    if (p.sspec) {
+      // Joystick cap: domed like the knob, same 0.34 compression, dimming on press.
+      const sp = !!L.sp;
+      p.sspec.style.background =
+        'radial-gradient(' + (30 * k) + '% ' + (22 * k) + '% at ' + hx + '% ' + hy + '%, '
+          + 'rgba(255,255,255,' + (sp ? 0.5 : 0.78) + ') 0%, rgba(255,250,236,.24) 40%, transparent 70%)';
+      if (p.sao) p.sao.style.boxShadow = sp
+        ? 'inset 0 ' + (1.5 * k) + 'px ' + (2.5 * k) + 'px rgba(18,10,2,.6)'
+        : 'none';
+    }
+  }
+
+  /* Cold start. An incandescent lamp doesn't switch on — it STRIKES: dark,
+     a flash, a stumble, a second flash, then an exponential warm from deep
+     red toward amber as the filament comes up to temperature (~1.4s). Driven
+     through filter — the CSS breathe owns opacity and keeps running under it.
+     The colour ramp matters as much as the brightness: a cold filament is
+     redder and duller, so saturation and hue land last. */
+  boot() {
+    if (!this._backlights || !this._backlights.length) return;
+    this._booting = true;
+    const strike = [[0, 0], [.05, .55], [.09, .1], [.14, .72], [.19, .45], [.26, .55]];
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / 1400);
+      let b = .55;
+      if (t < .26) {
+        for (let i = 1; i < strike.length; i++) {
+          if (t >= strike[i - 1][0] && t <= strike[i][0]) {
+            const f = (t - strike[i - 1][0]) / (strike[i][0] - strike[i - 1][0]);
+            b = strike[i - 1][1] + (strike[i][1] - strike[i - 1][1]) * f;
+          }
+        }
+      } else {
+        b = 1 - Math.exp(-(t - .26) * 6) * .45;
+      }
+      const cold = 1 - Math.min(1, b);
+      for (const n of this._backlights) {
+        n.style.filter = (n._baseFilter ? n._baseFilter + ' ' : '') +
+          'brightness(' + b.toFixed(3) + ') saturate(' + (1 + cold * .9).toFixed(3) + ') hue-rotate(' + (-22 * cold).toFixed(1) + 'deg)';
+      }
+      if (t < 1) requestAnimationFrame(step);
+      else {
+        for (const n of this._backlights) n.style.filter = n._baseFilter;
+        this._booting = false;
+      }
+    };
+    requestAnimationFrame(step);
+  }
+
+  buzz(ms) {
+    try { if (navigator.vibrate) navigator.vibrate(ms); } catch (_) {}
+    // Each haptic weight has a voice: 3-4ms detents tick, 6ms presses knock,
+    // 8ms gates clack. One event, felt and heard.
+    this.click(ms <= 4 ? 'tick' : ms <= 6 ? 'press' : 'gate');
+    // Load flicker: the detent solenoidless click still shares a rail with the
+    // lamps, so every tick pulls the backlight down ~18% for 70ms. Skipped
+    // while the boot ramp owns the filter.
+    if (!this._booting && this._backlights) {
+      for (const n of this._backlights) n.style.filter = (n._baseFilter ? n._baseFilter + ' ' : '') + 'brightness(.82)';
+      clearTimeout(this._dipT);
+      this._dipT = setTimeout(() => { for (const n of this._backlights) n.style.filter = n._baseFilter; }, 70);
+    }
+  }
+
+  /* Synthesized mechanics, not samples: a damped sine for the body of the sound
+     plus a 20ms bandpassed noise burst for the metallic edge. A detent tick is
+     high and tiny, a seat is a low thunk. Kept very quiet — hardware you hear
+     ABOVE the music is broken hardware. */
+  click(kind) {
+    const C = this._ac;
+    if (!C || C.state !== 'running') return;
+    const t = C.currentTime;
+    const o = C.createOscillator(), g = C.createGain();
+    o.frequency.value = kind === 'seat' ? 180 : kind === 'gate' ? 250 : kind === 'press' ? 320 : 640;
+    g.gain.setValueAtTime(kind === 'tick' ? 0.022 : 0.05, t);
+    g.gain.exponentialRampToValueAtTime(0.0004, t + (kind === 'tick' ? 0.028 : 0.07));
+    o.connect(g).connect(C.destination);
+    o.start(t); o.stop(t + 0.09);
+    const len = Math.floor(C.sampleRate * 0.02);
+    const buf = C.createBuffer(1, len, C.sampleRate);
+    const d = buf.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const n = C.createBufferSource(); n.buffer = buf;
+    const bp = C.createBiquadFilter(); bp.type = 'bandpass';
+    bp.frequency.value = kind === 'tick' ? 3600 : 1700; bp.Q.value = 1.2;
+    const ng = C.createGain(); ng.gain.value = kind === 'tick' ? 0.04 : 0.09;
+    n.connect(bp).connect(ng).connect(C.destination);
+    n.start(t);
+  }
+
+  cancelSpring(id) {
+    // Every spring cancel IS a pointerdown — the one moment browsers allow
+    // audio to start, so the audio context wakes here.
+    try {
+      if (!this._ac && (window.AudioContext || window.webkitAudioContext)) this._ac = new (window.AudioContext || window.webkitAudioContext)();
+      if (this._ac && this._ac.state === 'suspended') this._ac.resume();
+    } catch (_) {}
+    if (this._raf && this._raf[id]) cancelAnimationFrame(this._raf[id]);
+  }
+
+  /* Semi-implicit Euler spring, damped below critical on purpose — the
+     overshoot IS the realism. A tween decelerates into place; mass arrives with
+     momentum and gets caught by the notch. */
+  springVal(id, x0, target, v0, step, stiff, damp) {
+    this._raf = this._raf || {};
+    this.cancelSpring(id);
+    let x = x0, v = v0 || 0, t = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.032, (now - t) / 1000); t = now;
+      v += (-stiff * (x - target) - damp * v) * dt;
+      x += v * dt;
+      if (Math.abs(x - target) < 0.0015 && Math.abs(v) < 0.01) { step(target, true); return; }
+      step(x, false);
+      this._raf[id] = requestAnimationFrame(tick);
+    };
+    this._raf[id] = requestAnimationFrame(tick);
+  }
+
+  /* Free coast under exponential friction, handed to the detent spring once a
+     notch can catch it. Velocity is clamped — a wheel this size has a top
+     speed, and an unbounded flick would spin the band into a blur. */
+  coastDial(v0) {
+    this._raf = this._raf || {};
+    this.cancelSpring('dial');
+    let x = this.state.pos, v = Math.max(-12, Math.min(12, v0)), t = performance.now();
+    const tick = (now) => {
+      const dt = Math.min(0.032, (now - t) / 1000); t = now;
+      v *= Math.exp(-2.6 * dt);
+      x += v * dt;
+      if (Math.abs(v) < 1.2) {
+        this.springVal('dial', x, Math.round(x), v, (nx, done) => this.setPos(nx, !done), 120, 11);
+        return;
+      }
+      this.setPos(x, true);
+      this._raf.dial = requestAnimationFrame(tick);
+    };
+    this._raf.dial = requestAnimationFrame(tick);
+  }
+
+  wire(root, { knob, dial, stick }) {
+    const setPressed = (v) => { this.light.pressed = v; this.paintLight(root._parts); };
+    knob.addEventListener('pointerdown', () => setPressed(true));
+    knob.addEventListener('pointerup', () => setPressed(false));
+    knob.addEventListener('pointercancel', () => setPressed(false));
+    knob.addEventListener('pointerleave', () => setPressed(false));
+    const setStickPressed = (v) => { this.light.sp = v; this.paintLight(root._parts); };
+    stick.addEventListener('pointerdown', () => setStickPressed(true));
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) stick.addEventListener(ev, () => setStickPressed(false));
+    const k = root._parts.k;
+    const DETENT = 46 * k;
+
+    let kd = null;
+    const KTRAVEL = 32 * k; // px of thumb travel per detent
+    knob.addEventListener('pointerdown', (e) => {
+      this.cancelSpring('knob');
+      kd = { x: e.clientX, from: this.state.knobPos, moved: 0, t: performance.now(), v: 0, last: this.state.knobPos };
+      try { knob.setPointerCapture(e.pointerId); } catch (_) {}
+      knob.style.cursor = 'grabbing';
+    });
+    knob.addEventListener('pointermove', (e) => {
+      if (!kd) return;
+      const dx = e.clientX - kd.x;
+      kd.moved = Math.max(kd.moved, Math.abs(dx));
+      // Continuous while turning. Clamped rather than looped: three detents on
+      // a physical switch have stops, and passing MAP straight into ME would
+      // make the readout jump two modules on one flick.
+      const raw = Math.max(0, Math.min(MODULES.length - 1, kd.from + dx / KTRAVEL));
+      const know = performance.now();
+      kd.v = 0.8 * kd.v + 0.2 * ((raw - kd.last) / Math.max(1, know - kd.t) * 1000);
+      kd.last = raw; kd.t = know;
+      this.setState({ knobPos: raw, knobDragging: true });
+      // The module commits at the nearest notch as you cross it, so the readout
+      // and the dial's station set keep up with the turn.
+      const near = Math.round(raw);
+      if (near !== this.state.mod) { this.buzz(4); this.setState({ mod: near, pos: 0, dragging: false }); }
+    });
+    const kend = () => {
+      if (!kd) return;
+      const tap = kd.moved < 4, kv = kd.v; kd = null; knob.style.cursor = 'grab';
+      if (tap) this.setMod((this.state.mod + 1) % MODULES.length);
+      // Settle into the notch on a real damped spring, carrying the release
+      // velocity: the brass overshoots a couple of degrees and wobbles once —
+      // metal with momentum, not a tween.
+      else this.springVal('knob', this.state.knobPos, this.state.mod, kv, (x, done) => { if (done) this.click('seat'); this.setState({ knobPos: x, knobDragging: !done }); }, 160, 10);
+    };
+    knob.addEventListener('pointerup', kend);
+    knob.addEventListener('pointercancel', kend);
+    knob.addEventListener('wheel', (e) => { e.preventDefault(); this.setMod(this.state.mod + (e.deltaY > 0 ? 1 : -1)); }, { passive: false });
+    knob.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); this.setMod(this.state.mod + 1); }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); this.setMod(this.state.mod - 1); }
+    });
+
+    let dd = null;
+    dial.addEventListener('pointerdown', (e) => {
+      this.cancelSpring('dial');
+      dd = { x: e.clientX, from: this.state.pos, t: performance.now(), v: 0, last: this.state.pos };
+      try { dial.setPointerCapture(e.pointerId); } catch (_) {}
+      dial.style.cursor = 'grabbing';
+    });
+    dial.addEventListener('pointermove', (e) => {
+      if (!dd) return;
+      // One continuous float. No index, no clamp, no wrap arithmetic — the
+      // wheel simply keeps turning for as long as the finger keeps moving.
+      const npos = dd.from - (e.clientX - dd.x) / DETENT;
+      const dnow = performance.now();
+      dd.v = 0.8 * dd.v + 0.2 * ((npos - dd.last) / Math.max(1, dnow - dd.t) * 1000);
+      dd.last = npos; dd.t = dnow;
+      this.setPos(npos, true);
+    });
+    const dend = () => {
+      if (!dd) return;
+      const dv = dd.v; dd = null; dial.style.cursor = 'grab';
+      // A flick COASTS: the wheel keeps turning under its own momentum, detents
+      // ticking past as friction bleeds it off, until a notch catches it. A
+      // slow release skips the coast and just settles.
+      if (Math.abs(dv) > 1.6) this.coastDial(dv);
+      else this.springVal('dial', this.state.pos, Math.round(this.state.pos), dv, (x, done) => this.setPos(x, !done), 120, 11);
+    };
+    dial.addEventListener('pointerup', dend);
+    dial.addEventListener('pointercancel', dend);
+    dial.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      this.setPos(Math.round(this.state.pos) + (e.deltaY > 0 ? 1 : -1), false);
+    }, { passive: false });
+
+    let sd = null;
+    const THROW = 18 * k;
+    stick.addEventListener('pointerdown', (e) => {
+      this.cancelSpring('stick');
+      this.buzz(6);
+      sd = { x: e.clientX, y: e.clientY, fired: false, moved: 0 };
+      try { stick.setPointerCapture(e.pointerId); } catch (_) {}
+      stick.style.cursor = 'grabbing'; stick.style.transition = 'none';
+      // Pushed IN. The cap sinks and loses its cast shadow, so a press reads as
+      // a press before anything has moved — that is the play/pause gesture.
+      this.setState({ pressed: true });
+    });
+    stick.addEventListener('pointermove', (e) => {
+      if (!sd) return;
+      const dx = e.clientX - sd.x, dy = e.clientY - sd.y;
+      sd.moved = Math.max(sd.moved, Math.hypot(dx, dy));
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      this.setState({ tilt: {
+        x: ax >= ay ? Math.max(-1, Math.min(1, dx / (28 * k))) : 0,
+        y: ay > ax ? Math.max(-1, Math.min(1, -dy / (28 * k))) : 0,
+      } });
+      if (!sd.fired && Math.max(ax, ay) > THROW) { sd.fired = true; this.buzz(8); }
+    });
+    const send = () => {
+      if (!sd) return;
+      const { fired, moved } = sd; sd = null;
+      stick.style.cursor = 'grab';
+      // Real spring return: released from deflection, an underdamped spring
+      // shoots THROUGH centre — the scale factor goes briefly negative, so the
+      // cap overswings and wobbles the way a gated stick snaps back.
+      const t0 = this.state.tilt;
+      this.setState({ pressed: false });
+      if (t0.x || t0.y) this.springVal('stick', 1, 0, 0, (s) => this.setState({ tilt: { x: t0.x * s, y: t0.y * s } }), 260, 9);
+      else this.setState({ tilt: { x: 0, y: 0 } });
+      if (!fired && moved < 6) this.setState({ playing: !this.state.playing });
+    };
+    stick.addEventListener('pointerup', send);
+    stick.addEventListener('pointercancel', send);
+    stick.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.setState({ playing: !this.state.playing }); }
+    });
+  }
+
+  setMod(n) {
+    const mod = Math.max(0, Math.min(MODULES.length - 1, n));
+    // The dial tunes the sections of whatever you are looking at, so changing
+    // module re-seats it rather than carrying an index into a different list.
+    this.setState({ mod, knobPos: mod, knobDragging: false, pos: 0, dragging: false });
+  }
+  setPos(pos, dragging) {
+    // Every detent crossing is a physical event: a 3ms haptic tick on hardware
+    // that has a motor, silence elsewhere.
+    if (Math.round(pos) !== Math.round(this.state.pos)) this.buzz(3);
+    this.setState({ pos, dragging });
+  }
+  setSec() { /* superseded by setPos — the wheel has no discrete index while turning */ }
+
+  renderVals() {
+    return {
+      rules: [
+        { k: 'Left', v: 'Brass knob, three detents: MAP · MUSIC · ME. Tap steps, drag snaps to nearest, arrow keys step. The cap reads out the current module.' },
+        { k: 'Centre', v: 'Backlit dial tuning the sections of whatever you are looking at. A continuous loop — past the last station it comes round to the first. One long drag crosses the whole scale, and the tick band travels with the entire gesture.' },
+        { k: 'Right', v: 'Four brass detents mark the throws. Push in for play or pause — the cap sinks and drops its shadow. Drag left and right for previous and next, up to open the full player, down to dismiss it.' },
+        { k: 'One dial', v: 'Per screen, and it is the dock\u2019s. An in-page tab strip alongside it puts two identical-looking dials on screen meaning different things.' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>

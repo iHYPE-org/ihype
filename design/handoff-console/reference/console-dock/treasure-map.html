@@ -1,0 +1,152 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:#f0dfb8;font-family:'Work Sans',system-ui,sans-serif}
+#map{position:absolute;inset:0}
+/* Treasure grade: deeper sepia, lifted blacks (ink on old paper is never black),
+   a touch warmer than the console map. */
+.leaflet-tile-pane{filter:sepia(.96) saturate(.42) contrast(.96) brightness(1.09) hue-rotate(-6deg)}
+.leaflet-container{background:#e8dcbd}
+/* ── the paper ─────────────────────────────────────────────────────────
+   Four layers, all pointer-transparent:
+   1. .age    — vignette, two fold creases, rhumb grid (multiply)
+   2. .stains — coffee rings and a spill, hard-stop radial rings (multiply)
+   3. .char   — torn deckled edge: displaced frame, desk colour outside,
+                a charred line inside (feTurbulence displacement)
+   4. .grain  — paper tooth */
+.age{position:absolute;inset:0;pointer-events:none;z-index:401;mix-blend-mode:multiply;background:
+ radial-gradient(115% 88% at 50% 42%,rgba(232,220,189,0) 34%,rgba(120,94,52,.34) 100%),
+ linear-gradient(90deg,transparent 49.6%,rgba(100,72,34,.2) 49.9%,rgba(255,246,220,.3) 50.15%,transparent 50.5%),
+ linear-gradient(0deg,transparent 63.6%,rgba(100,72,34,.16) 63.9%,rgba(255,246,220,.24) 64.15%,transparent 64.5%),
+ repeating-linear-gradient(0deg,transparent 0 33px,rgba(120,94,52,.08) 33px 34px),
+ repeating-linear-gradient(90deg,transparent 0 33px,rgba(120,94,52,.08) 33px 34px)}
+.stains{display:none}
+.char{position:absolute;inset:-8px;pointer-events:none;z-index:402;filter:url(#torn)}
+.char .desk{position:absolute;inset:0;border:16px solid #f0dfb8}
+.char .burn{position:absolute;inset:13px;border:4px solid rgba(74,46,14,.38)}
+.char .scorch{position:absolute;inset:15px;border:9px solid rgba(110,70,26,.14)}
+.grain{position:absolute;inset:0;pointer-events:none;z-index:403;mix-blend-mode:multiply;opacity:.5;background:
+ repeating-linear-gradient(83deg,transparent 0 2px,rgba(120,94,52,.05) 2px 3px),
+ repeating-linear-gradient(-7deg,transparent 0 3px,rgba(120,94,52,.04) 3px 4px)}
+.leaflet-control-attribution{font-family:'JetBrains Mono',monospace;font-size:8.5px;background:rgba(232,220,189,.82);color:#5a4526}
+.leaflet-control-attribution a{color:#8a3a1e}
+/* ── X marks the show ── two hand-cut strokes, each pin jittered a few degrees
+   so no two X's sit identically — a stamped X reads as UI, a drawn one as ink */
+.pin-wrap{position:relative}
+.pin-x{position:absolute;left:-9px;top:-9px;width:18px;height:18px;filter:drop-shadow(1px 1.5px 0 rgba(58,42,18,.35))}
+.pin-x i{position:absolute;left:-1px;top:8px;width:20px;height:3.2px;border-radius:2px;background:#b8291a}
+.pin-x i:first-child{transform:rotate(43deg)}.pin-x i:last-child{transform:rotate(-47deg)}
+.pin-wrap.on .pin-x i{background:#ff5029;box-shadow:0 0 6px rgba(232,70,31,.6)}
+.pin-ring{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:9999px;border:1.6px solid rgba(138,58,30,.85);opacity:0;transform:scale(.6)}
+.pin-wrap.on .pin-ring{opacity:1;transform:scale(1);transition:all .18s cubic-bezier(.2,.7,.3,1)}
+.pin-label{position:absolute;left:14px;top:-8px;transition:opacity .12s ease;background:#efe4c6;border:1.5px solid #3a2a12;border-radius:3px;padding:3px 8px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px;letter-spacing:.04em;color:#2f2310;white-space:nowrap;box-shadow:2px 3px 0 rgba(58,42,18,.2)}
+.pin-wrap.on .pin-label{background:#fff6de;border-width:2px}
+.pin-wrap.flip .pin-label{left:auto;right:14px}
+.pin-wrap.hide .pin-label{opacity:0;pointer-events:none}
+.hud{position:absolute;left:0;right:0;top:0;z-index:500;padding:14px 14px 0;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.hud>*{pointer-events:auto}
+.searchbar{display:flex;align-items:center;gap:8px;background:#efe4c6;border:1.5px solid #3a2a12;border-radius:4px;padding:9px 12px;box-shadow:2px 3px 0 rgba(58,42,18,.22)}
+.searchbar svg{flex:none;color:#6b5327}
+.searchbar input{flex:1;min-width:0;border:0;background:none;outline:none;font-family:'JetBrains Mono',monospace;font-size:13px;letter-spacing:.04em;color:#2f2310}
+.searchbar input::placeholder{color:#8a7346}
+/* Chart info: compass, scale and the OSM credit, inked straight onto the parchment — no box */
+.chartinfo{position:absolute;right:16px;top:74px;z-index:500;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;text-align:center}
+.scale{display:flex;align-items:center;justify-content:center;gap:5px;font-family:'JetBrains Mono',monospace;font-size:8px;letter-spacing:.1em;color:#4a3a1c;text-shadow:0 1px 0 rgba(240,228,198,.7)}
+.scale i{display:block;width:56px;height:4px;border:1px solid #3a2a12;background:linear-gradient(90deg,#3a2a12 0 50%,transparent 50%)}
+.osm{pointer-events:auto;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.08em;color:#5a4526;text-shadow:0 1px 0 rgba(240,228,198,.7)}
+.osm a{color:#8a3a1e}
+.compass{width:64px;height:64px;color:#3a2a12;opacity:.8;filter:drop-shadow(1px 2px 0 rgba(58,42,18,.2))}
+.sheet{position:absolute;left:10px;right:10px;bottom:103px;z-index:600;background:#efe4c6;border:2px solid #3a2a12;border-radius:5px;padding:14px 16px 16px;box-shadow:3px 4px 0 rgba(58,42,18,.28);transform:translateY(120%);transition:transform .26s cubic-bezier(.22,.9,.3,1)}
+.sheet.up{transform:translateY(0)}
+.sheet h2{margin:0;font-family:'Instrument Serif',serif;font-size:26px;font-weight:400;color:#2f2310;line-height:1.1}
+.sheet .meta{margin:5px 0 0;font-family:'JetBrains Mono',monospace;font-size:11.5px;letter-spacing:.08em;color:#6b5327}
+.sheet .acts{margin:4px 0 12px;font-family:'Work Sans',sans-serif;font-size:13px;color:#4a3a1c}
+.sheet .row{display:flex;gap:8px}
+.btn{flex:1;min-height:44px;border:2px solid #3a2a12;border-radius:4px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.14em;cursor:pointer}
+.btn.primary{background:#ff5029;color:#2b1405;border-color:#8a3a1e}
+.btn.ghost{flex:0 0 96px;background:#e2d3ab;color:#4a3a1c}
+</style></head><body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="torn" x="-4%" y="-4%" width="108%" height="108%"><feTurbulence type="fractalNoise" baseFrequency="0.016 0.028" numOctaves="3" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="16"/></filter></svg>
+<div id="map"></div>
+<div class="age"></div>
+<div class="char"><div class="desk"></div><div class="scorch"></div><div class="burn"></div></div>
+<div class="grain"></div>
+<div class="hud">
+<div class="searchbar"><svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M10 10l4 4"/></svg><input id="q" placeholder="SEARCH VENUES, ARTISTS" aria-label="Search venues and artists"></div>
+</div>
+<div class="chartinfo">
+<div class="osm">© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors</div>
+<svg class="compass" viewBox="0 0 80 80" aria-hidden="true">
+ <circle cx="40" cy="42" r="26" fill="none" stroke="currentColor" stroke-width="1"/>
+ <circle cx="40" cy="42" r="20.5" fill="none" stroke="currentColor" stroke-width=".6" stroke-dasharray="1.6 3.2"/>
+ <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor"/>
+ <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity=".62"/>
+ <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity=".3"/>
+ <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity=".3"/>
+ <circle cx="40" cy="42" r="3.4" fill="#efe4c6" stroke="currentColor" stroke-width="1.4"/>
+ <text x="40" y="8.5" text-anchor="middle" font-size="10" font-family="'JetBrains Mono',monospace" font-weight="700" fill="currentColor">N</text>
+</svg>
+<div class="scale"><span>0</span><i></i><span>1 MI</span></div>
+</div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Venue"><h2 id="s-name">—</h2><p class="meta" id="s-meta">—</p><p class="acts" id="s-acts">—</p><div class="row"><button class="btn primary" id="s-tix">TICKETS</button><button class="btn ghost" id="s-close">CLOSE</button></div></div>
+<script>
+const VENUES=[
+ {n:"State Theatre",lat:43.65590,lng:-70.26370,t:"8:00 PM · $28",a:"Deering Oaks · Harbor Static"},
+ {n:"Port City",lat:43.65720,lng:-70.26480,t:"9:00 PM · $18",a:"Night Route"},
+ {n:"Thompson's Pt",lat:43.64320,lng:-70.28570,t:"7:30 PM · $12",a:"Second Shift · Cold Cellar"},
+ {n:"Eastern Prom",lat:43.66980,lng:-70.24520,t:"6:00 PM · Free",a:"Casco Brass Band"},
+ {n:"Old Port",lat:43.65650,lng:-70.25010,t:"10:00 PM · $10",a:"Vera Sound"},
+ {n:"Deering Oaks",lat:43.65700,lng:-70.27600,t:"5:30 PM · Free",a:"Longfellow Trio"},
+ {n:"Longfellow Sq",lat:43.65200,lng:-70.26800,t:"8:30 PM · $15",a:"Harbour Lights"}];
+const map=L.map('map',{zoomControl:false,attributionControl:false}).setView([43.6570,-70.2650],14);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);
+/* The night's route, plotted the pirate way: dashed ink through the shows in
+   start-time order, so the map ANSWERS something — walk it and you catch all
+   seven. Ink brown, never accent: the X's are the treasure, the line is the way. */
+const order=[...VENUES].sort((a,b)=>{
+ const t=s=>{const m=s.t.match(/(\d+):(\d+) (AM|PM)/);let h=+m[1]%12;if(m[3]==='PM')h+=12;return h*60+ +m[2];};
+ return t(a)-t(b);});
+L.polyline(order.map(v=>[v.lat,v.lng]),{color:'#6b3a1a',weight:2.2,opacity:.75,dashArray:'1 9',lineCap:'round'}).addTo(map);
+const sheet=document.getElementById('sheet');let cur=null;
+function show(v,el){if(cur)cur.classList.remove('on');cur=el;el.classList.add('on');
+ document.getElementById('s-name').textContent=v.n;document.getElementById('s-meta').textContent=v.t;document.getElementById('s-acts').textContent=v.a;sheet.classList.add('up');
+ el.classList.remove('hide');}
+/* Checkout is the Console Checkout template, which lives in the design-system
+   project and is not vendored here — navigating would 404 the whole preview.
+   Stub: state the destination on the button itself rather than dead-ending. */
+document.getElementById('s-tix').onclick=(e)=>{const b=e.currentTarget;b.textContent='→ CONSOLE CHECKOUT';setTimeout(()=>{b.textContent='TICKETS';},1400);};
+document.getElementById('s-close').onclick=()=>{sheet.classList.remove('up');if(cur){cur.classList.remove('on');cur=null;}};
+VENUES.forEach((v,i)=>{
+ /* Deterministic jitter per venue — the same X leans the same way on every
+    load, like ink that dried once. */
+ const j=((i*137)%17)-8;
+ const html='<div class="pin-wrap"><div class="pin-ring"></div><div class="pin-x" style="transform:rotate('+j+'deg)"><i></i><i></i></div><div class="pin-label">'+v.n+'</div></div>';
+ const m=L.marker([v.lat,v.lng],{icon:L.divIcon({html,className:'',iconSize:[18,18],iconAnchor:[9,9]}),keyboard:true,title:v.n}).addTo(map);
+ m.on('click',e=>show(v,e.target.getElement().firstElementChild));});
+/* A boxed label per pin collides the moment two venues sit close. Greedy
+   north-to-south: flip when a label would leave the frame, drop it (keeping
+   the X) when it would cover one already placed or sit under the search bar. */
+function declutter(){
+  const W=innerWidth,H=innerHeight,placed=[];
+  const hud=document.querySelector('.hud');
+  const HUD=hud?hud.getBoundingClientRect().bottom+4:60;
+  [...document.querySelectorAll('.pin-wrap')]
+    .sort((a,b)=>a.getBoundingClientRect().top-b.getBoundingClientRect().top)
+    .forEach(w=>{
+      w.classList.remove('flip','hide');
+      const lab=w.querySelector('.pin-label'); if(!lab) return;
+      const p=w.getBoundingClientRect();
+      if(p.left<0||p.left>W||p.top<0||p.top>H){ w.classList.add('hide'); return; }
+      let r=lab.getBoundingClientRect();
+      if(r.right>W-24){ w.classList.add('flip'); r=lab.getBoundingClientRect(); }
+      if(r.left<24||r.top<HUD){ w.classList.add('hide'); return; }
+      if(placed.some(q=>!(r.right<q.left-4||r.left>q.right+4||r.bottom<q.top-2||r.top>q.bottom+2))){ w.classList.add('hide'); return; }
+      placed.push(r);
+    });
+}
+map.on('moveend',declutter);map.on('zoomend',declutter);
+map.whenReady(()=>setTimeout(declutter,80));
+</script>
+</body></html>

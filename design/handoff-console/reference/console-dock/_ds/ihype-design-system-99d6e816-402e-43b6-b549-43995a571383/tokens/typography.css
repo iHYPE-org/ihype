@@ -1,0 +1,53 @@
+/* iHYPE Typography Tokens — Console direction, 2026-08-20
+   Family set is unchanged from Bulletin (see fonts.css); what moved is the
+   ROLE of Instrument Serif, promoted from editorial-only to every section
+   heading, plus a raised content floor: 15px, per HANDOFF §5 — a dial
+   readout, a form label or an error message is content, not an eyebrow, and
+   none of those may sit below it. The tracked-mono eyebrow exemption (11px,
+   metadata only) is unaffected. */
+:root {
+  /* ── Font Families ── */
+  /* Instrument Serif is the display face: every component and console template
+     sets it, and Bricolage Grotesque is retired. The Noto fallbacks stay in the
+     stack — they cost nothing until a CJK/Arabic locale loads one (see
+     __ihypeLoadLocaleFont in lib/i18n.js) and the glyphs are then needed. */
+  --font-display: 'Instrument Serif', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', serif;
+  --font-body:    'Work Sans', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', monospace;
+  --font-serif:   'Instrument Serif', 'Noto Sans Arabic', 'Noto Sans SC', 'Noto Sans JP', serif;
+  --font-heading: var(--font-serif);
+
+  /* ── Font Sizes ── */
+  --text-xs:   11px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   17px;
+  --text-lg:   21px;
+  --text-xl:   28px;
+  --text-2xl:  38px;
+  --text-3xl:  54px;
+
+  /* ── Display optical size ── Retained for the older marketing templates that
+     still load Bricolage Grotesque themselves and use its 12..96 opsz axis.
+     Instrument Serif has no optical-size axis, so console work ignores these. */
+  --opsz-lg:  20; /* @kind other */
+  --opsz-xl:  28; /* @kind other */
+  --opsz-2xl: 38; /* @kind other */
+  --opsz-3xl: 54; /* @kind other */
+
+  /* ── Letter Spacing ──
+     Negative display tracking belongs to Bricolage, which sets wide by default.
+     Instrument Serif is already tight and does not want it — console components
+     set `normal` locally rather than reading this token. */
+  --tracking-display: -0.035em;
+  --tracking-tight:   -0.02em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.08em;
+  --tracking-wider:    0.14em;
+  --tracking-widest:   0.22em;
+
+  /* ── Line height ── */
+  --leading-display: 1.03;
+  --leading-heading: 1.15;
+  --leading-body:    1.62;
+}

@@ -19,6 +19,24 @@ mmm.css already reads tokens; this recolors the shell to cream/walnut/brass.
 Verify: /app/map renders cream, dock area walnut. Nothing else moves.
 
 ## Step 2 — The dock (1 component + 1 layout line)
+THE VISUAL SPEC IS reference/console-dock/ — open "Console Dock.dc.html"
+in a browser (self-contained: tokens, textures, runtime included). What
+shipped instead was a flat horizontal bar; that is wrong. The real dock:
+round MAP/MUSIC/ME knob with knurled skirt + brass cap; a cream VU-style
+dial with the current section as the big serif station name, prev/next
+sections as small ARCED-IN wing labels, tick band, warm analog backlight,
+red needle; a brass Xbox-style thumbstick in a recessed 4-gate well.
+ConsoleDock.tsx in this folder is the ROUTER WIRING scaffold only — keep
+its router/transport logic, replace its markup/CSS with a faithful
+translation of the reference.
+
+FRAME RULE (applies to every step): the app renders as ONE 430px console
+column, identical on desktop, mobile, iOS and Android. On viewports wider
+than 430px the column centers on the walnut cabinet ground
+(tex/walnut-v3.png over the walnut gradient); it never reflows full-bleed.
+The first production screenshots stretched the dock across a 1914px window —
+that is the failure this rule exists to prevent.
+
 Mount `<ConsoleDock onTransport={playerStore.dispatch} />` in
 src/app/app/layout.tsx — the signed-in shell ONLY. /login, /auth/*, /welcome
 never render it. Knob cycles /app/{map,music,me}; thumbwheel drags through the
@@ -27,9 +45,12 @@ here in the same PR); joystick: tap toggle, L/R prev/next, up/down
 expand/collapse. Keyboard: knob and stick are buttons (Enter/Space native).
 
 ## Step 3 — MAP skin
-Leaflet keeps its data flow. Add the sepia tile filter + parchment HUD from
-the design (treasure-map.html in the design project is the reference:
-tile filter values, compass/scale/OSM-credit block, pin styling).
+Leaflet keeps its data flow. The COMPLETE reference is in the bundle:
+reference/map-treasure.html — a working page (CDN Leaflet + real OSM tiles).
+Translate it: the sepia tile filter values, parchment frame, search bar,
+X-mark venue pins with nameplate labels, dotted route lines, compass rose +
+scale + OSM credit block, and the venue sheet. Do not redesign any of it;
+open the file in a browser next to your output and diff by eye.
 
 ## Step 4 — Paper pass on MUSIC + ME panes
 Per V10_SIMPLIFICATION.md: strip gradients/shadows/tints from pane markup,

@@ -11,6 +11,8 @@
 | components/ (all 37 .jsx) | markup reference per screen |
 | lint/check-adherence.mjs | the PR gate (rule 7) — dependency-free Node script |
 | reference/ (s1–s9 .html) | per-screen pixel references, self-contained |
+| reference/map-treasure.html | the MAP surface — working Leaflet page, translate verbatim (step 3) |
+| reference/console-dock/ | THE dock + 430px frame, live and self-contained — the visual spec for step 2 |
 | NAV_MAP.md | route ↔ screen ↔ endpoint map |
 | V10_SIMPLIFICATION.md | the 5 paper rules |
 | BACKEND_RECONCILED.md | HYPE contract: 429 window, 409 ledger, 4 button states |
