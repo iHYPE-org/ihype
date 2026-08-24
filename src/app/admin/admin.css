@@ -22,7 +22,13 @@
 }
 
 /* ── iH/OPS Operator Console ─────────────────────────── */
-.ops-shell{position:fixed;inset:0;display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--f-b)}
+/* z-index is what makes this the ONLY chrome on /admin. The member app's
+   header and bottom tabs render from the root layout on every route; the MMM
+   frame covers them with z-index var(--z-sticky), and this shell had no
+   z-index at all — so the console rendered UNDER the member chrome, which is
+   exactly the screenshot the owner sent (member header on top, tab bar over
+   the console's own nav). Same fix as the frame, same token. */
+.ops-shell{position:fixed;inset:0;z-index:var(--z-sticky);display:flex;flex-direction:column;overflow:hidden;background:var(--bg);color:var(--ink);font-family:var(--f-b)}
 .ops-topbar{height:42px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 14px;border-bottom:1px solid var(--line);background:var(--bg)}
 .ops-wordmark{font-family:var(--f-d,'Bricolage Grotesque',sans-serif);font-weight:800;font-size: 1.0625rem;letter-spacing:-.02em;color:var(--ink);line-height:1}
 .ops-dot{color: var(--accent-text);margin:0 1px}
@@ -419,3 +425,48 @@
   font-size: 0.9375rem;
   line-height: 1;
 }
+
+/* ── The hi-fi print pass (owner, 2026-08-24: "update to hifi design
+   system") ── the console's cards take the same paper-box vocabulary as the
+   member app's panes: ink rule, cut corner, pressed offset shadow, mono
+   eyebrows. Scoped under .admin-console so the marketing .panel is
+   untouched. */
+.admin-console .panel {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--ink-2);
+  border-radius: var(--radius-panel);
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
+}
+.admin-console .badge {
+  font-family: var(--f-m, monospace);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border-radius: var(--radius-panel);
+}
+/* The consolidated console index — every destination in one band at the top,
+   so reaching any tool is one tap instead of a scroll (owner: "consolidated
+   menu buttons so I don't have to scroll down so far"). */
+.admin-index {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+.admin-index a {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--ink-a30);
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  box-shadow: 1.5px 2px 0 rgba(var(--ink-1-rgb), 0.14);
+  color: var(--ink);
+  font-family: var(--f-m, monospace);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+.admin-index a:hover { border-color: var(--accent-text); color: var(--accent-text); }

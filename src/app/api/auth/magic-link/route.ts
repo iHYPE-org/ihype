@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { sendMagicLinkEmail } from '@/lib/magic-link';
+import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 
@@ -33,9 +34,19 @@ export async function POST(request: Request) {
 
     if (!email) return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
 
-    const user = await db.user.findUnique({ where: { email }, select: { id: true } });
+    const user = await db.user.findUnique({ where: { email }, select: { id: true, role: true } });
     if (!user) {
       // Do not reveal whether an account exists.
+      return NextResponse.json({ ok: true });
+    }
+
+    /* The admin signs in with a passkey and nothing else (owner, 2026-08-24:
+       "Admin Mode needs passkey only security"). A magic link is exactly the
+       email-deliverable credential that policy exists to remove, so the admin
+       account never gets one — answered with the same ok:true as an unknown
+       address, because "this address is the admin" is itself information. */
+    if (user.role === 'ADMIN' || isAllowedAdminEmail(email)) {
+      log.warn('magic-link: refused for admin account (passkey-only policy)');
       return NextResponse.json({ ok: true });
     }
 
