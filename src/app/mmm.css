@@ -396,15 +396,15 @@ html.mmm-locked .site-shell > main {
 .mmm-chip {
   flex-shrink: 0;
   padding: 7px 13px;
-  border-radius: 999px;
-  border: 1px solid var(--hair-160);
-  background: rgba(var(--bg-base-rgb), 0.62);
-  color: var(--ink-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--ink-a45);
+  background: var(--bg-surface);
+  color: var(--ink-2);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
-  backdrop-filter: blur(8px);
+  box-shadow: 1.5px 2px 0 var(--ink-a10);
   white-space: nowrap;
 }
 .mmm-chip[aria-pressed='true'] {
@@ -549,6 +549,26 @@ html.mmm-locked .site-shell > main {
      clear the Dynamic Island at the top and the home indicator at the bottom,
      which the handoff's 430px rectangle has neither of. */
   padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
+}
+/* The pane is the same sheet of paper as the chart (owner, 2026-08-24: "all
+   frames should fit to this console and this map design"): the map's own film
+   grain and a faint vignette wash, fixed so it covers the viewport however far
+   the pane has scrolled. Decoration — never eats a tap — and under the dock's
+   own z, so the cabinet keeps its own grain. */
+.mmm-pane::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%),
+    url('/console/grain.png');
+  background-size: auto, 160px;
+  /* The map's own values (overlay at ~0.1). The first cut used multiply at
+     0.5 and turned the paper into sandpaper — grain is an exposure cue, not
+     a texture you should be able to name. */
+  mix-blend-mode: overlay;
+  opacity: 0.1;
 }
 
 /* Paint scope for workflows migrated from the retired AppShell. The
@@ -891,9 +911,10 @@ html.mmm-locked .site-shell > main {
   gap: 14px;
   width: 100%;
   text-align: left;
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-card);
+  background: var(--bg-surface);
+  border: 1px solid var(--ink-a45);
+  border-radius: var(--radius-panel);
+  box-shadow: 2px 3px 0 var(--ink-a10);
   padding: 16px 20px;
   cursor: pointer;
   transition: border-color var(--duration-fast) var(--ease-default);
@@ -969,9 +990,10 @@ html.mmm-locked .site-shell > main {
   align-items: center;
   gap: 8px;
   padding: 11px 16px;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--ink-a45);
   border-radius: var(--radius-pill);
-  background: transparent;
+  background: var(--bg-surface);
+  box-shadow: 1.5px 2px 0 var(--ink-a10);
   color: var(--ink);
   font-family: var(--font-display);
   font-weight: 600;
@@ -1071,9 +1093,12 @@ html.mmm-locked .site-shell > main {
   align-items: center;
   gap: 10px;
   padding: 9px 16px;
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-pill);
-  background: var(--bg-2);
+  /* The chart's search bar, everywhere: paper box, ink rule, pressed offset
+     shadow — one instrument, one finish, whichever pane it sits on. */
+  border: 1.5px solid var(--ink-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
 }
 .mmm-search-field:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
 .mmm-search-glyph { color: var(--ink-3); font-size: 0.9375rem; line-height: 1; }
@@ -1187,9 +1212,12 @@ html.mmm-locked .site-shell > main {
 
 .mmm-card {
   padding: 14px;
-  border-radius: 12px;
-  border: 1px solid var(--hair-100);
-  background: var(--hair-20);
+  /* A printed paper box — the chart's venue-tag vocabulary (ink rule, cut
+     corner, pressed offset shadow), calmer for a content card. */
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--ink-a45);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 var(--ink-a10);
 }
 .mmm-card-accent {
   border-color: rgba(var(--accent-rgb), 0.22);
@@ -1201,7 +1229,7 @@ html.mmm-locked .site-shell > main {
   align-items: center;
   gap: 11px;
   padding: 11px 3px;
-  border-bottom: 1px solid var(--hair-70);
+  border-bottom: 1px solid var(--ink-a22);
   width: 100%;
   text-align: left;
   background: none;
@@ -1252,8 +1280,9 @@ html.mmm-locked .site-shell > main {
 
 .mmm-btn-primary {
   padding: 10px 0;
-  border-radius: 9px;
-  border: 0;
+  border-radius: var(--radius-panel);
+  border: 1px solid rgba(61, 44, 12, .9);
+  box-shadow: 2px 3px 0 var(--ink-a20);
   background: var(--accent);
   color: var(--ink-on-accent);
   font-family: var(--font-body);
@@ -1264,9 +1293,10 @@ html.mmm-locked .site-shell > main {
 }
 .mmm-btn-ghost {
   padding: 10px 14px;
-  border-radius: 9px;
-  border: 1px solid var(--hair-160);
-  background: transparent;
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--ink-a45);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 var(--ink-a10);
   color: var(--ink-2);
   font-family: var(--font-body);
   font-size: 0.9375rem;
@@ -1314,9 +1344,9 @@ html.mmm-locked .site-shell > main {
   z-index: 51;
   max-height: 86%;
   overflow-y: auto;
-  background: var(--bg-3);
-  border-top: 1px solid var(--line-2);
-  border-radius: 18px 18px 0 0;
+  background: var(--bg-surface);
+  border-top: 2px solid var(--ink-2);
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   padding: 18px 18px 22px;
   animation: mmmSheetUp var(--sheet-enter-dur) var(--ease-out);
 }
@@ -2186,7 +2216,7 @@ html.mmm-locked .site-shell > main {
   align-items: flex-start;
   gap: 14px;
   padding: 14px 2px;
-  border-bottom: 1px solid var(--hair-70);
+  border-bottom: 1px solid var(--ink-a22);
 }
 .mmm-ticket-row:last-child { border-bottom: 0; }
 /* The date block: the design's calendar chip, big day over small month. */
@@ -2567,7 +2597,8 @@ html.mmm-locked .site-shell > main {
   margin-bottom: 12px;
   padding: 8px 12px;
   border-radius: var(--radius-pill);
-  background: rgba(var(--accent-rgb), 0.12);
+  border: 1px solid var(--ink-a35);
+  background: var(--bg-surface);
   font-family: var(--font-mono);
   font-size: 0.9375rem;
   letter-spacing: 0.12em;
@@ -3237,7 +3268,7 @@ html.mmm-locked .site-shell > main {
 .mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mmm-me-route-trail span { display: inline-flex; gap: 7px; }
 .mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
-.mmm-empty-state { padding: 18px; border: 1px dashed var(--hair-160); border-radius: var(--radius-lg); background: var(--hair-30); }
+.mmm-empty-state { padding: 18px; border: 1px dashed var(--ink-a45); border-radius: var(--radius-panel); background: transparent; }
 .mmm-empty-state strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 1rem; }
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
