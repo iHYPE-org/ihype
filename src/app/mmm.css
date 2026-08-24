@@ -1339,6 +1339,24 @@ html.mmm-locked .site-shell > main {
   cursor: pointer;
 }
 
+/* The heart for non-track things — a paper chip in the print vocabulary,
+   the glyph in brick ink when lit (accent-as-copy token, never the raw
+   accent: 2.48:1 on cream is the lint rule's whole point). 44px floor. */
+.mmm-like {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1.5px solid var(--ink-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
+  color: var(--ink-2);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.mmm-like[data-active] { color: var(--accent-text); }
+
 .mmm-link-field {
   display: flex;
   align-items: center;

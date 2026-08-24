@@ -128,6 +128,7 @@ model User {
   reassignedTickets       Ticket[]                 @relation("TicketReassignments")
   fanPlaylists            FanPlaylist[]
   favoriteMedia           FanFavoriteMedia[]
+  likes                   Like[]
   auditLogs               AuditLog[]
   contentReports          ContentReport[]
   seeds                   Seed[]
@@ -389,6 +390,37 @@ model FanFavoriteMedia {
 
   @@unique([userId, mediaId])
   @@index([userId, createdAt])
+}
+
+/// What a Like can point at. TRACK likes deliberately live in
+/// FanFavoriteMedia (they carry playable metadata the player needs); this
+/// enum covers the targets that only need identity.
+enum LikeTargetType {
+  ALBUM
+  ARTIST
+  VENUE
+  ADVERTISEMENT
+}
+
+/// One like per user per thing, held until unliked (owner, 2026-08-24:
+/// "Only like a track/album/artist/venue/advertisement once, stored to
+/// user's account. Likes are saved to account until unliked."). The unique
+/// constraint IS the "only once" rule — a second like is an upsert no-op,
+/// never a second row.
+model Like {
+  id         String         @id @default(cuid())
+  userId     String
+  targetType LikeTargetType
+  /// The id in the target's own table: Profile.id for ARTIST/VENUE,
+  /// ArtistMediaAsset.id for ALBUM, Ad.id for ADVERTISEMENT. Checked for
+  /// existence at the API, not by a foreign key — the targets live in three
+  /// tables, and a polymorphic FK does not exist in Postgres.
+  targetId   String
+  createdAt  DateTime       @default(now())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, targetType, targetId])
+  @@index([targetType, targetId])
 }
 
 model ArtistMediaAsset {
