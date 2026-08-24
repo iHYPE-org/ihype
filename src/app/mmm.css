@@ -1527,12 +1527,33 @@ html.mmm-locked .site-shell > main {
 .mmm-dock-badge {
   position: absolute;
   left: 50%;
-  top: calc(-1 * (var(--mmm-dock-lip) + 9px));
+  /* The BUTTON is the tap target and is a real 44px box — no invisible skirt:
+     the runbook's gate 6 measures element boxes, the 768px button floor
+     measures element boxes, and a target only a hit-test can see fails both
+     while passing the finger. The visible brass is the inner plate below,
+     held at the designed spot (straddling the lip, -12..+7 relative to the
+     bar) while the box extends UPWARD over the map — never down toward the
+     dial's station row, which is how PR #747's hit-test failed when the
+     grown box reached it. */
+  top: calc(-1 * (var(--mmm-dock-lip) + 22px));
   transform: translateX(-50%);
+  height: 44px;
+  min-width: 44px;
+  box-sizing: border-box;
+  /* The plate sits in flow so the button's width is the plate's — 13px of
+     top padding lands it at the designed -12px relative to the bar. */
+  padding: 13px 0 0;
   z-index: 12;
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
+  border: 0;
+  background: none;
+}
+.mmm-dock-badge:hover .mmm-dock-badge-plate { filter: brightness(1.12); }
+/* The maker's plate itself — the only visible part of the control. */
+.mmm-dock-badge-plate {
+  display: inline-block;
   padding: 1.5px 7px;
   border-radius: 1.5px;
   box-sizing: border-box;
@@ -1545,22 +1566,7 @@ html.mmm-locked .site-shell > main {
   letter-spacing: 0.14em;
   color: #33240a;
   text-shadow: 0 0.8px 0 rgba(255, 248, 224, .5);
-  /* globals.css floors every <button> to 44x44 under 768px. This one meets
-     the floor through its tap skirt (the ::after below — the design's own
-     "44px touch floor without 44px of brass"), so the box opts out: floored,
-     the visible plate grows to 44px tall, hangs over the dial's station row,
-     and its skirt swallows the station's own hit target — which is exactly
-     how PR #747's CI failed while a 2px font-metric difference let the same
-     test pass locally. measure:dock hit-tests the skirt's 44px reach. */
-  min-height: 0;
-  min-width: 0;
-}
-.mmm-dock-badge:hover { filter: brightness(1.12); }
-/* 44px touch floor without 44px of brass: an invisible tap skirt. */
-.mmm-dock-badge::after {
-  content: "";
-  position: absolute;
-  inset: -14px -8px;
+  white-space: nowrap;
 }
 
 /* ── The knob ── bakelite fluted skirt, lathe-turned brass cap, cream pointer.

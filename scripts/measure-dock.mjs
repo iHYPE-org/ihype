@@ -214,7 +214,10 @@ for (const width of WIDTHS) {
     const badgeBox = badge.getBoundingClientRect();
     const badgeCx = badgeBox.left + badgeBox.width / 2;
     const badgeCy = badgeBox.top + badgeBox.height / 2;
-    const hits = (x, y) => document.elementFromPoint(x, y) === badge;
+    const hits = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return el === badge || badge.contains(el);
+    };
     const at = (x) => {
       const el = document.elementFromPoint(x, dial.top + dial.height / 2);
       return el?.getAttribute('aria-label') ?? el?.className ?? 'nothing';
@@ -297,7 +300,7 @@ for (const r of rows) {
   if (r.readoutPx > 12) problems.push(`${r.width}px: the cap legend is ${r.readoutPx}px — it takes the 11px tracked-mono floor.`);
   if (r.pageScrollW > r.width) problems.push(`${r.width}px: the page scrolls sideways (${r.pageScrollW}px).`);
   if (!r.steps.every((hit) => /station/i.test(hit))) problems.push(`${r.width}px: a step affordance is covered (${r.steps.join(', ')}).`);
-  if (!r.badge44) problems.push(`${r.width}px: the nameplate's tap target is under 44px — its invisible skirt has stopped hit-testing.`);
+  if (!r.badge44) problems.push(`${r.width}px: the nameplate's tap target is under 44px.`);
   if (!r.instrument.needle || !r.instrument.pilot) problems.push(`${r.width}px: the meter lost its ${!r.instrument.needle ? 'needle' : 'pilot bead'}.`);
   if (r.instrument.card !== 840) problems.push(`${r.width}px: the tick card measures ${r.instrument.card}px — the compass disc geometry moved.`);
   /* 320px is below MOBILE.md's design width and clips the longest MUSIC name.

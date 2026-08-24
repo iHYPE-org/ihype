@@ -586,7 +586,7 @@ export function MmmDock({
         onPointerDown={(event) => { event.stopPropagation(); wakeAudio(); }}
         type="button"
       >
-        iHYPE
+        <span className="mmm-dock-badge-plate">iHYPE</span>
       </button>
 
       <div className="mmm-dock-plate">
