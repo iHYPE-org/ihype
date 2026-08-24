@@ -1457,6 +1457,15 @@ html.mmm-locked .site-shell > main {
   left: 0;
   right: 0;
   bottom: var(--mmm-dock-lift);
+  /* The console is the same size on every screen (owner, 2026-08-24: "For
+     desktop let's set the size limit to match mobile"). 430px is the width the
+     dc.html draws the dock at — its whole demo frame — so above that the bar
+     stops growing and centres, an object sitting on the desk rather than a
+     strip painted across it. No breakpoint: at phone widths min() takes the
+     viewport and nothing changes. */
+  box-sizing: border-box;
+  max-width: 430px;
+  margin-inline: auto;
   z-index: 45;
   padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
   border-top: var(--mmm-dock-lip) solid var(--brass);

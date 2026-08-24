@@ -217,6 +217,8 @@ for (const width of WIDTHS) {
     };
     return {
       dockH: Math.round(dockBox.height),
+      dockW: Math.round(dockBox.width),
+      centred: Math.abs((dockBox.left + dockBox.width / 2) - window.innerWidth / 2) <= 1,
       oneRow: kids.every((r) => r.top < kids[0].bottom && r.bottom > kids[0].top),
       knobs: [Math.round(knob.width), Math.round(gate.width)],
       dialW: Math.round(dial.width),
@@ -281,6 +283,10 @@ if (JSON_OUT) {
 const problems = [];
 for (const r of rows) {
   if (!r.oneRow) problems.push(`${r.width}px: the dock wrapped onto two rows.`);
+  /* The console matches the mobile size on every screen — 430px, the dc.html's
+     own frame width — and centres above it. */
+  if (r.dockW !== Math.min(r.width, 430)) problems.push(`${r.width}px: the bar measures ${r.dockW}px wide — it should be min(viewport, 430).`);
+  if (!r.centred) problems.push(`${r.width}px: the bar is not centred.`);
   if (r.dockH !== r.chrome) problems.push(`${r.width}px: the bar measures ${r.dockH}px but --mmm-chrome-size says ${r.chrome}px — the panes will clear the wrong height.`);
   if (r.knobs[0] !== 74 || r.knobs[1] !== 74) problems.push(`${r.width}px: the knobs measure ${r.knobs.join('/')} — the design says 74, matched.`);
   if (r.readoutSpill) problems.push(`${r.width}px: "${r.readout}" spills ${r.readoutSpill}px past the brass cap.`);
