@@ -221,22 +221,38 @@ export function TicketSaleCard({
         </div>
       </div>
 
-      <div className="ticketing-split-grid">
-        <div className="signal-card">
-          <strong>{venueName}</strong>
-          <span>{formatPercent(venuePayoutPercent)} {t('ticketSaleCard.shareLabel', 'share')}</span>
-          <span>{formatCurrencyFromCents(preview.venuePayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
+      {/* S4's split card (reference/s4-checkout.html): the keyed bar over one
+          row per share, real names and this order's real amounts — replacing
+          three separate stat cards saying the same thing without the bar. The
+          percentages are the show's own, never the constant. */}
+      <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+          {t('ticketSaleCard.whereItGoes', 'Where the face value goes')}
         </div>
-        <div className="signal-card">
-          <strong>{artistName}</strong>
-          <span>{formatPercent(artistPayoutPercent)} {t('ticketSaleCard.shareLabel', 'share')}</span>
-          <span>{formatCurrencyFromCents(preview.artistPayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
+        <div style={{ display: 'flex', height: 12, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
+          <div style={{ flex: Math.max(artistPayoutPercent, 1), background: 'var(--accent)' }} />
+          <div style={{ flex: Math.max(venuePayoutPercent, 1), background: 'var(--role-venue)' }} />
+          <div style={{ flex: Math.max(promoterPayoutPercent, 1), background: 'var(--role-promoter)' }} />
         </div>
-        <div className="signal-card">
-          <strong>{affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool')}</strong>
-          <span>{formatPercent(promoterPayoutPercent)} {t('ticketSaleCard.affiliateShareLabel', 'affiliate share')}</span>
-          <span>{formatCurrencyFromCents(preview.promoterPayoutCents)} {t('ticketSaleCard.forThisOrderLabel', 'for this order')}</span>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
+          {[
+            { key: 'var(--accent)', name: artistName, percent: artistPayoutPercent, cents: preview.artistPayoutCents },
+            { key: 'var(--role-venue)', name: venueName, percent: venuePayoutPercent, cents: preview.venuePayoutCents },
+            { key: 'var(--role-promoter)', name: affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool'), percent: promoterPayoutPercent, cents: preview.promoterPayoutCents },
+          ].map((row) => (
+            <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 2, background: row.key, flex: '0 0 auto' }} />
+              <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{row.name} · {formatPercent(row.percent)}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{formatCurrencyFromCents(row.cents)}</span>
+            </div>
+          ))}
         </div>
+        {affiliatePromoterName ? (
+          <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('ticketSaleCard.creditedTo', 'Credited to')}</span>
+            <span style={{ fontSize: '0.9375rem', fontWeight: 500, color: 'var(--role-promoter-text)' }}>{affiliatePromoterName}</span>
+          </div>
+        ) : null}
       </div>
 
       {/* ALL SALES ARE FINAL — rendered for EVERY state of this card, not just
@@ -355,20 +371,39 @@ export function TicketSaleCard({
 
             <div className="ticketing-split-preview">
               <div className="meta">{t('ticketSaleCard.orderPreviewLabel', 'Order preview')}</div>
-              <div className="ticketing-order-summary">
-                <div><span>{t('ticketSaleCard.subtotalLabel', 'Subtotal')}</span><strong>{formatCurrencyFromCents(preview.subtotalCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.localTaxLabel', 'Local tax')}</span><strong>{formatCurrencyFromCents(preview.localCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.stateTaxLabel', 'State / province tax')}</span><strong>{formatCurrencyFromCents(preview.stateCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.countryTaxLabel', 'Country tax')}</span><strong>{formatCurrencyFromCents(preview.countryCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.internationalTaxLabel', 'International tax')}</span><strong>{formatCurrencyFromCents(preview.internationalCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.totalTaxLabel', 'Total tax')}</span><strong>{formatCurrencyFromCents(preview.totalTaxCents)}</strong></div>
-                {/* Disclosed before payment, as its own line and in the buyer's
-                    favour: iHYPE is a nonprofit, takes $0, and does not absorb
-                    Stripe's cost of moving the money either. Naming Stripe is
-                    the point — this is not an iHYPE fee. */}
-                <div><span>{t('ticketSaleCard.processingFeeLabel', 'Stripe processing, paid by the buyer')}</span><strong>{formatCurrencyFromCents(preview.processingFeeCents)}</strong></div>
-                <div><span>{t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee')}</span><strong>{formatCurrencyFromCents(0)}</strong></div>
-                <div><span>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span><strong>{formatCurrencyFromCents(preview.totalChargeCents)}</strong></div>
+              {/* S4's order ledger. Every line the old summary carried
+                  survives — the reference shows four rows because its sample
+                  order has one implicit tax line; a real order can have five,
+                  and hiding any re-opens the unexplained-money gap the ledger
+                  exists to close. iHYPE's $0 is the accent-text line, exactly
+                  as the reference draws it. */}
+              <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 14, background: 'var(--bg-raised)', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {[
+                  { label: t('ticketSaleCard.subtotalLabel', 'Subtotal'), cents: preview.subtotalCents },
+                  { label: t('ticketSaleCard.localTaxLabel', 'Local tax'), cents: preview.localCents },
+                  { label: t('ticketSaleCard.stateTaxLabel', 'State / province tax'), cents: preview.stateCents },
+                  { label: t('ticketSaleCard.countryTaxLabel', 'Country tax'), cents: preview.countryCents },
+                  { label: t('ticketSaleCard.internationalTaxLabel', 'International tax'), cents: preview.internationalCents },
+                  { label: t('ticketSaleCard.totalTaxLabel', 'Total tax'), cents: preview.totalTaxCents },
+                  /* Disclosed before payment, as its own line and in the
+                     buyer's favour: iHYPE is a nonprofit, takes $0, and does
+                     not absorb Stripe's cost of moving the money either.
+                     Naming Stripe is the point — this is not an iHYPE fee. */
+                  { label: t('ticketSaleCard.processingFeeLabel', 'Stripe processing, paid by the buyer'), cents: preview.processingFeeCents },
+                  { label: t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee'), cents: 0, zero: true },
+                ].map((line) => (
+                  <div key={line.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{line.label}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', fontWeight: line.zero ? 600 : 400, color: line.zero ? 'var(--accent-text)' : 'var(--ink)' }}>
+                      {formatCurrencyFromCents(line.cents)}
+                    </span>
+                  </div>
+                ))}
+                <div style={{ height: 1, background: 'var(--line-2)' }} />
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                  <span style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: '1.3125rem' }}>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{formatCurrencyFromCents(preview.totalChargeCents)}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -390,16 +425,29 @@ export function TicketSaleCard({
             ref={turnstileRef}
           />
 
-          <div className="cta-row">
-            <button className="button" disabled={pending || awaitingTurnstile} type="submit">
+          <div className="cta-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+            {/* The reference's CTA carries the amount ("Pay $18.82"): the
+                number on the button is the number Stripe will charge, so a
+                buyer never approves a figure they have not seen. Reserve mode
+                keeps its own verb — a reservation charges later, and "Pay"
+                on it would claim something that is not yet true. */}
+            <button
+              className="button"
+              disabled={pending || awaitingTurnstile}
+              style={{ minHeight: 50, borderRadius: 'var(--radius-pill)', fontSize: '1rem', fontWeight: 600 }}
+              type="submit"
+            >
               {pending
                 ? ticketingOpen
                   ? t('ticketSaleCard.chargingButton', 'Charging...')
                   : t('ticketSaleCard.reservingButton', 'Reserving...')
                 : ticketingOpen
-                  ? t('ticketSaleCard.continueToStripeButton', 'Continue to Stripe')
+                  ? `${t('ticketSaleCard.payButton', 'Pay')} ${formatCurrencyFromCents(preview.totalChargeCents)}`
                   : t('ticketSaleCard.continueToStripeButton', 'Continue to Stripe')}
             </button>
+            <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
+              {t('ticketSaleCard.stripeCaption', 'Stripe · split frozen at publish')}
+            </div>
             {message ? (
               <span className="meta">
                 {message}
