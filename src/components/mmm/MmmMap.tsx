@@ -184,7 +184,7 @@ export function MmmMap({
       /* The chart's scale bar ("1 mi"), from map.html's HUD. A ScaleControl
          rather than a drawing because it must re-derive with the zoom — a
          static "1 MI" rule is wrong at every zoom but one. */
-      map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
+      map.addControl(new maplibre.ScaleControl({ maxWidth: 56, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
       map.on('load', () => { setReady(true); bump(); });

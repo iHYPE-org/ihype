@@ -412,6 +412,18 @@ export function MmmDock({
     springs.current.dial = { raf: requestAnimationFrame(tick) };
   }, [cancelSpring, setDialPos, springVal]);
 
+  /* A step tap, a wheel notch or an arrow key TURNS the wheel to the next
+     detent on the same spring the finger's release uses — never a teleport.
+     The teleport looked like no animation at all (owner, 2026-08-24: "Thumb
+     wheel doesn't have any animation"), and the reason is geometric: the tick
+     card's rotation is modulo one detent, so integer-to-integer is 0° to 0°,
+     and the resting label swaps text in place. Only the frames BETWEEN detents
+     move anything; the spring is what produces them. */
+  const tuneTo = useCallback((target: number) => {
+    cancelSpring('dial');
+    springVal('dial', pos.current, target, 0, (x, done) => setDialPos(x, !done), 120, 11);
+  }, [cancelSpring, setDialPos, springVal]);
+
   /* ── the stick ───────────────────────────────────────────────────────── */
   const paintStick = useCallback(() => {
     const { x, y } = tilt.current;
@@ -711,14 +723,14 @@ export function MmmDock({
             if (Math.abs(dv) > 1.6) coastDial(dv);
             else springVal('dial', pos.current, Math.round(pos.current), dv, (x, done) => setDialPos(x, !done), 120, 11);
           }}
-          onWheel={(event) => setDialPos(Math.round(pos.current) + (event.deltaY > 0 || event.deltaX > 0 ? 1 : -1), false)}
+          onWheel={(event) => tuneTo(Math.round(pos.current) + (event.deltaY > 0 || event.deltaX > 0 ? 1 : -1))}
           /* One stop in the tab order and the arrows tune it — the DIAL takes
              focus, not its tabs (roving focus across a drum whose faces swap
              text under the reader announces nonsense). Same contract as the
              vendored dial, asserted by e2e. */
           onKeyDown={(event) => {
-            if (event.key === 'ArrowRight') { event.preventDefault(); setDialPos(Math.round(pos.current) + 1, false); }
-            if (event.key === 'ArrowLeft') { event.preventDefault(); setDialPos(Math.round(pos.current) - 1, false); }
+            if (event.key === 'ArrowRight') { event.preventDefault(); tuneTo(Math.round(pos.current) + 1); }
+            if (event.key === 'ArrowLeft') { event.preventDefault(); tuneTo(Math.round(pos.current) - 1); }
           }}
           role="tablist"
           tabIndex={0}
@@ -751,7 +763,7 @@ export function MmmDock({
             aria-label="Previous station"
             className="mmm-dial-step"
             data-dir="prev"
-            onClick={(event) => { event.stopPropagation(); setDialPos(Math.round(pos.current) - 1, false); }}
+            onClick={(event) => { event.stopPropagation(); tuneTo(Math.round(pos.current) - 1); }}
             onPointerDown={(event) => event.stopPropagation()}
             tabIndex={-1}
             type="button"
@@ -762,7 +774,7 @@ export function MmmDock({
             aria-label="Next station"
             className="mmm-dial-step"
             data-dir="next"
-            onClick={(event) => { event.stopPropagation(); setDialPos(Math.round(pos.current) + 1, false); }}
+            onClick={(event) => { event.stopPropagation(); tuneTo(Math.round(pos.current) + 1); }}
             onPointerDown={(event) => event.stopPropagation()}
             tabIndex={-1}
             type="button"
