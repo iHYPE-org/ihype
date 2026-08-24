@@ -245,6 +245,16 @@ async function runShard(tests, index) {
         // variable name is used instead of the documented CLOUDFLARE_ prefix.
         WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: DB_URL,
         CI: 'true',
+        /* `wrangler dev` has died mid-suite twice with "V8 fatal error;
+           Ineffective mark-compacts near heap limit; JavaScript heap out of
+           memory" — once at a measured 1393 MB (the note at the top of
+           e2e/mmm-shell.spec.ts) and again on PR #747, where the crash took
+           every test after it down with ECONNREFUSED and read as ten
+           unrelated failures. Node's default old-space cap on the CI runner
+           sits right where a long-lived dev server serving a whole suite
+           lands. 4 GB is headroom, not a fix for a leak: if the server
+           reaches THIS, something is genuinely runaway and should fail. */
+        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
       },
     },
   );
