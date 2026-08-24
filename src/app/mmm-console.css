@@ -79,6 +79,10 @@
   transition: transform 150ms cubic-bezier(.2,.7,.3,1);
 }
 
-/* Content above the dock never hides beneath it. */
-.mmm-pane { padding-bottom: calc(var(--mmm-dock-h) + env(safe-area-inset-bottom, 0px)); }
+/* Content above the dock never hides beneath it. This reads the geometry
+   table's own --mmm-chrome-size (which already includes the safe area) rather
+   than the skin's --mmm-dock-h: this file loads after mmm.css, so its 93px
+   was silently overriding the pane's correct clearance — 12px of every pane
+   slid under the 105px bar the moment the plate's padding became real height. */
+.mmm-pane { padding-bottom: calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px); }
 /* Pre-auth routes render no dock: layout gates on session, not CSS. */

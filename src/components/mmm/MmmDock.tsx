@@ -708,7 +708,16 @@ export function MmmDock({
             else springVal('dial', pos.current, Math.round(pos.current), dv, (x, done) => setDialPos(x, !done), 120, 11);
           }}
           onWheel={(event) => setDialPos(Math.round(pos.current) + (event.deltaY > 0 || event.deltaX > 0 ? 1 : -1), false)}
+          /* One stop in the tab order and the arrows tune it — the DIAL takes
+             focus, not its tabs (roving focus across a drum whose faces swap
+             text under the reader announces nonsense). Same contract as the
+             vendored dial, asserted by e2e. */
+          onKeyDown={(event) => {
+            if (event.key === 'ArrowRight') { event.preventDefault(); setDialPos(Math.round(pos.current) + 1, false); }
+            if (event.key === 'ArrowLeft') { event.preventDefault(); setDialPos(Math.round(pos.current) - 1, false); }
+          }}
           role="tablist"
+          tabIndex={0}
         >
           <div aria-hidden="true" className="mmm-dial-backlight" ref={backlightRef} />
           <div aria-hidden="true" className="mmm-dial-spill" ref={spillRef} />
@@ -719,12 +728,9 @@ export function MmmDock({
             <button
               aria-selected="true"
               className="mmm-dial-station"
-              onKeyDown={(event) => {
-                if (event.key === 'ArrowRight') { event.preventDefault(); setDialPos(Math.round(pos.current) + 1, false); }
-                if (event.key === 'ArrowLeft') { event.preventDefault(); setDialPos(Math.round(pos.current) - 1, false); }
-              }}
               ref={stationRef}
               role="tab"
+              tabIndex={-1}
               type="button"
             />
             <div aria-hidden="true" className="mmm-dial-station" ref={wrRef} />
