@@ -294,3 +294,37 @@ said.
   filter.
 - A page's own sections (a profile's tab set) reach the dock's dial through a
   provider, so there is genuinely one dial per screen.
+
+## The 2026-08-24 hardware rebuild is authored at specimen scale (measured, not adopted)
+
+The `design/handoff-console` bundle's rebuilt RotaryNav, TunerDial and
+JoystickTransport ("real instrument hardware", "prop signature UNCHANGED")
+were vendored and measured at the dock's own 74px figure. All three fail at
+that size, each the same way — internal geometry authored against the
+specimen and never re-derived for the bar:
+
+- **TunerDial**: the label band sits at `top: 44` with `height: height - 110`
+  and rules at `top: 34`/`bottom: 46` — coherent at the 214px specimen,
+  negative at 74. Measured: the station name lays out off the glass at 768px+
+  and "Recommended" clips 45px at 393px even held down to --text-xl.
+- **RotaryNav**: the silkscreen ring renders at size × 1.51, leaving 19px of
+  margin around the face for the MAP/ME labels — which need ~26px at even the
+  11px floor, so both lower module names render as slivers under the skirt.
+  (Its prop signature also changed: activeModule/onNavigate →
+  active/onChange, with the callback now passing the module object.)
+- **JoystickTransport**: the four gate plates print OPEN/CLOSE/PREV/NEXT at
+  the type floor inside a 74px plate already carrying a 45px gate — NEXT
+  renders as "NE…W" split around the puck.
+
+The four content components (HypeButton, FullPlayer, SeedDeck, TicketQR) ARE
+adopted — their re-anchor is exactly the token fixes this file asked for
+(roleColor '#ff5029' → var(--accent), the fallback-duplicating var()s
+stripped, 999 → var(--radius-pill), sizes onto the token scale). Note for the
+next rebuild: components now pass TOKENS to their size helper
+('var(--text-lg)'), and src/components/ds/_ds-runtime.ts gained a branch that
+wraps those in a floor-preserving CSS max() — a rebuilt trio can rely on it.
+
+Fix in Claude Design by re-deriving the trio's internals from the 74px dock
+figure (every offset above as a fraction of height/size, checked at 74, not
+214) and it adopts cleanly through `npm run vendor:ds`; `measure:dock` is the
+gate that will say so.

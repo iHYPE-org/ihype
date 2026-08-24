@@ -256,6 +256,50 @@ export function MmmMap({
     return () => window.clearTimeout(timer);
   }, [active, cameraTick, load]);
 
+  // The night's route, plotted the pirate way (reference/map-treasure.html):
+  // dashed ink through the evening's shows in start-time order. Ink brown,
+  // never accent — the X's are the treasure, the line is the way. The colour
+  // is read from the ink token at runtime rather than written here, because a
+  // maplibre paint property cannot hold a var() and a hex in this file would
+  // be a raw literal on a member route. The template's Leaflet stroke is
+  // `1 9` dash at weight 2.2 with round caps — dots on a walked line — and
+  // maplibre measures dasharray in line-widths, hence the ÷2.2.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    const coordinates = layer === 'events' && events.length >= 2
+      ? [...events]
+          .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+          .map((pin) => [pin.longitude, pin.latitude] as [number, number])
+      : [];
+    const data = {
+      type: 'Feature' as const,
+      properties: {},
+      geometry: { type: 'LineString' as const, coordinates },
+    };
+    const source = map.getSource('mmm-trail');
+    if (source && 'setData' in source) {
+      (source as { setData: (d: unknown) => void }).setData(data);
+      return;
+    }
+    if (!coordinates.length) return;
+    const ink = getComputedStyle(document.documentElement).getPropertyValue('--ink-3').trim();
+    if (!ink) return;
+    map.addSource('mmm-trail', { type: 'geojson', data });
+    map.addLayer({
+      id: 'mmm-trail',
+      type: 'line',
+      source: 'mmm-trail',
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      paint: {
+        'line-color': ink,
+        'line-width': 2.2,
+        'line-opacity': 0.75,
+        'line-dasharray': [1 / 2.2, 9 / 2.2],
+      },
+    });
+  }, [events, layer, ready]);
+
   // Location. The map STARTS where the member is, at the owner's direction
   // (2026-08-22: "Remove near me (should always start where you are)").
   //
@@ -422,12 +466,33 @@ export function MmmMap({
     <div className="mmm-map-layer">
       <div className="mmm-map-canvas" ref={containerRef} />
       <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
-      {/* The compass rose, verbatim from templates/console-shell/map.html —
-          decoration (aria-hidden), unlike the scale bar beneath it. */}
-      <svg aria-hidden="true" className="mmm-map-compass" viewBox="0 0 52 52">
-        <circle cx="26" cy="28" fill="none" r="17" stroke="currentColor" strokeWidth="1" />
-        <path d="M26 9 L30 28 L26 47 L22 28 Z" fill="currentColor" />
-        <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="9" textAnchor="middle" x="26" y="7">N</text>
+      {/* The torn deckled edge (map-treasure.html's .char): an undisplaced
+          frame run through fractal-noise displacement so the paper's edge
+          tears differently on every inch and identically on every load. */}
+      <svg aria-hidden="true" height="0" style={{ position: 'absolute' }} width="0">
+        <filter height="108%" id="mmm-torn" width="108%" x="-4%" y="-4%">
+          <feTurbulence baseFrequency="0.016 0.028" numOctaves="3" result="n" seed="11" type="fractalNoise" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="16" />
+        </filter>
+      </svg>
+      <div aria-hidden="true" className="mmm-map-char">
+        <div className="mmm-map-char-desk" />
+        <div className="mmm-map-char-scorch" />
+        <div className="mmm-map-char-burn" />
+      </div>
+
+      {/* The compass rose — map-treasure.html's ornate eight-point card,
+          replacing console-shell's simpler needle. Decoration (aria-hidden),
+          unlike the scale bar beneath it. */}
+      <svg aria-hidden="true" className="mmm-map-compass" viewBox="0 0 80 80">
+        <circle cx="40" cy="42" fill="none" r="26" stroke="currentColor" strokeWidth="1" />
+        <circle cx="40" cy="42" fill="none" r="20.5" stroke="currentColor" strokeDasharray="1.6 3.2" strokeWidth="0.6" />
+        <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor" />
+        <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity="0.62" />
+        <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity="0.3" />
+        <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity="0.3" />
+        <circle cx="40" cy="42" fill="var(--bg-surface)" r="3.4" stroke="currentColor" strokeWidth="1.4" />
+        <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle" x="40" y="8.5">N</text>
       </svg>
 
       {placed.map((pin) => (
@@ -864,8 +929,17 @@ function MapPin({ onOpen, pin }: { onOpen: () => void; pin: Placed }) {
         type="button"
       >
         <span className="mmm-pin-tag">{venue.name}</span>
-        {/* U+2715, text presentation — the survey mark at the exact point. */}
-        <span aria-hidden="true" className="mmm-pin-x">✕</span>
+        {/* Two hand-cut strokes (map-treasure.html), jittered a few degrees by
+            a hash of the venue's own id — deterministic, so the same X leans
+            the same way on every load, like ink that dried once. */}
+        <span
+          aria-hidden="true"
+          className="mmm-pin-x"
+          style={{ transform: `rotate(${(([...venue.id].reduce((h, c) => h + c.charCodeAt(0), 0) * 137) % 17) - 8}deg)` }}
+        >
+          <i />
+          <i />
+        </span>
       </button>
     );
   }

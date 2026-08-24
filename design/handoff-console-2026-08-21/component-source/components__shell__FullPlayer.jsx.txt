@@ -1,9 +1,52 @@
+'use client';
+import React from 'react';
+
+/* Re-anchored to design tokens, 2026-08-22. Prop signature UNCHANGED so
+   _adherence.oxlintrc.json stays valid — this is strictly internal.
+   Kept as React.createElement for the same reason as PlayerPill and SeedDeck.
+
+   Worst file in the library on the audit: 51 violations. What changed:
+
+   BUG FIXED: the play button rendered '#fff8ef' on an --accent gradient —
+   effectively white on #ff5029, the forbidden pairing. It is the single most
+   important control on the screen. Fourth instance after MapSheet, PlayerPill
+   and SeedDeck.
+
+   BUG FIXED: the artist and album underlines used 'rgba(150,161,181,.4)' — a
+   cool grey-BLUE from the retired navy direction, sitting on warm walnut. Now
+   var(--rule-on-walnut).
+
+   Also fixed:
+   · the album plate hand-rolled the brass ring and inset shadow. It now wears
+     the design system's own .walnut-plate class from tokens/console.css, which
+     is what that class exists for — the gradient stays as the art fill.
+   · surfaces #34200f / #4a2b16 / #1a1206 / #5a3a1e / #2c1a0c → walnut tokens
+   · '#c9a54e' and '#8a6a2c' literals → var(--brass) / var(--brass-deep)
+   · ink #f6ecd9 / #d8c6a6 / #bda882 → the on-walnut set
+   · SEVEN font sizes below the floor (9.5 ×4, 10.5 ×3, 11, 11.5, 12, 12.5) →
+     var(--text-xs) for mono metadata, var(--text-base) for copy
+   · 14/15/16/24/26/96 → the token scale
+   · borderRadius 9999 → var(--radius-pill); plate 2 → var(--radius-panel)
+   · hyped label '#1c1408' and the close square's ink → var(--ink-on-accent)
+   · accent alphas → color-mix on var(--accent)
+
+   The final-value rendering (no keyframes, no timeline-dependent transitions)
+   and the in-flow close button are UNTOUCHED — both are ADHERENCE 23 fixes. */
+
 const _FP = {
-  base: '#34200f', surf: '#4a2b16', raised: '#4a2b16',
-  ink: '#f6ecd9', ink2: '#d8c6a6', ink3: '#bda882',
-  acc: '#ff5029', line: 'rgba(246,236,217,.16)', hair: 'rgba(246,236,217,.08)',
-  fd: "'Instrument Serif',serif", fb: "'Work Sans',system-ui,sans-serif",
-  fm: "'JetBrains Mono',monospace",
+  base: 'var(--walnut-2)',
+  surf: 'var(--walnut)',
+  raised: 'var(--walnut)',
+  ink: 'var(--ink-on-walnut)',
+  ink2: 'var(--ink-on-walnut-2)',
+  ink3: 'var(--ink-on-walnut-3)',
+  acc: 'var(--accent)',
+  onAcc: 'var(--ink-on-accent)',
+  line: 'var(--rule-on-walnut)',
+  hair: 'var(--rule-on-walnut-2)',
+  fd: 'var(--font-display)',
+  fb: 'var(--font-body)',
+  fm: 'var(--font-mono)',
 };
 
 /**
@@ -64,13 +107,13 @@ function bar({ value, onSeek, label, accent = true, height = 6 }) {
       if (e.key === 'ArrowLeft') onSeek(Math.max(0, value - 5));
     },
     style: {
-      flex: 1, height, borderRadius: 9999, background: 'rgba(246,236,217,.1)',
+      flex: 1, height, borderRadius: 'var(--radius-pill)', background: _FP.line,
       cursor: onSeek ? 'pointer' : 'default', overflow: 'hidden', touchAction: 'none',
     },
   }, React.createElement('div', {
     style: {
       height: '100%', width: Math.max(0, Math.min(100, value)) + '%',
-      borderRadius: 9999, background: accent ? _FP.acc : _FP.ink2,
+      borderRadius: 'var(--radius-pill)', background: accent ? _FP.acc : _FP.ink2,
     },
   }));
 }
@@ -87,82 +130,81 @@ export function FullPlayer({
   const round = (glyph, label, onClick, size, tone) => React.createElement('button', {
     type: 'button', onClick, 'aria-label': label,
     style: {
-      width: size, height: size, flex: '0 0 auto', padding: 0, borderRadius: 9999,
-      background: 'linear-gradient(180deg,#5a3a1e,#2c1a0c)',
-      border: '2px solid ' + (tone || '#8a6a2c'),
+      width: size, height: size, flex: '0 0 auto', padding: 0, borderRadius: 'var(--radius-pill)',
+      background: 'linear-gradient(180deg, var(--walnut), var(--walnut-3))',
+      border: '2px solid ' + (tone || 'var(--brass-deep)'),
       boxShadow: 'inset 0 1px 0 rgba(255,214,160,.2), inset 0 -2px 4px rgba(0,0,0,.5)',
-      color: '#f6ecd9', display: 'grid', placeItems: 'center',
-      fontSize: Math.round(size * 0.42), cursor: 'pointer',
+      color: _FP.ink, display: 'grid', placeItems: 'center',
+      fontSize: 'var(--text-lg)', cursor: 'pointer',
     },
   }, React.createElement('span', { 'aria-hidden': 'true' }, glyph));
+
+  /* Artist and release are separate destinations, so separate targets. */
+  const nameLink = (text, onClick) => React.createElement('button', {
+    type: 'button', onClick,
+    style: {
+      background: 'transparent', border: 0, padding: 0, cursor: 'pointer', font: 'inherit',
+      color: _FP.ink2, textDecoration: 'underline',
+      textDecorationColor: 'var(--rule-on-walnut)', textUnderlineOffset: 3,
+    },
+  }, text);
 
   return React.createElement('div', {
     role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Now playing',
     style: {
       position: 'fixed', inset: 0, zIndex: 900,
-      background: 'linear-gradient(180deg,#4a2b16 0%,#34200f 45%,#1a1206 100%)',
+      background: 'linear-gradient(180deg, var(--walnut) 0%, var(--walnut-2) 45%, var(--walnut-3) 100%)',
       display: 'flex', flexDirection: 'column',
       paddingTop: safeTop, paddingBottom: safeBottom,
       fontFamily: _FP.fb, color: _FP.ink, overflow: 'hidden',
     },
   },
     React.createElement('div', {
-      style: { flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '18px 20px 4px' },
+      style: { flex: 1, minHeight: 0, overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: 'var(--space-5) var(--space-5) var(--space-1)' },
     },
       React.createElement('div', {
-        style: { fontFamily: _FP.fm, fontSize: 9.5, letterSpacing: '.2em', textTransform: 'uppercase', color: _FP.ink3, textAlign: 'center' },
+        style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-widest)', textTransform: 'uppercase', color: _FP.ink3, textAlign: 'center' },
       }, playing ? 'Now playing' : 'Paused'),
 
       /* The artwork at the size the phone can actually give it. Square, capped
-         so the controls below never get pushed off a short screen. */
+         against viewport HEIGHT as well as width — at a short height the square
+         used to push the transport and the HYPE row past the bottom of a fixed,
+         non-scrolling overlay.
+
+         The brass ring and inset shadow come from .walnut-plate, the design
+         system's own class, rather than being restated here. */
       React.createElement('div', {
+        className: 'walnut-plate',
         style: {
-          /* The plate is capped against viewport HEIGHT as well as width. At a
-             short height the square used to push the transport and the HYPE row
-             past the bottom of a fixed, non-scrolling overlay — the same
-             constraint already fixed on the seed card and the inline player. */
-          width: 'min(72vw, 300px, 38vh)', aspectRatio: '1', margin: '18px auto 0',
-          borderRadius: 2, background: 'linear-gradient(160deg,#ff8a52,#c9401c 60%,#7a2412)',
-          boxShadow: '0 0 0 3px #c9a54e, inset 0 3px 10px rgba(0,0,0,.5), 0 18px 36px -12px rgba(0,0,0,.6)',
+          width: 'min(72vw, 300px, 38vh)', aspectRatio: '1', margin: 'var(--space-5) auto 0',
+          background: 'linear-gradient(160deg, #ff8a52, #c9401c 60%, #7a2412)',
           display: 'grid', placeItems: 'center',
-          fontFamily: _FP.fd, fontWeight: 400, fontSize: 96, letterSpacing: 'normal',
-          color: 'rgba(255,255,255,.85)',
+          fontFamily: _FP.fd, fontWeight: 400, fontSize: 'var(--text-3xl)', letterSpacing: 'var(--tracking-normal)',
+          color: 'var(--ink-on-media)',
         },
       }, track.initial),
 
-      React.createElement('div', { style: { textAlign: 'center', marginTop: 22 } },
+      React.createElement('div', { style: { textAlign: 'center', marginTop: 'var(--space-5)' } },
         React.createElement('div', {
-          style: { fontFamily: _FP.fd, fontWeight: 400, fontSize: 26, letterSpacing: 'normal', lineHeight: 1.15 },
+          style: { fontFamily: _FP.fd, fontWeight: 400, fontSize: 'var(--text-xl)', letterSpacing: 'var(--tracking-normal)', lineHeight: 'var(--leading-heading)' },
         }, track.title),
         React.createElement('div', {
-          style: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 7, marginTop: 7, fontSize: 14, color: _FP.ink2 },
+          style: { display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 'var(--space-1)', marginTop: 'var(--space-1)', fontSize: 'var(--text-base)', color: _FP.ink2 },
         },
-          React.createElement('button', {
-            type: 'button', onClick: () => onOpenArtist && onOpenArtist(track),
-            style: {
-              background: 'transparent', border: 0, padding: 0, cursor: 'pointer', font: 'inherit',
-              color: _FP.ink2, textDecoration: 'underline', textDecorationColor: 'rgba(150,161,181,.4)', textUnderlineOffset: 3,
-            },
-          }, track.artist),
-          track.album ? React.createElement('span', { 'aria-hidden': 'true', style: { color: _FP.ink3 } }, '·') : null,
-          track.album ? React.createElement('button', {
-            type: 'button', onClick: () => onOpenAlbum && onOpenAlbum(track),
-            style: {
-              background: 'transparent', border: 0, padding: 0, cursor: 'pointer', font: 'inherit',
-              color: _FP.ink2, textDecoration: 'underline', textDecorationColor: 'rgba(150,161,181,.4)', textUnderlineOffset: 3,
-            },
-          }, track.album) : null
+          nameLink(track.artist, () => onOpenArtist && onOpenArtist(track)),
+          track.album ? React.createElement('span', { 'aria-hidden': 'true', style: { color: _FP.ink3 } }, '\u00b7') : null,
+          track.album ? nameLink(track.album, () => onOpenAlbum && onOpenAlbum(track)) : null
         )
       ),
 
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 11, marginTop: 22 } },
-        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 10.5, color: _FP.ink3, minWidth: 34 } }, clock(progress, track.seconds)),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-5)' } },
+        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3, minWidth: 34 } }, clock(progress, track.seconds)),
         bar({ value: progress, onSeek, label: 'Seek' }),
-        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 10.5, color: _FP.ink3, minWidth: 34, textAlign: 'right' } }, clock(100, track.seconds))
+        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3, minWidth: 34, textAlign: 'right' } }, clock(100, track.seconds))
       ),
 
       React.createElement('div', {
-        style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 22, marginTop: 20 },
+        style: { display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-5)', marginTop: 'var(--space-5)' },
       },
         round('\u2039', 'Previous track', onPrev, 52),
         React.createElement('button', {
@@ -170,21 +212,24 @@ export function FullPlayer({
           'aria-label': playing ? 'Pause' : 'Play',
           style: {
             position: 'relative', width: 78, height: 78, flex: '0 0 auto', padding: 0,
-            borderRadius: 9999, background: 'radial-gradient(circle at 35% 30%,#ff8a5c,' + _FP.acc + ' 55%,#c9401c 100%)',
-            border: '2px solid #c9a54e', color: '#fff8ef',
+            borderRadius: 'var(--radius-pill)',
+            background: 'radial-gradient(circle at 35% 30%, #ff8a5c, var(--accent) 55%, #c9401c 100%)',
+            border: '2px solid var(--brass)', color: _FP.onAcc,
             display: 'grid', placeItems: 'center', cursor: 'pointer',
-            fontSize: 24, paddingLeft: playing ? 0 : 5,
-            boxShadow: '0 10px 20px -6px rgba(0,0,0,.5)',
+            fontSize: 'var(--text-lg)', paddingLeft: playing ? 0 : 5,
+            boxShadow: 'var(--shadow-play)',
           },
         },
-          ring(78, 3, progress, 'rgba(255,255,255,.9)', 'rgba(255,255,255,.22)'),
+          ring(78, 3, progress,
+            'color-mix(in oklab, var(--ink-on-accent) 90%, transparent)',
+            'color-mix(in oklab, var(--ink-on-accent) 22%, transparent)'),
           React.createElement('span', { 'aria-hidden': 'true' }, playing ? '\u275a\u275a' : '\u25b6')
         ),
         round('\u203a', 'Next track', onNext, 52)
       ),
 
       React.createElement('div', {
-        style: { display: 'flex', alignItems: 'center', gap: 12, marginTop: 22 },
+        style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-5)' },
       },
         React.createElement('button', {
           type: 'button', onClick: hypeLocked ? undefined : onToggleHype, disabled: hypeLocked,
@@ -193,61 +238,67 @@ export function FullPlayer({
             : 'Hype ' + track.artist,
           'aria-pressed': hyped,
           style: {
-            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-            height: 52, borderRadius: 9999, cursor: hypeLocked ? 'default' : 'pointer',
-            background: hypeLocked ? 'rgba(255,80,41,.08)' : (hyped ? _FP.acc : 'rgba(255,80,41,.14)'),
-            border: '1px solid ' + (hypeLocked ? 'rgba(255,80,41,.28)' : (hyped ? _FP.acc : 'rgba(255,80,41,.45)')),
-            color: hypeLocked ? 'rgba(255,80,41,.6)' : (hyped ? '#1c1408' : _FP.acc),
+            flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-2)',
+            height: 52, borderRadius: 'var(--radius-pill)', cursor: hypeLocked ? 'default' : 'pointer',
+            background: hypeLocked
+              ? 'color-mix(in oklab, var(--accent) 8%, transparent)'
+              : (hyped ? _FP.acc : 'color-mix(in oklab, var(--accent) 14%, transparent)'),
+            border: '1px solid ' + (hypeLocked
+              ? 'color-mix(in oklab, var(--accent) 28%, transparent)'
+              : (hyped ? _FP.acc : 'color-mix(in oklab, var(--accent) 45%, transparent)')),
+            color: hypeLocked ? _FP.ink3 : (hyped ? _FP.onAcc : _FP.acc),
           },
         },
           React.createElement('span', {
-            style: { fontFamily: _FP.fd, fontWeight: 400, fontSize: 16, letterSpacing: '.06em' },
+            style: { fontFamily: _FP.fd, fontWeight: 400, fontSize: 'var(--text-base)', letterSpacing: 'var(--tracking-wide)' },
           }, 'HYPE'),
           hypeLocked && hypeLabel ? React.createElement('span', {
-            style: { fontFamily: _FP.fm, fontWeight: 500, fontSize: 11.5, opacity: .85 },
+            style: { fontFamily: _FP.fm, fontWeight: 500, fontSize: 'var(--text-xs)', opacity: .85 },
           }, hypeLabel) : null
         ),
         round(faved ? '\u2665' : '\u2661', faved ? 'Remove from your library' : 'Save to your library', onToggleFav, 52, faved ? _FP.acc : undefined)
       ),
 
-      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 11, marginTop: 18 } },
-        React.createElement('span', { 'aria-hidden': 'true', style: { fontFamily: _FP.fm, fontSize: 12, color: _FP.ink3 } }, '\u266b'),
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginTop: 'var(--space-5)' } },
+        React.createElement('span', { 'aria-hidden': 'true', style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3 } }, '\u266b'),
         bar({ value: volume, onSeek: onVolume, label: 'Volume', accent: false, height: 4 }),
-        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 10.5, color: _FP.ink3, minWidth: 30, textAlign: 'right' } }, Math.round(volume) + '%')
+        React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3, minWidth: 30, textAlign: 'right' } }, Math.round(volume) + '%')
       ),
 
-      queue.length ? React.createElement('div', { style: { marginTop: 26 } },
+      queue.length ? React.createElement('div', { style: { marginTop: 'var(--space-6)' } },
         React.createElement('div', {
-          style: { fontFamily: _FP.fm, fontSize: 9.5, letterSpacing: '.18em', textTransform: 'uppercase', color: _FP.ink3, marginBottom: 8 },
+          style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', color: _FP.ink3, marginBottom: 'var(--space-2)' },
         }, 'Up next'),
         queue.map((t, i) => React.createElement('button', {
           key: 'q' + i, type: 'button', onClick: () => onPickTrack && onPickTrack(t, 'queue', i),
           style: {
-            display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '11px 0',
+            display: 'flex', width: '100%', alignItems: 'center', gap: 'var(--space-3)',
+            minHeight: 44, padding: 'var(--space-3) 0',
             background: 'transparent', border: 0, borderTop: i ? '1px solid ' + _FP.hair : 0,
             textAlign: 'left', cursor: 'pointer',
           },
         },
-          React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 11, color: _FP.ink3, width: 20, flex: '0 0 auto' } }, String(i + 1).padStart(2, '0')),
-          React.createElement('span', { style: { flex: 1, minWidth: 0, fontSize: 14, color: _FP.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t.title),
-          React.createElement('span', { style: { fontSize: 12.5, color: _FP.ink2, flex: '0 0 auto' } }, t.artist)
+          React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3, width: 20, flex: '0 0 auto' } }, String(i + 1).padStart(2, '0')),
+          React.createElement('span', { style: { flex: 1, minWidth: 0, fontSize: 'var(--text-base)', color: _FP.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t.title),
+          React.createElement('span', { style: { fontSize: 'var(--text-base)', color: _FP.ink2, flex: '0 0 auto' } }, t.artist)
         ))
       ) : null,
 
-      history.length ? React.createElement('div', { style: { marginTop: 22, borderTop: '1px solid ' + _FP.line, paddingTop: 14 } },
+      history.length ? React.createElement('div', { style: { marginTop: 'var(--space-5)', borderTop: '1px solid ' + _FP.line, paddingTop: 'var(--space-4)' } },
         React.createElement('div', {
-          style: { fontFamily: _FP.fm, fontSize: 9.5, letterSpacing: '.18em', textTransform: 'uppercase', color: _FP.ink3, marginBottom: 8 },
+          style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', color: _FP.ink3, marginBottom: 'var(--space-2)' },
         }, 'Played'),
         history.map((t, i) => React.createElement('button', {
           key: 'h' + i, type: 'button', onClick: () => onPickTrack && onPickTrack(t, 'history', i),
           style: {
-            display: 'flex', width: '100%', alignItems: 'center', gap: 12, padding: '10px 0',
+            display: 'flex', width: '100%', alignItems: 'center', gap: 'var(--space-3)',
+            minHeight: 44, padding: 'var(--space-3) 0',
             background: 'transparent', border: 0, textAlign: 'left', cursor: 'pointer', opacity: .55,
           },
         },
-          React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 11, color: _FP.ink3, width: 20, flex: '0 0 auto' } }, '\u00b7'),
-          React.createElement('span', { style: { flex: 1, minWidth: 0, fontSize: 14, color: _FP.ink2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t.title),
-          React.createElement('span', { style: { fontSize: 12.5, color: _FP.ink3, flex: '0 0 auto' } }, t.artist)
+          React.createElement('span', { style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', color: _FP.ink3, width: 20, flex: '0 0 auto' } }, '\u00b7'),
+          React.createElement('span', { style: { flex: 1, minWidth: 0, fontSize: 'var(--text-base)', color: _FP.ink2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, t.title),
+          React.createElement('span', { style: { fontSize: 'var(--text-base)', color: _FP.ink3, flex: '0 0 auto' } }, t.artist)
         ))
       ) : null,
 
@@ -259,25 +310,24 @@ export function FullPlayer({
 
        In the column's normal flow, NOT absolutely positioned over it: floating
        above a scrolling column meant whatever happened to sit in the bottom-left
-       corner at rest — the HYPE button — was painted over by it. Bottom padding
-       on the scroller cannot fix that; it lengthens the scroll without moving
-       an earlier child. Occupying real space can't be slid under. */
+       corner at rest — the HYPE button — was painted over by it. Occupying real
+       space can't be slid under. */
     React.createElement('div', {
       style: {
-        flex: 'none', display: 'flex', alignItems: 'center', gap: 13,
-        padding: '10px 20px 18px',
+        flex: 'none', display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+        padding: 'var(--space-3) var(--space-5) var(--space-5)',
       },
     },
       React.createElement('button', {
         type: 'button', onClick: onClose, 'aria-label': 'Back to iHYPE',
         style: {
           width: 62, height: 62, flex: '0 0 auto', padding: 0,
-          borderRadius: 21, background: _FP.acc, border: 0, color: '#1c1408',
+          borderRadius: 21, background: _FP.acc, border: 0, color: _FP.onAcc,
           display: 'grid', placeItems: 'center', cursor: 'pointer',
-          boxShadow: '0 8px 18px -6px rgba(0,0,0,.45)',
+          boxShadow: 'var(--shadow-trigger)',
         },
       }, React.createElement('span', {
-        style: { display: 'flex', alignItems: 'center', fontFamily: _FP.fd, fontWeight: 400, fontSize: 15, letterSpacing: '.01em', lineHeight: 1 },
+        style: { display: 'flex', alignItems: 'center', fontFamily: _FP.fd, fontWeight: 400, fontSize: 'var(--text-base)', letterSpacing: 'var(--tracking-normal)', lineHeight: 1 },
       },
         'iH',
         React.createElement('svg', {
@@ -287,7 +337,7 @@ export function FullPlayer({
         'PE'
       )),
       React.createElement('span', {
-        style: { fontFamily: _FP.fm, fontSize: 9.5, letterSpacing: '.18em', textTransform: 'uppercase', color: _FP.ink3 },
+        style: { fontFamily: _FP.fm, fontSize: 'var(--text-xs)', letterSpacing: 'var(--tracking-wider)', textTransform: 'uppercase', color: _FP.ink3 },
       }, 'Back')
     )
   );

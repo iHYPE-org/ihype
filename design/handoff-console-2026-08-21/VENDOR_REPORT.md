@@ -30,57 +30,57 @@ silent raise in this repository is a fix nobody upstream ever hears about.
 
 | Source | Line | Design system | Shipped | Floor applied |
 |---|---|---|---|---|
-| `components/shell/FullPlayer.jsx` | 113 | 9.5px | 11px | 11px |
-| `components/shell/FullPlayer.jsx` | 138 | 14px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 159 | 10.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 161 | 10.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 207 | 11.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 214 | 12px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 216 | 10.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 221 | 9.5px | 11px | 11px |
-| `components/shell/FullPlayer.jsx` | 231 | 11px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 232 | 14px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 233 | 12.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 239 | 9.5px | 11px | 11px |
-| `components/shell/FullPlayer.jsx` | 248 | 11px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 249 | 14px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 250 | 12.5px | 15px | 15px |
-| `components/shell/FullPlayer.jsx` | 290 | 9.5px | 11px | 11px |
-| `components/shell/SeedDeck.jsx` | 124 | 13.5px | 15px | 15px |
-| `components/shell/SeedDeck.jsx` | 264 | 13px | 15px | 15px |
-| `components/shell/SeedDeck.jsx` | 267 | 9.5px | 11px | 11px |
-| `components/shell/SeedDeck.jsx` | 317 | 11px | 15px | 15px |
 | `components/shell/TunerDial.jsx` | 117 | 8.5px | 15px | 15px |
 
 ## px -> rem conversions (value unchanged at 100% text size)
 
-21 inline sizes were converted. `px` cannot follow Settings ->
+41 inline sizes were converted. `px` cannot follow Settings ->
 Accessibility -> Text size, which is applied to the root font size; `rem` can.
 Sizes computed at runtime are routed through `dsFontSize`, which applies the
 same floor.
 
 | Source | Line | Design system | Shipped |
 |---|---|---|---|
-| `components/core/HypeButton.jsx` | 43 | `S.font` | `dsFontSize(S.font)` |
-| `components/core/HypeButton.jsx` | 63 | `S.font - 3` | `dsFontSize(S.font - 3)` |
-| `components/shell/FullPlayer.jsx` | 95 | `Math.round(size * 0.42)` | `dsFontSize(Math.round(size * 0.42))` |
-| `components/shell/FullPlayer.jsx` | 128 | `96px` | `6rem` |
-| `components/shell/FullPlayer.jsx` | 135 | `26px` | `1.625rem` |
-| `components/shell/FullPlayer.jsx` | 176 | `24px` | `1.5rem` |
-| `components/shell/FullPlayer.jsx` | 204 | `16px` | `1rem` |
-| `components/shell/FullPlayer.jsx` | 280 | `15px` | `0.9375rem` |
+| `components/core/HypeButton.jsx` | 81 | `S.font` | `dsFontSize(S.font)` |
+| `components/core/HypeButton.jsx` | 107 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 138 | `'var(--text-lg)'` | `dsFontSize('var(--text-lg)')` |
+| `components/shell/FullPlayer.jsx` | 166 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 182 | `'var(--text-3xl)'` | `dsFontSize('var(--text-3xl)')` |
+| `components/shell/FullPlayer.jsx` | 189 | `'var(--text-xl)'` | `dsFontSize('var(--text-xl)')` |
+| `components/shell/FullPlayer.jsx` | 192 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 201 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 203 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 219 | `'var(--text-lg)'` | `dsFontSize('var(--text-lg)')` |
+| `components/shell/FullPlayer.jsx` | 253 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 256 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 263 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 265 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 270 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 281 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 282 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 283 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 289 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 299 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/FullPlayer.jsx` | 300 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 301 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 330 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/FullPlayer.jsx` | 340 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
 | `components/shell/JoystickTransport.jsx` | 76 | `size * 0.11` | `dsFontSize(size * 0.11)` |
 | `components/shell/JoystickTransport.jsx` | 100 | `size * 0.2` | `dsFontSize(size * 0.2)` |
 | `components/shell/RotaryNav.jsx` | 118 | `Math.max(8, size * 0.115)` | `dsFontSize(Math.max(8, size * 0.115))` |
-| `components/shell/SeedDeck.jsx` | 123 | `24px` | `1.5rem` |
-| `components/shell/SeedDeck.jsx` | 182 | `11px` | `0.6875rem` |
-| `components/shell/SeedDeck.jsx` | 241 | `SLEEVE * 0.86` | `dsFontSize(SLEEVE * 0.86)` |
-| `components/shell/SeedDeck.jsx` | 257 | `27px` | `1.6875rem` |
-| `components/shell/SeedDeck.jsx` | 261 | `17px` | `1.0625rem` |
-| `components/shell/SeedDeck.jsx` | 279 | `26px` | `1.625rem` |
-| `components/shell/SeedDeck.jsx` | 314 | `22px` | `1.375rem` |
-| `components/shell/SeedDeck.jsx` | 332 | `30px` | `1.875rem` |
-| `components/shell/TicketQR.jsx` | 105 | `11px` | `0.6875rem` |
+| `components/shell/SeedDeck.jsx` | 166 | `'var(--text-lg)'` | `dsFontSize('var(--text-lg)')` |
+| `components/shell/SeedDeck.jsx` | 167 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/SeedDeck.jsx` | 213 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/SeedDeck.jsx` | 272 | `SLEEVE * 0.86` | `dsFontSize(SLEEVE * 0.86)` |
+| `components/shell/SeedDeck.jsx` | 288 | `'var(--text-xl)'` | `dsFontSize('var(--text-xl)')` |
+| `components/shell/SeedDeck.jsx` | 292 | `'var(--text-md)'` | `dsFontSize('var(--text-md)')` |
+| `components/shell/SeedDeck.jsx` | 295 | `'var(--text-base)'` | `dsFontSize('var(--text-base)')` |
+| `components/shell/SeedDeck.jsx` | 298 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/SeedDeck.jsx` | 311 | `'var(--text-xl)'` | `dsFontSize('var(--text-xl)')` |
+| `components/shell/SeedDeck.jsx` | 350 | `'var(--text-lg)'` | `dsFontSize('var(--text-lg)')` |
+| `components/shell/SeedDeck.jsx` | 353 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
+| `components/shell/SeedDeck.jsx` | 370 | `'var(--text-xl)'` | `dsFontSize('var(--text-xl)')` |
+| `components/shell/TicketQR.jsx` | 117 | `'var(--text-xs)'` | `dsFontSize('var(--text-xs)')` |
 | `components/shell/TunerDial.jsx` | 51 | `15px` | `0.9375rem` |
 
 ## Font families pointed at the app's type tokens
@@ -95,15 +95,8 @@ value-preserving where the faces are installed and correct where they are not.
 
 | Source | Literal | Token | Occurrences |
 |---|---|---|---|
-| `components/core/HypeButton.jsx` | `'JetBrains Mono', monospace` | `var(--f-m)` | 1 |
-| `components/shell/FullPlayer.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
-| `components/shell/FullPlayer.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
 | `components/shell/JoystickTransport.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
 | `components/shell/RotaryNav.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
-| `components/shell/SeedDeck.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
-| `components/shell/SeedDeck.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
-| `components/shell/TicketQR.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
-| `components/shell/TicketQR.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
 | `components/shell/TunerDial.jsx` | `'Instrument Serif',serif` | `var(--f-s)` | 1 |
 | `components/shell/TunerDial.jsx` | `'JetBrains Mono',monospace` | `var(--f-m)` | 1 |
 
@@ -139,34 +132,28 @@ a silence — this table is the record.
 
 | Source | First line | Literal | Occurrences |
 |---|---|---|---|
-| `components/core/HypeButton.jsx` | 25 | `#ff5029` | 1 |
-| `components/core/HypeButton.jsx` | 45 | `#eef1f6` | 1 |
-| `components/core/HypeButton.jsx` | 47 | `#8a6a2c` | 1 |
-| `components/core/HypeButton.jsx` | 49 | `#bda882` | 1 |
-| `components/core/HypeButton.jsx` | 49 | `#f6ecd9` | 1 |
-| `components/shell/FullPlayer.jsx` | 2 | `#34200f` | 2 |
-| `components/shell/FullPlayer.jsx` | 2 | `#4a2b16` | 3 |
-| `components/shell/FullPlayer.jsx` | 3 | `#f6ecd9` | 2 |
-| `components/shell/FullPlayer.jsx` | 3 | `#d8c6a6` | 1 |
-| `components/shell/FullPlayer.jsx` | 3 | `#bda882` | 1 |
-| `components/shell/FullPlayer.jsx` | 4 | `#ff5029` | 1 |
-| `components/shell/FullPlayer.jsx` | 4 | `rgba(246,236,217` | 3 |
-| `components/shell/FullPlayer.jsx` | 91 | `#5a3a1e` | 1 |
-| `components/shell/FullPlayer.jsx` | 91 | `#2c1a0c` | 1 |
-| `components/shell/FullPlayer.jsx` | 92 | `#8a6a2c` | 1 |
-| `components/shell/FullPlayer.jsx` | 93 | `rgba(255,214,160` | 1 |
-| `components/shell/FullPlayer.jsx` | 93 | `rgba(0,0,0` | 5 |
-| `components/shell/FullPlayer.jsx` | 103 | `#1a1206` | 1 |
-| `components/shell/FullPlayer.jsx` | 125 | `#ff8a52` | 1 |
-| `components/shell/FullPlayer.jsx` | 125 | `#c9401c` | 2 |
-| `components/shell/FullPlayer.jsx` | 125 | `#7a2412` | 1 |
-| `components/shell/FullPlayer.jsx` | 126 | `#c9a54e` | 2 |
-| `components/shell/FullPlayer.jsx` | 129 | `rgba(255,255,255` | 3 |
-| `components/shell/FullPlayer.jsx` | 144 | `rgba(150,161,181` | 2 |
-| `components/shell/FullPlayer.jsx` | 173 | `#ff8a5c` | 1 |
-| `components/shell/FullPlayer.jsx` | 174 | `#fff8ef` | 1 |
-| `components/shell/FullPlayer.jsx` | 198 | `rgba(255,80,41` | 5 |
-| `components/shell/FullPlayer.jsx` | 200 | `#1c1408` | 2 |
+| `components/core/HypeButton.jsx` | 9 | `#8a6a2c` | 1 |
+| `components/core/HypeButton.jsx` | 12 | `#ff5029` | 1 |
+| `components/shell/FullPlayer.jsx` | 10 | `#fff8ef` | 1 |
+| `components/shell/FullPlayer.jsx` | 11 | `#ff5029` | 1 |
+| `components/shell/FullPlayer.jsx` | 15 | `rgba(150,161,181` | 1 |
+| `components/shell/FullPlayer.jsx` | 23 | `#34200f` | 1 |
+| `components/shell/FullPlayer.jsx` | 23 | `#4a2b16` | 1 |
+| `components/shell/FullPlayer.jsx` | 23 | `#1a1206` | 1 |
+| `components/shell/FullPlayer.jsx` | 23 | `#5a3a1e` | 1 |
+| `components/shell/FullPlayer.jsx` | 23 | `#2c1a0c` | 1 |
+| `components/shell/FullPlayer.jsx` | 24 | `#c9a54e` | 1 |
+| `components/shell/FullPlayer.jsx` | 24 | `#8a6a2c` | 1 |
+| `components/shell/FullPlayer.jsx` | 25 | `#f6ecd9` | 1 |
+| `components/shell/FullPlayer.jsx` | 25 | `#d8c6a6` | 1 |
+| `components/shell/FullPlayer.jsx` | 25 | `#bda882` | 1 |
+| `components/shell/FullPlayer.jsx` | 30 | `#1c1408` | 1 |
+| `components/shell/FullPlayer.jsx` | 136 | `rgba(255,214,160` | 1 |
+| `components/shell/FullPlayer.jsx` | 136 | `rgba(0,0,0` | 1 |
+| `components/shell/FullPlayer.jsx` | 180 | `#ff8a52` | 1 |
+| `components/shell/FullPlayer.jsx` | 180 | `#c9401c` | 2 |
+| `components/shell/FullPlayer.jsx` | 180 | `#7a2412` | 1 |
+| `components/shell/FullPlayer.jsx` | 216 | `#ff8a5c` | 1 |
 | `components/shell/JoystickTransport.jsx` | 50 | `#7a5a22` | 1 |
 | `components/shell/JoystickTransport.jsx` | 50 | `#4a3512` | 1 |
 | `components/shell/JoystickTransport.jsx` | 51 | `rgba(0,0,0` | 2 |
@@ -187,28 +174,25 @@ a silence — this table is the record.
 | `components/shell/RotaryNav.jsx` | 105 | `rgba(255,184,74` | 1 |
 | `components/shell/RotaryNav.jsx` | 116 | `#e0c076` | 1 |
 | `components/shell/RotaryNav.jsx` | 117 | `rgba(255,248,224` | 1 |
-| `components/shell/SeedDeck.jsx` | 2 | `#34200f` | 1 |
-| `components/shell/SeedDeck.jsx` | 2 | `#4a2b16` | 1 |
-| `components/shell/SeedDeck.jsx` | 2 | `#f6ecd9` | 1 |
-| `components/shell/SeedDeck.jsx` | 2 | `#d8c6a6` | 1 |
-| `components/shell/SeedDeck.jsx` | 2 | `#bda882` | 1 |
-| `components/shell/SeedDeck.jsx` | 3 | `#ff5029` | 1 |
-| `components/shell/SeedDeck.jsx` | 3 | `rgba(246,236,217` | 2 |
-| `components/shell/SeedDeck.jsx` | 171 | `rgba(4,8,18` | 2 |
-| `components/shell/SeedDeck.jsx` | 183 | `#fff` | 1 |
-| `components/shell/SeedDeck.jsx` | 218 | `rgba(255,255,255` | 2 |
-| `components/shell/SeedDeck.jsx` | 218 | `rgba(0,0,0` | 4 |
-| `components/shell/SeedDeck.jsx` | 218 | `#140c05` | 1 |
-| `components/shell/SeedDeck.jsx` | 234 | `#c9a54e` | 1 |
-| `components/shell/SeedDeck.jsx` | 249 | `rgba(10,16,30` | 1 |
-| `components/shell/SeedDeck.jsx` | 278 | `rgba(20,12,5` | 2 |
-| `components/shell/SeedDeck.jsx` | 278 | `#8a6a2c` | 2 |
-| `components/shell/SeedDeck.jsx` | 296 | `rgba(255,80,41` | 6 |
-| `components/shell/SeedDeck.jsx` | 298 | `#1a1206` | 1 |
-| `components/shell/TicketQR.jsx` | 74 | `#1c1408` | 1 |
-| `components/shell/TicketQR.jsx` | 74 | `#f6ecd9` | 1 |
-| `components/shell/TicketQR.jsx` | 75 | `#fffbf0` | 1 |
-| `components/shell/TicketQR.jsx` | 106 | `#6b5a3e` | 1 |
+| `components/shell/SeedDeck.jsx` | 9 | `#fff` | 1 |
+| `components/shell/SeedDeck.jsx` | 13 | `rgba(10,16,30` | 1 |
+| `components/shell/SeedDeck.jsx` | 17 | `rgba(4,8,18` | 1 |
+| `components/shell/SeedDeck.jsx` | 18 | `#34200f` | 1 |
+| `components/shell/SeedDeck.jsx` | 18 | `#4a2b16` | 1 |
+| `components/shell/SeedDeck.jsx` | 18 | `#140c05` | 1 |
+| `components/shell/SeedDeck.jsx` | 19 | `#f6ecd9` | 1 |
+| `components/shell/SeedDeck.jsx` | 19 | `#d8c6a6` | 1 |
+| `components/shell/SeedDeck.jsx` | 19 | `#bda882` | 1 |
+| `components/shell/SeedDeck.jsx` | 20 | `#c9a54e` | 1 |
+| `components/shell/SeedDeck.jsx` | 20 | `#8a6a2c` | 1 |
+| `components/shell/SeedDeck.jsx` | 24 | `#1a1206` | 1 |
+| `components/shell/SeedDeck.jsx` | 249 | `rgba(255,255,255` | 2 |
+| `components/shell/SeedDeck.jsx` | 249 | `rgba(0,0,0` | 1 |
+| `components/shell/TicketQR.jsx` | 5 | `#6b5a3e` | 1 |
+| `components/shell/TicketQR.jsx` | 6 | `#f6ecd9` | 1 |
+| `components/shell/TicketQR.jsx` | 8 | `#fffbf0` | 2 |
+| `components/shell/TicketQR.jsx` | 9 | `#1c1408` | 2 |
+| `components/shell/TicketQR.jsx` | 10 | `#f0dfb8` | 1 |
 | `components/shell/TunerDial.jsx` | 51 | `rgba(92,62,20` | 2 |
 
 ## Types the handoff does not ship as source
