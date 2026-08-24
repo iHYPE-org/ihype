@@ -214,6 +214,14 @@ jobs:
         # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
+      - name: Theme contrast gate
+        # Every [data-theme] block in globals.css (plus :root and the walnut
+        # material) is re-measured: ink and the copy tokens must clear 4.5:1 on
+        # their own ground. Added with the five member-selectable themes
+        # (2026-08-24) — a theme block is exactly the place a plausible-looking
+        # value ships unmeasured, because nothing else renders it by default.
+        run: npm run audit:contrast
+
       - name: Unit tests
         run: npm test
 
