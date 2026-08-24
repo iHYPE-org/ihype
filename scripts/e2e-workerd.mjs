@@ -223,6 +223,15 @@ async function runShard(tests, index) {
     // runtime suite exercises the dependency versions in package-lock.json.
     process.execPath,
     [
+      /* The dev server's own node process is what dies when a shard's heap
+         outgrows the runner default — "V8 fatal error … JavaScript heap out
+         of memory" at 1393 MB on a CI runner (see the note at the top of
+         e2e/mmm-shell.spec.ts, and PR #747 where the crash cascaded into ten
+         ECONNREFUSED "failures"). The flag rides argv so it reaches exactly
+         this process: NODE_OPTIONS would leak into every node descendant
+         wrangler spawns, and destabilised the suite when tried. 3 GB clears
+         the measured need with room for the runner's other processes. */
+      '--max-old-space-size=3072',
       WRANGLER_CLI,
       'dev',
       '--config', TMP_CONFIG,
@@ -245,16 +254,6 @@ async function runShard(tests, index) {
         // variable name is used instead of the documented CLOUDFLARE_ prefix.
         WRANGLER_HYPERDRIVE_LOCAL_CONNECTION_STRING_HYPERDRIVE: DB_URL,
         CI: 'true',
-        /* `wrangler dev` has died mid-suite twice with "V8 fatal error;
-           Ineffective mark-compacts near heap limit; JavaScript heap out of
-           memory" — once at a measured 1393 MB (the note at the top of
-           e2e/mmm-shell.spec.ts) and again on PR #747, where the crash took
-           every test after it down with ECONNREFUSED and read as ten
-           unrelated failures. Node's default old-space cap on the CI runner
-           sits right where a long-lived dev server serving a whole suite
-           lands. 4 GB is headroom, not a fix for a leak: if the server
-           reaches THIS, something is genuinely runaway and should fail. */
-        NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --max-old-space-size=4096`.trim(),
       },
     },
   );

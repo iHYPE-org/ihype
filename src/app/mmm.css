@@ -1545,6 +1545,15 @@ html.mmm-locked .site-shell > main {
   letter-spacing: 0.14em;
   color: #33240a;
   text-shadow: 0 0.8px 0 rgba(255, 248, 224, .5);
+  /* globals.css floors every <button> to 44x44 under 768px. This one meets
+     the floor through its tap skirt (the ::after below — the design's own
+     "44px touch floor without 44px of brass"), so the box opts out: floored,
+     the visible plate grows to 44px tall, hangs over the dial's station row,
+     and its skirt swallows the station's own hit target — which is exactly
+     how PR #747's CI failed while a 2px font-metric difference let the same
+     test pass locally. measure:dock hit-tests the skirt's 44px reach. */
+  min-height: 0;
+  min-width: 0;
 }
 .mmm-dock-badge:hover { filter: brightness(1.12); }
 /* 44px touch floor without 44px of brass: an invisible tap skirt. */

@@ -100,6 +100,10 @@ await writeFile(path.join(dir, 'probe.css'), `
   --radius-panel: 3px; --z-sticky: 30;
 }
 html, body { margin: 0; height: 100%; background: var(--bg); }
+/* globals.css's phone-width button floor, restated here because the probe
+   slices only mmm.css — its absence is how a floored 44px nameplate hanging
+   over the dial passed this probe while failing the app (PR #747). */
+@media (max-width: 768px) { .button, [role=button], button { min-height: 44px; min-width: 44px; } }
 ${frame}
 ${dock}
 `);
