@@ -181,6 +181,10 @@ export function MmmMap({
           layers: [{ id: 'carto', type: 'raster', source: 'carto' }],
         },
       });
+      /* The chart's scale bar ("1 mi"), from map.html's HUD. A ScaleControl
+         rather than a drawing because it must re-derive with the zoom — a
+         static "1 MI" rule is wrong at every zoom but one. */
+      map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
       map.on('load', () => { setReady(true); bump(); });
@@ -418,6 +422,13 @@ export function MmmMap({
     <div className="mmm-map-layer">
       <div className="mmm-map-canvas" ref={containerRef} />
       <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
+      {/* The compass rose, verbatim from templates/console-shell/map.html —
+          decoration (aria-hidden), unlike the scale bar beneath it. */}
+      <svg aria-hidden="true" className="mmm-map-compass" viewBox="0 0 52 52">
+        <circle cx="26" cy="28" fill="none" r="17" stroke="currentColor" strokeWidth="1" />
+        <path d="M26 9 L30 28 L26 47 L22 28 Z" fill="currentColor" />
+        <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="9" textAnchor="middle" x="26" y="7">N</text>
+      </svg>
 
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />
@@ -852,11 +863,9 @@ function MapPin({ onOpen, pin }: { onOpen: () => void; pin: Placed }) {
         style={anchored}
         type="button"
       >
-        <span className="mmm-pin-pill">
-          <span aria-hidden="true" style={{ color: 'var(--role-venue)' }}>◆</span>
-          {venue.name}
-        </span>
-        <span aria-hidden="true" className="mmm-pin-leader" />
+        <span className="mmm-pin-tag">{venue.name}</span>
+        {/* U+2715, text presentation — the survey mark at the exact point. */}
+        <span aria-hidden="true" className="mmm-pin-x">✕</span>
       </button>
     );
   }
