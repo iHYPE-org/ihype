@@ -223,6 +223,15 @@ async function runShard(tests, index) {
     // runtime suite exercises the dependency versions in package-lock.json.
     process.execPath,
     [
+      /* The dev server's own node process is what dies when a shard's heap
+         outgrows the runner default — "V8 fatal error … JavaScript heap out
+         of memory" at 1393 MB on a CI runner (see the note at the top of
+         e2e/mmm-shell.spec.ts, and PR #747 where the crash cascaded into ten
+         ECONNREFUSED "failures"). The flag rides argv so it reaches exactly
+         this process: NODE_OPTIONS would leak into every node descendant
+         wrangler spawns, and destabilised the suite when tried. 3 GB clears
+         the measured need with room for the runner's other processes. */
+      '--max-old-space-size=3072',
       WRANGLER_CLI,
       'dev',
       '--config', TMP_CONFIG,

@@ -7,42 +7,41 @@
  * The dock is the app's whole navigation and every figure in it is load-bearing
  * on the others — the knob drives the bar's height, the bar's height is what the
  * panes clear, and the dial gets whatever is left over. `SHELL_LOCK` is blunt
- * about the consequence: change one and re-derive the rest, then MEASURE. Both
- * bugs that came out of adding the tuner to the old chrome were dependents
- * nobody re-derived, and neither was visible in the source.
+ * about the consequence: change one and re-derive the rest, then MEASURE.
  *
  * `audit:mobile` is the real instrument for rendered geometry, but it needs a
  * built app and a signed-in session — `/app/*` is behind auth, and seeding a
- * session needs a database. This needs neither: it mounts the three vendored
- * controls with the app's own token layer, the dock's own rules and the real
- * font files, sliced out of `mmm.css` and `globals.css` at run time so the
- * harness cannot drift from what ships.
+ * session needs a database. This needs neither: it mounts the REAL `MmmDock`
+ * (the hardware translated from `Console Dock.dc.html`) with the app's own
+ * token layer and the real font files, sliced out of `mmm.css` at run time so
+ * the harness cannot drift from what ships. `next/navigation` is aliased to a
+ * recording stub — the component is a client component and the router is its
+ * only Next dependency.
  *
- * What it cannot see: anything above the dock (panes, the map, the full player),
- * and any rule that only exists in the app's cascade. It is a geometry probe for
- * one bar, not a substitute for driving the app.
+ * ## What it checks, and why each one is here
  *
- * ## The four things it checks, and why each one is here
+ *   · **the bar's height equals the geometry table** — `--mmm-chrome-size` is
+ *     what every pane clears, so a bar that measures anything else means
+ *     content is sliding under the dock or floating above a gap;
+ *   · **the two knobs match at 74px** — the design: "both knobs are 74px,
+ *     matched … if one is smaller the dock looks broken";
+ *   · **the module readout fits its brass cap** — the engraved legend takes
+ *     the 11px tracked-mono floor, and "MUSIC" must fit the 48px cap;
+ *   · **the station name is not clipped from 375px up** — a destination you
+ *     cannot read is the exact failure the dial exists to fix. The drum's
+ *     neighbours slide out of the window by design (the window clips the
+ *     cylinder), so THEY may clip; the centre name may not;
+ *   · **both step affordances take their own taps** — they are the keyboard's
+ *     and Playwright's only way to turn the dial;
+ *   · **the nameplate's tap target clears 44px** — the visible badge is 17px
+ *     of brass; the floor is met by an invisible skirt, and a skirt is exactly
+ *     the kind of thing that silently stops working;
+ *   · **the needle, the pilot bead and the tick card are rendered** — the
+ *     instrument parts of the meter, each one structural DOM this harness
+ *     would otherwise not notice losing.
  *
- *   · **the two knobs match** — the handoff: "both knobs are 74px, matched …
- *     if one is smaller the dock looks broken";
- *   · **the cap readout is not cut off and stays inside its knob** — the design
- *     system draws it at 8.5px, which its own floor forbids, and at the floor
- *     "MUSIC" needed 52px in a 42px cap, which is why `mmm.css` takes it to the
- *     tracked-mono floor instead. Note what is NOT asserted: a few px of
- *     overhang past the cap circle. The cap hides no overflow, so that is a
- *     visible label sitting proud of the brass rather than a clipped one, and
- *     its exact value is a function of font rasterisation — it differs between
- *     this sandbox and a CI runner, so gating on it gates on the machine;
- *   · **both neighbour hints are on the face, at the 11px tracked-mono floor** —
- *     they were deleted once and asked for back, so their presence is a contract
- *     and their SIZE is the thing that made deleting them look necessary;
- *   · **the station name is not clipped** — a destination you cannot read is the
- *     exact failure the dial exists to fix;
- *   · **the chevrons still take their own taps** — the correction above widens
- *     the name toward them.
- *
- * Usage: `npm run measure:dock` · `--json` for the raw rows.
+ * Usage: `npm run measure:dock` · `--json` for the raw rows ·
+ * `DOCK_SHOT=/path/prefix` also writes `<prefix>-<width>.png` screenshots.
  */
 import { chromium } from '@playwright/test';
 import { build } from 'esbuild';
@@ -54,6 +53,7 @@ import path from 'node:path';
 const root = process.cwd();
 const WIDTHS = [320, 375, 393, 430, 768, 1280];
 const JSON_OUT = process.argv.includes('--json');
+const SHOT = process.env.DOCK_SHOT;
 
 /** A slice of a real stylesheet, by its own landmarks — never a copy. */
 function slice(file, from, to) {
@@ -67,66 +67,79 @@ function slice(file, from, to) {
 
 const dir = await mkdtemp(path.join(tmpdir(), 'ihype-dock-'));
 await mkdir(path.join(dir, 'fonts'), { recursive: true });
-for (const font of ['JetBrainsMono-Variable.woff2', 'InstrumentSerif-400.woff2']) {
+await mkdir(path.join(dir, 'console'), { recursive: true });
+for (const font of ['JetBrainsMono-Variable.woff2', 'BricolageGrotesque-Variable.woff2']) {
   await copyFile(path.join(root, 'src/app/fonts', font), path.join(dir, 'fonts', font));
+}
+/* The dock's photographed textures, served the same way the app serves them. */
+for (const tex of ['walnut-v3.png', 'grain.png', 'brushed.png', 'brass-turned.png']) {
+  await copyFile(path.join(root, 'public/console', tex), path.join(dir, 'console', tex));
 }
 
 /* The tokens live on `.mmm-frame`, so the harness gives its root that rule
    rather than re-declaring the geometry — a re-declared table is the thing this
-   whole file exists to catch. */
+   whole file exists to catch. The dock slice's absolute `/console/` URLs become
+   relative so `file://` can serve them. */
 const frame = slice('src/app/mmm.css', '.mmm-frame {', '/* ── Map layer').replace('.mmm-frame {', '#root {');
-const dock = slice('src/app/mmm.css', '/* ── The dock ', "/* The design system's ONE breakpoint");
-const tuner = slice('src/app/globals.css', '/* ── The tuner dial', '.tuner-step {');
+const dock = slice('src/app/mmm.css', '/* ── The dock ', "/* The design system's ONE breakpoint")
+  .replaceAll("url('/console/", "url('console/");
 
 await writeFile(path.join(dir, 'probe.css'), `
 @font-face { font-family: 'JB'; src: url('fonts/JetBrainsMono-Variable.woff2') format('woff2'); }
-@font-face { font-family: 'IS'; src: url('fonts/InstrumentSerif-400.woff2') format('woff2'); }
+@font-face { font-family: 'BG'; src: url('fonts/BricolageGrotesque-Variable.woff2') format('woff2'); }
 :root {
-  --f-m: 'JB', monospace; --f-s: 'IS', serif; --f-b: system-ui;
-  --font-mono: var(--f-m); --font-display: var(--f-b);
+  --font-mono: 'JB', monospace; --font-display: 'BG', sans-serif;
   --bg: #f0dfb8; --ink: #1c1408; --ink-1: #1c1408;
   --accent: #ff5029; --accent-rgb: 255, 80, 41;
-  --walnut: #4a2b16; --walnut-2: #34200f; --walnut-3: #1a1206;
-  --brass: #c9a54e; --brass-deep: #8a6a2c; --lamp: #ffb84a;
-  --radius-panel: 3px; --duration-slow: 420ms; --z-sticky: 30;
+  --walnut: #6e4c2b; --walnut-2: #4e3418; --walnut-3: #331f0c;
+  --brass: #c9a54e; --brass-deep: #8a6a2c; --lamp: #ff8f2d; --live: #c81f10;
+  --rule-on-walnut: rgba(246, 236, 217, .22);
+  --ease: cubic-bezier(.4, 0, .2, 1); --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
+  --duration-default: 200ms; --duration-medium: 320ms; --duration-slow: 420ms;
+  --radius-panel: 3px; --z-sticky: 30;
 }
 html, body { margin: 0; height: 100%; background: var(--bg); }
+/* globals.css's phone-width button floor, restated here because the probe
+   slices only mmm.css — its absence is how a floored 44px nameplate hanging
+   over the dial passed this probe while failing the app (PR #747). */
+@media (max-width: 768px) { .button, [role=button], button { min-height: 44px; min-width: 44px; } }
 ${frame}
 ${dock}
-${tuner}
+`);
+
+await writeFile(path.join(dir, 'router-stub.ts'), `
+export function useRouter() {
+  return {
+    push: (href: string) => { (window as unknown as { __pushes: string[] }).__pushes ??= []; (window as unknown as { __pushes: string[] }).__pushes.push(href); },
+    replace: () => {}, back: () => {}, forward: () => {}, refresh: () => {}, prefetch: () => {},
+  };
+}
+export function usePathname() { return '/app/music/recommended'; }
 `);
 
 await writeFile(path.join(dir, 'entry.tsx'), `
 import * as React from 'react';
 import { createRoot } from 'react-dom/client';
-import { RotaryNav } from '${root}/src/components/ds/RotaryNav';
-import { JoystickTransport } from '${root}/src/components/ds/JoystickTransport';
-import { TunerDial } from '${root}/src/components/ds/TunerDial';
-import { MMM_MUSIC_TABS, MMM_NAV } from '${root}/src/lib/mmm-nav';
+import { MmmDock } from '${root}/src/components/mmm/MmmDock';
 
-/* The real manifests, so the longest label this app actually ships is the one
-   being measured — "Recommended" is the whole reason the station rule exists. */
-function Dock() {
-  const [module, setModule] = React.useState('music');
-  const [station, setStation] = React.useState(
-    [...MMM_MUSIC_TABS].sort((a, b) => b.label.length - a.label.length)[0].id,
-  );
-  return (
-    <div className="mmm-dock">
-      <RotaryNav
-        activeModule={module}
-        modules={MMM_NAV.map((m) => ({ id: m.id, label: m.label }))}
-        onNavigate={(m) => setModule(m.id)}
-        size={74}
-      />
-      <div className="mmm-tuner-mount">
-        <TunerDial active={station} onChange={setStation} stations={[...MMM_MUSIC_TABS]} />
-      </div>
-      <JoystickTransport playing={false} size={74} />
-    </div>
-  );
-}
-createRoot(document.getElementById('root')!).render(<Dock />);
+/* The real component with the real manifests: pathname puts the dial on the
+   MUSIC set, parked on "Recommended" — the longest station name the app
+   ships, and the whole reason the width rules exist. */
+createRoot(document.getElementById('root')!).render(
+  <MmmDock
+    canTogglePlay={false}
+    layer={null}
+    onCollapse={() => {}}
+    onExpand={() => {}}
+    onNext={() => {}}
+    onPlayFallback={() => {}}
+    onPrev={() => {}}
+    onTogglePlay={() => {}}
+    pathname="/app/music/recommended"
+    playing={false}
+  />,
+);
 `);
 
 await writeFile(path.join(dir, 'index.html'),
@@ -137,21 +150,17 @@ await build({
   outfile: path.join(dir, 'bundle.js'),
   bundle: true,
   define: { 'process.env.NODE_ENV': '"production"' },
+  /* Something on MmmDock's import graph reads `process` beyond NODE_ENV; a
+     browser page has no such global, so give it an empty one. */
+  banner: { js: 'var process = process || { env: { NODE_ENV: "production" } };' },
+  alias: { 'next/navigation': path.join(dir, 'router-stub.ts') },
   nodePaths: [path.join(root, 'node_modules')],
   logLevel: 'error',
 });
 
 /**
- * Launch Playwright's own browser, and only fall back to a path.
- *
- * This used to pass `executablePath: '/opt/pw-browsers/chromium'` as the
- * DEFAULT, which is the pre-installed Chromium in one particular sandbox. On a
- * GitHub runner `playwright install` puts its browser under
- * `~/.cache/ms-playwright`, so the default launch is the correct one there and
- * the hardcoded path does not exist — which is exactly how this script, added to
- * CI to protect the dock, became the thing that failed CI and kept the dock from
- * shipping. Try Playwright's resolution first; fall back only if it cannot
- * resolve a browser and a known-good binary is on disk.
+ * Launch Playwright's own browser, and only fall back to a path — the
+ * hardcoded-default version of this failed CI from inside CI (see git history).
  */
 async function launch() {
   const override = process.env.CHROMIUM_PATH;
@@ -171,109 +180,97 @@ const rows = [];
 for (const width of WIDTHS) {
   const page = await browser.newPage({ viewport: { width, height: 852 } });
   await page.goto(`file://${path.join(dir, 'index.html')}`);
-  await page.waitForSelector('.mmm-dock button');
+  await page.waitForSelector('.mmm-dock .mmm-knob');
   await page.evaluate(() => document.fonts.ready);
+  /* Let the boot strike finish so the screenshot is the lit dial, not the
+     dark one, and the label spring has settled. */
+  await page.waitForTimeout(1600);
   rows.push({ width, ...await page.evaluate(() => {
     const dock = document.querySelector('.mmm-dock');
-    const kids = [...dock.children].map((child) => child.getBoundingClientRect());
-    const cap = dock.querySelector('button[aria-label^="Module:"] > span:last-child');
-    const station = dock.querySelector('[role="tab"][aria-selected="true"]');
-    const dialNode = document.querySelector('.tuner-dial');
+    const dockBox = dock.getBoundingClientRect();
+    const plate = dock.querySelector('.mmm-dock-plate');
+    const kids = [...plate.children].map((child) => child.getBoundingClientRect());
+    const knob = dock.querySelector('.mmm-knob').getBoundingClientRect();
+    const gate = dock.querySelector('.mmm-gate').getBoundingClientRect();
+    const readout = dock.querySelector('.mmm-knob-readout');
+    const dialNode = dock.querySelector('.mmm-hifi-dial');
     const dial = dialNode.getBoundingClientRect();
-    const scaleBox = dialNode.querySelector('.tuner-scale')?.getBoundingClientRect() ?? null;
+    const stationsRow = dock.querySelector('.mmm-dial-stations').getBoundingClientRect();
+    const station = dock.querySelector('.mmm-dial-station[role="tab"]');
+    const stationBox = station.getBoundingClientRect();
+    const wings = [...dock.querySelectorAll('.mmm-dial-station[aria-hidden="true"]')].map((wing) => {
+      const box = wing.getBoundingClientRect();
+      return {
+        text: wing.textContent,
+        px: parseFloat(getComputedStyle(wing).fontSize),
+        opacity: parseFloat(getComputedStyle(wing).opacity),
+        /* Some of a neighbour must be IN the window — a wing entirely outside
+           it is a hint nobody can see. Ink sliding past the window's edge is
+           the drum metaphor working, so partial is fine. */
+        inWindow: box.right > stationsRow.left && box.left < stationsRow.right,
+      };
+    });
+    const badge = dock.querySelector('.mmm-dock-badge');
+    const badgeBox = badge.getBoundingClientRect();
+    const badgeCx = badgeBox.left + badgeBox.width / 2;
+    const badgeCy = badgeBox.top + badgeBox.height / 2;
+    const hits = (x, y) => {
+      const el = document.elementFromPoint(x, y);
+      return el === badge || badge.contains(el);
+    };
     const at = (x) => {
       const el = document.elementFromPoint(x, dial.top + dial.height / 2);
-      return el?.getAttribute('aria-label') ?? el?.tagName ?? 'nothing';
+      return el?.getAttribute('aria-label') ?? el?.className ?? 'nothing';
     };
     return {
-      dockH: Math.round(dock.getBoundingClientRect().height),
+      dockH: Math.round(dockBox.height),
+      dockW: Math.round(dockBox.width),
+      centred: Math.abs((dockBox.left + dockBox.width / 2) - window.innerWidth / 2) <= 1,
       oneRow: kids.every((r) => r.top < kids[0].bottom && r.bottom > kids[0].top),
-      knobs: [Math.round(kids[0].width), Math.round(kids[kids.length - 1].width)],
-      dialW: Math.round(kids[1].width),
-      cap: cap.textContent,
-      capPx: parseFloat(getComputedStyle(cap).fontSize),
-      /* Two different questions, and the first one is the one that matters.
- 
-         CLIPPED: is any ink actually cut off? Only if something between the text
-         and the knob hides its overflow. The vendored cap sets no `overflow`, so
-         a label wider than the cap overhangs the brass circle — visible, not
-         cut. Asserting on the raw scrollWidth delta instead measured font
-         RASTERISATION: the same cap reports 1px in one sandbox and 3px on a
-         GitHub runner, so a threshold tuned on one machine fails on the other,
-         which is exactly the trap the Lighthouse budgets in this repo already
-         document. This is an absolute measure instead.
- 
-         SPILL: does the readout escape the knob it belongs to? That is the real
-         geometric limit — a legend running out over the dock is broken whether
-         or not it is clipped. */
-      capClipped: (() => {
-        let node = cap;
-        while (node && node !== dock) {
-          const { overflowX } = getComputedStyle(node);
-          if (overflowX === 'hidden' || overflowX === 'clip') {
-            return Math.max(0, Math.round(node.scrollWidth - node.clientWidth));
-          }
-          node = node.parentElement;
-        }
-        return 0;
+      knobs: [Math.round(knob.width), Math.round(gate.width)],
+      dialW: Math.round(dial.width),
+      readout: readout.textContent,
+      readoutPx: parseFloat(getComputedStyle(readout).fontSize),
+      /* The engraved legend against the brass cap circle (knob inset 13 each
+         side). Proud of the cap reads as broken hardware. Measured as the
+         TEXT's own box via a Range — the readout div spans the whole knob, so
+         its scrollWidth is the div, not the ink. */
+      readoutSpill: (() => {
+        const range = document.createRange();
+        range.selectNodeContents(readout);
+        return Math.max(0, Math.round(range.getBoundingClientRect().width - (knob.width - 26)));
       })(),
-      capSpill: Math.max(0, Math.round(cap.scrollWidth - kids[0].width)),
-      capOverhang: Math.round(cap.scrollWidth - cap.clientWidth),
       station: station.textContent,
       stationPx: parseFloat(getComputedStyle(station).fontSize),
-      stationClipped: Math.round(station.scrollWidth - station.clientWidth),
-      /* The two neighbour hints. They were deleted for a while and asked for
-         back (2026-08-22), so "are they on the face at all" is now a contract
-         worth measuring — a rule that hides them again would otherwise be a
-         silent regression, exactly as their absence was. Measured as RENDERED
-         geometry rather than as a CSS value: `display: none` anywhere in the
-         cascade, a zero-width box, or a hint pushed off the dial all read the
-         same way here, which is the point. */
-      shoulders: [...dock.querySelectorAll('[role="tab"][aria-selected="false"]')].map((hint) => {
-        const box = hint.getBoundingClientRect();
-        const dialBox = dial;
-        return {
-          text: hint.textContent,
-          px: parseFloat(getComputedStyle(hint).fontSize),
-          visible: getComputedStyle(hint).display !== 'none' && box.width > 0 && box.height > 0,
-          /* Ellipsised, i.e. showing a stub instead of a name. A hint may be
-             abbreviated where the name cannot, so this is reported and only
-             fails when there is nothing recognisable left. */
-          clipped: Math.round(hint.scrollWidth - hint.clientWidth),
-          insideDial: box.left >= dialBox.left - 1 && box.right <= dialBox.right + 1,
-          /* On the scale row, not beside the name. This is what the CSS moves
-             them to and it is the whole reason both a full-size name and two
-             readable hints fit at 393px — measured as an overlap of rendered
-             boxes, so the structural selector that does the moving cannot fail
-             quietly. A re-vendor that reorders the dial's children breaks the
-             selector, the hints spring back beside the name, and this is what
-             says so. */
-          onScale: scaleBox ? box.bottom > scaleBox.top && box.top < scaleBox.bottom : false,
-          /* Whether an `overflow: hidden` ancestor is CUTTING the hint, which is
-             the failure the structural selector exists to prevent and which
-             position alone cannot see: `getBoundingClientRect` reports where a
-             box was laid out, not what survives clipping, so a hint hidden by
-             the vendored wrapper still measures as being on the scale. Verified
-             by breaking the selector and watching this go from 0 to the full
-             height of the box. Walks to the dial, which clips on purpose. */
-          cutOff: (() => {
-            let node = hint.parentElement;
-            while (node && node !== dialNode) {
-              const { overflow, overflowY } = getComputedStyle(node);
-              if (/hidden|clip/.test(overflowY || overflow)) {
-                const clip = node.getBoundingClientRect();
-                return Math.max(0, Math.round(box.bottom - clip.bottom) + Math.max(0, Math.round(clip.top - box.top)));
-              }
-              node = node.parentElement;
-            }
-            return 0;
-          })(),
-        };
-      }),
-      chevrons: [at(dial.left + 8), at(dial.right - 8)],
+      /* The centre name against the window — the row clips, the label doesn't. */
+      stationClipped: Math.max(0, Math.round(stationBox.width - stationsRow.width)),
+      wings,
+      steps: [at(dial.left + 8), at(dial.right - 8)],
+      /* The nameplate's effective target: probe the skirt's reach. */
+      badge44: hits(badgeCx, badgeCy - 21) && hits(badgeCx, badgeCy + 21) && hits(badgeCx - 21, badgeCy) && hits(badgeCx + 21, badgeCy),
+      instrument: {
+        needle: !!dock.querySelector('.mmm-dial-needle'),
+        pilot: !!dock.querySelector('.mmm-dial-pilot'),
+        card: (() => {
+          const card = dock.querySelector('.mmm-dial-card');
+          return card ? Math.round(card.getBoundingClientRect().width) : 0;
+        })(),
+      },
       pageScrollW: document.documentElement.scrollWidth,
+      chrome: (() => {
+        /* The geometry table's own answer, resolved by the browser. */
+        const probe = document.createElement('div');
+        probe.style.height = 'var(--mmm-chrome-size)';
+        document.getElementById('root').appendChild(probe);
+        const h = Math.round(probe.getBoundingClientRect().height);
+        probe.remove();
+        return h;
+      })(),
     };
   }) });
+  if (SHOT) {
+    await page.screenshot({ path: `${SHOT}-${width}.png`, clip: { x: 0, y: 852 - 140, width, height: 140 } });
+  }
   await page.close();
 }
 await browser.close();
@@ -281,65 +278,41 @@ await browser.close();
 if (JSON_OUT) {
   console.log(JSON.stringify(rows, null, 2));
 } else {
-  console.log('\n  width  dock  knobs      dial   cap            station                    chevrons');
+  console.log('\n  width  dock  chrome  knobs   dial   readout          station                     wings');
   for (const r of rows) {
-    console.log(`  ${String(r.width).padStart(5)}  ${String(r.dockH).padStart(4)}  ${`${r.knobs[0]}/${r.knobs[1]}`.padEnd(9)}  ${String(r.dialW).padStart(4)}   `
-      + `"${r.cap}" ${r.capPx}px${r.capClipped ? ` CLIPPED ${r.capClipped}` : r.capSpill ? ` SPILLS ${r.capSpill}` : ''}`.padEnd(15)
+    console.log(`  ${String(r.width).padStart(5)}  ${String(r.dockH).padStart(4)}  ${String(r.chrome).padStart(6)}  ${`${r.knobs[0]}/${r.knobs[1]}`.padEnd(6)}  ${String(r.dialW).padStart(4)}   `
+      + `"${r.readout}" ${r.readoutPx}px${r.readoutSpill ? ` SPILLS ${r.readoutSpill}` : ''}`.padEnd(16)
       + `  "${r.station}" ${r.stationPx}px${r.stationClipped ? ` CLIPPED ${r.stationClipped}` : ''}`.padEnd(27)
-      + `  ${r.shoulders.map((h) => `${h.visible ? '' : 'HIDDEN '}${h.text}${h.clipped ? `+${h.clipped}` : ''}`).join(' | ')}`.padEnd(26)
-      + `  ${r.chevrons.join(' / ')}`);
+      + `  ${r.wings.map((wing) => `${wing.text || '·'}@${wing.px}px${wing.inWindow ? '' : ' OUT'}`).join(' | ')}`);
   }
 }
 
 const problems = [];
 for (const r of rows) {
   if (!r.oneRow) problems.push(`${r.width}px: the dock wrapped onto two rows.`);
-  if (r.knobs[0] !== r.knobs[1]) problems.push(`${r.width}px: the knobs disagree (${r.knobs.join(' vs ')}) — the handoff says matched.`);
-  if (r.capClipped) problems.push(`${r.width}px: "${r.cap}" is cut off in the knob cap by ${r.capClipped}px.`);
-  if (r.capSpill) problems.push(`${r.width}px: "${r.cap}" spills ${r.capSpill}px outside the knob.`);
-  /* The overhang past the cap circle, tolerated in PROPORTION TO THE TYPE rather
-     than as a fixed px. The defect this check exists for was "MUSIC" at the 15px
-     content floor needing 52px in a 42px cap — 10px proud of the brass, which
-     reads as broken. The noise it must not fail on is font rasterisation: the
-     same 11px cap measures 1px of overhang in one sandbox and 3px on a CI
-     runner. 0.4em separates them (4.4px at 11px, 6px at 15px) and scales with
-     whatever size the design system settles on, so this cannot be re-tuned into
-     a machine-specific threshold again. */
-  const overhangBudget = r.capPx * 0.4;
-  if (r.capOverhang > overhangBudget) {
-    problems.push(`${r.width}px: "${r.cap}" sits ${r.capOverhang}px proud of the knob cap (budget ${overhangBudget.toFixed(1)}px at ${r.capPx}px type).`);
-  }
+  /* The console matches the mobile size on every screen — 430px, the dc.html's
+     own frame width — and centres above it. */
+  if (r.dockW !== Math.min(r.width, 430)) problems.push(`${r.width}px: the bar measures ${r.dockW}px wide — it should be min(viewport, 430).`);
+  if (!r.centred) problems.push(`${r.width}px: the bar is not centred.`);
+  if (r.dockH !== r.chrome) problems.push(`${r.width}px: the bar measures ${r.dockH}px but --mmm-chrome-size says ${r.chrome}px — the panes will clear the wrong height.`);
+  if (r.knobs[0] !== 74 || r.knobs[1] !== 74) problems.push(`${r.width}px: the knobs measure ${r.knobs.join('/')} — the design says 74, matched.`);
+  if (r.readoutSpill) problems.push(`${r.width}px: "${r.readout}" spills ${r.readoutSpill}px past the brass cap.`);
+  if (r.readoutPx > 12) problems.push(`${r.width}px: the cap legend is ${r.readoutPx}px — it takes the 11px tracked-mono floor.`);
   if (r.pageScrollW > r.width) problems.push(`${r.width}px: the page scrolls sideways (${r.pageScrollW}px).`);
-  if (!r.chevrons.every((hit) => /station/i.test(hit))) problems.push(`${r.width}px: a step chevron is covered (${r.chevrons.join(', ')}).`);
-  /* 320px is below MOBILE.md's design width and ellipsises the longest of the
-     five MUSIC names. Reported, not failed — the alternative is a name at a size
-     the type floor forbids. */
+  if (!r.steps.every((hit) => /station/i.test(hit))) problems.push(`${r.width}px: a step affordance is covered (${r.steps.join(', ')}).`);
+  if (!r.badge44) problems.push(`${r.width}px: the nameplate's tap target is under 44px.`);
+  if (!r.instrument.needle || !r.instrument.pilot) problems.push(`${r.width}px: the meter lost its ${!r.instrument.needle ? 'needle' : 'pilot bead'}.`);
+  if (r.instrument.card !== 840) problems.push(`${r.width}px: the tick card measures ${r.instrument.card}px — the compass disc geometry moved.`);
+  /* 320px is below MOBILE.md's design width and clips the longest MUSIC name.
+     Reported, not failed — the alternative is a name below the type floor. */
   if (r.stationClipped && r.width >= 375) problems.push(`${r.width}px: "${r.station}" is clipped by ${r.stationClipped}px.`);
-
-  /* Both hints, on every width. There are always exactly two once more than one
-     station exists — the vendored dial renders offsets -1, 0 and +1 — so a count
-     other than two means one was hidden or never mounted. */
-  if (r.shoulders.length !== 2) {
-    problems.push(`${r.width}px: expected two neighbour hints on the dial face, measured ${r.shoulders.length}.`);
-  }
-  for (const hint of r.shoulders) {
-    if (!hint.visible) problems.push(`${r.width}px: the "${hint.text}" hint is on the dial but not rendered.`);
-    if (!hint.insideDial) problems.push(`${r.width}px: the "${hint.text}" hint sits outside the dial face.`);
-    if (hint.cutOff) {
-      problems.push(`${r.width}px: the "${hint.text}" hint is cut off by ${hint.cutOff}px — an \`overflow: hidden\` ancestor is clipping it. The structural selector in mmm.css that opens the vendored wrapper has stopped matching.`);
-    }
-    if (!hint.onScale) {
-      problems.push(`${r.width}px: the "${hint.text}" hint is not on the scale row — it has sprung back beside the station name, which is where it collides with it. Check the structural selector in mmm.css.`);
-    }
-    /* The hint takes the tracked-mono metadata floor, which is 11px, and must
-       not be raised back to the content floor by a re-vendor: at 15px the two
-       hints cost 44% of the face and the station name clips. */
-    if (hint.px > 12) {
-      problems.push(`${r.width}px: the "${hint.text}" hint is ${hint.px}px — a hint takes the 11px tracked-mono floor, not the content floor.`);
-    }
-    /* Two characters and an ellipsis is not a readout of anywhere. */
-    if (hint.clipped && hint.text.length - hint.clipped / (hint.px * 0.62) < 3) {
-      problems.push(`${r.width}px: the "${hint.text}" hint is clipped to fewer than three characters.`);
+  if (r.width >= 375) {
+    if (r.wings.length !== 2) problems.push(`${r.width}px: expected two drum neighbours, measured ${r.wings.length}.`);
+    for (const wing of r.wings) {
+      if (!wing.text) problems.push(`${r.width}px: a drum neighbour rendered empty.`);
+      if (wing.opacity <= 0.05) problems.push(`${r.width}px: the "${wing.text}" neighbour is invisible.`);
+      if (!wing.inWindow) problems.push(`${r.width}px: the "${wing.text}" neighbour sits entirely outside the window.`);
+      if (wing.px < 14.9) problems.push(`${r.width}px: the "${wing.text}" neighbour is ${wing.px}px — a resting neighbour is content and takes the 15px floor.`);
     }
   }
 }
@@ -350,4 +323,4 @@ if (problems.length) {
   process.exit(1);
 }
 const narrow = rows.find((r) => r.width === 320);
-console.log(`\n  Dock geometry holds from 375px up.${narrow?.stationClipped ? ` At 320px "${narrow.station}" ellipsises by ${narrow.stationClipped}px, which is below MOBILE.md's design width.` : ''}\n`);
+console.log(`\n  Dock geometry holds from 375px up.${narrow?.stationClipped ? ` At 320px "${narrow.station}" clips by ${narrow.stationClipped}px, which is below MOBILE.md's design width.` : ''}\n`);

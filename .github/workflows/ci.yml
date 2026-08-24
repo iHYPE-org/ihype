@@ -287,6 +287,21 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:8787
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
 
+      - name: Upload Playwright failure evidence
+        # Every e2e failure so far has printed "Error Context:
+        # test-results/…/error-context.md" into a log and then thrown the file
+        # away with the runner — two identical dial failures on PR #747 could
+        # not be diagnosed because the ARIA snapshots and traces they pointed
+        # at never left the machine. Failure-only, so a green run uploads
+        # nothing.
+        if: failure() && env.FULL_CI == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: playwright-test-results
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
       - name: Cloudflare build
         if: env.FULL_CI == 'true'
         run: npm run cf:build
