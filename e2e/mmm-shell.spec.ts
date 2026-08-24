@@ -1,5 +1,6 @@
 import { test, expect, type APIRequestContext, type BrowserContext, type Page } from '@playwright/test';
 import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
+import { MMM_MUSIC_TABS } from '../src/lib/mmm-nav';
 
 /**
  * The Music · Map · Me shell contract, as executable assertions.
@@ -231,7 +232,13 @@ test.describe('Music · Map · Me shell', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/app/music/discover');
 
-    const labels = ['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists'];
+    /* Derived from the manifest, not restated: a hardcoded list is one station
+       behind the moment MUSIC grows a tab — adding Library failed this test on
+       a wrong EXPECTATION, and the three 10s-poll retries that followed were
+       enough extra load to take the workerd server down for every test after
+       it (the ECONNREFUSED cascade). mmm-nav has no imports, so the spec can
+       read the real list directly. */
+    const labels = MMM_MUSIC_TABS.map((item) => item.label);
     const dial = page.getByRole('tablist', { name: /Sections in MUSIC/i });
     await expect(dial).toBeVisible();
 
@@ -322,6 +329,9 @@ test.describe('Music · Map · Me shell', () => {
     // the first playlist.
     '/app/music/discover', '/app/music/radio', '/app/music/charts',
     '/app/music/recommended', '/app/music/playlists',
+    // Library registers the liked tracks; an account with none falls through
+    // to the radio, which is still "the transport is never inert".
+    '/app/music/library',
   ] as const) {
     test(`the joystick starts playback on ${surface}`, async ({ page, request }) => {
       /* Asked before the page loads, and cached across the file — see

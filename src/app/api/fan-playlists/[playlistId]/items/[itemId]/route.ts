@@ -2,8 +2,14 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 
-function canUseFanPlaylists(role: string | null | undefined) {
-  return role === 'FAN' || role === 'ADMIN';
+/* Playlists are a listener act, not a role feature — the same account-wide
+   rule the likes system follows (owner, 2026-08-24: likes are "stored to
+   user's account"; the full player's add-to-playlist is offered to every
+   signed-in account, and a FAN/ADMIN gate here would make it silently 403
+   for artists and venues). Kept as a function so a future narrowing has a
+   seam to land in. */
+function canUseFanPlaylists(_role: string | null | undefined) {
+  return true;
 }
 
 export async function DELETE(

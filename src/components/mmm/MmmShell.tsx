@@ -403,6 +403,14 @@ export function MmmShell({
             way in: the joystick's ▲ opens it at EVERY width, where the phone
             was previously the only place it could be reached. */}
         <MmmFullPlayer
+          addTarget={currentTrack ? {
+            mediaId: currentTrack.id,
+            title: currentTrack.title,
+            artistName: currentTrack.artistName,
+            url: currentTrack.url,
+            artistProfileSlug: currentTrack.artistProfileSlug ?? null,
+            artworkUrl: currentTrack.artworkUrl ?? null,
+          } : null}
           canFavourite={Boolean(currentTrack)}
           canGoBack={canGoBack}
           canGoForward={canGoForward}

@@ -5,15 +5,10 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
-import { copyrightTone, resolveCopyrightState, type CopyrightState } from '@/lib/track-detail';
+import { copyrightTone, resolveCopyrightState } from '@/lib/track-detail';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
-
-const COPYRIGHT_LABEL: Record<CopyrightState, string> = {
-  flagged: 'Flagged · pending manual review',
-  'cleared-reviewed': 'Cleared · reviewed by moderator',
-  'cleared-unflagged': 'Cleared · no flags at upload',
-};
 
 function fmtDuration(secs: number | null): string | null {
   if (!secs || secs <= 0) return null;
@@ -81,18 +76,22 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       .catch(() => null),
   ]);
 
-  /* The STATE is `@/lib/track-detail`'s, shared with the public copy of this
-     page; only the copy is this file's. A track reaching either page is always
+  /* The STATE is `@/lib/track-detail`'s. A track reaching this page is always
      published — an ACTIONED report unpublishes it — which is why there are
      three states and no "removed" one.
 
-     Known gap, stated rather than hidden: these labels are hardcoded English
-     while the public page runs the same three through `getServerT()`. Sharing
-     the state is what stops the two disagreeing about whether a track is
-     flagged; translating this pane is separate work. */
+     The labels run through `getServerT()` in all 12 locales as of 2026-08-24 —
+     this used to be the recorded "hardcoded English" gap, kept open by a
+     comment that pointed at a public copy of the page which no longer exists. */
+  const t = await getServerT();
   const copyrightState = resolveCopyrightState(latestReport?.status);
+  const copyrightLabel = {
+    flagged: t('trackPage.copyright.flagged', 'Flagged · pending manual review'),
+    'cleared-reviewed': t('trackPage.copyright.clearedReviewed', 'Cleared · reviewed by moderator'),
+    'cleared-unflagged': t('trackPage.copyright.clearedUnflagged', 'Cleared · no flags at upload'),
+  } as const;
   const copyright = {
-    label: COPYRIGHT_LABEL[copyrightState],
+    label: copyrightLabel[copyrightState],
     tone: copyrightTone(copyrightState),
   };
 
@@ -148,7 +147,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       </div>
 
       <section className="mmm-profile-section">
-        <h2 className="mmm-profile-section-title">Copyright</h2>
+        <h2 className="mmm-profile-section-title">{t('trackPage.copyright.title', 'Copyright')}</h2>
         <p className="mmm-track-copyright" data-tone={copyright.tone}>{copyright.label}</p>
       </section>
     </div>

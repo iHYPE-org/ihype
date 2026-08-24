@@ -22,9 +22,9 @@ describe('MMM_NAV manifest', () => {
 
   // The app-shell redesign dropped Search and added Recommended. Asserting the
   // exact list is what stops the older five from creeping back in.
-  it('carries MUSIC’s five current items, with Recommended and no Search', () => {
+  it('carries MUSIC’s six current items, with Library and no Search', () => {
     expect(MMM_MUSIC_TABS.map((item) => item.label))
-      .toEqual(['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists']);
+      .toEqual(['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists', 'Library']);
     expect(MMM_MUSIC_TABS.map((item) => item.id)).not.toContain('search');
   });
 

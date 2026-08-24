@@ -24,10 +24,14 @@ function canUseFanPlaylists(_role: string | null | undefined) {
 
 /**
  * GET /api/fan-favorites?mediaId= → { liked } for the session user.
+ * GET /api/fan-favorites            → { favorites } — every liked track, newest first.
  *
- * The heart could never read its own stored state, so it re-offered a like
- * the account already held on every track change — "liked once, stored until
- * unliked" needs the control to light up on arrival.
+ * The single-target form is what lights a heart on arrival — the heart could
+ * never read its own stored state, so it re-offered a like the account already
+ * held on every track change. The LIST form backs the Library tab: these rows
+ * store the full playable shape (url, title, artist, artwork), and until the
+ * list was readable a liked track went into the account and never came back
+ * out anywhere.
  */
 export async function GET(request: Request) {
   const session = await auth();
@@ -35,7 +39,19 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Login required' }, { status: 401 });
   }
   const mediaId = new URL(request.url).searchParams.get('mediaId')?.trim();
-  if (!mediaId) return NextResponse.json({ error: 'mediaId required' }, { status: 400 });
+  if (!mediaId) {
+    try {
+      const favorites = await db.fanFavoriteMedia.findMany({
+        where: { userId: session.user.id },
+        orderBy: { createdAt: 'desc' },
+        select: { mediaId: true, title: true, artistName: true, url: true, artistProfileSlug: true, artworkUrl: true, createdAt: true },
+      });
+      return NextResponse.json({ favorites });
+    } catch (err) {
+      log.error('[fan-favorites]', err instanceof Error ? err : { error: String(err) });
+      return NextResponse.json({ error: 'Could not read loved media' }, { status: 500 });
+    }
+  }
   try {
     const row = await db.fanFavoriteMedia.findUnique({
       where: { userId_mediaId: { userId: session.user.id, mediaId } },

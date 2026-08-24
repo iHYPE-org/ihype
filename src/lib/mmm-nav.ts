@@ -58,6 +58,10 @@ export const MMM_NAV: readonly MmmModule[] = [
       { id: 'charts', label: 'Charts', href: `${MMM_BASE}/music/charts` },
       { id: 'recommended', label: 'Recommended', href: `${MMM_BASE}/music/recommended` },
       { id: 'playlists', label: 'Playlists', href: `${MMM_BASE}/music/playlists` },
+      /* Where the hearts land. Liked tracks, artists and venues had no surface
+         at all — a like went into the account and never came back out
+         (owner-approved batch, 2026-08-24). */
+      { id: 'library', label: 'Library', href: `${MMM_BASE}/music/library` },
     ],
   },
   // No submenu, by design — see the header note.
