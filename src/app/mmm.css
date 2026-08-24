@@ -218,14 +218,26 @@ html.mmm-locked .site-shell > main {
    clear of AA. `--accent` as a bare fill drops 2.70 -> 2.28 against land, which
    is why it stays a pin's stem and border and never its label.
 
-   Do not "restore" the light cast on the grounds that the map looks dark: it is
-   darker on purpose, because that is the only way a white tile can hold a tone. */
+   ## Lightened by owner instruction (2026-08-23), method unchanged
+
+   This block used to end "do not restore the light cast on the grounds that the
+   map looks dark". The owner then supplied a pixel reference (the light survey
+   print in `templates/console-shell/map.html`'s direction) and asked for it, so
+   the ban on the LOOK is superseded — but the mechanism above still governs,
+   and re-measuring proved it: `map.html`'s own filter applied to OUR voyager
+   tiles clips to pure white, water #fffff7 against land #ffffff, 1.00:1 — the
+   template was authored against OSM-standard tiles, which are darker. The
+   filter below is the re-derivation for voyager, darken-first as before, just
+   less: measured in Chromium on a real Casco Bay tile, water #fee3c1 against
+   land #fffed7, 1.20:1, with voyager's own linework carrying the rest of the
+   separation the dark version got from tone. Pin ink at 15.9:1 on this land is
+   clear of AA; `--accent` stays a mark and a border, never a text fill. */
 .mmm-map-canvas {
   position: absolute;
   inset: 0;
   /* Order is load-bearing. `brightness` LAST clips the highlights before the
      tone lands and gives back the white map this replaced. */
-  filter: brightness(0.72) sepia(1) saturate(1.1) contrast(1.15);
+  filter: brightness(0.8) sepia(1) saturate(0.7) contrast(1.12) hue-rotate(-6deg);
 }
 /* Paper, foxing, a RULED CHART GRID and a vignette, over the tiles but under
    the pins. On the LAYER rather than the canvas so the accent pins and the
@@ -260,13 +272,41 @@ html.mmm-locked .site-shell > main {
    chrome — it renders whenever the map does. */
 .mmm-map-attrib {
   position: absolute;
-  right: 6px;
-  bottom: 4px;
+  right: 10px;
+  top: 92px;
   z-index: 15;
   font-family: var(--font-mono);
   font-size: 0.9375rem;
   color: var(--ink-3);
   pointer-events: none;
+}
+/* The chart's ornaments, from map.html: a compass rose under the credit, and a
+   real maplibre scale bar under that — an instrument, not a decoration, so it
+   comes from ScaleControl rather than being drawn. */
+.mmm-map-compass {
+  position: absolute;
+  right: 14px;
+  top: 116px;
+  z-index: 15;
+  width: 46px;
+  height: 46px;
+  color: var(--ink-2);
+  opacity: 0.72;
+  pointer-events: none;
+}
+.mmm-map-canvas .maplibregl-ctrl-top-right { top: 168px; right: 14px; }
+.mmm-map-canvas .maplibregl-ctrl-scale {
+  background: none;
+  border: 1.5px solid var(--ink-2);
+  border-top: 0;
+  border-radius: 0;
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
 }
 
 .mmm-map-controls {
@@ -388,13 +428,41 @@ html.mmm-locked .site-shell > main {
   border-color: var(--ink-a85);
   box-shadow: 0 3px 14px rgba(var(--accent-rgb), 0.5);
 }
-.mmm-pin-venue .mmm-pin-pill { border-radius: 8px; border-color: rgba(var(--role-venue-rgb), 0.8); }
+/* A venue is a survey mark: a boxed name over a red ✕ at the exact point —
+   `templates/console-shell/map.html`'s `.pin-label` treatment (paper box, ink
+   border, mono bold, pressed offset shadow), with the mockup's ✕ where the
+   template drew a dot. ✕ is U+2715, text-presentation — never an emoji. */
+.mmm-pin-tag {
+  padding: 4px 9px;
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  border: 1.5px solid var(--ink-2);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  /* map.html says 12px; the console floor says content clears 15px, and a
+     venue's name is content. The floor wins, as it did for the dial. */
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  white-space: nowrap;
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.2);
+}
+.mmm-pin-x {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1;
+  /* --accent-text, not --accent: the bare accent measures 2.48:1 on the
+     ground, and the mockup's marks are the deeper brick red anyway. */
+  color: var(--accent-text);
+  text-shadow: 0 1px 0 rgba(var(--ink-1-rgb), 0.35);
+  margin-top: 2px;
+}
 /* Leader line. A de-collided pin gets a longer one so its true location stays
    readable — see placePins()'s `offset`. */
 .mmm-pin-leader { width: 2px; height: 7px; background: rgba(var(--accent-rgb), 0.75); }
 .mmm-pin[data-offset='true'] .mmm-pin-leader { height: 12px; }
 .mmm-pin[data-hot='true'] .mmm-pin-leader { background: var(--accent); }
-.mmm-pin-venue .mmm-pin-leader { background: rgba(var(--role-venue-rgb), 0.8); }
 
 .mmm-bubble {
   border-radius: 50%;
@@ -929,8 +997,20 @@ html.mmm-locked .site-shell > main {
    sitting on a solid pane, and needs the separation. */
 .mmm-map-search .mmm-search-field {
   padding: 8px 8px 8px 18px;
-  box-shadow: 0 14px 34px rgba(4, 8, 18, 0.5);
+  /* Parchment, not glass: the survey chart's field is a paper box with an ink
+     rule and a pressed offset shadow (map.html `.searchbar`), replacing the
+     navy blur-shadow this rule carried from the dark chart. */
+  border: 1.5px solid var(--ink-2);
+  border-radius: var(--radius-panel);
+  background: var(--bg-surface);
+  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.22);
 }
+.mmm-map-search .mmm-search-input {
+  font-family: var(--font-mono);
+  letter-spacing: 0.04em;
+}
+/* The chart sets its placeholder in tracked caps; the copy stays the layer's. */
+.mmm-map-search .mmm-search-input::placeholder { text-transform: uppercase; }
 /* A result row here is a button, not a link — selecting one flies the camera
    and opens a sheet rather than navigating. It therefore needs the type and
    alignment the anchor gets for free. */

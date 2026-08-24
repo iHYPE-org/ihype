@@ -1,0 +1,61 @@
+/* iHYPE Spacing, Radius, Shadow Tokens
+   Motion lives in tokens/motion.css and ONLY there. This file used to
+   redeclare --ease, --duration-fast/-base/-slow with values that contradicted
+   it (--duration-slow 300ms here against 480ms there). Removed 2026-08-07. */
+:root {
+  /* ── Spacing ── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Border Radius ── Console direction, 2026-08-20. A console is
+     machined: panels have a cut edge, not a moulded one — --radius-panel is
+     the token every card/row/stat now reads (was --radius-card at 18px).
+     --radius-pill is DELIBERATELY untouched: a button that reads as a key
+     still reads as a key. sm/md/lg carried forward unchanged per the
+     existing handoff note on the three scales that cannot be reconciled by
+     name against the shipped app. */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   16px;
+  --radius-2xl:  24px;
+  --radius-3xl:  32px;
+  --radius-full: 9999px;
+  --radius-panel: 3px;
+  --radius-card: var(--radius-panel); /* legacy alias — every template already reads this name */
+  --radius-pill: 9999px;
+  /* The logo trigger's squircle — 76px tile, 26px corner. */
+  --radius-trigger: 26px;
+
+  /* ── Mobile shell insets (vendored 2026-08-21 mobile pass) ──
+     Consumed by the shell, not re-derived — see MOBILE.md. */
+  --pane-pad: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(78px + 22px);
+  --chrome-l: calc(14px + env(safe-area-inset-left, 0px));
+  --chrome-r: calc(14px + env(safe-area-inset-right, 0px));
+  --player-l: calc(var(--chrome-l) + 56px + 10px);
+  @media (min-width: 620px) {
+    --pane-pad: 30px 40px 142px;
+    --chrome-l: calc(26px + env(safe-area-inset-left, 0px));
+    --chrome-r: calc(26px + env(safe-area-inset-right, 0px));
+    --player-l: calc(var(--chrome-l) + 88px + 12px);
+  }
+
+  /* ── Shadows ── Re-anchored to the cream board: shadows are near-black at
+     low opacity same as before (a shadow's own hue does not need to follow
+     the ground), but ambient shadow is now cast the way light behaves on
+     wood and paper, not glass — lower opacity, less blur radius. */
+  --shadow-card:   0 1px 2px rgba(28,20,8,.1), 0 3px 10px rgba(28,20,8,.08);
+  --shadow-raised: 0 3px 12px rgba(28,20,8,.14), 0 1px 3px rgba(28,20,8,.1);
+  --shadow-play:   0 18px 40px -18px rgba(0,0,0,.55);
+  --shadow-album:  0 20px 44px -16px rgba(0,0,0,.85);
+  --shadow-glow:   0 0 40px rgba(255,80,41,.3);
+  --shadow-trigger: 0 14px 34px rgba(255,80,41,.28);
+}

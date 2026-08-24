@@ -1,0 +1,198 @@
+/* iHYPE Color Tokens — "Console" hi-fi direction, 2026-08-20
+   Full replace of the navy "Bulletin" system. Source of truth: the two
+   reference photos (walnut/brass full player, parchment map) plus
+   uploads/ihype-hifi HANDOFF.md — reconciled with RETRO_HIFI_DIRECTION.md
+   where they agreed; DIRECTION.md's rationale used where the two diverged.
+
+   ONE ground. No [data-theme="light"] block, no switcher — the console
+   direction retired theming entirely. html.high-contrast remains a separate
+   accessibility mode, not a design theme.
+
+   THREE materials, not one palette:
+   - the board (cream) — the page ground, used by every card/row/stat
+   - walnut — the console chrome: player dock, full player, nav, map frame
+   - brass/lamp — bezels, transport keys, pilot lights, hairlines on walnut
+   Ink on a material comes from THAT material's own --ink-on-* token.
+   Never pair --ink-1/2/3 with a walnut surface — there is a lint guard for
+   this in the shipped app and the same rule applies here. */
+:root {
+  color-scheme: light;
+
+  /* ── The board ── */
+  --bg-base:    #f0dfb8;
+  --bg-surface: #e6d3a4;
+  --bg-raised:  #ddc998;
+  --bg-overlay: #d4bd8c;
+
+  /* ── Ink, on the board ── Measured against --bg-base, worst case on
+     --bg-overlay noted per HANDOFF §1/§2. */
+  --ink-1: #1c1408;
+  --ink-2: #4a3a24; /* 7.50:1 worst case */
+  --ink-3: #6b5a3e; /* 5.00:1 worst case — the floor for a WORD */
+  --ink-4: #a3906a; /* 2.65:1 — hairlines only, never text */
+  --ink-on-tint: #5a4830;
+
+  /* ── Alpha ink ── Dark ink at fixed opacities, for translucent copy and
+     fills over the cream board. */
+  --ink-a10: rgba(28,20,8,.1);
+  --ink-a20: rgba(28,20,8,.2);
+  --ink-a25: rgba(28,20,8,.25);
+  --ink-a30: rgba(28,20,8,.3);
+  --ink-a35: rgba(28,20,8,.35);
+  --ink-a40: rgba(28,20,8,.4);
+  --ink-a45: rgba(28,20,8,.45);
+  --ink-a50: rgba(28,20,8,.5);
+  --ink-a55: rgba(28,20,8,.55);
+  --ink-a60: rgba(28,20,8,.6);
+  --ink-a65: rgba(28,20,8,.65);
+  --ink-a70: rgba(28,20,8,.7);
+  --ink-a75: rgba(28,20,8,.75);
+  --ink-a80: rgba(28,20,8,.8);
+  --ink-a85: rgba(28,20,8,.85);
+  --ink-a90: rgba(28,20,8,.9);
+
+  /* ── Hairline / surface tint scale ── Dark ink at low opacity — black would
+     read muddy-grey over warm cream. */
+  --hair-20: rgba(28,20,8,.02);
+  --hair-30: rgba(28,20,8,.03);
+  --hair-40: rgba(28,20,8,.04);
+  --hair-50: rgba(28,20,8,.05);
+  --hair-70: rgba(28,20,8,.07);
+  --hair-80: rgba(28,20,8,.08);
+  --hair-100: rgba(28,20,8,.1);
+  --hair-120: rgba(28,20,8,.12);
+  --hair-150: rgba(28,20,8,.15);
+  --hair-180: rgba(28,20,8,.18);
+  --hair-200: rgba(28,20,8,.2);
+  --hair-250: rgba(28,20,8,.25);
+
+  /* ── Lines ── */
+  --line:   rgba(28,20,8,.12);
+  --line-2: rgba(28,20,8,.2);
+  --hairline: var(--ink-a10);
+
+  /* ── Accent — the pointer, the pilot lamp, the HYPE fill. Unchanged hue
+     through every direction the brand has carried. ── */
+  --accent:   #ff5029;
+  --accent-2: #ff3e9a;
+  /* The accent as COPY. #ff5029 on #f0dfb8 measures 2.48:1 and fails AA —
+     this is the trap DIRECTION.md calls out by name. Never render --accent
+     as text; use --accent-text (5.89:1 on the board). */
+  --accent-text: #923319;
+  --accent-deep: #7a2412;
+  --accent-grad:      linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), #ff3e6e);
+  /* Ink ON the accent fill. Dark ink, NOT white — white-on-accent is 3.27:1
+     and fails in every context, including the button it used to sit on. */
+  --ink-on-accent: #1c1408;
+
+  --ink-on-media: #fff;
+  --ink-on-media-rgb: 255, 255, 255; /* @kind color */
+  --scrim-rgb: 10, 6, 2; /* @kind color */
+  --scrim: rgba(10, 6, 2, .74);
+
+  /* ── Walnut — the console material. Three stops, darkest last, used for
+     the player dock, the full player, the nav and the map frame. Never pair
+     with --ink-1/2/3 — use the -on-walnut set below. ── */
+  --walnut:      #4a2b16;
+  --walnut-2:    #34200f;
+  --walnut-3:    #1a1206;
+  --walnut-rgb:  74, 43, 22; /* @kind color */
+
+  --ink-on-walnut:   #f6ecd9; /* 10.87:1 on --walnut */
+  --ink-on-walnut-2: #d8c6a6; /* 7.61:1 */
+  --ink-on-walnut-3: #bda882; /* 5.51:1 — the floor for a WORD */
+  --rule-on-walnut:   rgba(246,236,217,.16);
+  --rule-on-walnut-2: rgba(246,236,217,.08);
+
+  /* ── Brass — bezels, transport keys, step buttons, the tuner's ring. ── */
+  --brass:       #c9a54e;
+  --brass-deep:  #8a6a2c;
+  --brass-rgb:   201, 165, 78; /* @kind color */
+  --lamp:        #ffb84a; /* pilot lamps, hover/lit state */
+  --lamp-rgb:    255, 184, 74; /* @kind color */
+
+  /* ── Ash — the lighter partner wood in a two-tone walnut+ash cabinet body.
+     Pairs with --walnut on the same panel (ash the lid/end-caps, walnut the
+     face), never used alone at console scale. ── */
+  --ash:      #cbb794;
+  --ash-2:    #a68f68;
+  --ink-on-ash: #2a1f10; /* dark ink on the light wood, mirrors --map-ink */
+
+  /* ── The map — aged chart, not the walnut cabinet and not the board. ── */
+  --map-void:  #e2d1a0;
+  --map-ink:   #2a1f10;
+  --map-line:  rgba(42,31,16,.28);
+  --map-pin:   #b8291a;
+
+  /* ── Role Colors ──
+     Fan · Artist · Venue · Advertiser are the four account types. There is
+     NO DJ role (deleted 2026-08-06) and NO Promoter role — any account
+     promotes by sharing its HYPE link; --role-promoter colours the 10% pool
+     slice only. Fills stay vivid for artwork/avatars; *-text pairs are tuned
+     for the cream board, same method as --accent-text. */
+  --role-fan:        #8a4fd6;
+  --role-artist:     var(--accent);
+  --role-venue:      #0f8f80;
+  --role-promoter:   #c81866;
+  --role-advertiser: #a5760a;
+
+  --role-fan-rgb:        138, 79, 214; /* @kind color */
+  --role-venue-rgb:      15, 143, 128; /* @kind color */
+  --role-promoter-rgb:   200, 24, 102; /* @kind color */
+  --role-advertiser-rgb: 165, 118, 10; /* @kind color */
+
+  --role-artist-text:     var(--accent-text);
+  --role-venue-text:      var(--role-venue);
+  --role-promoter-text:   var(--role-promoter);
+  --role-advertiser-text: var(--role-advertiser);
+
+  /* ── Utility ── */
+  --warning: #a5760a;
+  --warn:    var(--warning); /* legacy alias */
+  --warning-text: #735000;
+  --blue:    #2259a1;
+  --live:    #b8291a;
+  --success: #0f8f80;
+  --danger:  var(--accent-text);
+
+  /* ── HYPE heat scale ── */
+  --heat-cold:  #8a7a5a;
+  --heat-warm:  var(--warning);
+  --heat-hot:   var(--accent);
+  --heat-fire:  #c81020;
+
+  /* ── Semantic aliases ── */
+  --color-success:     var(--success);
+  --color-success-bg:  rgba(var(--role-venue-rgb), .12);
+  --color-error:       #ac2424;
+  --color-error-rgb:   172, 36, 36; /* @kind color */
+  --color-error-bg:    rgba(var(--color-error-rgb), .1);
+  --color-warning:     var(--warning-text);
+  --color-warning-bg:  rgba(165,118,10, .14);
+  --color-info:        var(--blue);
+  --color-info-rgb:    34, 89, 161; /* @kind color */
+  --color-info-bg:     rgba(var(--color-info-rgb), .1);
+
+  /* ── RGB triplets for rgba() composition at arbitrary opacity ── */
+  --accent-rgb:          255, 80, 41;   /* @kind color */ /* #ff5029 */
+  --accent-2-rgb:        255, 62, 154;  /* @kind color */ /* #ff3e9a */
+  --warning-rgb:         165, 118, 10;  /* @kind color */
+  --heat-fire-rgb: 200, 16, 32; /* @kind color */
+  --heat-hot-rgb:  var(--accent-rgb); /* @kind color */
+  --heat-warm-rgb: 165, 118, 10; /* @kind color */
+  --heat-cold-rgb: 138, 122, 90; /* @kind color */
+
+  --ink-1-rgb:        28, 20, 8;   /* @kind color */
+  --surface-tint-rgb: 28, 20, 8;   /* @kind color */
+  --bg-base-rgb:      240, 223, 184; /* @kind color */
+}
+
+/* html.high-contrast is an ACCESSIBILITY MODE, not a design theme — do not
+   design for it and do not remove it. Carried forward unconverted; it keeps
+   its own black ground regardless of direction. */
+html.high-contrast {
+  --bg-base: #000; --bg-surface: #0a0a0a; --bg-raised: #141414; --bg-overlay: #1c1c1c;
+  --ink-1: #fff; --ink-2: #e6e6e6; --ink-3: #cfcfcf; --ink-4: #8a8a8a;
+  --line: rgba(255,255,255,.28); --line-2: rgba(255,255,255,.4);
+}

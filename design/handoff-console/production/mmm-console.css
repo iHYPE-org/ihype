@@ -3,6 +3,8 @@
    Only overrides + additions; mmm.css keeps owning layout. Tokens are the
    design system's cream/walnut/brass set verbatim. */
 
+*, *::before, *::after { box-sizing: border-box; }
+
 :root {
   --bg-base: #f0dfb8; --bg-surface: #f6ecd7; --bg-raised: #f6ecd7; --bg-overlay: #f6ecd7;
   --ink-1: #1c1408; --ink-2: #4a3a24; --ink-3: #6b5a3e;

@@ -28,11 +28,15 @@ specification. It overrides your judgment on anything visual.
 5. **Do not read `engineering/openapi.yaml` or `engineering/schema.sql`** —
    stale. `src/app/api/` is the API truth; `BACKEND_RECONCILED.md` has the
    HYPE contract (429 window + 409 ledger, four button states).
-6. **Dock rules:** 93px constant, safe-area pads beneath it, mounted only in
+6. **Frame rule:** the app is ONE 430px console column on every platform;
+   wider viewports center it on the walnut cabinet ground - never reflow
+   full-bleed. The dock's visual spec is reference/console-dock/ (open the
+   .dc.html in a browser); ConsoleDock.tsx is wiring scaffold, not the look.
+7. **Dock rules:** 93px constant, safe-area pads beneath it, mounted only in
    `src/app/app/layout.tsx` (pre-auth routes are dockless). `SECTIONS` in
    `ConsoleDock.tsx` mirrors `src/lib/mmm-nav.ts` — change both in one PR or
    neither.
-7. **Before opening a PR**, run the adherence check:
+8. **Before opening a PR**, run the adherence check:
    `node design/handoff-console/lint/check-adherence.mjs src/ --max=0`
    plus the repo's own `npm run audit:retro --max=0` and `npm run lint`.
    Zero new findings, or the PR says why each one is justified.
