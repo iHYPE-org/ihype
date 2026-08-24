@@ -179,6 +179,10 @@ export function MmmSettings() {
   const [savingDiscoverable, setSavingDiscoverable] = useState(false);
   const [inviteHexId, setInviteHexId] = useState<string | null>(null);
   const [inviteCopied, setInviteCopied] = useState(false);
+  const [paymentSaved, setPaymentSaved] = useState(false);
+  const [payout, setPayout] = useState<{ profileId: string; connected: boolean; started: boolean } | null>(null);
+  const [moneyBusy, setMoneyBusy] = useState<'payment' | 'payout' | null>(null);
+  const [hypeStats, setHypeStats] = useState<Record<string, number | null> | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -203,9 +207,20 @@ export function MmmSettings() {
         if (data.notificationPreference) setPrefs((p) => ({ ...p, ...data.notificationPreference }));
         if (data.creatorProfile) setDiscoverable(Boolean(data.creatorProfile.discoverable));
         if (data.inviteHexId) setInviteHexId(data.inviteHexId);
+        setPaymentSaved(Boolean(data.payment?.saved));
+        if (data.payout) setPayout(data.payout);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  }, []);
+
+  // The HYPE link's scoreboard. Nulls render as em dashes — a figure that
+  // could not be read is not 0 (the analytics rule).
+  useEffect(() => {
+    fetch('/api/me/hype-link-stats')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data) setHypeStats(data); })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -365,6 +380,46 @@ export function MmmSettings() {
     }
   }
 
+  /* Both money methods run through Stripe's hosted pages — no Stripe.js
+     anywhere in this codebase, same pattern as ticket checkout and Connect
+     onboarding. The buttons just fetch a URL and go there. */
+  async function addPaymentMethod() {
+    setMoneyBusy('payment');
+    setError(null);
+    try {
+      const res = await fetch('/api/stripe/payment-method/checkout', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ returnPath: '/app/me/settings' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.checkoutUrl) throw new Error(data.error ?? t('settingsPage.paymentMethodFailed', 'Could not open the payment form.'));
+      window.location.href = data.checkoutUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('settingsPage.paymentMethodFailed', 'Could not open the payment form.'));
+      setMoneyBusy(null);
+    }
+  }
+
+  async function connectPayouts() {
+    if (!payout) return;
+    setMoneyBusy('payout');
+    setError(null);
+    try {
+      const res = await fetch('/api/stripe/connect/onboard', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ profileId: payout.profileId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.onboardingUrl) throw new Error(data.error ?? t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
+      window.location.href = data.onboardingUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
+      setMoneyBusy(null);
+    }
+  }
+
   async function downloadExport() {
     setExporting(true);
     try {
@@ -417,40 +472,109 @@ export function MmmSettings() {
         <p style={{ color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
       ) : (
         <>
-          {/* Payout / Payment (role-aware) */}
-          <div className="settings-section">
-            <div className="settings-section-title">{isCreator ? t('settingsPage.payoutDestination', 'Payout destination') : t('settingsPage.paymentMethods', 'Payment methods')}</div>
-            <div className="settings-group">
-              {isCreator ? (
-                <>
-                  <div className="settings-row settings-payout-card">
-                    <div className="settings-payout-ic">
-                      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={roleColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+          {/* The HYPE link, first (owner, 2026-08-24: "put HYPE link at top —
+              it does a lot"). One link, four jobs: shares liked playlists,
+              shares events, invites new members past the alpha gate, and earns
+              the 10% promoter share on shows it sells. The scoreboard below is
+              /api/me/hype-link-stats — every figure a real table, an em dash
+              where one could not be read. */}
+          {inviteHexId && (
+            <div className="settings-section">
+              <div className="settings-section-title">{t('settingsPage.hypeLink', 'Your HYPE link')}</div>
+              <div className="settings-group">
+                <Row
+                  action={
+                    <button className="settings-btn settings-btn-ghost" onClick={shareInviteLink} type="button">
+                      {inviteCopied ? t('settingsPage.copied', 'Copied ✓') : t('settingsPage.share', 'Share')}
+                    </button>
+                  }
+                  detail={`ihype.org/invite/${inviteHexId}`}
+                  label={t('settingsPage.yourHypeLink', 'Share everything through it')}
+                />
+                <p className="settings-invite-note">
+                  {t('settingsPage.hypeLinkNote', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and earns you the 10% promoter share on any show it sells.')}
+                </p>
+                <div className="settings-hype-stats">
+                  {([
+                    [t('settingsPage.hypesEarned', 'HYPEs earned'), hypeStats?.hypesEarned],
+                    [t('settingsPage.hypesGiven', 'HYPEs given'), hypeStats?.hypesGiven],
+                    [t('settingsPage.ticketReferrals', 'Ticket referrals'), hypeStats?.ticketReferrals],
+                    [t('settingsPage.dollarsEarned', '$ earned'), typeof hypeStats?.dollarsEarnedCents === 'number' ? `$${(hypeStats.dollarsEarnedCents / 100).toFixed(2)}` : null],
+                    [t('settingsPage.newUsers', 'New members from your link'), hypeStats?.newUsers],
+                    [t('settingsPage.artistsHyped', 'Artists HYPEd'), hypeStats?.artistsHyped],
+                    [t('settingsPage.venuesHyped', 'Venues HYPEd'), hypeStats?.venuesHyped],
+                    [t('settingsPage.advertisersHyped', 'Advertisers HYPEd'), hypeStats?.advertisersHyped],
+                  ] as Array<[string, number | string | null | undefined]>).map(([statLabel, statValue]) => (
+                    <div className="settings-hype-stat" key={statLabel}>
+                      <div className="settings-hype-stat-value">{statValue ?? '—'}</div>
+                      <div className="settings-hype-stat-label">{statLabel}</div>
                     </div>
-                    <div style={{ flex: 1 }}>
-                      <div className="settings-row-label">{t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}</div>
-                      <div className="settings-row-detail">{t('settingsPage.payoutsLandDetail', 'Payouts land within 2 business days of a show closing')}</div>
-                      <div className="settings-split-mini">
-                        <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
-                        <span style={{ color: 'var(--ink-a65)' }}>{role === 'VENUE' ? t('settingsPage.splitArtist', '70% artist') : t('settingsPage.splitVenue', '20% venue')}</span>
-                        <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitPromoters', '10% promoters')}</span>
-                      </div>
-                    </div>
-                    <Link className="settings-btn settings-btn-ghost" href="/app/me?role=promoter">{t('settingsPage.connect', 'Connect')}</Link>
-                  </div>
-                  <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetail', 'Every payout receipt, itemized 70/20/10')} label={t('settingsPage.payoutHistory', 'Payout history')} />
-                </>
-              ) : (
-                <div className="settings-row settings-payout-card">
-                  <div className="settings-payout-ic">
-                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--role-fan)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div className="settings-row-label">{t('settingsPage.noPaymentMethod', 'No payment method on file')}</div>
-                    <div className="settings-row-detail">{t('settingsPage.paymentMethodDetail', 'Used for ticket purchases — face value + $0 fees')}</div>
-                  </div>
-                  <Link className="settings-btn settings-btn-ghost" href="/app/me?section=tickets">{t('settingsPage.add', 'Add')}</Link>
+                  ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Money methods — BOTH, for every role (owner, 2026-08-24:
+              "Settings needs payment method AND payout method"). A payment
+              method buys tickets; a payout method receives what your HYPE
+              link earns — the 10% promoter share lands on any account whose
+              link sold the ticket, so neither card is gated on role. Both run
+              through Stripe's hosted pages. */}
+          <div className="settings-section">
+            <div className="settings-section-title">{t('settingsPage.moneyMethods', 'Payment & payouts')}</div>
+            <div className="settings-group">
+              <div className="settings-row settings-payout-card">
+                <div className="settings-payout-ic">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="var(--role-fan)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="settings-row-label">
+                    {paymentSaved
+                      ? t('settingsPage.paymentMethodSaved', 'Payment method saved with Stripe')
+                      : t('settingsPage.noPaymentMethod', 'No payment method on file')}
+                  </div>
+                  <div className="settings-row-detail">{t('settingsPage.paymentMethodDetail', 'Used for ticket purchases — face value + $0 fees')}</div>
+                </div>
+                <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payment'} onClick={() => void addPaymentMethod()} type="button">
+                  {moneyBusy === 'payment' ? t('settingsPage.opening', 'Opening…') : paymentSaved ? t('settingsPage.update', 'Update') : t('settingsPage.add', 'Add')}
+                </button>
+              </div>
+
+              <div className="settings-row settings-payout-card">
+                <div className="settings-payout-ic">
+                  <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke={roleColor} strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="5" width="20" height="14" rx="2" /><line x1="2" y1="10" x2="22" y2="10" /></svg>
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div className="settings-row-label">
+                    {payout?.connected
+                      ? t('settingsPage.payoutConnected', 'Payout method connected')
+                      : t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}
+                  </div>
+                  <div className="settings-row-detail">
+                    {isCreator
+                      ? t('settingsPage.payoutsLandDetail', 'Payouts land within 2 business days of a show closing')
+                      : t('settingsPage.payoutPromoterDetail', 'Receives the 10% promoter share your HYPE link earns')}
+                  </div>
+                  <div className="settings-split-mini">
+                    {isCreator ? (
+                      <span style={{ color: roleColor }}>{role === 'VENUE' ? t('settingsPage.splitVenueYou', '20% you') : t('settingsPage.splitArtistYou', '70% you')}</span>
+                    ) : (
+                      <span style={{ color: 'var(--role-promoter)' }}>{t('settingsPage.splitPromoterYou', '10% you')}</span>
+                    )}
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitArtist', '70% artist')}</span>
+                    <span style={{ color: 'var(--ink-a65)' }}>{t('settingsPage.splitVenue', '20% venue')}</span>
+                  </div>
+                </div>
+                {payout && (
+                  <button className="settings-btn settings-btn-ghost" disabled={moneyBusy === 'payout'} onClick={() => void connectPayouts()} type="button">
+                    {moneyBusy === 'payout' ? t('settingsPage.opening', 'Opening…') : payout.connected ? t('settingsPage.manage', 'Manage') : t('settingsPage.connect', 'Connect')}
+                  </button>
+                )}
+              </div>
+
+              {isCreator && (
+                <Row action={<Link className="settings-btn settings-btn-ghost" href="/app/me/payouts?tab=history">{t('settingsPage.view', 'View')}</Link>} detail={t('settingsPage.payoutHistoryDetail', 'Every payout receipt, itemized 70/20/10')} label={t('settingsPage.payoutHistory', 'Payout history')} />
               )}
             </div>
           </div>
@@ -564,27 +688,6 @@ export function MmmSettings() {
             </div>
           </div>
 
-          {/* Invite friends */}
-          {inviteHexId && (
-            <div className="settings-section">
-              <div className="settings-section-title">{t('settingsPage.inviteFriends', 'Invite Friends')}</div>
-              <div className="settings-group">
-                <Row
-                  action={
-                    <button className="settings-btn settings-btn-ghost" onClick={shareInviteLink} type="button">
-                      {inviteCopied ? t('settingsPage.copied', 'Copied ✓') : t('settingsPage.share', 'Share')}
-                    </button>
-                  }
-                  detail={`ihype.org/invite/${inviteHexId}`}
-                  label={t('settingsPage.yourInviteLink', 'Your invite link')}
-                />
-                <p className="settings-invite-note">
-                  {t('settingsPage.inviteNote', 'Anyone who joins through your link skips the alpha invite code — no separate code needed.')}
-                </p>
-              </div>
-            </div>
-          )}
-
           {/* Danger zone */}
           <div className="settings-section">
             <div className="settings-section-title">{t('settingsPage.dangerZone', 'Danger Zone')}</div>
@@ -615,6 +718,36 @@ export function MmmSettings() {
       )}
 
       <style>{`
+        /* The HYPE link's scoreboard — eight printed figures on the paper
+           card. An em dash is "could not read", never 0 (the analytics rule).
+           Labels take the tracked-mono metadata floor; values are content. */
+        .settings-hype-stats {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+          gap: 10px;
+          padding: 12px 0 4px;
+        }
+        .settings-hype-stat {
+          border: 1px solid var(--ink-a22);
+          border-radius: var(--radius-panel);
+          background: var(--bg-surface);
+          padding: 10px 12px;
+        }
+        .settings-hype-stat-value {
+          font-family: var(--font-display);
+          font-size: 1.375rem;
+          line-height: 1.1;
+          color: var(--ink);
+        }
+        .settings-hype-stat-label {
+          margin-top: 3px;
+          font-family: var(--font-mono);
+          font-size: 0.6875rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          color: var(--ink-3);
+        }
+
         /* ── Design System 8 · templates/role-settings/ ──────────────────
            Values lifted from the template: a 640px reading column, 28px
            display heading, cards at 16px radius on the .04/.15 surface-tint

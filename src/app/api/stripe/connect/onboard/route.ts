@@ -59,9 +59,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
-  if (!['ARTIST', 'VENUE'].includes(profile.type)) {
-    return NextResponse.json({ error: 'Only artist and venue profiles can connect payouts.' }, { status: 400 });
-  }
+  /* Any owned profile may connect payouts (owner, 2026-08-24: "payout method
+     (for promotion of shows using your HYPE link)"). The 10% promoter share
+     lands on `affiliatePromoterProfileId` — a plain fan's LISTENER profile —
+     and the old ARTIST/VENUE gate meant a fan whose link sold tickets had
+     earnings with no account to pay them into. */
 
   let connectAccountId = profile.stripeConnectAccountId;
 
