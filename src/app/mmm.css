@@ -148,11 +148,15 @@ html.mmm-locked .site-shell > main {
      including its safe-area padding, which is why the panes needed no change. */
   --mmm-knob: 74px;
   --mmm-dock-pad: 8px;
+  /* The hi-fi plate the controls sit ON, recessed into the walnut (Console
+     Dock.dc.html: "the console is an object sitting in the woodwork"). Its
+     padding is real height, so it is in the chrome derivation below. */
+  --mmm-plate-pad: 6px;
   /* The brass lip is a real 3px border on the dock, so it is part of the height
-     content has to clear — not decoration sitting inside the padding. */
+     content has to clear - not decoration sitting inside the padding. */
   --mmm-dock-lip: 3px;
   --mmm-chrome-size: calc(
-    var(--mmm-knob) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
+    var(--mmm-knob) + (var(--mmm-dock-pad) + var(--mmm-plate-pad)) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
   );
   /* The pane's own horizontal padding, named because a surface inside the
      pane sometimes has to cancel it — a horizontally scrolling strip has to
@@ -1406,238 +1410,681 @@ html.mmm-locked .site-shell > main {
 }
 
 /* ── The dock ─────────────────────────────────────────────────────────────
-   The whole of the app's navigation, and the only persistent chrome.
+   The whole of the app's navigation, and the only persistent chrome — now the
+   design's own hardware, translated from
+   `design/handoff-console/reference/console-dock/Console Dock.dc.html`
+   (2026-08-24, owner: "I want the design console view. Make it work").
 
-   `design/handoff-console-2026-08-21/templates/console-shell/` draws it as a
-   real bar: full width, a 3px brass lip along the top, walnut cabinet grain
-   under it, and three controls in a flex row — RotaryNav, TunerDial,
-   JoystickTransport (see `MmmDock.tsx`). Everything that used to float over the
-   map bottom-left is retired with it: the logo trigger, the radial arc and its
-   scrim, the nav hint, the player pill, the phone mini-player and the cabinet
-   panel that sat behind them.
+   That file is the design system's production-scale build of the console: it
+   hand-draws the dock at K=74 with photographed textures, and it is what
+   superseded the specimen-scale JSX trio that `UPSTREAM_FIXES.md` records as
+   unmountable at 74px. Everything static about it lives HERE as classes at
+   k=1; only the live values (rotation, tilt, speculars, backlight strike) are
+   written inline by `MmmDock.tsx`, which is the dc.html's own split ("the dock
+   is drawn once per scale and then only its live values are written").
 
-   ## Two things this must keep doing
+   The four texture files are the design's own, served from `/console/`:
+   walnut-v3 (the cabinet — "real grain photographed, not a repeating stripe"),
+   brushed (the plate), brass-turned (the lathe path on the knob cap), grain
+   (film grain, "the single strongest anti-CG cue").
 
-   1. **Own the safe area.** `layout.tsx` sets `viewportFit: 'cover'`, which is a
-      promise to handle the insets yourself. The dock is the bottom-most element
-      in the app, so the home-indicator zone is its problem: the bottom padding
-      carries `--mmm-safe-bottom`, and `--mmm-chrome-size` includes it so the
-      panes clear the whole thing. Off-device both resolve to 0.
-   2. **Stay one row at 375px.** The knobs are fixed at 74px each and the dial
-      takes what is left — `flex: 1; min-width: 0` on the mount, which is what
-      stops the dial's own content from setting a floor and pushing a knob off
-      the edge. At 375px that leaves 195px of dial; measured at 393px the dial
-      is 213px and the longest station name ("Recommended") fits with room.
+   ## Three things this must keep doing
 
-   The dial's own paint is `.tuner-*` in globals.css, shared with the rest of the
-   app — this only places it. */
+   1. **Own the safe area.** `layout.tsx` sets `viewportFit: 'cover'`; the dock
+      is the bottom-most element, so the home-indicator zone is its problem.
+      Bottom padding carries `--mmm-safe-bottom`, and `--mmm-chrome-size`
+      includes it so the panes clear the whole bar.
+   2. **Stay one row at 375px.** Both knobs are fixed at 74px and the dial takes
+      what is left — `flex: 1; min-width: 0`, which stops the dial's content
+      from setting a floor and pushing a knob off the edge.
+   3. **Keep the geometry table honest.** The plate adds real height, so
+      `--mmm-plate-pad` is in the `--mmm-chrome-size` derivation — the bar is
+      105px + safe area now, not the old 93. Content clearance follows the
+      token, which is the rule that makes this a one-line change.
+
+   ## Two deviations from the dc.html, both floor-driven
+
+   The nameplate ("iHYPE") and nothing else: the dc.html engraves it at 9px
+   display-face with .08em tracking, which fails the type floor that governs
+   this codebase (sub-15px is legal only as tracked mono). It takes the same
+   treatment as the knob cap — 11px mono at .14em — which is the exemption's
+   own shape. And the dial gains two step affordances ("Previous station" /
+   "Next station") the dc.html does not draw: a drag-only dial is unreachable
+   by keyboard and untestable by Playwright, and the vendored dial these
+   replace had both. They are painted as engraving, not as buttons. */
 .mmm-dock {
   position: absolute;
   left: 0;
   right: 0;
   bottom: var(--mmm-dock-lift);
   z-index: 45;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: var(--mmm-dock-pad) 10px calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
+  padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
   border-top: var(--mmm-dock-lip) solid var(--brass);
-  background:
-    repeating-linear-gradient(88deg,
-      rgba(30, 14, 4, .3) 0 1px, transparent 1px 4px,
-      rgba(94, 56, 26, .22) 4px 6px, transparent 6px 13px),
-    linear-gradient(180deg, #6b4426 0%, #452711 46%, #5c3a1f 100%);
+  background-image:
+    linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54)),
+    url('/console/walnut-v3.png');
+  background-size: auto, 300px auto;
+  background-blend-mode: multiply, normal;
   background-color: var(--walnut);
-  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -6px 18px -8px rgba(0, 0, 0, .55);
+  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  /* The nameplate straddles the brass lip, so the bar must not clip. */
+  overflow: visible;
   /* The controls are the only interactive chrome; the bar itself swallows taps
-     rather than passing them to the map underneath, which is what a cabinet
-     face does. */
+     rather than passing them to the map underneath. */
   pointer-events: auto;
 }
-
-/* The dial's slot. `flex: 1; min-width: 0` is the whole rule — see the note
-   above about why `min-width` is load-bearing rather than tidy. */
-.mmm-tuner-mount {
-  flex: 1;
-  min-width: 0;
+/* Film grain over the whole cabinet, unifying every material under one
+   exposure. Above the plate (z2), below nothing interactive. */
+.mmm-dock-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  background-image: url('/console/grain.png');
+  background-size: 160px;
+  mix-blend-mode: overlay;
+  opacity: 0.09;
+}
+/* Fascia sheen: the room's light grazing walnut and brass as ONE surface.
+   Background written live by the pointer/tilt light in MmmDock. */
+.mmm-dock-barspec {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  mix-blend-mode: screen;
+  will-change: background;
+}
+/* The machined plate the three controls are seated in. */
+.mmm-dock-plate {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
-}
-
-/* The vendored dial sizes its own face and expects to fill its slot. */
-.mmm-tuner-mount .tuner-dial { width: 100%; }
-
-/* ── The VU backlight ─────────────────────────────────────────────────────
-   The dock dial is lit from behind and BELOW, like the meter window on a
-   receiver: `tokens/console.css` calls the dock "orange backlit VU" and gives
-   `.tuner-dial` a lamp gradient rising off its bottom edge plus an inset glow.
-   The shipped `.tuner-dial` in globals.css never had it — that block was
-   written for the OTHER TunerDial, the hand-authored one still used by
-   `EventsHome`/`PagesHome`, and it paints warm WHITE from the bottom
-   (`#fff3d4`) where the console paints lamp orange. Which is why the dock read
-   as flat cream glass in a brass ring: the one thing making it a lit instrument
-   was missing (reported 2026-08-22, "should be continuously flow with vu under
-   lighting").
-
-   Scoped to `.mmm-tuner-mount` on purpose. The two components share the
-   `.tuner-dial` class name and only this one sits on the walnut dock; relighting
-   the other would repaint two legacy pages that are not part of this design.
-
-   Values are the design system's own, with `--lamp`, `--accent` and `--bg`
-   standing in for its `#ffb066`, `#ff8f2d` and `--bg-base` — those are the
-   tokens this app names for the same three roles. Note what is NOT here: the
-   design system's `--lamp-rgb`, which this codebase does not define. Writing
-   `rgba(var(--lamp-rgb), .95)` would have dropped the whole declaration
-   silently, which is worse than the literal it replaced, so the first stop is
-   the flat token instead. `background-image` rather than `background`, so the
-   vendored inline `background-color: #eeddb4` still shows through where the
-   gradient is transparent. */
-.mmm-tuner-mount .tuner-dial {
+  gap: var(--mmm-dock-pad);
+  padding: var(--mmm-plate-pad);
+  border-radius: 14px;
   background-image:
-    radial-gradient(160% 180% at 50% 118%,
-      var(--lamp) 0%,
-      var(--accent) 14%,
-      #f3d9a0 40%,
-      var(--bg) 62%,
-      #e2cea0 84%,
-      #d4bd8c 100%);
-  box-shadow:
-    0 0 0 1px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    0 0 0 4px #6d5222,
-    /* The lamp behind the glass. -4px spread keeps it a band along the bottom
-       edge instead of a wash over the whole face, which would take the
-       engraved name's contrast down with it. */
-    inset 0 -9px 16px -4px rgba(var(--accent-rgb), 0.5),
-    inset 0 2px 5px rgba(92, 62, 20, 0.4),
-    inset 0 -1px 0 rgba(255, 252, 235, 0.8);
+    linear-gradient(180deg, rgba(28, 16, 4, .46), rgba(28, 16, 4, .2)),
+    url('/console/brushed.png');
+  background-size: auto, 120px;
+  background-blend-mode: normal, overlay;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), inset 0 -1px 0 rgba(255, 214, 160, .14), 0 0 0 1px var(--brass-deep);
 }
 
-/* The scale sits inside the lit band, so it glows rather than being merely
-   printed — the design system's `.tuner-scale` carries the same inner light.
-   This is what makes a continuous drag read as travel along an illuminated
-   scale: the ticks scroll THROUGH the glow instead of across dead paper. */
-.mmm-tuner-mount .tuner-scale {
-  box-shadow: inset 0 0 14px rgba(var(--accent-rgb), 0.32);
+/* ── The nameplate ── a brass maker's plate on the lip, straddling the top
+   edge of the cabinet, and the dock's HOME: wherever the subnav has taken you,
+   pressing the badge re-seats the console on MAP. */
+.mmm-dock-badge {
+  position: absolute;
+  left: 50%;
+  top: calc(-1 * (var(--mmm-dock-lip) + 9px));
+  transform: translateX(-50%);
+  z-index: 12;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  padding: 1.5px 7px;
+  border-radius: 1.5px;
+  box-sizing: border-box;
+  border: 0.8px solid rgba(61, 44, 12, .9);
+  background: linear-gradient(180deg, #f2dca4 0%, var(--brass) 30%, var(--brass-deep) 100%);
+  box-shadow: 0 1.5px 3px rgba(0, 0, 0, .45), inset 0 0.8px 0 rgba(255, 250, 232, .6);
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  color: #33240a;
+  text-shadow: 0 0.8px 0 rgba(255, 248, 224, .5);
+}
+.mmm-dock-badge:hover { filter: brightness(1.12); }
+/* 44px touch floor without 44px of brass: an invisible tap skirt. */
+.mmm-dock-badge::after {
+  content: "";
+  position: absolute;
+  inset: -14px -8px;
 }
 
-/* The needle is the brightest thing on the face, as on any real tuner. */
-.mmm-tuner-mount .tuner-needle {
-  box-shadow: 0 0 6px rgba(var(--accent-rgb), 0.9);
+/* ── The knob ── bakelite fluted skirt, lathe-turned brass cap, cream pointer.
+   MAP · MUSIC · ME. The rotation is written live; everything here is the
+   metal. */
+.mmm-knob {
+  position: relative;
+  width: var(--mmm-knob);
+  height: var(--mmm-knob);
+  flex: 0 0 auto;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  cursor: grab;
+  touch-action: none;
+  /* Bakelite. No token is black plastic — the dc.html's own deliberate
+     exception, same as TicketQR's scanner plate. */
+  background: #120c05;
+  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, .85), inset 0 0 0 1px var(--rule-on-walnut);
+}
+.mmm-knob-rotor {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  will-change: transform;
+}
+.mmm-knob-flutes {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, #0d0904 0deg 2.4deg, #3f3325 2.4deg 3.8deg, #17110a 3.8deg 6deg);
+}
+.mmm-knob-skirtlight {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 24%, rgba(255, 244, 224, .3), transparent 54%),
+    radial-gradient(circle at 50% 50%, transparent 58%, rgba(0, 0, 0, .55) 97%);
+}
+/* A thumb has rubbed the lower flank of the knurl bright over months of use.
+   The polish lives ON the metal, so it sits in the rotor and turns with it. */
+.mmm-knob-wear {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(46% 30% at 26% 76%, rgba(255, 244, 214, .11) 0%, transparent 66%);
+}
+.mmm-knob-cap {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 36% 28%, #f4e2ab 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%);
+  box-shadow: inset 0 1px 2px rgba(255, 246, 220, .6), inset 0 -2px 4px rgba(0, 0, 0, .5);
+}
+/* Turned brass is ANISOTROPIC — it reflects differently along the tool path
+   than across it; a plain radial gradient has no direction at all, which is
+   why it reads as plastic. The lathe path is the design's own photograph. */
+.mmm-knob-lathe {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background-image: url('/console/brass-turned.png');
+  background-size: 100% 100%;
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+  pointer-events: none;
+}
+/* Environment reflection: bright sky above, dark horizon, warm bounce from
+   the cabinet below. Metal looks like metal because of what it reflects. */
+.mmm-knob-env {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .4) 0%, rgba(255, 252, 240, .1) 26%, rgba(52, 30, 6, .34) 49%, rgba(58, 34, 8, .16) 56%, rgba(255, 214, 150, .26) 76%, rgba(255, 232, 190, .1) 100%);
+}
+/* The anisotropic glint — scattered along the lathe path, a property of the
+   surface, so it is correct for this one to turn with the rotor. Kept faint:
+   the bright specular is a reflection of the room and must NOT turn (that one
+   is .mmm-knob-spec, screen-space, above the rotor). */
+.mmm-knob-glint {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(30% 22% at 33% 22%, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .07) 42%, transparent 72%);
+}
+.mmm-knob-sheen {
+  position: absolute;
+  inset: 13px;
+  border-radius: 50%;
+  background: linear-gradient(128deg, rgba(255, 255, 255, .38) 0%, transparent 38%, transparent 64%, rgba(255, 255, 255, .12) 100%);
+}
+.mmm-knob-pointer {
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  transform: translateX(-50%);
+  width: 2.5px;
+  height: 11px;
+  border-radius: 0 0 2px 2px;
+  background: linear-gradient(180deg, #fff8e6, #e8d5aa);
+  box-shadow: 0 0 5px rgba(255, 240, 200, .6);
+}
+/* SCREEN-SPACE SPECULAR: a reflection is an image of the light source, so it
+   stays where the light is while the object turns underneath it. Painting it
+   inside the rotor made the highlight orbit with the knurling — the single
+   most legible wrongness in the old knob. Background written live. */
+.mmm-knob-spec {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  will-change: background;
+}
+/* Contact shadow, driven by press: ambient occlusion is a function of how
+   close two surfaces are, so pressing the knob into its seat darkens and
+   TIGHTENS the shadow. Box-shadow written live. */
+.mmm-knob-ao {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: box-shadow;
+  transition: box-shadow 90ms var(--ease);
+}
+/* The cap reads out the module — mono at the 11px eyebrow floor, EMBOSSED:
+   one dark edge below and one light edge above, so the letters read as
+   stamped into the brass rather than printed on it. Sub-pixel offsets on
+   purpose; a full pixel of relief at this size doubles the stroke. */
+.mmm-knob-readout {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: #5d4415;
+  pointer-events: none;
+  text-shadow: 0 0.75px 0.5px rgba(255, 248, 224, .72), 0 -0.5px 0.5px rgba(28, 16, 4, .55);
 }
 
-/* ── Two corrections to the vendored controls, both measured ───────────────
-   `src/components/ds/` is generated and reverted by the next `vendor:ds` run,
-   so anything this app knows and the design system does not has to live out
-   here. These are that, and they are `!important` because the values they
-   correct are INLINE in the vendored components — nothing else outranks an
-   inline style. Both are recorded in DESIGN_SYNC row 289 as design defects to
-   fix upstream, at which point these rules get shorter.
-
-   1 · The knob cap. The design system draws its module readout at 8.5px, which
-   its own 15px content floor forbids, so `vendor:ds` raises it — and at 15px
-   "MUSIC" measured 52px inside a 40px cap: a 10px overflow, on the control that
-   names where you are. It is not solvable by growing the knob (the cap would
-   need a 102px knob, taking 121px of a phone's height for the bar) and not by
-   abbreviating (the design system is explicit: the cap reads the module "by
-   NAME, not initial"). An engraved hardware legend IS the tracked-mono metadata
-   scale the floor exempts — uppercase, mono, letterspaced — so it takes that
-   floor, 11px, with the tracking the exemption requires. Measured: 41px in the
-   42px cap at 74px knobs.
-
-   2 · The shoulder hints, and WHERE they go.
-
-   The vendored dial insets the current station by 22% on both sides to leave
-   room for two neighbour hints beside it, and `vendor:ds` raises those hints
-   from the design system's 8.5px to its own 15px content floor. This rule used
-   to answer the resulting collision by DELETING the hints, and that was the
-   wrong half of the trade to give up: a tuner you cannot see past gives no
-   sense of which way to turn, which is most of what makes it a dial rather than
-   a stepper. The owner asked for them back (2026-08-22, "doesn't have mini text
-   on left and right showing prev next options").
-
-   Putting them back beside the name does not fit, and that is arithmetic rather
-   than taste. Measured in Chromium against the real faces:
-
-     "Recommended" (Instrument Serif)     15px 90px · 20px 120px · 24px 144px
-     "Playlists" (JetBrains Mono 700/.14em, 11px)                        74px
-     dial content box                     375px:171 · 393px:189 · 430px:226
-
-   The hints sit 24px in from the content edge to clear the 26px chevrons, so
-   two of them cost 2x(24+width). At 393px, holding the name at 20px leaves the
-   hints 20px each — two characters. At 375px there is no size at which all
-   three fit at all. The design's own 22%/20% split overlaps the name; it was
-   drawn at desktop width, where 1100px of dial hides the problem.
-
-   So they go on the SCALE ROW instead, at the ends of the graduations. Three
-   reasons: the horizontal room is there (the scale is decoration, and printing
-   station names along a slide rule is what the physical reference actually
-   does); the name keeps its full size, which is the dial's whole justification
-   over a tab strip; and the hints slide with the drag along the scale they
-   label, so a long drag reads as travel past named stations rather than as text
-   sliding over other text.
-
-   The size stays 11px: uppercase letterspaced mono IS the tracked-mono metadata
-   scale the type floor exempts, and a peripheral readout of where the scale goes
-   next is exactly what that scale is for. The family is restated for the same
-   two reasons the knob cap restates it.
-
-   ## The fragile part, and what catches it
-
-   Moving them means defeating the `overflow: hidden` on the vendored wrapper,
-   and that wrapper has no class — it is selected structurally, as the dial's
-   one child that is not `.tuner-scale`. A re-vendor that changes the element
-   order would break that selector, so `npm run measure:dock` asserts the hints
-   are rendered, inside the dial, at the 11px floor and on the scale band. The
-   selector's fragility is real; it fails loudly instead of silently, which is
-   the trade this directory has already made everywhere else. */
-.mmm-dock button[aria-label^="Module:"] > span:last-child {
-  /* The family is restated rather than inherited from the component's inline
-     style, and it is load-bearing twice: it is what makes this rule's claim to
-     the tracked-mono metadata floor legible to `lint-source.mjs` (which reads
-     the family and the tracking out of the same block), and it is what keeps
-     the claim true if the vendored component's own family ever changes. */
-  font-family: var(--f-m) !important;
-  font-size: 0.6875rem !important;
-  letter-spacing: 0.14em !important;
+/* ── The dial ── a backlit cream meter window in a brass ring, tuning the
+   sections of whatever you are looking at. Its stations ride a compass card
+   (R = 420px below the window) so the ticks RADIATE and the labels sink and
+   roll along the same arc — an instrument scale, not a tape. */
+.mmm-hifi-dial {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: var(--mmm-knob);
+  border-radius: 10px;
+  cursor: grab;
+  touch-action: none;
+  overflow: hidden;
+  background: radial-gradient(130% 170% at 50% 6%, #f3e7c8 0%, #e8d6a8 44%, #d4bd88 82%, #b9a06a 100%);
+  box-shadow: 0 0 0 2px var(--brass), inset 0 2px 8px rgba(92, 62, 20, .32), inset 0 -12px 20px -8px color-mix(in oklab, var(--lamp) 34%, transparent);
 }
-/* The wrapper holding the name and the two hints. Its `overflow: hidden` is
-   what stops the hints reaching the scale row, and its fixed 30px height is
-   what the name needs — so the overflow opens and the height stays. The dial
-   itself still clips, so a hint sliding under a long drag disappears at the
-   dial's edge rather than escaping onto the walnut. */
-.mmm-tuner-mount .tuner-dial > div:not(.tuner-scale) {
-  overflow: visible !important;
+/* Analog backlight: three warm bulbs pooling from the bottom edge, plus the
+   hot line where light spills under the bezel. Turned DOWN on purpose — the
+   brighter version washed the ticks toward the amber and cost the readout its
+   contrast. A lamp behind glass is dim; what sells it is the unevenness and
+   the falloff, not the output. The boot strike writes `filter` live. */
+.mmm-dial-backlight {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  animation: ihBacklight 5.5s var(--ease-in-out) infinite;
+  background:
+    radial-gradient(44% 128% at 18% 122%, rgba(214, 128, 44, .5) 0%, rgba(196, 110, 32, .26) 32%, rgba(180, 100, 28, .09) 56%, transparent 76%),
+    radial-gradient(50% 136% at 50% 128%, rgba(226, 148, 62, .58) 0%, rgba(202, 118, 36, .3) 30%, rgba(180, 100, 28, .1) 54%, transparent 76%),
+    radial-gradient(44% 128% at 82% 122%, rgba(214, 128, 44, .5) 0%, rgba(196, 110, 32, .26) 32%, rgba(180, 100, 28, .09) 56%, transparent 76%),
+    linear-gradient(180deg, rgba(74, 43, 22, .26) 0%, transparent 34%);
 }
-.mmm-tuner-mount [role="tab"][aria-selected="false"] {
-  font-family: var(--f-m) !important;
-  font-size: 0.6875rem !important;
-  letter-spacing: 0.14em !important;
-  /* Down onto the scale band. 32px clears the 30px name row by 2px and lands on
-     the graduations, which start immediately below it. */
-  top: 32px !important;
-  /* Tight to the graduations' own ends: the scale is masked to transparent in
-     its outer 10%, so a hint here sits where the ticks have already faded and
-     reads as the printing at the end of the slide rule. */
-  left: auto !important;
-  right: auto !important;
-  max-width: 42% !important;
-  /* Lit like the rest of the face's engraving rather than as dead ink — the
-     scale's own printing, seen at the edge of the lamp. */
-  color: rgba(92, 62, 20, 0.66) !important;
-  /* Above the graduations and the needle, which the dial paints at z-index 3. */
-  z-index: 4 !important;
+.mmm-dial-spill {
+  position: absolute;
+  left: 10%;
+  right: 10%;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(1.5px);
+  background: radial-gradient(ellipse, rgba(236, 176, 96, .62), rgba(206, 132, 48, .24) 58%, transparent 80%);
 }
-.mmm-tuner-mount [role="tab"][aria-selected="false"]:first-of-type { left: 2px !important; }
-.mmm-tuner-mount [role="tab"][aria-selected="false"]:last-of-type { right: 2px !important; }
-/* The name keeps the vendored 24px and takes the whole width back, inset only
-   far enough to clear the 26px step chevrons — 16px, not 26, because the inset
-   is measured from the dial's CONTENT box, which its own 12px of horizontal
-   padding has already moved inward. */
-.mmm-tuner-mount [role="tab"][aria-selected="true"] {
-  left: 16px !important;
-  right: 16px !important;
+/* The glass, above everything on the dial: one hard-edged reflection sweep, a
+   fainter second sweep from the back surface, and dust. Without them the
+   ticks look printed on the cabinet. */
+.mmm-dial-glass-1 {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background: linear-gradient(107deg, rgba(255, 255, 255, .3) 0%, rgba(255, 255, 255, .13) 7%, transparent 8%, transparent 20%, rgba(255, 255, 255, .09) 21%, rgba(255, 255, 255, .03) 27%, transparent 28%);
 }
+.mmm-dial-glass-2 {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, transparent 12%),
+    radial-gradient(120% 90% at 50% 118%, transparent 62%, rgba(58, 34, 8, .22) 100%);
+}
+.mmm-dial-grain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 6;
+  background-image: url('/console/grain.png');
+  background-size: 110px;
+  mix-blend-mode: overlay;
+  opacity: 0.11;
+}
+/* Fingerprints — two faint smears where thumbs have tuned it. At legible
+   opacity they read as dirt; at 4% they read as use. */
+.mmm-dial-smudge {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(30% 42% at 66% 60%, rgba(255, 255, 255, .045) 0%, transparent 70%),
+    radial-gradient(20% 30% at 32% 38%, rgba(255, 255, 255, .035) 0%, transparent 70%);
+}
+/* Dial glass sheen — flat pane, so the live reflection tracks near 1:1; the
+   knob's compression here would read as bowed glass. Background written live. */
+.mmm-dial-spec {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  z-index: 2;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  will-change: background;
+}
+/* Station row: a real drum. All three labels are identical in style and driven
+   purely by their continuous distance from centre — three points on a rotating
+   cylinder, so the halfway swap is invisible. Transforms and sizes are written
+   live; the rest sits here. The rest size is 26px (15 + 11 at distance 0),
+   which is why the base is above the content floor. */
+.mmm-dial-stations {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  top: 9px;
+  height: 36px;
+  overflow: hidden;
+  pointer-events: none;
+  /* The drum's resting type size, unitless — MmmDock's paint reads it and the
+     ramp runs rest → 15 (the content floor) by distance from centre. The
+     dc.html's own figure is 26, drawn at 430px; at 375 the window is 171px and
+     "Recommended" at 26px is 184, so the resting name loses its tail on the
+     design width MOBILE.md says to design at first. One step down fits it
+     exactly (170px) — measured, the same trade the knob cap already made. */
+  --mmm-drum-rest: 26;
+}
+@media (max-width: 392px) {
+  .mmm-dial-stations { --mmm-drum-rest: 24; }
+}
+.mmm-dial-station {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  line-height: 1.05;
+  letter-spacing: normal;
+  color: var(--ink-1);
+  white-space: nowrap;
+  transform-origin: 50% 50%;
+  will-change: transform, opacity, font-size;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+/* The keyboard's way in: the centre station is a real focusable tab. */
+.mmm-dial-station[role="tab"] { pointer-events: auto; cursor: inherit; }
+/* The tick window: a compass card, not a tape. Two discs (major and minor
+   ticks hang at different depths, cut by radial masks) plus a printed rail arc
+   the ticks hang from — the rail is on the face, not the rotor, so it is
+   static. Card rotation is written live. */
+.mmm-dial-scale {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8px;
+  height: 14px;
+  overflow: hidden;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+.mmm-dial-card,
+.mmm-dial-card-2,
+.mmm-dial-rail {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 840px;
+  height: 840px;
+  margin-left: -420px;
+  border-radius: 50%;
+}
+.mmm-dial-card {
+  will-change: transform;
+  background: repeating-conic-gradient(from -0.1023deg, rgba(28, 20, 8, .82) 0 0.2046deg, transparent 0.2046deg 6.2762deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 410px, #000 410px 420px, transparent 420px);
+  mask-image: radial-gradient(circle, transparent 410px, #000 410px 420px, transparent 420px);
+}
+.mmm-dial-card-2 {
+  will-change: transform;
+  background: repeating-conic-gradient(from -0.0682deg, rgba(28, 20, 8, .32) 0 0.1364deg, transparent 0.1364deg 1.2552deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 406px, #000 406px 412px, transparent 412px);
+  mask-image: radial-gradient(circle, transparent 406px, #000 406px 412px, transparent 412px);
+}
+.mmm-dial-rail {
+  box-sizing: border-box;
+  border: 1.1px solid rgba(28, 20, 8, .42);
+  pointer-events: none;
+}
+/* The needle casts a shadow onto the card — the one cue that says the pointer
+   and the scale live at different depths under the same glass. Tapered, like
+   a meter needle: a parallel-sided bar is a cursor, a taper is an instrument. */
+.mmm-dial-needle-shadow {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  width: 4px;
+  height: 22px;
+  margin-left: -1.1px;
+  pointer-events: none;
+  background: rgba(20, 12, 4, .32);
+  filter: blur(1px);
+  clip-path: polygon(50% 0%, 84% 100%, 16% 100%);
+}
+.mmm-dial-needle {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 4px;
+  height: 22px;
+  margin-left: -2px;
+  pointer-events: none;
+  background: linear-gradient(180deg, var(--live) 0%, color-mix(in oklab, var(--live) 75%, #5e0f04) 100%);
+  clip-path: polygon(50% 0%, 84% 100%, 16% 100%);
+  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--live) 55%, transparent));
+}
+/* The pilot bead — dead until the transport plays. A dial with a live needle
+   and no pilot lamp doesn't say whether the set is ON. */
+.mmm-dial-pilot {
+  position: absolute;
+  right: 10px;
+  top: 8px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: rgba(58, 34, 8, .35);
+  box-shadow: inset 0 0.8px 1px rgba(0, 0, 0, .5);
+  transition: background 300ms var(--ease), box-shadow 300ms var(--ease);
+}
+.mmm-dial-pilot[data-lit='true'] {
+  background: var(--lamp);
+  box-shadow: 0 0 6px 1.5px color-mix(in oklab, var(--lamp) 65%, transparent), inset 0 -0.8px 1px rgba(120, 60, 10, .5), inset 0 0.8px 0.8px rgba(255, 255, 255, .65);
+}
+/* The two step affordances — see the deviations note in the header. Painted
+   as the face's own engraving, full height so the target clears 44px against
+   the 74px dial. */
+.mmm-dial-step {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 26px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  z-index: 7;
+  color: rgba(92, 62, 20, .55);
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.mmm-dial-step[data-dir='prev'] { left: 0; }
+.mmm-dial-step[data-dir='next'] { right: 0; }
+
+/* ── The transport ── a brass thumbstick in a recessed round gate on the
+   plate. Four brass detent notches mark the throws; the stick sinks on press
+   (the play/pause gesture) and springs back through centre on release. */
+.mmm-gate {
+  position: relative;
+  width: var(--mmm-knob);
+  height: var(--mmm-knob);
+  flex: 0 0 auto;
+  perspective: 178px;
+}
+.mmm-gate-well {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 30%, #050301 0%, #0e0a05 60%, #1e160c 100%);
+  box-shadow: inset 0 5px 10px rgba(0, 0, 0, .95), 0 0 0 2px var(--brass-deep);
+}
+.mmm-gate-notch {
+  position: absolute;
+  border-radius: 1px;
+  background: var(--brass);
+  opacity: .72;
+  pointer-events: none;
+}
+.mmm-gate-notch[data-at='top'] { left: 50%; top: 1.5px; transform: translateX(-50%); width: 1.5px; height: 5px; }
+.mmm-gate-notch[data-at='bottom'] { left: 50%; bottom: 1.5px; transform: translateX(-50%); width: 1.5px; height: 5px; }
+.mmm-gate-notch[data-at='left'] { left: 1.5px; top: 50%; transform: translateY(-50%); width: 5px; height: 1.5px; }
+.mmm-gate-notch[data-at='right'] { right: 1.5px; top: 50%; transform: translateY(-50%); width: 5px; height: 1.5px; }
+/* Dust in the gate recess — a machined well collects it. */
+.mmm-gate-dust {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  border-radius: 50%;
+  pointer-events: none;
+}
+.mmm-stick-shadow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(0, 0, 0, .7) 40%, transparent 72%);
+  transition: transform var(--duration-default) var(--ease-spring), opacity var(--duration-default) var(--ease);
+}
+.mmm-stick {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 52px;
+  height: 52px;
+  margin: -26px 0 0 -26px;
+  border-radius: 50%;
+  transform-style: preserve-3d;
+  will-change: transform;
+  cursor: grab;
+  touch-action: none;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+.mmm-stick-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 24%, #f6e6b6 0%, var(--brass) 30%, var(--brass-deep) 72%, #4a3712 100%);
+  box-shadow: 0 6px 12px -4px rgba(0, 0, 0, .9), 0 2px 0 #3a2a0e, inset 0 1px 1px rgba(255, 248, 224, .5);
+}
+.mmm-stick-knurl {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgba(0, 0, 0, .3) 0deg 1.4deg, transparent 1.4deg 4.6deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%);
+  mask-image: radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%);
+}
+/* Concave dish — shadow at the near wall, light at the far wall, so it reads
+   as a bowl rather than a dome. */
+.mmm-stick-dish {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 50% 4%, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .28) 36%, transparent 66%),
+    radial-gradient(circle at 50% 96%, #f4dfa8 0%, #d6b26c 26%, var(--brass-deep) 64%, #38290c 100%);
+  box-shadow: inset 0 6px 11px rgba(0, 0, 0, .72), inset 0 -5px 8px rgba(255, 242, 206, .26);
+}
+/* Machined rim: one crisp turned edge where the dish meets the cap, catching
+   light on its lower half. The dish read as moulded without it. */
+.mmm-stick-rim {
+  position: absolute;
+  inset: 6.2px;
+  border-radius: 50%;
+  pointer-events: none;
+  box-sizing: border-box;
+  border: 0.8px solid rgba(255, 246, 214, .3);
+  -webkit-mask-image: linear-gradient(180deg, transparent 18%, #000 62%);
+  mask-image: linear-gradient(180deg, transparent 18%, #000 62%);
+}
+/* Lit while playing. Opacity flipped by data-lit. */
+.mmm-stick-lit {
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 300ms var(--ease);
+  box-shadow: inset 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent), 0 0 12px -2px color-mix(in oklab, var(--accent) 50%, transparent);
+}
+.mmm-stick[data-lit='true'] .mmm-stick-lit { opacity: 1; }
+/* Cap specular and press occlusion — written live, same split as the knob. */
+.mmm-stick-spec {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  will-change: background;
+}
+.mmm-stick-ao {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: box-shadow 90ms var(--ease);
+}
+
+/* The bulb flicker — a very slight, uneven breathe. A perfectly steady glow
+   reads as an LED panel rather than a lamp behind glass. A KEYFRAME, not a
+   transition, per the design's own note (ADHERENCE 23). */
+@keyframes ihBacklight {
+  0%, 100% { opacity: .94; }
+  43% { opacity: 1; }
+  71% { opacity: .97; }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* A dial that never stops pulsing is exactly what this setting is for. The
+     boot strike and the springs check the same query in MmmDock. */
+  .mmm-dial-backlight { animation: none; }
+}
+
 
 /* Reduced motion: the sheet settles instantly. Complements the token-level
    duration zeroing in globals.css, which cannot disable a keyframe. The arc's
