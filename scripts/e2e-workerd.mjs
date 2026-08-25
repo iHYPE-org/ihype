@@ -311,12 +311,20 @@ async function runShard(tests, index) {
   try {
     await waitForBoot(child);
     if (SERVE_ONLY) {
-      console.log(`[e2e-workerd] Local authenticated preview ready on ${BASE}`);
-      await new Promise((resolve) => child.once('exit', resolve));
-      exitCode = child.exitCode ?? 0;
+      /* Supervised too, and for the same reason: a person holding this server
+         open to measure or hand-check a surface loses the rest of their session
+         to one aborted request otherwise. That is not hypothetical — it voided
+         22 of 36 route/width pairs while `measure:layout` was being built. The
+         session now ends on a signal rather than on the child's exit, which is
+         what Ctrl-C already sent. */
+      watch(child);
+      console.log(`[e2e-workerd] Local authenticated preview ready on ${BASE} (supervised; Ctrl-C to stop)`);
+      await new Promise((resolve) => {
+        process.once('SIGINT', resolve);
+        process.once('SIGTERM', resolve);
+      });
+      exitCode = 0;
     } else {
-      // Only supervise once the suite is actually running: under --serve the
-      // process exiting IS the intended end of the session.
       watch(child);
       console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
       exitCode = await runPlaywright(tests);
