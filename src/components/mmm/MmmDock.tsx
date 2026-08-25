@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { usePlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { useRegisteredStations } from '@/components/mmm/MmmStations';
-import { MMM_NAV, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
+import { MMM_NAV, isMmmDetailPath, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
 
 /**
  * The console dock — the whole of the app's navigation, as the design system
@@ -34,12 +34,13 @@ import { MMM_NAV, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
  *
  * ## What is wired (all of it pre-existing, none of it changed)
  *
- *  - The knob commits a module at each detent crossing → `router.push`.
+ *  - The knob commits a module at each detent crossing → `navigate()`.
  *  - The dial tunes the REGISTERED stations when a page registered its own
  *    (see MmmStations.tsx), else the module's route set → `select()`.
  *  - The stick: tap = the universal transport (pause → surface intent → radio
  *    on, see MmmPlayIntent.tsx), throws = prev / next / expand / collapse.
- *  - The nameplate re-seats the console on MAP.
+ *  - The nameplate is the way back: from a detail page it returns you to the
+ *    main-nav page you came from, else it re-seats MAP.
  *  - `playing` lights the pilot bead and the stick's lamp ring.
  *
  * ## Two additions the dc.html does not draw, both deliberate
@@ -117,6 +118,10 @@ export function MmmDock({
     ?? `Sections in ${MMM_NAV.find((module) => module.id === activeModule)!.label}`;
   const activeIdx = Math.max(0, stations.findIndex((station) => station.id === active));
 
+  /* `select` is defined above `navigate` but only CALLS it on a tap, so the
+     hop through a ref keeps the declaration order legal. */
+  const navigateRef = useRef<(href: string) => void>(() => {});
+
   const select = useCallback((id: string) => {
     if (registered) {
       registered.onChange(id);
@@ -126,8 +131,8 @@ export function MmmDock({
        The needle is re-homed from the URL on arrival, so Back moves the dial
        too rather than leaving it lying about where you are. */
     const href = fallback.stations.find((station) => station.id === id)?.href;
-    if (href) router.push(href);
-  }, [fallback.stations, registered, router]);
+    if (href) navigateRef.current(href);
+  }, [fallback.stations, registered]);
   const selectRef = useRef(select);
   selectRef.current = select;
   const stationsRef = useRef(stations);
@@ -142,7 +147,6 @@ export function MmmDock({
   const readoutRef = useRef<HTMLDivElement>(null);
   const dialRef = useRef<HTMLDivElement>(null);
   const dialSpecRef = useRef<HTMLDivElement>(null);
-  const barSpecRef = useRef<HTMLDivElement>(null);
   const backlightRef = useRef<HTMLDivElement>(null);
   const spillRef = useRef<HTMLDivElement>(null);
   const wlRef = useRef<HTMLDivElement>(null);
@@ -285,11 +289,9 @@ export function MmmDock({
         : 'inset 0 0.5px 1px rgba(18,10,2,.3), 0 3px 7px rgba(18,10,2,.38)';
     }
     if (knobRef.current) knobRef.current.style.transform = L.pressed ? 'translateY(0.75px)' : 'none';
-    /* One light, four surfaces — same origin, different response per material. */
-    if (barSpecRef.current) {
-      barSpecRef.current.style.background =
-        'radial-gradient(34% 70% at ' + L.x + '% ' + L.y + '%, rgba(255,240,210,.12) 0%, transparent 72%)';
-    }
+    /* One light, THREE surfaces now — same origin, different response per
+       material. The cabinet itself no longer reflects: see the note where
+       `.mmm-dock-barspec` used to be defined. */
     if (dialSpecRef.current) {
       dialSpecRef.current.style.background =
         /* design-exempt: the light again — glass reflects it near 1:1. */
@@ -330,6 +332,41 @@ export function MmmDock({
     }
   }, []);
 
+  /**
+   * Navigate, and MEAN it.
+   *
+   * `router.push` is the fast path and stays the normal one. But on every
+   * `/app` DETAIL route (`/app/artists/…`, `/app/tracks/…`, a show, a
+   * playlist) a soft push does not commit: measured on the production bundle
+   * 2026-08-25 — the handler runs, the knob's readout and rotor move, the
+   * destination's RSC payload fetches 200, and `history.pushState` is never
+   * called, with no error thrown. Root cause is still open (recorded in
+   * DESIGN_SYNC row 309); what is NOT acceptable meanwhile is the symptom the
+   * owner reported as "Moving between map music me didn't work", because this
+   * dock is the app's ONLY navigation — a member on a profile page had no way
+   * out of it at all.
+   *
+   * So the push is given a moment to land and, if the URL has not moved, the
+   * dock falls back to a hard navigation. The poll is what keeps this honest
+   * on a slow connection: a soft nav that simply takes a while cancels the
+   * fallback the instant it commits, so the reload only ever happens when the
+   * transition genuinely never arrives.
+   */
+  const navigate = useCallback((href: string) => {
+    router.push(href);
+    if (typeof window === 'undefined') return;
+    const target = new URL(href, window.location.origin).pathname;
+    if (window.location.pathname === target) return;
+    const started = Date.now();
+    const poll = window.setInterval(() => {
+      if (window.location.pathname === target) { window.clearInterval(poll); return; }
+      if (Date.now() - started < 1500) return;
+      window.clearInterval(poll);
+      window.location.assign(href);
+    }, 120);
+  }, [router]);
+  navigateRef.current = navigate;
+
   const goModule = useCallback((idx: number) => {
     const n = MMM_NAV.length;
     const next = Math.max(0, Math.min(n - 1, idx));
@@ -337,8 +374,53 @@ export function MmmDock({
     committedMod.current = next;
     buzz(4);
     paintKnob();
-    router.push(MMM_NAV[next].href);
-  }, [buzz, paintKnob, router]);
+    navigate(MMM_NAV[next].href);
+  }, [buzz, navigate, paintKnob]);
+
+  /**
+   * The last MAIN-NAV path the member stood on — a module destination, not a
+   * detail page. This is what the nameplate returns them to (owner,
+   * 2026-08-25: "IHYPE name badge, when pressed, should take you to the last
+   * main nav page (MAP · MUSIC · ME) in case you're buried in some sub menu and
+   * are lost"). Recorded rather than derived, because a detail path cannot be
+   * asked which module it was reached from: `/app/artists/x` reports as MAP
+   * whether you arrived from the chart, the map or a search result.
+   */
+  const lastMainPath = useRef<string | null>(null);
+  useEffect(() => {
+    if (!isMmmDetailPath(pathname)) lastMainPath.current = pathname;
+  }, [pathname]);
+
+  /**
+   * Navigate to an explicit path and re-seat the knob on whatever module owns
+   * it. `goModule` cannot do this job for two reasons: it only knows a
+   * module's DEFAULT href (so it cannot return you to the MUSIC tab you were
+   * actually on), and it early-returns when the target module is already the
+   * committed one — which is why the nameplate was DEAD on every detail page.
+   * `/app/artists/x` resolves to MAP, so the badge called `goModule(0)` with
+   * MAP already committed, hit that guard and navigated nowhere. The one
+   * control whose whole purpose is "get me out of here" did nothing precisely
+   * when a member was lost.
+   */
+  const goPath = useCallback((href: string) => {
+    const idx = Math.max(0, MMM_NAV.findIndex((module) => module.id === moduleForPath(href)));
+    committedMod.current = idx;
+    knobPos.current = idx;
+    buzz(6);
+    paintKnob();
+    navigate(href);
+  }, [buzz, navigate, paintKnob]);
+
+  /* Buried → back to the main-nav page you came from. Already at main-nav
+     level → the plate keeps its documented HOME meaning and re-seats MAP. */
+  const goNameplate = useCallback(() => {
+    const remembered = lastMainPath.current;
+    if (isMmmDetailPath(pathname) && remembered) {
+      goPath(remembered);
+      return;
+    }
+    goPath(MMM_NAV[0].href);
+  }, [goPath, pathname]);
 
   /* ── the dial ────────────────────────────────────────────────────────── */
   /**
@@ -358,26 +440,37 @@ export function MmmDock({
      paintDial: getComputedStyle and clientWidth both force style/layout work,
      and paintDial runs once per pointer frame. (The resting size was being
      re-read per frame before this too; the cache fixes both.) */
-  const dialGeom = useRef({ rest: 26, maxW: 0, family: '' });
+  const dialGeom = useRef({ rest: 26, maxW: 0, family: '', weight: '400' });
   const measureDialGeom = useCallback(() => {
     const row = stationRef.current?.parentElement;
     if (!row) return;
     dialGeom.current = {
       rest: parseFloat(getComputedStyle(row).getPropertyValue('--mmm-drum-rest')) || 26,
-      maxW: row.clientWidth - 48,
+      /* The window the label must fit, with 6px of breathing room each side —
+         the same span `measure:dock`'s clip test uses. An earlier version
+         subtracted 48 to clear the two step chevrons outright, which shrank a
+         name that never actually clipped: the resting "Recommended" came back
+         16px at 375 where 24 fits. The chevrons are low-contrast marks at the
+         extreme ends; a long name reaching past them is what a real tuner
+         looks like, and legibility of the primary readout wins. */
+      maxW: row.clientWidth - 12,
+      /* The label's REAL face and weight, read off the element. Composing the
+         canvas font with an assumed `600` measured Bricolage wider than it
+         renders and shrank the readout a step further than needed. */
       family: stationRef.current ? getComputedStyle(stationRef.current).fontFamily : '',
+      weight: stationRef.current ? getComputedStyle(stationRef.current).fontWeight || '400' : '400',
     };
     fitCache.current.clear();
   }, []);
-  const fittedRest = useCallback((label: string, rest: number, maxW: number, family: string) => {
-    const key = `${label}|${rest}|${maxW}`;
+  const fittedRest = useCallback((label: string, rest: number, maxW: number, family: string, weight: string) => {
+    const key = `${label}|${rest}|${maxW}|${weight}|${family}`;
     const cached = fitCache.current.get(key);
     if (cached !== undefined) return cached;
     if (!fitCanvas.current) fitCanvas.current = document.createElement('canvas').getContext('2d');
     const ctx = fitCanvas.current;
     let fitted = rest;
     if (ctx && maxW > 0) {
-      ctx.font = `600 ${rest}px ${family || 'sans-serif'}`;
+      ctx.font = `${weight || '400'} ${rest}px ${family || 'sans-serif'}`;
       const width = ctx.measureText(label).width;
       if (width > maxW) fitted = Math.max(15, Math.floor(rest * (maxW / width)));
     }
@@ -395,7 +488,7 @@ export function MmmDock({
     /* The resting type size comes from the stylesheet (`--mmm-drum-rest`), so
        the 375px step-down lives with the rest of the geometry — see the note
        on .mmm-dial-stations. */
-    const { rest, maxW, family } = dialGeom.current;
+    const { rest, maxW, family, weight } = dialGeom.current;
     const slots: [HTMLElement | null, number][] = [
       [wlRef.current, -1],
       [stationRef.current, 0],
@@ -418,7 +511,7 @@ export function MmmDock({
          it. The resting size itself first shrinks to fit the window (see
          fittedRest) — a section name a page registered is not measured by any
          gate, and a clipped name is the failure the dial exists to prevent. */
-      const restFit = fittedRest(label, rest, maxW, family);
+      const restFit = fittedRest(label, rest, maxW, family, weight);
       node.style.fontSize = ((restFit - (restFit - 15) * Math.min(1, ad)) / 16).toFixed(4) + 'rem';
       node.style.opacity = String(Math.max(0, 1 - ad / 1.45));
       /* Compass drop: each label rides the same card as the ticks — sinking by
@@ -567,6 +660,20 @@ export function MmmDock({
     paintStick();
     const onResize = () => { measureDialGeom(); paintDial(); };
     window.addEventListener('resize', onResize);
+    /* Re-measure once the webfont has actually loaded. `fittedRest` measures
+       the label on a canvas in the drum's real face, and at mount that face is
+       still pending — so measureText falls back to a metrically WIDER system
+       font, the fit shrinks a name that would have fitted, and the cache keeps
+       that answer for the life of the dock. Caught by `measure:dock`: the
+       resting "Recommended" came back 15px at 320 and 17px at 375 where it
+       fits at 24. */
+    if (typeof document !== 'undefined' && document.fonts?.ready) {
+      void document.fonts.ready.then(() => {
+        if (!bar.isConnected) return;
+        measureDialGeom();
+        paintDial();
+      }).catch(() => { /* no font metrics to refine; the mount's fit stands */ });
+    }
 
     const onMove = (event: PointerEvent) => {
       const r = bar.getBoundingClientRect();
@@ -668,15 +775,15 @@ export function MmmDock({
   return (
     <div className="mmm-dock" ref={barRef}>
       <div aria-hidden="true" className="mmm-dock-grain" />
-      <div aria-hidden="true" className="mmm-dock-barspec" ref={barSpecRef} />
 
-      {/* The maker's plate is HOME: wherever the subnav has taken you, pressing
-          the badge re-seats the console on MAP. The dial behind it is a drag
-          surface; the badge must not start a tune. */}
+      {/* The maker's plate is the WAY BACK: from a profile, a track or a
+          ticket it returns you to the main-nav page you came from, and from
+          main-nav level it re-seats MAP. The dial behind it is a drag surface;
+          the badge must not start a tune. */}
       <button
-        aria-label="iHYPE — back to the map"
+        aria-label="iHYPE — back to the main navigation"
         className="mmm-dock-badge"
-        onClick={(event) => { event.stopPropagation(); buzz(6); goModule(0); }}
+        onClick={(event) => { event.stopPropagation(); goNameplate(); }}
         onPointerDown={(event) => { event.stopPropagation(); wakeAudio(); }}
         type="button"
       >

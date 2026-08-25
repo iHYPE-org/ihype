@@ -120,9 +120,12 @@ html:has(.mmm-frame) {
   /* Below a modal but above ordinary page content. */
   z-index: var(--z-sticky);
   /* ONE layout on every screen (owner, 2026-08-24: "I want mobile and desktop
-     and ios and android to share similar layout"). Above a phone the whole
-     console — chart, panes and dock — holds the dc.html's 430px frame and
-     centres, the same rule the dock itself already follows. The transform is
+     and ios and android to share similar layout") — but DOUBLE THE WIDTH on a
+     desk (owner, 2026-08-25: "For desktop version, let's double the width").
+     `--mmm-frame-max` is the one place that figure lives: the frame takes it,
+     the dock's own cap reads it, and `measure:dock` asserts the rendered bar
+     against the resolved value rather than a copy. A phone is unchanged —
+     min() takes the viewport long before the cap matters. The transform is
      load-bearing beyond centring: a transformed ancestor becomes the
      containing block for FIXED descendants, so the pane's fixed grain layer
      and anything else that says `position: fixed` stays inside the frame
@@ -133,7 +136,11 @@ html:has(.mmm-frame) {
      natural resolution. */
   left: 50%;
   right: auto;
-  width: min(100vw, 430px);
+  /* 860 = the dc.html's 430 doubled. Every surface inside the frame is
+     percentage- or flex-sized against it, so this one value widens the chart,
+     the panes and the dock together. */
+  --mmm-frame-max: 860px;
+  width: min(100vw, var(--mmm-frame-max));
   transform: translateX(-50%);
   /* The sheet's edge against the desk — invisible at phone width (clipped by
      the viewport), a hairline and a lifted shadow when the desk shows. */
@@ -1615,7 +1622,7 @@ html:has(.mmm-frame) {
      strip painted across it. No breakpoint: at phone widths min() takes the
      viewport and nothing changes. */
   box-sizing: border-box;
-  max-width: 430px;
+  max-width: var(--mmm-frame-max, 430px);
   margin-inline: auto;
   z-index: 45;
   padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
@@ -1645,16 +1652,14 @@ html:has(.mmm-frame) {
   mix-blend-mode: overlay;
   opacity: 0.09;
 }
-/* Fascia sheen: the room's light grazing walnut and brass as ONE surface.
-   Background written live by the pointer/tilt light in MmmDock. */
-.mmm-dock-barspec {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  mix-blend-mode: screen;
-  will-change: background;
-}
+/* The fascia sheen is GONE (owner, 2026-08-25: "Let's drop the reflection in
+   the console base, it's distracting"). It was a screen-blended gradient
+   spanning the whole bar, rewritten live by the pointer/tilt light — so on a
+   phone the largest surface in the app carried a moving highlight that tracked
+   the handset's every tilt, which reads as glare rather than as material. The
+   CONTROLS keep their speculars (`.mmm-knob-spec`, the dial glass, the stick
+   cap): a highlight the size of a knob describes a dome, and one the size of
+   the cabinet just moves. Do not reinstate it on the base. */
 /* The machined plate the three controls are seated in. */
 .mmm-dock-plate {
   position: relative;
@@ -2285,7 +2290,14 @@ html:has(.mmm-frame) {
    and where the eye has learned to look on a desktop after one use. */
 @media (min-width: 900px) {
   .mmm-pane { padding: 20px calc(50% - 340px) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px); }
-  .mmm-sheet { left: 50%; right: auto; width: 720px; transform: translateX(-50%); border-radius: 18px 18px 0 0; }
+  /* `min(720px, 100%)`, never a bare 720: these wide-viewport rules were
+     written when the pane spanned the whole desk, and the 430px frame cap
+     (row 300) turned the flat 720 into a real defect — a 720px sheet centred
+     inside a 430px frame that CLIPS its overflow lost 145px off each side, so
+     a pin sheet on a desktop rendered its title and its second button cut in
+     half (owner screenshot, 2026-08-25). The percentage resolves against the
+     frame, so the sheet can never again outgrow whatever the cap is. */
+  .mmm-sheet { left: 50%; right: auto; width: min(720px, 100%); transform: translateX(-50%); border-radius: 18px 18px 0 0; }
   @keyframes mmmSheetUpWide {
     from { transform: translate(-50%, 18px); opacity: 0; }
     to { transform: translate(-50%, 0); opacity: 1; }

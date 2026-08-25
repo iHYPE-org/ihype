@@ -225,6 +225,11 @@ for (const width of WIDTHS) {
     return {
       dockH: Math.round(dockBox.height),
       dockW: Math.round(dockBox.width),
+      /* The cap the CSS itself resolves, so this probe never carries a second
+         copy of the figure — the same rule as --mmm-chrome-size below. */
+      frameMax: Math.round(parseFloat(
+        getComputedStyle(document.getElementById('root')).getPropertyValue('--mmm-frame-max'),
+      )) || 0,
       centred: Math.abs((dockBox.left + dockBox.width / 2) - window.innerWidth / 2) <= 1,
       oneRow: kids.every((r) => r.top < kids[0].bottom && r.bottom > kids[0].top),
       knobs: [Math.round(knob.width), Math.round(gate.width)],
@@ -290,9 +295,12 @@ if (JSON_OUT) {
 const problems = [];
 for (const r of rows) {
   if (!r.oneRow) problems.push(`${r.width}px: the dock wrapped onto two rows.`);
-  /* The console matches the mobile size on every screen — 430px, the dc.html's
-     own frame width — and centres above it. */
-  if (r.dockW !== Math.min(r.width, 430)) problems.push(`${r.width}px: the bar measures ${r.dockW}px wide — it should be min(viewport, 430).`);
+  /* The console holds ONE width on every screen and centres above it: the
+     dc.html's 430 doubled for a desk (owner, 2026-08-25), read from
+     `--mmm-frame-max` rather than restated here. A phone is unaffected — the
+     viewport is the smaller term long before the cap is. */
+  if (!r.frameMax) problems.push(`${r.width}px: --mmm-frame-max did not resolve — the frame's width token moved, so this probe is measuring nothing.`);
+  else if (r.dockW !== Math.min(r.width, r.frameMax)) problems.push(`${r.width}px: the bar measures ${r.dockW}px wide — it should be min(viewport, ${r.frameMax}).`);
   if (!r.centred) problems.push(`${r.width}px: the bar is not centred.`);
   if (r.dockH !== r.chrome) problems.push(`${r.width}px: the bar measures ${r.dockH}px but --mmm-chrome-size says ${r.chrome}px — the panes will clear the wrong height.`);
   if (r.knobs[0] !== 74 || r.knobs[1] !== 74) problems.push(`${r.width}px: the knobs measure ${r.knobs.join('/')} — the design says 74, matched.`);

@@ -863,6 +863,29 @@ test.describe('ME with a real profile', () => {
     await expect(page.getByRole('tablist')).toHaveCount(1);
   });
 
+  /* The nameplate is the way OUT of a detail page, and nothing tested that
+     until it broke in both possible ways at once (2026-08-25). `goModule(0)`
+     early-returned because every detail path reports as MAP, so the badge was
+     inert; and even once that was fixed a soft `router.push` never committed
+     from these routes, so the URL did not move. A member who tapped into a
+     profile had NO way back — this dock is the app's only navigation. Reached
+     by clicking through, not by `goto`, so the remembered main-nav path is
+     exercised rather than only the MAP fallback. */
+  test('the nameplate escapes a detail page — the dock is the only way out', async ({ page }) => {
+    await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
+    const link = page.locator('a[href^="/app/artists/"]').first();
+    await expect(link).toBeVisible();
+    await link.click();
+    await expect(page).toHaveURL(/\/app\/artists\//);
+
+    await page.locator('.mmm-dock-badge').click();
+    // Generous: a soft transition that will not commit is rescued by a hard
+    // navigation after 1.5s, and that rescue is a pass — arriving is the
+    // contract, not which mechanism got there.
+    await expect(page).toHaveURL(/\/app\/(map|music|me)(\?|\/|$)/, { timeout: 15_000 });
+  });
+
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
     await page.goto('/app/me?role=fan');
     await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
