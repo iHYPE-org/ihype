@@ -48,6 +48,18 @@ const AUTH_SECRET = process.env.AUTH_SECRET || 'e2e-workerd-auth-secret-01234567
 const NEXTAUTH_SECRET = process.env.NEXTAUTH_SECRET || AUTH_SECRET;
 const BOOT_TIMEOUT_MS = 120_000;
 const SHUTDOWN_TIMEOUT_MS = 5_000;
+/* `wrangler dev` kills itself when its own ProxyWorker throws, and a client
+   that disconnects mid-response makes it throw: "Error in ProxyController:
+   Error inside ProxyWorker" with cause "Network connection lost." A browser
+   aborts requests as a matter of course — a hard navigation over a streaming
+   RSC fetch, Playwright closing a page mid-load — so this is not a fault we
+   can design out of the tests. One shard boots one server, so that death used
+   to fail every test after it with ECONNREFUSED: 10 in PR #752, 9 in #756,
+   25 locally, each time reading as a wall of unrelated breakage rather than
+   one crash. Restarting keeps the cost at the tests actually in flight, which
+   Playwright's own retries then recover. Capped so a server that cannot boot
+   at all still fails the run instead of looping. */
+const MAX_DEV_SERVER_RESTARTS = 5;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
@@ -216,8 +228,8 @@ function runPlaywright(tests) {
   });
 }
 
-async function runShard(tests, index) {
-  const child = spawn(
+function spawnDevServer(index) {
+  return spawn(
     // Launch the pinned local CLIs through the current Node executable. This
     // avoids platform-specific npx/.cmd process handling and guarantees the
     // runtime suite exercises the dependency versions in package-lock.json.
@@ -257,6 +269,43 @@ async function runShard(tests, index) {
       },
     },
   );
+}
+
+async function runShard(tests, index) {
+  let child = spawnDevServer(index);
+  let stopping = false;
+  let restarts = 0;
+
+  /* Watch one specific process instance. The `child` binding is reassigned on
+     restart, so the guard has to compare against the instance this handler was
+     registered for — reading the binding would let a stale exit event restart
+     a server that is already running. */
+  const watch = (instance) => {
+    instance.once('exit', (code) => {
+      if (stopping || instance !== child) return;
+      if (restarts >= MAX_DEV_SERVER_RESTARTS) {
+        console.error(`[e2e-workerd] dev server died (code ${code}) and hit the ${MAX_DEV_SERVER_RESTARTS}-restart cap; leaving it down`);
+        return;
+      }
+      restarts += 1;
+      console.error(`[e2e-workerd] dev server died (code ${code}) mid-run — restart ${restarts}/${MAX_DEV_SERVER_RESTARTS}`);
+      // Let the operating system release :8787 before rebinding it, the same
+      // reason run() waits between shards.
+      delay(1000)
+        .then(() => {
+          if (stopping) return undefined;
+          child = spawnDevServer(index);
+          watch(child);
+          return waitForBoot(child);
+        })
+        .then(() => {
+          if (!stopping) console.error('[e2e-workerd] dev server back up');
+        })
+        .catch((error) => {
+          console.error('[e2e-workerd] dev server restart failed:', error.message);
+        });
+    });
+  };
 
   let exitCode = 1;
   try {
@@ -266,13 +315,20 @@ async function runShard(tests, index) {
       await new Promise((resolve) => child.once('exit', resolve));
       exitCode = child.exitCode ?? 0;
     } else {
+      // Only supervise once the suite is actually running: under --serve the
+      // process exiting IS the intended end of the session.
+      watch(child);
       console.log(`[e2e-workerd] Ready on ${BASE}; shard ${index + 1}/${TEST_SHARDS.length}: ${tests.join(', ')}`);
       exitCode = await runPlaywright(tests);
+      if (restarts > 0) {
+        console.error(`[e2e-workerd] note: the dev server was restarted ${restarts}x during this shard`);
+      }
     }
   } catch (error) {
     console.error('[e2e-workerd]', error);
     exitCode = 1;
   } finally {
+    stopping = true;
     await stopProcessTree(child);
   }
 
