@@ -83,6 +83,7 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
+  ['e2e/ticket-transfer.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],

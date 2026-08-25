@@ -6,6 +6,25 @@ import { usePlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { useRegisteredStations } from '@/components/mmm/MmmStations';
 import { MMM_NAV, isMmmDetailPath, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
 
+/* Where the nameplate's memory lives across a document load. Session-scoped on
+   purpose: "the page you came from" is a property of this visit, and a value
+   restored a week later would send someone somewhere they have forgotten. */
+const LAST_MAIN_KEY = 'ihype_mmm_last_main';
+
+/** The remembered main-nav path, or null. Validated, never trusted verbatim:
+ *  this is client-writable storage, so a poisoned value must not become a
+ *  navigation target. It has to be an MMM main-nav path — inside the shell and
+ *  not itself a detail path, which would defeat the whole point. */
+function readLastMainPath(): string | null {
+  try {
+    const stored = sessionStorage.getItem(LAST_MAIN_KEY);
+    if (!stored || !stored.startsWith('/app/') || isMmmDetailPath(stored)) return null;
+    return stored;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * The console dock — the whole of the app's navigation, as the design system
  * itself builds it at production scale.
@@ -358,7 +377,19 @@ export function MmmDock({
    */
   const lastMainPath = useRef<string | null>(null);
   useEffect(() => {
-    if (!isMmmDetailPath(pathname)) lastMainPath.current = pathname;
+    if (!pathname || isMmmDetailPath(pathname)) return;
+    lastMainPath.current = pathname;
+    /* Mirrored into sessionStorage, and this is not belt-and-braces: a REF
+       cannot survive a document load, and this dock provokes one. `navigate()`
+       gives a soft push 1.5s and then hard-assigns (row 309's open bug), so the
+       common path into a detail page is a full reload — which remounts the dock,
+       resets the ref to null, and then runs this effect on a path that IS a
+       detail path, so nothing is recorded. The nameplate then read null and fell
+       through to MAP every single time. Reported as "should take you back to the
+       last main nav point … not always map" AFTER the feature shipped: the
+       feature was right and its memory was being wiped underneath it. Also fixes
+       a cold entry — a shared link or a refresh on a detail page. */
+    try { sessionStorage.setItem(LAST_MAIN_KEY, pathname); } catch { /* private mode */ }
   }, [pathname]);
 
   /**
@@ -384,7 +415,7 @@ export function MmmDock({
   /* Buried → back to the main-nav page you came from. Already at main-nav
      level → the plate keeps its documented HOME meaning and re-seats MAP. */
   const goNameplate = useCallback(() => {
-    const remembered = lastMainPath.current;
+    const remembered = lastMainPath.current ?? readLastMainPath();
     if (isMmmDetailPath(pathname) && remembered) {
       goPath(remembered);
       return;

@@ -102,6 +102,8 @@ export function MmmMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(false);
+  /* Collapsed by default — the credit is one tap, not a standing line. */
+  const [creditOpen, setCreditOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>(initialLayer);
@@ -184,7 +186,7 @@ export function MmmMap({
       /* The chart's scale bar ("1 mi"), from map.html's HUD. A ScaleControl
          rather than a drawing because it must re-derive with the zoom — a
          static "1 MI" rule is wrong at every zoom but one. */
-      map.addControl(new maplibre.ScaleControl({ maxWidth: 56, unit: 'imperial' }), 'top-right');
+      map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
       map.on('load', () => { setReady(true); bump(); });
@@ -465,22 +467,35 @@ export function MmmMap({
   return (
     <div className="mmm-map-layer">
       <div className="mmm-map-canvas" ref={containerRef} />
-      <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
-      {/* The torn deckled edge (map-treasure.html's .char): an undisplaced
-          frame run through fractal-noise displacement so the paper's edge
-          tears differently on every inch and identically on every load. */}
-      <svg aria-hidden="true" height="0" style={{ position: 'absolute' }} width="0">
-        <filter height="108%" id="mmm-torn" width="108%" x="-4%" y="-4%">
-          <feTurbulence baseFrequency="0.016 0.028" numOctaves="3" result="n" seed="11" type="fractalNoise" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="16" />
-        </filter>
-      </svg>
-      <div aria-hidden="true" className="mmm-map-char">
-        <div className="mmm-map-char-desk" />
-        <div className="mmm-map-char-scorch" />
-        <div className="mmm-map-char-burn" />
-      </div>
+      {/* The credit, as a DISCLOSURE (owner, 2026-08-25: "open street map
+          should be hidden").
 
+          It cannot just be deleted: CARTO's basemap terms and OSM's ODbL both
+          require the credit to be shown, so a map with no reachable credit puts
+          the tiles out of licence. Collapsed it is a mark; one tap is the
+          credit. That is as hidden as this can honestly get.
+
+          Built here rather than with MapLibre's own `compact` AttributionControl,
+          which was tried first: it renders EXPANDED on load — measured 224px
+          wide, which is the standing line this replaces — and re-asserts that
+          state whenever attributions update, so collapsing it once does not
+          hold. A disclosure we own is deterministic. */}
+      <button
+        aria-expanded={creditOpen}
+        aria-label="Map data credit"
+        className="mmm-map-attrib"
+        onClick={() => setCreditOpen((open) => !open)}
+        type="button"
+      >
+        {creditOpen ? '© OpenStreetMap · CARTO' : 'ⓘ'}
+      </button>
+      {/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map
+          design (doesn't fit with the view)"). It was map-treasure.html's
+          `.char`: an undisplaced frame run through a fractal-noise
+          displacement filter so the paper tore differently on every inch. The
+          `#mmm-torn` SVG filter went with it — nothing else referenced it, and
+          a filter definition left behind is one an unrelated element picks up
+          by name later. */}
       {/* The compass rose — map-treasure.html's ornate eight-point card,
           replacing console-shell's simpler needle. Decoration (aria-hidden),
           unlike the scale bar beneath it. */}

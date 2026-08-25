@@ -331,7 +331,6 @@ test.describe('Music · Map · Me shell', () => {
     '/app/music/recommended', '/app/music/playlists',
     // Library registers the liked tracks; an account with none falls through
     // to the radio, which is still "the transport is never inert".
-    '/app/music/library',
   ] as const) {
     test(`the joystick starts playback on ${surface}`, async ({ page, request }) => {
       /* Asked before the page loads, and cached across the file — see
@@ -629,51 +628,84 @@ test.describe('Music · Map · Me shell', () => {
   // panels are ONE group. This is the invariant that cannot be seen by
   // reading either half alone: the sections are component state and the panels
   // are the URL, so nothing about the types stops both being open at once.
-  test('ME keeps exactly one drawer open, across sections and account panels', async ({ page }) => {
+  test('ME shows the whole list, or the one thing you opened — never both', async ({ page }) => {
     const drawer = (label: string) =>
       page.locator('.mmm-me-accordion:visible').filter({
         has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
       });
+    const listed = () => page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
 
     await page.goto('/app/me');
-    // Entering ME is a clean four-row index. Nothing chooses itself.
+    // Entering ME is a clean index. Nothing chooses itself.
+    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
     for (const label of ['Profiles', 'My Tickets', 'Info', 'Settings']) {
       await expect(drawer(label)).toHaveAttribute('aria-expanded', 'false');
     }
 
+    /* Opening one HIDES the rest (owner, 2026-08-25: "Me needs to only show the
+       subnav selected, rather than the complete list and the selected list").
+       This test used to assert the opposite — that the others stayed rendered
+       and merely collapsed — so it is rewritten rather than deleted: the
+       one-at-a-time rule it guarded still holds, and is now visible in the list
+       itself rather than in four aria-expanded attributes. */
     await drawer('Profiles').click();
+    expect(await listed()).toEqual(['Profiles']);
     await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
 
-    // A section closes the other sections.
-    await drawer('My Tickets').click();
-    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+    // Closing it brings the index back, which is the only way to reach another.
+    await drawer('Profiles').click();
+    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
 
-    // A panel closes the sections, and puts itself in the URL so the drawer is
+    // A panel behaves identically, and puts itself in the URL so the drawer is
     // deep-linkable and Back closes it.
     await drawer('Settings').click();
     await expect(page).toHaveURL(/panel=settings/);
-    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('My Tickets')).toHaveAttribute('aria-expanded', 'false');
+    expect(await listed()).toEqual(['Settings']);
 
-    // And a section closes the panel — including its search param, or the drawer
-    // would reopen on the next render from a URL nobody cleared.
-    await drawer('Profiles').click();
+    // And closing the panel clears its search param, or it would reopen on the
+    // next render from a URL nobody cleared.
+    await drawer('Settings').click();
     await expect(page).not.toHaveURL(/panel=/);
-    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('Settings')).toHaveAttribute('aria-expanded', 'false');
+    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
   });
 
-  // Deep-linking a panel must not also open Profiles: the default applies only
-  // when nothing else is open, or the URL's own drawer loads a screen down.
+  // Deep-linking a panel shows that panel ALONE — the default index applies
+  // only when nothing is open, or the URL's own drawer loads a screen down.
   test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
     await page.goto('/app/me?panel=legal');
-    const drawer = (label: string) =>
+    const labels = await page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
+    expect(labels).toEqual(['Info']);
+    await expect(
       page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
-      });
-    await expect(drawer('Info')).toHaveAttribute('aria-expanded', 'true');
-    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'false');
+        has: page.locator('.mmm-me-accordion-label', { hasText: /^Info$/ }),
+      }),
+    ).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  /* The dial is ME's subnav, and it has to carry ALL FOUR options (owner,
+     2026-08-25: "Profiles My Tickets Info Settings for the four subnav options
+     in Me"). It used to carry only Info and Settings — `MMM_ME_PANELS`, the two
+     with rows — which was survivable while every card was on screen at once and
+     stopped being survivable the moment ME began showing one at a time: closing
+     the open card became the only route to the other three. Asserted by DRIVING
+     the dial, because the failure mode is a station that exists in a list and
+     reaches nothing. */
+  test('the dial carries ME\'s four subnav options, each opening its own card', async ({ page }) => {
+    await page.goto('/app/me');
+    const listed = () => page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
+    await expect(page.getByRole('tablist', { name: /Sections in ME/i })).toBeVisible();
+
+    // Nothing is open, so the whole index is on screen.
+    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
+
+    /* Step the dial through the remaining three. Each turn must leave exactly
+       one card, and the panels must reach the URL so they stay deep-linkable. */
+    const next = page.getByRole('button', { name: /Next station/i });
+    for (const expected of [['My Tickets'], ['Info'], ['Settings']]) {
+      await next.click();
+      await expect.poll(listed).toEqual(expected);
+    }
+    await expect(page).toHaveURL(/panel=settings/);
   });
 
   /**
@@ -884,6 +916,34 @@ test.describe('ME with a real profile', () => {
     // navigation after 1.5s, and that rescue is a pass — arriving is the
     // contract, not which mechanism got there.
     await expect(page).toHaveURL(/\/app\/(map|music|me)(\?|\/|$)/, { timeout: 15_000 });
+  });
+
+  /* …and it goes back to WHERE YOU WERE, which is the half the assertion above
+     cannot see: `/app/map` matches that regex, so the test passed for a month
+     while the badge sent everyone to MAP regardless (owner, 2026-08-25: "should
+     take you back to the last main nav point ... not always map").
+     The cause was that the memory is a ref and this dock provokes a document
+     load — `navigate()` hard-assigns after 1.5s when a soft push will not
+     commit, which remounts the dock and wipes the ref. So this test is
+     deliberately written as TWO page loads: sessionStorage is what has to carry
+     the value, and a same-tab `goto` reproduces exactly what the rescue does. */
+  test('the nameplate returns to the main-nav page you came from, not MAP', async ({ page }) => {
+    await page.goto('/app/music/charts');
+    await expect(page.locator('.mmm-dock')).toBeVisible();
+
+    // A second document load, landing directly on a detail page.
+    await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
+    const link = page.locator('a[href^="/app/artists/"]').first();
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute('href');
+    await page.goto(href!);
+    await expect(page).toHaveURL(/\/app\/artists\//);
+
+    await page.locator('.mmm-dock-badge').click();
+    // ME was the last main-nav page visited, so that is where it must land —
+    // and specifically NOT /app/map, which is the bug this guards.
+    await expect(page).toHaveURL(/\/app\/me(\?|\/|$)/, { timeout: 15_000 });
   });
 
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {

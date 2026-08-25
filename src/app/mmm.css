@@ -315,33 +315,52 @@ html:has(.mmm-frame) {
   mix-blend-mode: multiply;
 }
 
+/* MapLibre's own attribution and logo stay hidden — `.mmm-map-attrib` below
+   carries the credit instead. Check that element still renders before touching
+   this line: hiding BOTH is what puts the tiles out of licence, and it looks
+   like nothing at all from the outside. */
 .mmm-map-canvas .maplibregl-ctrl-attrib,
 .mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
 .mmm-map-canvas .maplibregl-canvas { outline: none; }
 
-/* Attribution is required by CARTO/OSM terms and is therefore not optional
-   chrome — it renders whenever the map does. */
+/* The credit as a disclosure: a mark when shut, the credit when open. Not
+   optional chrome — CARTO's terms and OSM's ODbL require it to be reachable —
+   but nothing requires it to be a standing line of text across the chart, which
+   is what it used to be (owner, 2026-08-25: "open street map should be
+   hidden"). Tracked mono at its 11px floor: metadata, and a legal notice, so it
+   shrinks and never disappears. `pointer-events` is deliberate: unlike the line
+   it replaces, this one has to be tappable. */
 .mmm-map-attrib {
   position: absolute;
   right: 10px;
   top: 92px;
   z-index: 15;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--hair-40);
+  border-radius: 999px;
+  background: rgba(var(--bg-base-rgb), .78);
   font-family: var(--font-mono);
-  /* Metadata, not content — the mono-eyebrow shape at its 11px floor (owner,
-     2026-08-24: "Open maps moniker too big"). A legal credit, so it shrinks;
-     it never hides. */
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
   color: var(--ink-3);
-  pointer-events: none;
+  cursor: pointer;
 }
+
 /* The chart's ornaments, from map.html: a compass rose under the credit, and a
    real maplibre scale bar under that — an instrument, not a decoration, so it
    comes from ScaleControl rather than being drawn. */
 .mmm-map-compass {
   position: absolute;
   right: 14px;
-  top: 116px;
+  /* Under the credit disc, which is 44px tall from y=92 (the tap floor applies
+     to it — it is a button now). Moving the compass up into the slot the old
+     credit LINE vacated put the two on top of each other, collapsed and
+     expanded alike; the stack is credit -> compass -> scale, in that order. */
+  top: 144px;
   z-index: 15;
   width: 46px;
   height: 46px;
@@ -349,7 +368,13 @@ html:has(.mmm-frame) {
   opacity: 0.72;
   pointer-events: none;
 }
-.mmm-map-canvas .maplibregl-ctrl-top-right { top: 168px; right: 14px; }
+/* The scale bar and the credit disc share this stack, under the compass.
+   `right` is 18px rather than 14: the scale's LABEL is centred inside a rule
+   whose width is the real distance, so when the label is wider than the rule it
+   overflows both ways, and at 14px the right half went off the viewport — the
+   clipped "3000 F" in the report. The rule's own maxWidth went 56 -> 96 in
+   MmmMap for the same reason: a longer rule fits its own label. */
+.mmm-map-canvas .maplibregl-ctrl-top-right { top: 198px; right: 18px; }
 .mmm-map-canvas .maplibregl-ctrl-scale {
   background: none;
   /* An instrument mark, not a frame (owner, 2026-08-24: "Line through map for
@@ -367,22 +392,14 @@ html:has(.mmm-frame) {
   text-align: center;
 }
 
-/* ── The torn edge ────────────────────────────────────────────────────────
-   map-treasure.html's `.char`: a frame displaced by fractal noise (the #torn
-   SVG filter MmmMap renders), desk colour outside the tear, a charred line and
-   a scorch halo just inside it. Decoration — never eats a drag — and sits over
-   the grain, under the pins. The inset is negative so the UNdisplaced frame
-   starts past the viewport and only its noise-torn edge shows. */
-.mmm-map-char {
-  position: absolute;
-  inset: -8px;
-  pointer-events: none;
-  z-index: 2;
-  filter: url(#mmm-torn);
-}
-.mmm-map-char-desk { position: absolute; inset: 0; border: 16px solid var(--bg); }
-.mmm-map-char-scorch { position: absolute; inset: 15px; border: 9px solid rgba(110, 70, 26, .14); }
-.mmm-map-char-burn { position: absolute; inset: 13px; border: 4px solid rgba(74, 46, 14, .38); }
+/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map design
+   (doesn't fit with the view)"). `.mmm-map-char` and its desk/scorch/burn
+   layers were map-treasure.html's `.char`, a frame displaced by fractal noise
+   so the paper's edge tore differently on every inch. The chart keeps its ruled
+   grid, its compass and its sepia — the paper stops pretending to be torn.
+   Do not reinstate it: the map fills a rectangular frame with a search bar
+   sitting on its top edge, and a ragged border under a straight-edged control
+   reads as a rendering fault rather than as paper. */
 
 /* ── X marks the show ── two hand-cut strokes (map-treasure.html), each pin
    jittered a few degrees by MmmMap so no two X's sit identically — a stamped
@@ -594,6 +611,15 @@ html:has(.mmm-frame) {
   z-index: 25;
   background: var(--bg);
   overflow-y: auto;
+  /* The pane scrolls DOWN and never sideways (owner, 2026-08-25: "Me category
+     needs fixed positioning - currently can be dragged out of frame in
+     mobile"). This is not redundant with the default: CSS computes a `visible`
+     overflow-x to `auto` when the other axis is not visible, so declaring only
+     overflow-y silently made the pane pannable, and any child a pixel too wide
+     let a thumb drag the whole surface out of the frame. Nothing here wants it
+     — the one horizontal scroller in the shell, the recents rail, scrolls
+     inside itself precisely so the pane does not have to. */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,
