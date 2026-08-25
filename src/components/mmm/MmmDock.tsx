@@ -252,7 +252,19 @@ export function MmmDock({
   }, []);
 
   /* ── the shared light ────────────────────────────────────────────────── */
-  const paintLight = useCallback(() => {
+  /**
+   * COALESCED to one paint per frame. The raw version ran the five gradient
+   * string-builds and style writes below once per EVENT — and on an iPhone
+   * `pointermove` arrives at up to 120Hz and `deviceorientation` at a steady
+   * 60Hz whenever the page is open, so the light alone was continuous paint
+   * work on the main thread. That is the owner's "map dragging is jerky, same
+   * with thumb wheel" (2026-08-25): desktop has no orientation stream and CI
+   * drives a mouse, so only a real handset ever paid it. Callers keep calling
+   * paintLight() freely; it now just marks the light dirty and the frame
+   * paints once. paintLightNow stays for the mount's first paint.
+   */
+  const lightRaf = useRef(0);
+  const paintLightNow = useCallback(() => {
     const L = light.current;
     /* The knob is a shallow dome, so the highlight's travel across it is a
        FRACTION of the pointer's travel across the dock — a 1:1 mapping reads
@@ -293,6 +305,13 @@ export function MmmDock({
       stickAoRef.current.style.boxShadow = L.sp ? 'inset 0 1.5px 2.5px rgba(18,10,2,.6)' : 'none';
     }
   }, []);
+  const paintLight = useCallback(() => {
+    if (lightRaf.current) return;
+    lightRaf.current = requestAnimationFrame(() => {
+      lightRaf.current = 0;
+      paintLightNow();
+    });
+  }, [paintLightNow]);
 
   /* ── the knob ────────────────────────────────────────────────────────── */
   const paintKnob = useCallback(() => {
@@ -334,6 +353,22 @@ export function MmmDock({
    */
   const fitCanvas = useRef<CanvasRenderingContext2D | null>(null);
   const fitCache = useRef<Map<string, number>>(new Map());
+  /* The drum's measured geometry — resting size, window width, type face —
+     CACHED here and refreshed on mount and resize, never read inside
+     paintDial: getComputedStyle and clientWidth both force style/layout work,
+     and paintDial runs once per pointer frame. (The resting size was being
+     re-read per frame before this too; the cache fixes both.) */
+  const dialGeom = useRef({ rest: 26, maxW: 0, family: '' });
+  const measureDialGeom = useCallback(() => {
+    const row = stationRef.current?.parentElement;
+    if (!row) return;
+    dialGeom.current = {
+      rest: parseFloat(getComputedStyle(row).getPropertyValue('--mmm-drum-rest')) || 26,
+      maxW: row.clientWidth - 48,
+      family: stationRef.current ? getComputedStyle(stationRef.current).fontFamily : '',
+    };
+    fitCache.current.clear();
+  }, []);
   const fittedRest = useCallback((label: string, rest: number, maxW: number, family: string) => {
     const key = `${label}|${rest}|${maxW}`;
     const cached = fitCache.current.get(key);
@@ -360,12 +395,7 @@ export function MmmDock({
     /* The resting type size comes from the stylesheet (`--mmm-drum-rest`), so
        the 375px step-down lives with the rest of the geometry — see the note
        on .mmm-dial-stations. */
-    const row = stationRef.current?.parentElement;
-    const rest = row ? parseFloat(getComputedStyle(row).getPropertyValue('--mmm-drum-rest')) || 26 : 26;
-    /* The window a resting name must fit: the row, minus the two step
-       affordances overhanging its ends. The label's real face, for measuring. */
-    const maxW = row ? row.clientWidth - 48 : 0;
-    const family = stationRef.current ? getComputedStyle(stationRef.current).fontFamily : '';
+    const { rest, maxW, family } = dialGeom.current;
     const slots: [HTMLElement | null, number][] = [
       [wlRef.current, -1],
       [stationRef.current, 0],
@@ -530,10 +560,13 @@ export function MmmDock({
     reduced.current = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches;
     const bar = barRef.current;
     if (!bar) return undefined;
-    paintLight();
+    measureDialGeom();
+    paintLightNow();
     paintKnob();
     paintDial();
     paintStick();
+    const onResize = () => { measureDialGeom(); paintDial(); };
+    window.addEventListener('resize', onResize);
 
     const onMove = (event: PointerEvent) => {
       const r = bar.getBoundingClientRect();
@@ -551,8 +584,14 @@ export function MmmDock({
        absent or permission-gated. */
     const onTiltDevice = (event: DeviceOrientationEvent) => {
       if (event.gamma == null || event.beta == null || !bar.isConnected) return;
-      light.current.x = 50 + Math.max(-1, Math.min(1, event.gamma / 28)) * 42;
-      light.current.y = 30 + Math.max(-1, Math.min(1, (event.beta - 40) / 30)) * 32;
+      const nx = 50 + Math.max(-1, Math.min(1, event.gamma / 28)) * 42;
+      const ny = 30 + Math.max(-1, Math.min(1, (event.beta - 40) / 30)) * 32;
+      /* The stream never stops; a handset lying still still reports at 60Hz
+         with sub-degree noise. Below half a percent of travel nothing visible
+         changes, so nothing is painted. */
+      if (Math.abs(nx - light.current.x) < 0.5 && Math.abs(ny - light.current.y) < 0.5) return;
+      light.current.x = nx;
+      light.current.y = ny;
       paintLight();
     };
     bar.addEventListener('pointermove', onMove);
@@ -606,9 +645,11 @@ export function MmmDock({
       bar.removeEventListener('pointermove', onMove);
       bar.removeEventListener('pointerleave', onLeave);
       window.removeEventListener('deviceorientation', onTiltDevice);
+      window.removeEventListener('resize', onResize);
       knob?.removeEventListener('wheel', swallow);
       dial?.removeEventListener('wheel', swallow);
       cancelAnimationFrame(raf);
+      if (lightRaf.current) cancelAnimationFrame(lightRaf.current);
       for (const key of Object.keys(currentSprings)) {
         cancelAnimationFrame(currentSprings[key].raf);
         delete currentSprings[key];
@@ -685,7 +726,13 @@ export function MmmDock({
             light.current.pressed = false;
             paintLight();
             if (!kd) return;
-            const tap = kd.moved < 4, kv = kd.v;
+            /* 10, not 4: a thumb on glass jitters 5-8px during a deliberate
+               tap, so at 4px a finger's tap read as a tiny drag that sprang
+               back — the knob "didn't work" on a phone while every mouse and
+               synthetic tap passed (owner, 2026-08-25: "Moving between map
+               music me didn't work"). 10 is still under a third of one detent's
+               travel (32px), so a real turn can never be mistaken for a tap. */
+            const tap = kd.moved < 10, kv = kd.v;
             knobDrag.current = null;
             if (tap) {
               knobDragging.current = false;
@@ -912,7 +959,11 @@ export function MmmDock({
                 tilt.current = { x: 0, y: 0 };
                 paintStick();
               }
-              if (!fired && moved < 6) togglePlayRef.current();
+              /* Same finger-jitter allowance as the knob's tap: a thumb tap
+                 wobbles more than 6px on glass, and a "dead" transport was the
+                 report. 10 stays well under STICK_THROW (18), so a throw can
+                 never read as a tap. */
+              if (!fired && moved < 10) togglePlayRef.current();
             }}
             type="button"
           >

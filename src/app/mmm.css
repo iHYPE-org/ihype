@@ -102,6 +102,16 @@ html.mmm-locked .site-shell > main {
   transform: none !important;
 }
 
+/* iOS Safari extends the PAGE's background into the gap between the web
+   content and its own bottom bar (and into rubber-band overscroll). That gap
+   sits directly under the dock, so with the page ground there the walnut ended
+   in a hard edge against a Safari-painted cream strip — the owner's "slight
+   line under console" (2026-08-25). Painting the html ground walnut while the
+   console is mounted makes whatever Safari extends read as the cabinet the
+   dock is part of. Scoped with :has so nothing outside /app/* changes. */
+html:has(.mmm-frame) {
+  background: var(--walnut-3);
+}
 .mmm-frame {
   position: fixed;
   inset: 0;
