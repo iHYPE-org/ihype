@@ -331,7 +331,6 @@ test.describe('Music · Map · Me shell', () => {
     '/app/music/recommended', '/app/music/playlists',
     // Library registers the liked tracks; an account with none falls through
     // to the radio, which is still "the transport is never inert".
-    '/app/music/library',
   ] as const) {
     test(`the joystick starts playback on ${surface}`, async ({ page, request }) => {
       /* Asked before the page loads, and cached across the file — see

@@ -155,6 +155,10 @@ const nextConfig = {
       { source: '/pages', destination: '/app/me/profiles', permanent: false },
       { source: '/search', destination: '/app/music/discover?focus=search', permanent: false },
       { source: '/radio/station', destination: '/app/music/radio', permanent: false },
+      /* Library folded into Playlists (2026-08-25). A config redirect rather
+         than a 404: the tab was live and linkable, and `permanent: false` for
+         the reason every entry here is — a 308 is cached effectively forever. */
+      { source: '/app/music/library', destination: '/app/music/playlists', permanent: false },
       { source: '/radio', destination: '/app/music/radio', permanent: false },
       { source: '/for-you', destination: '/app/music/recommended', permanent: false },
       { source: '/this-weekend', destination: '/app/map?layer=events', permanent: false },
