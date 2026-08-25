@@ -1054,7 +1054,14 @@ html:has(.mmm-frame) {
   color: var(--ink-on-accent);
 }
 
-/* ME's cards. There is one on screen at a time and the dial is what picks it
+/* ── ME cards ─────────────────────────────────────────────────────────────
+   This banner is a SLICE BOUNDARY as well as a heading: `measure:datepick`
+   cuts the date picker's stylesheet out of this file between the MAP banner
+   above and this line, and fails loudly when it cannot find either. It read
+   "ME accordions" until the accordion was deleted, and renaming it here means
+   renaming it in `scripts/measure-datepicker.mjs` too.
+
+   ME's cards. There is one on screen at a time and the dial is what picks it
    (owner, 2026-08-25: "Still showing multi options instead of single subnav
    using thumb wheel"), so there is no header row and no chevron left to style —
    `.mmm-me-accordion`, `-text`, `-label`, `-detail` and `-chevron` are deleted
