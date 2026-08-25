@@ -1657,9 +1657,16 @@ html:has(.mmm-frame) {
    spanning the whole bar, rewritten live by the pointer/tilt light — so on a
    phone the largest surface in the app carried a moving highlight that tracked
    the handset's every tilt, which reads as glare rather than as material. The
-   CONTROLS keep their speculars (`.mmm-knob-spec`, the dial glass, the stick
-   cap): a highlight the size of a knob describes a dome, and one the size of
-   the cabinet just moves. Do not reinstate it on the base. */
+   controls kept theirs at the time, on the argument that a highlight the size
+   of a knob describes a dome while one the size of the cabinet just moves.
+
+   NOTHING ON THE DOCK REFLECTS ANY MORE (owner, 2026-08-25: "Remove
+   reflective element from console"). `.mmm-knob-spec`, `.mmm-knob-sheen`, the
+   dial glass sheen and the stick cap's specular all went with the fascia's.
+   That argument above is recorded because it lost: the request came twice, and
+   a dome that has to be explained is not describing itself. What remains is
+   occlusion and light SOURCES — the contact shadows, the pointer, the lamp —
+   never an image of the room. Do not reinstate any of them. */
 /* The machined plate the three controls are seated in. */
 .mmm-dock-plate {
   position: relative;
@@ -1801,22 +1808,17 @@ html:has(.mmm-frame) {
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, .4) 0%, rgba(255, 252, 240, .1) 26%, rgba(52, 30, 6, .34) 49%, rgba(58, 34, 8, .16) 56%, rgba(255, 214, 150, .26) 76%, rgba(255, 232, 190, .1) 100%);
 }
-/* The anisotropic glint — scattered along the lathe path, a property of the
-   surface, so it is correct for this one to turn with the rotor. Kept faint:
-   the bright specular is a reflection of the room and must NOT turn (that one
-   is .mmm-knob-spec, screen-space, above the rotor). */
+/* The anisotropic glint — light scattered ALONG the lathe path, which is a
+   property of the machined surface rather than an image of the room, so it is
+   correct for this one to turn with the rotor and it survives the removal of
+   the dock's reflections. It is the last bright thing on the brass; if the
+   knob still reads as glossy, this is the next one to go. */
 .mmm-knob-glint {
   position: absolute;
   inset: 13px;
   border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(30% 22% at 33% 22%, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .07) 42%, transparent 72%);
-}
-.mmm-knob-sheen {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: linear-gradient(128deg, rgba(255, 255, 255, .38) 0%, transparent 38%, transparent 64%, rgba(255, 255, 255, .12) 100%);
 }
 .mmm-knob-pointer {
   position: absolute;
@@ -1828,18 +1830,6 @@ html:has(.mmm-frame) {
   border-radius: 0 0 2px 2px;
   background: linear-gradient(180deg, #fff8e6, #e8d5aa);
   box-shadow: 0 0 5px rgba(255, 240, 200, .6);
-}
-/* SCREEN-SPACE SPECULAR: a reflection is an image of the light source, so it
-   stays where the light is while the object turns underneath it. Painting it
-   inside the rotor made the highlight orbit with the knurling — the single
-   most legible wrongness in the old knob. Background written live. */
-.mmm-knob-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
 }
 /* Contact shadow, driven by press: ambient occlusion is a function of how
    close two surfaces are, so pressing the knob into its seat darkens and
@@ -1956,17 +1946,6 @@ html:has(.mmm-frame) {
   background:
     radial-gradient(30% 42% at 66% 60%, rgba(255, 255, 255, .045) 0%, transparent 70%),
     radial-gradient(20% 30% at 32% 38%, rgba(255, 255, 255, .035) 0%, transparent 70%);
-}
-/* Dial glass sheen — flat pane, so the live reflection tracks near 1:1; the
-   knob's compression here would read as bowed glass. Background written live. */
-.mmm-dial-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
 }
 /* Station row: a real drum. All three labels are identical in style and driven
    purely by their continuous distance from centre — three points on a rotating
@@ -2234,15 +2213,8 @@ html:has(.mmm-frame) {
   box-shadow: inset 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent), 0 0 12px -2px color-mix(in oklab, var(--accent) 50%, transparent);
 }
 .mmm-stick[data-lit='true'] .mmm-stick-lit { opacity: 1; }
-/* Cap specular and press occlusion — written live, same split as the knob. */
-.mmm-stick-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
-}
+/* Press occlusion, written live. The cap's specular was removed with the
+   dock's other reflections (2026-08-25). */
 .mmm-stick-ao {
   position: absolute;
   inset: 0;

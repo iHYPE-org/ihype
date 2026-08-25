@@ -142,11 +142,9 @@ export function MmmDock({
   const barRef = useRef<HTMLDivElement>(null);
   const rotorRef = useRef<HTMLDivElement>(null);
   const knobRef = useRef<HTMLButtonElement>(null);
-  const knobSpecRef = useRef<HTMLDivElement>(null);
   const knobAoRef = useRef<HTMLDivElement>(null);
   const readoutRef = useRef<HTMLDivElement>(null);
   const dialRef = useRef<HTMLDivElement>(null);
-  const dialSpecRef = useRef<HTMLDivElement>(null);
   const backlightRef = useRef<HTMLDivElement>(null);
   const spillRef = useRef<HTMLDivElement>(null);
   const wlRef = useRef<HTMLDivElement>(null);
@@ -156,7 +154,6 @@ export function MmmDock({
   const card2Ref = useRef<HTMLDivElement>(null);
   const stickRef = useRef<HTMLButtonElement>(null);
   const stickShadowRef = useRef<HTMLDivElement>(null);
-  const stickSpecRef = useRef<HTMLDivElement>(null);
   const stickAoRef = useRef<HTMLDivElement>(null);
 
   /* ── live state, none of it React state ──────────────────────────────── */
@@ -168,7 +165,13 @@ export function MmmDock({
   const committedStation = useRef(activeIdx);
   const tilt = useRef({ x: 0, y: 0 });
   const pressed = useRef(false);
-  const light = useRef({ x: 33, y: 22, pressed: false, sp: false });
+  /* Press state only. The dock carried a shared LIGHT until 2026-08-25 —
+     pointer- and tilt-driven speculars on the knob, dial glass and stick cap.
+     The owner retired the reflections ("Remove reflective element from
+     console"), and with them went the only reader of a light POSITION, so the
+     x/y, the pointer tracking and the orientation stream are all gone. What
+     remains is occlusion: pressing a control tightens its contact shadow. */
+  const light = useRef({ pressed: false, sp: false });
   const springs = useRef<Record<string, Spring>>({});
   const audio = useRef<AudioContext | null>(null);
   const booting = useRef(false);
@@ -255,65 +258,32 @@ export function MmmDock({
     } catch { /* no audio */ }
   }, []);
 
-  /* ── the shared light ────────────────────────────────────────────────── */
+  /* ── press occlusion ────────────────────────────────────────────────── */
   /**
-   * COALESCED to one paint per frame. The raw version ran the five gradient
-   * string-builds and style writes below once per EVENT — and on an iPhone
-   * `pointermove` arrives at up to 120Hz and `deviceorientation` at a steady
-   * 60Hz whenever the page is open, so the light alone was continuous paint
-   * work on the main thread. That is the owner's "map dragging is jerky, same
-   * with thumb wheel" (2026-08-25): desktop has no orientation stream and CI
-   * drives a mouse, so only a real handset ever paid it. Callers keep calling
-   * paintLight() freely; it now just marks the light dirty and the frame
-   * paints once. paintLightNow stays for the mount's first paint.
+   * Ambient occlusion is a function of how close two surfaces are, so pressing
+   * a control into its seat darkens and TIGHTENS its shadow. That is all this
+   * writes now.
+   *
+   * It used to paint three speculars from a shared light position, driven by
+   * `pointermove` (120Hz on ProMotion) and `deviceorientation` (a steady 60Hz
+   * whenever the page is open, even lying still). Coalescing it to one paint
+   * per frame was what fixed the owner's "map dragging is jerky, same with
+   * thumb wheel"; removing the reflections removes the streams themselves, so
+   * the dock now paints only when something is actually pressed — a few writes
+   * per interaction rather than a continuous load no desktop ever paid.
    */
-  const lightRaf = useRef(0);
-  const paintLightNow = useCallback(() => {
+  const paintLight = useCallback(() => {
     const L = light.current;
-    /* The knob is a shallow dome, so the highlight's travel across it is a
-       FRACTION of the pointer's travel across the dock — a 1:1 mapping reads
-       as a sticker sliding over the surface. 0.34 is the compression that
-       looked like curvature. */
-    const hx = 50 + (L.x - 50) * 0.34, hy = 34 + (L.y - 50) * 0.22;
-    if (knobSpecRef.current) {
-      knobSpecRef.current.style.background =
-        /* design-exempt: the specular is the LIGHT, not ink — white by physics, blended via `screen` so it only ever brightens. */
-        'radial-gradient(26% 19% at ' + hx + '% ' + hy + '%, rgba(255,255,255,' + (L.pressed ? 0.62 : 0.86)
-        + ') 0%, rgba(255,250,236,.3) 38%, transparent 70%),'
-        + 'radial-gradient(62% 52% at ' + (hx + 8) + '% ' + (hy + 26) + '%, rgba(255,224,170,.22) 0%, transparent 74%)';
-    }
     if (knobAoRef.current) {
-      /* Pressed: the gap closes, so the occlusion tightens and deepens. */
       knobAoRef.current.style.boxShadow = L.pressed
         ? 'inset 0 1.5px 2.5px rgba(18,10,2,.75), 0 1px 2px rgba(18,10,2,.6)'
         : 'inset 0 0.5px 1px rgba(18,10,2,.3), 0 3px 7px rgba(18,10,2,.38)';
     }
     if (knobRef.current) knobRef.current.style.transform = L.pressed ? 'translateY(0.75px)' : 'none';
-    /* One light, THREE surfaces now — same origin, different response per
-       material. The cabinet itself no longer reflects: see the note where
-       `.mmm-dock-barspec` used to be defined. */
-    if (dialSpecRef.current) {
-      dialSpecRef.current.style.background =
-        /* design-exempt: the light again — glass reflects it near 1:1. */
-        'radial-gradient(26% 62% at ' + L.x + '% ' + L.y + '%, rgba(255,255,255,.2) 0%, rgba(255,255,255,.05) 48%, transparent 72%)';
-    }
-    if (stickSpecRef.current) {
-      stickSpecRef.current.style.background =
-        /* design-exempt: the light again, compressed by the cap's dome. */
-        'radial-gradient(30% 22% at ' + hx + '% ' + hy + '%, rgba(255,255,255,' + (L.sp ? 0.5 : 0.78)
-        + ') 0%, rgba(255,250,236,.24) 40%, transparent 70%)';
-    }
     if (stickAoRef.current) {
       stickAoRef.current.style.boxShadow = L.sp ? 'inset 0 1.5px 2.5px rgba(18,10,2,.6)' : 'none';
     }
   }, []);
-  const paintLight = useCallback(() => {
-    if (lightRaf.current) return;
-    lightRaf.current = requestAnimationFrame(() => {
-      lightRaf.current = 0;
-      paintLightNow();
-    });
-  }, [paintLightNow]);
 
   /* ── the knob ────────────────────────────────────────────────────────── */
   const paintKnob = useCallback(() => {
@@ -654,7 +624,7 @@ export function MmmDock({
     const bar = barRef.current;
     if (!bar) return undefined;
     measureDialGeom();
-    paintLightNow();
+    paintLight();
     paintKnob();
     paintDial();
     paintStick();
@@ -675,35 +645,6 @@ export function MmmDock({
       }).catch(() => { /* no font metrics to refine; the mount's fit stands */ });
     }
 
-    const onMove = (event: PointerEvent) => {
-      const r = bar.getBoundingClientRect();
-      light.current.x = ((event.clientX - r.left) / r.width) * 100;
-      light.current.y = ((event.clientY - r.top) / r.height) * 100;
-      paintLight();
-    };
-    const onLeave = () => {
-      light.current.x = 33; light.current.y = 22; light.current.pressed = false;
-      paintLight();
-    };
-    /* On a phone the room doesn't follow a pointer — it follows the DEVICE.
-       Tilt the handset and the specular slides across the brass exactly as it
-       would on real metal. Falls back silently where orientation events are
-       absent or permission-gated. */
-    const onTiltDevice = (event: DeviceOrientationEvent) => {
-      if (event.gamma == null || event.beta == null || !bar.isConnected) return;
-      const nx = 50 + Math.max(-1, Math.min(1, event.gamma / 28)) * 42;
-      const ny = 30 + Math.max(-1, Math.min(1, (event.beta - 40) / 30)) * 32;
-      /* The stream never stops; a handset lying still still reports at 60Hz
-         with sub-degree noise. Below half a percent of travel nothing visible
-         changes, so nothing is painted. */
-      if (Math.abs(nx - light.current.x) < 0.5 && Math.abs(ny - light.current.y) < 0.5) return;
-      light.current.x = nx;
-      light.current.y = ny;
-      paintLight();
-    };
-    bar.addEventListener('pointermove', onMove);
-    bar.addEventListener('pointerleave', onLeave);
-    window.addEventListener('deviceorientation', onTiltDevice);
 
     /* React attaches wheel listeners passively, so a preventDefault inside
        onWheel does nothing and the page scrolls out from under the gesture —
@@ -749,14 +690,10 @@ export function MmmDock({
 
     const currentSprings = springs.current;
     return () => {
-      bar.removeEventListener('pointermove', onMove);
-      bar.removeEventListener('pointerleave', onLeave);
-      window.removeEventListener('deviceorientation', onTiltDevice);
       window.removeEventListener('resize', onResize);
       knob?.removeEventListener('wheel', swallow);
       dial?.removeEventListener('wheel', swallow);
       cancelAnimationFrame(raf);
-      if (lightRaf.current) cancelAnimationFrame(lightRaf.current);
       for (const key of Object.keys(currentSprings)) {
         cancelAnimationFrame(currentSprings[key].raf);
         delete currentSprings[key];
@@ -869,10 +806,8 @@ export function MmmDock({
             <div className="mmm-knob-lathe" />
             <div className="mmm-knob-env" />
             <div className="mmm-knob-glint" />
-            <div className="mmm-knob-sheen" />
             <div className="mmm-knob-pointer" />
           </div>
-          <div aria-hidden="true" className="mmm-knob-spec" ref={knobSpecRef} />
           <div aria-hidden="true" className="mmm-knob-ao" ref={knobAoRef} />
           <div aria-hidden="true" className="mmm-knob-readout" ref={readoutRef} />
         </button>
@@ -929,7 +864,6 @@ export function MmmDock({
           <div aria-hidden="true" className="mmm-dial-backlight" ref={backlightRef} />
           <div aria-hidden="true" className="mmm-dial-spill" ref={spillRef} />
           <div aria-hidden="true" className="mmm-dial-smudge" />
-          <div aria-hidden="true" className="mmm-dial-spec" ref={dialSpecRef} />
           <div className="mmm-dial-stations">
             <div aria-hidden="true" className="mmm-dial-station" ref={wlRef} />
             <button
@@ -1079,7 +1013,6 @@ export function MmmDock({
             <span aria-hidden="true" className="mmm-stick-dish" />
             <span aria-hidden="true" className="mmm-stick-rim" />
             <span aria-hidden="true" className="mmm-stick-lit" />
-            <span aria-hidden="true" className="mmm-stick-spec" ref={stickSpecRef} />
             <span aria-hidden="true" className="mmm-stick-ao" ref={stickAoRef} />
           </button>
         </div>
