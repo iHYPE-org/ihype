@@ -594,6 +594,15 @@ html:has(.mmm-frame) {
   z-index: 25;
   background: var(--bg);
   overflow-y: auto;
+  /* The pane scrolls DOWN and never sideways (owner, 2026-08-25: "Me category
+     needs fixed positioning - currently can be dragged out of frame in
+     mobile"). This is not redundant with the default: CSS computes a `visible`
+     overflow-x to `auto` when the other axis is not visible, so declaring only
+     overflow-y silently made the pane pannable, and any child a pixel too wide
+     let a thumb drag the whole surface out of the frame. Nothing here wants it
+     — the one horizontal scroller in the shell, the recents rail, scrolls
+     inside itself precisely so the pane does not have to. */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,

@@ -886,6 +886,34 @@ test.describe('ME with a real profile', () => {
     await expect(page).toHaveURL(/\/app\/(map|music|me)(\?|\/|$)/, { timeout: 15_000 });
   });
 
+  /* …and it goes back to WHERE YOU WERE, which is the half the assertion above
+     cannot see: `/app/map` matches that regex, so the test passed for a month
+     while the badge sent everyone to MAP regardless (owner, 2026-08-25: "should
+     take you back to the last main nav point ... not always map").
+     The cause was that the memory is a ref and this dock provokes a document
+     load — `navigate()` hard-assigns after 1.5s when a soft push will not
+     commit, which remounts the dock and wipes the ref. So this test is
+     deliberately written as TWO page loads: sessionStorage is what has to carry
+     the value, and a same-tab `goto` reproduces exactly what the rescue does. */
+  test('the nameplate returns to the main-nav page you came from, not MAP', async ({ page }) => {
+    await page.goto('/app/music/charts');
+    await expect(page.locator('.mmm-dock')).toBeVisible();
+
+    // A second document load, landing directly on a detail page.
+    await page.goto('/app/me?role=artist');
+    await page.getByRole('button', { name: /Profiles/ }).click();
+    const link = page.locator('a[href^="/app/artists/"]').first();
+    await expect(link).toBeVisible();
+    const href = await link.getAttribute('href');
+    await page.goto(href!);
+    await expect(page).toHaveURL(/\/app\/artists\//);
+
+    await page.locator('.mmm-dock-badge').click();
+    // ME was the last main-nav page visited, so that is where it must land —
+    // and specifically NOT /app/map, which is the bug this guards.
+    await expect(page).toHaveURL(/\/app\/me(\?|\/|$)/, { timeout: 15_000 });
+  });
+
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
     await page.goto('/app/me?role=fan');
     await expect(page.getByText(/Your HYPE link/i)).toBeVisible();

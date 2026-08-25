@@ -786,6 +786,18 @@ export function MmmSettings() {
         .settings-group { border: 0; border-radius: 0; overflow: visible; background: none; }
         .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid rgba(var(--surface-tint-rgb), .13); gap: 16px; }
         .settings-row:last-child { border-bottom: none; }
+        /* The text block must be allowed to SHRINK. A flex item defaults to
+           min-width:auto, which refuses to go below its content's intrinsic
+           width, so a long label, detail or email address pushed the row wider
+           than the pane instead of wrapping. Measured at 375px: right edge
+           428.8px against a 375px window — 54px of content a thumb could drag
+           the whole surface sideways to reach, which is the owner's "Me
+           category ... can be dragged out of frame in mobile". The pane now
+           refuses to pan (mmm.css), so without this the same rows would clip
+           instead. overflow-wrap:anywhere is for the unbroken case a recovery
+           email is. (No backticks in this comment: the block is a template
+           literal, so one would end it mid-stylesheet.) */
+        .settings-row > :first-child { min-width: 0; overflow-wrap: anywhere; }
         .settings-row-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
         .settings-row-detail { font-size: 0.9375rem; color: var(--ink-2); margin-top: 2px; }
         .settings-invite-note { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.5; margin: 10px 2px 0; }
