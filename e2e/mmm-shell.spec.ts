@@ -682,6 +682,32 @@ test.describe('Music · Map · Me shell', () => {
     ).toHaveAttribute('aria-expanded', 'true');
   });
 
+  /* The dial is ME's subnav, and it has to carry ALL FOUR options (owner,
+     2026-08-25: "Profiles My Tickets Info Settings for the four subnav options
+     in Me"). It used to carry only Info and Settings — `MMM_ME_PANELS`, the two
+     with rows — which was survivable while every card was on screen at once and
+     stopped being survivable the moment ME began showing one at a time: closing
+     the open card became the only route to the other three. Asserted by DRIVING
+     the dial, because the failure mode is a station that exists in a list and
+     reaches nothing. */
+  test('the dial carries ME\'s four subnav options, each opening its own card', async ({ page }) => {
+    await page.goto('/app/me');
+    const listed = () => page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
+    await expect(page.getByRole('tablist', { name: /Sections in ME/i })).toBeVisible();
+
+    // Nothing is open, so the whole index is on screen.
+    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
+
+    /* Step the dial through the remaining three. Each turn must leave exactly
+       one card, and the panels must reach the URL so they stay deep-linkable. */
+    const next = page.getByRole('button', { name: /Next station/i });
+    for (const expected of [['My Tickets'], ['Info'], ['Settings']]) {
+      await next.click();
+      await expect.poll(listed).toEqual(expected);
+    }
+    await expect(page).toHaveURL(/panel=settings/);
+  });
+
   /**
    * The assertions that were impossible without rows.
    *

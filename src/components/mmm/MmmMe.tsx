@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
 import { MmmTickets } from './MmmTickets';
+import { useRegisterStations } from './MmmStations';
 import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
 
@@ -138,6 +139,34 @@ function isMeSectionId(value: string | null): value is MeSectionId {
  * id therefore lives in the parent (`meGroup`), which makes "one at a time"
  * structural rather than a rule every toggle has to remember.
  */
+/**
+ * ME's four subnav options, as the DIAL's stations (owner, 2026-08-25:
+ * "Profiles My Tickets Info Settings for the four subnav options in Me").
+ *
+ * The dial used to offer only Info and Settings — `MMM_ME_PANELS`, the two that
+ * have rows — so half of ME's list was reachable only by scrolling to its card
+ * and tapping it. That was survivable while every card was on screen at once;
+ * it stopped being survivable the moment ME started showing one card at a time,
+ * because closing the open one became the only route back to the other three.
+ * The dial is the subnav, so the subnav has to be all four.
+ *
+ * Deliberately NOT added to `MMM_ME_PANELS`: that list drives the panel loop and
+ * indexes `ME_PANEL_ROWS`, and Profiles and My Tickets have no rows there — they
+ * are sections with bodies of their own. Two lists, because they answer two
+ * different questions.
+ *
+ * Module-level so its identity is stable. `useRegisterStations` compares
+ * `stations` by reference in its effect, so an array rebuilt each render would
+ * register on every render, set provider state, and re-render — the render loop
+ * `useRegisterQueue` exists to prevent one floor up.
+ */
+const ME_STATIONS: readonly { id: string; label: string }[] = [
+  { id: 'profiles', label: 'Profiles' },
+  { id: 'tickets', label: 'My Tickets' },
+  { id: 'info', label: 'Info' },
+  { id: 'settings', label: 'Settings' },
+];
+
 function Accordion({
   children,
   detail,
@@ -289,6 +318,39 @@ export function MmmMe({ data }: { data: MmmMeData }) {
     // current one, and Back would walk through them one dead step at a time.
     if (!isOpen && openPanel) setPanel(null);
   };
+
+  /* Wire the four to the dial. The callback goes through a ref so its identity
+     is permanently stable — same reason and same shape as `navigateRef` in
+     MmmDock — because `useRegisterStations` also depends on `onChange` by
+     reference, and this one closes over `openPanel`, the router and the search
+     params, all of which change. */
+  const selectStation = useRef<(id: string) => void>(() => {});
+  selectStation.current = (id: string) => {
+    if (id === 'profiles' || id === 'tickets') {
+      setMeGroup(id);
+      // Symmetric with toggleSection: only touch the URL when there is a panel
+      // to close, or every dial turn pushes a history entry identical to the
+      // current one and Back walks through dead steps.
+      if (openPanel) setPanel(null);
+      return;
+    }
+    if (isMePanelId(id)) {
+      setPanel(id);
+      setMeGroup('');
+    }
+  };
+  const onStationChange = useCallback((id: string) => selectStation.current(id), []);
+
+  useRegisterStations({
+    stations: ME_STATIONS,
+    /* The open card, or the first when nothing is open. The dial must always
+       name a real station — the vendored TunerDial warns and silently falls back
+       to index 0 when handed an `active` naming nothing, which is a confident
+       wrong readout — so "nothing open" shows Profiles rather than blank. */
+    active: openSection ?? openPanel ?? ME_STATIONS[0].id,
+    onChange: onStationChange,
+    label: 'Sections in ME',
+  });
 
   const copy = async () => {
     if (!data.hypeLink) return;
