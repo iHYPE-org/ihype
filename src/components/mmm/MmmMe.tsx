@@ -521,8 +521,14 @@ export function MmmMe({ data }: { data: MmmMeData }) {
              is a card here and never a role in the switcher — it has
              /advertise/dashboard, not a dashboard of this shape. Hidden once
              the account has one: this is an ADD button and there is nothing to
-             add twice. */
-          <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/new">
+             add twice.
+
+             Points at /start, the form that CREATES the AdvertiserAccount. It
+             used to point at /new, the campaign builder — so the one button
+             offering the role could not confer it, and the only route that
+             could (`/api/advertise/register`) refuses an email that already has
+             an account, i.e. every member who could see this button. */
+          <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/start">
             <span aria-hidden="true">＋</span>
             Add advertiser profile
             <span className="mmm-me-add-chip">Verified</span>
