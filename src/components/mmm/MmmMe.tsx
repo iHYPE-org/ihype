@@ -263,6 +263,24 @@ export function MmmMe({ data }: { data: MmmMeData }) {
     setMeGroup('');
   };
 
+  /**
+   * ME shows the WHOLE list, or the one thing you picked — never both (owner,
+   * 2026-08-25: "Me needs to only show the subnav selected, rather than the
+   * complete list and the selected list").
+   *
+   * Profiles, My Tickets, Info, Settings and the admin row are five cards in
+   * one visual list to a member, whatever the code calls them, and opening one
+   * used to leave the other four stacked underneath its body. With Info open
+   * that reads as the legal rows having grown a Settings row of their own.
+   *
+   * Folding on "is anything open" rather than per-card keeps this honest across
+   * the two stores the group is split over — `meGroup` up here, `panel` in the
+   * URL — which is the same reason `togglePanel` and `toggleSection` each clear
+   * the other. One value cannot hold two open drawers; this makes the same
+   * thing true of what is DRAWN.
+   */
+  const anythingOpen = openSection !== null || openPanel !== null;
+
   const toggleSection = (id: MeSectionId) => {
     const isOpen = openSection === id;
     setMeGroup(isOpen ? '' : id);
@@ -361,6 +379,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
+      {(!anythingOpen || openSection === 'profiles') && (
       <Accordion
         detail="Fan · add artist, venue or advertiser"
         label="Profiles"
@@ -455,7 +474,9 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </p>
       <AboutMeActivity data={data} />
       </Accordion>
+      )}
 
+      {(!anythingOpen || openSection === 'tickets') && (
       <Accordion
         detail={data.ticketCount === null ? 'Wallet · QR codes · transfers' : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · wallet, QR and transfers`}
         label="My Tickets"
@@ -468,6 +489,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             session — the same trap row 273 closed for the LISTEN destinations. */}
         <MmmTickets tickets={data.tickets} />
       </Accordion>
+      )}
 
       {/* Account panels open IN PLACE, one at a time. They used to be separate
           routes under /app/me/[panel]; the 2026-08-10 template makes ME one
@@ -491,6 +513,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           const panelId: MePanelId | null = isMePanelId(panel.id) ? panel.id : null;
           if (!panelId) return null;
           const open = openPanel === panelId;
+          // The other panels stand down while something is open.
+          if (anythingOpen && !open) return null;
           return (
             <div className="mmm-me-section" key={panel.id}>
               <button
@@ -537,7 +561,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             follows, and it is why removing this row entirely was not an
             option: the shell has no header, so without it an administrator has
             no route into the console at all. */}
-        {data.isAdmin && (
+        {data.isAdmin && !anythingOpen && (
           <div className="mmm-me-section">
             <Link className="mmm-me-accordion" href="/admin">
               <span className="mmm-me-accordion-text">
