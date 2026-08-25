@@ -1054,54 +1054,13 @@ html:has(.mmm-frame) {
   color: var(--ink-on-accent);
 }
 
-/* ── ME accordions ────────────────────────────────────────────────────────
-   Design System 8's ME surface. The section header is the control, so it takes
-   the full row and the whole thing is the hit target — a chevron-sized tap area
-   on a phone is the complaint this shell's touch floors exist to prevent. */
+/* ME's cards. There is one on screen at a time and the dial is what picks it
+   (owner, 2026-08-25: "Still showing multi options instead of single subnav
+   using thumb wheel"), so there is no header row and no chevron left to style —
+   `.mmm-me-accordion`, `-text`, `-label`, `-detail` and `-chevron` are deleted
+   with the control they drew. `-body` stays: it is the card's own padding, and
+   it is now the whole card. */
 .mmm-me-section { margin-bottom: 8px; }
-.mmm-me-accordion {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  background: var(--bg-surface);
-  border: 1px solid var(--ink-a45);
-  border-radius: var(--radius-panel);
-  box-shadow: 2px 3px 0 var(--ink-a10);
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion:hover,
-.mmm-me-accordion:focus-visible { border-color: var(--accent); }
-
-/* Label and detail stack, so the flex child that grows is the pair rather than
-   the label — otherwise the detail line sets its own width and the chevron
-   drifts inward on the rows that have one. */
-.mmm-me-accordion-text { flex: 1; min-width: 0; }
-.mmm-me-accordion-label {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-/* Says what is inside without opening it. Truncates rather than wrapping: a
-   two-line detail changes the row's height, and a column of rows at different
-   heights reads as unrelated cards instead of one list. */
-.mmm-me-accordion-detail {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.9375rem;
-  line-height: 1.35;
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Role-labelled rule above the stat grid inside Profiles. */
 .mmm-me-stats-head {
   display: flex;
@@ -1114,15 +1073,6 @@ html:has(.mmm-frame) {
   height: 1px;
   background: var(--hair-70);
 }
-.mmm-me-accordion-chevron {
-  flex: 0 0 auto;
-  font-size: 0.95rem;
-  line-height: 1;
-  color: var(--ink-2);
-  transform: rotate(90deg);
-  transition: transform var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion-chevron[data-open] { transform: rotate(-90deg); }
 .mmm-me-accordion-body { padding: 14px 2px 4px; }
 
 /* Supporting copy inside a section. Not --ink-3 at this size: it is a full

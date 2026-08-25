@@ -581,41 +581,40 @@ test.describe('Music · Map · Me shell', () => {
     }
   });
 
-  // The canonical panels are ACCORDIONS, not links. Legal now lives under
-  // Info and Accessibility under Settings, so neither is repeated at this
-  // level. Their retired routes still resolve to these parent drawers.
-  // The old routes redirect onto their canonical parent drawer, so this
-  // asserts the controls that exist rather than the navigation that moved.
-  test('the ME surface carries Settings and Info as rows, not a fan-out', async ({ page }) => {
+  /* ME's four sections are STATIONS ON THE DIAL, not a fan-out of links and no
+     longer a stack of headers (owner, 2026-08-25: "Still showing multi options
+     instead of single subnav using thumb wheel"). Legal lives under Info and
+     Accessibility under Settings, so neither is a section of its own; their
+     retired routes resolve onto the parent card. This asserts the sections that
+     exist rather than the navigation that moved. */
+  test('the ME surface carries Settings and Info as dial sections, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
-    // Matched on the LABEL SPAN, not on the button's text and not on its
-    // accessible name. Both of those are the label and the detail line
-    // concatenated — the two spans are adjacent with no whitespace between
-    // them, so the button reads "SettingsAccount · notifications · payments".
-    // That is why an anchored `/^Settings\b/` found nothing: there is no word
-    // boundary between "Settings" and "Account". The label span holds exactly
-    // the label, so an exact match on it is both correct and stable.
-    //
-    // Scoped this tightly on purpose: "Settings", "Info" and "Legal" are short
-    // common words, and a bare role query for them will find something else
-    // the first time this surface grows a control.
-    const panelFor = (label: string) =>
-      page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
-      });
+    /* Read the CARDS, by their own aria-label. There is no header row to match
+       on any more — the dial's drum is the label — so the section element
+       carries the name, and one exact-labelled card is the whole contract.
+       Scoped this tightly on purpose: "Settings", "Info" and "Legal" are short
+       common words, and a bare text query for them will find something else the
+       first time this surface grows a control. */
+    const cards = () => page.locator('.mmm-me-section:visible');
+    const labels = () => cards().evaluateAll((nodes) => nodes.map((n) => n.getAttribute('aria-label')));
 
-    for (const label of ['Info', 'Settings']) {
-      await expect(panelFor(label), `no ${label} panel`).toBeVisible();
+    // Exactly one card, and with nothing chosen it is Profiles.
+    await expect.poll(labels).toEqual(['Profiles']);
+
+    // Each of the four is reachable by its own deep link, alone.
+    for (const [param, label] of [
+      ['section=tickets', 'My Tickets'],
+      ['panel=legal', 'Info'],
+      ['panel=settings', 'Settings'],
+    ] as const) {
+      await page.goto(`/app/me?${param}`);
+      await expect.poll(labels, `deep link ${param}`).toEqual([label]);
     }
-    await expect(panelFor('Legal')).toHaveCount(0);
-    await expect(panelFor('Accessibility')).toHaveCount(0);
-    // Deliberately no count assertion: `.mmm-me-accordion` is also the class
-    // on the Profiles / My Tickets drawers above, so the page
-    // carries several of them and pinning a number here would break the next
-    // time ME grows a section — which is not what this test is about.
-    //
-    // Collapsed until asked: a drawer that starts open is not a drawer.
-    await expect(panelFor('Settings')).toHaveAttribute('aria-expanded', 'false');
+
+    // Legal and Accessibility are rows INSIDE those cards, never cards.
+    await expect(page.locator('.mmm-me-section[aria-label="Legal"]')).toHaveCount(0);
+    await expect(page.locator('.mmm-me-section[aria-label="Accessibility"]')).toHaveCount(0);
+
     /* The knob navigates on the tap — there is no menu to open and nothing to
        close behind it, which is the whole of what the arc's "no second level"
        rule was protecting. Stepping ME -> MAP -> MUSIC -> ME returns here. */
@@ -624,62 +623,59 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page).toHaveURL(/\/app\/map$/);
   });
 
-  // One drawer open at a time, page-wide — the two sections and the account
-  // panels are ONE group. This is the invariant that cannot be seen by
-  // reading either half alone: the sections are component state and the panels
-  // are the URL, so nothing about the types stops both being open at once.
-  test('ME shows the whole list, or the one thing you opened — never both', async ({ page }) => {
-    const drawer = (label: string) =>
-      page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: new RegExp(`^${label}$`) }),
-      });
-    const listed = () => page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
+  /* ONE CARD, ALWAYS — the invariant that replaced "one drawer open at a time".
+     It cannot be seen by reading either half alone: the two sections are
+     component state and the two panels are the URL, so nothing about the types
+     stops both being drawn at once.
+
+     This test has been rewritten twice by the same instruction, and the middle
+     version is the one worth remembering: it asserted that opening a card HID
+     the other three, which was true and still left the four-card index standing
+     whenever nothing was open. The index was the resting state, and the resting
+     state is what the owner was looking at. There is no index now. */
+  test('ME draws exactly one card, and the dial is what picks it', async ({ page }) => {
+    const labels = () =>
+      page.locator('.mmm-me-section:visible').evaluateAll((nodes) => nodes.map((n) => n.getAttribute('aria-label')));
 
     await page.goto('/app/me');
-    // Entering ME is a clean index. Nothing chooses itself.
-    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
-    for (const label of ['Profiles', 'My Tickets', 'Info', 'Settings']) {
-      await expect(drawer(label)).toHaveAttribute('aria-expanded', 'false');
-    }
+    await expect.poll(labels).toEqual(['Profiles']);
 
-    /* Opening one HIDES the rest (owner, 2026-08-25: "Me needs to only show the
-       subnav selected, rather than the complete list and the selected list").
-       This test used to assert the opposite — that the others stayed rendered
-       and merely collapsed — so it is rewritten rather than deleted: the
-       one-at-a-time rule it guarded still holds, and is now visible in the list
-       itself rather than in four aria-expanded attributes. */
-    await drawer('Profiles').click();
-    expect(await listed()).toEqual(['Profiles']);
-    await expect(drawer('Profiles')).toHaveAttribute('aria-expanded', 'true');
+    // Nothing on the card toggles it: the headers, chevrons and their hit
+    // targets are gone with the accordion.
+    await expect(page.locator('.mmm-me-accordion')).toHaveCount(0);
 
-    // Closing it brings the index back, which is the only way to reach another.
-    await drawer('Profiles').click();
-    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
+    /* The dial changes it, and a panel reaches the URL so it stays
+       deep-linkable and Back returns to the card before it. */
+    const next = page.getByRole('button', { name: /Next station/i });
+    await next.click();
+    await expect.poll(labels).toEqual(['My Tickets']);
+    await next.click();
+    await expect.poll(labels).toEqual(['Info']);
+    /* `panel=info`, not `panel=legal`: the dial writes the CANONICAL id, and
+       Legal is a row inside Info rather than a panel of its own. `?panel=legal`
+       still resolves here — `canonicalMePanelId` maps the retired id — which is
+       what keeps the old deep links working. */
+    await expect(page).toHaveURL(/panel=info/);
 
-    // A panel behaves identically, and puts itself in the URL so the drawer is
-    // deep-linkable and Back closes it.
-    await drawer('Settings').click();
+    /* Deliberately NOT asserting Back here. The two sections live in component
+       state and the two panels in the URL, so the history between them is not
+       one sequence — and the soft-navigation commit problem recorded in
+       DESIGN_SYNC row 309 makes what Back does from an /app route its own
+       question. Stepping on is what this test is about. */
+    await next.click();
+    await expect.poll(labels).toEqual(['Settings']);
     await expect(page).toHaveURL(/panel=settings/);
-    expect(await listed()).toEqual(['Settings']);
-
-    // And closing the panel clears its search param, or it would reopen on the
-    // next render from a URL nobody cleared.
-    await drawer('Settings').click();
-    await expect(page).not.toHaveURL(/panel=/);
-    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
   });
 
   // Deep-linking a panel shows that panel ALONE — the default index applies
   // only when nothing is open, or the URL's own drawer loads a screen down.
-  test('arriving on a panel deep link opens that panel and nothing else', async ({ page }) => {
+  test('arriving on a panel deep link shows that panel and nothing else', async ({ page }) => {
     await page.goto('/app/me?panel=legal');
-    const labels = await page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
-    expect(labels).toEqual(['Info']);
-    await expect(
-      page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: /^Info$/ }),
-      }),
-    ).toHaveAttribute('aria-expanded', 'true');
+    const cards = page.locator('.mmm-me-section:visible');
+    await expect.poll(() => cards.evaluateAll((nodes) => nodes.map((n) => n.getAttribute('aria-label')))).toEqual(['Info']);
+    // And it is the card's CONTENT that is on screen, not a header standing in
+    // for it — the legal rows the panel is a menu of.
+    await expect(cards.getByRole('link', { name: /Terms|Privacy/i }).first()).toBeVisible();
   });
 
   /* The dial is ME's subnav, and it has to carry ALL FOUR options (owner,
@@ -692,11 +688,12 @@ test.describe('Music · Map · Me shell', () => {
      reaches nothing. */
   test('the dial carries ME\'s four subnav options, each opening its own card', async ({ page }) => {
     await page.goto('/app/me');
-    const listed = () => page.locator('.mmm-me-accordion:visible .mmm-me-accordion-label').allTextContents();
+    const listed = () =>
+      page.locator('.mmm-me-section:visible').evaluateAll((nodes) => nodes.map((n) => n.getAttribute('aria-label')));
     await expect(page.getByRole('tablist', { name: /Sections in ME/i })).toBeVisible();
 
-    // Nothing is open, so the whole index is on screen.
-    expect(await listed()).toEqual(['Profiles', 'My Tickets', 'Info', 'Settings']);
+    // Arriving on ME lands on the first station.
+    await expect.poll(listed).toEqual(['Profiles']);
 
     /* Step the dial through the remaining three. Each turn must leave exactly
        one card, and the panels must reach the URL so they stay deep-linkable. */
@@ -726,11 +723,9 @@ test.describe('Music · Map · Me shell', () => {
     });
 
     test('a held ticket appears in ME and opens its sheet', async ({ page }) => {
-      await page.goto('/app/me');
-      const drawer = page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
-      });
-      await drawer.click();
+      // Deep-linked rather than tuned: the dial is covered by its own test, and
+      // this one is about the ticket.
+      await page.goto('/app/me?section=tickets');
 
       const row = page.locator('.mmm-ticket-row', { hasText: seeded.title });
       await expect(row).toBeVisible();
@@ -762,10 +757,7 @@ test.describe('Music · Map · Me shell', () => {
         startsAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       });
 
-      await page.goto('/app/me');
-      await page.locator('.mmm-me-accordion:visible').filter({
-        has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
-      }).click();
+      await page.goto('/app/me?section=tickets');
 
       const statuses = await page.locator('.mmm-ticket-status:visible').allInnerTexts();
       const firstAttended = statuses.findIndex((s) => /attended/i.test(s));
@@ -833,14 +825,9 @@ test.describe('Music · Map · Me shell', () => {
   // no tickets is the normal state for this suite — what must not come back is
   // the pair of buttons that left MMM.
   test('My Tickets renders in ME rather than linking to a compatibility URL', async ({ page }) => {
-    await page.goto('/app/me');
-    const drawer = page.locator('.mmm-me-accordion:visible').filter({
-      has: page.locator('.mmm-me-accordion-label', { hasText: /^My Tickets$/ }),
-    });
-    await drawer.click();
-    await expect(drawer).toHaveAttribute('aria-expanded', 'true');
-
-    const body = page.locator('.mmm-me-section:visible', { has: drawer }).locator('.mmm-me-accordion-body:visible');
+    await page.goto('/app/me?section=tickets');
+    const body = page.locator('.mmm-me-section[aria-label="My Tickets"]:visible');
+    await expect(body).toBeVisible();
     // Either real ticket rows, or the empty note — never a way out of the shell.
     await expect(body.getByRole('link', { name: /My tickets|Browse shows/ })).toHaveCount(0);
     await expect(body.locator('.mmm-ticket-list, .mmm-me-note')).not.toHaveCount(0);
@@ -851,7 +838,9 @@ test.describe('Music · Map · Me shell', () => {
   // render, which is the actual risk.
   test('a profile-less account still renders ME, without a HYPE link card', async ({ page }) => {
     await page.goto('/app/me');
-    await expect(page.getByRole('button', { name: /Settings/ }).first()).toBeVisible();
+    // The surface renders — its first card is there — and the HYPE link is not
+    // present-and-blank, it is absent.
+    await expect(page.locator('.mmm-me-section[aria-label="Profiles"]')).toBeVisible();
     await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
   });
 });
@@ -861,17 +850,29 @@ test.describe('ME with a real profile', () => {
     await signIn(context, ARTIST_EMAIL, [{ type: 'ARTIST', name: 'E2E MMM Artist' }]);
   });
 
+  /* SETTLE BEFORE MATCHING TEXT, and the count assertion is what does it.
+
+     While this route streams, Next holds a copy of the content in a hidden
+     staging node and moves it into place with a script — the same behaviour the
+     buy-pane test above documents. A bare `getByText` in that window resolves
+     to two nodes that are really one and fails on strict mode, which is exactly
+     how this pair failed in CI: "Your HYPE link" resolved to 2 elements, one
+     inside #main-content and one outside.
+
+     Asserting ONE visible card first is both the settle and a real check: a
+     genuine double render is two cards and fails here, so the `.first()` below
+     can no longer absorb one. */
   test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
     await page.goto('/app/me');
-    await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
-    await expect(page.getByText(/Promoting needs no role and no signup/i)).toBeVisible();
+    await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
+    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
+    await expect(page.getByText(/Promoting needs no role and no signup/i).first()).toBeVisible();
   });
 
   // The fan page creator was removed; Artist and Venue keep theirs. The role
   // switcher only appears once an account holds more than the implicit Fan role.
   test('an artist account gets a page card and a role switcher', async ({ page }) => {
-    await page.goto('/app/me?role=artist');
-    await page.getByRole('button', { name: /Profiles/ }).click();
+    await page.goto('/app/me?role=artist&section=profiles');
     await expect(page.getByText(/Your page/i)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fan', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
@@ -883,8 +884,7 @@ test.describe('ME with a real profile', () => {
      what shipped before the dock existed. The seeded artist's own page is the
      one profile this suite can reach without depending on fixture content. */
   test('a profile hands its tabs to the dock and draws no dial of its own', async ({ page }) => {
-    await page.goto('/app/me?role=artist');
-    await page.getByRole('button', { name: /Profiles/ }).click();
+    await page.goto('/app/me?role=artist&section=profiles');
     const link = page.locator('a[href^="/app/artists/"]').first();
     await expect(link).toBeVisible();
     await link.click();
@@ -904,8 +904,7 @@ test.describe('ME with a real profile', () => {
      by clicking through, not by `goto`, so the remembered main-nav path is
      exercised rather than only the MAP fallback. */
   test('the nameplate escapes a detail page — the dock is the only way out', async ({ page }) => {
-    await page.goto('/app/me?role=artist');
-    await page.getByRole('button', { name: /Profiles/ }).click();
+    await page.goto('/app/me?role=artist&section=profiles');
     const link = page.locator('a[href^="/app/artists/"]').first();
     await expect(link).toBeVisible();
     await link.click();
@@ -932,8 +931,7 @@ test.describe('ME with a real profile', () => {
     await expect(page.locator('.mmm-dock')).toBeVisible();
 
     // A second document load, landing directly on a detail page.
-    await page.goto('/app/me?role=artist');
-    await page.getByRole('button', { name: /Profiles/ }).click();
+    await page.goto('/app/me?role=artist&section=profiles');
     const link = page.locator('a[href^="/app/artists/"]').first();
     await expect(link).toBeVisible();
     const href = await link.getAttribute('href');
@@ -948,7 +946,9 @@ test.describe('ME with a real profile', () => {
 
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
     await page.goto('/app/me?role=fan');
-    await expect(page.getByText(/Your HYPE link/i)).toBeVisible();
+    // Settled first, same reason as the HYPE-link test above.
+    await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
+    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
     await expect(page.getByText(/Your page/i)).toHaveCount(0);
   });
 });

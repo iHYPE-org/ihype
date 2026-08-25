@@ -167,47 +167,6 @@ const ME_STATIONS: readonly { id: string; label: string }[] = [
   { id: 'settings', label: 'Settings' },
 ];
 
-function Accordion({
-  children,
-  detail,
-  label,
-  onToggle,
-  open,
-}: {
-  children: React.ReactNode;
-  /**
-   * A second line under the label, saying what is inside without opening it.
-   * Added by the 2026-08-10 template: a closed accordion labelled only
-   * "Profiles" tells you nothing about whether opening it is worth the tap.
-   * Omitted rather than rendered empty when the underlying figure could not be
-   * read — see `ticketCount`.
-   */
-  detail?: string | null;
-  label: string;
-  onToggle: () => void;
-  open: boolean;
-}) {
-  return (
-    <div className="mmm-me-section">
-      <button
-        aria-expanded={open}
-        className="mmm-me-accordion"
-        onClick={onToggle}
-        type="button"
-      >
-        <span className="mmm-me-accordion-text">
-          <span className="mmm-me-accordion-label">{label}</span>
-          {detail ? <span className="mmm-me-accordion-detail">{detail}</span> : null}
-        </span>
-        {/* One element rotated, not two glyphs: a single node cannot render a
-            chevron that disagrees with aria-expanded. */}
-        <span aria-hidden="true" className="mmm-me-accordion-chevron" data-open={open || undefined}>›</span>
-      </button>
-      {open && <div className="mmm-me-accordion-body">{children}</div>}
-    </div>
-  );
-}
-
 function AboutMeActivity({ data }: { data: MmmMeData }) {
   return (
     <div className="mmm-me-about-in-profiles">
@@ -284,40 +243,28 @@ export function MmmMe({ data }: { data: MmmMeData }) {
     router.push(query ? `/app/me?${query}` : '/app/me', { scroll: false });
   };
 
-  const togglePanel = (id: MePanelId) => {
-    setPanel(openPanel === id ? null : id);
-    // Opening a panel shuts every section above it. Symmetric with
-    // `toggleSection`, and between them they are what makes one-at-a-time hold
-    // across two stores — component state up here, the URL down there.
-    setMeGroup('');
-  };
-
   /**
-   * ME shows the WHOLE list, or the one thing you picked — never both (owner,
-   * 2026-08-25: "Me needs to only show the subnav selected, rather than the
-   * complete list and the selected list").
+   * ME draws exactly ONE card, and the dial is what picks it (owner,
+   * 2026-08-25: "Still showing multi options instead of single subnav using
+   * thumb wheel (less screen space taken up)").
    *
-   * Profiles, My Tickets, Info, Settings and the admin row are five cards in
-   * one visual list to a member, whatever the code calls them, and opening one
-   * used to leave the other four stacked underneath its body. With Info open
-   * that reads as the legal rows having grown a Settings row of their own.
+   * This replaces an accordion. The first pass at the owner's earlier
+   * instruction — "only show the subnav selected, rather than the complete list
+   * and the selected list" — folded the other cards away once one was OPEN, and
+   * left the four-card index standing whenever none was. So the index was still
+   * the resting state of ME: four headers, four detail lines and four chevrons
+   * above the thing you came for, which is what the screenshot shows and what
+   * "less screen space" is about.
    *
-   * Folding on "is anything open" rather than per-card keeps this honest across
-   * the two stores the group is split over — `meGroup` up here, `panel` in the
-   * URL — which is the same reason `togglePanel` and `toggleSection` each clear
-   * the other. One value cannot hold two open drawers; this makes the same
-   * thing true of what is DRAWN.
+   * There is therefore no closed state and no header to tap. A card is never
+   * "open"; it is simply the one the dial is on, and the dial's own drum is its
+   * label — a header repeating that name inside the pane is the second control
+   * for one value that the handoff's one-dial-per-screen rule exists to stop.
+   *
+   * `?section=` and `?panel=` still choose, so every deep link into ME keeps
+   * working; nothing on screen toggles any more.
    */
-  const anythingOpen = openSection !== null || openPanel !== null;
-
-  const toggleSection = (id: MeSectionId) => {
-    const isOpen = openSection === id;
-    setMeGroup(isOpen ? '' : id);
-    // Only touches the URL when there is actually a panel open to close —
-    // otherwise every section tap would push a history entry identical to the
-    // current one, and Back would walk through them one dead step at a time.
-    if (!isOpen && openPanel) setPanel(null);
-  };
+  const activeId: MeSectionId | MePanelId = openSection ?? openPanel ?? 'profiles';
 
   /* Wire the four to the dial. The callback goes through a ref so its identity
      is permanently stable — same reason and same shape as `navigateRef` in
@@ -328,9 +275,9 @@ export function MmmMe({ data }: { data: MmmMeData }) {
   selectStation.current = (id: string) => {
     if (id === 'profiles' || id === 'tickets') {
       setMeGroup(id);
-      // Symmetric with toggleSection: only touch the URL when there is a panel
-      // to close, or every dial turn pushes a history entry identical to the
-      // current one and Back walks through dead steps.
+      // Only touch the URL when there is actually a panel to close, or every
+      // dial turn pushes a history entry identical to the current one and Back
+      // walks through dead steps.
       if (openPanel) setPanel(null);
       return;
     }
@@ -343,11 +290,11 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
   useRegisterStations({
     stations: ME_STATIONS,
-    /* The open card, or the first when nothing is open. The dial must always
-       name a real station — the vendored TunerDial warns and silently falls back
-       to index 0 when handed an `active` naming nothing, which is a confident
-       wrong readout — so "nothing open" shows Profiles rather than blank. */
-    active: openSection ?? openPanel ?? ME_STATIONS[0].id,
+    /* The card on screen, which is now always exactly one. The dial must name a
+       real station — the vendored TunerDial warns and silently falls back to
+       index 0 when handed an `active` naming nothing, a confident wrong
+       readout — and `activeId` cannot be null, so it always does. */
+    active: activeId,
     onChange: onStationChange,
     label: 'Sections in ME',
   });
@@ -441,13 +388,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         </div>
       )}
 
-      {(!anythingOpen || openSection === 'profiles') && (
-      <Accordion
-        detail="Fan · add artist, venue or advertiser"
-        label="Profiles"
-        onToggle={() => toggleSection('profiles')}
-        open={openSection === 'profiles'}
-      >
+      {activeId === 'profiles' && (
+      <section aria-label="Profiles" className="mmm-me-section">
       {/* The stats that used to sit in a separate "Your year" section. The
           2026-08-10 template folds them under Profiles and labels them by role,
           because a figure like "Shows attended" belongs to the profile it was
@@ -541,22 +483,17 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         and earns from the 10% promoter pool when a ticket sells through it.
       </p>
       <AboutMeActivity data={data} />
-      </Accordion>
+      </section>
       )}
 
-      {(!anythingOpen || openSection === 'tickets') && (
-      <Accordion
-        detail={data.ticketCount === null ? 'Wallet · QR codes · transfers' : `${data.ticketCount} ticket${data.ticketCount === 1 ? '' : 's'} · wallet, QR and transfers`}
-        label="My Tickets"
-        onToggle={() => toggleSection('tickets')}
-        open={openSection === 'tickets'}
-      >
+      {activeId === 'tickets' && (
+      <section aria-label="My Tickets" className="mmm-me-section">
         {/* The tickets themselves, not a link out to them. This used to be two
             buttons into the legacy shell, which is a different header, a
             different player and no route back into MMM for the rest of the
             session — the same trap row 273 closed for the LISTEN destinations. */}
         <MmmTickets tickets={data.tickets} />
-      </Accordion>
+      </section>
       )}
 
       {/* Account panels open IN PLACE, one at a time. They used to be separate
@@ -580,66 +517,54 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           // does not survive into the onClick closure, where it is needed.
           const panelId: MePanelId | null = isMePanelId(panel.id) ? panel.id : null;
           if (!panelId) return null;
-          const open = openPanel === panelId;
-          // The other panels stand down while something is open.
-          if (anythingOpen && !open) return null;
+          // One card on screen, and the dial says which. A panel that is not it
+          // renders nothing at all — not a collapsed header.
+          if (activeId !== panelId) return null;
           return (
-            <div className="mmm-me-section" key={panel.id}>
-              <button
-                aria-expanded={open}
-                className="mmm-me-accordion"
-                onClick={() => togglePanel(panelId)}
-                type="button"
-              >
-                <span className="mmm-me-accordion-text">
-                  <span className="mmm-me-accordion-label">{panel.label}</span>
-                  <span className="mmm-me-accordion-detail">{panel.detail}</span>
-                </span>
-                <span aria-hidden="true" className="mmm-me-accordion-chevron" data-open={open || undefined}>›</span>
-              </button>
-              {open && (
-                <div className="mmm-me-accordion-body">
-                  {ME_PANEL_ROWS[panelId].map((row) => (
-                    <Link className="mmm-row" href={row.href} key={row.href + row.label} style={{ display: 'flex' }}>
-                      <span style={{ flex: 1, minWidth: 0 }}>
-                        <span className="mmm-row-title" style={{ display: 'block' }}>{row.label}</span>
-                        <span className="mmm-row-sub" style={{ display: 'block' }}>{row.detail}</span>
-                      </span>
-                      <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
+            <section aria-label={panel.label} className="mmm-me-section" key={panel.id}>
+              <div className="mmm-me-accordion-body">
+                {ME_PANEL_ROWS[panelId].map((row) => (
+                  <Link className="mmm-row" href={row.href} key={row.href + row.label} style={{ display: 'flex' }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="mmm-row-title" style={{ display: 'block' }}>{row.label}</span>
+                      <span className="mmm-row-sub" style={{ display: 'block' }}>{row.detail}</span>
+                    </span>
+                    <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+                  </Link>
+                ))}
+                {/* The admin console, for the one account allowed to hold ADMIN.
+
+                    It rides in SETTINGS, which is a menu of destinations that
+                    are not profiles — exactly what it is. It used to be a card
+                    of its own in the ME index, and there is no index any more:
+                    a fifth card with no station on the dial would be a card
+                    nothing could reach.
+
+                    It is NOT in Profiles, and must not go there. Profiles is
+                    "what this account can be" — artist, venue, advertiser — and
+                    admin is not an account type, the same rule DS8 states for
+                    promoter.
+
+                    Still gated on `isAdmin`, resolved server-side through
+                    `isAdminSession()` (the ADMIN role AND the allowlisted
+                    address), so it is never drawn for an account the console
+                    would refuse. Removing it outright was never an option: this
+                    shell has no header, so without it an administrator has no
+                    route into the console at all. */}
+                {panelId === 'settings' && data.isAdmin && (
+                  <Link className="mmm-row" href="/admin" style={{ display: 'flex' }}>
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span className="mmm-row-title" style={{ display: 'block' }}>Admin console</span>
+                      <span className="mmm-row-sub" style={{ display: 'block' }}>Platform operations · opens the ops shell</span>
+                    </span>
+                    <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+                  </Link>
+                )}
+              </div>
+            </section>
           );
         })}
 
-        {/* The admin console, for the one account allowed to hold ADMIN.
-
-            It lives HERE and not in the Profiles row above. Profiles is "what
-            this account can be" — artist, venue, advertiser — and admin is not
-            an account type; putting it there implied a fifth one, which is the
-            same mistake DS8 rules out for promoter. Account is where
-            destinations that are not profiles belong.
-
-            Still gated on `isAdmin`, which is resolved server-side through
-            `isAdminSession()` — both the ADMIN role and the allowlisted
-            address — so this is never drawn for an account the console would
-            refuse. That is the same no-dead-ends rule the player's heart
-            follows, and it is why removing this row entirely was not an
-            option: the shell has no header, so without it an administrator has
-            no route into the console at all. */}
-        {data.isAdmin && !anythingOpen && (
-          <div className="mmm-me-section">
-            <Link className="mmm-me-accordion" href="/admin">
-              <span className="mmm-me-accordion-text">
-                <span className="mmm-me-accordion-label">Admin console</span>
-                <span className="mmm-me-accordion-detail">Platform operations · opens the ops shell</span>
-              </span>
-              <span aria-hidden="true" className="mmm-me-accordion-chevron">›</span>
-            </Link>
-          </div>
-        )}
       </div>
     </>
   );
