@@ -322,6 +322,34 @@ export function MmmDock({
   }, [buzz, paintKnob, router]);
 
   /* ── the dial ────────────────────────────────────────────────────────── */
+  /**
+   * Shrink a resting label to its window. MUSIC's longest station is guarded
+   * by measure:dock, but a PROFILE hands the dial its own section names and
+   * "Event Calendar" at the resting 26px is wider than the drum — clipped on
+   * a real phone (owner screenshot, 2026-08-24). Measured on a CANVAS, never
+   * the DOM: paintDial runs at pointer frequency and reading scrollWidth
+   * there would force a layout per frame. Cached per (label, rest, width);
+   * the 15px content floor still holds — a name that cannot fit at 15px keeps
+   * 15px rather than dropping below what a person can read.
+   */
+  const fitCanvas = useRef<CanvasRenderingContext2D | null>(null);
+  const fitCache = useRef<Map<string, number>>(new Map());
+  const fittedRest = useCallback((label: string, rest: number, maxW: number, family: string) => {
+    const key = `${label}|${rest}|${maxW}`;
+    const cached = fitCache.current.get(key);
+    if (cached !== undefined) return cached;
+    if (!fitCanvas.current) fitCanvas.current = document.createElement('canvas').getContext('2d');
+    const ctx = fitCanvas.current;
+    let fitted = rest;
+    if (ctx && maxW > 0) {
+      ctx.font = `600 ${rest}px ${family || 'sans-serif'}`;
+      const width = ctx.measureText(label).width;
+      if (width > maxW) fitted = Math.max(15, Math.floor(rest * (maxW / width)));
+    }
+    fitCache.current.set(key, fitted);
+    return fitted;
+  }, []);
+
   const paintDial = useCallback(() => {
     const secs = stationsRef.current;
     const len = secs.length;
@@ -334,6 +362,10 @@ export function MmmDock({
        on .mmm-dial-stations. */
     const row = stationRef.current?.parentElement;
     const rest = row ? parseFloat(getComputedStyle(row).getPropertyValue('--mmm-drum-rest')) || 26 : 26;
+    /* The window a resting name must fit: the row, minus the two step
+       affordances overhanging its ends. The label's real face, for measuring. */
+    const maxW = row ? row.clientWidth - 48 : 0;
+    const family = stationRef.current ? getComputedStyle(stationRef.current).fontFamily : '';
     const slots: [HTMLElement | null, number][] = [
       [wlRef.current, -1],
       [stationRef.current, 0],
@@ -346,13 +378,18 @@ export function MmmDock({
       if (slot !== 0 && len < 2) { node.style.opacity = '0'; continue; }
       const d = slot - frac;
       const ad = Math.min(1.5, Math.abs(d));
-      node.textContent = secs[((((near + slot) % len) + len) % len)]?.label ?? '';
+      const label = secs[((((near + slot) % len) + len) % len)]?.label ?? '';
+      node.textContent = label;
       node.style.transition = dialDragging.current
         ? 'none'
         : 'transform var(--duration-medium) var(--ease-spring), opacity var(--duration-medium) var(--ease), font-size var(--duration-medium) var(--ease)';
       /* Size bottoms out at the 15px content floor, never below it: a resting
-         neighbour is something you read. rem, so Settings → Text size reaches it. */
-      node.style.fontSize = ((rest - (rest - 15) * Math.min(1, ad)) / 16).toFixed(4) + 'rem';
+         neighbour is something you read. rem, so Settings → Text size reaches
+         it. The resting size itself first shrinks to fit the window (see
+         fittedRest) — a section name a page registered is not measured by any
+         gate, and a clipped name is the failure the dial exists to prevent. */
+      const restFit = fittedRest(label, rest, maxW, family);
+      node.style.fontSize = ((restFit - (restFit - 15) * Math.min(1, ad)) / 16).toFixed(4) + 'rem';
       node.style.opacity = String(Math.max(0, 1 - ad / 1.45));
       /* Compass drop: each label rides the same card as the ticks — sinking by
          the circle's sagitta and rolling tangent to it. */
@@ -370,7 +407,7 @@ export function MmmDock({
       card.style.transition = dialDragging.current ? 'none' : 'transform var(--duration-medium) var(--ease-spring)';
       card.style.transform = rot;
     }
-  }, []);
+  }, [fittedRest]);
 
   const setDialPos = useCallback((next: number, dragging: boolean) => {
     /* Every detent crossing is a physical event — and a navigation: the dial

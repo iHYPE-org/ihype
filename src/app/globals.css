@@ -1168,10 +1168,17 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
   padding: 0.72rem 1rem;
   min-height: 2.8rem;
-  border: 1px solid transparent;
-  background: linear-gradient(135deg, #7bddff 0%, #c5f7ff 48%, #ffd583 100%);
-  color: #071019;
-  font-weight: 800;
+  /* The console primary, same recipe as .mmm-btn-primary: accent fill, dark
+     ink ON the fill, a machined edge and an offset press shadow. This base
+     rule carried the pre-DS8 cyan-to-amber gradient through TWO ground
+     conversions (owner, 2026-08-24: "Old button design") — every surface that
+     never got its own button style was still wearing it. */
+  border: 1px solid rgba(61, 44, 12, .9);
+  border-radius: var(--radius-panel);
+  background: var(--accent);
+  color: var(--ink-on-accent);
+  box-shadow: 2px 3px 0 var(--ink-a20);
+  font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease, background 160ms ease;
@@ -1181,19 +1188,23 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   transform: translateY(-1px);
 }
 .button:active {
-  transform: translateY(0.5px) !important;
-  box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+  /* The press: the button travels INTO its offset shadow, like the dock's
+     own hardware, rather than dropping a soft blur under a floating chip. */
+  transform: translate(1px, 1.5px) !important;
+  box-shadow: 1px 1.5px 0 var(--ink-a20) !important;
   transition-duration: 60ms !important;
 }
 .button.secondary {
-  border-color: var(--hair-100);
-  color: var(--ink);
+  /* The console ghost: paper surface, inked hairline, lighter press shadow. */
+  border-color: var(--ink-a45);
+  background: var(--bg-surface);
+  color: var(--ink-2);
+  box-shadow: 2px 3px 0 var(--ink-a10);
 }
 .button.secondary:hover,
 .button.secondary:focus-visible {
-  border-color: var(--hair-200);
-  background: var(--hair-80);
-  box-shadow: none;
+  border-color: var(--ink-a60);
+  background: var(--bg-3);
   transform: translateY(-1px);
 }
 .button.small {
@@ -1201,11 +1212,10 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   padding: 0.58rem 0.92rem;
 }
 /* Header join CTA — matches templates/landing/Landing.dc.html's header anchor
-   exactly (solid --accent, Syne 800, .88rem, 9px/18px, pill, accent glow).
-   Scoped to .nav-join-button rather than changed on .button, because .button's
-   cyan-to-amber gradient is used across the app and is not this button's
-   business. Without this override the header CTA inherits that gradient, which
-   is off-brand for the marketing nav. */
+   exactly (solid --accent, .88rem, 9px/18px, pill, accent glow). Scoped to
+   .nav-join-button because the marketing header keeps its own pill geometry.
+   (The base .button carried a cyan-to-amber gradient when this was written;
+   it wears the console recipe now, but the header pill still differs.) */
 .nav-join-button.button {
   background: var(--accent);
   color: var(--ink-on-accent);
@@ -2454,9 +2464,8 @@ body:has(#wt-wrap) .site-shell > main {
   pointer-events: none;
 }
 
-.button.secondary {
-  background: var(--hair-40);
-}
+/* .button.secondary's surface lives at its own definition now (the console
+   ghost) — a hair-40 wash re-declared here would silently win on order. */
 .media-player-button {
   padding: 0.34rem 0.56rem;
   border-radius: 999px;
@@ -2613,7 +2622,8 @@ body:has(#wt-wrap) .site-shell > main {
 .fan-playlist-panel{
   background: linear-gradient(180deg, rgba(17, 22, 34, 0.96), rgba(10, 14, 23, 0.98));
 }
-.button.secondary,
+/* .button.secondary carries the console press shadow at its own definition;
+   listing it here would zero that shadow on order alone. */
 .tag,
 .badge{
   box-shadow: none;
@@ -2624,13 +2634,14 @@ body:has(#wt-wrap) .site-shell > main {
   opacity: 0.2;
 }
 
-.button,
+/* .button used to be in both groups below; it now carries the console
+   recipe at its own definition (near-square radius, offset press shadow),
+   and these later same-specificity rules would silently win over it. */
 .panel,
 .card{
   border-radius: 26px;
 }
 
-.button,
 .panel,
 .card{
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
