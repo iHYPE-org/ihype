@@ -323,31 +323,36 @@ html:has(.mmm-frame) {
 .mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
 .mmm-map-canvas .maplibregl-canvas { outline: none; }
 
-/* The credit as a disclosure: a mark when shut, the credit when open. Not
+/* The credit, painted only while the compass is held (owner, 2026-08-25: "Tap
+   the compass on map to show open maps badge and hide when let go"). Not
    optional chrome — CARTO's terms and OSM's ODbL require it to be reachable —
    but nothing requires it to be a standing line of text across the chart, which
-   is what it used to be (owner, 2026-08-25: "open street map should be
-   hidden"). Tracked mono at its 11px floor: metadata, and a legal notice, so it
-   shrinks and never disappears. `pointer-events` is deliberate: unlike the line
-   it replaces, this one has to be tappable. */
+   is what it used to be. Tracked mono at its 11px floor: metadata, and a legal
+   notice, so it shrinks and never disappears.
+
+   `pointer-events: none` is the load-bearing line: this sits directly above the
+   control holding it open, so a thumb that slides up off the compass must pass
+   THROUGH it. Take that off and the badge swallows the pointerup that hides
+   it. It is `aria-hidden` for the same reason its trigger carries the label —
+   one announcement, on the thing that is focusable. */
 .mmm-map-attrib {
   position: absolute;
   right: 10px;
-  top: 92px;
-  z-index: 15;
+  top: 108px;
+  z-index: 16;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
   padding: 4px 8px;
   border: 1px solid var(--hair-40);
   border-radius: 999px;
-  background: rgba(var(--bg-base-rgb), .78);
+  background: rgba(var(--bg-base-rgb), .88);
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
+  white-space: nowrap;
   color: var(--ink-3);
-  cursor: pointer;
+  pointer-events: none;
 }
 
 /* The chart's ornaments, from map.html: a compass rose under the credit, and a
@@ -356,18 +361,31 @@ html:has(.mmm-frame) {
 .mmm-map-compass {
   position: absolute;
   right: 14px;
-  /* Under the credit disc, which is 44px tall from y=92 (the tap floor applies
-     to it — it is a button now). Moving the compass up into the slot the old
-     credit LINE vacated put the two on top of each other, collapsed and
-     expanded alike; the stack is credit -> compass -> scale, in that order. */
+  /* The compass took the credit disc's own slot when the disc stopped standing
+     there — the stack is now compass -> scale, with the credit painting in the
+     air above the compass only while it is held. It does NOT move when held:
+     a control that shifts under the finger pressing it is the one thing this
+     interaction cannot do. */
   top: 144px;
   z-index: 15;
+  /* 46px of rose inside a 46px control: it is a button now, so it carries the
+     tap floor itself rather than borrowing one from mobile-fit.css. */
   width: 46px;
   height: 46px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--ink-2);
   opacity: 0.72;
-  pointer-events: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* A press should read on the instrument, not just on the badge it opens. */
+  transition: opacity var(--duration-fast, .12s) var(--ease, ease);
 }
+.mmm-map-compass > svg { width: 100%; height: 100%; display: block; }
+.mmm-map-compass:hover { opacity: 0.9; }
+.mmm-map-compass:active { opacity: 1; }
+.mmm-map-compass:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 50%; }
 /* The scale bar and the credit disc share this stack, under the compass.
    `right` is 18px rather than 14: the scale's LABEL is centred inside a rule
    whose width is the real distance, so when the label is wider than the rule it
@@ -1036,54 +1054,20 @@ html:has(.mmm-frame) {
   color: var(--ink-on-accent);
 }
 
-/* ── ME accordions ────────────────────────────────────────────────────────
-   Design System 8's ME surface. The section header is the control, so it takes
-   the full row and the whole thing is the hit target — a chevron-sized tap area
-   on a phone is the complaint this shell's touch floors exist to prevent. */
+/* ── ME cards ─────────────────────────────────────────────────────────────
+   This banner is a SLICE BOUNDARY as well as a heading: `measure:datepick`
+   cuts the date picker's stylesheet out of this file between the MAP banner
+   above and this line, and fails loudly when it cannot find either. It read
+   "ME accordions" until the accordion was deleted, and renaming it here means
+   renaming it in `scripts/measure-datepicker.mjs` too.
+
+   ME's cards. There is one on screen at a time and the dial is what picks it
+   (owner, 2026-08-25: "Still showing multi options instead of single subnav
+   using thumb wheel"), so there is no header row and no chevron left to style —
+   `.mmm-me-accordion`, `-text`, `-label`, `-detail` and `-chevron` are deleted
+   with the control they drew. `-body` stays: it is the card's own padding, and
+   it is now the whole card. */
 .mmm-me-section { margin-bottom: 8px; }
-.mmm-me-accordion {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  background: var(--bg-surface);
-  border: 1px solid var(--ink-a45);
-  border-radius: var(--radius-panel);
-  box-shadow: 2px 3px 0 var(--ink-a10);
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion:hover,
-.mmm-me-accordion:focus-visible { border-color: var(--accent); }
-
-/* Label and detail stack, so the flex child that grows is the pair rather than
-   the label — otherwise the detail line sets its own width and the chevron
-   drifts inward on the rows that have one. */
-.mmm-me-accordion-text { flex: 1; min-width: 0; }
-.mmm-me-accordion-label {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-/* Says what is inside without opening it. Truncates rather than wrapping: a
-   two-line detail changes the row's height, and a column of rows at different
-   heights reads as unrelated cards instead of one list. */
-.mmm-me-accordion-detail {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.9375rem;
-  line-height: 1.35;
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Role-labelled rule above the stat grid inside Profiles. */
 .mmm-me-stats-head {
   display: flex;
@@ -1096,15 +1080,6 @@ html:has(.mmm-frame) {
   height: 1px;
   background: var(--hair-70);
 }
-.mmm-me-accordion-chevron {
-  flex: 0 0 auto;
-  font-size: 0.95rem;
-  line-height: 1;
-  color: var(--ink-2);
-  transform: rotate(90deg);
-  transition: transform var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion-chevron[data-open] { transform: rotate(-90deg); }
 .mmm-me-accordion-body { padding: 14px 2px 4px; }
 
 /* Supporting copy inside a section. Not --ink-3 at this size: it is a full
@@ -3404,6 +3379,27 @@ html:has(.mmm-frame) {
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .mmm-empty-actions a { text-decoration: none; }
+/* The 44px floor, applied HERE rather than to `.mmm-btn-primary` itself.
+
+   These two buttons measured 39px tall and were caught the moment ME started
+   drawing one card at a time: Profiles is now the resting state, so its empty
+   state — "Discover music" / "Explore the map" — is on screen at arrival where
+   it used to sit behind a closed drawer. The rule they break is MOBILE.md's,
+   which is 44x44 on every control at every width, desktop included, and
+   `mobile-fit.css` cannot help because its floors are gated on
+   `(pointer: coarse)`.
+
+   Scoped to the empty state because raising `.mmm-btn-primary` globally would
+   also grow the HYPE-link copy button, which is deliberately small and sized
+   inline beside a text field — a different control with a different reason, and
+   not this change's to move. Padding, not height: growing the box is what the
+   rule asks for, and a fixed height would clip a wrapped label. */
+.mmm-empty-actions .mmm-btn-primary,
+.mmm-empty-actions .mmm-btn-ghost {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 
 .mmm-ad-landing { width: min(100% - 32px, 1040px); margin: 0 auto; padding: 72px 0 96px; color: var(--ink); }
 .mmm-ad-hero { max-width: 760px; padding: 36px 0 72px; }

@@ -467,28 +467,28 @@ export function MmmMap({
   return (
     <div className="mmm-map-layer">
       <div className="mmm-map-canvas" ref={containerRef} />
-      {/* The credit, as a DISCLOSURE (owner, 2026-08-25: "open street map
-          should be hidden").
+      {/* The credit, HELD RATHER THAN TOGGLED (owner, 2026-08-25: "Tap the
+          compass on map to show open maps badge and hide when let go").
 
           It cannot just be deleted: CARTO's basemap terms and OSM's ODbL both
-          require the credit to be shown, so a map with no reachable credit puts
-          the tiles out of licence. Collapsed it is a mark; one tap is the
-          credit. That is as hidden as this can honestly get.
+          require the credit to be reachable, so a map with no way to it puts
+          the tiles out of licence. The compass is now that way in — press it
+          and the credit is there, let go and the chart is clean again.
 
-          Built here rather than with MapLibre's own `compact` AttributionControl,
-          which was tried first: it renders EXPANDED on load — measured 224px
-          wide, which is the standing line this replaces — and re-asserts that
-          state whenever attributions update, so collapsing it once does not
-          hold. A disclosure we own is deterministic. */}
-      <button
-        aria-expanded={creditOpen}
-        aria-label="Map data credit"
-        className="mmm-map-attrib"
-        onClick={() => setCreditOpen((open) => !open)}
-        type="button"
-      >
-        {creditOpen ? '© OpenStreetMap · CARTO' : 'ⓘ'}
-      </button>
+          It reads while held and is not itself a control (`pointer-events:
+          none`), so a finger that slides off the compass onto the badge does
+          not get stuck on it. It also appears in the slot ABOVE the compass
+          rather than in the compass's own place: the compass must not move
+          under the finger that is holding it.
+
+          The previous version was a tap-to-open disclosure on a ⓘ mark, and
+          before that MapLibre's own `compact` AttributionControl — which was
+          tried first and renders EXPANDED on load (measured 224px wide) and
+          re-asserts that state whenever attributions update, so collapsing it
+          once does not hold. */}
+      {creditOpen && (
+        <div aria-hidden="true" className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
+      )}
       {/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map
           design (doesn't fit with the view)"). It was map-treasure.html's
           `.char`: an undisplaced frame run through a fractal-noise
@@ -497,18 +497,36 @@ export function MmmMap({
           a filter definition left behind is one an unrelated element picks up
           by name later. */}
       {/* The compass rose — map-treasure.html's ornate eight-point card,
-          replacing console-shell's simpler needle. Decoration (aria-hidden),
-          unlike the scale bar beneath it. */}
-      <svg aria-hidden="true" className="mmm-map-compass" viewBox="0 0 80 80">
-        <circle cx="40" cy="42" fill="none" r="26" stroke="currentColor" strokeWidth="1" />
-        <circle cx="40" cy="42" fill="none" r="20.5" stroke="currentColor" strokeDasharray="1.6 3.2" strokeWidth="0.6" />
-        <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor" />
-        <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity="0.62" />
-        <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity="0.3" />
-        <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity="0.3" />
-        <circle cx="40" cy="42" fill="var(--bg-surface)" r="3.4" stroke="currentColor" strokeWidth="1.4" />
-        <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle" x="40" y="8.5">N</text>
-      </svg>
+          replacing console-shell's simpler needle. It was decoration until the
+          credit was hung on it; it is now the credit's control, so it is a
+          button with a real label and the rose itself stays `aria-hidden`.
+
+          Held, not toggled: down shows the credit, up or a finger sliding off
+          hides it. Focus shows it too, which is what makes it operable from a
+          keyboard without inventing a key handler — a tab to the compass reads
+          the label and paints the credit. */}
+      <button
+        aria-label="Hold to show the map data credit"
+        className="mmm-map-compass"
+        onBlur={() => setCreditOpen(false)}
+        onFocus={() => setCreditOpen(true)}
+        onPointerCancel={() => setCreditOpen(false)}
+        onPointerDown={() => setCreditOpen(true)}
+        onPointerLeave={() => setCreditOpen(false)}
+        onPointerUp={() => setCreditOpen(false)}
+        type="button"
+      >
+        <svg aria-hidden="true" viewBox="0 0 80 80">
+          <circle cx="40" cy="42" fill="none" r="26" stroke="currentColor" strokeWidth="1" />
+          <circle cx="40" cy="42" fill="none" r="20.5" stroke="currentColor" strokeDasharray="1.6 3.2" strokeWidth="0.6" />
+          <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor" />
+          <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity="0.62" />
+          <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity="0.3" />
+          <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity="0.3" />
+          <circle cx="40" cy="42" fill="var(--bg-surface)" r="3.4" stroke="currentColor" strokeWidth="1.4" />
+          <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle" x="40" y="8.5">N</text>
+        </svg>
+      </button>
 
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />
