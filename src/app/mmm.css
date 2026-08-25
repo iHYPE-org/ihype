@@ -3379,6 +3379,27 @@ html:has(.mmm-frame) {
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .mmm-empty-actions a { text-decoration: none; }
+/* The 44px floor, applied HERE rather than to `.mmm-btn-primary` itself.
+
+   These two buttons measured 39px tall and were caught the moment ME started
+   drawing one card at a time: Profiles is now the resting state, so its empty
+   state — "Discover music" / "Explore the map" — is on screen at arrival where
+   it used to sit behind a closed drawer. The rule they break is MOBILE.md's,
+   which is 44x44 on every control at every width, desktop included, and
+   `mobile-fit.css` cannot help because its floors are gated on
+   `(pointer: coarse)`.
+
+   Scoped to the empty state because raising `.mmm-btn-primary` globally would
+   also grow the HYPE-link copy button, which is deliberately small and sized
+   inline beside a text field — a different control with a different reason, and
+   not this change's to move. Padding, not height: growing the box is what the
+   rule asks for, and a fixed height would clip a wrapped label. */
+.mmm-empty-actions .mmm-btn-primary,
+.mmm-empty-actions .mmm-btn-ghost {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 
 .mmm-ad-landing { width: min(100% - 32px, 1040px); margin: 0 auto; padding: 72px 0 96px; color: var(--ink); }
 .mmm-ad-hero { max-width: 760px; padding: 36px 0 72px; }
