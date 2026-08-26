@@ -7,7 +7,18 @@ export function getStripe(): Stripe {
   if (!_stripe) {
     const key = readRuntimeEnv('STRIPE_SECRET_KEY');
     if (!key?.startsWith('sk_')) throw new Error('STRIPE_SECRET_KEY is not configured with a valid secret key.');
-    _stripe = new Stripe(key, { apiVersion: '2026-06-24.dahlia' });
+    /* Moves with the SDK, and is not free to choose. `Stripe.LatestApiVersion`
+       is a SINGLE-LITERAL type in each release, so bumping the `stripe` package
+       forces this string forward and typecheck fails until it matches — which
+       is how the 22.3.2 -> 22.5.0 bump in #753 turned up as a red PR rather
+       than a silent behaviour change.
+       Worth knowing that it IS a behaviour change and not a version label: an
+       API version fixes response shapes and defaults, so what actually
+       verifies this is the Stripe-side rehearsal in
+       docs/runbooks/money-path-rehearsal.md, not this file compiling. Live mode
+       still holds zero PaymentIntents, so nothing in production has ever
+       depended on the old version's shapes. */
+    _stripe = new Stripe(key, { apiVersion: '2026-07-29.dahlia' });
   }
   return _stripe;
 }
