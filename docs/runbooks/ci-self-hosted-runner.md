@@ -109,6 +109,20 @@ system Node could only disagree with it.
 
 ## 3. Point CI at it
 
+**PROVEN on 2026-08-26**, run 1245 attempt 3: all 32 steps green on
+`ihype-ci-runner` in about 8m30s, against roughly 13m on a hosted runner. It is
+faster on every comparable step — authenticated E2E 4m19s vs 4m52s, Cloudflare
+build 1m04s vs 1m30s, Worker bundle budget 1m05s vs 1m37s — because the
+node_modules, Docker and Playwright caches persist between runs.
+
+Four attempts got there, and each found something a hosted runner ships that a
+bare Ubuntu box does not. In order: the org runner GROUP had not granted this
+repository access (job queued five minutes, claimed in four seconds when
+pointed back at `ubuntu-latest`); **no `psql`**; **sudo scoped too narrowly**
+for `playwright install --with-deps`, which runs `sudo -- sh -c "apt-get ..."`;
+and the VM stopped by an auto-shutdown that has no auto-start. The script now
+carries the first three. The fourth is in section 4.
+
 **Done on 2026-08-26.** `ci.yml` runs on `[self-hosted, linux, x64, ihype-ci]`,
 and the **"Decide the CI depth"** step, the `FULL_CI` variable and the
 `full-ci` label override are deleted — every stage runs on every push again.
