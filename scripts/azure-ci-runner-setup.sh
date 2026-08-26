@@ -66,11 +66,22 @@ if ! id -u "$RUNNER_USER" >/dev/null 2>&1; then
   useradd -m -s /bin/bash "$RUNNER_USER"
 fi
 usermod -aG docker "$RUNNER_USER"
-# Scoped to apt-get and playwright's dependency installer rather than blanket
-# NOPASSWD: the runner executes whatever a workflow tells it to, so the narrower
-# this grant is, the less a compromised workflow inherits.
+# Full passwordless sudo, and the narrow version that came first did not work.
+#
+# The first cut allowlisted /usr/bin/apt-get, /usr/bin/apt and /usr/bin/dpkg on
+# the reasoning that a narrower grant means a compromised workflow inherits
+# less. `npx playwright install --with-deps` then failed in one second: it does
+# not invoke apt-get directly, it runs `sudo -- sh -c "apt-get install ..."`,
+# and the SHELL is not on the list.
+#
+# The scoping was buying less than it looked like anyway. This runner executes
+# whatever a workflow tells it to as $RUNNER_USER — that is what a CI runner
+# is — so the interesting boundary is which repositories can schedule jobs
+# here, not which binaries the job may call through sudo. Keeping deploys on
+# hosted runners (deploy-production.yml, where the production secrets live) is
+# the control that actually matters.
 cat > /etc/sudoers.d/90-github-runner <<SUDOERS
-$RUNNER_USER ALL=(root) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg
+$RUNNER_USER ALL=(ALL) NOPASSWD: ALL
 SUDOERS
 chmod 0440 /etc/sudoers.d/90-github-runner
 
