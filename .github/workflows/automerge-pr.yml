@@ -7,7 +7,10 @@ name: Auto-merge PRs
 # that would let a malicious PR run with write access to this repository.
 on:
   pull_request_target:
-    types: [labeled, reopened, synchronize, ready_for_review]
+    # `opened` matters for Dependabot: its PRs arrive labelled by it, never
+    # relabelled afterwards, so without this the branch below could only ever
+    # fire on a later synchronize that may never come.
+    types: [opened, labeled, reopened, synchronize, ready_for_review]
 
 permissions:
   contents: write
@@ -15,10 +18,40 @@ permissions:
 
 jobs:
   enable-automerge:
+    # Two ways in: the `automerge` label, or a Dependabot GROUPED update.
+    #
+    # Dependabot's PRs used to pile up until someone closed them by hand —
+    # `open-pull-requests-limit: 10` filling with weekly updates nobody merged,
+    # which trains you to ignore the list, which is how a real advisory gets
+    # missed. They never carried the label, so this workflow never touched them.
+    #
+    # This is only safe because of the required status check on `main`:
+    # `--auto` merges when the checks pass and NEVER merges a red PR, so a
+    # broken bump waits for a human exactly as it does today. Before that rule
+    # existed this would have been the 2026-07-21 incident again, where a
+    # grouped PR merged with CI fully red.
+    #
+    # Scoped to the two GROUP branches (plus github-actions) on purpose, and
+    # this is the load-bearing part: `dependabot.yml` restricts those groups to
+    # minor and patch, so a MAJOR bump is opened as its own individual PR with a
+    # branch name like `dependabot/npm_and_yarn/typescript-7.0.2`, which does
+    # not match and still needs a person. That is the whole lesson of the
+    # incident — three major jumps hid inside one routine-looking grouped PR —
+    # and keying on the branch prefix preserves it.
     if: >-
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
-      contains(github.event.pull_request.labels.*.name, 'automerge')
+      (
+        contains(github.event.pull_request.labels.*.name, 'automerge') ||
+        (
+          github.event.pull_request.user.login == 'dependabot[bot]' &&
+          (
+            startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/development-dependencies') ||
+            startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/production-dependencies') ||
+            startsWith(github.event.pull_request.head.ref, 'dependabot/github_actions/')
+          )
+        )
+      )
     runs-on: ubuntu-latest
     steps:
       - name: Enable auto-merge (squash)
