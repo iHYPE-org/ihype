@@ -11,13 +11,24 @@ import { describe, expect, it, vi } from 'vitest';
  *
  * In production that is invisible: a Worker invocation is short and the isolate
  * is gone long before the timers matter. In a long-lived process it is a leak
- * with no ceiling, and on 2026-08-26 it killed the authenticated e2e shard —
- * the wrangler dev server reached 1393 MB, spent ~95% of its time in GC
- * (`average mu = 0.046`), dragged `User.findUnique` out to 2 seconds and aborted
- * on signal 6 mid-suite. Whichever test was running when it died failed on
- * whatever its assertion happened to be, which is why the "flaky" test was a
- * different one every run and why three rounds of locator fixes never settled
- * the file.
+ * with no ceiling.
+ *
+ * IT IS NOT, HOWEVER, WHAT CRASHES THE E2E SHARD, and the commit that added this
+ * test claimed it was. Measured after the fix, against a live database: the
+ * wrangler dev server still reached 2160 MB, still logged `Last few GCs`, still
+ * aborted on signal 6, and the runner still reported "the dev server was
+ * restarted 1x during this shard". The leak is real and worth closing; it is one
+ * contributor, not the cause. Do not read a passing run of this test as evidence
+ * that the shard is healthy.
+ *
+ * The next suspect, unproven: `getDb()` builds a NEW PrismaClient per Cloudflare
+ * request — each holding a wasm query engine and a PrismaPg pool whose
+ * `idleTimeoutMillis: 10000` keeps it reachable for ten seconds after the
+ * request ends, with no `$disconnect()` anywhere. That would retain far more per
+ * request than a timer closure does. Whoever picks this up: instrument
+ * `makePrisma` with a construction counter before changing anything, because the
+ * whole reason this took three wrong turns was acting on a plausible cause
+ * without measuring it first.
  *
  * The extension itself cannot be imported here — `db.ts` constructs a real
  * PrismaClient at module scope against the wasm/workerd engine. So this test
