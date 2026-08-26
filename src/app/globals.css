@@ -625,6 +625,29 @@
   --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
   /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
   --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+  /* ── THE MACHINE THEMES TOO (2026-08-26) ─────────────────────────────────
+     Owner: "Themes should adjust console graphics, map graphic, buttons, and
+     fonts as well (for each of the theme options)." This REVERSES the earlier
+     rule that the walnut dock, brass and parchment chart do not theme because
+     they are "the machine, not the room". They are the room's machine now.
+
+     Every ink value below is COMPUTED against its own cabinet, not eyeballed:
+     the base ramp's ratios (10.87 / 7.61 / 5.51 on the lightest stop) are
+     reproduced per theme, because moving --walnut without moving its ink is
+     how a themed cabinet ends up with 2:1 copy on it. `audit:contrast` now
+     measures the ramp in every block rather than only in :root. */
+  --walnut: #3c2211; --walnut-2: #2a1709; --walnut-3: #140d04;
+  --brass: #b08f42; --brass-deep: #7a5f26; --lamp: #ffb84a;
+  --ink-on-walnut: #e3ddd6;    /* 10.90:1 on --walnut */
+  --ink-on-walnut-2: #c4b9a9;  /*  7.60:1 */
+  --ink-on-walnut-3: #ab9c86;  /*  5.48:1 — the floor */
+  --rule-on-walnut: rgba(227,221,214,.22); --rule-on-walnut-2: rgba(227,221,214,.38);
+  /* The chart at night: the same clear-classic recipe, dimmed. Darkening
+     BEFORE sepia, per the note in mmm.css — brightness last clips a near-white
+     tile to white and loses the tone entirely. */
+  --map-filter: brightness(.82) sepia(.24) saturate(1.05) contrast(1.06);
+  --map-rule: rgba(255,236,194,.09); --map-vignette: rgba(0,0,0,.34);
+  --map-blend: normal;
 }
 [data-theme="street"] {
   /* Asphalt and primer grey; the poster wall at night. */
@@ -658,6 +681,20 @@
   --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
   /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
   --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+  /* Primer-grey steel instead of walnut: the same machine bolted to a poster
+     wall. Hardware goes galvanised, the lamp goes sodium-orange. */
+  --walnut: #2c2f34; --walnut-2: #1f2226; --walnut-3: #14161a;
+  --brass: #9aa4b0; --brass-deep: #5e666f; --lamp: #ffb455;
+  --ink-on-walnut: #e6e8e9;    /* 10.93:1 on --walnut */
+  --ink-on-walnut-2: #bfc3c7;  /*  7.58:1 */
+  --ink-on-walnut-3: #a1a6ac;  /*  5.48:1 */
+  --rule-on-walnut: rgba(230,232,233,.22); --rule-on-walnut-2: rgba(230,232,233,.38);
+  /* Desaturated blueprint rather than sepia — a street map, photocopied. */
+  --map-filter: brightness(.78) grayscale(.55) contrast(1.12);
+  --map-rule: rgba(200,214,230,.1); --map-vignette: rgba(0,0,0,.38);
+  --map-blend: normal;
+  /* Stencilled display face, from the mono the app already loads. */
+  --f-d: var(--font-jb, 'JetBrains Mono', monospace);
 }
 [data-theme="metal"] {
   /* Cold gunmetal; stage blacks and steel. */
@@ -691,6 +728,23 @@
   --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
   /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
   --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
+  /* Gunmetal and chrome. The lamp is a cold instrument light, not a bulb. */
+  --walnut: #26292e; --walnut-2: #1a1d21; --walnut-3: #0f1114;
+  --brass: #c3ccd6; --brass-deep: #79828c; --lamp: #d8f4ff;
+  --ink-on-walnut: #dddfe2;    /* 10.93:1 on --walnut */
+  --ink-on-walnut-2: #b6bbc1;  /*  7.55:1 */
+  --ink-on-walnut-3: #989fa8;  /*  5.46:1 */
+  --rule-on-walnut: rgba(221,223,226,.24); --rule-on-walnut-2: rgba(221,223,226,.4);
+  /* Radar rather than survey chart: cold, high contrast, no warmth at all. */
+  --map-filter: brightness(.72) grayscale(.8) contrast(1.24);
+  --map-rule: rgba(190,220,235,.12); --map-vignette: rgba(0,0,0,.44);
+  --map-blend: normal;
+  /* Square hardware: a machined panel has a cut edge, and this theme is the
+     most literal about it. */
+  --radius-panel: 1px;
+  /* Body goes mono: an instrument reads out, it does not write prose. Display
+     stays the heavy grotesk so headings still carry weight against it. */
+  --f-b: var(--font-jb, 'JetBrains Mono', monospace);
 }
 [data-theme="flowery"] {
   /* Petal pink over deep plum ink. */
@@ -722,6 +776,28 @@
   --ink-a90: rgba(42,18,32,.9);
   --line: rgba(107,58,82,.34); --line-2: rgba(107,58,82,.52);
   --accent-text: #8f3117; --danger-text: #992508; --warning-text: #6e4703; --success-text: #09564f;
+  /* Mauve-stained wood with rose-gold hardware. Kept DARK on purpose even
+     though the room is pale: the cabinet is a solid object under a light room,
+     and a pale cabinet under pale panes loses the dock's edge entirely. */
+  --walnut: #5a3341; --walnut-2: #40232e; --walnut-3: #25131b;
+  --brass: #d8a08c; --brass-deep: #a06b58; --lamp: #ffb3c8;
+  --ink-on-walnut: #fdfbfc;    /* 10.4:1 on --walnut — a hair off white on
+                                  purpose, since a flat #fff reads as a hole
+                                  rather than as lit ivory */
+  --ink-on-walnut-2: #e2d8dc;  /*  7.60:1 */
+  --ink-on-walnut-3: #c9b6bd;  /*  5.50:1 */
+  --rule-on-walnut: rgba(253,251,252,.22); --rule-on-walnut-2: rgba(253,251,252,.38);
+  /* A botanical plate: warm, bright, the rule inked rose instead of umber. */
+  --map-filter: sepia(.1) saturate(1.24) brightness(1.02) hue-rotate(-8deg);
+  --map-rule: rgba(150,70,105,.08); --map-vignette: rgba(150,70,105,.14);
+  /* Softer edges than the machined default — the one theme that is not a
+     workshop. */
+  --radius-panel: 10px;
+  /* No display face at all: the humanist sans carries the headings too, which
+     is what makes this theme read gentle rather than editorial. Deliberately
+     NOT the serif — that is classical's voice, and two themes sharing a
+     display face would leave five themes with four voices. */
+  --f-d: var(--font-work, 'Work Sans', sans-serif);
 }
 [data-theme="classical"] {
   /* Concert-hall ivory; the display face goes serif. */
@@ -755,6 +831,19 @@
   --accent-text: #923319; --danger-text: #9c2707; --warning-text: #6e4703; --success-text: #09564f;
   /* The one theme that touches type: display goes to the serif the app already loads. */
   --f-d: var(--font-serif, 'Instrument Serif', serif);
+  /* Rosewood and gilt. The display face already went serif above; the cabinet
+     now agrees with it. */
+  --walnut: #46231a; --walnut-2: #31170f; --walnut-3: #1a0b06;
+  --brass: #d4b25a; --brass-deep: #96762f; --lamp: #ffcc7a;
+  --ink-on-walnut: #e9e3dd;    /* 10.88:1 on --walnut */
+  --ink-on-walnut-2: #cbbeb0;  /*  7.61:1 */
+  --ink-on-walnut-3: #b3a08c;  /*  5.49:1 */
+  --rule-on-walnut: rgba(233,227,221,.22); --rule-on-walnut-2: rgba(233,227,221,.38);
+  /* An engraved atlas plate: warmer and higher-contrast than the default, with
+     the rule inked closer to brown ink than pencil. */
+  --map-filter: sepia(.3) saturate(1.06) contrast(1.1);
+  --map-rule: rgba(96,68,34,.1); --map-vignette: rgba(96,68,34,.18);
+  --radius-panel: 4px;
 }
 
 /* The design system ships a reduced-motion block that zeroes its durations.
