@@ -5,6 +5,12 @@ name: Auto-merge PRs
 # it just flips the auto-merge bit via the GitHub API. Do not add an
 # actions/checkout step (or anything that runs code from the PR head) here;
 # that would let a malicious PR run with write access to this repository.
+#
+# THAT RULE MATTERS MORE SINCE `AUTOMERGE_TOKEN` EXISTS. The job now runs with a
+# personal access token that can write Contents and Pull requests across this
+# repository, so PR-authored code executing here would be handed far more than
+# the scoped GITHUB_TOKEN it replaced. The invariant is the same, the stakes are
+# higher: no checkout, no PR scripts, no `npm` anything.
 on:
   pull_request_target:
     # `opened` matters for anything opened by a bot: Dependabot labels its PRs
@@ -69,7 +75,24 @@ jobs:
     steps:
       - name: Enable auto-merge (squash)
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # `AUTOMERGE_TOKEN` is what makes the merge actually SHIP. A push made
+          # with the built-in GITHUB_TOKEN triggers NO workflows — GitHub's rule
+          # for preventing recursive runs — so every PR this job auto-merged
+          # produced a push to `main` that fired no deploy, no cache purge and
+          # not even the stale-PR refresh. Measured on 2026-08-26: `main` sat
+          # three merges ahead of production for 80 minutes with every check
+          # green and nothing anywhere reporting it, because CI runs on the free
+          # self-hosted runner and stayed healthy while deployment silently
+          # stopped. A PAT is a real actor, so its pushes trigger workflows
+          # normally.
+          #
+          # Falls back to GITHUB_TOKEN when the secret is absent so auto-merge
+          # keeps working rather than erroring — but note what that costs: the
+          # merge lands and nothing deploys. If you see merged commits that
+          # never reached production, check whether this secret expired. A
+          # fine-grained PAT has an expiry date and its lapse looks exactly like
+          # this bug coming back.
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
         # GitHub REFUSES to arm auto-merge on a PR that is already mergeable —
         # the mutation errors with "Pull request is in clean status" rather than
