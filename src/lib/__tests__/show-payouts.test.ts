@@ -115,6 +115,55 @@ describe('triggerShowPayouts', () => {
     );
   });
 
+  /* THE CRON RUNNING TWICE IS THE ONE FAILURE NOBODY SEES UNTIL IT COSTS
+     MONEY, and until now nothing asserted it.
+
+     `docs/runbooks/money-path-rehearsal.md` ends on exactly this check —
+     "running the payout cron twice and seeing `released: 0`" — because a
+     double payout does not raise an error, does not fail a request, and
+     leaves no complaint: the money simply leaves the platform balance twice
+     and the second transfer looks as ordinary as the first. The runbook has
+     to be walked by a person against a real database, so the guarantee had
+     no automated cover at all.
+
+     What makes it safe is one clause: the query filters `status: PENDING`,
+     and a released entry is no longer PENDING. So this test models the store
+     statefully and applies that filter, which means the second pass finds
+     nothing BECAUSE the first pass wrote RELEASED — not because a mock was
+     told to return an empty array. A test that stubbed the second findMany
+     to `[]` would pass with the filter deleted, which is precisely the
+     regression worth catching. */
+  it('pays once when the cron runs twice — the second pass releases nothing', async () => {
+    const store = [{ ...entry(), status: AccountsPayableStatus.PENDING }];
+    /* An ABSENT status filter must return EVERYTHING, the way a real query
+       would. Modelling it as `row.status === args.where.status` looks
+       equivalent and is not: with the filter deleted the comparison is
+       `=== undefined`, the fake returns nothing, and the test fails on the
+       FIRST pass releasing 0 — reporting the mutation but never once
+       exercising a double payment. Verified by deleting the filter and
+       watching this fake pay twice. */
+    mockDb.accountsPayableEntry.findMany.mockImplementation(
+      async (args: { where: { status?: AccountsPayableStatus } }) =>
+        store.filter((row) => args.where.status === undefined || row.status === args.where.status),
+    );
+    mockDb.accountsPayableEntry.update.mockImplementation(
+      async (args: { where: { id: string }; data: Record<string, unknown> }) => {
+        const row = store.find((candidate) => candidate.id === args.where.id);
+        if (row) Object.assign(row, args.data);
+        return row ?? {};
+      },
+    );
+    mockCreatePayoutTransfer.mockResolvedValue('tr_once');
+
+    await expect(triggerShowPayouts()).resolves.toEqual({ released: 1, skipped: 0 });
+    await expect(triggerShowPayouts()).resolves.toEqual({ released: 0, skipped: 0 });
+
+    // The assertion that actually protects the money.
+    expect(mockCreatePayoutTransfer).toHaveBeenCalledTimes(1);
+    expect(store[0].status).toBe(AccountsPayableStatus.RELEASED);
+    expect(store[0].stripeTransferId).toBe('tr_once');
+  });
+
   it('skips (does not transfer) an entry whose profile has no Stripe Connect account', async () => {
     mockDb.accountsPayableEntry.findMany.mockResolvedValue([
       entry({ profile: { stripeConnectAccountId: null, owner: { email: 'x@ihype.org' } } }),
