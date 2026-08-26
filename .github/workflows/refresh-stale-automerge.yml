@@ -1,0 +1,101 @@
+name: Refresh stale auto-merge PRs
+
+# Auto-merge does NOT update a stale branch by itself. GitHub arms the merge and
+# then waits — and a PR whose base has moved on reports `BEHIND` and sits there
+# green forever. Measured on 2026-08-26: #753 was fully green, armed, and did
+# not merge until its branch was refreshed by hand.
+#
+# That is not an edge case in a repo with one developer, it is the NORMAL case:
+# merging anything makes every other open PR behind at once. So each merge
+# stalled every PR queued behind it, which is the "they don't go away unless I
+# close them manually" complaint arriving by a second route.
+#
+# The ruleset on `main` sets `strict_required_status_checks_policy = False`, so
+# on paper being behind should not block. It blocks anyway — most likely a
+# classic branch-protection rule requiring up-to-date branches, which the
+# Actions token cannot read (403 on /branches/main/protection). This workflow
+# is keyed on the OBSERVED behaviour rather than on the rule we can see, and it
+# is a no-op the day that stops being true: nothing is BEHIND, nothing is
+# updated.
+#
+# SECURITY: `push` on the default branch, so this only ever runs code already
+# merged into `main`. It never checks out a PR head. Do not add one.
+on:
+  push:
+    branches: [main]
+  # Same recovery reason as deploy-production.yml: if the push that should
+  # have refreshed the armed PRs never produced a run — a budget stop, a
+  # queue drop — those PRs stay BEHIND with nothing to release them, and
+  # there is no second push coming precisely because nothing can merge.
+  # Safe to run at any time: it reads state and refreshes only what is
+  # already armed and already behind, so an unnecessary run is a no-op.
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# A burst of merges must not race each other into the same update-branch calls.
+concurrency:
+  group: refresh-stale-automerge
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Update every armed PR that has fallen behind
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          # `autoMergeRequest != null` is the whole gate: it means someone (a
+          # person, or the auto-merge workflow) has already decided this PR
+          # should land when green. Refreshing it is completing that decision,
+          # not making a new one. A draft or a `hold`-labelled PR is never
+          # armed, so both are excluded without naming them here.
+          #
+          # mergeStateStatus is computed lazily — GitHub answers UNKNOWN while
+          # it works the merge out, and a merge to main invalidates it for every
+          # open PR at once, which is exactly when this workflow runs. So poll
+          # until nothing is UNKNOWN rather than reading once and believing it;
+          # reading once would skip precisely the PRs this exists to fix.
+          for attempt in 1 2 3 4 5 6; do
+            pending=$(gh pr list --state open --limit 50 \
+              --json number,autoMergeRequest,mergeStateStatus \
+              --jq '[.[] | select(.autoMergeRequest != null and .mergeStateStatus == "UNKNOWN")] | length')
+            if [ "$pending" = "0" ]; then break; fi
+            echo "$pending armed PR(s) still computing mergeability (attempt $attempt)"
+            sleep 10
+          done
+
+          behind=$(gh pr list --state open --limit 50 \
+            --json number,autoMergeRequest,mergeStateStatus \
+            --jq '[.[] | select(.autoMergeRequest != null and .mergeStateStatus == "BEHIND") | .number] | join(" ")')
+
+          if [ -z "$behind" ]; then
+            echo "No armed PR is behind. Nothing to do."
+            exit 0
+          fi
+
+          for pr in $behind; do
+            echo "::group::Refreshing #$pr"
+            # 422 here means "already up to date" — another run got there first,
+            # or the head moved while we were looking. Not a failure: the goal
+            # is the state, not the call. Anything else is real and should fail
+            # the job, because a silent no-op leaves the PR stalled with nobody
+            # watching.
+            if out=$(gh api --method PUT "/repos/$GH_REPO/pulls/$pr/update-branch" 2>&1); then
+              echo "$out"
+            else
+              if printf '%s' "$out" | grep -q '"status": *"422"\|HTTP 422'; then
+                echo "already up to date"
+              else
+                echo "$out" >&2
+                exit 1
+              fi
+            fi
+            echo "::endgroup::"
+          done
