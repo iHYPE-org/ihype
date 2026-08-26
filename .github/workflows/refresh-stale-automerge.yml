@@ -23,6 +23,13 @@ name: Refresh stale auto-merge PRs
 on:
   push:
     branches: [main]
+  # Same recovery reason as deploy-production.yml: if the push that should
+  # have refreshed the armed PRs never produced a run — a budget stop, a
+  # queue drop — those PRs stay BEHIND with nothing to release them, and
+  # there is no second push coming precisely because nothing can merge.
+  # Safe to run at any time: it reads state and refreshes only what is
+  # already armed and already behind, so an unnecessary run is a no-op.
+  workflow_dispatch:
 
 permissions:
   contents: write
