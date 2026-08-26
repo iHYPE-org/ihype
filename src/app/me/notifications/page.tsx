@@ -1,17 +1,17 @@
 import { redirect } from 'next/navigation';
 
 /**
- * Notifications were merged into the fan dashboard — they are a section of
- * /me/dashboard now rather than a page of their own.
+ * Notifications live in the app shell now, at `/app/me/notifications`.
  *
- * This stays as a redirect rather than being deleted: the link ships inside
- * real notification emails and push payloads that are already in people's
- * inboxes and on their lock screens, so removing the route would 404 anyone
- * tapping a notification sent before this change.
+ * This stays a redirect rather than being deleted: the link ships inside real
+ * notification emails and push payloads already in people's inboxes and on
+ * their lock screens, so removing the route would 404 anyone tapping a
+ * notification sent before any of this moved.
  *
- * The API is untouched — `/api/me/notifications` (GET feed, POST mark-read)
- * still backs the list component in its new home.
+ * It pointed at `/me/dashboard` until 2026-08-25, which by then forwarded into
+ * `/app/me` — a surface with no feed on it. A redirect is only as good as what
+ * it lands on.
  */
 export default function NotificationsRedirect() {
-  redirect('/me/dashboard');
+  redirect('/app/me/notifications');
 }

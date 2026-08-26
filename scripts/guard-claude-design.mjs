@@ -314,6 +314,27 @@ for (const retired of [
 ]) {
   assertMissing(retired, 'The console dock is the only chrome — see MmmDock.tsx and DESIGN_SYNC row 289.');
 }
+/* Six components orphaned by the legacy-shell retirement, and asserted gone for
+ * the reason the dock components above are: a file left on disk is an import
+ * away from rendering, and this repository has already had one retired shell
+ * rebuilt from a copy nobody deleted.
+ *
+ * Each was verified replaced before deletion, not merely unreferenced — which
+ * is the distinction that matters, because most of the orphans that came out of
+ * that retirement are NOT replaced (see DESIGN_SYNC row 310) and deleting one of
+ * those would destroy the only implementation of a live feature.
+ */
+for (const [retired, replacement] of [
+  ['src/components/AlwaysOnStation.tsx', 'The station is the dock plus MmmMusic; /radio forwards to /app/music/radio.'],
+  ['src/components/ConnectPayoutButton.tsx', 'MmmSettings.tsx posts to /api/stripe/connect/onboard itself.'],
+  ['src/components/CompactHypeButton.tsx', 'HypeButton renders on all four MMM detail panes, and the shell heart posts the same endpoint.'],
+  ['src/components/LanguageSwitcher.tsx', 'MmmAccessibilitySettings.tsx owns setLocale.'],
+  ['src/components/PushPrimer.tsx', 'MmmSettings.tsx runs the push permission flow.'],
+  ['src/lib/weekendShows.ts', 'The weekend feed is the map events layer with its date picker; /this-weekend forwards there.'],
+]) {
+  assertMissing(retired, replacement);
+}
+
 assertIncludes(
   'src/components/mmm/MmmShell.tsx',
   '<MmmDock',

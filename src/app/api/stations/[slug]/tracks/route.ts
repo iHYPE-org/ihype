@@ -18,7 +18,39 @@ export type StationTrack = {
   artworkUrl: string | null;
   mediaUrl: string | null;
   durationSecs: number | null;
+  /** Why this track is in this station, for the viewer. Derived from the
+   *  context the station was already resolved with, so it costs no extra
+   *  query — see `reasonFor` below. */
+  reason: string;
 };
+
+/**
+ * The explanation a listener is owed for a recommendation (owner, 2026-08-25:
+ * "Recommended needs reason why rec was made").
+ *
+ * Derived rather than stored, and derived from the SAME context the station's
+ * `where` was built from — so it cannot disagree with why the row is actually
+ * in the list. The follow and hype checks come first because they are the
+ * specific answer; the station's kind is the fallback for a row that qualified
+ * some other way.
+ */
+function reasonFor(
+  profileId: string,
+  city: string | null,
+  station: { kind: string; genre: string | null },
+  context: StationContext,
+): string {
+  if (context.followedProfileIds.includes(profileId)) return 'From an artist you follow';
+  if (context.hypedProfileIds.includes(profileId)) return 'From an artist you hyped';
+  switch (station.kind) {
+    case 'local': return city ? `Playing in ${city}` : 'Near you';
+    case 'new': return 'Uploaded this week';
+    case 'genre': return station.genre ? `${station.genre} station` : 'Genre station';
+    case 'for_you': return 'Matches what you replay';
+    case 'friends': return 'Shared by someone you follow';
+    default: return station.kind === 'friends' ? 'Shared by someone you follow' : 'In this station';
+  }
+}
 
 /**
  * `GET /api/stations/:slug/tracks?limit&cursor` — one station resolved to a
@@ -73,7 +105,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
         id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, durationSecs: true,
-        profile: { select: { name: true, slug: true } },
+        profileId: true,
+        profile: { select: { name: true, slug: true, city: true } },
       },
     });
 
@@ -88,6 +121,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       artworkUrl: row.artworkUrl,
       mediaUrl: row.storageUrl,
       durationSecs: row.durationSecs,
+      reason: reasonFor(row.profileId, row.profile.city, station, context),
     }));
 
     return NextResponse.json(

@@ -22,10 +22,14 @@ describe('MMM_NAV manifest', () => {
 
   // The app-shell redesign dropped Search and added Recommended. Asserting the
   // exact list is what stops the older five from creeping back in.
-  it('carries MUSIC’s six current items, with Library and no Search', () => {
+  it('carries MUSIC’s five current items — no Library, no Search', () => {
     expect(MMM_MUSIC_TABS.map((item) => item.label))
-      .toEqual(['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists', 'Library']);
+      .toEqual(['Discover', 'Radio', 'Charts', 'Recommended', 'Playlists']);
     expect(MMM_MUSIC_TABS.map((item) => item.id)).not.toContain('search');
+    /* Library was retired 2026-08-25 and its content moved into Playlists.
+       Asserted absent rather than merely not listed: a station is one line to
+       re-add, and re-adding this one puts likes in two places again. */
+    expect(MMM_MUSIC_TABS.map((item) => item.id)).not.toContain('library');
   });
 
   // Both MAP and ME navigate directly now; only MUSIC fans out.

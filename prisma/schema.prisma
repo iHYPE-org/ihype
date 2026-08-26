@@ -126,6 +126,8 @@ model User {
   venueConnectionRequests VenueConnectionRequest[]
   scannedTickets          Ticket[]                 @relation("TicketScans")
   reassignedTickets       Ticket[]                 @relation("TicketReassignments")
+  ticketTransfersMinted   TicketTransferCode[]     @relation("TicketTransferCodesCreated")
+  ticketTransfersClaimed  TicketTransferCode[]     @relation("TicketTransferCodesClaimed")
   fanPlaylists            FanPlaylist[]
   favoriteMedia           FanFavoriteMedia[]
   likes                   Like[]
@@ -341,6 +343,36 @@ model Profile {
   @@index([stateRegion(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_stateRegion_trgm_idx")
   @@index([hometown(ops: raw("gin_trgm_ops"))], type: Gin, map: "Profile_hometown_trgm_idx")
   @@index([genres], type: Gin, map: "Profile_genres_gin_idx")
+}
+
+/// A one-time code that hands a ticket order to another ACCOUNT.
+///
+/// Distinct from the email transfer that already existed, and it has to be: the
+/// email path rewrites holderEmail and leaves buyerUserId alone, while every
+/// ticket list in the app is scoped `where: { buyerUserId }` — so an emailed
+/// transfer left the order in the sender's list and never put it in the
+/// recipient's. Claiming a code moves buyerUserId, which is what makes the
+/// handoff real rather than a notification.
+model TicketTransferCode {
+  id            String      @id @default(cuid())
+  /// Crockford base32, stored in canonical (normalized) form — see
+  /// src/lib/ticket-transfer-code.ts. Unique so a claim is a single lookup and
+  /// two live codes can never collide.
+  code          String      @unique
+  ticketOrderId String
+  createdById   String
+  createdAt     DateTime    @default(now())
+  expiresAt     DateTime
+  /// Set the moment the code is spent. Single-use is enforced by a conditional
+  /// update on this being null, not by a read-then-write.
+  claimedAt     DateTime?
+  claimedById   String?
+  ticketOrder   TicketOrder @relation(fields: [ticketOrderId], references: [id], onDelete: Cascade)
+  createdBy     User        @relation("TicketTransferCodesCreated", fields: [createdById], references: [id], onDelete: Cascade)
+  claimedBy     User?       @relation("TicketTransferCodesClaimed", fields: [claimedById], references: [id], onDelete: SetNull)
+
+  /// The order's live code is looked up to rotate it when a new one is minted.
+  @@index([ticketOrderId, claimedAt])
 }
 
 model FanPlaylist {
@@ -685,6 +717,7 @@ model TicketOrder {
   buyerUser                  User?                  @relation("BuyerTicketOrders", fields: [buyerUserId], references: [id], onDelete: SetNull)
   affiliatePromoterProfile   Profile?               @relation("AffiliatePromoterTicketOrders", fields: [affiliatePromoterProfileId], references: [id], onDelete: SetNull)
   tickets                    Ticket[]
+  transferCodes              TicketTransferCode[]
   accountsPayableEntries     AccountsPayableEntry[]
   promoCodeId                String?
   promoCode                  PromoCode?             @relation(fields: [promoCodeId], references: [id])

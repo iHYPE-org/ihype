@@ -58,10 +58,11 @@ export const MMM_NAV: readonly MmmModule[] = [
       { id: 'charts', label: 'Charts', href: `${MMM_BASE}/music/charts` },
       { id: 'recommended', label: 'Recommended', href: `${MMM_BASE}/music/recommended` },
       { id: 'playlists', label: 'Playlists', href: `${MMM_BASE}/music/playlists` },
-      /* Where the hearts land. Liked tracks, artists and venues had no surface
-         at all — a like went into the account and never came back out
-         (owner-approved batch, 2026-08-24). */
-      { id: 'library', label: 'Library', href: `${MMM_BASE}/music/library` },
+      /* There were SIX stations here. Library was retired 2026-08-25 ("Remove
+         library as it's already contained in playlists") and its whole content
+         — liked tracks, liked artists, liked venues — moved into Playlists
+         rather than going with it. Do not re-add a station for likes: the
+         surface exists, one tab to the left. */
     ],
   },
   // No submenu, by design — see the header note.

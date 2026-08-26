@@ -1,4 +1,5 @@
 'use client';
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
@@ -117,6 +118,23 @@ export function AdminShell({ children, name, email }: Props) {
   // Live counts, from the same endpoint the board polls — see AdminLive.tsx.
   const badges = useAdminBadges();
 
+  /* Keep the current section visible in the phone's nav strip. The strip
+     scrolls (eight sections do not fit 393px), so on /admin/system the active
+     tab sits off the right edge and an operator has no way to see where they
+     are — the same "confident, wrong readout" problem the dial's `active`
+     resolution exists to avoid, one shell over.
+
+     scrollLeft is set directly rather than through scrollIntoView: this bar is
+     position:fixed, and scrollIntoView is free to scroll ancestors, which on a
+     fixed element means scrolling the PAGE to chase something that never moves. */
+  const barRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const bar = barRef.current;
+    const current = bar?.querySelector<HTMLElement>('.ops-rail-active');
+    if (!bar || !current) return;
+    bar.scrollLeft = current.offsetLeft - (bar.clientWidth - current.clientWidth) / 2;
+  }, [active]);
+
   return (
     <div className="ops-shell">
       {/* Top bar */}
@@ -184,7 +202,7 @@ export function AdminShell({ children, name, email }: Props) {
       </div>
 
       {/* Mobile bottom bar */}
-      <nav className="ops-bottom-bar">
+      <nav className="ops-bottom-bar" ref={barRef}>
         {NAV.map(item => (
           <Link
             key={item.s}
@@ -193,7 +211,10 @@ export function AdminShell({ children, name, email }: Props) {
             title={t(`adminAdminShell.nav.${item.s}`, item.label)}
           >
             <span className="ops-rail-glyph">{item.glyph}</span>
-            <span>{t(`adminAdminShell.nav.${item.s}`, item.label)}</span>
+            {/* The SHORT label, same as the desktop rail. The full names are
+                what made this row 639px wide in a 393px bar; `title` and the
+                rail keep the real name available. */}
+            <span>{t(`adminAdminShell.rail.${item.s}`, item.rail ?? item.label)}</span>
           </Link>
         ))}
       </nav>

@@ -55,13 +55,46 @@
 .ops-subnav-link:hover{color:var(--ink)}
 .ops-subnav-link.ops-subnav-active{color: var(--accent-text);border-color:rgba(var(--accent-rgb),.35);background:rgba(var(--accent-rgb),.08)}
 .ops-bottom-bar{display:none}
+/* The phone's section nav. It SCROLLS; it does not divide.
+   `flex:1` on eight tabs looks like it shares the width and does not: with no
+   `min-width:0` a flex item never shrinks below its content, so each tab stayed
+   as wide as its own label and the eight measured 639px inside a 393px bar —
+   246px of it simply unreachable, with no horizontal padding, which is why the
+   labels ran together as "OverviewUsersTicketsPaymentsVerifica…" (owner
+   screenshot, 2026-08-25). Measured, not guessed: 72+45+63+72+117+126+90+54.
+
+   So it becomes a scrolling strip, which is the pattern `.ops-subnav` directly
+   above already uses for the same problem one level down — the two rows of this
+   console's navigation now behave the same way, which is the consistency the
+   report asked for. Tabs take the SHORT rail labels (Verify · Access · Stats)
+   that already exist for the 56px desktop rail and are exactly right here.
+
+   `padding-bottom` carries the safe-area inset because this bar is pinned to
+   `bottom:0`, which on a notched iPhone is the home-indicator swipe zone —
+   MOBILE.md's rule, and the same fix the member dock needed. */
 @media(max-width:700px){
   .ops-rail{display:none}
-  .ops-bottom-bar{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--bg);border-top:1px solid var(--line);z-index:100}
-  .ops-bottom-tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;font-size: 0.9375rem;color:var(--ink-3);text-decoration:none;gap:3px;font-family:var(--f-m,monospace)}
+  .ops-bottom-bar{
+    display:flex;position:fixed;bottom:0;left:0;right:0;
+    background:var(--bg);border-top:1px solid var(--line);z-index:100;
+    overflow-x:auto;scrollbar-width:none;
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+  }
+  .ops-bottom-bar::-webkit-scrollbar{display:none}
+  .ops-bottom-tab{
+    flex:0 0 auto;min-width:72px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:8px 10px;font-size: 0.9375rem;color:var(--ink-3);text-decoration:none;
+    gap:3px;font-family:var(--f-m,monospace);white-space:nowrap;
+  }
   .ops-bottom-tab.ops-rail-active{color: var(--accent-text)}
-  .ops-main{padding-bottom:60px}
+  .ops-main{padding-bottom:calc(60px + env(safe-area-inset-bottom, 0px))}
   .ops-search-hint{display:none}
+  /* The operator chip is a label, not a control, and it is the first thing to
+     go when the top bar runs out of room — the avatar beside it carries the
+     same information and can be tapped. Without this the chip pushed the
+     avatar off the right edge, which is the clipped "IA" in the report. */
+  .ops-chip-sm{display:none}
 }
 
 /* ── iH/OPS Login Gate ────────────────────────────────── */

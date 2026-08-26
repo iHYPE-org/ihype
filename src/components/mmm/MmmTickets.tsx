@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
+import { TicketClaimForm } from '@/components/TicketTransferPanel';
 
 const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
 
@@ -42,6 +43,13 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
 
   return (
     <>
+      {/* Claiming sits on the LIST, not on a ticket page: the person redeeming a
+          code does not have the ticket yet, so they cannot open its page. Above
+          the list because on a first transfer the list below is empty or demo
+          content, and a control under an empty state reads as part of it. */}
+      <div style={{ padding: '0 2px 14px' }}>
+        <TicketClaimForm />
+      </div>
       {demo && (
         <div className="mmm-demo-head mmm-ticket-demo-head">
           <span className="mmm-demo-badge">Demo content</span>

@@ -136,10 +136,25 @@ html:has(.mmm-frame) {
      natural resolution. */
   left: 50%;
   right: auto;
-  /* 860 = the dc.html's 430 doubled. Every surface inside the frame is
-     percentage- or flex-sized against it, so this one value widens the chart,
-     the panes and the dock together. */
-  --mmm-frame-max: 860px;
+  /* 712 = the content column (680) plus the pane's own 16px inset on each side
+     (owner, 2026-08-26: "let's set desktop mode to the exact width of the
+     search bar"). The paper now ends where the search bar ends instead of
+     carrying 90px of empty cream past it on either side.
+
+     680 is not a new number: the wide-viewport rule caps the column at
+     `calc(50% - 340px)` of padding, and 340 is half of 680, so the search bar,
+     every chart row and every card have measured 680 on a desk all along. What
+     changed is that the SHEET was 860 — the dc.html's 430 doubled — so the
+     column sat in the middle of a wider page. Measured at 1280: frame 860,
+     padding 90, field 680.
+
+     Keep the +32: at exactly 680 the wide rule computes ZERO padding and every
+     row goes flush to the paper's edge. The 16px matches what a phone already
+     uses, so the inset is the same figure at every width.
+
+     Every surface inside the frame is percentage- or flex-sized against this,
+     so the one value moves the chart, the panes and the dock together. */
+  --mmm-frame-max: 712px;
   width: min(100vw, var(--mmm-frame-max));
   transform: translateX(-50%);
   /* The sheet's edge against the desk — invisible at phone width (clipped by
@@ -315,41 +330,84 @@ html:has(.mmm-frame) {
   mix-blend-mode: multiply;
 }
 
+/* MapLibre's own attribution and logo stay hidden — `.mmm-map-attrib` below
+   carries the credit instead. Check that element still renders before touching
+   this line: hiding BOTH is what puts the tiles out of licence, and it looks
+   like nothing at all from the outside. */
 .mmm-map-canvas .maplibregl-ctrl-attrib,
 .mmm-map-canvas .maplibregl-ctrl-logo { display: none; }
 .mmm-map-canvas .maplibregl-canvas { outline: none; }
 
-/* Attribution is required by CARTO/OSM terms and is therefore not optional
-   chrome — it renders whenever the map does. */
+/* The credit, painted only while the compass is held (owner, 2026-08-25: "Tap
+   the compass on map to show open maps badge and hide when let go"). Not
+   optional chrome — CARTO's terms and OSM's ODbL require it to be reachable —
+   but nothing requires it to be a standing line of text across the chart, which
+   is what it used to be. Tracked mono at its 11px floor: metadata, and a legal
+   notice, so it shrinks and never disappears.
+
+   `pointer-events: none` is the load-bearing line: this sits directly above the
+   control holding it open, so a thumb that slides up off the compass must pass
+   THROUGH it. Take that off and the badge swallows the pointerup that hides
+   it. It is `aria-hidden` for the same reason its trigger carries the label —
+   one announcement, on the thing that is focusable. */
 .mmm-map-attrib {
   position: absolute;
   right: 10px;
-  top: 92px;
-  z-index: 15;
+  top: 108px;
+  z-index: 16;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border: 1px solid var(--hair-40);
+  border-radius: 999px;
+  background: rgba(var(--bg-base-rgb), .88);
   font-family: var(--font-mono);
-  /* Metadata, not content — the mono-eyebrow shape at its 11px floor (owner,
-     2026-08-24: "Open maps moniker too big"). A legal credit, so it shrinks;
-     it never hides. */
   font-size: 0.6875rem;
   letter-spacing: 0.14em;
+  white-space: nowrap;
   color: var(--ink-3);
   pointer-events: none;
 }
+
 /* The chart's ornaments, from map.html: a compass rose under the credit, and a
    real maplibre scale bar under that — an instrument, not a decoration, so it
    comes from ScaleControl rather than being drawn. */
 .mmm-map-compass {
   position: absolute;
   right: 14px;
-  top: 116px;
+  /* The compass took the credit disc's own slot when the disc stopped standing
+     there — the stack is now compass -> scale, with the credit painting in the
+     air above the compass only while it is held. It does NOT move when held:
+     a control that shifts under the finger pressing it is the one thing this
+     interaction cannot do. */
+  top: 144px;
   z-index: 15;
+  /* 46px of rose inside a 46px control: it is a button now, so it carries the
+     tap floor itself rather than borrowing one from mobile-fit.css. */
   width: 46px;
   height: 46px;
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--ink-2);
   opacity: 0.72;
-  pointer-events: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* A press should read on the instrument, not just on the badge it opens. */
+  transition: opacity var(--duration-fast, .12s) var(--ease, ease);
 }
-.mmm-map-canvas .maplibregl-ctrl-top-right { top: 168px; right: 14px; }
+.mmm-map-compass > svg { width: 100%; height: 100%; display: block; }
+.mmm-map-compass:hover { opacity: 0.9; }
+.mmm-map-compass:active { opacity: 1; }
+.mmm-map-compass:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 50%; }
+/* The scale bar and the credit disc share this stack, under the compass.
+   `right` is 18px rather than 14: the scale's LABEL is centred inside a rule
+   whose width is the real distance, so when the label is wider than the rule it
+   overflows both ways, and at 14px the right half went off the viewport — the
+   clipped "3000 F" in the report. The rule's own maxWidth went 56 -> 96 in
+   MmmMap for the same reason: a longer rule fits its own label. */
+.mmm-map-canvas .maplibregl-ctrl-top-right { top: 198px; right: 18px; }
 .mmm-map-canvas .maplibregl-ctrl-scale {
   background: none;
   /* An instrument mark, not a frame (owner, 2026-08-24: "Line through map for
@@ -367,22 +425,14 @@ html:has(.mmm-frame) {
   text-align: center;
 }
 
-/* ── The torn edge ────────────────────────────────────────────────────────
-   map-treasure.html's `.char`: a frame displaced by fractal noise (the #torn
-   SVG filter MmmMap renders), desk colour outside the tear, a charred line and
-   a scorch halo just inside it. Decoration — never eats a drag — and sits over
-   the grain, under the pins. The inset is negative so the UNdisplaced frame
-   starts past the viewport and only its noise-torn edge shows. */
-.mmm-map-char {
-  position: absolute;
-  inset: -8px;
-  pointer-events: none;
-  z-index: 2;
-  filter: url(#mmm-torn);
-}
-.mmm-map-char-desk { position: absolute; inset: 0; border: 16px solid var(--bg); }
-.mmm-map-char-scorch { position: absolute; inset: 15px; border: 9px solid rgba(110, 70, 26, .14); }
-.mmm-map-char-burn { position: absolute; inset: 13px; border: 4px solid rgba(74, 46, 14, .38); }
+/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map design
+   (doesn't fit with the view)"). `.mmm-map-char` and its desk/scorch/burn
+   layers were map-treasure.html's `.char`, a frame displaced by fractal noise
+   so the paper's edge tore differently on every inch. The chart keeps its ruled
+   grid, its compass and its sepia — the paper stops pretending to be torn.
+   Do not reinstate it: the map fills a rectangular frame with a search bar
+   sitting on its top edge, and a ragged border under a straight-edged control
+   reads as a rendering fault rather than as paper. */
 
 /* ── X marks the show ── two hand-cut strokes (map-treasure.html), each pin
    jittered a few degrees by MmmMap so no two X's sit identically — a stamped
@@ -463,6 +513,30 @@ html:has(.mmm-frame) {
   color: var(--accent-text);
   font-weight: 700;
 }
+/* Charts' chip rows — dataset, then the area scope or the genre list under it.
+   Scrolls rather than wraps: the genre row is as long as the catalogue's genre
+   list, and a wrapping row changes the pane's height every time the dataset
+   changes, which moves the chart out from under the reader's eye. */
+.mmm-chart-chips {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scrollbar-width: none;
+}
+.mmm-chart-chips::-webkit-scrollbar { display: none; }
+.mmm-chart-chips > .mmm-chip { flex: 0 0 auto; }
+/* Says WHERE the area chart is ranking, from the viewer's own profile. Mono at
+   its floor: this is a readout, not a sentence. */
+.mmm-chart-place {
+  margin: 0 0 12px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
 .mmm-chip-genre {
   padding: 5px 11px;
   font-family: var(--font-mono);
@@ -594,6 +668,15 @@ html:has(.mmm-frame) {
   z-index: 25;
   background: var(--bg);
   overflow-y: auto;
+  /* The pane scrolls DOWN and never sideways (owner, 2026-08-25: "Me category
+     needs fixed positioning - currently can be dragged out of frame in
+     mobile"). This is not redundant with the default: CSS computes a `visible`
+     overflow-x to `auto` when the other axis is not visible, so declaring only
+     overflow-y silently made the pane pannable, and any child a pixel too wide
+     let a thumb drag the whole surface out of the frame. Nothing here wants it
+     — the one horizontal scroller in the shell, the recents rail, scrolls
+     inside itself precisely so the pane does not have to. */
+  overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,
@@ -1010,54 +1093,20 @@ html:has(.mmm-frame) {
   color: var(--ink-on-accent);
 }
 
-/* ── ME accordions ────────────────────────────────────────────────────────
-   Design System 8's ME surface. The section header is the control, so it takes
-   the full row and the whole thing is the hit target — a chevron-sized tap area
-   on a phone is the complaint this shell's touch floors exist to prevent. */
+/* ── ME cards ─────────────────────────────────────────────────────────────
+   This banner is a SLICE BOUNDARY as well as a heading: `measure:datepick`
+   cuts the date picker's stylesheet out of this file between the MAP banner
+   above and this line, and fails loudly when it cannot find either. It read
+   "ME accordions" until the accordion was deleted, and renaming it here means
+   renaming it in `scripts/measure-datepicker.mjs` too.
+
+   ME's cards. There is one on screen at a time and the dial is what picks it
+   (owner, 2026-08-25: "Still showing multi options instead of single subnav
+   using thumb wheel"), so there is no header row and no chevron left to style —
+   `.mmm-me-accordion`, `-text`, `-label`, `-detail` and `-chevron` are deleted
+   with the control they drew. `-body` stays: it is the card's own padding, and
+   it is now the whole card. */
 .mmm-me-section { margin-bottom: 8px; }
-.mmm-me-accordion {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  width: 100%;
-  text-align: left;
-  background: var(--bg-surface);
-  border: 1px solid var(--ink-a45);
-  border-radius: var(--radius-panel);
-  box-shadow: 2px 3px 0 var(--ink-a10);
-  padding: 16px 20px;
-  cursor: pointer;
-  transition: border-color var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion:hover,
-.mmm-me-accordion:focus-visible { border-color: var(--accent); }
-
-/* Label and detail stack, so the flex child that grows is the pair rather than
-   the label — otherwise the detail line sets its own width and the chevron
-   drifts inward on the rows that have one. */
-.mmm-me-accordion-text { flex: 1; min-width: 0; }
-.mmm-me-accordion-label {
-  display: block;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1rem;
-  letter-spacing: -0.015em;
-  color: var(--ink);
-}
-/* Says what is inside without opening it. Truncates rather than wrapping: a
-   two-line detail changes the row's height, and a column of rows at different
-   heights reads as unrelated cards instead of one list. */
-.mmm-me-accordion-detail {
-  display: block;
-  margin-top: 3px;
-  font-size: 0.9375rem;
-  line-height: 1.35;
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Role-labelled rule above the stat grid inside Profiles. */
 .mmm-me-stats-head {
   display: flex;
@@ -1070,15 +1119,6 @@ html:has(.mmm-frame) {
   height: 1px;
   background: var(--hair-70);
 }
-.mmm-me-accordion-chevron {
-  flex: 0 0 auto;
-  font-size: 0.95rem;
-  line-height: 1;
-  color: var(--ink-2);
-  transform: rotate(90deg);
-  transition: transform var(--duration-fast) var(--ease-default);
-}
-.mmm-me-accordion-chevron[data-open] { transform: rotate(-90deg); }
 .mmm-me-accordion-body { padding: 14px 2px 4px; }
 
 /* Supporting copy inside a section. Not --ink-3 at this size: it is a full
@@ -1657,9 +1697,16 @@ html:has(.mmm-frame) {
    spanning the whole bar, rewritten live by the pointer/tilt light — so on a
    phone the largest surface in the app carried a moving highlight that tracked
    the handset's every tilt, which reads as glare rather than as material. The
-   CONTROLS keep their speculars (`.mmm-knob-spec`, the dial glass, the stick
-   cap): a highlight the size of a knob describes a dome, and one the size of
-   the cabinet just moves. Do not reinstate it on the base. */
+   controls kept theirs at the time, on the argument that a highlight the size
+   of a knob describes a dome while one the size of the cabinet just moves.
+
+   NOTHING ON THE DOCK REFLECTS ANY MORE (owner, 2026-08-25: "Remove
+   reflective element from console"). `.mmm-knob-spec`, `.mmm-knob-sheen`, the
+   dial glass sheen and the stick cap's specular all went with the fascia's.
+   That argument above is recorded because it lost: the request came twice, and
+   a dome that has to be explained is not describing itself. What remains is
+   occlusion and light SOURCES — the contact shadows, the pointer, the lamp —
+   never an image of the room. Do not reinstate any of them. */
 /* The machined plate the three controls are seated in. */
 .mmm-dock-plate {
   position: relative;
@@ -1801,22 +1848,17 @@ html:has(.mmm-frame) {
   pointer-events: none;
   background: linear-gradient(180deg, rgba(255, 255, 255, .4) 0%, rgba(255, 252, 240, .1) 26%, rgba(52, 30, 6, .34) 49%, rgba(58, 34, 8, .16) 56%, rgba(255, 214, 150, .26) 76%, rgba(255, 232, 190, .1) 100%);
 }
-/* The anisotropic glint — scattered along the lathe path, a property of the
-   surface, so it is correct for this one to turn with the rotor. Kept faint:
-   the bright specular is a reflection of the room and must NOT turn (that one
-   is .mmm-knob-spec, screen-space, above the rotor). */
+/* The anisotropic glint — light scattered ALONG the lathe path, which is a
+   property of the machined surface rather than an image of the room, so it is
+   correct for this one to turn with the rotor and it survives the removal of
+   the dock's reflections. It is the last bright thing on the brass; if the
+   knob still reads as glossy, this is the next one to go. */
 .mmm-knob-glint {
   position: absolute;
   inset: 13px;
   border-radius: 50%;
   pointer-events: none;
   background: radial-gradient(30% 22% at 33% 22%, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .07) 42%, transparent 72%);
-}
-.mmm-knob-sheen {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: linear-gradient(128deg, rgba(255, 255, 255, .38) 0%, transparent 38%, transparent 64%, rgba(255, 255, 255, .12) 100%);
 }
 .mmm-knob-pointer {
   position: absolute;
@@ -1828,18 +1870,6 @@ html:has(.mmm-frame) {
   border-radius: 0 0 2px 2px;
   background: linear-gradient(180deg, #fff8e6, #e8d5aa);
   box-shadow: 0 0 5px rgba(255, 240, 200, .6);
-}
-/* SCREEN-SPACE SPECULAR: a reflection is an image of the light source, so it
-   stays where the light is while the object turns underneath it. Painting it
-   inside the rotor made the highlight orbit with the knurling — the single
-   most legible wrongness in the old knob. Background written live. */
-.mmm-knob-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
 }
 /* Contact shadow, driven by press: ambient occlusion is a function of how
    close two surfaces are, so pressing the knob into its seat darkens and
@@ -1956,17 +1986,6 @@ html:has(.mmm-frame) {
   background:
     radial-gradient(30% 42% at 66% 60%, rgba(255, 255, 255, .045) 0%, transparent 70%),
     radial-gradient(20% 30% at 32% 38%, rgba(255, 255, 255, .035) 0%, transparent 70%);
-}
-/* Dial glass sheen — flat pane, so the live reflection tracks near 1:1; the
-   knob's compression here would read as bowed glass. Background written live. */
-.mmm-dial-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
 }
 /* Station row: a real drum. All three labels are identical in style and driven
    purely by their continuous distance from centre — three points on a rotating
@@ -2234,15 +2253,8 @@ html:has(.mmm-frame) {
   box-shadow: inset 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent), 0 0 12px -2px color-mix(in oklab, var(--accent) 50%, transparent);
 }
 .mmm-stick[data-lit='true'] .mmm-stick-lit { opacity: 1; }
-/* Cap specular and press occlusion — written live, same split as the knob. */
-.mmm-stick-spec {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  will-change: background;
-}
+/* Press occlusion, written live. The cap's specular was removed with the
+   dock's other reflections (2026-08-25). */
 .mmm-stick-ao {
   position: absolute;
   inset: 0;
@@ -3406,6 +3418,27 @@ html:has(.mmm-frame) {
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
 .mmm-empty-actions a { text-decoration: none; }
+/* The 44px floor, applied HERE rather than to `.mmm-btn-primary` itself.
+
+   These two buttons measured 39px tall and were caught the moment ME started
+   drawing one card at a time: Profiles is now the resting state, so its empty
+   state — "Discover music" / "Explore the map" — is on screen at arrival where
+   it used to sit behind a closed drawer. The rule they break is MOBILE.md's,
+   which is 44x44 on every control at every width, desktop included, and
+   `mobile-fit.css` cannot help because its floors are gated on
+   `(pointer: coarse)`.
+
+   Scoped to the empty state because raising `.mmm-btn-primary` globally would
+   also grow the HYPE-link copy button, which is deliberately small and sized
+   inline beside a text field — a different control with a different reason, and
+   not this change's to move. Padding, not height: growing the box is what the
+   rule asks for, and a fixed height would clip a wrapped label. */
+.mmm-empty-actions .mmm-btn-primary,
+.mmm-empty-actions .mmm-btn-ghost {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
 
 .mmm-ad-landing { width: min(100% - 32px, 1040px); margin: 0 auto; padding: 72px 0 96px; color: var(--ink); }
 .mmm-ad-hero { max-width: 760px; padding: 36px 0 72px; }
