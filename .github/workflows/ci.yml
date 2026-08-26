@@ -4,23 +4,16 @@ on:
   pull_request:
     branches:
       - main
-    # `labeled` is load-bearing, not tidiness. The expensive stages below gate
-    # on `github.event.pull_request.labels`, which is a SNAPSHOT of the event
-    # payload — and the default type list is [opened, synchronize, reopened].
-    # A label added after the PR is opened therefore fired no new run, and the
-    # run from `opened` carried an empty label list, so every gated stage
-    # skipped and the check went green anyway.
+    # Default types (opened, synchronize, reopened). `labeled` used to be here
+    # and is deliberately gone: no stage reads a label any more, so firing a
+    # full run on a label change would spend the machine on nothing.
     #
-    # Since a PR cannot be labelled before it exists, that made the documented
-    # procedure ("add `full-ci` to any PR touching the shell, auth, routing,
-    # the service worker or anything Workerd-specific") a no-op through the
-    # normal flow: the label was applied, nothing re-ran, and the PR reported
-    # success with none of the coverage it was asked for. Found on #652, whose
-    # 12 gated steps all skipped despite carrying the label.
-    #
-    # `unlabeled` is deliberately absent — removing a label should not spend
-    # 15 minutes of runner time re-proving a smaller suite.
-    types: [opened, synchronize, reopened, labeled]
+    # Worth keeping the reason it was ever needed, because it is a general
+    # Actions trap rather than a fact about this repo: `pull_request.labels` is
+    # a SNAPSHOT of the event payload, so a label added after a PR opens
+    # changes nothing about the run that already happened, and no new run fires
+    # unless `labeled` is in this list. On #652 that meant twelve gated steps
+    # skipped while the check reported success.
 
 permissions:
   contents: read
@@ -28,7 +21,11 @@ permissions:
 jobs:
   check:
     name: Typecheck, lint, test, build, and browser smoke
-    runs-on: ubuntu-latest
+    # Our own runner (Azure, 4 vCPU, East US) — see
+    # docs/runbooks/ci-self-hosted-runner.md. Minutes here are free, which is
+    # the whole reason the gated stages below could come back: the org's
+    # Actions allowance was the constraint, never the workload.
+    runs-on: [self-hosted, linux, x64, ihype-ci]
     services:
       postgres:
         image: postgres:16
@@ -44,32 +41,30 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      # Expensive stages (browser suites, Cloudflare build, Workerd smokes,
-      # Lighthouse) run only when a PR carries the `full-ci` label. They are
-      # ~11 of this job's ~15 minutes, and the org's Actions allowance cannot
-      # currently pay for them on every push -- jobs were being cancelled
-      # mid-run, so NOTHING was being verified. A 4-minute job that finishes
-      # beats a 15-minute job that gets killed at minute 14.
+      # EVERY STAGE RUNS ON EVERY PUSH AGAIN (2026-08-26).
       #
-      # This moves the safety net, it does not remove it:
-      # deploy-production.yml independently re-runs the tests, the Cloudflare
-      # build, the Worker bundle budget AND a pre-deploy Workerd smoke before
-      # it deploys, and skips every remaining step if any of them fail. So a
-      # broken change still cannot reach production; it just gets caught at
-      # deploy time rather than at merge time.
+      # The browser suites, the Cloudflare build, the Workerd smokes and
+      # Lighthouse used to run only when the diff touched certain paths — about
+      # 11 of this job's ~15 minutes. They were gated because the org's Actions
+      # allowance could not pay for them: jobs were being CANCELLED mid-run, so
+      # nothing was being verified at all. That was the right call then, and it
+      # is no longer needed — this job runs on our own machine now, where
+      # minutes cost nothing (docs/runbooks/ci-self-hosted-runner.md).
       #
-      # WHICH stage set runs is decided by the "Decide the CI depth" step
-      # below, from the diff, and it writes FULL_CI to $GITHUB_ENV. It is NOT
-      # set here, because a job-level default would win over nothing and only
-      # confuse the precedence.
+      # Gone with it: the "Decide the CI depth" step, the FULL_CI variable, and
+      # the `full-ci` label as a manual override. Two hard-won notes are kept
+      # here because they explain failures that will otherwise be rediscovered:
+      # a label added after a PR opens does NOT re-run the workflow unless
+      # `labeled` is in the trigger types (a run from `opened` carries an empty
+      # label list and skips silently while reporting success), and a label
+      # applied by a workflow using GITHUB_TOKEN starts no run at all. Both are
+      # why gating on labels was abandoned for gating on the diff, before both
+      # were abandoned for this.
       #
-      # It used to be `contains(github.event.pull_request.labels.*.name,
-      # 'full-ci')` alone, and a separate workflow applied that label from the
-      # changed paths. That could not work: Actions does not start a workflow
-      # run from an event created with the GITHUB_TOKEN, so the label landed
-      # on the PR and no `labeled` run ever fired -- the same silent skip,
-      # arrived at through the automation written to prevent it. Deciding
-      # in-job needs no second event at all.
+      # The deploy-time safety net is unchanged: deploy-production.yml
+      # independently re-runs the tests, the Cloudflare build, the Worker
+      # bundle budget and a pre-deploy Workerd smoke, and skips every later
+      # step if any of them fail.
       DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
       AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
       NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
@@ -84,52 +79,10 @@ jobs:
     steps:
       - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
         with:
-          # The depth decision below diffs against the PR base, which a
-          # depth-1 checkout does not have.
+          # Full history, not depth-1. The self-hosted runner reuses its
+          # workspace between runs, so this costs a fetch of what is new rather
+          # than a fresh clone — and several checks read git history.
           fetch-depth: 0
-
-      - name: Decide the CI depth
-        # What each pattern buys, so the list can be argued with rather than
-        # cargo-culted:
-        #   *.css                     - layout and geometry; only a browser sees it
-        #   components/shell, app/app - the two shells' chrome contracts
-        #   components/mmm            - the map, the panes, the dock
-        #   lib/map-dates             - the date picker's month maths, which
-        #                               measure:datepick renders in a browser
-        #   components/ds             - the vendored console controls the dock
-        #                               mounts; a re-vendored knob changes its
-        #                               geometry and only a browser sees that
-        #   lib/*-nav.ts              - the route registries both shells read
-        #   middleware.ts             - auth redirects and CSP, Edge-runtime only
-        #   public/sw.js              - caching, and it can serve a stale app
-        #   e2e/                      - the tests themselves
-        #   layout.tsx                - metadata, manifest, viewport, providers
-        #   this workflow             - so a change to the gate proves itself
-        #
-        # The `full-ci` label still forces the full set, as a manual override
-        # for a diff these patterns do not catch. It is no longer the only way
-        # in, which is what made it a single point of forgetting.
-        env:
-          BASE: ${{ github.event.pull_request.base.sha }}
-          HEAD: ${{ github.event.pull_request.head.sha }}
-          LABELLED: ${{ contains(github.event.pull_request.labels.*.name, 'full-ci') }}
-        run: |
-          set -euo pipefail
-          if [ "$LABELLED" = "true" ]; then
-            echo "FULL_CI=true" >> "$GITHUB_ENV"
-            echo "Full CI: the PR carries the full-ci label."
-            exit 0
-          fi
-          changed="$(git diff --name-only "$BASE" "$HEAD")"
-          echo "Changed files:"; echo "$changed"
-          pattern='(\.css$|^src/components/shell/|^src/components/mmm/|^src/components/ds/|^src/app/app/|^src/lib/(app-nav|mmm-nav)\.ts$|^middleware\.ts$|^public/sw\.js$|^e2e/|^src/app/layout\.tsx$|^scripts/measure-(dock|datepicker)\.mjs$|^src/lib/map-dates\.ts$|^\.github/workflows/ci\.yml$)'
-          if echo "$changed" | grep -qE "$pattern"; then
-            echo "FULL_CI=true" >> "$GITHUB_ENV"
-            echo "Full CI: this diff touches the shell, routing, styling or the service worker."
-          else
-            echo "FULL_CI=false" >> "$GITHUB_ENV"
-            echo "Trimmed CI: nothing the gated stages cover was touched."
-          fi
 
       - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
         with:
@@ -226,17 +179,14 @@ jobs:
         run: npm test
 
       - name: Prepare scratch database
-        if: env.FULL_CI == 'true'
         run: |
           psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
           npx prisma db push --accept-data-loss
 
       - name: Install Playwright browser
-        if: env.FULL_CI == 'true'
         run: npx playwright install chromium --with-deps
 
       - name: Dock geometry
-        if: env.FULL_CI == 'true'
         # The dock is the whole of the app's navigation and every figure in it
         # is load-bearing on the others (DESIGN_SYNC row 289). This drives
         # Chromium against slices of the real stylesheets — no build and no
@@ -248,7 +198,6 @@ jobs:
         run: npm run measure:dock
 
       - name: Measure the map's date picker
-        if: env.FULL_CI == 'true'
         # Same method and the same reason as the dock probe above: /app/map is
         # behind auth, so the picker is mounted against slices of the real
         # stylesheet rather than driven end-to-end. It catches the three things
@@ -261,11 +210,9 @@ jobs:
         run: npm run measure:datepick
 
       - name: Mandatory public browser smoke
-        if: env.FULL_CI == 'true'
         run: npx playwright test e2e/public-smoke.spec.ts --project=chromium
 
       - name: Mandatory authenticated E2E suite (Workerd)
-        if: env.FULL_CI == 'true'
         # Runs against a real `wrangler dev` (workerd) instance, not `next
         # dev` — src/lib/db.ts intentionally imports the wasm/workerd-only
         # Prisma engine (see the comment at the top of that file), which
@@ -302,7 +249,7 @@ jobs:
         # not be diagnosed because the ARIA snapshots and traces they pointed
         # at never left the machine. Failure-only, so a green run uploads
         # nothing.
-        if: failure() && env.FULL_CI == 'true'
+        if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: playwright-test-results
@@ -311,7 +258,6 @@ jobs:
           retention-days: 7
 
       - name: Cloudflare build
-        if: env.FULL_CI == 'true'
         run: npm run cf:build
         env:
           DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
@@ -320,14 +266,12 @@ jobs:
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
 
       - name: Worker bundle size budget
-        if: env.FULL_CI == 'true'
         run: node scripts/worker-size-budget.mjs
         env:
           CLOUDFLARE_API_TOKEN: dry-run-placeholder
           CLOUDFLARE_ACCOUNT_ID: dry-run-placeholder
 
       - name: Mandatory authenticated Workerd security smoke
-        if: env.FULL_CI == 'true'
         timeout-minutes: 20
         run: |
           set -o pipefail
@@ -341,7 +285,6 @@ jobs:
           NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
 
       - name: Mandatory authenticated Workerd performance budget
-        if: env.FULL_CI == 'true'
         # 20 was not enough on 2026-08-17 (PR #716): four of six pages went
         # over budget, each one paying a second full audit to confirm a breach
         # that could not fail the build, and the step was killed five seconds
@@ -362,7 +305,7 @@ jobs:
           NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
 
       - name: Upload Workerd diagnostics
-        if: always() && env.FULL_CI == 'true'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: workerd-smoke-diagnostics
@@ -370,7 +313,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Lighthouse report
-        if: always() && env.FULL_CI == 'true'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: lighthouse-budget-report
