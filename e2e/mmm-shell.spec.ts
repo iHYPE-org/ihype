@@ -838,9 +838,18 @@ test.describe('Music · Map · Me shell', () => {
   // render, which is the actual risk.
   test('a profile-less account still renders ME, without a HYPE link card', async ({ page }) => {
     await page.goto('/app/me');
-    // The surface renders — its first card is there — and the HYPE link is not
-    // present-and-blank, it is absent.
-    await expect(page.locator('.mmm-me-section[aria-label="Profiles"]')).toBeVisible();
+    /* The surface renders — its first card is there — and the HYPE link is not
+       present-and-blank, it is absent.
+
+       Settled on a COUNT rather than asserted visible directly: while the route
+       streams there are briefly two "Profiles" sections, the live one and the
+       staging copy Next moves into place, and `toBeVisible()` on a locator
+       matching both fails strict mode ("resolved to 2 elements") rather than
+       waiting. Asserting exactly one visible card is both the settle and a
+       genuine check that a double render is not shipping. */
+    const card = page.locator('.mmm-me-section:visible');
+    await expect(card).toHaveCount(1);
+    await expect(card).toHaveAttribute('aria-label', 'Profiles');
     await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
   });
 });
@@ -957,13 +966,25 @@ test.describe('ME with a real profile', () => {
 
     // A second document load, landing directly on a detail page.
     await page.goto('/app/me?role=artist&section=profiles');
-    const link = page.locator('a[href^="/app/artists/"]').first();
+    // Scoped to the settled card for the same reason as the profile-tabs test
+    // above: an unscoped match can resolve to the staging copy.
+    const card = page.locator('.mmm-me-section:visible');
+    await expect(card).toHaveCount(1);
+    const link = card.locator('a[href^="/app/artists/"]').first();
     await expect(link).toBeVisible();
     const href = await link.getAttribute('href');
     await page.goto(href!);
     await expect(page).toHaveURL(/\/app\/artists\//);
 
-    await page.locator('.mmm-dock-badge').click();
+    /* Wait for ONE dock before clicking it. Mid-stream there are two — the
+       live dock and the staged copy — so a bare `.mmm-dock-badge` click fails
+       strict mode, and `.first()` would be worse than the error: it can pick
+       the staged copy, whose React handler is not attached, so the click lands,
+       succeeds, and navigates nowhere. Settling the count is the only form of
+       this that is both stable and honest. */
+    const dock = page.locator('.mmm-dock:visible');
+    await expect(dock).toHaveCount(1);
+    await dock.locator('.mmm-dock-badge').click();
     // ME was the last main-nav page visited, so that is where it must land —
     // and specifically NOT /app/map, which is the bug this guards.
     await expect(page).toHaveURL(/\/app\/me(\?|\/|$)/, { timeout: 15_000 });
