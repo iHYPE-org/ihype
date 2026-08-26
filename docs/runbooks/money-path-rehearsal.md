@@ -23,7 +23,43 @@ payout-routing bug — `transfer_data.destination` sending the WHOLE charge to o
 party instead of the 70/20/10 split — confirmed fixed against real Stripe rather
 than against a mock.
 
-### BLOCKER — Connect is not signed up for
+### BLOCKER 2 — `createConnectAccount()` cannot create an account at all
+
+Found 2026-08-26 by running the app's own call, byte for byte, against a
+Connect-enabled test account:
+
+```
+stripe.accounts.create({ type: 'express', capabilities: { transfers: { requested: true } } })
+→ StripeInvalidRequestError: Stripe no longer recommends Accounts v1 for new
+  Connect integrations. Create connected accounts with POST /v2/core/accounts
+```
+
+`src/lib/stripe.ts:78` uses **Accounts v1**, and that endpoint is CLOSED to new
+Connect integrations — not deprecated-with-a-warning, rejected. So on a Stripe
+account that registers Connect from now on, no artist, venue or promoter can
+onboard, `stripeConnectAccountId` is never set, and every payable entry sits
+`PENDING` forever. The failure is at onboarding, before any money moves, which is
+the good news: nothing can sell a ticket into a payout that cannot happen.
+
+**Two related traps found at the same time, both of which cost real debugging:**
+
+1. **The v1 capability view LIES about v2 accounts.** `GET /v1/accounts` reported
+   `capabilities.transfers: "active"` for two accounts that cannot receive a
+   transfer; their `GET /v2/core/accounts?include=configuration.recipient` shows
+   `capabilities: {}`. A transfer destination needs
+   `configuration.recipient.capabilities.stripe_balance.stripe_transfers` — the
+   legacy `transfers` capability is a different thing with a confusingly
+   identical name. Do not trust the v1 field when diagnosing a failed payout.
+2. **`dashboard` is required** when creating a v2 account with the transfers
+   capability, and the error naming it arrives only after everything else
+   validates.
+
+Migrating means `accounts.create` → `POST /v2/core/accounts`, the onboarding
+link, the capability name checked before a transfer, and whatever
+`stripeConnectOnboarded` should now mean. It is a money-path change and wants its
+own PR with the rehearsal re-run against it.
+
+### BLOCKER 1 — Connect is not signed up for (on the original account)
 
 Steps 2 and 3 of the rehearsal (**the 70/20/10 transfers**, and **replaying a
 payout without double-paying**) could not run. Creating a connected account
@@ -48,6 +84,22 @@ REHEARSAL_CONNECT_ACCOUNTS=acct_1,acct_2,acct_3 \
 
 Onboarding cannot be faked — Stripe will not transfer to an account that has not
 completed it, and the application has the identical prerequisite.
+
+### What steps 2 and 3 proved before hitting blocker 2
+
+Run against a second, Connect-enabled test account:
+
+| Check | Result |
+|---|---|
+| **70/20/10 splits sum to the captured total with no leakage** | **PASS — artist=3500 venue=1000 promoter=500 of 5000** |
+| Each transfer actually reaches its destination | BLOCKED — destination lacks `stripe_balance.stripe_transfers` |
+| Replaying a payout does not double-pay | BLOCKED — depends on the transfer above |
+
+The passing row is the charter arithmetic verified against real Stripe rather
+than against a pure function. The two blocked rows are the ones that still have
+never executed anywhere; note that the double-pay guard now has unit cover
+(`show-payouts.test.ts`, "pays once when the cron runs twice"), which is not the
+same as proving Stripe accepts the second call as a no-op.
 
 ### The remaining steps still need a human
 
