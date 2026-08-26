@@ -26,10 +26,7 @@ az vm create \
   --resource-group ihype-ci \
   --name ihype-ci-runner \
   --image Ubuntu2404 \
-  --size Standard_D4as_v5 \
-  --priority Spot \
-  --eviction-policy Deallocate \
-  --max-price -1 \
+  --size Standard_D4as_v7 \
   --os-disk-size-gb 128 \
   --admin-username azureuser \
   --generate-ssh-keys \
@@ -38,14 +35,33 @@ az vm create \
 
 Notes on each choice that is not obvious:
 
-- **Spot with `Deallocate`.** Roughly a third the price. Azure can reclaim the
-  machine at any time; deallocated means the disk survives and starting it again
-  brings the runner back with no re-registration. `--max-price -1` means "pay up
-  to the normal on-demand price", which in practice means it is almost never
-  evicted.
-- **`D4as_v5`** — 4 vCPU / 16GB. The build peaks around 3GB (`--max-old-space-size=3072`)
-  and Playwright wants real cores. If spot capacity is short in your zone,
-  `Standard_D4s_v5` is a fine substitute.
+- **Not spot, for now.** Spot is roughly a third the price and was the plan,
+  but a new sponsorship subscription is refused spot capacity outright — four
+  families in a row returned `SkuNotAvailable`, including on-demand sizes,
+  which is how we learned the real cause was the SKU generation (below). Spot
+  restrictions usually lift once a subscription has billing history: **revisit
+  in a month**, and if it takes, recreate with
+  `--priority Spot --eviction-policy Deallocate --max-price -1`. Deallocate
+  keeps the disk, so an eviction costs a restart and no re-registration.
+
+  On-demand `D4as_v7` is about $0.19/hour — roughly $140/month at 24/7, or
+  ~$95 with the nightly shutdown below. Against a $2,000 grant that is a year
+  or more.
+- **`D4as_v7`, and the generation is the part that matters.** 4 vCPU / 16GB —
+  the build peaks around 3GB (`--max-old-space-size=3072`) and Playwright wants
+  real cores. **East US offers new subscriptions only the v7 families**, and
+  every v3/v4/v5 size fails with `SkuNotAvailable — Capacity Restrictions`,
+  which reads like a transient shortage and is not. Six creates were burned
+  guessing sizes before asking Azure what it would actually give:
+
+  ```bash
+  az vm list-skus -l eastus --resource-type virtualMachines --all \
+    --query '[?length(restrictions)==`0`].name' -o tsv | sort -u | head -40
+  ```
+
+  **Run that first whenever a create is refused.** An empty result means the
+  region is closed to this subscription; a list means you picked the wrong
+  generation.
 - **128GB disk.** `node_modules`, `.open-next`, the workerd binary and three
   Playwright browsers do not fit the 30GB default.
 - **SSH is the only inbound rule**, and the runner needs *no* inbound at all —
@@ -76,20 +92,13 @@ system Node could only disagree with it.
 
 ## 3. Point CI at it
 
-Once the runner shows **Idle** in the org's runner list, change `runs-on` in
-`.github/workflows/ci.yml` from `ubuntu-latest` to:
+**Done on 2026-08-26.** `ci.yml` runs on `[self-hosted, linux, x64, ihype-ci]`,
+and the **"Decide the CI depth"** step, the `FULL_CI` variable and the
+`full-ci` label override are deleted — every stage runs on every push again.
 
-```yaml
-runs-on: [self-hosted, linux, x64, ihype-ci]
-```
-
-**Do this only after the runner is online.** A job whose labels match no runner
-does not fail — it queues, silently, until someone notices.
-
-Then remove the diff gating that only existed to fit the allowance: the
-**"Decide the CI depth"** step and every `if: env.FULL_CI == 'true'` in
-`ci.yml`. That step's own log line explains why it chose what it chose; deleting
-it means every push runs every stage again.
+If the runner is ever rebuilt, do it in that order: **the runner must be online
+before `runs-on` points at it.** A job whose labels match no runner does not
+fail, it queues silently until someone notices.
 
 **Leave `deploy-production.yml` on `ubuntu-latest`.** It holds the production
 secrets, and a self-hosted runner executes whatever a workflow tells it to —
