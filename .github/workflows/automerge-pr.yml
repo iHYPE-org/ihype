@@ -7,10 +7,11 @@ name: Auto-merge PRs
 # that would let a malicious PR run with write access to this repository.
 on:
   pull_request_target:
-    # `opened` matters for Dependabot: its PRs arrive labelled by it, never
-    # relabelled afterwards, so without this the branch below could only ever
-    # fire on a later synchronize that may never come.
-    types: [opened, labeled, reopened, synchronize, ready_for_review]
+    # `opened` matters for anything opened by a bot: Dependabot labels its PRs
+    # at creation and never relabels them, so without this the job could only
+    # ever fire on a later synchronize that may never come.
+    # `unlabeled` is what lets removing the `hold` label release a PR.
+    types: [opened, reopened, synchronize, ready_for_review, labeled, unlabeled]
 
 permissions:
   contents: write
@@ -18,39 +19,51 @@ permissions:
 
 jobs:
   enable-automerge:
-    # Two ways in: the `automerge` label, or a Dependabot GROUPED update.
-    #
-    # Dependabot's PRs used to pile up until someone closed them by hand —
-    # `open-pull-requests-limit: 10` filling with weekly updates nobody merged,
-    # which trains you to ignore the list, which is how a real advisory gets
-    # missed. They never carried the label, so this workflow never touched them.
+    # Auto-merge is the DEFAULT for every pull request, not an opt-in label
+    # (owner, 2026-08-26: "Can we setup automerge when it's green?" / "For all
+    # future PRs?"). It was gated on an `automerge` label nobody applied, so it
+    # did nothing for months while merged-by-hand was the real workflow.
     #
     # This is only safe because of the required status check on `main`:
-    # `--auto` merges when the checks pass and NEVER merges a red PR, so a
-    # broken bump waits for a human exactly as it does today. Before that rule
-    # existed this would have been the 2026-07-21 incident again, where a
-    # grouped PR merged with CI fully red.
+    # `--auto` merges when the required checks pass and NEVER merges a red PR.
+    # A failing PR sits and waits for a person, exactly as it does today. It is
+    # also only safe because CI stopped skipping stages — until 2026-08-06 the
+    # browser, Cloudflare and bundle-budget stages were behind a label, so
+    # "green" covered about a quarter of the pipeline. Defaulting to auto-merge
+    # on top of a partial pipeline would have been the 2026-07-21 incident
+    # again, where a grouped PR merged with CI fully red.
     #
-    # Scoped to the two GROUP branches (plus github-actions) on purpose, and
-    # this is the load-bearing part: `dependabot.yml` restricts those groups to
-    # minor and patch, so a MAJOR bump is opened as its own individual PR with a
-    # branch name like `dependabot/npm_and_yarn/typescript-7.0.2`, which does
-    # not match and still needs a person. That is the whole lesson of the
-    # incident — three major jumps hid inside one routine-looking grouped PR —
-    # and keying on the branch prefix preserves it.
+    # Three exclusions, and each one is the brake for a different mistake:
+    #
+    #   1. DRAFTS never auto-merge. That is the mechanism for work in progress —
+    #      open it as a draft and it cannot merge itself out from under you, no
+    #      matter how green it goes. `ready_for_review` is what arms it.
+    #   2. The `hold` LABEL blocks a PR that is already open. Use it for a
+    #      change that passes CI but should not land yet — a migration waiting
+    #      on a data check, a change timed to something outside the repo.
+    #      Removing the label re-arms it (hence `unlabeled` above).
+    #   3. A DEPENDABOT MAJOR still needs a human. `dependabot.yml` restricts
+    #      the two groups to minor and patch, so a major bump arrives as its own
+    #      individual PR with a branch like
+    #      `dependabot/npm_and_yarn/typescript-7.0.2`, which matches none of the
+    #      group prefixes below. That is deliberate and it is the whole lesson
+    #      of the 2026-07-21 incident: three major jumps hid inside one
+    #      routine-looking grouped PR. A green pipeline does not prove a major
+    #      is safe — it proves nothing it covers broke, and an API-version or
+    #      runtime-behaviour change (see `apiVersion` in `src/lib/stripe.ts`)
+    #      can typecheck and test clean and still be a decision.
+    #
+    # Forks are excluded by the head-repo check: a branch in this repository
+    # implies write access, a fork PR implies nothing.
     if: >-
       github.event.pull_request.draft == false &&
       github.event.pull_request.head.repo.full_name == github.repository &&
+      !contains(github.event.pull_request.labels.*.name, 'hold') &&
       (
-        contains(github.event.pull_request.labels.*.name, 'automerge') ||
-        (
-          github.event.pull_request.user.login == 'dependabot[bot]' &&
-          (
-            startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/development-dependencies') ||
-            startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/production-dependencies') ||
-            startsWith(github.event.pull_request.head.ref, 'dependabot/github_actions/')
-          )
-        )
+        github.event.pull_request.user.login != 'dependabot[bot]' ||
+        startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/development-dependencies') ||
+        startsWith(github.event.pull_request.head.ref, 'dependabot/npm_and_yarn/production-dependencies') ||
+        startsWith(github.event.pull_request.head.ref, 'dependabot/github_actions/')
       )
     runs-on: ubuntu-latest
     steps:
@@ -58,4 +71,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_URL: ${{ github.event.pull_request.html_url }}
-        run: gh pr merge "$PR_URL" --auto --squash
+        # GitHub REFUSES to arm auto-merge on a PR that is already mergeable —
+        # the mutation errors with "Pull request is in clean status" rather than
+        # merging it. That is reachable here: removing `hold` from a PR whose
+        # checks finished long ago fires `unlabeled` against an already-green
+        # PR, and the label would look like it did nothing. So fall through to a
+        # direct squash, which still goes through branch protection and so still
+        # cannot merge a red or unreviewed PR — it is the same guarantee, just
+        # evaluated now instead of on the next check completion.
+        run: |
+          gh pr merge "$PR_URL" --auto --squash \
+            || gh pr merge "$PR_URL" --squash

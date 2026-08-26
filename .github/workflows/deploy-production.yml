@@ -4,6 +4,19 @@ on:
   push:
     branches:
       - main
+  # Manual recovery. A deploy run that GitHub never CREATED cannot be
+  # re-run — and that happens: on 2026-08-26 the Actions budget was
+  # exhausted mid-session, so the push that merged #765 produced no deploy
+  # run at all (no failure, no notice; only the unbilled Pages job
+  # appeared). Without this the only way to ship the already-merged commit
+  # is to invent another push to `main`, which means an empty or throwaway
+  # commit in the production history to work around a billing event.
+  #
+  # Guarded to `main` in the job below: this workflow runs
+  # `prisma migrate deploy` against the PRODUCTION database, so dispatching
+  # it on a feature branch would apply that branch's migrations to
+  # production — a far worse outcome than the missed deploy it recovers.
+  workflow_dispatch:
 
 concurrency:
   group: production-cloudflare
@@ -12,6 +25,9 @@ concurrency:
 jobs:
   deploy:
     name: Build and deploy
+    # `main` only, however this was started. See the workflow_dispatch note
+    # above: the migrate step targets the production database.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: Production – ihype
     permissions:
