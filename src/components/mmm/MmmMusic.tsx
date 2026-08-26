@@ -10,7 +10,7 @@ import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 
-export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists' | 'library';
+export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
 /**
  * The length of a Discover clip. The design system's range is 15–30 seconds and
@@ -46,6 +46,11 @@ type StationTrackRow = {
   // both are nullable in the underlying row.
   mediaUrl: string | null;
   artworkUrl: string | null;
+  /** Why this track is in this station, for this viewer. Derived server-side
+   *  from the same context the station was resolved with, so it cannot
+   *  disagree with why the row qualified. Optional so a response cached before
+   *  the field existed renders without one rather than printing "undefined". */
+  reason?: string | null;
 };
 
 /**
@@ -135,7 +140,6 @@ export function MmmMusic({
       {tab === 'charts' && <ChartsTab />}
       {tab === 'recommended' && <RecommendedTab />}
       {tab === 'playlists' && <PlaylistsTab />}
-      {tab === 'library' && <LibraryTab />}
     </>
   );
 }
@@ -599,6 +603,10 @@ function RecommendedTab() {
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
+            {/* The WHY. A recommendation a listener cannot account for reads as
+                an advert; this is the endpoint's own derivation, not a guess
+                made here, so it cannot disagree with why the row qualified. */}
+            {track.reason && <span className="mmm-row-sub" style={{ display: 'block', color: 'var(--accent-text)' }}>{track.reason}</span>}
           </span>
           <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
         </Link>
@@ -607,37 +615,196 @@ function RecommendedTab() {
   );
 }
 
+/**
+ * CHARTS IS THREE DATASETS (owner, 2026-08-25: "charts are 3 different
+ * datasets"), and the endpoint answers one at a time.
+ *
+ * - AREA ranks the same music at four widths — local, regional, national,
+ *   global. The scope is a zoom, so it is a second row of chips under one
+ *   dataset rather than three more datasets.
+ * - GENRE ranks one genre across everywhere. Its chips come from the response,
+ *   so a chip can never lead to an empty chart.
+ * - FRIENDS ranks only accounts the viewer follows — the same definition the
+ *   `friends` radio station already uses (`src/lib/stations.ts`), because two
+ *   surfaces answering "your friends" differently is worse than either answer.
+ *
+ * Chips rather than a dial: the dock's dial carries the MUSIC tab strip, and
+ * the handoff allows exactly one dial per screen. The radio tab's filter row is
+ * the precedent.
+ */
+const CHART_DATASETS = [
+  { id: 'area', label: 'Area' },
+  { id: 'genre', label: 'Genre' },
+  { id: 'friends', label: 'Friends' },
+] as const;
+
+const CHART_SCOPES = [
+  { id: 'local', label: 'Local' },
+  { id: 'regional', label: 'Regional' },
+  { id: 'national', label: 'National' },
+  { id: 'global', label: 'Global' },
+] as const;
+
+type ChartDatasetId = typeof CHART_DATASETS[number]['id'];
+type ChartScopeId = typeof CHART_SCOPES[number]['id'];
+
+type ChartPayload = {
+  rows: ChartRow[];
+  genres: string[];
+  viewerPlace: { city: string | null; region: string | null; country: string | null };
+  reason: string | null;
+};
+
+/** What an empty chart MEANS. Every one of these is a different situation and
+ *  three of them are actionable, so a single "nothing here" would be the least
+ *  useful sentence available. */
+function emptyChartMessage(reason: string | null, dataset: ChartDatasetId, scope: ChartScopeId): string {
+  if (reason === 'no-follows') return 'You are not following anyone yet. Follow an artist or a venue and their music charts here.';
+  if (reason === 'no-location') {
+    return scope === 'local'
+      ? 'Add a city to your profile and the local chart will follow it.'
+      : 'Add a location to your profile and this chart will follow it.';
+  }
+  if (reason === 'no-genre') return 'Pick a genre.';
+  if (reason === 'no-tracks') return 'No released music here yet.';
+  if (dataset === 'friends') return 'Nothing you follow has been hyped this week.';
+  return 'Nothing here has been hyped this week.';
+}
+
 function ChartsTab() {
-  const { status, data } = useJson<ChartRow[]>('/api/charts', (payload) => {
-    const groups = payload as { national?: Array<Record<string, unknown>> };
-    return (groups.national ?? []).slice(0, 20).map((row) => ({
-      id: String(row.id ?? ''),
-      title: String(row.title ?? 'Untitled'),
-      artistName: String(row.artistName ?? 'Unknown artist'),
-      artistSlug: String(row.artistSlug ?? ''),
-      hypeCount: Number(row.hypeCount ?? 0),
-      /* `/api/charts` has always returned these and this mapping dropped them,
-         so the chart was the one MUSIC surface with playable rows that could
-         not be played at all — not a missing feature, a discarded field. */
-      mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
-      artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
-    }));
+  const [dataset, setDataset] = useState<ChartDatasetId>('area');
+  const [scope, setScope] = useState<ChartScopeId>('local');
+  const [genre, setGenre] = useState('');
+
+  const query = dataset === 'area'
+    ? `/api/charts?dataset=area&scope=${scope}`
+    : dataset === 'genre'
+      ? `/api/charts?dataset=genre&genre=${encodeURIComponent(genre)}`
+      : '/api/charts?dataset=friends';
+
+  const { status, data } = useJson<ChartPayload>(query, (payload) => {
+    const body = payload as {
+      rows?: Array<Record<string, unknown>>;
+      genres?: unknown;
+      viewerPlace?: { city?: unknown; region?: unknown; country?: unknown };
+      reason?: unknown;
+    };
+    return {
+      rows: (body.rows ?? []).map((row) => ({
+        id: String(row.id ?? ''),
+        title: String(row.title ?? 'Untitled'),
+        artistName: String(row.artistName ?? 'Unknown artist'),
+        artistSlug: String(row.artistSlug ?? ''),
+        hypeCount: Number(row.hypeCount ?? 0),
+        /* `/api/charts` has always returned these and an earlier mapping
+           dropped them, so the chart was the one MUSIC surface with playable
+           rows that could not be played at all — not a missing feature, a
+           discarded field. */
+        mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
+        artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
+      })),
+      genres: Array.isArray(body.genres) ? body.genres.map(String) : [],
+      viewerPlace: {
+        city: typeof body.viewerPlace?.city === 'string' ? body.viewerPlace.city : null,
+        region: typeof body.viewerPlace?.region === 'string' ? body.viewerPlace.region : null,
+        country: typeof body.viewerPlace?.country === 'string' ? body.viewerPlace.country : null,
+      },
+      reason: typeof body.reason === 'string' ? body.reason : null,
+    };
   });
 
+  const rows = data?.rows ?? [];
   // The chart from number one down. Rows stay links to the artist, as drawn.
-  useRegisterQueue(data ?? []);
+  useRegisterQueue(rows);
 
-  if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Charts are unavailable right now.</Empty>;
-  const realRows = data ?? [];
-  const demo = realRows.length === 0;
-  const rows = demo ? DEMO_CHARTS : realRows;
+  /* The scope chip says WHERE it is ranking, when the viewer's profile knows.
+     "Local" alone is a label; "Local · Portland" is a readout. */
+  const scopeDetail = dataset === 'area'
+    ? scope === 'local' ? data?.viewerPlace.city
+      : scope === 'regional' ? data?.viewerPlace.region
+      : scope === 'national' ? data?.viewerPlace.country
+      : null
+    : null;
+
+  const chips = (
+    <>
+      <div className="mmm-chart-chips">
+        {CHART_DATASETS.map((entry) => (
+          <button
+            aria-pressed={entry.id === dataset}
+            className="mmm-chip mmm-chip-genre"
+            key={entry.id}
+            onClick={() => setDataset(entry.id)}
+            style={{ backdropFilter: 'none' }}
+            type="button"
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+      {dataset === 'area' && (
+        <div className="mmm-chart-chips">
+          {CHART_SCOPES.map((entry) => (
+            <button
+              aria-pressed={entry.id === scope}
+              className="mmm-chip mmm-chip-genre"
+              key={entry.id}
+              onClick={() => setScope(entry.id)}
+              style={{ backdropFilter: 'none' }}
+              type="button"
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {dataset === 'genre' && (data?.genres.length ?? 0) > 0 && (
+        <div className="mmm-chart-chips">
+          {(data?.genres ?? []).map((entry) => (
+            <button
+              aria-pressed={entry === genre}
+              className="mmm-chip mmm-chip-genre"
+              key={entry}
+              onClick={() => setGenre(entry === genre ? '' : entry)}
+              style={{ backdropFilter: 'none' }}
+              type="button"
+            >
+              {entry}
+            </button>
+          ))}
+        </div>
+      )}
+      {scopeDetail && <p className="mmm-chart-place">Ranking {scopeDetail}</p>}
+    </>
+  );
+
+  if (status === 'error') {
+    return (
+      <div className="mmm-music-list">
+        {chips}
+        <Empty>Charts are unavailable right now.</Empty>
+      </div>
+    );
+  }
+
+  /* Demo rows only stand in for the GLOBAL chart with nothing hyped anywhere.
+     A narrower dataset that is empty is telling the truth about this account —
+     no follows, no city, a quiet genre — and filling it with invented rows
+     would answer a real question with a fiction. */
+  const demo = status === 'ready' && rows.length === 0 && dataset === 'area' && scope === 'global';
+  const shown = demo ? DEMO_CHARTS : rows;
 
   return (
     <div className="mmm-music-list">
-      {demo && <DemoHeader description="A preview of the weekly chart once local HYPE activity can be ranked." />}
+      {chips}
+      {status === 'loading' && <Loading />}
+      {status === 'ready' && rows.length === 0 && !demo && (
+        <Empty>{emptyChartMessage(data?.reason ?? null, dataset, scope)}</Empty>
+      )}
+      {demo && <DemoHeader description="A preview of the weekly chart once HYPE activity can be ranked." />}
+      {shown.length > 0 && (
       <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {rows.map((row, index) => (
+      {shown.map((row, index) => (
         <li key={row.id}>
           {demo ? <div aria-disabled="true" className="mmm-row mmm-demo-row">
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
@@ -661,6 +828,7 @@ function ChartsTab() {
         </li>
       ))}
       </ol>
+      )}
     </div>
   );
 }
@@ -675,30 +843,194 @@ type FavoriteRow = {
 };
 type LikeRow = { targetType: 'ALBUM' | 'ARTIST' | 'VENUE' | 'ADVERTISEMENT'; targetId: string; name: string | null; slug: string | null; meta: string | null };
 
+type StationRow = { slug: string; title: string; subtitle: string; trackCount: number | null };
+
+/** One playable liked-track row. Extracted because the same row now appears
+ *  under Playlists rather than in a tab of its own. */
+function TrackRow({ row, active, playing, onPlay }: {
+  row: FavoriteRow; active: boolean; playing: boolean; onPlay: () => void;
+}) {
+  return (
+    <button
+      aria-label={active && playing ? `Pause ${row.title}` : `Play ${row.title} by ${row.artistName}`}
+      className="mmm-row"
+      data-playing={active && playing ? 'true' : undefined}
+      onClick={onPlay}
+      style={{ display: 'flex', width: '100%', textAlign: 'left' }}
+      type="button"
+    >
+      <span aria-hidden="true" style={{ color: active && playing ? 'var(--accent-text)' : 'var(--ink-3)', width: 22 }}>
+        {active && playing ? '❚❚' : '▶︎'}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
+        <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
+        <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
+      </span>
+    </button>
+  );
+}
+
+/** A profile the member liked. Artists and venues read identically; only the
+ *  route differs, so one component takes both. */
+function LikedProfileRows({ rows, heading, hrefFor }: {
+  rows: LikeRow[]; heading: string; hrefFor: (row: LikeRow) => string;
+}) {
+  if (rows.length === 0) return null;
+  return (
+    <>
+      <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>{heading} · {rows.length}</p>
+      {rows.map((row) => (
+        <Link className="mmm-row" href={hrefFor(row)} key={row.targetId} style={{ display: 'flex' }}>
+          <span style={{ flex: 1, minWidth: 0 }}>
+            <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
+            {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
+          </span>
+          <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+        </Link>
+      ))}
+    </>
+  );
+}
+
 /**
- * LIBRARY — where the hearts land.
+ * One of the member's own playlists, with the two controls it never had.
  *
- * Before this tab, a like went into the account and never came back out: the
- * player's heart wrote `FanFavoriteMedia` (a fully playable row — url, title,
- * artist, artwork) and the artist/venue hearts wrote `Like`, and no surface
- * anywhere listed either. This is also what makes the Settings copy true —
- * the HYPE link "shares liked playlists", and this list is the thing it shares.
- *
- * Liked tracks PLAY here — tapping a row starts the library from that row, and
- * the joystick starts it from the top — because a library you can only read is
- * the same bug one shelf up. Artists and venues stay links to their own pages.
+ * Rename is inline rather than a prompt() — a modal dialog is unstyleable and
+ * some WebViews suppress it outright, so the one place a name can be corrected
+ * would have been silently dead on a phone. Delete is two-tap: a playlist is
+ * real work to rebuild and a single destructive tap beside a navigation row is
+ * a mis-tap waiting to happen. Neither is optimistic — the row changes only
+ * once the server has said so, because a rename that appears to work and did
+ * not is worse than one that visibly failed.
  */
-function LibraryTab() {
+function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
+  list: PlaylistRow; onRenamed: (name: string) => void; onDeleted: () => void;
+}) {
+  const [mode, setMode] = useState<'idle' | 'rename' | 'confirm'>('idle');
+  const [draft, setDraft] = useState(list.name);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const rename = async () => {
+    const name = draft.trim();
+    if (!name || name === list.name) { setMode('idle'); return; }
+    setBusy(true); setError(null);
+    try {
+      const response = await fetch(`/api/fan-playlists/${list.id}`, {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name }),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      onRenamed(name);
+      setMode('idle');
+    } catch {
+      setError('That name could not be saved.');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async () => {
+    setBusy(true); setError(null);
+    try {
+      const response = await fetch(`/api/fan-playlists/${list.id}`, { method: 'DELETE' });
+      if (!response.ok) throw new Error(String(response.status));
+      onDeleted();
+    } catch {
+      setError('That playlist could not be deleted.');
+      setBusy(false);
+      setMode('idle');
+    }
+  };
+
+  if (mode === 'rename') {
+    return (
+      <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <input
+          aria-label={`Rename ${list.name}`}
+          autoFocus
+          className="mmm-row-title"
+          disabled={busy}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => { if (event.key === 'Enter') void rename(); if (event.key === 'Escape') setMode('idle'); }}
+          style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: 'var(--ink)' }}
+          value={draft}
+        />
+        <button className="mmm-btn-ghost" disabled={busy} onClick={() => void rename()} type="button">Save</button>
+        <button className="mmm-btn-ghost" disabled={busy} onClick={() => { setDraft(list.name); setMode('idle'); }} type="button">Cancel</button>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <Link href={`/app/playlists/${list.id}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
+          <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
+          <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>
+        </Link>
+        {mode === 'confirm' ? (
+          <>
+            <button className="mmm-btn-ghost" disabled={busy} onClick={() => void remove()} type="button">Delete</button>
+            <button className="mmm-btn-ghost" disabled={busy} onClick={() => setMode('idle')} type="button">Keep</button>
+          </>
+        ) : (
+          <>
+            <button aria-label={`Rename ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('rename')} type="button">Rename</button>
+            <button aria-label={`Delete ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('confirm')} type="button">Delete</button>
+          </>
+        )}
+      </div>
+      {error && <p className="mmm-eyebrow" role="status" style={{ color: 'var(--danger-text)', padding: '0 2px 8px' }}>{error}</p>}
+    </div>
+  );
+}
+
+/**
+ * PLAYLISTS — every collection the member has, in one place.
+ *
+ * This absorbed the LIBRARY tab (owner, 2026-08-25: "Remove library as it's
+ * already contained in playlists"). Library's whole content moved here rather
+ * than going with the tab: liked tracks, liked artists and liked venues are the
+ * same rows in the same markup, because a like that goes into the account and
+ * never comes back out is the exact bug Library was built to fix, and deleting
+ * the surface would have re-opened it.
+ *
+ * Four sections, in the order a member cares about them:
+ *   Liked tracks            — playable, tap to start from that row
+ *   Your playlists          — with rename and delete, which nothing offered
+ *   Automatically assembled — the eight computed stations, the "discover" half
+ *   Liked artists / venues  — links to their pages
+ */
+function PlaylistsTab() {
   const { playTrack, currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
   const favorites = useJson<FavoriteRow[]>('/api/fan-favorites', (payload) =>
     ((payload as { favorites?: FavoriteRow[] }).favorites ?? []));
   const likes = useJson<LikeRow[]>('/api/likes', (payload) =>
     ((payload as { likes?: LikeRow[] }).likes ?? []));
+  const stations = useJson<StationRow[]>('/api/stations', (payload) =>
+    ((payload as { stations?: StationRow[] }).stations ?? []));
+  const owned = useJson<PlaylistRow[]>('/api/fan-playlists', (payload) => {
+    const lists = (payload as { playlists?: Array<Record<string, unknown>> }).playlists ?? [];
+    return lists.map((list) => ({
+      id: String(list.id ?? ''),
+      name: String(list.name ?? 'Playlist'),
+      count: Array.isArray(list.items) ? list.items.length : Number(list.itemCount ?? 0),
+      items: Array.isArray(list.items) ? (list.items as PlayableRow[]) : [],
+    }));
+  });
+
+  /* Rename and delete edit this list in place. Held separately from the fetch so
+     a change shows immediately without refetching four endpoints, and seeded
+     from the fetch rather than duplicating it. */
+  const [lists, setLists] = useState<PlaylistRow[] | null>(null);
+  useEffect(() => { if (owned.data) setLists(owned.data); }, [owned.data]);
 
   const tracks = favorites.data ?? [];
-  /* `toQueue` addresses a row by hexId||id and favorites store the track's id
-     as `mediaId` — without this mapping every liked row is silently dropped
-     as unplayable and the whole library goes mute. */
+  /* `toQueue` addresses a row by hexId||id and favorites store the track's id as
+     `mediaId` — without this mapping every liked row is silently dropped as
+     unplayable and the whole section goes mute. */
   const playableTracks = tracks.map((row) => ({
     id: row.mediaId,
     title: row.title,
@@ -707,28 +1039,46 @@ function LibraryTab() {
     url: row.url,
     artworkUrl: row.artworkUrl,
   }));
-  useRegisterQueue(playableTracks);
-
-  if (favorites.status === 'loading' && likes.status === 'loading') return <Loading />;
-  if (favorites.status === 'error' && likes.status === 'error') {
-    return <Empty>Your library could not be read right now. Everything in it is safe.</Empty>;
-  }
-
-  const likedArtists = (likes.data ?? []).filter((row) => row.targetType === 'ARTIST' && row.name);
-  const likedVenues = (likes.data ?? []).filter((row) => row.targetType === 'VENUE' && row.name);
-  const empty = tracks.length === 0 && likedArtists.length === 0 && likedVenues.length === 0;
+  /* The joystick starts the liked tracks — the top section, and the one a member
+     is most likely to mean by "play" here. Falls back to the first playlist when
+     nothing is liked yet, which is what this tab registered before. */
+  useRegisterQueue(playableTracks.length > 0 ? playableTracks : ((lists ?? [])[0]?.items ?? []));
 
   const playFrom = (index: number) => {
     const queue = toQueue(playableTracks);
-    /* The queue drops unplayable rows, so the tapped row's position in the
-       QUEUE has to be found by identity, not assumed from the list index. */
+    /* The queue drops unplayable rows, so the tapped row's position in the QUEUE
+       has to be found by identity, not assumed from the list index. */
     const target = queue.findIndex((entry) => entry.mediaId === tracks[index].mediaId);
     if (target < 0) return;
     if (currentTrack?.id === queue[target].id) { togglePlayback(); return; }
     playTrack(queue[target], queue);
   };
 
-  if (empty) {
+  /* A station resolves on demand: there is no station-to-track join table, so
+     its tracks only exist as the answer to a request. Nothing is registered for
+     the joystick from here — tapping the row IS the request. */
+  const playStation = async (slug: string) => {
+    try {
+      const response = await fetch(`/api/stations/${slug}/tracks?limit=40`, { cache: 'no-store' });
+      if (!response.ok) return;
+      const payload = await response.json() as { tracks?: StationTrackRow[] };
+      const queue = toQueue(payload.tracks ?? []);
+      if (queue.length > 0) playTrack(queue[0], queue);
+    } catch { /* a station that cannot be read simply does not start */ }
+  };
+
+  if (favorites.status === 'loading' && likes.status === 'loading' && owned.status === 'loading') {
+    return <Loading />;
+  }
+
+  const likedArtists = (likes.data ?? []).filter((row) => row.targetType === 'ARTIST' && row.name);
+  const likedVenues = (likes.data ?? []).filter((row) => row.targetType === 'VENUE' && row.name);
+  const ownLists = lists ?? [];
+  const stationRows = stations.data ?? [];
+  const nothing = tracks.length === 0 && ownLists.length === 0
+    && likedArtists.length === 0 && likedVenues.length === 0 && stationRows.length === 0;
+
+  if (nothing) {
     return (
       <Empty>
         Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue
@@ -742,109 +1092,67 @@ function LibraryTab() {
       {tracks.length > 0 && (
         <>
           <p className="mmm-eyebrow" style={{ padding: '2px 2px 8px' }}>Liked tracks · {tracks.length}</p>
-          {tracks.map((row, index) => {
-            const active = currentTrack?.mediaId === row.mediaId || currentTrack?.id === row.mediaId;
-            return (
-              <button
-                aria-label={active && isPlaying ? `Pause ${row.title}` : `Play ${row.title} by ${row.artistName}`}
-                className="mmm-row"
-                data-playing={active && isPlaying ? 'true' : undefined}
-                key={row.mediaId}
-                onClick={() => playFrom(index)}
-                style={{ display: 'flex', width: '100%', textAlign: 'left' }}
-                type="button"
-              >
-                <span aria-hidden="true" style={{ color: active && isPlaying ? 'var(--accent-text)' : 'var(--ink-3)', width: 22 }}>
-                  {active && isPlaying ? '❚❚' : '▶︎'}
-                </span>
-                <span style={{ flex: 1, minWidth: 0 }}>
-                  <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
-                  <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
-                </span>
-              </button>
-            );
-          })}
-        </>
-      )}
-      {likedArtists.length > 0 && (
-        <>
-          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Liked artists · {likedArtists.length}</p>
-          {likedArtists.map((row) => (
-            <Link className="mmm-row" href={row.slug ? `/app/artists/${row.slug}` : '/app/music/discover'} key={row.targetId} style={{ display: 'flex' }}>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
-                {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
-              </span>
-              <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-            </Link>
+          {tracks.map((row, index) => (
+            <TrackRow
+              active={currentTrack?.mediaId === row.mediaId || currentTrack?.id === row.mediaId}
+              key={row.mediaId}
+              onPlay={() => playFrom(index)}
+              playing={isPlaying}
+              row={row}
+            />
           ))}
         </>
       )}
-      {likedVenues.length > 0 && (
+
+      {ownLists.length > 0 && (
         <>
-          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Liked venues · {likedVenues.length}</p>
-          {likedVenues.map((row) => (
-            <Link className="mmm-row" href={row.slug ? `/app/venues/${row.slug}` : '/app/map?layer=venues'} key={row.targetId} style={{ display: 'flex' }}>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
-                {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
-              </span>
-              <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-            </Link>
+          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Your playlists · {ownLists.length}</p>
+          {ownLists.map((list) => (
+            <OwnPlaylistRow
+              key={list.id}
+              list={list}
+              onDeleted={() => setLists((current) => (current ?? []).filter((entry) => entry.id !== list.id))}
+              onRenamed={(name) => setLists((current) => (current ?? []).map((entry) => (entry.id === list.id ? { ...entry, name } : entry)))}
+            />
           ))}
         </>
       )}
-    </div>
-  );
-}
 
-function PlaylistsTab() {
-  const { status, data } = useJson<PlaylistRow[]>('/api/fan-playlists', (payload) => {
-    const lists = (payload as { playlists?: Array<Record<string, unknown>> }).playlists ?? [];
-    return lists.map((list) => ({
-      id: String(list.id ?? ''),
-      name: String(list.name ?? 'Playlist'),
-      count: Array.isArray(list.items) ? list.items.length : Number(list.itemCount ?? 0),
-      items: Array.isArray(list.items) ? (list.items as PlayableRow[]) : [],
-    }));
-  });
+      {stationRows.length > 0 && (
+        <>
+          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Automatically assembled · {stationRows.length}</p>
+          {stationRows.map((station) => (
+            <button
+              aria-label={`Play ${station.title}`}
+              className="mmm-row"
+              key={station.slug}
+              onClick={() => void playStation(station.slug)}
+              style={{ display: 'flex', width: '100%', textAlign: 'left' }}
+              type="button"
+            >
+              <span aria-hidden="true" style={{ color: 'var(--ink-3)', width: 22 }}>▶︎</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="mmm-row-title" style={{ display: 'block' }}>{station.title}</span>
+                <span className="mmm-row-sub" style={{ display: 'block' }}>{station.subtitle}</span>
+              </span>
+              {/* A null count means the count could not be read, so it renders
+                  nothing rather than claiming a station is empty. */}
+              {station.trackCount !== null && <span className="mmm-row-meta">{station.trackCount}</span>}
+            </button>
+          ))}
+        </>
+      )}
 
-  /* The first playlist, played from the top. The first rather than a picked one
-     because this is the joystick's fallback for the tab, not a per-row control:
-     the rows link to each playlist's own page, and that page registers its own
-     items (MmmPlayHere). */
-  useRegisterQueue((data ?? [])[0]?.items ?? []);
-
-  if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Playlists are unavailable right now.</Empty>;
-  const realLists = data ?? [];
-  const demo = realLists.length === 0;
-  const lists = demo ? DEMO_PLAYLISTS : realLists;
-
-  // Each row links to its own playlist. /playlists never existed, so every
-  // row used to point at the same dead URL. The real route is
-  // /playlist/[slug], where the "slug" is the FanPlaylist id — page.tsx looks
-  // it up with findUnique({ id }), and that id is exactly what
-  // /api/fan-playlists returns.
-  return (
-    <div className="mmm-music-list">
-      {demo && <DemoHeader description="A preview of personal and automatically assembled playlists." />}
-      {lists.map((list) => (
-        demo ? <div aria-disabled="true" className="mmm-row mmm-demo-row" key={list.id}>
-          <span className="mmm-demo-art mmm-demo-playlist-art" aria-hidden="true">≡</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
-            <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} tracks</span>
-          </span>
-          <span className="mmm-row-meta">Preview</span>
-        </div> : <Link className="mmm-row" href={`/app/playlists/${list.id}`} key={list.id} style={{ display: 'flex' }}>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
-            <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>
-          </span>
-          <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-        </Link>
-      ))}
+      <LikedProfileRows
+        heading="Liked artists"
+        hrefFor={(row) => (row.slug ? `/app/artists/${row.slug}` : '/app/music/discover')}
+        rows={likedArtists}
+      />
+      <LikedProfileRows
+        heading="Liked venues"
+        hrefFor={(row) => (row.slug ? `/app/venues/${row.slug}` : '/app/map?layer=venues')}
+        rows={likedVenues}
+      />
     </div>
   );
 }

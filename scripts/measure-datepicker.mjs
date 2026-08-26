@@ -45,7 +45,7 @@ function slice(file, from, to) {
 
 const dir = await mkdtemp(path.join(tmpdir(), 'ihype-datepick-'));
 
-const picker = slice('src/app/mmm.css', '/* ── MAP date picker', '/* ── ME accordions');
+const picker = slice('src/app/mmm.css', '/* ── MAP date picker', '/* ── ME cards');
 const search = slice('src/app/mmm.css', '/* ── Universal search', '.mmm-search-key {');
 const mapSearch = slice('src/app/mmm.css', '.mmm-map-search {', '/* ── Universal search');
 

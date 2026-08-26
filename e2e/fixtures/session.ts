@@ -195,6 +195,10 @@ export type SeededShow = {
    */
   artistSlug: string;
   venueSlug: string;
+  /** The TicketOrder id. Both transfer endpoints are addressed by the ORDER,
+   *  not by a ticket's serialized id — a transfer moves the whole order — so a
+   *  spec that only had the serializedId could not reach them. */
+  orderId: string;
 };
 
 export async function seedShowWithTicket({
@@ -268,13 +272,28 @@ export async function seedShowWithTicket({
     // A real ticketed show: priced, with a split, so the buy pane and the split
     // bar both have something true to draw. The split is the charter's, which
     // is what the payout engine assumes when nothing overrides it.
+    /* The title carries the KEY, and that is load-bearing rather than cosmetic.
+       Every seeded show used to be called "E2E Night", so the moment a suite
+       seeded two of them for one account — 'default' and 'attended' are both
+       seeded by mmm-shell — `locator('.mmm-ticket-row', { hasText: seeded.title })`
+       matched two rows and failed on strict mode. It passed in CI only because a
+       fresh database happens to reach the first assertion before the second show
+       exists; on any database that has run the suite before, it failed and read
+       as a broken ticket list. No test hardcodes the literal, they all use the
+       returned `title`, so a distinct one per key costs nothing.
+
+       `startsAt` is restored on update too: a suite seeding the same key with a
+       past date for an attended ticket would otherwise keep whatever the first
+       run wrote. */
+    const showTitle = `E2E Night ${key}`;
+    const showStartsAt = startsAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const show = await prisma.show.upsert({
       where: { slug: showSlug },
-      update: {},
+      update: { title: showTitle, startsAt: showStartsAt },
       create: {
         slug: showSlug,
-        title: 'E2E Night',
-        startsAt: startsAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        title: showTitle,
+        startsAt: showStartsAt,
         creatorId: buyerUserId,
         venueProfileId: venue.id,
         headlinerProfileId: artist.id,
@@ -289,9 +308,23 @@ export async function seedShowWithTicket({
     });
 
     const confirmationCode = `E2E-${stamp}`.toUpperCase().slice(0, 24);
+    /* The update clause RESTORES the state this fixture promises, rather than
+       leaving whatever a previous run did. It used to be `{}`, which made the
+       seed idempotent only on a virgin database: the ticket-transfer suite
+       claims an order, which moves buyerUserId to the claiming account
+       permanently, so the next run on the same database re-used an order the
+       seeded buyer no longer owned and the transfer panel correctly refused to
+       render. A seed that silently means something different on a second run is
+       worse than one that fails. */
     const order = await prisma.ticketOrder.upsert({
       where: { confirmationCode },
-      update: {},
+      update: {
+        buyerUserId,
+        buyerEmail,
+        status: 'CAPTURED',
+        transferredAt: null,
+        transferredToEmail: null,
+      },
       create: {
         confirmationCode,
         showId: show.id,
@@ -312,10 +345,14 @@ export async function seedShowWithTicket({
     });
 
     const serializedId = `IHY-${createHash('sha256').update(confirmationCode).digest('hex').slice(0, 8).toUpperCase()}`;
-    await prisma.ticket.upsert({
-      where: { serializedId },
-      update: {},
-      create: {
+    /* Cleared and recreated rather than upserted on serializedId, because a
+       TRANSFER rotates that id: after one, no row carries the canonical value,
+       so an upsert cannot find it and adds a SECOND ticket to the same order
+       instead. Two runs left two tickets; three left three, each with a
+       different id and all of them valid. */
+    await prisma.ticket.deleteMany({ where: { ticketOrderId: order.id } });
+    await prisma.ticket.create({
+      data: {
         serializedId,
         ticketOrderId: order.id,
         showId: show.id,
@@ -326,7 +363,7 @@ export async function seedShowWithTicket({
       },
     });
 
-    return { showId: show.id, slug: show.slug, title: show.title, serializedId, artistSlug, venueSlug };
+    return { showId: show.id, slug: show.slug, title: show.title, serializedId, artistSlug, venueSlug, orderId: order.id };
   } finally {
     await prisma.$disconnect();
   }

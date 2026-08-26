@@ -102,6 +102,8 @@ export function MmmMap({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(false);
+  /* Collapsed by default — the credit is one tap, not a standing line. */
+  const [creditOpen, setCreditOpen] = useState(false);
   const [failed, setFailed] = useState(false);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>(initialLayer);
@@ -184,7 +186,7 @@ export function MmmMap({
       /* The chart's scale bar ("1 mi"), from map.html's HUD. A ScaleControl
          rather than a drawing because it must re-derive with the zoom — a
          static "1 MI" rule is wrong at every zoom but one. */
-      map.addControl(new maplibre.ScaleControl({ maxWidth: 56, unit: 'imperial' }), 'top-right');
+      map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
       map.on('load', () => { setReady(true); bump(); });
@@ -465,35 +467,66 @@ export function MmmMap({
   return (
     <div className="mmm-map-layer">
       <div className="mmm-map-canvas" ref={containerRef} />
-      <div className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
-      {/* The torn deckled edge (map-treasure.html's .char): an undisplaced
-          frame run through fractal-noise displacement so the paper's edge
-          tears differently on every inch and identically on every load. */}
-      <svg aria-hidden="true" height="0" style={{ position: 'absolute' }} width="0">
-        <filter height="108%" id="mmm-torn" width="108%" x="-4%" y="-4%">
-          <feTurbulence baseFrequency="0.016 0.028" numOctaves="3" result="n" seed="11" type="fractalNoise" />
-          <feDisplacementMap in="SourceGraphic" in2="n" scale="16" />
-        </filter>
-      </svg>
-      <div aria-hidden="true" className="mmm-map-char">
-        <div className="mmm-map-char-desk" />
-        <div className="mmm-map-char-scorch" />
-        <div className="mmm-map-char-burn" />
-      </div>
+      {/* The credit, HELD RATHER THAN TOGGLED (owner, 2026-08-25: "Tap the
+          compass on map to show open maps badge and hide when let go").
 
+          It cannot just be deleted: CARTO's basemap terms and OSM's ODbL both
+          require the credit to be reachable, so a map with no way to it puts
+          the tiles out of licence. The compass is now that way in — press it
+          and the credit is there, let go and the chart is clean again.
+
+          It reads while held and is not itself a control (`pointer-events:
+          none`), so a finger that slides off the compass onto the badge does
+          not get stuck on it. It also appears in the slot ABOVE the compass
+          rather than in the compass's own place: the compass must not move
+          under the finger that is holding it.
+
+          The previous version was a tap-to-open disclosure on a ⓘ mark, and
+          before that MapLibre's own `compact` AttributionControl — which was
+          tried first and renders EXPANDED on load (measured 224px wide) and
+          re-asserts that state whenever attributions update, so collapsing it
+          once does not hold. */}
+      {creditOpen && (
+        <div aria-hidden="true" className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
+      )}
+      {/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map
+          design (doesn't fit with the view)"). It was map-treasure.html's
+          `.char`: an undisplaced frame run through a fractal-noise
+          displacement filter so the paper tore differently on every inch. The
+          `#mmm-torn` SVG filter went with it — nothing else referenced it, and
+          a filter definition left behind is one an unrelated element picks up
+          by name later. */}
       {/* The compass rose — map-treasure.html's ornate eight-point card,
-          replacing console-shell's simpler needle. Decoration (aria-hidden),
-          unlike the scale bar beneath it. */}
-      <svg aria-hidden="true" className="mmm-map-compass" viewBox="0 0 80 80">
-        <circle cx="40" cy="42" fill="none" r="26" stroke="currentColor" strokeWidth="1" />
-        <circle cx="40" cy="42" fill="none" r="20.5" stroke="currentColor" strokeDasharray="1.6 3.2" strokeWidth="0.6" />
-        <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor" />
-        <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity="0.62" />
-        <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity="0.3" />
-        <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity="0.3" />
-        <circle cx="40" cy="42" fill="var(--bg-surface)" r="3.4" stroke="currentColor" strokeWidth="1.4" />
-        <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle" x="40" y="8.5">N</text>
-      </svg>
+          replacing console-shell's simpler needle. It was decoration until the
+          credit was hung on it; it is now the credit's control, so it is a
+          button with a real label and the rose itself stays `aria-hidden`.
+
+          Held, not toggled: down shows the credit, up or a finger sliding off
+          hides it. Focus shows it too, which is what makes it operable from a
+          keyboard without inventing a key handler — a tab to the compass reads
+          the label and paints the credit. */}
+      <button
+        aria-label="Hold to show the map data credit"
+        className="mmm-map-compass"
+        onBlur={() => setCreditOpen(false)}
+        onFocus={() => setCreditOpen(true)}
+        onPointerCancel={() => setCreditOpen(false)}
+        onPointerDown={() => setCreditOpen(true)}
+        onPointerLeave={() => setCreditOpen(false)}
+        onPointerUp={() => setCreditOpen(false)}
+        type="button"
+      >
+        <svg aria-hidden="true" viewBox="0 0 80 80">
+          <circle cx="40" cy="42" fill="none" r="26" stroke="currentColor" strokeWidth="1" />
+          <circle cx="40" cy="42" fill="none" r="20.5" stroke="currentColor" strokeDasharray="1.6 3.2" strokeWidth="0.6" />
+          <path d="M40 12 L44 42 L40 72 L36 42 Z" fill="currentColor" />
+          <path d="M10 42 L40 38 L70 42 L40 46 Z" fill="currentColor" opacity="0.62" />
+          <path d="M22 24 L42 40 L58 60 L38 44 Z" fill="currentColor" opacity="0.3" />
+          <path d="M58 24 L42 44 L22 60 L38 40 Z" fill="currentColor" opacity="0.3" />
+          <circle cx="40" cy="42" fill="var(--bg-surface)" r="3.4" stroke="currentColor" strokeWidth="1.4" />
+          <text fill="currentColor" fontFamily="var(--font-mono)" fontSize="10" fontWeight="700" textAnchor="middle" x="40" y="8.5">N</text>
+        </svg>
+      </button>
 
       {placed.map((pin) => (
         <MapPin key={pin.key} onOpen={() => onOpenSheet(pin.target)} pin={pin} />

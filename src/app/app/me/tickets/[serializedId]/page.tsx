@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { TicketVerificationCard } from '@/components/TicketVerificationCard';
 import { TicketReassignmentForm } from '@/components/TicketReassignmentForm';
+import { TicketTransferPanel } from '@/components/TicketTransferPanel';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -44,6 +45,13 @@ export default async function TicketPage({
   const canScan =
     Boolean(ticket.venueProfile?.ownerId) &&
     canManageOwnedResource(session, ticket.venueProfile!.ownerId);
+  /* The transfer control belongs to whoever the order is FOR, which is
+     buyerUserId — the same column every ticket list is scoped by and the same
+     one the transfer endpoints check. Venue staff can reach this page to scan
+     and reassign; they must not be offered a control that gives the ticket
+     away. The API enforces this too; this is so the button is not drawn for
+     someone who would only be refused. */
+  const isHolder = ticket.ticketOrder.buyerUserId === session.user.id;
   const qrCodeDataUrl = await buildTicketQrCodeDataUrl(ticket.serializedId);
 
   /* ── S5 · Ticket ────────────────────────────────────────────────────────
@@ -184,6 +192,15 @@ export default async function TicketPage({
         </p>
 
         <TicketVerificationCard canScan={canScan} serializedId={ticket.serializedId} status={status} />
+
+        {isHolder && ticket.status !== 'SCANNED' ? (
+          <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', background: 'var(--bg-surface)', padding: '16px 18px' }}>
+            <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 500 }}>
+              {t('ticketsSerializedIdPage.transferHeading', 'Transfer this ticket')}
+            </h3>
+            <TicketTransferPanel orderId={ticket.ticketOrderId} />
+          </div>
+        ) : null}
 
         {canScan ? (
           <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', background: 'var(--bg-surface)', padding: '16px 18px' }}>
