@@ -873,7 +873,14 @@ test.describe('ME with a real profile', () => {
   // switcher only appears once an account holds more than the implicit Fan role.
   test('an artist account gets a page card and a role switcher', async ({ page }) => {
     await page.goto('/app/me?role=artist&section=profiles');
-    await expect(page.getByText(/Your page/i)).toBeVisible();
+    /* Same settle as the HYPE-link test above, and for the same reason — this
+       pair had it and these two did not, which is why they were the flaky ones.
+       Matching text before the streamed content is moved out of the staging
+       node fails with "element not found", intermittently, depending on how
+       fast the route streams. */
+    const card = page.locator('.mmm-me-section:visible');
+    await expect(card).toHaveCount(1);
+    await expect(card.getByText(/Your page/i).first()).toBeVisible();
     await expect(page.getByRole('button', { name: 'Fan', exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
   });
@@ -885,7 +892,25 @@ test.describe('ME with a real profile', () => {
      one profile this suite can reach without depending on fixture content. */
   test('a profile hands its tabs to the dock and draws no dial of its own', async ({ page }) => {
     await page.goto('/app/me?role=artist&section=profiles');
-    const link = page.locator('a[href^="/app/artists/"]').first();
+    /* SCOPE THE LINK TO THE SETTLED CARD, and this is a correctness fix rather
+       than a timing tweak.
+
+       While the route streams, Next holds a copy of the content in a hidden
+       staging node and moves it into place with a script (see the HYPE-link
+       test above). An unscoped `a[href^="/app/artists/"]`.first() can therefore
+       resolve to the STAGED copy, which is real DOM with no React handler
+       attached — so the click lands, reports success, and no navigation ever
+       happens. That is exactly how this failed in CI on 2026-08-26, and it
+       reads identically to a broken router: the link is visible, the click is
+       accepted, the URL never moves. It cost a long investigation into a Next
+       minor bump that turned out to be innocent.
+    
+       Scoping to `.mmm-me-section:visible` after asserting there is exactly one
+       makes the staged copy unreachable by construction, rather than waiting
+       and hoping the swap has happened. */
+    const card = page.locator('.mmm-me-section:visible');
+    await expect(card).toHaveCount(1);
+    const link = card.locator('a[href^="/app/artists/"]').first();
     await expect(link).toBeVisible();
     await link.click();
     await expect(page).toHaveURL(/\/app\/artists\//);
