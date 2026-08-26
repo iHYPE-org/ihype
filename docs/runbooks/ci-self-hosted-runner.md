@@ -105,20 +105,29 @@ secrets, and a self-hosted runner executes whatever a workflow tells it to —
 including from a fork's pull request, if repository settings ever allow one.
 Keeping deploys on ephemeral GitHub infrastructure keeps that boundary.
 
-## 4. Guard the credits
+## 4. Guard the credits — with a budget, NOT an auto-shutdown
 
-Set a budget the day you create the VM:
-
-```bash
-az consumption budget create \
-  --budget-name ihype-ci-monthly --amount 150 --time-grain Monthly \
-  --category Cost --start-date $(date -u +%Y-%m-01) --end-date 2027-12-31
-```
+Set a budget the day you create the VM. The CLI's `consumption budget` command
+is a fussy preview and rejected a valid request, so do it in the portal:
+**Cost Management → Budgets → + Add**, scope the subscription, monthly, **$150**,
+alert at 80%.
 
 Azure does **not** stop at zero when a grant runs out — it bills the card on
-file. A running spot VM plus a burstable Postgres is roughly $60–90/month, so
-$2,000 covers about a year, but only if nothing else is provisioned against the
-same subscription.
+file. An on-demand `D4as_v7` is about $140/month, so $2,000 covers roughly 14
+months, but only if nothing else is provisioned against the same subscription.
+
+**Do NOT set `az vm auto-shutdown` on this VM.** It was tried on the first
+night and had to be undone within the hour. There is no matching auto-start:
+`az vm auto-shutdown` deallocates on a schedule and nothing brings the machine
+back, so the runner goes offline permanently at the first firing. Worse, a job
+asking for a runner that does not exist **queues silently** rather than failing
+— the same failure mode that cost this setup its first evening — so CI would
+appear to hang for no visible reason, at night, with no error anywhere.
+
+The saving was about $45/month. If it is ever worth reclaiming, the correct
+shape is a PAIRED start/stop schedule via Azure Automation, so the machine
+comes back on its own. A bare shutdown is not a cheaper version of that; it is
+a broken one.
 
 ## What must not move to Azure
 
