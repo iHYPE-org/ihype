@@ -136,10 +136,25 @@ html:has(.mmm-frame) {
      natural resolution. */
   left: 50%;
   right: auto;
-  /* 860 = the dc.html's 430 doubled. Every surface inside the frame is
-     percentage- or flex-sized against it, so this one value widens the chart,
-     the panes and the dock together. */
-  --mmm-frame-max: 860px;
+  /* 712 = the content column (680) plus the pane's own 16px inset on each side
+     (owner, 2026-08-26: "let's set desktop mode to the exact width of the
+     search bar"). The paper now ends where the search bar ends instead of
+     carrying 90px of empty cream past it on either side.
+
+     680 is not a new number: the wide-viewport rule caps the column at
+     `calc(50% - 340px)` of padding, and 340 is half of 680, so the search bar,
+     every chart row and every card have measured 680 on a desk all along. What
+     changed is that the SHEET was 860 — the dc.html's 430 doubled — so the
+     column sat in the middle of a wider page. Measured at 1280: frame 860,
+     padding 90, field 680.
+
+     Keep the +32: at exactly 680 the wide rule computes ZERO padding and every
+     row goes flush to the paper's edge. The 16px matches what a phone already
+     uses, so the inset is the same figure at every width.
+
+     Every surface inside the frame is percentage- or flex-sized against this,
+     so the one value moves the chart, the panes and the dock together. */
+  --mmm-frame-max: 712px;
   width: min(100vw, var(--mmm-frame-max));
   transform: translateX(-50%);
   /* The sheet's edge against the desk — invisible at phone width (clipped by

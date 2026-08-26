@@ -14,6 +14,11 @@
 #   - Docker. `ci.yml` declares `services: postgres:16`, and service containers
 #     on a self-hosted runner are started by the runner's own Docker daemon.
 #     Without it every job fails before its first step.
+#   - postgresql-client. The "Prepare scratch database" step shells out to
+#     `psql` to create two extensions. A hosted runner ships it; this one did
+#     not, and the first real job died there after passing all nineteen steps
+#     before it. The service CONTAINER is not the client: Docker running
+#     postgres:16 says nothing about `psql` existing on the host.
 #   - Passwordless sudo for the runner user. `npx playwright install --with-deps`
 #     shells out to apt; on a hosted runner that is free, here it is not.
 #   - A large disk. node_modules, .open-next, the workerd binary and three
@@ -49,6 +54,7 @@ apt-get update -qq
 apt-get install -y -qq \
   curl jq git ca-certificates gnupg unzip \
   docker.io \
+  postgresql-client \
   libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
   libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
   libgbm1 libpango-1.0-0 libcairo2 libasound2t64
@@ -60,11 +66,22 @@ if ! id -u "$RUNNER_USER" >/dev/null 2>&1; then
   useradd -m -s /bin/bash "$RUNNER_USER"
 fi
 usermod -aG docker "$RUNNER_USER"
-# Scoped to apt-get and playwright's dependency installer rather than blanket
-# NOPASSWD: the runner executes whatever a workflow tells it to, so the narrower
-# this grant is, the less a compromised workflow inherits.
+# Full passwordless sudo, and the narrow version that came first did not work.
+#
+# The first cut allowlisted /usr/bin/apt-get, /usr/bin/apt and /usr/bin/dpkg on
+# the reasoning that a narrower grant means a compromised workflow inherits
+# less. `npx playwright install --with-deps` then failed in one second: it does
+# not invoke apt-get directly, it runs `sudo -- sh -c "apt-get install ..."`,
+# and the SHELL is not on the list.
+#
+# The scoping was buying less than it looked like anyway. This runner executes
+# whatever a workflow tells it to as $RUNNER_USER — that is what a CI runner
+# is — so the interesting boundary is which repositories can schedule jobs
+# here, not which binaries the job may call through sudo. Keeping deploys on
+# hosted runners (deploy-production.yml, where the production secrets live) is
+# the control that actually matters.
 cat > /etc/sudoers.d/90-github-runner <<SUDOERS
-$RUNNER_USER ALL=(root) NOPASSWD: /usr/bin/apt-get, /usr/bin/apt, /usr/bin/dpkg
+$RUNNER_USER ALL=(ALL) NOPASSWD: ALL
 SUDOERS
 chmod 0440 /etc/sudoers.d/90-github-runner
 

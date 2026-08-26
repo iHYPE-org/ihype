@@ -1,10 +1,27 @@
 # CI on our own runner (Azure)
 
-**Why:** the org's GitHub Actions allowance ran out and jobs were being
-cancelled mid-run. The response was to gate about 11 of CI's 15 minutes — the
-browser, Cloudflare and Lighthouse stages — behind a diff check, so most pushes
-verify less than they used to. **Minutes on a self-hosted runner are free**, so
-this machine exists to buy that coverage back, not to save a line item.
+**Why:** the org's GitHub Actions spend was halted and jobs were being cancelled
+mid-run. The response was to gate about 11 of CI's 15 minutes — the browser,
+Cloudflare and Lighthouse stages — behind a diff check, so most pushes verified
+less than they used to. **Minutes on a self-hosted runner are free**, so this
+machine exists to buy that coverage back, not to save a line item.
+
+**"Allowance ran out" was the wrong diagnosis, and it cost an evening.** The
+real cause is a **$0 budget with "Stop usage" enabled**, at
+**Org → Settings → Billing and licensing → Budgets and alerts**. When such a
+budget reads 100%, GitHub does not queue a run and does not fail one either — it
+creates NO workflow run at all. From the outside that looks like a broken
+trigger: the workflow file is `state: active`, the PR is open, and other
+apps' checks (Prisma) still report on the same commit, so everything points
+at the YAML. Nothing in the Actions UI says "budget".
+
+**Check that page before debugging a workflow that will not start.** The fix is
+a small budget rather than no budget: **$5 with Stop usage ON** (set 2026-08-26).
+Jobs on our own runner cost nothing and do not draw against it, so the $5 is
+headroom for the hosted work that remains — `deploy-production.yml`, which stays
+on GitHub runners because it holds the production secrets. Linux minutes are
+$0.008, so $5 is about 60 deploys. Do NOT remove the limit instead: that is
+uncapped billing for no benefit, and the cap is what stops a runaway loop.
 
 **Funded by** a $2,000 Azure nonprofit grant (2026-08-25). Credits expire, so
 nothing with production data goes on Azure — see "What must not move" below.
@@ -92,6 +109,20 @@ system Node could only disagree with it.
 
 ## 3. Point CI at it
 
+**PROVEN on 2026-08-26**, run 1245 attempt 3: all 32 steps green on
+`ihype-ci-runner` in about 8m30s, against roughly 13m on a hosted runner. It is
+faster on every comparable step — authenticated E2E 4m19s vs 4m52s, Cloudflare
+build 1m04s vs 1m30s, Worker bundle budget 1m05s vs 1m37s — because the
+node_modules, Docker and Playwright caches persist between runs.
+
+Four attempts got there, and each found something a hosted runner ships that a
+bare Ubuntu box does not. In order: the org runner GROUP had not granted this
+repository access (job queued five minutes, claimed in four seconds when
+pointed back at `ubuntu-latest`); **no `psql`**; **sudo scoped too narrowly**
+for `playwright install --with-deps`, which runs `sudo -- sh -c "apt-get ..."`;
+and the VM stopped by an auto-shutdown that has no auto-start. The script now
+carries the first three. The fourth is in section 4.
+
 **Done on 2026-08-26.** `ci.yml` runs on `[self-hosted, linux, x64, ihype-ci]`,
 and the **"Decide the CI depth"** step, the `FULL_CI` variable and the
 `full-ci` label override are deleted — every stage runs on every push again.
@@ -105,20 +136,29 @@ secrets, and a self-hosted runner executes whatever a workflow tells it to —
 including from a fork's pull request, if repository settings ever allow one.
 Keeping deploys on ephemeral GitHub infrastructure keeps that boundary.
 
-## 4. Guard the credits
+## 4. Guard the credits — with a budget, NOT an auto-shutdown
 
-Set a budget the day you create the VM:
-
-```bash
-az consumption budget create \
-  --budget-name ihype-ci-monthly --amount 150 --time-grain Monthly \
-  --category Cost --start-date $(date -u +%Y-%m-01) --end-date 2027-12-31
-```
+Set a budget the day you create the VM. The CLI's `consumption budget` command
+is a fussy preview and rejected a valid request, so do it in the portal:
+**Cost Management → Budgets → + Add**, scope the subscription, monthly, **$150**,
+alert at 80%.
 
 Azure does **not** stop at zero when a grant runs out — it bills the card on
-file. A running spot VM plus a burstable Postgres is roughly $60–90/month, so
-$2,000 covers about a year, but only if nothing else is provisioned against the
-same subscription.
+file. An on-demand `D4as_v7` is about $140/month, so $2,000 covers roughly 14
+months, but only if nothing else is provisioned against the same subscription.
+
+**Do NOT set `az vm auto-shutdown` on this VM.** It was tried on the first
+night and had to be undone within the hour. There is no matching auto-start:
+`az vm auto-shutdown` deallocates on a schedule and nothing brings the machine
+back, so the runner goes offline permanently at the first firing. Worse, a job
+asking for a runner that does not exist **queues silently** rather than failing
+— the same failure mode that cost this setup its first evening — so CI would
+appear to hang for no visible reason, at night, with no error anywhere.
+
+The saving was about $45/month. If it is ever worth reclaiming, the correct
+shape is a PAIRED start/stop schedule via Azure Automation, so the machine
+comes back on its own. A bare shutdown is not a cheaper version of that; it is
+a broken one.
 
 ## What must not move to Azure
 
