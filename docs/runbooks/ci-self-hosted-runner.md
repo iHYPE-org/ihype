@@ -1,10 +1,27 @@
 # CI on our own runner (Azure)
 
-**Why:** the org's GitHub Actions allowance ran out and jobs were being
-cancelled mid-run. The response was to gate about 11 of CI's 15 minutes — the
-browser, Cloudflare and Lighthouse stages — behind a diff check, so most pushes
-verify less than they used to. **Minutes on a self-hosted runner are free**, so
-this machine exists to buy that coverage back, not to save a line item.
+**Why:** the org's GitHub Actions spend was halted and jobs were being cancelled
+mid-run. The response was to gate about 11 of CI's 15 minutes — the browser,
+Cloudflare and Lighthouse stages — behind a diff check, so most pushes verified
+less than they used to. **Minutes on a self-hosted runner are free**, so this
+machine exists to buy that coverage back, not to save a line item.
+
+**"Allowance ran out" was the wrong diagnosis, and it cost an evening.** The
+real cause is a **$0 budget with "Stop usage" enabled**, at
+**Org → Settings → Billing and licensing → Budgets and alerts**. When such a
+budget reads 100%, GitHub does not queue a run and does not fail one either — it
+creates NO workflow run at all. From the outside that looks like a broken
+trigger: the workflow file is `state: active`, the PR is open, and other
+apps' checks (Prisma) still report on the same commit, so everything points
+at the YAML. Nothing in the Actions UI says "budget".
+
+**Check that page before debugging a workflow that will not start.** The fix is
+a small budget rather than no budget: **$5 with Stop usage ON** (set 2026-08-26).
+Jobs on our own runner cost nothing and do not draw against it, so the $5 is
+headroom for the hosted work that remains — `deploy-production.yml`, which stays
+on GitHub runners because it holds the production secrets. Linux minutes are
+$0.008, so $5 is about 60 deploys. Do NOT remove the limit instead: that is
+uncapped billing for no benefit, and the cap is what stops a runaway loop.
 
 **Funded by** a $2,000 Azure nonprofit grant (2026-08-25). Credits expire, so
 nothing with production data goes on Azure — see "What must not move" below.
