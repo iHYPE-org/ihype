@@ -1,14 +1,59 @@
 # Runbook — rehearse the money path before the first sale
 
-**Status: never executed.** Live Stripe holds zero PaymentIntents, zero
-connected accounts and a zero balance. Nothing has ever been sold through this
-app, which means the first real ticket purchase will be the first execution of
-the capture → split → payout → refund path in production. This runbook exists so
-that does not happen.
+**Status: step 1 executed 2026-08-26 — 8 passed, 0 failed, 2 steps blocked.**
+Live Stripe still holds zero PaymentIntents, zero connected accounts and a zero
+balance. Nothing has ever been sold through this app, so the first real ticket
+purchase is still the first production execution of the capture → split → payout
+→ refund path. This runbook exists so that does not happen.
 
-It needs credentials nobody in an agent session has. Every step is written to be
-done by a human in one sitting, in order, with what "good" looks like stated so a
-partial pass is not mistaken for a pass.
+### What step 1 proved, against real test-mode Stripe
+
+| Check | Result |
+|---|---|
+| PaymentIntent authorizes with no `transfer_data` | PASS — `requires_capture` |
+| Manual capture method is in force | PASS |
+| Capture succeeds | PASS — `succeeded` |
+| Full amount lands on the PLATFORM balance, not routed onward | PASS — `amount_received=5000` |
+| Captured order refunds in full | PASS — `amount=5000` |
+| Ad pre-auth captures only delivered spend, releasing the rest | PASS — `1250` of `5000` |
+| Unaired campaign releases the hold entirely | PASS — `canceled` |
+
+The fourth row is the one that matters most historically: it is the 2026-07-14
+payout-routing bug — `transfer_data.destination` sending the WHOLE charge to one
+party instead of the 70/20/10 split — confirmed fixed against real Stripe rather
+than against a mock.
+
+### BLOCKER — Connect is not signed up for
+
+Steps 2 and 3 of the rehearsal (**the 70/20/10 transfers**, and **replaying a
+payout without double-paying**) could not run. Creating a connected account
+returns:
+
+> You can only create new accounts if you've signed up for Connect
+
+**This is a launch prerequisite, not a testing detail.** `triggerShowPayouts()`
+pays through `stripe.transfers.create()` to connected accounts, so until Connect
+is enabled on the iHYPE Stripe account no artist, venue or promoter can be paid
+at all — in test mode or in production. A ticket would sell, the money would
+capture to the platform balance, and every payable entry would sit `PENDING`
+forever.
+
+Enable Connect (dashboard → Connect), then create three test Express accounts and
+complete the hosted onboarding for each with Stripe's test values, and re-run:
+
+```
+REHEARSAL_CONNECT_ACCOUNTS=acct_1,acct_2,acct_3 \
+  STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
+```
+
+Onboarding cannot be faked — Stripe will not transfer to an account that has not
+completed it, and the application has the identical prerequisite.
+
+### The remaining steps still need a human
+
+Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
+door. Every step is written to be done in one sitting, in order, with what "good"
+looks like stated so a partial pass is not mistaken for a pass.
 
 ---
 
@@ -20,7 +65,7 @@ Do not re-prove these; know what they do and don't cover.
 |---|---|---|
 | The 70/20/10 arithmetic, lineup splits, rounding remainder | `src/lib/__tests__/ticket-order-state.test.ts` | Whether Prisma writes what the pure function returned |
 | Capture / refund / void state transitions, races, capacity release, PENDING-only payable voiding | `src/lib/__tests__/ticket-order-money-path.test.ts` | Whether Prisma's `updateMany` filters as assumed |
-| `triggerShowPayouts` querying, per-entry release, failure isolation | `src/lib/__tests__/show-payouts.test.ts` | Whether Stripe accepts the transfer shape |
+| `triggerShowPayouts` querying, per-entry release, failure isolation, **and that a second cron pass releases nothing** | `src/lib/__tests__/show-payouts.test.ts` | Whether Stripe accepts the transfer shape |
 | Stripe fee arithmetic | `src/lib/__tests__/stripe-fees.test.ts` | Anything about a real charge |
 
 Everything in the right-hand column is what the steps below are for.
