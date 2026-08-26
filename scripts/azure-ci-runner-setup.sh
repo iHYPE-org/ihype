@@ -14,6 +14,11 @@
 #   - Docker. `ci.yml` declares `services: postgres:16`, and service containers
 #     on a self-hosted runner are started by the runner's own Docker daemon.
 #     Without it every job fails before its first step.
+#   - postgresql-client. The "Prepare scratch database" step shells out to
+#     `psql` to create two extensions. A hosted runner ships it; this one did
+#     not, and the first real job died there after passing all nineteen steps
+#     before it. The service CONTAINER is not the client: Docker running
+#     postgres:16 says nothing about `psql` existing on the host.
 #   - Passwordless sudo for the runner user. `npx playwright install --with-deps`
 #     shells out to apt; on a hosted runner that is free, here it is not.
 #   - A large disk. node_modules, .open-next, the workerd binary and three
@@ -49,6 +54,7 @@ apt-get update -qq
 apt-get install -y -qq \
   curl jq git ca-certificates gnupg unzip \
   docker.io \
+  postgresql-client \
   libnss3 libnspr4 libatk1.0-0t64 libatk-bridge2.0-0t64 libcups2t64 \
   libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 libxfixes3 libxrandr2 \
   libgbm1 libpango-1.0-0 libcairo2 libasound2t64
