@@ -1,14 +1,111 @@
 # Runbook — rehearse the money path before the first sale
 
-**Status: never executed.** Live Stripe holds zero PaymentIntents, zero
-connected accounts and a zero balance. Nothing has ever been sold through this
-app, which means the first real ticket purchase will be the first execution of
-the capture → split → payout → refund path in production. This runbook exists so
-that does not happen.
+**Status: step 1 executed 2026-08-26 — 8 passed, 0 failed, 2 steps blocked.**
+Live Stripe still holds zero PaymentIntents, zero connected accounts and a zero
+balance. Nothing has ever been sold through this app, so the first real ticket
+purchase is still the first production execution of the capture → split → payout
+→ refund path. This runbook exists so that does not happen.
 
-It needs credentials nobody in an agent session has. Every step is written to be
-done by a human in one sitting, in order, with what "good" looks like stated so a
-partial pass is not mistaken for a pass.
+### What step 1 proved, against real test-mode Stripe
+
+| Check | Result |
+|---|---|
+| PaymentIntent authorizes with no `transfer_data` | PASS — `requires_capture` |
+| Manual capture method is in force | PASS |
+| Capture succeeds | PASS — `succeeded` |
+| Full amount lands on the PLATFORM balance, not routed onward | PASS — `amount_received=5000` |
+| Captured order refunds in full | PASS — `amount=5000` |
+| Ad pre-auth captures only delivered spend, releasing the rest | PASS — `1250` of `5000` |
+| Unaired campaign releases the hold entirely | PASS — `canceled` |
+
+The fourth row is the one that matters most historically: it is the 2026-07-14
+payout-routing bug — `transfer_data.destination` sending the WHOLE charge to one
+party instead of the 70/20/10 split — confirmed fixed against real Stripe rather
+than against a mock.
+
+### BLOCKER 2 — `createConnectAccount()` cannot create an account at all
+
+Found 2026-08-26 by running the app's own call, byte for byte, against a
+Connect-enabled test account:
+
+```
+stripe.accounts.create({ type: 'express', capabilities: { transfers: { requested: true } } })
+→ StripeInvalidRequestError: Stripe no longer recommends Accounts v1 for new
+  Connect integrations. Create connected accounts with POST /v2/core/accounts
+```
+
+`src/lib/stripe.ts:78` uses **Accounts v1**, and that endpoint is CLOSED to new
+Connect integrations — not deprecated-with-a-warning, rejected. So on a Stripe
+account that registers Connect from now on, no artist, venue or promoter can
+onboard, `stripeConnectAccountId` is never set, and every payable entry sits
+`PENDING` forever. The failure is at onboarding, before any money moves, which is
+the good news: nothing can sell a ticket into a payout that cannot happen.
+
+**Two related traps found at the same time, both of which cost real debugging:**
+
+1. **The v1 capability view LIES about v2 accounts.** `GET /v1/accounts` reported
+   `capabilities.transfers: "active"` for two accounts that cannot receive a
+   transfer; their `GET /v2/core/accounts?include=configuration.recipient` shows
+   `capabilities: {}`. A transfer destination needs
+   `configuration.recipient.capabilities.stripe_balance.stripe_transfers` — the
+   legacy `transfers` capability is a different thing with a confusingly
+   identical name. Do not trust the v1 field when diagnosing a failed payout.
+2. **`dashboard` is required** when creating a v2 account with the transfers
+   capability, and the error naming it arrives only after everything else
+   validates.
+
+Migrating means `accounts.create` → `POST /v2/core/accounts`, the onboarding
+link, the capability name checked before a transfer, and whatever
+`stripeConnectOnboarded` should now mean. It is a money-path change and wants its
+own PR with the rehearsal re-run against it.
+
+### BLOCKER 1 — Connect is not signed up for (on the original account)
+
+Steps 2 and 3 of the rehearsal (**the 70/20/10 transfers**, and **replaying a
+payout without double-paying**) could not run. Creating a connected account
+returns:
+
+> You can only create new accounts if you've signed up for Connect
+
+**This is a launch prerequisite, not a testing detail.** `triggerShowPayouts()`
+pays through `stripe.transfers.create()` to connected accounts, so until Connect
+is enabled on the iHYPE Stripe account no artist, venue or promoter can be paid
+at all — in test mode or in production. A ticket would sell, the money would
+capture to the platform balance, and every payable entry would sit `PENDING`
+forever.
+
+Enable Connect (dashboard → Connect), then create three test Express accounts and
+complete the hosted onboarding for each with Stripe's test values, and re-run:
+
+```
+REHEARSAL_CONNECT_ACCOUNTS=acct_1,acct_2,acct_3 \
+  STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
+```
+
+Onboarding cannot be faked — Stripe will not transfer to an account that has not
+completed it, and the application has the identical prerequisite.
+
+### What steps 2 and 3 proved before hitting blocker 2
+
+Run against a second, Connect-enabled test account:
+
+| Check | Result |
+|---|---|
+| **70/20/10 splits sum to the captured total with no leakage** | **PASS — artist=3500 venue=1000 promoter=500 of 5000** |
+| Each transfer actually reaches its destination | BLOCKED — destination lacks `stripe_balance.stripe_transfers` |
+| Replaying a payout does not double-pay | BLOCKED — depends on the transfer above |
+
+The passing row is the charter arithmetic verified against real Stripe rather
+than against a pure function. The two blocked rows are the ones that still have
+never executed anywhere; note that the double-pay guard now has unit cover
+(`show-payouts.test.ts`, "pays once when the cron runs twice"), which is not the
+same as proving Stripe accepts the second call as a no-op.
+
+### The remaining steps still need a human
+
+Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
+door. Every step is written to be done in one sitting, in order, with what "good"
+looks like stated so a partial pass is not mistaken for a pass.
 
 ---
 
@@ -20,7 +117,7 @@ Do not re-prove these; know what they do and don't cover.
 |---|---|---|
 | The 70/20/10 arithmetic, lineup splits, rounding remainder | `src/lib/__tests__/ticket-order-state.test.ts` | Whether Prisma writes what the pure function returned |
 | Capture / refund / void state transitions, races, capacity release, PENDING-only payable voiding | `src/lib/__tests__/ticket-order-money-path.test.ts` | Whether Prisma's `updateMany` filters as assumed |
-| `triggerShowPayouts` querying, per-entry release, failure isolation | `src/lib/__tests__/show-payouts.test.ts` | Whether Stripe accepts the transfer shape |
+| `triggerShowPayouts` querying, per-entry release, failure isolation, **and that a second cron pass releases nothing** | `src/lib/__tests__/show-payouts.test.ts` | Whether Stripe accepts the transfer shape |
 | Stripe fee arithmetic | `src/lib/__tests__/stripe-fees.test.ts` | Anything about a real charge |
 
 Everything in the right-hand column is what the steps below are for.
