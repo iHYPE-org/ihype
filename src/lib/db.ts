@@ -116,19 +116,38 @@ function makePrisma(url: string) {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
           const start = Date.now();
-          const timeout = new Promise<never>((_, reject) =>
-            setTimeout(() => {
+          /* CLEAR THE TIMER. `Promise.race` settles as soon as the query wins,
+             but it does not cancel the loser — so without the `finally` below
+             every single query left a live 25-second timeout behind, each one
+             pinning a closure over `model`, `operation` and `args`.
+
+             In production that is invisible: a Worker invocation is short and
+             the isolate is torn down long before the timers matter. In a
+             long-lived process it is a leak with no ceiling, and it is what
+             killed the authenticated e2e shard — measured 2026-08-26, the
+             wrangler dev server climbed to 1393 MB, spent 95% of its time in
+             GC (`average mu = 0.046`), dragged User.findUnique out to 2s, and
+             aborted on signal 6 mid-suite. The tests that happened to be
+             running when it died failed on whatever their assertion was, which
+             is why the "flaky" test was a different one every run. */
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const timeout = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
               const err = new Error('DB query timeout after 25s');
               log.error('[db]', err, `Query timed out: ${model}.${operation}`);
               reject(err);
-            }, 25_000)
-          );
-          const result = await Promise.race([query(args), timeout]);
-          const elapsed = Date.now() - start;
-          if (elapsed > 1000) {
-            log.warn('[db]', { model, operation, elapsedMs: elapsed }, 'Slow query');
+            }, 25_000);
+          });
+          try {
+            const result = await Promise.race([query(args), timeout]);
+            const elapsed = Date.now() - start;
+            if (elapsed > 1000) {
+              log.warn('[db]', { model, operation, elapsedMs: elapsed }, 'Slow query');
+            }
+            return result;
+          } finally {
+            if (timer) clearTimeout(timer);
           }
-          return result;
         },
       },
     },
