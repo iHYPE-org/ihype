@@ -75,13 +75,76 @@ export async function createStripeConnectAccount({
   profileType: string;
 }): Promise<string> {
   const stripe = getStripe();
-  const account = await stripe.accounts.create({
-    type: 'express',
-    email,
-    capabilities: { transfers: { requested: true } },
-    metadata: { profileId, profileType }
+  /* ACCOUNTS V2, and v1 is not a fallback — it is CLOSED.
+     `stripe.accounts.create({ type: 'express' })` returns an error, not a
+     warning: "Stripe no longer recommends Accounts v1 for new Connect
+     integrations." Verified 2026-08-26 by running the old call verbatim
+     against a Connect-enabled test account. While it stood, no artist, venue
+     or promoter could onboard at all, `stripeConnectAccountId` was never set,
+     and every payable entry would have sat PENDING forever.
+
+     `configuration.recipient` is the shape that matters. iHYPE never charges
+     ON BEHALF of a connected account — it captures the whole ticket to the
+     platform balance and pays the 70/20/10 out as separate transfers (see
+     `createTicketPaymentIntent` below) — so these accounts are RECIPIENTS,
+     not merchants, and the capability a transfer destination needs is
+     `stripe_balance.stripe_transfers`. Do not reach for the legacy
+     `transfers` capability: it is a different thing wearing a near-identical
+     name, and `GET /v1/accounts` will happily report `transfers: "active"`
+     for an account whose v2 recipient capabilities are empty and which
+     Stripe refuses to transfer to. That misreading cost real debugging.
+
+     `dashboard` is required whenever the transfers capability is requested,
+     and the error saying so arrives only after everything else validates.
+     `responsibilities` names the platform for both fees and losses, which is
+     what a marketplace is: iHYPE is merchant of record and carries the
+     chargebacks. */
+  const account = await stripe.v2.core.accounts.create({
+    contact_email: email,
+    dashboard: 'express',
+    identity: { country: 'us', entity_type: 'individual' },
+    configuration: {
+      recipient: {
+        capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
+      },
+    },
+    defaults: {
+      currency: 'usd',
+      responsibilities: { fees_collector: 'application', losses_collector: 'application' },
+    },
+    metadata: { profileId, profileType },
   });
   return account.id;
+}
+
+/**
+ * Whether Stripe will actually accept a transfer to this account.
+ *
+ * This is the question `stripeConnectOnboarded` is meant to answer, and the
+ * old signal answered a different one: the webhook set the flag from
+ * `account.charges_enabled`, which is about accepting CARD PAYMENTS. A
+ * recipient that has completed onboarding and can receive every transfer we
+ * will ever send it still reports `charges_enabled: false`, because iHYPE
+ * never asks for `card_payments`. So the flag could not become true, the
+ * "Verified" pill in payout settings could never light up, and the Connect
+ * health cron would have flagged every correctly-onboarded account as broken.
+ *
+ * Returns false rather than throwing on a Stripe error: a failed lookup means
+ * "not proven ready", and the caller's job is to keep the member's own view
+ * honest, not to abort their page.
+ */
+export async function isConnectPayoutReady(connectAccountId: string): Promise<boolean> {
+  try {
+    const stripe = getStripe();
+    const account = await stripe.v2.core.accounts.retrieve(connectAccountId, {
+      include: ['configuration.recipient'],
+    });
+    const transfers =
+      account.configuration?.recipient?.capabilities?.stripe_balance?.stripe_transfers;
+    return transfers?.status === 'active';
+  } catch {
+    return false;
+  }
 }
 
 export async function createConnectOnboardingUrl({
@@ -94,11 +157,20 @@ export async function createConnectOnboardingUrl({
   refreshUrl: string;
 }): Promise<string> {
   const stripe = getStripe();
-  const link = await stripe.accountLinks.create({
+  /* v2 link for a v2 account — v1's `accountLinks.create` cannot onboard one,
+     so this moved with the account creation above and not separately. `configurations: ['recipient']` has to match the
+     configuration the account was created with, or the hosted flow collects
+     the wrong requirements and the transfers capability never activates. */
+  const link = await stripe.v2.core.accountLinks.create({
     account: connectAccountId,
-    refresh_url: refreshUrl,
-    return_url: returnUrl,
-    type: 'account_onboarding'
+    use_case: {
+      type: 'account_onboarding',
+      account_onboarding: {
+        configurations: ['recipient'],
+        refresh_url: refreshUrl,
+        return_url: returnUrl,
+      },
+    },
   });
   return link.url;
 }
@@ -387,7 +459,11 @@ export async function settleAdCampaignAuthorization(paymentIntentId: string, spe
  */
 export async function deauthorizeStripeConnectAccount(connectAccountId: string): Promise<void> {
   const stripe = getStripe();
-  await stripe.accounts.del(connectAccountId);
+  // v2 accounts close rather than delete; `accounts.del` is the v1 verb and
+  // does not apply to an account created by `createStripeConnectAccount`.
+  await stripe.v2.core.accounts.close(connectAccountId, {
+    applied_configurations: ['recipient'],
+  });
 }
 
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
