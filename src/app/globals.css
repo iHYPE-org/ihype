@@ -648,6 +648,10 @@
   --map-filter: brightness(.82) sepia(.24) saturate(1.05) contrast(1.06);
   --map-rule: rgba(255,236,194,.09); --map-vignette: rgba(0,0,0,.34);
   --map-blend: normal;
+  /* Dark used to share console's display face on the reasoning that it is
+     the same machine with the lights off. It gets its own now: a cooler,
+     squarer grotesk, so all six themes have a distinct voice. */
+  --f-d: var(--font-space, 'Space Grotesk', sans-serif);
 }
 [data-theme="street"] {
   /* Asphalt and primer grey; the poster wall at night. */
@@ -693,8 +697,9 @@
   --map-filter: brightness(.78) grayscale(.55) contrast(1.12);
   --map-rule: rgba(200,214,230,.1); --map-vignette: rgba(0,0,0,.38);
   --map-blend: normal;
-  /* Stencilled display face, from the mono the app already loads. */
-  --f-d: var(--font-jb, 'JetBrains Mono', monospace);
+  /* A poster face, not a borrowed mono: heavy condensed caps are what a
+     paste-up wall reads as. Loaded on demand — see layout.tsx. */
+  --f-d: var(--font-anton, 'Anton', 'Arial Narrow', sans-serif);
 }
 [data-theme="metal"] {
   /* Cold gunmetal; stage blacks and steel. */
@@ -742,9 +747,10 @@
   /* Square hardware: a machined panel has a cut edge, and this theme is the
      most literal about it. */
   --radius-panel: 1px;
-  /* Body goes mono: an instrument reads out, it does not write prose. Display
-     stays the heavy grotesk so headings still carry weight against it. */
+  /* Body goes mono: an instrument reads out, it does not write prose. The
+     display face is squared and technical to match the 1px panel radius. */
   --f-b: var(--font-jb, 'JetBrains Mono', monospace);
+  --f-d: var(--font-chakra, 'Chakra Petch', sans-serif);
 }
 [data-theme="flowery"] {
   /* Petal pink over deep plum ink. */
@@ -793,11 +799,10 @@
   /* Softer edges than the machined default — the one theme that is not a
      workshop. */
   --radius-panel: 10px;
-  /* No display face at all: the humanist sans carries the headings too, which
-     is what makes this theme read gentle rather than editorial. Deliberately
-     NOT the serif — that is classical's voice, and two themes sharing a
-     display face would leave five themes with four voices. */
-  --f-d: var(--font-work, 'Work Sans', sans-serif);
+  /* A high-contrast didone for the headings — distinct from classical's
+     display serif, which is a quirky text face rather than an elegant one, so
+     the two read as different rooms rather than the same one twice. */
+  --f-d: var(--font-playfair, 'Playfair Display', Georgia, serif);
 }
 [data-theme="classical"] {
   /* Concert-hall ivory; the display face goes serif. */
