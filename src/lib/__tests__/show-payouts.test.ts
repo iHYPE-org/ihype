@@ -134,7 +134,12 @@ describe('triggerShowPayouts', () => {
      to `[]` would pass with the filter deleted, which is precisely the
      regression worth catching. */
   it('pays once when the cron runs twice — the second pass releases nothing', async () => {
-    const store = [{ ...entry(), status: AccountsPayableStatus.PENDING }];
+    /* Typed wider than `entry()` returns because the release WRITES fields the
+       fixture does not declare — `stripeTransferId` and `paidAt` arrive via the
+       update below, and asserting on them is the point. */
+    const store: Array<Record<string, unknown> & { id: string; status: AccountsPayableStatus }> = [
+      { ...entry(), status: AccountsPayableStatus.PENDING },
+    ];
     /* An ABSENT status filter must return EVERYTHING, the way a real query
        would. Modelling it as `row.status === args.where.status` looks
        equivalent and is not: with the filter deleted the comparison is
