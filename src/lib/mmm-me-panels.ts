@@ -38,7 +38,13 @@ export function canonicalMePanelId(value: string | null | undefined): MePanelId 
 
 export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
   settings: [
-    // Accessibility leads this panel deliberately. It is the row a reader who
+    /* Notifications leads, above accessibility: this is the row a member
+       opens Settings looking for after tapping a notification, and the feed
+       had no route at all until 2026-08-25 — `/me/notifications` redirected
+       to a dashboard that no longer exists, so every already-sent email and
+       push payload landed on a page with no feed on it. */
+    { label: 'Notifications', detail: 'What has happened on your account', href: '/app/me/notifications' },
+    // Accessibility leads the rest deliberately. It is the row a reader who
     // cannot read the app needs, and it was second — under a row about payouts
     // and data export, which nobody reaches this panel to find in a hurry.
     // Text size is named first in the detail for the same reason.

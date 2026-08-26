@@ -13,6 +13,7 @@ import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
+import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -75,6 +76,7 @@ export default async function MmmArtistPage({
       merchContent: true,
       pressKitContent: true,
       contactInfo: true,
+      ownerId: true,
       owner: { select: { email: true, username: true } },
       _count: { select: { followers: true } },
     },
@@ -86,6 +88,7 @@ export default async function MmmArtistPage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing title="No such artist" body="That profile may have been removed, or the link may be older than it is. The map still knows who is playing." />;
 
   const activeTab = resolveTab(ARTIST_TABS, requestedTab);
+  const isOwner = profile.ownerId === session.user.id;
 
   const now = new Date();
   const [userHype, upcoming, releases] = await Promise.all([
@@ -353,6 +356,25 @@ export default async function MmmArtistPage({
       }))} />
 
       <ProfileTabs active={activeTab} label="Artist sections" tabs={ARTIST_TABS} />
+
+      {activeTab === 'albums' && isOwner && (
+        /* The upload form, for the artist's own eyes.
+
+           `TrackUploadPanel` is the ONLY client anywhere that posts to
+           `/api/artist-media`, and nothing had mounted it since the legacy
+           artist page was retired — so no artist could add a track at all,
+           on a music platform, while the API and the four-layer copyright scan
+           behind it kept working. DESIGN_SYNC row 311 kept the file for exactly
+           this reason: the component IS the fix, and deleting it would have
+           turned a re-mount into a rebuild.
+
+           Here rather than in ME, because this is where an artist's releases
+           are listed: the panel sits directly above the list it adds to, and a
+           listener never sees it. */
+        <ProfilePanel empty="" isEmpty={false} tabId="albums" title="Upload a track">
+          <TrackUploadPanel profileId={profile.id} />
+        </ProfilePanel>
+      )}
 
       {activeTab === 'albums' && (
         <ProfilePanel

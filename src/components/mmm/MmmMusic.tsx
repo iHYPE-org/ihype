@@ -615,37 +615,196 @@ function RecommendedTab() {
   );
 }
 
+/**
+ * CHARTS IS THREE DATASETS (owner, 2026-08-25: "charts are 3 different
+ * datasets"), and the endpoint answers one at a time.
+ *
+ * - AREA ranks the same music at four widths — local, regional, national,
+ *   global. The scope is a zoom, so it is a second row of chips under one
+ *   dataset rather than three more datasets.
+ * - GENRE ranks one genre across everywhere. Its chips come from the response,
+ *   so a chip can never lead to an empty chart.
+ * - FRIENDS ranks only accounts the viewer follows — the same definition the
+ *   `friends` radio station already uses (`src/lib/stations.ts`), because two
+ *   surfaces answering "your friends" differently is worse than either answer.
+ *
+ * Chips rather than a dial: the dock's dial carries the MUSIC tab strip, and
+ * the handoff allows exactly one dial per screen. The radio tab's filter row is
+ * the precedent.
+ */
+const CHART_DATASETS = [
+  { id: 'area', label: 'Area' },
+  { id: 'genre', label: 'Genre' },
+  { id: 'friends', label: 'Friends' },
+] as const;
+
+const CHART_SCOPES = [
+  { id: 'local', label: 'Local' },
+  { id: 'regional', label: 'Regional' },
+  { id: 'national', label: 'National' },
+  { id: 'global', label: 'Global' },
+] as const;
+
+type ChartDatasetId = typeof CHART_DATASETS[number]['id'];
+type ChartScopeId = typeof CHART_SCOPES[number]['id'];
+
+type ChartPayload = {
+  rows: ChartRow[];
+  genres: string[];
+  viewerPlace: { city: string | null; region: string | null; country: string | null };
+  reason: string | null;
+};
+
+/** What an empty chart MEANS. Every one of these is a different situation and
+ *  three of them are actionable, so a single "nothing here" would be the least
+ *  useful sentence available. */
+function emptyChartMessage(reason: string | null, dataset: ChartDatasetId, scope: ChartScopeId): string {
+  if (reason === 'no-follows') return 'You are not following anyone yet. Follow an artist or a venue and their music charts here.';
+  if (reason === 'no-location') {
+    return scope === 'local'
+      ? 'Add a city to your profile and the local chart will follow it.'
+      : 'Add a location to your profile and this chart will follow it.';
+  }
+  if (reason === 'no-genre') return 'Pick a genre.';
+  if (reason === 'no-tracks') return 'No released music here yet.';
+  if (dataset === 'friends') return 'Nothing you follow has been hyped this week.';
+  return 'Nothing here has been hyped this week.';
+}
+
 function ChartsTab() {
-  const { status, data } = useJson<ChartRow[]>('/api/charts', (payload) => {
-    const groups = payload as { national?: Array<Record<string, unknown>> };
-    return (groups.national ?? []).slice(0, 20).map((row) => ({
-      id: String(row.id ?? ''),
-      title: String(row.title ?? 'Untitled'),
-      artistName: String(row.artistName ?? 'Unknown artist'),
-      artistSlug: String(row.artistSlug ?? ''),
-      hypeCount: Number(row.hypeCount ?? 0),
-      /* `/api/charts` has always returned these and this mapping dropped them,
-         so the chart was the one MUSIC surface with playable rows that could
-         not be played at all — not a missing feature, a discarded field. */
-      mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
-      artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
-    }));
+  const [dataset, setDataset] = useState<ChartDatasetId>('area');
+  const [scope, setScope] = useState<ChartScopeId>('local');
+  const [genre, setGenre] = useState('');
+
+  const query = dataset === 'area'
+    ? `/api/charts?dataset=area&scope=${scope}`
+    : dataset === 'genre'
+      ? `/api/charts?dataset=genre&genre=${encodeURIComponent(genre)}`
+      : '/api/charts?dataset=friends';
+
+  const { status, data } = useJson<ChartPayload>(query, (payload) => {
+    const body = payload as {
+      rows?: Array<Record<string, unknown>>;
+      genres?: unknown;
+      viewerPlace?: { city?: unknown; region?: unknown; country?: unknown };
+      reason?: unknown;
+    };
+    return {
+      rows: (body.rows ?? []).map((row) => ({
+        id: String(row.id ?? ''),
+        title: String(row.title ?? 'Untitled'),
+        artistName: String(row.artistName ?? 'Unknown artist'),
+        artistSlug: String(row.artistSlug ?? ''),
+        hypeCount: Number(row.hypeCount ?? 0),
+        /* `/api/charts` has always returned these and an earlier mapping
+           dropped them, so the chart was the one MUSIC surface with playable
+           rows that could not be played at all — not a missing feature, a
+           discarded field. */
+        mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
+        artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
+      })),
+      genres: Array.isArray(body.genres) ? body.genres.map(String) : [],
+      viewerPlace: {
+        city: typeof body.viewerPlace?.city === 'string' ? body.viewerPlace.city : null,
+        region: typeof body.viewerPlace?.region === 'string' ? body.viewerPlace.region : null,
+        country: typeof body.viewerPlace?.country === 'string' ? body.viewerPlace.country : null,
+      },
+      reason: typeof body.reason === 'string' ? body.reason : null,
+    };
   });
 
+  const rows = data?.rows ?? [];
   // The chart from number one down. Rows stay links to the artist, as drawn.
-  useRegisterQueue(data ?? []);
+  useRegisterQueue(rows);
 
-  if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Charts are unavailable right now.</Empty>;
-  const realRows = data ?? [];
-  const demo = realRows.length === 0;
-  const rows = demo ? DEMO_CHARTS : realRows;
+  /* The scope chip says WHERE it is ranking, when the viewer's profile knows.
+     "Local" alone is a label; "Local · Portland" is a readout. */
+  const scopeDetail = dataset === 'area'
+    ? scope === 'local' ? data?.viewerPlace.city
+      : scope === 'regional' ? data?.viewerPlace.region
+      : scope === 'national' ? data?.viewerPlace.country
+      : null
+    : null;
+
+  const chips = (
+    <>
+      <div className="mmm-chart-chips">
+        {CHART_DATASETS.map((entry) => (
+          <button
+            aria-pressed={entry.id === dataset}
+            className="mmm-chip mmm-chip-genre"
+            key={entry.id}
+            onClick={() => setDataset(entry.id)}
+            style={{ backdropFilter: 'none' }}
+            type="button"
+          >
+            {entry.label}
+          </button>
+        ))}
+      </div>
+      {dataset === 'area' && (
+        <div className="mmm-chart-chips">
+          {CHART_SCOPES.map((entry) => (
+            <button
+              aria-pressed={entry.id === scope}
+              className="mmm-chip mmm-chip-genre"
+              key={entry.id}
+              onClick={() => setScope(entry.id)}
+              style={{ backdropFilter: 'none' }}
+              type="button"
+            >
+              {entry.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {dataset === 'genre' && (data?.genres.length ?? 0) > 0 && (
+        <div className="mmm-chart-chips">
+          {(data?.genres ?? []).map((entry) => (
+            <button
+              aria-pressed={entry === genre}
+              className="mmm-chip mmm-chip-genre"
+              key={entry}
+              onClick={() => setGenre(entry === genre ? '' : entry)}
+              style={{ backdropFilter: 'none' }}
+              type="button"
+            >
+              {entry}
+            </button>
+          ))}
+        </div>
+      )}
+      {scopeDetail && <p className="mmm-chart-place">Ranking {scopeDetail}</p>}
+    </>
+  );
+
+  if (status === 'error') {
+    return (
+      <div className="mmm-music-list">
+        {chips}
+        <Empty>Charts are unavailable right now.</Empty>
+      </div>
+    );
+  }
+
+  /* Demo rows only stand in for the GLOBAL chart with nothing hyped anywhere.
+     A narrower dataset that is empty is telling the truth about this account —
+     no follows, no city, a quiet genre — and filling it with invented rows
+     would answer a real question with a fiction. */
+  const demo = status === 'ready' && rows.length === 0 && dataset === 'area' && scope === 'global';
+  const shown = demo ? DEMO_CHARTS : rows;
 
   return (
     <div className="mmm-music-list">
-      {demo && <DemoHeader description="A preview of the weekly chart once local HYPE activity can be ranked." />}
+      {chips}
+      {status === 'loading' && <Loading />}
+      {status === 'ready' && rows.length === 0 && !demo && (
+        <Empty>{emptyChartMessage(data?.reason ?? null, dataset, scope)}</Empty>
+      )}
+      {demo && <DemoHeader description="A preview of the weekly chart once HYPE activity can be ranked." />}
+      {shown.length > 0 && (
       <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
-      {rows.map((row, index) => (
+      {shown.map((row, index) => (
         <li key={row.id}>
           {demo ? <div aria-disabled="true" className="mmm-row mmm-demo-row">
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
@@ -669,6 +828,7 @@ function ChartsTab() {
         </li>
       ))}
       </ol>
+      )}
     </div>
   );
 }

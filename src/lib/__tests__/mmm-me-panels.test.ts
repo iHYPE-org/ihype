@@ -46,7 +46,15 @@ describe('ME account panels', () => {
     );
     expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Account and privacy')?.detail)
       .toContain('payouts');
-    expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toContain('Notifications');
+    /* Notifications IS a Settings row now, and this line asserted the opposite
+       until 2026-08-25. The reason it was excluded was that it had nowhere to
+       go: the feed had been a section of `/me/dashboard`, that page went with
+       the legacy shell, and a row pointing at a redirect chain ending on a
+       surface with no feed is worse than no row. `/app/me/notifications`
+       renders the feed, so the row is a bridge to something real — which is the
+       rule the next test in this file enforces for every row here. */
+    expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Notifications')?.href)
+      .toBe('/app/me/notifications');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Privacy policy')?.href)
       .toBe('/app/me/info/privacy');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'DMCA')?.href)
