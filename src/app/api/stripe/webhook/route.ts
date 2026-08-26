@@ -196,11 +196,31 @@ export async function POST(request: NextRequest) {
         }
 
         case 'account.updated': {
+          /* `charges_enabled` is the wrong signal and this used to trust it.
+             It asks whether the account can accept CARD PAYMENTS; iHYPE
+             captures every ticket to its own balance and pays the 70/20/10 out
+             as transfers, so a connected account never requests
+             `card_payments` and reports `charges_enabled: false` no matter how
+             completely it has onboarded. Writing that into
+             `stripeConnectOnboarded` meant the flag could never become true:
+             the "Verified" pill in payout settings stayed off forever and the
+             Connect health cron flagged every correctly-onboarded account.
+
+             `payouts_enabled` is the closest v1 field to the real question —
+             can money reach this account — so the flag can now at least turn
+             ON here. The authoritative check is `isConnectPayoutReady()` in
+             the return route, which reads the v2 recipient capability
+             directly; this handler is a backstop for a status that changes
+             later (a verification lapsing), and is deliberately one-way: it
+             never clears a flag the capability check has set, because a v1
+             event about a v2 account is the less informed of the two. */
           const account = event.data.object;
-          await tx.profile.updateMany({
-            where: { stripeConnectAccountId: account.id },
-            data: { stripeConnectOnboarded: account.charges_enabled },
-          });
+          if (account.payouts_enabled) {
+            await tx.profile.updateMany({
+              where: { stripeConnectAccountId: account.id },
+              data: { stripeConnectOnboarded: true },
+            });
+          }
           break;
         }
 
