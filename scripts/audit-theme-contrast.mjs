@@ -128,26 +128,44 @@ for (const [name, tokens] of blocks) {
   }
 }
 
-/* The walnut material. Its ink ramp is checked against the lightest stop of
-   its gradient — see the header. --ink-on-walnut-3 is the dimmest rank a WORD
-   may use, so it is in; the --rule-on-walnut pair are hairlines and are not. */
+/* The walnut material, IN EVERY THEME.
+
+   Its ink ramp is checked against the lightest stop of its gradient — see the
+   header. --ink-on-walnut-3 is the dimmest rank a WORD may use, so it is in;
+   the --rule-on-walnut pair are hairlines and are not.
+
+   This used to read --walnut from :root ALONE, which was correct only while the
+   cabinet did not theme. Since 2026-08-26 it does (owner: "Themes should adjust
+   console graphics, map graphic, buttons, and fonts as well"), and a check
+   pinned to :root would have gone on passing while five themed cabinets carried
+   whatever ink they liked — precisely the silent-gate failure this file exists
+   to prevent.
+
+   `blocks` is already merged over :root, and that is what makes this strict for
+   free: a theme that restates --walnut and forgets its ink resolves to the base
+   CREAM on, say, steel, and fails here. Inheriting is not a defence. */
 {
-  const walnut = base.get('--walnut');
   const inks = ['--ink-on-walnut', '--ink-on-walnut-2', '--ink-on-walnut-3'];
-  if (!walnut) failures.push('walnut: --walnut is not defined — the material lost its ground');
-  else {
-    for (const name of inks) {
-      const value = base.get(name);
-      if (!value) { failures.push(`walnut: ${name} is not defined`); continue; }
+  if (!base.get('--walnut')) {
+    failures.push('walnut: --walnut is not defined in :root — the material lost its ground');
+  }
+  for (const [name, tokens] of blocks) {
+    const walnut = tokens.get('--walnut');
+    if (!walnut) continue;
+    for (const ink of inks) {
+      const value = tokens.get(ink);
+      if (!value) { failures.push(`walnut [${name}]: ${ink} is not defined`); continue; }
       const r = ratio(value, walnut);
-      if (r < AA) failures.push(`walnut: ${name} ${value} on --walnut ${walnut} = ${r.toFixed(2)}:1`);
+      if (r < AA) {
+        failures.push(`walnut [${name}]: ${ink} ${value} on --walnut ${walnut} = ${r.toFixed(2)}:1`);
+      }
     }
     /* The two controls the material paints: brass disc, dark glyph. */
     for (const [fill, label] of [['--brass', '--walnut-3'], ['--lamp', '--walnut-3']]) {
-      const f = base.get(fill), l = base.get(label);
+      const f = tokens.get(fill), l = tokens.get(label);
       if (!f || !l) continue;
       const r = ratio(l, f);
-      if (r < AA) failures.push(`walnut: ${label} on ${fill} = ${r.toFixed(2)}:1`);
+      if (r < AA) failures.push(`walnut [${name}]: ${label} on ${fill} = ${r.toFixed(2)}:1`);
     }
   }
 }
@@ -156,4 +174,4 @@ if (failures.length) {
   console.error('Theme contrast failures:\n' + failures.map((f) => '  - ' + f).join('\n'));
   process.exit(1);
 }
-console.log(`Contrast passed: ${blocks.length} theme + the walnut material, every ink clears ${AA}:1 on its own ground.`);
+console.log(`Contrast passed: ${blocks.length} themes, each with its own cabinet, every ink clears ${AA}:1 on its own ground.`);
