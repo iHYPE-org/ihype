@@ -46,10 +46,33 @@ jobs:
     steps:
       - name: Update every armed PR that has fallen behind
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # MUST be the PAT, and the job refuses to act without it — see below.
+          GH_TOKEN: ${{ secrets.AUTOMERGE_TOKEN || secrets.GITHUB_TOKEN }}
+          HAS_PAT: ${{ secrets.AUTOMERGE_TOKEN != '' && 'yes' || 'no' }}
           GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
+
+          # REFRESHING WITH GITHUB_TOKEN MAKES THINGS WORSE, so this stops.
+          #
+          # `update-branch` is a push, and GitHub fires no workflows for a push
+          # made with the built-in token. So a PR that was GREEN but BEHIND
+          # becomes a PR with a new head and NO CI AT ALL — it cannot merge, and
+          # nothing will ever re-run its checks, because the only event that
+          # would is the push that just happened and did not count.
+          #
+          # Observed on #753 at 02:39 on 2026-08-27: this workflow refreshed it
+          # and its check list went from a full green pipeline to one
+          # third-party check. Strictly worse than leaving it behind, and
+          # unrecoverable without a human pushing to the branch.
+          #
+          # So: no PAT, no refresh. Say why, loudly, and leave the PRs in the
+          # state a person can still rescue them from.
+          if [ "$HAS_PAT" != "yes" ]; then
+            echo "::warning title=Refresh skipped::AUTOMERGE_TOKEN is absent. Updating a branch with GITHUB_TOKEN triggers no CI, which would leave every refreshed PR with no checks and no way to merge — worse than being behind. Add the secret (repository-level, not environment or Dependabot scope), or update the branches by hand."
+            echo "AUTOMERGE_TOKEN absent — refresh skipped deliberately. See the warning on this run." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
           # `autoMergeRequest != null` is the whole gate: it means someone (a
           # person, or the auto-merge workflow) has already decided this PR

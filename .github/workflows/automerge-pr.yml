@@ -73,6 +73,28 @@ jobs:
       )
     runs-on: ubuntu-latest
     steps:
+      # THE SILENT FALLBACK, MADE LOUD. `secrets.AUTOMERGE_TOKEN ||
+      # secrets.GITHUB_TOKEN` below degrades quietly by design — auto-merge
+      # keeps working when the secret is missing — and quietly is exactly the
+      # problem: the merge lands, no workflow fires, and production stops
+      # receiving deploys with every check green. That is not hypothetical. On
+      # 2026-08-27 the token was believed configured and four consecutive
+      # auto-merges still produced no push-triggered deploy, which is only
+      # explicable if this secret resolved empty. A fine-grained PAT expiring
+      # looks identical. So say which one is in play, every run.
+      #
+      # `secrets.NAME != ''` is the only thing a workflow may ask about a
+      # secret's value, and it is enough: present or absent is the whole
+      # question.
+      - name: Report which token is merging
+        run: |
+          if [ "${{ secrets.AUTOMERGE_TOKEN != '' }}" = "true" ]; then
+            echo "AUTOMERGE_TOKEN present — the merge push will trigger workflows (deploy included)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning title=Auto-merge will not deploy::AUTOMERGE_TOKEN is absent, so this PR will be merged with GITHUB_TOKEN. GitHub fires no workflows for a GITHUB_TOKEN push, so the merge will NOT deploy to production. Add the secret (repository-level, not environment or Dependabot scope) or dispatch deploy-production.yml by hand after each merge."
+            echo "AUTOMERGE_TOKEN ABSENT — this merge will not deploy. See the warning on this run." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Enable auto-merge (squash)
         env:
           # `AUTOMERGE_TOKEN` is what makes the merge actually SHIP. A push made
