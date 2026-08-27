@@ -513,7 +513,13 @@ test.describe('Music · Map · Me shell', () => {
   // to prove a placeholder swapped would fail for reasons that are not this.
   test('map search follows the layer, on every layer', async ({ page }) => {
     await page.goto('/app/map');
-    const field = page.locator('.mmm-map-search .mmm-search-input');
+    /* Settled, and the settle repeats after each layer switch below: the
+       staged copy the streaming shell holds makes a bare locator resolve to 2
+       (tenth member of the 2026-08-26 duplication family, surfaced by CI's
+       stream timing rather than local runs). Filtering to :visible keeps every
+       later assertion on the live control. */
+    const field = page.locator('.mmm-map-search .mmm-search-input:visible');
+    await expect(field).toHaveCount(1);
 
     // Events is the landing layer, and it used to have no bar at all — the date
     // picker lives in this one, so skipping events would hide the control.
