@@ -182,7 +182,14 @@ test.describe('Music · Map · Me shell', () => {
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/app/map');
-      const box = await page.locator('.mmm-dock').evaluate((dock) => {
+      /* Settle to the one live dock before measuring. Mid-stream there are two
+         — the live dock and Next's staged copy — so a bare `.mmm-dock` here is
+         a strict-mode failure, and the staged copy would measure a bar whose
+         knobs have not been laid out. Eleventh member of the duplication
+         family; same treatment as every other. */
+      const docks = page.locator('.mmm-dock:visible');
+      await expect(docks).toHaveCount(1);
+      const box = await docks.evaluate((dock) => {
         const knobs = [...dock.children].filter((child) => child.querySelector('button'));
         const rects = knobs.map((child) => child.getBoundingClientRect());
         return {
@@ -1136,8 +1143,13 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
        value is 0 (it is flush to the edge, with the home-indicator inset inside
        its own padding), and the lifted value is whatever the banner measured
        itself to be — which depends on locale and on how the copy wraps. */
+    /* The LIVE dock, not `querySelector`'s first match: while the route
+       streams there are two, and the staged copy's rect is all zeros — which
+       would report a gap of a whole viewport and fail a correct page. */
     const gap = () => page.evaluate(() => {
-      const box = document.querySelector('.mmm-dock')!.getBoundingClientRect();
+      const dock = [...document.querySelectorAll('.mmm-dock')]
+        .find((node) => (node as HTMLElement).offsetParent !== null) ?? document.querySelector('.mmm-dock')!;
+      const box = dock.getBoundingClientRect();
       return Math.round(window.innerHeight - box.bottom);
     });
 
