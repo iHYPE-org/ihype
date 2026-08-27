@@ -301,6 +301,24 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         .legal-doc ol { color: var(--ink-2); font-size: 0.9375rem; line-height: 1.75; padding-left: 1.25rem; }
         .legal-doc li + li { margin-top: .65rem; }
         .legal-doc a { color: var(--accent-text); }
+        /* ...but NOT the two buttons, which are anchor elements inside this
+           same panel and were being repainted by the prose-link rule above: it
+           scores (0,1,1) against .lp-btn-primary's (0,1,0) and wins.
+           --accent-text is the accent used AS COPY and --ink-on-accent is ink
+           ON a brand fill: inverses, never interchangeable, and painting the
+           first onto the accent measures 2.37:1 against the 5.58:1 the right
+           token gives. Caught by axe on /info, not by reading -- the button's
+           own rule is correct, and nothing in it hints that a link rule three
+           hundred lines away outranks it. The ghost button is the same cause
+           without the contrast failure: it was rendering accent where the
+           design calls for muted.
+
+           NOTE: this whole CSS block lives in a TEMPLATE LITERAL, so a
+           backtick in a comment here ends the string and the build fails with
+           a JSX syntax error pointing at the comment rather than at the
+           quote. Plain text only. */
+        .legal-doc a.lp-btn-primary { color: var(--ink-on-accent); }
+        .legal-doc a.lp-btn-ghost { color: var(--muted); }
         .legal-split-display { font-family: var(--f-d, 'Bricolage Grotesque', sans-serif) !important; font-weight: 800; font-size: 1.5rem; letter-spacing: -.03em; color: var(--ink) !important; line-height: 1.3; margin: 1rem 0 !important; }
         /* Carried over from the standalone /charter page's own <style> block
            when it was folded into this tab. */
