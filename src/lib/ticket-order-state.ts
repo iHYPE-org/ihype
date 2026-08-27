@@ -78,6 +78,9 @@ export function buildPayableEntries(
     venuePayoutCents: number;
     artistPayoutCents: number;
     promoterPayoutCents: number;
+    /** Set when the charge was a destination charge settled on behalf of this
+     *  account — meaning Stripe has ALREADY routed the act's share. */
+    settlementAccountId?: string | null;
   },
   acceptedLineupSlots: { profileId: string; splitPercent: number }[],
 ) {
@@ -108,7 +111,25 @@ export function buildPayableEntries(
   push(order.taxInternationalCents, 'TAX_INTERNATIONAL', 'International tax payable', 'Captured ticket order tax.');
   push(order.venuePayoutCents, 'VENUE_PAYOUT', 'Venue payout', 'Venue payout from captured ticket order.', show.venueProfileId);
 
-  if (acceptedLineupSlots.length > 0) {
+  /* NO PAYABLE FOR A SHARE STRIPE ALREADY ROUTED.
+   *
+   * On a destination charge the act's share never reached the platform — it
+   * went to their account with the charge, and the platform only ever received
+   * the application fee (venue + promoter + tax + processing). Writing an
+   * ARTIST_PAYOUT entry here anyway would have `triggerShowPayouts()` transfer
+   * that share a SECOND time, out of money belonging to the venue, the
+   * promoter and a tax authority. Nothing downstream would catch it: the entry
+   * would look exactly like every other artist payout and the transfer would
+   * succeed.
+   *
+   * A lineup never takes this branch, because a lineup is never settled on
+   * behalf of one act in the first place (see the purchase route) — but the
+   * guard is written to cover both shapes rather than relying on that, since
+   * the two decisions live in different files and only one of them is here.
+   */
+  if (order.settlementAccountId) {
+    // Nothing to record. The act has been paid by Stripe, in full, already.
+  } else if (acceptedLineupSlots.length > 0) {
     const perActShares = splitArtistPayoutAcrossLineup(order.artistPayoutCents, show.artistPayoutPercent, acceptedLineupSlots);
     for (const share of perActShares) {
       push(share.amountCents, 'ARTIST_PAYOUT', 'Artist payout (lineup split)', 'Artist payout (lineup split) from captured ticket order.', share.profileId);

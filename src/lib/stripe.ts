@@ -425,12 +425,40 @@ export async function cancelTicketPaymentIntent(paymentIntentId: string): Promis
 export async function refundTicketPaymentIntent(
   paymentIntentId: string,
   amountCents: number | null,
+  options: { wasDestinationCharge?: boolean } = {},
 ): Promise<string> {
   const stripe = getStripe();
   const refund = await stripe.refunds.create(
     {
       payment_intent: paymentIntentId,
       ...(amountCents !== null ? { amount: amountCents } : {}),
+      /* PULL THE ACT'S SHARE BACK TOO, on a destination charge.
+       *
+       * Stripe's default on a charge with `transfer_data.destination` is that
+       * the destination KEEPS what it was transferred and the platform eats
+       * the whole refund — so a refunded $18 ticket would return $18 to the
+       * fan out of a balance that only ever received $6.25 of it, and the act
+       * would keep their $12.60 for a show the fan is no longer attending.
+       * Every refund would be a net loss of roughly the artist's share.
+       *
+       * `reverse_transfer` reverses proportionally, and
+       * `refund_application_fee` returns the platform's share proportionally
+       * as well, so a partial refund unwinds each party by the same fraction.
+       * Stripe requires the transfer reversal whenever the application fee is
+       * refunded, which is why these two are one flag here rather than two.
+       *
+       * If the act's balance cannot cover it they go negative, and Stripe
+       * debits their bank only when `debit_negative_balances` is set. That is
+       * the real limit of this: it makes recovery the default rather than a
+       * guarantee.
+       *
+       * Deliberately NOT inferred from the PaymentIntent. Reading it back
+       * would be a second network call on a path that already has the answer
+       * stored on the order, and inferring money behaviour from a remote read
+       * is how the `charges_enabled` mix-up happened. */
+      ...(options.wasDestinationCharge
+        ? { reverse_transfer: true, refund_application_fee: true }
+        : {}),
     },
     // The key carries the amount: a partial refund followed by a different
     // partial refund on the same intent is two distinct operations, and

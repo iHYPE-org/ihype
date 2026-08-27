@@ -123,6 +123,41 @@ describe('buildPayableEntries', () => {
     promoterPayoutCents: 1000,
   };
 
+  it('writes NO artist payable when Stripe already routed the act their share', () => {
+    /* The double-pay guard. On a destination charge the act's share never
+       reached the platform — it went to their account with the charge, and the
+       platform received only the application fee (venue + promoter + tax +
+       processing). An ARTIST_PAYOUT entry here would have the payout cron
+       transfer that share a SECOND time, out of money belonging to the venue,
+       the promoter and a tax authority. Nothing downstream would catch it: the
+       entry looks like any other artist payout and the transfer succeeds. */
+    const entries = buildPayableEntries(show, { ...order, settlementAccountId: 'acct_artist' }, []);
+    expect(entries.filter((e) => e.category === 'ARTIST_PAYOUT')).toHaveLength(0);
+
+    // Everything the platform DOES hold is still recorded, unchanged.
+    const venue = entries.filter((e) => e.category === 'VENUE_PAYOUT');
+    expect(venue).toHaveLength(1);
+    expect(venue[0].amountCents).toBe(2000);
+    expect(entries.filter((e) => e.category === 'PROMOTER_AFFILIATE')).toHaveLength(1);
+  });
+
+  it('suppresses the lineup payables too, not just the single-act one', () => {
+    /* A lineup is never settled on behalf of one act in the first place — the
+       purchase route takes the platform branch for it. This asserts the guard
+       covers that shape anyway, because the two decisions live in different
+       files and only one of them is here. */
+    const slots = [
+      { profileId: 'act1', splitPercent: 40 },
+      { profileId: 'act2', splitPercent: 30 },
+    ];
+    expect(buildPayableEntries(show, order, slots).filter((e) => e.category === 'ARTIST_PAYOUT').length)
+      .toBeGreaterThan(0);
+    expect(
+      buildPayableEntries(show, { ...order, settlementAccountId: 'acct_artist' }, slots)
+        .filter((e) => e.category === 'ARTIST_PAYOUT'),
+    ).toHaveLength(0);
+  });
+
   it('pays the headliner directly when the show has no lineup', () => {
     const entries = buildPayableEntries(show, order, []);
     const artist = entries.filter((e) => e.category === 'ARTIST_PAYOUT');

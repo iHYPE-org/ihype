@@ -707,6 +707,15 @@ model TicketOrder {
   locationCountry            String?
   locationPostalCode         String?
   chargedAt                  DateTime?
+  /// The Connect account this order was settled ON BEHALF OF, when the charge
+  /// was a destination charge. Null means the platform settled it and the whole
+  /// split is paid out afterwards through AccountsPayableEntry.
+  ///
+  /// It has to be stored rather than re-derived: `buildPayableEntries` runs at
+  /// capture and must NOT write an artist payable for a share Stripe already
+  /// routed, or the payout cron would pay that act a second time. Asking Stripe
+  /// at capture time would put a network call inside the money transaction.
+  settlementAccountId        String?
   refundedAt                 DateTime?
   stripeRefundId             String?
   transferredAt              DateTime?

@@ -1,0 +1,12 @@
+-- Records which Connect account a ticket order was settled ON BEHALF OF, when
+-- the charge was a Stripe destination charge.
+--
+-- Additive and nullable, so existing rows are correct as they stand: every
+-- order taken before this column existed was platform-settled, and NULL is
+-- exactly what that means.
+--
+-- Load-bearing rather than informational. `buildPayableEntries` reads it at
+-- capture to decide whether to write an ARTIST_PAYOUT entry: on a destination
+-- charge Stripe has already routed the act's share with the charge, so writing
+-- a payable for it would have the payout cron pay that act a SECOND time.
+ALTER TABLE "TicketOrder" ADD COLUMN "settlementAccountId" TEXT;
