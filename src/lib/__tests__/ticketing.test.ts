@@ -238,12 +238,16 @@ describe('calculateTicketOrderFinancials', () => {
     // iHYPE is a nonprofit and absorbs no fee, so processing rides on top of
     // the charge rather than coming out of it.
     expect(result.processingFeeCents).toBeGreaterThan(0);
+    // Four named components and nothing else. The reserve joined this sum on
+    // 2026-08-27; it is charged on top of face value like processing is, and
+    // like processing it is not part of anyone's share.
     expect(result.totalChargeCents).toBe(
-      result.subtotalCents + result.totalTaxCents + result.processingFeeCents,
+      result.subtotalCents + result.totalTaxCents + result.reserveFeeCents + result.processingFeeCents,
     );
-    // And the quoted fee really does cover what Stripe takes.
+    // And the quoted fee really does cover what Stripe takes — over the
+    // reserve too, which is why the reserve is inside the gross-up.
     expect(result.totalChargeCents - stripeCutOf(result.totalChargeCents))
-      .toBeGreaterThanOrEqual(result.subtotalCents + result.totalTaxCents);
+      .toBeGreaterThanOrEqual(result.subtotalCents + result.totalTaxCents + result.reserveFeeCents);
   });
 
   it('keeps the processing fee out of the split entirely', () => {
@@ -340,15 +344,28 @@ describe('the destination-charge split', () => {
       destinationPayoutCents: financials.artistPayoutCents,
     });
 
-    expect(financials.totalChargeCents).toBe(1885);
+    // 1800 face + 27 reserve + 86 grossed-up processing.
+    expect(financials.totalChargeCents).toBe(1913);
     expect(split.destinationKeepsCents).toBe(1260);
-    expect(split.applicationFeeCents).toBe(625);
+    expect(split.applicationFeeCents).toBe(653);
 
     /* The load-bearing property: after Stripe takes its cut from the
        PLATFORM's fee, what remains is exactly venue + promoter. If this ever
        fails, someone is being paid out of the processing fee. */
+    /* The load-bearing property: after Stripe takes its cut from the
+       PLATFORM's fee, what remains covers venue + promoter + reserve. If it
+       ever falls SHORT, someone is being paid out of the processing fee.
+
+       Not exact equality, and the slack is meaningful: both the reserve and
+       the gross-up round UP, so the platform retains up to a couple of cents
+       more than the exact figure. That direction is deliberate and consistent
+       across this module — a half-cent left behind would be the platform
+       absorbing a cost, and the rule is that it never does. Asserting equality
+       here would be asserting that rounding does not happen. */
+    const owed = financials.venuePayoutCents + financials.promoterPayoutCents + financials.reserveFeeCents;
     const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
-    expect(platformRetains).toBe(financials.venuePayoutCents + financials.promoterPayoutCents);
+    expect(platformRetains).toBeGreaterThanOrEqual(owed);
+    expect(platformRetains - owed).toBeLessThanOrEqual(2);
   });
 
   it('keeps tax on the platform side, never on the destination', () => {
@@ -368,10 +385,11 @@ describe('the destination-charge split', () => {
     // collected; the whole of the tax sits inside the platform's fee, which is
     // what lets buildPayableEntries write the TAX_* entries against it.
     expect(split.destinationKeepsCents).toBe(1260);
+    const owed = financials.venuePayoutCents + financials.promoterPayoutCents
+      + financials.totalTaxCents + financials.reserveFeeCents;
     const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
-    expect(platformRetains).toBe(
-      financials.venuePayoutCents + financials.promoterPayoutCents + financials.totalTaxCents,
-    );
+    expect(platformRetains).toBeGreaterThanOrEqual(owed);
+    expect(platformRetains - owed).toBeLessThanOrEqual(2);
   });
 
   it('holds when no promoter is credited and the share redistributes', () => {
@@ -384,8 +402,10 @@ describe('the destination-charge split', () => {
       destinationPayoutCents: financials.artistPayoutCents,
     });
     expect(split.destinationKeepsCents).toBe(1400); // 77.78% of face
+    const owed = financials.venuePayoutCents + financials.reserveFeeCents; // promoter 0
     const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
-    expect(platformRetains).toBe(financials.venuePayoutCents); // 400, promoter 0
+    expect(platformRetains).toBeGreaterThanOrEqual(owed);
+    expect(platformRetains - owed).toBeLessThanOrEqual(2);
   });
 
   it('refuses a destination payout larger than the charge', () => {
@@ -401,5 +421,61 @@ describe('the destination-charge split', () => {
     // application fee is simply the entire charge.
     const split = calculateDestinationChargeSplit({ totalChargeCents: 500, destinationPayoutCents: 0 });
     expect(split.applicationFeeCents).toBe(500);
+  });
+});
+
+describe('the protection reserve', () => {
+  const base = { ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70 };
+
+  it('is 1.5% of face value, and does not touch the split', () => {
+    const f = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true });
+    expect(f.reserveFeeCents).toBe(27); // ceil(1800 * 0.015)
+    // The charter is a split of FACE VALUE. Nobody's share moves because a
+    // reserve was collected, exactly as nobody's share moves for processing.
+    expect(f.artistPayoutCents).toBe(1260);
+    expect(f.venuePayoutCents).toBe(360);
+    expect(f.promoterPayoutCents).toBe(180);
+  });
+
+  it('is inside the gross-up, so Stripe cannot eat into it', () => {
+    /* Stripe charges on everything it processes, including the reserve. If the
+       reserve were added after the gross-up, the platform would pay Stripe's
+       percentage of its own protection fund — the same under-collection
+       stripe-fees.ts exists to prevent. */
+    const f = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true });
+    const keptAfterStripe = f.totalChargeCents - stripeCutOf(f.totalChargeCents);
+    expect(keptAfterStripe).toBeGreaterThanOrEqual(
+      f.subtotalCents + f.totalTaxCents + f.reserveFeeCents,
+    );
+  });
+
+  it('adds up: every cent the buyer pays is one of four named things', () => {
+    for (const ticketPriceCents of [1, 500, 1799, 1800, 4250, 99999]) {
+      for (const hasAffiliatePromoter of [true, false]) {
+        const f = calculateTicketOrderFinancials({ ...base, ticketPriceCents, hasAffiliatePromoter });
+        expect(f.totalChargeCents).toBe(
+          f.subtotalCents + f.totalTaxCents + f.reserveFeeCents + f.processingFeeCents,
+        );
+        // ...and the face value is exactly the three shares, still.
+        expect(f.artistPayoutCents + f.venuePayoutCents + f.promoterPayoutCents)
+          .toBe(f.subtotalCents);
+      }
+    }
+  });
+
+  it('leaves the destination charge routing only the act share', () => {
+    // The reserve stays with the platform like tax does: it must never reach
+    // the act's account, or it could not pay for the dispute it exists for.
+    const f = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true });
+    const split = calculateDestinationChargeSplit({
+      totalChargeCents: f.totalChargeCents,
+      destinationPayoutCents: f.artistPayoutCents,
+    });
+    const owed = f.venuePayoutCents + f.promoterPayoutCents + f.reserveFeeCents;
+    const platformRetains = split.applicationFeeCents - stripeCutOf(f.totalChargeCents);
+    // Never short; over only by the rounding this module always takes in the
+    // platform's favour rather than the parties'.
+    expect(platformRetains).toBeGreaterThanOrEqual(owed);
+    expect(platformRetains - owed).toBeLessThanOrEqual(2);
   });
 });

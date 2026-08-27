@@ -101,6 +101,25 @@ never executed anywhere; note that the double-pay guard now has unit cover
 (`show-payouts.test.ts`, "pays once when the cron runs twice"), which is not the
 same as proving Stripe accepts the second call as a no-op.
 
+### Loss controls, added 2026-08-27 — verify these in the rehearsal
+
+Four changes exist to stop a sale losing money for iHYPE, the act, the venue or
+the promoter. Three are provable without Stripe and are unit-tested; the fourth
+has never executed anywhere and is the one to watch for.
+
+| Control | What it prevents | Proven? |
+|---|---|---|
+| **10-day payout hold** (`PAYOUT_HOLD_DAYS`, `show-payouts.ts`) | Payables used to release the moment a show hit `ENDED`, leaving **zero** window to reverse anything. A dispute the next morning had nothing to claw back. | Unit-tested. Confirm in step 3 that a show ended today releases NOTHING. |
+| **1.5% protection reserve** (`TICKET_RESERVE_PERCENT`) | Disputes ($15 fee + the amount, debited from the PLATFORM even on a destination charge), Connect's ~1% of gross, and the Amex under-collection `stripe-fees.ts` has always documented. All previously paid by nobody. | Unit-tested, disclosed at checkout. Reconcile the fund against real disputes before trusting 1.5%. |
+| **`reverse_transfer` + `refund_application_fee`** on refunds | Stripe's default is that the destination KEEPS its transfer and the platform absorbs the whole refund — every refund a net loss of about the artist's share. | Unit-tested. **Prove against real Stripe**: refund a destination charge and check the act's balance actually drops. |
+| **`debit_negative_balances: true`** | Without it, a reversal that outruns an act's balance waits on their FUTURE volume; for an artist playing three shows a year that can be next season, and the shortfall sits on iHYPE meanwhile. | **NOT PROVEN.** It is a v1 `accounts.update` against a v2 account, because v2 cannot manage payout settings. Best-effort and non-fatal by design. Watch for `[stripe] could not set debit_negative_balances` in the logs on the first onboarding — if it appears, this control is off and nobody would otherwise notice. |
+
+What none of it fixes: a stolen card that buys a ticket, attends the show, and
+disputes. The show happened and the act played. Radar lowers the frequency, the
+reserve absorbs the hit, the hold decides whether it lands on iHYPE or is
+clawed back from the act — and the deliberate answer is that **iHYPE carries
+it**, because an artist clawed back a week after playing does not come back.
+
 ### The remaining steps still need a human
 
 Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way

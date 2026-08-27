@@ -1,6 +1,45 @@
 import { calculateProcessingFee } from '@/lib/stripe-fees';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
+
+/**
+ * The protection reserve, as a fraction of face value plus tax.
+ *
+ * ## What it is for, precisely
+ *
+ * Three real costs exist that nothing else in this system pays for, and a
+ * platform taking 0% has no revenue to absorb them:
+ *
+ *   1. DISPUTES. Stripe debits a disputed amount plus a $15 fee from the
+ *      PLATFORM account on a destination charge, with or without
+ *      `on_behalf_of`. Recovery from the act is a best-effort transfer
+ *      reversal, and after a show has happened it is often the wrong thing to
+ *      attempt at all — the artist played.
+ *   2. CONNECT'S OWN FEES: $2/month per active connected account, 0.25% + 25c
+ *      per payout, 0.25% of transfer volume. Roughly 1% of gross on a small
+ *      show, previously paid by nobody.
+ *   3. THE AMEX GAP, which `stripe-fees.ts` has documented from the start: the
+ *      gross-up quotes the standard 2.9% rate, Amex costs 3.5%, and the brand
+ *      is unknown until after the charge. Every Amex order under-collects
+ *      about 0.6% of the total.
+ *
+ * ## Why 1.5%
+ *
+ * It covers (2) and (3) outright and leaves a margin against (1) at a dispute
+ * rate in the low tenths of a percent, which is normal for event ticketing
+ * where the buyer knows the merchant and receives something. It is 27c on an
+ * $18 ticket. Set deliberately low: this is a fund against loss, not a revenue
+ * line, and over-collecting would make "0% to iHYPE" a technicality.
+ *
+ * ## What it is NOT
+ *
+ * It is not iHYPE's money and must never be described as a platform fee. The
+ * charter's 70/20/10 of face value is untouched by it, exactly as the
+ * processing fee is. If the fund persistently exceeds what disputes consume,
+ * the honest responses are to lower this number or to spend the surplus on the
+ * people it was collected from — not to keep it.
+ */
+export const TICKET_RESERVE_PERCENT = 0.015;
 export const MAX_PROMOTER_AFFILIATE_PERCENT = 10;
 
 type SplitInput = {
@@ -241,13 +280,26 @@ export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInpu
    * Grossed up over subtotal + taxes, because Stripe charges on everything it
    * processes — see `stripe-fees.ts` for why a flat percentage under-collects.
    */
-  const processing = calculateProcessingFee(payouts.subtotalCents + taxes.totalTaxCents);
+  const protectedBaseCents = payouts.subtotalCents + taxes.totalTaxCents;
+
+  /* The reserve is computed BEFORE the processing gross-up and included in the
+     amount grossed up, because Stripe charges on everything it processes —
+     including the reserve. Computing it afterwards would leave the platform
+     paying Stripe's percentage of its own protection fund, which is the exact
+     shape of under-collection `stripe-fees.ts` exists to prevent.
+
+     Rounded UP for the same reason that module rounds up: a half-cent left
+     behind is the platform absorbing a cost, and the rule is that it never
+     does. The buyer pays at most one cent more than the exact figure. */
+  const reserveFeeCents = Math.ceil(protectedBaseCents * TICKET_RESERVE_PERCENT);
+  const processing = calculateProcessingFee(protectedBaseCents + reserveFeeCents);
 
   return {
     ...payouts,
     ...taxes,
+    reserveFeeCents,
     processingFeeCents: processing.feeCents,
-    totalChargeCents: payouts.subtotalCents + taxes.totalTaxCents + processing.feeCents
+    totalChargeCents: protectedBaseCents + reserveFeeCents + processing.feeCents
   };
 }
 

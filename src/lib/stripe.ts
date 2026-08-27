@@ -1,6 +1,7 @@
 import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { calculateDestinationChargeSplit } from '@/lib/ticketing';
+import { log } from '@/lib/logger';
 
 let _stripe: Stripe | null = null;
 
@@ -142,6 +143,38 @@ export async function createStripeConnectAccount({
     },
     metadata: { profileId, profileType },
   });
+  /* Let Stripe recover a negative balance from the account's own bank.
+   *
+   * It matters on exactly the path that costs real money: a refund or a
+   * dispute reversal on a destination charge can take an account below zero,
+   * and without this Stripe waits for that account's FUTURE volume to make the
+   * platform whole. For an artist who plays three shows a year, "future
+   * volume" can be next season, and until then the shortfall sits on iHYPE.
+   * It is disclosed by the hosted onboarding the payee completes, so it is not
+   * being done to them quietly.
+   *
+   * A SEPARATE v1 CALL, and not by preference: `debit_negative_balances` is a
+   * payout setting, v2 account creation does not accept one, and Stripe's own
+   * documentation says payout settings cannot be managed through the Accounts
+   * v2 API at all. So a v2 account takes a v1 update — which is the one part
+   * of this file that has never been executed against a real Connect account,
+   * because Connect is not signed up for yet.
+   *
+   * Therefore: best-effort, and it must NOT break onboarding. If the call is
+   * rejected the account is still fully usable; what is lost is automatic
+   * recovery on a negative balance, which is a risk-reduction setting rather
+   * than a correctness requirement. Verify this specific call during the
+   * money-path rehearsal and delete this caveat once it has run. */
+  await stripe.accounts
+    .update(account.id, { settings: { payouts: { debit_negative_balances: true } } })
+    .catch((error: unknown) => {
+      log.error(
+        '[stripe]',
+        error instanceof Error ? error : { error: String(error) },
+        `could not set debit_negative_balances on ${account.id}`,
+      );
+    });
+
   return account.id;
 }
 

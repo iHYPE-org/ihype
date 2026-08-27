@@ -716,6 +716,12 @@ model TicketOrder {
   /// routed, or the payout cron would pay that act a second time. Asking Stripe
   /// at capture time would put a network call inside the money transaction.
   settlementAccountId        String?
+  /// The protection reserve collected on this order, in cents. Held by the
+  /// platform against refunds, disputes and Connect's own fees — see
+  /// TICKET_RESERVE_PERCENT. Recorded per order so the fund can be reconciled
+  /// against what it actually pays out, which is the only way to know whether
+  /// 1.5% is the right number.
+  reserveFeeCents            Int                    @default(0)
   refundedAt                 DateTime?
   stripeRefundId             String?
   transferredAt              DateTime?
