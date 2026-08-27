@@ -45,9 +45,15 @@ vi.mock('@/lib/ticketing', () => ({
 
 const createTicketCheckoutSession = vi.fn();
 const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
+/* Defaults to NOT settlement-ready, which is the state most shows are in: the
+   headliner has to finish `card_payments` onboarding before their charge can
+   be settled on their behalf. The destination-charge path gets its own test
+   below rather than becoming the assumed default here. */
+const isConnectSettlementReady = vi.fn().mockResolvedValue(false);
 vi.mock('@/lib/stripe', () => ({
   createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
+  isConnectSettlementReady: (...args: unknown[]) => isConnectSettlementReady(...args),
 }));
 
 const voidReservedTicketOrder = vi.fn().mockResolvedValue(true);
@@ -182,6 +188,54 @@ describe('POST /api/shows/[showId]/tickets', () => {
     expect(json.checkoutUrl).toBe('https://checkout.stripe.com/test');
     expect(createTicketCheckoutSession).toHaveBeenCalledTimes(1);
     expect(voidReservedTicketOrder).not.toHaveBeenCalled();
+  });
+
+  describe('who settles the charge', () => {
+    beforeEach(() => {
+      createTicketCheckoutSession.mockResolvedValue({
+        checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test',
+      });
+    });
+
+    it('settles on behalf of a settlement-ready headliner, routing their share', async () => {
+      isConnectSettlementReady.mockResolvedValue(true);
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBe('acct_artist');
+      // Their share of FACE VALUE, routed by Stripe with the charge — not the
+      // total, which carries tax and the processing fee that stay behind.
+      expect(call.destinationPayoutCents).toBe(1600);
+    });
+
+    it('falls back to platform settlement when the headliner is not ready', async () => {
+      // The ordinary state until an act finishes card_payments onboarding. A
+      // fan must never be blocked by the act's paperwork, so this is a
+      // fallback, not a failure.
+      isConnectSettlementReady.mockResolvedValue(false);
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBeNull();
+      // Both or neither: an account with no amount would make Stripe route the
+      // ENTIRE charge to it, which is the 2026-07-14 bug.
+      expect(call.destinationPayoutCents).toBeUndefined();
+    });
+
+    it('falls back when Stripe cannot be reached, rather than failing the sale', async () => {
+      // The order is already reserved by this point. Stripe being briefly
+      // unreachable should downgrade the settlement mode, not lose the sale.
+      isConnectSettlementReady.mockRejectedValue(new Error('Stripe API unreachable'));
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBeNull();
+    });
   });
 
   it('rolls back the reservation when hosted checkout creation fails', async () => {

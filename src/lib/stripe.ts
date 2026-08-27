@@ -237,114 +237,43 @@ export async function createConnectOnboardingUrl({
 }
 
 /**
- * A DESTINATION CHARGE settled on behalf of the act, when we can; a
- * platform-settled charge when we cannot.
+ * The ticket purchase — a DESTINATION CHARGE settled on behalf of the act when
+ * one is settlement-ready, and a platform-settled charge when not.
  *
- * ## What changed, and what the old warning was right about
+ * ## Why the act's share is routed by Stripe rather than paid out later
  *
- * This used to be "separate charges and transfers" — capture everything to the
- * platform balance, pay the split out afterwards — and its comment warned that
- * a destination charge supports only ONE connected account, which had already
- * caused this codebase's worst bug: `transfer_data.destination` with no
- * `amount`, routing 100% of every sale to a single party.
- *
- * That warning stands. The resolution is not to route the whole charge, but to
- * claim the rest back as an `application_fee_amount`: Stripe moves the full
- * charge to the destination and pulls the fee back to the platform, so exactly
- * one party is settled by Stripe and the others are paid from what returns.
- * `calculateDestinationChargeSplit` computes the fee as `total - destination`
- * for the reason given there — the subtraction cannot silently omit a
- * component the way an addition can.
- *
- * ## Why bother
- *
- * The act's 70% never passes through iHYPE's balance. It is routed atomically
- * with the charge, so it does not depend on a payout cron running, on Connect
- * transfers succeeding later, or on the platform staying solvent in between.
+ * On a destination charge Stripe moves the whole charge to the destination and
+ * pulls `application_fee_amount` back to the platform. So the act's 70% never
+ * passes through iHYPE's balance: it does not depend on a payout cron running,
+ * on a later transfer succeeding, or on the platform being solvent in between.
  * `on_behalf_of` additionally makes the act the settlement merchant, so the
- * fan's statement carries their name rather than iHYPE's.
+ * fan's statement carries their name.
+ *
+ * ## The warning that came with the old code, which still applies
+ *
+ * A destination charge supports exactly ONE connected account, and omitting
+ * `transfer_data.amount` sends the ENTIRE charge to it — this codebase's
+ * 2026-07-14 bug, which routed 100% of every sale to a single party. The fix is
+ * not to route the whole charge but to claim the rest back as an application
+ * fee, computed by `calculateDestinationChargeSplit` as `total - destination`:
+ * that and `venue + promoter + tax + fee` are equal only while every component
+ * is accounted for, and a subtraction cannot silently omit one. An addition
+ * that forgot the tax would not fail — it would quietly overpay the act out of
+ * money owed to a tax authority.
  *
  * ## What it does not do
  *
- * It does not move dispute liability. Stripe debits disputes from the platform
- * account on a destination charge "with or without `on_behalf_of`". iHYPE still
- * carries chargebacks; recovery is a transfer reversal and is best-effort.
+ * It does not move dispute liability. Stripe debits disputes from the PLATFORM
+ * account on a destination charge "with or without on_behalf_of". iHYPE still
+ * carries chargebacks; recovery is a best-effort transfer reversal.
  *
  * ## The fallback is not an error path
  *
- * `destinationAccountId` is optional and a sale must never be blocked by the
- * act's paperwork. With no settlement-ready account this behaves exactly as
- * before — a platform-settled charge, split afterwards through
- * `AccountsPayableEntry` — which is why that machinery stays.
+ * `destinationAccountId` is optional. With no settlement-ready account this
+ * behaves exactly as it did before — platform-settled, split afterwards through
+ * `AccountsPayableEntry` — which is why that machinery stays. A fan is never
+ * blocked by the act's paperwork.
  */
-export async function createTicketPaymentIntent({
-  amountCents,
-  stripeCustomerId,
-  paymentMethodId,
-  showId,
-  ticketOrderConfirmationCode,
-  venuePayoutCents,
-  artistPayoutCents,
-  destinationAccountId,
-  destinationPayoutCents,
-}: {
-  amountCents: number;
-  stripeCustomerId: string;
-  paymentMethodId: string;
-  showId: string;
-  ticketOrderConfirmationCode: string;
-  venuePayoutCents: number;
-  artistPayoutCents: number;
-  /** The act's Connect account, when it is settlement-ready. Omitted falls
-   *  back to a platform-settled charge — see the note above. */
-  destinationAccountId?: string | null;
-  /** What that account keeps, of FACE VALUE. Required with the account. */
-  destinationPayoutCents?: number;
-}): Promise<{ paymentIntentId: string; status: Stripe.PaymentIntent.Status }> {
-  const stripe = getStripe();
-
-  /* Both or neither. An account with no amount would make Stripe transfer the
-     ENTIRE charge — the 2026-07-14 bug exactly — so this refuses rather than
-     defaulting, and refuses before any money moves. */
-  const routed = destinationAccountId
-    ? calculateDestinationChargeSplit({
-        totalChargeCents: amountCents,
-        destinationPayoutCents: destinationPayoutCents ?? -1,
-      })
-    : null;
-
-  const paymentIntent = await stripe.paymentIntents.create(
-    {
-      amount: amountCents,
-      currency: 'usd',
-      capture_method: 'manual',
-      customer: stripeCustomerId,
-      payment_method: paymentMethodId,
-      confirm: true,
-      return_url: `${process.env.NEXT_PUBLIC_APP_URL}/shows/${showId}`,
-      ...(routed && destinationAccountId
-        ? {
-            on_behalf_of: destinationAccountId,
-            transfer_data: { destination: destinationAccountId },
-            application_fee_amount: routed.applicationFeeCents,
-          }
-        : {}),
-      metadata: {
-        confirmationCode: ticketOrderConfirmationCode,
-        showId,
-        venuePayoutCents: String(venuePayoutCents),
-        artistPayoutCents: String(artistPayoutCents),
-        // Recorded on the intent so a reconciliation can tell a destination
-        // charge from a platform-settled one without re-deriving it.
-        settlementMode: routed ? 'destination' : 'platform',
-      }
-    },
-    { idempotencyKey: `ticket-order:${ticketOrderConfirmationCode}` }
-  );
-
-  return { paymentIntentId: paymentIntent.id, status: paymentIntent.status };
-}
-
 export async function createTicketCheckoutSession({
   amountCents,
   stripeCustomerId,
@@ -353,6 +282,8 @@ export async function createTicketCheckoutSession({
   showTitle,
   quantity,
   ticketOrderConfirmationCode,
+  destinationAccountId,
+  destinationPayoutCents,
 }: {
   amountCents: number;
   stripeCustomerId: string;
@@ -361,9 +292,24 @@ export async function createTicketCheckoutSession({
   showTitle: string;
   quantity: number;
   ticketOrderConfirmationCode: string;
+  /** The act's Connect account, when `isConnectSettlementReady` says so. */
+  destinationAccountId?: string | null;
+  /** What that account keeps, of FACE VALUE. Required with the account. */
+  destinationPayoutCents?: number;
 }): Promise<{ checkoutUrl: string; checkoutSessionId: string }> {
   const stripe = getStripe();
   const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
+
+  /* Both or neither. An account with no amount would make Stripe transfer the
+     ENTIRE charge — the 2026-07-14 bug exactly — so this refuses rather than
+     defaulting, and refuses before the fan ever reaches a payment page. */
+  const routed = destinationAccountId
+    ? calculateDestinationChargeSplit({
+        totalChargeCents: amountCents,
+        destinationPayoutCents: destinationPayoutCents ?? -1,
+      })
+    : null;
+
   const session = await stripe.checkout.sessions.create(
     {
       mode: 'payment',
@@ -380,7 +326,20 @@ export async function createTicketCheckoutSession({
         },
       }],
       payment_intent_data: {
-        metadata: { confirmationCode: ticketOrderConfirmationCode, showId },
+        ...(routed && destinationAccountId
+          ? {
+              on_behalf_of: destinationAccountId,
+              transfer_data: { destination: destinationAccountId },
+              application_fee_amount: routed.applicationFeeCents,
+            }
+          : {}),
+        metadata: {
+          confirmationCode: ticketOrderConfirmationCode,
+          showId,
+          // Recorded on the intent so a reconciliation can tell a destination
+          // charge from a platform-settled one without re-deriving it.
+          settlementMode: routed ? 'destination' : 'platform',
+        },
       },
       metadata: {
         purpose: 'ticket_purchase',
@@ -490,8 +449,8 @@ export async function refundTicketPaymentIntent(
  * 'manual'` means the session's underlying PaymentIntent only ever
  * authorizes the full quoted budget; Stripe creates that PaymentIntent
  * synchronously, so its id is available immediately, before the advertiser
- * ever completes checkout — same as `createTicketPaymentIntent`, just via
- * the Checkout Session wrapper instead of a directly-confirmed PaymentIntent.
+ * ever completes checkout — the same manual-capture shape the ticket checkout
+ * session uses, and for the same reason.
  */
 export async function createAdCampaignCheckoutSession({
   adId,

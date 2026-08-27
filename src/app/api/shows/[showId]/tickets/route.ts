@@ -16,6 +16,7 @@ import { getPaymentProcessingReadiness } from '@/lib/payments';
 import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
   createTicketCheckoutSession,
+  isConnectSettlementReady,
   getOrCreateStripeCustomer,
 } from '@/lib/stripe';
 import {
@@ -149,6 +150,11 @@ export async function POST(
             },
           },
           promoterProfile: { select: { id: true, name: true } },
+          // Counted in the query that already runs rather than asked for
+          // separately: the settlement decision below needs it, and a second
+          // round trip on the purchase path is both slower and one more thing
+          // that can fail between reserving inventory and taking payment.
+          _count: { select: { lineupSlots: { where: { status: 'ACCEPTED' } } } },
         },
       }),
     ]);
@@ -350,6 +356,45 @@ export async function POST(
     });
     reservedOrderId = order.id;
 
+    /* SETTLE ON BEHALF OF THE HEADLINER WHEN WE CAN.
+     *
+     * A destination charge routes the act's share atomically with the charge,
+     * so their 70% never passes through iHYPE's balance and does not depend on
+     * a payout cron. `on_behalf_of` also puts their name on the fan's
+     * statement.
+     *
+     * Three things make this conditional rather than assumed, and each is a
+     * real state rather than an error:
+     *
+     *   - the show may have no headliner profile at all;
+     *   - the headliner may not have connected Stripe yet;
+     *   - the account may be connected but not yet SETTLEMENT-ready, which is
+     *     a different question from payout-ready (`card_payments` versus
+     *     `stripe_balance.stripe_transfers`) and needs its own check.
+     *
+     * Any of those falls back to a platform-settled charge, split afterwards
+     * exactly as before. A fan must never be blocked by the act's paperwork,
+     * and a sale that fails because an artist has not finished onboarding is a
+     * worse outcome than one that pays out a day later.
+     *
+     * A LINEUP takes the fallback deliberately: a destination charge has one
+     * destination, so routing the headliner's slice while the other acts wait
+     * on payables would pay one act on a different schedule from the rest of
+     * the same bill. Until Stripe can express a multi-way split, everyone on a
+     * shared bill is paid the same way.
+     *
+     * `.catch(() => null)` on the readiness call is deliberate too: Stripe
+     * being briefly unreachable should downgrade the settlement mode, not fail
+     * the purchase — the order is already reserved at this point. */
+    const lineupSlotCount = show._count?.lineupSlots ?? 0;
+    const headlinerConnectId = show.headlinerProfile?.stripeConnectAccountId ?? null;
+    const settlementAccountId =
+      lineupSlotCount === 0 && headlinerConnectId
+        ? await isConnectSettlementReady(headlinerConnectId)
+            .then((ready) => (ready ? headlinerConnectId : null))
+            .catch(() => null)
+        : null;
+
     const checkout = await createTicketCheckoutSession({
       amountCents: financials.totalChargeCents,
       stripeCustomerId: customerId,
@@ -358,6 +403,8 @@ export async function POST(
       showTitle: show.title,
       quantity: body.quantity,
       ticketOrderConfirmationCode: order.confirmationCode,
+      destinationAccountId: settlementAccountId,
+      ...(settlementAccountId ? { destinationPayoutCents: financials.artistPayoutCents } : {}),
     });
     return NextResponse.json(
       {

@@ -101,7 +101,9 @@ function check(label, condition, detail = '') {
 }
 
 async function createAuthorizedTicketIntent(confirmationCode) {
-  // Mirrors createTicketPaymentIntent(): manual capture, no transfer_data.
+  // Mirrors the platform-settled branch of createTicketCheckoutSession():
+  // manual capture, no transfer_data. The destination-charge branch is
+  // rehearsed separately once a settlement-ready account exists.
   return stripe.paymentIntents.create(
     {
       amount: TICKET_AMOUNT_CENTS,
