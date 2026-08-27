@@ -155,7 +155,7 @@ test.describe('Music · Map · Me shell', () => {
        the map bottom-left is retired (2026-08-22) — assert it is GONE rather
        than merely hidden, because a hidden logo trigger still in the DOM is a
        second way to switch module waiting to be un-hidden. */
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
     await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeVisible();
     await expect(page.getByRole('tablist')).toBeVisible();
     await expect(page.getByRole('button', { name: /Play\. Drag for previous/i })).toBeVisible();
@@ -301,7 +301,7 @@ test.describe('Music · Map · Me shell', () => {
 
     await expect(page.locator('.mmm-full')).toHaveCount(0);
     // And the gesture left the dock intact.
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
   });
 
   /* The joystick can START playback, not only pause what is already playing —
@@ -341,7 +341,13 @@ test.describe('Music · Map · Me shell', () => {
 
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);
-      await expect(page.locator('.mmm-dock')).toBeVisible();
+      /* Count-settled, not just visibility: while the route streams there are
+         briefly TWO docks — the live one and Next's staging copy — and a bare
+         `.mmm-dock` visibility check fails strict mode on the duplicate. Same
+         class and same fix as the four ME-pane tests hardened on 2026-08-26;
+         this was the fifth member, caught by the OOM-fix verification run. */
+      const dock = page.locator('.mmm-dock:visible');
+      await expect(dock).toHaveCount(1);
 
       const play = page.getByRole('button', { name: /^Play\. Drag for/ });
       await expect(play, 'the transport should offer Play before anything is loaded').toBeVisible();
@@ -962,7 +968,7 @@ test.describe('ME with a real profile', () => {
      the value, and a same-tab `goto` reproduces exactly what the rescue does. */
   test('the nameplate returns to the main-nav page you came from, not MAP', async ({ page }) => {
     await page.goto('/app/music/charts');
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
 
     // A second document load, landing directly on a detail page.
     await page.goto('/app/me?role=artist&section=profiles');
