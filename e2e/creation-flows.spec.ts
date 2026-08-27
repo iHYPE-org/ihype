@@ -107,8 +107,14 @@ test.describe('advertiser signup', () => {
     await signIn(context, `e2e-create-advertiser-${RUN}@ihype.org`);
     await page.goto('/app/me/advertising/start');
 
-    await page.getByLabel(/Company or brand name/i).fill('Creation Flow Sound Co');
-    await page.getByRole('button', { name: /create|start|open/i }).first().click();
+    /* Settled to the one visible form first — CI's stream timing surfaces the
+       staged duplicate here where local runs never did (strict mode: "resolved
+       to 2 elements"), which is exactly why every fill in this file scopes to
+       a settled container. */
+    const form = page.locator('form.adv-signup:visible');
+    await expect(form).toHaveCount(1, { timeout: 15_000 });
+    await form.getByLabel(/Company or brand name/i).fill('Creation Flow Sound Co');
+    await form.getByRole('button', { name: /create|start|open/i }).first().click();
 
     /* Success is a REDIRECT to the advertising dashboard — the route's own
        contract: an existing profile redirects to /app/me/advertising, so
