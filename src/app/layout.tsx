@@ -91,6 +91,56 @@ const instrumentSerif = localFont({
   adjustFontFallback: 'Times New Roman',
 });
 
+/* ── THEME DISPLAY FACES ──────────────────────────────────────────────────
+ * One per theme, so each has its own voice rather than four voices shared
+ * across six themes (owner, 2026-08-26: "Do it for all").
+ *
+ * `preload: false` IS THE WHOLE REASON THIS IS AFFORDABLE, and removing it
+ * silently undoes the trade. The four faces above are preloaded because every
+ * page uses them; these four are used by ONE theme each, so preloading them
+ * would put 89KB of fonts on the critical path of every request to serve a
+ * theme the reader has probably not chosen. With preload off the browser
+ * fetches a face only when a rule actually references it — which, because the
+ * reference lives inside a `[data-theme]` block, means only when that theme is
+ * active. The default console theme pays nothing for any of them.
+ *
+ * Latin subset only, taken from Google's own woff2 files (same provenance as
+ * the four above — see the note at the top of this file for why they are
+ * vendored rather than fetched at build time). Sizes: Anton 18KB,
+ * Chakra Petch 10KB, Playfair 38KB, Space Grotesk 22KB.
+ *
+ * `adjustFontFallback` is deliberately omitted: these swap in only on a theme
+ * change, where the reader is already looking at a repaint, and a metric
+ * override computed against the wrong face is worse than a plain swap. */
+const anton = localFont({
+  src: './fonts/Anton.woff2',
+  weight: '400',
+  variable: '--font-anton',
+  display: 'swap',
+  preload: false,
+});
+const chakraPetch = localFont({
+  src: './fonts/ChakraPetch-600.woff2',
+  weight: '600',
+  variable: '--font-chakra',
+  display: 'swap',
+  preload: false,
+});
+const playfair = localFont({
+  src: './fonts/PlayfairDisplay-Variable.woff2',
+  weight: '500 700',
+  variable: '--font-playfair',
+  display: 'swap',
+  preload: false,
+});
+const spaceGrotesk = localFont({
+  src: './fonts/SpaceGrotesk-Variable.woff2',
+  weight: '400 700',
+  variable: '--font-space',
+  display: 'swap',
+  preload: false,
+});
+
 export const metadata: Metadata = {
   title: {
     default: 'iHYPE.org',
@@ -188,7 +238,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const accessibilityBootstrap = `(function(){var d=document.documentElement;try{var s=JSON.parse(localStorage.getItem('ihype-accessibility-settings')||'{}');var n=Number(s.textScale);if(isFinite(n))d.style.setProperty('--ihype-text-scale',String(Math.min(1.4,Math.max(0.85,n))));if(['dark','flowery','street','metal','classical'].indexOf(s.theme)>-1)d.setAttribute('data-theme',s.theme);if(s.highContrast)d.classList.add('high-contrast');if(s.largeText)d.classList.add('a11y-large-text');if(s.reduceMotion)d.classList.add('a11y-reduce-motion');if(s.underlineLinks)d.classList.add('a11y-underline-links');if(s.readableFont)d.classList.add('a11y-readable-font')}catch(e){}
 try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.createElement('div');p.style.cssText='font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';d.appendChild(p);var px=parseFloat(getComputedStyle(p).fontSize);p.remove();if(px>0)d.style.setProperty('--ihype-os-text-scale',String(Math.max(1,px/17)))}}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${anton.variable} ${chakraPetch.variable} ${playfair.variable} ${spaceGrotesk.variable}`}>
       <head>
         <script
           nonce={nonce}

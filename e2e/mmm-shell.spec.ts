@@ -155,7 +155,7 @@ test.describe('Music · Map · Me shell', () => {
        the map bottom-left is retired (2026-08-22) — assert it is GONE rather
        than merely hidden, because a hidden logo trigger still in the DOM is a
        second way to switch module waiting to be un-hidden. */
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
     await expect(page.getByRole('button', { name: /Module: MAP/i })).toBeVisible();
     await expect(page.getByRole('tablist')).toBeVisible();
     await expect(page.getByRole('button', { name: /Play\. Drag for previous/i })).toBeVisible();
@@ -182,7 +182,14 @@ test.describe('Music · Map · Me shell', () => {
     for (const width of [390, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/app/map');
-      const box = await page.locator('.mmm-dock').evaluate((dock) => {
+      /* Settle to the one live dock before measuring. Mid-stream there are two
+         — the live dock and Next's staged copy — so a bare `.mmm-dock` here is
+         a strict-mode failure, and the staged copy would measure a bar whose
+         knobs have not been laid out. Eleventh member of the duplication
+         family; same treatment as every other. */
+      const docks = page.locator('.mmm-dock:visible');
+      await expect(docks).toHaveCount(1);
+      const box = await docks.evaluate((dock) => {
         const knobs = [...dock.children].filter((child) => child.querySelector('button'));
         const rects = knobs.map((child) => child.getBoundingClientRect());
         return {
@@ -301,7 +308,7 @@ test.describe('Music · Map · Me shell', () => {
 
     await expect(page.locator('.mmm-full')).toHaveCount(0);
     // And the gesture left the dock intact.
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
   });
 
   /* The joystick can START playback, not only pause what is already playing —
@@ -341,7 +348,13 @@ test.describe('Music · Map · Me shell', () => {
 
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);
-      await expect(page.locator('.mmm-dock')).toBeVisible();
+      /* Count-settled, not just visibility: while the route streams there are
+         briefly TWO docks — the live one and Next's staging copy — and a bare
+         `.mmm-dock` visibility check fails strict mode on the duplicate. Same
+         class and same fix as the four ME-pane tests hardened on 2026-08-26;
+         this was the fifth member, caught by the OOM-fix verification run. */
+      const dock = page.locator('.mmm-dock:visible');
+      await expect(dock).toHaveCount(1);
 
       const play = page.getByRole('button', { name: /^Play\. Drag for/ });
       await expect(play, 'the transport should offer Play before anything is loaded').toBeVisible();
@@ -507,7 +520,13 @@ test.describe('Music · Map · Me shell', () => {
   // to prove a placeholder swapped would fail for reasons that are not this.
   test('map search follows the layer, on every layer', async ({ page }) => {
     await page.goto('/app/map');
-    const field = page.locator('.mmm-map-search .mmm-search-input');
+    /* Settled, and the settle repeats after each layer switch below: the
+       staged copy the streaming shell holds makes a bare locator resolve to 2
+       (tenth member of the 2026-08-26 duplication family, surfaced by CI's
+       stream timing rather than local runs). Filtering to :visible keeps every
+       later assertion on the live control. */
+    const field = page.locator('.mmm-map-search .mmm-search-input:visible');
+    await expect(field).toHaveCount(1);
 
     // Events is the landing layer, and it used to have no bar at all — the date
     // picker lives in this one, so skipping events would hide the control.
@@ -962,7 +981,7 @@ test.describe('ME with a real profile', () => {
      the value, and a same-tab `goto` reproduces exactly what the rescue does. */
   test('the nameplate returns to the main-nav page you came from, not MAP', async ({ page }) => {
     await page.goto('/app/music/charts');
-    await expect(page.locator('.mmm-dock')).toBeVisible();
+    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
 
     // A second document load, landing directly on a detail page.
     await page.goto('/app/me?role=artist&section=profiles');
@@ -1124,8 +1143,13 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
        value is 0 (it is flush to the edge, with the home-indicator inset inside
        its own padding), and the lifted value is whatever the banner measured
        itself to be — which depends on locale and on how the copy wraps. */
+    /* The LIVE dock, not `querySelector`'s first match: while the route
+       streams there are two, and the staged copy's rect is all zeros — which
+       would report a gap of a whole viewport and fail a correct page. */
     const gap = () => page.evaluate(() => {
-      const box = document.querySelector('.mmm-dock')!.getBoundingClientRect();
+      const dock = [...document.querySelectorAll('.mmm-dock')]
+        .find((node) => (node as HTMLElement).offsetParent !== null) ?? document.querySelector('.mmm-dock')!;
+      const box = dock.getBoundingClientRect();
       return Math.round(window.innerHeight - box.bottom);
     });
 

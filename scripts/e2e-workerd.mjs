@@ -81,6 +81,15 @@ const REQUESTED_TESTS = process.argv.slice(2).filter((argument) => argument !== 
 // nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
+  // The alpha acceptance list's creation flows (page creator, advertiser
+  // signup, track upload, event publish). Its own shard on purpose: a fresh
+  // workerd per shard keeps it clear of the per-request PrismaClient memory
+  // growth that long shards accumulate.
+  ['e2e/creation-flows.spec.ts'],
+  // Alpha list step 5: playlist rename/two-tap delete and the ownership
+  // boundary. Destructive paths, so they get their own shard and their own
+  // fresh database rows per test address.
+  ['e2e/destructive-flows.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/ticket-transfer.spec.ts'],
@@ -251,12 +260,26 @@ function spawnDevServer(index) {
       '--port', String(PORT),
       '--persist-to', join(PERSIST_ROOT, `shard-${index + 1}`),
       '--show-interactive-dev-session=false',
+      /* Tells src/lib/db.ts it is running under this harness, which gates the
+         pool's `maxUses: 1` (see makePrisma). A wrangler --var, not an OS env
+         var, because process.env inside workerd reflects wrangler vars — the
+         spawn env below never reaches worker code. */
+      '--var', 'E2E_HARNESS:1',
     ],
     {
       stdio: ['ignore', 'inherit', 'inherit'],
       detached: process.platform !== 'win32',
       env: {
         ...process.env,
+        /* MEASURED, 2026-08-27: wrangler's own node process grows with the log
+           volume it forwards — ~1300 MB peak over one mmm-shell shard at the
+           default level, 580 MB with this set. That process shares the machine
+           with workerd (whose V8 isolate dies at its ~1.4 GB ceiling — the
+           1393 MB "Mark-Compact … Aborted" crashes CI kept attributing to app
+           code), so every MB the tooling does not hoard is headroom for the
+           suite. Error-level still surfaces real failures; the per-request
+           [wrangler:info] lines are what this silences. */
+        WRANGLER_LOG: 'error',
         // The developer's .env normally points at next dev on :3000. This
         // isolated Worker owns :8787, so all server-side auth/WebAuthn origin
         // checks must use the same origin Playwright is exercising.

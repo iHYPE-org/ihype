@@ -39,8 +39,11 @@ export type SeededUser = {
 };
 
 export type ShellFixtureOptions = {
-  /** Creator profiles to attach, which is what the drawer's role gates read. */
-  profiles?: { type: 'ARTIST' | 'VENUE'; name: string }[];
+  /** Creator profiles to attach, which is what the drawer's role gates read.
+   * `verified` stamps VERIFIED — the upload gate (POST /api/artist-media)
+   * 403s an UNVERIFIED profile, so a spec exercising upload must seed a
+   * profile that has passed the gate the product really enforces. */
+  profiles?: { type: 'ARTIST' | 'VENUE'; name: string; verified?: boolean }[];
   role?: Role;
 };
 
@@ -89,10 +92,14 @@ export async function seedSessionCookie(
       // embed route look profiles up by. Derived from the same seed as the slug
       // so it is stable across runs.
       const hexId = `0x${createHash('sha256').update(slug).digest('hex').slice(0, 32)}`;
+      const verification = profile.verified ? { verificationStatus: 'VERIFIED' as const } : {};
       await prisma.profile.upsert({
         where: { slug },
-        update: {},
-        create: { slug, hexId, name: profile.name, type: profile.type, ownerId: user.id, genres: [] },
+        // The update must carry the verification too: an upsert that only
+        // creates it leaves a rerun's existing row unverified, and the spec
+        // fails only on the second run — the worst kind of flake.
+        update: { ...verification },
+        create: { slug, hexId, name: profile.name, type: profile.type, ownerId: user.id, genres: [], ...verification },
       });
     }
 

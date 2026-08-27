@@ -300,7 +300,13 @@ html:has(.mmm-frame) {
      measured reason this stops at .18.) The classic read now comes from the
      chart's furniture — the torn edge, the ruled grid, the compass, the mono
      credits — not from staining the tiles. */
-  filter: sepia(0.18) saturate(1.1) contrast(1.04);
+  /* Themed as of 2026-08-26 (owner: "Themes should adjust console graphics,
+     map graphic, buttons, and fonts as well"). The default keeps the measured
+     clear-classic values; each theme overrides `--map-filter` in globals.css.
+     A token rather than five copies of this rule: the filter ORDER is
+     load-bearing (darken before sepia, or a near-white tile clips to white —
+     see the note above), and five copies is five chances to get it wrong. */
+  filter: var(--map-filter, sepia(0.18) saturate(1.1) contrast(1.04));
 }
 /* A RULED CHART GRID and a vignette, over the tiles but under the pins. On
    the LAYER rather than the canvas so the accent pins and the controls above
@@ -323,11 +329,16 @@ html:has(.mmm-frame) {
      ::before layer), the two fold creases and the flat tan tint — every one
      of them was texture ON TOP of the tiles, and together they were the
      "grain" being reported. Texture belongs to the cabinet, not the chart. */
+  /* The ruled ink is a token so a theme can re-ink the chart without
+     redeclaring the geometry: the 33px pitch IS the cue that reads as a survey
+     chart, so it stays here and only the colour moves. `--map-vignette` is the
+     same ink at roughly double strength, which is how the corner falloff
+     reads as the same pencil rather than a second material. */
   background:
-    radial-gradient(120% 90% at 50% 40%, transparent 58%, rgba(120, 94, 52, .13) 100%),
-    repeating-linear-gradient(0deg, transparent 0 33px, rgba(120, 94, 52, .07) 33px 34px),
-    repeating-linear-gradient(90deg, transparent 0 33px, rgba(120, 94, 52, .07) 33px 34px);
-  mix-blend-mode: multiply;
+    radial-gradient(120% 90% at 50% 40%, transparent 58%, var(--map-vignette, rgba(120, 94, 52, .13)) 100%),
+    repeating-linear-gradient(0deg, transparent 0 33px, var(--map-rule, rgba(120, 94, 52, .07)) 33px 34px),
+    repeating-linear-gradient(90deg, transparent 0 33px, var(--map-rule, rgba(120, 94, 52, .07)) 33px 34px);
+  mix-blend-mode: var(--map-blend, multiply);
 }
 
 /* MapLibre's own attribution and logo stay hidden — `.mmm-map-attrib` below

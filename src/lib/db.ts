@@ -101,6 +101,27 @@ function getConnectionString() {
 }
 
 function makePrisma(url: string) {
+  /* Under the e2e harness only (scripts/e2e-workerd.mjs passes
+     --var E2E_HARNESS:1), destroy each pg connection after a single use.
+
+     Why this exists, all of it measured on 2026-08-27: workerd requires one
+     PrismaClient per request (a shared client draws "Cannot perform I/O on
+     behalf of a different request" — 396 of them when tried), and each client
+     retains ~10 MB in a LONG-LIVED dev server, because the pool's idle timer
+     belongs to a request context that has ended and never fires, so the socket
+     — and through it the client and its wasm engine — is never released. At
+     ~200 requests per shard that reaches workerd's ~1.4 GB isolate ceiling and
+     the server aborts mid-suite, failing whichever test happened to be running
+     (the "different flaky test every run" that ate three rounds of locator
+     fixes). `maxUses: 1` destroys the connection at release, which happens
+     IN-request where I/O is still legal; measured, it halves per-client
+     retention and took the shard from crash-and-restart to clean.
+
+     Gated to the harness because production pays the cost differently: there
+     an isolate serves one request and dies, so nothing accumulates — but
+     maxUses would make every QUERY redial, and a 15-query page would pay 15
+     handshakes for a problem production does not have. */
+  const singleUse = readRuntimeEnv('E2E_HARNESS') === '1';
   const adapter = new PrismaPg({
     connectionString: url,
     // Fail fast instead of hanging the Worker until Cloudflare's 30s timeout fires.
@@ -108,6 +129,7 @@ function makePrisma(url: string) {
     // Each Worker invocation handles one request; one connection is enough.
     max: 1,
     idleTimeoutMillis: 10000,
+    ...(singleUse ? { maxUses: 1 } : {}),
   });
   // Fail loudly when a query hangs — Cloudflare Workers have a 60s wall-clock
   // limit and a hung query would silently consume it. 25s leaves enough headroom.
@@ -116,19 +138,38 @@ function makePrisma(url: string) {
       $allModels: {
         async $allOperations({ model, operation, args, query }) {
           const start = Date.now();
-          const timeout = new Promise<never>((_, reject) =>
-            setTimeout(() => {
+          /* CLEAR THE TIMER. `Promise.race` settles as soon as the query wins,
+             but it does not cancel the loser — so without the `finally` below
+             every single query left a live 25-second timeout behind, each one
+             pinning a closure over `model`, `operation` and `args`.
+
+             In production that is invisible: a Worker invocation is short and
+             the isolate is torn down long before the timers matter. In a
+             long-lived process it is a leak with no ceiling, and it is what
+             killed the authenticated e2e shard — measured 2026-08-26, the
+             wrangler dev server climbed to 1393 MB, spent 95% of its time in
+             GC (`average mu = 0.046`), dragged User.findUnique out to 2s, and
+             aborted on signal 6 mid-suite. The tests that happened to be
+             running when it died failed on whatever their assertion was, which
+             is why the "flaky" test was a different one every run. */
+          let timer: ReturnType<typeof setTimeout> | undefined;
+          const timeout = new Promise<never>((_, reject) => {
+            timer = setTimeout(() => {
               const err = new Error('DB query timeout after 25s');
               log.error('[db]', err, `Query timed out: ${model}.${operation}`);
               reject(err);
-            }, 25_000)
-          );
-          const result = await Promise.race([query(args), timeout]);
-          const elapsed = Date.now() - start;
-          if (elapsed > 1000) {
-            log.warn('[db]', { model, operation, elapsedMs: elapsed }, 'Slow query');
+            }, 25_000);
+          });
+          try {
+            const result = await Promise.race([query(args), timeout]);
+            const elapsed = Date.now() - start;
+            if (elapsed > 1000) {
+              log.warn('[db]', { model, operation, elapsedMs: elapsed }, 'Slow query');
+            }
+            return result;
+          } finally {
+            if (timer) clearTimeout(timer);
           }
-          return result;
         },
       },
     },
