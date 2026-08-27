@@ -216,6 +216,12 @@ export async function POST(
       venuePayoutPercent: show.venuePayoutPercent,
       artistPayoutPercent: show.artistPayoutPercent,
       promoterPayoutPercent: show.promoterPayoutPercent,
+      // "(if applicable)" — the 10% is only withheld when a promoter is
+      // actually being credited on this order. Resolved just above from the
+      // referral cookie / ?ref=; when nobody referred the sale, the share
+      // redistributes to the artist and venue instead of being parked in a
+      // payable nobody can be paid from.
+      hasAffiliatePromoter: Boolean(affiliatePromoterProfile),
       buyerLocation,
       venueLocation: {
         postalCode: show.venueProfile?.postalCode,

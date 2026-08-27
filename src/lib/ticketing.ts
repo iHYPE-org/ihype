@@ -12,6 +12,20 @@ type SplitInput = {
 type OrderInput = SplitInput & {
   ticketPriceCents: number;
   quantity: number;
+  /**
+   * Whether a promoter is actually being credited on THIS order — the charter's
+   * "10% promoters (if applicable)", where the parenthesis is load-bearing.
+   *
+   * It has to be a per-order input rather than a property of the show, and that
+   * asymmetry is what hid the bug: `Show.promoterPayoutPercent` is configured
+   * when the show is created, but whether a promoter is involved is only known
+   * at purchase, from the referral cookie. So the percentage was applied to
+   * every order and the share was withheld whether or not anyone had earned it.
+   *
+   * Defaults to true so an existing caller that genuinely has a promoter keeps
+   * today's arithmetic exactly; the purchase route passes the real answer.
+   */
+  hasAffiliatePromoter?: boolean;
 };
 
 type TaxLocation = {
@@ -74,7 +88,8 @@ export function calculateTicketOrderPayouts({
   quantity,
   venuePayoutPercent,
   artistPayoutPercent,
-  promoterPayoutPercent = DEFAULT_PROMOTER_AFFILIATE_PERCENT
+  promoterPayoutPercent = DEFAULT_PROMOTER_AFFILIATE_PERCENT,
+  hasAffiliatePromoter = true
 }: OrderInput) {
   validateTicketSplit({
     venuePayoutPercent,
@@ -91,9 +106,40 @@ export function calculateTicketOrderPayouts({
   }
 
   const subtotalCents = ticketPriceCents * quantity;
-  const venuePayoutCents = Math.round(subtotalCents * (venuePayoutPercent / 100));
-  const promoterPayoutCents = Math.round(subtotalCents * (promoterPayoutPercent / 100));
-  const artistPayoutCents = subtotalCents - venuePayoutCents - promoterPayoutCents;
+
+  /**
+   * NO PROMOTER MEANS NO PROMOTER SHARE — the charter's "(if applicable)".
+   *
+   * Until 2026-08-27 the 10% came off every order regardless. `buildPayableEntries`
+   * then wrote a PROMOTER_AFFILIATE entry with a null profileId labelled
+   * "Promoter affiliate pool", and `triggerShowPayouts()` cannot pay an entry
+   * with no connected account — so on a show nobody promoted, a tenth of every
+   * ticket was withheld from the artist and the venue and parked in iHYPE's
+   * balance permanently. The platform takes 0%, so there was no charter basis
+   * for holding it, and nothing reported it: the entry looked like the tax
+   * entries, which legitimately stay PENDING.
+   *
+   * The unearned share is redistributed PROPORTIONALLY, preserving the
+   * configured artist:venue ratio (70:20). Neither party gains at the other's
+   * expense — on a default show the artist takes 77.78% and the venue 22.22%,
+   * which is the same 7:2 relationship the charter states.
+   *
+   * The formula is deliberately one expression for both cases rather than a
+   * branch: with a promoter, `distributable` is 90% of the subtotal and the
+   * ratio puts the venue back on exactly 20% and the artist on 70%, identical
+   * to the old arithmetic. A branch would have let the two paths drift.
+   *
+   * The artist absorbs the rounding remainder, the same convention the lineup
+   * split and the display bar already follow, so the shares always sum to the
+   * face value exactly.
+   */
+  const promoterPayoutCents = hasAffiliatePromoter
+    ? Math.round(subtotalCents * (promoterPayoutPercent / 100))
+    : 0;
+  const distributableCents = subtotalCents - promoterPayoutCents;
+  const venueShareOfRest = venuePayoutPercent / (venuePayoutPercent + artistPayoutPercent);
+  const venuePayoutCents = Math.round(distributableCents * venueShareOfRest);
+  const artistPayoutCents = distributableCents - venuePayoutCents;
 
   return {
     subtotalCents,
