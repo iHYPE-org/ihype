@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { calculateDestinationChargeSplit } from '@/lib/ticketing';
 
 let _stripe: Stripe | null = null;
 
@@ -94,22 +95,35 @@ export async function createStripeConnectAccount({
      or promoter could onboard at all, `stripeConnectAccountId` was never set,
      and every payable entry would have sat PENDING forever.
 
-     `configuration.recipient` is the shape that matters. iHYPE never charges
-     ON BEHALF of a connected account — it captures the whole ticket to the
-     platform balance and pays the 70/20/10 out as separate transfers (see
-     `createTicketPaymentIntent` below) — so these accounts are RECIPIENTS,
-     not merchants, and the capability a transfer destination needs is
-     `stripe_balance.stripe_transfers`. Do not reach for the legacy
+     TWO CONFIGURATIONS, and the reason is the whole payout design.
+
+     `recipient` (`stripe_balance.stripe_transfers`) is what lets an account
+     RECEIVE money from us. Every payee needs it. Do not reach for the legacy
      `transfers` capability: it is a different thing wearing a near-identical
      name, and `GET /v1/accounts` will happily report `transfers: "active"`
-     for an account whose v2 recipient capabilities are empty and which
-     Stripe refuses to transfer to. That misreading cost real debugging.
+     for an account whose v2 recipient capabilities are empty and which Stripe
+     refuses to transfer to. That misreading cost real debugging.
+
+     `merchant` (`card_payments`) is what lets an account be the SETTLEMENT
+     MERCHANT — the `on_behalf_of` on a destination charge, so the fan's
+     statement carries the act's name and the act's 70% is routed by Stripe
+     with the charge instead of passing through iHYPE's balance.
+
+     This row used to say these accounts are "RECIPIENTS, not merchants", and
+     that was right for the previous design and is wrong for this one. It is
+     also not a free upgrade: `card_payments` is only available under the FULL
+     service agreement, and an account on the `recipient` agreement can never
+     request it (Stripe's own words). So the payee completes fuller KYC than a
+     transfers-only recipient would. That is the price of delegating merchant
+     of record, and it is deliberate.
+
+     What it does NOT buy is dispute liability. Stripe debits disputes from the
+     PLATFORM account on a destination charge "with or without on_behalf_of",
+     so iHYPE still carries chargebacks and `responsibilities` below says so
+     honestly. Recovery is a transfer reversal, best-effort, not a guarantee.
 
      `dashboard` is required whenever the transfers capability is requested,
-     and the error saying so arrives only after everything else validates.
-     `responsibilities` names the platform for both fees and losses, which is
-     what a marketplace is: iHYPE is merchant of record and carries the
-     chargebacks. */
+     and the error saying so arrives only after everything else validates. */
   const account = await stripe.v2.core.accounts.create({
     contact_email: email,
     dashboard: 'express',
@@ -117,6 +131,9 @@ export async function createStripeConnectAccount({
     configuration: {
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
+      },
+      merchant: {
+        capabilities: { card_payments: { requested: true } },
       },
     },
     defaults: {
@@ -158,6 +175,36 @@ export async function isConnectPayoutReady(connectAccountId: string): Promise<bo
   }
 }
 
+/**
+ * Whether Stripe will accept this account as the SETTLEMENT MERCHANT of a
+ * charge — the `on_behalf_of` on a destination charge.
+ *
+ * Deliberately separate from `isConnectPayoutReady` above, because they are
+ * different questions and merging them would re-create the exact bug that
+ * function's docstring describes. An account can be perfectly able to receive
+ * every transfer we send and still not be able to settle a charge, and the
+ * reverse is possible too while onboarding is partway through. A single
+ * "onboarded" boolean cannot mean both.
+ *
+ * The caller that matters is the purchase route: if this is false the sale
+ * must fall back to a platform-settled charge rather than failing, because a
+ * fan should never be blocked by the act's paperwork.
+ *
+ * Returns false rather than throwing, same reason as above: a failed lookup
+ * means "not proven ready".
+ */
+export async function isConnectSettlementReady(connectAccountId: string): Promise<boolean> {
+  try {
+    const stripe = getStripe();
+    const account = await stripe.v2.core.accounts.retrieve(connectAccountId, {
+      include: ['configuration.merchant'],
+    });
+    return account.configuration?.merchant?.capabilities?.card_payments?.status === 'active';
+  } catch {
+    return false;
+  }
+}
+
 export async function createConnectOnboardingUrl({
   connectAccountId,
   returnUrl,
@@ -169,15 +216,18 @@ export async function createConnectOnboardingUrl({
 }): Promise<string> {
   const stripe = getStripe();
   /* v2 link for a v2 account — v1's `accountLinks.create` cannot onboard one,
-     so this moved with the account creation above and not separately. `configurations: ['recipient']` has to match the
-     configuration the account was created with, or the hosted flow collects
-     the wrong requirements and the transfers capability never activates. */
+     so this moved with the account creation above and not separately. The
+     `configurations` list has to match what the account was created with. */
   const link = await stripe.v2.core.accountLinks.create({
     account: connectAccountId,
     use_case: {
       type: 'account_onboarding',
       account_onboarding: {
-        configurations: ['recipient'],
+        // BOTH, matching the account above. A link that names only one
+        // collects the wrong requirements and the missing capability never
+        // activates — silently, because the member completes a flow that
+        // looks finished.
+        configurations: ['recipient', 'merchant'],
         refresh_url: refreshUrl,
         return_url: returnUrl,
       },
@@ -187,17 +237,45 @@ export async function createConnectOnboardingUrl({
 }
 
 /**
- * "Separate charges and transfers" pattern — deliberately does NOT set
- * `transfer_data.destination`. A destination charge only supports ONE
- * Connect account per PaymentIntent, and (this codebase's real bug, fixed
- * here) omitting `transfer_data.amount` means Stripe transfers the ENTIRE
- * captured charge to that one account — so the previous version routed
- * 100% of every ticket sale to a single party (venue, or artist if no
- * venue) instead of the charter's 70/20/10 split. The full charge now
- * captures to the platform's own Stripe balance; the actual per-party
- * split is paid out afterward as real `stripe.transfers.create()` calls
- * (see `createPayoutTransfer` below), one per `AccountsPayableEntry`,
- * driven by `src/lib/show-payouts.ts`.
+ * A DESTINATION CHARGE settled on behalf of the act, when we can; a
+ * platform-settled charge when we cannot.
+ *
+ * ## What changed, and what the old warning was right about
+ *
+ * This used to be "separate charges and transfers" — capture everything to the
+ * platform balance, pay the split out afterwards — and its comment warned that
+ * a destination charge supports only ONE connected account, which had already
+ * caused this codebase's worst bug: `transfer_data.destination` with no
+ * `amount`, routing 100% of every sale to a single party.
+ *
+ * That warning stands. The resolution is not to route the whole charge, but to
+ * claim the rest back as an `application_fee_amount`: Stripe moves the full
+ * charge to the destination and pulls the fee back to the platform, so exactly
+ * one party is settled by Stripe and the others are paid from what returns.
+ * `calculateDestinationChargeSplit` computes the fee as `total - destination`
+ * for the reason given there — the subtraction cannot silently omit a
+ * component the way an addition can.
+ *
+ * ## Why bother
+ *
+ * The act's 70% never passes through iHYPE's balance. It is routed atomically
+ * with the charge, so it does not depend on a payout cron running, on Connect
+ * transfers succeeding later, or on the platform staying solvent in between.
+ * `on_behalf_of` additionally makes the act the settlement merchant, so the
+ * fan's statement carries their name rather than iHYPE's.
+ *
+ * ## What it does not do
+ *
+ * It does not move dispute liability. Stripe debits disputes from the platform
+ * account on a destination charge "with or without `on_behalf_of`". iHYPE still
+ * carries chargebacks; recovery is a transfer reversal and is best-effort.
+ *
+ * ## The fallback is not an error path
+ *
+ * `destinationAccountId` is optional and a sale must never be blocked by the
+ * act's paperwork. With no settlement-ready account this behaves exactly as
+ * before — a platform-settled charge, split afterwards through
+ * `AccountsPayableEntry` — which is why that machinery stays.
  */
 export async function createTicketPaymentIntent({
   amountCents,
@@ -206,7 +284,9 @@ export async function createTicketPaymentIntent({
   showId,
   ticketOrderConfirmationCode,
   venuePayoutCents,
-  artistPayoutCents
+  artistPayoutCents,
+  destinationAccountId,
+  destinationPayoutCents,
 }: {
   amountCents: number;
   stripeCustomerId: string;
@@ -215,8 +295,23 @@ export async function createTicketPaymentIntent({
   ticketOrderConfirmationCode: string;
   venuePayoutCents: number;
   artistPayoutCents: number;
+  /** The act's Connect account, when it is settlement-ready. Omitted falls
+   *  back to a platform-settled charge — see the note above. */
+  destinationAccountId?: string | null;
+  /** What that account keeps, of FACE VALUE. Required with the account. */
+  destinationPayoutCents?: number;
 }): Promise<{ paymentIntentId: string; status: Stripe.PaymentIntent.Status }> {
   const stripe = getStripe();
+
+  /* Both or neither. An account with no amount would make Stripe transfer the
+     ENTIRE charge — the 2026-07-14 bug exactly — so this refuses rather than
+     defaulting, and refuses before any money moves. */
+  const routed = destinationAccountId
+    ? calculateDestinationChargeSplit({
+        totalChargeCents: amountCents,
+        destinationPayoutCents: destinationPayoutCents ?? -1,
+      })
+    : null;
 
   const paymentIntent = await stripe.paymentIntents.create(
     {
@@ -227,11 +322,21 @@ export async function createTicketPaymentIntent({
       payment_method: paymentMethodId,
       confirm: true,
       return_url: `${process.env.NEXT_PUBLIC_APP_URL}/shows/${showId}`,
+      ...(routed && destinationAccountId
+        ? {
+            on_behalf_of: destinationAccountId,
+            transfer_data: { destination: destinationAccountId },
+            application_fee_amount: routed.applicationFeeCents,
+          }
+        : {}),
       metadata: {
         confirmationCode: ticketOrderConfirmationCode,
         showId,
         venuePayoutCents: String(venuePayoutCents),
-        artistPayoutCents: String(artistPayoutCents)
+        artistPayoutCents: String(artistPayoutCents),
+        // Recorded on the intent so a reconciliation can tell a destination
+        // charge from a platform-settled one without re-deriving it.
+        settlementMode: routed ? 'destination' : 'platform',
       }
     },
     { idempotencyKey: `ticket-order:${ticketOrderConfirmationCode}` }

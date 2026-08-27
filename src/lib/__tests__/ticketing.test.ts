@@ -5,6 +5,7 @@ import {
   calculateTicketOrderPayouts,
   calculateTicketTaxes,
   calculateTicketOrderFinancials,
+  calculateDestinationChargeSplit,
   getRemainingPayoutPercent,
   PLATFORM_COMMISSION_PERCENT,
   DEFAULT_PROMOTER_AFFILIATE_PERCENT
@@ -319,5 +320,86 @@ describe('the promoter share is only withheld when a promoter earned it', () => 
     const explicit = calculateTicketOrderPayouts({ ...show, hasAffiliatePromoter: true });
     const defaulted = calculateTicketOrderPayouts({ ...show });
     expect(defaulted).toEqual(explicit);
+  });
+});
+
+describe('the destination-charge split', () => {
+  /* On a destination charge Stripe moves the whole charge to the destination
+     and pulls the application fee back, so the only number we control is what
+     comes back. These pin the arithmetic that decides how much of a fan's
+     payment never passes through iHYPE at all. */
+
+  it('leaves the artist their full share of face value, whole', () => {
+    // $18 face, no tax: buyer charged 1885, artist keeps 1260 (70% of 1800).
+    const financials = calculateTicketOrderFinancials({
+      ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70,
+      hasAffiliatePromoter: true,
+    });
+    const split = calculateDestinationChargeSplit({
+      totalChargeCents: financials.totalChargeCents,
+      destinationPayoutCents: financials.artistPayoutCents,
+    });
+
+    expect(financials.totalChargeCents).toBe(1885);
+    expect(split.destinationKeepsCents).toBe(1260);
+    expect(split.applicationFeeCents).toBe(625);
+
+    /* The load-bearing property: after Stripe takes its cut from the
+       PLATFORM's fee, what remains is exactly venue + promoter. If this ever
+       fails, someone is being paid out of the processing fee. */
+    const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
+    expect(platformRetains).toBe(financials.venuePayoutCents + financials.promoterPayoutCents);
+  });
+
+  it('keeps tax on the platform side, never on the destination', () => {
+    const financials = calculateTicketOrderFinancials({
+      ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70,
+      hasAffiliatePromoter: true,
+      buyerLocation: { postalCode: '04101', stateRegion: 'ME', country: 'US' },
+      venueLocation: { postalCode: '04101', stateRegion: 'ME', country: 'US' },
+    });
+    expect(financials.totalTaxCents).toBeGreaterThan(0);
+
+    const split = calculateDestinationChargeSplit({
+      totalChargeCents: financials.totalChargeCents,
+      destinationPayoutCents: financials.artistPayoutCents,
+    });
+    // The artist's share is of face value and does not move because tax was
+    // collected; the whole of the tax sits inside the platform's fee, which is
+    // what lets buildPayableEntries write the TAX_* entries against it.
+    expect(split.destinationKeepsCents).toBe(1260);
+    const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
+    expect(platformRetains).toBe(
+      financials.venuePayoutCents + financials.promoterPayoutCents + financials.totalTaxCents,
+    );
+  });
+
+  it('holds when no promoter is credited and the share redistributes', () => {
+    const financials = calculateTicketOrderFinancials({
+      ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70,
+      hasAffiliatePromoter: false,
+    });
+    const split = calculateDestinationChargeSplit({
+      totalChargeCents: financials.totalChargeCents,
+      destinationPayoutCents: financials.artistPayoutCents,
+    });
+    expect(split.destinationKeepsCents).toBe(1400); // 77.78% of face
+    const platformRetains = split.applicationFeeCents - stripeCutOf(financials.totalChargeCents);
+    expect(platformRetains).toBe(financials.venuePayoutCents); // 400, promoter 0
+  });
+
+  it('refuses a destination payout larger than the charge', () => {
+    // Not a rounding artefact — it means the split upstream is wrong, and
+    // Stripe would reject it at the moment of purchase instead.
+    expect(() => calculateDestinationChargeSplit({
+      totalChargeCents: 1000, destinationPayoutCents: 1001,
+    })).toThrow(/cannot exceed/i);
+  });
+
+  it('accepts a destination that keeps nothing', () => {
+    // A free show, or an act whose whole share is held back — legal, and the
+    // application fee is simply the entire charge.
+    const split = calculateDestinationChargeSplit({ totalChargeCents: 500, destinationPayoutCents: 0 });
+    expect(split.applicationFeeCents).toBe(500);
   });
 });

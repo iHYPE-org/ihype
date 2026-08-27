@@ -261,3 +261,76 @@ export function formatCurrencyFromCents(amountCents: number) {
 export function formatPercent(value: number) {
   return `${value}%`;
 }
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Destination charges: what the platform keeps, and what Stripe routes for us
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The application fee for a destination charge — everything the platform holds
+ * back from a charge whose destination is the act being paid.
+ *
+ * ## Why the split is expressed this way round
+ *
+ * On a destination charge Stripe moves the WHOLE charge to the destination
+ * account and then pulls `application_fee_amount` back to the platform. So the
+ * only number we control is what comes back, and what the destination keeps is
+ * whatever we do not claim. Writing it as `total - destination` rather than
+ * `venue + promoter + tax + fee` is deliberate: those are the same figure only
+ * while every component is accounted for, and the subtraction cannot silently
+ * omit one. A missed component would not fail — it would quietly overpay the
+ * destination out of the tax money.
+ *
+ * ## What each party ends up with, on an $18 ticket with no tax
+ *
+ *   buyer charged            1885   (face 1800 + 85 grossed-up processing)
+ *   application fee           625   → platform
+ *     Stripe takes             85   from the platform's fee, not the artist's
+ *     platform retains        540   = venue 360 + promoter 180
+ *   destination keeps        1260   = the artist's 70% of FACE VALUE, whole
+ *
+ * The artist's share is unaffected by what the buyer's card cost to process,
+ * which is the same rule `calculateProcessingFee` already encodes and the
+ * reason the fee is grossed up rather than deducted.
+ *
+ * ## Taxes ride with the platform, on purpose
+ *
+ * Tax is collected from the buyer and remitted by iHYPE, so it must not reach
+ * the destination account. It is inside the application fee for exactly that
+ * reason — `buildPayableEntries` still writes the TAX_* entries against it.
+ *
+ * ## Lineups
+ *
+ * A destination charge has ONE destination. With accepted lineup slots the
+ * headliner's own slice is routed atomically and the remaining acts stay
+ * platform-held payables, so `destinationPayoutCents` is the slice being routed
+ * rather than the whole artist share. Callers pass what they mean.
+ */
+export function calculateDestinationChargeSplit({
+  totalChargeCents,
+  destinationPayoutCents,
+}: {
+  /** What Stripe is asked to charge: face value + tax + grossed-up processing. */
+  totalChargeCents: number;
+  /** The share routed straight to the destination account, of FACE VALUE. */
+  destinationPayoutCents: number;
+}): { applicationFeeCents: number; destinationKeepsCents: number } {
+  if (!Number.isInteger(totalChargeCents) || totalChargeCents <= 0) {
+    throw new Error('Total charge must be a positive whole number of cents.');
+  }
+  if (!Number.isInteger(destinationPayoutCents) || destinationPayoutCents < 0) {
+    throw new Error('Destination payout must be a non-negative whole number of cents.');
+  }
+  /* Stripe caps `application_fee_amount` at the charge amount, and a
+     destination that keeps a negative share is not a rounding artefact — it
+     means a caller has passed a payout larger than the charge, which is a
+     split miscalculation upstream. Fail loudly rather than let Stripe reject
+     it at the moment of purchase. */
+  if (destinationPayoutCents > totalChargeCents) {
+    throw new Error('Destination payout cannot exceed the total charge.');
+  }
+  return {
+    applicationFeeCents: totalChargeCents - destinationPayoutCents,
+    destinationKeepsCents: destinationPayoutCents,
+  };
+}
