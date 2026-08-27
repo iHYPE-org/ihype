@@ -90,6 +90,11 @@ const DEFAULT_TEST_SHARDS = [
   // boundary. Destructive paths, so they get their own shard and their own
   // fresh database rows per test address.
   ['e2e/destructive-flows.spec.ts'],
+  // The alpha list's engagement acts: like, hype, the liked-artists list,
+  // display name, and the HYPE link hand-off. Own shard for the same reason as
+  // the two above — these write member state, and a fresh workerd keeps the
+  // shard clear of the per-request PrismaClient growth.
+  ['e2e/engagement-flows.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
   ['e2e/ticket-transfer.spec.ts'],
