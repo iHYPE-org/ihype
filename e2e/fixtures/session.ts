@@ -45,6 +45,12 @@ export type ShellFixtureOptions = {
    * profile that has passed the gate the product really enforces. */
   profiles?: { type: 'ARTIST' | 'VENUE'; name: string; verified?: boolean }[];
   role?: Role;
+  /** Starting HYPE balance. `User.hypeBalance` defaults to 0 and
+   * `applyHypeEntry` refuses a spend it cannot cover, so a freshly seeded
+   * member CANNOT hype anything — a spec that wants the success path has to
+   * say so, and a spec that wants the refusal path gets it by saying nothing.
+   * Both are real states and both are worth testing. */
+  hypeBalance?: number;
 };
 
 function databaseUrl() {
@@ -63,10 +69,12 @@ export function sessionCookieName() {
  * Creates (or reuses) a user plus any requested creator profiles, and returns a
  * cookie value `auth()` will accept.
  */
+export type SeededProfile = { id: string; slug: string; name: string; type: 'ARTIST' | 'VENUE' };
+
 export async function seedSessionCookie(
   email: string,
   options: ShellFixtureOptions = {},
-): Promise<{ cookie: string; user: SeededUser }> {
+): Promise<{ cookie: string; user: SeededUser; profiles: SeededProfile[] }> {
   const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
   if (!secret) throw new Error('AUTH_SECRET must be set to sign an e2e session.');
 
@@ -77,13 +85,18 @@ export async function seedSessionCookie(
     // `username` is non-null and unique in the schema; derive it from the
     // address so re-running a spec reuses the same row instead of colliding.
     const username = name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
+    // The balance is written on UPDATE as well as CREATE, deliberately: a
+    // rerun's existing row has already spent whatever the last run gave it, so
+    // create-only seeding passes the first time and fails ever after.
+    const balance = options.hypeBalance === undefined ? {} : { hypeBalance: options.hypeBalance };
     const user = await prisma.user.upsert({
       where: { email },
-      update: { role },
-      create: { email, name, username, role, emailVerified: new Date() },
+      update: { role, ...balance },
+      create: { email, name, username, role, emailVerified: new Date(), ...balance },
       select: { id: true, email: true, name: true, role: true, userSecurityVersion: true, emailVerified: true },
     });
 
+    const seededProfiles: SeededProfile[] = [];
     for (const profile of options.profiles ?? []) {
       // Slug is derived from the user id so repeated runs are idempotent and
       // two concurrently-seeded users cannot collide on it.
@@ -93,14 +106,16 @@ export async function seedSessionCookie(
       // so it is stable across runs.
       const hexId = `0x${createHash('sha256').update(slug).digest('hex').slice(0, 32)}`;
       const verification = profile.verified ? { verificationStatus: 'VERIFIED' as const } : {};
-      await prisma.profile.upsert({
+      const row = await prisma.profile.upsert({
         where: { slug },
         // The update must carry the verification too: an upsert that only
         // creates it leaves a rerun's existing row unverified, and the spec
         // fails only on the second run — the worst kind of flake.
         update: { ...verification },
         create: { slug, hexId, name: profile.name, type: profile.type, ownerId: user.id, genres: [], ...verification },
+        select: { id: true, slug: true, name: true, type: true },
       });
+      seededProfiles.push({ id: row.id, slug: row.slug, name: row.name, type: profile.type });
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -129,6 +144,15 @@ export async function seedSessionCookie(
     return {
       cookie,
       user: { id: user.id, email: user.email!, name: user.name!, role: user.role },
+      /* The seeded profiles, so a spec can reach one WITHOUT recomputing
+       * `e2e-artist-${userId.slice(0,8)}` for itself. That recomputation
+       * couples a spec to this function's private naming, and it breaks
+       * silently — a wrong slug is a 404, which reads as "the page is gone"
+       * rather than "the test built the wrong URL". Needed the moment a spec
+       * has to reach SOMEONE ELSE's profile: HYPE refuses your own
+       * (`/api/hype` answers 409 "You cannot HYPE your own profile"), so a
+       * hype test cannot use the signed-in member's own page. */
+      profiles: seededProfiles,
     };
   } finally {
     await prisma.$disconnect();
