@@ -440,18 +440,36 @@ if (!/FEATURE_ENABLE_TICKET_PAYMENTS="false"/.test(environmentExample)) {
   fail('.env.example', 'paid ticketing must default to disabled.');
 }
 
-// Paid ticketing went live 2026-07-19: 501c3 status confirmed and a live
-// Stripe account is attached to the org's bank account (explicit,
-// unambiguous product/business confirmation — this line is a deliberate,
-// reviewed edit, not a default someone forgot to flip back). Actual
-// charging still additionally requires live STRIPE_SECRET_KEY/
-// STRIPE_WEBHOOK_SECRET Cloudflare Worker secrets (never touched by this
-// repo or its CI — see src/lib/payments.ts's getPaymentProcessingReadiness,
-// which fails closed if either is missing or STRIPE_SECRET_KEY is a
-// sk_test_ key in production).
+// THE ASSERTION IS INVERTED AS OF 2026-08-27, and the direction is the point.
+//
+// It used to require "true", written on 2026-07-19 when 501c3 status and a live
+// Stripe account attached to the org's bank account were confirmed. Both of
+// those are still true. What neither of them established is that anyone could
+// be PAID: Stripe Connect has never been signed up for, so
+// `createPayoutTransfer()` has no destination and `triggerShowPayouts()` can
+// release nothing. A sale would capture to the platform balance and leave every
+// AccountsPayableEntry PENDING forever, with no fault reported anywhere,
+// because nothing is faulty.
+//
+// So the guard now protects the SAFE side. It still exists — nobody can flip
+// this on in passing — it just guards the other direction, which is the one
+// that can lose someone else's money.
+//
+// Flip both this and wrangler.toml back together, and only after
+// docs/runbooks/money-path-rehearsal.md is walked to the end: Connect enabled,
+// an Express account through hosted onboarding, a real transfer reaching a real
+// destination, and the payout cron run TWICE showing `released: 0` on the
+// second pass. Charging additionally requires the live
+// STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET Worker secrets, which this repo never
+// touches — see getPaymentProcessingReadiness(), which fails closed if either
+// is missing or the key is sk_test_ in production.
 const wranglerConfig = await text('wrangler.toml');
-if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"true"/.test(wranglerConfig)) {
-  fail('wrangler.toml', 'paid ticketing launch flag was reverted — confirm this is intentional before changing it back.');
+if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"false"/.test(wranglerConfig)) {
+  fail(
+    'wrangler.toml',
+    'paid ticketing is enabled while Stripe Connect is not signed up for: a sale would capture and no payout could ever be released. '
+    + 'Walk docs/runbooks/money-path-rehearsal.md to the end first, then flip this guard and the flag together.',
+  );
 }
 
 const payments = await text('src/lib/payments.ts');

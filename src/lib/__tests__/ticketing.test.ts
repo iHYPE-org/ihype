@@ -278,3 +278,46 @@ describe('calculateTicketOrderFinancials', () => {
       .toBe(result.subtotalCents);
   });
 });
+
+describe('the promoter share is only withheld when a promoter earned it', () => {
+  /* The charter says "10% promoters (if applicable)", and the parenthesis was
+     not implemented: the share came off every order, then sat in an unpayable
+     PROMOTER_AFFILIATE entry with a null profileId. On a show nobody promoted,
+     a tenth of every ticket was withheld from the artist and the venue and held
+     by a platform that takes 0%. */
+  const show = { ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70 };
+
+  it('splits 70/20/10 when a promoter is credited', () => {
+    const payouts = calculateTicketOrderPayouts({ ...show, hasAffiliatePromoter: true });
+    expect(payouts.artistPayoutCents).toBe(1260);
+    expect(payouts.venuePayoutCents).toBe(360);
+    expect(payouts.promoterPayoutCents).toBe(180);
+  });
+
+  it('redistributes the promoter share proportionally when there is none', () => {
+    const payouts = calculateTicketOrderPayouts({ ...show, hasAffiliatePromoter: false });
+    expect(payouts.promoterPayoutCents).toBe(0);
+    // 7:2 preserved — 77.78% / 22.22% of face value, not 80/20.
+    expect(payouts.venuePayoutCents).toBe(400);
+    expect(payouts.artistPayoutCents).toBe(1400);
+  });
+
+  it('always sums to the face value exactly, promoter or not', () => {
+    for (const hasAffiliatePromoter of [true, false]) {
+      // Prices chosen to force rounding in both directions.
+      for (const ticketPriceCents of [1, 7, 333, 1799, 1800, 2501, 99999]) {
+        const p = calculateTicketOrderPayouts({ ...show, ticketPriceCents, hasAffiliatePromoter });
+        expect(p.artistPayoutCents + p.venuePayoutCents + p.promoterPayoutCents)
+          .toBe(p.subtotalCents);
+        expect(p.artistPayoutCents).toBeGreaterThanOrEqual(0);
+        expect(p.venuePayoutCents).toBeGreaterThanOrEqual(0);
+      }
+    }
+  });
+
+  it('defaults to withholding the share, so an existing caller is unchanged', () => {
+    const explicit = calculateTicketOrderPayouts({ ...show, hasAffiliatePromoter: true });
+    const defaulted = calculateTicketOrderPayouts({ ...show });
+    expect(defaulted).toEqual(explicit);
+  });
+});
