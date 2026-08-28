@@ -264,6 +264,42 @@ export async function isConnectPayoutReady(connectAccountId: string): Promise<bo
   }
 }
 
+/**
+ * Whether Stripe will accept a CHARGE created on this account — the venue-direct
+ * question, which is a different one from `isConnectPayoutReady` above.
+ *
+ * The two capabilities are not a ladder and one does not imply the other. An
+ * account can be fully payout-ready (`recipient` complete, transfers active)
+ * and completely unable to be the merchant on a charge, because `card_payments`
+ * lives on the `merchant` configuration behind the full service agreement and
+ * heavier KYC. Only a VENUE is ever asked for it.
+ *
+ * Using the payout check to gate venue-direct — which is what the ticket route
+ * did until 2026-08-28 — picks the mode on the wrong evidence. A venue that
+ * completed recipient onboarding only would be selected as merchant, and
+ * `createVenueDirectCheckoutSession` would then be rejected by Stripe for a
+ * missing capability, failing a purchase whose inventory was already reserved.
+ * The failure lands on the fan, at the last step, for a venue's paperwork.
+ *
+ * Same failure posture as the payout check: false on any error, because "not
+ * proven" and "not ready" must lead to the same conservative branch.
+ */
+export async function isConnectMerchantReady(connectAccountId: string): Promise<boolean> {
+  try {
+    const stripe = getStripe();
+    /* `include` is not optional. Accounts v2 returns an unrequested property as
+       null "regardless of their actual value", so omitting it here would read
+       null and report every venue as not-ready — a silent, permanent fallback
+       to platform settlement that nothing else would flag. */
+    const account = await stripe.v2.core.accounts.retrieve(connectAccountId, {
+      include: ['configuration.merchant'],
+    });
+    return account.configuration?.merchant?.capabilities?.card_payments?.status === 'active';
+  } catch {
+    return false;
+  }
+}
+
 export async function createConnectOnboardingUrl({
   connectAccountId,
   returnUrl,

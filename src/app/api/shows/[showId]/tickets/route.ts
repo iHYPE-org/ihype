@@ -17,6 +17,7 @@ import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
   createTicketCheckoutSession,
   createVenueDirectCheckoutSession,
+  isConnectMerchantReady,
   isConnectPayoutReady,
   getOrCreateStripeCustomer,
 } from '@/lib/stripe';
@@ -257,8 +258,16 @@ export async function POST(
     const venueConnectId = show.venueProfile?.stripeConnectAccountId ?? null;
     const headlinerConnectId = show.headlinerProfile?.stripeConnectAccountId ?? null;
 
+    /* MERCHANT-ready, not PAYOUT-ready, and the distinction is the whole
+       correctness of this branch. `card_payments` is what lets a charge be
+       created ON the venue's account; `stripe_transfers` only lets money be
+       sent TO it. This asked the payout question until 2026-08-28, which meant
+       a venue that had completed recipient onboarding alone was selected as
+       merchant and then rejected by Stripe for the missing capability —
+       failing the purchase at the last step, after inventory was reserved, for
+       paperwork the fan has nothing to do with. */
     const venueDirectAccountId = venueConnectId
-      ? await isConnectPayoutReady(venueConnectId)
+      ? await isConnectMerchantReady(venueConnectId)
           .then((ready: boolean) => (ready ? venueConnectId : null))
           .catch(() => null)
       : null;
