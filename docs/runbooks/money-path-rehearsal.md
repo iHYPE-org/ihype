@@ -402,6 +402,71 @@ entries get paid. That is step 2.
 
 ---
 
+### Test cards, and the one that matters most
+
+From the Accounts v2 marketplace blueprint, 2026-08-28. Use these in step 2 —
+"buy a ticket" without naming a card only ever exercises the happy path.
+
+| Card | What it does | Why walk it |
+|---|---|---|
+| `4000 0000 0000 0077` | succeeds, funds available immediately | the blueprint's own card; skips the pending-balance wait, so a transfer can be attempted in the same sitting |
+| `4242 4242 4242 4242` | succeeds, funds pending | the realistic case — proves the payout cron waits rather than failing |
+| `4000 0000 0000 0259` | succeeds, then **disputes as fraudulent** | **the one that matters.** Everything about this settlement design is an argument about who eats a chargeback. Nothing has ever tested that claim. |
+| `4000 0000 0000 0002` | declined | the order must not reserve capacity for a sale that did not happen |
+
+Any future expiry (12/31) and any three-digit CVC.
+
+**Walk `…0259` on a VENUE_DIRECT sale specifically.** The whole case for the
+mode is that the dispute is debited from the venue and, under Stripe-managed
+risk, an unrecoverable shortfall is Stripe's rather than iHYPE's. Confirm in
+the dashboard that the disputed amount and the 15 USD fee land on the **venue's**
+balance and not the platform's. If they land on the platform, the settlement
+model is wrong and every number in this runbook is wrong with it.
+
+Then walk it again on a `DESTINATION` sale, where the opposite should be true
+and the platform *should* be debited — that is the exposure the 1.5% reserve
+line exists to fund, and it should be visible.
+
+### Two things the checkout surface does that nobody has decided
+
+Both seen in the blueprint's own checkout screenshot, both true of our code,
+neither a bug.
+
+**1. On a venue-direct sale the fan sees the VENUE, not iHYPE.** The blueprint's
+page reads "Pay Powdur" — the connected account's name — because on a direct
+charge the connected account *is* the merchant. That is the mode working as
+designed, and it is worth stating plainly because the owner's instruction
+during the `on_behalf_of` discussion was "let's keep iHYPE as the name on the
+purchase". That instruction was about destination charges and still holds
+there; venue-direct deliberately moved the merchant role, and the name moves
+with it.
+
+The consequence is a real one and it lands on the venue: an unfamiliar name on
+a card statement is the most common single trigger for a "I don't recognise
+this" chargeback, and on this mode the venue pays for it. The obvious mitigation
+is `payment_intent_data.statement_descriptor_suffix` carrying the show or the
+venue's trading name. **It is deliberately not implemented yet**, because the
+concatenated descriptor must be 1-22 characters *including the connected
+account's own prefix*, which we do not know at session-creation time — so a long
+venue prefix plus our suffix is rejected, and a rejected descriptor fails the
+whole Checkout Session and loses the sale. Cheap fix, real downside, needs one
+test against a real connected account before shipping. Do it during step 2.
+
+**2. We compute tax ourselves; the blueprint uses Stripe Tax.** Its screenshot
+shows a live "Tax — enter address to calculate" line. Our session sends a
+single line item at `financials.totalChargeCents`, so the Stripe page shows one
+number and the itemisation lives only in `TicketSaleCard` before the fan leaves
+the app. `calculateTicketTaxes` is our own.
+
+That is defensible for a fixed-price ticket at a known venue address, and it is
+also the part of the money path with the least evidence behind it. The venue is
+the one remitting on a venue-direct sale, so a wrong figure is a wrong figure in
+someone else's tax filing. Enabling `automatic_tax` would move both the
+calculation and the rate-table maintenance to Stripe — worth pricing before the
+first multi-state show rather than after.
+
+---
+
 ## Step 2 — the app's own path, against a scratch database (1–2 hours)
 
 This is the step that has never been done in any form, and it is the one that
