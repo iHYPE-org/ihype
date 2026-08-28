@@ -373,6 +373,26 @@ That difference is not an inconvenience of the script; it is the same
 distinction `isConnectPayoutReady()` and the venue-direct branch turn on, so an
 account that cannot satisfy step 7 also cannot take a `VENUE_DIRECT` sale.
 
+**Both prerequisites now exist (checked 2026-08-28, via the Stripe MCP).** The
+test-mode sandbox (`acct_1Ttr6LLuZsyulVGR`, "New business sandbox") holds two
+connected accounts with `card_payments` AND `transfers` active,
+`charges_enabled`, `payouts_enabled`, and a verified test bank account:
+`acct_1U8mdKLuZs8WZJKj` and `acct_1U8mdmLuZsguyf6N`. (Four more sit at
+`transfers: inactive` with KYC outstanding — rehearsal/probe residue; fine to
+leave.) So the run that proves the two remaining settlement modes is one
+command for whoever holds the test key:
+
+```bash
+STRIPE_SECRET_KEY=sk_test_… \
+REHEARSAL_MERCHANT_ACCOUNT=acct_1U8mdKLuZs8WZJKj \
+REHEARSAL_CONNECT_ACCOUNTS=acct_1U8mdmLuZsguyf6N \
+npm run stripe:rehearsal
+```
+
+It could not be run from the sandboxed session that wrote this note: the
+session held no raw `sk_test_` key, and the Stripe MCP's write surface
+deliberately excludes payment-creation operations.
+
 **What good looks like:** every check passes AND the last line reads *"All three
 settlement modes rehearsed"*. In particular:
 
