@@ -447,6 +447,66 @@ trusting the redirect, and an unfinished member is sent to payout settings — b
 the reason it must never be trusted is worth keeping written down, because
 trusting it is the obvious implementation.
 
+### MEASURED: the account configuration we ship cannot be created
+
+Probed against a real test-mode sandbox, 2026-08-28, with nine combinations.
+This is the first time `createStripeConnectAccount` has been executed against
+Stripe at all, and **both of its account shapes are rejected**:
+
+```
+recipient + merchant, stripe/stripe, express   (VENUE)
+  -> "This account configuration is not supported."
+recipient only,       stripe/stripe, express   (ARTIST / PROMOTER)
+  -> "Losses collector can only be 'application' for the set of
+      configurations this account has."
+```
+
+So no artist and no venue could onboard. `stripeConnectAccountId` would never
+be set and every payable would sit PENDING forever — the same shape as the
+2026-07-14 bug, reported by nothing, because nothing is faulty.
+
+**What the probe established:**
+
+| configuration | dashboard | responsibilities | result |
+|---|---|---|---|
+| recipient + merchant | `full` | stripe / stripe | **OK** — transfers + card_payments both `restricted` pending KYC |
+| merchant only | `full` | stripe / stripe | OK |
+| recipient + merchant | `express` | stripe / stripe | not supported |
+| merchant only | `express` | stripe / stripe | not supported |
+| recipient only | `full` | stripe / stripe | dashboard must be `none` or `express` |
+| recipient only | `express` or `none` | stripe / stripe | losses must be `application` |
+| recipient only | `express` or `none` | application / application | refused, pointing at the platform profile |
+
+Two conclusions:
+
+**1. A merchant account needs `dashboard: 'full'`, not `'express'`.** Express is
+refused whenever Stripe manages losses. Note this contradicts the Connect setup
+screen, which said sellers use the Express Dashboard, and contradicts the
+`dashboard: 'express'` this codebase ships. A venue getting the full Stripe
+Dashboard is arguably right — it is a business with an accountant — but it is
+not what was designed.
+
+**2. A recipient-only account is currently impossible**, and the two errors
+contradict each other: recipient-only *requires* `application`, and
+`application` is refused with *"Please review the responsibilities of managing
+losses for connected accounts at /settings/connect/platform-profile"*.
+
+That wording matters. It is the phrasing of an **unfinished profile**, not a
+forbidden value — and the platform profile has an outstanding **"Negative
+balance liability acknowledgement"** action. The working hypothesis is that
+completing it unblocks `application` for recipient accounts, which would keep
+artist onboarding light. Until it is completed the choice is:
+
+- give artists the merchant configuration too — one code change, but every
+  musician completes full-service-agreement KYC to be *paid*, and becomes a
+  merchant they are not; or
+- accept `application` losses for recipient accounts — artists stay light,
+  iHYPE carries an artist's negative balance, which arises only when a refund
+  with `reverse_transfer` outruns their balance.
+
+**Do not change the code until the acknowledgement is resolved**, because it
+may make the second option available without any product cost.
+
 ### Test cards, and the one that matters most
 
 From the Accounts v2 marketplace blueprint, 2026-08-28. Use these in step 2 —
