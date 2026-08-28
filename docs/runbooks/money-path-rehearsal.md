@@ -447,6 +447,44 @@ trusting the redirect, and an unfinished member is sent to payout settings — b
 the reason it must never be trusted is worth keeping written down, because
 trusting it is the obvious implementation.
 
+### Stripe's docs confirm the dispute split, first-party
+
+Quoted 2026-08-28. This had rested on a support conversation; it is now
+documented, and it is the single claim the settlement design depends on:
+
+> For disputes on payments created using **direct charges**, Stripe debits the
+> disputed amount from the **connected account's balance, not your platform's
+> balance.** Stripe can bill the dispute fee to either the platform or the
+> connected account, depending on the connected account's configuration.
+
+> For disputes where payments were created on your platform using **destination
+> charges or separate charges and transfers, with or without `on_behalf_of`**,
+> your platform balance is automatically debited for the disputed amount and
+> fee.
+
+So `VENUE_DIRECT` moves the dispute to the venue, and `DESTINATION` /
+`PLATFORM` leave it with iHYPE. Both halves of the model are confirmed rather
+than assumed, and the reserve line is charged on exactly the two modes that
+carry the exposure.
+
+Two side notes worth keeping:
+
+**`debit_negative_balances` governs the EXTERNAL account, not the balance.**
+The doc says Stripe debits a connected account's external (bank) account "only
+if `debit_negative_balances` is set to true". That is a narrower thing than the
+risk-management page's "you can't directly debit connected account balances"
+under Stripe-managed risk, and the two are easy to conflate. It changes nothing
+here — we are not the losses collector, so recovery is Stripe's — but do not
+read this paragraph as an argument for re-adding the call.
+
+**A destination charge uses the PLATFORM's payment-method configuration.** The
+doc: "Connected accounts using indirect charges without `on_behalf_of` use the
+payment method configurations that you set up for charges on your platform."
+Since `DESTINATION` deliberately omits `on_behalf_of`, the methods a fan is
+offered on that mode are iHYPE's, and on `VENUE_DIRECT` they are the venue's.
+That is the switch that decides whether the async bank-debit path is reachable
+at all — see the `checkout.session.async_payment_*` handlers.
+
 ### MEASURED: the account configuration we ship cannot be created
 
 Probed against a real test-mode sandbox, 2026-08-28, with nine combinations.
