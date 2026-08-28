@@ -636,9 +636,44 @@ export async function createPayoutTransfer({
   return transfer.id;
 }
 
+/**
+ * Make sure a ticket's PaymentIntent is captured, and tolerate its already
+ * being so.
+ *
+ * `/api/shows/[showId]/ticketing/open` captures the reserved orders for a show
+ * when the organiser opens ticketing — a design that assumes the charge was
+ * only AUTHORIZED until then. It was written against `createTicketPaymentIntent`,
+ * which used `capture_method: 'manual'` and no longer exists: the live path is
+ * `createTicketCheckoutSession`, which sets no capture method at all, so a
+ * ticket captures the moment the fan pays.
+ *
+ * So by the time this runs the intent is normally already `succeeded`, and a
+ * bare `capture()` answers `payment_intent_unexpected_state` — turning the
+ * whole open-ticketing run into a row of failures for orders where nothing is
+ * wrong and the money is already in hand.
+ *
+ * Treating that state as success is right under either capture mode, because
+ * the postcondition this function promises is "captured", not "captured by
+ * this call". The caller then finalises the order exactly as it would have.
+ *
+ * NOTE the open product question this does not answer: whether pre-sale
+ * reservations should hold an authorization at all. If they should, the ticket
+ * session needs `capture_method: 'manual'` while ticketing is closed AND the
+ * webhook must stop finalising those orders on `checkout.session.completed`.
+ * That is a deliberate decision, not a repair, so it is not made here.
+ */
 export async function captureTicketPaymentIntent(paymentIntentId: string): Promise<void> {
   const stripe = getStripe();
-  await stripe.paymentIntents.capture(paymentIntentId, {}, { idempotencyKey: `capture:${paymentIntentId}` });
+  try {
+    await stripe.paymentIntents.capture(paymentIntentId, {}, { idempotencyKey: `capture:${paymentIntentId}` });
+  } catch (error) {
+    /* Re-read rather than pattern-matching the message: the only acceptable
+       reason to swallow a capture failure is that the money is genuinely
+       captured, and the intent itself is the authority on that. Anything else
+       rethrows, so a real failure still stops the run. */
+    const intent = await stripe.paymentIntents.retrieve(paymentIntentId).catch(() => null);
+    if (intent?.status !== 'succeeded') throw error;
+  }
 }
 
 export async function cancelTicketPaymentIntent(paymentIntentId: string): Promise<void> {
@@ -722,8 +757,12 @@ export async function refundTicketPaymentIntent(
  * 'manual'` means the session's underlying PaymentIntent only ever
  * authorizes the full quoted budget; Stripe creates that PaymentIntent
  * synchronously, so its id is available immediately, before the advertiser
- * ever completes checkout — the same manual-capture shape the ticket checkout
- * session uses, and for the same reason.
+ * ever completes checkout.
+ *
+ * This is the ONLY manual-capture path in the codebase. This docstring used to
+ * say it was "the same shape the ticket checkout session uses"; the ticket
+ * session sets no capture method and captures on payment. See
+ * `captureTicketPaymentIntent` for what that mismatch broke.
  */
 export async function createAdCampaignCheckoutSession({
   adId,

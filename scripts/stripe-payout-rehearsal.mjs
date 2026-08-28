@@ -19,9 +19,13 @@
  * The Stripe-side semantics the application depends on, with the same call
  * shapes src/lib/stripe.ts uses:
  *
- *   1. A ticket PaymentIntent created with `capture_method: 'manual'` and NO
- *      `transfer_data` captures in full to the platform balance. (This is the
- *      "separate charges and transfers" premise the whole split rests on.)
+ *   1. A PaymentIntent with NO `transfer_data` captures in full to the
+ *      platform balance. (This is the "separate charges and transfers" premise
+ *      the whole split rests on.) It is written with `capture_method: 'manual'`
+ *      so authorization and capture can be asserted separately — note that the
+ *      LIVE ticket path does not: `createTicketCheckoutSession` sets no capture
+ *      method, so a real ticket captures on payment. What is being rehearsed
+ *      here is where the money lands, which is identical either way.
  *   2. Three transfers — 70/20/10 of the captured amount — succeed against
  *      connected accounts and sum to exactly the captured total, with the
  *      last one absorbing the rounding remainder.
@@ -129,9 +133,10 @@ function check(label, condition, detail = '') {
 }
 
 async function createAuthorizedTicketIntent(confirmationCode) {
-  // Mirrors the platform-settled branch of createTicketCheckoutSession():
-  // manual capture, no transfer_data. The destination-charge branch is
-  // rehearsed separately once a settlement-ready account exists.
+  // The platform-settled shape: no transfer_data, so the whole charge lands on
+  // the platform balance. Manual capture is this script's own choice, not the
+  // live path's — it lets authorization and capture be asserted as two steps.
+  // Modes 2 and 3 are rehearsed in steps 6 and 7.
   return stripe.paymentIntents.create(
     {
       amount: TICKET_AMOUNT_CENTS,
