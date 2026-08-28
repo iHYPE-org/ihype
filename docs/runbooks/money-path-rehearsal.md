@@ -112,13 +112,45 @@ has never executed anywhere and is the one to watch for.
 | **10-day payout hold** (`PAYOUT_HOLD_DAYS`, `show-payouts.ts`) | Payables used to release the moment a show hit `ENDED`, leaving **zero** window to reverse anything. A dispute the next morning had nothing to claw back. | Unit-tested. Confirm in step 3 that a show ended today releases NOTHING. |
 | **1.5% protection reserve** (`TICKET_RESERVE_PERCENT`) | Disputes ($15 fee + the amount, debited from the PLATFORM even on a destination charge), Connect's ~1% of gross, and the Amex under-collection `stripe-fees.ts` has always documented. All previously paid by nobody. | Unit-tested, disclosed at checkout. Reconcile the fund against real disputes before trusting 1.5%. |
 | **`reverse_transfer` + `refund_application_fee`** on refunds | Stripe's default is that the destination KEEPS its transfer and the platform absorbs the whole refund — every refund a net loss of about the artist's share. | Unit-tested. **Prove against real Stripe**: refund a destination charge and check the act's balance actually drops. |
-| **`debit_negative_balances: true`** | Without it, a reversal that outruns an act's balance waits on their FUTURE volume; for an artist playing three shows a year that can be next season, and the shortfall sits on iHYPE meanwhile. | **NOT PROVEN.** It is a v1 `accounts.update` against a v2 account, because v2 cannot manage payout settings. Best-effort and non-fatal by design. Watch for `[stripe] could not set debit_negative_balances` in the logs on the first onboarding — if it appears, this control is off and nobody would otherwise notice. |
+| ~~`debit_negative_balances: true`~~ **REMOVED 2026-08-27** | It made Stripe recover a negative balance from the payee's own bank, which mattered while iHYPE was liable for those balances. | **Deleted, not deferred.** Connect signup selected Stripe-managed risk, and a platform that is not liable cannot debit its connected accounts at all — Stripe handles recovery itself. The call was also a v1 `accounts.update` against a v2 account and had never executed anywhere. Do not re-add it: "make sure we can debit the account" reads like an obviously good idea to anyone who has not read the platform's risk configuration. |
 
 What none of it fixes: a stolen card that buys a ticket, attends the show, and
 disputes. The show happened and the act played. Radar lowers the frequency, the
 reserve absorbs the hit, the hold decides whether it lands on iHYPE or is
 clawed back from the act — and the deliberate answer is that **iHYPE carries
 it**, because an artist clawed back a week after playing does not come back.
+
+### Connect is configured, and it changes the dispute answer below
+
+Signed up 2026-08-27. The platform's own Connect configuration is:
+
+| Setting | Chosen |
+|---|---|
+| Funds flow | **Sellers will collect payments directly** — direct charges, the venue is the merchant |
+| Account creation | Onboarding hosted by Stripe |
+| Account management | Sellers use the Express Dashboard |
+| Risk and loss liability | **Stripe manages risk and is liable if sellers cannot pay back losses, including fraud** |
+
+The last row is the one that matters most and it was not a given. On a
+**venue-direct** sale iHYPE now carries no dispute exposure at all: Stripe
+debits the venue's account, and if that account cannot cover it, STRIPE absorbs
+the shortfall rather than the platform. That is what makes this design viable
+for a platform with no reserve behind it.
+
+`createStripeConnectAccount` must match, and now does:
+`responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' }`.
+It said `'application'` for both until this date, which would have handed the
+liability straight back — quietly, on an account that looks correctly
+configured.
+
+**What the section below still describes accurately** is the FALLBACK modes.
+A headliner-destination or platform-settled charge is an *indirect* charge, the
+platform is the merchant, and Stripe's own guidance is explicit that
+Stripe-managed risk "doesn't absolve your platform of responsibility for its own
+balance". So the empty-fund problem is real for exactly those sales — the ones
+where no venue is onboarded — and disappears for the rest. That is a strong
+argument for getting venues onboarded early, and a reason the 1.5% reserve stays
+on the fallback modes and is charged on none of the venue-direct ones.
 
 ### Dispute liability: settled, and the fund is empty
 

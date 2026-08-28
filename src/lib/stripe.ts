@@ -167,41 +167,37 @@ export async function createStripeConnectAccount({
     },
     defaults: {
       currency: 'usd',
-      responsibilities: { fees_collector: 'application', losses_collector: 'application' },
+      /* MATCHES THE PLATFORM'S OWN CONNECT CONFIGURATION, confirmed at signup
+         on 2026-08-27: "Sellers will collect payments directly" and "Stripe
+         will manage risk and be liable if sellers can't pay back losses — even
+         if those losses result from fraud."
+         `losses_collector: 'stripe'` is the whole reason this design is viable
+         for a platform with no reserve: when a venue's balance goes negative
+         from a dispute and cannot be recovered, STRIPE absorbs it rather than
+         iHYPE. Setting `'application'` here — which this line did until today —
+         would hand that liability straight back, quietly, on an account that
+         looks correctly configured.
+         `fees_collector: 'stripe'` because on a direct charge Stripe deducts
+         its processing fee from the venue's own side of the transaction. That
+         is what makes the venue's 20% arrive whole and iHYPE's application fee
+         exactly the two onward shares. */
+      responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
     },
     metadata: { profileId, profileType },
   });
-  /* Let Stripe recover a negative balance from the account's own bank.
+  /* `debit_negative_balances` USED TO BE SET HERE AND IS DELETED, not moved.
    *
-   * It matters on exactly the path that costs real money: a refund or a
-   * dispute reversal on a destination charge can take an account below zero,
-   * and without this Stripe waits for that account's FUTURE volume to make the
-   * platform whole. For an artist who plays three shows a year, "future
-   * volume" can be next season, and until then the shortfall sits on iHYPE.
-   * It is disclosed by the hosted onboarding the payee completes, so it is not
-   * being done to them quietly.
+   * It made Stripe recover a negative balance from the payee's own bank, which
+   * mattered while iHYPE was liable for those balances. It is not merely
+   * unnecessary now — it is incompatible: under Stripe-managed risk a platform
+   * that is not liable cannot debit its connected accounts at all, and Stripe
+   * handles recovery itself.
    *
-   * A SEPARATE v1 CALL, and not by preference: `debit_negative_balances` is a
-   * payout setting, v2 account creation does not accept one, and Stripe's own
-   * documentation says payout settings cannot be managed through the Accounts
-   * v2 API at all. So a v2 account takes a v1 update — which is the one part
-   * of this file that has never been executed against a real Connect account,
-   * because Connect is not signed up for yet.
-   *
-   * Therefore: best-effort, and it must NOT break onboarding. If the call is
-   * rejected the account is still fully usable; what is lost is automatic
-   * recovery on a negative balance, which is a risk-reduction setting rather
-   * than a correctness requirement. Verify this specific call during the
-   * money-path rehearsal and delete this caveat once it has run. */
-  await stripe.accounts
-    .update(account.id, { settings: { payouts: { debit_negative_balances: true } } })
-    .catch((error: unknown) => {
-      log.error(
-        '[stripe]',
-        error instanceof Error ? error : { error: String(error) },
-        `could not set debit_negative_balances on ${account.id}`,
-      );
-    });
+   * The old call was a v1 `accounts.update` against a v2 account and was
+   * flagged in the runbook as never having executed anywhere. It never will.
+   * Recorded rather than silently dropped because "make sure we can debit the
+   * account" reads like an obviously good idea to anyone who has not read the
+   * platform's risk configuration. */
 
   return account.id;
 }
@@ -628,10 +624,10 @@ export async function refundTicketPaymentIntent(
        * Stripe requires the transfer reversal whenever the application fee is
        * refunded, which is why these two are one flag here rather than two.
        *
-       * If the act's balance cannot cover it they go negative, and Stripe
-       * debits their bank only when `debit_negative_balances` is set. That is
-       * the real limit of this: it makes recovery the default rather than a
-       * guarantee.
+       * If the act's balance cannot cover it they go negative — and under the
+       * platform's Stripe-managed risk configuration that is STRIPE's loss to
+       * recover, not iHYPE's. This used to depend on `debit_negative_balances`
+       * and no longer does; see the note in `createStripeConnectAccount`.
        *
        * Deliberately NOT inferred from the PaymentIntent. Reading it back
        * would be a second network call on a path that already has the answer
