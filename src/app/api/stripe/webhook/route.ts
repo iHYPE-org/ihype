@@ -92,7 +92,33 @@ export async function POST(request: NextRequest) {
       }
 
       switch (event.type) {
-        case 'checkout.session.completed': {
+        /* THREE EVENTS, NOT ONE, and only the first was handled.
+         *
+         * Stripe is explicit that `checkout.session.completed` means the
+         * customer "successfully AUTHORIZED the payment by submitting the
+         * Checkout form", and that the next step is to "wait for the payment
+         * to succeed or fail". For a card that is the same instant, which is
+         * why one handler looked sufficient. For a delayed-notification method
+         * — ACH, SEPA, Pay by Bank, Boleto, BLIK — it is 2 to 14 days later,
+         * and the outcome arrives as `checkout.session.async_payment_succeeded`
+         * or `..._failed`.
+         *
+         * We do not pin `payment_method_types`, so Checkout offers whatever the
+         * account has enabled. These methods are reachable.
+         *
+         * The `payment_status === 'paid'` guard below was already right and is
+         * what stopped the dangerous half of this: a ticket was never issued
+         * before the money landed. What it could not do is issue one AFTER.
+         * With no async handler, an ACH buyer paid, the funds arrived, and no
+         * ticket was ever created — money taken, nothing delivered, and no
+         * error anywhere because every handler did exactly what it said.
+         *
+         * A failure was the mirror image: the session has already COMPLETED, so
+         * `checkout.session.expired` never fires for it, and the reserved order
+         * sat holding a seat forever against a payment that will never arrive.
+         */
+        case 'checkout.session.completed':
+        case 'checkout.session.async_payment_succeeded': {
           const checkoutSession = event.data.object;
           if (
             checkoutSession.mode === 'payment' &&
@@ -113,9 +139,33 @@ export async function POST(request: NextRequest) {
                   where: { id: order.id },
                   data: { stripePaymentIntentId: paymentIntentId },
                 });
+                /* Safe to receive twice. A card sale sends `completed` already
+                   paid and no async event; a bank debit sends `completed`
+                   unpaid and then `async_payment_succeeded` paid. Should both
+                   ever arrive paid, `finalizeCapturedTicketOrder` reports
+                   `changed: false` on the second and no tickets are reissued. */
                 const finalized = await finalizeCapturedTicketOrder(tx, order.id, new Date(event.created * 1000));
                 if (finalized.changed) capturedOrderId = order.id;
               }
+            }
+          }
+          break;
+        }
+
+        case 'checkout.session.async_payment_failed': {
+          /* The bank debit was declined days after checkout. Release the seat.
+             `checkout.session.expired` cannot do this — the session completed,
+             so it never expires — and nothing else was watching, so the order
+             held capacity indefinitely for a sale that had already failed. */
+          const checkoutSession = event.data.object;
+          if (checkoutSession.metadata?.purpose === 'ticket_purchase') {
+            const confirmationCode = checkoutSession.metadata.confirmationCode;
+            if (confirmationCode) {
+              const order = await tx.ticketOrder.findUnique({
+                where: { confirmationCode },
+                select: { id: true },
+              });
+              if (order) await voidReservedTicketOrder(tx, order.id);
             }
           }
           break;
@@ -220,6 +270,63 @@ export async function POST(request: NextRequest) {
               where: { stripeConnectAccountId: account.id },
               data: { stripeConnectOnboarded: true },
             });
+          }
+          break;
+        }
+
+        case 'charge.dispute.created': {
+          /* DETECTED, NOT AUTOMATED, and the distinction is deliberate.
+           *
+           * Where this lands depends entirely on the settlement mode, and the
+           * two cases are opposites:
+           *   - VENUE_DIRECT: the charge is on the venue, so Stripe debits the
+           *     VENUE. Under this platform's Stripe-managed risk configuration
+           *     an unrecoverable shortfall is Stripe's. iHYPE is not involved.
+           *   - DESTINATION / PLATFORM: Stripe debits the PLATFORM, "with or
+           *     without on_behalf_of". This is the exposure the 1.5% reserve
+           *     line funds, against a fund that starts at zero.
+           *
+           * Stripe's guidance for the second case is to recover by reversing
+           * the transfer to the act. That is real money taken back from a
+           * musician, sometimes for a show they played, and it is not a
+           * decision a webhook handler should make unattended. So this reports
+           * and a human decides. `log.error` is what reaches Sentry here;
+           * `console.error` lands in Worker logs nobody tails. */
+          const dispute = event.data.object;
+          log.error(
+            '[stripe/webhook]',
+            null,
+            `DISPUTE ${dispute.id}: ${dispute.amount} ${dispute.currency} on charge ${typeof dispute.charge === 'string' ? dispute.charge : dispute.charge?.id} — reason ${dispute.reason}. Check the order's settlementMode before acting: VENUE_DIRECT is the venue's, DESTINATION and PLATFORM are ours.`,
+          );
+          break;
+        }
+
+        case 'charge.updated': {
+          /* A SKIPPED TRANSFER, which mode 2 has no other way to notice.
+           *
+           * On an asynchronous payment method there is a gap between
+           * authorization and funds landing. If the destination account loses
+           * its transfer capability or is closed in that window, Stripe SKIPS
+           * the transfer and leaves the money in the platform balance, marking
+           * it by setting `transfer_data` to null on the charge.
+           *
+           * That is silent here in a way it is not for other modes:
+           * `DESTINATION` deliberately writes NO AccountsPayableEntry for the
+           * act, because the transfer is supposed to be atomic with the charge.
+           * So a skipped transfer leaves nobody owed anything in our database
+           * and the act's 70% sitting on the platform, with every row looking
+           * correct. Nothing else would ever ask. */
+          const charge = event.data.object;
+          if (
+            charge.metadata?.settlementMode === 'destination' &&
+            charge.transfer_data === null &&
+            charge.status === 'succeeded'
+          ) {
+            log.error(
+              '[stripe/webhook]',
+              null,
+              `SKIPPED TRANSFER on charge ${charge.id} (${charge.amount} ${charge.currency}): the destination lost its transfer capability or was closed, so the act's share is sitting in the platform balance with no payable row behind it. Create the transfer manually once the account is fixed.`,
+            );
           }
           break;
         }

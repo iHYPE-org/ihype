@@ -402,6 +402,51 @@ entries get paid. That is step 2.
 
 ---
 
+### The webhook must be subscribed to five more events
+
+Added to the handler 2026-08-28 from Stripe's destination-charge and hosted-
+onboarding guides. **Code alone is not enough — each has to be ticked on the
+endpoint in the dashboard, or the handler never runs.** The registered set was
+`payment_intent.*` plus `account.updated`; `checkout.session.completed` and
+`.expired` were being handled in code and are worth re-confirming too.
+
+| Event | Why |
+|---|---|
+| `checkout.session.async_payment_succeeded` | **Money taken, nothing delivered.** `checkout.session.completed` means the customer AUTHORIZED, not that the payment cleared — for ACH, SEPA, Pay by Bank, Boleto or BLIK the outcome is 2-14 days later. Our `payment_status === 'paid'` guard correctly refused to issue a ticket before the funds arrived, and nothing then issued one after. |
+| `checkout.session.async_payment_failed` | The seat is held forever otherwise. The session already COMPLETED, so `checkout.session.expired` never fires for it. |
+| `charge.dispute.created` | Reports the dispute with a note on which side it lands. Deliberately does not act — see below. |
+| `charge.updated` | Detects a **skipped transfer**: if the destination loses its transfer capability during an async payment, Stripe leaves the money on the platform and sets `transfer_data` to null. `DESTINATION` mode writes no payable row for the act, so this is otherwise invisible in every table we have. |
+
+We do not pin `payment_method_types`, so Checkout offers whatever the account
+has enabled. If bank debits are on, these paths are live today.
+
+**The dispute handler reports and does not recover, on purpose.** Where a
+dispute lands depends on the settlement mode and the two cases are opposites:
+`VENUE_DIRECT` debits the venue, and under Stripe-managed risk an
+unrecoverable shortfall is Stripe's; `DESTINATION` and `PLATFORM` debit iHYPE.
+Stripe's guidance for the second is to recover by reversing the transfer to the
+act — real money taken back from a musician, sometimes for a show they played.
+That is not a decision an unattended webhook should make.
+
+### Onboarding: two settings worth deciding before the first venue
+
+From Stripe's hosted-onboarding guide.
+
+**`collection_options.fields` is unset, so onboarding is INCREMENTAL.** The
+default collects only `currently_due`. Passing `eventually_due` collects
+everything up front. Incremental gets a venue onboarded faster; up-front avoids
+the failure mode where a venue is verified in March, hits a revenue threshold in
+July, and has payouts disabled mid-season for information nobody asked for. For
+a venue that will be the merchant of record on real ticket sales, up-front is
+probably right. It is one parameter on the account link.
+
+**The return URL means "left the flow", not "finished it".** Stripe says so
+outright: it "doesn't mean that all information has been collected". Our return
+route now retrieves the account and checks the real capability rather than
+trusting the redirect, and an unfinished member is sent to payout settings — but
+the reason it must never be trusted is worth keeping written down, because
+trusting it is the obvious implementation.
+
 ### Test cards, and the one that matters most
 
 From the Accounts v2 marketplace blueprint, 2026-08-28. Use these in step 2 —
