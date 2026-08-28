@@ -1,0 +1,17 @@
+-- Which party was the merchant of record on a ticket order's charge.
+--
+--   PLATFORM      iHYPE settled it; every share is paid out from payables.
+--   DESTINATION   destination charge; the ARTIST's share went with the charge.
+--   VENUE_DIRECT  charge created on the venue's own Connect account; the
+--                 VENUE's share and the collected TAX stayed with them, and
+--                 iHYPE holds only the artist's and promoter's shares.
+--
+-- Load-bearing rather than descriptive. `buildPayableEntries` reads it at
+-- capture to decide which payables to write, and writing one for a share
+-- Stripe has already delivered would pay that party a second time — out of
+-- money belonging to somebody else. The account id alone cannot answer this:
+-- both non-platform modes set one, and they suppress DIFFERENT shares.
+--
+-- Defaults to PLATFORM, which is correct for every existing row: no order
+-- taken before this column existed was settled any other way.
+ALTER TABLE "TicketOrder" ADD COLUMN "settlementMode" TEXT NOT NULL DEFAULT 'PLATFORM';

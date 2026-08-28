@@ -1,6 +1,61 @@
 import { calculateProcessingFee } from '@/lib/stripe-fees';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
+
+/**
+ * The protection reserve, as a fraction of face value plus tax.
+ *
+ * ## What it is for, precisely
+ *
+ * Three real costs exist that nothing else in this system pays for, and a
+ * platform taking 0% has no revenue to absorb them:
+ *
+ *   1. DISPUTES. Stripe debits a disputed amount plus a $15 fee from the
+ *      PLATFORM account on a destination charge, with or without
+ *      `on_behalf_of`. Recovery from the act is a best-effort transfer
+ *      reversal, and after a show has happened it is often the wrong thing to
+ *      attempt at all — the artist played.
+ *   2. CONNECT'S OWN FEES: $2/month per active connected account, 0.25% + 25c
+ *      per payout, 0.25% of transfer volume. Roughly 1% of gross on a small
+ *      show, previously paid by nobody.
+ *   3. THE AMEX GAP, which `stripe-fees.ts` has documented from the start: the
+ *      gross-up quotes the standard 2.9% rate, Amex costs 3.5%, and the brand
+ *      is unknown until after the charge. Every Amex order under-collects
+ *      about 0.6% of the total.
+ *
+ * ## Why 1.5%
+ *
+ * It covers (2) and (3) outright and leaves a margin against (1) at a dispute
+ * rate in the low tenths of a percent, which is normal for event ticketing
+ * where the buyer knows the merchant and receives something. It is 27c on an
+ * $18 ticket. Set deliberately low: this is a fund against loss, not a revenue
+ * line, and over-collecting would make "0% to iHYPE" a technicality.
+ *
+ * ## What it is NOT
+ *
+ * It is not iHYPE's money and must never be described as a platform fee. The
+ * charter's 70/20/10 of face value is untouched by it, exactly as the
+ * processing fee is. If the fund persistently exceeds what disputes consume,
+ * the honest responses are to lower this number or to spend the surplus on the
+ * people it was collected from — not to keep it.
+ *
+ * ## It COLLECTS a fund. It does not start with one.
+ *
+ * There is no float behind this and none is guaranteed. At 27c on an $18
+ * ticket, one dispute costs $20.40 with a successful transfer reversal and $33
+ * without, so the fund cannot absorb a single dispute until roughly the 76th
+ * or 122nd ticket respectively. Before that, a dispute is met from whatever is
+ * in the Stripe balance — which is commingled with venue shares, promoter
+ * shares and collected TAX.
+ *
+ * That is survivable at alpha volume and dangerous at scale, so the rule is a
+ * threshold and not a launch gate: see the "fund starts at zero" section of
+ * docs/runbooks/money-path-rehearsal.md before raising ticket volume. Do not
+ * raise this percentage to build the fund faster — doubling it still only
+ * reaches one dispute's worth around ticket 60, and it spends the buyer's
+ * total, which is the thing this whole fee design is careful about.
+ */
+export const TICKET_RESERVE_PERCENT = 0.015;
 export const MAX_PROMOTER_AFFILIATE_PERCENT = 10;
 
 type SplitInput = {
@@ -224,7 +279,24 @@ export function calculateTicketTaxes({
   };
 }
 
-export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInput) {
+export function calculateTicketOrderFinancials(
+  input: OrderInput & TicketTaxInput & {
+    /**
+     * Whether iHYPE is the merchant of record on this sale and therefore
+     * carries its refunds and disputes.
+     *
+     * False on a VENUE-DIRECT charge, where the charge is created on the
+     * venue's own Connect account: Stripe debits that account for disputes,
+     * the venue is the seller for tax, and the protection reserve has nothing
+     * left to protect. Charging a buyer for a risk nobody is carrying would be
+     * a fee with no cost behind it, which is the one thing this fee design
+     * refuses to do.
+     *
+     * Defaults true so every existing caller keeps today's arithmetic.
+     */
+    platformBearsRisk?: boolean;
+  },
+) {
   const payouts = calculateTicketOrderPayouts(input);
   const taxes = calculateTicketTaxes(input);
 
@@ -241,13 +313,28 @@ export function calculateTicketOrderFinancials(input: OrderInput & TicketTaxInpu
    * Grossed up over subtotal + taxes, because Stripe charges on everything it
    * processes — see `stripe-fees.ts` for why a flat percentage under-collects.
    */
-  const processing = calculateProcessingFee(payouts.subtotalCents + taxes.totalTaxCents);
+  const protectedBaseCents = payouts.subtotalCents + taxes.totalTaxCents;
+
+  /* The reserve is computed BEFORE the processing gross-up and included in the
+     amount grossed up, because Stripe charges on everything it processes —
+     including the reserve. Computing it afterwards would leave the platform
+     paying Stripe's percentage of its own protection fund, which is the exact
+     shape of under-collection `stripe-fees.ts` exists to prevent.
+
+     Rounded UP for the same reason that module rounds up: a half-cent left
+     behind is the platform absorbing a cost, and the rule is that it never
+     does. The buyer pays at most one cent more than the exact figure. */
+  const reserveFeeCents = (input.platformBearsRisk ?? true)
+    ? Math.ceil(protectedBaseCents * TICKET_RESERVE_PERCENT)
+    : 0;
+  const processing = calculateProcessingFee(protectedBaseCents + reserveFeeCents);
 
   return {
     ...payouts,
     ...taxes,
+    reserveFeeCents,
     processingFeeCents: processing.feeCents,
-    totalChargeCents: payouts.subtotalCents + taxes.totalTaxCents + processing.feeCents
+    totalChargeCents: protectedBaseCents + reserveFeeCents + processing.feeCents
   };
 }
 
@@ -260,4 +347,142 @@ export function formatCurrencyFromCents(amountCents: number) {
 
 export function formatPercent(value: number) {
   return `${value}%`;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+ * Destination charges: what the platform keeps, and what Stripe routes for us
+ * ──────────────────────────────────────────────────────────────────────────── */
+
+/**
+ * The application fee for a destination charge — everything the platform holds
+ * back from a charge whose destination is the act being paid.
+ *
+ * ## Why the split is expressed this way round
+ *
+ * On a destination charge Stripe moves the WHOLE charge to the destination
+ * account and then pulls `application_fee_amount` back to the platform. So the
+ * only number we control is what comes back, and what the destination keeps is
+ * whatever we do not claim. Writing it as `total - destination` rather than
+ * `venue + promoter + tax + fee` is deliberate: those are the same figure only
+ * while every component is accounted for, and the subtraction cannot silently
+ * omit one. A missed component would not fail — it would quietly overpay the
+ * destination out of the tax money.
+ *
+ * ## What each party ends up with, on an $18 ticket with no tax
+ *
+ *   buyer charged            1885   (face 1800 + 85 grossed-up processing)
+ *   application fee           625   → platform
+ *     Stripe takes             85   from the platform's fee, not the artist's
+ *     platform retains        540   = venue 360 + promoter 180
+ *   destination keeps        1260   = the artist's 70% of FACE VALUE, whole
+ *
+ * The artist's share is unaffected by what the buyer's card cost to process,
+ * which is the same rule `calculateProcessingFee` already encodes and the
+ * reason the fee is grossed up rather than deducted.
+ *
+ * ## Taxes ride with the platform, on purpose
+ *
+ * Tax is collected from the buyer and remitted by iHYPE, so it must not reach
+ * the destination account. It is inside the application fee for exactly that
+ * reason — `buildPayableEntries` still writes the TAX_* entries against it.
+ *
+ * ## Lineups
+ *
+ * A destination charge has ONE destination. With accepted lineup slots the
+ * headliner's own slice is routed atomically and the remaining acts stay
+ * platform-held payables, so `destinationPayoutCents` is the slice being routed
+ * rather than the whole artist share. Callers pass what they mean.
+ */
+export function calculateDestinationChargeSplit({
+  totalChargeCents,
+  destinationPayoutCents,
+}: {
+  /** What Stripe is asked to charge: face value + tax + grossed-up processing. */
+  totalChargeCents: number;
+  /** The share routed straight to the destination account, of FACE VALUE. */
+  destinationPayoutCents: number;
+}): { applicationFeeCents: number; destinationKeepsCents: number } {
+  if (!Number.isInteger(totalChargeCents) || totalChargeCents <= 0) {
+    throw new Error('Total charge must be a positive whole number of cents.');
+  }
+  if (!Number.isInteger(destinationPayoutCents) || destinationPayoutCents < 0) {
+    throw new Error('Destination payout must be a non-negative whole number of cents.');
+  }
+  /* Stripe caps `application_fee_amount` at the charge amount, and a
+     destination that keeps a negative share is not a rounding artefact — it
+     means a caller has passed a payout larger than the charge, which is a
+     split miscalculation upstream. Fail loudly rather than let Stripe reject
+     it at the moment of purchase. */
+  if (destinationPayoutCents > totalChargeCents) {
+    throw new Error('Destination payout cannot exceed the total charge.');
+  }
+  return {
+    applicationFeeCents: totalChargeCents - destinationPayoutCents,
+    destinationKeepsCents: destinationPayoutCents,
+  };
+}
+
+/**
+ * The application fee on a VENUE-DIRECT charge: exactly the money iHYPE owes
+ * other people, and not one cent more.
+ *
+ * ## The flow, which runs the opposite way to a destination charge
+ *
+ * The charge is created ON the venue's Connect account (`Stripe-Account`
+ * header). Stripe deducts its processing fee and the application fee from that
+ * account, and the venue keeps the rest. So the platform does not decide what
+ * the venue receives — it decides what it TAKES, and the venue's share is the
+ * remainder.
+ *
+ * That inversion is why the fee is the sum of the two onward shares rather
+ * than `total - venue`. Written the other way it would silently absorb the tax
+ * and any difference between the quoted processing fee and Stripe's real cut,
+ * turning a fee that is purely pass-through into one that varies with card
+ * brand. Claiming only what must be paid onward keeps iHYPE's 0% literally
+ * true on every single charge.
+ *
+ * ## Who ends up with what, on an $18 ticket
+ *
+ *   buyer charged            1885   (face 1800 + 85 grossed-up processing)
+ *   Stripe takes               85   from the VENUE's account, as merchant
+ *   application fee          1440   → iHYPE, then out again:
+ *                                     artist 1260 + promoter 180
+ *   venue keeps               360   = its 20% of face
+ *
+ * Tax, where collected, stays with the venue for the same reason it used to
+ * stay with the platform: the merchant of record remits it, and on this charge
+ * type the merchant is the venue.
+ *
+ * ## What the venue absorbs, stated plainly
+ *
+ * Stripe's real cut comes out of the venue's side, so an Amex order — 3.5%
+ * against the 2.9% the gross-up quotes — leaves the venue a few cents under
+ * 20%. That gap used to sit on iHYPE and is documented in `stripe-fees.ts`.
+ * It moves with the merchant role, along with the disputes and the tax, and a
+ * venue agreeing to be the merchant should be told so rather than discovering
+ * it in a reconciliation.
+ */
+export function calculateDirectChargeApplicationFee({
+  artistPayoutCents,
+  promoterPayoutCents,
+  totalChargeCents,
+}: {
+  artistPayoutCents: number;
+  promoterPayoutCents: number;
+  /** Only for the sanity check below — Stripe caps the fee at the charge. */
+  totalChargeCents: number;
+}): { applicationFeeCents: number } {
+  if (!Number.isInteger(artistPayoutCents) || artistPayoutCents < 0
+    || !Number.isInteger(promoterPayoutCents) || promoterPayoutCents < 0) {
+    throw new Error('Onward shares must be non-negative whole numbers of cents.');
+  }
+  const applicationFeeCents = artistPayoutCents + promoterPayoutCents;
+  /* Stripe requires the fee to be LESS than the charge, not merely equal: a
+     fee equal to the whole charge leaves the merchant nothing to pay Stripe
+     from. Reaching this means the split is wrong upstream, so it fails here
+     rather than at the moment a fan tries to pay. */
+  if (applicationFeeCents >= totalChargeCents) {
+    throw new Error('Application fee must be less than the total charge.');
+  }
+  return { applicationFeeCents };
 }

@@ -45,9 +45,18 @@ vi.mock('@/lib/ticketing', () => ({
 
 const createTicketCheckoutSession = vi.fn();
 const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
+/* Defaults to NOT payout-ready, which is the state most shows are in until the
+   headliner finishes Connect onboarding. The destination-charge path gets its
+   own test below rather than becoming the assumed default here. */
+const isConnectPayoutReady = vi.fn().mockResolvedValue(false);
+const isConnectMerchantReady = vi.fn().mockResolvedValue(false);
+const createVenueDirectCheckoutSession = vi.fn();
 vi.mock('@/lib/stripe', () => ({
   createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
+  createVenueDirectCheckoutSession: (...args: unknown[]) => createVenueDirectCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
+  isConnectPayoutReady: (...args: unknown[]) => isConnectPayoutReady(...args),
+  isConnectMerchantReady: (...args: unknown[]) => isConnectMerchantReady(...args),
 }));
 
 const voidReservedTicketOrder = vi.fn().mockResolvedValue(true);
@@ -182,6 +191,109 @@ describe('POST /api/shows/[showId]/tickets', () => {
     expect(json.checkoutUrl).toBe('https://checkout.stripe.com/test');
     expect(createTicketCheckoutSession).toHaveBeenCalledTimes(1);
     expect(voidReservedTicketOrder).not.toHaveBeenCalled();
+  });
+
+  describe('who settles the charge', () => {
+    beforeEach(() => {
+      /* vi.clearAllMocks() clears CALLS, not implementations, so a
+         mockResolvedValue set in one test leaks into the next. Both readiness
+         mocks are re-floored here: without this the venue-direct test's `true`
+         would silently make every later test in this block pick mode 1. */
+      isConnectPayoutReady.mockResolvedValue(false);
+      isConnectMerchantReady.mockResolvedValue(false);
+      createTicketCheckoutSession.mockResolvedValue({
+        checkoutSessionId: 'cs_test', checkoutUrl: 'https://checkout.stripe.com/test',
+      });
+    });
+
+    it('prefers a venue-direct charge when the venue is onboarded', async () => {
+      /* Mode 1 and the one the product wants: the VENUE becomes the merchant,
+         so disputes and tax leave iHYPE entirely and the buyer pays no
+         protection reserve. It outranks routing to the headliner. */
+      isConnectMerchantReady.mockResolvedValue(true);
+      createVenueDirectCheckoutSession.mockResolvedValue({
+        checkoutSessionId: 'cs_direct', checkoutUrl: 'https://checkout.stripe.com/direct',
+      });
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+      expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+
+      const [call] = createVenueDirectCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.venueAccountId).toBe('acct_venue');
+      // iHYPE claims only what it owes onward — never the venue's share, and
+      // never the tax the venue is the one remitting.
+      expect(call.artistPayoutCents).toBe(1600);
+      expect(call.promoterPayoutCents).toBe(0);
+      // Selected on card_payments, never on the payout capability.
+      expect(isConnectMerchantReady).toHaveBeenCalledWith('acct_venue');
+    });
+
+    it('does not pick venue-direct for a venue that is only payout-ready', async () => {
+      /* THE DISTINCTION THIS BRANCH TURNS ON, and the bug it had until
+         2026-08-28. `stripe_transfers` lets money be sent TO an account;
+         `card_payments` lets a charge be created ON it, and only the second
+         makes a venue capable of being the merchant. They are separate
+         capabilities on separate configurations and neither implies the other,
+         so a venue that completed recipient onboarding alone looks payout-ready
+         and cannot take a charge.
+
+         Choosing on the wrong one does not degrade quietly: Stripe rejects
+         `createVenueDirectCheckoutSession` for the missing capability, and the
+         fan's purchase fails at the last step, after inventory is reserved,
+         over paperwork they have nothing to do with. */
+      isConnectPayoutReady.mockResolvedValue(true);
+      isConnectMerchantReady.mockResolvedValue(false);
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+      expect(createVenueDirectCheckoutSession).not.toHaveBeenCalled();
+      // Steps down a mode rather than failing — the venue is still the
+      // headliner's venue, but the act's own account carries the routing.
+      expect(createTicketCheckoutSession).toHaveBeenCalled();
+    });
+
+    it('falls back to routing the headliner when only they are onboarded', async () => {
+      // No venue account at all, so mode 1 is unavailable and mode 2 applies.
+      dbShowFindUnique.mockResolvedValueOnce(baseShow({ venueProfile: null }));
+      isConnectPayoutReady.mockResolvedValue(true);
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBe('acct_artist');
+      // Their share of FACE VALUE, routed by Stripe with the charge — not the
+      // total, which carries tax and the processing fee that stay behind.
+      expect(call.destinationPayoutCents).toBe(1600);
+    });
+
+    it('falls back to platform settlement when the headliner is not ready', async () => {
+      // The ordinary state until an act finishes Connect onboarding. A
+      // fan must never be blocked by the act's paperwork, so this is a
+      // fallback, not a failure.
+      isConnectPayoutReady.mockResolvedValue(false);
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBeNull();
+      // Both or neither: an account with no amount would make Stripe route the
+      // ENTIRE charge to it, which is the 2026-07-14 bug.
+      expect(call.destinationPayoutCents).toBeUndefined();
+    });
+
+    it('falls back when Stripe cannot be reached, rather than failing the sale', async () => {
+      // The order is already reserved by this point. Stripe being briefly
+      // unreachable should downgrade the settlement mode, not lose the sale.
+      isConnectPayoutReady.mockRejectedValue(new Error('Stripe API unreachable'));
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+      const [call] = createTicketCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.destinationAccountId).toBeNull();
+    });
   });
 
   it('rolls back the reservation when hosted checkout creation fails', async () => {

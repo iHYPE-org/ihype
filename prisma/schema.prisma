@@ -707,6 +707,34 @@ model TicketOrder {
   locationCountry            String?
   locationPostalCode         String?
   chargedAt                  DateTime?
+  /// The Connect account this order was settled ON BEHALF OF, when the charge
+  /// was a destination charge. Null means the platform settled it and the whole
+  /// split is paid out afterwards through AccountsPayableEntry.
+  ///
+  /// It has to be stored rather than re-derived: `buildPayableEntries` runs at
+  /// capture and must NOT write an artist payable for a share Stripe already
+  /// routed, or the payout cron would pay that act a second time. Asking Stripe
+  /// at capture time would put a network call inside the money transaction.
+  /// Which party was the merchant on this charge, and therefore which share
+  /// never passed through iHYPE's balance. Load-bearing at capture: writing a
+  /// payable for a share Stripe already delivered would pay that party twice.
+  ///
+  ///   PLATFORM      iHYPE settled it; every share is paid from payables.
+  ///   DESTINATION   destination charge; the ARTIST's share went with it.
+  ///   VENUE_DIRECT  charge on the venue's own account; the VENUE's share and
+  ///                 the TAX stayed with them, and iHYPE holds only the
+  ///                 artist's and promoter's shares as an application fee.
+  ///
+  /// A string rather than an enum so adding a mode needs no migration on a
+  /// table that carries live orders.
+  settlementMode             String                 @default("PLATFORM")
+  settlementAccountId        String?
+  /// The protection reserve collected on this order, in cents. Held by the
+  /// platform against refunds, disputes and Connect's own fees — see
+  /// TICKET_RESERVE_PERCENT. Recorded per order so the fund can be reconciled
+  /// against what it actually pays out, which is the only way to know whether
+  /// 1.5% is the right number.
+  reserveFeeCents            Int                    @default(0)
   refundedAt                 DateTime?
   stripeRefundId             String?
   transferredAt              DateTime?

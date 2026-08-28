@@ -83,6 +83,13 @@ export async function POST(request: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const onboardingUrl = await createConnectOnboardingUrl({
     connectAccountId,
+    /* A venue is the MERCHANT on its own shows — the ticket charge is created
+       on its account — so its onboarding has to collect the `merchant`
+       requirements too. Naming the wrong set here is silent: the member
+       completes a flow that looks finished and `card_payments` never
+       activates, so every sale quietly falls back to platform settlement and
+       iHYPE carries disputes it thought the venue had taken. */
+    merchantOnboarding: profile.type === 'VENUE',
     returnUrl: `${appUrl}/api/stripe/connect/return?profileId=${profile.id}`,
     refreshUrl: `${appUrl}/api/stripe/connect/refresh?profileId=${profile.id}`
   });

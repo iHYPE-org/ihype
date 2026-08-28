@@ -322,22 +322,107 @@ export async function GET(request: NextRequest) {
     }
 
     case 'stripe-connect-health': {
+      /* RECONCILES, and used to only complain.
+       *
+       * KYC IS ASYNCHRONOUS AND THAT IS THE WHOLE PROBLEM. A member finishes
+       * hosted onboarding and Stripe verifies them minutes or days later, long
+       * after they have closed the tab — so `/api/stripe/connect/return`, which
+       * checks readiness at the moment they come back, correctly finds them not
+       * ready and marks nothing.
+       *
+       * The intended backstop was the v1 `account.updated` webhook. For a
+       * recipient-only account that backstop does not exist: Stripe's own
+       * migration guide says v2 Accounts emit v1 events "depending on the
+       * updated configuration", and names the MERCHANT configuration as what
+       * emits v1 `account.updated`. A recipient capability going active
+       * announces itself on the v2 thin event
+       * `v2.core.account[configuration.recipient].capability_status_updated`,
+       * which needs a v2 event destination scoped to "Your account" — one this
+       * platform has not created. So for every artist and promoter, nothing
+       * was ever going to flip the flag after they left the page. Their shows
+       * would settle PLATFORM forever, reporting no fault, because nothing is
+       * faulty — it is just never asked.
+       *
+       * Asking Stripe on a schedule closes that with no dashboard
+       * configuration at all, and keeps working if an event is ever missed or
+       * a destination is deleted. A v2 event destination is still worth adding
+       * for latency (this run is 6-hourly); it is no longer load-bearing.
+       *
+       * PROMOTE ONLY, never demote — same one-way rule the webhook follows. A
+       * lapsed verification is a human decision, not something a cron should
+       * silently switch off mid-show-week.
+       *
+       * Bounded per run: this makes one Stripe call per pending profile, and
+       * an unbounded loop here is a Worker timeout on the day someone runs a
+       * signup campaign. The leftovers are picked up by the next run. */
       const { db } = await import('@/lib/db');
       const { sendOperationalEmail } = await import('@/lib/mailer');
-      const issues = await db.profile.findMany({
-        where: {
-          OR: [
-            { stripeConnectOnboarded: true, stripeConnectAccountId: null },
-            { stripeConnectOnboarded: false, stripeConnectAccountId: { not: null } }
-          ]
-        },
-        select: { name: true, slug: true, stripeConnectOnboarded: true, stripeConnectAccountId: true }
-      });
-      if (issues.length > 0) {
-        await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: `[iHYPE] Stripe Connect issues (${issues.length})`, text: issues.map(i => `${i.name}: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('\n'), html: `<p>${issues.map(i => `<strong>${i.name}</strong>: onboarded=${i.stripeConnectOnboarded}, accountId=${i.stripeConnectAccountId ?? 'null'}`).join('<br/>')}</p>` }, 'stripe-connect-health');
+      const { isConnectMerchantReady, isConnectPayoutReady, isStripeConfigured } =
+        await import('@/lib/stripe');
+
+      const RECONCILE_LIMIT = 50;
+      let promoted = 0;
+      let stillPending = 0;
+
+      if (isStripeConfigured()) {
+        const pending = await db.profile.findMany({
+          where: { stripeConnectOnboarded: false, stripeConnectAccountId: { not: null } },
+          select: { id: true, type: true, stripeConnectAccountId: true },
+          orderBy: { updatedAt: 'asc' },
+          take: RECONCILE_LIMIT,
+        });
+
+        for (const profile of pending) {
+          const accountId = profile.stripeConnectAccountId;
+          if (!accountId) continue;
+          /* A VENUE has to clear both. It is the merchant on its own shows, and
+             `card_payments` is what makes that true; marking it onboarded on
+             the payout capability alone lights up "Verified" for an account
+             that cannot take a charge. Same rule as the return route. */
+          const payoutReady = await isConnectPayoutReady(accountId).catch(() => false);
+          const merchantReady =
+            profile.type === 'VENUE'
+              ? await isConnectMerchantReady(accountId).catch(() => false)
+              : true;
+          if (payoutReady && merchantReady) {
+            await db.profile.update({
+              where: { id: profile.id },
+              data: { stripeConnectOnboarded: true },
+            });
+            promoted += 1;
+          } else {
+            stillPending += 1;
+          }
+        }
       }
+
+      /* Only genuinely CORRUPT state is worth an email now. "Started
+         onboarding and has not finished" is the ordinary condition of every
+         member mid-signup, and this alert used to include it — so it fired
+         every six hours about people doing nothing wrong, which is how an
+         alert becomes something nobody reads. An onboarded profile with no
+         account id cannot happen through any code path and means the two
+         columns have diverged. */
+      const corrupt = await db.profile.findMany({
+        where: { stripeConnectOnboarded: true, stripeConnectAccountId: null },
+        select: { name: true, slug: true },
+      });
+      if (corrupt.length > 0) {
+        const line = (i: { name: string; slug: string }) =>
+          `${i.name} (${i.slug}): marked onboarded with no Connect account id`;
+        await sendOperationalEmail(
+          {
+            to: getAdminAlertRecipients(),
+            subject: `[iHYPE] Stripe Connect state is inconsistent (${corrupt.length})`,
+            text: corrupt.map(line).join('\n'),
+            html: `<p>${corrupt.map((i) => `<strong>${i.name}</strong> (${i.slug}): marked onboarded with no Connect account id`).join('<br/>')}</p>`,
+          },
+          'stripe-connect-health',
+        );
+      }
+
       await pingCronAlive('stripe-connect-health');
-      return NextResponse.json({ ok: true, issues: issues.length });
+      return NextResponse.json({ ok: true, promoted, stillPending, corrupt: corrupt.length });
     }
 
     default:

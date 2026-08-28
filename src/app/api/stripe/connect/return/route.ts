@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { type NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { isConnectPayoutReady, isStripeConfigured } from '@/lib/stripe';
+import { isConnectMerchantReady, isConnectPayoutReady, isStripeConfigured } from '@/lib/stripe';
 import { getProfilePathForType } from '@/lib/profile-paths';
 import { log } from '@/lib/logger';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
@@ -15,6 +15,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
  */
 export async function GET(request: NextRequest) {
   let fallback: string = WORKBENCH_PATH;
+  let ready = false;
   try {
     const profileId = request.nextUrl.searchParams.get('profileId');
 
@@ -36,7 +37,18 @@ export async function GET(request: NextRequest) {
          the 70/20/10 out as transfers, so a recipient never requests
          `card_payments` and reports `charges_enabled: false` however completely
          it has onboarded. The flag could therefore never become true. */
-      const ready = await isConnectPayoutReady(profile.stripeConnectAccountId);
+      const payoutReady = await isConnectPayoutReady(profile.stripeConnectAccountId);
+      /* A VENUE has a HIGHER bar and must clear both. It was asked for the
+         merchant configuration at signup because it is the merchant on its own
+         shows, and `card_payments` is what makes that true. Marking it
+         onboarded on the payout capability alone lights up "Verified" for an
+         account that cannot take a charge — the same mistake the ticket route
+         made when picking a settlement mode, in the place the venue reads. */
+      const merchantReady =
+        profile.type === 'VENUE'
+          ? await isConnectMerchantReady(profile.stripeConnectAccountId)
+          : true;
+      ready = payoutReady && merchantReady;
       if (ready) {
         await db.profile.update({
           where: { id: profile.id },
@@ -45,6 +57,15 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    /* Stripe sends the member back here whenever they LEAVE the flow, not only
+       when they finish it — abandoning halfway lands on the same return_url.
+       This said "connected" unconditionally, to people who were not, and then
+       dropped them on their profile page where nothing shows payout state at
+       all. Someone who did not finish is sent to payout settings instead: that
+       is where the status pill reads the truth and where PayoutConnectButton
+       already renders its "Finish setup" state for exactly this case — an
+       account that exists and is not onboarded. */
+    if (!ready) redirect('/payouts?tab=settings&payout=incomplete');
     redirect(`${fallback}?payout=connected`);
   } catch (err) {
     // Re-throw redirect errors (Next.js redirect() throws internally)

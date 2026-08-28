@@ -49,6 +49,26 @@ export async function GET(request: Request) {
       connectAccountId: profile.stripeConnectAccountId,
       returnUrl: `${appUrl}/api/stripe/connect/return?profileId=${profile.id}`,
       refreshUrl: `${appUrl}/api/stripe/connect/refresh?profileId=${profile.id}`,
+      /* MUST MATCH THE ONBOARD ROUTE, and did not until 2026-08-28.
+       *
+       * This route is where Stripe sends a venue whose onboarding link expired
+       * part-way through — so it is reached by exactly the people who did not
+       * finish in one sitting, which is most of them. Omitting this defaulted
+       * the link to `['recipient']`, and a link naming fewer configurations
+       * than the account has collects only those requirements: the venue would
+       * complete a flow, be told it was done, become payout-ready, and never
+       * activate `card_payments`.
+       *
+       * Nothing would have reported that. `isConnectPayoutReady()` reads the
+       * recipient capability and would say yes; the payout settings page would
+       * light up "Verified"; and the ticket route, finding no merchant
+       * account, would quietly settle the sale as DESTINATION instead — moving
+       * the dispute liability back onto a platform with no reserve, which is
+       * the single thing this whole settlement design exists to prevent.
+       *
+       * Derived from the profile type here rather than passed through a query
+       * parameter, because the caller of this route is Stripe, not us. */
+      merchantOnboarding: profile.type === 'VENUE',
     });
     return NextResponse.redirect(onboardingUrl);
   } catch {

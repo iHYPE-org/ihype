@@ -123,6 +123,71 @@ describe('buildPayableEntries', () => {
     promoterPayoutCents: 1000,
   };
 
+  it('writes NO artist payable when Stripe already routed the act their share', () => {
+    /* The double-pay guard. On a destination charge the act's share never
+       reached the platform — it went to their account with the charge, and the
+       platform received only the application fee (venue + promoter + tax +
+       processing). An ARTIST_PAYOUT entry here would have the payout cron
+       transfer that share a SECOND time, out of money belonging to the venue,
+       the promoter and a tax authority. Nothing downstream would catch it: the
+       entry looks like any other artist payout and the transfer succeeds. */
+    const entries = buildPayableEntries(
+      show, { ...order, settlementMode: 'DESTINATION', settlementAccountId: 'acct_artist' }, [],
+    );
+    expect(entries.filter((e) => e.category === 'ARTIST_PAYOUT')).toHaveLength(0);
+
+    // Everything the platform DOES hold is still recorded, unchanged.
+    const venue = entries.filter((e) => e.category === 'VENUE_PAYOUT');
+    expect(venue).toHaveLength(1);
+    expect(venue[0].amountCents).toBe(2000);
+    expect(entries.filter((e) => e.category === 'PROMOTER_AFFILIATE')).toHaveLength(1);
+  });
+
+  it('suppresses the lineup payables too, not just the single-act one', () => {
+    /* A lineup is never settled on behalf of one act in the first place — the
+       purchase route takes the platform branch for it. This asserts the guard
+       covers that shape anyway, because the two decisions live in different
+       files and only one of them is here. */
+    const slots = [
+      { profileId: 'act1', splitPercent: 40 },
+      { profileId: 'act2', splitPercent: 30 },
+    ];
+    expect(buildPayableEntries(show, order, slots).filter((e) => e.category === 'ARTIST_PAYOUT').length)
+      .toBeGreaterThan(0);
+    expect(
+      buildPayableEntries(show, { ...order, settlementMode: 'DESTINATION', settlementAccountId: 'acct_artist' }, slots)
+        .filter((e) => e.category === 'ARTIST_PAYOUT'),
+    ).toHaveLength(0);
+  });
+
+  it('on a venue-direct charge, suppresses the VENUE share and the tax — not the artist', () => {
+    /* The mirror image of the destination case, and the reason a single
+       "settlementAccountId" could not express both: on a direct charge the
+       VENUE is the merchant, so their 20% and the tax never left their
+       account, while the artist's and promoter's shares DID reach iHYPE as the
+       application fee and must still be paid out. Getting this backwards would
+       pay the venue twice and the artist never. */
+    const withTax = { ...order, taxStateCents: 150, settlementMode: 'VENUE_DIRECT', settlementAccountId: 'acct_venue' };
+    const entries = buildPayableEntries(show, withTax, []);
+
+    expect(entries.filter((e) => e.category === 'VENUE_PAYOUT')).toHaveLength(0);
+    expect(entries.filter((e) => e.category === 'TAX_STATE')).toHaveLength(0);
+
+    const artist = entries.filter((e) => e.category === 'ARTIST_PAYOUT');
+    expect(artist).toHaveLength(1);
+    expect(artist[0].amountCents).toBe(7000);
+    expect(entries.filter((e) => e.category === 'PROMOTER_AFFILIATE')).toHaveLength(1);
+  });
+
+  it('still writes the venue share and tax on a platform-settled order', () => {
+    // The default, and the guard against the mode check leaking into it.
+    const withTax = { ...order, taxStateCents: 150 };
+    const entries = buildPayableEntries(show, withTax, []);
+    expect(entries.filter((e) => e.category === 'VENUE_PAYOUT')).toHaveLength(1);
+    expect(entries.filter((e) => e.category === 'TAX_STATE')).toHaveLength(1);
+    expect(entries.filter((e) => e.category === 'ARTIST_PAYOUT')).toHaveLength(1);
+  });
+
   it('pays the headliner directly when the show has no lineup', () => {
     const entries = buildPayableEntries(show, order, []);
     const artist = entries.filter((e) => e.category === 'ARTIST_PAYOUT');

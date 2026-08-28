@@ -19,9 +19,13 @@
  * The Stripe-side semantics the application depends on, with the same call
  * shapes src/lib/stripe.ts uses:
  *
- *   1. A ticket PaymentIntent created with `capture_method: 'manual'` and NO
- *      `transfer_data` captures in full to the platform balance. (This is the
- *      "separate charges and transfers" premise the whole split rests on.)
+ *   1. A PaymentIntent with NO `transfer_data` captures in full to the
+ *      platform balance. (This is the "separate charges and transfers" premise
+ *      the whole split rests on.) It is written with `capture_method: 'manual'`
+ *      so authorization and capture can be asserted separately — note that the
+ *      LIVE ticket path does not: `createTicketCheckoutSession` sets no capture
+ *      method, so a real ticket captures on payment. What is being rehearsed
+ *      here is where the money lands, which is identical either way.
  *   2. Three transfers — 70/20/10 of the captured amount — succeed against
  *      connected accounts and sum to exactly the captured total, with the
  *      last one absorbing the rounding remainder.
@@ -31,6 +35,21 @@
  *   5. An authorized-but-uncaptured PaymentIntent can be partially captured
  *      (the ad-settlement path, which captures only delivered spend) and can
  *      be cancelled outright (the release-the-hold path).
+ *   6. DESTINATION mode: a charge with `transfer_data.destination` and an
+ *      `application_fee_amount` routes exactly the act's share to the act and
+ *      keeps the rest on the platform — NOT the whole charge, which is the
+ *      2026-07-14 bug this shape replaced. Refunding it with
+ *      `reverse_transfer`/`refund_application_fee` unwinds the act too, rather
+ *      than leaving the platform to fund the whole refund alone.
+ *   7. VENUE_DIRECT mode: a charge created ON the venue's account really does
+ *      live there and not on the platform, and the `application_fee_amount`
+ *      carrying the artist's 70% and the promoter's 10% really does land in
+ *      the PLATFORM balance where the payout cron can transfer it onward.
+ *
+ * Steps 1-5 rehearse settlement mode PLATFORM, which is the FALLBACK. Steps 6
+ * and 7 rehearse the two modes a real sale is expected to take. A run that
+ * skips 6 and 7 for want of connected accounts has proved the fallback and
+ * nothing else — do not read it as a green light.
  *
  * What it does NOT prove
  * ----------------------
@@ -47,6 +66,12 @@
  * Optionally reuse already-onboarded test connected accounts (see step 2's
  * output if you don't have any):
  *   REHEARSAL_CONNECT_ACCOUNTS=acct_a,acct_b,acct_c
+ *
+ * Step 7 additionally needs one account with an active `card_payments`
+ * capability — a MERCHANT, which is a strictly higher bar than the `transfers`
+ * capability steps 2 and 6 need. Pass it explicitly if the auto-detection
+ * picks the wrong one:
+ *   REHEARSAL_MERCHANT_ACCOUNT=acct_venue
  */
 
 import Stripe from 'stripe';
@@ -89,6 +114,13 @@ function splitCents(total, parts) {
 let passed = 0;
 let failed = 0;
 const cleanup = [];
+/* Steps 6 and 7 skip when no suitable connected account exists, and a skip is
+   not a failure — nobody can conjure an onboarded venue out of a script. But a
+   silent skip that still exits 0 is how this codebase has twice ended up
+   trusting a green tick that measured nothing (the gated CI stages, the
+   redirect entry in the Lighthouse set). So a run that could not exercise the
+   modes a real sale takes exits 2: not a failure, not a pass either. */
+const skippedModes = [];
 
 function check(label, condition, detail = '') {
   if (condition) {
@@ -101,7 +133,10 @@ function check(label, condition, detail = '') {
 }
 
 async function createAuthorizedTicketIntent(confirmationCode) {
-  // Mirrors createTicketPaymentIntent(): manual capture, no transfer_data.
+  // The platform-settled shape: no transfer_data, so the whole charge lands on
+  // the platform balance. Manual capture is this script's own choice, not the
+  // live path's — it lets authorization and capture be asserted as two steps.
+  // Modes 2 and 3 are rehearsed in steps 6 and 7.
   return stripe.paymentIntents.create(
     {
       amount: TICKET_AMOUNT_CENTS,
@@ -245,6 +280,165 @@ async function step5AdSettlement() {
   check('unaired campaign releases the hold entirely', cancelled.status === 'canceled', cancelled.status);
 }
 
+async function resolveMerchantAccount() {
+  const fromEnv = (process.env.REHEARSAL_MERCHANT_ACCOUNT ?? '').trim();
+  if (fromEnv) return fromEnv;
+  const existing = await stripe.accounts.list({ limit: 100 });
+  // card_payments, not transfers. An account can be payable and still be
+  // unable to be the merchant on a charge, which is exactly the distinction
+  // isConnectPayoutReady() vs. the venue-direct branch turns on.
+  const merchant = existing.data.find((a) => a.capabilities?.card_payments === 'active');
+  return merchant?.id ?? null;
+}
+
+async function step6DestinationCharge(accounts) {
+  console.log('\n[6] DESTINATION mode routes the act\'s share and no more');
+  if (!accounts) {
+    console.log('  SKIP  depends on the connected accounts step 2 needs.');
+    skippedModes.push('DESTINATION');
+    return;
+  }
+  const actAccount = accounts[0];
+  const actShareCents = Math.floor((TICKET_AMOUNT_CENTS * 70) / 100);
+  // calculateDestinationChargeSplit(): the fee is what is LEFT, computed by
+  // subtraction. An addition that forgot a component would not fail here; it
+  // would quietly overpay the act. Restated so a drift fails an assertion.
+  const applicationFeeCents = TICKET_AMOUNT_CENTS - actShareCents;
+
+  const code = `rehearsal-dest-${Date.now()}`;
+  const intent = await stripe.paymentIntents.create(
+    {
+      amount: TICKET_AMOUNT_CENTS,
+      currency: 'usd',
+      payment_method: 'pm_card_visa',
+      confirm: true,
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      transfer_data: { destination: actAccount },
+      application_fee_amount: applicationFeeCents,
+      metadata: { confirmationCode: code, settlementMode: 'destination', rehearsal: 'true' },
+    },
+    { idempotencyKey: `ticket-destination:${code}` },
+  );
+  check('destination charge succeeds', intent.status === 'succeeded', intent.status);
+  check(
+    'iHYPE stays the settlement merchant (no on_behalf_of)',
+    !intent.on_behalf_of,
+    `on_behalf_of=${intent.on_behalf_of ?? 'unset'}`,
+  );
+
+  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { expand: ['transfer'] });
+  const transfer = charge.transfer && typeof charge.transfer === 'object' ? charge.transfer : null;
+  check('a transfer to the act was created', Boolean(transfer), transfer ? transfer.id : 'none');
+  // THE ASSERTION THIS STEP EXISTS FOR. Omitting transfer_data.amount sends
+  // the ENTIRE charge onward; the application fee is what claws the rest back.
+  check(
+    'the act receives their share, not the whole charge',
+    transfer?.amount === actShareCents,
+    `transferred=${transfer?.amount} expected=${actShareCents} of ${TICKET_AMOUNT_CENTS}`,
+  );
+  check(
+    'the platform keeps the remainder as an application fee',
+    charge.application_fee_amount === applicationFeeCents,
+    `fee=${charge.application_fee_amount} expected=${applicationFeeCents}`,
+  );
+
+  // refundTicketPaymentIntent({ wasDestinationCharge: true }). Without these
+  // two flags a refunded ticket returns the full face value out of a balance
+  // that only ever received the fee, and the act keeps their share.
+  const refund = await stripe.refunds.create(
+    { payment_intent: intent.id, reverse_transfer: true, refund_application_fee: true },
+    { idempotencyKey: `refund:${intent.id}:full` },
+  );
+  check('destination refund succeeds', refund.status === 'succeeded' || refund.status === 'pending', `status=${refund.status}`);
+  const afterRefund = transfer ? await stripe.transfers.retrieve(transfer.id) : null;
+  check(
+    'the refund pulls the act\'s share back too',
+    afterRefund?.amount_reversed === afterRefund?.amount,
+    `reversed=${afterRefund?.amount_reversed} of ${afterRefund?.amount}`,
+  );
+}
+
+async function step7VenueDirectCharge(merchantAccount) {
+  console.log('\n[7] VENUE_DIRECT mode puts the charge on the venue and the fee on the platform');
+  if (!merchantAccount) {
+    console.log('  SKIP  no connected account has an active `card_payments` capability.');
+    console.log('        This is a HIGHER bar than the transfers capability steps 2 and 6 use: a');
+    console.log('        venue-direct charge needs a full-service-agreement merchant, which means');
+    console.log('        completing hosted onboarding with the merchant configuration requested.');
+    console.log('        Create one, then re-run with:');
+    console.log('          REHEARSAL_MERCHANT_ACCOUNT=acct_venue');
+    console.log('        Until this step runs, the mode a real sale is expected to take is unproven.');
+    return;
+  }
+
+  // calculateDirectChargeApplicationFee(): a SUM of the two onward shares, not
+  // total - venue. The venue keeps what it is not charged, so the platform
+  // must name what it takes rather than what the venue receives.
+  const artistCents = Math.floor((TICKET_AMOUNT_CENTS * 70) / 100);
+  const promoterCents = Math.floor((TICKET_AMOUNT_CENTS * 10) / 100);
+  const applicationFeeCents = artistCents + promoterCents;
+  check(
+    'the application fee claims the two onward shares and nothing else',
+    applicationFeeCents < TICKET_AMOUNT_CENTS,
+    `fee=${applicationFeeCents} of ${TICKET_AMOUNT_CENTS}, venue keeps the rest less Stripe's cut`,
+  );
+
+  const code = `rehearsal-direct-${Date.now()}`;
+  const intent = await stripe.paymentIntents.create(
+    {
+      amount: TICKET_AMOUNT_CENTS,
+      currency: 'usd',
+      payment_method: 'pm_card_visa',
+      confirm: true,
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      application_fee_amount: applicationFeeCents,
+      metadata: { confirmationCode: code, settlementMode: 'venue_direct', rehearsal: 'true' },
+    },
+    {
+      // The header is the whole difference. Without it this is an ordinary
+      // platform charge carrying a nonsensical fee, and iHYPE is silently the
+      // merchant again — which looks completely normal until a chargeback.
+      stripeAccount: merchantAccount,
+      idempotencyKey: `ticket-direct:${merchantAccount}:${code}`,
+    },
+  );
+  check('direct charge succeeds', intent.status === 'succeeded', intent.status);
+
+  // The merchant role really moved: the charge is not on the platform at all.
+  // A platform-scoped lookup must fail, and that failure is the pass.
+  let visibleToPlatform = true;
+  try {
+    await stripe.paymentIntents.retrieve(intent.id);
+  } catch {
+    visibleToPlatform = false;
+  }
+  check(
+    'the charge lives on the venue, not the platform',
+    !visibleToPlatform,
+    visibleToPlatform ? 'platform can read it — the stripeAccount header did not apply' : `${intent.id} is invisible to the platform`,
+  );
+
+  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { stripeAccount: merchantAccount });
+  check(
+    'the venue is charged the application fee',
+    charge.application_fee_amount === applicationFeeCents,
+    `fee=${charge.application_fee_amount} expected=${applicationFeeCents}`,
+  );
+
+  // And it landed on the PLATFORM, which is what makes the split payable.
+  // Application fees are readable platform-side by definition; if this is
+  // empty the money is somewhere the payout cron cannot reach.
+  const feeId = charge.application_fee;
+  const fee = feeId ? await stripe.applicationFees.retrieve(typeof feeId === 'string' ? feeId : feeId.id) : null;
+  check(
+    'the fee lands in the platform balance, where the payout cron can transfer it',
+    fee?.amount === applicationFeeCents,
+    fee ? `application_fee ${fee.id} = ${fee.amount}` : 'no application fee object on the platform',
+  );
+  console.log(`        Onward: artist ${artistCents}, promoter ${promoterCents}. The transfer mechanism`);
+  console.log('        itself is the one step 2 and step 3 already proved — same createPayoutTransfer().');
+}
+
 async function main() {
   const account = await stripe.accounts.retrieve();
   console.log(`Stripe test-mode rehearsal — account ${account.id}`);
@@ -256,6 +450,8 @@ async function main() {
   await step3TransferIdempotency(transfers);
   await step4Refund();
   await step5AdSettlement();
+  await step6DestinationCharge(accounts);
+  await step7VenueDirectCharge(await resolveMerchantAccount());
 
   for (const fn of cleanup) await fn().catch(() => {});
 
@@ -266,6 +462,15 @@ async function main() {
   }
   console.log('\nStripe-side semantics hold. Still unverified: the database state transitions in');
   console.log('triggerShowPayouts()/refundCapturedTicketOrder(), which need a staging DB to exercise.');
+  if (skippedModes.length > 0) {
+    console.error(`\nINCOMPLETE — could not rehearse: ${skippedModes.join(', ')}.`);
+    console.error('Those are the settlement modes a real sale is expected to take. What ran was the');
+    console.error('PLATFORM fallback. Onboard the connected accounts named above and run this again');
+    console.error('before treating the money path as rehearsed. Exiting 2 rather than 0 so this');
+    console.error('cannot be mistaken for a pass by anything reading the exit code.');
+    process.exit(2);
+  }
+  console.log('All three settlement modes rehearsed: PLATFORM, DESTINATION, VENUE_DIRECT.');
 }
 
 main().catch((error) => {

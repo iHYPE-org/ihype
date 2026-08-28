@@ -58,7 +58,8 @@
     "clear:users": "node scripts/clear-all-users.mjs",
     "audit:retro": "node scripts/audit-retro-coverage.mjs --max=0",
     "design:handoff": "node scripts/build-console-handoff.mjs",
-    "measure:layout": "tsx scripts/measure-layout.mts"
+    "measure:layout": "tsx scripts/measure-layout.mts",
+    "rehearse:money": "tsx scripts/rehearse-money-path.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

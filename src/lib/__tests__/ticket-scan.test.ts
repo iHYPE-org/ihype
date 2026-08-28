@@ -114,10 +114,13 @@ describe('ticket scan: complete order validation', () => {
     venueLocation: { stateRegion: 'NY', country: 'US', postalCode: '10001' }
   };
 
-  it('total charge is subtotal + all taxes + the buyer-paid Stripe fee', () => {
+  it('total charge is subtotal + taxes + reserve + the buyer-paid Stripe fee', () => {
+    // Four named components and nothing else. The protection reserve joined
+    // this sum on 2026-08-27; like processing it rides on top of face value
+    // and is not part of anyone's share.
     const result = calculateTicketOrderFinancials(validOrder);
     expect(result.totalChargeCents).toBe(
-      result.subtotalCents + result.totalTaxCents + result.processingFeeCents,
+      result.subtotalCents + result.totalTaxCents + result.reserveFeeCents + result.processingFeeCents,
     );
   });
 

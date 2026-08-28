@@ -1,0 +1,16 @@
+-- The protection reserve collected on a ticket order, in cents.
+--
+-- Held by the platform against refunds, card disputes and Stripe Connect's own
+-- per-account and per-payout fees — costs that a platform taking 0% has no
+-- other revenue to absorb. It is charged to the buyer on top of face value and
+-- disclosed as its own line before payment; it is NOT part of the 70/20/10
+-- split, which remains a split of face value alone.
+--
+-- Defaults to 0, which is correct for every existing row: no order taken before
+-- this column existed collected a reserve.
+--
+-- Recorded per order rather than derived so the fund can be reconciled against
+-- what it actually pays out. That reconciliation is the only way to learn
+-- whether 1.5% is the right number, and the honest responses to a persistent
+-- surplus are to lower it or to spend it on the people it came from.
+ALTER TABLE "TicketOrder" ADD COLUMN "reserveFeeCents" INTEGER NOT NULL DEFAULT 0;

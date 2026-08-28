@@ -147,7 +147,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
          * is the one line to change.
          */
         const refundableCents = order.totalChargeCents - order.processingFeeCents;
-        const refundId = await refundTicketPaymentIntent(order.stripePaymentIntentId, refundableCents);
+        /* On a destination charge the act's share is not in the platform
+           balance to refund from — Stripe routed it with the charge. Without
+           the reversal flag the default is that they KEEP it and the platform
+           returns the fan's whole payment out of the application fee it
+           received, so every refund would lose roughly the artist's share.
+           `settlementAccountId` is stored on the order precisely so this does
+           not have to ask Stripe what kind of charge it was. */
+        const refundId = await refundTicketPaymentIntent(
+          order.stripePaymentIntentId,
+          refundableCents,
+          { wasDestinationCharge: Boolean(order.settlementAccountId) },
+        );
         await db.$transaction(async (tx) => {
           const ok = await refundCapturedTicketOrder(tx, order.id);
           if (!ok) throw new Error('Order changed state before the refund could be recorded.');

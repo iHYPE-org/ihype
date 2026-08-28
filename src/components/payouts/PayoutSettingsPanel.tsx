@@ -68,6 +68,29 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                   />
                 )}
               </div>
+
+              {/* A VENUE is agreeing to something materially different from an
+                  artist or a promoter, and it has to be said BEFORE the button
+                  rather than discovered in a Stripe dashboard afterwards.
+                  Connecting here makes the venue the merchant of record on its
+                  own shows: the ticket charge is created on its account, so it
+                  receives the money first, and disputes and sales tax are its
+                  own. That is what lets iHYPE take 0% and charge buyers no
+                  protection fee — a platform with no reserve and no staff
+                  cannot honestly hold those obligations, and a venue already
+                  has a bank account and an accountant.
+
+                  Kept to plain sentences and shown to every venue, connected or
+                  not: a venue that connected last month should still be able to
+                  read what it agreed to. */}
+              {p.type === 'VENUE' && (
+                <p className="pset-merchant-note">
+                  {t(
+                    'payoutSettingsPanel.venueMerchantNote',
+                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
+                  )}
+                </p>
+              )}
             </div>
           ))}
         </div>
@@ -98,6 +121,10 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         .pset-account-info { flex: 1; min-width: 0; }
         .pset-account-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
         .pset-account-id { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); margin-top: 3px; }
+        /* The venue disclosure is the one block on this panel that is a legal
+           statement rather than a status readout, so it is set apart from the
+           card it sits in rather than reading as another row of metadata. */
+        .pset-merchant-note { margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--role-venue); background: rgba(var(--role-venue-rgb),.08); border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-a70); }
         .pset-note { padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--bg2); margin-bottom: 0; }
         .pset-note-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 4px; }
         .pset-note p { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }

@@ -101,6 +101,227 @@ never executed anywhere; note that the double-pay guard now has unit cover
 (`show-payouts.test.ts`, "pays once when the cron runs twice"), which is not the
 same as proving Stripe accepts the second call as a no-op.
 
+### Loss controls, added 2026-08-27 — verify these in the rehearsal
+
+Four changes exist to stop a sale losing money for iHYPE, the act, the venue or
+the promoter. Three are provable without Stripe and are unit-tested; the fourth
+has never executed anywhere and is the one to watch for.
+
+| Control | What it prevents | Proven? |
+|---|---|---|
+| **10-day payout hold** (`PAYOUT_HOLD_DAYS`, `show-payouts.ts`) | Payables used to release the moment a show hit `ENDED`, leaving **zero** window to reverse anything. A dispute the next morning had nothing to claw back. | Unit-tested. Confirm in step 3 that a show ended today releases NOTHING. |
+| **1.5% protection reserve** (`TICKET_RESERVE_PERCENT`) | Disputes ($15 fee + the amount, debited from the PLATFORM even on a destination charge), Connect's ~1% of gross, and the Amex under-collection `stripe-fees.ts` has always documented. All previously paid by nobody. | Unit-tested, disclosed at checkout. Reconcile the fund against real disputes before trusting 1.5%. |
+| **`reverse_transfer` + `refund_application_fee`** on refunds | Stripe's default is that the destination KEEPS its transfer and the platform absorbs the whole refund — every refund a net loss of about the artist's share. | Unit-tested. **Prove against real Stripe**: refund a destination charge and check the act's balance actually drops. |
+| ~~`debit_negative_balances: true`~~ **REMOVED 2026-08-27** | It made Stripe recover a negative balance from the payee's own bank, which mattered while iHYPE was liable for those balances. | **Deleted, not deferred.** Connect signup selected Stripe-managed risk, and a platform that is not liable cannot debit its connected accounts at all — Stripe handles recovery itself. The call was also a v1 `accounts.update` against a v2 account and had never executed anywhere. Do not re-add it: "make sure we can debit the account" reads like an obviously good idea to anyone who has not read the platform's risk configuration. |
+
+What none of it fixes: a stolen card that buys a ticket, attends the show, and
+disputes. The show happened and the act played. Radar lowers the frequency, the
+reserve absorbs the hit, the hold decides whether it lands on iHYPE or is
+clawed back from the act — and the deliberate answer is that **iHYPE carries
+it**, because an artist clawed back a week after playing does not come back.
+
+### Connect is configured, and it changes the dispute answer below
+
+Signed up 2026-08-27. The platform's own Connect configuration is:
+
+| Setting | Chosen |
+|---|---|
+| Funds flow | **Sellers will collect payments directly** — direct charges, the venue is the merchant |
+| Account creation | Onboarding hosted by Stripe |
+| Account management | Sellers use the Express Dashboard |
+| Risk and loss liability | **Stripe manages risk and is liable if sellers cannot pay back losses, including fraud** |
+
+The last row is the one that matters most and it was not a given. On a
+**venue-direct** sale iHYPE now carries no dispute exposure at all: Stripe
+debits the venue's account, and if that account cannot cover it, STRIPE absorbs
+the shortfall rather than the platform. That is what makes this design viable
+for a platform with no reserve behind it.
+
+`createStripeConnectAccount` must match, and now does:
+`responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' }`.
+It said `'application'` for both until this date, which would have handed the
+liability straight back — quietly, on an account that looks correctly
+configured.
+
+**What the section below still describes accurately** is the FALLBACK modes.
+A headliner-destination or platform-settled charge is an *indirect* charge, the
+platform is the merchant, and Stripe's own guidance is explicit that
+Stripe-managed risk "doesn't absolve your platform of responsibility for its own
+balance". So the empty-fund problem is real for exactly those sales — the ones
+where no venue is onboarded — and disappears for the rest. That is a strong
+argument for getting venues onboarded early, and a reason the 1.5% reserve stays
+on the fallback modes and is charged on none of the venue-direct ones.
+
+### Dispute liability: settled, and the fund is empty
+
+Confirmed with Stripe, 2026-08-27, after the destination-charge work landed.
+Recorded here because it is the question most likely to be re-litigated by
+someone reading `on_behalf_of` and assuming it did more than it does.
+
+**iHYPE carries every chargeback.** Stripe debits dispute amounts and fees from
+the PLATFORM account on a destination charge, *with or without* `on_behalf_of`.
+The connected account bears none of it. `on_behalf_of` moves the settlement
+merchant — the act's name on the fan's statement, their country's fee structure
+— and moves no risk at all.
+
+Two levers were checked and neither helps:
+
+- **`losses_collector` / `controller.losses.payments`** governs *connected
+  account* negative balances, not the platform's own. It cannot help on an
+  indirect charge, where the negative balance in question is the platform's.
+  (**Corrected 2026-08-28:** this bullet used to say the right value was
+  `application` and that `createStripeConnectAccount` already set it. Both
+  halves are now wrong — the signed-up configuration is Stripe-managed risk, so
+  the value is `'stripe'`, and the function was changed to match. The point the
+  bullet was making still stands: it buys nothing on the fallback modes.)
+- **Direct charges** put liability on the connected account — and this bullet
+  used to end there, claiming they settle to exactly one account so the
+  70/20/10 "could not be routed by Stripe" and one party would have to be
+  trusted to pay the other two. **That was wrong, and it cost most of a day.**
+  `application_fee_amount` on a direct charge lands in the PLATFORM balance and
+  can be transferred onward, so a direct charge routes a three-way split
+  perfectly well: the venue keeps its 20% by never sending it, and the artist's
+  70% and the promoter's 10% arrive as an application fee that the payout cron
+  pays out. That is `VENUE_DIRECT`, and it is now the preferred mode. Nobody is
+  trusted to pay anybody.
+
+Liability follows the merchant on the charge, and a charge has one merchant.
+That is card-network structure, not a product choice, so no vendor escapes it
+by being cleverer. **What follows from it is not what this paragraph used to
+say** — it used to conclude that no configuration gives an enforced split with
+no platform dispute liability. There is one: make the merchant somebody other
+than iHYPE. A direct charge on the venue's account is an enforced three-way
+split (see the corrected bullet above) whose merchant is the venue, so the
+dispute is the venue's and, under Stripe-managed risk, the unrecoverable
+shortfall is Stripe's. iHYPE's exposure is zero on those sales. It is the
+fallback modes — where no venue is onboarded and iHYPE is the merchant by
+default — that carry the liability this section is about.
+
+#### Deflection is not insurance
+
+Stripe pointed at third-party apps — ChargebackStop, Chargeblast, Chargeflow —
+rather than their own first-party Chargeback Protection, which strongly implies
+the first-party product is not available on Connect destination charges. Do not
+plan around it without confirming.
+
+What those apps sell is mostly **prevention and automation**, not risk
+transfer:
+
+- **Pre-dispute alerts** (Ethoca / Verifi networks): notification when a
+  cardholder disputes with their bank, with a window to refund voluntarily
+  before it becomes a chargeback. The sale is still lost; the **$15 fee**, the
+  chargeback record and the dispute-ratio hit are avoided.
+- **Dispute automation**: evidence assembly and submission, usually priced on
+  recovery. Some tiers advertise a guarantee — read those terms rather than the
+  marketing.
+
+None of them move liability. They lower frequency and cost.
+
+**Alerts are worth more here than to an ordinary merchant**, and the reason is
+the payout hold. An alert arriving inside the ten days means the payable is
+still held, so the refund AND the transfer reversal can both happen while the
+act's share is still recoverable — instead of clawing back from someone who
+played the show a week ago, which is the outcome this runbook says iHYPE should
+absorb rather than inflict. The hold creates the window; the alerts say when to
+use it. That is a better argument for ten days than the one written above it.
+
+#### The fund starts at zero, and is not segregated
+
+`TICKET_RESERVE_PERCENT` COLLECTS a reserve. It does not begin with one, and
+there is no float behind it. At 27c on an $18 ticket:
+
+| Outcome | Net loss | Tickets that must have sold to cover it |
+|---|---|---|
+| Dispute, transfer reversal succeeds | $18.00 − $12.60 recovered + $15 fee = **$20.40** | **76** |
+| Dispute, reversal fails (act's balance empty) | $18 + $15 = **$33.00** | **122** |
+
+So the fund cannot absorb one dispute until roughly the hundredth ticket. Before
+that, a dispute is met by whatever is in the Stripe balance; if that is short,
+Stripe debits the linked bank account, and failing that the platform goes
+negative and recovers from later sales.
+
+**It is also commingled.** The reserve accrues into the same balance as venue
+shares, promoter shares and collected TAX. A dispute consumes whatever is
+sitting there, which can be a remittance owed to a tax authority — a worse
+failure than the dispute. `reserveFeeCents` is stored per order specifically so
+collected-minus-consumed can be reported against the tax liability; build that
+view before volume, not after.
+
+#### What to do about it, given no guaranteed float
+
+A seeded float is the clean answer and **cannot be relied on** — donations are
+not guaranteed. So the rule is a threshold rather than a precondition:
+
+- **Alpha is not gated on this.** At ten shows and a couple of hundred tickets
+  the expected loss is a few dollars and the tail is one or two disputes,
+  landing as a negative balance of tens of dollars that later sales recover.
+  Unpleasant, visible, survivable.
+- **Growth is gated on it.** Do not scale past a few hundred tickets a month
+  until the fund covers a bad month. That is a rule that can be kept without
+  anyone donating anything.
+- **Keep the ten days.** With no float, a successful reversal is the difference
+  between $20.40 and $33. Do not shorten the hold under pressure from acts
+  waiting to be paid; explain it instead.
+- **Radar rules** are free and cut fraud at source.
+- **Do NOT raise the reserve to build the fund faster.** Doubling to 54c still
+  only reaches one dispute's worth around ticket 60, and it spends the thing
+  this project has been most careful about — the buyer's total.
+
+Reserve policy and tax segregation for a 501(c)(3) are an accountant's
+territory, not this runbook's. What is written here is the mechanics; the
+treatment is a question for someone qualified.
+
+### KYC finishes after the member leaves, and the v1 webhook does not say so
+
+Recorded 2026-08-28, from Stripe's Accounts v2 migration guide.
+
+Onboarding completion is **asynchronous**. A venue finishes the hosted flow and
+Stripe verifies them minutes or days later, by which time they have closed the
+tab. `/api/stripe/connect/return` checks readiness at the moment they come
+back, correctly finds them not ready, and marks nothing. Something has to ask
+again later.
+
+The intended backstop was the v1 `account.updated` webhook, and **for a
+recipient-only account that backstop does not exist.** Stripe's guide says v2
+`Accounts` emit v1 events "depending on the updated configuration", and names
+the **merchant** configuration as the one that emits v1 `account.updated`. A
+recipient capability going active announces itself only on the v2 thin event:
+
+```
+v2.core.account[configuration.recipient].capability_status_updated
+```
+
+So for every artist and promoter — recipient-only by design — nothing was ever
+going to flip `stripeConnectOnboarded` after they left the page. Every one of
+their shows would settle `PLATFORM` indefinitely, reporting no fault, because
+nothing is faulty: the question is simply never asked again.
+
+**Closed by making `stripe-connect-health` reconcile rather than complain.**
+Every 6 hours it asks Stripe the real readiness question for each profile that
+has an account and is not marked onboarded, and promotes the ones that have
+gone active — payout capability for everyone, **plus** `card_payments` for a
+venue. Promote-only, never demote. It needs no dashboard configuration and it
+keeps working if an event is missed or a destination is deleted.
+
+That cron previously only sent email, and its query included
+`onboarded: false, accountId: not null` — which is the ordinary state of every
+member who has started and not finished. It therefore alerted every six hours
+about people doing nothing wrong. It now emails only for genuinely corrupt
+state (onboarded with no account id), which no code path can produce.
+
+**A v2 event destination is still worth adding, and is no longer load-bearing.**
+It buys latency: minutes instead of up to six hours. Two things to get right,
+both of which Stripe's own support notes people get wrong:
+
+- Create it as an **API v2** destination — a v1 webhook endpoint does not
+  receive thin events at all, so our existing `/api/stripe/webhook` cannot.
+- Scope it to **"Your account"**, not "Connected accounts". `v2.core.account.*`
+  events for connected accounts arrive on the platform's own scope, which is
+  the opposite of the v1 intuition.
+
+Subscribe to the `configuration.recipient` **and** `configuration.merchant`
+variants — a venue needs both, and only the merchant one has any v1 equivalent.
+
 ### The remaining steps still need a human
 
 Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
@@ -126,9 +347,9 @@ Everything in the right-hand column is what the steps below are for.
 
 ## Step 1 — Stripe-side semantics (30 minutes, test mode)
 
-`scripts/stripe-payout-rehearsal.mjs` rehearses the six Stripe behaviours the
-app's design depends on. It **refuses any key that is not `sk_test_`**, so it
-cannot touch live money.
+`scripts/stripe-payout-rehearsal.mjs` rehearses the Stripe behaviours the app's
+design depends on, across **all three settlement modes**. It **refuses any key
+that is not `sk_test_`**, so it cannot touch live money.
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
@@ -137,17 +358,157 @@ STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
 A test-mode account already exists on the iHYPE Stripe account, so the key comes
 from Stripe Dashboard → Developers → API keys with the **Test mode** toggle on.
 
-The script creates its own connected accounts unless you point it at existing
-ones with `REHEARSAL_CONNECT_ACCOUNTS=acct_…,acct_…,acct_…`.
+**It does not create connected accounts, and cannot.** Stripe will not transfer
+to, or charge on, an account that has not completed onboarding, so the accounts
+are a prerequisite rather than something the script can arrange:
 
-**What good looks like:** every one of its six checks prints a pass, in
-particular that the three transfers sum to exactly the captured amount and that
-replaying a transfer with the same idempotency key returns the *same* transfer id
-rather than paying twice.
+| Env var | What it needs | Which steps |
+|---|---|---|
+| `REHEARSAL_CONNECT_ACCOUNTS=acct_…,acct_…,acct_…` | three accounts with `transfers` **active** | 2, 3, 6 |
+| `REHEARSAL_MERCHANT_ACCOUNT=acct_venue` | one account with `card_payments` **active** | 7 |
+
+The second is a strictly higher bar than the first — a merchant needs the full
+service agreement and the merchant configuration requested during onboarding.
+That difference is not an inconvenience of the script; it is the same
+distinction `isConnectPayoutReady()` and the venue-direct branch turn on, so an
+account that cannot satisfy step 7 also cannot take a `VENUE_DIRECT` sale.
+
+**What good looks like:** every check passes AND the last line reads *"All three
+settlement modes rehearsed"*. In particular:
+
+- the three transfers sum to exactly the captured amount, and replaying one with
+  the same idempotency key returns the *same* transfer id rather than paying
+  twice (steps 2-3);
+- on a **destination** charge the act receives their *share* and not the whole
+  charge — the 2026-07-14 bug, asserted directly — and a refund with
+  `reverse_transfer`/`refund_application_fee` reverses the act's transfer in
+  full rather than leaving the platform to fund the refund alone (step 6);
+- on a **venue-direct** charge the PaymentIntent is **invisible to a
+  platform-scoped lookup** — that failure is the pass, and it is the only
+  positive proof the merchant role actually moved — while the application fee
+  carrying the artist's 70% and the promoter's 10% appears as a platform
+  `application_fee` object where the payout cron can reach it (step 7).
+
+**A skip is not a pass, and the exit code says so.** Steps 6 and 7 skip when the
+accounts they need do not exist, and the script then exits **2**, not 0, naming
+the modes it could not rehearse. What ran in that case is the `PLATFORM`
+fallback — the mode a real sale is *least* likely to take. This is deliberate:
+a green tick over an unrun stage is a mistake this repository has already made
+twice, and an exit code is harder to skim past than a log line.
 
 **What it cannot do:** it has no database, so it does not exercise
 `triggerShowPayouts()`'s own state transitions — the thing that decides which
 entries get paid. That is step 2.
+
+---
+
+### The webhook must be subscribed to five more events
+
+Added to the handler 2026-08-28 from Stripe's destination-charge and hosted-
+onboarding guides. **Code alone is not enough — each has to be ticked on the
+endpoint in the dashboard, or the handler never runs.** The registered set was
+`payment_intent.*` plus `account.updated`; `checkout.session.completed` and
+`.expired` were being handled in code and are worth re-confirming too.
+
+| Event | Why |
+|---|---|
+| `checkout.session.async_payment_succeeded` | **Money taken, nothing delivered.** `checkout.session.completed` means the customer AUTHORIZED, not that the payment cleared — for ACH, SEPA, Pay by Bank, Boleto or BLIK the outcome is 2-14 days later. Our `payment_status === 'paid'` guard correctly refused to issue a ticket before the funds arrived, and nothing then issued one after. |
+| `checkout.session.async_payment_failed` | The seat is held forever otherwise. The session already COMPLETED, so `checkout.session.expired` never fires for it. |
+| `charge.dispute.created` | Reports the dispute with a note on which side it lands. Deliberately does not act — see below. |
+| `charge.updated` | Detects a **skipped transfer**: if the destination loses its transfer capability during an async payment, Stripe leaves the money on the platform and sets `transfer_data` to null. `DESTINATION` mode writes no payable row for the act, so this is otherwise invisible in every table we have. |
+
+We do not pin `payment_method_types`, so Checkout offers whatever the account
+has enabled. If bank debits are on, these paths are live today.
+
+**The dispute handler reports and does not recover, on purpose.** Where a
+dispute lands depends on the settlement mode and the two cases are opposites:
+`VENUE_DIRECT` debits the venue, and under Stripe-managed risk an
+unrecoverable shortfall is Stripe's; `DESTINATION` and `PLATFORM` debit iHYPE.
+Stripe's guidance for the second is to recover by reversing the transfer to the
+act — real money taken back from a musician, sometimes for a show they played.
+That is not a decision an unattended webhook should make.
+
+### Onboarding: two settings worth deciding before the first venue
+
+From Stripe's hosted-onboarding guide.
+
+**`collection_options.fields` is unset, so onboarding is INCREMENTAL.** The
+default collects only `currently_due`. Passing `eventually_due` collects
+everything up front. Incremental gets a venue onboarded faster; up-front avoids
+the failure mode where a venue is verified in March, hits a revenue threshold in
+July, and has payouts disabled mid-season for information nobody asked for. For
+a venue that will be the merchant of record on real ticket sales, up-front is
+probably right. It is one parameter on the account link.
+
+**The return URL means "left the flow", not "finished it".** Stripe says so
+outright: it "doesn't mean that all information has been collected". Our return
+route now retrieves the account and checks the real capability rather than
+trusting the redirect, and an unfinished member is sent to payout settings — but
+the reason it must never be trusted is worth keeping written down, because
+trusting it is the obvious implementation.
+
+### Test cards, and the one that matters most
+
+From the Accounts v2 marketplace blueprint, 2026-08-28. Use these in step 2 —
+"buy a ticket" without naming a card only ever exercises the happy path.
+
+| Card | What it does | Why walk it |
+|---|---|---|
+| `4000 0000 0000 0077` | succeeds, funds available immediately | the blueprint's own card; skips the pending-balance wait, so a transfer can be attempted in the same sitting |
+| `4242 4242 4242 4242` | succeeds, funds pending | the realistic case — proves the payout cron waits rather than failing |
+| `4000 0000 0000 0259` | succeeds, then **disputes as fraudulent** | **the one that matters.** Everything about this settlement design is an argument about who eats a chargeback. Nothing has ever tested that claim. |
+| `4000 0000 0000 0002` | declined | the order must not reserve capacity for a sale that did not happen |
+
+Any future expiry (12/31) and any three-digit CVC.
+
+**Walk `…0259` on a VENUE_DIRECT sale specifically.** The whole case for the
+mode is that the dispute is debited from the venue and, under Stripe-managed
+risk, an unrecoverable shortfall is Stripe's rather than iHYPE's. Confirm in
+the dashboard that the disputed amount and the 15 USD fee land on the **venue's**
+balance and not the platform's. If they land on the platform, the settlement
+model is wrong and every number in this runbook is wrong with it.
+
+Then walk it again on a `DESTINATION` sale, where the opposite should be true
+and the platform *should* be debited — that is the exposure the 1.5% reserve
+line exists to fund, and it should be visible.
+
+### Two things the checkout surface does that nobody has decided
+
+Both seen in the blueprint's own checkout screenshot, both true of our code,
+neither a bug.
+
+**1. On a venue-direct sale the fan sees the VENUE, not iHYPE.** The blueprint's
+page reads "Pay Powdur" — the connected account's name — because on a direct
+charge the connected account *is* the merchant. That is the mode working as
+designed, and it is worth stating plainly because the owner's instruction
+during the `on_behalf_of` discussion was "let's keep iHYPE as the name on the
+purchase". That instruction was about destination charges and still holds
+there; venue-direct deliberately moved the merchant role, and the name moves
+with it.
+
+The consequence is a real one and it lands on the venue: an unfamiliar name on
+a card statement is the most common single trigger for a "I don't recognise
+this" chargeback, and on this mode the venue pays for it. The obvious mitigation
+is `payment_intent_data.statement_descriptor_suffix` carrying the show or the
+venue's trading name. **It is deliberately not implemented yet**, because the
+concatenated descriptor must be 1-22 characters *including the connected
+account's own prefix*, which we do not know at session-creation time — so a long
+venue prefix plus our suffix is rejected, and a rejected descriptor fails the
+whole Checkout Session and loses the sale. Cheap fix, real downside, needs one
+test against a real connected account before shipping. Do it during step 2.
+
+**2. We compute tax ourselves; the blueprint uses Stripe Tax.** Its screenshot
+shows a live "Tax — enter address to calculate" line. Our session sends a
+single line item at `financials.totalChargeCents`, so the Stripe page shows one
+number and the itemisation lives only in `TicketSaleCard` before the fan leaves
+the app. `calculateTicketTaxes` is our own.
+
+That is defensible for a fixed-price ticket at a known venue address, and it is
+also the part of the money path with the least evidence behind it. The venue is
+the one remitting on a venue-direct sale, so a wrong figure is a wrong figure in
+someone else's tax filing. Enabling `automatic_tax` would move both the
+calculation and the rate-table maintenance to Stripe — worth pricing before the
+first multi-state show rather than after.
 
 ---
 
@@ -177,8 +538,37 @@ FEATURE_ENABLE_TICKET_PAYMENTS=true npm run dev
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-Then walk the path as a member, and check the database after each step rather
-than at the end:
+**Then run the walk rather than performing it:**
+
+```bash
+DATABASE_URL=… STRIPE_SECRET_KEY=sk_test_… AUTH_SECRET=… CRON_SECRET=… \
+  npm run rehearse:money
+```
+
+`scripts/rehearse-money-path.mts` performs all seven stages below and asserts
+each one against the database. It refuses a non-`sk_test_` key, and refuses a
+`DATABASE_URL` that looks like a managed host without "scratch" or "rehearsal"
+in its name — it creates orders, voids tickets and moves capacity, and there is
+no undo. It does not start Postgres, the app or `stripe listen`: those are three
+long-lived processes and a script that owns them is a worse version of three
+terminal windows. It checks for each and names the command.
+
+Set `REHEARSAL_VENUE_ACCOUNT` to rehearse `VENUE_DIRECT`, or
+`REHEARSAL_ARTIST_ACCOUNT` alone for `DESTINATION`. With neither it exercises
+`PLATFORM` and says so — **one run covers one mode**, and the assertions differ
+per mode because which shares become payables differs per mode.
+
+Everything up to the first purchase has been exercised (2026-08-28): preflight
+refusals, provisioning against a real migrated Postgres, and seeding. Two
+schema mistakes were found and fixed doing that — the show needs `isTicketed`
+plus non-null `venuePayoutPercent`/`artistPayoutPercent`, which are nullable
+with no default, so a show created without them looks complete and answers 400
+to every purchase. **From the purchase onward the script is unrun**, because
+that needs the running app and a test key. Expect to fix something on the first
+real pass; fix it in the script rather than working around it, or the next
+person walks it by hand again.
+
+The stages, and what each proves:
 
 1. **Create a show** with a venue and a headliner, both with onboarded test-mode
    Connect accounts (`POST /api/stripe/connect/onboard` from `/payouts?tab=settings`).
@@ -209,6 +599,11 @@ than at the end:
 
 Record the outcome — including anything surprising — in a DESIGN_SYNC row, and
 delete the scratch database.
+
+The one stage the script deliberately does not automate is the **dispute**:
+`4000 0000 0000 0259` needs the Stripe dashboard checked afterwards to see
+which balance was debited, and that is a judgement about money rather than an
+assertion. Walk it by hand, per the card table above.
 
 ---
 

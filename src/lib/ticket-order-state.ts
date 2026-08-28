@@ -78,6 +78,10 @@ export function buildPayableEntries(
     venuePayoutCents: number;
     artistPayoutCents: number;
     promoterPayoutCents: number;
+    /** Which party was the merchant, and so which share never reached iHYPE.
+     *  See TicketOrder.settlementMode. Absent means PLATFORM. */
+    settlementMode?: string | null;
+    settlementAccountId?: string | null;
   },
   acceptedLineupSlots: { profileId: string; splitPercent: number }[],
 ) {
@@ -102,13 +106,52 @@ export function buildPayableEntries(
     });
   };
 
-  push(order.taxLocalCents, 'TAX_LOCAL', 'Local tax payable', 'Captured ticket order tax.');
-  push(order.taxStateCents, 'TAX_STATE', 'State / province tax payable', 'Captured ticket order tax.');
-  push(order.taxCountryCents, 'TAX_COUNTRY', 'Country tax payable', 'Captured ticket order tax.');
-  push(order.taxInternationalCents, 'TAX_INTERNATIONAL', 'International tax payable', 'Captured ticket order tax.');
-  push(order.venuePayoutCents, 'VENUE_PAYOUT', 'Venue payout', 'Venue payout from captured ticket order.', show.venueProfileId);
+  /* WHICH SHARES ACTUALLY REACHED THE PLATFORM.
+   *
+   * A payable is a promise to pay someone out of money iHYPE is holding. If
+   * the money never arrived, the promise is a double payment waiting to
+   * happen — and an undetectable one, because the entry looks exactly like a
+   * legitimate payout and the transfer succeeds. Nothing downstream can catch
+   * it, so it has to be right here.
+   *
+   *   VENUE_DIRECT  the charge was on the venue's own account. Their share and
+   *                 the tax never left it — they are the merchant and they
+   *                 remit. iHYPE holds only the artist's and promoter's shares
+   *                 as an application fee, so only those two get payables.
+   *   DESTINATION   Stripe routed the ARTIST's share with the charge; the rest
+   *                 came back to iHYPE as the application fee.
+   *   PLATFORM      everything captured to iHYPE; every share is a payable.
+   */
+  const venueIsMerchant = order.settlementMode === 'VENUE_DIRECT';
+  const artistWasRouted = order.settlementMode === 'DESTINATION' || Boolean(order.settlementAccountId && order.settlementMode !== 'VENUE_DIRECT');
 
-  if (acceptedLineupSlots.length > 0) {
+  if (!venueIsMerchant) {
+    push(order.taxLocalCents, 'TAX_LOCAL', 'Local tax payable', 'Captured ticket order tax.');
+    push(order.taxStateCents, 'TAX_STATE', 'State / province tax payable', 'Captured ticket order tax.');
+    push(order.taxCountryCents, 'TAX_COUNTRY', 'Country tax payable', 'Captured ticket order tax.');
+    push(order.taxInternationalCents, 'TAX_INTERNATIONAL', 'International tax payable', 'Captured ticket order tax.');
+    push(order.venuePayoutCents, 'VENUE_PAYOUT', 'Venue payout', 'Venue payout from captured ticket order.', show.venueProfileId);
+  }
+
+  /* NO PAYABLE FOR A SHARE STRIPE ALREADY ROUTED.
+   *
+   * On a destination charge the act's share never reached the platform — it
+   * went to their account with the charge, and the platform only ever received
+   * the application fee (venue + promoter + tax + processing). Writing an
+   * ARTIST_PAYOUT entry here anyway would have `triggerShowPayouts()` transfer
+   * that share a SECOND time, out of money belonging to the venue, the
+   * promoter and a tax authority. Nothing downstream would catch it: the entry
+   * would look exactly like every other artist payout and the transfer would
+   * succeed.
+   *
+   * A lineup never takes this branch, because a lineup is never settled on
+   * behalf of one act in the first place (see the purchase route) — but the
+   * guard is written to cover both shapes rather than relying on that, since
+   * the two decisions live in different files and only one of them is here.
+   */
+  if (artistWasRouted) {
+    // Nothing to record. The act has been paid by Stripe, in full, already.
+  } else if (acceptedLineupSlots.length > 0) {
     const perActShares = splitArtistPayoutAcrossLineup(order.artistPayoutCents, show.artistPayoutPercent, acceptedLineupSlots);
     for (const share of perActShares) {
       push(share.amountCents, 'ARTIST_PAYOUT', 'Artist payout (lineup split)', 'Artist payout (lineup split) from captured ticket order.', share.profileId);

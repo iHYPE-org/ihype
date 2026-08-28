@@ -390,6 +390,13 @@ export function TicketSaleCard({
                      not absorb Stripe's cost of moving the money either.
                      Naming Stripe is the point — this is not an iHYPE fee. */
                   { label: t('ticketSaleCard.processingFeeLabel', 'Stripe processing, paid by the buyer'), cents: preview.processingFeeCents },
+                  /* The protection reserve, on its own line for the same
+                     reason as the one above: a charge the buyer cannot account
+                     for is the thing this ledger exists to prevent. Named for
+                     what it DOES rather than what it is called internally —
+                     "reserve" is an accounting word and means nothing at a
+                     checkout. */
+                  { label: t('ticketSaleCard.reserveFeeLabel', 'Refund & dispute protection'), cents: preview.reserveFeeCents },
                   { label: t('ticketSaleCard.ihypeFeeLabel', 'iHYPE fee'), cents: 0, zero: true },
                 ].map((line) => (
                   <div key={line.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -404,6 +411,28 @@ export function TicketSaleCard({
                   <span style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: '1.3125rem' }}>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{formatCurrencyFromCents(preview.totalChargeCents)}</span>
                 </div>
+                {/* Plain language, under the number it explains, because a
+                    ledger line without a sentence is only half a disclosure.
+                    Says where the money goes AND what it is not: the two
+                    questions a reader of "Refund & dispute protection"
+                    actually has. Deliberately not a tooltip — a fee someone
+                    has to hover to understand is not disclosed. */}
+                {/* 15px, not the 13px this first shipped as: an explanation of
+                    a charge is CONTENT, and DS8's floor applies. Shrinking the
+                    sentence that justifies a fee is precisely the wrong thing
+                    to shrink — caught by `npm run lint`, not by review. */}
+                <p style={{ margin: 0, fontSize: '0.9375rem', lineHeight: 1.55, color: 'var(--ink-2)' }}>
+                  {t(
+                    'ticketSaleCard.feeExplainer',
+                    'Every cent above face value covers a real cost: Stripe’s charge for handling your card, and a small fund that pays for refunds and card disputes. iHYPE takes nothing — the {artist}% / {venue}% / {promoter}% split is of the ticket price itself, and it is unaffected by either line.',
+                  )
+                    .replace('{artist}', String(artistPayoutPercent))
+                    .replace('{venue}', String(venuePayoutPercent))
+                    // The show's own configured share, not a hardcoded 10:
+                    // this sentence is a claim about where the buyer's money
+                    // goes, so it has to read the same figures the split does.
+                    .replace('{promoter}', String(100 - artistPayoutPercent - venuePayoutPercent))}
+                </p>
               </div>
             </div>
           </div>
