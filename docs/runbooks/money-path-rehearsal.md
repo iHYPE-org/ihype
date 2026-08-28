@@ -538,8 +538,37 @@ FEATURE_ENABLE_TICKET_PAYMENTS=true npm run dev
 stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-Then walk the path as a member, and check the database after each step rather
-than at the end:
+**Then run the walk rather than performing it:**
+
+```bash
+DATABASE_URL=… STRIPE_SECRET_KEY=sk_test_… AUTH_SECRET=… CRON_SECRET=… \
+  npm run rehearse:money
+```
+
+`scripts/rehearse-money-path.mts` performs all seven stages below and asserts
+each one against the database. It refuses a non-`sk_test_` key, and refuses a
+`DATABASE_URL` that looks like a managed host without "scratch" or "rehearsal"
+in its name — it creates orders, voids tickets and moves capacity, and there is
+no undo. It does not start Postgres, the app or `stripe listen`: those are three
+long-lived processes and a script that owns them is a worse version of three
+terminal windows. It checks for each and names the command.
+
+Set `REHEARSAL_VENUE_ACCOUNT` to rehearse `VENUE_DIRECT`, or
+`REHEARSAL_ARTIST_ACCOUNT` alone for `DESTINATION`. With neither it exercises
+`PLATFORM` and says so — **one run covers one mode**, and the assertions differ
+per mode because which shares become payables differs per mode.
+
+Everything up to the first purchase has been exercised (2026-08-28): preflight
+refusals, provisioning against a real migrated Postgres, and seeding. Two
+schema mistakes were found and fixed doing that — the show needs `isTicketed`
+plus non-null `venuePayoutPercent`/`artistPayoutPercent`, which are nullable
+with no default, so a show created without them looks complete and answers 400
+to every purchase. **From the purchase onward the script is unrun**, because
+that needs the running app and a test key. Expect to fix something on the first
+real pass; fix it in the script rather than working around it, or the next
+person walks it by hand again.
+
+The stages, and what each proves:
 
 1. **Create a show** with a venue and a headliner, both with onboarded test-mode
    Connect accounts (`POST /api/stripe/connect/onboard` from `/payouts?tab=settings`).
@@ -570,6 +599,11 @@ than at the end:
 
 Record the outcome — including anything surprising — in a DESIGN_SYNC row, and
 delete the scratch database.
+
+The one stage the script deliberately does not automate is the **dispute**:
+`4000 0000 0000 0259` needs the Stripe dashboard checked afterwards to see
+which balance was debited, and that is a judgement about money rather than an
+assertion. Walk it by hand, per the card table above.
 
 ---
 
