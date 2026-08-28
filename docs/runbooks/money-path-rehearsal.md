@@ -542,8 +542,39 @@ artist onboarding light. Until it is completed the choice is:
   iHYPE carries an artist's negative balance, which arises only when a refund
   with `reverse_transfer` outruns their balance.
 
-**Do not change the code until the acknowledgement is resolved**, because it
-may make the second option available without any product cost.
+**RESOLVED, 2026-08-28: the acknowledgement must NOT be signed, so option one
+is forced.** Its text was read and it is the platform-managed-risk agreement:
+
+> You'll be liable for seller losses. Stripe will hold reserves on your account
+> to cover the total value of negative account balances.
+
+…followed by onboarding review, risk underwriting, risk monitoring systems,
+risk actions, seller communication, seller remediation, and support for payment
+and risk inquiries. That is the entire list of things this org has said it
+cannot do ("we don't HAVE a reserve, at all" / "I don't have the headcount"),
+and Stripe would begin holding reserves against the platform balance on
+signature. Do not acknowledge it.
+
+So every connected account carries the merchant configuration, and the shipped
+configuration is now:
+
+```
+configuration: { recipient: { stripe_transfers }, merchant: { card_payments } }
+dashboard:     'full'
+defaults:      { fees_collector: 'stripe', losses_collector: 'stripe' }
+identity:      entity_type company for a VENUE, individual otherwise
+```
+
+Verified by creating both shapes against the sandbox: `acct_…` for an
+individual artist and for a company venue, each returning `transfers=restricted`
+and `card_payments=restricted` — the correct state for an account whose KYC has
+not been completed yet.
+
+What the heavier onboarding does NOT mean: an act being merchant-CAPABLE does
+not make them a merchant. Nothing creates a charge on an act's account —
+`createVenueDirectCheckoutSession` is called for the venue only, gated on
+`isConnectMerchantReady(venue)`. The capability sits unused, and that is the
+price of the payout working at all.
 
 ### Test cards, and the one that matters most
 

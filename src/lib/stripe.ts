@@ -149,21 +149,57 @@ export async function createStripeConnectAccount({
      `responsibilities` names the platform for both fees and losses, which is
      what Stripe tells marketplaces on indirect charges to do — and is honest:
      iHYPE carries the chargebacks. */
-  const isMerchant = profileType.toUpperCase() === 'VENUE';
+  const isVenue = profileType.toUpperCase() === 'VENUE';
   const account = await stripe.v2.core.accounts.create({
     contact_email: email,
-    dashboard: 'express',
+    /* `full`, NOT `express`, AND EVERY ACCOUNT GETS THE MERCHANT CONFIGURATION.
+     * Both of those are forced by Stripe, and both contradict what this file
+     * said until 2026-08-28. Measured against a real sandbox — nine
+     * combinations, tabulated in docs/runbooks/money-path-rehearsal.md — after
+     * the shipped version turned out to create NO account at all:
+     *
+     *   recipient + merchant, express  ->  "This account configuration is not
+     *                                      supported."
+     *   recipient only,       express  ->  "Losses collector can only be
+     *                                      'application' for the set of
+     *                                      configurations this account has."
+     *
+     * Only `recipient + merchant` with `dashboard: 'full'` and Stripe as both
+     * collectors is accepted. Express is refused whenever Stripe manages
+     * losses, whatever the Connect setup screen says.
+     *
+     * WHY AN ARTIST NOW CARRIES `merchant` TOO, having deliberately not.
+     *
+     * The old reasoning was sound and is worth keeping: a payee is not a
+     * merchant, and asking a solo musician for full-service-agreement KYC to
+     * be handed 70% of a door split is asking them to take on a role they are
+     * not in. It is unavailable, not abandoned. A recipient-only account
+     * REQUIRES `losses_collector: 'application'`, and `application` requires
+     * accepting the platform-managed-risk agreement — which reads: "You'll be
+     * liable for seller losses. Stripe will hold reserves on your account",
+     * plus risk underwriting, monitoring, remediation and risk support.
+     *
+     * That is the whole of what this org cannot do (owner, 2026-08-27: "we
+     * don't HAVE a reserve, at all" / "I don't have the headcount"). Heavier
+     * onboarding for an act is a real cost; platform liability with no reserve
+     * behind it is not a cost, it is the failure. So the trade is made
+     * knowingly and in that direction.
+     *
+     * Note what does NOT follow: an act being merchant-CAPABLE does not make
+     * them a merchant. Nothing ever creates a charge on their account —
+     * `createVenueDirectCheckoutSession` is called for the venue and only the
+     * venue, and the ticket route gates it on `isConnectMerchantReady(venue)`.
+     * The capability sits unused, which is the price of the payout working. */
+    dashboard: 'full',
     /* A venue is a business; an artist signing up alone is usually not. Getting
        this wrong sends the payee through the wrong identity questions and
        strands onboarding partway with no obvious cause. */
-    identity: { country: 'us', entity_type: isMerchant ? 'company' : 'individual' },
+    identity: { country: 'us', entity_type: isVenue ? 'company' : 'individual' },
     configuration: {
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
       },
-      ...(isMerchant
-        ? { merchant: { capabilities: { card_payments: { requested: true } } } }
-        : {}),
+      merchant: { capabilities: { card_payments: { requested: true } } },
     },
     defaults: {
       currency: 'usd',
@@ -328,7 +364,17 @@ export async function createConnectOnboardingUrl({
            flow the member completed and believes is finished.
            `merchant` is requested for venues only; see
            `createStripeConnectAccount`. */
-        configurations: merchantOnboarding ? ['recipient', 'merchant'] : ['recipient'],
+        /* ALWAYS BOTH, as of 2026-08-28. Every account is created with the
+           merchant configuration because Stripe does not accept a
+           recipient-only account under this platform's risk settings (see
+           `createStripeConnectAccount`), and a link naming fewer
+           configurations than the account has collects only those
+           requirements — the member completes a flow, is told it is done, and
+           a capability never activates. `merchantOnboarding` is kept as a
+           parameter so callers keep documenting intent, and so the day a
+           recipient-only account becomes possible again there is one place to
+           change. */
+        configurations: ['recipient', 'merchant'],
         refresh_url: refreshUrl,
         return_url: returnUrl,
       },
