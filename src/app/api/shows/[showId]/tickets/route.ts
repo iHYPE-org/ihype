@@ -16,7 +16,7 @@ import { getPaymentProcessingReadiness } from '@/lib/payments';
 import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
   createTicketCheckoutSession,
-  isConnectSettlementReady,
+  isConnectPayoutReady,
   getOrCreateStripeCustomer,
 } from '@/lib/stripe';
 import {
@@ -240,8 +240,13 @@ export async function POST(
      *
      * A destination charge routes the act's share atomically with the charge,
      * so their 70% never passes through iHYPE's balance and does not depend on
-     * a payout cron. `on_behalf_of` also puts their name on the fan's
-     * statement.
+     * a payout cron.
+     *
+     * iHYPE stays the settlement merchant — `on_behalf_of` is deliberately not
+     * set, so the fan sees iHYPE on their statement. See the note in
+     * `createStripeConnectAccount` for why the alternative was tried and
+     * dropped: it moved no risk, and an unfamiliar legal name on a statement
+     * is the commonest cause of the disputes iHYPE pays for.
      *
      * Three things make this conditional rather than assumed, and each is a
      * real state rather than an error:
@@ -270,8 +275,8 @@ export async function POST(
     const headlinerConnectId = show.headlinerProfile?.stripeConnectAccountId ?? null;
     const settlementAccountId =
       lineupSlotCount === 0 && headlinerConnectId
-        ? await isConnectSettlementReady(headlinerConnectId)
-            .then((ready) => (ready ? headlinerConnectId : null))
+        ? await isConnectPayoutReady(headlinerConnectId)
+            .then((ready: boolean) => (ready ? headlinerConnectId : null))
             .catch(() => null)
         : null;
 

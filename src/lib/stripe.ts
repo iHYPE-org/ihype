@@ -96,35 +96,41 @@ export async function createStripeConnectAccount({
      or promoter could onboard at all, `stripeConnectAccountId` was never set,
      and every payable entry would have sat PENDING forever.
 
-     TWO CONFIGURATIONS, and the reason is the whole payout design.
+     RECIPIENT ONLY, and this is a deliberate reversal.
 
-     `recipient` (`stripe_balance.stripe_transfers`) is what lets an account
-     RECEIVE money from us. Every payee needs it. Do not reach for the legacy
-     `transfers` capability: it is a different thing wearing a near-identical
-     name, and `GET /v1/accounts` will happily report `transfers: "active"`
-     for an account whose v2 recipient capabilities are empty and which Stripe
-     refuses to transfer to. That misreading cost real debugging.
+     For a day this also requested a `merchant` configuration with
+     `card_payments`, because a destination charge settled with `on_behalf_of`
+     needs the destination to be a payments-capable account. That was dropped
+     on 2026-08-27 along with `on_behalf_of` itself (owner: "Let's keep iHYPE
+     as the name on the purchase"), and the reasoning is worth keeping because
+     it looked like a clear win at the time:
 
-     `merchant` (`card_payments`) is what lets an account be the SETTLEMENT
-     MERCHANT — the `on_behalf_of` on a destination charge, so the fan's
-     statement carries the act's name and the act's 70% is routed by Stripe
-     with the charge instead of passing through iHYPE's balance.
+       - `on_behalf_of` moved the SETTLEMENT MERCHANT and no risk whatsoever.
+         Stripe debits disputes from the platform "with or without" it.
+       - It put the act's legal name on the fan's card statement — often not
+         the name on the poster — which is the single most common trigger for
+         a "I don't recognise this" chargeback. So it plausibly INCREASED the
+         disputes iHYPE was going to pay for anyway.
+       - `card_payments` is only available on the FULL service agreement, so
+         it cost every act heavier KYC than a payee needs.
 
-     This row used to say these accounts are "RECIPIENTS, not merchants", and
-     that was right for the previous design and is wrong for this one. It is
-     also not a free upgrade: `card_payments` is only available under the FULL
-     service agreement, and an account on the `recipient` agreement can never
-     request it (Stripe's own words). So the payee completes fuller KYC than a
-     transfers-only recipient would. That is the price of delegating merchant
-     of record, and it is deliberate.
+     Dropping it keeps the whole benefit — `transfer_data.destination` still
+     routes the act's share atomically with the charge — and gives back the
+     recognisable statement descriptor and the lighter onboarding. The two are
+     separate Stripe parameters and always were.
 
-     What it does NOT buy is dispute liability. Stripe debits disputes from the
-     PLATFORM account on a destination charge "with or without on_behalf_of",
-     so iHYPE still carries chargebacks and `responsibilities` below says so
-     honestly. Recovery is a transfer reversal, best-effort, not a guarantee.
+     `stripe_balance.stripe_transfers` is the capability a transfer destination
+     needs. Do not reach for the legacy `transfers` capability: it is a
+     different thing wearing a near-identical name, and `GET /v1/accounts` will
+     happily report `transfers: "active"` for an account whose v2 recipient
+     capabilities are empty and which Stripe refuses to transfer to. That
+     misreading cost real debugging.
 
      `dashboard` is required whenever the transfers capability is requested,
-     and the error saying so arrives only after everything else validates. */
+     and the error saying so arrives only after everything else validates.
+     `responsibilities` names the platform for both fees and losses, which is
+     what Stripe tells marketplaces on indirect charges to do — and is honest:
+     iHYPE carries the chargebacks. */
   const account = await stripe.v2.core.accounts.create({
     contact_email: email,
     dashboard: 'express',
@@ -132,9 +138,6 @@ export async function createStripeConnectAccount({
     configuration: {
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
-      },
-      merchant: {
-        capabilities: { card_payments: { requested: true } },
       },
     },
     defaults: {
@@ -208,36 +211,6 @@ export async function isConnectPayoutReady(connectAccountId: string): Promise<bo
   }
 }
 
-/**
- * Whether Stripe will accept this account as the SETTLEMENT MERCHANT of a
- * charge — the `on_behalf_of` on a destination charge.
- *
- * Deliberately separate from `isConnectPayoutReady` above, because they are
- * different questions and merging them would re-create the exact bug that
- * function's docstring describes. An account can be perfectly able to receive
- * every transfer we send and still not be able to settle a charge, and the
- * reverse is possible too while onboarding is partway through. A single
- * "onboarded" boolean cannot mean both.
- *
- * The caller that matters is the purchase route: if this is false the sale
- * must fall back to a platform-settled charge rather than failing, because a
- * fan should never be blocked by the act's paperwork.
- *
- * Returns false rather than throwing, same reason as above: a failed lookup
- * means "not proven ready".
- */
-export async function isConnectSettlementReady(connectAccountId: string): Promise<boolean> {
-  try {
-    const stripe = getStripe();
-    const account = await stripe.v2.core.accounts.retrieve(connectAccountId, {
-      include: ['configuration.merchant'],
-    });
-    return account.configuration?.merchant?.capabilities?.card_payments?.status === 'active';
-  } catch {
-    return false;
-  }
-}
-
 export async function createConnectOnboardingUrl({
   connectAccountId,
   returnUrl,
@@ -256,11 +229,11 @@ export async function createConnectOnboardingUrl({
     use_case: {
       type: 'account_onboarding',
       account_onboarding: {
-        // BOTH, matching the account above. A link that names only one
-        // collects the wrong requirements and the missing capability never
-        // activates — silently, because the member completes a flow that
-        // looks finished.
-        configurations: ['recipient', 'merchant'],
+        // Matches the account above. A link naming a configuration the
+        // account does not have collects the wrong requirements, and the
+        // capability never activates — silently, after a flow that looked
+        // finished to the member.
+        configurations: ['recipient'],
         refresh_url: refreshUrl,
         return_url: returnUrl,
       },
@@ -279,8 +252,12 @@ export async function createConnectOnboardingUrl({
  * pulls `application_fee_amount` back to the platform. So the act's 70% never
  * passes through iHYPE's balance: it does not depend on a payout cron running,
  * on a later transfer succeeding, or on the platform being solvent in between.
- * `on_behalf_of` additionally makes the act the settlement merchant, so the
- * fan's statement carries their name.
+ *
+ * iHYPE remains the SETTLEMENT MERCHANT — `on_behalf_of` is deliberately not
+ * set. The fan buys from iHYPE, sees iHYPE on their statement, and the act's
+ * share is still routed atomically. Those are separate parameters; only the
+ * second one is worth having. See `createStripeConnectAccount` for why the
+ * first was tried and dropped.
  *
  * ## The warning that came with the old code, which still applies
  *
@@ -296,9 +273,11 @@ export async function createConnectOnboardingUrl({
  *
  * ## What it does not do
  *
- * It does not move dispute liability. Stripe debits disputes from the PLATFORM
- * account on a destination charge "with or without on_behalf_of". iHYPE still
- * carries chargebacks; recovery is a best-effort transfer reversal.
+ * It does not move dispute liability, and nothing available in Stripe does
+ * while the split is still routed: Stripe debits disputes from the PLATFORM
+ * account on a destination charge "with or without on_behalf_of". iHYPE
+ * carries chargebacks; recovery is a best-effort transfer reversal, and the
+ * fund behind it starts empty. See docs/runbooks/money-path-rehearsal.md.
  *
  * ## The fallback is not an error path
  *
@@ -325,7 +304,7 @@ export async function createTicketCheckoutSession({
   showTitle: string;
   quantity: number;
   ticketOrderConfirmationCode: string;
-  /** The act's Connect account, when `isConnectSettlementReady` says so. */
+  /** The act's Connect account, when `isConnectPayoutReady` says so. */
   destinationAccountId?: string | null;
   /** What that account keeps, of FACE VALUE. Required with the account. */
   destinationPayoutCents?: number;
@@ -359,9 +338,13 @@ export async function createTicketCheckoutSession({
         },
       }],
       payment_intent_data: {
+        /* `transfer_data` and `application_fee_amount`, and deliberately NOT
+           `on_behalf_of` — see the account-creation note above. The routing is
+           the part worth having; the settlement-merchant switch moved no risk,
+           put an unfamiliar legal name on the fan's statement, and made every
+           act complete heavier KYC. iHYPE stays the name on the purchase. */
         ...(routed && destinationAccountId
           ? {
-              on_behalf_of: destinationAccountId,
               transfer_data: { destination: destinationAccountId },
               application_fee_amount: routed.applicationFeeCents,
             }

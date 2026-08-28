@@ -45,15 +45,14 @@ vi.mock('@/lib/ticketing', () => ({
 
 const createTicketCheckoutSession = vi.fn();
 const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
-/* Defaults to NOT settlement-ready, which is the state most shows are in: the
-   headliner has to finish `card_payments` onboarding before their charge can
-   be settled on their behalf. The destination-charge path gets its own test
-   below rather than becoming the assumed default here. */
-const isConnectSettlementReady = vi.fn().mockResolvedValue(false);
+/* Defaults to NOT payout-ready, which is the state most shows are in until the
+   headliner finishes Connect onboarding. The destination-charge path gets its
+   own test below rather than becoming the assumed default here. */
+const isConnectPayoutReady = vi.fn().mockResolvedValue(false);
 vi.mock('@/lib/stripe', () => ({
   createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
-  isConnectSettlementReady: (...args: unknown[]) => isConnectSettlementReady(...args),
+  isConnectPayoutReady: (...args: unknown[]) => isConnectPayoutReady(...args),
 }));
 
 const voidReservedTicketOrder = vi.fn().mockResolvedValue(true);
@@ -197,8 +196,8 @@ describe('POST /api/shows/[showId]/tickets', () => {
       });
     });
 
-    it('settles on behalf of a settlement-ready headliner, routing their share', async () => {
-      isConnectSettlementReady.mockResolvedValue(true);
+    it('routes the share of a payout-ready headliner straight to them', async () => {
+      isConnectPayoutReady.mockResolvedValue(true);
 
       const res = await POST(makeRequest({ quantity: 1 }), params);
       expect(res.status).toBe(201);
@@ -211,10 +210,10 @@ describe('POST /api/shows/[showId]/tickets', () => {
     });
 
     it('falls back to platform settlement when the headliner is not ready', async () => {
-      // The ordinary state until an act finishes card_payments onboarding. A
+      // The ordinary state until an act finishes Connect onboarding. A
       // fan must never be blocked by the act's paperwork, so this is a
       // fallback, not a failure.
-      isConnectSettlementReady.mockResolvedValue(false);
+      isConnectPayoutReady.mockResolvedValue(false);
 
       const res = await POST(makeRequest({ quantity: 1 }), params);
       expect(res.status).toBe(201);
@@ -229,7 +228,7 @@ describe('POST /api/shows/[showId]/tickets', () => {
     it('falls back when Stripe cannot be reached, rather than failing the sale', async () => {
       // The order is already reserved by this point. Stripe being briefly
       // unreachable should downgrade the settlement mode, not lose the sale.
-      isConnectSettlementReady.mockRejectedValue(new Error('Stripe API unreachable'));
+      isConnectPayoutReady.mockRejectedValue(new Error('Stripe API unreachable'));
 
       const res = await POST(makeRequest({ quantity: 1 }), params);
       expect(res.status).toBe(201);
