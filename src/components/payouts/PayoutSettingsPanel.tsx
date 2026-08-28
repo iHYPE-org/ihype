@@ -121,6 +121,10 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
         .pset-account-info { flex: 1; min-width: 0; }
         .pset-account-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
         .pset-account-id { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); margin-top: 3px; }
+        /* The venue disclosure is the one block on this panel that is a legal
+           statement rather than a status readout, so it is set apart from the
+           card it sits in rather than reading as another row of metadata. */
+        .pset-merchant-note { margin: 14px 0 0; padding: 12px 14px; border-left: 3px solid var(--role-venue); background: rgba(var(--role-venue-rgb),.08); border-radius: 0 var(--radius-md) var(--radius-md) 0; font-size: 0.9375rem; line-height: 1.6; color: var(--ink-a70); }
         .pset-note { padding: 14px 16px; border-radius: var(--radius-md); border: 1px solid var(--line); background: var(--bg2); margin-bottom: 0; }
         .pset-note-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-a65); margin-bottom: 4px; }
         .pset-note p { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.6; margin: 0; }
