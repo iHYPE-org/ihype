@@ -351,9 +351,6 @@ describe('the destination-charge split', () => {
     expect(split.applicationFeeCents).toBe(653);
 
     /* The load-bearing property: after Stripe takes its cut from the
-       PLATFORM's fee, what remains is exactly venue + promoter. If this ever
-       fails, someone is being paid out of the processing fee. */
-    /* The load-bearing property: after Stripe takes its cut from the
        PLATFORM's fee, what remains covers venue + promoter + reserve. If it
        ever falls SHORT, someone is being paid out of the processing fee.
 
