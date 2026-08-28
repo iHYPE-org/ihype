@@ -38,6 +38,22 @@ export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
  * processing fee is. If the fund persistently exceeds what disputes consume,
  * the honest responses are to lower this number or to spend the surplus on the
  * people it was collected from — not to keep it.
+ *
+ * ## It COLLECTS a fund. It does not start with one.
+ *
+ * There is no float behind this and none is guaranteed. At 27c on an $18
+ * ticket, one dispute costs $20.40 with a successful transfer reversal and $33
+ * without, so the fund cannot absorb a single dispute until roughly the 76th
+ * or 122nd ticket respectively. Before that, a dispute is met from whatever is
+ * in the Stripe balance — which is commingled with venue shares, promoter
+ * shares and collected TAX.
+ *
+ * That is survivable at alpha volume and dangerous at scale, so the rule is a
+ * threshold and not a launch gate: see the "fund starts at zero" section of
+ * docs/runbooks/money-path-rehearsal.md before raising ticket volume. Do not
+ * raise this percentage to build the fund faster — doubling it still only
+ * reaches one dispute's worth around ticket 60, and it spends the buyer's
+ * total, which is the thing this whole fee design is careful about.
  */
 export const TICKET_RESERVE_PERCENT = 0.015;
 export const MAX_PROMOTER_AFFILIATE_PERCENT = 10;

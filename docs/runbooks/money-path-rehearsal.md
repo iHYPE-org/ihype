@@ -120,6 +120,109 @@ reserve absorbs the hit, the hold decides whether it lands on iHYPE or is
 clawed back from the act — and the deliberate answer is that **iHYPE carries
 it**, because an artist clawed back a week after playing does not come back.
 
+### Dispute liability: settled, and the fund is empty
+
+Confirmed with Stripe, 2026-08-27, after the destination-charge work landed.
+Recorded here because it is the question most likely to be re-litigated by
+someone reading `on_behalf_of` and assuming it did more than it does.
+
+**iHYPE carries every chargeback.** Stripe debits dispute amounts and fees from
+the PLATFORM account on a destination charge, *with or without* `on_behalf_of`.
+The connected account bears none of it. `on_behalf_of` moves the settlement
+merchant — the act's name on the fan's statement, their country's fee structure
+— and moves no risk at all.
+
+Two levers were checked and neither helps:
+
+- **`losses_collector` / `controller.losses.payments`** governs *connected
+  account* negative balances, not the platform's own. Stripe's guidance for
+  marketplaces using indirect charges is to set it to `application`, which is
+  what `createStripeConnectAccount` already does. The configuration was already
+  right; there was no free lunch in it.
+- **Direct charges** would put liability on the connected account, and settle
+  to exactly one account — so the 70/20/10 could not be routed by Stripe, and
+  one party would have to be trusted to pay the other two. That is the model
+  this platform exists to replace.
+
+There is no Stripe configuration that gives an enforced multi-party split AND
+no platform dispute liability. Liability follows the merchant on the charge,
+and a charge has one merchant. That is card-network structure, not a product
+choice, so no vendor escapes it by being cleverer.
+
+#### Deflection is not insurance
+
+Stripe pointed at third-party apps — ChargebackStop, Chargeblast, Chargeflow —
+rather than their own first-party Chargeback Protection, which strongly implies
+the first-party product is not available on Connect destination charges. Do not
+plan around it without confirming.
+
+What those apps sell is mostly **prevention and automation**, not risk
+transfer:
+
+- **Pre-dispute alerts** (Ethoca / Verifi networks): notification when a
+  cardholder disputes with their bank, with a window to refund voluntarily
+  before it becomes a chargeback. The sale is still lost; the **$15 fee**, the
+  chargeback record and the dispute-ratio hit are avoided.
+- **Dispute automation**: evidence assembly and submission, usually priced on
+  recovery. Some tiers advertise a guarantee — read those terms rather than the
+  marketing.
+
+None of them move liability. They lower frequency and cost.
+
+**Alerts are worth more here than to an ordinary merchant**, and the reason is
+the payout hold. An alert arriving inside the ten days means the payable is
+still held, so the refund AND the transfer reversal can both happen while the
+act's share is still recoverable — instead of clawing back from someone who
+played the show a week ago, which is the outcome this runbook says iHYPE should
+absorb rather than inflict. The hold creates the window; the alerts say when to
+use it. That is a better argument for ten days than the one written above it.
+
+#### The fund starts at zero, and is not segregated
+
+`TICKET_RESERVE_PERCENT` COLLECTS a reserve. It does not begin with one, and
+there is no float behind it. At 27c on an $18 ticket:
+
+| Outcome | Net loss | Tickets that must have sold to cover it |
+|---|---|---|
+| Dispute, transfer reversal succeeds | $18.00 − $12.60 recovered + $15 fee = **$20.40** | **76** |
+| Dispute, reversal fails (act's balance empty) | $18 + $15 = **$33.00** | **122** |
+
+So the fund cannot absorb one dispute until roughly the hundredth ticket. Before
+that, a dispute is met by whatever is in the Stripe balance; if that is short,
+Stripe debits the linked bank account, and failing that the platform goes
+negative and recovers from later sales.
+
+**It is also commingled.** The reserve accrues into the same balance as venue
+shares, promoter shares and collected TAX. A dispute consumes whatever is
+sitting there, which can be a remittance owed to a tax authority — a worse
+failure than the dispute. `reserveFeeCents` is stored per order specifically so
+collected-minus-consumed can be reported against the tax liability; build that
+view before volume, not after.
+
+#### What to do about it, given no guaranteed float
+
+A seeded float is the clean answer and **cannot be relied on** — donations are
+not guaranteed. So the rule is a threshold rather than a precondition:
+
+- **Alpha is not gated on this.** At ten shows and a couple of hundred tickets
+  the expected loss is a few dollars and the tail is one or two disputes,
+  landing as a negative balance of tens of dollars that later sales recover.
+  Unpleasant, visible, survivable.
+- **Growth is gated on it.** Do not scale past a few hundred tickets a month
+  until the fund covers a bad month. That is a rule that can be kept without
+  anyone donating anything.
+- **Keep the ten days.** With no float, a successful reversal is the difference
+  between $20.40 and $33. Do not shorten the hold under pressure from acts
+  waiting to be paid; explain it instead.
+- **Radar rules** are free and cut fraud at source.
+- **Do NOT raise the reserve to build the fund faster.** Doubling to 54c still
+  only reaches one dispute's worth around ticket 60, and it spends the thing
+  this project has been most careful about — the buyer's total.
+
+Reserve policy and tax segregation for a 501(c)(3) are an accountant's
+territory, not this runbook's. What is written here is the mechanics; the
+treatment is a question for someone qualified.
+
 ### The remaining steps still need a human
 
 Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
