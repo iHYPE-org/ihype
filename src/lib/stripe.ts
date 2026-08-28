@@ -96,14 +96,29 @@ export async function createStripeConnectAccount({
      or promoter could onboard at all, `stripeConnectAccountId` was never set,
      and every payable entry would have sat PENDING forever.
 
-     RECIPIENT ONLY, and this is a deliberate reversal.
+     WHICH CONFIGURATIONS DEPEND ON WHAT THE ACCOUNT HAS TO DO.
 
-     For a day this also requested a `merchant` configuration with
-     `card_payments`, because a destination charge settled with `on_behalf_of`
-     needs the destination to be a payments-capable account. That was dropped
-     on 2026-08-27 along with `on_behalf_of` itself (owner: "Let's keep iHYPE
-     as the name on the purchase"), and the reasoning is worth keeping because
-     it looked like a clear win at the time:
+     A VENUE is the MERCHANT on its own shows: the ticket charge is created on
+     its account (`createVenueDirectCheckoutSession`), so it needs `merchant`
+     with `card_payments`. That is only available on the FULL service
+     agreement, which means fuller KYC — and it is the whole point rather than
+     a cost, because with the merchant role go the disputes, the tax and the
+     customer relationship that iHYPE has neither the capital nor the headcount
+     to carry.
+
+     An ARTIST or PROMOTER only ever RECEIVES money, so `recipient` alone is
+     right and their onboarding stays light. Asking a solo musician to complete
+     merchant KYC to be handed 70% of a door split would be asking them to take
+     on a role they are not in.
+
+     RECIPIENT-ONLY WAS BRIEFLY THE ANSWER FOR EVERYONE, and this is a
+     deliberate partial reversal.
+
+     For a day `merchant` was requested for EVERY account, to support a
+     destination charge settled with `on_behalf_of`. That was dropped along
+     with `on_behalf_of` itself (owner: "Let's keep iHYPE as the name on the
+     purchase"), and the reasoning is worth keeping because it looked like a
+     clear win at the time and the same argument will be made again:
 
        - `on_behalf_of` moved the SETTLEMENT MERCHANT and no risk whatsoever.
          Stripe debits disputes from the platform "with or without" it.
@@ -114,10 +129,13 @@ export async function createStripeConnectAccount({
        - `card_payments` is only available on the FULL service agreement, so
          it cost every act heavier KYC than a payee needs.
 
-     Dropping it keeps the whole benefit — `transfer_data.destination` still
-     routes the act's share atomically with the charge — and gives back the
-     recognisable statement descriptor and the lighter onboarding. The two are
-     separate Stripe parameters and always were.
+     Dropping it kept the whole benefit — `transfer_data.destination` still
+     routes the act's share atomically — and gave back the lighter onboarding.
+     The two are separate Stripe parameters and always were.
+
+     The venue `merchant` configuration below is NOT that idea returning. It
+     exists because the venue genuinely IS the merchant on a direct charge, not
+     to relabel whose name appears on a charge iHYPE is settling.
 
      `stripe_balance.stripe_transfers` is the capability a transfer destination
      needs. Do not reach for the legacy `transfers` capability: it is a
@@ -131,14 +149,21 @@ export async function createStripeConnectAccount({
      `responsibilities` names the platform for both fees and losses, which is
      what Stripe tells marketplaces on indirect charges to do — and is honest:
      iHYPE carries the chargebacks. */
+  const isMerchant = profileType.toUpperCase() === 'VENUE';
   const account = await stripe.v2.core.accounts.create({
     contact_email: email,
     dashboard: 'express',
-    identity: { country: 'us', entity_type: 'individual' },
+    /* A venue is a business; an artist signing up alone is usually not. Getting
+       this wrong sends the payee through the wrong identity questions and
+       strands onboarding partway with no obvious cause. */
+    identity: { country: 'us', entity_type: isMerchant ? 'company' : 'individual' },
     configuration: {
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
       },
+      ...(isMerchant
+        ? { merchant: { capabilities: { card_payments: { requested: true } } } }
+        : {}),
     },
     defaults: {
       currency: 'usd',
@@ -214,11 +239,15 @@ export async function isConnectPayoutReady(connectAccountId: string): Promise<bo
 export async function createConnectOnboardingUrl({
   connectAccountId,
   returnUrl,
-  refreshUrl
+  refreshUrl,
+  merchantOnboarding = false,
 }: {
   connectAccountId: string;
   returnUrl: string;
   refreshUrl: string;
+  /** True for a VENUE, which is the merchant on its own shows and so needs the
+   *  `merchant` configuration collected too. See createStripeConnectAccount. */
+  merchantOnboarding?: boolean;
 }): Promise<string> {
   const stripe = getStripe();
   /* v2 link for a v2 account — v1's `accountLinks.create` cannot onboard one,
@@ -229,11 +258,13 @@ export async function createConnectOnboardingUrl({
     use_case: {
       type: 'account_onboarding',
       account_onboarding: {
-        // Matches the account above. A link naming a configuration the
-        // account does not have collects the wrong requirements, and the
-        // capability never activates — silently, after a flow that looked
-        // finished to the member.
-        configurations: ['recipient'],
+        /* Must match what the account was created with. A link naming a
+           configuration the account does not have collects the wrong
+           requirements and the capability never activates — silently, after a
+           flow the member completed and believes is finished.
+           `merchant` is requested for venues only; see
+           `createStripeConnectAccount`. */
+        configurations: merchantOnboarding ? ['recipient', 'merchant'] : ['recipient'],
         refresh_url: refreshUrl,
         return_url: returnUrl,
       },

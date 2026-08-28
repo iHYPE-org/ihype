@@ -68,6 +68,29 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                   />
                 )}
               </div>
+
+              {/* A VENUE is agreeing to something materially different from an
+                  artist or a promoter, and it has to be said BEFORE the button
+                  rather than discovered in a Stripe dashboard afterwards.
+                  Connecting here makes the venue the merchant of record on its
+                  own shows: the ticket charge is created on its account, so it
+                  receives the money first, and disputes and sales tax are its
+                  own. That is what lets iHYPE take 0% and charge buyers no
+                  protection fee — a platform with no reserve and no staff
+                  cannot honestly hold those obligations, and a venue already
+                  has a bank account and an accountant.
+
+                  Kept to plain sentences and shown to every venue, connected or
+                  not: a venue that connected last month should still be able to
+                  read what it agreed to. */}
+              {p.type === 'VENUE' && (
+                <p className="pset-merchant-note">
+                  {t(
+                    'payoutSettingsPanel.venueMerchantNote',
+                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
+                  )}
+                </p>
+              )}
             </div>
           ))}
         </div>
