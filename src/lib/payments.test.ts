@@ -58,6 +58,34 @@ describe('payment processing readiness', () => {
     process.env.STRIPE_SECRET_KEY = 'sk_live_example';
     process.env.STRIPE_WEBHOOK_SECRET = 'whsec_example';
 
-    expect(getPaymentProcessingReadiness()).toEqual({ ready: true, blockers: [] });
+    expect(getPaymentProcessingReadiness()).toEqual({
+      ready: true,
+      blockers: [],
+      // Fully configured, so there is nothing for the flag to be the sole
+      // blocker of. See the comment in payments.ts for why this is separate.
+      paymentsDisabledByFlag: false,
+    });
+  });
+
+  it('separates "closed on purpose" from "misconfigured"', () => {
+    /* This distinction is what the post-deploy smoke test and the readiness
+       cron branch on. Collapsing them made a correct production deployment
+       fail its own smoke test — skipping the Cloudflare cache purge behind
+       it — and would have emailed the administrators daily about a state they
+       chose. */
+    setEnvironment('FEATURE_ENABLE_TICKET_PAYMENTS', 'false');
+    setEnvironment('STRIPE_SECRET_KEY', 'sk_live_configured');
+    setEnvironment('STRIPE_WEBHOOK_SECRET', 'whsec_configured');
+    const closedOnPurpose = getPaymentProcessingReadiness();
+    expect(closedOnPurpose.ready).toBe(false);
+    expect(closedOnPurpose.paymentsDisabledByFlag).toBe(true);
+
+    // A second blocker means something is actually wrong, and the flag is no
+    // longer the sole reason — this must NOT read as the intended state.
+    setEnvironment('STRIPE_SECRET_KEY', undefined);
+    const alsoBroken = getPaymentProcessingReadiness();
+    expect(alsoBroken.ready).toBe(false);
+    expect(alsoBroken.paymentsDisabledByFlag).toBe(false);
+    expect(alsoBroken.blockers.length).toBeGreaterThan(1);
   });
 });
