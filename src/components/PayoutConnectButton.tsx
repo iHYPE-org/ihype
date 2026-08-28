@@ -12,17 +12,23 @@ import { useI18n } from '@/components/I18nProvider';
  */
 type ConnectState = 'connect' | 'reconnect' | 'finish-setup';
 
-const STATE_KEY: Record<ConnectState, string> = {
-  connect: 'poConnect',
-  reconnect: 'poReconnect',
-  'finish-setup': 'poFinishSetup',
+/* Key AND fallback, because the key alone shipped: these three keys were
+   never added to the dictionaries, and `t()` returns the key when it misses —
+   so the live button read "POCONNECT" (the key, uppercased by this
+   component's own CSS) on the page where a venue agrees to be seller of
+   record. A t() call without a fallback fails like that silently; the two
+   calls below this one always had fallbacks and never broke. */
+const STATE_LABEL: Record<ConnectState, [string, string]> = {
+  connect: ['poConnect', 'Connect'],
+  reconnect: ['poReconnect', 'Reconnect'],
+  'finish-setup': ['poFinishSetup', 'Finish setup'],
 };
 
 export function PayoutConnectButton({ profileId, state }: { profileId: string; state: ConnectState }) {
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const label = t(STATE_KEY[state]);
+  const label = t(...STATE_LABEL[state]);
 
   async function connect() {
     setBusy(true);

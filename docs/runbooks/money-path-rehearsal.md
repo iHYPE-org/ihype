@@ -447,6 +447,156 @@ trusting the redirect, and an unfinished member is sent to payout settings — b
 the reason it must never be trusted is worth keeping written down, because
 trusting it is the obvious implementation.
 
+### Stripe's docs confirm the dispute split, first-party
+
+Quoted 2026-08-28. This had rested on a support conversation; it is now
+documented, and it is the single claim the settlement design depends on:
+
+> For disputes on payments created using **direct charges**, Stripe debits the
+> disputed amount from the **connected account's balance, not your platform's
+> balance.** Stripe can bill the dispute fee to either the platform or the
+> connected account, depending on the connected account's configuration.
+
+> For disputes where payments were created on your platform using **destination
+> charges or separate charges and transfers, with or without `on_behalf_of`**,
+> your platform balance is automatically debited for the disputed amount and
+> fee.
+
+So `VENUE_DIRECT` moves the dispute to the venue, and `DESTINATION` /
+`PLATFORM` leave it with iHYPE. Both halves of the model are confirmed rather
+than assumed, and the reserve line is charged on exactly the two modes that
+carry the exposure.
+
+Two side notes worth keeping:
+
+**`debit_negative_balances` governs the EXTERNAL account, not the balance.**
+The doc says Stripe debits a connected account's external (bank) account "only
+if `debit_negative_balances` is set to true". That is a narrower thing than the
+risk-management page's "you can't directly debit connected account balances"
+under Stripe-managed risk, and the two are easy to conflate. It changes nothing
+here — we are not the losses collector, so recovery is Stripe's — but do not
+read this paragraph as an argument for re-adding the call.
+
+**A destination charge uses the PLATFORM's payment-method configuration.** The
+doc: "Connected accounts using indirect charges without `on_behalf_of` use the
+payment method configurations that you set up for charges on your platform."
+Since `DESTINATION` deliberately omits `on_behalf_of`, the methods a fan is
+offered on that mode are iHYPE's, and on `VENUE_DIRECT` they are the venue's.
+That is the switch that decides whether the async bank-debit path is reachable
+at all — see the `checkout.session.async_payment_*` handlers.
+
+### MEASURED: the account configuration we ship cannot be created
+
+Probed against a real test-mode sandbox, 2026-08-28, with nine combinations.
+This is the first time `createStripeConnectAccount` has been executed against
+Stripe at all, and **both of its account shapes are rejected**:
+
+```
+recipient + merchant, stripe/stripe, express   (VENUE)
+  -> "This account configuration is not supported."
+recipient only,       stripe/stripe, express   (ARTIST / PROMOTER)
+  -> "Losses collector can only be 'application' for the set of
+      configurations this account has."
+```
+
+So no artist and no venue could onboard. `stripeConnectAccountId` would never
+be set and every payable would sit PENDING forever — the same shape as the
+2026-07-14 bug, reported by nothing, because nothing is faulty.
+
+**What the probe established:**
+
+| configuration | dashboard | responsibilities | result |
+|---|---|---|---|
+| recipient + merchant | `full` | stripe / stripe | **OK** — transfers + card_payments both `restricted` pending KYC |
+| merchant only | `full` | stripe / stripe | OK |
+| recipient + merchant | `express` | stripe / stripe | not supported |
+| merchant only | `express` | stripe / stripe | not supported |
+| recipient only | `full` | stripe / stripe | dashboard must be `none` or `express` |
+| recipient only | `express` or `none` | stripe / stripe | losses must be `application` |
+| recipient only | `express` or `none` | application / application | refused, pointing at the platform profile |
+
+Two conclusions:
+
+**1. A merchant account needs `dashboard: 'full'`, not `'express'`.** Express is
+refused whenever Stripe manages losses. Note this contradicts the Connect setup
+screen, which said sellers use the Express Dashboard, and contradicts the
+`dashboard: 'express'` this codebase ships. A venue getting the full Stripe
+Dashboard is arguably right — it is a business with an accountant — but it is
+not what was designed.
+
+**2. A recipient-only account is currently impossible**, and the two errors
+contradict each other: recipient-only *requires* `application`, and
+`application` is refused with *"Please review the responsibilities of managing
+losses for connected accounts at /settings/connect/platform-profile"*.
+
+That wording matters. It is the phrasing of an **unfinished profile**, not a
+forbidden value — and the platform profile has an outstanding **"Negative
+balance liability acknowledgement"** action. The working hypothesis is that
+completing it unblocks `application` for recipient accounts, which would keep
+artist onboarding light. Until it is completed the choice is:
+
+- give artists the merchant configuration too — one code change, but every
+  musician completes full-service-agreement KYC to be *paid*, and becomes a
+  merchant they are not; or
+- accept `application` losses for recipient accounts — artists stay light,
+  iHYPE carries an artist's negative balance, which arises only when a refund
+  with `reverse_transfer` outruns their balance.
+
+**RESOLVED, 2026-08-28: the acknowledgement must NOT be signed, so option one
+is forced.** Its text was read and it is the platform-managed-risk agreement:
+
+> You'll be liable for seller losses. Stripe will hold reserves on your account
+> to cover the total value of negative account balances.
+
+…followed by onboarding review, risk underwriting, risk monitoring systems,
+risk actions, seller communication, seller remediation, and support for payment
+and risk inquiries. That is the entire list of things this org has said it
+cannot do ("we don't HAVE a reserve, at all" / "I don't have the headcount"),
+and Stripe would begin holding reserves against the platform balance on
+signature. Do not acknowledge it.
+
+So every connected account carries the merchant configuration, and the shipped
+configuration is now:
+
+```
+configuration: { recipient: { stripe_transfers }, merchant: { card_payments } }
+dashboard:     'full'
+defaults:      { fees_collector: 'stripe', losses_collector: 'stripe' }
+identity:      entity_type company for a VENUE, individual otherwise
+```
+
+Verified by creating both shapes against the sandbox: `acct_…` for an
+individual artist and for a company venue, each returning `transfers=restricted`
+and `card_payments=restricted` — the correct state for an account whose KYC has
+not been completed yet.
+
+**MEASURED, same day: the heavier onboarding costs an individual artist zero
+extra fields.** The fear driving the recipient-only design was full merchant
+KYC for musicians. Measured against the sandbox, an individual account created
+bare owes 20 requirement entries; with the platform prefilling the five
+merchant-only fields (`mcc`, `statement_descriptor`, `support.phone`,
+`business_url`, `product_description`) it owes 15 — and those 15 (name, email,
+phone, address, DOB, SSN **last four**, bank account, ToS) are exactly what a
+bare payee owes under KYC rules at any processor. `createStripeConnectAccount`
+now prefills all of them from the profile (the support phone is collected in
+the hosted flow beside the identity phone the member types anyway).
+
+Two mechanics found doing it: `defaults.profile.business_url` is silently
+ignored on CREATE and honoured on UPDATE, so the function sets it twice; and
+the requirements list recomputes **asynchronously**, so a read immediately
+after a write can still show entries the write satisfied — do not treat that
+as the prefill failing.
+
+A COMPANY venue still owes real business KYC (EIN, registered name, owners,
+representative — ~38 entries). That is inherent to being a business taking
+card payments anywhere, not something this design added.
+
+What the heavier onboarding does NOT mean: an act being merchant-CAPABLE does
+not make them a merchant. Nothing creates a charge on an act's account —
+`createVenueDirectCheckoutSession` is called for the venue only, gated on
+`isConnectMerchantReady(venue)`. The capability sits unused, and that is the
+price of the payout working at all.
+
 ### Test cards, and the one that matters most
 
 From the Accounts v2 marketplace blueprint, 2026-08-28. Use these in step 2 —
@@ -521,22 +671,50 @@ RELEASED with a real `stripeTransferId` on it.
 You need a throwaway Postgres and test-mode Stripe keys. **Never point this at
 the production `DATABASE_URL`** — it creates and refunds orders.
 
+**`npm run dev` CANNOT run this rehearsal — measured 2026-08-28.** `src/lib/db.ts`
+deliberately loads the wasm/workerd Prisma engine, which does not load under
+`next dev` ("The loaded wasm module was unexpectedly undefined"). The app has to
+run as the real worker build, which also makes the rehearsal representative:
+what runs is byte-for-byte what deploys.
+
 ```bash
-# 1. A scratch database, migrated to head.
+# 1. A scratch database, migrated to head. The Postgres USER NEEDS A PASSWORD —
+#    wrangler's local Hyperdrive rejects a passwordless connection string.
 createdb ihype_rehearsal
-DATABASE_URL=postgresql://…/ihype_rehearsal DIRECT_URL=postgresql://…/ihype_rehearsal \
-  npx prisma migrate deploy
+DATABASE_URL=postgresql://user:pass@…/ihype_rehearsal DIRECT_URL=… npx prisma migrate deploy
 
-# 2. Run the app against it, in test mode, with payments ON.
-#    FEATURE_ENABLE_TICKET_PAYMENTS defaults to OFF and src/lib/payments.ts
-#    fails closed on it — a rehearsal with it unset proves nothing.
-DATABASE_URL=… DIRECT_URL=… \
-STRIPE_SECRET_KEY=sk_test_… STRIPE_WEBHOOK_SECRET=whsec_… \
-FEATURE_ENABLE_TICKET_PAYMENTS=true npm run dev
+# 2. Build and serve the worker with rehearsal vars. STRIPE_ALLOW_TEST_MODE_REHEARSAL
+#    is what lets a production BUILD accept a sk_test_ key (payments.ts documents it;
+#    lint-source fails the build if wrangler.toml ever defines it). Use Cloudflare's
+#    published always-pass Turnstile TEST secret, or purchases fail the bot check.
+npm run cf:build
+# then wrangler dev against a stripped config carrying:
+#   DATABASE_URL, AUTH_SECRET/NEXTAUTH_SECRET, AUTH_URL=http://localhost:8787,
+#   STRIPE_SECRET_KEY=sk_test_…, STRIPE_WEBHOOK_SECRET=whsec_<any local value>,
+#   CRON_SECRET, FEATURE_ENABLE_TICKET_PAYMENTS="true",
+#   STRIPE_ALLOW_TEST_MODE_REHEARSAL="true",
+#   TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+# (scripts/e2e-workerd.mjs is the reference for deriving the config)
 
-# 3. Forward webhooks, or nothing ever captures.
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+# 3. Forward webhooks, or nothing ever captures. `stripe listen` if you have the
+#    CLI; otherwise a poller that re-signs /v1/events to localhost with
+#    stripe.webhooks.generateTestHeaderString works identically.
+stripe listen --forward-to localhost:8787/api/stripe/webhook
+
+# 4. Run it. PLAYWRIGHT_AUTH_COOKIE_SECURE=true — the production build expects
+#    the __Secure- cookie name even over http (same as the e2e harness).
+PLAYWRIGHT_AUTH_COOKIE_SECURE=true REHEARSAL_BASE_URL=http://localhost:8787 \
+DATABASE_URL=… STRIPE_SECRET_KEY=sk_test_… STRIPE_WEBHOOK_SECRET=… \
+AUTH_SECRET=… CRON_SECRET=… npm run rehearse:money
 ```
+
+**REHEARSAL_PAY_MODE=api** exists for machines that cannot point a browser at
+checkout.stripe.com (this sandbox's TLS-re-signing proxy is one). Checkout
+creates its PaymentIntent lazily — only the hosted form creates it — so API mode
+makes the money real directly (a genuine confirmed PaymentIntent, really
+refunded later) and synthesizes only the `checkout.session.completed` envelope,
+delivered with the same signature scheme as real delivery. On a machine with a
+working browser, prefer the default mode, which exercises the real event.
 
 **Then run the walk rather than performing it:**
 
@@ -580,14 +758,23 @@ The stages, and what each proves:
    → the promoter entry carries that referrer's `profileId`, not null. This is
    the 10% pool actually attributing to a person, which no test covers because
    it spans the referral tables.
-4. **Refund the first order** (>48h before doors, from `/tickets`).
-   → order and tickets `VOID`; capacity back; **its** payable entries `VOID`; the
-   other order's entries untouched and still `PENDING`; a real refund visible in
-   the Stripe test dashboard.
-5. **Scan a ticket** on the remaining order, then try to refund it.
-   → refused. A scanned ticket is a person who walked in.
-6. **End the show** (`status = ENDED`, `startsAt` in the past) and run the payout
-   cron: `curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron?job=show-payouts`.
+4. **Cancel a second show** (organizer flow, `reason` one of
+   artist/venue/low-sales/other). Buyer-initiated refunds were REMOVED
+   2026-08-12 — all sales are final — so cancellation is the only refund path
+   that exists, and the original stage here tested a deleted route for two
+   weeks. → the unscanned order and its tickets and payables `VOID`, a real
+   `stripeRefundId` recorded, the main show's payables untouched.
+5. **Scan a ticket first** on one of the cancelled show's orders.
+   → that order is SKIPPED by the cancellation, not refunded: still `CAPTURED`,
+   no refund id. A scanned ticket is a person who walked in.
+6. **End the show** — `status = ENDED` and `startsAt` at least **11 days** back:
+   `triggerShowPayouts` holds every payout `PAYOUT_HOLD_DAYS` (10) past the show
+   date so the dispute window mostly closes first. Backdating by a day measures
+   the hold working, not the payout failing. Then run the cron:
+   `curl -H "Authorization: Bearer $CRON_SECRET" localhost:8787/api/cron?job=show-payouts`.
+   An entry whose payee has no Connect account is counted `skipped` and stays
+   PENDING — correct behaviour, and also why the release leg is only PROVEN
+   when a real onboarded account is attached.
    → each entry `RELEASED` with a `stripeTransferId`; transfers visible in the
    Stripe test dashboard, summing to the captured total; the venue and artist
    owners each got the payout email; **tax entries stay PENDING** (manual

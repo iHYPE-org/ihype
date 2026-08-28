@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
+import { getProfilePathForType } from '@/lib/profile-paths';
 import {
   createConnectOnboardingUrl,
   createStripeConnectAccount,
@@ -43,6 +44,8 @@ export async function POST(request: Request) {
     select: {
       id: true,
       type: true,
+      name: true,
+      slug: true,
       stripeConnectAccountId: true,
       stripeConnectOnboarded: true,
       owner: {
@@ -71,7 +74,12 @@ export async function POST(request: Request) {
     connectAccountId = await createStripeConnectAccount({
       email: profile.owner.email ?? '',
       profileId: profile.id,
-      profileType: profile.type
+      profileType: profile.type,
+      profileName: profile.name,
+      /* The member's public page doubles as their merchant business URL —
+         one of the prefills that keeps merchant onboarding down to what a
+         bare payee would owe anyway. */
+      profileUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://ihype.org'}${getProfilePathForType(profile.type, profile.slug)}`,
     });
 
     await db.profile.update({

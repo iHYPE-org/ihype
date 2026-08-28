@@ -368,6 +368,7 @@ async function step7VenueDirectCharge(merchantAccount) {
     console.log('        Create one, then re-run with:');
     console.log('          REHEARSAL_MERCHANT_ACCOUNT=acct_venue');
     console.log('        Until this step runs, the mode a real sale is expected to take is unproven.');
+    skippedModes.push('VENUE_DIRECT');
     return;
   }
 

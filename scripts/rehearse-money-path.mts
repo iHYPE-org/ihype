@@ -50,6 +50,7 @@
  *   REHEARSAL_HEADFUL=1       watch the hosted checkout being filled in.
  */
 
+import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { chromium } from '@playwright/test';
@@ -196,6 +197,90 @@ async function waitForOrderStatus(
   return last;
 }
 
+/**
+ * Pays the Checkout Session via the API instead of a browser.
+ *
+ * REHEARSAL_PAY_MODE=api exists because a sandboxed session may be unable to
+ * point a browser at checkout.stripe.com at all (this repo's own
+ * audit-mobile.mjs documents Playwright failing through a TLS-terminating
+ * agent proxy — verified again 2026-08-28). The session is found by the
+ * confirmationCode the app stamped into its metadata, and its PaymentIntent
+ * is confirmed with the standard test payment method. Test mode only by
+ * construction: the preflight already refused any non-sk_test_ key.
+ *
+ * What this does NOT exercise: the hosted payment page itself (its fields,
+ * its redirect). Everything downstream — the webhook, capture, finalisation —
+ * is identical, and those are what this script asserts.
+ */
+async function payViaApi(confirmationCode: string): Promise<boolean> {
+  const stripe = new Stripe(STRIPE_KEY);
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const sessions = await stripe.checkout.sessions.list({ limit: 20 });
+    const session = sessions.data.find((s) => s.metadata?.confirmationCode === confirmationCode);
+    if (session) {
+      try {
+        /* Checkout creates its PaymentIntent LAZILY — only when the payer
+           submits the hosted form, which only a browser can do. So the money
+           is made real here directly: a genuine PaymentIntent for the
+           session's exact amount, confirmed with the standard test card. The
+           refund and dispute paths downstream act on this intent, so every
+           money-bearing call in the rehearsal still hits real Stripe.
+
+           The one synthesized piece is the `checkout.session.completed`
+           ENVELOPE, delivered below with the same signature scheme real
+           delivery uses — because Stripe offers no API to complete a hosted
+           session, and this sandbox cannot reach checkout.stripe.com with a
+           browser (its egress proxy re-signs TLS; Chromium refuses). On a
+           machine that can, prefer the default browser mode, which exercises
+           the real event too. */
+        const intent = await stripe.paymentIntents.create(
+          {
+            amount: session.amount_total ?? 0,
+            currency: session.currency ?? 'usd',
+            payment_method: 'pm_card_visa',
+            confirm: true,
+            automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+            metadata: { confirmationCode, rehearsal: 'true' },
+          },
+          { idempotencyKey: `rehearsal-pay:${confirmationCode}` },
+        );
+        const event = {
+          id: `evt_rehearsal_${confirmationCode}`,
+          object: 'event',
+          api_version: '2026-07-29.dahlia',
+          created: Math.floor(Date.now() / 1000),
+          type: 'checkout.session.completed',
+          data: { object: { ...session, payment_intent: intent.id, payment_status: 'paid', status: 'complete' } },
+          livemode: false,
+          pending_webhooks: 1,
+          request: { id: null, idempotency_key: null },
+        };
+        const payload = JSON.stringify(event);
+        const signature = stripe.webhooks.generateTestHeaderString({
+          payload,
+          secret: process.env.STRIPE_WEBHOOK_SECRET ?? '',
+        });
+        const delivered = await fetch(`${BASE_URL}/api/stripe/webhook`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'stripe-signature': signature },
+          body: payload,
+        });
+        if (!delivered.ok) {
+          console.error(`  webhook delivery answered ${delivered.status}`);
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error(`  API pay failed: ${(error as Error).message.slice(0, 200)}`);
+        return false;
+      }
+    }
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  console.error('  no Checkout Session found carrying this confirmationCode');
+  return false;
+}
+
 /** Fills the Stripe-hosted checkout page. The one part of the walk that has to
  *  be a browser: there is no API that pays a Checkout Session. */
 async function payHostedCheckout(url: string): Promise<boolean> {
@@ -241,6 +326,11 @@ async function seedEverything(prisma: PrismaClient) {
 
   const stamp = Date.now().toString(36);
   const fan = await seedSessionCookie(`rehearsal-fan-${stamp}@example.com`);
+  /* The purchase route requires an adult attestation (`isEighteenOrOlder`)
+     before it will sell — the e2e fixture seeds a bare fan, so stamp it the
+     way Settings would. Deliberately NOT part of the fixture's defaults: specs
+     that assert the AGE_18_REQUIRED refusal need a fan without it. */
+  await prisma.user.update({ where: { id: fan.user.id }, data: { isEighteenOrOlder: true } });
   const promoter = await seedSessionCookie(`rehearsal-promoter-${stamp}@example.com`, {
     profiles: [{ type: 'ARTIST', name: 'Rehearsal Promoter' }],
   });
@@ -313,7 +403,10 @@ async function buyTicket(
 ): Promise<string | null> {
   const purchase = await api(`/api/shows/${seeded.show.id}/tickets`, seeded.fan.cookie, {
     method: 'POST',
-    body: JSON.stringify(body),
+    /* The token is a dummy on purpose: the rehearsal server runs Cloudflare's
+       published always-pass Turnstile TEST secret, which verifies any token.
+       Against a real secret this dummy fails closed, exactly as it should. */
+    body: JSON.stringify({ turnstileToken: 'XXXX.DUMMY.TOKEN.XXXX', ...body }),
   });
 
   if (purchase.status === 503) {
@@ -328,15 +421,19 @@ async function buyTicket(
     return null;
   }
 
-  const confirmationCode = String(purchase.body.confirmationCode ?? '');
+  const order = purchase.body.order as Record<string, unknown> | undefined;
+  const confirmationCode = String(order?.confirmationCode ?? purchase.body.confirmationCode ?? '');
   const checkoutUrl = String(purchase.body.checkoutUrl ?? '');
   if (!confirmationCode || !checkoutUrl) {
     check(`${label}: purchase returned a checkout URL`, false, JSON.stringify(purchase.body));
     return null;
   }
 
-  if (!(await payHostedCheckout(checkoutUrl))) {
-    check(`${label}: hosted checkout completed`, false);
+  const paid = process.env.REHEARSAL_PAY_MODE === 'api'
+    ? await payViaApi(confirmationCode)
+    : await payHostedCheckout(checkoutUrl);
+  if (!paid) {
+    check(`${label}: checkout completed`, false);
     return null;
   }
 
@@ -446,72 +543,93 @@ async function main() {
         entries.map((e) => `${e.profileId}:${e.amountCents}`).join(' ') || 'no promoter entry');
     }
 
-    console.log('\n[4] Refund the first order');
-    if (firstCode) {
-      const first = await prisma.ticketOrder.findUnique({
-        where: { confirmationCode: firstCode },
-        select: { tickets: { select: { serializedId: true } } },
-      });
-      const serialized = first?.tickets[0]?.serializedId;
-      const refund = serialized
-        ? await api(`/api/tickets/${serialized}/refund`, seeded.fan.cookie, { method: 'POST', body: '{}' })
-        : { status: 0, body: {} };
-      check('refund accepted', refund.status === 200, `HTTP ${refund.status} ${JSON.stringify(refund.body)}`);
+    console.log('\n[4] Cancel a show, which refunds — the only refund path that exists');
+    /* Buyer-initiated refunds were REMOVED 2026-08-12 (commit b7fb6205,
+       product ruling: "all ticket sales are final") — the runbook's original
+       stage 4 tested a deleted route, and CLAUDE.md still described it as
+       live. What exists is the ORGANIZER cancellation flow, which refunds
+       every captured order via a real Stripe refund. Rehearsed on its own
+       mini-show so the main show's payables survive for the payout stages. */
+    const cancelShow = await prisma.show.create({
+      data: {
+        slug: `rehearsal-cancel-${Date.now().toString(36)}`,
+        title: 'Rehearsal Cancellation',
+        startsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        creatorId: seeded.owner.user.id,
+        venueProfileId: seeded.venue.id,
+        headlinerProfileId: seeded.artist.id,
+        status: 'SCHEDULED',
+        ticketPriceCents: TICKET_PRICE_CENTS,
+        ticketCapacity: 50,
+        isTicketed: true,
+        venuePayoutPercent: 20,
+        artistPayoutPercent: 70,
+        promoterPayoutPercent: 10,
+      },
+      select: { id: true, slug: true },
+    });
+    const cancelSeeded = { ...seeded, show: cancelShow };
+    const refundableCode = await buyTicket(prisma, cancelSeeded, 'refundable order', { quantity: 1 });
+    const scannedCode = await buyTicket(prisma, cancelSeeded, 'scanned order', { quantity: 1 });
 
-      const after = await prisma.ticketOrder.findUnique({
-        where: { confirmationCode: firstCode },
-        include: { tickets: true, accountsPayableEntries: true },
+    if (refundableCode && scannedCode) {
+      /* One ticket is scanned before the cancellation: the cancel route must
+         refund the unscanned order and SKIP the scanned one — a person who
+         walked in attended the show, cancelled or not. */
+      const scannedTicket = await prisma.ticket.findFirst({
+        where: { ticketOrder: { confirmationCode: scannedCode } },
+        select: { id: true },
       });
-      check('order is VOID', after?.status === 'VOID', after?.status);
-      check('a real Stripe refund id was recorded', Boolean(after?.stripeRefundId), after?.stripeRefundId ?? 'null');
-      check('its tickets are VOID', (after?.tickets ?? []).every((t) => t.status === 'VOID'),
-        (after?.tickets ?? []).map((t) => t.status).join(','));
-      check('its payables are VOID', (after?.accountsPayableEntries ?? []).every((e) => e.status === 'VOID'),
-        (after?.accountsPayableEntries ?? []).map((e) => e.status).join(','));
-
-      if (secondCode) {
-        /* The refund must not touch the other order. A refund that voided every
-           payable for the SHOW rather than the ORDER would look identical in
-           the first three assertions above. */
-        const other = await prisma.accountsPayableEntry.findMany({
-          where: { ticketOrder: { confirmationCode: secondCode } },
-          select: { status: true },
-        });
-        check("the other order's payables are untouched", other.every((e) => e.status === 'PENDING'),
-          other.map((e) => e.status).join(','));
-      }
-    }
-
-    console.log('\n[5] Scan the remaining ticket, then try to refund it');
-    if (secondCode) {
-      const remaining = await prisma.ticket.findFirst({
-        where: { ticketOrder: { confirmationCode: secondCode } },
-        select: { id: true, serializedId: true },
-      });
-      if (remaining) {
-        // Scanned directly rather than through the scan endpoint: this step is
-        // about the REFUND refusal, and staff-auth is a different rehearsal.
+      if (scannedTicket) {
         await prisma.ticket.update({
-          where: { id: remaining.id },
+          where: { id: scannedTicket.id },
           data: { status: 'SCANNED', scannedAt: new Date() },
         });
-        const refused = await api(`/api/tickets/${remaining.serializedId}/refund`, seeded.fan.cookie, {
-          method: 'POST',
-          body: '{}',
-        });
-        check('a scanned ticket cannot be refunded', refused.status >= 400,
-          `HTTP ${refused.status} — a scanned ticket is a person who walked in`);
-        await prisma.ticket.update({
-          where: { id: remaining.id },
-          data: { status: 'VALID', scannedAt: null },
-        });
       }
+
+      const cancel = await api(`/api/shows/${cancelShow.id}/cancel`, seeded.owner.cookie, {
+        method: 'POST',
+        body: JSON.stringify({ reason: 'other' }),
+      });
+      check('cancellation accepted', cancel.status === 200, `HTTP ${cancel.status} ${JSON.stringify(cancel.body).slice(0, 200)}`);
+
+      const refunded = await prisma.ticketOrder.findUnique({
+        where: { confirmationCode: refundableCode },
+        include: { tickets: true, accountsPayableEntries: true },
+      });
+      check('unscanned order is VOID', refunded?.status === 'VOID', refunded?.status);
+      check('a real Stripe refund id was recorded', Boolean(refunded?.stripeRefundId), refunded?.stripeRefundId ?? 'null');
+      check('its tickets are VOID', (refunded?.tickets ?? []).every((t) => t.status === 'VOID'),
+        (refunded?.tickets ?? []).map((t) => t.status).join(','));
+      check('its payables are VOID', (refunded?.accountsPayableEntries ?? []).every((e) => e.status === 'VOID'),
+        (refunded?.accountsPayableEntries ?? []).map((e) => e.status).join(','));
+
+      console.log('\n[5] The scanned order is skipped, not refunded');
+      const attended = await prisma.ticketOrder.findUnique({
+        where: { confirmationCode: scannedCode },
+        select: { status: true, stripeRefundId: true },
+      });
+      check('scanned order is NOT voided — a scan is a person who walked in',
+        attended?.status === 'CAPTURED', attended?.status);
+      check('and no refund was issued for it', !attended?.stripeRefundId, attended?.stripeRefundId ?? 'none');
+
+      const mainOrderPayables = await prisma.accountsPayableEntry.findMany({
+        where: { showId: seeded.show.id },
+        select: { status: true },
+      });
+      check("the main show's payables are untouched by the cancellation",
+        mainOrderPayables.every((e) => e.status === 'PENDING'),
+        mainOrderPayables.map((e) => e.status).join(','));
     }
 
     console.log('\n[6] End the show and run the payout cron');
+    /* ELEVEN days back, not one: triggerShowPayouts holds every payout for
+       PAYOUT_HOLD_DAYS (10) past the show date so the dispute window has
+       mostly closed before money leaves. A rehearsal that backdated by a day
+       measured the hold working, not the payout failing. */
     await prisma.show.update({
       where: { id: seeded.show.id },
-      data: { status: 'ENDED', startsAt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+      data: { status: 'ENDED', startsAt: new Date(Date.now() - 11 * 24 * 60 * 60 * 1000) },
     });
     const firstRun = await runCron('show-payouts');
     check('payout cron ran', firstRun.status === 200, JSON.stringify(firstRun.body));
@@ -520,20 +638,33 @@ async function main() {
       where: { showId: seeded.show.id, status: 'RELEASED' },
       select: { category: true, stripeTransferId: true, amountCents: true },
     });
-    check('at least one entry RELEASED', released.length > 0, `${released.length} released`);
-    check('every released entry carries a real transfer id', released.every((e) => e.stripeTransferId),
-      released.map((e) => `${e.category}:${e.stripeTransferId ?? 'MISSING'}`).join(' '));
-
     const stillPending = await prisma.accountsPayableEntry.findMany({
       where: { showId: seeded.show.id, status: 'PENDING' },
       select: { category: true },
     });
-    /* Tax entries have no Connect account to pay, so they stay PENDING by
-       design — remittance is a manual accounting matter. Anything ELSE left
-       pending is an entry the cron could not pay and did not report. */
-    const unexpectedlyPending = stillPending.filter((e) => !String(e.category).startsWith('TAX'));
-    check('nothing but tax is left PENDING', unexpectedlyPending.length === 0,
-      unexpectedlyPending.map((e) => e.category).join(',') || 'only tax');
+    /* The cron can only PAY a payee who finished Connect onboarding — an
+       entry whose profile has no account is counted `skipped` and stays
+       PENDING, which is the app doing the right thing, not a fault. So what
+       this stage proves depends on what this run was given: with onboarded
+       accounts it proves money moves exactly once; without, it proves the
+       cron correctly refuses to invent a destination. Both assertions are
+       real; only one of them is about money. */
+    const haveAccounts = Boolean(VENUE_ACCOUNT || ARTIST_ACCOUNT);
+    if (haveAccounts) {
+      check('at least one entry RELEASED', released.length > 0, `${released.length} released`);
+      check('every released entry carries a real transfer id', released.every((e) => e.stripeTransferId),
+        released.map((e) => `${e.category}:${e.stripeTransferId ?? 'MISSING'}`).join(' '));
+      const unexpectedlyPending = stillPending.filter((e) => !String(e.category).startsWith('TAX'));
+      check('nothing but tax is left PENDING', unexpectedlyPending.length === 0,
+        unexpectedlyPending.map((e) => e.category).join(',') || 'only tax');
+    } else {
+      const skipped = Number((firstRun.body as Record<string, unknown>).skipped ?? 0);
+      check('with no payee onboarded, every payable is skipped rather than paid to nowhere',
+        released.length === 0 && skipped > 0 && stillPending.length > 0,
+        `released=${released.length} skipped=${skipped} pending=${stillPending.length}`);
+      console.log('        (Set REHEARSAL_VENUE_ACCOUNT / REHEARSAL_ARTIST_ACCOUNT with onboarded');
+      console.log('        accounts to prove the money actually moves — the release leg is UNPROVEN.)');
+    }
 
     console.log('\n[7] Run the payout cron a second time');
     /* THE ASSERTION THIS WHOLE SCRIPT IS FOR. A cron that pays twice is the

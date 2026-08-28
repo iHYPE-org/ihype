@@ -20,7 +20,21 @@ export function getStripe(): Stripe {
        docs/runbooks/money-path-rehearsal.md, not this file compiling. Live mode
        still holds zero PaymentIntents, so nothing in production has ever
        depended on the old version's shapes. */
-    _stripe = new Stripe(key, { apiVersion: '2026-07-29.dahlia' });
+    /* `httpClient` is REQUIRED in a Workers runtime, not an optimisation.
+       stripe-node picks its transport by sniffing for Node, and OpenNext
+       polyfills `process` in workerd — so without this the SDK selects its
+       node:https client, which runs on a shim and never completes a request.
+       Measured 2026-08-28 in the money-path rehearsal: every ticket purchase
+       hung for the SDK's full 80s timeout and answered 500, on the first run
+       this code ever made a Stripe call from inside a worker. Nothing in
+       production had ever exercised an outbound Stripe call, so nothing had
+       ever caught it. The fetch client is Stripe's own documented client for
+       Cloudflare Workers, and `fetch` is native in every runtime this app
+       has (workerd, Node 18+, vitest). */
+    _stripe = new Stripe(key, {
+      apiVersion: '2026-07-29.dahlia',
+      httpClient: Stripe.createFetchHttpClient(),
+    });
   }
   return _stripe;
 }
@@ -78,14 +92,57 @@ export async function createPaymentMethodSetupSession({
   return session.url;
 }
 
+/**
+ * Every merchant-only requirement Stripe would otherwise put in front of the
+ * member is PREFILLED here, and that is what keeps the heavier account shape
+ * from costing the member anything. Measured 2026-08-28 against a real
+ * sandbox: an individual account created bare owes 20 requirement entries;
+ * created with these prefills it owes 15 — and those 15 (name, email, phone,
+ * address, DOB, SSN last-4, bank account, ToS) are exactly what a bare PAYEE
+ * owes under money-laundering rules. The merchant configuration's marginal
+ * cost to the member is zero fields. The one merchant field not prefilled is
+ * `support.phone`, because we do not know their phone at creation; the hosted
+ * flow collects it beside the identity phone they type anyway.
+ */
+function merchantPrefill(profileType: string, profileName: string) {
+  const isVenue = profileType.toUpperCase() === 'VENUE';
+  /* Statement descriptor rules: 5-22 chars, and it is what a FAN's bank
+     statement shows on a venue-direct sale — so it should name the venue the
+     fan bought from, not iHYPE. Sanitised to the character set Stripe accepts;
+     the IHYPE prefix keeps short names above the 5-char floor and gives an
+     unfamiliar name context, which is the cheapest chargeback prevention
+     there is. For an artist the descriptor is inert (nothing ever charges on
+     their account) but Stripe requires it regardless. */
+  const descriptor = `IHYPE ${profileName}`
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]+/g, '')
+    .replace(/ +/g, ' ')
+    .trim()
+    .slice(0, 22);
+  return {
+    /* MCC is a card-network category code. 7922 is "Theatrical Producers and
+       Ticket Agencies" — a venue selling tickets to its own shows. 7929 is
+       "Bands, Orchestras, and Miscellaneous Entertainers". Honest for each,
+       and never something to ask a musician to look up. */
+    mcc: isVenue ? '7922' : '7929',
+    statement_descriptor: { descriptor },
+  };
+}
+
 export async function createStripeConnectAccount({
   email,
   profileId,
-  profileType
+  profileType,
+  profileName,
+  profileUrl,
 }: {
   email: string;
   profileId: string;
   profileType: string;
+  /** Public display name — becomes the statement descriptor a fan's bank shows. */
+  profileName: string;
+  /** Absolute URL of the profile's public page, e.g. https://ihype.org/venues/x. */
+  profileUrl: string;
 }): Promise<string> {
   const stripe = getStripe();
   /* ACCOUNTS V2, and v1 is not a fallback — it is CLOSED.
@@ -149,24 +206,73 @@ export async function createStripeConnectAccount({
      `responsibilities` names the platform for both fees and losses, which is
      what Stripe tells marketplaces on indirect charges to do — and is honest:
      iHYPE carries the chargebacks. */
-  const isMerchant = profileType.toUpperCase() === 'VENUE';
+  const isVenue = profileType.toUpperCase() === 'VENUE';
   const account = await stripe.v2.core.accounts.create({
     contact_email: email,
-    dashboard: 'express',
+    /* `full`, NOT `express`, AND EVERY ACCOUNT GETS THE MERCHANT CONFIGURATION.
+     * Both of those are forced by Stripe, and both contradict what this file
+     * said until 2026-08-28. Measured against a real sandbox — nine
+     * combinations, tabulated in docs/runbooks/money-path-rehearsal.md — after
+     * the shipped version turned out to create NO account at all:
+     *
+     *   recipient + merchant, express  ->  "This account configuration is not
+     *                                      supported."
+     *   recipient only,       express  ->  "Losses collector can only be
+     *                                      'application' for the set of
+     *                                      configurations this account has."
+     *
+     * Only `recipient + merchant` with `dashboard: 'full'` and Stripe as both
+     * collectors is accepted. Express is refused whenever Stripe manages
+     * losses, whatever the Connect setup screen says.
+     *
+     * WHY AN ARTIST NOW CARRIES `merchant` TOO, having deliberately not.
+     *
+     * The old reasoning was sound and is worth keeping: a payee is not a
+     * merchant, and asking a solo musician for full-service-agreement KYC to
+     * be handed 70% of a door split is asking them to take on a role they are
+     * not in. It is unavailable, not abandoned. A recipient-only account
+     * REQUIRES `losses_collector: 'application'`, and `application` requires
+     * accepting the platform-managed-risk agreement — which reads: "You'll be
+     * liable for seller losses. Stripe will hold reserves on your account",
+     * plus risk underwriting, monitoring, remediation and risk support.
+     *
+     * That is the whole of what this org cannot do (owner, 2026-08-27: "we
+     * don't HAVE a reserve, at all" / "I don't have the headcount"). Heavier
+     * onboarding for an act is a real cost; platform liability with no reserve
+     * behind it is not a cost, it is the failure. So the trade is made
+     * knowingly and in that direction.
+     *
+     * Note what does NOT follow: an act being merchant-CAPABLE does not make
+     * them a merchant. Nothing ever creates a charge on their account —
+     * `createVenueDirectCheckoutSession` is called for the venue and only the
+     * venue, and the ticket route gates it on `isConnectMerchantReady(venue)`.
+     * The capability sits unused, which is the price of the payout working. */
+    dashboard: 'full',
     /* A venue is a business; an artist signing up alone is usually not. Getting
        this wrong sends the payee through the wrong identity questions and
        strands onboarding partway with no obvious cause. */
-    identity: { country: 'us', entity_type: isMerchant ? 'company' : 'individual' },
+    identity: { country: 'us', entity_type: isVenue ? 'company' : 'individual' },
     configuration: {
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
       },
-      ...(isMerchant
-        ? { merchant: { capabilities: { card_payments: { requested: true } } } }
-        : {}),
+      merchant: {
+        capabilities: { card_payments: { requested: true } },
+        ...merchantPrefill(profileType, profileName),
+      },
     },
     defaults: {
       currency: 'usd',
+      /* The member's public iHYPE page is their business URL, and the
+         description is what they are actually doing here. Both are merchant
+         requirements Stripe would otherwise ask the member to type.
+         `business_url` is ALSO re-set via update below: measured 2026-08-28,
+         the create call accepts it silently and the requirement stays open,
+         while the same value through `accounts.update` clears it. */
+      profile: {
+        business_url: profileUrl,
+        product_description: 'Live music performances and ticketed shows on iHYPE.',
+      },
       /* MATCHES THE PLATFORM'S OWN CONNECT CONFIGURATION, confirmed at signup
          on 2026-08-27: "Sellers will collect payments directly" and "Stripe
          will manage risk and be liable if sellers can't pay back losses — even
@@ -230,6 +336,15 @@ export async function createStripeConnectAccount({
    * Recorded rather than silently dropped because "make sure we can debit the
    * account" reads like an obviously good idea to anyone who has not read the
    * platform's risk configuration. */
+
+  /* Re-set the business URL through update. Measured 2026-08-28: the create
+     call accepts `defaults.profile.business_url` without error and the
+     requirement stays open anyway; the identical value through
+     `accounts.update` clears it. Best-effort — if this fails the member types
+     one URL during onboarding rather than being blocked here. */
+  await stripe.v2.core.accounts
+    .update(account.id, { defaults: { profile: { business_url: profileUrl } } })
+    .catch(() => {});
 
   return account.id;
 }
@@ -328,7 +443,17 @@ export async function createConnectOnboardingUrl({
            flow the member completed and believes is finished.
            `merchant` is requested for venues only; see
            `createStripeConnectAccount`. */
-        configurations: merchantOnboarding ? ['recipient', 'merchant'] : ['recipient'],
+        /* ALWAYS BOTH, as of 2026-08-28. Every account is created with the
+           merchant configuration because Stripe does not accept a
+           recipient-only account under this platform's risk settings (see
+           `createStripeConnectAccount`), and a link naming fewer
+           configurations than the account has collects only those
+           requirements — the member completes a flow, is told it is done, and
+           a capability never activates. `merchantOnboarding` is kept as a
+           parameter so callers keep documenting intent, and so the day a
+           recipient-only account becomes possible again there is one place to
+           change. */
+        configurations: ['recipient', 'merchant'],
         refresh_url: refreshUrl,
         return_url: returnUrl,
       },

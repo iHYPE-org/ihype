@@ -472,6 +472,17 @@ if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"false"/.test(wranglerConfig)) {
   );
 }
 
+// The rehearsal escape hatch may never be configured for the deployed Worker.
+// STRIPE_ALLOW_TEST_MODE_REHEARSAL lets the money-path rehearsal accept a
+// sk_test_ key inside a production BUILD running locally against a scratch
+// database; defined in wrangler.toml it would let production accept one too.
+if (/STRIPE_ALLOW_TEST_MODE_REHEARSAL/.test(wranglerConfig)) {
+  fail(
+    'wrangler.toml',
+    'STRIPE_ALLOW_TEST_MODE_REHEARSAL is a local rehearsal-only variable and must never be set for the deployed Worker.',
+  );
+}
+
 const payments = await text('src/lib/payments.ts');
 if (!payments.includes('FEATURE_ENABLE_TICKET_PAYMENTS')) {
   fail('src/lib/payments.ts', 'payment readiness must require the explicit launch flag.');
