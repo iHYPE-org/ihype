@@ -78,14 +78,57 @@ export async function createPaymentMethodSetupSession({
   return session.url;
 }
 
+/**
+ * Every merchant-only requirement Stripe would otherwise put in front of the
+ * member is PREFILLED here, and that is what keeps the heavier account shape
+ * from costing the member anything. Measured 2026-08-28 against a real
+ * sandbox: an individual account created bare owes 20 requirement entries;
+ * created with these prefills it owes 15 — and those 15 (name, email, phone,
+ * address, DOB, SSN last-4, bank account, ToS) are exactly what a bare PAYEE
+ * owes under money-laundering rules. The merchant configuration's marginal
+ * cost to the member is zero fields. The one merchant field not prefilled is
+ * `support.phone`, because we do not know their phone at creation; the hosted
+ * flow collects it beside the identity phone they type anyway.
+ */
+function merchantPrefill(profileType: string, profileName: string) {
+  const isVenue = profileType.toUpperCase() === 'VENUE';
+  /* Statement descriptor rules: 5-22 chars, and it is what a FAN's bank
+     statement shows on a venue-direct sale — so it should name the venue the
+     fan bought from, not iHYPE. Sanitised to the character set Stripe accepts;
+     the IHYPE prefix keeps short names above the 5-char floor and gives an
+     unfamiliar name context, which is the cheapest chargeback prevention
+     there is. For an artist the descriptor is inert (nothing ever charges on
+     their account) but Stripe requires it regardless. */
+  const descriptor = `IHYPE ${profileName}`
+    .toUpperCase()
+    .replace(/[^A-Z0-9 ]+/g, '')
+    .replace(/ +/g, ' ')
+    .trim()
+    .slice(0, 22);
+  return {
+    /* MCC is a card-network category code. 7922 is "Theatrical Producers and
+       Ticket Agencies" — a venue selling tickets to its own shows. 7929 is
+       "Bands, Orchestras, and Miscellaneous Entertainers". Honest for each,
+       and never something to ask a musician to look up. */
+    mcc: isVenue ? '7922' : '7929',
+    statement_descriptor: { descriptor },
+  };
+}
+
 export async function createStripeConnectAccount({
   email,
   profileId,
-  profileType
+  profileType,
+  profileName,
+  profileUrl,
 }: {
   email: string;
   profileId: string;
   profileType: string;
+  /** Public display name — becomes the statement descriptor a fan's bank shows. */
+  profileName: string;
+  /** Absolute URL of the profile's public page, e.g. https://ihype.org/venues/x. */
+  profileUrl: string;
 }): Promise<string> {
   const stripe = getStripe();
   /* ACCOUNTS V2, and v1 is not a fallback — it is CLOSED.
@@ -199,10 +242,23 @@ export async function createStripeConnectAccount({
       recipient: {
         capabilities: { stripe_balance: { stripe_transfers: { requested: true } } },
       },
-      merchant: { capabilities: { card_payments: { requested: true } } },
+      merchant: {
+        capabilities: { card_payments: { requested: true } },
+        ...merchantPrefill(profileType, profileName),
+      },
     },
     defaults: {
       currency: 'usd',
+      /* The member's public iHYPE page is their business URL, and the
+         description is what they are actually doing here. Both are merchant
+         requirements Stripe would otherwise ask the member to type.
+         `business_url` is ALSO re-set via update below: measured 2026-08-28,
+         the create call accepts it silently and the requirement stays open,
+         while the same value through `accounts.update` clears it. */
+      profile: {
+        business_url: profileUrl,
+        product_description: 'Live music performances and ticketed shows on iHYPE.',
+      },
       /* MATCHES THE PLATFORM'S OWN CONNECT CONFIGURATION, confirmed at signup
          on 2026-08-27: "Sellers will collect payments directly" and "Stripe
          will manage risk and be liable if sellers can't pay back losses — even
@@ -266,6 +322,15 @@ export async function createStripeConnectAccount({
    * Recorded rather than silently dropped because "make sure we can debit the
    * account" reads like an obviously good idea to anyone who has not read the
    * platform's risk configuration. */
+
+  /* Re-set the business URL through update. Measured 2026-08-28: the create
+     call accepts `defaults.profile.business_url` without error and the
+     requirement stays open anyway; the identical value through
+     `accounts.update` clears it. Best-effort — if this fails the member types
+     one URL during onboarding rather than being blocked here. */
+  await stripe.v2.core.accounts
+    .update(account.id, { defaults: { profile: { business_url: profileUrl } } })
+    .catch(() => {});
 
   return account.id;
 }

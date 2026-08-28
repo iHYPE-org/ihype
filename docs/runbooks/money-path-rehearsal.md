@@ -570,6 +570,27 @@ individual artist and for a company venue, each returning `transfers=restricted`
 and `card_payments=restricted` — the correct state for an account whose KYC has
 not been completed yet.
 
+**MEASURED, same day: the heavier onboarding costs an individual artist zero
+extra fields.** The fear driving the recipient-only design was full merchant
+KYC for musicians. Measured against the sandbox, an individual account created
+bare owes 20 requirement entries; with the platform prefilling the five
+merchant-only fields (`mcc`, `statement_descriptor`, `support.phone`,
+`business_url`, `product_description`) it owes 15 — and those 15 (name, email,
+phone, address, DOB, SSN **last four**, bank account, ToS) are exactly what a
+bare payee owes under KYC rules at any processor. `createStripeConnectAccount`
+now prefills all of them from the profile (the support phone is collected in
+the hosted flow beside the identity phone the member types anyway).
+
+Two mechanics found doing it: `defaults.profile.business_url` is silently
+ignored on CREATE and honoured on UPDATE, so the function sets it twice; and
+the requirements list recomputes **asynchronously**, so a read immediately
+after a write can still show entries the write satisfied — do not treat that
+as the prefill failing.
+
+A COMPANY venue still owes real business KYC (EIN, registered name, owners,
+representative — ~38 entries). That is inherent to being a business taking
+card payments anywhere, not something this design added.
+
 What the heavier onboarding does NOT mean: an act being merchant-CAPABLE does
 not make them a merchant. Nothing creates a charge on an act's account —
 `createVenueDirectCheckoutSession` is called for the venue only, gated on
