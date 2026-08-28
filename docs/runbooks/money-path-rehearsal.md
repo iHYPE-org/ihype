@@ -296,9 +296,9 @@ Everything in the right-hand column is what the steps below are for.
 
 ## Step 1 — Stripe-side semantics (30 minutes, test mode)
 
-`scripts/stripe-payout-rehearsal.mjs` rehearses the six Stripe behaviours the
-app's design depends on. It **refuses any key that is not `sk_test_`**, so it
-cannot touch live money.
+`scripts/stripe-payout-rehearsal.mjs` rehearses the Stripe behaviours the app's
+design depends on, across **all three settlement modes**. It **refuses any key
+that is not `sk_test_`**, so it cannot touch live money.
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
@@ -307,13 +307,43 @@ STRIPE_SECRET_KEY=sk_test_… npm run stripe:rehearsal
 A test-mode account already exists on the iHYPE Stripe account, so the key comes
 from Stripe Dashboard → Developers → API keys with the **Test mode** toggle on.
 
-The script creates its own connected accounts unless you point it at existing
-ones with `REHEARSAL_CONNECT_ACCOUNTS=acct_…,acct_…,acct_…`.
+**It does not create connected accounts, and cannot.** Stripe will not transfer
+to, or charge on, an account that has not completed onboarding, so the accounts
+are a prerequisite rather than something the script can arrange:
 
-**What good looks like:** every one of its six checks prints a pass, in
-particular that the three transfers sum to exactly the captured amount and that
-replaying a transfer with the same idempotency key returns the *same* transfer id
-rather than paying twice.
+| Env var | What it needs | Which steps |
+|---|---|---|
+| `REHEARSAL_CONNECT_ACCOUNTS=acct_…,acct_…,acct_…` | three accounts with `transfers` **active** | 2, 3, 6 |
+| `REHEARSAL_MERCHANT_ACCOUNT=acct_venue` | one account with `card_payments` **active** | 7 |
+
+The second is a strictly higher bar than the first — a merchant needs the full
+service agreement and the merchant configuration requested during onboarding.
+That difference is not an inconvenience of the script; it is the same
+distinction `isConnectPayoutReady()` and the venue-direct branch turn on, so an
+account that cannot satisfy step 7 also cannot take a `VENUE_DIRECT` sale.
+
+**What good looks like:** every check passes AND the last line reads *"All three
+settlement modes rehearsed"*. In particular:
+
+- the three transfers sum to exactly the captured amount, and replaying one with
+  the same idempotency key returns the *same* transfer id rather than paying
+  twice (steps 2-3);
+- on a **destination** charge the act receives their *share* and not the whole
+  charge — the 2026-07-14 bug, asserted directly — and a refund with
+  `reverse_transfer`/`refund_application_fee` reverses the act's transfer in
+  full rather than leaving the platform to fund the refund alone (step 6);
+- on a **venue-direct** charge the PaymentIntent is **invisible to a
+  platform-scoped lookup** — that failure is the pass, and it is the only
+  positive proof the merchant role actually moved — while the application fee
+  carrying the artist's 70% and the promoter's 10% appears as a platform
+  `application_fee` object where the payout cron can reach it (step 7).
+
+**A skip is not a pass, and the exit code says so.** Steps 6 and 7 skip when the
+accounts they need do not exist, and the script then exits **2**, not 0, naming
+the modes it could not rehearse. What ran in that case is the `PLATFORM`
+fallback — the mode a real sale is *least* likely to take. This is deliberate:
+a green tick over an unrun stage is a mistake this repository has already made
+twice, and an exit code is harder to skim past than a log line.
 
 **What it cannot do:** it has no database, so it does not exercise
 `triggerShowPayouts()`'s own state transitions — the thing that decides which
