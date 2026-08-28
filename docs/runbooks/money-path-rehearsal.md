@@ -271,6 +271,57 @@ Reserve policy and tax segregation for a 501(c)(3) are an accountant's
 territory, not this runbook's. What is written here is the mechanics; the
 treatment is a question for someone qualified.
 
+### KYC finishes after the member leaves, and the v1 webhook does not say so
+
+Recorded 2026-08-28, from Stripe's Accounts v2 migration guide.
+
+Onboarding completion is **asynchronous**. A venue finishes the hosted flow and
+Stripe verifies them minutes or days later, by which time they have closed the
+tab. `/api/stripe/connect/return` checks readiness at the moment they come
+back, correctly finds them not ready, and marks nothing. Something has to ask
+again later.
+
+The intended backstop was the v1 `account.updated` webhook, and **for a
+recipient-only account that backstop does not exist.** Stripe's guide says v2
+`Accounts` emit v1 events "depending on the updated configuration", and names
+the **merchant** configuration as the one that emits v1 `account.updated`. A
+recipient capability going active announces itself only on the v2 thin event:
+
+```
+v2.core.account[configuration.recipient].capability_status_updated
+```
+
+So for every artist and promoter — recipient-only by design — nothing was ever
+going to flip `stripeConnectOnboarded` after they left the page. Every one of
+their shows would settle `PLATFORM` indefinitely, reporting no fault, because
+nothing is faulty: the question is simply never asked again.
+
+**Closed by making `stripe-connect-health` reconcile rather than complain.**
+Every 6 hours it asks Stripe the real readiness question for each profile that
+has an account and is not marked onboarded, and promotes the ones that have
+gone active — payout capability for everyone, **plus** `card_payments` for a
+venue. Promote-only, never demote. It needs no dashboard configuration and it
+keeps working if an event is missed or a destination is deleted.
+
+That cron previously only sent email, and its query included
+`onboarded: false, accountId: not null` — which is the ordinary state of every
+member who has started and not finished. It therefore alerted every six hours
+about people doing nothing wrong. It now emails only for genuinely corrupt
+state (onboarded with no account id), which no code path can produce.
+
+**A v2 event destination is still worth adding, and is no longer load-bearing.**
+It buys latency: minutes instead of up to six hours. Two things to get right,
+both of which Stripe's own support notes people get wrong:
+
+- Create it as an **API v2** destination — a v1 webhook endpoint does not
+  receive thin events at all, so our existing `/api/stripe/webhook` cannot.
+- Scope it to **"Your account"**, not "Connected accounts". `v2.core.account.*`
+  events for connected accounts arrive on the platform's own scope, which is
+  the opposite of the v1 intuition.
+
+Subscribe to the `configuration.recipient` **and** `configuration.merchant`
+variants — a venue needs both, and only the merchant one has any v1 equivalent.
+
 ### The remaining steps still need a human
 
 Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
