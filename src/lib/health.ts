@@ -184,7 +184,12 @@ export async function getHealthSnapshot() {
           : 'not_configured',
       launchReadiness: {
         ready: launchBlockers.length === 0,
-        blockers: launchBlockers
+        blockers: launchBlockers,
+        /* Lets a caller tell "closed on purpose" apart from "misconfigured".
+           See the comment in src/lib/payments.ts — the post-deploy smoke test
+           and the readiness cron both need this distinction, and both were
+           treating the two as one thing. */
+        paymentsDisabledByFlag: paymentReadiness.paymentsDisabledByFlag
       },
       alphaReadiness: {
         ready: alphaBlockers.length === 0,

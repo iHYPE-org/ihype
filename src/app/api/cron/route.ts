@@ -68,7 +68,18 @@ export async function GET(request: NextRequest) {
           log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'alert email failed');
         }
       }
-      if (snapshot.status === 'ok' && !snapshot.launchReadiness.ready && isEmailDeliveryConfigured()) {
+      /* Not an alert when the ONLY blocker is the deliberate paid-ticketing
+         flag. It is throttled to once a day, but a daily email about a state
+         the administrators chose is still an email nobody reads — and then
+         neither is the one that matters. Anything else in `blockers` (a
+         missing Stripe secret, a test key in production) still alerts, which
+         is the case this exists for. */
+      if (
+        snapshot.status === 'ok' &&
+        !snapshot.launchReadiness.ready &&
+        !snapshot.launchReadiness.paymentsDisabledByFlag &&
+        isEmailDeliveryConfigured()
+      ) {
         try {
           const { kvGet, kvPut } = await import('@/lib/kv');
           const lastAlert = await kvGet<number>('health-alert:launch-readiness');

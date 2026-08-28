@@ -142,6 +142,24 @@ for (const check of checks) {
           continue;
         }
         if (requireLaunchReady && payload.launchReadiness?.ready !== true) {
+          /* PAID TICKETING BEING OFF IS NOT A DEPLOY FAILURE.
+           *
+           * It is the approved state of production until the money path has
+           * been rehearsed, and this check treated it as a fault: on
+           * 2026-08-28 the deploy that closed the flag went out correctly and
+           * then failed its own post-deploy smoke, which SKIPPED the steps
+           * behind it — including the Cloudflare cache purge.
+           *
+           * The assertion that matters is unchanged and is not relaxed here:
+           * `paymentsDisabledByFlag` is true only when the flag is the SOLE
+           * blocker. A missing Stripe secret, or a test key in production,
+           * leaves other blockers and still fails the deploy. */
+          if (payload.launchReadiness?.paymentsDisabledByFlag === true) {
+            console.log(
+              `[smoke] ${check.path} ${response.status} ${elapsed}ms — paid ticketing deliberately disabled; everything else is configured`,
+            );
+            continue;
+          }
           failed = true;
           console.error(
             `[smoke] ${check.path} launch readiness failed: ${JSON.stringify(payload.launchReadiness?.blockers ?? [])}`,
