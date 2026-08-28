@@ -11,7 +11,15 @@ import {
 } from '@/lib/stripe';
 
 const schema = z.object({
-  profileId: z.string().cuid()
+  /* NOT `.cuid()`, and that changed after it broke in production (Sentry
+     JAVASCRIPT-NEXTJS-E, 2026-08-28). The schema defaults new ids to cuid,
+     but rows seeded outside Prisma's default carry other shapes, and the
+     admin's own preview profiles failed the pattern — so the Connect button
+     answered "Invalid request." for exactly the person testing it. Id shape
+     is not a security boundary here: the findUnique below misses unknown ids
+     and the ownership check is what actually gates the action. Validate that
+     it is a sane opaque id, no more. */
+  profileId: z.string().min(1).max(64).regex(/^[A-Za-z0-9_-]+$/)
 });
 
 /**
