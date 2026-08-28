@@ -180,7 +180,39 @@ export async function createStripeConnectAccount({
          `fees_collector: 'stripe'` because on a direct charge Stripe deducts
          its processing fee from the venue's own side of the transaction. That
          is what makes the venue's 20% arrive whole and iHYPE's application fee
-         exactly the two onward shares. */
+         exactly the two onward shares. It also moves the DISPUTE FEE onto the
+         venue — Stripe's table is explicit that `fees_collector: 'application'`
+         bills the platform for it and every other value bills the connected
+         account. The venue disclosure in PayoutSettingsPanel says so in
+         so many words; do not change one without the other.
+
+         THIS DIVERGES FROM STRIPE'S PUBLISHED RECOMMENDATION FOR THE
+         DESTINATION-CHARGE ACCOUNTS, DELIBERATELY. Read this before "fixing"
+         it, because the docs will look like they are on the other side.
+
+         Stripe says: "If you use destination charges with an Account, we
+         recommend that you set both `losses_collector` and `fees_collector` to
+         `application`", and separately that assigning losses to Stripe "doesn't
+         absolve your platform of responsibility for its own balance". Both are
+         true and neither is an argument for `application` HERE:
+
+           - `losses_collector` governs the CONNECTED ACCOUNT's negative
+             balance and nothing else. On a destination charge the disputed
+             amount hits the PLATFORM balance, which this setting cannot touch
+             either way. So `application` would not move a cent of the exposure
+             the recommendation is about — it would only decide who eats an
+             ARTIST's negative balance, which happens when a refund with
+             `reverse_transfer` outruns their balance. `stripe` puts that on
+             Stripe. `application` puts it on a platform with no reserve.
+           - What the recommendation actually buys is recovery LEVERS —
+             account debits, payout pauses, connected-account reserves — all of
+             which require platform liability and all of which iHYPE has said
+             it does not want and cannot staff.
+
+         So the recommendation optimises for a marketplace that wants control
+         and can fund it. This one wants neither. If that ever changes, change
+         BOTH values together: Stripe rejects `losses_collector: 'application'`
+         with `fees_collector: 'stripe'`. */
       responsibilities: { fees_collector: 'stripe', losses_collector: 'stripe' },
     },
     metadata: { profileId, profileType },

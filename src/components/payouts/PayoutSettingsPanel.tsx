@@ -87,7 +87,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
                 <p className="pset-merchant-note">
                   {t(
                     'payoutSettingsPanel.venueMerchantNote',
-                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
+                    'Connecting makes your venue the seller of record for your own shows. Ticket money is charged to your Stripe account first, so you receive it directly — and refunds, card disputes and sales tax are yours to handle, the same as tickets you sell at the door. If a buyer disputes a charge, Stripe takes the ticket price and its own $15 dispute fee from your account, not from iHYPE. iHYPE takes 0% and passes on no fee for this; we transfer the artist’s 70% and any promoter’s 10% out of your ticket revenue automatically.',
                   )}
                 </p>
               )}
