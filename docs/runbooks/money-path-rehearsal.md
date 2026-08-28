@@ -167,19 +167,35 @@ merchant — the act's name on the fan's statement, their country's fee structur
 Two levers were checked and neither helps:
 
 - **`losses_collector` / `controller.losses.payments`** governs *connected
-  account* negative balances, not the platform's own. Stripe's guidance for
-  marketplaces using indirect charges is to set it to `application`, which is
-  what `createStripeConnectAccount` already does. The configuration was already
-  right; there was no free lunch in it.
-- **Direct charges** would put liability on the connected account, and settle
-  to exactly one account — so the 70/20/10 could not be routed by Stripe, and
-  one party would have to be trusted to pay the other two. That is the model
-  this platform exists to replace.
+  account* negative balances, not the platform's own. It cannot help on an
+  indirect charge, where the negative balance in question is the platform's.
+  (**Corrected 2026-08-28:** this bullet used to say the right value was
+  `application` and that `createStripeConnectAccount` already set it. Both
+  halves are now wrong — the signed-up configuration is Stripe-managed risk, so
+  the value is `'stripe'`, and the function was changed to match. The point the
+  bullet was making still stands: it buys nothing on the fallback modes.)
+- **Direct charges** put liability on the connected account — and this bullet
+  used to end there, claiming they settle to exactly one account so the
+  70/20/10 "could not be routed by Stripe" and one party would have to be
+  trusted to pay the other two. **That was wrong, and it cost most of a day.**
+  `application_fee_amount` on a direct charge lands in the PLATFORM balance and
+  can be transferred onward, so a direct charge routes a three-way split
+  perfectly well: the venue keeps its 20% by never sending it, and the artist's
+  70% and the promoter's 10% arrive as an application fee that the payout cron
+  pays out. That is `VENUE_DIRECT`, and it is now the preferred mode. Nobody is
+  trusted to pay anybody.
 
-There is no Stripe configuration that gives an enforced multi-party split AND
-no platform dispute liability. Liability follows the merchant on the charge,
-and a charge has one merchant. That is card-network structure, not a product
-choice, so no vendor escapes it by being cleverer.
+Liability follows the merchant on the charge, and a charge has one merchant.
+That is card-network structure, not a product choice, so no vendor escapes it
+by being cleverer. **What follows from it is not what this paragraph used to
+say** — it used to conclude that no configuration gives an enforced split with
+no platform dispute liability. There is one: make the merchant somebody other
+than iHYPE. A direct charge on the venue's account is an enforced three-way
+split (see the corrected bullet above) whose merchant is the venue, so the
+dispute is the venue's and, under Stripe-managed risk, the unrecoverable
+shortfall is Stripe's. iHYPE's exposure is zero on those sales. It is the
+fallback modes — where no venue is onboarded and iHYPE is the merchant by
+default — that carry the liability this section is about.
 
 #### Deflection is not insurance
 
