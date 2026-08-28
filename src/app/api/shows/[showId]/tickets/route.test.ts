@@ -49,8 +49,10 @@ const getOrCreateStripeCustomer = vi.fn().mockResolvedValue('cus_existing');
    headliner finishes Connect onboarding. The destination-charge path gets its
    own test below rather than becoming the assumed default here. */
 const isConnectPayoutReady = vi.fn().mockResolvedValue(false);
+const createVenueDirectCheckoutSession = vi.fn();
 vi.mock('@/lib/stripe', () => ({
   createTicketCheckoutSession: (...args: unknown[]) => createTicketCheckoutSession(...args),
+  createVenueDirectCheckoutSession: (...args: unknown[]) => createVenueDirectCheckoutSession(...args),
   getOrCreateStripeCustomer: (...args: unknown[]) => getOrCreateStripeCustomer(...args),
   isConnectPayoutReady: (...args: unknown[]) => isConnectPayoutReady(...args),
 }));
@@ -196,7 +198,30 @@ describe('POST /api/shows/[showId]/tickets', () => {
       });
     });
 
-    it('routes the share of a payout-ready headliner straight to them', async () => {
+    it('prefers a venue-direct charge when the venue is onboarded', async () => {
+      /* Mode 1 and the one the product wants: the VENUE becomes the merchant,
+         so disputes and tax leave iHYPE entirely and the buyer pays no
+         protection reserve. It outranks routing to the headliner. */
+      isConnectPayoutReady.mockResolvedValue(true);
+      createVenueDirectCheckoutSession.mockResolvedValue({
+        checkoutSessionId: 'cs_direct', checkoutUrl: 'https://checkout.stripe.com/direct',
+      });
+
+      const res = await POST(makeRequest({ quantity: 1 }), params);
+      expect(res.status).toBe(201);
+      expect(createTicketCheckoutSession).not.toHaveBeenCalled();
+
+      const [call] = createVenueDirectCheckoutSession.mock.calls.at(-1) as [Record<string, unknown>];
+      expect(call.venueAccountId).toBe('acct_venue');
+      // iHYPE claims only what it owes onward — never the venue's share, and
+      // never the tax the venue is the one remitting.
+      expect(call.artistPayoutCents).toBe(1600);
+      expect(call.promoterPayoutCents).toBe(0);
+    });
+
+    it('falls back to routing the headliner when only they are onboarded', async () => {
+      // No venue account at all, so mode 1 is unavailable and mode 2 applies.
+      dbShowFindUnique.mockResolvedValueOnce(baseShow({ venueProfile: null }));
       isConnectPayoutReady.mockResolvedValue(true);
 
       const res = await POST(makeRequest({ quantity: 1 }), params);

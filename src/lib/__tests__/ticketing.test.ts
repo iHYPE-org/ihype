@@ -6,6 +6,7 @@ import {
   calculateTicketTaxes,
   calculateTicketOrderFinancials,
   calculateDestinationChargeSplit,
+  calculateDirectChargeApplicationFee,
   getRemainingPayoutPercent,
   PLATFORM_COMMISSION_PERCENT,
   DEFAULT_PROMOTER_AFFILIATE_PERCENT
@@ -477,5 +478,64 @@ describe('the protection reserve', () => {
     // platform's favour rather than the parties'.
     expect(platformRetains).toBeGreaterThanOrEqual(owed);
     expect(platformRetains - owed).toBeLessThanOrEqual(2);
+  });
+});
+
+describe('venue-direct charges', () => {
+  const base = { ticketPriceCents: 1800, quantity: 1, venuePayoutPercent: 20, artistPayoutPercent: 70 };
+
+  it('charges no protection reserve, because the venue carries the risk', () => {
+    /* The reserve funds refunds and disputes for whoever the merchant is. On a
+       direct charge Stripe debits the VENUE's account, so a reserve collected
+       by iHYPE would be a fee with no cost behind it. */
+    const f = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true, platformBearsRisk: false });
+    expect(f.reserveFeeCents).toBe(0);
+    expect(f.totalChargeCents).toBe(1885); // 1800 face + 85 processing, nothing else
+    // Cheaper for the buyer than the platform-settled mode, by exactly the reserve.
+    const platformSettled = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true });
+    expect(platformSettled.totalChargeCents - f.totalChargeCents).toBe(platformSettled.reserveFeeCents + 1);
+  });
+
+  it('claims only what must be paid onward, leaving the venue its 20%', () => {
+    const f = calculateTicketOrderFinancials({ ...base, hasAffiliatePromoter: true, platformBearsRisk: false });
+    const { applicationFeeCents } = calculateDirectChargeApplicationFee({
+      artistPayoutCents: f.artistPayoutCents,
+      promoterPayoutCents: f.promoterPayoutCents,
+      totalChargeCents: f.totalChargeCents,
+    });
+    expect(applicationFeeCents).toBe(1440); // artist 1260 + promoter 180
+
+    /* What the venue nets: the charge, less Stripe's cut (taken from THEIR
+       account, since they are the merchant), less what iHYPE claimed. On a
+       standard card that is their 20% of face, to the cent. */
+    const venueNets = f.totalChargeCents - stripeCutOf(f.totalChargeCents) - applicationFeeCents;
+    expect(venueNets).toBe(f.venuePayoutCents);
+  });
+
+  it('leaves tax with the venue, who is the one remitting it', () => {
+    const f = calculateTicketOrderFinancials({
+      ...base, hasAffiliatePromoter: true, platformBearsRisk: false,
+      buyerLocation: { postalCode: '04101', stateRegion: 'ME', country: 'US' },
+      venueLocation: { postalCode: '04101', stateRegion: 'ME', country: 'US' },
+    });
+    expect(f.totalTaxCents).toBeGreaterThan(0);
+    const { applicationFeeCents } = calculateDirectChargeApplicationFee({
+      artistPayoutCents: f.artistPayoutCents,
+      promoterPayoutCents: f.promoterPayoutCents,
+      totalChargeCents: f.totalChargeCents,
+    });
+    // iHYPE's fee does not grow by a cent when tax is collected — the merchant
+    // of record keeps it and remits it, and here that is the venue.
+    expect(applicationFeeCents).toBe(f.artistPayoutCents + f.promoterPayoutCents);
+    const venueNets = f.totalChargeCents - stripeCutOf(f.totalChargeCents) - applicationFeeCents;
+    expect(venueNets).toBe(f.venuePayoutCents + f.totalTaxCents);
+  });
+
+  it('refuses a fee that would leave the merchant nothing', () => {
+    // Stripe requires the fee to be LESS than the charge. Reaching this means
+    // the split is wrong upstream; fail before a fan tries to pay.
+    expect(() => calculateDirectChargeApplicationFee({
+      artistPayoutCents: 900, promoterPayoutCents: 100, totalChargeCents: 1000,
+    })).toThrow(/less than the total charge/i);
   });
 });

@@ -131,7 +131,9 @@ describe('buildPayableEntries', () => {
        transfer that share a SECOND time, out of money belonging to the venue,
        the promoter and a tax authority. Nothing downstream would catch it: the
        entry looks like any other artist payout and the transfer succeeds. */
-    const entries = buildPayableEntries(show, { ...order, settlementAccountId: 'acct_artist' }, []);
+    const entries = buildPayableEntries(
+      show, { ...order, settlementMode: 'DESTINATION', settlementAccountId: 'acct_artist' }, [],
+    );
     expect(entries.filter((e) => e.category === 'ARTIST_PAYOUT')).toHaveLength(0);
 
     // Everything the platform DOES hold is still recorded, unchanged.
@@ -153,9 +155,37 @@ describe('buildPayableEntries', () => {
     expect(buildPayableEntries(show, order, slots).filter((e) => e.category === 'ARTIST_PAYOUT').length)
       .toBeGreaterThan(0);
     expect(
-      buildPayableEntries(show, { ...order, settlementAccountId: 'acct_artist' }, slots)
+      buildPayableEntries(show, { ...order, settlementMode: 'DESTINATION', settlementAccountId: 'acct_artist' }, slots)
         .filter((e) => e.category === 'ARTIST_PAYOUT'),
     ).toHaveLength(0);
+  });
+
+  it('on a venue-direct charge, suppresses the VENUE share and the tax — not the artist', () => {
+    /* The mirror image of the destination case, and the reason a single
+       "settlementAccountId" could not express both: on a direct charge the
+       VENUE is the merchant, so their 20% and the tax never left their
+       account, while the artist's and promoter's shares DID reach iHYPE as the
+       application fee and must still be paid out. Getting this backwards would
+       pay the venue twice and the artist never. */
+    const withTax = { ...order, taxStateCents: 150, settlementMode: 'VENUE_DIRECT', settlementAccountId: 'acct_venue' };
+    const entries = buildPayableEntries(show, withTax, []);
+
+    expect(entries.filter((e) => e.category === 'VENUE_PAYOUT')).toHaveLength(0);
+    expect(entries.filter((e) => e.category === 'TAX_STATE')).toHaveLength(0);
+
+    const artist = entries.filter((e) => e.category === 'ARTIST_PAYOUT');
+    expect(artist).toHaveLength(1);
+    expect(artist[0].amountCents).toBe(7000);
+    expect(entries.filter((e) => e.category === 'PROMOTER_AFFILIATE')).toHaveLength(1);
+  });
+
+  it('still writes the venue share and tax on a platform-settled order', () => {
+    // The default, and the guard against the mode check leaking into it.
+    const withTax = { ...order, taxStateCents: 150 };
+    const entries = buildPayableEntries(show, withTax, []);
+    expect(entries.filter((e) => e.category === 'VENUE_PAYOUT')).toHaveLength(1);
+    expect(entries.filter((e) => e.category === 'TAX_STATE')).toHaveLength(1);
+    expect(entries.filter((e) => e.category === 'ARTIST_PAYOUT')).toHaveLength(1);
   });
 
   it('pays the headliner directly when the show has no lineup', () => {

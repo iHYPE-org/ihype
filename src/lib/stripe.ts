@@ -1,6 +1,6 @@
 import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
-import { calculateDestinationChargeSplit } from '@/lib/ticketing';
+import { calculateDestinationChargeSplit, calculateDirectChargeApplicationFee } from '@/lib/ticketing';
 import { log } from '@/lib/logger';
 
 let _stripe: Stripe | null = null;
@@ -367,6 +367,140 @@ export async function createTicketCheckoutSession({
       expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
     },
     { idempotencyKey: `ticket-checkout:${ticketOrderConfirmationCode}` },
+  );
+  if (!session.url) throw new Error('Stripe did not return a ticket checkout URL.');
+  return { checkoutUrl: session.url, checkoutSessionId: session.id };
+}
+
+/**
+ * VENUE-DIRECT: the charge is created on the venue's own Stripe account, and
+ * the venue is the merchant of record.
+ *
+ * ## Why this mode exists
+ *
+ * Owner, 2026-08-27: "I don't have money to give in the case of fraud, I don't
+ * have the headcount to handle taxes, I don't have the headcount to handle
+ * ticket support. I just want the lowest fees possible to pass on to buyers,
+ * and a way to split the payouts."
+ *
+ * Every other arrangement fails at least one of those. A platform-settled
+ * charge makes iHYPE the merchant, so iHYPE carries disputes it cannot fund and
+ * a tax obligation it has nobody to file. A full ticketing platform takes the
+ * merchant role and 11-17% with it, and cannot split three ways. A direct
+ * charge is the only shape that moves the merchant role onto someone with a
+ * bank account and an accountant while keeping the 70/20/10 enforced in code.
+ *
+ * ## The flow runs the opposite way to a destination charge
+ *
+ * `Stripe-Account` puts the charge on the venue. Stripe deducts its own fee AND
+ * the application fee from that account; the venue keeps the remainder. So the
+ * platform does not decide what the venue receives — it decides what it TAKES,
+ * and `calculateDirectChargeApplicationFee` claims exactly the two onward
+ * shares and nothing else. See that function for why it is a sum rather than
+ * `total - venue`.
+ *
+ * ## What moves with the merchant role
+ *
+ * All of it, and this is the entire point:
+ *   - DISPUTES. "Direct charges occur on a connected account, so negative
+ *     transactions for direct charges affect the connected account's balance."
+ *     iHYPE is not debited. There is no protection reserve on this mode, and
+ *     `calculateTicketOrderFinancials({ platformBearsRisk: false })` is what
+ *     stops one being charged — a fee with no cost behind it is the one thing
+ *     the fee design refuses to do.
+ *   - TAX. The venue is the seller, so the venue remits. The application fee
+ *     does not grow by a cent when tax is collected.
+ *   - STRIPE'S REAL CUT, including the Amex gap `stripe-fees.ts` documents. An
+ *     Amex order leaves the venue a few cents under 20%. Tell venues that
+ *     rather than letting them find it in a reconciliation.
+ *
+ * ## What does NOT move
+ *
+ * Product support. "Where is my ticket", transfers and the QR are iHYPE's,
+ * because they are iHYPE's product. Only the money-side support — refunds and
+ * disputes, which the venue sees in their own Stripe dashboard — goes with the
+ * merchant role.
+ *
+ * ## Costs worth knowing before extending this
+ *
+ * Charges live on the CONNECTED ACCOUNT, not the platform. Any later lookup
+ * needs the same `stripeAccount` option, webhooks arrive per-account, and
+ * platform-level exports will not show these payments. Checkout also renders
+ * the VENUE's branding, which is arguably right — a fan recognises the venue
+ * they are going to — but it is not iHYPE's.
+ */
+export async function createVenueDirectCheckoutSession({
+  amountCents,
+  venueAccountId,
+  artistPayoutCents,
+  promoterPayoutCents,
+  showId,
+  showSlug,
+  showTitle,
+  quantity,
+  ticketOrderConfirmationCode,
+}: {
+  amountCents: number;
+  /** The venue's Connect account. The charge is created ON this account. */
+  venueAccountId: string;
+  artistPayoutCents: number;
+  promoterPayoutCents: number;
+  showId: string;
+  showSlug: string;
+  showTitle: string;
+  quantity: number;
+  ticketOrderConfirmationCode: string;
+}): Promise<{ checkoutUrl: string; checkoutSessionId: string }> {
+  const stripe = getStripe();
+  const baseUrl = readRuntimeEnv('NEXT_PUBLIC_APP_URL') ?? 'http://localhost:3000';
+
+  const { applicationFeeCents } = calculateDirectChargeApplicationFee({
+    artistPayoutCents,
+    promoterPayoutCents,
+    totalChargeCents: amountCents,
+  });
+
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      line_items: [{
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          unit_amount: amountCents,
+          product_data: { name: `${quantity} × ${showTitle}`, metadata: { showId } },
+        },
+      }],
+      payment_intent_data: {
+        application_fee_amount: applicationFeeCents,
+        metadata: {
+          confirmationCode: ticketOrderConfirmationCode,
+          showId,
+          settlementMode: 'venue_direct',
+        },
+      },
+      metadata: {
+        purpose: 'ticket_purchase',
+        confirmationCode: ticketOrderConfirmationCode,
+        showId,
+        settlementMode: 'venue_direct',
+      },
+      success_url: `${baseUrl}/shows/${showSlug}?checkout=success`,
+      cancel_url: `${baseUrl}/shows/${showSlug}?checkout=cancelled`,
+      expires_at: Math.floor(Date.now() / 1000) + 30 * 60,
+    },
+    {
+      /* THE HEADER IS THE WHOLE DIFFERENCE. Without `stripeAccount` this is an
+         ordinary platform charge with a nonsensical application fee, and iHYPE
+         silently becomes the merchant again — the exact failure this mode
+         exists to prevent, and one that would look completely normal until the
+         first chargeback arrived. */
+      stripeAccount: venueAccountId,
+      /* Scoped to the account too: the same confirmation code could otherwise
+         collide across venues, and an idempotency key is only as safe as its
+         uniqueness. */
+      idempotencyKey: `ticket-direct:${venueAccountId}:${ticketOrderConfirmationCode}`,
+    },
   );
   if (!session.url) throw new Error('Stripe did not return a ticket checkout URL.');
   return { checkoutUrl: session.url, checkoutSessionId: session.id };
