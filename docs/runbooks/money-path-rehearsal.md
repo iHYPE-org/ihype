@@ -671,22 +671,50 @@ RELEASED with a real `stripeTransferId` on it.
 You need a throwaway Postgres and test-mode Stripe keys. **Never point this at
 the production `DATABASE_URL`** — it creates and refunds orders.
 
+**`npm run dev` CANNOT run this rehearsal — measured 2026-08-28.** `src/lib/db.ts`
+deliberately loads the wasm/workerd Prisma engine, which does not load under
+`next dev` ("The loaded wasm module was unexpectedly undefined"). The app has to
+run as the real worker build, which also makes the rehearsal representative:
+what runs is byte-for-byte what deploys.
+
 ```bash
-# 1. A scratch database, migrated to head.
+# 1. A scratch database, migrated to head. The Postgres USER NEEDS A PASSWORD —
+#    wrangler's local Hyperdrive rejects a passwordless connection string.
 createdb ihype_rehearsal
-DATABASE_URL=postgresql://…/ihype_rehearsal DIRECT_URL=postgresql://…/ihype_rehearsal \
-  npx prisma migrate deploy
+DATABASE_URL=postgresql://user:pass@…/ihype_rehearsal DIRECT_URL=… npx prisma migrate deploy
 
-# 2. Run the app against it, in test mode, with payments ON.
-#    FEATURE_ENABLE_TICKET_PAYMENTS defaults to OFF and src/lib/payments.ts
-#    fails closed on it — a rehearsal with it unset proves nothing.
-DATABASE_URL=… DIRECT_URL=… \
-STRIPE_SECRET_KEY=sk_test_… STRIPE_WEBHOOK_SECRET=whsec_… \
-FEATURE_ENABLE_TICKET_PAYMENTS=true npm run dev
+# 2. Build and serve the worker with rehearsal vars. STRIPE_ALLOW_TEST_MODE_REHEARSAL
+#    is what lets a production BUILD accept a sk_test_ key (payments.ts documents it;
+#    lint-source fails the build if wrangler.toml ever defines it). Use Cloudflare's
+#    published always-pass Turnstile TEST secret, or purchases fail the bot check.
+npm run cf:build
+# then wrangler dev against a stripped config carrying:
+#   DATABASE_URL, AUTH_SECRET/NEXTAUTH_SECRET, AUTH_URL=http://localhost:8787,
+#   STRIPE_SECRET_KEY=sk_test_…, STRIPE_WEBHOOK_SECRET=whsec_<any local value>,
+#   CRON_SECRET, FEATURE_ENABLE_TICKET_PAYMENTS="true",
+#   STRIPE_ALLOW_TEST_MODE_REHEARSAL="true",
+#   TURNSTILE_SECRET_KEY="1x0000000000000000000000000000000AA"
+# (scripts/e2e-workerd.mjs is the reference for deriving the config)
 
-# 3. Forward webhooks, or nothing ever captures.
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+# 3. Forward webhooks, or nothing ever captures. `stripe listen` if you have the
+#    CLI; otherwise a poller that re-signs /v1/events to localhost with
+#    stripe.webhooks.generateTestHeaderString works identically.
+stripe listen --forward-to localhost:8787/api/stripe/webhook
+
+# 4. Run it. PLAYWRIGHT_AUTH_COOKIE_SECURE=true — the production build expects
+#    the __Secure- cookie name even over http (same as the e2e harness).
+PLAYWRIGHT_AUTH_COOKIE_SECURE=true REHEARSAL_BASE_URL=http://localhost:8787 \
+DATABASE_URL=… STRIPE_SECRET_KEY=sk_test_… STRIPE_WEBHOOK_SECRET=… \
+AUTH_SECRET=… CRON_SECRET=… npm run rehearse:money
 ```
+
+**REHEARSAL_PAY_MODE=api** exists for machines that cannot point a browser at
+checkout.stripe.com (this sandbox's TLS-re-signing proxy is one). Checkout
+creates its PaymentIntent lazily — only the hosted form creates it — so API mode
+makes the money real directly (a genuine confirmed PaymentIntent, really
+refunded later) and synthesizes only the `checkout.session.completed` envelope,
+delivered with the same signature scheme as real delivery. On a machine with a
+working browser, prefer the default mode, which exercises the real event.
 
 **Then run the walk rather than performing it:**
 
@@ -730,14 +758,23 @@ The stages, and what each proves:
    → the promoter entry carries that referrer's `profileId`, not null. This is
    the 10% pool actually attributing to a person, which no test covers because
    it spans the referral tables.
-4. **Refund the first order** (>48h before doors, from `/tickets`).
-   → order and tickets `VOID`; capacity back; **its** payable entries `VOID`; the
-   other order's entries untouched and still `PENDING`; a real refund visible in
-   the Stripe test dashboard.
-5. **Scan a ticket** on the remaining order, then try to refund it.
-   → refused. A scanned ticket is a person who walked in.
-6. **End the show** (`status = ENDED`, `startsAt` in the past) and run the payout
-   cron: `curl -H "Authorization: Bearer $CRON_SECRET" localhost:3000/api/cron?job=show-payouts`.
+4. **Cancel a second show** (organizer flow, `reason` one of
+   artist/venue/low-sales/other). Buyer-initiated refunds were REMOVED
+   2026-08-12 — all sales are final — so cancellation is the only refund path
+   that exists, and the original stage here tested a deleted route for two
+   weeks. → the unscanned order and its tickets and payables `VOID`, a real
+   `stripeRefundId` recorded, the main show's payables untouched.
+5. **Scan a ticket first** on one of the cancelled show's orders.
+   → that order is SKIPPED by the cancellation, not refunded: still `CAPTURED`,
+   no refund id. A scanned ticket is a person who walked in.
+6. **End the show** — `status = ENDED` and `startsAt` at least **11 days** back:
+   `triggerShowPayouts` holds every payout `PAYOUT_HOLD_DAYS` (10) past the show
+   date so the dispute window mostly closes first. Backdating by a day measures
+   the hold working, not the payout failing. Then run the cron:
+   `curl -H "Authorization: Bearer $CRON_SECRET" localhost:8787/api/cron?job=show-payouts`.
+   An entry whose payee has no Connect account is counted `skipped` and stays
+   PENDING — correct behaviour, and also why the release leg is only PROVEN
+   when a real onboarded account is attached.
    → each entry `RELEASED` with a `stripeTransferId`; transfers visible in the
    Stripe test dashboard, summing to the captured total; the venue and artist
    owners each got the payout email; **tax entries stay PENDING** (manual

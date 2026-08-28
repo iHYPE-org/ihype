@@ -26,9 +26,25 @@ export function getPaymentProcessingReadiness() {
     blockers.push('Set FEATURE_ENABLE_TICKET_PAYMENTS=true only when paid ticketing is approved for launch.');
   }
 
+  /* REHEARSAL ESCAPE HATCH, deliberately narrow. The money-path rehearsal has
+     to run against the real production worker build — src/lib/db.ts's wasm
+     engine cannot load under `next dev` (measured 2026-08-28) — and a
+     production build has NODE_ENV=production baked in, so the test-key refusal
+     below made the rehearsal impossible against the only build that can run.
+     This variable is set only by the local rehearsal tooling against a scratch
+     database. Two rails keep it out of production: lint-source.mjs fails the
+     build if wrangler.toml ever defines it (the same guard the FEATURE flag
+     has), and even if it leaked, it only permits a TEST key — it can never
+     make a live key more capable. */
+  const rehearsalTestMode =
+    readRuntimeEnv('STRIPE_ALLOW_TEST_MODE_REHEARSAL') === 'true';
   if (!stripeSecretKey?.startsWith('sk_')) {
     blockers.push('Set STRIPE_SECRET_KEY to a valid sk_ secret.');
-  } else if (process.env.NODE_ENV === 'production' && stripeSecretKey.startsWith('sk_test_')) {
+  } else if (
+    process.env.NODE_ENV === 'production' &&
+    stripeSecretKey.startsWith('sk_test_') &&
+    !rehearsalTestMode
+  ) {
     blockers.push('Production paid ticketing requires a live Stripe secret key, not sk_test_.');
   }
 

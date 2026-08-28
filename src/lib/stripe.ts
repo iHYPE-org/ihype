@@ -20,7 +20,21 @@ export function getStripe(): Stripe {
        docs/runbooks/money-path-rehearsal.md, not this file compiling. Live mode
        still holds zero PaymentIntents, so nothing in production has ever
        depended on the old version's shapes. */
-    _stripe = new Stripe(key, { apiVersion: '2026-07-29.dahlia' });
+    /* `httpClient` is REQUIRED in a Workers runtime, not an optimisation.
+       stripe-node picks its transport by sniffing for Node, and OpenNext
+       polyfills `process` in workerd — so without this the SDK selects its
+       node:https client, which runs on a shim and never completes a request.
+       Measured 2026-08-28 in the money-path rehearsal: every ticket purchase
+       hung for the SDK's full 80s timeout and answered 500, on the first run
+       this code ever made a Stripe call from inside a worker. Nothing in
+       production had ever exercised an outbound Stripe call, so nothing had
+       ever caught it. The fetch client is Stripe's own documented client for
+       Cloudflare Workers, and `fetch` is native in every runtime this app
+       has (workerd, Node 18+, vitest). */
+    _stripe = new Stripe(key, {
+      apiVersion: '2026-07-29.dahlia',
+      httpClient: Stripe.createFetchHttpClient(),
+    });
   }
   return _stripe;
 }
