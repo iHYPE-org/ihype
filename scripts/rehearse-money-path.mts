@@ -212,11 +212,30 @@ async function waitForOrderStatus(
  * its redirect). Everything downstream — the webhook, capture, finalisation —
  * is identical, and those are what this script asserts.
  */
-async function payViaApi(confirmationCode: string): Promise<boolean> {
+async function payViaApi(prisma: PrismaClient, confirmationCode: string): Promise<boolean> {
   const stripe = new Stripe(STRIPE_KEY);
   for (let attempt = 0; attempt < 5; attempt++) {
-    const sessions = await stripe.checkout.sessions.list({ limit: 20 });
-    const session = sessions.data.find((s) => s.metadata?.confirmationCode === confirmationCode);
+    /* A VENUE_DIRECT session is created ON the venue's account — the exact
+       property step 1's "invisible to a platform-scoped lookup" check exists
+       to prove — so a platform-scoped list can never find it (measured
+       2026-08-30: every purchase stage failed "no Checkout Session found"
+       while the app answered 201). Search both scopes, and carry the scope
+       forward: the synthetic PaymentIntent must live where the real one
+       would, or nothing downstream (the refund above all) is faithful. */
+    const scopes: (Stripe.RequestOptions | undefined)[] = [undefined];
+    if (VENUE_ACCOUNT) scopes.push({ stripeAccount: VENUE_ACCOUNT });
+    let session: Stripe.Checkout.Session | undefined;
+    let scope: Stripe.RequestOptions | undefined;
+    for (const candidate of scopes) {
+      const sessions = candidate
+        ? await stripe.checkout.sessions.list({ limit: 20 }, candidate)
+        : await stripe.checkout.sessions.list({ limit: 20 });
+      session = sessions.data.find((s) => s.metadata?.confirmationCode === confirmationCode);
+      if (session) {
+        scope = candidate;
+        break;
+      }
+    }
     if (session) {
       try {
         /* Checkout creates its PaymentIntent LAZILY — only when the payer
@@ -233,6 +252,23 @@ async function payViaApi(confirmationCode: string): Promise<boolean> {
            browser (its egress proxy re-signs TLS; Chromium refuses). On a
            machine that can, prefer the default browser mode, which exercises
            the real event too. */
+        /* Mirror the shape the REAL session gives its PaymentIntent, or the
+           refund path downstream is not rehearsed faithfully. Measured
+           2026-08-30: a plain PI on a DESTINATION order made the cancel
+           route's `reverse_transfer: true` fail with "does not have an
+           associated transfer" — a harness artifact, not the app. The order
+           row already stores the split, so the shapes are recomputed the way
+           src/lib/stripe.ts computes them: DESTINATION's fee is what is LEFT
+           after the act's share; VENUE_DIRECT's fee is the SUM of the two
+           onward shares (the venue keeps its 20% by never sending it). */
+        const order = await prisma.ticketOrder.findUnique({ where: { confirmationCode } });
+        const modeShape: Partial<Stripe.PaymentIntentCreateParams> = {};
+        if (order?.settlementMode === 'DESTINATION' && order.settlementAccountId) {
+          modeShape.transfer_data = { destination: order.settlementAccountId };
+          modeShape.application_fee_amount = order.totalChargeCents - order.artistPayoutCents;
+        } else if (order?.settlementMode === 'VENUE_DIRECT') {
+          modeShape.application_fee_amount = order.artistPayoutCents + order.promoterPayoutCents;
+        }
         const intent = await stripe.paymentIntents.create(
           {
             amount: session.amount_total ?? 0,
@@ -241,8 +277,9 @@ async function payViaApi(confirmationCode: string): Promise<boolean> {
             confirm: true,
             automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
             metadata: { confirmationCode, rehearsal: 'true' },
+            ...modeShape,
           },
-          { idempotencyKey: `rehearsal-pay:${confirmationCode}` },
+          { idempotencyKey: `rehearsal-pay:${confirmationCode}`, ...(scope ?? {}) },
         );
         const event = {
           id: `evt_rehearsal_${confirmationCode}`,
@@ -430,7 +467,7 @@ async function buyTicket(
   }
 
   const paid = process.env.REHEARSAL_PAY_MODE === 'api'
-    ? await payViaApi(confirmationCode)
+    ? await payViaApi(prisma, confirmationCode)
     : await payHostedCheckout(checkoutUrl);
   if (!paid) {
     check(`${label}: checkout completed`, false);
