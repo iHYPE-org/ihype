@@ -1,10 +1,81 @@
 # Runbook — rehearse the money path before the first sale
 
-**Status: step 1 executed 2026-08-26 — 8 passed, 0 failed, 2 steps blocked.**
-Live Stripe still holds zero PaymentIntents, zero connected accounts and a zero
-balance. Nothing has ever been sold through this app, so the first real ticket
-purchase is still the first production execution of the capture → split → payout
-→ refund path. This runbook exists so that does not happen.
+**Status: step 1 COMPLETE 2026-08-30 — 25 passed, 0 failed, all three
+settlement modes rehearsed (PLATFORM, DESTINATION, VENUE_DIRECT). Steps 2 and 3
+remain.** Live Stripe still holds zero PaymentIntents and a zero balance.
+Nothing has ever been sold through this app, so the first real ticket purchase
+is still the first production execution of the capture → split → payout
+→ refund path against the LIVE account. This runbook exists so that does not
+happen unrehearsed.
+
+### Step 1 complete — 2026-08-30, sandbox `acct_1Ttr6LLuZsyulVGR`
+
+Final run: **25 passed, 0 failed**, exit 0, last line *"All three settlement
+modes rehearsed: PLATFORM, DESTINATION, VENUE_DIRECT."* Run by the operator on
+their own machine (the remote session's permission layer refused to execute the
+script; every harness fix below was written there, pushed to
+`claude/stripe-rehearsal-results`, and pulled).
+
+| Check | Result |
+|---|---|
+| [1] Platform capture: authorizes with no `transfer_data`, manual capture in force, capture succeeds, full 5000 lands on the platform | PASS ×4 |
+| [2] 70/20/10 split sums exactly (artist 3500 / venue 1000 / promoter 500), three real transfers created (`tr_1UAE7FLuZsyulVGRLE5mo9jq`, `tr_1UAE7FLuZsyulVGRM2Yg5ux0`, `tr_1UAE7GLuZsyulVGRYdL5Y1Ma`) | PASS ×4 |
+| [3] Replaying a transfer with the same idempotency key returns the SAME transfer id — no double-pay | PASS |
+| [4] Captured charge refunds in full (5000) | PASS ×2 |
+| [5] Ad pre-auth captures only delivered spend (1250 of 5000); unaired hold released outright | PASS ×2 |
+| [6] DESTINATION: charge succeeds, no `on_behalf_of`, transfer created, **the act NETS exactly 3500** (5000 transferred, 1500 application fee pulled back), refund with `reverse_transfer`/`refund_application_fee` reverses 5000 of 5000 | PASS ×7 |
+| [7] VENUE_DIRECT: fee names the two onward shares (4000 of 5000), direct charge succeeds **on the venue** (`pi_3UAE7VLuZs8WZJKj1PDPEfxT` is invisible to a platform-scoped lookup — that failure is the pass), venue charged the fee, and a real `fee_1UAE7YLuZs8WZJKjbYih0yb0` = 4000 sits on the platform where the payout cron can reach it | PASS ×5 |
+
+**DESTINATION and VENUE_DIRECT RAN rather than skipped — their first execution
+anywhere.** What it took to get here; every item is a trap for the next person:
+
+1. **The 2026-08-28 "both prerequisites now exist" note below was wrong, by the
+   exact v1-capability trap this runbook documents.** `acct_1U8mdKLuZs8WZJKj`
+   and `acct_1U8mdmLuZsguyf6N` showed `transfers: "active"` in the v1 view and
+   a real transfer was refused ("destination account needs … stripe_transfers").
+   The v2 view showed **no recipient configuration at all** — merchant-only,
+   which is also why step 7 worked before step 2 did. Fixed by
+   `POST /v2/core/accounts/{id}` requesting
+   `configuration.recipient.capabilities.stripe_balance.stripe_transfers`
+   (activated instantly — KYC was already verified). Note: v2 core accounts
+   404s on this sandbox without a `.preview` Stripe-Version header
+   (`2025-09-30.preview` works).
+2. **`REHEARSAL_CONNECT_ACCOUNTS` needs THREE ids** (artist/venue/promoter
+   slots; auto-detection likewise wants three accounts). The one-account
+   command previously written here silently skips step 2. A destination may
+   repeat — the working invocation is below.
+3. **Step 2 needs AVAILABLE balance** — every `pm_card_visa` charge lands as
+   pending. The script now self-funds via the `4000 0000 0000 0077`
+   bypass-pending card, grossed up for Stripe's fee on the top-up itself
+   (funding the bare shortfall left it ~3% short), and then POLLS the balance:
+   the Balance API lags the charge by several seconds, and the first version
+   triple-funded against a stale reading and still hit "insufficient funds".
+4. **Three readback/assertion bugs in the script itself, all invisible until
+   it executed**: `charges.retrieve(id, { stripeAccount })` sent the header as
+   a request parameter (options are the THIRD argument) and aborted step 7; a
+   charge's `transfer` and `application_fee` attach moments AFTER the
+   PaymentIntent confirms, so immediate readbacks reported both missing while
+   both demonstrably existed on Stripe a minute later (now polled); and step
+   6's original assertion expected `transfer.amount === 3500`, which
+   contradicts Stripe's documented mechanics — with `application_fee_amount`
+   the FULL charge transfers to the destination and the fee is pulled back, so
+   the act's share is the NET (now asserted as 5000 − 1500 = 3500). The old
+   reversal check also passed vacuously (`undefined === undefined`) when no
+   transfer had been found.
+5. **Key hygiene**: one aborted attempt was the environment carrying the
+   literal `sk_test_…` placeholder pasted from this runbook's own example;
+   another was the MAIN account's test-mode key — connected accounts are
+   per-environment, so only the sandbox's own secret key can reach them.
+
+**Open question carried to step 2**: if a transfer FAILS (e.g.
+`balance_insufficient`), does Stripe replay the saved error for a retry with
+the same idempotency key? `createPayoutTransfer` keys on the payable entry id,
+so a transiently-failed payout retried by the cron needs this answered before
+anyone trusts the retry path.
+
+Rehearsal residue: the sandbox balance drifts negative between runs (each
+run's refunds pull from the same pool the top-ups feed). Harmless — the
+self-funding step absorbs it.
 
 ### What step 1 proved, against real test-mode Stripe
 
@@ -379,13 +450,21 @@ connected accounts with `card_payments` AND `transfers` active,
 `charges_enabled`, `payouts_enabled`, and a verified test bank account:
 `acct_1U8mdKLuZs8WZJKj` and `acct_1U8mdmLuZsguyf6N`. (Four more sit at
 `transfers: inactive` with KYC outstanding — rehearsal/probe residue; fine to
-leave.) So the run that proves the two remaining settlement modes is one
-command for whoever holds the test key:
+leave.)
+
+**CORRECTED 2026-08-30 — that check trusted the v1 capability view, which this
+runbook's own BLOCKER 2 section says lies about v2 accounts, and it lied
+here.** Both accounts were merchant-only in the v2 view (no recipient
+configuration) and refused real transfers until
+`configuration.recipient.capabilities.stripe_balance.stripe_transfers` was
+requested via `POST /v2/core/accounts/{id}` — see the step-1-complete section
+at the top. Both now genuinely carry it. The working invocation (note THREE
+connect-account slots — the script requires three; repeating one is fine):
 
 ```bash
 STRIPE_SECRET_KEY=sk_test_… \
 REHEARSAL_MERCHANT_ACCOUNT=acct_1U8mdKLuZs8WZJKj \
-REHEARSAL_CONNECT_ACCOUNTS=acct_1U8mdmLuZsguyf6N \
+REHEARSAL_CONNECT_ACCOUNTS=acct_1U8mdmLuZsguyf6N,acct_1U8mdKLuZs8WZJKj,acct_1U8mdmLuZsguyf6N \
 npm run stripe:rehearsal
 ```
 
