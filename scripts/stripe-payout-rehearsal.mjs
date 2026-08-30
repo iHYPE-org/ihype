@@ -208,21 +208,30 @@ async function step2SplitTransfers(captured, accounts) {
   // Stripe's documented fix is a charge on the bypass-pending test card
   // (4000 0000 0000 0077), which settles immediately. Test mode only by
   // construction: the key guard at the top refuses anything but sk_test_.
-  const balance = await stripe.balance.retrieve();
-  const availableUsd = balance.available.find((b) => b.currency === 'usd')?.amount ?? 0;
-  if (availableUsd < captured.amount_received) {
+  const availableUsd = async () =>
+    (await stripe.balance.retrieve()).available.find((b) => b.currency === 'usd')?.amount ?? 0;
+  let available = await availableUsd();
+  // The top-up charge itself pays Stripe's fee (2.9% + 30c in test mode), so
+  // funding the bare shortfall leaves the balance ~3% short — measured on the
+  // first local run (2026-08-30): funded 5895 against -895, transfers still
+  // refused. Gross up for the fee, then re-check rather than assume.
+  for (let attempt = 0; available < captured.amount_received && attempt < 3; attempt += 1) {
+    const shortfall = captured.amount_received - available;
+    const gross = Math.ceil((shortfall + 30) / 0.971) + 100;
     const topUp = await stripe.paymentIntents.create(
       {
-        amount: Math.max(captured.amount_received - availableUsd, captured.amount_received),
+        amount: gross,
         currency: 'usd',
         payment_method: 'pm_card_bypassPending',
         confirm: true,
         automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
         metadata: { rehearsal: 'true', purpose: 'available-balance-top-up' },
       },
-      { idempotencyKey: `topup:${captured.id}` }
+      { idempotencyKey: `topup:${captured.id}:${attempt}` }
     );
-    console.log(`        (available balance was ${availableUsd}; funded ${topUp.amount_received} via the bypass-pending test card)`);
+    const before = available;
+    available = await availableUsd();
+    console.log(`        (available balance was ${before}; funded ${topUp.amount_received} via the bypass-pending test card; now ${available})`);
   }
 
   const transfers = [];
