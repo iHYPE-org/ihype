@@ -202,6 +202,45 @@ async function step2SplitTransfers(captured, accounts) {
     shares.map((s) => `${s.label}=${s.amount}`).join(' ')
   );
 
+  // Transfers draw on the AVAILABLE balance, and every test-mode card charge
+  // above (pm_card_visa) lands as PENDING — so on a fresh sandbox this step
+  // always fails with "insufficient available funds" (measured 2026-08-30).
+  // Stripe's documented fix is a charge on the bypass-pending test card
+  // (4000 0000 0000 0077), which settles immediately. Test mode only by
+  // construction: the key guard at the top refuses anything but sk_test_.
+  const availableUsd = async () =>
+    (await stripe.balance.retrieve()).available.find((b) => b.currency === 'usd')?.amount ?? 0;
+  let available = await availableUsd();
+  // The top-up charge itself pays Stripe's fee (2.9% + 30c in test mode), so
+  // funding the bare shortfall leaves the balance ~3% short — measured on the
+  // first local run (2026-08-30): funded 5895 against -895, transfers still
+  // refused. Gross up for the fee, then re-check rather than assume.
+  for (let funding = 0; available < captured.amount_received && funding < 2; funding += 1) {
+    const shortfall = captured.amount_received - available;
+    const gross = Math.ceil((shortfall + 30) / 0.971) + 100;
+    const topUp = await stripe.paymentIntents.create(
+      {
+        amount: gross,
+        currency: 'usd',
+        payment_method: 'pm_card_bypassPending',
+        confirm: true,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        metadata: { rehearsal: 'true', purpose: 'available-balance-top-up' },
+      },
+      { idempotencyKey: `topup:${captured.id}:${funding}` }
+    );
+    console.log(`        (available balance was ${available}; funded ${topUp.amount_received} gross via the bypass-pending test card)`);
+    // The Balance API lags the charge by several seconds — measured
+    // 2026-08-30: three top-ups fired in three seconds, each against the
+    // same stale reading, and the transfer still found nothing. Poll for the
+    // funds to actually show before concluding more funding is needed.
+    for (let i = 0; i < 60 && available < captured.amount_received; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      available = await availableUsd();
+    }
+    console.log(`        (available balance now ${available})`);
+  }
+
   const transfers = [];
   for (let i = 0; i < shares.length; i += 1) {
     const share = shares[i];
@@ -326,15 +365,28 @@ async function step6DestinationCharge(accounts) {
     `on_behalf_of=${intent.on_behalf_of ?? 'unset'}`,
   );
 
-  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { expand: ['transfer'] });
-  const transfer = charge.transfer && typeof charge.transfer === 'object' ? charge.transfer : null;
+  // The transfer attaches to the charge moments AFTER the PaymentIntent
+  // confirms — an immediate readback reported "no transfer" on the first real
+  // run (2026-08-30) while the object demonstrably existed a minute later.
+  // Poll briefly instead of trusting the first read.
+  let charge = null;
+  let transfer = null;
+  for (let i = 0; i < 10 && !transfer; i += 1) {
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, 1000));
+    charge = await stripe.charges.retrieve(String(intent.latest_charge), { expand: ['transfer'] });
+    transfer = charge.transfer && typeof charge.transfer === 'object' ? charge.transfer : null;
+  }
   check('a transfer to the act was created', Boolean(transfer), transfer ? transfer.id : 'none');
-  // THE ASSERTION THIS STEP EXISTS FOR. Omitting transfer_data.amount sends
-  // the ENTIRE charge onward; the application fee is what claws the rest back.
+  // THE ASSERTION THIS STEP EXISTS FOR — stated per Stripe's documented
+  // mechanics: with application_fee_amount the FULL charge amount transfers
+  // to the destination and the fee is then pulled back to the platform, so
+  // the act's share is the NET of the two. (The first version of this check
+  // expected transfer.amount === the share, which can never be true in this
+  // shape.) The 2026-07-14 bug was this transfer with NO fee coming back.
   check(
-    'the act receives their share, not the whole charge',
-    transfer?.amount === actShareCents,
-    `transferred=${transfer?.amount} expected=${actShareCents} of ${TICKET_AMOUNT_CENTS}`,
+    'the act nets their share, not the whole charge',
+    transfer?.amount === TICKET_AMOUNT_CENTS && transfer.amount - applicationFeeCents === actShareCents,
+    `transferred=${transfer?.amount}, fee back=${applicationFeeCents}, net=${(transfer?.amount ?? 0) - applicationFeeCents} expected=${actShareCents}`,
   );
   check(
     'the platform keeps the remainder as an application fee',
@@ -351,9 +403,11 @@ async function step6DestinationCharge(accounts) {
   );
   check('destination refund succeeds', refund.status === 'succeeded' || refund.status === 'pending', `status=${refund.status}`);
   const afterRefund = transfer ? await stripe.transfers.retrieve(transfer.id) : null;
+  // Boolean(afterRefund) matters: with no transfer this used to compare
+  // undefined === undefined and PASS while measuring nothing.
   check(
     'the refund pulls the act\'s share back too',
-    afterRefund?.amount_reversed === afterRefund?.amount,
+    Boolean(afterRefund) && afterRefund.amount_reversed === afterRefund.amount,
     `reversed=${afterRefund?.amount_reversed} of ${afterRefund?.amount}`,
   );
 }
@@ -419,7 +473,10 @@ async function step7VenueDirectCharge(merchantAccount) {
     visibleToPlatform ? 'platform can read it — the stripeAccount header did not apply' : `${intent.id} is invisible to the platform`,
   );
 
-  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { stripeAccount: merchantAccount });
+  // Options are the THIRD argument on retrieve(); passed second, stripeAccount
+  // is sent to the API as a request parameter and rejected ("Received unknown
+  // parameter"), which aborted the first real run of this step (2026-08-30).
+  const charge = await stripe.charges.retrieve(String(intent.latest_charge), {}, { stripeAccount: merchantAccount });
   check(
     'the venue is charged the application fee',
     charge.application_fee_amount === applicationFeeCents,
@@ -429,7 +486,16 @@ async function step7VenueDirectCharge(merchantAccount) {
   // And it landed on the PLATFORM, which is what makes the split payable.
   // Application fees are readable platform-side by definition; if this is
   // empty the money is somewhere the payout cron cannot reach.
-  const feeId = charge.application_fee;
+  // Same async attach as step 6: the ApplicationFee object is created moments
+  // after the charge, and the first real run (2026-08-30) read it back too
+  // early and reported "no application fee object on the platform" while the
+  // fee existed. Poll the venue-side charge until it names the fee.
+  let feeId = charge.application_fee;
+  for (let i = 0; i < 10 && !feeId; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const again = await stripe.charges.retrieve(String(intent.latest_charge), {}, { stripeAccount: merchantAccount });
+    feeId = again.application_fee;
+  }
   const fee = feeId ? await stripe.applicationFees.retrieve(typeof feeId === 'string' ? feeId : feeId.id) : null;
   check(
     'the fee lands in the platform balance, where the payout cron can transfer it',
