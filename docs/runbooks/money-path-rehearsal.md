@@ -1,10 +1,11 @@
 # Runbook — rehearse the money path before the first sale
 
 **Status: steps 1 AND 2 executed 2026-08-30 — step 1 clean (25/25, all three
-settlement modes), step 2 walked in all three modes and it found what it exists
-to find: ONE REAL DEFECT — a cancelled show cannot refund any VENUE_DIRECT
-order (see the step-2 section below). Fix that, re-run VENUE_DIRECT stage 4,
-walk the dispute card by hand, and step 3 is the only door left.** Live Stripe
+settlement modes), step 2 walked in all three modes, and the one real defect
+it found — a cancelled show could not refund any VENUE_DIRECT order — is FIXED
+and PROVEN: stage 4 re-run against the fixed worker, `ordersRefunded: 1,
+ordersFailed: 0`, real refund on the venue's account (see the step-2 section).
+What remains before step 3: walk the dispute card by hand.** Live Stripe
 still holds zero PaymentIntents and a zero balance.
 Nothing has ever been sold through this app, so the first real ticket purchase
 is still the first production execution of the capture → split → payout
@@ -112,6 +113,23 @@ payables PENDING), twice over:
 The fix is a money-path change (`refundTicketPaymentIntent` gains a
 settlement-mode/account parameter; the cancel route passes the order's) and
 wants its own PR with VENUE_DIRECT stage 4 re-run against it.
+
+**FIXED AND PROVEN, same day.** `refundTicketPaymentIntent` now takes the
+order's `settlementMode`/`settlementAccountId`, using the same discriminants
+as `buildPayableEntries()` (a legacy row with an account id and no recorded
+mode still refunds as a destination charge, exactly as the old boolean did):
+DESTINATION keeps `reverse_transfer` + `refund_application_fee`
+platform-scoped; VENUE_DIRECT refunds ON the venue's account with
+`refund_application_fee` only, so the platform returns the artist and
+promoter shares it was carrying rather than leaving the venue to fund the
+fan's whole refund out of its kept 20%. `cancelTicketPaymentIntent` gained
+the same optional scope for the RESERVED-order path. VENUE_DIRECT stage 4
+re-run against the rebuilt worker: **25 passed, 1 failed** (the one fail is
+the promoter-not-onboardable environment limit) — cancellation now answers
+`ordersRefunded: 1, ordersFailed: 0`, records a real refund whose id carries
+the venue's own account token (`re_3UAEssLuZs8WZJKj0Hjxuhj0`), and voids the
+order, its tickets and its payables; the release leg and the second-run
+`released: 0` both held.
 
 **Harness fixes made on the way (in `scripts/rehearse-money-path.mts`):**
 `payViaApi` searched Checkout Sessions platform-scoped only, so a venue-direct
