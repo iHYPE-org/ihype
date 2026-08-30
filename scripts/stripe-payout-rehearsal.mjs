@@ -358,15 +358,28 @@ async function step6DestinationCharge(accounts) {
     `on_behalf_of=${intent.on_behalf_of ?? 'unset'}`,
   );
 
-  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { expand: ['transfer'] });
-  const transfer = charge.transfer && typeof charge.transfer === 'object' ? charge.transfer : null;
+  // The transfer attaches to the charge moments AFTER the PaymentIntent
+  // confirms — an immediate readback reported "no transfer" on the first real
+  // run (2026-08-30) while the object demonstrably existed a minute later.
+  // Poll briefly instead of trusting the first read.
+  let charge = null;
+  let transfer = null;
+  for (let i = 0; i < 10 && !transfer; i += 1) {
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, 1000));
+    charge = await stripe.charges.retrieve(String(intent.latest_charge), { expand: ['transfer'] });
+    transfer = charge.transfer && typeof charge.transfer === 'object' ? charge.transfer : null;
+  }
   check('a transfer to the act was created', Boolean(transfer), transfer ? transfer.id : 'none');
-  // THE ASSERTION THIS STEP EXISTS FOR. Omitting transfer_data.amount sends
-  // the ENTIRE charge onward; the application fee is what claws the rest back.
+  // THE ASSERTION THIS STEP EXISTS FOR — stated per Stripe's documented
+  // mechanics: with application_fee_amount the FULL charge amount transfers
+  // to the destination and the fee is then pulled back to the platform, so
+  // the act's share is the NET of the two. (The first version of this check
+  // expected transfer.amount === the share, which can never be true in this
+  // shape.) The 2026-07-14 bug was this transfer with NO fee coming back.
   check(
-    'the act receives their share, not the whole charge',
-    transfer?.amount === actShareCents,
-    `transferred=${transfer?.amount} expected=${actShareCents} of ${TICKET_AMOUNT_CENTS}`,
+    'the act nets their share, not the whole charge',
+    transfer?.amount === TICKET_AMOUNT_CENTS && transfer.amount - applicationFeeCents === actShareCents,
+    `transferred=${transfer?.amount}, fee back=${applicationFeeCents}, net=${(transfer?.amount ?? 0) - applicationFeeCents} expected=${actShareCents}`,
   );
   check(
     'the platform keeps the remainder as an application fee',
@@ -383,9 +396,11 @@ async function step6DestinationCharge(accounts) {
   );
   check('destination refund succeeds', refund.status === 'succeeded' || refund.status === 'pending', `status=${refund.status}`);
   const afterRefund = transfer ? await stripe.transfers.retrieve(transfer.id) : null;
+  // Boolean(afterRefund) matters: with no transfer this used to compare
+  // undefined === undefined and PASS while measuring nothing.
   check(
     'the refund pulls the act\'s share back too',
-    afterRefund?.amount_reversed === afterRefund?.amount,
+    Boolean(afterRefund) && afterRefund.amount_reversed === afterRefund.amount,
     `reversed=${afterRefund?.amount_reversed} of ${afterRefund?.amount}`,
   );
 }
@@ -464,7 +479,16 @@ async function step7VenueDirectCharge(merchantAccount) {
   // And it landed on the PLATFORM, which is what makes the split payable.
   // Application fees are readable platform-side by definition; if this is
   // empty the money is somewhere the payout cron cannot reach.
-  const feeId = charge.application_fee;
+  // Same async attach as step 6: the ApplicationFee object is created moments
+  // after the charge, and the first real run (2026-08-30) read it back too
+  // early and reported "no application fee object on the platform" while the
+  // fee existed. Poll the venue-side charge until it names the fee.
+  let feeId = charge.application_fee;
+  for (let i = 0; i < 10 && !feeId; i += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const again = await stripe.charges.retrieve(String(intent.latest_charge), {}, { stripeAccount: merchantAccount });
+    feeId = again.application_fee;
+  }
   const fee = feeId ? await stripe.applicationFees.retrieve(typeof feeId === 'string' ? feeId : feeId.id) : null;
   check(
     'the fee lands in the platform balance, where the payout cron can transfer it',
