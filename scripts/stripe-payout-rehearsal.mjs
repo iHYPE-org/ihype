@@ -202,6 +202,29 @@ async function step2SplitTransfers(captured, accounts) {
     shares.map((s) => `${s.label}=${s.amount}`).join(' ')
   );
 
+  // Transfers draw on the AVAILABLE balance, and every test-mode card charge
+  // above (pm_card_visa) lands as PENDING — so on a fresh sandbox this step
+  // always fails with "insufficient available funds" (measured 2026-08-30).
+  // Stripe's documented fix is a charge on the bypass-pending test card
+  // (4000 0000 0000 0077), which settles immediately. Test mode only by
+  // construction: the key guard at the top refuses anything but sk_test_.
+  const balance = await stripe.balance.retrieve();
+  const availableUsd = balance.available.find((b) => b.currency === 'usd')?.amount ?? 0;
+  if (availableUsd < captured.amount_received) {
+    const topUp = await stripe.paymentIntents.create(
+      {
+        amount: Math.max(captured.amount_received - availableUsd, captured.amount_received),
+        currency: 'usd',
+        payment_method: 'pm_card_bypassPending',
+        confirm: true,
+        automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+        metadata: { rehearsal: 'true', purpose: 'available-balance-top-up' },
+      },
+      { idempotencyKey: `topup:${captured.id}` }
+    );
+    console.log(`        (available balance was ${availableUsd}; funded ${topUp.amount_received} via the bypass-pending test card)`);
+  }
+
   const transfers = [];
   for (let i = 0; i < shares.length; i += 1) {
     const share = shares[i];
