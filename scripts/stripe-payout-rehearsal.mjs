@@ -215,7 +215,7 @@ async function step2SplitTransfers(captured, accounts) {
   // funding the bare shortfall leaves the balance ~3% short — measured on the
   // first local run (2026-08-30): funded 5895 against -895, transfers still
   // refused. Gross up for the fee, then re-check rather than assume.
-  for (let attempt = 0; available < captured.amount_received && attempt < 3; attempt += 1) {
+  for (let funding = 0; available < captured.amount_received && funding < 2; funding += 1) {
     const shortfall = captured.amount_received - available;
     const gross = Math.ceil((shortfall + 30) / 0.971) + 100;
     const topUp = await stripe.paymentIntents.create(
@@ -227,11 +227,18 @@ async function step2SplitTransfers(captured, accounts) {
         automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
         metadata: { rehearsal: 'true', purpose: 'available-balance-top-up' },
       },
-      { idempotencyKey: `topup:${captured.id}:${attempt}` }
+      { idempotencyKey: `topup:${captured.id}:${funding}` }
     );
-    const before = available;
-    available = await availableUsd();
-    console.log(`        (available balance was ${before}; funded ${topUp.amount_received} via the bypass-pending test card; now ${available})`);
+    console.log(`        (available balance was ${available}; funded ${topUp.amount_received} gross via the bypass-pending test card)`);
+    // The Balance API lags the charge by several seconds — measured
+    // 2026-08-30: three top-ups fired in three seconds, each against the
+    // same stale reading, and the transfer still found nothing. Poll for the
+    // funds to actually show before concluding more funding is needed.
+    for (let i = 0; i < 60 && available < captured.amount_received; i += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      available = await availableUsd();
+    }
+    console.log(`        (available balance now ${available})`);
   }
 
   const transfers = [];
