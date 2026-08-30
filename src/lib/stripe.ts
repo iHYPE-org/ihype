@@ -801,9 +801,21 @@ export async function captureTicketPaymentIntent(paymentIntentId: string): Promi
   }
 }
 
-export async function cancelTicketPaymentIntent(paymentIntentId: string): Promise<void> {
+export async function cancelTicketPaymentIntent(
+  paymentIntentId: string,
+  /* A VENUE_DIRECT order's PaymentIntent lives ON the venue's account, so a
+     platform-scoped cancel cannot find it — the same scoping that broke the
+     refund path (see refundTicketPaymentIntent). RESERVED orders rarely carry
+     an intent id at all (Checkout creates it lazily), but when one does, the
+     caller passes the order's settlementAccountId for a venue-direct order. */
+  stripeAccountId?: string | null,
+): Promise<void> {
   const stripe = getStripe();
-  await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `cancel:${paymentIntentId}` });
+  await stripe.paymentIntents.cancel(
+    paymentIntentId,
+    {},
+    { idempotencyKey: `cancel:${paymentIntentId}`, ...(stripeAccountId ? { stripeAccount: stripeAccountId } : {}) },
+  );
 }
 
 /**
@@ -830,9 +842,31 @@ export async function cancelTicketPaymentIntent(paymentIntentId: string): Promis
 export async function refundTicketPaymentIntent(
   paymentIntentId: string,
   amountCents: number | null,
-  options: { wasDestinationCharge?: boolean } = {},
+  /* The refund's shape follows the order's SETTLEMENT MODE, and the caller
+     passes the order's own stored fields rather than a pre-digested boolean.
+     The boolean this replaces (`wasDestinationCharge: Boolean(settlementAccountId)`)
+     was wrong for VENUE_DIRECT twice over, measured against real Stripe in the
+     step-2 rehearsal (2026-08-30): the PaymentIntent lives ON the venue's
+     account, so the platform-scoped refund answered "No such payment_intent"
+     — every cancelled venue-direct order silently failed to refund — and even
+     scoped correctly, `reverse_transfer: true` is rejected on a direct charge
+     ("does not have an associated transfer").
+
+     Deliberately NOT inferred from the PaymentIntent. Reading it back would be
+     a second network call on a path that already has the answer stored on the
+     order, and inferring money behaviour from a remote read is how the
+     `charges_enabled` mix-up happened. */
+  options: { settlementMode?: string; settlementAccountId?: string | null } = {},
 ): Promise<string> {
   const stripe = getStripe();
+  /* Same discriminants as buildPayableEntries() in ticket-order-state.ts —
+     the two files must not disagree about what a mode means. A legacy row
+     with an account id but no recorded mode is treated as a destination
+     charge, exactly as the old boolean did. */
+  const venueIsMerchant = options.settlementMode === 'VENUE_DIRECT';
+  const artistWasRouted =
+    options.settlementMode === 'DESTINATION' ||
+    Boolean(options.settlementAccountId && options.settlementMode !== 'VENUE_DIRECT');
   const refund = await stripe.refunds.create(
     {
       payment_intent: paymentIntentId,
@@ -855,20 +889,26 @@ export async function refundTicketPaymentIntent(
        * If the act's balance cannot cover it they go negative — and under the
        * platform's Stripe-managed risk configuration that is STRIPE's loss to
        * recover, not iHYPE's. This used to depend on `debit_negative_balances`
-       * and no longer does; see the note in `createStripeConnectAccount`.
-       *
-       * Deliberately NOT inferred from the PaymentIntent. Reading it back
-       * would be a second network call on a path that already has the answer
-       * stored on the order, and inferring money behaviour from a remote read
-       * is how the `charges_enabled` mix-up happened. */
-      ...(options.wasDestinationCharge
-        ? { reverse_transfer: true, refund_application_fee: true }
-        : {}),
+       * and no longer does; see the note in `createStripeConnectAccount`. */
+      ...(artistWasRouted ? { reverse_transfer: true, refund_application_fee: true } : {}),
+      /* On a VENUE-DIRECT refund the refund is debited from the VENUE (they
+       * are the merchant), so the platform returns its application fee — the
+       * artist's 70% and the promoter's 10% it was carrying — or the venue
+       * would be funding the fan's whole refund out of the 20% it kept.
+       * There is no transfer to reverse on a direct charge. */
+      ...(venueIsMerchant ? { refund_application_fee: true } : {}),
     },
     // The key carries the amount: a partial refund followed by a different
     // partial refund on the same intent is two distinct operations, and
     // sharing a key would silently return the first one's result.
-    { idempotencyKey: `refund:${paymentIntentId}:${amountCents ?? 'full'}` }
+    {
+      idempotencyKey: `refund:${paymentIntentId}:${amountCents ?? 'full'}`,
+      /* THE HEADER IS THE OTHER HALF OF THE FIX: a direct charge's
+       * PaymentIntent exists only on the venue's account. */
+      ...(venueIsMerchant && options.settlementAccountId
+        ? { stripeAccount: options.settlementAccountId }
+        : {}),
+    }
   );
   return refund.id;
 }

@@ -157,7 +157,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         const refundId = await refundTicketPaymentIntent(
           order.stripePaymentIntentId,
           refundableCents,
-          { wasDestinationCharge: Boolean(order.settlementAccountId) },
+          { settlementMode: order.settlementMode, settlementAccountId: order.settlementAccountId },
         );
         await db.$transaction(async (tx) => {
           const ok = await refundCapturedTicketOrder(tx, order.id);
@@ -165,7 +165,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
           await tx.ticketOrder.update({ where: { id: order.id }, data: { refundedAt: new Date(), stripeRefundId: refundId } });
         });
       } else {
-        if (order.stripePaymentIntentId) await cancelTicketPaymentIntent(order.stripePaymentIntentId);
+        if (order.stripePaymentIntentId) {
+          await cancelTicketPaymentIntent(
+            order.stripePaymentIntentId,
+            // A venue-direct intent exists only on the venue's account.
+            order.settlementMode === 'VENUE_DIRECT' ? order.settlementAccountId : null,
+          );
+        }
         const ok = await db.$transaction((tx) => voidReservedTicketOrder(tx, order.id));
         if (!ok) { failed += 1; continue; }
       }
