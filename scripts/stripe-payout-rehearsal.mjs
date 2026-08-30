@@ -419,7 +419,10 @@ async function step7VenueDirectCharge(merchantAccount) {
     visibleToPlatform ? 'platform can read it — the stripeAccount header did not apply' : `${intent.id} is invisible to the platform`,
   );
 
-  const charge = await stripe.charges.retrieve(String(intent.latest_charge), { stripeAccount: merchantAccount });
+  // Options are the THIRD argument on retrieve(); passed second, stripeAccount
+  // is sent to the API as a request parameter and rejected ("Received unknown
+  // parameter"), which aborted the first real run of this step (2026-08-30).
+  const charge = await stripe.charges.retrieve(String(intent.latest_charge), {}, { stripeAccount: merchantAccount });
   check(
     'the venue is charged the application fee',
     charge.application_fee_amount === applicationFeeCents,
