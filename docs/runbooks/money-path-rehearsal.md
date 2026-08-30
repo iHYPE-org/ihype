@@ -1,8 +1,11 @@
 # Runbook — rehearse the money path before the first sale
 
-**Status: step 1 COMPLETE 2026-08-30 — 25 passed, 0 failed, all three
-settlement modes rehearsed (PLATFORM, DESTINATION, VENUE_DIRECT). Steps 2 and 3
-remain.** Live Stripe still holds zero PaymentIntents and a zero balance.
+**Status: steps 1 AND 2 executed 2026-08-30 — step 1 clean (25/25, all three
+settlement modes), step 2 walked in all three modes and it found what it exists
+to find: ONE REAL DEFECT — a cancelled show cannot refund any VENUE_DIRECT
+order (see the step-2 section below). Fix that, re-run VENUE_DIRECT stage 4,
+walk the dispute card by hand, and step 3 is the only door left.** Live Stripe
+still holds zero PaymentIntents and a zero balance.
 Nothing has ever been sold through this app, so the first real ticket purchase
 is still the first production execution of the capture → split → payout
 → refund path against the LIVE account. This runbook exists so that does not
@@ -71,7 +74,68 @@ anywhere.** What it took to get here; every item is a trap for the next person:
 `balance_insufficient`), does Stripe replay the saved error for a retry with
 the same idempotency key? `createPayoutTransfer` keys on the payable entry id,
 so a transiently-failed payout retried by the cron needs this answered before
-anyone trusts the retry path.
+anyone trusts the retry path. (Step 2 did not answer it — no transfer failed
+transiently during its runs. Still open.)
+
+### Step 2 walked — 2026-08-30, all three modes, scratch Postgres + real worker
+
+`npm run rehearse:money` executed against the real worker build (`wrangler
+dev` on the OpenNext bundle, local Postgres 16 behind the Hyperdrive binding,
+`REHEARSAL_PAY_MODE=api`) in all three settlement modes, resetting the scratch
+database between runs. Per-mode results:
+
+| Mode | Result | What it proved |
+|---|---|---|
+| PLATFORM (no accounts) | **24 passed, 0 failed** | Capture → `TicketOrder` CAPTURED, one ticket per seat, payables sum exactly and start PENDING, 28¢ reserve charged, HYPE-link 10% attributes to a real profile, cancellation refunds for real (`re_3UAEdNLuZsyulVGR1hIUnvQY`) and voids order/tickets/payables, a scanned order is skipped not refunded, the cron **skips** every un-onboarded payee rather than paying to nowhere, and a second cron run releases nothing. |
+| DESTINATION (`REHEARSAL_ARTIST_ACCOUNT`) | 24 passed, 2 failed — both environment | The whole refund leg on a real destination charge: `reverse_transfer` works, order/tickets/payables VOID, reserve charged. The 2 fails are the release leg for venue+promoter payables, whose payees cannot be onboarded here: both sandbox accounts are merchant-capable, and attaching one to the venue flips the app into VENUE_DIRECT. Correct skip behaviour, not a defect. |
+| VENUE_DIRECT (`REHEARSAL_VENUE_ACCOUNT` + `REHEARSAL_ARTIST_ACCOUNT`) | 21 passed, 5 failed — **4 are ONE REAL DEFECT**, 1 environment | **The release leg is PROVEN**: two payables went PENDING→RELEASED with real transfer ids (`tr_1UAEXHLuZsyulVGRolk9DUXc`, `tr_1UAEXILuZsyulVGRe8jBfJpI`) and the second cron run released 0 — the double-pay check, against real Stripe AND the real database. No reserve charged (venue bears the risk), venue share correctly not a payable. The 5th fail: the promoter payable skips because no third onboarded account exists to give the promoter. |
+
+**THE DEFECT — a cancelled show cannot refund any VENUE_DIRECT order.** The
+only refund path that exists (`/api/shows/[showId]/cancel`) failed every
+venue-direct order (`ordersFailed: 1`, order stays CAPTURED, tickets VALID,
+payables PENDING), twice over:
+
+1. `refundTicketPaymentIntent()` runs PLATFORM-scoped, and a venue-direct
+   PaymentIntent lives on the VENUE's account. Stripe answers
+   `No such payment_intent: 'pi_3UAEW9LuZs8WZJKj0xyH8y3v'` — the account token
+   is right there in the id. The refund needs the `stripeAccount` header, from
+   the order's own `settlementAccountId`.
+2. Even scoped correctly, the cancel route passes
+   `wasDestinationCharge: Boolean(order.settlementAccountId)` — true for
+   venue-direct too — so it would send `reverse_transfer: true` on a DIRECT
+   charge, which has no transfer. Measured directly: `Cannot reverse transfer
+   on charge … because it does not have an associated transfer.` The flags are
+   mode-specific: a venue-direct refund wants `refund_application_fee: true`
+   (return the platform's fee so the venue is not left funding the fan's full
+   refund out of its 20%) and NO `reverse_transfer`.
+
+The fix is a money-path change (`refundTicketPaymentIntent` gains a
+settlement-mode/account parameter; the cancel route passes the order's) and
+wants its own PR with VENUE_DIRECT stage 4 re-run against it.
+
+**Harness fixes made on the way (in `scripts/rehearse-money-path.mts`):**
+`payViaApi` searched Checkout Sessions platform-scoped only, so a venue-direct
+session — created ON the venue's account, exactly as step 1 proves — was never
+found and every purchase failed; it now searches both scopes and creates the
+synthetic PaymentIntent in the scope the session lives in. And that synthetic
+PI now mirrors the real session's shape per mode (`transfer_data` + fee for
+DESTINATION, fee-only for VENUE_DIRECT), because a plain PI made the refund
+leg fail on Stripe's side for the harness's reasons rather than the app's.
+
+**Operational notes for the next run:** the app's own per-IP purchase rate
+limit accumulates across runs (state persists in wrangler's `--persist-to`
+directory) — restart `wrangler dev` with a fresh persist dir when a run
+starts answering 429; reset the scratch database between runs
+(`stripeConnectAccountId` is unique, so re-seeding trips on the previous
+run's rows); and in this sandbox the runner needed the Stripe SDK routed
+through the egress proxy plus the env file force-applied over a stale
+inherited `STRIPE_SECRET_KEY` (node `--env-file` lets pre-existing
+environment win).
+
+**Deliberately not done here:** the dispute walk (`4000 0000 0000 0259` on a
+venue-direct and then a destination sale, checking WHOSE balance is debited in
+the dashboard) — that is a judgement about money made by a person, per the
+card table below.
 
 Rehearsal residue: the sandbox balance drifts negative between runs (each
 run's refunds pull from the same pool the top-ups feed). Harmless — the
