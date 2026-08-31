@@ -257,14 +257,14 @@ const EMOJI_EXEMPT = [
 
 
 /**
- * `\u25c0` and `\u25b6` without a text-presentation selector.
+ * `◀` and `▶` without a text-presentation selector.
  *
  * Both carry `Emoji=Yes` — an emoji variant exists — even though their default
  * is text presentation, and WebKit serves the colour glyph from Apple Color
  * Emoji anyway. On a real iPhone every one of these renders as a BLUE ROUNDED
  * SQUARE, which is how the console dock's joystick shipped drawing three of
  * them in a row, and how four play buttons across the app shipped as blue
- * emoji on a walnut-and-brass surface. `\u25b2` and `\u25bc` have no emoji
+ * emoji on a walnut-and-brass surface. `▲` and `▼` have no emoji
  * variant and are unaffected — which is exactly why the bug looked arbitrary.
  *
  * The fix is to follow the glyph with U+FE0E, VARIATION SELECTOR-15, which
@@ -277,7 +277,7 @@ const EMOJI_EXEMPT = [
  * catches it, and `vendor:ds` applies the same transform to the generated
  * components so both halves of the app are covered.
  */
-const EMOJI_CAPABLE_GLYPH = /[\u25c0\u25b6](?![\ufe0e\ufe0f])/;
+const EMOJI_CAPABLE_GLYPH = /[◀▶](?![︎️])/;
 
 /**
  * Comments collapsed to NEWLINES, not to nothing.
@@ -314,7 +314,7 @@ for (const file of sourceFiles) {
       fail(file, 'a px size in the `font:` shorthand ignores the Text size accessibility setting — use rem (px / 16).');
     }
     if (EMOJI_CAPABLE_GLYPH.test(withoutComments(content))) {
-      fail(file, 'a bare \u25c0 or \u25b6 renders as a blue emoji square on iOS — follow it with \\ufe0e (VARIATION SELECTOR-15) to request text presentation.');
+      fail(file, 'a bare ◀ or ▶ renders as a blue emoji square on iOS — follow it with \\ufe0e (VARIATION SELECTOR-15) to request text presentation.');
     }
     if (ACCENT_AS_TEXT.test(content)) {
       fail(file, '--accent is a fill, not copy: 2.48:1 on the console ground. Use --accent-text for a word, --ink-on-accent for a label on the fill.');
@@ -430,7 +430,7 @@ for (const file of await walkStyles('src')) {
 }
 
 const readme = await text('README.md');
-if (readme.includes('cite')) fail('README.md', 'internal rendered citation tokens must not be committed.');
+if (readme.includes('cite')) fail('README.md', 'internal rendered citation tokens must not be committed.');
 
 const environmentExample = await text('.env.example');
 if (/BETA_INVITE_CODES=.*\b(?:IHYPE|HYPE2026|BETA|LISTEN)\b/i.test(environmentExample)) {
@@ -440,35 +440,38 @@ if (!/FEATURE_ENABLE_TICKET_PAYMENTS="false"/.test(environmentExample)) {
   fail('.env.example', 'paid ticketing must default to disabled.');
 }
 
-// THE ASSERTION IS INVERTED AS OF 2026-08-27, and the direction is the point.
+// THE ASSERTION HAS CHANGED SHAPE TWICE, and each turn is the point.
 //
-// It used to require "true", written on 2026-07-19 when 501c3 status and a live
-// Stripe account attached to the org's bank account were confirmed. Both of
-// those are still true. What neither of them established is that anyone could
-// be PAID: Stripe Connect has never been signed up for, so
-// `createPayoutTransfer()` has no destination and `triggerShowPayouts()` can
-// release nothing. A sale would capture to the platform balance and leave every
-// AccountsPayableEntry PENDING forever, with no fault reported anywhere,
-// because nothing is faulty.
+// 2026-07-19: required "true" (501c3 and a live Stripe account confirmed).
+// 2026-08-27: inverted to require "false", because neither of those
+// established that anyone could be PAID — Stripe Connect had never been
+// signed up for, so `createPayoutTransfer()` had no destination and a sale
+// would have left every AccountsPayableEntry PENDING forever with no fault
+// reported anywhere, because nothing is faulty.
+// 2026-08-31: the prerequisite that inversion named is met —
+// docs/runbooks/money-path-rehearsal.md walked to the end (Connect signed up
+// 2026-08-27; step 1 25/25 across all three settlement modes; step 2 against
+// the real worker with real transfers to real onboarded destinations and the
+// payout cron run TWICE showing `released: 0`; the venue-direct refund defect
+// fixed and re-proven; the dispute walk measured 8/8) — so the flag flipped
+// to "true" and this guard turned with it, per its own instruction.
 //
-// So the guard now protects the SAFE side. It still exists — nobody can flip
-// this on in passing — it just guards the other direction, which is the one
-// that can lose someone else's money.
-//
-// Flip both this and wrangler.toml back together, and only after
-// docs/runbooks/money-path-rehearsal.md is walked to the end: Connect enabled,
-// an Express account through hosted onboarding, a real transfer reaching a real
-// destination, and the payout cron run TWICE showing `released: 0` on the
-// second pass. Charging additionally requires the live
-// STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET Worker secrets, which this repo never
-// touches — see getPaymentProcessingReadiness(), which fails closed if either
-// is missing or the key is sk_test_ in production.
+// What it asserts now: the flag stays an EXPLICIT declaration in
+// wrangler.toml, whichever way it points. Deleting the line (so the runtime
+// silently falls back to undefined/off) is the failure mode left — an
+// emergency kill-switch flip to "false" must never fight the linter, but a
+// flag that quietly stops being declared is dashboard residue by another
+// name. Charging still additionally requires the live
+// STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET Worker secrets, which this repo
+// never touches — see getPaymentProcessingReadiness(), which fails closed if
+// either is missing or the key is sk_test_ in production, and the post-deploy
+// smoke, which fails the deploy on any blocker other than the flag itself.
 const wranglerConfig = await text('wrangler.toml');
-if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"false"/.test(wranglerConfig)) {
+if (!/FEATURE_ENABLE_TICKET_PAYMENTS\s*=\s*"(?:true|false)"/.test(wranglerConfig)) {
   fail(
     'wrangler.toml',
-    'paid ticketing is enabled while Stripe Connect is not signed up for: a sale would capture and no payout could ever be released. '
-    + 'Walk docs/runbooks/money-path-rehearsal.md to the end first, then flip this guard and the flag together.',
+    'FEATURE_ENABLE_TICKET_PAYMENTS must be declared explicitly ("true" or "false") — '
+    + 'paid ticketing is a deliberate configuration, never an absent default.',
   );
 }
 
