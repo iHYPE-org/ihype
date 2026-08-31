@@ -18,7 +18,11 @@ The daily `backup-verify` cron proves the *live* database is up, populated, and 
    CONFIRM_RESTORE_DRILL='verify isolated restore' \
    npm run verify:restore
    ```
-   The checker refuses to run when the restore and production database identities match. Save its JSON output with the drill evidence.
+   The checker refuses to run when the restore and production database identities match, and **exits non-zero on every failure** — so it is safe to script. Save its JSON output with the drill evidence.
+
+   `PRODUCTION_DATABASE_URL` is a **guard only**: the checker never connects to it. It exists so the drill cannot be run against production by mistake. The count comparison in step 4 stays manual and stays yours.
+
+   It fails a restore that carries its rows but not their critical fields — a captured `TicketOrder` with no `stripePaymentIntentId` (unrefundable), an onboarded `Profile` with no `stripeConnectAccountId` (unpayable), a ticket with no serialized id, a vanished audit trail. Verified 2026-08-31 by corrupting each in a scratch restore: before this, all of them reported PASS.
 4. **Independently compare the critical counts:**
    ```sql
    SELECT (SELECT COUNT(*) FROM "User")    AS users,
@@ -27,7 +31,7 @@ The daily `backup-verify` cron proves the *live* database is up, populated, and 
    SELECT COUNT(*), MAX(migration_name) FROM _prisma_migrations WHERE finished_at IS NOT NULL;
    ```
    Compare against the backup-check email from the chosen restore point's day. Counts should match to within a day's organic growth; the migration count/name must match exactly.
-5. **Spot-check application-critical data** on the fork: one recent `TicketOrder` (confirmationCode + stripePaymentIntentId present), one `Profile` with `stripeConnectAccountId`, one `AuditLog` row.
+5. **Spot-check application-critical data** on the fork. The checker in step 3 now asserts the machine-checkable half of this — payment linkage, payout linkage, serialized ids, the audit trail — so what is left for a human is judgement rather than field-presence: does the most recent show look like a real show, does an order's amount match what the charter's split would produce, is the newest row roughly as recent as the restore point.
 6. **Tear down** the fork project immediately (it contains production PII — it must not outlive the drill).
 7. **Record the result:** send an email to admin@ihype.org with subject `Restore drill YYYY-MM — PASS/FAIL`, the restore point used, counts observed, and teardown confirmation. Keep these — they are the compliance evidence.
 8. **Update the alpha gate:** only after every step passes, set the Worker secret `RESTORE_DRILL_VERIFIED_AT` to the UTC timestamp from the checker output. Never set it from a live-database health check.

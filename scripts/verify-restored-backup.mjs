@@ -4,6 +4,11 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
 const restoreUrl = process.env.RESTORE_DATABASE_URL?.trim();
+/* USED ONLY AS A GUARD — this script never connects to it. It exists so the
+   checker can refuse to run when the "restore" turns out to be production
+   itself. The count comparison in the runbook's step 4 is deliberately
+   manual, against the backup-check email; nothing here reads production, and
+   the name should not be taken to promise otherwise. */
 const productionUrl = process.env.PRODUCTION_DATABASE_URL?.trim();
 const confirmation = process.env.CONFIRM_RESTORE_DRILL?.trim();
 
@@ -57,13 +62,63 @@ try {
     fail('The restored database is missing core rows or completed migrations. Do not mark the drill as passed.');
   }
 
+  /* ROW COUNTS ARE NOT ENOUGH, and this is the half that was missing.
+     A restore can carry every row and still have lost the columns that make
+     them useful: measured 2026-08-31 by nulling `stripePaymentIntentId` on
+     every order and `stripeConnectAccountId` on every profile, after which
+     this script still reported PASS. Those two fields are what let you refund
+     a fan and pay an artist — losing them silently is the exact disaster a
+     restore drill exists to catch, and they were left to a human to spot-check
+     by eye at step 5 of the runbook.
+
+     Each check is CONDITIONAL on the class being non-empty, so a young
+     production with no sales yet passes honestly rather than failing on
+     absence. */
+  const integrity = [];
+
+  if (ticketOrders > 0) {
+    const captured = await db.ticketOrder.count({ where: { status: 'CAPTURED' } });
+    if (captured > 0) {
+      const unlinked = await db.ticketOrder.count({
+        where: { status: 'CAPTURED', stripePaymentIntentId: null },
+      });
+      if (unlinked > 0) {
+        integrity.push(`${unlinked} of ${captured} captured ticket orders have no stripePaymentIntentId — those cannot be refunded`);
+      }
+    }
+  }
+
+  if (tickets > 0) {
+    const unusable = await db.ticket.count({ where: { OR: [{ serializedId: '' }] } });
+    if (unusable > 0) integrity.push(`${unusable} tickets have no serializedId — those are not admissible at a door`);
+  }
+
+  const onboarded = await db.profile.count({ where: { stripeConnectOnboarded: true } });
+  if (onboarded > 0) {
+    const unpayable = await db.profile.count({
+      where: { stripeConnectOnboarded: true, stripeConnectAccountId: null },
+    });
+    if (unpayable > 0) {
+      integrity.push(`${unpayable} of ${onboarded} onboarded profiles have no stripeConnectAccountId — those cannot be paid out`);
+    }
+  }
+
+  if (users > 0 && auditLogs < 1) {
+    integrity.push('no AuditLog rows survived — the audit trail is the compliance evidence this drill is run for');
+  }
+
+  if (integrity.length > 0) {
+    fail(`The restore carries its rows but not their critical fields:\n  - ${integrity.join('\n  - ')}`);
+  }
+
   console.log(JSON.stringify({
     result: 'PASS',
     verifiedAt: new Date().toISOString(),
     restoreTarget: restoreIdentity,
     counts: { users, profiles, shows, ticketOrders, tickets, notificationJobs, auditLogs },
     migrations: { count: Number(migration.count), latest: migration.latest },
-    next: 'Compare these counts with the backup-check evidence, spot-check critical records, destroy the restore, then set RESTORE_DRILL_VERIFIED_AT.',
+    integrity: 'checked: captured orders keep their PaymentIntent, onboarded profiles keep their Connect account, tickets keep their serialized id, the audit trail survived',
+    next: 'Compare these counts with the backup-check evidence (this script never reads production), destroy the restore, then set RESTORE_DRILL_VERIFIED_AT.',
   }, null, 2));
 } catch (error) {
   fail(error instanceof Error ? `Restore verification query failed: ${error.message}` : 'Restore verification query failed.');
