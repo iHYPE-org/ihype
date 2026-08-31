@@ -2,6 +2,24 @@
 // When R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME
 // are set, uploads go to Cloudflare R2 via AWS Signature Version 4.
 // Otherwise, files are base64-encoded and stored inline (dev/fallback only).
+//
+// EVERY ONE OF THOSE FOUR IS READ THROUGH readRuntimeEnv(), NOT process.env,
+// and that changed on 2026-08-31. Worker *secrets* — which is what these four
+// have to be, since none of them appears in wrangler.toml's [vars] — do not
+// land on `process.env` at all on workerd; they arrive on the Cloudflare env
+// binding, reachable only through getCloudflareContext(). Reading them from
+// process.env therefore made isObjectStorageConfigured() answer FALSE in
+// production no matter how the account was configured, and the failure is
+// silent by design: every caller has a fallback, so uploads kept "working"
+// while quietly base64-ing whole images and audio files into Postgres rows,
+// and /api/advertise/audio-upload — the one caller with no fallback — answered
+// 503 "Ad audio storage is not configured."
+//
+// This is the identical shape that left transactional email dead for 36 days
+// (see the header of src/lib/runtime-env.ts, which exists because of it).
+// Do not reintroduce a process.env read here.
+
+import { readRuntimeEnv } from '@/lib/runtime-env';
 
 export type StoredObject = {
   key: string;
@@ -82,10 +100,10 @@ async function r2Request(
   body?: Buffer,
   contentType?: string
 ): Promise<Response> {
-  const accountId   = process.env.R2_ACCOUNT_ID!;
-  const accessKeyId = process.env.R2_ACCESS_KEY_ID!;
-  const secretKey   = process.env.R2_SECRET_ACCESS_KEY!;
-  const bucket      = process.env.R2_BUCKET_NAME!;
+  const accountId   = readRuntimeEnv('R2_ACCOUNT_ID')!;
+  const accessKeyId = readRuntimeEnv('R2_ACCESS_KEY_ID')!;
+  const secretKey   = readRuntimeEnv('R2_SECRET_ACCESS_KEY')!;
+  const bucket      = readRuntimeEnv('R2_BUCKET_NAME')!;
   const region      = 'auto'; // R2 S3-compatible endpoint always uses 'auto'
   const endpoint    = new URL(`https://${accountId}.r2.cloudflarestorage.com/${bucket}/${key}`);
 
@@ -111,9 +129,9 @@ async function uploadToR2(key: string, data: Buffer, contentType: string): Promi
     throw new Error(`R2 upload failed: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ''}`);
   }
 
-  const accountId  = process.env.R2_ACCOUNT_ID!;
-  const bucket     = process.env.R2_BUCKET_NAME!;
-  const publicBase = process.env.R2_PUBLIC_URL ?? `https://${accountId}.r2.cloudflarestorage.com/${bucket}`;
+  const accountId  = readRuntimeEnv('R2_ACCOUNT_ID')!;
+  const bucket     = readRuntimeEnv('R2_BUCKET_NAME')!;
+  const publicBase = readRuntimeEnv('R2_PUBLIC_URL') ?? `https://${accountId}.r2.cloudflarestorage.com/${bucket}`;
   return `${publicBase}/${key}`;
 }
 
@@ -121,10 +139,10 @@ async function uploadToR2(key: string, data: Buffer, contentType: string): Promi
 
 export function isObjectStorageConfigured(): boolean {
   return Boolean(
-    process.env.R2_ACCOUNT_ID &&
-    process.env.R2_ACCESS_KEY_ID &&
-    process.env.R2_SECRET_ACCESS_KEY &&
-    process.env.R2_BUCKET_NAME
+    readRuntimeEnv('R2_ACCOUNT_ID') &&
+    readRuntimeEnv('R2_ACCESS_KEY_ID') &&
+    readRuntimeEnv('R2_SECRET_ACCESS_KEY') &&
+    readRuntimeEnv('R2_BUCKET_NAME')
   );
 }
 
@@ -145,10 +163,10 @@ export function isTrustedStorageUrl(url: string): boolean {
   }
   if (parsed.protocol !== 'https:') return false;
 
-  const accountId = process.env.R2_ACCOUNT_ID;
-  const bucket = process.env.R2_BUCKET_NAME;
+  const accountId = readRuntimeEnv('R2_ACCOUNT_ID');
+  const bucket = readRuntimeEnv('R2_BUCKET_NAME');
   const candidates = [
-    process.env.R2_PUBLIC_URL,
+    readRuntimeEnv('R2_PUBLIC_URL'),
     accountId && bucket ? `https://${accountId}.r2.cloudflarestorage.com/${bucket}` : undefined,
   ].filter((v): v is string => Boolean(v));
 

@@ -38,6 +38,7 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { readFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
+import { buildTicketVerificationUrl } from '../src/lib/tickets';
 
 const BASE = (process.env.ALPHA_BASE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
@@ -265,6 +266,38 @@ async function main() {
       `a second member sharing the display name "${shared}" was refused ${second.status}: "${second.body?.error}" — the derived username (${first.body?.username}) is not de-duplicated, and the form never asked for one`,
     );
     return `both members registered; usernames de-duplicated`;
+  });
+
+  // ── 1c. Names the derived username used to choke on ──────────────────────
+  await item('1c. Members with apostrophes, accents and non-Latin names can sign up', async () => {
+    /* Signup shows no username field but derives one from the display name and
+       validated it, so these were all 400 "Username must be 3-30 characters…"
+       about a field the member never saw. A non-Latin name normalises to an
+       empty string, so it could not create an account at all. */
+    const names = ["Sarah O'Brien", 'Renée Fleming', '李明', 'Bo'];
+    const outcomes: string[] = [];
+    for (const [index, name] of names.entries()) {
+      const code = `NAME-${randomUUID().slice(0, 8).toUpperCase()}`;
+      await prisma.inviteCode.create({ data: { code } });
+      const email = `alpha-name-${index}-${run}@example.com`;
+      const result = await api('/api/register', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email, name, role: 'FAN',
+          isThirteenOrOlder: true, isEighteenOrOlder: true,
+          turnstileToken: 'alpha-walk-token', inviteCode: code,
+        }),
+      });
+      assert(
+        [200, 201].includes(result.status),
+        `"${name}" was refused ${result.status}: ${result.body?.error}`,
+      );
+      const row = await prisma.user.findUnique({ where: { email }, select: { username: true } });
+      assert(row?.username, `"${name}" registered but has no username`);
+      outcomes.push(`${name} -> ${row.username}`);
+    }
+    return outcomes.join(' · ');
   });
 
   // ── 2/3. Passkey + login are Playwright's (e2e/passkey.spec.ts, auth.spec.ts).
@@ -527,8 +560,19 @@ async function main() {
 
     const qr = await api(`/api/tickets/${serializedId}/qr`, { cookie: fan.cookie });
     assert(qr.status === 200, `QR endpoint answered ${qr.status}`);
-    const isSvg = qr.text.includes('<svg');
-    assert(isSvg, 'QR endpoint did not return an SVG');
+    assert(qr.text.includes('<svg'), 'QR endpoint did not return an SVG');
+
+    /* THE QR HAS TO LEAD SOMEWHERE. It used to encode the scan API, which is
+       POST-only, so a phone camera opening it got 405 and the code on every
+       ticket was decorative. Check the URL it actually encodes — the same
+       helper the route uses — by opening it the way a camera would: GET. */
+    const encoded = buildTicketVerificationUrl(serializedId);
+    const scanned = await api(new URL(encoded).pathname, { cookie: creator.cookie });
+    assert(scanned.status !== 405, `a phone camera opening the ticket QR gets ${scanned.status} Method Not Allowed`);
+    assert(
+      [200, 301, 302, 303, 307, 308].includes(scanned.status),
+      `the URL in the ticket QR answered ${scanned.status}`,
+    );
 
     const first = await api(`/api/shows/${showId}/scan`, {
       method: 'POST',
@@ -548,7 +592,7 @@ async function main() {
 
     const ticket = await prisma.ticket.findFirst({ where: { serializedId } });
     assert(ticket?.status === 'SCANNED', `ticket is ${ticket?.status}, expected SCANNED`);
-    return `QR served as SVG; first scan accepted, replay refused (${replay.status})`;
+    return `QR served as SVG and its URL opens with GET (${scanned.status}); first scan accepted, replay refused (${replay.status})`;
   });
 
   // ── 17. Refund ───────────────────────────────────────────────────────────
