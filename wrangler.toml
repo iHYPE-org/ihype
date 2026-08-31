@@ -50,33 +50,39 @@ NEXT_PUBLIC_TURNSTILE_SITE_KEY = "0x4AAAAAADSF8WNxaeBIRmR7"
 SENTRY_DSN = "https://6fcca4160df1fe7b0d5e3aa4b7a73f44@o4511334761103360.ingest.us.sentry.io/4511334762741760"
 # Paid ticketing must remain an explicit configuration change, not dashboard residue.
 #
-# FALSE as of 2026-08-27, deliberately, and turning it back on is a decision
-# with a prerequisite rather than a config tweak.
+# TRUE as of 2026-08-31, deliberately, because the prerequisite the paragraph
+# below set out has been met: docs/runbooks/money-path-rehearsal.md is walked
+# to the end. Connect is signed up for (2026-08-27, Stripe-managed risk);
+# rehearsal step 1 ran 25/25 against real test-mode Stripe across all three
+# settlement modes; step 2 ran the app's own path against the real worker
+# build in all three modes — including real transfers reaching real onboarded
+# destinations and the payout cron run TWICE with `released: 0` on the second
+# pass, the exact check named below — and the one defect it found (venue-direct
+# refunds were platform-scoped) is fixed and re-proven; the dispute walk is
+# measured 8/8 (`npm run stripe:disputes`): a venue-direct chargeback debits
+# the venue, a destination chargeback debits the platform. DESIGN_SYNC rows
+# 315–318 carry the evidence, transfer ids included.
 #
-# It was true from 2026-07-19 with both live Stripe secrets set and the webhook
-# verified, so the buy path was ARMED in production for five weeks. What was
-# never true in that window is that anyone could be PAID: Stripe Connect has
-# never been signed up for on the iHYPE account, so `createPayoutTransfer()`
-# has no destination to transfer to.
+# What is still true, and is now VISIBLE rather than silent: live mode has no
+# connected accounts yet, so early sales settle PLATFORM and their payables sit
+# PENDING until the payee onboards — the cron reports them `skipped`, and the
+# stripe-connect-health cron promotes accounts as KYC completes. The launch
+# sequence is the runbook's step 3: one deliberate low-price sale by the
+# operator, step-2's checks walked against production once, refunded via show
+# cancellation (the only refund path), then open sales.
 #
-# That combination is the worst shape this system can take, because it fails
-# silently and on the far side of the money. A fan buys, the charge captures to
-# the platform balance, the order reads CAPTURED, the ticket scans — and every
-# AccountsPayableEntry sits PENDING forever with nothing able to release it.
-# The artist's 70% would be sitting in iHYPE's Stripe balance with no mechanism
-# to send it. Nothing in the app would report a fault, because nothing is
-# faulty: the payout cron correctly finds no connected account.
+# The history below is kept because it is the reason the prerequisite existed.
 #
-# It cost nothing only because live Stripe holds zero PaymentIntents — the flag
-# was armed but never fired. Do not read those five weeks as evidence that this
-# is safe.
-#
-# Re-enable only after docs/runbooks/money-path-rehearsal.md is walked to the
-# end, which means Connect enabled, an Express account through hosted
-# onboarding, a real transfer reaching a real destination, and the payout cron
-# run TWICE showing `released: 0` on the second pass. A cron that pays twice is
-# invisible until it happens.
-FEATURE_ENABLE_TICKET_PAYMENTS = "false"
+# FALSE from 2026-08-27 to 2026-08-31: the flag had been true from 2026-07-19
+# with both live Stripe secrets set and the webhook verified, so the buy path
+# was ARMED in production for five weeks while nobody could be PAID — Stripe
+# Connect had never been signed up for, so `createPayoutTransfer()` had no
+# destination. That combination is the worst shape this system can take: a fan
+# buys, the charge captures, the order reads CAPTURED, the ticket scans — and
+# every AccountsPayableEntry sits PENDING forever, with nothing reporting a
+# fault because nothing is faulty. It cost nothing only because live Stripe
+# held zero PaymentIntents. Those five weeks were not evidence of safety.
+FEATURE_ENABLE_TICKET_PAYMENTS = "true"
 
 [[kv_namespaces]]
 binding = "KV"
