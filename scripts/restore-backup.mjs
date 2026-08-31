@@ -46,7 +46,9 @@ const bucket = process.env.BACKUP_R2_BUCKET?.trim() || 'ihype-backups';
 const targetUrl = process.env.RESTORE_TARGET_URL?.trim();
 const passphrase = process.env.BACKUP_PASSPHRASE ?? '';
 const confirmation = process.env.CONFIRM_RESTORE?.trim();
-const cloudflareToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+/* Same fallback as backup-database.mjs: a dedicated backup token if one exists,
+   otherwise the deploy's. */
+const cloudflareToken = process.env.BACKUP_R2_API_TOKEN?.trim() || process.env.CLOUDFLARE_API_TOKEN?.trim();
 const cloudflareAccount = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
 
 function fail(message) {
@@ -128,7 +130,7 @@ const passPath = join(workDir, 'pass');
 
 if (!localFile) {
   if (!cloudflareToken || !cloudflareAccount) {
-    fail('Set CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID to download from R2, or pass --file=<path> for a backup you already hold.');
+    fail('Set CLOUDFLARE_API_TOKEN (or BACKUP_R2_API_TOKEN) and CLOUDFLARE_ACCOUNT_ID to download from R2, or pass --file=<path> for a backup you already hold.');
   }
   console.log(`Downloading ${bucket}/${key} …`);
   /* --remote is explicit: without it wrangler reads local persistence and

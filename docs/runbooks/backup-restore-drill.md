@@ -32,7 +32,11 @@ Only `premigration/` grows: you must be able to reach the state before a *specif
 Do this once; it is the only part that needs the Cloudflare dashboard.
 
 1. **Create the bucket.** Cloudflare → R2 → Create bucket → `ihype-backups`. Keep it separate from `ihype-media`: a credential that can reach the backups must not also be able to reach (or overwrite) member media.
-2. **Give the deploy token R2 write.** The Actions secret `CLOUDFLARE_API_TOKEN` already exists. Either add **Workers R2 Storage: Edit** to it, or mint a second token and store it as `CLOUDFLARE_API_TOKEN` on the backup workflow. No S3 access key is needed — `wrangler r2 object put` authenticates with the API token.
+2. **Give an API token R2 write.** Cloudflare → profile menu → **My Profile** → **API Tokens** (an account-owned token lives under Manage Account → API Tokens instead). Find the token behind the `CLOUDFLARE_API_TOKEN` Actions secret → ⋯ → **Edit** → **+ Add more** → Account · **Workers R2 Storage** · **Edit** → Continue to summary → Save. **Editing a token does not change its value**, so the GitHub secret needs no update.
+
+   No S3 access key is needed — `wrangler r2 object put` authenticates with the API token. **Do not use R2 → "Manage R2 API tokens"** for this: that page's **Object Read & Write** permission is documented as S3-API only, and wrangler goes through the Cloudflare REST API, so a bucket-scoped token from there fails. The REST path needs account-wide **Workers R2 Storage Write** (shown as "Edit" in the token editor, "Admin Read & Write" on the R2 page).
+
+   That means a per-bucket backup credential is not available, and the separation this runbook asks for is bucket separation, not credential separation. If you would rather the deploy token stay untouched and independently revocable, mint a second token with the same permission and store it as the Actions secret **`BACKUP_R2_API_TOKEN`** — both scripts prefer it and fall back to `CLOUDFLARE_API_TOKEN`. Be clear-eyed about what that buys: a compromised deploy token carrying R2 write can delete the backups, and a separate token only helps if the deploy token is *not* also given the permission.
 3. **Generate the passphrase** and store it as the Actions secret `BACKUP_PASSPHRASE`:
    ```bash
    openssl rand -base64 48

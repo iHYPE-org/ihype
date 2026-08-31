@@ -69,7 +69,15 @@ if (!VALID_SLOTS.has(slotArg)) {
 const databaseUrl = process.env.BACKUP_DATABASE_URL?.trim();
 const passphrase = process.env.BACKUP_PASSPHRASE ?? '';
 const bucket = process.env.BACKUP_R2_BUCKET?.trim() || 'ihype-backups';
-const cloudflareToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
+/* BACKUP_R2_API_TOKEN first so the backups CAN be given their own credential
+   later without a code change, falling back to the token the deploy already
+   holds. Note what a separate token does and does not buy here: `wrangler r2
+   object put` goes through the Cloudflare REST API, and R2's bucket-scoped
+   "Object Read & Write" permission is documented as S3-API only — so any token
+   wrangler can use carries account-wide **Workers R2 Storage Write**, whichever
+   token it is. The gain is revocability and keeping the deploy token unchanged,
+   not a narrower blast radius. */
+const cloudflareToken = process.env.BACKUP_R2_API_TOKEN?.trim() || process.env.CLOUDFLARE_API_TOKEN?.trim();
 const cloudflareAccount = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
 const heartbeatUrl = process.env.BACKUP_HEARTBEAT_URL?.trim();
 const label = process.env.BACKUP_LABEL?.trim() || '';
@@ -115,7 +123,7 @@ if (!databaseUrl) {
 if (!configured) {
   const missing = [
     !passphrase && 'BACKUP_PASSPHRASE',
-    !cloudflareToken && 'CLOUDFLARE_API_TOKEN',
+    !cloudflareToken && 'CLOUDFLARE_API_TOKEN (or BACKUP_R2_API_TOKEN)',
     !cloudflareAccount && 'CLOUDFLARE_ACCOUNT_ID',
   ].filter(Boolean);
   console.log(`::warning::No database backup was taken — ${missing.join(', ')} not configured. The platform is running with NO backup outside the live cluster. See docs/runbooks/backup-restore-drill.md.`);
