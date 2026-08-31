@@ -11,10 +11,16 @@ import { Prisma } from '@prisma/client/edge';
 
 const constructWebhookEvent = vi.fn();
 const isStripeConfigured = vi.fn().mockReturnValue(true);
-vi.mock('@/lib/stripe', () => ({
-  constructWebhookEvent: (...args: unknown[]) => constructWebhookEvent(...args),
-  isStripeConfigured: () => isStripeConfigured(),
-}));
+vi.mock('@/lib/stripe', () => {
+  // Defined inside the factory so the route's `instanceof` check compares
+  // against the same class this test throws.
+  class WebhookSecretUnavailableError extends Error {}
+  return {
+    WebhookSecretUnavailableError,
+    constructWebhookEvent: (...args: unknown[]) => constructWebhookEvent(...args),
+    isStripeConfigured: () => isStripeConfigured(),
+  };
+});
 
 const finalizeCapturedTicketOrder = vi.fn();
 const voidReservedTicketOrder = vi.fn().mockResolvedValue(true);
@@ -133,6 +139,20 @@ describe('POST /api/stripe/webhook', () => {
 
     const res = await POST(makeRequest({}));
     expect(res.status).toBe(400);
+  });
+
+  it('returns 503, not 400, when the webhook secret is unreadable this invocation', async () => {
+    // The transient env-binding loss of 2026-08-30: the secret IS set, this
+    // one request's Cloudflare context came back empty. 400 tells Stripe the
+    // delivery is bad and mislabels the fault as a signature failure; 503 is
+    // retryable, and the retry arrives with a fresh (working) context.
+    const { WebhookSecretUnavailableError } = await import('@/lib/stripe');
+    constructWebhookEvent.mockImplementation(() => {
+      throw new WebhookSecretUnavailableError();
+    });
+
+    const res = await POST(makeRequest({}));
+    expect(res.status).toBe(503);
   });
 
   it('finalizes the ticket order on a successful payment_intent.succeeded event', async () => {

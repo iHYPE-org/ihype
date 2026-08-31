@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
-import { constructWebhookEvent, getStripe, isStripeConfigured } from '@/lib/stripe';
+import { constructWebhookEvent, getStripe, isStripeConfigured, WebhookSecretUnavailableError } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
@@ -26,6 +26,15 @@ export async function POST(request: NextRequest) {
   try {
     event = constructWebhookEvent(payload, signature);
   } catch (error) {
+    if (error instanceof WebhookSecretUnavailableError) {
+      /* The secret is SET — this request's Cloudflare env binding came back
+         empty (an intermittent platform fault, ~8% of deliveries on
+         2026-08-30). 503 tells Stripe to retry; the retry is a fresh
+         invocation with a fresh context, so it self-heals. 400 here would
+         mislabel a transient fault as a bad delivery and stop nothing. */
+      log.error('[stripe/webhook]', error, 'Webhook secret unreadable this invocation (env binding lost) — answered 503 for a Stripe retry');
+      return NextResponse.json({ error: 'Webhook secret unavailable.' }, { status: 503 });
+    }
     log.error('[stripe/webhook]', error instanceof Error ? error : null, 'Invalid webhook signature');
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }

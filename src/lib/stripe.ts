@@ -1018,9 +1018,27 @@ export async function deauthorizeStripeConnectAccount(connectAccountId: string):
   });
 }
 
+/**
+ * "Secret unreadable" is not "signature invalid", and collapsing them cost a
+ * misdiagnosis in production: on 2026-08-30, ~8% of webhook deliveries hit a
+ * request whose `getCloudflareContext().env` came back empty, so the secret —
+ * which IS set — could not be read for that one invocation. The generic throw
+ * below was caught by the route's signature-failure branch, logged to Sentry
+ * as "Invalid webhook signature", and answered 400 — a terminal verdict for a
+ * transient platform fault. A typed error lets the route answer 503 instead,
+ * which Stripe treats as retryable; the retry arrives as a fresh invocation
+ * with a fresh context, which is the only retry that can actually help here.
+ */
+export class WebhookSecretUnavailableError extends Error {
+  constructor() {
+    super('STRIPE_WEBHOOK_SECRET could not be read from the runtime environment.');
+    this.name = 'WebhookSecretUnavailableError';
+  }
+}
+
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripe();
   const secret = readRuntimeEnv('STRIPE_WEBHOOK_SECRET');
-  if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not configured.');
+  if (!secret) throw new WebhookSecretUnavailableError();
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }

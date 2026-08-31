@@ -29,7 +29,8 @@
  * refactor with real regression risk, and blocking every merge until someone
  * does it would just get the check disabled. So CI passes `--max=<baseline>`:
  * the existing debt is tolerated, a NEW duplicate fails the build. Lower the
- * number as they get fixed; never raise it.
+ * number as they get fixed; never raise it. The baseline reached ZERO on
+ * 2026-08-31 — the ratchet is now a gate, and any new duplicate fails.
  *
  * Dead classes stay advisory — a class can legitimately be added by a library
  * or by markup this scan cannot see.

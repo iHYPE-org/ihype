@@ -145,10 +145,11 @@ jobs:
         # and /register rendered a retired design for months while the correct
         # block sat dead directly above it, with every other check green.
         #
-        # --max is a RATCHET, not a target. 145 such pairs already existed when
-        # this landed; they render correctly today only because the right rule
-        # happens to come last. Existing debt passes, a NEW duplicate fails.
-        # Lower this number as they get fixed. Never raise it.
+        # --max started life as a RATCHET at 145 — the override pairs that
+        # already existed when this landed, rendering correctly only because
+        # the right rule happened to come last. That debt is fully paid down
+        # (2026-08-31: 0 overrides), so zero is now a GATE, not a countdown.
+        # Never raise it: any new duplicate selector fails here.
         run: npm run audit:css -- --max=0
 
       - name: Route inventory ratchet
