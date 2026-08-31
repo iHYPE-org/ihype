@@ -5,7 +5,10 @@ settlement modes), step 2 walked in all three modes, the one real defect it
 found (venue-direct refunds) FIXED and PROVEN, and the dispute walk MEASURED
 (8/8, `npm run stripe:disputes` — see its section below): a venue-direct
 chargeback debits the VENUE, a destination chargeback debits the PLATFORM.
-Nothing on this runbook's list stands before step 3, the one-way door.**
+Nothing on this runbook's list stands before step 3, the one-way door — and
+step 3's first bullet is DONE (2026-08-31): `FEATURE_ENABLE_TICKET_PAYMENTS`
+is flipped to true in `wrangler.toml`. What remains is the operator's
+deliberate first sale, per the checklist in the step-3 section.**
 Live Stripe still holds zero PaymentIntents and a zero balance.
 Nothing has ever been sold through this app, so the first real ticket purchase
 is still the first production execution of the capture → split → payout
@@ -997,8 +1000,24 @@ assertion. Walk it by hand, per the card table above.
 Only after steps 1 and 2 pass:
 
 - Set `FEATURE_ENABLE_TICKET_PAYMENTS=true` in the production Worker.
+  **Done 2026-08-31** — flipped in `wrangler.toml` (a deploy-on-merge config
+  change, per the flag's own rule that this is never dashboard residue). The
+  post-deploy smoke now asserts FULL launch readiness rather than
+  "disabled-by-flag": a missing live secret would fail the deploy loudly.
 - Sell **one** ticket to yourself at the lowest possible price, and walk step 2's
-  checks against production once, refunding at the end.
+  checks against production once, refunding at the end. **This is the remaining
+  act, and it is the operator's on purpose.** The walk, concretely:
+  1. Create a low-price ticketed show in production (or use a scratch one).
+  2. Buy one ticket with a real card. Confirm in `/admin` or the DB: order
+     CAPTURED, one VALID ticket, payables PENDING and summing exactly,
+     `settlementMode` recorded (PLATFORM until a venue completes onboarding —
+     expected, not a fault).
+  3. Confirm the confirmation email and the QR page render.
+  4. Cancel the show (the only refund path) — confirm `ordersRefunded: 1`, a
+     real `re_…` on the order, tickets and payables VOID, and the refund
+     arriving back on the card (minus the processing fee, per policy).
+  5. Watch the payout cron's next run report nothing released for the
+     cancelled show.
 - Then open sales.
 
 The first real sale should be one you made on purpose.
