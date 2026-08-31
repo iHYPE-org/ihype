@@ -751,6 +751,32 @@ async function main() {
     adAudioUrl = uploadBody?.url ?? '';
     assert(adAudioUrl, `audio upload returned no url: ${JSON.stringify(uploadBody).slice(0, 160)}`);
 
+    /* `POST /api/advertise/campaigns` resolves the placement from an `AdSlot`
+       row named for the coverage tier, and answers 404 "Ad slot not found for
+       this coverage tier" when there is none.
+
+       CI HAS NO SUCH ROW AND PRODUCTION DOES, and the difference is worth
+       knowing about beyond this one step: migration
+       `20260704020000_ad_scope_and_slots` INSERTs the four tier rows, so
+       anything built by `prisma migrate deploy` — production, and the scratch
+       database this walk was developed against — carries them. CI builds its
+       database with `prisma db push`, which reconciles the SCHEMA and never
+       replays a migration's DML, so every row a migration seeds is simply
+       absent there. Measured 2026-08-31: this step failed in CI with that 404
+       while passing locally, and the cause was the database build method
+       rather than anything in the request.
+
+       So creating it here is fixture setup of the same kind as seeding the
+       cast, not a workaround for a missing production row. It is created only
+       when absent, so a database that already has the four is untouched. */
+    const tierName = 'Local';
+    const existingSlot = await prisma.adSlot.findFirst({ where: { name: tierName, active: true } });
+    if (!existingSlot) {
+      await prisma.adSlot.create({
+        data: { name: tierName, description: 'Created by the alpha acceptance walk — the coverage-tier placement the campaign route resolves.', active: true },
+      });
+    }
+
     const campaign = await api('/api/advertise/campaigns', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -778,7 +804,8 @@ async function main() {
       ['AWAITING_PAYMENT', 'PENDING', 'APPROVED'].includes(ad.status),
       `unexpected campaign status ${ad.status}`,
     );
-    return `Ad ${ad.id.slice(0, 8)} status=${ad.status} budget=${ad.budgetCents}c · spot stored at ${String(adAudioUrl).slice(0, 46)}… (${ad.audioDurationSecs ?? '?'}s)`;
+    const slotNote = existingSlot ? '' : ' · no AdSlot row existed (db push does not replay migration DML), so one was created';
+    return `Ad ${ad.id.slice(0, 8)} status=${ad.status} budget=${ad.budgetCents}c · spot stored at ${String(adAudioUrl).slice(0, 46)}… (${ad.audioDurationSecs ?? '?'}s)${slotNote}`;
   });
 
   // ── 21. Listen to radio ──────────────────────────────────────────────────
@@ -1260,11 +1287,25 @@ async function main() {
     /* balanceAfter on the newest entry has to equal the user's balance, or the
        ledger is decorative: it is what a member sees when they ask where their
        HYPE went, and what an operator would reconcile a dispute against. */
+    /* SCOPED TO THIS RUN'S OWN MEMBERS, and that scoping is the check rather
+       than a weakening of it. Every email this walk creates embeds the run id,
+       so `contains: run` is exactly the set whose entire HYPE history the walk
+       caused and can therefore reason about.
+
+       It used to reconcile any 25 users carrying a ledger entry, which made the
+       assertion a hostage to whatever else shared the database. Measured in CI
+       2026-08-31: the e2e suite runs earlier in the same job against the same
+       Postgres and seeds `hypeBalance` directly on its own fixtures, so the
+       walk found a user with a balance of 49 and entries summing to -1 and
+       reported a ledger defect that was really another suite's fixture. A
+       check that fails for reasons outside the thing it is checking gets
+       ignored, and then it is worth nothing when it is right. */
     const users = await prisma.user.findMany({
-      where: { hypeLedgerEntries: { some: {} } },
+      where: { email: { contains: run }, hypeLedgerEntries: { some: {} } },
       select: { id: true, hypeBalance: true },
       take: 25,
     });
+    assert(users.length > 0, 'no member of this run carries a ledger entry — the walk earned no HYPE, which is itself the failure');
     /* `hype-ledger.ts` is the ONLY thing in src/ that writes `hypeBalance` —
        checked, no other production path touches it — so entries summing to the
        balance is a real invariant. The exception is this walk's own cast: the
