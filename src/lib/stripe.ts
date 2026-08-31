@@ -79,6 +79,17 @@ export async function createPaymentMethodSetupSession({
   const session = await stripe.checkout.sessions.create(
     {
       mode: 'setup',
+      /* REQUIRED, and its absence made this route a hard 500 for every member
+         (found by the alpha acceptance walk, 2026-08-31). In setup mode
+         Checkout offers dynamic payment methods, and without an explicit
+         `payment_method_types` it needs a currency to decide which ones the
+         account can present — so Stripe answers
+         "Missing required param: currency" and nothing is ever saved.
+         Verified both ways against real test-mode Stripe with production URLs:
+         identical call minus this line fails, plus this line returns a URL.
+         Nothing caught it earlier because saving a card is only reachable once
+         paid ticketing is on, which it became the day before. */
+      currency: 'usd',
       customer: stripeCustomerId,
       setup_intent_data: { metadata: { userId } },
       metadata: { purpose: 'ticket_payment_method', userId },
