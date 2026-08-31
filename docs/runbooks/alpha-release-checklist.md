@@ -19,6 +19,10 @@
 - [ ] Confirm registration, upload, outbound-email, advertising, payment,
       ticketing, radio, and map switches have the intended values.
 - [ ] Confirm the most recent backup verification passed.
+- [ ] Confirm the **Database backup** workflow ran within the last 6 hours and its
+      job summary names the keys it wrote. There is no Supabase PITR on this plan,
+      so those encrypted dumps are the only copy of the database outside the live
+      cluster — a run that says "SKIPPED — not configured" means there is none.
 - [ ] `RESTORE_DRILL_VERIFIED_AT` matches that drill and is no more than 35 days old.
 
 ## Immediately after deploying

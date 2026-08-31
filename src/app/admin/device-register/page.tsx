@@ -37,7 +37,7 @@ function AdminDeviceRegisterInner() {
     try {
       const optionsRes = await fetch('/api/admin/device-passkey');
       const options = await optionsRes.json();
-      if (!optionsRes.ok) throw new Error(options.error ?? t('adminDeviceRegisterPage.passkeyFailed', 'Could not start the passkey ceremony.'));
+      if (!optionsRes.ok) throw new Error(options.error ?? t('adminDeviceRegisterPage.passkeyStartFailed', 'Could not start the passkey ceremony.'));
       const assertion = await startAuthentication({ optionsJSON: options });
       const verifyRes = await fetch('/api/admin/device-passkey', {
         method: 'POST',

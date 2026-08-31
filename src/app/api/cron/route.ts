@@ -298,6 +298,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'media-backfill': {
+      /* Moves media that predates working object storage out of Postgres and
+         into R2. DRY RUN unless `apply=1`, idempotent, and it never drops an
+         inline copy before the R2 write has come back — so it is safe to call
+         repeatedly and safe to call by mistake.
+           ?job=media-backfill                 → measure, write nothing
+           ?job=media-backfill&apply=1&limit=25 → move up to 25 items
+         `more: true` in the response means candidates remain; call again.
+         Deliberately NOT on a schedule in wrangler.cron.toml: this is a
+         one-off catch-up, and a recurring job whose steady state is "nothing
+         to do" is a job nobody reads the output of. */
+      const { runMediaBackfill } = await import('@/lib/media-backfill');
+      const limit = Math.min(Math.max(Number(searchParams.get('limit') ?? 10) || 10, 1), 50);
+      const summary = await runMediaBackfill({ limit, apply: searchParams.get('apply') === '1' });
+      return NextResponse.json({ ok: summary.errors.length === 0, ...summary });
+    }
+
     case 'session-cleanup': {
       const { db } = await import('@/lib/db');
       const result = await db.session.deleteMany({ where: { expires: { lt: new Date() } } });

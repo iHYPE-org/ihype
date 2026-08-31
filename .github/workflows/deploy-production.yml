@@ -152,6 +152,73 @@ jobs:
         # deploy here rather than ship. See prisma/migrations-pending/README.md.
         run: npm run guard:migrations
 
+      - name: Detect pending migrations
+        # Decides whether this deploy is about to change the production schema,
+        # which is the one moment where the 6-hourly backup's RPO is not good
+        # enough: a migration that drops or rewrites a column is exactly what
+        # point-in-time recovery exists for, and this project has no PITR (paid
+        # add-on, no capital — see docs/runbooks/backup-restore-drill.md).
+        #
+        # Asking Prisma what is pending is better than diffing the commit: it
+        # answers about the DATABASE rather than about git, so it is right after
+        # a revert, a re-run, a workflow_dispatch recovery, or a deploy that
+        # never happened. An unreadable status counts as pending — an unknown
+        # schema state is the case where you most want a backup.
+        id: pending_migrations
+        shell: bash
+        run: |
+          set +e
+          out=$(npx prisma migrate status 2>&1)
+          code=$?
+          set -e
+          echo "$out"
+          if echo "$out" | grep -qiE 'not yet been applied|following migration'; then
+            echo 'pending=true' >> "$GITHUB_OUTPUT"
+            echo 'Pending migrations detected; a pre-migration backup will be taken.'
+          elif [ $code -ne 0 ]; then
+            echo 'pending=true' >> "$GITHUB_OUTPUT"
+            echo '::warning::Could not read migration status; taking a pre-migration backup anyway.'
+          else
+            echo 'pending=false' >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Install PostgreSQL 17 client for the pre-migration backup
+        if: steps.pending_migrations.outputs.pending == 'true'
+        # The runner ships PG16 and pg_dump refuses to dump a newer server, so
+        # this cannot ride on the image's version — Supabase upgrades majors on
+        # its own schedule. Same step as backup-database.yml.
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Pre-migration backup
+        if: steps.pending_migrations.outputs.pending == 'true'
+        # SELF-ARMING GATE. With no BACKUP_PASSPHRASE configured this warns and
+        # exits 0, so landing it could not block a deploy on day one. Once the
+        # secret exists, a failed dump, a failed encrypt, a backup that will not
+        # decrypt, or a failed upload all exit non-zero — and because every
+        # later step is skipped when one fails, a schema change cannot reach
+        # production without a recoverable copy of the state before it.
+        timeout-minutes: 25
+        run: node scripts/backup-database.mjs --slot=premigration
+        env:
+          BACKUP_DATABASE_URL: ${{ secrets.DIRECT_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_R2_BUCKET: ${{ vars.BACKUP_R2_BUCKET || 'ihype-backups' }}
+          BACKUP_LABEL: 'before ${{ github.sha }}'
+          BACKUP_R2_API_TOKEN: ${{ secrets.BACKUP_R2_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Run migrations
         # Build (and now the Workerd smoke test above) run first so neither a
         # compilation failure nor a workerd-only crash can advance production

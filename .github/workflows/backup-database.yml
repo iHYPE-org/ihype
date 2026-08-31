@@ -1,0 +1,106 @@
+# Encrypted off-cluster database backups — the free stand-in for Supabase PITR.
+#
+# PITR is a paid add-on and this project has no starting capital, so without
+# this workflow there is NO copy of the production database anywhere outside
+# the live cluster: the Supabase free plan does not provide downloadable daily
+# backups either. The daily `backup-verify` cron proves the live database is up
+# and populated. It has never proven a copy exists, because one did not.
+#
+# CADENCE. Every 6 hours, which sets the RPO: a disaster loses at most the
+# transactions since the last dump. That is worse than PITR's seconds and is
+# recorded as an accepted risk in docs/runbooks/backup-restore-drill.md. Six
+# hours is also chosen against the Actions allowance — this repository has
+# already had CI runs cancelled and one production deploy never created because
+# the budget ran out (see deploy-production.yml's workflow_dispatch note).
+# 4 runs/day at ~2 minutes is ~240 minutes/month. Hourly would be ~1,400 and
+# would compete with the deploys and CI runs that keep the site shipping.
+#
+# The keys this writes are fixed rotating slots that overwrite themselves, so
+# storage is bounded with no lifecycle rule and no S3 credential. See the header
+# of scripts/backup-database.mjs.
+name: Database backup
+
+on:
+  schedule:
+    # 00:00, 06:00, 12:00, 18:00 UTC. The 00:00 run additionally writes the
+    # day-of-month slot, giving ~a month of daily copies alongside the week of
+    # 6-hourly ones.
+    - cron: '0 0,6,12,18 * * *'
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: 'Key slot to write'
+        required: false
+        default: 'manual'
+        type: choice
+        options:
+          - manual
+          - schedule
+      dry_run:
+        description: 'Dump, encrypt and verify the round-trip without uploading'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  # Never two dumps at once: they would race on the same rotating key and could
+  # leave a half-written object under it.
+  group: database-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    name: Dump, encrypt, store
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
+
+      - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install PostgreSQL 17 client
+        # The runner ships the PG16 client. pg_dump refuses to dump a server
+        # NEWER than itself, and Supabase upgrades its Postgres majors on its
+        # own schedule — so pinning to whatever the runner image happens to
+        # carry means the backup silently starts failing on somebody else's
+        # release day. A newer pg_dump reads older servers fine, so installing
+        # 17 covers today's server and the next upgrade.
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          pg_dump --version
+
+      - name: Install wrangler
+        # Only wrangler is needed to upload; `npm ci` would install the whole
+        # dependency tree (and run `prisma generate`) to run one CLI.
+        run: npm install --no-save --no-audit --no-fund wrangler@4
+
+      - name: Back up the database
+        run: node scripts/backup-database.mjs --slot=${{ inputs.slot || 'schedule' }} ${{ inputs.dry_run && '--dry-run' || '' }}
+        env:
+          # DIRECT_URL, not DATABASE_URL: pg_dump needs a real session, and a
+          # transaction-mode pooler cannot give it a consistent snapshot.
+          BACKUP_DATABASE_URL: ${{ secrets.DIRECT_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_R2_BUCKET: ${{ vars.BACKUP_R2_BUCKET || 'ihype-backups' }}
+          BACKUP_HEARTBEAT_URL: ${{ secrets.BACKUP_HEARTBEAT_URL }}
+          # Optional dedicated credential. Set BACKUP_R2_API_TOKEN to keep the
+          # deploy token unchanged and revocable on its own; unset, the backup
+          # uses the deploy's token. Either way the permission needed is
+          # account-wide Workers R2 Storage Write — R2's bucket-scoped
+          # "Object Read & Write" is S3-API only and wrangler uses the REST API.
+          BACKUP_R2_API_TOKEN: ${{ secrets.BACKUP_R2_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}

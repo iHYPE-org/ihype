@@ -79,6 +79,17 @@ export async function createPaymentMethodSetupSession({
   const session = await stripe.checkout.sessions.create(
     {
       mode: 'setup',
+      /* REQUIRED, and its absence made this route a hard 500 for every member
+         (found by the alpha acceptance walk, 2026-08-31). In setup mode
+         Checkout offers dynamic payment methods, and without an explicit
+         `payment_method_types` it needs a currency to decide which ones the
+         account can present — so Stripe answers
+         "Missing required param: currency" and nothing is ever saved.
+         Verified both ways against real test-mode Stripe with production URLs:
+         identical call minus this line fails, plus this line returns a URL.
+         Nothing caught it earlier because saving a card is only reachable once
+         paid ticketing is on, which it became the day before. */
+      currency: 'usd',
       customer: stripeCustomerId,
       setup_intent_data: { metadata: { userId } },
       metadata: { purpose: 'ticket_payment_method', userId },
@@ -944,7 +955,7 @@ export async function createAdCampaignCheckoutSession({
    *  when the advertiser explicitly asks to retry — otherwise Stripe dedupes
    *  against the first (possibly abandoned/expired) session. */
   idempotencyKey?: string;
-}): Promise<{ paymentIntentId: string; checkoutUrl: string }> {
+}): Promise<{ paymentIntentId: string | null; checkoutUrl: string; sessionId: string }> {
   const stripe = getStripe();
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ihype.org';
 
@@ -973,11 +984,25 @@ export async function createAdCampaignCheckoutSession({
     { idempotencyKey: idempotencyKey ?? `ad-checkout:${adId}` },
   );
 
-  if (typeof session.payment_intent !== 'string') {
-    throw new Error('Checkout session did not return a payment intent id.');
-  }
+  /* THE PAYMENT INTENT IS NULL HERE, ALWAYS, AND THIS USED TO THROW ON IT.
+     Checkout creates its PaymentIntent LAZILY — only once the payer submits
+     the hosted form — so `session.payment_intent` is null at creation for
+     every session in payment mode. Measured against real test-mode Stripe on
+     2026-08-31: `payment_intent: null`, session url present. The old
+     `throw new Error('Checkout session did not return a payment intent id.')`
+     therefore fired on EVERY ad campaign that cleared vetting, so the route
+     answered 500 and no advertiser could ever pay. This codebase already knew
+     the intent was lazy — scripts/rehearse-money-path.mts says so for tickets
+     — but the ad path was written as though it were not.
 
-  return { paymentIntentId: session.payment_intent, checkoutUrl: session.url ?? '' };
+     The id is picked up later instead: the campaign's PaymentIntent carries
+     `metadata.adId` (set through `payment_intent_data` above), and the webhook
+     resolves the campaign from that and backfills the column. */
+  return {
+    paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+    checkoutUrl: session.url ?? '',
+    sessionId: session.id,
+  };
 }
 
 /**
@@ -988,9 +1013,31 @@ export async function createAdCampaignCheckoutSession({
  * of 0, so a campaign that ran without ever serving an impression is
  * cancelled (releasing the hold) instead of captured.
  */
+/**
+ * Stripe will not capture less than this. Below it there is no partial
+ * capture to make — the only two moves are take the minimum or take nothing.
+ * (USD; other currencies have their own floors, and this app charges in USD.)
+ */
+export const STRIPE_MINIMUM_CHARGE_CENTS = 50;
+
 export async function settleAdCampaignAuthorization(paymentIntentId: string, spentCents: number): Promise<void> {
   const stripe = getStripe();
-  if (spentCents <= 0) {
+  /* UNDER THE FLOOR THE HOLD IS RELEASED, NOT CAPTURED, and that used to be a
+     throw. `spentCents <= 0` was the only release branch, so a campaign that
+     delivered between 1c and 49c went to `capture`, and Stripe answered
+     "Amount must be at least $0.50 USD" (measured 2026-08-31 on a campaign
+     with 9c delivered). The settlement cron caught it, logged it, counted the
+     campaign `skipped` and moved on — so the authorization stayed open until
+     Stripe expired it about a week later, `settledAt` stayed null, and the
+     job retried and failed again every single day in between.
+     That is not an edge case: a small campaign priced per impression spends
+     under 50c routinely, and it is exactly the shape a first advertiser has.
+
+     Releasing is the honest resolution of the two available. Capturing the
+     50c minimum would bill an advertiser 50c for 9c of delivery; we delivered
+     too little to bill for, so we bill nothing. The caller stamps the campaign
+     settled either way, which is what stops the daily retry. */
+  if (spentCents < STRIPE_MINIMUM_CHARGE_CENTS) {
     await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `ad-settle-cancel:${paymentIntentId}` });
     return;
   }
@@ -1018,9 +1065,27 @@ export async function deauthorizeStripeConnectAccount(connectAccountId: string):
   });
 }
 
+/**
+ * "Secret unreadable" is not "signature invalid", and collapsing them cost a
+ * misdiagnosis in production: on 2026-08-30, ~8% of webhook deliveries hit a
+ * request whose `getCloudflareContext().env` came back empty, so the secret —
+ * which IS set — could not be read for that one invocation. The generic throw
+ * below was caught by the route's signature-failure branch, logged to Sentry
+ * as "Invalid webhook signature", and answered 400 — a terminal verdict for a
+ * transient platform fault. A typed error lets the route answer 503 instead,
+ * which Stripe treats as retryable; the retry arrives as a fresh invocation
+ * with a fresh context, which is the only retry that can actually help here.
+ */
+export class WebhookSecretUnavailableError extends Error {
+  constructor() {
+    super('STRIPE_WEBHOOK_SECRET could not be read from the runtime environment.');
+    this.name = 'WebhookSecretUnavailableError';
+  }
+}
+
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripe();
   const secret = readRuntimeEnv('STRIPE_WEBHOOK_SECRET');
-  if (!secret) throw new Error('STRIPE_WEBHOOK_SECRET is not configured.');
+  if (!secret) throw new WebhookSecretUnavailableError();
   return stripe.webhooks.constructEvent(payload, signature, secret);
 }

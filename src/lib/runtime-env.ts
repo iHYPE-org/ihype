@@ -52,6 +52,22 @@ function readCloudflareEnvObject(): Record<string, unknown> | null {
   return contextReader();
 }
 
+/**
+ * One BINDING from the Worker env — a KV namespace, an R2 bucket, a Durable
+ * Object namespace, the AI binding.
+ *
+ * Separate from `readRuntimeEnv` because that one coerces to string and drops
+ * everything else, which is right for secrets and useless for a bucket. Both
+ * go through the same reader, so `setContextReaderForTests` covers this too and
+ * a fake bucket can be injected without a Worker.
+ *
+ * Returns undefined outside a request context (module init, build, tests, plain
+ * Node), exactly as the string reader does.
+ */
+export function readRuntimeBinding(name: string): unknown {
+  return readCloudflareEnvObject()?.[name] ?? undefined;
+}
+
 /** True when a Cloudflare request context is available, i.e. secrets are visible. */
 export function hasRuntimeEnvContext(): boolean {
   return readCloudflareEnvObject() !== null;

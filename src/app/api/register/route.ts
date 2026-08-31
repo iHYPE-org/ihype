@@ -16,7 +16,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { verifyTurnstileToken } from '@/lib/turnstile';
 import { areRegistrationsEnabledRuntime, isInviteCodeRequiredRuntime, isInviteCodeSharingEnabledRuntime, isReservedPlatformEmail, isValidInviteCode } from '@/lib/runtime-flags';
-import { getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
+import { deriveUsernameCandidate, getUsernameValidationMessage, isValidUsername, normalizeUsername } from '@/lib/usernames';
 import { generateUniqueNonwordSlug } from '@/lib/nonword-slug';
 import { log } from '@/lib/logger';
 import { resolveReferrer, runRegistrationPostProcessing } from '@/lib/registration-post-processing';
@@ -25,6 +25,46 @@ import {
   getPasskeyBootstrapCookieName,
   getPasskeyBootstrapCookieOptions,
 } from '@/lib/passkey-bootstrap';
+
+/** A handle for a member whose display name yields nothing legal — or none at
+ *  all, which is the ordinary case now that a fan signup asks for no name. */
+function randomHandle() {
+  return `user${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * The first free handle at or after `base`.
+ *
+ * Derived handles collide constantly, because display names do: the SECOND
+ * "Sarah Smith" to sign up used to be refused outright with "An account with
+ * those credentials already exists" — naming a credential she was never asked
+ * for and could not change (measured 2026-08-31: first 200, second 409). Only
+ * a handle the member CHOSE should ever produce that error.
+ *
+ * One prefix query, then an in-memory scan, rather than a probe per candidate.
+ * The stem is shortened so numbered variants of a maximum-length base are
+ * still inside the result set. The unique constraint on User.username remains
+ * the arbiter: two concurrent signups can still pick the same free name, and
+ * the P2002 branch in the catch below is what answers that.
+ */
+async function resolveAvailableUsername(base: string): Promise<string> {
+  const MAX = 30;
+  const stem = base.slice(0, 26);
+  const rows = await db.user.findMany({
+    where: { username: { startsWith: stem } },
+    select: { username: true },
+    take: 500,
+  });
+  const taken = new Set(rows.map((row) => row.username));
+  if (!taken.has(base)) return base;
+
+  for (let n = 2; n < 1000; n++) {
+    const suffix = String(n);
+    const candidate = `${base.slice(0, MAX - suffix.length)}${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return randomHandle();
+}
 
 const schema = z.object({
   name: z.preprocess(
@@ -131,14 +171,18 @@ export async function POST(request: Request) {
     const normalizedEmail = body.email ? body.email.toLowerCase() : null;
     const normalizedPhone = body.phone ? body.phone.replace(/\s+/g, '').toLowerCase() : null;
 
+    /* Whether the member CHOSE this handle decides how a problem with it is
+       reported. A username they typed is theirs to fix, so an invalid or taken
+       one is a 400/409 they can act on. A username DERIVED from their display
+       name is not something they can see or correct, so it is sanitised and
+       de-duplicated instead of refused. */
+    const usernameWasChosen = Boolean(body.username);
     let normalizedUsername: string;
     if (body.username) {
       normalizedUsername = normalizeUsername(body.username);
     } else {
-      const base = trimmedName
-        ? normalizeUsername(trimmedName.replace(/\s+/g, ''))
-        : `user${Math.random().toString(36).slice(2, 8)}`;
-      normalizedUsername = base.slice(0, 30) || `user${Math.random().toString(36).slice(2, 8)}`;
+      normalizedUsername =
+        (trimmedName ? deriveUsernameCandidate(trimmedName) : null) ?? randomHandle();
     }
 
     if (!body.passkeyFlow && !normalizedEmail && !normalizedPhone) {
@@ -158,7 +202,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid registration payload' }, { status: 400 });
     }
 
-    if (!isValidUsername(normalizedUsername)) {
+    /* Only for a handle the member actually typed. A derived one has already
+       been sanitised into something legal, and refusing THAT told people with
+       an apostrophe, an accent, a short name or a non-Latin name that their
+       "username" was invalid — a field the signup form never showed them. */
+    if (usernameWasChosen && !isValidUsername(normalizedUsername)) {
       return NextResponse.json({ error: getUsernameValidationMessage() }, { status: 400 });
     }
 
@@ -242,6 +290,13 @@ export async function POST(request: Request) {
 
     if (body.role !== 'FAN' && trimmedName.length < 2) {
       return NextResponse.json({ error: 'Name is required for this account type.' }, { status: 400 });
+    }
+
+    /* Resolve a derived handle to a free one BEFORE the collision check below,
+       so a shared display name never reaches it. A CHOSEN handle is left
+       exactly as typed — if it is taken, the 409 is the correct answer. */
+    if (!usernameWasChosen) {
+      normalizedUsername = await resolveAvailableUsername(normalizedUsername);
     }
 
     const orConditions: Array<{ email: string } | { phone: string } | { username: string }> = [

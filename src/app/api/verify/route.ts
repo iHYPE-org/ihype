@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { storeMediaFile, isObjectStorageConfigured } from '@/lib/object-storage';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
@@ -74,14 +73,25 @@ export async function POST(request: Request) {
     const base64 = buffer.toString('base64');
     const dataUrl = `data:${file.type};base64,${base64}`;
 
-    if (isObjectStorageConfigured()) {
-      const ext = file.type === 'application/pdf' ? 'pdf' : file.type.split('/')[1];
-      const key = `verification/${profile.id}/${crypto.randomUUID()}.${ext}`;
-      const stored = await storeMediaFile(key, dataUrl, file.type);
-      proofUrl = stored.url;
-    } else {
-      proofUrl = dataUrl;
-    }
+    /* DELIBERATELY INLINE, AND NOT IN R2 (2026-08-31).
+     *
+     * This file is an identity or ownership document — a licence, a lease, a
+     * passport page. Every other upload in this app is public by nature
+     * (avatars, cover art, ad spots) and is served from `/cdn/<key>`, where the
+     * key IS the credential: anyone holding it gets the bytes. That is fine for
+     * a hero image and wrong for someone's ID.
+     *
+     * The route's own `/cdn` allowlist already refuses the `verification/`
+     * prefix, but that is not sufficient on its own: this project's routes are
+     * managed in the Cloudflare dashboard, and if an edge rule maps `/cdn/*`
+     * straight to the bucket it answers before any code here runs. So the
+     * document does not go into the bucket at all.
+     *
+     * Cost of keeping it inline: an ≤8 MB base64 column on the Profile row,
+     * readable only by whoever can already read that row (the admin review
+     * queue). Worth it. The upgrade, when someone wants it, is R2 plus an
+     * admin-authenticated read route — not a public prefix. */
+    proofUrl = dataUrl;
   }
 
   const genres = genresRaw ? genresRaw.split(',').map((g) => g.trim()).filter(Boolean) : undefined;

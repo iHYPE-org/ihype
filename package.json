@@ -32,6 +32,8 @@
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:acrcloud": "tsx --env-file-if-exists=.env scripts/verify-acrcloud.ts",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
+    "backup:database": "node --import dotenv/config scripts/backup-database.mjs",
+    "backup:restore": "node --import dotenv/config scripts/restore-backup.mjs",
     "check": "npm run typecheck && npm run lint && npm test",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -60,7 +62,8 @@
     "audit:retro": "node scripts/audit-retro-coverage.mjs --max=0",
     "design:handoff": "node scripts/build-console-handoff.mjs",
     "measure:layout": "tsx scripts/measure-layout.mts",
-    "rehearse:money": "tsx scripts/rehearse-money-path.mts"
+    "rehearse:money": "tsx scripts/rehearse-money-path.mts",
+    "alpha:walk": "tsx scripts/alpha-acceptance-walk.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",

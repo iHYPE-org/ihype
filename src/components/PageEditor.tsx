@@ -350,6 +350,12 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
       const formData = new FormData();
       formData.append('file', file);
       formData.append('field', field);
+      /* Say WHICH page this image is for. Every other call in this component
+         already sends `profileId`; this one did not, and the route answered by
+         picking one of the member's profiles arbitrarily — so a member who
+         owns both an artist and a venue page could set their band photo and
+         watch it appear on the venue instead. */
+      formData.append('profileId', profileId);
       const res = await fetch('/api/profile/upload-graphic', { method: 'POST', body: formData });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));

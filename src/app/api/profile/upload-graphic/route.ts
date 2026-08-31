@@ -31,11 +31,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Upload request is limited to 9MB.' }, { status: 413 });
   }
 
-  const profile = await db.profile.findFirst({
+  /* Only an existence check here — WHICH profile is decided after the body is
+     parsed, because the caller names it. Kept ahead of the rate limit so a
+     member with no page at all still gets a 404 rather than burning quota. */
+  const ownsAny = await db.profile.findFirst({
     where: { ownerId: session.user.id },
     select: { id: true },
+    // Deterministic, so the legacy no-profileId path below cannot land on a
+    // different page from one request to the next.
+    orderBy: { createdAt: 'asc' },
   });
-  if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+  if (!ownsAny) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
   // Every accepted upload runs vetImageUpload(), which calls a Workers AI
   // vision model, and then writes to R2. Both cost money per request, and
@@ -61,6 +67,25 @@ export async function POST(request: Request) {
   const formData = await request.formData();
   const file = formData.get('file') as File | null;
   const field = formData.get('field') as string | null;
+  const requestedProfileId = String(formData.get('profileId') ?? '').trim();
+
+  /* The page the member is actually editing. This used to be `findFirst` over
+     their profiles with the caller's choice ignored entirely, which meant a
+     member who owns more than one page — an artist who also runs a venue is
+     the ordinary case — uploaded a hero or avatar and it landed on whichever
+     row Postgres returned first. Measured 2026-08-31: an image uploaded for an
+     ARTIST page was written to that member's VENUE page instead.
+     Ownership is re-checked here; `profileId` names a target, it never grants
+     access to one. */
+  let profile = ownsAny;
+  if (requestedProfileId) {
+    const requested = await db.profile.findFirst({
+      where: { id: requestedProfileId, ownerId: session.user.id },
+      select: { id: true },
+    });
+    if (!requested) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
+    profile = requested;
+  }
 
   if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
   if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File must be under 8 MB' }, { status: 400 });

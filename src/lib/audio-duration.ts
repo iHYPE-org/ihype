@@ -19,8 +19,20 @@ function parseWavDuration(b: Uint8Array): number | null {
   while (offset + 8 <= b.length) {
     const id = view.getUint32(offset, false);
     const size = view.getUint32(offset + 4, true);
-    if (id === 0x666d7420 && offset + 16 <= b.length) { // "fmt "
-      byteRate = view.getUint32(offset + 12, true);
+    if (id === 0x666d7420 && offset + 20 <= b.length) { // "fmt "
+      /* byteRate lives at +16, NOT +12 — +12 is sampleRate, and reading it
+         there made every 16-bit file report double its length (measured
+         2026-08-31: a real 20s 22.05kHz mono WAV came back as 40s). The error
+         is a factor of bytes-per-sample x channels, so ordinary 16-bit stereo
+         reads 4x too long: a 15-second spot was refused as 60s, which made WAV
+         ad uploads impossible to get past the 30s gate. It also stored wrong
+         durations for uploaded WAV tracks, which is what the station's
+         ad-break cadence counts minutes of music with.
+
+         fmt chunk layout from `offset`:
+           +0 id · +4 size · +8 audioFormat · +10 channels
+           +12 sampleRate · +16 byteRate · +20 blockAlign · +22 bitsPerSample */
+      byteRate = view.getUint32(offset + 16, true);
     }
     if (id === 0x64617461 && byteRate > 0) { // "data"
       return Math.round(size / byteRate);

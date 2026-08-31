@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { Prisma } from '@prisma/client/edge';
 import { db } from '@/lib/db';
-import { constructWebhookEvent, getStripe, isStripeConfigured } from '@/lib/stripe';
+import { constructWebhookEvent, getStripe, isStripeConfigured, WebhookSecretUnavailableError } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
@@ -26,6 +26,15 @@ export async function POST(request: NextRequest) {
   try {
     event = constructWebhookEvent(payload, signature);
   } catch (error) {
+    if (error instanceof WebhookSecretUnavailableError) {
+      /* The secret is SET — this request's Cloudflare env binding came back
+         empty (an intermittent platform fault, ~8% of deliveries on
+         2026-08-30). 503 tells Stripe to retry; the retry is a fresh
+         invocation with a fresh context, so it self-heals. 400 here would
+         mislabel a transient fault as a bad delivery and stop nothing. */
+      log.error('[stripe/webhook]', error, 'Webhook secret unreadable this invocation (env binding lost) — answered 503 for a Stripe retry');
+      return NextResponse.json({ error: 'Webhook secret unavailable.' }, { status: 503 });
+    }
     log.error('[stripe/webhook]', error instanceof Error ? error : null, 'Invalid webhook signature');
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
@@ -196,16 +205,34 @@ export async function POST(request: NextRequest) {
           // the campaign needs to go live the moment the hold succeeds,
           // not when it's eventually captured.
           const paymentIntent = event.data.object;
+          /* RESOLVED BY METADATA WHEN THE COLUMN IS EMPTY, and it usually is.
+             Checkout creates its PaymentIntent lazily, so the campaign row has
+             no `stripePaymentIntentId` until this event arrives — matching on
+             the column alone found nothing and the campaign stayed
+             AWAITING_PAYMENT forever with the advertiser's money on hold. The
+             id is backfilled below so settlement can capture against it. */
           const ad = await tx.ad.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
             select: { id: true, status: true, runDays: true },
-          });
+          }) ?? (typeof paymentIntent.metadata?.adId === 'string'
+            ? await tx.ad.findUnique({
+                where: { id: paymentIntent.metadata.adId },
+                select: { id: true, status: true, runDays: true },
+              })
+            : null);
           if (ad && ad.status === 'AWAITING_PAYMENT') {
             const startsAt = new Date(event.created * 1000);
             const endsAt = new Date(startsAt.getTime() + (ad.runDays ?? 7) * 24 * 60 * 60 * 1000);
             await tx.ad.update({
               where: { id: ad.id },
-              data: { status: 'APPROVED', authorizedAt: startsAt, startsAt, endsAt },
+              data: {
+                status: 'APPROVED',
+                authorizedAt: startsAt,
+                startsAt,
+                endsAt,
+                // Settlement captures against this, so it has to be stored.
+                stripePaymentIntentId: paymentIntent.id,
+              },
             });
             authorizedAdId = ad.id;
           }
@@ -221,10 +248,16 @@ export async function POST(request: NextRequest) {
           });
           for (const order of orders) await voidReservedTicketOrder(tx, order.id);
 
+          // Same lazy-PaymentIntent problem as the authorization case above.
           const ad = await tx.ad.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
             select: { id: true, status: true },
-          });
+          }) ?? (typeof paymentIntent.metadata?.adId === 'string'
+            ? await tx.ad.findUnique({
+                where: { id: paymentIntent.metadata.adId },
+                select: { id: true, status: true },
+              })
+            : null);
           if (ad && ad.status === 'AWAITING_PAYMENT') {
             await tx.ad.update({ where: { id: ad.id }, data: { status: 'CANCELLED' } });
             cancelledAdId = ad.id;
