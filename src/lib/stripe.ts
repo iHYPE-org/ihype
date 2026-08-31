@@ -955,7 +955,7 @@ export async function createAdCampaignCheckoutSession({
    *  when the advertiser explicitly asks to retry — otherwise Stripe dedupes
    *  against the first (possibly abandoned/expired) session. */
   idempotencyKey?: string;
-}): Promise<{ paymentIntentId: string; checkoutUrl: string }> {
+}): Promise<{ paymentIntentId: string | null; checkoutUrl: string; sessionId: string }> {
   const stripe = getStripe();
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://ihype.org';
 
@@ -984,11 +984,25 @@ export async function createAdCampaignCheckoutSession({
     { idempotencyKey: idempotencyKey ?? `ad-checkout:${adId}` },
   );
 
-  if (typeof session.payment_intent !== 'string') {
-    throw new Error('Checkout session did not return a payment intent id.');
-  }
+  /* THE PAYMENT INTENT IS NULL HERE, ALWAYS, AND THIS USED TO THROW ON IT.
+     Checkout creates its PaymentIntent LAZILY — only once the payer submits
+     the hosted form — so `session.payment_intent` is null at creation for
+     every session in payment mode. Measured against real test-mode Stripe on
+     2026-08-31: `payment_intent: null`, session url present. The old
+     `throw new Error('Checkout session did not return a payment intent id.')`
+     therefore fired on EVERY ad campaign that cleared vetting, so the route
+     answered 500 and no advertiser could ever pay. This codebase already knew
+     the intent was lazy — scripts/rehearse-money-path.mts says so for tickets
+     — but the ad path was written as though it were not.
 
-  return { paymentIntentId: session.payment_intent, checkoutUrl: session.url ?? '' };
+     The id is picked up later instead: the campaign's PaymentIntent carries
+     `metadata.adId` (set through `payment_intent_data` above), and the webhook
+     resolves the campaign from that and backfills the column. */
+  return {
+    paymentIntentId: typeof session.payment_intent === 'string' ? session.payment_intent : null,
+    checkoutUrl: session.url ?? '',
+    sessionId: session.id,
+  };
 }
 
 /**
@@ -999,9 +1013,31 @@ export async function createAdCampaignCheckoutSession({
  * of 0, so a campaign that ran without ever serving an impression is
  * cancelled (releasing the hold) instead of captured.
  */
+/**
+ * Stripe will not capture less than this. Below it there is no partial
+ * capture to make — the only two moves are take the minimum or take nothing.
+ * (USD; other currencies have their own floors, and this app charges in USD.)
+ */
+export const STRIPE_MINIMUM_CHARGE_CENTS = 50;
+
 export async function settleAdCampaignAuthorization(paymentIntentId: string, spentCents: number): Promise<void> {
   const stripe = getStripe();
-  if (spentCents <= 0) {
+  /* UNDER THE FLOOR THE HOLD IS RELEASED, NOT CAPTURED, and that used to be a
+     throw. `spentCents <= 0` was the only release branch, so a campaign that
+     delivered between 1c and 49c went to `capture`, and Stripe answered
+     "Amount must be at least $0.50 USD" (measured 2026-08-31 on a campaign
+     with 9c delivered). The settlement cron caught it, logged it, counted the
+     campaign `skipped` and moved on — so the authorization stayed open until
+     Stripe expired it about a week later, `settledAt` stayed null, and the
+     job retried and failed again every single day in between.
+     That is not an edge case: a small campaign priced per impression spends
+     under 50c routinely, and it is exactly the shape a first advertiser has.
+
+     Releasing is the honest resolution of the two available. Capturing the
+     50c minimum would bill an advertiser 50c for 9c of delivery; we delivered
+     too little to bill for, so we bill nothing. The caller stamps the campaign
+     settled either way, which is what stops the daily retry. */
+  if (spentCents < STRIPE_MINIMUM_CHARGE_CENTS) {
     await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `ad-settle-cancel:${paymentIntentId}` });
     return;
   }

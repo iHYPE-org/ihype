@@ -180,12 +180,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         await notifyUser(order.buyerUserId, {
           type: 'show_canceled_refunded',
           title: `"${show.title}" was cancelled`,
-          // The platform's own sentence stays first and unconditional, so the
-          // refund fact is never displaced by whatever the organizer wrote —
-          // and the organizer's words are attributed, not blended into it.
-          body: organizerMessage
-            ? `The organizer cancelled this event — your order has been refunded in full. From the organizer: “${organizerMessage}”`
-            : 'The organizer cancelled this event — your order has been refunded in full.',
+          /* The platform's own sentence stays first and unconditional, so the
+             refund fact is never displaced by whatever the organizer wrote —
+             and the organizer's words are attributed, not blended into it.
+             IT NO LONGER SAYS "IN FULL", BECAUSE IT IS NOT. The refund is
+             `totalChargeCents - processingFeeCents` (see the refundableCents
+             comment above): a deliberate policy, but one this message
+             contradicted. Measured 2026-08-31 on a $18.37 ticket — charged
+             1952c, refunded 1865c, so the fan was 87c short of a message
+             promising the lot. Money copy that overstates by 4.7% is how a
+             support ticket becomes a chargeback, and a chargeback costs 1500c
+             in fees against the 87c in dispute. The amount is stated instead,
+             which is both true and more useful than either adjective. */
+          body: (() => {
+            const refunded = `$${((order.totalChargeCents - order.processingFeeCents) / 100).toFixed(2)}`;
+            const opening = order.processingFeeCents > 0
+              ? `The organizer cancelled this event — ${refunded} has been refunded to your original payment method. The payment processing fee is not returned.`
+              : `The organizer cancelled this event — ${refunded} has been refunded to your original payment method.`;
+            return organizerMessage ? `${opening} From the organizer: “${organizerMessage}”` : opening;
+          })(),
           link: '/tickets',
         });
       }

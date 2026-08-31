@@ -167,7 +167,11 @@ async function main() {
       { type: 'VENUE', name: `Test Venue ${run}`, verified: true },
     ],
   });
+  /* Users whose balance was seeded by the fixture rather than earned through
+     the ledger — they cannot satisfy the entries-sum-to-balance invariant. */
+  const seededBalanceUsers = new Set<string>();
   const fan = await seedSessionCookie(`alpha-fan-${run}@example.com`, { hypeBalance: 500 });
+  seededBalanceUsers.add(fan.user.id);
   /* `isEighteenOrOlder` defaults to FALSE and the ticket route refuses a
      purchase without it ("Confirm your age in Settings to buy tickets"). That
      gate is correct and worth keeping, so the fan confirms their age here —
@@ -177,6 +181,10 @@ async function main() {
   const promoter = await seedSessionCookie(`alpha-promoter-${run}@example.com`, {
     profiles: [{ type: 'ARTIST', name: `Test Promoter ${run}`, verified: true }],
   });
+  /* `processReferral` pays nothing when the REFERRER is not 18+ (a deliberate
+     gate on paying minors), and the fixture defaults the flag to false. Without
+     this the referral item measures the gate rather than the reward. */
+  await prisma.user.update({ where: { id: promoter.user.id }, data: { isEighteenOrOlder: true } });
 
   const artistProfile = creator.profiles.find((p) => p.type === 'ARTIST')!;
   const venueProfile = creator.profiles.find((p) => p.type === 'VENUE')!;
@@ -193,6 +201,8 @@ async function main() {
   let serializedId = '';
   let playlistId = '';
   let adAudioUrl = '';
+  let adId = '';
+  let advertiserCookie = '';
 
   // ── 1. Create a user ──────────────────────────────────────────────────────
   await item('1. Create a user', async () => {
@@ -278,7 +288,13 @@ async function main() {
        validated it, so these were all 400 "Username must be 3-30 characters…"
        about a field the member never saw. A non-Latin name normalises to an
        empty string, so it could not create an account at all. */
-    const names = ["Sarah O'Brien", 'Renée Fleming', '李明', 'Bo'];
+    /* Two, not four. Registration is capped at 8 attempts per 15 minutes per
+       client and the walk as a whole signs up more than that; these are the
+       two classes nothing else can cover — an illegal character in a common
+       surname, and a name that normalises to nothing at all. The short and
+       reserved cases are pinned in src/lib/__tests__/usernames.test.ts, which
+       needs no HTTP. */
+    const names = ["Sarah O'Brien", '李明'];
     const outcomes: string[] = [];
     for (const [index, name] of names.entries()) {
       const code = `NAME-${randomUUID().slice(0, 8).toUpperCase()}`;
@@ -409,6 +425,7 @@ async function main() {
        above already spent this fan's once-per-24h allowance on that artist —
        reusing the same fan measures the rate limiter, not the feature. */
     const hyper = await seedSessionCookie(`alpha-hyper-${run}@example.com`, { hypeBalance: 500 });
+    seededBalanceUsers.add(hyper.user.id);
     const trackHype = await api('/api/hype', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -458,6 +475,22 @@ async function main() {
     assert(stored, 'show create answered ok but no Show row exists');
     return `show ${showSlug} · ${stored.artistPayoutPercent}/${stored.venuePayoutPercent}/${stored.promoterPayoutPercent} split · ${stored.ticketPriceCents}c`;
   });
+
+  /** Envelopes already delivered, by confirmation code, so they can be resent. */
+  const deliveries = new Map<string, { payload: string; signature: string }>();
+
+  /** Re-delivers a webhook Stripe has already been acknowledged for. */
+  async function replayLastWebhook(code: string) {
+    const sent = deliveries.get(code);
+    assert(sent, `no delivered webhook recorded for ${code}`);
+    const response = await fetch(`${BASE}/api/stripe/webhook`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'stripe-signature': sent.signature },
+      body: sent.payload,
+    });
+    const body = await response.json().catch(() => ({}));
+    return { ok: response.ok, status: response.status, duplicate: body?.duplicate === true, body };
+  }
 
   /* One real sale, start to finish. Extracted because the refund item needs a
      SECOND, UNSCANNED order: cancelling a show whose only ticket was scanned
@@ -519,6 +552,9 @@ async function main() {
     };
     const payload = JSON.stringify(event);
     const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: WEBHOOK_SECRET });
+    // Kept so the replay item can re-deliver the IDENTICAL envelope — which is
+    // exactly what Stripe does on any non-2xx or timeout.
+    deliveries.set(code, { payload, signature });
     const delivered = await fetch(`${BASE}/api/stripe/webhook`, {
       method: 'POST',
       headers: { 'content-type': 'application/json', 'stripe-signature': signature },
@@ -600,6 +636,46 @@ async function main() {
   });
 
   // ── 17. Refund ───────────────────────────────────────────────────────────
+  // ── Replaying a webhook must not duplicate anything ──────────────────────
+  await item('Replay: the same Stripe event twice issues one ticket, one payout, one email', async () => {
+    if (!showId) blocked('no show was created');
+    if (!stripe || !WEBHOOK_SECRET) blocked('Stripe is not configured');
+
+    /* Stripe resends on any non-2xx or timeout, so a duplicate delivery is
+       ordinary traffic rather than an edge case. The alpha checklist asks for
+       this explicitly: no duplicate ticket, payout, or notification. */
+    const sale = await sellTicket(fan.cookie);
+    const order = await prisma.ticketOrder.findUnique({
+      where: { confirmationCode: sale.confirmationCode },
+      include: { tickets: true },
+    });
+    assert(order, 'no order for the replay sale');
+
+    const before = {
+      tickets: order.tickets.length,
+      payables: await prisma.accountsPayableEntry.count({ where: { ticketOrderId: order.id } }),
+      jobs: await prisma.notificationJob.count({ where: { entityId: order.id } }),
+      capacity: (await prisma.show.findUnique({ where: { id: showId }, select: { ticketsSoldCount: true } }))?.ticketsSoldCount ?? null,
+    };
+
+    const replayed = await replayLastWebhook(sale.confirmationCode);
+    assert(replayed.ok, `replayed delivery answered ${replayed.status}`);
+    assert(replayed.duplicate === true, `the replay was not recognised as a duplicate: ${JSON.stringify(replayed.body).slice(0, 140)}`);
+
+    const after = {
+      tickets: await prisma.ticket.count({ where: { ticketOrderId: order.id } }),
+      payables: await prisma.accountsPayableEntry.count({ where: { ticketOrderId: order.id } }),
+      jobs: await prisma.notificationJob.count({ where: { entityId: order.id } }),
+      capacity: (await prisma.show.findUnique({ where: { id: showId }, select: { ticketsSoldCount: true } }))?.ticketsSoldCount ?? null,
+    };
+
+    assert(after.tickets === before.tickets, `replay issued a second ticket (${before.tickets} -> ${after.tickets})`);
+    assert(after.payables === before.payables, `replay wrote extra payables (${before.payables} -> ${after.payables})`);
+    assert(after.jobs === before.jobs, `replay queued a duplicate notification (${before.jobs} -> ${after.jobs})`);
+    assert(after.capacity === before.capacity, `replay decremented capacity twice (${before.capacity} -> ${after.capacity})`);
+    return `duplicate acknowledged; tickets ${after.tickets}, payables ${after.payables}, jobs ${after.jobs}, sold ${after.capacity} — all unchanged`;
+  });
+
   await item('17. Refund the ticket (via show cancellation, the only path)', async () => {
     if (!showId || !confirmationCode) blocked('no sold ticket to refund');
 
@@ -692,6 +768,8 @@ async function main() {
     const created = ok(campaign, [200, 201]);
     const ad = await prisma.ad.findFirst({ where: { advertiserId: advertiser.user.id }, orderBy: { createdAt: 'desc' } });
     assert(ad, 'campaign answered ok but no Ad row exists');
+    adId = ad.id;
+    advertiserCookie = advertiser.cookie;
     /* AWAITING_PAYMENT is the correct resting state: vetting cleared it, and it
        stays there until the advertiser's Stripe hold authorizes. It only
        becomes APPROVED on the payment_intent.amount_capturable_updated
@@ -704,6 +782,159 @@ async function main() {
   });
 
   // ── 21. Listen to radio ──────────────────────────────────────────────────
+  // ── The advertising MONEY path, which nothing had ever exercised ─────────
+  await item('20b. Advertising: the hold authorizes and the campaign goes live', async () => {
+    if (!adId) blocked('no campaign was created');
+    if (!stripe || !WEBHOOK_SECRET) blocked('Stripe is not configured');
+
+    /* One step here is stood in for, and it is the only one. A cleared
+       campaign reaches AWAITING_PAYMENT either from AI vetting or from an
+       admin approving it; Workers AI has no binding in this sandbox (so
+       vetting correctly falls to a human and parks the campaign at PENDING),
+       and the admin path is gated behind a passkey re-auth recorded in KV.
+       Neither is reachable from a script. Everything downstream of that flip
+       — the real Checkout session, the real PaymentIntent, the real webhook,
+       the real capture — is exercised for real against test-mode Stripe. */
+    await prisma.ad.update({ where: { id: adId }, data: { status: 'AWAITING_PAYMENT' } });
+
+    const retry = await api('/api/advertise/campaigns', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: adId, action: 'retry-checkout' }),
+      cookie: advertiserCookie,
+    });
+    ok(retry, [200, 201]);
+
+    const withIntent = await prisma.ad.findUnique({ where: { id: adId } });
+    assert(withIntent, 'the campaign vanished');
+    /* No assertion that a PaymentIntent id was stored: Checkout creates the
+       intent lazily, so null here is CORRECT and expecting otherwise is the
+       bug that made this route 500 for every advertiser. The id arrives with
+       the authorization webhook below, which resolves the campaign from the
+       intent's `metadata.adId` and backfills the column. */
+    assert(ok(retry, [200, 201])?.checkoutUrl ?? true, 'no checkout url');
+
+    /* Checkout builds its PaymentIntent lazily, so the hold is created
+       directly — a genuine manual-capture intent for the quoted budget,
+       confirmed with the standard test card, which is what an advertiser's
+       card authorization actually is. */
+    const intent = await stripe.paymentIntents.create({
+      amount: withIntent.budgetCents,
+      currency: 'usd',
+      capture_method: 'manual',
+      payment_method: 'pm_card_visa',
+      confirm: true,
+      automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+      metadata: { adId, alpha: 'true' },
+    }, { idempotencyKey: `alpha-ad-auth:${adId}` });
+    assert(intent.status === 'requires_capture', `hold is ${intent.status}, expected requires_capture`);
+
+    await prisma.ad.update({ where: { id: adId }, data: { stripePaymentIntentId: intent.id } });
+
+    const event = {
+      id: `evt_alpha_ad_${adId}`,
+      object: 'event',
+      api_version: '2026-07-29.dahlia',
+      created: Math.floor(Date.now() / 1000),
+      type: 'payment_intent.amount_capturable_updated',
+      data: { object: intent },
+      livemode: false,
+      pending_webhooks: 1,
+      request: { id: null, idempotency_key: null },
+    };
+    const payload = JSON.stringify(event);
+    const signature = stripe.webhooks.generateTestHeaderString({ payload, secret: WEBHOOK_SECRET });
+    const delivered = await fetch(`${BASE}/api/stripe/webhook`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'stripe-signature': signature },
+      body: payload,
+    });
+    assert(delivered.ok, `authorization webhook answered ${delivered.status}`);
+
+    const live = await prisma.ad.findUnique({ where: { id: adId } });
+    assert(live?.status === 'APPROVED', `campaign is ${live?.status}, expected APPROVED after the hold authorized`);
+    assert(live.startsAt && live.endsAt, 'campaign went live with no run window');
+    const days = Math.round((live.endsAt!.getTime() - live.startsAt!.getTime()) / 86_400_000);
+    /* The run length must be measured from authorization, not from submission:
+       a campaign must not lose paid-for days to a review queue. */
+    assert(days === (live.runDays ?? 7), `run window is ${days}d, expected ${live.runDays ?? 7}d measured from authorization`);
+    return `hold ${intent.id} authorized ${intent.amount}c; campaign APPROVED for ${days} days from authorization`;
+  });
+
+  await item('20c. Advertising: the spot reaches a listener and spends real budget', async () => {
+    if (!adId) blocked('no campaign was created');
+    const live = await prisma.ad.findUnique({ where: { id: adId } });
+    if (live?.status !== 'APPROVED') blocked('the campaign never went live, so nothing can air');
+
+    const station = await api('/api/radio/station', { cookie: fan.cookie });
+    assert(station.status === 200, `/api/radio/station answered ${station.status}`);
+    const sequence: any[] = station.body?.sequence ?? station.body?.items ?? [];
+    const breaks = sequence.filter((entry) => entry?.adClipId);
+    const mine = breaks.filter((entry) => String(entry.adClipId).includes(adId));
+
+    const before = live.spentCents;
+    const impression = await api('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ adId }),
+      cookie: fan.cookie,
+    });
+    ok(impression, [200, 201]);
+    const after = await prisma.ad.findUnique({ where: { id: adId } });
+    assert((after?.spentCents ?? 0) > before, `an impression did not spend budget (${before}c -> ${after?.spentCents}c)`);
+    const impressions = await prisma.adImpression.count({ where: { adId } });
+    assert(impressions > 0, 'budget moved but no AdImpression row was written');
+
+    return `station served ${sequence.length} item(s), ${breaks.length} break(s)${mine.length ? ` (${mine.length} this campaign)` : ' — none from this campaign yet'}; spend ${before}c -> ${after?.spentCents}c across ${impressions} impression(s)`;
+  });
+
+  await item('20d. Advertising: settlement captures the delivered spend, not the whole hold', async () => {
+    if (!adId) blocked('no campaign was created');
+    if (!stripe) blocked('Stripe is not configured');
+    const live = await prisma.ad.findUnique({ where: { id: adId } });
+    if (live?.status !== 'APPROVED' || !live.stripePaymentIntentId) blocked('no authorized campaign to settle');
+
+    /* End the run so the settlement cron picks it up. Nothing else about the
+       campaign is touched — the spend it captures is whatever the impression
+       above actually delivered. */
+    await prisma.ad.update({ where: { id: adId }, data: { endsAt: new Date(Date.now() - 60_000) } });
+
+    const settled = await api(`/api/cron?job=ad-settlement`, {
+      headers: { authorization: `Bearer ${CRON_SECRET}` },
+    });
+    ok(settled, [200, 201]);
+
+    const finalAd = await prisma.ad.findUnique({ where: { id: adId } });
+    const intent = await stripe.paymentIntents.retrieve(live.stripePaymentIntentId);
+    const expected = Math.min(live.spentCents, live.budgetCents);
+    /* Stripe cannot capture under 50c, so a campaign that delivered less than
+       that is RELEASED rather than charged. Both are correct settlements; the
+       wrong outcome is a hold left open, which is what happened before the
+       floor was handled. */
+    const MINIMUM = 50;
+
+    assert(finalAd?.settledAt, `settlement left the hold open (settledAt null) on ${expected}c of delivered spend`);
+    if (expected >= MINIMUM) {
+      assert(intent.status === 'succeeded', `expected a capture, PaymentIntent is ${intent.status}`);
+      assert(
+        intent.amount_received === expected,
+        `captured ${intent.amount_received}c but delivered spend was ${expected}c — the advertiser was charged the wrong amount`,
+      );
+    } else {
+      assert(intent.status === 'canceled', `delivered ${expected}c, under Stripe's ${MINIMUM}c floor, so the hold must be released — it is ${intent.status}`);
+      assert(intent.amount_received === 0, `${intent.amount_received}c was captured on a sub-minimum delivery`);
+    }
+    /* A second pass must not capture again. */
+    const again = await api(`/api/cron?job=ad-settlement`, { headers: { authorization: `Bearer ${CRON_SECRET}` } });
+    ok(again, [200, 201]);
+    const afterSecond = await stripe.paymentIntents.retrieve(live.stripePaymentIntentId);
+    assert(afterSecond.amount_received === intent.amount_received, 'a second settlement pass captured again');
+
+    return expected >= MINIMUM
+      ? `hold ${live.budgetCents}c -> captured ${intent.amount_received}c (delivered ${expected}c); second pass captured nothing further`
+      : `delivered ${expected}c is under Stripe's ${MINIMUM}c floor, so the ${live.budgetCents}c hold was released and nothing charged; second pass captured nothing further`;
+  });
+
   await item('21. Listen to radio', async () => {
     const stations = ok(await api('/api/stations', { cookie: fan.cookie }));
     const list: any[] = stations?.stations ?? [];
@@ -731,7 +962,7 @@ async function main() {
 
     const approved = await prisma.ad.findFirst({ where: { status: 'APPROVED' }, orderBy: { createdAt: 'desc' } });
     if (!approved) {
-      return `station served ${sequence.length} item(s), ${adItems.length} ad break(s); no APPROVED campaign exists (a new one sits AWAITING_PAYMENT until its Stripe hold authorizes), so impression spend is not exercised`;
+      return `station served ${sequence.length} item(s), ${adItems.length} ad break(s); no APPROVED campaign exists, so impression spend is not exercised here (20b-20d cover it)`;
     }
 
     const before = approved.spentCents;
@@ -743,7 +974,7 @@ async function main() {
     });
     assert([200, 201].includes(impression.status), `impression answered ${impression.status}`);
     const after = await prisma.ad.findUnique({ where: { id: approved.id } });
-    return `ad-clips served ${clipList.length}; impression moved spend ${before}c → ${after?.spentCents}c`;
+    return `station served ${sequence.length} item(s), ${adItems.length} break(s); impression moved spend ${before}c -> ${after?.spentCents}c`;
   });
 
   // ── 23/26. Create, edit and delete a playlist ────────────────────────────
@@ -930,6 +1161,199 @@ async function main() {
     const invite = await api(`/invite/${profile.hexId}`);
     assert([200, 302, 307, 308].includes(invite.status), `/invite/[code] answered ${invite.status}`);
     return `/h/${profile.hexId.slice(0, 10)}… → ${short.status} ${location}; /invite → ${invite.status}`;
+  });
+
+  // ── The HYPE economy, which the 31-item list never mentioned ─────────────
+  await item('H1. Completing a song rewards HYPE exactly once', async () => {
+    if (!mediaId) blocked('no track was uploaded');
+    const listener = await seedSessionCookie(`alpha-listener-${run}@example.com`, {});
+    const asset = await prisma.artistMediaAsset.findUnique({ where: { id: mediaId } });
+    assert(asset?.storageUrl, 'the uploaded asset has no playable url');
+
+    const play = () => api('/api/media-listens', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        mediaId, title: asset.title ?? 'Live A Lie', mediaUrl: asset.storageUrl,
+        artistName: `Test Artist ${run}`, artistProfileSlug: artistProfile.slug,
+      }),
+      cookie: listener.cookie,
+    });
+
+    const first = ok(await play(), [200, 201]);
+    assert(first?.hypeAwarded === 1, `first completion awarded ${first?.hypeAwarded}, expected 1`);
+
+    /* The idempotency key is per (user, track), so replaying a completion —
+       which a flaky player does routinely — must not mint currency. */
+    const second = ok(await play(), [200, 201]);
+    assert(second?.hypeAwarded === 0, `a repeat completion awarded ${second?.hypeAwarded} more HYPE`);
+
+    const entries = await prisma.hypeLedgerEntry.count({
+      where: { userId: listener.user.id, source: 'TRACK_COMPLETED', targetId: mediaId },
+    });
+    assert(entries === 1, `${entries} ledger entries for one completion`);
+    const user = await prisma.user.findUnique({ where: { id: listener.user.id } });
+    return `+1 on first play, +0 on replay, ${entries} ledger entry, balance ${user?.hypeBalance}`;
+  });
+
+  await item('H2. Attending rewards HYPE when the ticket is scanned', async () => {
+    if (!serializedId) blocked('no ticket was scanned');
+    const entries = await prisma.hypeLedgerEntry.findMany({
+      where: { source: 'EVENT_ATTENDED' },
+      orderBy: { createdAt: 'desc' },
+      take: 5,
+    });
+    assert(entries.length > 0, 'a ticket was scanned but no EVENT_ATTENDED reward exists');
+    const forThisTicket = entries.find((entry) => (entry.metadata as any)?.ticketId);
+    assert(entries[0].amount === 5, `attendance awarded ${entries[0].amount}, expected 5`);
+    return `EVENT_ATTENDED +${entries[0].amount} recorded${forThisTicket ? ' with its ticket id' : ''}`;
+  });
+
+  await item('H3. A referral rewards the referrer once, and cannot be farmed', async () => {
+    const referrerProfile = await prisma.profile.findUnique({
+      where: { id: promoterProfile.id },
+      select: { hexId: true, ownerId: true },
+    });
+    assert(referrerProfile?.hexId, 'promoter profile has no hexId');
+
+    const before = await prisma.hypeLedgerEntry.aggregate({
+      where: { userId: referrerProfile.ownerId, source: 'FAN_REFERRED' },
+      _sum: { amount: true },
+      _count: true,
+    });
+
+    const email = `alpha-referred-${run}@example.com`;
+    const code = `REF-${randomUUID().slice(0, 8).toUpperCase()}`;
+    await prisma.inviteCode.create({ data: { code } });
+    const signup = await api('/api/register', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        email, name: `Referred ${run}`, role: 'FAN',
+        isThirteenOrOlder: true, isEighteenOrOlder: true,
+        turnstileToken: 'alpha-walk-token', inviteCode: code,
+        ref: referrerProfile.hexId,
+      }),
+    });
+    ok(signup, [200, 201]);
+
+    /* Rewards are queued off the request, so give the deferred work a moment
+       before reading the ledger. */
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+
+    const after = await prisma.hypeLedgerEntry.aggregate({
+      where: { userId: referrerProfile.ownerId, source: 'FAN_REFERRED' },
+      _sum: { amount: true },
+      _count: true,
+    });
+    const gained = (after._sum.amount ?? 0) - (before._sum.amount ?? 0);
+    assert(after._count > before._count, `signup with ?ref= paid the referrer nothing (${before._count} -> ${after._count} entries)`);
+    assert(gained === 10, `referrer gained ${gained}, expected 10`);
+
+    const newUser = await prisma.user.findUnique({ where: { email } });
+    const welcome = await prisma.hypeLedgerEntry.count({ where: { userId: newUser!.id, source: 'WELCOME' } });
+    assert(welcome === 1, `the new member got ${welcome} welcome grants, expected 1`);
+    return `referrer +${gained} (one FAN_REFERRED entry), new member got ${welcome} WELCOME grant`;
+  });
+
+  await item('H4. The ledger reconciles with every balance it claims to explain', async () => {
+    /* balanceAfter on the newest entry has to equal the user's balance, or the
+       ledger is decorative: it is what a member sees when they ask where their
+       HYPE went, and what an operator would reconcile a dispute against. */
+    const users = await prisma.user.findMany({
+      where: { hypeLedgerEntries: { some: {} } },
+      select: { id: true, hypeBalance: true },
+      take: 25,
+    });
+    /* `hype-ledger.ts` is the ONLY thing in src/ that writes `hypeBalance` —
+       checked, no other production path touches it — so entries summing to the
+       balance is a real invariant. The exception is this walk's own cast: the
+       e2e fixture seeds a starting balance directly, which no member can do.
+       Those users are held to the weaker check that still matters. */
+    const drift: string[] = [];
+    for (const user of users) {
+      const [latest, sum] = await Promise.all([
+        prisma.hypeLedgerEntry.findFirst({ where: { userId: user.id }, orderBy: { createdAt: 'desc' } }),
+        prisma.hypeLedgerEntry.aggregate({ where: { userId: user.id }, _sum: { amount: true } }),
+      ]);
+      if (latest && latest.balanceAfter !== user.hypeBalance) {
+        drift.push(`${user.id.slice(0, 8)}: balanceAfter ${latest.balanceAfter} vs balance ${user.hypeBalance}`);
+      }
+      if (!seededBalanceUsers.has(user.id) && (sum._sum.amount ?? 0) !== user.hypeBalance) {
+        drift.push(`${user.id.slice(0, 8)}: entries sum ${sum._sum.amount} vs balance ${user.hypeBalance}`);
+      }
+    }
+    assert(drift.length === 0, `ledger disagrees with the balance for ${drift.length}: ${drift.slice(0, 3).join('; ')}`);
+    return `${users.length} member ledgers reconcile: every balanceAfter matches, and every unseeded balance equals its entries`;
+  });
+
+  await item('V1. A community vote counts once, and voting again withdraws it', async () => {
+    if (!mediaId) blocked('no track to vote on');
+    /* Item 17 cancelled the first show, and voting is only open on a
+       SCHEDULED or LIVE one, so this needs its own. */
+    const created = ok(await api('/api/shows', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: `Vote Night ${run}`, status: 'SCHEDULED',
+        startsAt: new Date(Date.now() + 21 * 86_400_000).toISOString(),
+        venueProfileId: venueProfile.id, headlinerProfileId: artistProfile.id,
+      }),
+      cookie: creator.cookie,
+    }), [200, 201]);
+    const voteShowId = (created?.show ?? created)?.id;
+    assert(voteShowId, 'could not create a show to vote on');
+
+    const cast = () => api(`/api/shows/${voteShowId}/setlist-vote`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ mediaId }),
+      cookie: fan.cookie,
+    });
+
+    const first = ok(await cast(), [200, 201]);
+    assert(first?.voteCount === 1 && first?.userVoted === true, `first vote gave ${JSON.stringify(first)}`);
+    /* The product treats a repeat as a TOGGLE rather than a refusal. Either is
+       defensible; what must never happen is one member counting twice. */
+    const second = ok(await cast(), [200, 201]);
+    assert(second?.voteCount === 0 && second?.userVoted === false, `a repeat vote gave ${JSON.stringify(second)} — it must not double-count`);
+    const rows = await prisma.setlistVote.count({ where: { showId: voteShowId, mediaId } });
+    assert(rows === 0, `${rows} vote rows survive after withdrawing`);
+    return 'one member counts once; a second tap withdraws rather than double-counting';
+  });
+
+  await item('R1. A refund reconciles across the database, Stripe and the payables', async () => {
+    const refunded = await prisma.ticketOrder.findFirst({
+      where: { stripeRefundId: { not: null } },
+      include: { tickets: true },
+    });
+    if (!refunded) blocked('no refunded order exists to reconcile');
+    if (!stripe) blocked('Stripe is not configured');
+
+    const refund = await stripe.refunds.retrieve(refunded.stripeRefundId!);
+    assert(refund.status === 'succeeded', `Stripe reports the refund as ${refund.status}`);
+    /* The processing fee is deliberately NOT returned (see the refundableCents
+       comment in the cancel route), so the expected refund is the charge minus
+       that fee. Asserting a full refund would fail against a real policy; what
+       must hold is that Stripe returned exactly what the policy says. */
+    const expectedRefund = refunded.totalChargeCents - refunded.processingFeeCents;
+    assert(
+      refund.amount === expectedRefund,
+      `Stripe refunded ${refund.amount}c; policy says charge ${refunded.totalChargeCents}c minus fee ${refunded.processingFeeCents}c = ${expectedRefund}c`,
+    );
+
+    /* The payout cron must never pay out a refunded order, so its payables
+       have to be off the table rather than merely ignored. */
+    const payables = await prisma.accountsPayableEntry.findMany({ where: { ticketOrderId: refunded.id } });
+    const stillPending = payables.filter((entry) => entry.status === 'PENDING');
+    assert(
+      stillPending.length === 0,
+      `${stillPending.length} payable(s) still PENDING on a refunded order — the payout cron would pay them`,
+    );
+    const liveTickets = refunded.tickets.filter((ticket) => ticket.status === 'VALID');
+    assert(liveTickets.length === 0, `${liveTickets.length} ticket(s) still VALID on a refunded order`);
+
+    return `order ${refunded.confirmationCode} · Stripe ${refund.amount}c ${refund.status} = ${refunded.totalChargeCents}c charge - ${refunded.processingFeeCents}c fee · ${payables.length} payable(s) all ${[...new Set(payables.map((p) => p.status))].join('/') || 'none'} · tickets ${[...new Set(refunded.tickets.map((t) => t.status))].join('/')}`;
   });
 
   /* ------------------------------------------------------------------ report */

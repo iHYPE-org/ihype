@@ -258,6 +258,41 @@ jobs:
           if-no-files-found: ignore
           retention-days: 7
 
+      - name: Mandatory alpha acceptance walk
+        # The alpha list end to end against the real Workers build: signup and
+        # its username derivation, uploads with real media, the discover deck,
+        # playlists, the HYPE economy and its ledger, community votes, and the
+        # ticket path through sale, scan, webhook replay and refund
+        # reconciliation. Runs WITHOUT Stripe credentials here — the money
+        # items report themselves BLOCKED rather than failing, which keeps the
+        # other two dozen honest in CI while the full walk (advertising
+        # authorization, capture and settlement included) is run against
+        # test-mode Stripe by hand before a release.
+        timeout-minutes: 20
+        run: |
+          set -o pipefail
+          node scripts/make-alpha-fixtures.mjs
+          node scripts/e2e-workerd.mjs --serve > alpha-walk-server.log 2>&1 &
+          SERVER_PID=$!
+          for _ in $(seq 1 60); do
+            curl -sf http://localhost:8787/api/health >/dev/null 2>&1 && break
+            sleep 2
+          done
+          npm run alpha:walk 2>&1 | tee alpha-walk.log
+          STATUS=${PIPESTATUS[0]}
+          kill "$SERVER_PID" 2>/dev/null || true
+          exit "$STATUS"
+        env:
+          ALPHA_BASE_URL: http://localhost:8787
+          ALPHA_SONG: e2e/fixtures/media/alpha-song.wav
+          ALPHA_GRAPHIC: e2e/fixtures/media/alpha-graphic.png
+          ALPHA_AD_AUDIO: e2e/fixtures/media/alpha-ad-spot.wav
+          DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          E2E_WORKERD_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          NEXTAUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          PLAYWRIGHT_AUTH_COOKIE_SECURE: 'true'
+
       - name: Cloudflare build
         run: npm run cf:build
         env:

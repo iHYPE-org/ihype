@@ -151,6 +151,12 @@ function writeStrippedConfig() {
     AUTH_URL: BASE,
     NEXT_PUBLIC_APP_URL: BASE,
     NEXT_PUBLIC_BASE_URL: BASE,
+    /* Cloudflare's documented always-passes TEST secret, not a real one.
+       `verifyTurnstileToken` fails CLOSED when no secret is set and NODE_ENV
+       is production — which the built worker always reports — so without this
+       every registration answers "Bot check failed" and nothing that signs a
+       member up can be covered here at all. */
+    TURNSTILE_SECRET_KEY: '1x0000000000000000000000000000000AA',
   })) {
     varsSection = upsertTomlVariable(varsSection, name, value);
   }

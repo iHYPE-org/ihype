@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { settleAdCampaignAuthorization, isStripeConfigured } from '@/lib/stripe';
+import { settleAdCampaignAuthorization, isStripeConfigured, STRIPE_MINIMUM_CHARGE_CENTS } from '@/lib/stripe';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
@@ -41,12 +41,18 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
       const captureAmount = Math.min(ad.spentCents, ad.budgetCents);
       await settleAdCampaignAuthorization(ad.stripePaymentIntentId!, captureAmount);
       await db.ad.update({ where: { id: ad.id }, data: { settledAt: new Date() } });
+      /* Below Stripe's floor nothing is captured and the whole hold is
+         released, so telling the advertiser they were "charged $0.09" would be
+         false. Say which of the two actually happened. */
+      const charged = captureAmount >= STRIPE_MINIMUM_CHARGE_CENTS;
       deferWork(notifyAdvertiser(
         ad.advertiserId,
         ad.advertiser.email,
         ad.title,
         'SETTLED',
-        `Charged $${(captureAmount / 100).toFixed(2)} for actual delivered spend — the rest of your authorized budget was released.`,
+        charged
+          ? `Charged $${(captureAmount / 100).toFixed(2)} for actual delivered spend — the rest of your authorized budget was released.`
+          : `This campaign delivered less than the $${(STRIPE_MINIMUM_CHARGE_CENTS / 100).toFixed(2)} minimum a card can be charged, so you were not charged at all and the authorization has been released in full.`,
       ), 'ad-settlement-notification');
       settled += 1;
     } catch (error) {
