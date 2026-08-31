@@ -32,6 +32,8 @@
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:acrcloud": "tsx --env-file-if-exists=.env scripts/verify-acrcloud.ts",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
+    "backup:database": "node --import dotenv/config scripts/backup-database.mjs",
+    "backup:restore": "node --import dotenv/config scripts/restore-backup.mjs",
     "check": "npm run typecheck && npm run lint && npm test",
     "test": "vitest run",
     "test:watch": "vitest",
