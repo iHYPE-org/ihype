@@ -1,12 +1,12 @@
 # Runbook — rehearse the money path before the first sale
 
 **Status: steps 1 AND 2 executed 2026-08-30 — step 1 clean (25/25, all three
-settlement modes), step 2 walked in all three modes, and the one real defect
-it found — a cancelled show could not refund any VENUE_DIRECT order — is FIXED
-and PROVEN: stage 4 re-run against the fixed worker, `ordersRefunded: 1,
-ordersFailed: 0`, real refund on the venue's account (see the step-2 section).
-What remains before step 3: walk the dispute card by hand.** Live Stripe
-still holds zero PaymentIntents and a zero balance.
+settlement modes), step 2 walked in all three modes, the one real defect it
+found (venue-direct refunds) FIXED and PROVEN, and the dispute walk MEASURED
+(8/8, `npm run stripe:disputes` — see its section below): a venue-direct
+chargeback debits the VENUE, a destination chargeback debits the PLATFORM.
+Nothing on this runbook's list stands before step 3, the one-way door.**
+Live Stripe still holds zero PaymentIntents and a zero balance.
 Nothing has ever been sold through this app, so the first real ticket purchase
 is still the first production execution of the capture → split → payout
 → refund path against the LIVE account. This runbook exists so that does not
@@ -154,6 +154,23 @@ environment win).
 venue-direct and then a destination sale, checking WHOSE balance is debited in
 the dashboard) — that is a judgement about money made by a person, per the
 card table below.
+
+### The dispute walk — measured, 2026-08-30 (`npm run stripe:disputes`)
+
+The judgement is still a person's; the MEASUREMENT is now a script
+(`scripts/stripe-dispute-walk.mjs`), because "check whose balance was debited
+in the dashboard" is a question the API answers precisely: a dispute's own
+`balance_transactions` say what was debited and live on the account that ate
+it. Run against the sandbox, **8 passed, 0 failed** — and this is the single
+claim the whole settlement design (and the reserve pricing) depends on:
+
+| Leg | Dispute | Where it landed |
+|---|---|---|
+| VENUE_DIRECT (direct charge on the venue, disputed as fraudulent) | `du_1UAIWaLuZs8WZJKjdFHTeSKq` | **The VENUE's balance**: amount −5000, dispute fee 1500, net −6500 — all on the venue's side of the ledger, and the dispute is INVISIBLE to a platform-scoped lookup. Under Stripe-managed risk, a shortfall the venue cannot cover is Stripe's, not iHYPE's. |
+| DESTINATION (platform charge with `transfer_data`, disputed as fraudulent) | `du_1UAIWcLuZsyulVGR9aM3gDfa` | **The PLATFORM's balance**: amount −5000, fee 1500, net −6500. The act's account carries no dispute and their transferred share is untouched — recovering it is the reverse-transfer decision the webhook handler deliberately leaves to a person. This is the exposure the 1.5% reserve exists to fund. |
+
+Both disputes remain open in the sandbox as `needs_response` — harmless test
+residue; respond or ignore. The script refuses any non-`sk_test_` key.
 
 Rehearsal residue: the sandbox balance drifts negative between runs (each
 run's refunds pull from the same pool the top-ups feed). Harmless — the
