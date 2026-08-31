@@ -47,6 +47,9 @@ const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 const CRON_SECRET = process.env.CRON_SECRET ?? '';
 const SONG_PATH = process.env.ALPHA_SONG ?? '';
 const GRAPHIC_PATH = process.env.ALPHA_GRAPHIC ?? '';
+/* A ≤30s spot. Deliberately NOT the song: an ad is a different artefact, and
+   /api/advertise/campaigns rightly refuses a 146-second track. */
+const AD_AUDIO_PATH = process.env.ALPHA_AD_AUDIO ?? '';
 
 /** Not round, so a rounding bug in the 70/20/10 split cannot hide. */
 const TICKET_PRICE_CENTS = 1837;
@@ -148,6 +151,7 @@ async function main() {
 
   const song = readFileSync(SONG_PATH);
   const graphic = readFileSync(GRAPHIC_PATH);
+  const adSpot = AD_AUDIO_PATH ? readFileSync(AD_AUDIO_PATH) : null;
 
   console.log(`\niHYPE alpha acceptance walk`);
   console.log(`  target   ${BASE}`);
@@ -650,10 +654,13 @@ async function main() {
     });
     assert([200, 201, 409].includes(reg.status), `advertiser register answered ${reg.status}: ${reg.body?.error ?? ''}`);
 
-    /* The audio spot is the same real m4a — the route computes duration
-       server-side and validates magic bytes, so the file has to be genuine. */
+    /* A real ≤30s spot, not the song: the route computes duration server-side
+       from the file's own header and refuses anything longer, which is correct
+       — an ad is not a track. Magic bytes are validated too, so this has to be
+       genuine audio rather than a buffer of zeros. */
+    if (!adSpot) blocked('ALPHA_AD_AUDIO is not set, so there is no ad spot to upload');
     const form = new FormData();
-    form.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song.m4a');
+    form.set('file', new Blob([adSpot], { type: 'audio/wav' }), 'test-ad-spot.wav');
     const upload = await api('/api/advertise/audio-upload', { method: 'POST', body: form, cookie: advertiser.cookie });
     if (upload.status === 503 && /storage is not configured/i.test(upload.body?.error ?? '')) {
       /* isObjectStorageConfigured() wants four R2_* S3 credentials on
@@ -685,7 +692,15 @@ async function main() {
     const created = ok(campaign, [200, 201]);
     const ad = await prisma.ad.findFirst({ where: { advertiserId: advertiser.user.id }, orderBy: { createdAt: 'desc' } });
     assert(ad, 'campaign answered ok but no Ad row exists');
-    return `Ad ${ad.id.slice(0, 8)} status=${ad.status} budget=${ad.budgetCents}c (audio duration ${ad.audioDurationSecs ?? '?'}s)`;
+    /* AWAITING_PAYMENT is the correct resting state: vetting cleared it, and it
+       stays there until the advertiser's Stripe hold authorizes. It only
+       becomes APPROVED on the payment_intent.amount_capturable_updated
+       webhook. */
+    assert(
+      ['AWAITING_PAYMENT', 'PENDING', 'APPROVED'].includes(ad.status),
+      `unexpected campaign status ${ad.status}`,
+    );
+    return `Ad ${ad.id.slice(0, 8)} status=${ad.status} budget=${ad.budgetCents}c · spot stored at ${String(adAudioUrl).slice(0, 46)}… (${ad.audioDurationSecs ?? '?'}s)`;
   });
 
   // ── 21. Listen to radio ──────────────────────────────────────────────────

@@ -1,25 +1,29 @@
 // Abstraction for media file storage.
-// When R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, and R2_BUCKET_NAME
-// are set, uploads go to Cloudflare R2 via AWS Signature Version 4.
-// Otherwise, files are base64-encoded and stored inline (dev/fallback only).
 //
-// EVERY ONE OF THOSE FOUR IS READ THROUGH readRuntimeEnv(), NOT process.env,
-// and that changed on 2026-08-31. Worker *secrets* — which is what these four
-// have to be, since none of them appears in wrangler.toml's [vars] — do not
-// land on `process.env` at all on workerd; they arrive on the Cloudflare env
-// binding, reachable only through getCloudflareContext(). Reading them from
-// process.env therefore made isObjectStorageConfigured() answer FALSE in
-// production no matter how the account was configured, and the failure is
-// silent by design: every caller has a fallback, so uploads kept "working"
-// while quietly base64-ing whole images and audio files into Postgres rows,
-// and /api/advertise/audio-upload — the one caller with no fallback — answered
-// 503 "Ad audio storage is not configured."
+// Uploads go to the Cloudflare R2 bucket through the Worker's `R2` BINDING —
+// declared in wrangler.toml as `[[r2_buckets]] binding = "R2"`. When the
+// binding is absent (local dev, build, tests, plain Node) files are
+// base64-encoded and returned inline instead.
 //
-// This is the identical shape that left transactional email dead for 36 days
-// (see the header of src/lib/runtime-env.ts, which exists because of it).
-// Do not reintroduce a process.env read here.
+// THIS USED TO SIGN S3 REQUESTS WITH SIGV4 AND FOUR R2_* CREDENTIALS, AND THAT
+// PATH WAS DEAD IN PRODUCTION THE ENTIRE TIME (rewritten 2026-08-31).
+// `wrangler secret list` on the live Worker returns 22 secrets and not one of
+// them is an R2 credential; none is a `[vars]` entry either. So
+// `isObjectStorageConfigured()` had always answered false, and the failure was
+// silent by construction: every caller has a fallback, so profile images,
+// track artwork and verification documents were being base64'd into Postgres
+// rows, while `/api/advertise/audio-upload` — the one caller with no fallback —
+// answered 503 and made ad campaigns impossible to create.
+//
+// The binding needs no credentials at all, and the app already had one: the
+// sibling `src/lib/r2.ts` has been using it successfully for track audio the
+// whole time. Two storage implementations where one worked and one was dead is
+// what made this survive so long — the big files went through the live one.
+//
+// Do not reintroduce the credential path. If R2 ever needs reaching from
+// outside a Worker request, that is a different module with a different name.
 
-import { readRuntimeEnv } from '@/lib/runtime-env';
+import { readRuntimeBinding } from '@/lib/runtime-env';
 
 export type StoredObject = {
   key: string;
@@ -27,157 +31,107 @@ export type StoredObject = {
   storageType: 'r2' | 'inline';
 };
 
-// ── AWS Signature Version 4 helpers (Web Crypto — works on Cloudflare Workers) ──
+/** The subset of Cloudflare's R2Bucket this module uses. */
+type R2BucketLike = {
+  put(
+    key: string,
+    value: ArrayBuffer,
+    opts?: { httpMetadata?: { contentType?: string } },
+  ): Promise<unknown>;
+  delete(key: string): Promise<unknown>;
+};
 
-const enc = new TextEncoder();
-
-async function hmac(key: BufferSource, data: string): Promise<ArrayBuffer> {
-  const k = await crypto.subtle.importKey('raw', key, { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-  return crypto.subtle.sign('HMAC', k, enc.encode(data));
+function getBucket(): R2BucketLike | null {
+  const binding = readRuntimeBinding('R2');
+  if (!binding || typeof binding !== 'object') return null;
+  const candidate = binding as Partial<R2BucketLike>;
+  return typeof candidate.put === 'function' && typeof candidate.delete === 'function'
+    ? (binding as R2BucketLike)
+    : null;
 }
 
-async function sha256hex(data: string): Promise<string> {
-  const buf = await crypto.subtle.digest('SHA-256', enc.encode(data));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+/**
+ * The origin public object URLs are built on.
+ *
+ * `R2_PUBLIC_BASE_URL`, not `R2_PUBLIC_URL` — the old code read the latter,
+ * which is not set anywhere in this project and never was, while the former is
+ * a real `[vars]` entry in wrangler.toml and is what `src/lib/r2.ts` already
+ * uses. Two names for one value, one of them fictional.
+ */
+function publicBase(): string {
+  return (
+    process.env.R2_PUBLIC_BASE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    process.env.NEXT_PUBLIC_BASE_URL ??
+    ''
+  ).replace(/\/$/, '');
 }
 
-function toHex(buf: ArrayBuffer): string {
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
+/** The path objects are served from — see src/app/cdn/[...key]/route.ts. */
+export const CDN_PREFIX = '/cdn/';
 
-async function signingKey(secretKey: string, date: string, region: string, service: string): Promise<ArrayBuffer> {
-  const kDate    = await hmac(enc.encode(`AWS4${secretKey}`), date);
-  const kRegion  = await hmac(kDate, region);
-  const kService = await hmac(kRegion, service);
-  return hmac(kService, 'aws4_request');
-}
-
-async function buildAuthHeader(
-  method: string,
-  url: URL,
-  headers: Record<string, string>,
-  payloadHash: string,
-  accessKeyId: string,
-  secretKey: string,
-  region: string
-): Promise<string> {
-  const now = new Date();
-  const amzDate = now.toISOString().replace(/[:-]|\.\d{3}/g, '').slice(0, 15) + 'Z'; // yyyymmddTHHMMSSZ
-  const dateStamp = amzDate.slice(0, 8);
-
-  // Add required headers
-  headers['x-amz-date'] = amzDate;
-  headers['x-amz-content-sha256'] = payloadHash;
-  headers['host'] = url.host;
-
-  const sortedKeys = Object.keys(headers).sort();
-  const canonicalHeaders = sortedKeys.map(k => `${k.toLowerCase()}:${headers[k].trim()}\n`).join('');
-  const signedHeaders = sortedKeys.map(k => k.toLowerCase()).join(';');
-
-  const canonicalRequest = [
-    method,
-    url.pathname,
-    url.search.slice(1), // remove leading '?'
-    canonicalHeaders,
-    signedHeaders,
-    payloadHash
-  ].join('\n');
-
-  const credentialScope = `${dateStamp}/${region}/s3/aws4_request`;
-  const stringToSign = ['AWS4-HMAC-SHA256', amzDate, credentialScope, await sha256hex(canonicalRequest)].join('\n');
-
-  const key = await signingKey(secretKey, dateStamp, region, 's3');
-  const signature = toHex(await hmac(key, stringToSign));
-
-  return `AWS4-HMAC-SHA256 Credential=${accessKeyId}/${credentialScope}, SignedHeaders=${signedHeaders}, Signature=${signature}`;
-}
-
-// ── R2 operations ────────────────────────────────────────────────────────────
-
-async function r2Request(
-  method: string,
-  key: string,
-  body?: Buffer,
-  contentType?: string
-): Promise<Response> {
-  const accountId   = readRuntimeEnv('R2_ACCOUNT_ID')!;
-  const accessKeyId = readRuntimeEnv('R2_ACCESS_KEY_ID')!;
-  const secretKey   = readRuntimeEnv('R2_SECRET_ACCESS_KEY')!;
-  const bucket      = readRuntimeEnv('R2_BUCKET_NAME')!;
-  const region      = 'auto'; // R2 S3-compatible endpoint always uses 'auto'
-  const endpoint    = new URL(`https://${accountId}.r2.cloudflarestorage.com/${bucket}/${key}`);
-
-  const EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
-  const payloadHash  = body ? toHex(await crypto.subtle.digest('SHA-256', new Uint8Array(body))) : EMPTY_SHA256;
-
-  const reqHeaders: Record<string, string> = {};
-  if (contentType) reqHeaders['content-type'] = contentType;
-
-  const authorization = await buildAuthHeader(method, endpoint, reqHeaders, payloadHash, accessKeyId, secretKey, region);
-
-  return fetch(endpoint.toString(), {
-    method,
-    headers: { ...reqHeaders, Authorization: authorization },
-    body: body as unknown as BodyInit | undefined
-  });
-}
-
-async function uploadToR2(key: string, data: Buffer, contentType: string): Promise<string> {
-  const response = await r2Request('PUT', key, data, contentType);
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`R2 upload failed: ${response.status} ${response.statusText}${text ? ` — ${text.slice(0, 200)}` : ''}`);
-  }
-
-  const accountId  = readRuntimeEnv('R2_ACCOUNT_ID')!;
-  const bucket     = readRuntimeEnv('R2_BUCKET_NAME')!;
-  const publicBase = readRuntimeEnv('R2_PUBLIC_URL') ?? `https://${accountId}.r2.cloudflarestorage.com/${bucket}`;
-  return `${publicBase}/${key}`;
+export function objectPublicUrl(key: string): string {
+  return `${publicBase()}${CDN_PREFIX}${key}`;
 }
 
 // ── Public API ───────────────────────────────────────────────────────────────
 
+/**
+ * Whether a real bucket is reachable. Synchronous on purpose: every call site
+ * branches on it inline, and `readRuntimeBinding` resolves the Cloudflare
+ * context synchronously the same way `readRuntimeEnv` does.
+ */
 export function isObjectStorageConfigured(): boolean {
-  return Boolean(
-    readRuntimeEnv('R2_ACCOUNT_ID') &&
-    readRuntimeEnv('R2_ACCESS_KEY_ID') &&
-    readRuntimeEnv('R2_SECRET_ACCESS_KEY') &&
-    readRuntimeEnv('R2_BUCKET_NAME')
-  );
+  return getBucket() !== null;
 }
 
 /**
- * True only for URLs this app itself generated via storeMediaFile() — the
- * R2 public base (or the default R2 endpoint) or an inline `data:` URL.
- * Used to gate any server-side fetch() of a client-submitted "url" field
- * (e.g. re-fetching an uploaded ad's audio for content vetting) so a client
- * can never point the server at an arbitrary internal/external URL (SSRF).
+ * True only for URLs this app itself generated via storeMediaFile() — an
+ * object served from our own `/cdn/` path, a direct R2 host, or an inline
+ * `data:` URL. Used to gate any server-side fetch() of a client-submitted
+ * "url" field (e.g. re-fetching an uploaded ad's audio for content vetting) so
+ * a client can never point the server at an arbitrary internal/external URL
+ * (SSRF).
+ *
+ * The `/cdn/` arm is new with the binding rewrite; the R2 host arm is kept
+ * because rows written before it still carry those URLs.
  */
 export function isTrustedStorageUrl(url: string): boolean {
   if (url.startsWith('data:')) return true;
+
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
     return false;
   }
-  if (parsed.protocol !== 'https:') return false;
+  // A bucket's own hostname: <account>.r2.cloudflarestorage.com or *.r2.dev.
+  // Always https — these are public Cloudflare endpoints and nothing else.
+  if (
+    parsed.protocol === 'https:' &&
+    /^[a-z0-9-]+\.r2\.(?:cloudflarestorage\.com|dev)$/i.test(parsed.hostname)
+  ) {
+    return true;
+  }
 
-  const accountId = readRuntimeEnv('R2_ACCOUNT_ID');
-  const bucket = readRuntimeEnv('R2_BUCKET_NAME');
-  const candidates = [
-    readRuntimeEnv('R2_PUBLIC_URL'),
-    accountId && bucket ? `https://${accountId}.r2.cloudflarestorage.com/${bucket}` : undefined,
-  ].filter((v): v is string => Boolean(v));
-
-  return candidates.some((base) => {
-    try {
-      const baseUrl = new URL(base);
-      return parsed.origin === baseUrl.origin && parsed.pathname.startsWith(baseUrl.pathname);
-    } catch {
-      return false;
-    }
-  });
+  const base = publicBase();
+  if (!base) return false;
+  try {
+    const baseUrl = new URL(base);
+    /* Exact ORIGIN match, which includes the scheme — so this trusts our own
+       site and nothing else: https in production, http on a dev box, and
+       `http://ihype.org/...` still refused when the configured base is https.
+       An earlier version rejected every non-https URL before reaching here,
+       which was correct for the R2 arm above and wrong for this one: it made
+       the app distrust its own uploads in local development, so a campaign
+       could not be created against a locally uploaded spot.
+       The `/cdn/` requirement is the important half — origin alone would trust
+       every route on the site, which is most of the SSRF surface this exists
+       to close. */
+    return parsed.origin === baseUrl.origin && parsed.pathname.startsWith(CDN_PREFIX);
+  } catch {
+    return false;
+  }
 }
 
 export async function storeMediaFile(
@@ -188,15 +142,19 @@ export async function storeMediaFile(
   const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : dataUrl;
   const buffer = Buffer.from(base64, 'base64');
 
-  if (isObjectStorageConfigured()) {
-    const url = await uploadToR2(key, buffer, contentType);
-    return { key, url, storageType: 'r2' };
-  }
+  const bucket = getBucket();
+  if (!bucket) return { key, url: dataUrl, storageType: 'inline' };
 
-  return { key, url: dataUrl, storageType: 'inline' };
+  await bucket.put(key, buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength) as ArrayBuffer, {
+    httpMetadata: { contentType },
+  });
+  return { key, url: objectPublicUrl(key), storageType: 'r2' };
 }
 
 export async function deleteMediaFile(key: string): Promise<void> {
-  if (!isObjectStorageConfigured()) return;
-  await r2Request('DELETE', key).catch(() => {});
+  const bucket = getBucket();
+  if (!bucket) return;
+  // Best-effort: a delete that fails must not fail the caller's request, which
+  // is usually a moderation or cleanup action that has already succeeded.
+  await Promise.resolve(bucket.delete(key)).catch(() => {});
 }
