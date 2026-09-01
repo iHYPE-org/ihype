@@ -48,9 +48,53 @@
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { appendFileSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { appendFileSync, existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+/* ------------------------------------------------- which pg_dump, exactly
+
+   `pg_dump` REFUSES TO DUMP A SERVER NEWER THAN ITSELF, and getting the wrong
+   one is silent until the moment you need a backup. Measured 2026-09-01 on the
+   first real run: the job aborted with "server version: 17.6; pg_dump version:
+   16.15" even though the workflow installs postgresql-client-17. On Debian and
+   Ubuntu `/usr/bin/pg_dump` is not a binary at all — it is `pg_wrapper`, which
+   picks a version from the default CLUSTER rather than from what is installed,
+   so installing 17 alongside 16 does not necessarily change what runs.
+
+   So resolve the real versioned binary rather than trusting PATH: the highest
+   major under the versioned /usr/lib/postgresql directories wins. `PG_DUMP`/`PG_RESTORE` override
+   it outright for a layout this does not know (RHEL's /usr/pgsql-17/bin, macOS
+   Homebrew, a container), and a bare name is the last resort so nothing here
+   breaks on a machine without the Debian tree.
+
+   pg_dump and pg_restore are resolved the same way for the same reason: an
+   archive written by 17 is not readable by 16's pg_restore, so a mismatched
+   pair would pass the dump and fail the round-trip check. */
+function resolvePgBinary(name, overrideEnv) {
+  const override = process.env[overrideEnv]?.trim();
+  if (override) return override;
+
+  const root = '/usr/lib/postgresql';
+  const found = [];
+  let entries = [];
+  try {
+    entries = readdirSync(root);
+  } catch {
+    return name;
+  }
+  for (const entry of entries) {
+    const major = Number.parseInt(entry, 10);
+    if (!Number.isInteger(major)) continue;
+    const candidate = join(root, entry, 'bin', name);
+    if (existsSync(candidate)) found.push({ major, path: candidate });
+  }
+  found.sort((a, b) => b.major - a.major);
+  return found[0]?.path ?? name;
+}
+
+const PG_DUMP = resolvePgBinary('pg_dump', 'PG_DUMP');
+const PG_RESTORE = resolvePgBinary('pg_restore', 'PG_RESTORE');
 
 const args = process.argv.slice(2);
 const slotArg = (args.find((a) => a.startsWith('--slot=')) ?? '--slot=manual').split('=')[1];
@@ -216,6 +260,12 @@ function redact(text) {
 
 note(`### Database backup — slot \`${slotArg}\`${label ? ` (${label})` : ''}`);
 
+/* Name the binary and its version in the summary. The 2026-09-01 failure was
+   invisible until pg_dump aborted mid-job; a line saying which pg_dump is about
+   to run turns "why did the backup stop working" into a glance. */
+const dumpVersion = run(PG_DUMP, ['--version']);
+note(`- pg_dump: ${PG_DUMP}${dumpVersion.ok ? ` (${dumpVersion.output.trim()})` : ' — could not report its version'}`);
+
 /* --exclude-schema=stripe, NOT --schema=public, and the difference is not
    cosmetic. The `stripe` schema is the Supabase Stripe Sync Engine's:
    installed outside this repo, referenced by no application code, and
@@ -232,7 +282,7 @@ note(`### Database backup — slot \`${slotArg}\`${label ? ` (${label})` : ''}`)
 
    --no-owner/--no-acl so the dump restores into a scratch database owned by
    whatever local role the operator happens to have. */
-const dump = run('pg_dump', [
+const dump = run(PG_DUMP, [
   databaseUrl,
   '--format=custom',
   '--compress=9',
@@ -265,7 +315,7 @@ if (dumpBytes < 64 * 1024) {
    perfectly ordinary file and only reveals itself at restore time, which is the
    worst possible moment to find out. `pg_restore --list` walks the table of
    contents without touching a database. */
-const toc = run('pg_restore', ['--list', dumpPath]);
+const toc = run(PG_RESTORE, ['--list', dumpPath]);
 if (!toc.ok) {
   fail(`The dump does not parse as a Postgres archive: ${redact(toc.output).trim().slice(0, 400)}`);
 }
@@ -330,7 +380,7 @@ if (!decrypt.ok) {
   fail(`The encrypted backup did not decrypt with the configured passphrase: ${redact(decrypt.output).trim().slice(0, 400)}`);
 }
 
-const roundTripToc = run('pg_restore', ['--list', roundTripPath]);
+const roundTripToc = run(PG_RESTORE, ['--list', roundTripPath]);
 if (!roundTripToc.ok) {
   fail('The decrypted backup does not parse as a Postgres archive. Do not treat this object as a backup.');
 }
