@@ -70,6 +70,18 @@ jobs:
         # carry means the backup silently starts failing on somebody else's
         # release day. A newer pg_dump reads older servers fine, so installing
         # 17 covers today's server and the next upgrade.
+        #
+        # INSTALLING IT IS NOT ENOUGH, which is what the 2026-09-01 failure
+        # taught: the job aborted with "server version: 17.6; pg_dump version:
+        # 16.15" AFTER this step had run and reported success. On Debian and
+        # Ubuntu `/usr/bin/pg_dump` is `pg_wrapper`, which picks a version from
+        # the default CLUSTER rather than from what is installed, so adding 17
+        # beside 16 need not change what actually runs. Hence both halves below:
+        # put the versioned bin directory first on PATH, then ASSERT the version
+        # rather than printing it — a step that installs and hopes is how this
+        # failed silently the first time. scripts/backup-database.mjs resolves
+        # the versioned binary itself as well, so neither layer is load-bearing
+        # alone.
         shell: bash
         run: |
           set -euo pipefail
@@ -80,7 +92,13 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
-          pg_dump --version
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          version="$(/usr/lib/postgresql/17/bin/pg_dump --version)"
+          echo "$version"
+          case "$version" in
+            *"pg_dump (PostgreSQL) 17."*) ;;
+            *) echo "::error::Expected pg_dump 17, got: $version"; exit 1 ;;
+          esac
 
       - name: Install wrangler
         # Only wrangler is needed to upload; `npm ci` would install the whole

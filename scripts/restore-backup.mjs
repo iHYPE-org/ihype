@@ -29,9 +29,39 @@
 */
 
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+/* Same binary resolution as backup-database.mjs, and needed here for the
+   mirror-image reason: an archive written by pg_dump 17 cannot be read by
+   pg_restore 16, so a drill run on a box whose PATH points at an older client
+   fails on a backup that is perfectly good. On Debian/Ubuntu `/usr/bin/pg_restore`
+   is `pg_wrapper`, which chooses by default CLUSTER rather than by what is
+   installed. PG_RESTORE overrides for any layout this does not know. */
+function resolvePgBinary(name, overrideEnv) {
+  const override = process.env[overrideEnv]?.trim();
+  if (override) return override;
+  const root = '/usr/lib/postgresql';
+  const found = [];
+  let entries = [];
+  try {
+    entries = readdirSync(root);
+  } catch {
+    return name;
+  }
+  for (const entry of entries) {
+    const major = Number.parseInt(entry, 10);
+    if (!Number.isInteger(major)) continue;
+    const candidate = join(root, entry, 'bin', name);
+    if (existsSync(candidate)) found.push({ major, path: candidate });
+  }
+  found.sort((a, b) => b.major - a.major);
+  return found[0]?.path ?? name;
+}
+
+const PG_RESTORE = resolvePgBinary('pg_restore', 'PG_RESTORE');
+const PSQL = resolvePgBinary('psql', 'PSQL');
 
 const args = process.argv.slice(2);
 
@@ -107,7 +137,7 @@ function redact(text) {
    has rows silently merges two states and produces something that is neither
    the backup nor what was there before, which is the worst possible thing to
    then verify and sign off. */
-const occupied = run('psql', [targetUrl, '-tAc', "SELECT to_regclass('public.\"User\"') IS NOT NULL"]);
+const occupied = run(PSQL, [targetUrl, '-tAc', "SELECT to_regclass('public.\"User\"') IS NOT NULL"]);
 if (!occupied.ok) {
   fail(`Could not reach RESTORE_TARGET_URL: ${redact(occupied.output).trim().slice(0, 300)}`);
 }
@@ -157,7 +187,7 @@ writeFileSync(passPath, passphrase, { mode: 0o600 });
 const decrypt = run('gpg', ['--batch', '--yes', '--quiet', '--decrypt', '--passphrase-file', passPath, '--output', dumpPath, encryptedPath]);
 if (!decrypt.ok) fail(`Decryption failed — wrong passphrase, or a corrupt object: ${redact(decrypt.output).trim().slice(0, 300)}`);
 
-const toc = run('pg_restore', ['--list', dumpPath]);
+const toc = run(PG_RESTORE, ['--list', dumpPath]);
 if (!toc.ok) fail('The decrypted file is not a Postgres archive.');
 console.log(`Archive parses: ${toc.output.split('\n').filter((l) => l && !l.startsWith(';')).length} entries`);
 
@@ -166,12 +196,12 @@ console.log(`Archive parses: ${toc.output.split('\n').filter((l) => l && !l.star
    selecting form emits a `CREATE SCHEMA public` that always fails, and one
    expected error means nobody can tell an unexpected one from the noise. */
 console.log('Restoring …');
-const restore = run('pg_restore', ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error', dumpPath]);
+const restore = run(PG_RESTORE, ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error', dumpPath]);
 if (!restore.ok) {
   fail(`pg_restore failed: ${redact(restore.output).trim().slice(0, 1200)}`);
 }
 
-const counts = run('psql', [targetUrl, '-tAc',
+const counts = run(PSQL, [targetUrl, '-tAc',
   'SELECT (SELECT COUNT(*) FROM "User") || \' users, \' || (SELECT COUNT(*) FROM "Profile") || \' profiles, \' || (SELECT COUNT(*) FROM _prisma_migrations WHERE finished_at IS NOT NULL) || \' migrations\'',
 ]);
 

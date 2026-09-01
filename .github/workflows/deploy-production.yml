@@ -188,7 +188,14 @@ jobs:
         if: steps.pending_migrations.outputs.pending == 'true'
         # The runner ships PG16 and pg_dump refuses to dump a newer server, so
         # this cannot ride on the image's version — Supabase upgrades majors on
-        # its own schedule. Same step as backup-database.yml.
+        # its own schedule. Same step as backup-database.yml, including its
+        # PATH line and version assertion: installing 17 does not by itself
+        # change what `pg_dump` resolves to, because /usr/bin/pg_dump is
+        # pg_wrapper and picks by default cluster. That is what made the
+        # 2026-09-01 backup fail after a green install step.
+        #
+        # This runs BEFORE a schema change reaches production, so a failure
+        # here stopping the deploy is the intended behaviour, not collateral.
         shell: bash
         run: |
           set -euo pipefail
@@ -199,6 +206,13 @@ jobs:
             | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
           sudo apt-get update -qq
           sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          version="$(/usr/lib/postgresql/17/bin/pg_dump --version)"
+          echo "$version"
+          case "$version" in
+            *"pg_dump (PostgreSQL) 17."*) ;;
+            *) echo "::error::Expected pg_dump 17, got: $version"; exit 1 ;;
+          esac
 
       - name: Pre-migration backup
         if: steps.pending_migrations.outputs.pending == 'true'
