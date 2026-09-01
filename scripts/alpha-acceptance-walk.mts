@@ -1086,20 +1086,155 @@ async function main() {
   });
 
   // ── 27. Recommended ──────────────────────────────────────────────────────
-  await item('27. Check recommended', async () => {
-    const candidates = ['/api/recommendations', '/api/discover/recommended', '/api/for-you'];
-    for (const path of candidates) {
-      const result = await api(path, { cookie: fan.cookie });
-      if (result.status === 200) {
-        const arrays = Object.entries(result.body ?? {}).filter(([, v]) => Array.isArray(v));
-        return `${path} → 200, ${arrays.map(([k, v]) => `${k}=${(v as any[]).length}`).join(' ') || 'no arrays'}`;
-      }
+  await item('27. Check recommended (the engine speaks only once the fan has left a signal)', async () => {
+    /* A fan with NO signal must get `ready: false` and an empty list — the
+       owner's rule, 2026-09-01: "will say nothing yet until something makes
+       sense". A fan who has hyped (item 13) is ready. Both halves are asserted
+       so the gate cannot quietly become either always-on or always-off. */
+    const cold = await seedSessionCookie(`alpha-cold-${run}@example.com`, {});
+    const coldResult = await api('/api/recommend', { cookie: cold.cookie });
+    ok(coldResult);
+    assert(coldResult.body?.ready === false, `a fan with no signal got ready=${coldResult.body?.ready}`);
+    assert(Array.isArray(coldResult.body?.tracks) && coldResult.body.tracks.length === 0, 'a fan with no signal was shown tracks');
+
+    const warm = await api('/api/recommend', { cookie: fan.cookie });
+    ok(warm);
+    assert(warm.body?.ready === true, `the fan who hyped in item 13 got ready=${warm.body?.ready} (signals ${JSON.stringify(warm.body?.signals)})`);
+    assert(Array.isArray(warm.body?.tracks), 'no tracks array');
+    for (const track of warm.body.tracks) {
+      assert(typeof track.reason === 'string' && track.reason.length > 0, `track ${track.id} carries no reason`);
     }
-    /* The MMM Recommended tab is a station ranking, not its own endpoint. */
-    const radio = await api('/api/radio?ranking=Recommended%20for%20you', { cookie: fan.cookie });
-    assert(radio.status === 200, `no recommended surface answered 200 (tried ${candidates.join(', ')} and /api/radio)`);
-    const items = radio.body?.tracks ?? radio.body?.items ?? [];
-    return `served by /api/radio?ranking=Recommended for you → ${Array.isArray(items) ? items.length : 0} item(s)`;
+    return `cold fan: ready=false, 0 tracks · warm fan: ready=true, ${warm.body.tracks.length} track(s), signals ${JSON.stringify(warm.body.signals)}`;
+  });
+
+  // ── 32. The fan-to-venue demand loop (2026-09-01) ─────────────────────────
+  /* Built the same day as rows 328-331 and never driven until this block. One
+     ask from a fan has to reach five places: the venue's radar, the artist's
+     analytics, both stats boards, the fan's own recommendations (stations and
+     the deck), and the two people's notifications. Each hop is asserted from
+     the outside, through the worker, as the product would be used. */
+  let askId = '';
+  const asker = await seedSessionCookie(`alpha-asker-${run}@example.com`, {});
+  const friend = await seedSessionCookie(`alpha-friend-${run}@example.com`, {});
+
+  await item('32a. A fan asks the venue to book the artist (by @handle)', async () => {
+    const result = await api('/api/venue-requests', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      cookie: asker.cookie,
+      body: JSON.stringify({
+        venueProfileId: venueProfile.id,
+        requesterType: 'LISTENER',
+        artistName: `@${artistProfile.slug}`,
+        note: 'Please — half my street would come.',
+        notifyOnBooking: true,
+      }),
+    });
+    const body = ok(result, [201]);
+    askId = body.id;
+    assert(body.artistProfileId === artistProfile.id, `@handle did not resolve to the artist profile (got ${body.artistProfileId})`);
+    assert(body.artistName === artistProfile.name, `artistName stored as "${body.artistName}", expected the profile's name`);
+    assert(body.notifyOnBooking === true, 'notifyOnBooking was not stored');
+    const dup = await api('/api/venue-requests', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      cookie: asker.cookie,
+      body: JSON.stringify({ venueProfileId: venueProfile.id, requesterType: 'LISTENER', artistProfileId: artistProfile.id }),
+    });
+    assert(dup.status === 409, `a duplicate pending ask answered ${dup.status}, expected 409`);
+    return `ask ${askId.slice(0, 8)} → artist ${artistProfile.slug}, duplicate refused 409`;
+  });
+
+  await item('32b. The venue owner and the artist owner are both told', async () => {
+    const notes = await prisma.notification.findMany({
+      where: { userId: creator.user.id, type: { in: ['venue-request', 'fan-demand'] } },
+      select: { type: true, link: true },
+    });
+    const types = new Set(notes.map((n) => n.type));
+    assert(types.has('venue-request'), 'the venue owner got no "venue-request" notification');
+    assert(types.has('fan-demand'), 'the artist owner got no "fan-demand" notification');
+    return notes.map((n) => `${n.type} → ${n.link}`).join(' · ');
+  });
+
+  await item("32c. The venue's demand radar ranks the act, with the fan's reason", async () => {
+    const page = await api('/app/me/booking', { cookie: creator.cookie });
+    assert(page.status === 200, `/app/me/booking answered ${page.status}`);
+    assert(page.text.includes(artistProfile.name), 'the radar page does not name the requested act');
+    assert(/1 fan asked/.test(page.text), 'the radar page does not carry the "1 fan asked" demand chip');
+    assert(/1 fan request analysed/.test(page.text), 'the radar page does not report the request it analysed');
+    return `radar names ${artistProfile.name} · "1 fan asked" · 1 request analysed`;
+  });
+
+  await item("32d. The artist's analytics shows where fans want them", async () => {
+    const page = await api(`/app/me/artists/${artistProfile.slug}/analytics`, { cookie: creator.cookie });
+    assert(page.status === 200, `analytics answered ${page.status}`);
+    assert(page.text.includes('Where fans want you'), 'the analytics page has no "Where fans want you" section');
+    assert(page.text.includes(venueProfile.name), 'the analytics page does not name the venue that was asked');
+    return `analytics lists ${venueProfile.name} under "Where fans want you"`;
+  });
+
+  await item('32e. Both stats boards count the ask', async () => {
+    const artistBoard = ok(await api(`/api/profile/stats?profileId=${artistProfile.id}`, { cookie: creator.cookie }));
+    const venueBoard = ok(await api(`/api/profile/stats?profileId=${venueProfile.id}`, { cookie: creator.cookie }));
+    const pick = (board: any, key: string) => (board.stats as any[]).find((s) => s.key === key)?.value;
+    assert(pick(artistBoard, 'requests') === 1, `artist Requests = ${pick(artistBoard, 'requests')}, expected 1`);
+    assert(pick(artistBoard, 'recommendations') === 1, `artist Recommendations = ${pick(artistBoard, 'recommendations')}, expected 1 venue`);
+    assert(pick(venueBoard, 'requests') === 1, `venue Requests = ${pick(venueBoard, 'requests')}, expected 1`);
+    assert(pick(venueBoard, 'recommendations') === 1, `venue Recommendations = ${pick(venueBoard, 'recommendations')}, expected 1 act`);
+    const strangerView = await api(`/api/profile/stats?profileId=${artistProfile.id}`, { cookie: asker.cookie });
+    assert(strangerView.status === 404, `a non-owner reading the board got ${strangerView.status}, expected 404`);
+    return 'artist requests=1 recommendations=1 · venue requests=1 recommendations=1 · non-owner 404';
+  });
+
+  await item("32f. The ask feeds the asker's own recommendations: station, deck, engine", async () => {
+    const station = ok(await api('/api/stations/for-you/tracks?limit=25', { cookie: asker.cookie }));
+    const mine = (station.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    assert(mine, 'the asked-for act is not in the asker\'s For You station');
+    assert(mine.reason === 'You asked a venue to book them', `station reason was "${mine.reason}"`);
+
+    const deck = ok(await api('/api/discover/seeds', { cookie: asker.cookie }));
+    const card = (deck.seeds as any[]).find((c) => c.hexId === mediaHexId);
+    assert(card, 'the asked-for act is not in the asker\'s discover deck');
+    assert(card.reason === 'You asked a venue to book them', `deck reason was "${card.reason}"`);
+    assert((deck.seeds as any[])[0]?.hexId === mediaHexId, 'the request card does not lead the deck');
+
+    const engine = ok(await api('/api/recommend', { cookie: asker.cookie }));
+    assert(engine.ready === true, `a fan with one ask got ready=${engine.ready} (${JSON.stringify(engine.signals)})`);
+    assert(engine.signals?.requests >= 1, `engine did not count the request (${JSON.stringify(engine.signals)})`);
+    return `station + deck carry "${mine.reason}", deck leads with it, engine ready with signals ${JSON.stringify(engine.signals)}`;
+  });
+
+  await item('32g. A fan who follows the venue hears what other fans want there', async () => {
+    await prisma.follow.create({ data: { followerId: friend.user.id, followeeProfileId: venueProfile.id } });
+    const station = ok(await api('/api/stations/friends/tracks?limit=25', { cookie: friend.cookie }));
+    const row = (station.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    assert(row, 'the wanted act is not in the follower\'s Recommended-by-friends station');
+    assert(row.reason === `Fans want them at ${venueProfile.name}`, `reason was "${row.reason}"`);
+    const engine = ok(await api('/api/recommend', { cookie: friend.cookie }));
+    assert(engine.ready === true, `a fan with one follow got ready=${engine.ready}`);
+    const rec = (engine.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    assert(rec, 'the engine did not recommend the act fans want at the followed venue');
+    assert(rec.reason === `Fans want them at ${venueProfile.name}`, `engine reason was "${rec.reason}"`);
+    return `follower's station and engine both say "${row.reason}"`;
+  });
+
+  await item('32h. The venue books the act; every ask is answered and the fan is told', async () => {
+    const patched = await api(`/api/venue-requests/${askId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      cookie: creator.cookie,
+      body: JSON.stringify({ status: 'BOOKED' }),
+    });
+    ok(patched);
+    const row = await prisma.venueConnectionRequest.findUnique({ where: { id: askId }, select: { status: true } });
+    assert(row?.status === 'BOOKED', `ask status is ${row?.status}`);
+    const told = await prisma.notification.count({ where: { userId: asker.user.id, type: 'ask-booked' } });
+    assert(told === 1, `the asker got ${told} "ask-booked" notification(s), expected 1`);
+    const board = ok(await api(`/api/profile/stats?profileId=${artistProfile.id}`, { cookie: creator.cookie }));
+    const recs = (board.stats as any[]).find((s) => s.key === 'recommendations')?.value;
+    assert(recs === 0, `a booked ask should leave the live ranking; artist Recommendations = ${recs}`);
+    const fanPage = await api(`/app/fans/${(await prisma.profile.findFirst({ where: { ownerId: asker.user.id }, select: { slug: true } }))?.slug ?? '-'}?section=asks`, { cookie: asker.cookie });
+    return `BOOKED · asker notified once · artist Recommendations back to 0 · fan Asks page ${fanPage.status}`;
   });
 
   // ── 28. Update payment method ────────────────────────────────────────────

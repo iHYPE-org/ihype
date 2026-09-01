@@ -3,9 +3,10 @@ import type { Prisma, ProfileType } from '@prisma/client';
 import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import type { RequestLocation } from '@/lib/request-location';
 import {
-  WEIGHTS, geoTier, tasteScore, finalScore, buildReason,
-  type Signals, type RecommendationReason,
+  WEIGHTS, geoTier, tasteScore, finalScore, buildReason, isRecommendationReady, KNOWN_GENRE_WEIGHT,
+  type Signals, type RecommendationReason, type KnownArtist, type ViewerSignals,
 } from '@/lib/recommendation-scoring';
+import { loadCoRequesterIds, loadRequestSignals } from '@/lib/request-signals';
 
 export { WEIGHTS, geoTier, tasteScore, finalScore, buildReason } from '@/lib/recommendation-scoring';
 export type { Signals, RecommendationReason } from '@/lib/recommendation-scoring';
@@ -49,6 +50,13 @@ export type RecommendationResult = {
     collabCandidates: number;
     comparableCandidates: number;
     weights: typeof WEIGHTS;
+    /** What the viewer has left for the engine to work from. */
+    viewerSignals: ViewerSignals;
+    /**
+     * False until the viewer has left at least one taste signal. A caller
+     * must show NOTHING when this is false — see `isRecommendationReady`.
+     */
+    ready: boolean;
   };
 };
 
@@ -57,6 +65,21 @@ export type RecommendationResult = {
  * viewer id and detected location (so this works from both an API route and a
  * server component). Each result carries an explainable `reason` derived from
  * its dominant weighted signal.
+ *
+ * Live as of 2026-09-01 behind `GET /api/recommend`, which the MUSIC module's
+ * Recommended tab reads. It had no consumer before that. Three signals were
+ * added the same day so it hears everything a fan does, not only hypes:
+ *
+ *  - **follows** — a followed artist is known (excluded from results) and its
+ *    genres weigh into taste at 2× a hype.
+ *  - **fan requests** (`fan-demand.ts`) — an act the viewer asked a venue to
+ *    book is known and weighs 3×; an act OTHER fans want at a venue the viewer
+ *    follows or asked gets a demand boost and the reason "Fans want them at
+ *    <Venue>"; and fans who asked for the same acts join the collaborative
+ *    neighbourhood, which the hype graph alone cannot see.
+ *  - **readiness** — `meta.ready` is false until the viewer has left one taste
+ *    signal, and the caller shows nothing. The engine speaks when it has
+ *    something to say, not before.
  */
 export async function getRecommendations(
   viewerId: string | null,
@@ -71,10 +94,18 @@ export async function getRecommendations(
   let viewerCity: string | null = null;
   let viewerGenres: string[] = [];
   let alreadyHypedIds = new Set<string>();
+  /* Everything the viewer already knows — hyped, followed, or asked a venue
+     for. Recommending any of these back is noise, so they are excluded from
+     results and from the collaborative/comparable candidate pools alike. */
+  const knownIds = new Set<string>();
   const collabScores = new Map<string, number>();
   const seedSignals = new Map<string, number>();
-  // genre (lowercase) → an artist the viewer hyped in that genre, for reasons.
-  const genreToArtist = new Map<string, { name: string; slug: string }>();
+  // genre (lowercase) → an artist the viewer knows in that genre, for reasons.
+  const genreToArtist = new Map<string, KnownArtist>();
+  // acts other fans want at the viewer's venues → the venue to name and how many fans.
+  const demandByProfile = new Map<string, { venueName: string; fans: number }>();
+  let maxWantedFans = 0;
+  const viewerSignals: ViewerSignals = { hypes: 0, seeds: 0, follows: 0, requests: 0 };
 
   if (requestLocation) {
     viewerState = requestLocation.stateRegion;
@@ -83,7 +114,7 @@ export async function getRecommendations(
   }
 
   if (viewerId) {
-    const [hypedProfiles, seedRows] = await Promise.all([
+    const [hypedProfiles, seedRows, follows] = await Promise.all([
       db.profileHypeEvent.findMany({
         where: { userId: viewerId },
         select: { profileId: true, profile: { select: { name: true, slug: true, genres: true, stateRegion: true, country: true } } },
@@ -94,27 +125,66 @@ export async function getRecommendations(
         orderBy: { createdAt: 'desc' },
         take: 500,
       }),
+      db.follow.findMany({
+        where: { followerId: viewerId },
+        select: { followeeProfileId: true, followeeProfile: { select: { name: true, slug: true, genres: true, type: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 300,
+      }).catch(() => []),
     ]);
+    const followedIds = follows.map((row) => row.followeeProfileId);
+    const requests = await loadRequestSignals(viewerId, followedIds);
+    const requestedProfiles = requests.requestedArtistIds.length
+      ? await db.profile.findMany({
+          where: { id: { in: requests.requestedArtistIds } },
+          select: { id: true, name: true, slug: true, genres: true },
+        }).catch(() => [])
+      : [];
 
     alreadyHypedIds = new Set(hypedProfiles.map((h: { profileId: string }) => h.profileId));
+    for (const id of alreadyHypedIds) knownIds.add(id);
+    for (const id of followedIds) knownIds.add(id);
+    for (const profile of requestedProfiles) knownIds.add(profile.id);
+    viewerSignals.hypes = hypedProfiles.length;
+    viewerSignals.seeds = seedRows.length;
+    viewerSignals.follows = follows.length;
+    viewerSignals.requests = requests.requestedArtistIds.length + requests.requestedVenueIds.length;
 
-    const hypedGenreCounts = new Map<string, number>();
+    /* The viewer's genre profile, weighted by how they came to know each act:
+       a request outweighs a follow outweighs a hype. The reason map keeps the
+       STRONGEST way for each genre, so a request-backed reason wins the
+       sentence over a hype-backed one for the same genre. */
+    const genreWeights = new Map<string, number>();
+    const knownRank: Record<string, number> = { hype: 1, follow: 2, request: 3 };
+    const learn = (profile: { name: string; slug: string; genres: string[] }, via: 'hype' | 'follow' | 'request') => {
+      for (const genre of profile.genres) {
+        const key = genre.toLowerCase();
+        genreWeights.set(key, (genreWeights.get(key) ?? 0) + KNOWN_GENRE_WEIGHT[via]);
+        const current = genreToArtist.get(key);
+        if (!current || knownRank[current.via ?? 'hype'] < knownRank[via]) {
+          genreToArtist.set(key, { name: profile.name, slug: profile.slug, via });
+        }
+      }
+    };
     for (const { profile } of hypedProfiles as Array<{ profile: { name: string; slug: string; genres: string[]; stateRegion: string | null; country: string | null } | null }>) {
       if (!profile) continue;
       if (!requestLocation) {
         viewerState ??= profile.stateRegion;
         viewerCountry ??= profile.country;
       }
-      for (const genre of profile.genres) {
-        const key = genre.toLowerCase();
-        hypedGenreCounts.set(key, (hypedGenreCounts.get(key) ?? 0) + 1);
-        if (!genreToArtist.has(key)) genreToArtist.set(key, { name: profile.name, slug: profile.slug });
-      }
+      learn(profile, 'hype');
     }
-    viewerGenres = [...hypedGenreCounts.entries()]
+    for (const row of follows) if (row.followeeProfile) learn(row.followeeProfile, 'follow');
+    for (const profile of requestedProfiles) learn(profile, 'request');
+    viewerGenres = [...genreWeights.entries()]
       .sort((a, b) => b[1] - a[1])
       .slice(0, 10)
       .map(([g]) => g);
+
+    for (const entry of requests.wantedAt) {
+      demandByProfile.set(entry.artistProfileId, { venueName: entry.venueName, fans: entry.fans });
+      if (entry.fans > maxWantedFans) maxWantedFans = entry.fans;
+    }
 
     if (seedRows.length > 0) {
       const mediaIds = [...new Set(seedRows.map((s: { mediaId: string }) => s.mediaId))];
@@ -133,19 +203,23 @@ export async function getRecommendations(
       for (const [id, score] of seedSignals) seedSignals.set(id, score / maxSeed);
     }
 
-    // Collaborative filtering.
-    if (alreadyHypedIds.size > 0) {
-      const coHypeUsers = await db.profileHypeEvent.findMany({
-        where: { profileId: { in: [...alreadyHypedIds] }, userId: { not: viewerId } },
-        select: { userId: true },
-        distinct: ['userId'],
-        take: COLLAB_MAX_COHYPE_USERS,
-      });
-      if (coHypeUsers.length > 0) {
-        const coHypeUserIds = coHypeUsers.map((u: { userId: string }) => u.userId);
+    // Collaborative filtering — over the acts the viewer knows by any route,
+    // and over the fans who asked venues for the same acts, not only co-hypers.
+    if (knownIds.size > 0) {
+      const [coHypeUsers, coRequesters] = await Promise.all([
+        db.profileHypeEvent.findMany({
+          where: { profileId: { in: [...knownIds] }, userId: { not: viewerId } },
+          select: { userId: true },
+          distinct: ['userId'],
+          take: COLLAB_MAX_COHYPE_USERS,
+        }),
+        loadCoRequesterIds(viewerId, requests.requestedArtistIds),
+      ]);
+      const coHypeUserIds = [...new Set([...coHypeUsers.map((u: { userId: string }) => u.userId), ...coRequesters])];
+      if (coHypeUserIds.length > 0) {
         const coHypeEvents = await db.profileHypeEvent.groupBy({
           by: ['profileId'],
-          where: { userId: { in: coHypeUserIds }, profileId: { notIn: [...alreadyHypedIds] } },
+          where: { userId: { in: coHypeUserIds }, profileId: { notIn: [...knownIds] } },
           _count: { _all: true },
           orderBy: { _count: { profileId: 'desc' } },
           take: COLLAB_MAX_CANDIDATES,
@@ -166,7 +240,7 @@ export async function getRecommendations(
         type: 'ARTIST',
         genres: { hasSome: viewerGenres.slice(0, 4) },
         hypeCount: { gte: 5 },
-        id: { notIn: viewerId ? [...alreadyHypedIds] : [] },
+        id: { notIn: viewerId ? [...knownIds] : [] },
       },
       select: { id: true },
       take: 40,
@@ -183,7 +257,7 @@ export async function getRecommendations(
         const compFanIds = compFans.map((f: { userId: string }) => f.userId);
         const compCandidates = await db.profileHypeEvent.groupBy({
           by: ['profileId'],
-          where: { userId: { in: compFanIds }, profileId: { notIn: viewerId ? [...alreadyHypedIds] : [] } },
+          where: { userId: { in: compFanIds }, profileId: { notIn: viewerId ? [...knownIds] : [] } },
           _count: { _all: true },
           orderBy: { _count: { profileId: 'desc' } },
           take: 80,
@@ -233,6 +307,8 @@ export async function getRecommendations(
         collabCandidates: collabScores.size,
         comparableCandidates: comparableScores.size,
         weights: WEIGHTS,
+        viewerSignals,
+        ready: isRecommendationReady(viewerSignals),
       },
     };
   }
@@ -256,7 +332,7 @@ export async function getRecommendations(
   const maxHype = Math.max(...(profiles as PoolProfile[]).map((p: PoolProfile) => p.hypeCount), 1);
 
   const scored: RecommendedProfile[] = (profiles as PoolProfile[])
-    .filter((p: PoolProfile) => !alreadyHypedIds.has(p.id))
+    .filter((p: PoolProfile) => !knownIds.has(p.id))
     .map((profile: PoolProfile, index: number) => {
       const social   = Math.log1p(profile.hypeCount) / Math.log1p(maxHype);
       const momentum = momentumRaw[index] / maxMomentum;
@@ -267,10 +343,19 @@ export async function getRecommendations(
 
       const seedBoost  = seedSignals.get(profile.id) ?? 0;
       const seedFactor = 1 + seedBoost * 0.4;
+      /* Fans wanting this act at a venue the viewer follows or asked. A fact
+         about a room the viewer cares about, so it both lifts the score and
+         becomes the sentence — "Fans like you hype them" is an inference,
+         "Fans want them at Port City" is a report. */
+      const wanted = demandByProfile.get(profile.id);
+      const demandBoost = wanted && maxWantedFans > 0 ? wanted.fans / maxWantedFans : 0;
+      const demandFactor = 1 + demandBoost * 0.6;
 
       const signals: Signals = { taste, geo, social, momentum, collab, comparable };
       const base = finalScore(signals);
-      const reason = buildReason(signals, profile.genres, genreToArtist, profile.city);
+      const reason: RecommendationReason = wanted
+        ? { kind: 'request', text: `Fans want them at ${wanted.venueName}` }
+        : buildReason(signals, profile.genres, genreToArtist, profile.city);
 
       return {
         id: profile.id,
@@ -287,7 +372,7 @@ export async function getRecommendations(
         verified: profile.verified,
         avatarImage: profile.avatarImage,
         reason,
-        _scores: { ...signals, seed: seedBoost, final: Math.max(0, base * seedFactor) },
+        _scores: { ...signals, seed: seedBoost, demand: demandBoost, final: Math.max(0, base * seedFactor * demandFactor) },
         _rank: 0,
       };
     });
@@ -307,6 +392,8 @@ export async function getRecommendations(
       collabCandidates: collabScores.size,
       comparableCandidates: comparableScores.size,
       weights: WEIGHTS,
+      viewerSignals,
+      ready: isRecommendationReady(viewerSignals),
     },
   };
 }

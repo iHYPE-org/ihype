@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { geoTier, tasteScore, finalScore, buildReason, historyBoost, WEIGHTS, type Signals } from '@/lib/recommendation-scoring';
+import { geoTier, tasteScore, finalScore, buildReason, historyBoost, isRecommendationReady, KNOWN_GENRE_WEIGHT, WEIGHTS, type Signals } from '@/lib/recommendation-scoring';
 
 describe('geoTier', () => {
   it('returns null when the viewer has no location', () => {
@@ -119,5 +119,39 @@ describe('historyBoost', () => {
 
   it('stacks both boosts when the fan has seen both the artist and the venue before', () => {
     expect(historyBoost(true, true)).toBeCloseTo(historyBoost(true, false) + (historyBoost(false, true) - 1));
+  });
+});
+
+describe('buildReason names how the viewer knows the artist', () => {
+  const taste: Signals = { taste: 1, geo: null, social: 0.1, momentum: 0.1, collab: null, comparable: null };
+
+  it('says "asked a venue to book" for a request-backed genre', () => {
+    const known = new Map([['house', { name: 'Nyla Park', slug: 'nyla-park', via: 'request' as const }]]);
+    expect(buildReason(taste, ['house'], known, null).text).toBe('Because you asked a venue to book Nyla Park');
+  });
+
+  it('says "follow" for a follow-backed genre and keeps "hyped" as the default', () => {
+    const followed = new Map([['house', { name: 'Nyla Park', slug: 'nyla-park', via: 'follow' as const }]]);
+    expect(buildReason(taste, ['house'], followed, null).text).toBe('Because you follow Nyla Park');
+    const legacy = new Map([['house', { name: 'Nyla Park', slug: 'nyla-park' }]]);
+    expect(buildReason(taste, ['house'], legacy, null).text).toBe('Because you hyped Nyla Park');
+  });
+
+  it('weighs a request above a follow above a hype in the genre profile', () => {
+    expect(KNOWN_GENRE_WEIGHT.request).toBeGreaterThan(KNOWN_GENRE_WEIGHT.follow);
+    expect(KNOWN_GENRE_WEIGHT.follow).toBeGreaterThan(KNOWN_GENRE_WEIGHT.hype);
+  });
+});
+
+describe('isRecommendationReady (say nothing until it makes sense)', () => {
+  it('is not ready for a viewer who has left no taste signal, whatever their location', () => {
+    expect(isRecommendationReady({ hypes: 0, seeds: 0, follows: 0, requests: 0 })).toBe(false);
+  });
+
+  it('is ready on a single signal of any kind', () => {
+    expect(isRecommendationReady({ hypes: 1, seeds: 0, follows: 0, requests: 0 })).toBe(true);
+    expect(isRecommendationReady({ hypes: 0, seeds: 1, follows: 0, requests: 0 })).toBe(true);
+    expect(isRecommendationReady({ hypes: 0, seeds: 0, follows: 1, requests: 0 })).toBe(true);
+    expect(isRecommendationReady({ hypes: 0, seeds: 0, follows: 0, requests: 1 })).toBe(true);
   });
 });

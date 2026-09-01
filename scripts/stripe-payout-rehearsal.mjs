@@ -91,7 +91,25 @@ if (!KEY.startsWith('sk_test_')) {
   process.exit(1);
 }
 
-const stripe = new Stripe(KEY);
+/* Egress through an HTTPS proxy when the environment names one. The sandboxes
+   this is rehearsed from reach Stripe only that way, and Stripe's default Node
+   client ignores HTTPS_PROXY — every request failed as "An error occurred with
+   our connection to Stripe" (2026-09-01). `https-proxy-agent` is the agent
+   Stripe's own docs name for this; it is a transitive dependency here, so it is
+   loaded dynamically and its absence just means a direct connection, which is
+   the right behaviour on a machine with plain egress. */
+async function buildStripe() {
+  const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  if (!proxy) return new Stripe(KEY);
+  try {
+    const { HttpsProxyAgent } = await import('https-proxy-agent');
+    return new Stripe(KEY, { httpAgent: new HttpsProxyAgent(proxy) });
+  } catch {
+    console.warn('HTTPS_PROXY is set but https-proxy-agent is not installed; connecting directly.');
+    return new Stripe(KEY);
+  }
+}
+const stripe = await buildStripe();
 
 // 70/20/10, matching the charter and src/lib/ticket-order-state.ts. The last
 // share absorbs the remainder so the parts always sum to the whole — the same
