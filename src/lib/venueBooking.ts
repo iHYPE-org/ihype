@@ -147,8 +147,13 @@ export async function getVenueBookingRecommendations(userId: string, now: Date =
       : 'Trending now',
   });
 
+  /* "Already booked" hides an act the venue has a show with — unless fans are
+     asking for them again. A request after a booking is the signal for a
+     return night, and hiding it was the one hop the end-to-end walk found
+     broken (2026-09-01, item 32c): the act fans asked for had a show here and
+     the radar said nothing. */
   const scored = rows
-    .filter((r: ArtistRow) => !!r.slug && !bookedIds.has(r.id))
+    .filter((r: ArtistRow) => !!r.slug && (!bookedIds.has(r.id) || demandByProfile.has(r.id)))
     .map((r: ArtistRow) => {
       const taste = tasteScore(venue.genres, r.genres);
       const geo = geoScore(venue.city, venue.stateRegion, r.city, r.stateRegion);

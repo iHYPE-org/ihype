@@ -323,7 +323,18 @@ async function main() {
   // ── 2/3. Passkey + login are Playwright's (e2e/passkey.spec.ts, auth.spec.ts).
   //        What is asserted here is that a signed session actually authenticates.
   await item('3. Login (session authenticates against the real worker)', async () => {
-    const me = ok(await api('/api/me', { cookie: fan.cookie }));
+    const probe = await api('/api/me', { cookie: fan.cookie });
+    /* The one wrong-environment failure that reads as a product bug. A
+       production build (any workerd target) names its session cookie
+       __Secure-authjs.session-token, and the fixture mints under the name
+       sessionCookieName() returns — so without PLAYWRIGHT_AUTH_COOKIE_SECURE=true
+       every authenticated item answers 401 and nothing else in the walk means
+       anything. Measured 2026-09-01: 17 failures, all this. */
+    assert(
+      probe.status !== 401 || process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE === 'true',
+      '/api/me answered 401 with the seeded cookie. If the target is a production build (workerd), set PLAYWRIGHT_AUTH_COOKIE_SECURE=true so the fixture mints and sends __Secure-authjs.session-token.',
+    );
+    const me = ok(probe);
     assert(me?.user?.id === fan.user.id || me?.id === fan.user.id, `/api/me did not return the signed-in user: ${JSON.stringify(me).slice(0, 120)}`);
     return `/api/me resolved ${fan.user.email}`;
   });
