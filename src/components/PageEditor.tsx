@@ -10,7 +10,6 @@ import {
   getProfileAccentTone,
   getProfileBackdropTone,
 } from '@/lib/profile-design';
-import { AI_FIELD_LABELS } from '@/lib/page-refine';
 import { parsePressKit, serializePressKit } from '@/lib/press-kit';
 import { statOptionsForRole, type StatKey } from '@/lib/profile-stats-catalog';
 import { MUSIC_GENRES } from '@/lib/genres';
@@ -66,7 +65,6 @@ const SECTIONS = [
   { id: 'presskit', label: 'Press kit' },
   { id: 'stats', label: 'Stats' },
   { id: 'theme', label: 'Theme' },
-  { id: 'ai', label: 'AI' },
 ] as const;
 type SectionId = (typeof SECTIONS)[number]['id'];
 
@@ -147,16 +145,6 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiProposed, setAiProposed] = useState<Record<string, string> | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [aiApplied, setAiApplied] = useState(false);
-  const [importUrl, setImportUrl] = useState('');
-  const [importBusy, setImportBusy] = useState(false);
-  // One-shot "Generate my page" intake — a thin front door onto the same
-  // runAiRefine()/refine endpoint below, for an owner with an empty page who
-  // hasn't written anything yet to reorganize.
   // Press kit sub-form: friendly text fields serialized into the single
   // pressKitContent JSON column on every change.
   const [kitTagline, setKitTagline] = useState('');
@@ -372,82 +360,21 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
     }
   }
 
-  async function runAiRefine() {
-    const instruction = aiPrompt.trim();
-    if (!instruction || aiBusy) return;
-    setAiBusy(true);
-    setAiError(null);
-    setAiProposed(null);
-    setAiApplied(false);
-    try {
-      const res = await fetch('/api/page-builder/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, instruction }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAiError(d.error ?? t('pageEditor.aiGenericError', 'Something went wrong — try again.'));
-      } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        // Distinguish an engine outage from the AI running fine but having
-        // nothing to work with (e.g. "write my About from my bio" with an
-        // empty bio) — the old catch-all "warming up" was misleading in the
-        // latter, far more common, case.
-        setAiError(
-          d.reason === 'engine'
-            ? t('pageEditor.aiEngineUnavailable', 'The AI engine is temporarily unavailable — please try again in a moment.')
-            : t('pageEditor.aiNotEnoughContent', "The AI couldn't find enough to work with. Fill in the fields your instruction refers to (like your bio), or rephrase it.")
-        );
-      } else {
-        setAiProposed(d.changes as Record<string, string>);
-      }
-    } catch {
-      setAiError(t('pageEditor.networkError', 'Network error — try again.'));
-    } finally {
-      setAiBusy(false);
-    }
-  }
+  /* THERE IS NO AI IN THIS EDITOR ANY MORE, and it is not coming back by
+     halves. Whole-page generation went first (2026-08-08, Design System 8):
+     it cost tokens on every page and still produced pages that had to be
+     hand-edited into a common shape. The two survivors — "refine" and
+     "import from your website" — went 2026-09-01 by owner instruction:
+     "ditch AI page editor for artists and venues - we're going to go more
+     streamlined to save time and storage space."
 
-  async function runWebsiteImport() {
-    const url = importUrl.trim();
-    if (!url || importBusy) return;
-    setImportBusy(true);
-    setAiError(null);
-    setAiProposed(null);
-    setAiApplied(false);
-    try {
-      const res = await fetch('/api/page-builder/import-website', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, url }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAiError(d.error ?? t('pageEditor.importFailed', 'Could not import from that site — try again.'));
-      } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        setAiError(t('pageEditor.importNothingMapped', 'Nothing on that page mapped to your iHYPE fields.'));
-      } else {
-        setAiProposed(d.changes as Record<string, string>);
-      }
-    } catch {
-      setAiError(t('pageEditor.networkError', 'Network error — try again.'));
-    } finally {
-      setImportBusy(false);
-    }
-  }
-
-  // Whole-page AI generation lived here and was retired 2026-08-08 (Design
-  // System 8): it cost tokens on every page and still produced pages that had
-  // to be hand-edited into a common shape, so profile pages are now a fixed
-  // per-type schema. The two AI tools below are deliberately kept — both edit
-  // content the member has already supplied rather than inventing a page.
-  function applyAiChanges() {
-    if (!aiProposed) return;
-    setData((d) => (d ? { ...d, ...aiProposed } : d));
-    setSavedAt(null);
-    setAiProposed(null);
-    setAiApplied(true);
-  }
+     The reasoning that kept them ("they only edit content the member already
+     supplied") was about safety, never about whether they earned their place.
+     They were an eighth section on an editor the owner has called too busy,
+     a per-keystroke inference cost, and a second way to write the same fields
+     the form already writes. `/api/page-builder/refine` and
+     `/api/page-builder/import-website` are deleted with them; the profile is
+     a fixed per-type schema filled in by hand. */
 
   if (!data) {
     return <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-a65)' }}>{t('pageEditor.loadingPage', 'Loading your page…')}</div>;
@@ -838,149 +765,6 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               fontWeight: 800, fontSize: '1.125rem', color: accentTone.accent ?? preset.accent,
             }}>{data.name || t('pageEditor.themePreviewFallbackName', 'Your page')}</div>
           </div>
-        </div>
-      )}
-
-      {section === 'ai' && (
-        <div className="sub-panel">
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase',
-            color: 'var(--ink-a65)', marginBottom: 14,
-          }}>
-            {t('pageEditor.aiPageStudioLabel', 'AI PAGE TOOLS')}
-          </div>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
-            {t('pageEditor.aiStudioIntro', "Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works with content you've already added, and nothing changes until you apply and save.")}
-          </p>
-
-          {!isFan && (
-            <div style={{
-              border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px',
-              background: 'var(--hair-20)', marginBottom: 20,
-            }}>
-              <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
-                {t('pageEditor.importFromWebsiteTitle', 'Import from your website')}
-              </div>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 10px', lineHeight: 1.5 }}>
-                {t('pageEditor.importFromWebsiteBody', "Already have a site? Paste the address and the AI pulls your bio, links, and details into your iHYPE page. You review everything before it's applied.")}
-              </p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <input
-                  inputMode="url"
-                  onChange={(e) => setImportUrl(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runWebsiteImport(); } }}
-                  placeholder="https://yourband.com"
-                  style={{ ...inputStyle, flex: '1 1 220px' }}
-                  type="url"
-                  value={importUrl}
-                />
-                <button
-                  className="settings-btn settings-btn-ghost"
-                  disabled={importBusy || !importUrl.trim()}
-                  onClick={runWebsiteImport}
-                  style={{ flexShrink: 0 }}
-                  type="button"
-                >
-                  {importBusy ? t('pageEditor.importing', 'Importing…') : t('pageEditor.import', 'Import')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-            {[
-              { key: 'organizeLinks', text: 'Organize my links by importance' },
-              { key: 'tightenBio', text: 'Tighten my bio' },
-              { key: 'writeAboutFromBio', text: 'Write my About section from my bio' },
-              ...(isArtistOrDj ? [{ key: 'polishTourMerch', text: 'Polish my tour and merch sections' }] : []),
-              ...(isVenue ? [{ key: 'cleanHoursParking', text: 'Clean up my hours and parking info' }] : []),
-              { key: 'moodierLook', text: 'Give my page a moodier late-night look' },
-            ].map((chip) => (
-              <button
-                key={chip.key}
-                onClick={() => setAiPrompt(chip.text)}
-                style={{
-                  fontSize: '0.9375rem', padding: '7px 13px', borderRadius: 9999, cursor: 'pointer',
-                  background: 'var(--hair-30)', border: '1px solid var(--hair-100)',
-                  color: 'var(--ink-a65)', fontFamily: 'var(--font-body)',
-                }}
-                type="button"
-              >
-                {t(`pageEditor.aiChip.${chip.key}`, chip.text)}
-              </button>
-            ))}
-          </div>
-
-          <TextAreaField
-            maxLength={500}
-            onChange={setAiPrompt}
-            placeholder={t('pageEditor.aiPromptPlaceholder', 'e.g. Reorder my links so streaming comes first, and rewrite my bio to sound bigger')}
-            rows={3}
-            value={aiPrompt}
-          />
-          <button
-            className="settings-btn settings-btn-accent"
-            disabled={aiBusy || !aiPrompt.trim()}
-            onClick={runAiRefine}
-            style={{ width: '100%', marginTop: 12, padding: '13px', fontSize: '0.9375rem' }}
-            type="button"
-          >
-            {aiBusy ? t('pageEditor.thinking', 'Thinking…') : t('pageEditor.customizeWithAi', 'Customize with AI')}
-          </button>
-
-          {aiError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginTop: 14 }}>{aiError}</p>}
-          {aiApplied && (
-            <p style={{ color: 'var(--role-venue)', fontSize: '0.9375rem', fontFamily: 'var(--font-mono)', marginTop: 14 }}>
-              ✓ {t('pageEditor.aiAppliedNote', 'Applied — review the sections, then hit Save changes.')}
-            </p>
-          )}
-
-          {aiProposed && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase',
-                color: 'var(--ink-a65)', marginBottom: 12,
-              }}>
-                {t('pageEditor.proposedChangesLabel', 'PROPOSED CHANGES')} · {Object.keys(aiProposed).length}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {Object.entries(aiProposed).map(([field, value]) => (
-                  <div key={field} style={{
-                    border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 12, padding: '12px 14px',
-                    background: 'rgba(var(--accent-rgb),.05)',
-                  }}>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--accent-text)', marginBottom: 6 }}>
-                      {t(`pageEditor.aiFieldLabel.${field}`, AI_FIELD_LABELS[field] ?? field)}
-                    </div>
-                    <div style={{
-                      fontSize: '0.9375rem', color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.5,
-                      maxHeight: 140, overflowY: 'auto',
-                    }}>
-                      {value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button
-                  className="settings-btn settings-btn-accent"
-                  onClick={applyAiChanges}
-                  style={{ flex: 1, padding: '12px', fontSize: '0.9375rem' }}
-                  type="button"
-                >
-                  {t('pageEditor.applyChanges', 'Apply changes')}
-                </button>
-                <button
-                  className="settings-btn settings-btn-ghost"
-                  onClick={() => setAiProposed(null)}
-                  style={{ padding: '12px 18px', fontSize: '0.9375rem' }}
-                  type="button"
-                >
-                  {t('pageEditor.discard', 'Discard')}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
