@@ -10,13 +10,13 @@ import {
   getProfileAccentTone,
   getProfileBackdropTone,
 } from '@/lib/profile-design';
-import { AI_FIELD_LABELS } from '@/lib/page-refine';
 import { parsePressKit, serializePressKit } from '@/lib/press-kit';
 import { statOptionsForRole, type StatKey } from '@/lib/profile-stats-catalog';
 import { MUSIC_GENRES } from '@/lib/genres';
 import { useI18n } from '@/components/I18nProvider';
+import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 
-type AvailabilityEntry = { id: string; date: string; note: string | null };
+type AvailabilityEntry = { id: string; date: string; note: string | null; kind?: 'TOUR' | 'AVAILABLE' };
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
 
 type EditorProfile = {
@@ -43,6 +43,10 @@ type EditorProfile = {
   stateRegion: string | null;
   postalCode: string | null;
   country: string | null;
+  hometown: string | null;
+  members: string | null;
+  contactInfo: string | null;
+  capacity: number | null;
   hoursText: string | null;
   parkingDetails: string | null;
   stayRecommendations: string | null;
@@ -58,17 +62,56 @@ type EditorProfile = {
   pinnedStats: string[];
 };
 
-const SECTIONS = [
-  { id: 'basics', label: 'Basics' },
+/**
+ * FOUR SECTIONS, AND WHICH FOUR DEPENDS ON THE TYPE.
+ *
+ * Set by the owner 2026-09-01 — "artist page too busy, we need to tone down
+ * the customization", then the two shapes verbatim. What this replaced was one
+ * seven-section list shared by every profile type and filtered down with
+ * per-type conditions, which is how an artist ended up with Basics, About,
+ * Media, Details, Press kit, Stats, Theme AND an AI tab: nothing in the
+ * structure said what a section was FOR, so each new field found a home and
+ * the page grew.
+ *
+ * Naming the sets per type is the fix. A venue's second section is Event Info
+ * because that is what a venue publishes; an artist's is Media because that is
+ * what an artist publishes. Neither has to carry the other's fields, and
+ * "where does this new field go" now has an answer that can be wrong.
+ *
+ * A fan gets two. Fans have no catalogue, no room and no press kit, and the
+ * old editor gave them a Theme tab and a Details tab that rendered nothing.
+ */
+const ARTIST_SECTIONS = [
   { id: 'about', label: 'About' },
   { id: 'media', label: 'Media' },
-  { id: 'details', label: 'Details' },
   { id: 'presskit', label: 'Press kit' },
   { id: 'stats', label: 'Stats' },
-  { id: 'theme', label: 'Theme' },
-  { id: 'ai', label: 'AI' },
+] as const;
+
+const VENUE_SECTIONS = [
+  { id: 'about', label: 'About' },
+  { id: 'eventinfo', label: 'Event Info' },
+  { id: 'contact', label: 'Contact' },
+  { id: 'stats', label: 'Stats' },
+] as const;
+
+const FAN_SECTIONS = [
+  { id: 'about', label: 'About' },
+  { id: 'stats', label: 'Stats' },
+] as const;
+
+const SECTIONS = [
+  ...ARTIST_SECTIONS,
+  ...VENUE_SECTIONS,
+  ...FAN_SECTIONS,
 ] as const;
 type SectionId = (typeof SECTIONS)[number]['id'];
+
+function sectionsForType(type: string): readonly { id: SectionId; label: string }[] {
+  if (type === 'VENUE') return VENUE_SECTIONS;
+  if (type === 'LISTENER') return FAN_SECTIONS;
+  return ARTIST_SECTIONS;
+}
 
 const inputStyle: React.CSSProperties = {
   width: '100%', boxSizing: 'border-box', padding: '12px 14px', borderRadius: 10,
@@ -139,24 +182,19 @@ function ImageField({ label, value, onUpload, uploading }: { label: string; valu
 export function PageEditor({ profileId, initialSection }: { profileId: string; initialSection?: string }) {
   const { t } = useI18n();
   const [data, setData] = useState<EditorProfile | null>(null);
+  /* 'about' is the new front door — 'basics' is gone, and a deep link naming a
+     retired section (?editor=theme from a bookmark or an old email) must land
+     somewhere real rather than on a blank pane. Whether the named section is
+     valid FOR THIS TYPE is settled below, once the profile has loaded and its
+     type is known. */
   const resolvedInitialSection = SECTIONS.some((item) => item.id === initialSection)
     ? initialSection as SectionId
-    : 'basics';
+    : 'about';
   const [section, setSection] = useState<SectionId>(resolvedInitialSection);
   const [saving, setSaving] = useState(false);
   const [savedAt, setSavedAt] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadingField, setUploadingField] = useState<string | null>(null);
-  const [aiPrompt, setAiPrompt] = useState('');
-  const [aiBusy, setAiBusy] = useState(false);
-  const [aiProposed, setAiProposed] = useState<Record<string, string> | null>(null);
-  const [aiError, setAiError] = useState<string | null>(null);
-  const [aiApplied, setAiApplied] = useState(false);
-  const [importUrl, setImportUrl] = useState('');
-  const [importBusy, setImportBusy] = useState(false);
-  // One-shot "Generate my page" intake — a thin front door onto the same
-  // runAiRefine()/refine endpoint below, for an owner with an empty page who
-  // hasn't written anything yet to reorganize.
   // Press kit sub-form: friendly text fields serialized into the single
   // pressKitContent JSON column on every change.
   const [kitTagline, setKitTagline] = useState('');
@@ -174,6 +212,10 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const [availDates, setAvailDates] = useState<AvailabilityEntry[]>([]);
   const [availDateInput, setAvailDateInput] = useState('');
   const [availNoteInput, setAvailNoteInput] = useState('');
+  /* Which kind the add form will write. TOUR first because the calendar's
+     headline use is "where am I playing" — booking availability is the
+     secondary meaning that happened to be here first. */
+  const [availKindInput, setAvailKindInput] = useState<'TOUR' | 'AVAILABLE'>('TOUR');
   const [availSaving, setAvailSaving] = useState(false);
   const [availError, setAvailError] = useState<string | null>(null);
   // Recent activity — read-only feed from /api/profile/activity (who hyped
@@ -260,6 +302,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
           profileId,
           date: new Date(availDateInput).toISOString(),
           note: availNoteInput.trim() || undefined,
+          kind: availKindInput,
         }),
       });
       const d = await res.json().catch(() => ({}));
@@ -372,82 +415,21 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
     }
   }
 
-  async function runAiRefine() {
-    const instruction = aiPrompt.trim();
-    if (!instruction || aiBusy) return;
-    setAiBusy(true);
-    setAiError(null);
-    setAiProposed(null);
-    setAiApplied(false);
-    try {
-      const res = await fetch('/api/page-builder/refine', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, instruction }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAiError(d.error ?? t('pageEditor.aiGenericError', 'Something went wrong — try again.'));
-      } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        // Distinguish an engine outage from the AI running fine but having
-        // nothing to work with (e.g. "write my About from my bio" with an
-        // empty bio) — the old catch-all "warming up" was misleading in the
-        // latter, far more common, case.
-        setAiError(
-          d.reason === 'engine'
-            ? t('pageEditor.aiEngineUnavailable', 'The AI engine is temporarily unavailable — please try again in a moment.')
-            : t('pageEditor.aiNotEnoughContent', "The AI couldn't find enough to work with. Fill in the fields your instruction refers to (like your bio), or rephrase it.")
-        );
-      } else {
-        setAiProposed(d.changes as Record<string, string>);
-      }
-    } catch {
-      setAiError(t('pageEditor.networkError', 'Network error — try again.'));
-    } finally {
-      setAiBusy(false);
-    }
-  }
+  /* THERE IS NO AI IN THIS EDITOR ANY MORE, and it is not coming back by
+     halves. Whole-page generation went first (2026-08-08, Design System 8):
+     it cost tokens on every page and still produced pages that had to be
+     hand-edited into a common shape. The two survivors — "refine" and
+     "import from your website" — went 2026-09-01 by owner instruction:
+     "ditch AI page editor for artists and venues - we're going to go more
+     streamlined to save time and storage space."
 
-  async function runWebsiteImport() {
-    const url = importUrl.trim();
-    if (!url || importBusy) return;
-    setImportBusy(true);
-    setAiError(null);
-    setAiProposed(null);
-    setAiApplied(false);
-    try {
-      const res = await fetch('/api/page-builder/import-website', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, url }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setAiError(d.error ?? t('pageEditor.importFailed', 'Could not import from that site — try again.'));
-      } else if (!d.changes || Object.keys(d.changes).length === 0) {
-        setAiError(t('pageEditor.importNothingMapped', 'Nothing on that page mapped to your iHYPE fields.'));
-      } else {
-        setAiProposed(d.changes as Record<string, string>);
-      }
-    } catch {
-      setAiError(t('pageEditor.networkError', 'Network error — try again.'));
-    } finally {
-      setImportBusy(false);
-    }
-  }
-
-  // Whole-page AI generation lived here and was retired 2026-08-08 (Design
-  // System 8): it cost tokens on every page and still produced pages that had
-  // to be hand-edited into a common shape, so profile pages are now a fixed
-  // per-type schema. The two AI tools below are deliberately kept — both edit
-  // content the member has already supplied rather than inventing a page.
-  function applyAiChanges() {
-    if (!aiProposed) return;
-    setData((d) => (d ? { ...d, ...aiProposed } : d));
-    setSavedAt(null);
-    setAiProposed(null);
-    setAiApplied(true);
-  }
+     The reasoning that kept them ("they only edit content the member already
+     supplied") was about safety, never about whether they earned their place.
+     They were an eighth section on an editor the owner has called too busy,
+     a per-keystroke inference cost, and a second way to write the same fields
+     the form already writes. `/api/page-builder/refine` and
+     `/api/page-builder/import-website` are deleted with them; the profile is
+     a fixed per-type schema filled in by hand. */
 
   if (!data) {
     return <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-a65)' }}>{t('pageEditor.loadingPage', 'Loading your page…')}</div>;
@@ -457,6 +439,15 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const isFan = data.type === 'LISTENER';
   const isArtistOrDj = data.type === 'ARTIST';
 
+  /* The type decides the set, and a section outside it falls back to the first
+     one rather than rendering an empty pane. That matters because the sets no
+     longer overlap: a venue has no Media and an artist has no Contact, so
+     ?editor=media on a venue used to be reachable and blank. */
+  const visibleSections = sectionsForType(data.type);
+  const activeSection: SectionId = visibleSections.some((item) => item.id === section)
+    ? section
+    : visibleSections[0].id;
+
   const preset = getProfileDesignPreset(data.themePreset);
   const accentTone = getProfileAccentTone(data.themeAccentTone);
   const backdropTone = getProfileBackdropTone(data.themeBackdropTone);
@@ -464,7 +455,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   return (
     <div>
       <div className="page-editor-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
-        {SECTIONS.filter((s) => (s.id !== 'details' || !isFan) && (s.id !== 'presskit' || isArtistOrDj)).map((s) => (
+        {visibleSections.map((s) => (
           <button
             key={s.id}
             className={section === s.id ? 'sub-tab active' : 'sub-tab'}
@@ -476,160 +467,251 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
         ))}
       </div>
 
-      {section === 'basics' && (
+      {activeSection === 'about' && (
         <div className="sub-panel">
           <Field label={t('pageEditor.nameLabel', 'Name')}><TextField maxLength={120} onChange={(v) => set('name', v)} value={data.name} /></Field>
           <Field hint={t('pageEditor.headlineHint', 'A short one-liner shown near your name')} label={t('pageEditor.headlineLabel', 'Headline')}>
             <TextField maxLength={180} onChange={(v) => set('headline', v ?? '')} placeholder={t('pageEditor.headlinePlaceholder', 'e.g. Indie rock from Portland')} value={data.headline ?? ''} />
           </Field>
-          <Field label={t('pageEditor.bioLabel', 'Bio')}><TextAreaField maxLength={1000} onChange={(v) => set('bio', v)} rows={3} value={data.bio ?? ''} /></Field>
-          <Field label={t('pageEditor.linksLabel', 'Links')} hint={t('pageEditor.linksHint', 'One per line — socials, streaming, anything')}>
-            <TextAreaField maxLength={5000} onChange={(v) => set('links', v)} rows={3} value={data.links ?? ''} />
-          </Field>
+
           {isArtistOrDj && (
-            <Field hint={t('pageEditor.genresHint', 'Comma-separated — shown on your public page and used for discovery')} label={t('pageEditor.genresLabel', 'Genres')}>
-              <input
-                list="ihype-editor-genre-suggestions"
-                onChange={(e) => { setGenresText(e.target.value); setGenresSavedAt(null); }}
-                placeholder={t('pageEditor.genresPlaceholder', 'dream-pop, shoegaze, lo-fi')}
-                style={inputStyle}
-                type="text"
-                value={genresText}
-              />
-              <datalist id="ihype-editor-genre-suggestions">
-                {MUSIC_GENRES.map((g) => <option key={g} value={g} />)}
-              </datalist>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
-                <button
-                  className="settings-btn settings-btn-ghost"
-                  disabled={genresSaving}
-                  onClick={saveGenres}
-                  type="button"
-                >
-                  {genresSaving ? t('pageEditor.saving', 'Saving…') : t('pageEditor.saveGenres', 'Save genres')}
-                </button>
-                {genresError && <span style={{ color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{genresError}</span>}
-                {genresSavedAt && !genresError && <span style={{ color: 'var(--role-venue)', fontSize: '0.9375rem', fontFamily: 'var(--font-mono)' }}>✓ {t('pageEditor.saved', 'Saved')}</span>}
-              </div>
+            <>
+              <Field hint={t('pageEditor.genresHint', 'Comma-separated — shown on your public page and used for discovery')} label={t('pageEditor.genresLabel', 'Genre')}>
+                <input
+                  list="ihype-editor-genre-suggestions"
+                  onChange={(e) => { setGenresText(e.target.value); setGenresSavedAt(null); }}
+                  placeholder={t('pageEditor.genresPlaceholder', 'dream-pop, shoegaze, lo-fi')}
+                  style={inputStyle}
+                  type="text"
+                  value={genresText}
+                />
+                <datalist id="ihype-editor-genre-suggestions">
+                  {MUSIC_GENRES.map((g) => <option key={g} value={g} />)}
+                </datalist>
+                {/* Genres save through their own endpoint, so they keep their own
+                    button — "Save changes" at the bottom does not carry them. */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                  <button className="settings-btn settings-btn-ghost" disabled={genresSaving} onClick={saveGenres} type="button">
+                    {genresSaving ? t('pageEditor.saving', 'Saving…') : t('pageEditor.saveGenres', 'Save genres')}
+                  </button>
+                  {genresError && <span style={{ color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{genresError}</span>}
+                  {genresSavedAt && !genresError && <span style={{ color: 'var(--role-venue)', fontSize: '0.9375rem', fontFamily: 'var(--font-mono)' }}>✓ {t('pageEditor.saved', 'Saved')}</span>}
+                </div>
+              </Field>
+              <Field hint={t('pageEditor.originHint', 'Where the act is from — shown on your page and used for local discovery')} label={t('pageEditor.originLabel', 'Origin')}>
+                <TextField maxLength={120} onChange={(v) => set('hometown', v)} placeholder={t('pageEditor.originPlaceholder', 'Portland, ME')} value={data.hometown ?? ''} />
+              </Field>
+            </>
+          )}
+
+          <Field label={t('pageEditor.bioLabel', 'Bio')}><TextAreaField maxLength={1000} onChange={(v) => set('bio', v)} rows={3} value={data.bio ?? ''} /></Field>
+
+          {isArtistOrDj && (
+            <Field hint={t('pageEditor.membersHint', 'One per line — name, then instrument if you want')} label={t('pageEditor.membersLabel', 'Members')}>
+              <TextAreaField maxLength={2000} onChange={(v) => set('members', v)} placeholder={t('pageEditor.membersPlaceholder', 'Sam Reyes — vocals, guitar\nJo Okafor — bass')} rows={4} value={data.members ?? ''} />
             </Field>
           )}
+
+          {isVenue && (
+            <Field hint={t('pageEditor.capacityHint', 'Maximum room size — one event can still be capped lower')} label={t('pageEditor.capacityLabel', 'Capacity')}>
+              {/* capacity is an Int on Profile and the editor schema rejects a
+                  string, so the digits are parsed here rather than shipped raw.
+                  An emptied field means "not stated", which is null, not 0 — a
+                  venue with capacity 0 is a closed room. */}
+              <TextField
+                maxLength={6}
+                onChange={(v) => {
+                  const digits = v.replace(/[^0-9]/g, '');
+                  set('capacity', digits === '' ? null : Number(digits));
+                }}
+                placeholder="250"
+                value={data.capacity == null ? '' : String(data.capacity)}
+              />
+            </Field>
+          )}
+
+          <Field label={t('pageEditor.linksLabel', 'Links')} hint={t('pageEditor.linksHint', 'One per line — website, socials, streaming')}>
+            <TextAreaField maxLength={5000} onChange={(v) => set('links', v)} rows={3} value={data.links ?? ''} />
+          </Field>
+
+          <Field hint={t('pageEditor.aboutHint', 'The main story on your page — as long as you want')} label={t('pageEditor.aboutLabel', 'About')}>
+            <TextAreaField maxLength={5000} onChange={(v) => set('aboutContent', v)} rows={8} value={data.aboutContent ?? ''} />
+          </Field>
+
           {isVenue && (
             <>
-              <Field label={t('pageEditor.addressLabel', 'Address')}><TextField maxLength={240} onChange={(v) => set('addressLine1', v)} value={data.addressLine1 ?? ''} /></Field>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-                <Field label={t('pageEditor.cityLabel', 'City')}><TextField maxLength={120} onChange={(v) => set('city', v)} value={data.city ?? ''} /></Field>
-                <Field label={t('pageEditor.stateLabel', 'State')}><TextField maxLength={120} onChange={(v) => set('stateRegion', v)} value={data.stateRegion ?? ''} /></Field>
-                <Field label={t('pageEditor.postalCodeLabel', 'Postal code')}><TextField maxLength={40} onChange={(v) => set('postalCode', v)} value={data.postalCode ?? ''} /></Field>
-                <Field label={t('pageEditor.countryLabel', 'Country')}><TextField maxLength={80} onChange={(v) => set('country', v)} value={data.country ?? ''} /></Field>
-              </div>
+              <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
+              <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
+              <ImageField label={t('pageEditor.galleryCoverLabel', 'Room photo')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
+            </>
+          )}
+
+          {/* ── The tour calendar ──────────────────────────────────────────
+              One calendar, two kinds of date. Both are AvailabilityDate rows
+              distinguished by `kind`, because "a date with a note on this
+              artist's calendar" is one shape whether the artist is playing
+              that night or free to be booked that night. A second model would
+              have duplicated the table, the ownership check and the route to
+              change one string.
+
+              The old free-text `tourContent` textarea is gone: a paragraph of
+              dates cannot be sorted, cannot expire, and cannot be read by
+              anything but a human. */}
+          {isArtistOrDj && (
+            <div id="tour-creator" className="page-editor-anchor-target">
+              <Field
+                hint={t('pageEditor.tourCalendarHint', 'Dates you are playing, and dates you are open to be booked. Shows ticketed on iHYPE appear on your page automatically — add the ones that are not.')}
+                label={t('pageEditor.tourCalendarLabel', 'Tour calendar')}
+              >
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  {(['TOUR', 'AVAILABLE'] as const).map((kind) => (
+                    <button
+                      key={kind}
+                      aria-pressed={availKindInput === kind}
+                      className={availKindInput === kind ? 'sub-tab active' : 'sub-tab'}
+                      onClick={() => setAvailKindInput(kind)}
+                      type="button"
+                    >
+                      {kind === 'TOUR'
+                        ? t('pageEditor.tourDateKind', 'Playing')
+                        : t('pageEditor.availableDateKind', 'Open to book')}
+                    </button>
+                  ))}
+                </div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
+                  <input
+                    onChange={(e) => setAvailDateInput(e.target.value)}
+                    style={{ ...inputStyle, flex: '1 1 160px' }}
+                    type="date"
+                    value={availDateInput}
+                  />
+                  <input
+                    maxLength={200}
+                    onChange={(e) => setAvailNoteInput(e.target.value)}
+                    placeholder={availKindInput === 'TOUR'
+                      ? t('pageEditor.tourNotePlaceholder', 'Venue, city')
+                      : t('pageEditor.noteOptionalPlaceholder', 'Note (optional)')}
+                    style={{ ...inputStyle, flex: '2 1 200px' }}
+                    type="text"
+                    value={availNoteInput}
+                  />
+                  <button
+                    className="settings-btn settings-btn-ghost"
+                    disabled={availSaving || !availDateInput}
+                    onClick={addAvailabilityDate}
+                    style={{ flexShrink: 0 }}
+                    type="button"
+                  >
+                    {availSaving ? t('pageEditor.adding', 'Adding…') : t('pageEditor.addDate', 'Add date')}
+                  </button>
+                </div>
+                {availError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{availError}</p>}
+                {availDates.length === 0 ? (
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {availDates.map((d) => (
+                      <div
+                        key={d.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
+                          padding: '10px 12px', borderRadius: 10, border: '1px solid var(--hair-100)',
+                          background: 'var(--hair-30)',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <span style={{ fontSize: '0.9375rem', color: 'var(--ink)', fontWeight: 600 }}>
+                              {new Date(d.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                            </span>
+                            {/* A row whose kind is missing is a pre-`kind` row, and
+                                the column defaults to AVAILABLE, so that is what it
+                                is labelled rather than guessed at. */}
+                            <span style={{
+                              /* Mono eyebrow at .18em, matching the others in this
+                                 file: DS8 exempts the tracked mono scale from the
+                                 15px floor only at >= .14em, and lint enforces it. */
+                              fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em',
+                              textTransform: 'uppercase', color: 'var(--ink-a65)',
+                            }}>
+                              {d.kind === 'TOUR'
+                                ? t('pageEditor.tourDateKind', 'Playing')
+                                : t('pageEditor.availableDateKind', 'Open to book')}
+                            </span>
+                          </div>
+                          {d.note && <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{d.note}</div>}
+                        </div>
+                        <button
+                          className="settings-btn settings-btn-ghost"
+                          onClick={() => removeAvailabilityDate(d.id)}
+                          style={{ padding: '6px 12px', fontSize: '0.9375rem' }}
+                          type="button"
+                        >
+                          {t('pageEditor.remove', 'Remove')}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Field>
+            </div>
+          )}
+
+          {isFan && (
+            <>
+              <Field hint={t('pageEditor.topFiveHint', 'One item per line')} label={t('pageEditor.topFiveLabel', 'Top 5')}>
+                <TextAreaField maxLength={2000} onChange={(v) => set('topFiveContent', v)} rows={5} value={data.topFiveContent ?? ''} />
+              </Field>
+              <Field label={t('pageEditor.nowPlayingLabel', 'Now playing / current mood')}><TextField maxLength={240} onChange={(v) => set('nowPlaying', v)} value={data.nowPlaying ?? ''} /></Field>
             </>
           )}
         </div>
       )}
 
-      {section === 'about' && (
+      {activeSection === 'media' && isArtistOrDj && (
         <div className="sub-panel">
-          <Field hint={t('pageEditor.aboutHint', 'The main story on your page — as long as you want')} label={t('pageEditor.aboutLabel', 'About')}>
-            <TextAreaField maxLength={5000} onChange={(v) => set('aboutContent', v)} rows={8} value={data.aboutContent ?? ''} />
-          </Field>
-          <Field hint={t('pageEditor.topFiveHint', 'One item per line')} label={t('pageEditor.topFiveLabel', 'Top 5')}>
-            <TextAreaField maxLength={2000} onChange={(v) => set('topFiveContent', v)} placeholder={t('pageEditor.topFivePlaceholder', 'e.g.\nFavorite venue in town\nDream collab\n...')} rows={5} value={data.topFiveContent ?? ''} />
-          </Field>
-          <Field label={t('pageEditor.nowPlayingLabel', 'Now playing / current mood')}><TextField maxLength={240} onChange={(v) => set('nowPlaying', v)} value={data.nowPlaying ?? ''} /></Field>
-        </div>
-      )}
+          {/* Songs upload lived on the PUBLIC artist page's Tracks tab and
+              nowhere in the editor, so the one section named Media held four
+              image slots and no music. TrackUploadPanel is the same component,
+              mounted where an owner looks for it. */}
+          <TrackUploadPanel profileId={profileId} />
 
-      {section === 'media' && (
-        <div className="sub-panel">
-          <ImageField label={t('pageEditor.avatarLabel', 'Avatar')} onUpload={(f) => uploadImage('avatarImage', f)} uploading={uploadingField === 'avatarImage'} value={data.avatarImage} />
-          <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
-          <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
-          <ImageField label={t('pageEditor.galleryCoverLabel', 'Gallery cover')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
-        </div>
-      )}
-
-      {section === 'details' && isArtistOrDj && (
-        <div className="sub-panel">
-          <Field label={t('pageEditor.upcomingLabel', 'Upcoming')}><TextAreaField maxLength={5000} onChange={(v) => set('upcomingContent', v)} rows={4} value={data.upcomingContent ?? ''} /></Field>
-          <div id="tour-creator" className="page-editor-anchor-target">
-            <Field label={t('pageEditor.tourDatesLabel', 'Tour dates')}><TextAreaField maxLength={5000} onChange={(v) => set('tourContent', v)} rows={4} value={data.tourContent ?? ''} /></Field>
+          <div style={{ marginTop: 22 }}>
+            <ImageField label={t('pageEditor.avatarLabel', 'Avatar')} onUpload={(f) => uploadImage('avatarImage', f)} uploading={uploadingField === 'avatarImage'} value={data.avatarImage} />
+            <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
+            <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
+            <ImageField label={t('pageEditor.galleryCoverLabel', 'Gallery cover')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
           </div>
-          <Field hint={t('pageEditor.requestsHint', 'What fans can request from you')} label={t('pageEditor.requestsLabel', 'Requests')}><TextAreaField maxLength={5000} onChange={(v) => set('requestContent', v)} rows={3} value={data.requestContent ?? ''} /></Field>
-          <Field label={t('pageEditor.previousShowHighlightsLabel', 'Previous show highlights')}><TextAreaField maxLength={5000} onChange={(v) => set('previousShowHighlights', v)} rows={4} value={data.previousShowHighlights ?? ''} /></Field>
-          <Field label={t('pageEditor.merchLinkLabel', 'Merch link')}><TextField onChange={(v) => set('merchUrl', v)} placeholder="https://…" value={data.merchUrl ?? ''} /></Field>
-          <Field label={t('pageEditor.merchDetailsLabel', 'Merch details')}><TextAreaField maxLength={5000} onChange={(v) => set('merchContent', v)} rows={3} value={data.merchContent ?? ''} /></Field>
-
-          <Field hint={t('pageEditor.bookingAvailabilityHint', "Dates you're open for booking — venues and promoters can see these on your public page")} label={t('pageEditor.bookingAvailabilityLabel', 'Booking availability')}>
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-              <input
-                onChange={(e) => setAvailDateInput(e.target.value)}
-                style={{ ...inputStyle, flex: '1 1 160px' }}
-                type="date"
-                value={availDateInput}
-              />
-              <input
-                maxLength={200}
-                onChange={(e) => setAvailNoteInput(e.target.value)}
-                placeholder={t('pageEditor.noteOptionalPlaceholder', 'Note (optional)')}
-                style={{ ...inputStyle, flex: '2 1 200px' }}
-                type="text"
-                value={availNoteInput}
-              />
-              <button
-                className="settings-btn settings-btn-ghost"
-                disabled={availSaving || !availDateInput}
-                onClick={addAvailabilityDate}
-                style={{ flexShrink: 0 }}
-                type="button"
-              >
-                {availSaving ? t('pageEditor.adding', 'Adding…') : t('pageEditor.addDate', 'Add date')}
-              </button>
-            </div>
-            {availError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{availError}</p>}
-            {availDates.length === 0 ? (
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                {availDates.map((d) => (
-                  <div
-                    key={d.id}
-                    style={{
-                      display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10,
-                      padding: '10px 12px', borderRadius: 10, border: '1px solid var(--hair-100)',
-                      background: 'var(--hair-30)',
-                    }}
-                  >
-                    <div>
-                      <div style={{ fontSize: '0.9375rem', color: 'var(--ink)', fontWeight: 600 }}>
-                        {new Date(d.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
-                      </div>
-                      {d.note && <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{d.note}</div>}
-                    </div>
-                    <button
-                      className="settings-btn settings-btn-ghost"
-                      onClick={() => removeAvailabilityDate(d.id)}
-                      style={{ padding: '6px 12px', fontSize: '0.9375rem' }}
-                      type="button"
-                    >
-                      {t('pageEditor.remove', 'Remove')}
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Field>
         </div>
       )}
 
-      {section === 'details' && isVenue && (
+      {activeSection === 'eventinfo' && isVenue && (
         <div className="sub-panel">
+          <Field label={t('pageEditor.addressLabel', 'Address')}><TextField maxLength={240} onChange={(v) => set('addressLine1', v)} value={data.addressLine1 ?? ''} /></Field>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Field label={t('pageEditor.cityLabel', 'City')}><TextField maxLength={120} onChange={(v) => set('city', v)} value={data.city ?? ''} /></Field>
+            <Field label={t('pageEditor.stateLabel', 'State')}><TextField maxLength={120} onChange={(v) => set('stateRegion', v)} value={data.stateRegion ?? ''} /></Field>
+            <Field label={t('pageEditor.postalCodeLabel', 'Postal code')}><TextField maxLength={40} onChange={(v) => set('postalCode', v)} value={data.postalCode ?? ''} /></Field>
+            <Field label={t('pageEditor.countryLabel', 'Country')}><TextField maxLength={80} onChange={(v) => set('country', v)} value={data.country ?? ''} /></Field>
+          </div>
           <Field label={t('pageEditor.hoursLabel', 'Hours')}><TextAreaField maxLength={500} onChange={(v) => set('hoursText', v)} rows={3} value={data.hoursText ?? ''} /></Field>
           <Field label={t('pageEditor.parkingDetailsLabel', 'Parking details')}><TextAreaField maxLength={1000} onChange={(v) => set('parkingDetails', v)} rows={3} value={data.parkingDetails ?? ''} /></Field>
           <Field label={t('pageEditor.stayRecommendationsLabel', 'Stay recommendations')}><TextAreaField maxLength={1000} onChange={(v) => set('stayRecommendations', v)} rows={3} value={data.stayRecommendations ?? ''} /></Field>
         </div>
       )}
 
-      {section === 'presskit' && isArtistOrDj && (
+      {activeSection === 'contact' && isVenue && (
+        <div className="sub-panel">
+          <Field
+            hint={t('pageEditor.contactInfoHint', 'How artists and bookers reach you — email, phone, or whoever handles booking')}
+            label={t('pageEditor.contactInfoLabel', 'Booking contact')}
+          >
+            <TextAreaField maxLength={1000} onChange={(v) => set('contactInfo', v)} placeholder={t('pageEditor.contactInfoPlaceholder', 'booking@yourvenue.com')} rows={4} value={data.contactInfo ?? ''} />
+          </Field>
+        </div>
+      )}
+
+      {activeSection === 'presskit' && isArtistOrDj && (
         <div className="sub-panel">
           <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
             {t('pageEditor.pressKitIntro', 'Your press kit is a shareable one-pager for bookers, venues, and press — it pulls your name, bio, photos, and upcoming shows automatically, plus everything you add here.')}
@@ -661,7 +743,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
         </div>
       )}
 
-      {section === 'stats' && (
+      {activeSection === 'stats' && (
         <div className="sub-panel">
           <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
             {t('pageEditor.statsIntro', 'Pick up to 4 real stats to show on your public page. These are the same numbers already shown in your Insights tab — nothing here is estimated or made up.')}
@@ -734,253 +816,6 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               </div>
             )}
           </div>
-        </div>
-      )}
-
-      {section === 'theme' && (
-        <div className="sub-panel">
-          <Field hint={t('pageEditor.designPresetHint', 'Sets the overall look of your public page')} label={t('pageEditor.designPresetLabel', 'Design preset')}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 10 }}>
-              {profileDesignPresets.map((p) => (
-                <button
-                  key={p.id}
-                  onClick={() => set('themePreset', p.id)}
-                  style={{
-                    padding: 12, borderRadius: 12, cursor: 'pointer', textAlign: 'left',
-                    border: `2px solid ${data.themePreset === p.id ? p.accent : 'var(--hair-80)'}`,
-                    background: p.panel,
-                  }}
-                  type="button"
-                >
-                  <div style={{ width: '100%', height: 32, borderRadius: 8, background: p.hero, marginBottom: 8 }} />
-                  <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: p.text }}>{t(`pageEditor.designPresetOption.${p.id}`, p.label)}</div>
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field hint={t('pageEditor.accentToneHint', "Override the preset's accent color, or leave it on Preset")} label={t('pageEditor.accentToneLabel', 'Accent tone')}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {profileAccentTones.map((tone) => (
-                <button
-                  key={tone.id}
-                  onClick={() => set('themeAccentTone', tone.id)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 6, padding: '8px 14px', borderRadius: 9999, cursor: 'pointer',
-                    border: `1px solid ${data.themeAccentTone === tone.id || (!data.themeAccentTone && tone.id === 'preset') ? (tone.accent ?? preset.accent) : 'var(--hair-80)'}`,
-                    background: 'var(--hair-30)', color: 'var(--ink)', fontSize: '0.9375rem',
-                  }}
-                  type="button"
-                >
-                  <span style={{ width: 12, height: 12, borderRadius: '50%', background: tone.accent ?? preset.accent, display: 'inline-block' }} />
-                  {t(`pageEditor.accentToneOption.${tone.id}`, tone.label)}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field hint={t('pageEditor.backdropToneHint', "Override the preset's backdrop, or leave it on Preset")} label={t('pageEditor.backdropToneLabel', 'Backdrop tone')}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {profileBackdropTones.map((tone) => (
-                <button
-                  key={tone.id}
-                  onClick={() => set('themeBackdropTone', tone.id)}
-                  style={{
-                    padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: '0.9375rem', color: 'var(--ink)',
-                    border: `1px solid ${data.themeBackdropTone === tone.id || (!data.themeBackdropTone && tone.id === 'preset') ? (tone.border ?? preset.border) : 'var(--hair-80)'}`,
-                    background: tone.panel ?? preset.panel,
-                  }}
-                  type="button"
-                >
-                  {t(`pageEditor.backdropToneOption.${tone.id}`, tone.label)}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <Field hint={t('pageEditor.fontPairingHint', "Swaps the headline/body typefaces on your public page — leave unset to keep the site's default fonts")} label={t('pageEditor.fontPairingLabel', 'Font pairing')}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              <button
-                onClick={() => set('themeFontPreset', '')}
-                style={{
-                  padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: '0.9375rem', color: 'var(--ink)',
-                  border: `1px solid ${!data.themeFontPreset ? (accentTone.accent ?? preset.accent) : 'var(--hair-80)'}`,
-                  background: 'var(--hair-30)',
-                }}
-                type="button"
-              >
-                {t('pageEditor.siteDefaultFont', 'Site default')}
-              </button>
-              {profileFontPresets.map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => set('themeFontPreset', f.id)}
-                  style={{
-                    padding: '8px 14px', borderRadius: 9999, cursor: 'pointer', fontSize: '0.9375rem', color: 'var(--ink)',
-                    border: `1px solid ${data.themeFontPreset === f.id ? (accentTone.accent ?? preset.accent) : 'var(--hair-80)'}`,
-                    background: 'var(--hair-30)', fontFamily: f.displayFamily,
-                  }}
-                  title={f.description}
-                  type="button"
-                >
-                  {t(`pageEditor.fontPresetOption.${f.id}`, f.label)}
-                </button>
-              ))}
-            </div>
-          </Field>
-
-          <div style={{ marginTop: 8, padding: 20, borderRadius: 16, background: backdropTone.hero ?? preset.hero, border: `1px solid ${backdropTone.border ?? preset.border}` }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: preset.muted, marginBottom: 6 }}>{t('pageEditor.themePreviewLabel', 'Preview')}</div>
-            <div style={{
-              fontFamily: data.themeFontPreset
-                ? (profileFontPresets.find((f) => f.id === data.themeFontPreset)?.displayFamily ?? 'var(--font-display)')
-                : 'var(--font-display)',
-              fontWeight: 800, fontSize: '1.125rem', color: accentTone.accent ?? preset.accent,
-            }}>{data.name || t('pageEditor.themePreviewFallbackName', 'Your page')}</div>
-          </div>
-        </div>
-      )}
-
-      {section === 'ai' && (
-        <div className="sub-panel">
-          <div style={{
-            fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase',
-            color: 'var(--ink-a65)', marginBottom: 14,
-          }}>
-            {t('pageEditor.aiPageStudioLabel', 'AI PAGE TOOLS')}
-          </div>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
-            {t('pageEditor.aiStudioIntro', "Tell the AI what you want and it reorganizes your page — bio, links, sections, theme. It only works with content you've already added, and nothing changes until you apply and save.")}
-          </p>
-
-          {!isFan && (
-            <div style={{
-              border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px',
-              background: 'var(--hair-20)', marginBottom: 20,
-            }}>
-              <div style={{ fontSize: '0.9375rem', fontWeight: 600, color: 'var(--ink)', marginBottom: 4 }}>
-                {t('pageEditor.importFromWebsiteTitle', 'Import from your website')}
-              </div>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 10px', lineHeight: 1.5 }}>
-                {t('pageEditor.importFromWebsiteBody', "Already have a site? Paste the address and the AI pulls your bio, links, and details into your iHYPE page. You review everything before it's applied.")}
-              </p>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <input
-                  inputMode="url"
-                  onChange={(e) => setImportUrl(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); runWebsiteImport(); } }}
-                  placeholder="https://yourband.com"
-                  style={{ ...inputStyle, flex: '1 1 220px' }}
-                  type="url"
-                  value={importUrl}
-                />
-                <button
-                  className="settings-btn settings-btn-ghost"
-                  disabled={importBusy || !importUrl.trim()}
-                  onClick={runWebsiteImport}
-                  style={{ flexShrink: 0 }}
-                  type="button"
-                >
-                  {importBusy ? t('pageEditor.importing', 'Importing…') : t('pageEditor.import', 'Import')}
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
-            {[
-              { key: 'organizeLinks', text: 'Organize my links by importance' },
-              { key: 'tightenBio', text: 'Tighten my bio' },
-              { key: 'writeAboutFromBio', text: 'Write my About section from my bio' },
-              ...(isArtistOrDj ? [{ key: 'polishTourMerch', text: 'Polish my tour and merch sections' }] : []),
-              ...(isVenue ? [{ key: 'cleanHoursParking', text: 'Clean up my hours and parking info' }] : []),
-              { key: 'moodierLook', text: 'Give my page a moodier late-night look' },
-            ].map((chip) => (
-              <button
-                key={chip.key}
-                onClick={() => setAiPrompt(chip.text)}
-                style={{
-                  fontSize: '0.9375rem', padding: '7px 13px', borderRadius: 9999, cursor: 'pointer',
-                  background: 'var(--hair-30)', border: '1px solid var(--hair-100)',
-                  color: 'var(--ink-a65)', fontFamily: 'var(--font-body)',
-                }}
-                type="button"
-              >
-                {t(`pageEditor.aiChip.${chip.key}`, chip.text)}
-              </button>
-            ))}
-          </div>
-
-          <TextAreaField
-            maxLength={500}
-            onChange={setAiPrompt}
-            placeholder={t('pageEditor.aiPromptPlaceholder', 'e.g. Reorder my links so streaming comes first, and rewrite my bio to sound bigger')}
-            rows={3}
-            value={aiPrompt}
-          />
-          <button
-            className="settings-btn settings-btn-accent"
-            disabled={aiBusy || !aiPrompt.trim()}
-            onClick={runAiRefine}
-            style={{ width: '100%', marginTop: 12, padding: '13px', fontSize: '0.9375rem' }}
-            type="button"
-          >
-            {aiBusy ? t('pageEditor.thinking', 'Thinking…') : t('pageEditor.customizeWithAi', 'Customize with AI')}
-          </button>
-
-          {aiError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginTop: 14 }}>{aiError}</p>}
-          {aiApplied && (
-            <p style={{ color: 'var(--role-venue)', fontSize: '0.9375rem', fontFamily: 'var(--font-mono)', marginTop: 14 }}>
-              ✓ {t('pageEditor.aiAppliedNote', 'Applied — review the sections, then hit Save changes.')}
-            </p>
-          )}
-
-          {aiProposed && (
-            <div style={{ marginTop: 20 }}>
-              <div style={{
-                fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase',
-                color: 'var(--ink-a65)', marginBottom: 12,
-              }}>
-                {t('pageEditor.proposedChangesLabel', 'PROPOSED CHANGES')} · {Object.keys(aiProposed).length}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                {Object.entries(aiProposed).map(([field, value]) => (
-                  <div key={field} style={{
-                    border: '1px solid rgba(var(--accent-rgb),.25)', borderRadius: 12, padding: '12px 14px',
-                    background: 'rgba(var(--accent-rgb),.05)',
-                  }}>
-                    <div style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--accent-text)', marginBottom: 6 }}>
-                      {t(`pageEditor.aiFieldLabel.${field}`, AI_FIELD_LABELS[field] ?? field)}
-                    </div>
-                    <div style={{
-                      fontSize: '0.9375rem', color: 'var(--ink)', whiteSpace: 'pre-wrap', lineHeight: 1.5,
-                      maxHeight: 140, overflowY: 'auto',
-                    }}>
-                      {value}
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
-                <button
-                  className="settings-btn settings-btn-accent"
-                  onClick={applyAiChanges}
-                  style={{ flex: 1, padding: '12px', fontSize: '0.9375rem' }}
-                  type="button"
-                >
-                  {t('pageEditor.applyChanges', 'Apply changes')}
-                </button>
-                <button
-                  className="settings-btn settings-btn-ghost"
-                  onClick={() => setAiProposed(null)}
-                  style={{ padding: '12px 18px', fontSize: '0.9375rem' }}
-                  type="button"
-                >
-                  {t('pageEditor.discard', 'Discard')}
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 
