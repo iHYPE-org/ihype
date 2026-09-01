@@ -1,13 +1,13 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { TunerDial } from '@/components/TunerDial';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { FollowButton } from '@/components/FollowButton';
 import { PageEditor } from '@/components/PageEditor';
 import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useI18n } from '@/components/I18nProvider';
+import { useRegisterStations } from '@/components/mmm/MmmStations';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
@@ -130,6 +130,45 @@ export function PagesHome({
     setTab(validInitialTab);
   }, [validInitialTab]);
   const visibleTabs = TABS;
+
+  /* ── The dock's dial owns this set; this page draws no selector ───────────
+     This used to render its own <TunerDial> directly above the dock's, which
+     put two identical-looking dials on screen ten pixels apart meaning
+     different things — the exact failure MmmStations.tsx exists to prevent and
+     that ProfileTabs was already converted away from. Reported 2026-09-01 as
+     "duplicated nav": the in-page dial read "Creator" while the dock's read
+     "Info", so the two controls did not even agree on where you were.
+
+     The STATE stays here. The dock is a remote control for `tab`, not a second
+     copy of it, and every existing setTab call site is untouched.
+
+     Both values handed over must be reference-stable or the registration
+     re-fires on every render, sets provider state, and re-renders — the loop
+     MmmMe.tsx documents. `t` is redeclared on every I18nProvider render, so
+     memoising on it would be no memo at all; the labels are digested into a
+     string instead, the same technique useRegisterQueue uses for its rows. */
+  const stationDigest = visibleTabs.map((item) => `${item.id}\u0001${t(`pagesHome.tabLabel.${item.id}`, item.label)}`).join('\u0002');
+  const stations = useMemo(
+    // Built from visibleTabs, not parsed back out of the digest: a label like
+    // "My Page" contains a space, so any separator-and-split scheme is one
+    // translation away from breaking. The digest is only the cache key.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    () => visibleTabs.map((item) => ({ id: item.id, label: t(`pagesHome.tabLabel.${item.id}`, item.label) })),
+    [stationDigest],
+  );
+  const selectStation = useRef<(id: string) => void>(() => {});
+  selectStation.current = (id: string) => setTab(id as TabId);
+  const onStationChange = useCallback((id: string) => selectStation.current(id), []);
+
+  useRegisterStations({
+    stations,
+    /* The dial must name a real station: the vendored TunerDial warns and
+       silently falls back to index 0 when `active` names nothing, which is a
+       confident wrong readout. `tab` is always one of TABS. */
+    active: tab,
+    onChange: onStationChange,
+    label: t('pagesHome.tabstripAriaLabel', 'Pages sections'),
+  });
   const [netFilter, setNetFilter] = useState<(typeof NET_FILTERS)[number]['id']>('all');
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
@@ -255,20 +294,6 @@ export function PagesHome({
       <div className="section-content">
       <div ref={contentTopRef} />
       <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Dashboard')}</h1>
-
-      {/* The tuner, not a strip of wrapping pills. This set can reach seven
-          entries depending on the member's roles, which on a phone wrapped to
-          two and sometimes three rows of 13px buttons before any content
-          appeared. The dial is one row whatever the count. */}
-      <TunerDial
-        active={tab}
-        label={t('pagesHome.tabstripAriaLabel', 'Pages sections')}
-        onSelect={(id) => setTab(id as typeof tab)}
-        stops={visibleTabs.map((tabItem) => ({
-          id: tabItem.id,
-          label: t(`pagesHome.tabLabel.${tabItem.id}`, tabItem.label),
-        }))}
-      />
 
       {tab === 'search' && (
         <div className="sub-panel">

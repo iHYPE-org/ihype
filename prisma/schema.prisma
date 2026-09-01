@@ -257,6 +257,10 @@ model Profile {
   contactInfo                   String?
   hoursText                     String?
   hometown                      String?
+  // Band roster, one member per line. Free text rather than a relation:
+  // a member is a NAME on a page, not an account, and modelling it as
+  // rows would imply an identity the product does not have.
+  members                       String?
   city                          String?
   stateRegion                   String?
   country                       String?
@@ -324,6 +328,7 @@ model Profile {
   setlistTemplates              SetlistTemplate[]
   nowPlaying                    String?
   availabilityDates             AvailabilityDate[]
+  albums                        Album[]
   receivedBookingRequests       BookingRequest[]            @relation("BookingRequestToProfile")
   promoCodes                    PromoCode[]
   fanMailLastSentAt             DateTime?
@@ -478,12 +483,36 @@ model ArtistMediaAsset {
   updatedAt        DateTime         @updatedAt
   profile          Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
   radioTracks      RadioShowTrack[]
+  albumId          String?
+  album            Album?           @relation(fields: [albumId], references: [id], onDelete: SetNull)
 
   @@index([profileId, createdAt])
   @@index([freeUseEnabled, createdAt])
   @@index([publishAt, isPublished])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_title_trgm_idx")
   @@index([notes(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_notes_trgm_idx")
+}
+
+/// A release a set of tracks belongs to. Deliberately thin: a title, its cover
+/// and an order. Everything playable still lives on ArtistMediaAsset, so a
+/// track with no album is the normal case rather than an orphan — singles are
+/// how most of this catalogue arrives.
+///
+/// onDelete: SetNull on the track side, never Cascade: deleting a release must
+/// not delete the recordings in it.
+model Album {
+  id         String             @id @default(cuid())
+  profileId  String
+  title      String
+  artworkUrl String?
+  releasedOn DateTime?
+  sortOrder  Int                @default(0)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  profile    Profile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  tracks     ArtistMediaAsset[]
+
+  @@index([profileId, sortOrder])
 }
 
 model AuditLog {
@@ -1233,15 +1262,32 @@ model Badge {
   @@index([userId])
 }
 
+/// One dated entry on an artist's calendar. `kind` is what the date MEANS,
+/// and the two meanings share this table on purpose: both are
+/// "profile + date + note", both are owner-managed, and both render in the
+/// same calendar in the editor's About section. A separate TourDate model
+/// would have duplicated the shape, the ownership checks and the CRUD route
+/// to change one string.
 model AvailabilityDate {
-  id        String   @id @default(cuid())
+  id        String           @id @default(cuid())
   profileId String
   date      DateTime
   note      String?
-  createdAt DateTime @default(now())
-  profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  /// AVAILABLE = open for booking (venues see these on the public page).
+  /// TOUR      = a date the artist is playing.
+  /// Defaults to AVAILABLE so every pre-existing row keeps the only meaning
+  /// it could have had before this column existed.
+  kind      AvailabilityKind @default(AVAILABLE)
+  createdAt DateTime         @default(now())
+  profile   Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@index([profileId])
+  @@index([profileId, kind, date])
+}
+
+enum AvailabilityKind {
+  AVAILABLE
+  TOUR
 }
 
 model ShowAttendee {
