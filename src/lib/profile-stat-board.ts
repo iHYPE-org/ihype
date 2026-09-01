@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { pastShowWhere, upcomingShowWhere } from '@/lib/profile-detail';
+import { demandKey } from '@/lib/fan-demand';
 
 /**
  * The owner's Stats section — a fixed board of real counts, one per line the
@@ -19,15 +20,24 @@ import { pastShowWhere, upcomingShowWhere } from '@/lib/profile-detail';
  * stats board is a claim and "could not read" is not one. Same rule as
  * `analytics-engine.ts` and `admin-workbench.ts`.
  *
- * Two labels need their source stated, because the word alone does not say:
+ * Two labels are the owner's product model and need their source stated
+ * (2026-09-01: "Fans can request that venues bring artists they recommend to
+ * perform at their venues. Those requests show up as recommendations to the
+ * venues through analysis"):
  *
- *  - **Recommendations** counts `VenueConnectionRequest` rows naming this
- *    artist — a venue that reached out after the demand radar (`/me/booking`)
- *    recommended them. It is the only recommendation the schema RECORDS; the
- *    For You engine ranks live and stores nothing, so "how often were you
- *    recommended to fans" is not a number anyone holds.
- *  - **Requests** counts `BookingRequest` rows sent to the profile, every
- *    status. Pending/accepted/declined is the owner's inbox, not a stat.
+ *  - **Requests** — fan requests. A `VenueConnectionRequest` is a fan asking
+ *    a venue to book an act. On an artist's board it counts requests NAMING
+ *    the artist, every status; on a venue's, requests the venue received.
+ *  - **Recommendations** — the other end of the same rows after the demand
+ *    radar's analysis (`fan-demand.ts`). On an artist's board: distinct venues
+ *    whose radar currently ranks them (PENDING requests, by venue). On a
+ *    venue's: distinct acts fans have asked for that are still pending.
+ *    Booked and dismissed requests have left the ranking, so they leave this
+ *    figure too — a recommendation is a live thing.
+ *
+ * `BookingRequest` (a venue asking an artist to play) is the venue's own
+ * outreach and stays on the venue board as "Booking requests"; on the artist
+ * board it is an inbox, not a stat, and the owner's list did not ask for it.
  *
  * Financial figures (revenue, payouts) stay out on purpose — `ProfileInsights`
  * carries them, owner-only, and this board must stay safe to show on a screen
@@ -59,7 +69,7 @@ async function artistBoard(profileId: string, now: Date): Promise<StatBoardEntry
     return assets.map((asset) => asset.hexId);
   });
 
-  const [listens, completed, follows, hypes, pastEvents, tickets, recommendations, requests] = await Promise.all([
+  const [listens, completed, follows, hypes, pastEvents, tickets, recommendedTo, fanRequests] = await Promise.all([
     hexIds === null
       ? Promise.resolve(null)
       : count(() => db.mediaListen.count({ where: { mediaId: { in: hexIds } } })),
@@ -79,8 +89,15 @@ async function artistBoard(profileId: string, now: Date): Promise<StatBoardEntry
       });
       return totals._sum.quantity ?? 0;
     }),
+    count(async () => {
+      const venues = await db.venueConnectionRequest.findMany({
+        where: { artistProfileId: profileId, status: 'PENDING' },
+        distinct: ['venueProfileId'],
+        select: { venueProfileId: true },
+      });
+      return venues.length;
+    }),
     count(() => db.venueConnectionRequest.count({ where: { artistProfileId: profileId } })),
-    count(() => db.bookingRequest.count({ where: { toProfileId: profileId } })),
   ]);
 
   return [
@@ -90,13 +107,13 @@ async function artistBoard(profileId: string, now: Date): Promise<StatBoardEntry
     { key: 'hypes', label: 'Hypes', hint: 'Hypes this profile has received.', value: hypes },
     { key: 'pastEvents', label: 'Past events', hint: 'Shows you played or promoted that have happened.', value: pastEvents },
     { key: 'ticketsSold', label: 'Total tickets sold', hint: 'Paid tickets across those shows.', value: tickets },
-    { key: 'recommendations', label: 'Recommendations', hint: 'Venues who reached out after iHYPE recommended you.', value: recommendations },
-    { key: 'requests', label: 'Requests', hint: 'Booking requests sent to this profile.', value: requests },
+    { key: 'recommendations', label: 'Recommendations', hint: 'Venues whose demand radar is recommending you right now.', value: recommendedTo },
+    { key: 'requests', label: 'Requests', hint: 'Fans who asked a venue to book you.', value: fanRequests },
   ];
 }
 
 async function venueBoard(profileId: string, now: Date): Promise<StatBoardEntry[]> {
-  const [follows, hypes, pastEvents, upcomingEvents, tickets, requests, connections] = await Promise.all([
+  const [follows, hypes, pastEvents, upcomingEvents, tickets, fanRequests, recommendedActs, bookingRequests] = await Promise.all([
     count(() => db.follow.count({ where: { followeeProfileId: profileId } })),
     count(async () => {
       const profile = await db.profile.findUnique({ where: { id: profileId }, select: { hypeCount: true } });
@@ -111,8 +128,16 @@ async function venueBoard(profileId: string, now: Date): Promise<StatBoardEntry[
       });
       return totals._sum.quantity ?? 0;
     }),
-    count(() => db.bookingRequest.count({ where: { toProfileId: profileId } })),
     count(() => db.venueConnectionRequest.count({ where: { venueProfileId: profileId } })),
+    count(async () => {
+      const pending = await db.venueConnectionRequest.findMany({
+        where: { venueProfileId: profileId, status: 'PENDING' },
+        select: { artistProfileId: true, artistName: true },
+      });
+      // Same grouping as the radar: by profile when named, else by name.
+      return new Set(pending.map(demandKey)).size;
+    }),
+    count(() => db.bookingRequest.count({ where: { toProfileId: profileId } })),
   ]);
 
   return [
@@ -121,8 +146,9 @@ async function venueBoard(profileId: string, now: Date): Promise<StatBoardEntry[
     { key: 'pastEvents', label: 'Past events', hint: 'Shows hosted here that have happened.', value: pastEvents },
     { key: 'upcomingEvents', label: 'Upcoming events', hint: 'Shows on the calendar, including one on stage now.', value: upcomingEvents },
     { key: 'ticketsSold', label: 'Total tickets sold', hint: 'Paid tickets across shows hosted here.', value: tickets },
-    { key: 'requests', label: 'Booking requests', hint: 'Requests to play here, every status.', value: requests },
-    { key: 'connections', label: 'Connection requests', hint: 'Fans and artists asking to connect with this venue.', value: connections },
+    { key: 'requests', label: 'Requests', hint: 'Fans who asked you to book someone.', value: fanRequests },
+    { key: 'recommendations', label: 'Recommendations', hint: 'Acts your demand radar is recommending right now.', value: recommendedActs },
+    { key: 'bookingRequests', label: 'Booking requests', hint: 'Your outreach to artists, every status.', value: bookingRequests },
   ];
 }
 
