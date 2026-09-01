@@ -112,12 +112,34 @@ async function main() {
       console.log(`  PASS  Matched: ${outcome.matchedSource}` + (outcome.score === null ? '' : ` (score ${outcome.score})`));
       console.log('        The copyright filter identifies commercial recordings end to end.');
       break;
-    case 'error':
+    case 'error': {
       console.error(`  FAIL  ${outcome.detail}`);
-      console.error('        An auth failure here usually means the key/secret pair or the');
-      console.error('        region host does not belong to this project.');
+      /* A network failure and an auth failure are different problems and this
+         used to blame credentials for both. Measured 2026-09-01: a host that
+         does not resolve produced "fetch failed" under a hint about the
+         key/secret pair, sending the reader after the wrong thing. `fetch`
+         reports every DNS, TLS and connection error as that one opaque string,
+         so the host is the first thing to doubt, not the last. */
+      const unreachable = /fetch failed|ENOTFOUND|EAI_AGAIN|ECONNREFUSED|ETIMEDOUT|getaddrinfo/i.test(outcome.detail);
+      if (unreachable) {
+        console.error(`        ACRCLOUD_HOST (${process.env.ACRCLOUD_HOST}) could not be REACHED — not an`);
+        console.error('        auth failure. Check the host is your project\'s real region host');
+        console.error('        from the Access tab (e.g. identify-us-west-2.acrcloud.com), with');
+        console.error('        no scheme and no trailing slash. If the host is right, check');
+        console.error('        egress from this machine.');
+        console.error('');
+        console.error('        THEN CHECK THE WORKER SECRET TOO. This layer fails OPEN, so the');
+        console.error('        same wrong host in production means every upload passes');
+        console.error('        fingerprinting silently: npx wrangler secret put ACRCLOUD_HOST --name ihype');
+      } else {
+        console.error('        The host resolved and answered, so this is an auth or contract');
+        console.error('        failure: the key/secret pair most likely does not belong to this');
+        console.error('        project, or is a Console API token rather than the project\'s');
+        console.error('        Access credentials.');
+      }
       process.exit(1);
       break;
+    }
     case 'not-configured':
       // isAcrCloudConfigured() passed above, so reaching this means the env
       // was cleared mid-run; report it rather than claiming a pass.
