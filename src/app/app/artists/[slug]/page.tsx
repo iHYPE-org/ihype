@@ -91,7 +91,13 @@ export default async function MmmArtistPage({
   const isOwner = profile.ownerId === session.user.id;
 
   const now = new Date();
-  const [userHype, upcoming, releases] = await Promise.all([
+  /* The calendar's dates are stored at UTC midnight (the editor posts the
+     date input as an ISO instant). A date is a calendar day, so it stays on
+     the page through that day — and twelve hours past it, because a Portland
+     artist's "tonight" is still today at 3am UTC and dropping the gig while
+     the band is on stage would be the wrong kind of precise. */
+  const calendarFloor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 12 * 3_600_000);
+  const [userHype, upcoming, releases, calendar] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
@@ -152,6 +158,21 @@ export default async function MmmArtistPage({
              drops those rather than stalling the player on a dead entry. */
           storageUrl: true,
         },
+      })
+      .catch(() => []),
+    /* The tour calendar — `AvailabilityDate` rows the artist entered in the
+       editor. Two kinds on one calendar: TOUR is a date they are playing that
+       is not ticketed here (a ticketed one is a Show and is already in
+       `upcoming`); AVAILABLE is a date they are open to be booked, which the
+       schema has always said venues see on the public page and which, until
+       this query, nothing rendered. Both are what the editor's hint promises
+       will appear here. */
+    db.availabilityDate
+      .findMany({
+        where: { profileId: profile.id, date: { gte: calendarFloor } },
+        orderBy: { date: 'asc' },
+        take: 24,
+        select: { id: true, date: true, note: true, kind: true },
       })
       .catch(() => []),
   ]);
@@ -412,9 +433,11 @@ export default async function MmmArtistPage({
         <ProfilePanel
           tabId="tour"
           empty="No dates announced yet."
-          isEmpty={upcoming.length === 0 && !unwrap(profile.tourContent)}
+          isEmpty={upcoming.length === 0 && calendar.length === 0 && !unwrap(profile.tourContent)}
           title="Tour"
         >
+          {/* Legacy free text. The editor no longer writes it; a profile that
+              set it before the calendar existed keeps its paragraph. */}
           <RichContent value={profile.tourContent} />
           {upcoming.length > 0 && (
             <ul className="mmm-profile-shows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
@@ -476,6 +499,62 @@ export default async function MmmArtistPage({
                       Get ticket
                     </span>
                   </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {calendar.length > 0 && (
+            <ul className="mmm-profile-shows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+              {calendar.map((entry) => (
+                <li
+                  key={entry.id}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 13,
+                    padding: '14px 0',
+                    borderBottom: '1px solid var(--line)',
+                  }}
+                >
+                  <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6875rem',
+                        letterSpacing: '0.14em',
+                        color: 'var(--ink-3)',
+                      }}
+                    >
+                      {/* UTC on purpose: the row IS a UTC-midnight day, and a
+                          local-time read shifts it to the evening before for
+                          everyone west of Greenwich. */}
+                      {entry.date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()}
+                    </span>
+                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.5rem', lineHeight: 1 }}>
+                      {entry.date.getUTCDate()}
+                    </span>
+                  </span>
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500 }}>
+                      {entry.note || (entry.kind === 'TOUR' ? 'Playing' : 'Open to book')}
+                    </span>
+                    <span
+                      style={{
+                        display: 'block',
+                        fontFamily: 'var(--font-mono)',
+                        fontSize: '0.6875rem',
+                        letterSpacing: '0.14em',
+                        textTransform: 'uppercase',
+                        color: 'var(--ink-3)',
+                      }}
+                    >
+                      {[
+                        entry.kind === 'TOUR' ? 'Playing' : 'Open to book',
+                        entry.date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
+                      ].join(' · ')}
+                    </span>
+                  </span>
                 </li>
               ))}
             </ul>

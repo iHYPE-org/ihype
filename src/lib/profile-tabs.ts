@@ -12,7 +12,8 @@ import type { ProfileTab } from '@/components/profile/ProfileTabs';
  *
  *   ARTIST
  *     Albums     ArtistMediaAsset rows for the profile
- *     Tour       Show rows where the profile headlines (+ `tourContent`)
+ *     Tour       Show rows where the profile headlines, plus the
+ *                `AvailabilityDate` calendar (TOUR and AVAILABLE kinds)
  *     Bio        `headline` and `bio`
  *     Merch      `merchContent`
  *     Contact    `contactInfo`, and the booking request flow
