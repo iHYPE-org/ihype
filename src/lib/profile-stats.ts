@@ -33,7 +33,7 @@ export async function getPinnedStatValues(
   const needsInsights = validKeys.some((k) =>
     ['hypeTotal', 'followerCount', 'monthlyListeners', 'trackCompletionRate', 'ticketsSold'].includes(k)
   );
-  const needsFanStats = validKeys.some((k) => ['showsAttended', 'artistsHyped', 'ticketsBought'].includes(k));
+  const needsFanStats = validKeys.some((k) => ['showsAttended', 'artistsHyped', 'ticketsBought', 'asksMade', 'asksBooked'].includes(k));
 
   const [insights, fanStats] = await Promise.all([
     needsInsights ? getProfileInsights(profileId, profileType) : Promise.resolve(null),
@@ -49,6 +49,8 @@ export async function getPinnedStatValues(
     showsAttended: fanStats?.showsAttended,
     artistsHyped: fanStats?.artistsHyped,
     ticketsBought: fanStats?.ticketsBought,
+    asksMade: fanStats?.asksMade,
+    asksBooked: fanStats?.asksBooked,
   };
 
   return validKeys
@@ -63,10 +65,10 @@ export async function getPinnedStatValues(
 
 async function getFanStatsForProfile(profileId: string) {
   const profile = await db.profile.findUnique({ where: { id: profileId }, select: { ownerId: true } });
-  if (!profile) return { showsAttended: 0, artistsHyped: 0, ticketsBought: 0 };
+  if (!profile) return { showsAttended: 0, artistsHyped: 0, ticketsBought: 0, asksMade: 0, asksBooked: 0 };
 
   const userId = profile.ownerId;
-  const [hypeGivenShows, hypeGivenProfiles, ticketOrders] = await Promise.all([
+  const [hypeGivenShows, hypeGivenProfiles, ticketOrders, asksMade, asksBooked] = await Promise.all([
     db.hypeEvent.count({ where: { userId } }),
     db.profileHypeEvent.count({ where: { userId } }),
     db.ticketOrder.aggregate({
@@ -74,11 +76,15 @@ async function getFanStatsForProfile(profileId: string) {
       _sum: { quantity: true },
       _count: { id: true },
     }),
+    db.venueConnectionRequest.count({ where: { requesterId: userId } }),
+    db.venueConnectionRequest.count({ where: { requesterId: userId, status: 'BOOKED' } }),
   ]);
 
   return {
     showsAttended: ticketOrders._count.id,
     artistsHyped: hypeGivenShows + hypeGivenProfiles,
     ticketsBought: ticketOrders._sum.quantity ?? 0,
+    asksMade,
+    asksBooked,
   };
 }

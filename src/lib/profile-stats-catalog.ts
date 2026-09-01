@@ -11,7 +11,9 @@ export type StatKey =
   | 'ticketsSold'
   | 'showsAttended'
   | 'artistsHyped'
-  | 'ticketsBought';
+  | 'ticketsBought'
+  | 'asksMade'
+  | 'asksBooked';
 
 export type StatDef = { key: StatKey; label: string };
 
@@ -29,6 +31,11 @@ export const STAT_CATALOG: Record<StatKey, StatDef & { roles: string[] }> = {
   showsAttended: { key: 'showsAttended', label: 'Shows Attended', roles: ['LISTENER'] },
   artistsHyped: { key: 'artistsHyped', label: 'Artists Hyped', roles: ['LISTENER'] },
   ticketsBought: { key: 'ticketsBought', label: 'Tickets Bought', roles: ['LISTENER'] },
+  /* A fan's asks — venues they asked to book an act (2026-09-01, the demand
+     loop in fan-demand.ts). Public-safe: a count, never the venue, the act or
+     where the fan was when they asked. "Booked" is the venue saying yes. */
+  asksMade: { key: 'asksMade', label: 'Asks', roles: ['LISTENER'] },
+  asksBooked: { key: 'asksBooked', label: 'Asks Booked', roles: ['LISTENER'] },
 };
 
 export function statOptionsForRole(profileType: string): StatDef[] {

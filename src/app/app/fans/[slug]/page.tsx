@@ -19,7 +19,7 @@ import { getServerT } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
-const fanSections = ['taste', 'top5', 'shows', 'referrals'] as const;
+const fanSections = ['taste', 'top5', 'shows', 'asks', 'referrals'] as const;
 type FanSection = (typeof fanSections)[number];
 
 function getActiveSection(section: string | string[] | undefined): FanSection {
@@ -27,13 +27,19 @@ function getActiveSection(section: string | string[] | undefined): FanSection {
   return 'taste';
 }
 
-const SECTION_LABEL: Record<FanSection, string> = { taste: 'Taste', top5: 'Top 5', shows: 'Shows', referrals: 'Referrals' };
+const SECTION_LABEL: Record<FanSection, string> = { taste: 'Taste', top5: 'Top 5', shows: 'Shows', asks: 'Asks', referrals: 'Referrals' };
 const SECTION_LABEL_KEY: Record<FanSection, string> = {
   taste: 'fansSlugPage.tabTaste',
   top5: 'fansSlugPage.tabTop5',
   shows: 'fansSlugPage.tabShows',
+  asks: 'fansSlugPage.tabAsks',
   referrals: 'fansSlugPage.tabReferrals',
 };
+
+/* What a venue did with an ask, in the fan's words. PENDING is the venue not
+   having answered; DISMISSED is a no, said gently — "Passed" — because the
+   fan did nothing wrong by asking. */
+const ASK_STATUS_LABEL: Record<string, string> = { PENDING: 'Pending', BOOKED: 'Booked', DISMISSED: 'Passed' };
 
 function getTopFiveItems(content: string | null) {
   if (!content) return [];
@@ -84,7 +90,7 @@ export default async function FanProfilePage({
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const themeVars = resolveProfileThemeVars(profile);
 
-  const [hypedShows, userHype, promoterDashboard] = await Promise.all([
+  const [hypedShows, userHype, promoterDashboard, asks] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId, ...getDemoShowRelationExclusion() },
       include: { show: { include: { venueProfile: true } } },
@@ -94,6 +100,26 @@ export default async function FanProfilePage({
       ? db.profileHypeEvent.findUnique({ where: { userId_profileId: { userId: session.user.id, profileId: profile.id } }, select: { createdAt: true } })
       : null,
     isOwner ? getPromoterDashboard(profile.ownerId) : Promise.resolve(null),
+    /* The fan's asks — venues they asked to book an act (the demand loop,
+       `fan-demand.ts`). Public like a hype is public: the act, the room, the
+       date and what the venue did. NOT the note (written for the venue) and
+       NOT where the fan was when they asked (`requester*` columns are never
+       selected here). Independently caught so a failure empties one tab. */
+    db.venueConnectionRequest
+      .findMany({
+        where: { requesterId: profile.ownerId },
+        orderBy: { createdAt: 'desc' },
+        take: 24,
+        select: {
+          id: true,
+          artistName: true,
+          status: true,
+          createdAt: true,
+          artistProfile: { select: { slug: true, name: true } },
+          venueProfile: { select: { slug: true, name: true, city: true } },
+        },
+      })
+      .catch(() => []),
   ]);
 
   const now = new Date();
@@ -125,7 +151,7 @@ export default async function FanProfilePage({
             <div className="fan-hero-actions">
               {isOwner ? (
                 <>
-                  <Link className="fan-hero-btn" href="/pages">{t('fansSlugPage.editProfile', 'Edit Profile')}</Link>
+                  <Link className="fan-hero-btn" href="/app/me/profiles">{t('fansSlugPage.editProfile', 'Edit Profile')}</Link>
                   <Link className="fan-hero-btn" href="/settings">{t('fansSlugPage.settings', 'Settings')}</Link>
                 </>
               ) : (
@@ -141,6 +167,7 @@ export default async function FanProfilePage({
           <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
           <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
           <div><div className="fan-stat-val">{profile._count.followers.toLocaleString()}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
+          <div><div className="fan-stat-val">{asks.length.toLocaleString()}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
         </div>
         <PinnedStatTiles accent="var(--profile-accent, var(--role-fan))" stats={pinnedStats} />
       </div>
@@ -192,6 +219,50 @@ export default async function FanProfilePage({
                   </div>
                   <span style={{ fontSize: '0.9375rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>
+              ))}
+            </div>
+          )
+        )}
+
+        {activeSection === 'asks' && (
+          asks.length === 0 ? (
+            <div className="fan-empty">
+              <p>
+                {isOwner
+                  ? t('fansSlugPage.noAsksOwner', 'You have not asked a venue to book anyone yet. Find an artist or a venue and ask — the venue sees it ranked with everyone else who asked.')
+                  : `${profile.name} ${t('fansSlugPage.noAsks', 'has not asked a venue to book anyone yet.')}`}
+              </p>
+            </div>
+          ) : (
+            <div className="fan-show-list">
+              {asks.map((ask) => (
+                <div className="fan-show-row" key={ask.id}>
+                  <div>
+                    <h4>
+                      {ask.artistProfile
+                        ? <Link href={`/app/artists/${ask.artistProfile.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ask.artistProfile.name}</Link>
+                        : ask.artistName}
+                      {' '}<span style={{ fontWeight: 400, color: 'var(--ink-a65)' }}>{t('fansSlugPage.askAt', 'at')}</span>{' '}
+                      <Link href={`/app/venues/${ask.venueProfile.slug}`} style={{ color: 'inherit', textDecoration: 'none' }}>{ask.venueProfile.name}</Link>
+                    </h4>
+                    <p>
+                      {[
+                        ask.venueProfile.city,
+                        ask.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                      ].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <span
+                    className="fan-badge"
+                    style={ask.status === 'BOOKED'
+                      ? { background: 'rgba(var(--role-venue-rgb),.15)', color: 'var(--role-venue)' }
+                      : ask.status === 'DISMISSED'
+                        ? { background: 'var(--hair-50)', color: 'var(--ink-a65)' }
+                        : { background: 'rgba(var(--role-fan-rgb),.15)', color: 'var(--profile-accent, var(--role-fan))' }}
+                  >
+                    {t(`fansSlugPage.askStatus.${ask.status}`, ASK_STATUS_LABEL[ask.status] ?? ask.status)}
+                  </span>
+                </div>
               ))}
             </div>
           )
