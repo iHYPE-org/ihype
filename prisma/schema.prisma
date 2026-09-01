@@ -984,6 +984,15 @@ model VenueConnectionRequest {
   artistName      String
   note            String?
   notifyOnBooking Boolean                 @default(false)
+  /// Where the fan was when they asked, captured once at submission so the
+  /// venue's demand radar can weigh a request by how close the fan lives:
+  /// the fan's own profile location when it has one, else the request's edge
+  /// geolocation. Never updated afterwards — a fan who moves does not move
+  /// the requests they already made. All nullable; unknown weighs as unknown.
+  requesterCity        String?
+  requesterStateRegion String?
+  requesterLatitude    Float?
+  requesterLongitude   Float?
   createdAt       DateTime                @default(now())
   respondedAt     DateTime?
   updatedAt       DateTime                @updatedAt
@@ -993,6 +1002,8 @@ model VenueConnectionRequest {
 
   @@index([venueProfileId, requesterId])
   @@index([requesterId])
+  @@index([venueProfileId, status, createdAt])
+  @@index([artistProfileId, status])
 }
 
 model VerificationToken {

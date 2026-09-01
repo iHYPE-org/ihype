@@ -5,9 +5,12 @@ import { db } from '@/lib/db';
 export const dynamic = 'force-dynamic';
 
 /**
- * Powers the mobile Events home's "Tickets" tab (EventsHome.tsx) — same
- * query src/app/shows/page.tsx's loadTicketOrders used to run inline
- * server-side, exposed here so the client component can fetch it directly.
+ * The signed-in member's own ticket orders as JSON. It was written for the
+ * Events home's "Tickets" tab (`EventsHome.tsx`), which was deleted on
+ * 2026-09-01 as dead code, so as of that date NOTHING in the app calls this
+ * route; it is kept because it is the only list-form of "my tickets" the API
+ * offers and `/tickets` may want it back. Same ownership rule as the page:
+ * the session's own orders and nothing else.
  */
 export async function GET(request: Request) {
   const session = await auth();

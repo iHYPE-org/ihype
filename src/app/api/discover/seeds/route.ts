@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { releasedMediaWhere } from '@/lib/media-release';
+import { loadCoRequesterIds, loadRequestSignals } from '@/lib/request-signals';
 
 const LAMBDA = 0.05;
 
@@ -52,9 +53,26 @@ export async function GET(request: NextRequest) {
 
     // --- Collaborative filtering (v2) with time-decay scoring --------
     type SeedMedia = { id: string; hexId: string; title: string; artworkUrl: string | null; profile: { name: string; slug: string; city: string | null; genres: string[]; avatarImage: string | null; nowPlaying: string | null; journalContent: string | null } | null };
+    const seedSelect = {
+      id: true,
+      hexId: true,
+      title: true,
+      artworkUrl: true,
+      profileId: true,
+      profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } },
+    } as const;
+    const rowProfileId = (row: { profileId: string }) => row.profileId;
     let cfMedia: SeedMedia[] = [];
+    /* Fan requests as a deck signal (2026-09-01, `fan-demand.ts`). A fan who
+       asked a venue to book an act wants to hear that act; an act other fans
+       want at a venue this fan follows or asked is a recommendation with a
+       reason they already care about. Up to REQUEST_CARDS cards lead the deck,
+       each carrying its own reason, ahead of the co-hype pool. */
+    const REQUEST_CARDS = 5;
+    let requestMedia: SeedMedia[] = [];
+    const requestReason = new Map<string, string>();
     if (!hasFilter) {
-      const [hypedByMe, playlistItems] = await Promise.all([
+      const [hypedByMe, playlistItems, follows] = await Promise.all([
         db.profileHypeEvent.findMany({
           where: { userId: session.user.id },
           select: { profileId: true },
@@ -65,7 +83,44 @@ export async function GET(request: NextRequest) {
           select: { artistProfileSlug: true },
           take: 200,
         }),
+        db.follow.findMany({ where: { followerId: session.user.id }, select: { followeeProfileId: true }, take: 200 }).catch(() => []),
       ]);
+      const requests = await loadRequestSignals(session.user.id, follows.map((row) => row.followeeProfileId));
+      const requestProfileIds = [...requests.requestedArtistIds, ...requests.wantedAt.map((entry) => entry.artistProfileId)];
+      if (requestProfileIds.length > 0) {
+        const rows = await db.artistMediaAsset.findMany({
+          where: {
+            profileId: { in: requestProfileIds },
+            id: { notIn: [...actionedIds] },
+            ...releasedMediaWhere(),
+            profile: { discoverable: true },
+          },
+          take: 40,
+          orderBy: { createdAt: 'desc' },
+          select: seedSelect,
+        }).catch(() => [] as (SeedMedia & { profileId: string })[]);
+        // One card per act, requested acts first, so five asks do not become
+        // five tracks by one band.
+        const seen = new Set<string>();
+        const wantedBy = new Map(requests.wantedAt.map((entry) => [entry.artistProfileId, entry.venueName]));
+        const ordered = [
+          ...rows.filter((row) => row.profile && requests.requestedArtistIds.includes(rowProfileId(row))),
+          ...rows.filter((row) => row.profile && !requests.requestedArtistIds.includes(rowProfileId(row))),
+        ];
+        for (const row of ordered) {
+          const profileId = rowProfileId(row);
+          if (!profileId || seen.has(profileId) || requestMedia.length >= REQUEST_CARDS) continue;
+          seen.add(profileId);
+          requestMedia.push(row);
+          const venueName = wantedBy.get(profileId);
+          requestReason.set(
+            row.id,
+            requests.requestedArtistIds.includes(profileId)
+              ? 'You asked a venue to book them'
+              : venueName ? `Fans want them at ${venueName}` : 'Fans want them at a venue you follow',
+          );
+        }
+      }
       const playlistSlugs = [...new Set(
         playlistItems.map((item) => item.artistProfileSlug).filter((slug): slug is string => Boolean(slug)),
       )];
@@ -80,13 +135,18 @@ export async function GET(request: NextRequest) {
         ...playlistProfiles.map((profile) => profile.id),
       ])];
       if (myProfileIds.length > 0) {
-        const fellowFans = await db.profileHypeEvent.findMany({
-          where: { profileId: { in: myProfileIds }, userId: { not: session.user.id } },
-          select: { userId: true },
-          distinct: ['userId'],
-          take: 500
-        });
-        const fanIds = fellowFans.map((r) => r.userId);
+        const [fellowFans, coRequesters] = await Promise.all([
+          db.profileHypeEvent.findMany({
+            where: { profileId: { in: myProfileIds }, userId: { not: session.user.id } },
+            select: { userId: true },
+            distinct: ['userId'],
+            take: 500
+          }),
+          // Fans who asked a venue for the same acts this fan did — a
+          // neighbourhood the hype graph cannot see.
+          loadCoRequesterIds(session.user.id, requests.requestedArtistIds),
+        ]);
+        const fanIds = [...new Set([...fellowFans.map((r) => r.userId), ...coRequesters])];
         if (fanIds.length > 0) {
           const mySet = new Set(myProfileIds);
           // Use findMany to get createdAt for decay weighting
@@ -146,10 +206,11 @@ export async function GET(request: NextRequest) {
             profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } }
           },
         });
+    const requestIds = new Set(requestMedia.map((item) => item.id));
     const personalizedIds = new Set(personalizedMedia.map((item) => item.id));
     const randomPool = await db.artistMediaAsset.findMany({
       where: {
-        id: { notIn: [...actionedIds, ...personalizedIds] },
+        id: { notIn: [...actionedIds, ...personalizedIds, ...requestIds] },
         ...releasedMediaWhere(),
         profile: profileFilter,
       },
@@ -169,7 +230,7 @@ export async function GET(request: NextRequest) {
     }
     const randomMedia = randomPool.slice(0, 5);
     const randomIds = new Set(randomMedia.map((item) => item.id));
-    const media = [...personalizedMedia, ...randomMedia];
+    const media = [...requestMedia, ...personalizedMedia.filter((item) => !requestIds.has(item.id)), ...randomMedia];
 
     // Hype count per track — use findMany for per-record decay weights
     const mediaIds = media.map(m => m.id);
@@ -205,13 +266,14 @@ export async function GET(request: NextRequest) {
         hypeCount: hypeCountMap.get(m.id) ?? 0,
         nowPlaying: m.profile?.nowPlaying ?? null,
         journalContent: m.profile?.journalContent ?? null,
-        reason: genres.length
+        reason: requestReason.get(m.id)
+          ?? (genres.length
           ? `Matches ${genres.join(', ')}`
           : randomIds.has(m.id)
             ? 'A completely random discovery'
           : cfMedia.length
             ? 'Fans like you also hype this'
-            : 'Fresh music for your Seed mix',
+            : 'Fresh music for your Seed mix'),
       })),
     });
   } catch (error) {

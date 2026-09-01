@@ -7,6 +7,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
+import { describeDemand, scoreVenueDemand } from '@/lib/fan-demand';
 
 export const dynamic = 'force-dynamic';
 
@@ -207,6 +208,36 @@ export default async function ArtistAnalyticsPage({
     .sort((a, b) => b.grossCents - a.grossCents)
     .slice(0, 5);
 
+  /* Where fans want you — the artist's side of the fan-to-venue demand loop.
+     The same PENDING requests a venue's radar ranks, grouped by VENUE for
+     this artist, weighed by time, distinct fans and each fan's distance to
+     THAT venue. Not windowed by the range tabs: a request is a standing ask
+     until the venue books or dismisses it. Legacy rows without a stored fan
+     location fall back to the requester's profile, as the radar does. */
+  const demandRows = await db.venueConnectionRequest.findMany({
+    where: { artistProfileId: profile.id, status: 'PENDING' },
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+    select: {
+      venueProfileId: true, artistProfileId: true, artistName: true, requesterId: true, createdAt: true,
+      requesterCity: true, requesterStateRegion: true, requesterLatitude: true, requesterLongitude: true,
+      venueProfile: { select: { slug: true, name: true, city: true, stateRegion: true, latitude: true, longitude: true } },
+      requester: { select: { profiles: { select: { city: true, stateRegion: true, latitude: true, longitude: true }, take: 1 } } },
+    },
+  }).catch(() => []);
+  const venueBySlugId = new Map(demandRows.map((row) => [row.venueProfileId, row.venueProfile]));
+  const venueDemand = scoreVenueDemand(
+    demandRows.map((row) => {
+      const fallback = row.requester.profiles[0];
+      const hasStored = row.requesterCity || row.requesterStateRegion || row.requesterLatitude !== null;
+      const located = hasStored || !fallback
+        ? row
+        : { ...row, requesterCity: fallback.city, requesterStateRegion: fallback.stateRegion, requesterLatitude: fallback.latitude, requesterLongitude: fallback.longitude };
+      return { ...located, venue: row.venueProfile };
+    }),
+    end,
+  ).slice(0, 8);
+
   return (
     <div className="aa-page">
       <div className="aa-header">
@@ -284,6 +315,31 @@ export default async function ArtistAnalyticsPage({
                   </div>
                 </div>
                 <span className="aa-event-gross">{formatCurrencyFromCents(event.grossCents)}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="aa-eyebrow-row" style={{ marginTop: 32 }}>
+        <span className="aa-eyebrow-sm" style={{ color: 'var(--role-fan)' }}>{t('artistsSlugAnalyticsPage.whereFansWantYou', 'Where fans want you')}</span>
+      </div>
+      {venueDemand.length === 0 ? (
+        <div className="aa-empty"><p>{t('artistsSlugAnalyticsPage.noFanRequests', 'No fan requests yet. When a fan asks a venue to book you, that venue ranks here.')}</p></div>
+      ) : (
+        <div className="aa-events-list">
+          {venueDemand.map((entry) => {
+            const venue = venueBySlugId.get(entry.venueProfileId);
+            if (!venue) return null;
+            return (
+              <Link className="aa-event-row" href={`/app/venues/${venue.slug}`} key={entry.venueProfileId}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="aa-event-title">{venue.name}{venue.city ? ` · ${venue.city}` : ''}</div>
+                  <div className="aa-event-meta">{describeDemand(entry, end)}</div>
+                </div>
+                <span className="aa-event-gross" style={{ color: 'var(--role-fan)' }}>
+                  {entry.fans.toLocaleString()} {entry.fans === 1 ? t('artistsSlugAnalyticsPage.fanUnit', 'fan') : t('artistsSlugAnalyticsPage.fansUnit', 'fans')}
+                </span>
               </Link>
             );
           })}

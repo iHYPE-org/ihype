@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { detectRequestLocation } from '@/lib/request-location';
+import { log } from '@/lib/logger';
 
 const schema = z.object({
   venueProfileId: z.string().cuid(),
@@ -65,10 +67,11 @@ export async function POST(request: Request) {
     }
 
     let artistProfileName: string | null = null;
+    let artistProfileId = body.artistProfileId;
 
-    if (body.artistProfileId) {
+    if (artistProfileId) {
       const artistProfile = await db.profile.findUnique({
-        where: { id: body.artistProfileId },
+        where: { id: artistProfileId },
         select: { id: true, name: true, type: true }
       });
 
@@ -77,7 +80,49 @@ export async function POST(request: Request) {
       }
 
       artistProfileName = artistProfile.name;
+    } else if (body.artistName) {
+      /* The form asks for "Artist name or iHYPE handle" and sent only text, so
+         a fan typing @handle or an exact name got a request attached to NO
+         profile — it never reached the artist's stats and the venue's radar
+         could not match it to an act it knows. Resolve it here: an exact slug
+         (with or without the @) or an exact, case-insensitive name. Anything
+         looser would attach a fan's request to the wrong artist. */
+      const handle = body.artistName.replace(/^@/, '').trim().toLowerCase();
+      const matched = handle
+        ? await db.profile.findFirst({
+            where: {
+              type: 'ARTIST',
+              OR: [{ slug: handle }, { name: { equals: body.artistName.trim(), mode: 'insensitive' } }],
+            },
+            select: { id: true, name: true },
+          }).catch(() => null)
+        : null;
+      if (matched) {
+        artistProfileId = matched.id;
+        artistProfileName = matched.name;
+      }
     }
+
+    /* Where the fan is, captured once. Their own profile location first (the
+       address they chose to give), else the request's edge geolocation. This
+       is what lets the venue's radar weigh a request by whether the fan could
+       actually attend; see `fan-demand.ts`. Never fatal — a request with no
+       location is stored with none and weighs as unknown. */
+    const requesterProfile = await db.profile.findFirst({
+      where: { ownerId: session.user.id, OR: [{ latitude: { not: null } }, { city: { not: null } }] },
+      orderBy: { createdAt: 'asc' },
+      select: { city: true, stateRegion: true, latitude: true, longitude: true },
+    }).catch(() => null);
+    const edge = requesterProfile ? null : await detectRequestLocation().catch((error) => {
+      log.warn('[venue-requests]', { error: error instanceof Error ? error.message : String(error) }, 'Location detection failed; request stored without a location');
+      return null;
+    });
+    const requesterLocation = {
+      requesterCity: requesterProfile?.city ?? edge?.city ?? null,
+      requesterStateRegion: requesterProfile?.stateRegion ?? edge?.stateRegion ?? null,
+      requesterLatitude: requesterProfile?.latitude ?? edge?.latitude ?? null,
+      requesterLongitude: requesterProfile?.longitude ?? edge?.longitude ?? null,
+    };
 
     const normalizedArtistName = (body.artistName || artistProfileName || '').trim().toLowerCase();
     const existingPendingRequests = await db.venueConnectionRequest.findMany({
@@ -93,7 +138,7 @@ export async function POST(request: Request) {
     });
 
     const isDuplicate = existingPendingRequests.some((connectionRequest) => {
-      if (body.artistProfileId && connectionRequest.artistProfileId === body.artistProfileId) {
+      if (artistProfileId && connectionRequest.artistProfileId === artistProfileId) {
         return true;
       }
 
@@ -110,12 +155,13 @@ export async function POST(request: Request) {
     const connectionRequest = await db.venueConnectionRequest.create({
       data: {
         venueProfileId: body.venueProfileId,
-        artistProfileId: body.artistProfileId,
+        artistProfileId,
         requesterId: session.user.id,
         requesterType: body.requesterType,
-        artistName: body.artistName || artistProfileName || 'Unknown artist',
+        artistName: artistProfileName || body.artistName || 'Unknown artist',
         note: body.note || undefined,
-        notifyOnBooking: body.notifyOnBooking
+        notifyOnBooking: body.notifyOnBooking,
+        ...requesterLocation,
       }
     });
 

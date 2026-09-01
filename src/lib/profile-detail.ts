@@ -70,3 +70,24 @@ export function upcomingShowWhere(now: Date = new Date()) {
     ],
   };
 }
+
+/**
+ * The complement of `upcomingShowWhere` over the public statuses: a show that
+ * was visible and is over. ENDED always counts; SCHEDULED counts once its
+ * start has passed, because a show whose status was never flipped still
+ * happened. LIVE is never past (it is upcoming, above), and DRAFT/CANCELED are
+ * neither — a cancelled show did not take place and must not inflate a "past
+ * events" figure that sits beside a tickets-sold one.
+ *
+ * Written as a disjunction for the same reason as its sibling: `status in
+ * (SCHEDULED, ENDED) AND startsAt < now` would drop an ENDED show whose
+ * `startsAt` was edited forward, and reads as though it would not.
+ */
+export function pastShowWhere(now: Date = new Date()) {
+  return {
+    OR: [
+      { status: 'ENDED' as ShowStatus },
+      { status: 'SCHEDULED' as ShowStatus, startsAt: { lt: now } },
+    ],
+  };
+}

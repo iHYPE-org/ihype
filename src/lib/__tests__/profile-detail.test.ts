@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ShowStatus } from '@prisma/client';
-import { isUpcomingShow, upcomingShowWhere } from '@/lib/profile-detail';
+import { isUpcomingShow, pastShowWhere, upcomingShowWhere } from '@/lib/profile-detail';
 
 const NOW = new Date('2026-08-14T20:00:00.000Z');
 const at = (offsetMs: number) => new Date(NOW.getTime() + offsetMs);
@@ -67,6 +67,45 @@ describe('upcomingShowWhere', () => {
       for (const startsAt of [at(-HOUR), NOW, at(HOUR)]) {
         expect(matches({ status, startsAt }), `${status} @ ${startsAt.toISOString()}`)
           .toBe(isUpcomingShow({ status, startsAt }, NOW));
+      }
+    }
+  });
+});
+
+describe('pastShowWhere', () => {
+  it('counts ENDED whatever the clock says, and SCHEDULED only once it has started', () => {
+    expect(pastShowWhere(NOW)).toEqual({
+      OR: [
+        { status: 'ENDED' },
+        { status: 'SCHEDULED', startsAt: { lt: NOW } },
+      ],
+    });
+  });
+
+  it('partitions the public statuses with upcomingShowWhere — a visible show is exactly one of past or upcoming', () => {
+    // A LIVE show is upcoming and never past; a SCHEDULED one flips at its
+    // start; DRAFT and CANCELED are neither. Both fragments are evaluated the
+    // way Prisma would, and the pair must cover SCHEDULED/LIVE/ENDED exactly
+    // once so "Past events" and "Shows" on a profile never double-count.
+    const upcoming = upcomingShowWhere(NOW);
+    const past = pastShowWhere(NOW);
+    const matches = (
+      where: { OR: { status: ShowStatus; startsAt?: { gte?: Date; lt?: Date } }[] },
+      show: { status: ShowStatus; startsAt: Date },
+    ) =>
+      where.OR.some((clause) => {
+        if (clause.status !== show.status) return false;
+        if (clause.startsAt?.gte !== undefined && show.startsAt < clause.startsAt.gte) return false;
+        if (clause.startsAt?.lt !== undefined && show.startsAt >= clause.startsAt.lt) return false;
+        return true;
+      });
+    const statuses: ShowStatus[] = ['DRAFT', 'SCHEDULED', 'LIVE', 'ENDED', 'CANCELED'];
+    for (const status of statuses) {
+      for (const startsAt of [at(-HOUR), NOW, at(HOUR)]) {
+        const show = { status, startsAt };
+        const hits = Number(matches(upcoming, show)) + Number(matches(past, show));
+        const visible = status === 'SCHEDULED' || status === 'LIVE' || status === 'ENDED';
+        expect(hits, `${status} @ ${startsAt.toISOString()}`).toBe(visible ? 1 : 0);
       }
     }
   });

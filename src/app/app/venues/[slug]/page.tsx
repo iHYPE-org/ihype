@@ -12,6 +12,7 @@ import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
+import { VenueRequestForm } from '@/components/VenueRequestForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,7 @@ export default async function MmmVenuePage({
       hoursText: true,
       contactInfo: true,
       requestContent: true,
+      ownerId: true,
       owner: { select: { email: true, username: true } },
       _count: { select: { followers: true } },
     },
@@ -82,6 +84,7 @@ export default async function MmmVenuePage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
 
   const activeTab = resolveTab(VENUE_TABS, requestedTab);
+  const isOwner = profile.ownerId === session.user.id;
 
   const now = new Date();
   const [userHype, upcoming] = await Promise.all([
@@ -252,6 +255,30 @@ export default async function MmmVenuePage({
           title="Contact"
         >
           <RichContent value={profile.contactInfo} />
+        </ProfilePanel>
+      )}
+
+      {activeTab === 'contact' && (
+        /* The fan's side of the demand radar. `VenueRequestForm` posts to
+           /api/venue-requests and, until 2026-09-01, was mounted on no page —
+           fans could not ask a venue for anyone, so the venue's radar had
+           nothing to analyse. It lives on Contact because "bring this act
+           here" is the one thing a fan has to say to a venue. The owner sees
+           where the answers land instead of a form addressed to themselves. */
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Ask them to book someone">
+          {isOwner ? (
+            <p className="profile-standfirst">
+              Fans use this form to ask you to book an act. Their requests rank on your{' '}
+              <Link href="/app/me/booking">demand radar</Link>, weighed by how recently, how many, and how close they are.
+            </p>
+          ) : (
+            <>
+              <p className="profile-standfirst">
+                Want to see someone play here? Name the act and {profile.name} sees the request, ranked with everyone else who asked.
+              </p>
+              <VenueRequestForm venueProfileId={profile.id} />
+            </>
+          )}
         </ProfilePanel>
       )}
 

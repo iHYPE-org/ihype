@@ -18,6 +18,9 @@ import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 
 type AvailabilityEntry = { id: string; date: string; note: string | null; kind?: 'TOUR' | 'AVAILABLE' };
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
+/* One tile of the owner's stats board — see src/lib/profile-stat-board.ts.
+   `value: null` is "could not read", rendered as a dash, never as 0. */
+type StatBoardEntry = { key: string; label: string; hint: string; value: number | null };
 
 type EditorProfile = {
   id: string;
@@ -221,6 +224,10 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   // Recent activity — read-only feed from /api/profile/activity (who hyped
   // this profile recently); there's nothing to edit, just to show.
   const [hypers, setHypers] = useState<RecentHyper[] | null>(null);
+  // The stats board — fixed real counts for artists and venues, from
+  // /api/profile/stats. `null` while loading; 'unavailable' when the request
+  // failed or the type has no board (a fan's Stats is the picker below).
+  const [statBoard, setStatBoard] = useState<StatBoardEntry[] | null | 'unavailable'>(null);
 
   useEffect(() => {
     setSection(resolvedInitialSection);
@@ -258,6 +265,14 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.dates) setAvailDates(d.dates); })
       .catch(() => {});
+  }, [profileId]);
+
+  useEffect(() => {
+    setStatBoard(null);
+    fetch(`/api/profile/stats?profileId=${profileId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setStatBoard(Array.isArray(d?.stats) ? d.stats : 'unavailable'))
+      .catch(() => setStatBoard('unavailable'));
   }, [profileId]);
 
   useEffect(() => {
@@ -745,46 +760,91 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
       {activeSection === 'stats' && (
         <div className="sub-panel">
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
-            {t('pageEditor.statsIntro', 'Pick up to 4 real stats to show on your public page. These are the same numbers already shown in your Insights tab — nothing here is estimated or made up.')}
-          </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {statOptionsForRole(data.type).map((opt) => {
-              const checked = data.pinnedStats.includes(opt.key);
-              const atLimit = data.pinnedStats.length >= 4;
-              return (
-                <label
-                  key={opt.key}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                    borderRadius: 10, border: '1px solid var(--hair-100)',
-                    background: checked ? 'var(--hair-50)' : 'transparent',
-                    cursor: !checked && atLimit ? 'not-allowed' : 'pointer',
-                    opacity: !checked && atLimit ? 0.5 : 1,
-                  }}
-                >
-                  <input
-                    checked={checked}
-                    disabled={!checked && atLimit}
-                    onChange={(e) => {
-                      const key = opt.key as StatKey;
-                      if (e.target.checked) {
-                        if (!atLimit) set('pinnedStats', [...data.pinnedStats, key]);
-                      } else {
-                        set('pinnedStats', data.pinnedStats.filter((k) => k !== key));
-                      }
-                    }}
-                    type="checkbox"
-                  />
-                  <span style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{t(`pageEditor.statOption.${opt.key}`, opt.label)}</span>
-                </label>
-              );
-            })}
-          </div>
-          {data.pinnedStats.length >= 4 && (
-            <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '10px 0 0' }}>
-              {t('pageEditor.statsLimitReached', '4 selected — uncheck one to swap it for another.')}
-            </p>
+          {/* Two Stats sections in one slot. A FAN keeps the "pin up to 4"
+              picker, because /app/fans/[slug] renders the pinned tiles and
+              that is where the choice shows. An ARTIST or VENUE gets the fixed
+              board the owner specified (2026-09-01): the artist page never
+              rendered pinned tiles, so the picker there chose for nobody. */}
+          {isFan ? (
+            <>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
+                {t('pageEditor.statsIntro', 'Pick up to 4 real stats to show on your public page. These are the same numbers already shown in your Insights tab — nothing here is estimated or made up.')}
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {statOptionsForRole(data.type).map((opt) => {
+                  const checked = data.pinnedStats.includes(opt.key);
+                  const atLimit = data.pinnedStats.length >= 4;
+                  return (
+                    <label
+                      key={opt.key}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
+                        borderRadius: 10, border: '1px solid var(--hair-100)',
+                        background: checked ? 'var(--hair-50)' : 'transparent',
+                        cursor: !checked && atLimit ? 'not-allowed' : 'pointer',
+                        opacity: !checked && atLimit ? 0.5 : 1,
+                      }}
+                    >
+                      <input
+                        checked={checked}
+                        disabled={!checked && atLimit}
+                        onChange={(e) => {
+                          const key = opt.key as StatKey;
+                          if (e.target.checked) {
+                            if (!atLimit) set('pinnedStats', [...data.pinnedStats, key]);
+                          } else {
+                            set('pinnedStats', data.pinnedStats.filter((k) => k !== key));
+                          }
+                        }}
+                        type="checkbox"
+                      />
+                      <span style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{t(`pageEditor.statOption.${opt.key}`, opt.label)}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {data.pinnedStats.length >= 4 && (
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '10px 0 0' }}>
+                  {t('pageEditor.statsLimitReached', '4 selected — uncheck one to swap it for another.')}
+                </p>
+              )}
+            </>
+          ) : (
+            <>
+              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
+                {t('pageEditor.statBoardIntro', 'Real counts from your profile. Nothing here is estimated — a dash means a number could not be read just now.')}
+              </p>
+              {statBoard === null ? (
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.loading', 'Loading…')}</p>
+              ) : statBoard === 'unavailable' ? (
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.statBoardUnavailable', 'Stats could not be loaded. Reload to try again.')}</p>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
+                  {statBoard.map((stat) => (
+                    <div
+                      key={stat.key}
+                      style={{
+                        display: 'flex', flexDirection: 'column', gap: 4, padding: '12px 14px',
+                        borderRadius: 10, border: '1px solid var(--hair-100)', background: 'var(--hair-30)',
+                      }}
+                    >
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', color: 'var(--ink)' }}>
+                        {stat.value === null ? '—' : stat.value.toLocaleString()}
+                      </span>
+                      <span style={{
+                        fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em',
+                        textTransform: 'uppercase', color: 'var(--ink-a65)',
+                      }}>
+                        {t(`pageEditor.statBoard.${stat.key}`, stat.label)}
+                      </span>
+                      <span style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
+                        {t(`pageEditor.statBoardHint.${stat.key}`, stat.hint)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid var(--hair-100)' }}>
