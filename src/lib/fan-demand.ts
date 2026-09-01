@@ -232,3 +232,70 @@ export function describeDemand(entry: Pick<DemandEntry, 'fans' | 'nearby' | 'lat
   parts.push(ageDays <= 7 ? 'this week' : ageDays <= 30 ? 'this month' : 'earlier');
   return parts.join(' · ');
 }
+
+/* ── The fan's own recommendations ───────────────────────────────────────────
+   Owner, 2026-09-01: "The recommendation and seed engines feed a big way into
+   what a fan will be shown for their own recommendations." A request is the
+   strongest taste signal a fan can leave — stronger than a hype, because it
+   names a room and asks for a night — so it feeds the two engines that decide
+   what THIS fan hears: the computed stations (`stations.ts`) and the discover
+   deck (`/api/discover/seeds`). Two signals come out of the same rows:
+
+     requested  — acts the fan asked a venue for. Play them.
+     wantedAt   — acts OTHER fans asked for at venues this fan follows or asked.
+                  "Fans want them at <Venue>" is a recommendation with a reason
+                  the fan already cares about.
+
+   Pure; `request-signals.ts` does the reads. */
+
+export type OwnRequestRow = { artistProfileId: string | null; venueProfileId: string };
+export type VenueRequestRow = {
+  artistProfileId: string | null;
+  venueProfileId: string;
+  requesterId: string;
+  venueName: string;
+};
+
+export type RequestSignals = {
+  /** Acts the viewer asked for, in no particular order. */
+  requestedArtistIds: string[];
+  /** Venues the viewer asked — a room they care about. */
+  requestedVenueIds: string[];
+  /** Acts other fans want at the viewer's venues, strongest first. */
+  wantedAt: { artistProfileId: string; venueName: string; fans: number }[];
+};
+
+export function summarizeRequestSignals(
+  own: readonly OwnRequestRow[],
+  atVenues: readonly VenueRequestRow[],
+  viewerId: string,
+): RequestSignals {
+  const requestedArtistIds = [...new Set(own.map((row) => row.artistProfileId).filter((id): id is string => Boolean(id)))];
+  const requestedVenueIds = [...new Set(own.map((row) => row.venueProfileId))];
+  const requested = new Set(requestedArtistIds);
+
+  // Distinct fans per act, and the venue with the most of them for the reason.
+  const fansByArtist = new Map<string, Set<string>>();
+  const fansByArtistVenue = new Map<string, Map<string, { name: string; fans: Set<string> }>>();
+  for (const row of atVenues) {
+    if (!row.artistProfileId || row.requesterId === viewerId || requested.has(row.artistProfileId)) continue;
+    let fans = fansByArtist.get(row.artistProfileId);
+    if (!fans) fansByArtist.set(row.artistProfileId, (fans = new Set()));
+    fans.add(row.requesterId);
+    let venues = fansByArtistVenue.get(row.artistProfileId);
+    if (!venues) fansByArtistVenue.set(row.artistProfileId, (venues = new Map()));
+    let venue = venues.get(row.venueProfileId);
+    if (!venue) venues.set(row.venueProfileId, (venue = { name: row.venueName, fans: new Set() }));
+    venue.fans.add(row.requesterId);
+  }
+
+  const wantedAt = [...fansByArtist.entries()]
+    .map(([artistProfileId, fans]) => {
+      const venues = [...(fansByArtistVenue.get(artistProfileId)?.values() ?? [])];
+      venues.sort((a, b) => b.fans.size - a.fans.size || a.name.localeCompare(b.name));
+      return { artistProfileId, venueName: venues[0]?.name ?? '', fans: fans.size };
+    })
+    .sort((a, b) => b.fans - a.fans || a.artistProfileId.localeCompare(b.artistProfileId));
+
+  return { requestedArtistIds, requestedVenueIds, wantedAt };
+}

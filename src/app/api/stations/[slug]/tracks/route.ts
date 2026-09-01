@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { findStation, stationWhere, type StationContext } from '@/lib/stations';
 import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
+import { loadRequestSignals } from '@/lib/request-signals';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,9 @@ function reasonFor(
 ): string {
   if (context.followedProfileIds.includes(profileId)) return 'From an artist you follow';
   if (context.hypedProfileIds.includes(profileId)) return 'From an artist you hyped';
+  if (context.requestedProfileIds.includes(profileId)) return 'You asked a venue to book them';
+  const wanted = context.wantedAtVenue.find((entry) => entry.profileId === profileId);
+  if (wanted) return wanted.venueName ? `Fans want them at ${wanted.venueName}` : 'Fans want them at a venue you follow';
   switch (station.kind) {
     case 'local': return city ? `Playing in ${city}` : 'Near you';
     case 'new': return 'Uploaded this week';
@@ -87,9 +91,18 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       userId ? db.profile.findFirst({ where: { ownerId: userId, city: { not: null } }, select: { city: true } }) : Promise.resolve(null),
     ]);
 
+    const followedProfileIds = follows.map((follow) => follow.followeeProfileId);
+    /* Fan requests as a station signal — see `fan-demand.ts`. Read after the
+       follows because the venues the viewer follows are one of its inputs. */
+    const requests = userId
+      ? await loadRequestSignals(userId, followedProfileIds)
+      : { requestedArtistIds: [], requestedVenueIds: [], wantedAt: [] };
+
     const context: StationContext = {
       hypedProfileIds: hypes.map((hype) => hype.profileId),
-      followedProfileIds: follows.map((follow) => follow.followeeProfileId),
+      followedProfileIds,
+      requestedProfileIds: requests.requestedArtistIds,
+      wantedAtVenue: requests.wantedAt.map((entry) => ({ profileId: entry.artistProfileId, venueName: entry.venueName })),
       viewerCity: viewerProfile?.city ?? null,
       now: new Date(),
     };

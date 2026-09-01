@@ -149,3 +149,41 @@ describe('scoreVenueDemand (the artist\'s side of the same rows)', () => {
     expect(venueView.fans).toBe(artistView.fans);
   });
 });
+
+describe('summarizeRequestSignals (what feeds the fan\'s own recommendations)', () => {
+  it('separates what the fan asked for from what other fans want at the fan\'s venues', async () => {
+    const { summarizeRequestSignals } = await import('@/lib/fan-demand');
+    const signals = summarizeRequestSignals(
+      [
+        { artistProfileId: 'act_a', venueProfileId: 'v1' },
+        { artistProfileId: null, venueProfileId: 'v2' }, // name-only ask still marks the venue
+        { artistProfileId: 'act_a', venueProfileId: 'v2' },
+      ],
+      [
+        { artistProfileId: 'act_b', venueProfileId: 'v1', requesterId: 'f1', venueName: 'Port City' },
+        { artistProfileId: 'act_b', venueProfileId: 'v1', requesterId: 'f2', venueName: 'Port City' },
+        { artistProfileId: 'act_b', venueProfileId: 'v2', requesterId: 'f3', venueName: 'Space' },
+        { artistProfileId: 'act_c', venueProfileId: 'v2', requesterId: 'f1', venueName: 'Space' },
+        // The viewer's own ask and an act they already asked for are not "other fans".
+        { artistProfileId: 'act_d', venueProfileId: 'v1', requesterId: 'me', venueName: 'Port City' },
+        { artistProfileId: 'act_a', venueProfileId: 'v1', requesterId: 'f9', venueName: 'Port City' },
+      ],
+      'me',
+    );
+    expect(signals.requestedArtistIds).toEqual(['act_a']);
+    expect(signals.requestedVenueIds).toEqual(['v1', 'v2']);
+    expect(signals.wantedAt).toEqual([
+      { artistProfileId: 'act_b', venueName: 'Port City', fans: 3 },
+      { artistProfileId: 'act_c', venueName: 'Space', fans: 1 },
+    ]);
+  });
+
+  it('counts distinct fans, so one fan asking at two venues is one fan', async () => {
+    const { summarizeRequestSignals } = await import('@/lib/fan-demand');
+    const signals = summarizeRequestSignals([], [
+      { artistProfileId: 'act_b', venueProfileId: 'v1', requesterId: 'f1', venueName: 'Port City' },
+      { artistProfileId: 'act_b', venueProfileId: 'v2', requesterId: 'f1', venueName: 'Space' },
+    ], 'me');
+    expect(signals.wantedAt).toEqual([{ artistProfileId: 'act_b', venueName: 'Port City', fans: 1 }]);
+  });
+});

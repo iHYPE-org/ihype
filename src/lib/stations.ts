@@ -83,6 +83,18 @@ export type StationContext = {
   hypedProfileIds: readonly string[];
   /** Profile ids the viewer follows — the signal for `friends`. */
   followedProfileIds: readonly string[];
+  /**
+   * Acts the viewer asked a venue to book (2026-09-01, `fan-demand.ts`). The
+   * strongest taste signal a fan leaves, so `for_you` plays them.
+   */
+  requestedProfileIds: readonly string[];
+  /**
+   * Acts OTHER fans want at venues the viewer follows or asked, with the venue
+   * to name in the reason. Feeds `for_you` and `friends`: the venue you follow
+   * is an account you follow, and its fans wanting an act is what "recommended
+   * by friends" means once a venue can be a friend.
+   */
+  wantedAtVenue: readonly { profileId: string; venueName: string }[];
   /** The viewer's own city label, for `local`. */
   viewerCity: string | null;
   now: Date;
@@ -106,15 +118,21 @@ export function stationWhere(
     profile: { discoverable: true },
   };
 
+  const wantedIds = context.wantedAtVenue.map((entry) => entry.profileId);
+
   switch (station.kind) {
-    case 'for_you':
-      return context.hypedProfileIds.length
-        ? { AND: [eligible, { profileId: { in: [...context.hypedProfileIds] } }] }
+    case 'for_you': {
+      const ids = [...new Set([...context.hypedProfileIds, ...context.requestedProfileIds, ...wantedIds])];
+      return ids.length
+        ? { AND: [eligible, { profileId: { in: ids } }] }
         : { AND: [eligible, { id: { in: [] } }] };
-    case 'friends':
-      return context.followedProfileIds.length
-        ? { AND: [eligible, { profileId: { in: [...context.followedProfileIds] } }] }
+    }
+    case 'friends': {
+      const ids = [...new Set([...context.followedProfileIds, ...wantedIds])];
+      return ids.length
+        ? { AND: [eligible, { profileId: { in: ids } }] }
         : { AND: [eligible, { id: { in: [] } }] };
+    }
     case 'local':
       return context.viewerCity
         ? { AND: [eligible, { profile: { discoverable: true, city: { equals: context.viewerCity, mode: 'insensitive' } } }] }
