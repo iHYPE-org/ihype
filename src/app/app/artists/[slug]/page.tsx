@@ -14,6 +14,7 @@ import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
+import { ArtistRequestForm } from '@/components/ArtistRequestForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -558,6 +559,29 @@ export default async function MmmArtistPage({
                 </li>
               ))}
             </ul>
+          )}
+        </ProfilePanel>
+      )}
+
+      {activeTab === 'tour' && (
+        /* The fan's side of the artist's demand: ask this act to come to a
+           venue near the fan, or one they follow. Same request row the venue
+           page's form files, entered from here, so it lands on the venue's
+           radar AND in this artist's analytics. On Tour because that is where
+           a fan looks for a date near them and finds none. */
+        <ProfilePanel empty="" isEmpty={false} tabId="tour" title={isOwner ? 'Where fans want you' : 'Want them near you?'}>
+          {isOwner ? (
+            <p className="profile-standfirst">
+              Fans can ask a venue to book you from here. Every ask ranks on that venue&apos;s demand radar and on your{' '}
+              <Link href={`/app/me/artists/${profile.slug}/analytics`}>analytics</Link>, weighed by how recently, how many, and how close they are.
+            </p>
+          ) : (
+            <>
+              <p className="profile-standfirst">
+                Pick a venue near you, or one you follow, and {profile.name} and the venue both see the ask.
+              </p>
+              <ArtistRequestForm artistName={profile.name} artistProfileId={profile.id} />
+            </>
           )}
         </ProfilePanel>
       )}

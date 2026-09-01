@@ -24,6 +24,14 @@
  * submission (`/api/venue-requests`), so name-only groups are acts not on
  * iHYPE — still shown to the venue, because "six fans want a band you have
  * never heard of" is exactly the signal the radar is for.
+ *
+ * **The same rows read from the artist's side** (owner, same day: "Fans can
+ * also request artists come to venues near them or that they love and show
+ * up as recommendations in artist analysis as well"): `scoreVenueDemand()`
+ * groups one artist's requests by VENUE instead, with proximity still
+ * measured fan-to-venue — a show is viable where the fans who asked can get
+ * to, which is not necessarily where the artist lives. Same time and
+ * frequency rules; one core, two groupings.
  */
 
 export const HALF_LIFE_DAYS = 30;
@@ -118,32 +126,50 @@ export function demandKey(request: Pick<DemandRequest, 'artistProfileId' | 'arti
   return request.artistProfileId ? `profile:${request.artistProfileId}` : `name:${request.artistName.trim().toLowerCase()}`;
 }
 
-/** Ranked demand, strongest first. Empty input → empty output. */
-export function scoreFanDemand(requests: readonly DemandRequest[], venue: DemandVenue, now: Date = new Date()): DemandEntry[] {
-  type Group = DemandEntry & { perFan: Map<string, { weight: number; nearby: boolean }> };
+/** One artist's requests, each carrying the venue it was addressed to. */
+export type VenueDemandRequest = DemandRequest & {
+  venueProfileId: string;
+  venue: DemandVenue;
+};
+
+export type VenueDemandEntry = Omit<DemandEntry, 'artistProfileId' | 'artistName'> & {
+  venueProfileId: string;
+};
+
+/**
+ * The core: group requests by `keyOf`, weigh each by recency × proximity to
+ * `venueOf(request)`, count distinct fans with one strongest ask each.
+ */
+function groupDemand<TRequest extends DemandRequest, TKey extends object>(
+  requests: readonly TRequest[],
+  keyOf: (request: TRequest) => string,
+  venueOf: (request: TRequest) => DemandVenue,
+  identityOf: (request: TRequest) => TKey,
+  now: Date,
+): (Omit<DemandEntry, 'artistProfileId' | 'artistName'> & TKey)[] {
+  type Group = Omit<DemandEntry, 'artistProfileId' | 'artistName'> & TKey & { perFan: Map<string, { weight: number; nearby: boolean }> };
   const groups = new Map<string, Group>();
 
   for (const request of requests) {
-    const key = demandKey(request);
+    const key = keyOf(request);
     let group = groups.get(key);
     if (!group) {
       group = {
+        ...identityOf(request),
         key,
-        artistProfileId: request.artistProfileId,
-        artistName: request.artistName.trim(),
         fans: 0,
         requests: 0,
         nearby: 0,
         latestAt: request.createdAt,
         weight: 0,
         perFan: new Map(),
-      };
+      } as Group;
       groups.set(key, group);
     }
     group.requests += 1;
     if (request.createdAt > group.latestAt) group.latestAt = request.createdAt;
 
-    const proximity = proximityWeight(request, venue);
+    const proximity = proximityWeight(request, venueOf(request));
     const weight = recencyWeight(request.createdAt, now) * proximity.weight;
     const best = group.perFan.get(request.requesterId);
     // One fan, however often they ask, is one fan: keep their strongest ask.
@@ -154,7 +180,8 @@ export function scoreFanDemand(requests: readonly DemandRequest[], venue: Demand
     }
   }
 
-  const entries: DemandEntry[] = [];
+  type Entry = Omit<DemandEntry, 'artistProfileId' | 'artistName'> & TKey;
+  const entries: Entry[] = [];
   for (const group of groups.values()) {
     let weight = 0;
     let nearby = 0;
@@ -163,11 +190,37 @@ export function scoreFanDemand(requests: readonly DemandRequest[], venue: Demand
       if (fan.nearby) nearby += 1;
     }
     const { perFan, ...entry } = group;
-    entries.push({ ...entry, fans: perFan.size, nearby, weight });
+    entries.push({ ...entry, fans: perFan.size, nearby, weight } as Entry);
   }
 
   return entries.sort(
     (a, b) => b.weight - a.weight || b.fans - a.fans || b.latestAt.getTime() - a.latestAt.getTime(),
+  );
+}
+
+/** A venue's view: ranked acts, strongest first. Empty input → empty output. */
+export function scoreFanDemand(requests: readonly DemandRequest[], venue: DemandVenue, now: Date = new Date()): DemandEntry[] {
+  return groupDemand(
+    requests,
+    demandKey,
+    () => venue,
+    (request) => ({ artistProfileId: request.artistProfileId, artistName: request.artistName.trim() }),
+    now,
+  );
+}
+
+/**
+ * An artist's view: ranked venues fans want them at, strongest first.
+ * Proximity is fan-to-THAT-venue, so "four fans near the Sinclair asked" and
+ * "four fans in Texas asked for the Sinclair" rank differently, as they should.
+ */
+export function scoreVenueDemand(requests: readonly VenueDemandRequest[], now: Date = new Date()): VenueDemandEntry[] {
+  return groupDemand(
+    requests,
+    (request) => `venue:${request.venueProfileId}`,
+    (request) => request.venue,
+    (request) => ({ venueProfileId: request.venueProfileId }),
+    now,
   );
 }
 

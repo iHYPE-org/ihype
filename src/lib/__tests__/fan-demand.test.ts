@@ -112,3 +112,40 @@ describe('describeDemand', () => {
     expect(describeDemand({ fans: 2, nearby: 0, latestAt: daysAgo(90) }, NOW)).toBe('2 fans asked · earlier');
   });
 });
+
+describe('scoreVenueDemand (the artist\'s side of the same rows)', () => {
+  const SINCLAIR: DemandVenue = { city: 'Cambridge', stateRegion: 'MA', latitude: 42.3736, longitude: -71.1190 };
+  const venueReq = (venueProfileId: string, venue: DemandVenue, over: Partial<DemandRequest> = {}) => ({
+    ...req(over), venueProfileId, venue,
+  });
+
+  it('groups one artist\'s requests by venue and measures proximity to THAT venue', async () => {
+    const { scoreVenueDemand } = await import('@/lib/fan-demand');
+    const entries = scoreVenueDemand([
+      // Two Boston-area fans asking for the Sinclair: nearby to it, far from Portland.
+      venueReq('sinclair', SINCLAIR, { requesterId: 'f1', requesterLatitude: 42.3601, requesterLongitude: -71.0589 }),
+      venueReq('sinclair', SINCLAIR, { requesterId: 'f2', requesterLatitude: 42.3601, requesterLongitude: -71.0589 }),
+      // One Portland fan asking for a Portland room.
+      venueReq('portland_room', PORTLAND, { requesterId: 'f3', requesterCity: 'Portland' }),
+      // A Texan asking for the Sinclair counts, but not as nearby.
+      venueReq('sinclair', SINCLAIR, { requesterId: 'f4', requesterLatitude: 30.2672, requesterLongitude: -97.7431, createdAt: daysAgo(45) }),
+    ], NOW);
+    expect(entries.map((e) => e.venueProfileId)).toEqual(['sinclair', 'portland_room']);
+    expect(entries[0].fans).toBe(3);
+    expect(entries[0].nearby).toBe(2);
+    expect(entries[1].fans).toBe(1);
+    expect(entries[1].nearby).toBe(1);
+  });
+
+  it('agrees with scoreFanDemand on weight when every request is for one venue', async () => {
+    const { scoreVenueDemand } = await import('@/lib/fan-demand');
+    const rows = [
+      req({ requesterId: 'f1', requesterCity: 'Portland', createdAt: daysAgo(3) }),
+      req({ requesterId: 'f2', requesterCity: 'Bangor', requesterStateRegion: 'ME', createdAt: daysAgo(10) }),
+    ];
+    const [venueView] = scoreVenueDemand(rows.map((r) => ({ ...r, venueProfileId: 'v', venue: PORTLAND })), NOW);
+    const [artistView] = scoreFanDemand(rows, PORTLAND, NOW);
+    expect(venueView.weight).toBeCloseTo(artistView.weight, 10);
+    expect(venueView.fans).toBe(artistView.fans);
+  });
+});
