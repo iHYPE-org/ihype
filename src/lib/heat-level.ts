@@ -5,7 +5,7 @@
  * cold) on every card that carries a hype count — the discover grid, the
  * recruiting kits' city bars, the map's cluster pins. Each of those surfaces
  * was deriving its own threshold, or inventing a different signal entirely:
- * `EventsHome` rendered "+N% this week" from `hypeCount >= 50` and nothing
+ * the since-deleted `EventsHome` rendered "+N% this week" from `hypeCount >= 50` and nothing
  * else used that number, so two cards for the same show could disagree about
  * whether it was hot.
  *

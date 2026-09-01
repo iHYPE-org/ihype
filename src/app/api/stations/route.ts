@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { STATIONS, stationTitle, stationWhere, type StationContext } from '@/lib/stations';
 import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
+import { loadRequestSignals } from '@/lib/request-signals';
 
 export const dynamic = 'force-dynamic';
 
@@ -51,9 +52,18 @@ export async function GET() {
         : Promise.resolve(null),
     ]);
 
+    const followedProfileIds = follows.map((follow) => follow.followeeProfileId);
+    /* The same request signals the tracks route resolves with, so a station's
+       advertised track count and its actual list are built from one context. */
+    const requests = userId
+      ? await loadRequestSignals(userId, followedProfileIds)
+      : { requestedArtistIds: [], requestedVenueIds: [], wantedAt: [] };
+
     const context: StationContext = {
       hypedProfileIds: hypes.map((hype) => hype.profileId),
-      followedProfileIds: follows.map((follow) => follow.followeeProfileId),
+      followedProfileIds,
+      requestedProfileIds: requests.requestedArtistIds,
+      wantedAtVenue: requests.wantedAt.map((entry) => ({ profileId: entry.artistProfileId, venueName: entry.venueName })),
       viewerCity: viewerProfile?.city ?? null,
       now: new Date(),
     };
