@@ -28,11 +28,14 @@ export function TrackUploadPanel({
   profileId,
   onUploaded,
   albums = [],
+  fileMb = 60,
 }: {
   profileId: string;
   onUploaded?: () => void;
   /** The artist's album folders, so a track can be filed at upload. */
   albums?: AlbumOption[];
+  /** The live per-file cap from GET /api/artist-media, so the copy never lies about it. */
+  fileMb?: number;
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -141,7 +144,7 @@ export function TrackUploadPanel({
         <div>
           <h3>{t('trackUploadPanel.uploadTrackHeading', 'Upload track')}</h3>
           <p className="meta">
-            {t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only — MP3, AAC/M4A, WAV or FLAC, up to 60 MB. Lossless is welcome. Every upload runs an automated scan before it’s marked cleared.')}
+            {`${t('trackUploadPanel.artistAudioOnlyNoticePrefix', 'Audio only — MP3, AAC/M4A, WAV or FLAC, up to')} ${fileMb} MB. ${t('trackUploadPanel.artistAudioOnlyNoticeSuffix', 'Lossless is welcome. Every upload runs an automated scan before it’s marked cleared.')}`}
           </p>
         </div>
       </div>

@@ -11,6 +11,7 @@ import { AUDIO_SNIFF_BYTES, PLAYABLE_AUDIO_FORMATS_LABEL, sniffAudio } from '@/l
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { runTrackScanPipeline } from '@/lib/media-vetting';
 import { albumRelease, resolveRelease } from '@/lib/release-schedule';
+import { GB, MB, getMediaLimits } from '@/lib/media-limits';
 import { isObjectStorageConfigured, storeMediaFile } from '@/lib/object-storage';
 import { vetImageUpload } from '@/lib/image-vetting';
 import { recordAuditEvent } from '@/lib/audit';
@@ -21,23 +22,17 @@ import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 export const dynamic = 'force-dynamic';
 
-/* Sized for lossless (owner, 2026-09-02: any format we can play). A 16-bit
-   44.1 kHz stereo WAV is ~10 MB a minute and FLAC about half that, so the old
-   10 MB cap admitted a one-minute WAV and nothing longer; 60 MB is a six-minute
-   WAV or a twelve-minute FLAC. The ceiling is the WORKER, not taste: this route
-   reads the whole file into memory (`file.arrayBuffer()`) to sniff, measure and
-   scan it, the isolate has 128 MB, and the request is buffered by `formData()`
-   too — so the request cap sits a little above the file cap and both stay well
-   under half the heap. Going past this means streaming the body to R2 and
-   scanning only its head, which is a different route. */
-const MAX_AUDIO_FILE_SIZE_BYTES = 60 * 1024 * 1024;
-const MAX_ARTWORK_FILE_SIZE_BYTES = 8 * 1024 * 1024;
+/* The budgets live in src/lib/media-limits.ts — defaults in code, overrides in
+   KV, so storage scales without a deploy. Sized for lossless (owner,
+   2026-09-02: any format we can play): a 16-bit 44.1 kHz stereo WAV is ~10 MB a
+   minute and FLAC about half, so the old 10 MB cap admitted a one-minute WAV
+   and nothing longer. The per-file cap has a ceiling the override cannot lift,
+   because this route reads the whole file into the Worker's 128 MB isolate to
+   sniff, measure and scan it; see that module. The request cap rides a little
+   above the file cap. */
+const MAX_ARTWORK_FILE_SIZE_BYTES = 8 * MB;
 const ARTWORK_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-/* 1 GB a profile: roughly a hundred lossless tracks, which is also the track
-   ceiling below. Raised from 250 MB with the file cap for the same reason. */
-const MAX_PROFILE_STORAGE_BYTES = 1024 * 1024 * 1024;
-const MAX_PROFILE_TRACKS = 100;
-const MAX_UPLOAD_REQUEST_SIZE_BYTES = 70 * 1024 * 1024;
+const REQUEST_HEADROOM_BYTES = 10 * MB;
 
 class MediaQuotaError extends Error {}
 
@@ -65,11 +60,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
+  const limits = await getMediaLimits();
   const tracks = await withDbRetry(() =>
     db.artistMediaAsset.findMany({
       where: { profileId },
       orderBy: { createdAt: 'desc' },
-      take: MAX_PROFILE_TRACKS,
+      take: limits.profileTracks,
       select: {
         hexId: true,
         title: true,
@@ -86,7 +82,7 @@ export async function GET(request: Request) {
     }),
   );
 
-  return NextResponse.json({ tracks });
+  return NextResponse.json({ tracks, limits });
 }
 
 function deriveTitleFromFileName(value: string) {
@@ -121,10 +117,15 @@ export async function POST(request: Request) {
     );
   }
 
+  const limits = await getMediaLimits();
+  const maxAudioBytes = Math.round(limits.fileMb * MB);
+  const maxRequestBytes = maxAudioBytes + REQUEST_HEADROOM_BYTES;
+  const maxProfileBytes = Math.round(limits.profileGb * GB);
+
   // Reject declared oversized bodies before request.formData() can buffer
   // them. Edge/WAF limits remain necessary for chunked or dishonest clients.
-  if (exceedsDeclaredRequestSize(request, MAX_UPLOAD_REQUEST_SIZE_BYTES)) {
-    return NextResponse.json({ error: 'Upload request is limited to 70MB.' }, { status: 413 });
+  if (exceedsDeclaredRequestSize(request, maxRequestBytes)) {
+    return NextResponse.json({ error: `Upload request is limited to ${Math.round(maxRequestBytes / MB)}MB.` }, { status: 413 });
   }
 
   const rateLimit = await consumeRateLimit(
@@ -179,8 +180,8 @@ export async function POST(request: Request) {
     if (mediaValidationError) {
       return NextResponse.json({ error: mediaValidationError }, { status: 400 });
     }
-    if (file.size > MAX_AUDIO_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: 'Audio uploads are limited to 60MB. For a longer piece, upload it as FLAC or AAC/M4A.' }, { status: 400 });
+    if (file.size > maxAudioBytes) {
+      return NextResponse.json({ error: `Audio uploads are limited to ${limits.fileMb}MB. For a longer piece, upload it as FLAC or AAC/M4A.` }, { status: 400 });
     }
 
     /* The head of the file, not its name or MIME type, decides what it is.
@@ -341,14 +342,14 @@ export async function POST(request: Request) {
             _count: { _all: true },
             _sum: { fileSizeBytes: true },
           });
-          if (usage._count._all >= MAX_PROFILE_TRACKS) {
+          if (usage._count._all >= limits.profileTracks) {
             throw new MediaQuotaError(
-              `Each artist profile is limited to ${MAX_PROFILE_TRACKS} uploaded tracks.`,
+              `Each artist profile is limited to ${limits.profileTracks} uploaded tracks.`,
             );
           }
-          if ((usage._sum.fileSizeBytes ?? 0) + file.size > MAX_PROFILE_STORAGE_BYTES) {
+          if ((usage._sum.fileSizeBytes ?? 0) + file.size > maxProfileBytes) {
             throw new MediaQuotaError(
-              'This upload would exceed the 250MB storage limit for the artist profile.',
+              `This upload would exceed the ${limits.profileGb}GB storage limit for the artist profile.`,
             );
           }
 

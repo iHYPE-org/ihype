@@ -260,6 +260,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   // owner-gated, both refreshed after an upload or a folder change.
   const [albums, setAlbums] = useState<AlbumRow[] | null>(null);
   const [tracks, setTracks] = useState<TrackRow[] | null>(null);
+  const [fileMb, setFileMb] = useState<number>(60);
   const [albumTitleInput, setAlbumTitleInput] = useState('');
   const [albumDateInput, setAlbumDateInput] = useState('');
   const [albumBusy, setAlbumBusy] = useState<string | null>(null);
@@ -274,7 +275,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
       .catch(() => {});
     fetch(`/api/artist-media?profileId=${profileId}`)
       .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.tracks) setTracks(d.tracks); })
+      .then((d) => { if (d?.tracks) setTracks(d.tracks); if (typeof d?.limits?.fileMb === 'number') setFileMb(d.limits.fileMb); })
       .catch(() => {});
   }, [profileId]);
 
@@ -789,7 +790,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               nowhere in the editor, so the one section named Media held four
               image slots and no music. TrackUploadPanel is the same component,
               mounted where an owner looks for it. */}
-          <TrackUploadPanel albums={albums ?? []} onUploaded={loadMedia} profileId={profileId} />
+          <TrackUploadPanel albums={albums ?? []} fileMb={fileMb} onUploaded={loadMedia} profileId={profileId} />
 
           {/* ── Albums ─────────────────────────────────────────────────
               A folder with a title, a date and one cover; tracks are filed
