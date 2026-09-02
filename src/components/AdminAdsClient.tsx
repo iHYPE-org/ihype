@@ -68,7 +68,7 @@ export function AdminAdsClient({ ads: initial, status, q, page, total, pageSize 
 
     if (res.ok) {
       // Approving stores AWAITING_PAYMENT, not APPROVED — the campaign only
-      // goes live once the advertiser authorizes the Stripe hold. Reflect
+      // goes live once the advertiser pays through Stripe Checkout. Reflect
       // what the server actually stored rather than the requested status.
       const stored = typeof payload?.ad?.status === 'string' ? payload.ad.status : newStatus;
       setAds(prev => prev.map(a => a.id === id ? { ...a, status: stored } : a));

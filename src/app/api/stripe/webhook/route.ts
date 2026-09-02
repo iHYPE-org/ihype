@@ -224,14 +224,11 @@ export async function POST(request: NextRequest) {
         }
 
         case 'payment_intent.amount_capturable_updated': {
-          // Fires when a manual-capture PaymentIntent's amount_capturable
-          // changes — including the moment it first becomes capturable,
-          // i.e. successful authorization. Ticket orders react to
-          // `payment_intent.succeeded` (explicit capture) instead; ad
-          // campaigns react HERE, since capture only ever happens much
-          // later at campaign settlement (see the ad-settlement cron) —
-          // the campaign needs to go live the moment the hold succeeds,
-          // not when it's eventually captured.
+          // LEGACY: a manual-capture hold from before 2026-09-02, when ad
+          // budgets were only authorised at checkout. Campaigns paid since
+          // then are charged up front and go live on `payment_intent.succeeded`
+          // below; this branch stays so a checkout session issued under the
+          // old model and completed after the deploy still goes live.
           const paymentIntent = event.data.object;
           /* RESOLVED BY METADATA WHEN THE COLUMN IS EMPTY, and it usually is.
              Checkout creates its PaymentIntent lazily, so the campaign row has
@@ -316,6 +313,38 @@ export async function POST(request: NextRequest) {
           } else if (order) {
             const finalized = await finalizeCapturedTicketOrder(tx, order.id, new Date(event.created * 1000));
             if (finalized.changed) capturedOrderId = order.id;
+          }
+
+          /* AD CAMPAIGNS GO LIVE HERE (charged up front, 2026-09-02). The
+             budget is captured the moment the advertiser pays, so this is the
+             event that says the money landed and the purchased run starts.
+             Resolved by `metadata.adId` because Checkout creates the intent
+             lazily and the row has no intent id until this arrives. Platform
+             account only, and the amount received must cover the budget —
+             the same guards as every other money-moving branch. */
+          if (adEventIsPlatform(eventAccount) && typeof paymentIntent.metadata?.adId === 'string') {
+            const ad = await tx.ad.findUnique({
+              where: { id: paymentIntent.metadata.adId },
+              select: { id: true, status: true, runDays: true, budgetCents: true },
+            });
+            if (ad && ad.status === 'AWAITING_PAYMENT' && !holdCoversBudget(paymentIntent.amount_received, ad.budgetCents)) {
+              log.error('[stripe/webhook]', null, `Refused payment for ad ${ad.id}: received ${paymentIntent.amount_received} is under the budget ${ad.budgetCents}`);
+            } else if (ad && ad.status === 'AWAITING_PAYMENT') {
+              const startsAt = new Date(event.created * 1000);
+              const endsAt = new Date(startsAt.getTime() + (ad.runDays ?? 7) * 24 * 60 * 60 * 1000);
+              await tx.ad.update({
+                where: { id: ad.id },
+                data: {
+                  status: 'APPROVED',
+                  authorizedAt: startsAt,
+                  startsAt,
+                  endsAt,
+                  // Settlement refunds against this, so it has to be stored.
+                  stripePaymentIntentId: paymentIntent.id,
+                },
+              });
+              authorizedAdId = ad.id;
+            }
           }
           break;
         }
