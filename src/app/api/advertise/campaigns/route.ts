@@ -8,7 +8,8 @@ import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
-import { createAdCampaignCheckoutSession, settleAdCampaignAuthorization } from '@/lib/stripe';
+import { createAdCampaignCheckoutSession, settleAdCampaign } from '@/lib/stripe';
+import { describeSettlement } from '@/lib/ad-settlement';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
 import {
@@ -112,11 +113,10 @@ export async function POST(request: NextRequest) {
 
   // Budget is computed server-side from scope/spots/days — never trust a
   // client-submitted price for what it's about to be charged. startsAt/
-  // endsAt are NOT resolved here — pre-auth-then-capture billing means a
-  // campaign doesn't actually start its purchased run until payment is
-  // authorized (see the AWAITING_PAYMENT handling below and the webhook),
-  // so a campaign stuck in manual review or awaiting checkout never loses
-  // run length to the wait.
+  // endsAt are NOT resolved here — the campaign's purchased run starts when
+  // the payment lands (see the AWAITING_PAYMENT handling below and the
+  // webhook), so a campaign stuck in manual review or awaiting checkout
+  // never loses run length to the wait.
   const quote = quoteAdCampaign(body.scope, spotsPerDay, body.runDays);
 
   // AI vetting (music-industry-only policy). Approvals go live without an
@@ -224,7 +224,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       log.error('[advertise/campaigns]', error instanceof Error ? error : null, 'Checkout session creation failed');
       // The Ad row stays AWAITING_PAYMENT with no stripePaymentIntentId —
-      // the advertiser sees "authorize payment" fail rather than a
+      // the advertiser sees "pay for your campaign" fail rather than a
       // silently-live unpaid campaign. They can retry via the dashboard
       // (a future "Pay now" action) rather than losing the submission.
     }
@@ -273,7 +273,7 @@ export async function POST(request: NextRequest) {
       message:
         storedStatus === 'AWAITING_PAYMENT'
           ? (checkoutUrl
-              ? 'Campaign passed automated vetting — authorize payment to go live.'
+              ? 'Campaign passed automated vetting — pay to go live. Unspent budget is refunded when the run ends.'
               : 'Campaign passed vetting, but starting checkout failed. Try again from your dashboard.')
         : storedStatus === 'REJECTED' ? 'Campaign did not meet the music-industry supporter policy.'
         : 'Campaign is queued for manual review (within 48 hours).',
@@ -333,13 +333,14 @@ export async function PATCH(request: NextRequest) {
     }).catch(() => {});
     return NextResponse.json({ ad: updated, checkoutUrl: checkout.checkoutUrl });
   } else if (action === 'cancel') {
-    // Pre-auth-then-capture: cancelling early is a settlement, not just a
-    // status flip — capture whatever actually aired (never the full hold),
-    // or release the hold outright if nothing did.
+    // Cancelling early is a settlement, not just a status flip: the budget
+    // was charged at checkout, so the unspent remainder goes back now (a
+    // pre-2026-09-02 hold is captured for the spend or released instead —
+    // see ad-settlement-plan.ts).
+    let settlement: string | undefined;
     if (ad.stripePaymentIntentId && !ad.settledAt) {
-      // Never capture more than what was actually authorized — spentCents
-      // can drift slightly over budgetCents (see ad-settlement.ts).
-      await settleAdCampaignAuthorization(ad.stripePaymentIntentId, Math.min(ad.spentCents, ad.budgetCents));
+      const plan = await settleAdCampaign(ad.stripePaymentIntentId, ad.spentCents, ad.budgetCents);
+      settlement = describeSettlement(plan, false);
       updated = await db.ad.update({
         where: { id },
         data: { status: 'CANCELLED', pausedAt: null, settledAt: new Date() },
@@ -347,6 +348,13 @@ export async function PATCH(request: NextRequest) {
     } else {
       updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED', pausedAt: null } });
     }
+    recordAuditEvent({
+      actorUserId: session.user.id,
+      action: 'ad.campaign.cancelled',
+      entityType: 'Ad',
+      entityId: id,
+    }).catch(() => {});
+    return NextResponse.json({ ad: updated, settlement });
   } else if (action === 'pause') {
     if (ad.status !== 'APPROVED') {
       return NextResponse.json({ error: 'Only a live campaign can be paused.' }, { status: 400 });
