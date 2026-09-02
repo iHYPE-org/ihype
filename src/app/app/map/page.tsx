@@ -5,5 +5,7 @@
  * changes — see the note in the layout.
  */
 export default function MmmMapPage() {
-  return null;
+  // The map itself is the layout's base layer; this route contributes only the
+  // document's name, which it never had. See the music tab page for why hidden.
+  return <h1 className="sr-only">Map</h1>;
 }

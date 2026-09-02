@@ -351,9 +351,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <div className="mmm-link-field">
             <span className="mmm-link-value">{data.hypeLink.url}</span>
             <button
-              className="mmm-btn-primary"
+              className="mmm-btn-primary mmm-link-copy"
               onClick={() => void copy()}
-              style={{ flexShrink: 0, padding: '5px 11px', borderRadius: 7, fontSize: '0.9375rem' }}
               type="button"
             >
               {copied ? 'Copied' : 'Copy'}
@@ -451,12 +450,12 @@ export function MmmMe({ data }: { data: MmmMeData }) {
         <Link className="mmm-me-add" data-kind="artist" href="/app/me/profiles?create=artist">
           <span aria-hidden="true">＋</span>
           Add artist profile
-          <span className="mmm-me-add-chip">Verified</span>
+          <span className="mmm-me-add-chip">Verification required</span>
         </Link>
         <Link className="mmm-me-add" data-kind="venue" href="/app/me/profiles?create=venue">
           <span aria-hidden="true">＋</span>
           Add venue profile
-          <span className="mmm-me-add-chip">Verified</span>
+          <span className="mmm-me-add-chip">Verification required</span>
         </Link>
         {!data.hasAdvertiser && (
           /* Advertiser is a real fifth account type with no Profile row, so it
@@ -473,7 +472,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/start">
             <span aria-hidden="true">＋</span>
             Add advertiser profile
-            <span className="mmm-me-add-chip">Verified</span>
+            <span className="mmm-me-add-chip">Verification required</span>
           </Link>
         )}
       </div>

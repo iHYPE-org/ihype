@@ -137,11 +137,15 @@ export function MmmMusic({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.6, padding: '10px 2px' }}>{children}</p>;
+  return <p className="mmm-empty">{children}</p>;
 }
 
 function Loading() {
-  return <p className="mmm-eyebrow" role="status" style={{ padding: '10px 2px' }}>Loading…</p>;
+  /* The same plate the empty state uses, so a tab has ONE shape while it
+     waits and when it has nothing — a fetching list and an empty list used to
+     look like two different screens. `aria-busy` tells assistive tech the
+     region is still filling. */
+  return <p aria-busy="true" className="mmm-empty mmm-loading" role="status">Loading…</p>;
 }
 
 function DemoHeader({ description }: { description: string }) {
@@ -526,23 +530,27 @@ function RadioTab() {
       {stations.map((station) => (
         <button
           className="mmm-row mmm-card mmm-station"
+          /* A station that resolves to nothing is listed — the set is fixed and
+             a missing row says nothing — but it is not PLAYABLE: it used to
+             offer a live play button beside "0 tracks", and a tap started
+             nothing. Disabled, said plainly, and drawn without the play glyph. */
+          data-empty={station.trackCount === 0 ? 'true' : undefined}
           data-playing="false"
-          disabled={pendingStation === station.slug}
+          disabled={pendingStation === station.slug || station.trackCount === 0}
           key={station.slug}
           onClick={() => void openStation(station.slug, station.title)}
-          style={{ borderBottom: '1px solid var(--hair-100)' }}
           type="button"
         >
-          <span aria-hidden="true" className="mmm-station-art">▶︎</span>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mmm-row-title" style={{ display: 'block' }}>{station.title}</span>
-            <span className="mmm-row-sub" style={{ display: 'block' }}>{station.subtitle}</span>
+          <span aria-hidden="true" className="mmm-station-art">{station.trackCount === 0 ? '·' : '▶︎'}</span>
+          <span className="mmm-station-main">
+            <span className="mmm-row-title">{station.title}</span>
+            <span className="mmm-row-sub">{station.subtitle}</span>
           </span>
           {/* A null count means the query failed. Rendering "0 tracks" beside a
               station that may be full is worse than rendering nothing. */}
           {station.trackCount !== null && (
-            <span className="mmm-row-meta" style={{ color: 'var(--ink-3)', fontSize: '0.9375rem', letterSpacing: '0.06em' }}>
-              {station.trackCount} track{station.trackCount === 1 ? '' : 's'}
+            <span className="mmm-row-meta mmm-station-count">
+              {station.trackCount === 0 ? 'No tracks yet' : `${station.trackCount} track${station.trackCount === 1 ? '' : 's'}`}
             </span>
           )}
         </button>

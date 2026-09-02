@@ -16,6 +16,10 @@ type TicketSaleCardProps = {
   showId: string;
   showSlug: string;
   title: string;
+  /** What the card's own heading says. Defaults to the show title; the shell's
+   *  show pane already carries that as its h1, so it passes a section name and
+   *  the document stops announcing the same heading twice. */
+  heading?: string;
   ticketPriceCents: number;
   ticketCapacity: number | null;
   ticketsSoldCount: number;
@@ -62,6 +66,7 @@ export function TicketSaleCard({
   showId,
   showSlug,
   title,
+  heading,
   ticketPriceCents,
   ticketCapacity,
   ticketsSoldCount,
@@ -192,7 +197,7 @@ export function TicketSaleCard({
       <div className="ticketing-panel-header">
         <div>
           <div className="badge">{t('ticketSaleCard.badge', 'Ticket Sales')}</div>
-          <h2>{title}</h2>
+          <h2>{heading ?? title}</h2>
           <p className="kicker">
             {t(
               'ticketSaleCard.kicker',
@@ -345,6 +350,9 @@ export function TicketSaleCard({
                   −
                 </button>
                 <input
+                  /* The wrapping <label> names only its FIRST control, the minus
+                     button — so this field had no accessible name at all. */
+                  aria-label={t('ticketSaleCard.quantityLabel', 'Quantity')}
                   inputMode="numeric"
                   max={remainingTickets === null ? 8 : Math.max(remainingTickets, 1)}
                   min="1"
