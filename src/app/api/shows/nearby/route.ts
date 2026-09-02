@@ -5,6 +5,8 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { coarsenFanCoordinates, isPublicVenueCoordinate } from '@/lib/public-location';
 import { areMapsEnabledRuntime } from '@/lib/runtime-flags';
+import { consumeRateLimit } from '@/lib/rate-limit';
+import { readClientAddress } from '@/lib/request-meta';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +15,11 @@ export async function GET(request: NextRequest) {
     if (!(await areMapsEnabledRuntime())) {
       return NextResponse.json({ error: 'Map lookups are temporarily paused.', code: 'MAPS_PAUSED' }, { status: 503, headers: { 'Retry-After': '300' } });
     }
+    // Same budget as /api/search: an unauthenticated Haversine + ILIKE query
+    // whose CDN key includes the coordinates, so a random `lat` per request
+    // defeated the cache (second security scan, 2026-09-02).
+    const rl = await consumeRateLimit(`shows-nearby:${readClientAddress(request)}`, { limit: 60, windowMs: 60 * 1000 });
+    if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
     const { searchParams } = new URL(request.url);
     const requestedLat = parseFloat(searchParams.get('lat') ?? '');
     const requestedLng = parseFloat(searchParams.get('lng') ?? '');

@@ -7,6 +7,9 @@ import { sendDay1Email } from '@/lib/onboarding-emails';
 import { checkForSpam } from '@/lib/spam-detection';
 import { awardHype } from '@/lib/hype-ledger';
 
+/** Referred signups per day that may raise the referrer's PUBLIC hype count. */
+const REFERRAL_PROFILE_HYPES_PER_DAY = 5;
+
 type RegistrationUser = {
   id: string;
   username: string;
@@ -113,13 +116,25 @@ async function processReferral(user: RegistrationUser, refValue: string) {
   });
 
   if (referrerProfileId) {
-    await db.$transaction([
-      db.profileHypeEvent.create({ data: { userId: user.id, profileId: referrerProfileId } }),
-      db.profile.update({
-        where: { id: referrerProfileId },
-        data: { hypeCount: { increment: 1 } },
-      }),
-    ]);
+    /* The ledger award above is daily-capped; this public hype was not, so a
+       farm of throwaway signups with `ref=<own username>` inflated a profile's
+       `hypeCount` — the figure charts and recommendations rank on — without
+       bound (second security scan, 2026-09-02). Five referred signups a day
+       may raise the public count; the rest still earn the (capped) ledger
+       credit and the badge check. */
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const referralsToday = await db.hypeLedgerEntry.count({
+      where: { userId: referrerId, source: 'FAN_REFERRED', createdAt: { gte: since } },
+    }).catch(() => Number.POSITIVE_INFINITY);
+    if (referralsToday <= REFERRAL_PROFILE_HYPES_PER_DAY) {
+      await db.$transaction([
+        db.profileHypeEvent.create({ data: { userId: user.id, profileId: referrerProfileId } }),
+        db.profile.update({
+          where: { id: referrerProfileId },
+          data: { hypeCount: { increment: 1 } },
+        }),
+      ]);
+    }
   }
 
   await checkAndAwardBadges(referrerId, { referrerUsername: resolvedUsername });

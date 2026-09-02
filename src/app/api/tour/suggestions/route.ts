@@ -2,12 +2,18 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { buildAiTourPlan } from '@/lib/ai-tour';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  // Three aggregates and a Workers AI call per GET with no budget (second
+  // security scan, 2026-09-02).
+  const rl = await consumeRateLimit(rateLimitKey('ai-tour-plan', session.user.id, null), { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Too many requests — try again later.' }, { status: 429 });
 
   // Venue profiles with city data, sorted by hypeCount
   const venues = await db.profile.findMany({

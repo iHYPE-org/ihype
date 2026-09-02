@@ -365,8 +365,11 @@ export async function POST(request: Request) {
           name: profileName,
           ownerId: createdUser.id,
           contactInfo: body.contactInfo || null,
-          hometown: body.hometown || null,
-          city: body.city || body.hometown || null,
+          // A fan's location is never stored (public-location.ts: fan profiles
+          // publish no location, and the editor already sanitises on edit —
+          // signup did not). Second security scan, 2026-09-02.
+          hometown: profileType === 'LISTENER' ? null : body.hometown || null,
+          city: profileType === 'LISTENER' ? null : body.city || body.hometown || null,
           postalCode: profileType === 'VENUE' ? body.postalCode || null : null,
           verificationStatus: getVerificationStatusForType(profileType),
           // Not stamped at signup. This field records when a real submission

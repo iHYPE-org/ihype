@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,7 +58,7 @@ export async function POST(
         to: user.email,
         subject: `${profile.name}: ${subject}`,
         text: content,
-        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>You received this because you follow ${profile.name} on iHYPE. <a href="https://ihype.org">ihype.org</a></small></p>`,
+        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>You received this because you follow ${escapeHtml(profile.name)} on iHYPE. <a href="https://ihype.org">ihype.org</a></small></p>`,
       });
       sent++;
     } catch { /* continue */ }

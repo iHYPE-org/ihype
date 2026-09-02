@@ -6,6 +6,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { editorSchema } from '@/lib/profile-editor-schema';
 import { statOptionsForRole } from '@/lib/profile-stats-catalog';
 import { sanitizeStoredProfileLocation } from '@/lib/public-location';
+import { isStoredMediaUrl } from '@/lib/object-storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,11 +107,11 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
 
-  let profile: { id: string; ownerId: string; type: string } | null;
+  let profile: { id: string; ownerId: string; type: string; heroImage: string | null; avatarImage: string | null; logoImage: string | null; galleryImage: string | null } | null;
   try {
     profile = await withDbRetry(() => db.profile.findUnique({
       where: { id: body.profileId },
-      select: { id: true, ownerId: true, type: true }
+      select: { id: true, ownerId: true, type: true, heroImage: true, avatarImage: true, logoImage: true, galleryImage: true }
     }));
   } catch {
     return NextResponse.json({ error: 'Database unavailable — please try again in a moment.' }, { status: 503 });
@@ -177,6 +178,27 @@ export async function PATCH(request: Request) {
       ? body.pinnedStats.filter((key) => statOptionsForRole(profile!.type).some((s) => s.key === key)).slice(0, 4)
       : undefined,
   };
+
+  /* An image URL the app did not store is refused (second security scan,
+     2026-09-02). The four graphic fields accepted any string and render as
+     `<img src>` on the profile, in search and in the deck under a CSP that
+     allows `img-src https:`, so an owner could point their avatar at a host
+     they control and log the address and referrer of every member who saw
+     it. A value that is UNCHANGED from what is stored is allowed through, so
+     a profile carrying a pre-CDN external image can still save its text. */
+  for (const field of ['heroImage', 'avatarImage', 'logoImage', 'galleryImage'] as const) {
+    const next = data[field];
+    if (typeof next === 'string' && next !== profile[field] && !isStoredMediaUrl(next)) {
+      return NextResponse.json({ error: `${field} must be an image uploaded through iHYPE.` }, { status: 400 });
+    }
+  }
+  if (typeof data.merchUrl === 'string') {
+    let merch: URL | null = null;
+    try { merch = new URL(data.merchUrl); } catch { merch = null; }
+    if (!merch || merch.protocol !== 'https:') {
+      return NextResponse.json({ error: 'merchUrl must be an https link.' }, { status: 400 });
+    }
+  }
 
   let updated: { id: string; slug: string; type: string; updatedAt: Date };
   try {

@@ -32,9 +32,6 @@ export async function GET() {
         country: true,
         contactInfo: true,
         verificationNotes: true,
-        // Selected only to report WHETHER a document was attached; the bytes
-        // are served by GET /api/admin/verifications/[profileId]/proof.
-        verificationProofUrl: true,
         verificationStatus: true,
         verificationSubmittedAt: true,
         verificationReviewedAt: true,
@@ -53,11 +50,20 @@ export async function GET() {
       orderBy: [{ verificationSubmittedAt: 'asc' }, { createdAt: 'asc' }]
     });
 
+    /* WHICH rows carry a document, asked as a second id-only query. Selecting
+       `verificationProofUrl` itself would pull every applicant's inline
+       document (up to 8 MB base64 each, REJECTED rows kept forever) into a
+       128 MB isolate to compute a boolean. The bytes are served one at a time
+       by GET /api/admin/verifications/[profileId]/proof. */
+    const withProof = new Set(
+      (await db.profile.findMany({
+        where: { id: { in: profiles.map((profile) => profile.id) }, verificationProofUrl: { not: null } },
+        select: { id: true },
+      })).map((row) => row.id),
+    );
+
     return NextResponse.json({
-      profiles: profiles.map(({ verificationProofUrl, ...profile }) => ({
-        ...profile,
-        hasProof: Boolean(verificationProofUrl),
-      })),
+      profiles: profiles.map((profile) => ({ ...profile, hasProof: withProof.has(profile.id) })),
     });
   } catch (err) {
     log.error('[api/admin/verifications]', err instanceof Error ? err : { error: String(err) }, 'error');

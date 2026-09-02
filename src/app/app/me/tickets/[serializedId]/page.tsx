@@ -52,6 +52,13 @@ export default async function TicketPage({
      away. The API enforces this too; this is so the button is not drawn for
      someone who would only be refused. */
   const isHolder = ticket.ticketOrder.buyerUserId === session.user.id;
+  /* Holder, the venue's staff, or an admin — nobody else (second security
+     scan, 2026-09-02). The id is 96 random bits, so this closes link leakage
+     rather than guessing: a forwarded URL showed any signed-in member the
+     holder's name, the order code and totals, and a live QR. */
+  if (!isHolder && !canScan && !canManageOwnedResource(session, ticket.ticketOrder.buyerUserId ?? '')) {
+    return <MmmMissing body="This ticket belongs to another account." title="Not your ticket" />;
+  }
   const qrCodeDataUrl = await buildTicketQrCodeDataUrl(ticket.serializedId);
 
   /* ── S5 · Ticket ────────────────────────────────────────────────────────

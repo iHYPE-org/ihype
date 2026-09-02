@@ -4,6 +4,7 @@ import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { trackEvent } from '@/lib/analytics';
 import { sanitizeTelemetryEvent } from '@/lib/telemetry';
+import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 // Generic product-event ingest — Seeds swipes, checkout steps, referral
 // clicks, etc. Writes to Cloudflare Analytics Engine via trackEvent().
@@ -36,6 +37,11 @@ export async function POST(request: Request) {
 
   let body: z.infer<typeof schema>;
   try {
+    // A telemetry event is a few hundred bytes; refuse anything that is not
+    // before the isolate parses it (second security scan, 2026-09-02).
+    if (exceedsDeclaredRequestSize(request, 4 * 1024)) {
+      return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
+    }
     body = schema.parse(await request.json());
   } catch {
     return NextResponse.json({ ok: true });

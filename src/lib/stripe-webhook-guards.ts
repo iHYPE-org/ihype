@@ -66,5 +66,6 @@ export function holdCoversBudget(amountCapturable: number | null | undefined, bu
  */
 export function livemodeMatchesKey(eventLivemode: boolean, secretKey: string | null | undefined): boolean {
   if (!secretKey) return false;
-  return eventLivemode === secretKey.startsWith('sk_live_');
+  // `rk_live_` is a restricted live key; a rotation to one must not 400 every event.
+  return eventLivemode === /^(sk|rk)_live_/.test(secretKey);
 }

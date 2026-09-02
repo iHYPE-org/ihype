@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,10 +51,15 @@ export async function POST(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  // One pending request per target was the only limit; unlimited targets was
+  // an inbox-spam and stats-inflation path (second security scan, 2026-09-02).
+  const rl = await consumeRateLimit(rateLimitKey('booking-request', session.user.id, null), { limit: 20, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Too many booking requests — try again later.' }, { status: 429 });
+
   const body = await request.json().catch(() => null);
   const { toProfileId, message } = body ?? {};
-  if (!toProfileId || !message?.trim()) {
-    return NextResponse.json({ error: 'toProfileId and message are required' }, { status: 400 });
+  if (typeof toProfileId !== 'string' || typeof message !== 'string' || !message.trim() || message.length > 4000) {
+    return NextResponse.json({ error: 'toProfileId and message (up to 4000 characters) are required' }, { status: 400 });
   }
 
   const profile = await db.profile.findUnique({ where: { id: toProfileId }, select: { id: true } });

@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { notifyUser } from '@/lib/notify';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +15,11 @@ const slotSchema = z.object({
 });
 
 const schema = z.object({
-  slots: z.array(slotSchema).min(2, 'A lineup split needs at least two acts — a single act just uses the show\'s own artist share.'),
+  slots: z.array(slotSchema)
+    .min(2, 'A lineup split needs at least two acts — a single act just uses the show\'s own artist share.')
+    // Every named act is notified on every proposal; an unbounded array was a
+    // push-notification cannon (second security scan, 2026-09-02).
+    .max(12, 'A lineup holds at most 12 acts.'),
 });
 
 /**
@@ -73,6 +78,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ show
 export async function POST(request: Request, { params }: { params: Promise<{ showId: string }> }) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+
+  const rl = await consumeRateLimit(rateLimitKey('lineup-propose', session.user.id, null), { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Too many lineup proposals — try again later.' }, { status: 429 });
 
   const { showId } = await params;
   const show = await db.show.findUnique({

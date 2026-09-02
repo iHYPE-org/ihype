@@ -4,6 +4,7 @@ import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { trackRequest } from '@/lib/analytics';
+import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 const schema = z.object({
   event: z.string().min(1).max(80),
@@ -55,6 +56,11 @@ export async function POST(request: Request) {
 
   let body: z.infer<typeof schema>;
   try {
+    // A telemetry event is a few hundred bytes; refuse anything that is not
+    // before the isolate parses it (second security scan, 2026-09-02).
+    if (exceedsDeclaredRequestSize(request, 4 * 1024)) {
+      return NextResponse.json({ error: 'Payload too large.' }, { status: 413 });
+    }
     body = schema.parse(await request.json());
   } catch {
     return NextResponse.json({ ok: true });

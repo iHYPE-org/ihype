@@ -4,6 +4,8 @@ import { auth } from '@/lib/auth';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
+import { z } from 'zod';
+import { checkContent } from '@/lib/auto-mod';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,6 +60,14 @@ export async function GET(
   return NextResponse.json({ show });
 }
 
+const patchSchema = z.object({
+  status: z.string().max(20).optional(),
+  title: z.string().trim().min(3).max(200).optional(),
+  description: z.string().trim().max(2000).optional(),
+  productionPlan: z.unknown().optional(),
+  startsAt: z.string().datetime({ offset: true }).optional(),
+});
+
 const VALID_TRANSITIONS: Record<string, string[]> = {
   DRAFT:      ['SCHEDULED'],
   SCHEDULED:  ['LIVE', 'DRAFT'],
@@ -73,8 +83,21 @@ export async function PATCH(
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
 
   const { showId } = await params;
-  let body: { status?: string; title?: string; description?: string; productionPlan?: unknown; startsAt?: string };
-  try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  /* Typed and bounded like POST /api/shows (second security scan,
+     2026-09-02). This body was a bare cast: a megabyte title, a non-string
+     title (a Prisma throw and a 500), an unparseable date, and none of the
+     auto-moderation POST runs — and the title is rendered on the public show
+     page, the map, search and every ticket email. */
+  const parsed = patchSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Invalid request.', issues: parsed.error.issues.map((issue) => issue.message) }, { status: 400 });
+  }
+  const body = parsed.data;
+  // Same auto-moderation as POST: flagged copy is stored FLAGGED for review,
+  // not refused — the queue decides, exactly as it does for a new show.
+  const moderationStatus = body.title !== undefined || body.description !== undefined
+    ? (checkContent(`${body.title ?? ''} ${body.description ?? ''}`).flagged ? 'FLAGGED' : undefined)
+    : undefined;
 
   const show = await db.show.findFirst({
     where: { OR: [{ id: showId }, { slug: showId }], creatorId: session.user.id },
@@ -91,17 +114,22 @@ export async function PATCH(
       return NextResponse.json({ error: 'Only draft or scheduled shows can be edited' }, { status: 400 });
     }
 
-    let productionPlan = body.productionPlan;
+    let productionPlan: unknown = body.productionPlan;
     if (productionPlan !== undefined) {
-      const parsed = showProductionPlanSchema.safeParse(productionPlan);
+      const parsedPlan = showProductionPlanSchema.safeParse(productionPlan);
+      // A plan that does not parse is refused rather than stored as-is — the
+      // player resolves whatever is in this column.
+      if (!parsedPlan.success) {
+        return NextResponse.json({ error: 'productionPlan is not a valid plan.' }, { status: 400 });
+      }
       // Same auto-fill as POST /api/shows: a DJ can save with "advertising
       // enabled" on but no clips ever manually confirmed into the timeline,
       // which otherwise leaves the frequency-based ad-break auto-injection
       // with nothing to inject.
-      if (parsed.success && parsed.data.advertising.enabled && parsed.data.advertising.clips.length === 0) {
-        parsed.data.advertising.clips = await resolveAdBreakClips(parsed.data.advertising.scope);
-        productionPlan = parsed.data;
+      if (parsedPlan.data.advertising.enabled && parsedPlan.data.advertising.clips.length === 0) {
+        parsedPlan.data.advertising.clips = await resolveAdBreakClips(parsedPlan.data.advertising.scope);
       }
+      productionPlan = parsedPlan.data;
     }
 
     const updated = await db.show.update({
@@ -109,6 +137,7 @@ export async function PATCH(
       data: {
         ...(body.title !== undefined && { title: body.title }),
         ...(body.description !== undefined && { description: body.description }),
+        ...(moderationStatus ? { moderationStatus } : {}),
         ...(productionPlan !== undefined && { productionPlan: productionPlan as object }),
         ...(body.startsAt !== undefined && { startsAt: new Date(body.startsAt) }),
       },

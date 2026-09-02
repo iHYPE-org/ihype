@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { createSerializedTicketId } from '@/lib/tickets';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,7 @@ export async function POST(
     where: { id: serializedId },
     include: {
       show: { select: { title: true, startsAt: true } },
-      tickets: { select: { serializedId: true, holderName: true } },
+      tickets: { select: { serializedId: true, holderName: true, status: true } },
     },
   });
 
@@ -51,6 +52,22 @@ export async function POST(
 
   if (order.status !== 'CAPTURED') {
     return NextResponse.json({ error: 'Only captured orders can be transferred' }, { status: 400 });
+  }
+  if (order.tickets.some((t) => t.status === 'SCANNED')) {
+    return NextResponse.json({ error: 'A ticket that has been scanned at the door cannot be transferred' }, { status: 400 });
+  }
+
+  /* The recipient becomes the OWNER, not just the addressee (second security
+     scan, 2026-09-02). Rotating the serialized ids stopped the sender's old
+     QR working, but `buyerUserId` stayed on the sender, and the QR page and
+     transfer-code route authorise on that column — so the sender could pull
+     the NEW QR from their own ticket list and scan first, or transfer the same
+     order again to a second buyer. Ownership moves to the recipient's account
+     when one exists for the address, and is cleared otherwise so the sender
+     holds nothing; the recipient's email link is then the only way in. */
+  const recipient = await db.user.findUnique({ where: { email: toEmail }, select: { id: true } });
+  if (recipient?.id === session.user.id) {
+    return NextResponse.json({ error: 'That is your own address' }, { status: 400 });
   }
 
   // Reissue every ticket in the order with a fresh serializedId rather than
@@ -82,7 +99,12 @@ export async function POST(
 
   await db.ticketOrder.update({
     where: { id: serializedId },
-    data: { transferredAt: new Date(), transferredToEmail: toEmail },
+    data: {
+      transferredAt: new Date(),
+      transferredToEmail: toEmail,
+      buyerUserId: recipient?.id ?? null,
+      buyerEmail: toEmail,
+    },
   });
 
   const ticketList = reissued.map((t) => `• #${t.serializedId}`).join('\n');
@@ -91,7 +113,7 @@ export async function POST(
     to: toEmail,
     subject: `Ticket transfer: ${order.show.title}`,
     text: `You've received tickets for ${order.show.title}!\n\n${ticketList}\n\nOriginal confirmation: ${order.confirmationCode}`,
-    html: `<p>You've received tickets for <strong>${order.show.title}</strong>!</p><ul>${reissued.map((t) => `<li>#${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
+    html: `<p>You've received tickets for <strong>${escapeHtml(order.show.title)}</strong>!</p><ul>${reissued.map((t) => `<li>#${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
   }).catch(() => {});
 
   return NextResponse.json({ transferred: true });

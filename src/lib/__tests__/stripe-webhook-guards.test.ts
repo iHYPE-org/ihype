@@ -56,6 +56,7 @@ describe('ad campaign events', () => {
 describe('livemodeMatchesKey', () => {
   it('pairs live events with live keys and test events with test keys', () => {
     expect(livemodeMatchesKey(true, 'sk_live_x')).toBe(true);
+    expect(livemodeMatchesKey(true, 'rk_live_x')).toBe(true);
     expect(livemodeMatchesKey(false, 'sk_test_x')).toBe(true);
     expect(livemodeMatchesKey(false, 'sk_live_x')).toBe(false);
     expect(livemodeMatchesKey(true, 'sk_test_x')).toBe(false);
