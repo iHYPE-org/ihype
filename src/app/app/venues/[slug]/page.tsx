@@ -7,11 +7,13 @@ import { FollowButton } from '@/components/FollowButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
-import { heatLevel, HEAT_LABEL, HEAT_TOKEN } from '@/lib/heat-level';
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
+import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
+import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
+import { formatTicketPrice, showRowTrail } from '@/lib/show-row';
 import { VenueRequestForm } from '@/components/VenueRequestForm';
 
 export const dynamic = 'force-dynamic';
@@ -87,7 +89,7 @@ export default async function MmmVenuePage({
   const isOwner = profile.ownerId === session.user.id;
 
   const now = new Date();
-  const [userHype, upcoming] = await Promise.all([
+  const [userHype, upcoming, ticketsSold] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
@@ -112,63 +114,96 @@ export default async function MmmVenuePage({
           title: true,
           startsAt: true,
           hypeCount: true,
+          /* For the row's trail and price — the same fields the show page
+             decides "on sale" from, so the row cannot disagree with it. */
+          status: true,
+          isTicketed: true,
+          ticketingOpensAt: true,
+          ticketPriceCents: true,
           headlinerProfile: { select: { name: true } },
         },
       })
       .catch(() => []),
+    /* Paid tickets across every show hosted here — the public stat
+       catalogue's venue figure, the same CAPTURED-only count the owner's
+       insights use. Null, not 0, when the read fails. */
+    db.ticketOrder
+      .aggregate({ where: { show: { venueProfileId: profile.id }, status: 'CAPTURED' }, _sum: { quantity: true } })
+      .then((totals) => totals._sum.quantity ?? 0)
+      .catch((): number | null => null),
   ]);
 
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
+  const sub = [profile.roomType || null, where || null].filter(Boolean).join(' · ');
+  const address = [profile.addressLine1, profile.city, profile.stateRegion].filter(Boolean).join(', ');
 
+  /* ── Profile · venue ────────────────────────────────────────────────────
+     The same console card the artist pane draws (`.mmm-profile-*` in
+     mmm.css), with the venue hue on the band. Until 2026-09-02 this pane
+     still carried the design before that one — a 250–390px cinematic cover
+     at a 28px radius with the name set in 6vw over a veil — so the two
+     profile panes were the same object drawn in two eras. */
   return (
     <div className="mmm-show mmm-public-profile" data-profile-type="venue">
       <Link className="mmm-show-back" href="/app/map">← Map</Link>
 
-      <header className="mmm-profile-hero">
-        {profile.heroImage ? <img alt="" className="mmm-profile-cover" src={profile.heroImage} /> : <span aria-hidden="true" className="mmm-profile-cover mmm-profile-cover-fallback" />}
-        <span aria-hidden="true" className="mmm-profile-cover-veil" />
-        <div className="mmm-profile-identity">
-          <div className="mmm-profile-avatar">
-            {profile.logoImage || profile.avatarImage ? <img alt="" src={profile.logoImage || profile.avatarImage || ''} /> : <span>{profile.name.charAt(0)}</span>}
-          </div>
-          <div>
-            <div className="mmm-show-eyebrow">Venue profile</div>
-            <h1 className="mmm-show-title">{profile.name}</h1>
-            {where && <div className="mmm-show-where">{where}</div>}
-          </div>
+      <div className="mmm-profile-card">
+        <div className="mmm-profile-band">
+          {profile.heroImage && <img alt="" src={profile.heroImage} />}
+          <span aria-hidden="true" className="mmm-profile-band-glare" />
         </div>
-      </header>
 
-      <div className="mmm-profile-badges">
-        {profile.verificationStatus === 'VERIFIED' && (
-          <span className="mmm-profile-badge" data-kind="verified">Verified</span>
-        )}
-        {profile.capacity ? (
-          <span className="mmm-profile-badge">Capacity {profile.capacity.toLocaleString()}</span>
-        ) : null}
-        <span className="mmm-profile-badge">{profile.hypeCount.toLocaleString()} hypes</span>
-        <span className="mmm-profile-badge">
-          {profile._count.followers.toLocaleString()} followers
-        </span>
-      </div>
+        <div className="mmm-profile-body">
+          <div className="mmm-profile-head">
+            <div className="mmm-profile-art">
+              {profile.logoImage || profile.avatarImage ? (
+                <img alt="" src={profile.logoImage || profile.avatarImage || ''} />
+              ) : (
+                <span>{profile.name.charAt(0)}</span>
+              )}
+            </div>
+            <div className="mmm-profile-head-label">
+              {/* `.mmm-show-eyebrow` is the hook e2e reads to tell this pane
+                  from the artist's. */}
+              <span className="mmm-show-eyebrow">
+                {profile.verificationStatus === 'VERIFIED' ? 'VENUE · VERIFIED' : 'VENUE'}
+              </span>
+            </div>
+          </div>
 
-      {(profile.headline || profile.bio) && (
-        <section className="mmm-profile-about mmm-card">
-          <span className="mmm-eyebrow">About</span>
-          {profile.headline && <h2>{profile.headline}</h2>}
-          {profile.bio && <p>{profile.bio}</p>}
-        </section>
-      )}
+          <div>
+            <h1 className="mmm-show-title">{profile.name}</h1>
+            {sub && <div className="mmm-profile-sub">{sub}</div>}
+          </div>
 
-      <div className="mmm-profile-actions">
-        <HypeButton
-          entityLabel="venue"
-          initialCount={profile.hypeCount}
-          lastHypedAt={userHype?.createdAt?.toISOString() ?? null}
-          targetId={profile.id}
-          targetType="profile"
-        />
-        <FollowButton profileId={profile.id} />
+          {(profile.headline || profile.bio) && (
+            <p className="mmm-profile-lede">{profile.headline || profile.bio}</p>
+          )}
+
+          <div className="mmm-profile-actions">
+            <HypeButton
+              entityLabel="venue"
+              initialCount={profile.hypeCount}
+              lastHypedAt={userHype?.createdAt?.toISOString() ?? null}
+              targetId={profile.id}
+              targetType="profile"
+            />
+            <FollowButton profileId={profile.id} />
+            {/* Remember this room. `/api/likes` has accepted VENUE since the
+                model was written; the pane never offered it. */}
+            <MmmLikeButton name={profile.name} targetId={profile.id} targetType="VENUE" />
+          </div>
+
+          {/* The public stat catalogue's three venue figures. Capacity moved to
+              Venue Info, where a coordinator looks for it. */}
+          <ProfileCounters
+            counters={[
+              { label: 'Hypes', value: profile.hypeCount },
+              { label: 'Followers', value: profile._count.followers },
+              { label: 'Tickets sold', value: ticketsSold },
+            ]}
+          />
+        </div>
       </div>
 
       <ProfileTabs active={activeTab} label="Venue sections" tabs={VENUE_TABS} />
@@ -180,35 +215,26 @@ export default async function MmmVenuePage({
           isEmpty={upcoming.length === 0}
           title="Event Calendar"
         >
-          <ul className="mmm-profile-shows">
-            {upcoming.map((show) => {
-              const heat = heatLevel(show.hypeCount);
-              return (
-                <li key={show.id}>
-                  <Link className="mmm-profile-show" href={`/app/shows/${show.slug}`}>
-                    <span
-                      aria-label={HEAT_LABEL[heat]}
-                      className="mmm-profile-heat"
-                      role="img"
-                      style={{ background: HEAT_TOKEN[heat] }}
-                      title={HEAT_LABEL[heat]}
-                    />
-                    <span className="mmm-profile-show-main">
-                      <span className="mmm-profile-show-when">{formatShowTime(show.startsAt)}</span>
-                      <span className="mmm-profile-show-title">{show.title}</span>
-                      <span className="mmm-profile-show-where">
-                        {show.headlinerProfile?.name ?? ''}
-                      </span>
-                    </span>
-                  </Link>
-                </li>
-              );
-            })}
+          <ul className="mmm-profile-rows">
+            {upcoming.map((show) => (
+              <ProfileRow
+                key={show.id}
+                date={show.startsAt}
+                href={`/app/shows/${show.slug}`}
+                meta={[show.headlinerProfile?.name, formatShowTime(show.startsAt), formatTicketPrice(show)].filter(Boolean).join(' · ')}
+                title={show.title}
+                trail={showRowTrail(show, now)}
+              />
+            ))}
           </ul>
         </ProfilePanel>
       )}
 
       {activeTab === 'info' && (
+        /* The room's spec plate: what a coordinator needs before a date is
+           agreed. The address links back to the map — this is a map-first
+           app, and the address used to be plain text on a page reached FROM
+           the map. */
         <ProfilePanel
           tabId="info"
           empty={`${profile.name} has not added room details yet.`}
@@ -224,13 +250,17 @@ export default async function MmmVenuePage({
               <div><dt>Capacity</dt><dd>{profile.capacity.toLocaleString()}</dd></div>
             )}
             {profile.roomType && <div><dt>Room</dt><dd>{profile.roomType}</dd></div>}
-            {profile.addressLine1 && (
+            {address && (
               <div>
                 <dt>Address</dt>
-                <dd>{[profile.addressLine1, profile.city, profile.stateRegion].filter(Boolean).join(', ')}</dd>
+                <dd>{address} · <Link href="/app/map?layer=venues">Map</Link></dd>
               </div>
             )}
             {profile.hoursText && <div><dt>Hours</dt><dd>{profile.hoursText}</dd></div>}
+            <div>
+              <dt>Identity</dt>
+              <dd>{profile.verificationStatus === 'VERIFIED' ? 'Verified by iHYPE' : 'Not yet verified by iHYPE'}</dd>
+            </div>
           </dl>
           <RichContent value={profile.bio} />
         </ProfilePanel>
@@ -248,13 +278,33 @@ export default async function MmmVenuePage({
       )}
 
       {activeTab === 'contact' && (
-        <ProfilePanel
-          tabId="contact"
-          empty={`${profile.name} has not added contact details yet.`}
-          isEmpty={!unwrap(profile.contactInfo)}
-          title="Contact"
-        >
-          <RichContent value={profile.contactInfo} />
+        /* Contact is also the coordination sheet (owner, 2026-09-02): the
+           venue's own words first, then the terms every date here is booked
+           under — where booking happens, the split the charter fixes, the
+           ticket terms, the per-show lineup agreement. Every line points at
+           something the product already holds; nothing here is a new document. */
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Contact">
+          {unwrap(profile.contactInfo)
+            ? <RichContent value={profile.contactInfo} />
+            : <p className="profile-standfirst">{profile.name} has not added contact details yet.</p>}
+          <dl className="profile-facts profile-facts-coordination">
+            <div>
+              <dt>Booking</dt>
+              <dd>Fans ask below; the venue books from its <Link href="/app/me/booking">demand radar</Link>.</dd>
+            </div>
+            <div>
+              <dt>Split</dt>
+              <dd>70% artist · 20% venue · 10% promoters, fixed by the <Link href="/info?tab=charter">charter</Link>.</dd>
+            </div>
+            <div>
+              <dt>Lineup</dt>
+              <dd>A multi-act bill splits the artist share by a lineup agreement every act accepts, on the show&apos;s own page.</dd>
+            </div>
+            <div>
+              <dt>Tickets</dt>
+              <dd>All sales are final; a cancelled show refunds every ticket. <Link href="/ticket-policy">Ticket policy</Link>.</dd>
+            </div>
+          </dl>
         </ProfilePanel>
       )}
 

@@ -3149,60 +3149,143 @@ html:has(.mmm-frame) {
   padding-top: 12px;
 }
 .mmm-public-profile { max-width: 760px; margin-inline: auto; }
-.mmm-profile-hero {
-  position: relative;
-  min-height: clamp(250px, 42vh, 390px);
-  overflow: hidden;
-  border: 1px solid var(--line-2);
-  border-radius: 28px;
-  background: var(--bg-2);
-  box-shadow: 0 24px 70px rgba(var(--scrim-rgb), 0.38);
-}
-.mmm-profile-cover { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.mmm-profile-cover-fallback {
-  background:
-    radial-gradient(circle at 78% 20%, rgba(var(--accent-rgb), 0.42), transparent 32%),
-    linear-gradient(145deg, var(--bg-2), rgba(var(--accent-rgb), 0.12));
-}
-.mmm-public-profile[data-profile-type='venue'] .mmm-profile-cover-fallback {
-  background:
-    radial-gradient(circle at 76% 18%, rgba(var(--role-venue-rgb), 0.42), transparent 34%),
-    linear-gradient(145deg, var(--bg-2), rgba(var(--role-venue-rgb), 0.12));
-}
-.mmm-profile-cover-veil { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(var(--scrim-rgb), 0.12), rgba(var(--scrim-rgb), 0.92)); }
-.mmm-profile-identity {
-  position: absolute;
-  left: 24px;
-  right: 24px;
-  bottom: 22px;
+/* ── The console profile card (2026-09-02) ──────────────────────────────
+   One hero for the artist AND the venue pane, translated from the console
+   reference (s6-profile-artist.html / ConsoleProfile.dc.html): a 132px band,
+   a brass-edged 76px portrait breaking its lower edge, the role pill, the
+   name, one line of sub, one paragraph, the three actions, three counters.
+   The venue pane used to carry a 250–390px cinematic cover at a 28px radius
+   from the design before this one, and the artist pane carried this same
+   card as 180 lines of inline style. Paint lives here; a page writes classes.
+   The band is the ground beneath the artist's own cover art, never a
+   replacement for it. */
+.mmm-profile-card {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
+  flex-direction: column;
+  background: var(--bg-surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+  overflow: hidden;
 }
-.mmm-profile-identity .mmm-show-title { color: var(--ink-on-media); font-size: clamp(2rem, 6vw, 3.5rem); }
-.mmm-profile-identity .mmm-show-where { color: rgba(var(--ink-on-media-rgb), 0.72); }
-.mmm-profile-avatar {
-  width: 84px;
-  height: 84px;
-  flex: 0 0 84px;
+.mmm-profile-band {
+  position: relative;
+  height: 132px;
+  background: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+}
+/* A venue's band takes the venue hue: the role colour is the one thing that
+   tells the two panes apart at a glance, and the eyebrow is small. */
+.mmm-public-profile[data-profile-type='venue'] .mmm-profile-band {
+  background: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+}
+.mmm-profile-band img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.mmm-profile-band-glare {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+}
+.mmm-profile-body { padding: 0 22px 22px; display: flex; flex-direction: column; gap: 18px; }
+.mmm-profile-head { display: flex; align-items: flex-end; gap: 14px; margin-top: -34px; }
+.mmm-profile-head-label { padding-bottom: 4px; }
+.mmm-profile-art {
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid rgba(var(--ink-on-media-rgb), 0.34);
-  border-radius: 28px;
-  background: rgba(var(--scrim-rgb), 0.58);
-  color: var(--ink-on-media);
-  font: 800 2rem var(--font-display);
-  box-shadow: 0 12px 30px rgba(var(--scrim-rgb), 0.38);
+  border: 1px solid var(--brass);
+  border-radius: var(--radius-panel);
+  background: var(--bg-raised);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  color: var(--accent-text);
+  box-shadow: 0 6px 14px -6px rgba(var(--scrim-rgb), 0.5);
 }
-.mmm-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.mmm-profile-about { margin-top: 18px; padding: 20px; }
-.mmm-profile-about h2 { margin: 8px 0 0; color: var(--ink); font: 800 1.2rem/1.15 var(--font-display); }
-.mmm-profile-about p { margin: 10px 0 0; color: var(--ink-2); font-size: 0.9375rem; line-height: 1.65; white-space: pre-line; }
+.mmm-profile-art img { width: 100%; height: 100%; object-fit: cover; }
+/* The role pill keeps the `.mmm-show-eyebrow` hook e2e reads; only its
+   dressing is local. */
+.mmm-profile-head .mmm-show-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line-2);
+  background: var(--bg-surface);
+  color: var(--ink-2);
+}
+.mmm-profile-card .mmm-show-title {
+  margin: 0;
+  font-size: 2.125rem;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.mmm-profile-sub { margin-top: 4px; font-size: 0.9375rem; color: var(--ink-2); }
+.mmm-profile-lede { margin: 0; font-size: 0.9375rem; line-height: 1.62; color: var(--ink-2); text-wrap: pretty; }
+.mmm-profile-card .mmm-profile-actions { margin-top: 0; }
+.mmm-profile-counters { display: flex; gap: 10px; }
+.mmm-profile-counter {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-panel);
+}
+.mmm-profile-counter-value { font-family: var(--font-mono); font-size: 1.3125rem; color: var(--ink); }
+.mmm-profile-counter-label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* A dated row on a profile: show or calendar day. The trail is the one word a
+   fan reads first, toned by what it says — LIVE hotter than on sale, on sale
+   hotter than a date with no sale to report. */
+.mmm-profile-rows { list-style: none; margin: 0; padding: 0; }
+.mmm-profile-row {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  color: inherit;
+  text-decoration: none;
+}
+.mmm-profile-rows li:last-child .mmm-profile-row { border-bottom: 0; }
+.mmm-profile-row-date { width: 46px; flex: 0 0 auto; text-align: center; }
+.mmm-profile-row-month {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.mmm-profile-row-day { display: block; font-family: var(--font-display); font-size: 1.5rem; line-height: 1; color: var(--ink); }
+.mmm-profile-row-main { flex: 1; min-width: 0; }
+.mmm-profile-row-title { display: block; font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
+.mmm-profile-row-meta { display: block; margin-top: 2px; font-size: 0.9375rem; color: var(--ink-3); }
+.mmm-profile-row-trail {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+  color: var(--ink-3);
+}
+.mmm-profile-row-trail[data-tone='live'] { color: var(--accent-text); font-weight: 700; }
+.mmm-profile-row-trail[data-tone='sale'] { color: var(--ink); font-weight: 700; }
 @media (max-width: 520px) {
-  .mmm-profile-hero { min-height: 300px; border-radius: 22px; }
-  .mmm-profile-identity { left: 18px; right: 18px; bottom: 18px; align-items: flex-start; flex-direction: column; gap: 10px; }
-  .mmm-profile-avatar { width: 64px; height: 64px; flex-basis: 64px; border-radius: 21px; }
+  .mmm-profile-body { padding: 0 16px 18px; gap: 14px; }
+  .mmm-profile-counters { gap: 7px; }
+  .mmm-profile-counter { padding: 10px 9px; }
 }
 .mmm-deck-stack {
   position: relative;

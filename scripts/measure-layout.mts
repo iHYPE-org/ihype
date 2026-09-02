@@ -371,9 +371,20 @@ if (!canSeedSession()) {
 // An ARTIST profile so the role-gated surfaces render their fullest state:
 // a profile-less account hides the page card and the HYPE link card, and an
 // element that never rendered cannot be proved unmoved.
-const { cookie } = await seedSessionCookie(EMAIL, {
-  profiles: [{ type: 'ARTIST', name: 'Layout Baseline' }],
+const { cookie, profiles } = await seedSessionCookie(EMAIL, {
+  profiles: [
+    { type: 'ARTIST', name: 'Layout Baseline' },
+    { type: 'VENUE', name: 'Layout Baseline Room' },
+  ],
 });
+/* The two public profile panes, at the seeded slugs. They were the two
+   surfaces nothing measured — `audit:mobile` covers signed-out pages only and
+   this list had no dynamic route — and the venue pane went on carrying a
+   retired hero for a fortnight because of it. Pushed rather than listed, since
+   the slug is only known once the fixture has run. */
+for (const profile of profiles) {
+  ROUTES.push(profile.type === 'VENUE' ? `/app/venues/${profile.slug}` : `/app/artists/${profile.slug}`);
+}
 
 // Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
 // HTTPS_PROXY from the environment, and `bypass` is required rather than

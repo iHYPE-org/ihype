@@ -13,6 +13,8 @@ import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
+import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
+import { formatTicketPrice, showRowTrail } from '@/lib/show-row';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ArtistRequestForm } from '@/components/ArtistRequestForm';
 
@@ -98,7 +100,7 @@ export default async function MmmArtistPage({
      artist's "tonight" is still today at 3am UTC and dropping the gig while
      the band is on stage would be the wrong kind of precise. */
   const calendarFloor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 12 * 3_600_000);
-  const [userHype, upcoming, releases, calendar, albums] = await Promise.all([
+  const [userHype, upcoming, releases, calendar, albums, listeners] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
@@ -124,6 +126,12 @@ export default async function MmmArtistPage({
           title: true,
           startsAt: true,
           hypeCount: true,
+          /* For the row's trail and price — the same fields the show page
+             decides "on sale" from, so the row cannot disagree with it. */
+          status: true,
+          isTicketed: true,
+          ticketingOpensAt: true,
+          ticketPriceCents: true,
           venueProfile: { select: { name: true, city: true } },
         },
       })
@@ -187,6 +195,18 @@ export default async function MmmArtistPage({
         select: { id: true, title: true, artworkUrl: true, releasedOn: true },
       })
       .catch(() => []),
+    /* Distinct accounts that have played any of this artist's tracks — the
+       public stat catalogue's listener figure, computed the way the owner's
+       insights compute it (MediaListen is one row per listener per track).
+       Null, not 0, when the read fails: a zero is a claim about the artist. */
+    db.artistMediaAsset
+      .findMany({ where: { profileId: profile.id }, select: { hexId: true } })
+      .then((assets) => (assets.length
+        ? db.mediaListen
+          .findMany({ where: { mediaId: { in: assets.map((asset) => asset.hexId) } }, select: { userId: true }, distinct: ['userId'] })
+          .then((rows) => rows.length)
+        : 0))
+      .catch((): number | null => null),
   ]);
   const albumById = new Map(albums.map((album) => [album.id, album]));
   const coverFor = (release: { artworkUrl: string | null; albumId: string | null }) =>
@@ -220,111 +240,40 @@ export default async function MmmArtistPage({
     <div className="mmm-show mmm-public-profile" data-profile-type="artist">
       <Link className="mmm-show-back" href="/app/music/charts">← Music</Link>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          background: 'var(--bg-surface)',
-          border: '1px solid var(--line)',
-          borderRadius: 'var(--radius-panel)',
-          overflow: 'hidden',
-        }}
-      >
-        <div
-          style={{
-            height: 132,
-            position: 'relative',
-            background:
-              'linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%)',
-          }}
-        >
+      <div className="mmm-profile-card">
+        <div className="mmm-profile-band">
           {/* The artist's own cover art still wins when they have uploaded one —
               the gradient is the ground beneath it, not a replacement for it. */}
-          {profile.heroImage && (
-            <img
-              alt=""
-              src={profile.heroImage}
-              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-            />
-          )}
-          <span
-            aria-hidden="true"
-            style={{
-              position: 'absolute',
-              inset: 0,
-              background: 'radial-gradient(70% 100% at 22% 8%, rgba(255,240,210,.34), transparent 60%)',
-            }}
-          />
+          {profile.heroImage && <img alt="" src={profile.heroImage} />}
+          <span aria-hidden="true" className="mmm-profile-band-glare" />
         </div>
 
-        <div style={{ padding: '0 22px 22px', display: 'flex', flexDirection: 'column', gap: 18 }}>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 14, marginTop: -34 }}>
-            <div
-              style={{
-                width: 76,
-                height: 76,
-                flex: '0 0 auto',
-                borderRadius: 'var(--radius-panel)',
-                background: 'var(--bg-raised)',
-                border: '1px solid var(--brass)',
-                display: 'grid',
-                placeItems: 'center',
-                overflow: 'hidden',
-                fontFamily: 'var(--font-display)',
-                fontSize: '2rem',
-                color: 'var(--accent-text)',
-                boxShadow: '0 6px 14px -6px rgba(28,20,8,.5)',
-              }}
-            >
+        <div className="mmm-profile-body">
+          <div className="mmm-profile-head">
+            <div className="mmm-profile-art">
               {profile.avatarImage || profile.logoImage ? (
-                <img
-                  alt=""
-                  src={profile.avatarImage || profile.logoImage || ''}
-                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                />
+                <img alt="" src={profile.avatarImage || profile.logoImage || ''} />
               ) : (
                 <span>{profile.name.charAt(0)}</span>
               )}
             </div>
-            <div style={{ paddingBottom: 4 }}>
+            <div className="mmm-profile-head-label">
               {/* Keeps the `.mmm-show-eyebrow` hook: `e2e/mmm-panes.spec.ts`
                   reads it to tell the artist pane from the venue pane, and in
                   S6 this pill is what carries that label. */}
-              <span
-                className="mmm-show-eyebrow"
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '4px 10px',
-                  borderRadius: 'var(--radius-pill)',
-                  background: 'var(--bg-surface)',
-                  border: '1px solid var(--line-2)',
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '0.6875rem',
-                  letterSpacing: '0.16em',
-                  color: 'var(--ink-2)',
-                }}
-              >
+              <span className="mmm-show-eyebrow">
                 {profile.verificationStatus === 'VERIFIED' ? 'ARTIST · VERIFIED' : 'ARTIST'}
               </span>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column' }}>
-            <h1
-              className="mmm-show-title"
-              style={{ fontFamily: 'var(--font-display)', fontSize: '2.125rem', lineHeight: 1.1, fontWeight: 400, margin: 0 }}
-            >
-              {profile.name}
-            </h1>
-            {sub && <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4 }}>{sub}</div>}
+          <div>
+            <h1 className="mmm-show-title">{profile.name}</h1>
+            {sub && <div className="mmm-profile-sub">{sub}</div>}
           </div>
 
           {(profile.headline || profile.bio) && (
-            <p style={{ fontSize: '0.9375rem', lineHeight: 1.62, color: 'var(--ink-2)', margin: 0, textWrap: 'pretty' }}>
-              {profile.headline || profile.bio}
-            </p>
+            <p className="mmm-profile-lede">{profile.headline || profile.bio}</p>
           )}
 
           {/* The two things a listener actually does here. Both are the real
@@ -332,7 +281,7 @@ export default async function MmmArtistPage({
               count and the follow state are rules someone learned the hard way, and
               a second implementation of either would drift. The reference draws
               them as two equal pills; that is this row, not a reimplementation. */}
-          <div className="mmm-profile-actions" style={{ display: 'flex', gap: 10 }}>
+          <div className="mmm-profile-actions">
             <HypeButton
               entityLabel="artist"
               initialCount={profile.hypeCount}
@@ -346,39 +295,19 @@ export default async function MmmArtistPage({
             <MmmLikeButton name={profile.name} targetId={profile.id} targetType="ARTIST" />
           </div>
 
-          <div style={{ display: 'flex', gap: 10 }}>
-            {[
-              { value: profile.hypeCount.toLocaleString(), label: 'HYPE' },
-              { value: String(upcoming.length), label: 'SHOWS' },
-              // The charter's artist share. A constant, not a per-profile figure.
-              { value: '70%', label: 'KEEPS' },
-            ].map((stat) => (
-              <div
-                key={stat.label}
-                style={{
-                  flex: 1,
-                  border: '1px solid var(--line)',
-                  borderRadius: 'var(--radius-panel)',
-                  padding: 13,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 3,
-                }}
-              >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem' }}>{stat.value}</span>
-                <span
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: '0.6875rem',
-                    letterSpacing: '0.14em',
-                    color: 'var(--ink-3)',
-                  }}
-                >
-                  {stat.label}
-                </span>
-              </div>
-            ))}
-          </div>
+          {/* The public stat catalogue's three artist figures, as the console
+              template draws them. "70% KEEPS" used to sit here — a charter
+              constant that read the same on every artist, so it said nothing
+              about this one — while the follower count was fetched and never
+              shown. Listeners is distinct accounts that have played a track;
+              a figure that could not be read is a dash, not a zero. */}
+          <ProfileCounters
+            counters={[
+              { label: 'Hypes', value: profile.hypeCount },
+              { label: 'Followers', value: profile._count.followers },
+              { label: 'Listeners', value: listeners },
+            ]}
+          />
         </div>
       </div>
 
@@ -510,122 +439,37 @@ export default async function MmmArtistPage({
               set it before the calendar existed keeps its paragraph. */}
           <RichContent value={profile.tourContent} />
           {upcoming.length > 0 && (
-            <ul className="mmm-profile-shows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            <ul className="mmm-profile-rows">
               {upcoming.map((show) => (
-                <li key={show.id}>
-                  <Link
-                    href={`/app/shows/${show.slug}`}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 13,
-                      padding: '14px 0',
-                      borderBottom: '1px solid var(--line)',
-                      color: 'inherit',
-                      textDecoration: 'none',
-                    }}
-                  >
-                    <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>
-                      <span
-                        style={{
-                          display: 'block',
-                          fontFamily: 'var(--font-mono)',
-                          fontSize: '0.6875rem',
-                          letterSpacing: '0.14em',
-                          color: 'var(--ink-3)',
-                        }}
-                      >
-                        {show.startsAt.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()}
-                      </span>
-                      <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.5rem', lineHeight: 1 }}>
-                        {show.startsAt.getDate()}
-                      </span>
-                    </span>
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500 }}>{show.title}</span>
-                      <span style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
-                        {/* The reference's second line is venue · price. Price is not
-                            selected by this page's query and inventing one on a page
-                            that sells tickets would be worse than omitting it, so the
-                            door time takes that slot. */}
-                        {[show.venueProfile?.name, show.venueProfile?.city, formatShowTime(show.startsAt)]
-                          .filter(Boolean)
-                          .join(' · ')}
-                      </span>
-                    </span>
-                    <span
-                      style={{
-                        padding: '8px 14px',
-                        minHeight: 44,
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        borderRadius: 'var(--radius-pill)',
-                        background: 'var(--accent)',
-                        color: 'var(--ink-on-accent)',
-                        fontSize: '0.9375rem',
-                        fontWeight: 500,
-                      }}
-                    >
-                      Get ticket
-                    </span>
-                  </Link>
-                </li>
+                <ProfileRow
+                  key={show.id}
+                  date={show.startsAt}
+                  href={`/app/shows/${show.slug}`}
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowTime(show.startsAt), formatTicketPrice(show)]
+                    .filter(Boolean)
+                    .join(' · ')}
+                  title={show.title}
+                  trail={showRowTrail(show, now)}
+                />
               ))}
             </ul>
           )}
           {calendar.length > 0 && (
-            <ul className="mmm-profile-shows" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            <ul className="mmm-profile-rows">
               {calendar.map((entry) => (
-                <li
+                /* UTC on purpose: the row IS a UTC-midnight day, and a local-time
+                   read shifts it to the evening before for everyone west of
+                   Greenwich. */
+                <ProfileRow
                   key={entry.id}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 13,
-                    padding: '14px 0',
-                    borderBottom: '1px solid var(--line)',
-                  }}
-                >
-                  <span style={{ width: 46, flex: '0 0 auto', textAlign: 'center' }}>
-                    <span
-                      style={{
-                        display: 'block',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.6875rem',
-                        letterSpacing: '0.14em',
-                        color: 'var(--ink-3)',
-                      }}
-                    >
-                      {/* UTC on purpose: the row IS a UTC-midnight day, and a
-                          local-time read shifts it to the evening before for
-                          everyone west of Greenwich. */}
-                      {entry.date.toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' }).toUpperCase()}
-                    </span>
-                    <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.5rem', lineHeight: 1 }}>
-                      {entry.date.getUTCDate()}
-                    </span>
-                  </span>
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontSize: '0.9375rem', fontWeight: 500 }}>
-                      {entry.note || (entry.kind === 'TOUR' ? 'Playing' : 'Open to book')}
-                    </span>
-                    <span
-                      style={{
-                        display: 'block',
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: '0.6875rem',
-                        letterSpacing: '0.14em',
-                        textTransform: 'uppercase',
-                        color: 'var(--ink-3)',
-                      }}
-                    >
-                      {[
-                        entry.kind === 'TOUR' ? 'Playing' : 'Open to book',
-                        entry.date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
-                      ].join(' · ')}
-                    </span>
-                  </span>
-                </li>
+                  date={entry.date}
+                  meta={[
+                    entry.kind === 'TOUR' ? 'Playing' : 'Open to book',
+                    entry.date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
+                  ].join(' · ')}
+                  title={entry.note || (entry.kind === 'TOUR' ? 'Playing' : 'Open to book')}
+                  utc
+                />
               ))}
             </ul>
           )}
@@ -679,13 +523,38 @@ export default async function MmmArtistPage({
       )}
 
       {activeTab === 'contact' && (
-        <ProfilePanel
-          tabId="contact"
-          empty={`${profile.name} has not added contact details. Hype the profile and they will see the interest.`}
-          isEmpty={!unwrap(profile.contactInfo)}
-          title="Contact"
-        >
-          <RichContent value={profile.contactInfo} />
+        /* Contact is also the coordination sheet (owner, 2026-09-02: "paperwork
+           legally bound and ready for event coordination"): the owner's own
+           words first, then the facts a venue or promoter needs before a date
+           is agreed — where booking happens, the press kit, the split the
+           charter fixes, the ticket terms, and whether iHYPE has verified
+           who this is. Every line points at something the product already
+           holds; nothing here is a new document. */
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Contact">
+          {unwrap(profile.contactInfo)
+            ? <RichContent value={profile.contactInfo} />
+            : <p className="profile-standfirst">{profile.name} has not added contact details. Hype the profile and they will see the interest.</p>}
+          <dl className="profile-facts profile-facts-coordination">
+            <div>
+              <dt>Booking</dt>
+              <dd>
+                Venues book from their <Link href="/app/me/booking">demand radar</Link>; fans <Link href="?tab=tour">ask a venue</Link> from Tour.
+              </dd>
+            </div>
+            <div><dt>Press</dt><dd><Link href="?tab=press">Press kit</Link></dd></div>
+            <div>
+              <dt>Split</dt>
+              <dd>70% artist · 20% venue · 10% promoters, fixed by the <Link href="/info?tab=charter">charter</Link>.</dd>
+            </div>
+            <div>
+              <dt>Tickets</dt>
+              <dd>All sales are final; a cancelled show refunds every ticket. <Link href="/ticket-policy">Ticket policy</Link>.</dd>
+            </div>
+            <div>
+              <dt>Identity</dt>
+              <dd>{profile.verificationStatus === 'VERIFIED' ? 'Verified by iHYPE' : 'Not yet verified by iHYPE'}</dd>
+            </div>
+          </dl>
         </ProfilePanel>
       )}
 
