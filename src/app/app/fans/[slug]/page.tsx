@@ -57,10 +57,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     select: { name: true, genres: true, city: true, stateRegion: true, hypeCount: true },
   });
   if (!profile) return { title: 'Fan · iHYPE' };
-  const loc = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
+  // No location: fan profiles never publish one (public-location.ts).
   return {
     title: `${profile.name} · iHYPE`,
-    description: ['Fan', profile.genres.slice(0, 3).join(', ') || null, loc || null].filter(Boolean).join(' · '),
+    description: ['Fan', profile.genres.slice(0, 3).join(', ') || null].filter(Boolean).join(' · '),
   };
 }
 
@@ -143,7 +143,7 @@ export default async function FanProfilePage({
           </div>
           <div style={{ flex: 1 }}>
             <div className="fan-display-name">{profile.name}</div>
-            <div className="fan-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}{profile.city ? ` · ${profile.city}` : ''}</div>
+            <div className="fan-handle">{profile.owner?.username ? `@${profile.owner.username}` : profile.hexId}</div>
             <div className="fan-hero-badges">
               <span className="fan-badge" style={{ background: 'rgba(var(--role-fan-rgb),.15)', color: 'var(--role-fan)' }}>{t('fansSlugPage.fanBadge', 'Fan')}</span>
               {profile.verificationStatus === 'VERIFIED' && <span className="fan-badge" style={{ background: 'rgba(var(--role-venue-rgb),.15)', color: 'var(--role-venue)' }}>{t('fansSlugPage.verifiedBadge', '✓ Verified')}</span>}

@@ -3,10 +3,15 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { runAI } from '@/lib/ai';
+import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
+
+  // A Workers AI call per GET with no budget (second security scan, 2026-09-02).
+  const rl = await consumeRateLimit(rateLimitKey('ai-ad-recs', session.user.id, null), { limit: 10, windowMs: 60 * 60 * 1000 });
+  if (!rl.allowed) return NextResponse.json({ error: 'Too many requests — try again later.' }, { status: 429 });
 
   const profileId = new URL(request.url).searchParams.get('profileId');
   const select = { ownerId: true, type: true, name: true, genres: true, city: true, hypeCount: true, bio: true } as const;

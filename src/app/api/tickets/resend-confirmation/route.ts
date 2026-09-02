@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { log } from '@/lib/logger';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,7 +39,7 @@ export async function POST(_request: NextRequest) {
       to: order.buyerEmail,
       subject: `Your tickets for ${order.show.title}`,
       text: `Hi ${order.buyerName},\n\nHere are your tickets for ${order.show.title}:\n\n${ticketList}\n\nConfirmation: ${order.confirmationCode}\n\nSee you there!`,
-      html: `<p>Hi <strong>${order.buyerName}</strong>,</p><p>Here are your tickets for <strong>${order.show.title}</strong>:</p><ul>${order.tickets.map((t) => `<li>${t.holderName} — #${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
+      html: `<p>Hi <strong>${escapeHtml(order.buyerName)}</strong>,</p><p>Here are your tickets for <strong>${escapeHtml(order.show.title)}</strong>:</p><ul>${order.tickets.map((t) => `<li>${escapeHtml(t.holderName)} — #${t.serializedId}</li>`).join('')}</ul><p>Confirmation: <strong>${order.confirmationCode}</strong></p>`,
     });
 
     return NextResponse.json({ ok: true });

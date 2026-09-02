@@ -20,8 +20,9 @@ const CORE_PAGES = [
   '/hype',
   // `/tickets` used to be precached here. It is a signed-in page listing one
   // account's tickets, so precaching it stored one person's HTML for the next
-  // person on a shared device (security sweep, 2026-09-02). The TICKETS_CACHE
-  // below still holds the ticket API responses the offline wallet needs.
+  // person on a shared device (security sweep, 2026-09-02). Individual ticket
+  // pages (/tickets/<id>) are still stored in TICKETS_CACHE on first view, so
+  // the offline wallet is unaffected.
   // Precached so the real offline page is available when there is no network.
   // Install runs on a first visit while still online, so by the time it is
   // needed it is already here. See offlineFallback().
@@ -54,8 +55,10 @@ const NETWORK_ONLY_PATHS = [
   // Signed-in surfaces outside /app that were being written to PAGE_CACHE
   // (security sweep, 2026-09-02). The denylist is a second line: the caching
   // helpers below also refuse any response the server marks private/no-store,
-  // which is what every dynamic signed-in page carries.
-  '/tickets',
+  // which is what every dynamic signed-in page carries. `/tickets/<id>` is
+  // deliberately NOT here: it is the offline wallet (the QR at the door with
+  // no signal), served from TICKETS_CACHE below and cleared on sign-out by
+  // CLEAR_PRIVATE. The /tickets index is dynamic and refused by isCacheable.
   '/settings',
   '/me',
   '/payouts',
@@ -192,7 +195,9 @@ self.addEventListener('fetch', (event) => {
     // Individual purchased ticket pages — network-first, fall back to cache
     // so the holder can show their QR at the venue door with no connectivity.
     if (url.pathname.startsWith('/tickets/')) {
-      event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE));
+      // The one place a private page is stored on purpose — see the note on
+      // NETWORK_ONLY_PATHS. Sign-out clears this cache.
+      event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
       return;
     }
     // Show and artist pages: stale-while-revalidate (ticket availability changes)
@@ -237,10 +242,11 @@ async function staleWhileRevalidate(request, cacheName) {
   return cached || (await networkFetch) || (await offlineFallback());
 }
 
-async function networkWithCacheFallback(request, cacheName) {
+async function networkWithCacheFallback(request, cacheName, options = {}) {
   try {
     const response = await fetch(request);
-    if (isCacheable(response) && request.method === 'GET') {
+    const storable = options.storePrivate ? Boolean(response && response.ok) : isCacheable(response);
+    if (storable && request.method === 'GET') {
       const cache = await caches.open(cacheName);
       await cache.put(request, response.clone());
     }

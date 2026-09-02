@@ -35,6 +35,14 @@ export async function POST(request: Request) {
     if (oldest) await db.pushSubscription.delete({ where: { id: oldest.id } });
   }
 
+  /* An endpoint already bound to ANOTHER account is refused rather than
+     re-homed (second security scan, 2026-09-02): the upsert used to overwrite
+     `userId`, so whoever learned a member's push endpoint could take their
+     device's notifications. */
+  const boundTo = await db.pushSubscription.findUnique({ where: { endpoint: sub.endpoint }, select: { userId: true } });
+  if (boundTo && boundTo.userId !== session.user.id) {
+    return NextResponse.json({ error: 'This device is registered to another account.' }, { status: 409 });
+  }
   await db.pushSubscription.upsert({
     where: { endpoint: sub.endpoint },
     create: {

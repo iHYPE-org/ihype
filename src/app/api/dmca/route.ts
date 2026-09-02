@@ -91,6 +91,13 @@ export async function POST(request: NextRequest) {
       }
     }
 
+  } catch (err) {
+    log.error('[dmca]', err instanceof Error ? err : { error: String(err) }, 'resolving the DMCA target failed');
+  }
+
+  // The report IS the receipt. If it cannot be filed the claimant must not be
+  // told it was received — a notice that reached nobody has a legal clock too.
+  try {
     await db.contentReport.create({
       data: {
         targetType: target.type,
@@ -100,6 +107,12 @@ export async function POST(request: NextRequest) {
         reporterUserId: session?.user?.id ?? null,
       },
     });
+  } catch (err) {
+    log.error('[dmca]', err instanceof Error ? err : { error: String(err) }, 'filing the DMCA report failed');
+    return NextResponse.json({ error: 'We could not record your notice. Please email admin@ihype.org.' }, { status: 500 });
+  }
+
+  try {
 
     if (target.ownerUserId) {
       await db.notification.create({
@@ -136,7 +149,7 @@ export async function POST(request: NextRequest) {
       'dmca-notice',
     );
   } catch (err) {
-    log.error('[dmca]', err instanceof Error ? err : { error: String(err) }, 'filing the DMCA report failed');
+    log.error('[dmca]', err instanceof Error ? err : { error: String(err) }, 'notifying about the DMCA report failed');
   }
 
   return NextResponse.json({ ok: true });

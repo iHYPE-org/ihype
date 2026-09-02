@@ -39,6 +39,11 @@ export async function POST(request: Request) {
     if (oldest) await db.nativeDeviceToken.delete({ where: { id: oldest.id } });
   }
 
+  // Same rule as /api/push/subscribe: a token bound to another account is not re-homed.
+  const boundTo = await db.nativeDeviceToken.findUnique({ where: { token }, select: { userId: true } });
+  if (boundTo && boundTo.userId !== session.user.id) {
+    return NextResponse.json({ error: 'This device is registered to another account.' }, { status: 409 });
+  }
   await db.nativeDeviceToken.upsert({
     where: { token },
     create: { userId: session.user.id, token, platform },

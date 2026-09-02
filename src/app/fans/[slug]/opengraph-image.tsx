@@ -58,7 +58,9 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   ]);
 
   const topArtists = topArtistFollows.map((f) => f.followeeProfile.name).filter(Boolean);
-  const city = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
+  // Fan profiles never publish a location (public-location.ts); this card is
+  // unauthenticated and was painting the fan's city into a PNG.
+  const city = '';
 
   return new ImageResponse(
     (

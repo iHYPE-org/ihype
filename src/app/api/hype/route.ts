@@ -12,6 +12,7 @@ import { notifyUser } from '@/lib/notify';
 import { log } from '@/lib/logger';
 import { applyHypeEntry, InsufficientHypeError } from '@/lib/hype-ledger';
 import { formatHypeWait, hypeWaitMs, nextHypeAt } from '@/lib/hype-window';
+import { escapeHtml } from '@/lib/html-escape';
 
 const HYPE_MILESTONES = [10, 50, 100, 500, 1000];
 const SHOW_HYPE_MILESTONES = [10, 25, 50, 100, 250, 500];
@@ -52,7 +53,7 @@ async function checkAndRecordShowMilestone(showId: string, newCount: number) {
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
           <h2 style="margin:0 0 12px;">🎉 ${crossed} hypes!</h2>
-          <p>Congrats ${ownerName} — <strong>${show.title}</strong> just hit <strong>${crossed} hypes</strong> on iHYPE.</p>
+          <p>Congrats ${escapeHtml(ownerName)} — <strong>${escapeHtml(show.title)}</strong> just hit <strong>${crossed} hypes</strong> on iHYPE.</p>
           <p>Keep the momentum — share your show to invite more fans.</p>
           <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
         </div>
@@ -107,7 +108,7 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
       const html = `
         <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
           <h2 style="margin:0 0 12px;">🎉 ${crossed} hypes!</h2>
-          <p>Congrats ${ownerName} — <strong>${profile.name}</strong> just crossed <strong>${crossed} hypes</strong> on iHYPE.</p>
+          <p>Congrats ${escapeHtml(ownerName)} — <strong>${escapeHtml(profile.name)}</strong> just crossed <strong>${crossed} hypes</strong> on iHYPE.</p>
           <p>Keep the momentum — share your profile to invite more fans.</p>
           <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
         </div>
@@ -127,7 +128,8 @@ async function checkAndRecordMilestone(profileId: string, newCount: number) {
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const showId = searchParams.get('showId');
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '10'), 50);
+  const parsedLimit = parseInt(searchParams.get('limit') ?? '10', 10);
+  const limit = Number.isFinite(parsedLimit) ? Math.min(Math.max(parsedLimit, 1), 50) : 10;
   if (!showId) return NextResponse.json({ error: 'showId required' }, { status: 400 });
   const hypers = await db.hypeEvent.findMany({
     where: { showId },

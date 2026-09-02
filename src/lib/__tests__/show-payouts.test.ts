@@ -31,13 +31,14 @@ vi.mock('@/lib/mailer', () => ({ sendGenericEmail: vi.fn().mockResolvedValue(und
 vi.mock('@/lib/env', () => ({ getAdminAlertRecipients: () => ['admin@ihype.org'] }));
 
 import { db } from '@/lib/db';
-import { createPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
+import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { sendGenericEmail } from '@/lib/mailer';
 import { triggerShowPayouts } from '@/lib/show-payouts';
 
 const mockDb = db as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
 const mockIsStripeConfigured = isStripeConfigured as unknown as ReturnType<typeof vi.fn>;
 const mockCreatePayoutTransfer = createPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
+const mockFindPayoutTransfer = findPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
 const mockSendEmail = sendGenericEmail as unknown as ReturnType<typeof vi.fn>;
 
 function entry(overrides: Partial<Record<string, unknown>> = {}) {
@@ -61,6 +62,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   mockIsStripeConfigured.mockReturnValue(true);
   mockCreatePayoutTransfer.mockReset().mockResolvedValue('tr_default');
+  mockFindPayoutTransfer.mockReset().mockResolvedValue(null);
   mockSendEmail.mockReset().mockResolvedValue(undefined);
   mockDb.accountsPayableEntry.findMany.mockReset().mockResolvedValue([]);
   mockDb.accountsPayableEntry.update.mockReset().mockResolvedValue({});
@@ -169,6 +171,22 @@ describe('triggerShowPayouts', () => {
     expect(mockCreatePayoutTransfer).toHaveBeenCalledTimes(1);
     expect(store[0].status).toBe(AccountsPayableStatus.RELEASED);
     expect(store[0].stripeTransferId).toBe('tr_once');
+  });
+
+  it('records an existing Stripe transfer instead of paying the entry a second time', async () => {
+    // Last run's transfer succeeded but the RELEASED write failed; the entry
+    // is still PENDING and Stripe already holds a transfer for it.
+    mockDb.accountsPayableEntry.findMany.mockResolvedValue([entry()]);
+    mockFindPayoutTransfer.mockResolvedValueOnce('tr_existing');
+
+    const result = await triggerShowPayouts();
+
+    expect(mockCreatePayoutTransfer).not.toHaveBeenCalled();
+    expect(mockDb.accountsPayableEntry.update).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ap_1' },
+      data: expect.objectContaining({ status: 'RELEASED', stripeTransferId: 'tr_existing' }),
+    }));
+    expect(result.released).toBe(1);
   });
 
   it('skips (does not transfer) an entry whose profile has no Stripe Connect account', async () => {

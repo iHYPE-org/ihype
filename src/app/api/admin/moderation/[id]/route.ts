@@ -18,7 +18,9 @@ import { log } from '@/lib/logger';
  */
 const PROFILE_IMAGE_FIELDS = new Set(['heroImage', 'avatarImage', 'logoImage', 'galleryImage']);
 
-async function enforceRemoval(targetType: string, targetId: string, reason: string): Promise<void> {
+type EnforcementOutcome = { ok: true } | { ok: false; error: string };
+
+async function enforceRemoval(targetType: string, targetId: string, reason: string): Promise<EnforcementOutcome> {
   switch (targetType) {
     case 'track':
       await db.artistMediaAsset.updateMany({ where: { hexId: targetId }, data: { isPublished: false, freeUseEnabled: false } });
@@ -26,9 +28,24 @@ async function enforceRemoval(targetType: string, targetId: string, reason: stri
     case 'comment':
       await db.showComment.updateMany({ where: { id: targetId }, data: { deletedAt: new Date() } });
       break;
-    case 'show':
-      await db.show.updateMany({ where: { id: targetId }, data: { status: 'CANCELED' } });
+    case 'show': {
+      /* A status flip is not a cancellation once money has moved. Buyers of a
+         show set CANCELED here kept their charge and lost their event: the
+         refund loop lives in POST /api/shows/[showId]/cancel (organizer or
+         admin), which refunds every CAPTURED order, skips scanned tickets and
+         tells the holders. So a show with paid orders is refused here and the
+         admin is pointed at that flow; one with none is cancelled outright.
+         (Second security scan, 2026-09-02.) */
+      const paidOrders = await db.ticketOrder.count({ where: { showId: targetId, status: 'CAPTURED' } });
+      if (paidOrders > 0) {
+        return {
+          ok: false,
+          error: `This show has ${paidOrders} paid order${paidOrders === 1 ? '' : 's'}. Cancel it through the show's cancel flow (/shows/<slug>/cancel), which refunds buyers; approving here would only flip the status.`,
+        };
+      }
+      await db.show.updateMany({ where: { id: targetId }, data: { status: 'CANCELED', canceledAt: new Date(), cancellationReason: 'Removed after a content report' } });
       break;
+    }
     case 'ad-audio':
       await db.ad.updateMany({ where: { id: targetId }, data: { status: 'REJECTED' } });
       break;
@@ -44,6 +61,7 @@ async function enforceRemoval(targetType: string, targetId: string, reason: stri
     default:
       break;
   }
+  return { ok: true };
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -76,7 +94,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (!report) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
     if (action === 'approve') {
-      await enforceRemoval(report.targetType, report.targetId, report.reason);
+      const outcome = await enforceRemoval(report.targetType, report.targetId, report.reason);
+      if (!outcome.ok) return NextResponse.json({ error: outcome.error }, { status: 409 });
     }
 
     await db.contentReport.update({ where: { id }, data: { status: action === 'approve' ? 'ACTIONED' : 'DISMISSED' } });
