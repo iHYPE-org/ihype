@@ -12,7 +12,6 @@ describe('alpha readiness', () => {
   it('reports human resilience and real-content gaps separately from deployment health', () => {
     const blockers = buildAlphaBlockers({
       administrators: 1,
-      playableTracks: 3,
       discoverableArtists: 2,
       discoverableVenues: 1,
       upcomingEvents: 0,
@@ -23,14 +22,15 @@ describe('alpha readiness', () => {
     expect(blockers).toEqual(expect.arrayContaining([
       expect.stringContaining('second administrator'),
       expect.stringContaining('restore drill'),
-      expect.stringContaining('10 playable local tracks'),
     ]));
+    // No minimum number of uploads (owner, 2026-09-02): a track count is
+    // reported, never a blocker.
+    expect(blockers.some((b) => /playable/.test(b))).toBe(false);
   });
 
   it('passes when the alpha cohort and operational evidence are ready', () => {
     expect(buildAlphaBlockers({
       administrators: 2,
-      playableTracks: 10,
       discoverableArtists: 5,
       discoverableVenues: 2,
       upcomingEvents: 2,

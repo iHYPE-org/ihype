@@ -19,7 +19,7 @@ describe('artist media validation', () => {
 
   it('rejects disguised and unsafe audio files', () => {
     expect(validateArtistMediaUpload(upload('track.mp4', 'audio/mpeg'))).toBe(
-      'The file extension does not match a supported audio upload type.',
+      'That file type does not play everywhere iHYPE does. Upload MP3, AAC/M4A, WAV or FLAC.',
     );
     expect(validateArtistMediaUpload(upload('bad?.mp3', 'audio/mpeg'))).toContain('unsafe characters');
   });

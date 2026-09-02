@@ -66,3 +66,41 @@ describe('parseAudioDuration — WAV', () => {
     expect(parseAudioDuration(new Uint8Array(64))).toBeNull();
   });
 });
+
+describe('parseAudioDuration for the lossless and AAC containers', () => {
+  it('reads a FLAC STREAMINFO: 44.1 kHz, 10,584,000 samples is 240 seconds', () => {
+    const b = new Uint8Array(64);
+    b.set([0x66, 0x4c, 0x61, 0x43], 0); // fLaC
+    b[4] = 0x00; b[5] = 0; b[6] = 0; b[7] = 34; // STREAMINFO, length 34
+    // bytes 8..17: block/frame sizes (irrelevant here)
+    // sample rate 44100 = 0x0AC44 in 20 bits → bytes 18,19 and high nibble of 20
+    b[18] = 0x0a; b[19] = 0xc4; b[20] = 0x40 | 0x02; // channels-1 = 1 (stereo) in the next 3 bits
+    b[21] = 0x0f & 0x00; // bps low bits + top 4 bits of total samples = 0
+    const total = 10_584_000; // 240 s
+    b[22] = (total >>> 24) & 0xff; b[23] = (total >>> 16) & 0xff; b[24] = (total >>> 8) & 0xff; b[25] = total & 0xff;
+    expect(parseAudioDuration(b)).toBe(240);
+  });
+
+  it('reads an M4A movie header, version 0: timescale 1000, duration 183,500 is 184 seconds', () => {
+    const b = new Uint8Array(96);
+    const view = new DataView(b.buffer);
+    b.set([0, 0, 0, 0x18], 0); b.set([0x66, 0x74, 0x79, 0x70], 4); b.set([0x4d, 0x34, 0x41, 0x20], 8); // ftyp M4A
+    const at = 40;
+    view.setUint32(at - 4, 108, false);
+    b.set([0x6d, 0x76, 0x68, 0x64], at); // mvhd
+    b[at + 4] = 0; // version 0
+    view.setUint32(at + 16, 1000, false);
+    view.setUint32(at + 20, 183_500, false);
+    expect(parseAudioDuration(b)).toBe(184);
+  });
+
+  it('returns null rather than a guess when the container carries no duration', () => {
+    const flacNoTotal = new Uint8Array(64);
+    flacNoTotal.set([0x66, 0x4c, 0x61, 0x43], 0);
+    flacNoTotal[18] = 0x0a; flacNoTotal[19] = 0xc4; flacNoTotal[20] = 0x40;
+    expect(parseAudioDuration(flacNoTotal)).toBeNull();
+    const m4aNoMvhd = new Uint8Array(64);
+    m4aNoMvhd.set([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x4d, 0x34, 0x41, 0x20], 0);
+    expect(parseAudioDuration(m4aNoMvhd)).toBeNull();
+  });
+});
