@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatTicketPrice, showRowTrail } from '../show-row';
+import { formatShowClock, formatTicketPrice, showRowTrail } from '../show-row';
 
 const now = new Date('2026-09-02T20:00:00Z');
 const base = { isTicketed: true, ticketPriceCents: 1800, ticketingOpensAt: new Date('2026-09-01T00:00:00Z') };
@@ -27,5 +27,11 @@ describe('formatTicketPrice', () => {
     expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 1850 })).toBe('$18.50');
     expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 0 })).toBe('Free');
     expect(formatTicketPrice({ isTicketed: false, ticketPriceCents: 1800 })).toBeNull();
+  });
+});
+
+describe('formatShowClock', () => {
+  it('gives the time alone, since the row already shows the date', () => {
+    expect(formatShowClock(new Date('2026-09-09T19:05:00'))).toMatch(/^7:05\sPM$/);
   });
 });

@@ -39,3 +39,11 @@ export function formatTicketPrice(show: Pick<ShowRowSource, 'isTicketed' | 'tick
   const dollars = show.ticketPriceCents / 100;
   return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
 }
+
+/**
+ * The clock alone. A row already carries the date in its date block, so the
+ * meta line repeating "Sep 9, 2026" beside it said the same thing twice.
+ */
+export function formatShowClock(date: Date): string {
+  return new Intl.DateTimeFormat('en-US', { timeStyle: 'short' }).format(date);
+}

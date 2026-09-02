@@ -5,7 +5,6 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
-import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
@@ -13,7 +12,7 @@ import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
-import { formatTicketPrice, showRowTrail } from '@/lib/show-row';
+import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
 import { VenueRequestForm } from '@/components/VenueRequestForm';
 
 export const dynamic = 'force-dynamic';
@@ -221,7 +220,7 @@ export default async function MmmVenuePage({
                 key={show.id}
                 date={show.startsAt}
                 href={`/app/shows/${show.slug}`}
-                meta={[show.headlinerProfile?.name, formatShowTime(show.startsAt), formatTicketPrice(show)].filter(Boolean).join(' · ')}
+                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt), formatTicketPrice(show)].filter(Boolean).join(' · ')}
                 title={show.title}
                 trail={showRowTrail(show, now)}
               />

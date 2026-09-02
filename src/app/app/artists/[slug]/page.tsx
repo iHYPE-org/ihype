@@ -7,14 +7,13 @@ import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
 import { FollowButton } from '@/components/FollowButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
-import { formatShowTime } from '@/lib/utils';
 import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/lib/runtime-flags';
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
-import { formatTicketPrice, showRowTrail } from '@/lib/show-row';
+import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ArtistRequestForm } from '@/components/ArtistRequestForm';
 
@@ -445,7 +444,7 @@ export default async function MmmArtistPage({
                   key={show.id}
                   date={show.startsAt}
                   href={`/app/shows/${show.slug}`}
-                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowTime(show.startsAt), formatTicketPrice(show)]
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt), formatTicketPrice(show)]
                     .filter(Boolean)
                     .join(' · ')}
                   title={show.title}

@@ -3223,7 +3223,17 @@ html:has(.mmm-frame) {
 }
 .mmm-profile-sub { margin-top: 4px; font-size: 0.9375rem; color: var(--ink-2); }
 .mmm-profile-lede { margin: 0; font-size: 0.9375rem; line-height: 1.62; color: var(--ink-2); text-wrap: pretty; }
-.mmm-profile-card .mmm-profile-actions { margin-top: 0; }
+/* The three actions on one line, as the template's two equal pills plus the
+   like. Each real component brings its own wrapper: `HypeButton` a `.cta-row`
+   (with a 1rem top margin meant for prose), `FollowButton` an inline
+   `width: 100%`. Left alone they stacked three lines deep with Follow a
+   634px-wide bare label — measured on the built worker at 1280. A flex basis
+   of 0 outranks the inline width, and the 48px floor is the template's. */
+.mmm-profile-card .mmm-profile-actions { margin-top: 0; flex-wrap: nowrap; align-items: stretch; }
+.mmm-profile-actions > .cta-row { margin-top: 0; flex: 1 1 0; min-width: 0; }
+.mmm-profile-actions > .cta-row > .button { width: 100%; min-height: 48px; }
+.mmm-profile-actions > button[aria-pressed] { flex: 1 1 0; min-width: 0; min-height: 48px; }
+.mmm-profile-actions > .mmm-like { flex: 0 0 auto; min-height: 48px; }
 .mmm-profile-counters { display: flex; gap: 10px; }
 .mmm-profile-counter {
   flex: 1;
