@@ -3,6 +3,17 @@
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
+/**
+ * Follow / unfollow one profile, with the optimistic count.
+ *
+ * Two variants, both painted by `.follow-btn` in globals.css (2026-09-02):
+ * `chip` sits in a row of equal actions (the profile card's Hype · Follow ·
+ * Like), `hero` matches the `*-hero-btn` links the legacy profile heroes draw
+ * beside it. State is an attribute (`data-following`) so the stylesheet, and
+ * therefore every theme, decides the paint — this component used to carry ~20
+ * inline style properties, which is why it rendered as a bare 634px-wide label
+ * next to the Hype button until the card overrode it.
+ */
 export function FollowButton({ profileId, variant = 'chip' }: { profileId: string; variant?: 'chip' | 'hero' }) {
   const { t } = useI18n();
   const [following, setFollowing] = useState(false);
@@ -48,35 +59,6 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
     }
   }
 
-  // 'hero' matches the *-hero-btn CSS class every profile hero row already
-  // uses for its Link buttons (Customize/Settings/etc.) — same padding,
-  // radius, and font-size so Follow doesn't wrap or mis-size next to them.
-  const heroStyle = {
-    display: 'inline-flex' as const,
-    alignItems: 'center' as const,
-    gap: 7,
-    padding: '10px 18px',
-    borderRadius: 9,
-    fontSize: '0.9375rem',
-    fontWeight: 700,
-    whiteSpace: 'nowrap' as const,
-    flexShrink: 0,
-  };
-  const chipStyle = {
-    width: '100%',
-    padding: '7px 10px',
-    borderRadius: 7,
-    fontSize: '0.9375rem',
-    fontFamily: 'var(--font-mono)',
-    letterSpacing: '.06em',
-    // The label is "+ Follow" or "✓ Following · 128". Left to wrap it makes
-    // the chip two lines tall and knocks the row it sits in out of
-    // alignment; clipping one glyph is the better failure.
-    whiteSpace: 'nowrap' as const,
-    overflow: 'hidden' as const,
-    textOverflow: 'ellipsis' as const,
-  };
-
   return (
     <button
       disabled={busy}
@@ -84,15 +66,9 @@ export function FollowButton({ profileId, variant = 'chip' }: { profileId: strin
       type="button"
       aria-pressed={following}
       aria-label={following ? t('followButton.unfollow', 'Unfollow') : t('followButton.follow', 'Follow')}
-      style={{
-        ...(variant === 'hero' ? heroStyle : chipStyle),
-        border: following ? '1px solid rgba(var(--accent-rgb),.4)' : variant === 'hero' ? '1px solid var(--hair-100)' : '1px solid var(--hair-120)',
-        background: following ? 'rgba(var(--accent-rgb),.1)' : variant === 'hero' ? 'var(--line)' : 'var(--hair-50)',
-        color: following ? 'var(--accent-text)' : variant === 'hero' ? 'var(--ink)' : 'var(--ink-a65)',
-        cursor: busy ? 'default' : 'pointer',
-        transition: 'all 150ms ease',
-        opacity: busy ? 0.6 : 1,
-      }}
+      className="follow-btn"
+      data-variant={variant}
+      data-following={following ? 'true' : undefined}
     >
       {following ? t('followButton.followingLabel', '✓ Following') : t('followButton.followLabel', '+ Follow')}{count > 0 ? ` · ${count}` : ''}
     </button>

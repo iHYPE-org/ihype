@@ -506,6 +506,13 @@ html:has(.mmm-frame) {
 
 .mmm-chip {
   flex-shrink: 0;
+  /* 44px at EVERY pointer type (MOBILE.md: "desktop included"). This floor
+     used to live only under `(pointer: coarse)` in mobile-fit.css, so a mouse
+     got a 31px chip; measured on the built worker at 1280, every filter chip
+     on Radio and Charts and the ME role tabs were under the floor. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   padding: 7px 13px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--ink-a45);
@@ -942,8 +949,9 @@ html:has(.mmm-frame) {
   display: flex;
   align-items: center;
   gap: 7px;
-  /* 44px tall on a coarse pointer comes from mobile-fit.css's floors; this is
-     the desktop padding and the floor only ever grows it. */
+  /* 44px at every pointer type — the floor used to arrive only from
+     mobile-fit.css under `(pointer: coarse)`, and a mouse got 26px. */
+  min-height: 44px;
   padding: 5px 10px;
   border: 1px solid var(--line-2);
   border-radius: var(--radius-pill);
@@ -1150,6 +1158,7 @@ html:has(.mmm-frame) {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 44px;
   padding: 11px 16px;
   border: 1px solid var(--ink-a45);
   border-radius: var(--radius-pill);
@@ -1181,6 +1190,25 @@ html:has(.mmm-frame) {
   text-transform: uppercase;
   color: var(--ink-3);
 }
+
+/* ── The empty plate ─────────────────────────────────────────────────────
+   One shape for a tab that has nothing and a tab that is still filling: the
+   console template's dashed plate carrying the panel's own sentence (the same
+   treatment `.profile-panel-empty` gives a profile section). Before this a
+   MUSIC tab's empty state was a bare 15px paragraph in a screen of cream, and
+   its loading state an eyebrow — two different screens for one moment. */
+.mmm-empty {
+  margin: 6px 0 0;
+  padding: 30px 22px;
+  text-align: center;
+  border: 2px dashed var(--line-2);
+  border-radius: var(--radius-panel);
+  font-family: var(--f-s, Georgia, serif);
+  font-size: 1.1875rem;
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+.mmm-loading { border-style: dotted; color: var(--ink-3); }
 
 /* ── MAP layer search ─────────────────────────────────────────────────────
    Sits under the layer chips on the venues and artists layers. It reuses the
@@ -1266,6 +1294,9 @@ html:has(.mmm-frame) {
 .mmm-search-input {
   flex: 1;
   min-width: 0;
+  /* The field around it is tall enough; the INPUT is the thing a finger or a
+     pointer actually hits, and it measured 21px. */
+  min-height: 44px;
   background: transparent;
   border: 0;
   outline: none;
@@ -1347,6 +1378,7 @@ html:has(.mmm-frame) {
   display: flex;
   align-items: center;
   gap: 12px;
+  min-height: 44px;
   padding: 10px 10px;
   border-radius: 10px;
 }
@@ -1389,6 +1421,9 @@ html:has(.mmm-frame) {
   display: flex;
   align-items: center;
   gap: 11px;
+  /* A row is a control (a link or a button) and takes the 44px floor at every
+     pointer type; a one-line row measured 35px on desktop. */
+  min-height: 44px;
   padding: 11px 3px;
   border-bottom: 1px solid var(--ink-a22);
   width: 100%;
@@ -1420,6 +1455,20 @@ html:has(.mmm-frame) {
   background: linear-gradient(140deg, var(--accent), var(--accent-deep));
   color: var(--ink-on-accent);
 }
+.mmm-station { border-bottom: 1px solid var(--hair-100); }
+/* A playlist row's link: fills the row and takes its 44px, where an inline
+   flex item measured 35px inside a 44px row. */
+.mmm-row-link { flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; justify-content: center; text-decoration: none; color: inherit; }
+.mmm-row-link > .mmm-row-title,
+.mmm-row-link > .mmm-row-sub { display: block; }
+.mmm-station-main { flex: 1; min-width: 0; }
+.mmm-station-main > .mmm-row-title,
+.mmm-station-main > .mmm-row-sub { display: block; }
+.mmm-station-count { color: var(--ink-3); font-size: 0.9375rem; letter-spacing: 0.06em; }
+/* A station with nothing to play is listed, said plainly, and not offered as
+   a control — see the Radio tab. Disabled paint, not hidden. */
+.mmm-station[data-empty='true'] { cursor: default; opacity: 0.72; }
+.mmm-station[data-empty='true'] .mmm-station-art { background: var(--bg-3); color: var(--ink-3); }
 
 .mmm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
 .mmm-stat-value {
@@ -1440,6 +1489,10 @@ html:has(.mmm-frame) {
 }
 
 .mmm-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 10px 0;
   border-radius: var(--radius-panel);
   border: 1px solid rgba(61, 44, 12, .9);
@@ -1453,6 +1506,10 @@ html:has(.mmm-frame) {
   cursor: pointer;
 }
 .mmm-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
   padding: 10px 14px;
   border-radius: var(--radius-panel);
   border: 1px solid var(--ink-a45);
@@ -1482,6 +1539,7 @@ html:has(.mmm-frame) {
 }
 .mmm-like[data-active] { color: var(--accent-text); }
 
+.mmm-link-copy { flex-shrink: 0; padding: 10px 14px; }
 .mmm-link-field {
   display: flex;
   align-items: center;
@@ -2593,7 +2651,7 @@ html:has(.mmm-frame) {
 }
 .mmm-show-where { font-size: 0.9375rem; color: var(--ink-2); }
 .mmm-show-by { margin-top: 4px; font-size: 0.9375rem; }
-.mmm-show-by a { color: var(--accent-text); text-decoration: none; }
+.mmm-show-by a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); text-decoration: none; }
 
 /* The split bar. Each part grows by its own percentage, so the bar IS the
    split rather than a picture of one — a 60/30/10 show draws itself. */
@@ -3370,10 +3428,13 @@ html:has(.mmm-frame) {
 .mmm-deck-clip-fill { stroke: var(--ink-on-media); }
 .mmm-deck-play {
   position: absolute;
-  top: 18px;
-  right: 18px;
-  width: 38px;
-  height: 38px;
+  /* 44px, not the design's 38: MOBILE.md's floor applies on desktop too, and
+     this is the only way to stop the clip. Offset by 3 so its centre stays
+     where the 38px control's was. */
+  top: 15px;
+  right: 15px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   display: grid;
   place-items: center;
@@ -3402,6 +3463,9 @@ html:has(.mmm-frame) {
 .mmm-deck-body { position: absolute; left: 22px; right: 22px; bottom: 22px; }
 .mmm-deck-artist {
   display: block;
+  /* The name is the card's link to the artist — a control, so it takes the
+     44px floor; at 1.875rem it measured 32px. */
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: transparent;

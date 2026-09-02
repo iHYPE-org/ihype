@@ -27,5 +27,15 @@ export default async function MmmMusicPage({
   if (!MMM_MUSIC_TABS.some((item) => item.id === tab)) {
     return <MmmMissing eyebrow="Not found" title="No such tab" body="That is not one of MUSIC's tabs. Discover, Radio, Charts, Recommended, Playlists and Library are." />;
   }
-  return <MmmMusic city={city} focusSearch={focus === 'search'} genre={genre} q={q} tab={tab as MusicTabId} />;
+  /* The dial reads the section visually; the document needs to say it too.
+     Every MUSIC tab rendered with no heading at all, so a screen reader landed
+     on a page with no name. Visually hidden: a second visible title would be
+     the one-dial rule's drift in another form. */
+  const label = MMM_MUSIC_TABS.find((item) => item.id === tab)?.label ?? 'Music';
+  return (
+    <>
+      <h1 className="sr-only">{label}</h1>
+      <MmmMusic city={city} focusSearch={focus === 'search'} genre={genre} q={q} tab={tab as MusicTabId} />
+    </>
+  );
 }

@@ -81,6 +81,7 @@ export function PasskeyManager() {
   }
 
   const ghostButton: React.CSSProperties = {
+    minHeight: 44, display: 'inline-flex', alignItems: 'center',
     padding: '10px 18px', borderRadius: 8, fontSize: '0.9375rem', fontWeight: 600, cursor: 'pointer',
     border: 'none', background: 'var(--line)', color: 'var(--ink)',
   };
