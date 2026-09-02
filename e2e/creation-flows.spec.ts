@@ -154,7 +154,7 @@ test.describe('uploading a track', () => {
     frame[0] = 0xff; frame[1] = 0xf3; frame[2] = 0x90; frame[3] = 0x64;
     const mp3 = Buffer.concat(Array.from({ length: 400 }, () => frame));
 
-    await panel.locator('input[accept="audio/*"]').setInputFiles({
+    await panel.locator('input[type="file"][accept*="audio/"]').setInputFiles({
       name: 'creation-flow.mp3', mimeType: 'audio/mpeg', buffer: mp3,
     });
     await panel.getByPlaceholder(/Track title/i).fill('Creation Flow Anthem');

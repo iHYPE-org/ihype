@@ -3,6 +3,15 @@ import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { log } from '@/lib/logger';
+import { deleteArtistMediaFromBlob } from '@/lib/media-storage';
+import { deleteMediaFile, isTrustedStorageUrl } from '@/lib/object-storage';
+import { albumRelease, isHeld, resolveRelease } from '@/lib/release-schedule';
+
+/** Best-effort removal of a stored cover; a missing object is not an error. */
+async function deleteStoredImage(url: string | null) {
+  if (!url || !isTrustedStorageUrl(url)) return;
+  await deleteMediaFile(new URL(url).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
+}
 
 export async function PATCH(
   request: Request,
@@ -20,7 +29,7 @@ export async function PATCH(
     const asset = await withDbRetry(() =>
       db.artistMediaAsset.findUnique({
         where: { hexId },
-        select: { id: true, profile: { select: { ownerId: true } } }
+        select: { id: true, profileId: true, isPublished: true, publishAt: true, artworkUrl: true, profile: { select: { ownerId: true } } }
       })
     );
 
@@ -36,12 +45,47 @@ export async function PATCH(
     if ('freeUseEnabled' in body) data.freeUseEnabled = Boolean(body.freeUseEnabled);
     if ('title' in body && typeof body.title === 'string' && body.title.trim()) data.title = body.title.trim().slice(0, 200);
     if ('notes' in body) data.notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 5000) || null : null;
+    /* Which album folder the track sits in; null takes it out. The album has
+       to be the same artist's — an id is not a capability, and a track filed
+       under another profile's album would show on their page. */
+    const held = isHeld(asset);
+    if ('albumId' in body) {
+      if (body.albumId === null || body.albumId === '') {
+        data.albumId = null;
+      } else if (typeof body.albumId === 'string' && body.albumId.length <= 64) {
+        const album = await withDbRetry(() => db.album.findUnique({ where: { id: body.albumId }, select: { profileId: true, releasedOn: true } }));
+        if (!album || album.profileId !== asset.profileId) {
+          return NextResponse.json({ error: 'That album is not on this profile.' }, { status: 400 });
+        }
+        data.albumId = body.albumId;
+        // Filing into a dated folder takes the folder's date, unless a hold is on.
+        const inherited = albumRelease(album.releasedOn);
+        if (inherited && !held && !('release' in body)) Object.assign(data, inherited);
+      }
+    }
+    /* Release: 'now' | ISO instant | null (= now). Never lifts a HOLD: a
+       track the scan or a moderator withheld stays withheld whatever date the
+       artist picks — the hold is cleared in the moderation queue, not here. */
+    if ('release' in body) {
+      if (held) {
+        return NextResponse.json({ error: 'This track is held for review. It goes live when a reviewer clears it, not on a date you set.' }, { status: 409 });
+      }
+      const release = resolveRelease(typeof body.release === 'string' || body.release === null ? body.release : undefined);
+      if (!release) return NextResponse.json({ error: 'Release date could not be read.' }, { status: 400 });
+      Object.assign(data, release);
+    }
+    /* Only removal here — `artworkUrl: null`. A new cover comes through
+       POST /api/artist-media/[hexId]/artwork, which vets and stores it. */
+    if ('artworkUrl' in body && body.artworkUrl === null) {
+      data.artworkUrl = null;
+      await deleteStoredImage(asset.artworkUrl);
+    }
 
     const updated = await withDbRetry(() =>
       db.artistMediaAsset.update({
         where: { id: asset.id },
         data,
-        select: { hexId: true, title: true, notes: true, freeUseEnabled: true }
+        select: { hexId: true, title: true, notes: true, freeUseEnabled: true, albumId: true, artworkUrl: true, isPublished: true, publishAt: true }
       })
     );
 
@@ -70,6 +114,8 @@ export async function DELETE(
         select: {
           id: true,
           profileId: true,
+          storageKey: true,
+          artworkUrl: true,
           profile: {
             select: {
               ownerId: true,
@@ -89,6 +135,11 @@ export async function DELETE(
     }
 
     await withDbRetry(() => db.artistMediaAsset.delete({ where: { id: asset.id } }));
+    /* The row is gone; now the bytes. Best effort, after the delete, so a
+       storage hiccup cannot leave a track the artist removed still listed.
+       Until 2026-09-02 neither the audio nor the cover was removed from R2. */
+    if (asset.storageKey) await deleteArtistMediaFromBlob(asset.storageKey).catch(() => undefined);
+    await deleteStoredImage(asset.artworkUrl);
     await withDbRetry(() =>
       db.profile.update({
         where: { id: asset.profileId },

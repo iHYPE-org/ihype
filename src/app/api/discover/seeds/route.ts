@@ -52,12 +52,13 @@ export async function GET(request: NextRequest) {
     const actionedIds = new Set(actioned.map(s => s.mediaId));
 
     // --- Collaborative filtering (v2) with time-decay scoring --------
-    type SeedMedia = { id: string; hexId: string; title: string; artworkUrl: string | null; profile: { name: string; slug: string; city: string | null; genres: string[]; avatarImage: string | null; nowPlaying: string | null; journalContent: string | null } | null };
+    type SeedMedia = { id: string; hexId: string; title: string; artworkUrl: string | null; album: { artworkUrl: string | null } | null; profile: { name: string; slug: string; city: string | null; genres: string[]; avatarImage: string | null; nowPlaying: string | null; journalContent: string | null } | null };
     const seedSelect = {
       id: true,
       hexId: true,
       title: true,
       artworkUrl: true,
+      album: { select: { artworkUrl: true } },
       profileId: true,
       profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } },
     } as const;
@@ -180,6 +181,7 @@ export async function GET(request: NextRequest) {
                 hexId: true,
                 title: true,
                 artworkUrl: true,
+                album: { select: { artworkUrl: true } },
                 profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } }
               }
             });
@@ -203,6 +205,7 @@ export async function GET(request: NextRequest) {
             hexId: true,
             title: true,
             artworkUrl: true,
+            album: { select: { artworkUrl: true } },
             profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } }
           },
         });
@@ -221,6 +224,7 @@ export async function GET(request: NextRequest) {
         hexId: true,
         title: true,
         artworkUrl: true,
+        album: { select: { artworkUrl: true } },
         profile: { select: { name: true, slug: true, city: true, genres: true, avatarImage: true, nowPlaying: true, journalContent: true } },
       },
     });
@@ -260,7 +264,7 @@ export async function GET(request: NextRequest) {
         title: m.title,
         artistName: m.profile?.name ?? 'Unknown Artist',
         artistSlug: m.profile?.slug ?? null,
-        artworkUrl: m.artworkUrl ?? m.profile?.avatarImage ?? null,
+        artworkUrl: m.artworkUrl ?? m.album?.artworkUrl ?? m.profile?.avatarImage ?? null,
         city: m.profile?.city ?? null,
         genres: m.profile?.genres ?? [],
         hypeCount: hypeCountMap.get(m.id) ?? 0,

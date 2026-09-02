@@ -55,7 +55,11 @@
 
 ## Content and native clients
 
-- [ ] Alpha readiness reports at least 10 playable tracks, 5 artists, 2 venues, and 2 upcoming events.
+- [ ] Alpha readiness reports at least 5 artists, 2 venues, and 2 upcoming events.
+      <!-- "10 playable tracks" was here until 2026-09-02 and is deliberately gone
+      (owner: "There should be no minimum number of uploads"). The playable
+      track count is still shown on /api/health so an empty station is visible;
+      it is information, not a gate. -->
       <!-- "and 1 radio show" was here and is deliberately gone (2026-08-14). It
       could not be satisfied: DJ-authored radio shows were retired as a product
       decision, `RadioShowCreator` is gone, and nothing in the app can author

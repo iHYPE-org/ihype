@@ -128,7 +128,6 @@ export async function getHealthSnapshot() {
     const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'));
     const alphaBlockers = buildAlphaBlockers({
       administrators: administratorCount,
-      playableTracks: playableTrackCount,
       discoverableArtists: discoverableArtistCount,
       discoverableVenues: discoverableVenueCount,
       upcomingEvents: upcomingEventCount,

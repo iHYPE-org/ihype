@@ -119,6 +119,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       select: {
         id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, durationSecs: true,
         profileId: true,
+        album: { select: { artworkUrl: true } },
         profile: { select: { name: true, slug: true, city: true } },
       },
     });
@@ -131,7 +132,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       title: row.title,
       artistName: row.profile.name,
       artistSlug: row.profile.slug,
-      artworkUrl: row.artworkUrl,
+      // Per track, else the album's — the artist's choice of which to give.
+      artworkUrl: row.artworkUrl ?? row.album?.artworkUrl ?? null,
       mediaUrl: row.storageUrl,
       durationSecs: row.durationSecs,
       reason: reasonFor(row.profileId, row.profile.city, station, context),
