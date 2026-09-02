@@ -7,6 +7,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-analytics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerT } from '@/lib/i18n/server';
+import { describeDemand, proximityWeight, scoreFanDemand, type DemandVenue } from '@/lib/fan-demand';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,7 +54,7 @@ export default async function VenueAnalyticsPage({
 
   const profile = await db.profile.findUnique({
     where: { slug },
-    select: { id: true, slug: true, name: true, type: true, ownerId: true },
+    select: { id: true, slug: true, name: true, type: true, ownerId: true, city: true, stateRegion: true, latitude: true, longitude: true },
   });
   if (!profile || profile.type !== 'VENUE') return notFound();
 
@@ -61,6 +62,38 @@ export default async function VenueAnalyticsPage({
   if (!isOwner) return notFound();
 
   const data = await getVenueAnalyticsData(profile.id, range);
+
+  /* Acts fans NEAR THIS VENUE are asking other rooms for — the mirror of the
+     artist's "Where fans want you" (2026-09-01). The venue's own radar already
+     ranks asks addressed to it; this is the demand in its catchment that went
+     elsewhere, which is exactly the act a booker wants to hear about first.
+     Same core as the radar (`scoreFanDemand`), scored against THIS venue's
+     location, keeping only acts with at least one fan the proximity rule
+     calls nearby. Pending only; not windowed by the range tabs. Legacy rows
+     without a stored fan location fall back to the requester's profile. */
+  const here: DemandVenue = { city: profile.city, stateRegion: profile.stateRegion, latitude: profile.latitude, longitude: profile.longitude };
+  const nearbyRows = await db.venueConnectionRequest.findMany({
+    where: { status: 'PENDING', artistProfileId: { not: null }, venueProfileId: { not: profile.id } },
+    orderBy: { createdAt: 'desc' },
+    take: 500,
+    select: {
+      artistProfileId: true, artistName: true, requesterId: true, createdAt: true,
+      requesterCity: true, requesterStateRegion: true, requesterLatitude: true, requesterLongitude: true,
+      artistProfile: { select: { slug: true, name: true } },
+      requester: { select: { profiles: { select: { city: true, stateRegion: true, latitude: true, longitude: true }, take: 1 } } },
+    },
+  }).catch(() => []);
+  const artistById = new Map(nearbyRows.map((row) => [row.artistProfileId as string, row.artistProfile]));
+  const located = nearbyRows.map((row) => {
+    const fallback = row.requester.profiles[0];
+    const hasStored = row.requesterCity || row.requesterStateRegion || row.requesterLatitude !== null;
+    return hasStored || !fallback
+      ? row
+      : { ...row, requesterCity: fallback.city, requesterStateRegion: fallback.stateRegion, requesterLatitude: fallback.latitude, requesterLongitude: fallback.longitude };
+  });
+  const nearbyDemand = scoreFanDemand(located.filter((row) => proximityWeight(row, here).nearby), here)
+    .filter((entry) => entry.nearby > 0)
+    .slice(0, 8);
   const maxAttendance = Math.max(1, ...data.buckets.map((b) => b.attendance));
 
   return (
@@ -150,6 +183,33 @@ export default async function VenueAnalyticsPage({
                   <div className="vaa-event-meta">{soldLabel}</div>
                 </div>
                 <span className="vaa-event-gross">{formatCurrencyFromCents(event.grossCents)}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="vaa-section-head">
+        <span className="vaa-eyebrow-sm">{t('venuesSlugAnalyticsPage.nearbyDemand', 'Acts fans near you want')}</span>
+      </div>
+      {nearbyDemand.length === 0 ? (
+        <div className="vaa-empty">
+          {profile.city || profile.latitude !== null
+            ? t('venuesSlugAnalyticsPage.noNearbyDemand', 'No fan near you has asked another venue for an act yet. Asks addressed to you are on your demand radar.')
+            : t('venuesSlugAnalyticsPage.noLocationForDemand', 'Add your address so this can find the fans near you.')}
+        </div>
+      ) : (
+        <div className="vaa-events">
+          {nearbyDemand.map((entry) => {
+            const artist = entry.artistProfileId ? artistById.get(entry.artistProfileId) : null;
+            if (!artist) return null;
+            return (
+              <Link className="vaa-event-row" href={`/app/artists/${artist.slug}`} key={entry.key}>
+                <div>
+                  <div className="vaa-event-title">{artist.name}</div>
+                  <div className="vaa-event-meta">{describeDemand(entry)} · {t('venuesSlugAnalyticsPage.askedElsewhere', 'asked of other venues')}</div>
+                </div>
+                <span className="vaa-event-gross">{entry.nearby.toLocaleString()} {entry.nearby === 1 ? t('venuesSlugAnalyticsPage.nearbyFan', 'nearby fan') : t('venuesSlugAnalyticsPage.nearbyFans', 'nearby fans')}</span>
               </Link>
             );
           })}

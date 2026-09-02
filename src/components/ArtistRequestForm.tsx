@@ -22,6 +22,7 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
   const [query, setQuery] = useState('');
   const [venueId, setVenueId] = useState<string | null>(null);
   const [note, setNote] = useState('');
+  const [notifyOnBooking, setNotifyOnBooking] = useState(true);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -48,7 +49,7 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
     const res = await fetch('/api/venue-requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ venueProfileId: venueId, requesterType: 'LISTENER', artistProfileId, note: note.trim() || undefined }),
+      body: JSON.stringify({ venueProfileId: venueId, requesterType: 'LISTENER', artistProfileId, note: note.trim() || undefined, notifyOnBooking }),
     });
     const data = await res.json().catch(() => ({}));
     if (res.ok) {
@@ -118,6 +119,10 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
         placeholder={`${t('artistRequestForm.notePlaceholder', 'Why here, why now — the venue reads this.')}`}
         value={note}
       />
+      <label className="arf-check">
+        <input checked={notifyOnBooking} onChange={(e) => setNotifyOnBooking(e.target.checked)} type="checkbox" />
+        {t('artistRequestForm.notifyOnBooking', 'Tell me if they book them')}
+      </label>
       <button className="arf-submit" disabled={pending || !venueId} type="submit">
         {pending
           ? t('artistRequestForm.sending', 'Sending…')
@@ -138,6 +143,8 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
         .arf-option-on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
         .arf-option-name { font-size: 0.9375rem; font-weight: 600; }
         .arf-option-meta { font-size: 0.9375rem; color: var(--ink-3); }
+        .arf-check { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 0.9375rem; color: var(--ink); cursor: pointer; }
+        .arf-check input { width: 18px; height: 18px; }
         .arf-submit { min-height: 44px; padding: 12px 20px; border: none; border-radius: var(--radius-pill); background: var(--accent); color: var(--ink-on-accent); font-weight: 600; font-size: 0.9375rem; cursor: pointer; }
         .arf-submit:disabled { opacity: .55; cursor: default; }
         .arf-msg { font-size: 0.9375rem; margin: 0; }
