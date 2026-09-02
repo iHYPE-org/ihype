@@ -226,6 +226,14 @@ jobs:
         # via Chromium's CDP virtual authenticator) before this was wired in.
         timeout-minutes: 15
         run: |
+          # The public smoke above ran `next dev`, which writes its own route
+          # typegen to .next/dev/types — and tsconfig includes that directory,
+          # so `next build`'s typecheck reads it. Playwright stops the dev
+          # server the moment its tests finish, and a validator.ts cut off
+          # mid-write is a TS1128 in a file nobody authored (PR #793: green on
+          # one push, red on the next, same routes). Start the build from
+          # nothing that a dev server wrote.
+          rm -rf .next
           npm run cf:build
           node scripts/e2e-workerd.mjs
         env:
