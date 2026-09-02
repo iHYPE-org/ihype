@@ -171,6 +171,43 @@ describe('POST /api/stripe/webhook', () => {
     expect(finalizeCapturedTicketOrder).toHaveBeenCalledTimes(1);
   });
 
+  it('finalizes a hosted checkout from payment_intent.succeeded alone when checkout.session.completed never arrived', async () => {
+    // The live endpoint was found not subscribed to checkout.session.* on
+    // 2026-09-02, so the order never learned its intent id. The intent's own
+    // metadata names the order; the lookup falls back to it and stores the id.
+    const event = succeededEvent('evt_pi_only', 'pi_only');
+    (event.data.object as Record<string, unknown>).metadata = { confirmationCode: 'ABCD1234', showId: 'show_1' };
+    constructWebhookEvent.mockReturnValue(event);
+    ticketOrderFindUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...PLATFORM_ORDER, stripePaymentIntentId: null });
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(ticketOrderFindUnique).toHaveBeenNthCalledWith(2, expect.objectContaining({ where: { confirmationCode: 'ABCD1234' } }));
+    expect(ticketOrderUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'order_1' },
+      data: { stripePaymentIntentId: 'pi_only' },
+    }));
+    expect(finalizeCapturedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1', expect.any(Date));
+  });
+
+  it('does not let an intent claim an order already bound to a different intent', async () => {
+    const event = succeededEvent('evt_pi_other', 'pi_other');
+    (event.data.object as Record<string, unknown>).metadata = { confirmationCode: 'ABCD1234' };
+    constructWebhookEvent.mockReturnValue(event);
+    ticketOrderFindUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce({ ...PLATFORM_ORDER, stripePaymentIntentId: 'pi_original' });
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(ticketOrderUpdate).not.toHaveBeenCalled();
+    expect(finalizeCapturedTicketOrder).not.toHaveBeenCalled();
+  });
+
   it('finalizes a hosted ticket checkout and stores its PaymentIntent', async () => {
     const event = {
       id: 'evt_checkout',

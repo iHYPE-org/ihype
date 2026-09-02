@@ -302,10 +302,40 @@ export async function POST(request: NextRequest) {
 
         case 'payment_intent.succeeded': {
           const paymentIntent = event.data.object;
-          const order = await tx.ticketOrder.findUnique({
+          let order = await tx.ticketOrder.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
             select: ORDER_GUARD_SELECT,
           });
+          /* A hosted checkout's order learns its PaymentIntent id only from
+             `checkout.session.completed` — and on 2026-09-02 the LIVE endpoint
+             in the Stripe dashboard was found not to subscribe to that event
+             at all, so this branch would have looked the paid order up by an
+             id nothing had stored and finalised nothing: a fan charged, no
+             tickets, the reservation voided by the expiry cron. The intent
+             carries the order's `confirmationCode` in its own metadata (set
+             through `payment_intent_data` at session creation), so it is
+             resolved here as well; the account and amount guards below apply
+             to either lookup. This makes finalisation depend on one event
+             subscription, not two. */
+          if (!order) {
+            const confirmationCode = paymentIntent.metadata?.confirmationCode;
+            if (confirmationCode) {
+              const byCode = await tx.ticketOrder.findUnique({
+                where: { confirmationCode },
+                select: { ...ORDER_GUARD_SELECT, stripePaymentIntentId: true },
+              });
+              // An order already bound to a different intent is not this payment's.
+              if (byCode && (!byCode.stripePaymentIntentId || byCode.stripePaymentIntentId === paymentIntent.id)) {
+                order = byCode;
+                if (byCode.stripePaymentIntentId !== paymentIntent.id) {
+                  await tx.ticketOrder.update({
+                    where: { id: byCode.id },
+                    data: { stripePaymentIntentId: paymentIntent.id },
+                  });
+                }
+              }
+            }
+          }
           if (order && !ticketOrderMatchesEvent(order, eventAccount)) {
             log.error('[stripe/webhook]', null, `Refused ${event.type} for order ${order.id}: event account does not match the order's settlement account`);
           } else if (order && !amountCoversOrder(paymentIntent.amount_received, order.totalChargeCents)) {
