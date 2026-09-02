@@ -1421,6 +1421,9 @@ html:has(.mmm-frame) {
   display: flex;
   align-items: center;
   gap: 11px;
+  /* A row is a control (a link or a button) and takes the 44px floor at every
+     pointer type; a one-line row measured 35px on desktop. */
+  min-height: 44px;
   padding: 11px 3px;
   border-bottom: 1px solid var(--ink-a22);
   width: 100%;
@@ -1453,6 +1456,11 @@ html:has(.mmm-frame) {
   color: var(--ink-on-accent);
 }
 .mmm-station { border-bottom: 1px solid var(--hair-100); }
+/* A playlist row's link: fills the row and takes its 44px, where an inline
+   flex item measured 35px inside a 44px row. */
+.mmm-row-link { flex: 1; min-width: 0; min-height: 44px; display: flex; flex-direction: column; justify-content: center; text-decoration: none; color: inherit; }
+.mmm-row-link > .mmm-row-title,
+.mmm-row-link > .mmm-row-sub { display: block; }
 .mmm-station-main { flex: 1; min-width: 0; }
 .mmm-station-main > .mmm-row-title,
 .mmm-station-main > .mmm-row-sub { display: block; }
@@ -2643,7 +2651,7 @@ html:has(.mmm-frame) {
 }
 .mmm-show-where { font-size: 0.9375rem; color: var(--ink-2); }
 .mmm-show-by { margin-top: 4px; font-size: 0.9375rem; }
-.mmm-show-by a { color: var(--accent-text); text-decoration: none; }
+.mmm-show-by a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); text-decoration: none; }
 
 /* The split bar. Each part grows by its own percentage, so the bar IS the
    split rather than a picture of one — a 60/30/10 show draws itself. */
@@ -3455,6 +3463,9 @@ html:has(.mmm-frame) {
 .mmm-deck-body { position: absolute; left: 22px; right: 22px; bottom: 22px; }
 .mmm-deck-artist {
   display: block;
+  /* The name is the card's link to the artist — a control, so it takes the
+     44px floor; at 1.875rem it measured 32px. */
+  min-height: 44px;
   padding: 0;
   border: 0;
   background: transparent;

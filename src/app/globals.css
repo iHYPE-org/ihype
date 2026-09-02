@@ -1349,7 +1349,9 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   transform: translateY(-1px);
 }
 .button.small {
-  min-height: 2.15rem;
+  /* "small" is the horizontal padding, not the height: every control clears
+     44px (2.75rem) at every pointer type. */
+  min-height: 2.75rem;
   padding: 0.58rem 0.92rem;
 }
 /* Header join CTA — matches templates/landing/Landing.dc.html's header anchor
@@ -2398,6 +2400,12 @@ body:has(#wt-wrap) .site-shell > main {
 .artist-media-upload-header p {
   margin: 0;
 }
+/* Every control in the upload form clears the 44px floor; its text inputs
+   measured 23-24px on desktop. Checkboxes keep their own 24px floor. */
+.artist-media-upload-form input:not([type='checkbox']),
+.artist-media-upload-form select,
+.artist-media-upload-form textarea,
+.artist-media-upload-form button { min-height: 44px; }
 .artist-media-upload-form {
   display: grid;
   gap: 0.9rem;
@@ -3555,6 +3563,10 @@ html.high-contrast p {
    so hover, focus, press, and active states animate consistently. */
 .sub-tab {
   appearance: none;
+  display: inline-flex;
+  align-items: center;
+  /* 44px at every pointer type (MOBILE.md); measured 37px on desktop. */
+  min-height: 44px;
   font-family: var(--font-body);
   font-size: 0.9375rem;
   font-weight: 400;

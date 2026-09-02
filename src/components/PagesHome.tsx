@@ -86,8 +86,7 @@ const CREATE_CARDS: { type: string; color: string; bg: string; name: string; des
 const b: React.CSSProperties = {
   fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', padding: '10px 18px',
   borderRadius: 9, cursor: 'pointer', border: 'none', textDecoration: 'none',
-  display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap',
-};
+  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 6, whiteSpace: 'nowrap', minHeight: 44 };
 const bSolid: React.CSSProperties = { ...b, background: 'var(--accent)', color: 'var(--ink-on-accent)' };
 const bGhost: React.CSSProperties = { ...b, background: 'transparent', color: 'var(--ink-a70)', boxShadow: 'inset 0 0 0 1px var(--line-2)' };
 

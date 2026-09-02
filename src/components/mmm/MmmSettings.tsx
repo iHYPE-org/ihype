@@ -817,7 +817,7 @@ export function MmmSettings() {
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
 
-        .settings-input-inline { height: 42px; padding: 0 14px; border: 1px solid rgba(var(--surface-tint-rgb), .14); border-radius: 9px; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.9375rem; box-sizing: border-box; }
+        .settings-input-inline { height: 44px; padding: 0 14px; border: 1px solid rgba(var(--surface-tint-rgb), .14); border-radius: 9px; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.9375rem; box-sizing: border-box; }
         .settings-input-inline:focus { outline: none; border-color: var(--accent); }
         .settings-recovery { align-items: flex-start; }
         .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }

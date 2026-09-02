@@ -153,6 +153,7 @@ export function TrackUploadPanel({
         {error ? <p className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
         <input
           accept=".mp3,.m4a,.aac,.wav,.flac,audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/wave,audio/flac,audio/x-flac"
+          aria-label={t('trackUploadPanel.audioFileLabel', 'Audio file')}
           disabled={submitting}
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           type="file"
@@ -167,6 +168,7 @@ export function TrackUploadPanel({
           />
         </label>
         <input
+          aria-label={t('trackUploadPanel.trackTitlePlaceholder', 'Track title')}
           className="field"
           disabled={submitting}
           maxLength={160}
@@ -176,6 +178,8 @@ export function TrackUploadPanel({
           value={title}
         />
         <textarea
+          aria-label={t('trackUploadPanel.notesPlaceholder', 'Notes (optional)')}
+          className="field"
           disabled={submitting}
           maxLength={1000}
           onChange={(e) => setNotes(e.target.value)}

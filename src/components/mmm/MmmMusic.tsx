@@ -978,9 +978,9 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
   return (
     <div style={{ display: 'flex', flexDirection: 'column' }}>
       <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <Link href={`/app/playlists/${list.id}`} style={{ flex: 1, minWidth: 0, textDecoration: 'none' }}>
-          <span className="mmm-row-title" style={{ display: 'block' }}>{list.name}</span>
-          <span className="mmm-row-sub" style={{ display: 'block' }}>{list.count} track{list.count === 1 ? '' : 's'}</span>
+        <Link className="mmm-row-link" href={`/app/playlists/${list.id}`}>
+          <span className="mmm-row-title">{list.name}</span>
+          <span className="mmm-row-sub">{list.count} track{list.count === 1 ? '' : 's'}</span>
         </Link>
         {mode === 'confirm' ? (
           <>
