@@ -5,5 +5,8 @@
  * changes — see the note in the layout.
  */
 export default function MmmMapPage() {
+  // The map is the layout's base layer and MmmShell does not render this
+  // route's children while it is the surface — the document heading lives in
+  // MmmMap itself for that reason.
   return null;
 }

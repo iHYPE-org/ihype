@@ -17,5 +17,10 @@ export default async function MmmMePage({
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me');
   const role = (await searchParams)?.role;
   const data = await loadMmmMe(session.user.id, role, isAdminSession(session));
-  return <MmmMe data={data} />;
+  return (
+    <>
+      <h1 className="sr-only">Me</h1>
+      <MmmMe data={data} />
+    </>
+  );
 }

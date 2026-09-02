@@ -117,7 +117,7 @@ export function HypeButton({ targetType, targetId, initialCount, lastHypedAt, en
     : t('hypeButton.hypeAria', 'Hype this {noun}').replace('{noun}', noun);
 
   return (
-    <div className="cta-row" style={{ position: 'relative' }}>
+    <div className="cta-row hype-cta">
       <button
         className={`button${waiting ? ' secondary' : ''}${popping ? ' hype-pop' : ''}`}
         onClick={handleClick}

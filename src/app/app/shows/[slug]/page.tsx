@@ -252,6 +252,7 @@ export default async function MmmShowPage({
       {show.isTicketed && venue && show.headlinerProfile && splits ? (
         <div className="mmm-show-sale">
           <TicketSaleCard
+            heading="Tickets"
             affiliatePromoterName={affiliatePromoter?.name ?? null}
             affiliatePromoterProfileId={affiliatePromoter?.id ?? null}
             artistName={show.headlinerProfile.name}

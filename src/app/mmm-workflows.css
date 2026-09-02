@@ -31,7 +31,9 @@
 
 .mmm-settings-pill-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .mmm-settings-pill {
-  min-height: 38px;
+  /* 44px at every pointer type (MOBILE.md); it was 38 with the floor arriving
+     only under `(pointer: coarse)`. */
+  min-height: 44px;
   padding: 8px 13px;
   border: 1px solid var(--line);
   border-radius: 999px;

@@ -809,7 +809,7 @@ export function MmmSettings() {
         .settings-toggle-thumb { position: absolute; width: 20px; height: 20px; top: 2px; left: 2px; border-radius: 50%; background: var(--ink); transition: transform 200ms cubic-bezier(.2,.7,.3,1); pointer-events: none; }
         .settings-toggle input:checked ~ .settings-toggle-thumb { background: var(--bg); transform: translateX(18px); }
 
-        .settings-btn { padding: 9px 18px; border-radius: 9px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-block; }
+        .settings-btn { min-height: 44px; padding: 9px 18px; border-radius: 9px; font-size: 0.9375rem; font-weight: 600; cursor: pointer; transition: all 150ms; border: none; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
         .settings-btn-ghost { background: rgba(var(--surface-tint-rgb), .08); color: var(--ink); }
         .settings-btn-ghost:hover { background: rgba(var(--surface-tint-rgb), .14); }
         .settings-btn-danger { background: rgba(239,68,68,.12); color: var(--danger-text); }
@@ -817,7 +817,7 @@ export function MmmSettings() {
         .settings-btn-accent { background: var(--accent); color: var(--ink-on-accent); }
         .settings-btn-accent:hover { opacity: .9; }
 
-        .settings-input-inline { height: 42px; padding: 0 14px; border: 1px solid rgba(var(--surface-tint-rgb), .14); border-radius: 9px; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.9375rem; box-sizing: border-box; }
+        .settings-input-inline { height: 44px; padding: 0 14px; border: 1px solid rgba(var(--surface-tint-rgb), .14); border-radius: 9px; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 0.9375rem; box-sizing: border-box; }
         .settings-input-inline:focus { outline: none; border-color: var(--accent); }
         .settings-recovery { align-items: flex-start; }
         .settings-recovery-controls { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
