@@ -101,9 +101,17 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   color: var(--ink);
 }
 .profile-panel-empty {
+  /* The console template's empty state: a dashed plate carrying the panel's
+     own sentence, so "nothing here yet" reads as deliberate rather than as a
+     container with no children. */
   margin: 0;
-  font-size: 1rem;           /* 16px — an empty state is read, not skimmed */
-  line-height: 1.6;
+  padding: 30px 22px;
+  text-align: center;
+  border: 2px dashed var(--line-2);
+  border-radius: var(--radius-panel);
+  font-family: var(--f-s, Georgia, serif);
+  font-size: 1.1875rem;      /* 19px — an empty state is read, not skimmed */
+  line-height: 1.45;
   color: var(--ink-2);
 }
 .profile-standfirst {
@@ -141,6 +149,9 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   color: var(--ink-3);
 }
 .profile-facts dd { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--ink); }
+.profile-facts dd a { color: var(--accent-text); text-decoration: underline; text-underline-offset: 2px; }
+/* The facts a coordinator needs read as one plate under the owner's own words. */
+.profile-facts-coordination { margin-top: 18px; }
 
 /* Releases: a shelf of sleeves. */
 /* An album folder on the Albums tab (2026-09-02): a header row shaped like a
