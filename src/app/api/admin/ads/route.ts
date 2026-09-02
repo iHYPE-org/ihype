@@ -64,9 +64,19 @@ export async function PATCH(request: Request) {
     // actually authorizes payment via the checkout link this triggers.
     const storedStatus = status === 'APPROVED' ? 'AWAITING_PAYMENT' : status;
 
-    let ad = await db.ad.update({
-      where: { id },
+    /* Only a campaign still waiting on review can be decided. Without the
+       status precondition, "approving" an already APPROVED or CANCELLED
+       campaign reverted it to AWAITING_PAYMENT and issued a second checkout —
+       a second hold on the advertiser's card (security sweep, 2026-09-02). */
+    const decided = await db.ad.updateMany({
+      where: { id, status: 'PENDING' },
       data: { status: storedStatus },
+    });
+    if (decided.count === 0) {
+      return NextResponse.json({ error: 'Only a campaign awaiting review can be decided.' }, { status: 409 });
+    }
+    let ad = await db.ad.findUniqueOrThrow({
+      where: { id },
       include: { advertiser: { select: { id: true, email: true } } },
     });
 

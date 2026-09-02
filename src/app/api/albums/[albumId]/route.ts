@@ -4,7 +4,7 @@ import type { Session } from 'next-auth';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { deleteMediaFile, isTrustedStorageUrl } from '@/lib/object-storage';
+import { deleteMediaFile, isStoredMediaUrl } from '@/lib/object-storage';
 import { log } from '@/lib/logger';
 import { albumRelease, isReleaseInput, parseReleaseInput } from '@/lib/release-schedule';
 
@@ -63,7 +63,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ al
         data: cascade,
       }).catch(() => null);
     }
-    if (artworkUrl === null && existing.artworkUrl && isTrustedStorageUrl(existing.artworkUrl)) {
+    if (artworkUrl === null && existing.artworkUrl && isStoredMediaUrl(existing.artworkUrl)) {
       await deleteMediaFile(new URL(existing.artworkUrl).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
     }
     return NextResponse.json({
@@ -88,7 +88,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     const album = await ownedAlbum(albumId, session);
     if (!album) return NextResponse.json({ error: 'Album not found.' }, { status: 404 });
     await db.album.delete({ where: { id: albumId } });
-    if (album.artworkUrl && isTrustedStorageUrl(album.artworkUrl)) {
+    if (album.artworkUrl && isStoredMediaUrl(album.artworkUrl)) {
       const key = new URL(album.artworkUrl).pathname.replace(/^\/cdn\//, '');
       await deleteMediaFile(key).catch(() => undefined);
     }

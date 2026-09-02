@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { enqueueEmail } from '@/lib/email-queue';
 import { createUnsubscribeToken } from '@/lib/unsubscribe';
 import { getBaseUrl } from '@/lib/utils';
+import { escapeHtml } from '@/lib/html-escape';
 import { isOutboundEmailEnabledRuntime } from '@/lib/runtime-flags';
 
 function getEmailFrom() {
@@ -279,10 +280,10 @@ export async function sendIssuedTicketEmail({
       .join('\n'),
       html: `
       <div style="font-family:Arial,sans-serif;max-width:640px;margin:0 auto;padding:24px;color:#10182a;">
-        <p style="margin:0 0 16px;">Hi ${resolvedName},</p>
-        <p style="margin:0 0 16px;">Your ticket${tickets.length === 1 ? ' is' : 's are'} ready for <strong>${showTitle}</strong>.</p>
+        <p style="margin:0 0 16px;">Hi ${escapeHtml(resolvedName)},</p>
+        <p style="margin:0 0 16px;">Your ticket${tickets.length === 1 ? ' is' : 's are'} ready for <strong>${escapeHtml(showTitle)}</strong>.</p>
         <div style="margin:0 0 18px;padding:16px 18px;border-radius:18px;background:#10182a;color:#ffffff;">
-          ${venueName ? `<p style="margin:0 0 8px;"><strong>Venue:</strong> ${venueName}</p>` : ''}
+          ${venueName ? `<p style="margin:0 0 8px;"><strong>Venue:</strong> ${escapeHtml(venueName)}</p>` : ''}
           ${eventOpensAtLabel ? `<p style="margin:0 0 8px;"><strong>Event time:</strong> ${eventOpensAtLabel}</p>` : ''}
           <p style="margin:0;"><strong>Charge:</strong> ${totalChargeLabel}</p>
         </div>
@@ -291,10 +292,10 @@ export async function sendIssuedTicketEmail({
             .map(
               (ticket) => `
                 <div style="padding:16px 18px;border-radius:18px;border:1px solid #d6deea;background:#f8fbff;">
-                  <p style="margin:0 0 8px;font-weight:700;">${ticket.label}</p>
+                  <p style="margin:0 0 8px;font-weight:700;">${escapeHtml(ticket.label)}</p>
                   <p style="margin:0 0 8px;"><strong>ID:</strong> ${ticket.serializedId}</p>
                   <p style="margin:0 0 12px;"><a href="${ticket.verificationUrl}" style="color:#1f6feb;">View ticket &amp; QR code</a></p>
-                  ${ticket.qrCodeDataUrl && !ticket.qrCodeDataUrl.startsWith('data:') ? `<img src="${ticket.qrCodeDataUrl}" alt="QR code for ${ticket.label}" style="width:160px;height:160px;border-radius:14px;border:1px solid #d6deea;background:#ffffff;padding:8px;" />` : ''}
+                  ${ticket.qrCodeDataUrl && !ticket.qrCodeDataUrl.startsWith('data:') ? `<img src="${ticket.qrCodeDataUrl}" alt="QR code for ${escapeHtml(ticket.label)}" style="width:160px;height:160px;border-radius:14px;border:1px solid #d6deea;background:#ffffff;padding:8px;" />` : ''}
                 </div>
               `
             )

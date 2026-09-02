@@ -2,7 +2,7 @@ import { AccountsPayableCategory, AccountsPayableStatus } from '@prisma/client/e
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getAdminAlertRecipients } from '@/lib/env';
-import { createPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
+import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 
 // Only these three categories are ever paid out via a Stripe Connect
@@ -86,7 +86,14 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
     }
 
     try {
-      const transferId = await createPayoutTransfer({
+      /* Ask Stripe before paying. A transfer whose RELEASED write failed last
+         run is still PENDING here and would otherwise be paid twice once the
+         24-hour idempotency window has passed. */
+      const existingTransferId = await findPayoutTransfer({ payableEntryId: entry.id, showId: entry.showId });
+      if (existingTransferId) {
+        log.error('[show-payouts]', null, `entry ${entry.id} already has transfer ${existingTransferId}; recording it instead of paying again`);
+      }
+      const transferId = existingTransferId ?? await createPayoutTransfer({
         amountCents: entry.amountCents,
         connectAccountId,
         payableEntryId: entry.id,

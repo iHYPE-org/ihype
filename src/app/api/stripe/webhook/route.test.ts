@@ -96,15 +96,18 @@ function succeededEvent(id: string, paymentIntentId: string) {
     id,
     type: 'payment_intent.succeeded',
     created: Math.floor(Date.now() / 1000),
-    data: { object: { id: paymentIntentId } },
+    data: { object: { id: paymentIntentId, amount_received: 2000 } },
   };
 }
+
+// The order every ticket branch reads: settles on the platform, charges $20.
+const PLATFORM_ORDER = { id: 'order_1', settlementMode: 'PLATFORM', settlementAccountId: null, totalChargeCents: 2000 };
 
 beforeEach(() => {
   vi.clearAllMocks();
   processedEvents = new Set();
   isStripeConfigured.mockReturnValue(true);
-  ticketOrderFindUnique.mockResolvedValue({ id: 'order_1' });
+  ticketOrderFindUnique.mockResolvedValue(PLATFORM_ORDER);
   dbTicketOrderFindUniqueTopLevel.mockResolvedValue({
     id: 'order_1',
     buyerEmail: 'fan@ihype.org',
@@ -173,7 +176,7 @@ describe('POST /api/stripe/webhook', () => {
       type: 'checkout.session.completed',
       created: Math.floor(Date.now() / 1000),
       data: { object: {
-        id: 'cs_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_checkout',
+        id: 'cs_1', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_checkout', amount_total: 2000,
         metadata: { purpose: 'ticket_purchase', confirmationCode: 'ABCD1234', showId: 'show_1' },
       } },
     };
@@ -187,6 +190,61 @@ describe('POST /api/stripe/webhook', () => {
       data: { stripePaymentIntentId: 'pi_checkout' },
     }));
     expect(finalizeCapturedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_1', expect.any(Date));
+  });
+
+  it('refuses a connected-account checkout that names a platform order (security sweep, 2026-09-02)', async () => {
+    // A venue with its own Stripe keys pays fifty cents on ITS account with
+    // someone else's confirmationCode in metadata. Signed by Stripe, real
+    // event — and not about this order.
+    const event = {
+      id: 'evt_forged', type: 'checkout.session.completed', created: Math.floor(Date.now() / 1000),
+      account: 'acct_venue',
+      data: { object: {
+        id: 'cs_forged', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_forged', amount_total: 50,
+        metadata: { purpose: 'ticket_purchase', confirmationCode: 'ABCD1234', showId: 'show_1' },
+      } },
+    };
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200); // acknowledged so Stripe stops retrying; nothing changed
+    expect(ticketOrderUpdate).not.toHaveBeenCalled();
+    expect(finalizeCapturedTicketOrder).not.toHaveBeenCalled();
+  });
+
+  it('refuses a session paid for less than the order charges', async () => {
+    const event = {
+      id: 'evt_short', type: 'checkout.session.completed', created: Math.floor(Date.now() / 1000),
+      data: { object: {
+        id: 'cs_short', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_short', amount_total: 50,
+        metadata: { purpose: 'ticket_purchase', confirmationCode: 'ABCD1234', showId: 'show_1' },
+      } },
+    };
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(finalizeCapturedTicketOrder).not.toHaveBeenCalled();
+  });
+
+  it('accepts a venue-direct sale only from the venue account', async () => {
+    ticketOrderFindUnique.mockResolvedValue({ id: 'order_vd', settlementMode: 'VENUE_DIRECT', settlementAccountId: 'acct_venue', totalChargeCents: 2000 });
+    const base = {
+      type: 'checkout.session.completed', created: Math.floor(Date.now() / 1000),
+      data: { object: {
+        id: 'cs_vd', mode: 'payment', payment_status: 'paid', payment_intent: 'pi_vd', amount_total: 2000,
+        metadata: { purpose: 'ticket_purchase', confirmationCode: 'VD1', showId: 'show_1' },
+      } },
+    };
+    constructWebhookEvent.mockReturnValue({ ...base, id: 'evt_vd_wrong', account: 'acct_other' });
+    await POST(makeRequest(base));
+    expect(finalizeCapturedTicketOrder).not.toHaveBeenCalled();
+
+    constructWebhookEvent.mockReturnValue({ ...base, id: 'evt_vd_right', account: 'acct_venue' });
+    await POST(makeRequest(base));
+    expect(finalizeCapturedTicketOrder).toHaveBeenCalledWith(expect.anything(), 'order_vd', expect.any(Date));
   });
 
   it('releases inventory when hosted checkout expires', async () => {
@@ -257,7 +315,7 @@ describe('POST /api/stripe/webhook', () => {
       data: { object: { id: 'pi_failed' } },
     };
     constructWebhookEvent.mockReturnValue(event);
-    ticketOrderFindMany.mockResolvedValue([{ id: 'order_9' }]);
+    ticketOrderFindMany.mockResolvedValue([{ ...PLATFORM_ORDER, id: 'order_9' }]);
     adFindUnique.mockResolvedValue(null);
 
     const res = await POST(makeRequest(event));

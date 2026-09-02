@@ -7,6 +7,8 @@ import { notifyUser } from '@/lib/notify';
 import { cancelTicketPaymentIntent, refundTicketPaymentIntent } from '@/lib/stripe';
 import { refundCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { log } from '@/lib/logger';
+import { getAdminAlertRecipients } from '@/lib/env';
+import { sendOperationalEmail } from '@/lib/mailer';
 
 export const dynamic = 'force-dynamic';
 
@@ -217,6 +219,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
       canceledAt: new Date(),
     },
   });
+
+  /* A refund that failed leaves a CAPTURED order on a CANCELED show with no
+     retry path — the payout cron only runs for ENDED shows, so the money is
+     stuck rather than double-paid, and nobody is told. The show still cancels
+     (ticketing has to stop), but the admin hears about the stuck orders now
+     rather than from the buyer (security sweep, 2026-09-02). */
+  if (failed > 0) {
+    await sendOperationalEmail(
+      {
+        to: getAdminAlertRecipients(),
+        subject: `[iHYPE] ${failed} refund${failed === 1 ? '' : 's'} failed cancelling a show`,
+        text: `Show ${showId} was cancelled but ${failed} order refund${failed === 1 ? '' : 's'} failed and need${failed === 1 ? 's' : ''} a manual refund in Stripe. Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}. Details are in Sentry under [shows/cancel].`,
+        html: `<p>Show <code>${showId}</code> was cancelled but <strong>${failed}</strong> order refund${failed === 1 ? '' : 's'} failed and need${failed === 1 ? 's' : ''} a manual refund in Stripe.</p><p>Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}.</p><p>Details are in Sentry under <code>[shows/cancel]</code>.</p>`,
+      },
+      'show-cancel-refund-failures',
+    );
+  }
 
   return NextResponse.json({
     canceled: true,

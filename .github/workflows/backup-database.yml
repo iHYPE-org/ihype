@@ -103,7 +103,15 @@ jobs:
       - name: Install wrangler
         # Only wrangler is needed to upload; `npm ci` would install the whole
         # dependency tree (and run `prisma generate`) to run one CLI.
-        run: npm install --no-save --no-audit --no-fund wrangler@4
+        #
+        # Pinned to the version the lockfile resolves, not a floating `@4`: this
+        # job holds DIRECT_URL, BACKUP_PASSPHRASE and the Cloudflare token four
+        # times a day, and a floating major would hand all three to whatever
+        # wrangler publishes next (security sweep, 2026-09-02).
+        run: |
+          version="$(node -p "require('./package-lock.json').packages['node_modules/wrangler'].version")"
+          echo "wrangler@$version (from package-lock.json)"
+          npm install --no-save --no-audit --no-fund "wrangler@$version"
 
       - name: Back up the database
         run: node scripts/backup-database.mjs --slot=${{ inputs.slot || 'schedule' }} ${{ inputs.dry_run && '--dry-run' || '' }}

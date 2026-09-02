@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { isObjectStorageConfigured, storeMediaFile } from '@/lib/object-storage';
+import { deleteMediaFile, isObjectStorageConfigured, isStoredMediaUrl, storeMediaFile } from '@/lib/object-storage';
 import { vetImageUpload } from '@/lib/image-vetting';
 import { areUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { exceedsDeclaredRequestSize } from '@/lib/request-size';
@@ -66,10 +66,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ alb
       return NextResponse.json({ error: 'Media storage is not configured.' }, { status: 501 });
     }
     const ext = file.type.split('/')[1] ?? 'bin';
-    const key = `artist-media/${album.profileId}/albums/${album.id}.${ext}`;
+    /* A VERSIONED key, not `<albumId>.<ext>`. `/cdn` serves every object with
+       a year-long immutable cache on the promise that keys carry a unique
+       part and objects are replaced rather than mutated; a deterministic key
+       re-PUT on every replace broke that promise, so a changed cover stayed
+       stale at the edge for a year. The previous object is deleted once the
+       new one is stored, as the track-artwork route already does. */
+    const key = `artist-media/${album.profileId}/albums/${album.id}-${Date.now().toString(36)}.${ext}`;
     const dataUrl = `data:${file.type};base64,${Buffer.from(bytes).toString('base64')}`;
     const stored = await storeMediaFile(key, dataUrl, file.type);
+    const previous = await db.album.findUnique({ where: { id: album.id }, select: { artworkUrl: true } });
     const updated = await db.album.update({ where: { id: album.id }, data: { artworkUrl: stored.url }, select: { id: true, artworkUrl: true } });
+    if (previous?.artworkUrl && previous.artworkUrl !== stored.url && isStoredMediaUrl(previous.artworkUrl) && !previous.artworkUrl.startsWith('data:')) {
+      await deleteMediaFile(new URL(previous.artworkUrl).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
+    }
     return NextResponse.json({ album: updated });
   } catch (error) {
     log.error('[api/albums/artwork]', error instanceof Error ? error : { error: String(error) }, 'upload failed');

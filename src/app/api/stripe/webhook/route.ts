@@ -6,6 +6,18 @@ import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { finalizeCapturedTicketOrder, voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { processNotificationJobs } from '@/lib/notification-jobs';
+import {
+  adEventIsPlatform,
+  amountCoversOrder,
+  holdCoversBudget,
+  livemodeMatchesKey,
+  ticketOrderMatchesEvent,
+} from '@/lib/stripe-webhook-guards';
+
+/* Every ticket-order branch below reads the same three columns so the
+   `stripe-webhook-guards` checks can run: which account the order settles on
+   and what it charges. See that module for why a signature alone is not proof. */
+const ORDER_GUARD_SELECT = { id: true, settlementMode: true, settlementAccountId: true, totalChargeCents: true } as const;
 
 export const runtime = 'nodejs';
 
@@ -38,6 +50,16 @@ export async function POST(request: NextRequest) {
     log.error('[stripe/webhook]', error instanceof Error ? error : null, 'Invalid webhook signature');
     return NextResponse.json({ error: 'Invalid signature.' }, { status: 400 });
   }
+
+  /* A test-mode event must never drive state under a live key, nor a live
+     event under a test key. Signatures already keep the two apart when each
+     endpoint has its own secret; this is the check for the day they do not. */
+  const secretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
+  if (secretKey && !livemodeMatchesKey(event.livemode === true, secretKey)) {
+    log.error('[stripe/webhook]', null, `Refused a ${event.livemode ? 'live' : 'test'}-mode event under the other mode's key (${event.type})`);
+    return NextResponse.json({ error: 'Event mode does not match this endpoint.' }, { status: 400 });
+  }
+  const eventAccount = event.account ?? null;
 
   let finalizedOrderId: string | null = null;
   let authorizedAdId: string | null = null;
@@ -141,9 +163,13 @@ export async function POST(request: NextRequest) {
             if (confirmationCode && paymentIntentId) {
               const order = await tx.ticketOrder.findUnique({
                 where: { confirmationCode },
-                select: { id: true },
+                select: ORDER_GUARD_SELECT,
               });
-              if (order) {
+              if (order && !ticketOrderMatchesEvent(order, eventAccount)) {
+                log.error('[stripe/webhook]', null, `Refused ${event.type} for order ${order.id}: event account does not match the order's settlement account`);
+              } else if (order && !amountCoversOrder(checkoutSession.amount_total, order.totalChargeCents)) {
+                log.error('[stripe/webhook]', null, `Refused ${event.type} for order ${order.id}: session total ${checkoutSession.amount_total ?? 'unknown'} is under the order's ${order.totalChargeCents}`);
+              } else if (order) {
                 await tx.ticketOrder.update({
                   where: { id: order.id },
                   data: { stripePaymentIntentId: paymentIntentId },
@@ -172,9 +198,11 @@ export async function POST(request: NextRequest) {
             if (confirmationCode) {
               const order = await tx.ticketOrder.findUnique({
                 where: { confirmationCode },
-                select: { id: true },
+                select: ORDER_GUARD_SELECT,
               });
-              if (order) await voidReservedTicketOrder(tx, order.id);
+              // Same guard as the paid branch: a connected account must not be
+              // able to void someone else's reserved seat by naming its code.
+              if (order && ticketOrderMatchesEvent(order, eventAccount)) await voidReservedTicketOrder(tx, order.id);
             }
           }
           break;
@@ -187,9 +215,9 @@ export async function POST(request: NextRequest) {
             if (confirmationCode) {
               const order = await tx.ticketOrder.findUnique({
                 where: { confirmationCode },
-                select: { id: true },
+                select: ORDER_GUARD_SELECT,
               });
-              if (order) await voidReservedTicketOrder(tx, order.id);
+              if (order && ticketOrderMatchesEvent(order, eventAccount)) await voidReservedTicketOrder(tx, order.id);
             }
           }
           break;
@@ -211,16 +239,23 @@ export async function POST(request: NextRequest) {
              the column alone found nothing and the campaign stayed
              AWAITING_PAYMENT forever with the advertiser's money on hold. The
              id is backfilled below so settlement can capture against it. */
+          if (!adEventIsPlatform(eventAccount)) {
+            // Ads are charged on the platform account only; a connected
+            // account's manual-capture intent naming our `adId` is not ours.
+            break;
+          }
           const ad = await tx.ad.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
-            select: { id: true, status: true, runDays: true },
+            select: { id: true, status: true, runDays: true, budgetCents: true },
           }) ?? (typeof paymentIntent.metadata?.adId === 'string'
             ? await tx.ad.findUnique({
                 where: { id: paymentIntent.metadata.adId },
-                select: { id: true, status: true, runDays: true },
+                select: { id: true, status: true, runDays: true, budgetCents: true },
               })
             : null);
-          if (ad && ad.status === 'AWAITING_PAYMENT') {
+          if (ad && ad.status === 'AWAITING_PAYMENT' && !holdCoversBudget(paymentIntent.amount_capturable, ad.budgetCents)) {
+            log.error('[stripe/webhook]', null, `Refused authorization for ad ${ad.id}: hold ${paymentIntent.amount_capturable} is under the budget ${ad.budgetCents}`);
+          } else if (ad && ad.status === 'AWAITING_PAYMENT') {
             const startsAt = new Date(event.created * 1000);
             const endsAt = new Date(startsAt.getTime() + (ad.runDays ?? 7) * 24 * 60 * 60 * 1000);
             await tx.ad.update({
@@ -244,10 +279,13 @@ export async function POST(request: NextRequest) {
           const paymentIntent = event.data.object;
           const orders = await tx.ticketOrder.findMany({
             where: { stripePaymentIntentId: paymentIntent.id },
-            select: { id: true },
+            select: ORDER_GUARD_SELECT,
           });
-          for (const order of orders) await voidReservedTicketOrder(tx, order.id);
+          for (const order of orders) {
+            if (ticketOrderMatchesEvent(order, eventAccount)) await voidReservedTicketOrder(tx, order.id);
+          }
 
+          if (!adEventIsPlatform(eventAccount)) break;
           // Same lazy-PaymentIntent problem as the authorization case above.
           const ad = await tx.ad.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
@@ -269,9 +307,13 @@ export async function POST(request: NextRequest) {
           const paymentIntent = event.data.object;
           const order = await tx.ticketOrder.findUnique({
             where: { stripePaymentIntentId: paymentIntent.id },
-            select: { id: true },
+            select: ORDER_GUARD_SELECT,
           });
-          if (order) {
+          if (order && !ticketOrderMatchesEvent(order, eventAccount)) {
+            log.error('[stripe/webhook]', null, `Refused ${event.type} for order ${order.id}: event account does not match the order's settlement account`);
+          } else if (order && !amountCoversOrder(paymentIntent.amount_received, order.totalChargeCents)) {
+            log.error('[stripe/webhook]', null, `Refused ${event.type} for order ${order.id}: received ${paymentIntent.amount_received} is under the order's ${order.totalChargeCents}`);
+          } else if (order) {
             const finalized = await finalizeCapturedTicketOrder(tx, order.id, new Date(event.created * 1000));
             if (finalized.changed) capturedOrderId = order.id;
           }

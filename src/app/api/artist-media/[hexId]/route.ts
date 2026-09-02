@@ -4,12 +4,12 @@ import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { log } from '@/lib/logger';
 import { deleteArtistMediaFromBlob } from '@/lib/media-storage';
-import { deleteMediaFile, isTrustedStorageUrl } from '@/lib/object-storage';
+import { deleteMediaFile, isStoredMediaUrl } from '@/lib/object-storage';
 import { albumRelease, isHeld, resolveRelease } from '@/lib/release-schedule';
 
 /** Best-effort removal of a stored cover; a missing object is not an error. */
 async function deleteStoredImage(url: string | null) {
-  if (!url || !isTrustedStorageUrl(url)) return;
+  if (!url || !isStoredMediaUrl(url)) return;
   await deleteMediaFile(new URL(url).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
 }
 

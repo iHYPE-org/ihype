@@ -121,7 +121,17 @@ export async function POST(request: NextRequest) {
 
   // AI vetting (music-industry-only policy). Approvals go live without an
   // admin touch; only borderline submissions land in the manual queue.
-  const clickUrl = typeof body.clickUrl === 'string' ? body.clickUrl : '';
+  /* `clickUrl` is rendered as a link on the admin review screen and the
+     advertiser's own dashboard, so it has to be an https URL of sane length —
+     it was stored verbatim, any scheme, any size (security sweep, 2026-09-02). */
+  const clickUrl = typeof body.clickUrl === 'string' ? body.clickUrl.trim() : '';
+  if (clickUrl) {
+    let parsedClick: URL | null = null;
+    try { parsedClick = new URL(clickUrl); } catch { parsedClick = null; }
+    if (!parsedClick || parsedClick.protocol !== 'https:' || clickUrl.length > 2048) {
+      return NextResponse.json({ error: 'clickUrl must be an https URL.' }, { status: 400 });
+    }
+  }
   const vetting = await vetAdvertisement({
     advertiserName: session.user.name ?? session.user.email ?? 'Self-serve advertiser',
     advertiserType: `self-serve campaign in slot "${slot.name}"`,
@@ -188,7 +198,7 @@ export async function POST(request: NextRequest) {
       audioDurationSecs: typeof body.audioDurationSecs === 'number' && Number.isFinite(body.audioDurationSecs)
         ? Math.max(0, Math.round(body.audioDurationSecs))
         : undefined,
-      clickUrl: typeof body.clickUrl === 'string' ? body.clickUrl : undefined,
+      clickUrl: clickUrl || undefined,
       budgetCents: quote.totalCostCents,
       runDays: quote.runDays,
       status: storedStatus,

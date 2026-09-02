@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { deleteMediaFile, isObjectStorageConfigured, isTrustedStorageUrl, storeMediaFile } from '@/lib/object-storage';
+import { deleteMediaFile, isObjectStorageConfigured, isStoredMediaUrl, storeMediaFile } from '@/lib/object-storage';
 import { vetImageUpload } from '@/lib/image-vetting';
 import { areUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { exceedsDeclaredRequestSize } from '@/lib/request-size';
@@ -68,7 +68,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ hex
     const key = `artist-media/${asset.profileId}/artwork/${hexId}-${Date.now().toString(36)}.${ext}`;
     const stored = await storeMediaFile(key, `data:${file.type};base64,${Buffer.from(bytes).toString('base64')}`, file.type);
     const updated = await db.artistMediaAsset.update({ where: { id: asset.id }, data: { artworkUrl: stored.url }, select: { hexId: true, artworkUrl: true } });
-    if (asset.artworkUrl && asset.artworkUrl !== stored.url && isTrustedStorageUrl(asset.artworkUrl)) {
+    if (asset.artworkUrl && asset.artworkUrl !== stored.url && isStoredMediaUrl(asset.artworkUrl)) {
       await deleteMediaFile(new URL(asset.artworkUrl).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
     }
     return NextResponse.json({ track: updated });

@@ -71,3 +71,36 @@ the correct action is none.
 
 _Reviewed 2026-08-13 against `@capacitor/cli@8.5.0`, `xcode@3.0.1`,
 `uuid@7.0.3`._
+
+---
+
+## `deepmerge-ts < 8.0.0` and `mysql2 < 3.22.0` via `prisma` → `@prisma/config` (high, GHSA-ggr8-5vv4-36mx and GHSA-3f6p-5ww8-9rcr)
+
+**Status: accepted. Do not run `npm audit fix --force` for these.**
+
+Both arrive through the **Prisma CLI** (`prisma@7.10.0`, a devDependency) and
+its `@prisma/config` package. Neither is reachable from anything that ships:
+
+- `deepmerge-ts` (stack exhaustion on a deeply nested input) is used by the
+  CLI to merge `prisma.config.ts` — a file in this repository, not an input
+  anyone else supplies. It runs at `prisma generate` and `prisma migrate
+  deploy` time, on a developer machine or a CI runner.
+- `mysql2` (authentication downgrade) is a MySQL driver. iHYPE's database is
+  PostgreSQL behind Hyperdrive; no code, config or connection string here names
+  MySQL, so the driver is never instantiated.
+
+`npm audit --omit=dev` (the check CI runs) reports **0** advisories: nothing in
+the Worker or the browser bundle is affected.
+
+### Why the offered fix is worse than the finding
+
+The only fix npm offers is `prisma@6.19.3` — a **downgrade** across a major
+version, against 109+ migrations and a `prisma.config.ts` written for Prisma 7.
+That trades a working migration pipeline for closing two paths nothing walks.
+
+### When to revisit
+
+When Prisma publishes a 7.x release whose `@prisma/config` carries
+`deepmerge-ts >= 8` and `mysql2 >= 3.22`, take it as a normal upgrade.
+
+_Reviewed 2026-09-02 against `prisma@7.10.0`._

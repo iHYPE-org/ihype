@@ -8,10 +8,22 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   const session = await auth();
+  /* Signed-in listeners only (security sweep, 2026-09-02). An impression
+     SPENDS an advertiser's authorized budget — `spentCents` is what the
+     settlement cron captures — and `adId` is public in every station and
+     sequence payload. Anonymous callers were rate-limited per IP but never
+     deduplicated, so 100 POSTs an hour from each address drained a real
+     campaign for plays nobody heard. A member is deduplicated to one charge
+     per ad per day below, which caps what any one account can cost an
+     advertiser at cents. Every player that fires this runs inside the
+     signed-in shell, so nothing legitimate is refused. */
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
+  }
+  const userId = session.user.id;
   const ip = readClientAddress(request);
-  const userId = session?.user?.id ?? `anon:${ip}`;
 
-  const rl = await consumeRateLimit(`ad-impression:${userId}`, { limit: 100, windowMs: 60 * 60 * 1000 });
+  const rl = await consumeRateLimit(`ad-impression:${userId}:${ip}`, { limit: 100, windowMs: 60 * 60 * 1000 });
   if (!rl.allowed) {
     return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
   }
@@ -22,15 +34,13 @@ export async function POST(request: NextRequest) {
   const adId = typeof body.adId === 'string' ? body.adId : '';
   if (!adId) return NextResponse.json({ error: 'adId is required.' }, { status: 400 });
 
-  // Per-user 24h dedup
-  if (session?.user?.id) {
-    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-    const existing = await db.adImpression.findFirst({
-      where: { adId, userId: session.user.id, createdAt: { gte: since } },
-      select: { id: true },
-    });
-    if (existing) return NextResponse.json({ ok: true, skipped: true });
-  }
+  // Per-user 24h dedup — one charge per listener per ad per day.
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const existing = await db.adImpression.findFirst({
+    where: { adId, userId, createdAt: { gte: since } },
+    select: { id: true },
+  });
+  if (existing) return NextResponse.json({ ok: true, skipped: true });
 
   // Only a genuinely servable ad may spend budget. Mirror the serve-side
   // gate in ad-clip-selection.ts exactly (status APPROVED, inside the run
@@ -83,7 +93,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'not_active' });
   }
 
-  await db.adImpression.create({ data: { adId, userId: session?.user?.id ?? undefined } });
+  await db.adImpression.create({ data: { adId, userId } });
 
   return NextResponse.json({ ok: true });
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -13,9 +14,15 @@ export async function GET(request: NextRequest) {
 
   const now = new Date();
 
-  // Enforce DMCA on shows past deadline
+  /* CONFIRMED, not PENDING (security sweep, 2026-09-02). PENDING was set by
+     the public, unauthenticated `/api/dmca` form, so this job cancelled any
+     show a stranger named ten days earlier — and cancelled it without the
+     refunds the organizer cancellation route issues. `/api/dmca` now files a
+     moderation report instead; this job only acts on a show an admin has
+     marked CONFIRMED and given a deadline, which nothing in the app does yet.
+     Any rows still PENDING from the old form are deliberately left alone. */
   const shows = await db.show.findMany({
-    where: { dmcaDeadline: { lt: now }, dmcaStatus: 'PENDING' },
+    where: { dmcaDeadline: { lt: now }, dmcaStatus: 'CONFIRMED' },
     select: {
       id: true,
       title: true,
@@ -42,7 +49,7 @@ export async function GET(request: NextRequest) {
         to: ownerEmail,
         subject: `[iHYPE] DMCA notice enforced — ${show.title}`,
         text: `Your show "${show.title}" has been canceled due to a DMCA takedown request that was not resolved before the deadline. Contact admin@ihype.org to appeal.`,
-        html: `<p>Your show <strong>${show.title}</strong> has been canceled due to an unresolved DMCA notice.</p><p>Contact <a href="mailto:admin@ihype.org">admin@ihype.org</a> to appeal.</p>`,
+        html: `<p>Your show <strong>${escapeHtml(show.title)}</strong> has been canceled due to an unresolved DMCA notice.</p><p>Contact <a href="mailto:admin@ihype.org">admin@ihype.org</a> to appeal.</p>`,
       }).catch(() => {});
     }),
   );

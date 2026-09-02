@@ -116,6 +116,16 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
             <strong>{t('adminVerificationsAdminVerificationQueue.notes', 'Notes')}:</strong> {profile.verificationNotes}
           </p>
         )}
+        <p className="meta" style={{ margin: '0.4rem 0 0' }}>
+          <strong>{t('adminVerificationsAdminVerificationQueue.document', 'Document')}:</strong>{' '}
+          {profile.hasProof ? (
+            <a href={`/api/admin/verifications/${profile.id}/proof`} style={{ color: 'inherit', textDecoration: 'underline' }}>
+              {t('adminVerificationsAdminVerificationQueue.openDocument', 'Download the proof document')}
+            </a>
+          ) : (
+            t('adminVerificationsAdminVerificationQueue.noDocument', 'None attached — decide on the link and notes')
+          )}
+        </p>
       </div>
 
       {!decided && (

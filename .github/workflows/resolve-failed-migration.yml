@@ -30,6 +30,10 @@ jobs:
   resolve:
     name: Mark migration as applied
     runs-on: ubuntu-latest
+    # Same protected environment as the deploy: this job holds the production
+    # DIRECT_URL, so whatever reviewers or wait timers the environment carries
+    # apply here too (security sweep, 2026-09-02).
+    environment: Production – ihype
     steps:
       - name: Check confirmation
         if: inputs.confirm != 'RESOLVE'
@@ -50,6 +54,12 @@ jobs:
       - name: Resolve
         # DIRECT_URL, not DATABASE_URL: migrate commands must bypass the
         # connection pooler, same as the deploy workflow's migrate step.
-        run: node scripts/resolve-failed-migration.mjs "${{ inputs.migration_name }}"
+        #
+        # The input reaches the shell through `env:`, never by expanding
+        # `${{ inputs.* }}` inside `run:` — a free-text input expanded there is
+        # a shell injection, and this job holds the production DIRECT_URL
+        # (security sweep, 2026-09-02).
+        run: node scripts/resolve-failed-migration.mjs "$MIGRATION_NAME"
         env:
+          MIGRATION_NAME: ${{ inputs.migration_name }}
           DATABASE_URL: ${{ secrets.DIRECT_URL }}
