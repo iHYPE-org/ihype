@@ -122,7 +122,7 @@ export function TrackUploadPanel({
         <div>
           <h3>{t('trackUploadPanel.uploadTrackHeading', 'Upload track')}</h3>
           <p className="meta">
-            {t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only (MP3/WAV/FLAC). Every upload runs an automated scan before it’s marked cleared.')}
+            {t('trackUploadPanel.artistAudioOnlyNotice', 'Audio only — MP3, AAC/M4A, WAV or FLAC, up to 60 MB. Lossless is welcome. Every upload runs an automated scan before it’s marked cleared.')}
           </p>
         </div>
       </div>
@@ -130,7 +130,7 @@ export function TrackUploadPanel({
       <div className="artist-media-upload-form">
         {error ? <p className="meta" style={{ color: 'var(--danger)' }}>{error}</p> : null}
         <input
-          accept="audio/*"
+          accept=".mp3,.m4a,.aac,.wav,.flac,audio/mpeg,audio/mp4,audio/x-m4a,audio/aac,audio/wav,audio/x-wav,audio/wave,audio/flac,audio/x-flac"
           disabled={submitting}
           onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           type="file"

@@ -9,13 +9,14 @@
  * readiness board teaches everyone to read past the board, which is how the
  * Lighthouse budget stopped being read.
  *
- * Radio is not unmeasured by dropping it. `/radio` is the always-on station,
- * assembled from published tracks — so `playableTracks` below IS the radio
- * readiness check. Ten playable tracks is a station; zero is silence.
+ * There is also NO track minimum (owner, 2026-09-02: "There should be no
+ * minimum number of uploads"). This used to require ten playable tracks on the
+ * reasoning that the always-on station is assembled from them. It still is —
+ * the count is reported on /api/health so an operator can see an empty station
+ * coming — but a number of uploads is not a condition of opening the doors.
  */
 export const ALPHA_CONTENT_TARGETS = {
   administrators: 2,
-  playableTracks: 10,
   discoverableArtists: 5,
   discoverableVenues: 2,
   upcomingEvents: 2,
@@ -37,7 +38,6 @@ export function evaluateRestoreDrill(raw: string | undefined, now = Date.now()) 
 
 export function buildAlphaBlockers({
   administrators,
-  playableTracks,
   discoverableArtists,
   discoverableVenues,
   upcomingEvents,
@@ -46,7 +46,6 @@ export function buildAlphaBlockers({
   launchBlockers = [],
 }: {
   administrators: number;
-  playableTracks: number;
   discoverableArtists: number;
   discoverableVenues: number;
   upcomingEvents: number;
@@ -59,7 +58,6 @@ export function buildAlphaBlockers({
     administrators < ALPHA_CONTENT_TARGETS.administrators && `Promote a second administrator (${administrators}/${ALPHA_CONTENT_TARGETS.administrators} ready).`,
     !restoreDrillReady && 'Complete a database restore drill and set RESTORE_DRILL_VERIFIED_AT to its ISO timestamp.',
     !inviteOnlySignup && 'Keep invite-only registration enabled during alpha.',
-    playableTracks < ALPHA_CONTENT_TARGETS.playableTracks && `Publish at least ${ALPHA_CONTENT_TARGETS.playableTracks} playable local tracks (${playableTracks} ready).`,
     discoverableArtists < ALPHA_CONTENT_TARGETS.discoverableArtists && `Onboard at least ${ALPHA_CONTENT_TARGETS.discoverableArtists} discoverable artists (${discoverableArtists} ready).`,
     discoverableVenues < ALPHA_CONTENT_TARGETS.discoverableVenues && `Onboard at least ${ALPHA_CONTENT_TARGETS.discoverableVenues} discoverable venues (${discoverableVenues} ready).`,
     upcomingEvents < ALPHA_CONTENT_TARGETS.upcomingEvents && `Publish at least ${ALPHA_CONTENT_TARGETS.upcomingEvents} upcoming events (${upcomingEvents} ready).`,

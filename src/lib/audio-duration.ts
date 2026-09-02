@@ -1,5 +1,7 @@
 // Pure-JS audio duration parser — no native modules, works in CF Workers.
-// Supports WAV and MPEG Layer 3 (MP3). Returns null for unsupported formats.
+// Supports WAV, FLAC, MP4/M4A (AAC, ALAC) and MPEG Layer 3 (MP3). Returns null
+// for anything else: a null duration is "unknown", never a guess, because the
+// station's ad-break cadence counts minutes of music with this number.
 
 export function parseAudioDuration(bytes: Uint8Array): number | null {
   if (bytes.length < 12) return null;
@@ -7,7 +9,57 @@ export function parseAudioDuration(bytes: Uint8Array): number | null {
   if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46) {
     return parseWavDuration(bytes);
   }
+  // FLAC: "fLaC"
+  if (bytes[0] === 0x66 && bytes[1] === 0x4c && bytes[2] === 0x61 && bytes[3] === 0x43) {
+    return parseFlacDuration(bytes);
+  }
+  // MP4 family: "ftyp" at offset 4
+  if (bytes[4] === 0x66 && bytes[5] === 0x74 && bytes[6] === 0x79 && bytes[7] === 0x70) {
+    return parseMp4Duration(bytes);
+  }
   return parseMp3Duration(bytes);
+}
+
+/* FLAC: the STREAMINFO block is mandatory and first. After the 4-byte marker
+   and the 4-byte block header, its layout is min/max block size (2+2), min/max
+   frame size (3+3), then a packed field: 20 bits sample rate, 3 bits channels-1,
+   5 bits bits-per-sample-1, 36 bits total samples. Total samples of 0 means
+   "unknown", and so does this function then. */
+function parseFlacDuration(b: Uint8Array): number | null {
+  if (b.length < 26) return null;
+  if ((b[4] & 0x7f) !== 0) return null; // first block must be STREAMINFO
+  const sampleRate = (b[18] << 12) | (b[19] << 4) | (b[20] >> 4);
+  const totalSamples = (b[21] & 0x0f) * 2 ** 32 + ((b[22] << 24) >>> 0) + (b[23] << 16) + (b[24] << 8) + b[25];
+  if (sampleRate <= 0 || totalSamples <= 0) return null;
+  return Math.round(totalSamples / sampleRate);
+}
+
+/* MP4/M4A: the movie header box ("mvhd") carries a timescale and a duration
+   in that timescale. Found by scanning for the fourcc rather than walking the
+   box tree, because `moov` may sit at the end of the file (a "non-faststart"
+   encode) and a walk that stops at the first `mdat` would miss it. Version 0
+   packs both as 32-bit; version 1 as 32-bit timescale and 64-bit duration. */
+function parseMp4Duration(b: Uint8Array): number | null {
+  const view = new DataView(b.buffer, b.byteOffset, b.byteLength);
+  for (let i = 4; i <= b.length - 24; i += 1) {
+    if (b[i] === 0x6d && b[i + 1] === 0x76 && b[i + 2] === 0x68 && b[i + 3] === 0x64) { // "mvhd"
+      const version = b[i + 4];
+      if (version === 0) {
+        if (i + 24 > b.length) return null;
+        const timescale = view.getUint32(i + 16, false);
+        const duration = view.getUint32(i + 20, false);
+        return timescale > 0 && duration > 0 ? Math.round(duration / timescale) : null;
+      }
+      if (version === 1) {
+        if (i + 36 > b.length) return null;
+        const timescale = view.getUint32(i + 24, false);
+        const duration = Number(view.getBigUint64(i + 28, false));
+        return timescale > 0 && duration > 0 ? Math.round(duration / timescale) : null;
+      }
+      return null;
+    }
+  }
+  return null;
 }
 
 function parseWavDuration(b: Uint8Array): number | null {

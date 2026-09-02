@@ -20,7 +20,7 @@ export async function PATCH(
     const asset = await withDbRetry(() =>
       db.artistMediaAsset.findUnique({
         where: { hexId },
-        select: { id: true, profile: { select: { ownerId: true } } }
+        select: { id: true, profileId: true, profile: { select: { ownerId: true } } }
       })
     );
 
@@ -36,12 +36,26 @@ export async function PATCH(
     if ('freeUseEnabled' in body) data.freeUseEnabled = Boolean(body.freeUseEnabled);
     if ('title' in body && typeof body.title === 'string' && body.title.trim()) data.title = body.title.trim().slice(0, 200);
     if ('notes' in body) data.notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 5000) || null : null;
+    /* Which album folder the track sits in; null takes it out. The album has
+       to be the same artist's — an id is not a capability, and a track filed
+       under another profile's album would show on their page. */
+    if ('albumId' in body) {
+      if (body.albumId === null || body.albumId === '') {
+        data.albumId = null;
+      } else if (typeof body.albumId === 'string' && body.albumId.length <= 64) {
+        const album = await withDbRetry(() => db.album.findUnique({ where: { id: body.albumId }, select: { profileId: true } }));
+        if (!album || album.profileId !== asset.profileId) {
+          return NextResponse.json({ error: 'That album is not on this profile.' }, { status: 400 });
+        }
+        data.albumId = body.albumId;
+      }
+    }
 
     const updated = await withDbRetry(() =>
       db.artistMediaAsset.update({
         where: { id: asset.id },
         data,
-        select: { hexId: true, title: true, notes: true, freeUseEnabled: true }
+        select: { hexId: true, title: true, notes: true, freeUseEnabled: true, albumId: true }
       })
     );
 

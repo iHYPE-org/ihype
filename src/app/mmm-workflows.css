@@ -143,6 +143,13 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 .profile-facts dd { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--ink); }
 
 /* Releases: a shelf of sleeves. */
+/* An album folder on the Albums tab (2026-09-02): a header row shaped like a
+   release row — cover, title, year · count — with its tracks listed under it.
+   Paint comes from the same tokens as the rows; only rhythm is set here. */
+.profile-album { margin-bottom: 18px; }
+.profile-album + .profile-album { border-top: 1px solid var(--line); padding-top: 14px; }
+.profile-album-lead { display: flex; align-items: center; gap: 12px; padding: 4px 0 10px; }
+
 .profile-releases {
   list-style: none;
   margin: 0;

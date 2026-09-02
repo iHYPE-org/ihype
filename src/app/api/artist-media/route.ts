@@ -7,7 +7,7 @@ import { validateArtistMediaUpload } from '@/lib/media-validation';
 import { deleteArtistMediaFromBlob, isBlobMediaStorageAvailable, uploadArtistMediaToBlob } from '@/lib/media-storage';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime, areUploadsEnabledRuntime } from '@/lib/runtime-flags';
-import { validateAudioMagicBytes } from '@/lib/validate-upload';
+import { AUDIO_SNIFF_BYTES, PLAYABLE_AUDIO_FORMATS_LABEL, sniffAudio } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { runTrackScanPipeline } from '@/lib/media-vetting';
 import { isObjectStorageConfigured, storeMediaFile } from '@/lib/object-storage';
@@ -20,12 +20,23 @@ import { exceedsDeclaredRequestSize } from '@/lib/request-size';
 
 export const dynamic = 'force-dynamic';
 
-const MAX_AUDIO_FILE_SIZE_BYTES = 10 * 1024 * 1024;
+/* Sized for lossless (owner, 2026-09-02: any format we can play). A 16-bit
+   44.1 kHz stereo WAV is ~10 MB a minute and FLAC about half that, so the old
+   10 MB cap admitted a one-minute WAV and nothing longer; 60 MB is a six-minute
+   WAV or a twelve-minute FLAC. The ceiling is the WORKER, not taste: this route
+   reads the whole file into memory (`file.arrayBuffer()`) to sniff, measure and
+   scan it, the isolate has 128 MB, and the request is buffered by `formData()`
+   too — so the request cap sits a little above the file cap and both stay well
+   under half the heap. Going past this means streaming the body to R2 and
+   scanning only its head, which is a different route. */
+const MAX_AUDIO_FILE_SIZE_BYTES = 60 * 1024 * 1024;
 const MAX_ARTWORK_FILE_SIZE_BYTES = 8 * 1024 * 1024;
 const ARTWORK_ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-const MAX_PROFILE_STORAGE_BYTES = 250 * 1024 * 1024;
+/* 1 GB a profile: roughly a hundred lossless tracks, which is also the track
+   ceiling below. Raised from 250 MB with the file cap for the same reason. */
+const MAX_PROFILE_STORAGE_BYTES = 1024 * 1024 * 1024;
 const MAX_PROFILE_TRACKS = 100;
-const MAX_UPLOAD_REQUEST_SIZE_BYTES = 20 * 1024 * 1024;
+const MAX_UPLOAD_REQUEST_SIZE_BYTES = 70 * 1024 * 1024;
 
 class MediaQuotaError extends Error {}
 
@@ -66,6 +77,7 @@ export async function GET(request: Request) {
         fileSizeBytes: true,
         freeUseEnabled: true,
         artworkUrl: true,
+        albumId: true,
         createdAt: true,
       },
     }),
@@ -109,7 +121,7 @@ export async function POST(request: Request) {
   // Reject declared oversized bodies before request.formData() can buffer
   // them. Edge/WAF limits remain necessary for chunked or dishonest clients.
   if (exceedsDeclaredRequestSize(request, MAX_UPLOAD_REQUEST_SIZE_BYTES)) {
-    return NextResponse.json({ error: 'Upload request is limited to 20MB.' }, { status: 413 });
+    return NextResponse.json({ error: 'Upload request is limited to 70MB.' }, { status: 413 });
   }
 
   const rateLimit = await consumeRateLimit(
@@ -155,12 +167,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: mediaValidationError }, { status: 400 });
     }
     if (file.size > MAX_AUDIO_FILE_SIZE_BYTES) {
-      return NextResponse.json({ error: 'Audio uploads are limited to 10MB.' }, { status: 400 });
+      return NextResponse.json({ error: 'Audio uploads are limited to 60MB. For a longer piece, upload it as FLAC or AAC/M4A.' }, { status: 400 });
     }
 
-    const headerBuffer = await file.slice(0, 12).arrayBuffer();
-    if (!validateAudioMagicBytes(new Uint8Array(headerBuffer))) {
-      return NextResponse.json({ error: 'File content does not match a supported audio format.' }, { status: 400 });
+    /* The head of the file, not its name or MIME type, decides what it is.
+       Anything the platform's players cannot all decode is refused with the
+       reason (validate-upload.ts); a video track is refused whatever the
+       container claims. */
+    const headerBuffer = await file.slice(0, AUDIO_SNIFF_BYTES).arrayBuffer();
+    const sniff = sniffAudio(new Uint8Array(headerBuffer));
+    if (!sniff) {
+      return NextResponse.json({ error: `File content does not match a supported audio format. Upload ${PLAYABLE_AUDIO_FORMATS_LABEL}.` }, { status: 400 });
+    }
+    if (!sniff.playable) {
+      return NextResponse.json({ error: sniff.reason ?? `Upload ${PLAYABLE_AUDIO_FORMATS_LABEL}.` }, { status: 400 });
     }
 
     const profile = await withDbRetry(() =>

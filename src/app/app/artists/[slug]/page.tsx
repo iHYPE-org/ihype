@@ -98,7 +98,7 @@ export default async function MmmArtistPage({
      artist's "tonight" is still today at 3am UTC and dropping the gig while
      the band is on stage would be the wrong kind of precise. */
   const calendarFloor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 12 * 3_600_000);
-  const [userHype, upcoming, releases, calendar] = await Promise.all([
+  const [userHype, upcoming, releases, calendar, albums] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
@@ -153,6 +153,7 @@ export default async function MmmArtistPage({
           artworkUrl: true,
           durationSecs: true,
           createdAt: true,
+          albumId: true,
           /* Selected so the dock's joystick can play this artist. The page
              listed their releases and offered no way to hear one. Nullable: an
              asset can be published before its audio is stored, and `toQueue`
@@ -176,7 +177,24 @@ export default async function MmmArtistPage({
         select: { id: true, date: true, note: true, kind: true },
       })
       .catch(() => []),
+    /* The artist's album folders (2026-09-02). Tracks are grouped under them
+       on the Albums tab; tracks in no folder list as singles below. A track's
+       own cover wins; the album's fills in where a track has none. */
+    db.album
+      .findMany({
+        where: { profileId: profile.id },
+        orderBy: [{ sortOrder: 'asc' }, { releasedOn: 'desc' }, { createdAt: 'desc' }],
+        select: { id: true, title: true, artworkUrl: true, releasedOn: true },
+      })
+      .catch(() => []),
   ]);
+  const albumById = new Map(albums.map((album) => [album.id, album]));
+  const coverFor = (release: { artworkUrl: string | null; albumId: string | null }) =>
+    release.artworkUrl ?? (release.albumId ? albumById.get(release.albumId)?.artworkUrl ?? null : null);
+  const albumGroups = albums
+    .map((album) => ({ album, tracks: releases.filter((release) => release.albumId === album.id) }))
+    .filter((group) => group.tracks.length > 0);
+  const singles = releases.filter((release) => !release.albumId || !albumById.has(release.albumId));
 
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   const sub = [profile.genres.slice(0, 3).join(' · ') || null, where || null].filter(Boolean).join(' · ');
@@ -374,7 +392,7 @@ export default async function MmmArtistPage({
         artistName: profile.name,
         artistSlug: profile.slug,
         mediaUrl: release.storageUrl,
-        artworkUrl: release.artworkUrl,
+        artworkUrl: coverFor(release),
       }))} />
 
       <ProfileTabs active={activeTab} label="Artist sections" tabs={ARTIST_TABS} />
@@ -405,28 +423,79 @@ export default async function MmmArtistPage({
           isEmpty={releases.length === 0}
           title="Albums"
         >
-          <ul className="profile-releases">
-            {releases.map((release) => (
-              <li key={release.id}>
-                <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
-                  {release.artworkUrl
-                    ? <img alt="" className="profile-release-art" src={release.artworkUrl} />
-                    : <span aria-hidden="true" className="profile-release-art" />}
-                  <span className="profile-release-body">
-                    <span className="profile-release-title">{release.title}</span>
-                    <span className="profile-release-meta">
-                      {[
-                        release.durationSecs
-                          ? `${Math.floor(release.durationSecs / 60)}:${String(release.durationSecs % 60).padStart(2, '0')}`
-                          : null,
-                        release.createdAt.getFullYear(),
-                      ].filter(Boolean).join(' · ')}
-                    </span>
+          {albumGroups.map(({ album, tracks }) => (
+            <section className="profile-album" key={album.id}>
+              <header className="profile-album-lead">
+                {album.artworkUrl
+                  ? <img alt="" className="profile-release-art" src={album.artworkUrl} />
+                  : <span aria-hidden="true" className="profile-release-art" />}
+                <span className="profile-release-body">
+                  <span className="profile-release-title">{album.title}</span>
+                  <span className="profile-release-meta">
+                    {[
+                      album.releasedOn ? album.releasedOn.getUTCFullYear() : null,
+                      `${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}`,
+                    ].filter(Boolean).join(' · ')}
                   </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+                </span>
+              </header>
+              <ul className="profile-releases">
+                {tracks.map((release) => (
+              <li key={release.id}>
+                    <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
+                      {coverFor(release)
+                        ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
+                        : <span aria-hidden="true" className="profile-release-art" />}
+                      <span className="profile-release-body">
+                        <span className="profile-release-title">{release.title}</span>
+                        <span className="profile-release-meta">
+                          {[
+                            release.durationSecs
+                              ? `${Math.floor(release.durationSecs / 60)}:${String(release.durationSecs % 60).padStart(2, '0')}`
+                              : null,
+                            release.createdAt.getFullYear(),
+                          ].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ))}
+          {singles.length > 0 && (
+            <section className="profile-album">
+              {albumGroups.length > 0 && (
+                <header className="profile-album-lead">
+                  <span className="profile-release-body">
+                    <span className="profile-release-title">Singles</span>
+                  </span>
+                </header>
+              )}
+              <ul className="profile-releases">
+                {singles.map((release) => (
+              <li key={release.id}>
+                    <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
+                      {coverFor(release)
+                        ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
+                        : <span aria-hidden="true" className="profile-release-art" />}
+                      <span className="profile-release-body">
+                        <span className="profile-release-title">{release.title}</span>
+                        <span className="profile-release-meta">
+                          {[
+                            release.durationSecs
+                              ? `${Math.floor(release.durationSecs / 60)}:${String(release.durationSecs % 60).padStart(2, '0')}`
+                              : null,
+                            release.createdAt.getFullYear(),
+                          ].filter(Boolean).join(' · ')}
+                        </span>
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
         </ProfilePanel>
       )}
 

@@ -71,7 +71,7 @@ export async function GET() {
       ? await db.artistMediaAsset.findMany({
           where: { profileId: { in: artistIds }, storageUrl: { not: null }, ...releasedMediaWhere(), profile: { discoverable: true } },
           orderBy: [{ createdAt: 'desc' }],
-          select: { id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, profileId: true },
+          select: { id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, profileId: true, album: { select: { artworkUrl: true } } },
         }).catch(() => [])
       : [];
     const newestByArtist = new Map<string, (typeof rows)[number]>();
@@ -88,7 +88,7 @@ export async function GET() {
         artistName: profile.name,
         artistSlug: profile.slug,
         mediaUrl: track.storageUrl,
-        artworkUrl: track.artworkUrl ?? profile.avatarImage,
+        artworkUrl: track.artworkUrl ?? track.album?.artworkUrl ?? profile.avatarImage,
         reason: profile.reason.text,
         reasonKind: profile.reason.kind,
       });
