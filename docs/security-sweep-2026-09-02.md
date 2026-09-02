@@ -147,13 +147,13 @@ the first sweep had only listed as "gated". Everything below verified in code.
 
 ### Recorded, not changed
 
-- **Ad campaign holds outlive the run.** A manual-capture card authorization is
-  good for about seven days; campaigns run 7–90 days and can be paused
-  indefinitely, and settlement only captures `APPROVED` campaigns after
-  `endsAt`. A campaign longer than a week, or paused and never resumed, is
-  unbilled — impressions delivered, capture fails. The fix is a product change:
-  charge the budget up front and refund the unspent remainder at the end, or
-  capture-to-date at day six and re-authorize. Needs a decision.
+- **Ad campaign holds outlive the run — DECIDED and fixed the same day.**
+  A manual-capture card authorization is good for about seven days; campaigns
+  run 7–90 days and could be paused indefinitely, so a campaign longer than a
+  week was unbilled. The owner chose charge-up-front: checkout captures the
+  budget, settlement refunds `budget − spent`, and a campaign paused 60 days
+  is settled as cancelled. See DESIGN_SYNC row 339 and
+  `src/lib/ad-settlement-plan.ts`.
 - The upload size pre-check's chunked-encoding branch (first change) is
   harmless but almost certainly never fires on Workers, which frame bodies
   themselves. Browsers always send `Content-Length` for form uploads.

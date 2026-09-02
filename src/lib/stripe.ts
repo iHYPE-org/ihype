@@ -2,6 +2,8 @@ import Stripe from 'stripe';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { calculateDestinationChargeSplit, calculateDirectChargeApplicationFee } from '@/lib/ticketing';
 import { log } from '@/lib/logger';
+import { planAdSettlement, type AdSettlementPlan } from '@/lib/ad-settlement-plan';
+export { STRIPE_MINIMUM_CHARGE_CENTS } from '@/lib/ad-settlement-plan';
 
 let _stripe: Stripe | null = null;
 
@@ -949,20 +951,21 @@ export async function refundTicketPaymentIntent(
 }
 
 /**
- * Pre-auth-then-capture ad campaign billing (DESIGN_SYNC row 234). A
- * Checkout Session in `mode: 'payment'` needs no client-side Stripe.js/
- * Elements integration (the advertiser is redirected to Stripe's own
- * hosted page) — a good fit for a self-serve B2B flow with no existing
- * card-collection UI in this codebase. `payment_intent_data.capture_method:
- * 'manual'` means the session's underlying PaymentIntent only ever
- * authorizes the full quoted budget; Stripe creates that PaymentIntent
- * synchronously, so its id is available immediately, before the advertiser
- * ever completes checkout.
+ * Ad campaign checkout — CHARGED UP FRONT (2026-09-02, owner decision; see
+ * `ad-settlement-plan.ts`). A Checkout Session in `mode: 'payment'` needs no
+ * client-side Stripe.js/Elements integration (the advertiser is redirected to
+ * Stripe's own hosted page) — a good fit for a self-serve B2B flow with no
+ * card-collection UI in this codebase.
  *
- * This is the ONLY manual-capture path in the codebase. This docstring used to
- * say it was "the same shape the ticket checkout session uses"; the ticket
- * session sets no capture method and captures on payment. See
- * `captureTicketPaymentIntent` for what that mismatch broke.
+ * This used to set `payment_intent_data.capture_method: 'manual'` so the
+ * budget was only AUTHORISED and captured at the end of the run
+ * (DESIGN_SYNC row 234). A card authorisation lives about seven days; runs go
+ * to ninety and a pause was unbounded, so every campaign longer than a week
+ * delivered its impressions and then could not be billed. Now the whole
+ * budget is captured at checkout, like the ticket session, and settlement
+ * REFUNDS the unspent remainder. There is no manual-capture path left in the
+ * codebase; `settleAdCampaign` still knows how to close a hold opened before
+ * this change.
  */
 export async function createAdCampaignCheckoutSession({
   adId,
@@ -998,10 +1001,9 @@ export async function createAdCampaignCheckoutSession({
       ],
       customer_email: advertiserEmail ?? undefined,
       payment_intent_data: {
-        capture_method: 'manual',
         metadata: { adId },
       },
-      metadata: { adId },
+      metadata: { adId, purpose: 'ad_campaign' },
       success_url: `${baseUrl}/advertise/dashboard?checkout=success`,
       cancel_url: `${baseUrl}/advertise/dashboard?checkout=cancelled`,
     },
@@ -1030,46 +1032,51 @@ export async function createAdCampaignCheckoutSession({
 }
 
 /**
- * Captures only the actual delivered spend, never the full authorized
- * budget — the point of pre-auth-then-capture. Called at campaign end (the
- * settlement cron) or on early self-serve cancellation, in both cases with
- * whatever `spentCents` really is at that moment. Stripe rejects a capture
- * of 0, so a campaign that ran without ever serving an impression is
- * cancelled (releasing the hold) instead of captured.
+ * Closes a campaign's money at the end of its run, on cancellation, or after
+ * a long pause. Reads the PaymentIntent and lets `planAdSettlement` decide:
+ * a campaign charged up front gets `budget - spent` REFUNDED; a hold opened
+ * before 2026-09-02 (`requires_capture`) is captured for the spend or
+ * released under Stripe's minimum. Idempotent per intent through the keys,
+ * and the caller stamps `settledAt` whatever the plan was, which is what stops
+ * the daily retry.
+ *
+ * Returns what actually happened so the advertiser can be told the truth —
+ * "refunded $75.00" and "charged $45.00" are different sentences.
  */
-/**
- * Stripe will not capture less than this. Below it there is no partial
- * capture to make — the only two moves are take the minimum or take nothing.
- * (USD; other currencies have their own floors, and this app charges in USD.)
- */
-export const STRIPE_MINIMUM_CHARGE_CENTS = 50;
-
-export async function settleAdCampaignAuthorization(paymentIntentId: string, spentCents: number): Promise<void> {
+export async function settleAdCampaign(
+  paymentIntentId: string,
+  spentCents: number,
+  budgetCents: number,
+): Promise<AdSettlementPlan> {
   const stripe = getStripe();
-  /* UNDER THE FLOOR THE HOLD IS RELEASED, NOT CAPTURED, and that used to be a
-     throw. `spentCents <= 0` was the only release branch, so a campaign that
-     delivered between 1c and 49c went to `capture`, and Stripe answered
-     "Amount must be at least $0.50 USD" (measured 2026-08-31 on a campaign
-     with 9c delivered). The settlement cron caught it, logged it, counted the
-     campaign `skipped` and moved on — so the authorization stayed open until
-     Stripe expired it about a week later, `settledAt` stayed null, and the
-     job retried and failed again every single day in between.
-     That is not an edge case: a small campaign priced per impression spends
-     under 50c routinely, and it is exactly the shape a first advertiser has.
-
-     Releasing is the honest resolution of the two available. Capturing the
-     50c minimum would bill an advertiser 50c for 9c of delivery; we delivered
-     too little to bill for, so we bill nothing. The caller stamps the campaign
-     settled either way, which is what stops the daily retry. */
-  if (spentCents < STRIPE_MINIMUM_CHARGE_CENTS) {
-    await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `ad-settle-cancel:${paymentIntentId}` });
-    return;
+  const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
+  const plan = planAdSettlement({
+    intentStatus: intent.status,
+    amountReceivedCents: intent.amount_received,
+    spentCents,
+    budgetCents,
+  });
+  switch (plan.action) {
+    case 'refund':
+      await stripe.refunds.create(
+        { payment_intent: paymentIntentId, amount: plan.amountCents, reason: 'requested_by_customer', metadata: { purpose: 'ad_campaign_unspent' } },
+        { idempotencyKey: `ad-settle-refund:${paymentIntentId}:${plan.amountCents}` },
+      );
+      break;
+    case 'capture':
+      await stripe.paymentIntents.capture(
+        paymentIntentId,
+        { amount_to_capture: plan.amountCents },
+        { idempotencyKey: `ad-settle-capture:${paymentIntentId}` },
+      );
+      break;
+    case 'release':
+      await stripe.paymentIntents.cancel(paymentIntentId, {}, { idempotencyKey: `ad-settle-cancel:${paymentIntentId}` });
+      break;
+    case 'none':
+      break;
   }
-  await stripe.paymentIntents.capture(
-    paymentIntentId,
-    { amount_to_capture: spentCents },
-    { idempotencyKey: `ad-settle-capture:${paymentIntentId}` },
-  );
+  return plan;
 }
 
 /**

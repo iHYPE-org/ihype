@@ -42,6 +42,7 @@ let processedEvents: Set<string>;
 
 const ticketOrderFindUnique = vi.fn();
 const adFindUnique = vi.fn();
+const adUpdate = vi.fn().mockResolvedValue({});
 const profileUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
 const ticketOrderFindMany = vi.fn().mockResolvedValue([]);
 const ticketOrderUpdate = vi.fn().mockResolvedValue({});
@@ -71,7 +72,7 @@ vi.mock('@/lib/db', () => ({
             return { id: key };
           }),
         },
-        ad: { findUnique: (...a: unknown[]) => adFindUnique(...a), update: vi.fn().mockResolvedValue({}) },
+        ad: { findUnique: (...a: unknown[]) => adFindUnique(...a), update: (...a: unknown[]) => adUpdate(...a) },
         ticketOrder: { findUnique: (...a: unknown[]) => ticketOrderFindUnique(...a), findMany: (...a: unknown[]) => ticketOrderFindMany(...a), update: (...a: unknown[]) => ticketOrderUpdate(...a) },
         profile: { updateMany: (...a: unknown[]) => profileUpdateMany(...a) },
         notificationJob: { upsert: vi.fn().mockResolvedValue({}) },
@@ -305,6 +306,38 @@ describe('POST /api/stripe/webhook', () => {
 
     expect(res.status).toBe(200);
     expect(json.duplicate).toBe(true);
+  });
+
+  it('puts an ad campaign live when its up-front charge succeeds, and refuses a short payment', async () => {
+    // Charged up front (2026-09-02): the campaign goes live on the event that
+    // says the money landed, with the run starting at the event's time.
+    adFindUnique.mockResolvedValue({ id: 'ad_1', status: 'AWAITING_PAYMENT', runDays: 14, budgetCents: 12000 });
+    ticketOrderFindUnique.mockResolvedValue(null);
+    const event = {
+      id: 'evt_ad_paid', type: 'payment_intent.succeeded', created: 1_700_000_000,
+      data: { object: { id: 'pi_ad', amount_received: 12000, metadata: { adId: 'ad_1' } } },
+    };
+    constructWebhookEvent.mockReturnValue(event);
+    const res = await POST(makeRequest(event));
+    expect(res.status).toBe(200);
+    expect(adUpdate).toHaveBeenCalledWith(expect.objectContaining({
+      where: { id: 'ad_1' },
+      data: expect.objectContaining({ status: 'APPROVED', stripePaymentIntentId: 'pi_ad' }),
+    }));
+    const { startsAt, endsAt } = adUpdate.mock.calls[0][0].data as { startsAt: Date; endsAt: Date };
+    expect(endsAt.getTime() - startsAt.getTime()).toBe(14 * 24 * 60 * 60 * 1000);
+
+    // Fifty cents against a $120 budget: signed, real, and not enough.
+    adUpdate.mockClear();
+    adFindUnique.mockResolvedValue({ id: 'ad_2', status: 'AWAITING_PAYMENT', runDays: 14, budgetCents: 12000 });
+    const short = {
+      id: 'evt_ad_short', type: 'payment_intent.succeeded', created: 1_700_000_000,
+      data: { object: { id: 'pi_ad_short', amount_received: 50, metadata: { adId: 'ad_2' } } },
+    };
+    constructWebhookEvent.mockReturnValue(short);
+    const res2 = await POST(makeRequest(short));
+    expect(res2.status).toBe(200);
+    expect(adUpdate).not.toHaveBeenCalled();
   });
 
   it('voids reserved ticket orders on payment_intent.payment_failed', async () => {
