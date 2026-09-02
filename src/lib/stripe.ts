@@ -1047,7 +1047,7 @@ export async function settleAdCampaign(
   paymentIntentId: string,
   spentCents: number,
   budgetCents: number,
-): Promise<AdSettlementPlan> {
+): Promise<AdSettlementResult> {
   const stripe = getStripe();
   const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
   const plan = planAdSettlement({
@@ -1056,13 +1056,18 @@ export async function settleAdCampaign(
     spentCents,
     budgetCents,
   });
+  let refundId: string | null = null;
   switch (plan.action) {
-    case 'refund':
-      await stripe.refunds.create(
+    case 'refund': {
+      // The refund id is what the advertiser can quote to their bank, so it
+      // is returned for the caller to persist rather than left in Stripe.
+      const refund = await stripe.refunds.create(
         { payment_intent: paymentIntentId, amount: plan.amountCents, reason: 'requested_by_customer', metadata: { purpose: 'ad_campaign_unspent' } },
         { idempotencyKey: `ad-settle-refund:${paymentIntentId}:${plan.amountCents}` },
       );
+      refundId = refund.id;
       break;
+    }
     case 'capture':
       await stripe.paymentIntents.capture(
         paymentIntentId,
@@ -1076,8 +1081,11 @@ export async function settleAdCampaign(
     case 'none':
       break;
   }
-  return plan;
+  return { plan, refundId };
 }
+
+/** What settlement did, plus the Stripe refund it can be traced by (null when nothing was refunded). */
+export type AdSettlementResult = { plan: AdSettlementPlan; refundId: string | null };
 
 /**
  * Deletes a Stripe Connect Express account, ending its ability to receive
