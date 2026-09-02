@@ -70,7 +70,7 @@ export async function POST(req: Request, { params }: RouteContext) {
   try {
     body = trackSchema.parse(await req.json());
   } catch (err) {
-    return NextResponse.json({ error: 'Invalid request.', detail: err }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid request.', issues: err instanceof z.ZodError ? err.issues.map((issue) => issue.message) : undefined }, { status: 400 });
   }
 
   const track = await db.radioShowTrack.upsert({

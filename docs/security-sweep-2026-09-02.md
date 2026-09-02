@@ -110,3 +110,54 @@ registry-only resolutions; no secrets in tracked files or `wrangler.toml`
 vars; Supabase MCP `read_only` and feature pinning as CLAUDE.md states;
 price/quantity/capacity integrity on ticket checkout; refund vs payout state
 machine disjoint; ad-settlement capped at budget and idempotent.
+
+## Second scan (same day, after the first change merged as #797)
+
+Four more passes: an adversarial review of the first change itself,
+business-logic abuse, privacy and client-side exposure, and the API surface
+the first sweep had only listed as "gated". Everything below verified in code.
+
+### Fixed
+
+| Sev | Where | What was wrong | What changed |
+|---|---|---|---|
+| **High** | `POST /api/settings/delete-account` | `db.user.delete()` — `Show.creator`, `TicketOrder.show`, `Ticket.show` and `AccountsPayableEntry.show` cascade, so an organiser deleting their account destroyed every buyer's order and ticket and every other party's payable. | Routes through `executeAccountErasure()` (anonymise, keep the shell row, drop sessions). |
+| **High** | Ticket checkout affiliate | Only the show's owners were excluded from earning the 10% promoter credit; a buyer could name their own profile and get 10% back from the acts. | Self-referral refused. |
+| **High** | Ticket transfer | Ids were rotated but `buyerUserId` stayed on the sender, who could pull the new QR from their own list or transfer the order again. No scanned check. | Ownership moves to the recipient's account (or is cleared); scanned orders cannot be transferred. |
+| Medium | `expire-reservations` cron | 15-minute TTL under a 30-minute Checkout session: a buyer paying at minute 16–30 found the order VOID when the webhook arrived. Void write had no status guard. | 35-minute TTL; void only while still RESERVED with no intent. |
+| Medium | Moderation approve on a `show` | A status flip with no refunds — the DMCA fix had moved "cancel with no refunds" to a one-click admin button. | Refused (409) when paid orders exist, pointing at the organizer cancel flow; cancelled outright otherwise. |
+| Medium | `GET /api/admin/verifications` (first change) | Selected every applicant's inline proof document (≤8 MB each) to compute a boolean. | Second id-only query. |
+| Medium | `public/sw.js` (first change) | `/tickets` in the network-only list and the `private` refusal together disabled the offline ticket wallet. | Wallet branch stores on purpose; `/tickets` off the denylist; comment corrected. |
+| Medium | `PATCH /api/shows/[showId]` | Bare cast: unbounded title/description, non-string values (500), unparseable dates, no auto-moderation, invalid `productionPlan` stored as-is. | Zod schema, POST's caps and moderation, invalid plan refused. |
+| Medium | `GET /api/shows` | Whole rows under `Cache-Control: public`: organiser notes, moderation state, cancellation message, DMCA fields, production plan. | `omit` of the private columns. |
+| Medium | `GET /api/profile/[slug]` | Public, CDN-cached for 5 min, served `contactInfo` for fans, ignored `discoverable`, listed unreleased tracks. Its only caller is the owner's editor. | Owner sees all; others need `discoverable`, no contact fields unless a venue, released tracks only, `private, no-store`. |
+| Medium | Fan location | Signup stored a fan's city; the fan page, its metadata and the unauthenticated OG image published it. | Never stored for fans; not rendered; `/fans` out of robots. |
+| Medium | Profile editor image URLs | Any string rendered as `<img src>` — an owner could log every viewer's address and referrer from their own host. | A new image URL must be one iHYPE stored; `merchUrl` must be https; unchanged legacy values still save. |
+| Medium | Referral hype | Every referred signup added an uncapped public hype to the referrer's profile. | Five a day may raise the public count. |
+| Low | `/app/me/tickets/[id]` | Any signed-in member with the link saw holder name, order totals and the live QR. | Holder, venue staff or admin only. |
+| Low | Push subscribe / device register | Upsert re-homed a known endpoint or token to the caller's account. | 409 on a foreign endpoint. |
+| Low | Lineup proposals | Unbounded slot array, no rate limit, every act notified per POST. | Max 12 slots, 10 proposals an hour. |
+| Low | `/api/shows/nearby`, AI ad ideas, AI tour plan, booking requests | No budget. | 60/min per IP; 10/hour per member; 20/hour per member. |
+| Low | Analytics ingest | Unbounded body parsed before validation. | 4 KB cap. |
+| Low | Email HTML | Five more unescaped sites (resend-confirmation, transfer, fan-mail sender name, hype milestones, beta-access admin mail) and the payout email. | `escapeHtml`. |
+| Low | Impressions (first change) | Refusing anonymous callers dropped every signed-out play on the public show page. | Anonymous listeners count once per address per ad per day via a rate-limit bucket. |
+| Low | `livemodeMatchesKey` (first change) | Refused every event under a restricted `rk_live_` key. | Both live prefixes. |
+| Low | DMCA (first change) | A failed report create still answered "received". | 500 with an address to write to. |
+| Low | Misc | `GET /api/hype?limit=abc` → NaN `take`; tracks route echoed the ZodError object; `clickUrl` unvalidated. | Clamped; messages only; https-only. |
+
+### Recorded, not changed
+
+- **Ad campaign holds outlive the run.** A manual-capture card authorization is
+  good for about seven days; campaigns run 7–90 days and can be paused
+  indefinitely, and settlement only captures `APPROVED` campaigns after
+  `endsAt`. A campaign longer than a week, or paused and never resumed, is
+  unbilled — impressions delivered, capture fails. The fix is a product change:
+  charge the budget up front and refund the unspent remainder at the end, or
+  capture-to-date at day six and re-authorize. Needs a decision.
+- The upload size pre-check's chunked-encoding branch (first change) is
+  harmless but almost certainly never fires on Workers, which frame bodies
+  themselves. Browsers always send `Content-Length` for form uploads.
+- `/api/hype?showId=` publicly returns hypers' `userId` and `username`;
+  `/embed/[hexId]` ignores `discoverable`; anonymous audit-log writes from
+  `/api/referral/click` and `/api/analytics/signup-funnel` can be inflated.
+  Low, and each is a small product decision about what is public.

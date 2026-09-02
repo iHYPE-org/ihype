@@ -4,6 +4,7 @@ import { sendGenericEmail } from '@/lib/mailer';
 import { getAdminAlertRecipients } from '@/lib/env';
 import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { escapeHtml } from '@/lib/html-escape';
 
 // Only these three categories are ever paid out via a Stripe Connect
 // transfer — tax entries (TAX_LOCAL/STATE/COUNTRY/INTERNATIONAL) have no
@@ -111,7 +112,7 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
         await sendGenericEmail({
           to: ownerEmail,
           subject: `[iHYPE] Payout sent for "${entry.show.title}"`,
-          html: `<p>$${(entry.amountCents / 100).toFixed(2)} was just transferred to your account for <strong>${entry.show.title}</strong>.</p>`,
+          html: `<p>$${(entry.amountCents / 100).toFixed(2)} was just transferred to your account for <strong>${escapeHtml(entry.show.title)}</strong>.</p>`,
           text: `$${(entry.amountCents / 100).toFixed(2)} was just transferred to your account for "${entry.show.title}".`,
         }).catch(() => {});
       }
@@ -123,7 +124,7 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
         to: getAdminAlertRecipients(),
         subject: `[iHYPE] Payout transfer failed: ${entry.show.title}`,
         text: `Payout for "${entry.payeeLabel}" on show "${entry.show.title}" (entry ${entry.id}) failed: ${error instanceof Error ? error.message : String(error)}`,
-        html: `<p>Payout for <strong>${entry.payeeLabel}</strong> on show <strong>${entry.show.title}</strong> (entry ${entry.id}) failed. Needs manual attention.</p>`,
+        html: `<p>Payout for <strong>${escapeHtml(entry.payeeLabel)}</strong> on show <strong>${escapeHtml(entry.show.title)}</strong> (entry ${entry.id}) failed. Needs manual attention.</p>`,
       }).catch(() => {});
       skipped++;
     }

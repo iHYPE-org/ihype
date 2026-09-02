@@ -6,6 +6,7 @@ import { readClientAddress } from '@/lib/request-meta';
 import { sendGenericEmail } from '@/lib/mailer';
 import { deferWork } from '@/lib/defer-work';
 import { getAdminAlertRecipients } from '@/lib/env';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     to: getAdminAlertRecipients(),
     subject: `Beta access request — ${body.email}`,
     text: textLines.join('\n'),
-    html: textLines.map((line) => `<p>${line}</p>`).join('\n')
+    html: textLines.map((line) => `<p>${escapeHtml(line)}</p>`).join('\n')
   }), 'beta-access-request-email');
 
   return NextResponse.json({ ok: true });

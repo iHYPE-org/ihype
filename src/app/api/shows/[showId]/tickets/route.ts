@@ -215,6 +215,16 @@ export async function POST(
           { status: 400 },
         );
       }
+      /* Nor can the buyer refer themselves (second security scan, 2026-09-02).
+         Any owned profile can connect payouts, so a fan naming their own
+         profile here withheld 10% from the artist and venue and had the cron
+         pay it back to them after the show — cashback funded by the acts. */
+      if (affiliatePromoterProfile.ownerId === session.user.id) {
+        return NextResponse.json(
+          { error: 'You cannot earn referral credit on your own purchase' },
+          { status: 400 },
+        );
+      }
     }
 
     /* WHO IS THE MERCHANT ON THIS SALE.

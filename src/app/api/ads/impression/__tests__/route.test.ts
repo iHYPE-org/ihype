@@ -145,12 +145,17 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     expect(mockDb.ad.findUnique).not.toHaveBeenCalled();
   });
 
-  it('refuses an anonymous caller before any DB work — adId is public and every hit spends budget', async () => {
+  it('charges an anonymous listener through a one-per-day address+ad bucket, not per hit', async () => {
     mockAuth.mockResolvedValue(null);
     mockDb.ad.findUnique.mockResolvedValue(ad());
     const res = await post({ adId: 'a1' });
-    expect(res.status).toBe(401);
-    expect(mockDb.ad.findUnique).not.toHaveBeenCalled();
+    expect(await res.json()).toEqual({ ok: true });
+    expect(mockRate).toHaveBeenCalledWith('ad-impression:play:9.9.9.9:a1', expect.objectContaining({ limit: 1 }));
+    // The bucket says this address already played this ad today → skipped, no spend.
+    mockRate.mockImplementation(async (key: string) => ({ allowed: !key.startsWith('ad-impression:play:'), retryAfterSeconds: 0 }));
+    mockDb.ad.updateMany.mockClear();
+    const again = await post({ adId: 'a1' });
+    expect(await again.json()).toEqual({ ok: true, skipped: true });
     expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 

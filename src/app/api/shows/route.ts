@@ -16,6 +16,22 @@ import { checkContent } from '@/lib/auto-mod';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
 
+/* Columns the public feed must not ship (second security scan, 2026-09-02).
+   Both list branches returned whole rows under `Cache-Control: public`, so
+   every show's organiser notes, moderation state, cancellation message, DMCA
+   fields and production plan were public. The single-show GET already
+   selects an explicit public set; the list keeps its shape minus these. */
+const PRIVATE_SHOW_COLUMNS = {
+  bookingLegalNotes: true,
+  moderationStatus: true,
+  cancellationMessage: true,
+  productionPlan: true,
+  setlistProgress: true,
+  dmcaStatus: true,
+  dmcaDeadline: true,
+  capacityAlertSentAt: true,
+} as const;
+
 const schema = z.object({
   title: z.string().min(3),
   description: z.string().optional(),
@@ -87,6 +103,7 @@ export async function GET(request: Request) {
   if (radioOnly) {
     const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
     const shows = await db.show.findMany({
+      omit: PRIVATE_SHOW_COLUMNS,
       include: {
         venueProfile: profileSelect,
         headlinerProfile: { select: { ...profileSelect.select, genres: true } },
@@ -110,6 +127,7 @@ export async function GET(request: Request) {
   const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
   const shows = await db.show.findMany({
     include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
+    omit: PRIVATE_SHOW_COLUMNS,
     where: {
       status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
       ...getDemoCreatorExclusion()
