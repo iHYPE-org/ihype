@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
 import { getServerT } from '@/lib/i18n/server';
+import { REFUND_WINDOW_BUSINESS_DAYS } from '@/lib/ad-settlement-plan';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,11 @@ export default async function AdvertiserDashboard() {
   // one impression to divide by.
   const effectiveCpmCents = totalImpressions > 0 ? (totalSpentCents / totalImpressions) * 1000 : null;
   const activeCampaigns = campaigns.filter((c) => c.status === 'APPROVED').length;
+  // Money the advertiser has actually been sent back, from the settlement
+  // record — never inferred from budget − spent, which is a projection.
+  const totalRefundedCents = campaigns.reduce((s, c) => s + (c.refundedCents ?? 0), 0);
+  const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+  const day = (d: Date) => new Date(d).toLocaleDateString();
 
   // Day-by-day breakdown, last 14 days, aggregated across all the
   // advertiser's campaigns. AdImpression rows have no per-day rollup
@@ -105,7 +111,23 @@ export default async function AdvertiserDashboard() {
             <div className="ad-dash-stat-val">{activeCampaigns}</div>
             <div className="ad-dash-stat-sub">${(totalBudgetCents / 100 - totalSpentCents / 100).toFixed(2)} {t('advertiseDashboardPage.budgetRemaining', 'budget remaining')}</div>
           </div>
+          {totalRefundedCents > 0 && (
+            <div className="ad-dash-stat-card">
+              <div className="ad-dash-stat-label">{t('advertiseDashboardPage.refunded', 'Refunded')}</div>
+              <div className="ad-dash-stat-val">{dollars(totalRefundedCents)}</div>
+              <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.refundedSub', 'Unspent budget sent back to your card')}</div>
+            </div>
+          )}
         </div>
+      )}
+
+      {campaigns.length > 0 && (
+        <p className="meta ad-dash-refund-policy">
+          {t(
+            'advertiseDashboardPage.refundPolicy',
+            `How billing works: a campaign is charged in full when you pay at checkout. When its run ends, or you cancel it, whatever was not spent is refunded to the card you paid with — usually on your statement within ${REFUND_WINDOW_BUSINESS_DAYS} business days — and the amount and Stripe refund reference appear on the campaign below. iHYPE absorbs the card-processing fee; nothing is deducted from the refund.`,
+          )}
+        </p>
       )}
 
       {campaigns.length === 0 && (
@@ -152,12 +174,53 @@ export default async function AdvertiserDashboard() {
                 {campaign.status === 'AWAITING_PAYMENT' ? t('advertiseDashboardPage.awaitingPayment', 'AWAITING PAYMENT') : campaign.status}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: 24 }}>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
               <div><div style={{ fontWeight: 700 }}>{campaign.impressions.toLocaleString()}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
               <div>
-                <div style={{ fontWeight: 700 }}>${((campaign.budgetCents - campaign.spentCents) / 100).toFixed(2)}</div>
-                <div className="meta">{t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining')}</div>
+                <div style={{ fontWeight: 700 }}>{dollars(campaign.budgetCents)}</div>
+                <div className="meta">{campaign.authorizedAt ? t('advertiseDashboardPage.paid', 'Paid') : t('advertiseDashboardPage.quoted', 'Quoted')}</div>
               </div>
+              <div>
+                <div style={{ fontWeight: 700 }}>{dollars(Math.min(campaign.spentCents, campaign.budgetCents))}</div>
+                <div className="meta">{t('advertiseDashboardPage.spent', 'Spent')}</div>
+              </div>
+              {campaign.settledAt ? (
+                <div>
+                  <div style={{ fontWeight: 700 }}>{campaign.refundedCents === null ? '—' : dollars(campaign.refundedCents)}</div>
+                  <div className="meta">{t('advertiseDashboardPage.refunded', 'Refunded')}</div>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ fontWeight: 700 }}>${((campaign.budgetCents - Math.min(campaign.spentCents, campaign.budgetCents)) / 100).toFixed(2)}</div>
+                  <div className="meta">{t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining')}</div>
+                </div>
+              )}
+            </div>
+            {/* The money line: what was charged, what came back, and when. A
+                settled campaign reads from the settlement record; a live one
+                states the promise; one not yet paid says nothing was charged. */}
+            <div className="meta ad-dash-money">
+              {campaign.settledAt ? (
+                campaign.refundedCents === null ? (
+                  <>{t('advertiseDashboardPage.settledOn', 'Settled')} {day(campaign.settledAt)}.</>
+                ) : campaign.refundedCents > 0 ? (
+                  <>
+                    {t('advertiseDashboardPage.settledOn', 'Settled')} {day(campaign.settledAt)} · {dollars(campaign.refundedCents)} {t('advertiseDashboardPage.refundedToCard', 'refunded to the card you paid with, usually on your statement within')} {REFUND_WINDOW_BUSINESS_DAYS} {t('advertiseDashboardPage.businessDays', 'business days')}
+                    {campaign.settledChargedCents !== null && campaign.settledChargedCents > 0 && <> · {dollars(campaign.settledChargedCents)} {t('advertiseDashboardPage.keptForDelivery', 'kept for delivered spend')}</>}
+                    {campaign.stripeRefundId && <> · {t('advertiseDashboardPage.refundRef', 'Stripe refund ref')} <code>{campaign.stripeRefundId}</code></>}
+                  </>
+                ) : (
+                  <>{t('advertiseDashboardPage.settledOn', 'Settled')} {day(campaign.settledAt)} · {t('advertiseDashboardPage.nothingToRefund', 'the full budget was delivered, so there was nothing to refund')}</>
+                )
+              ) : campaign.authorizedAt ? (
+                <>
+                  {t('advertiseDashboardPage.chargedOn', 'Charged')} {dollars(campaign.budgetCents)} {t('advertiseDashboardPage.on', 'on')} {day(campaign.authorizedAt)} · {t('advertiseDashboardPage.unspentPromise', 'unspent budget is refunded to that card when the run ends or if you cancel')}
+                </>
+              ) : campaign.status === 'AWAITING_PAYMENT' ? (
+                <>{t('advertiseDashboardPage.notChargedYet', 'Nothing charged yet — paying charges the full budget, and whatever is unspent at the end is refunded.')}</>
+              ) : (
+                <>{t('advertiseDashboardPage.notCharged', 'Nothing has been charged for this campaign.')}</>
+              )}
             </div>
             {(campaign.startsAt || campaign.endsAt) && (
               <div className="meta" style={{ marginTop: 8 }}>
@@ -168,7 +231,12 @@ export default async function AdvertiserDashboard() {
             )}
             {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT') && (
               <div style={{ marginTop: 12 }}>
-                <CampaignCancelButton campaignId={campaign.id} status={campaign.status} />
+                <CampaignCancelButton
+                  campaignId={campaign.id}
+                  status={campaign.status}
+                  charged={Boolean(campaign.authorizedAt) && !campaign.settledAt}
+                  unspentCents={campaign.budgetCents - Math.min(campaign.spentCents, campaign.budgetCents)}
+                />
               </div>
             )}
           </div>
@@ -181,6 +249,9 @@ export default async function AdvertiserDashboard() {
         .ad-dash-stat-label { font-family: var(--font-mono); font-size: 0.6875rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 6px; }
         .ad-dash-stat-val { font-family: var(--font-display); font-weight: 800; font-size: 1.375rem; color: var(--ink); }
         .ad-dash-stat-sub { font-size: 0.9375rem; color: var(--ink-a65); margin-top: 2px; }
+        .ad-dash-refund-policy { margin: -8px 0 24px; max-width: 72ch; }
+        .ad-dash-money { margin-top: 8px; overflow-wrap: anywhere; }
+        .ad-dash-money code { font-family: var(--font-mono); }
       `}</style>
     </div>
   );

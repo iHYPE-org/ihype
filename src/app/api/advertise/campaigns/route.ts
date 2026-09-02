@@ -9,7 +9,7 @@ import { readClientAddress } from '@/lib/request-meta';
 import { recordAuditEvent } from '@/lib/audit';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession, settleAdCampaign } from '@/lib/stripe';
-import { describeSettlement } from '@/lib/ad-settlement';
+import { describeSettlement, settlementRecord } from '@/lib/ad-settlement';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
 import {
@@ -339,11 +339,11 @@ export async function PATCH(request: NextRequest) {
     // see ad-settlement-plan.ts).
     let settlement: string | undefined;
     if (ad.stripePaymentIntentId && !ad.settledAt) {
-      const plan = await settleAdCampaign(ad.stripePaymentIntentId, ad.spentCents, ad.budgetCents);
-      settlement = describeSettlement(plan, false);
+      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId, ad.spentCents, ad.budgetCents);
+      settlement = describeSettlement(plan, false, refundId);
       updated = await db.ad.update({
         where: { id },
-        data: { status: 'CANCELLED', pausedAt: null, settledAt: new Date() },
+        data: { status: 'CANCELLED', pausedAt: null, settledAt: new Date(), ...settlementRecord(plan, refundId) },
       });
     } else {
       updated = await db.ad.update({ where: { id }, data: { status: 'CANCELLED', pausedAt: null } });

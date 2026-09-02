@@ -10,7 +10,7 @@ const STATUS_EMAIL_COPY: Record<NotifyStatus, { subject: string; body: string }>
   PENDING: { subject: 'Your iHYPE ad campaign is under review', body: 'is queued for manual review — we\'ll follow up within 48 hours.' },
   AWAITING_PAYMENT: { subject: 'Pay to launch your iHYPE ad campaign', body: 'passed vetting — pay for your campaign to go live. Your card is charged the full budget now, and whatever is not spent by the end of the run is refunded automatically.' },
   PAYMENT_FAILED: { subject: 'Payment failed for your iHYPE ad campaign', body: 'passed vetting, but the payment failed or was abandoned — the campaign was cancelled. Submit a new campaign to try again.' },
-  SETTLED: { subject: 'Your iHYPE ad campaign has ended', body: 'has ended.' },
+  SETTLED: { subject: 'Your iHYPE ad campaign has ended — here is what happened to your budget', body: 'has ended and its budget has been settled.' },
 };
 
 /**
@@ -32,11 +32,13 @@ export async function notifyAdvertiser(
   const copy = STATUS_EMAIL_COPY[status];
   const ctaUrl = status === 'AWAITING_PAYMENT' && checkoutUrl ? checkoutUrl : `${getBaseUrl()}/advertise/dashboard`;
   const ctaLabel = status === 'AWAITING_PAYMENT' && checkoutUrl ? 'Pay for your campaign' : 'View your campaigns';
+  // A settlement sentence is a statement of money moved, not a vetting verdict.
+  const detailLabel = status === 'SETTLED' ? 'Settlement' : 'Reasoning';
   await sendEmailToUser(userId, {
     idempotencyKey,
     to: email,
     subject: copy.subject,
-    text: `Your campaign "${title}" ${copy.body}\n\nReasoning: ${reasoning}\n\n${ctaLabel}: ${ctaUrl}`,
-    html: `<p>Your campaign <strong>${escapeHtml(title)}</strong> ${copy.body}</p><p>Reasoning: ${escapeHtml(reasoning)}</p><p><a href="${escapeHtml(ctaUrl)}">${ctaLabel}</a></p>`,
+    text: `Your campaign "${title}" ${copy.body}\n\n${detailLabel}: ${reasoning}\n\n${ctaLabel}: ${ctaUrl}`,
+    html: `<p>Your campaign <strong>${escapeHtml(title)}</strong> ${copy.body}</p><p>${detailLabel}: ${escapeHtml(reasoning)}</p><p><a href="${escapeHtml(ctaUrl)}">${ctaLabel}</a></p>`,
   });
 }
