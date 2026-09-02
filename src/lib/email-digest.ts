@@ -1,6 +1,7 @@
 import { db } from '@/lib/db';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
+import { escapeHtml } from '@/lib/html-escape';
 
 type DigestResult = { sent: boolean; reason?: string; showCount?: number };
 
@@ -81,7 +82,7 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
 
   const html = `
     <div style="font-family:Arial,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#10182a;">
-      <p>Hi ${name},</p>
+      <p>Hi ${escapeHtml(name)},</p>
       <p>Here are upcoming shows from the artists and venues you hype on iHYPE:</p>
       <ul style="padding-left:18px;line-height:1.6;">
         ${shows
@@ -91,11 +92,13 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
               month: 'short',
               day: 'numeric'
             });
+            // Show titles and profile names are member text: a title written
+            // as markup rendered as a live link under the iHYPE sender.
             const venueLabel = show.venueProfile?.name
-              ? ` @ ${show.venueProfile.name}${show.venueProfile.city ? `, ${show.venueProfile.city}` : ''}`
+              ? ` @ ${escapeHtml(show.venueProfile.name)}${show.venueProfile.city ? `, ${escapeHtml(show.venueProfile.city)}` : ''}`
               : '';
-            const headliner = show.headlinerProfile?.name ? ` — ${show.headlinerProfile.name}` : '';
-            return `<li><strong>${dateLabel}</strong>: ${show.title}${headliner}${venueLabel}</li>`;
+            const headliner = show.headlinerProfile?.name ? ` — ${escapeHtml(show.headlinerProfile.name)}` : '';
+            return `<li><strong>${dateLabel}</strong>: ${escapeHtml(show.title)}${headliner}${venueLabel}</li>`;
           })
           .join('')}
       </ul>

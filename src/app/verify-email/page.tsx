@@ -3,6 +3,7 @@
 import { Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
+import { isSafeLocalRedirect } from '@/lib/auth-redirects';
 
 export default function VerifyEmailPage() {
   return (
@@ -44,7 +45,12 @@ function VerifyEmailForm() {
         body: JSON.stringify({ action: 'confirm', code }),
       });
       if (res.ok) {
-        router.push(searchParams.get('callbackUrl') || '/');
+        /* Same-origin paths only. `router.push` hard-navigates to an absolute
+           URL, so an unchecked `callbackUrl` sent a member who had just typed
+           a real code to whatever site the link named (security sweep,
+           2026-09-02). */
+        const callbackUrl = searchParams.get('callbackUrl');
+        router.push(isSafeLocalRedirect(callbackUrl) ? callbackUrl : '/');
         router.refresh();
         return;
       }

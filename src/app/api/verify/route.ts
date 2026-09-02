@@ -7,6 +7,13 @@ import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 const MAX_BYTES = 8 * 1024 * 1024;
 const ALLOWED_TYPES = new Set(['image/jpeg', 'image/png', 'application/pdf']);
 
+function proofBytesMatchType(bytes: Buffer, type: string): boolean {
+  if (type === 'image/jpeg') return bytes.length > 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  if (type === 'image/png') return bytes.length > 8 && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+  if (type === 'application/pdf') return bytes.length > 5 && bytes.subarray(0, 5).toString('latin1') === '%PDF-';
+  return false;
+}
+
 // Applicant-facing proof-of-identity submission — distinct from the admin
 // review side (GET/PATCH /api/admin/verifications/[profileId]). Sets the
 // same Profile.verificationStatus/verificationSubmittedAt fields the admin
@@ -70,6 +77,13 @@ export async function POST(request: Request) {
     if (!ALLOWED_TYPES.has(file.type)) return NextResponse.json({ error: 'Must be a JPEG, PNG, or PDF' }, { status: 400 });
 
     const buffer = Buffer.from(await file.arrayBuffer());
+    /* The bytes have to BE the type the client declared. Every other upload in
+       the app sniffs its magic bytes and this one trusted `file.type` — the
+       one field a client sets freely — so anything at all could be stored as
+       "a PDF" and later opened by the admin (security sweep, 2026-09-02). */
+    if (!proofBytesMatchType(buffer, file.type)) {
+      return NextResponse.json({ error: 'File content does not match its type — upload the original JPEG, PNG or PDF.' }, { status: 400 });
+    }
     const base64 = buffer.toString('base64');
     const dataUrl = `data:${file.type};base64,${base64}`;
 

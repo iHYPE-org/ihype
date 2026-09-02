@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import { ModerationActions } from '@/components/ModerationActions';
 import { getServerT } from '@/lib/i18n/server';
+import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,9 @@ type SearchParams = { status?: string; type?: string; page?: string };
 
 export default async function ModerationPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
   const session = await auth();
-  if (session?.user?.role !== 'ADMIN') redirect('/');
+  // The same check every other admin page runs, so none of them relies on the
+  // layout's redirect alone (a streamed page cannot be stopped by its layout).
+  if (!isAdminSession(session)) redirect('/');
 
   const t = await getServerT();
   const sp = (await searchParams) ?? {};

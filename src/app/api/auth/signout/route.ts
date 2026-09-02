@@ -28,6 +28,15 @@ function signOut(request: NextRequest) {
 }
 
 export function GET(request: NextRequest) {
+  /* A GET that clears the session is a cross-site logout: any page can embed
+     `<img src="https://ihype.org/api/auth/signout">`. The GET stays because
+     plain "Sign out" links depend on it, but a cross-site fetch is refused —
+     browsers label every request with `Sec-Fetch-Site`, and a top-level
+     navigation from our own page reads `same-origin` (or `none` for a typed
+     URL), never `cross-site`. (Security sweep, 2026-09-02.) */
+  if (request.headers.get('sec-fetch-site') === 'cross-site') {
+    return NextResponse.redirect(new URL('/', request.url));
+  }
   return signOut(request);
 }
 

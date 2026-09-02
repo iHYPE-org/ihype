@@ -1,5 +1,6 @@
 import { db } from '@/lib/db';
 import { sendMarketingEmail } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 
 async function getUserForEmail(userId: string) {
   return db.user.findUnique({
@@ -9,7 +10,9 @@ async function getUserForEmail(userId: string) {
 }
 
 function wrapText(text: string): string {
-  return `<pre style="font-family:sans-serif;white-space:pre-wrap">${text}</pre>`;
+  // The text carries the member's own display name; a name written as markup
+  // must render as text, not as markup.
+  return `<pre style="font-family:sans-serif;white-space:pre-wrap">${escapeHtml(text)}</pre>`;
 }
 
 export async function sendDay1Email(userId: string): Promise<void> {

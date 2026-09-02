@@ -32,9 +32,11 @@ import { readRuntimeEnv } from '@/lib/runtime-env';
 function clampAdminRole(role: string | undefined, email: string | null | undefined): string | undefined {
   if (role !== 'ADMIN') return role;
   if (isAllowedAdminEmail(email, readRuntimeEnv('ADMIN_ALLOWED_EMAILS'))) return role;
+  /* The domain is enough to tell "the owner's old address" from "a stranger";
+     the full address is PII that would otherwise sit in Sentry indefinitely. */
   log.error(
     '[auth] ADMIN role refused — address is not on the admin allowlist',
-    { email: email ?? null },
+    { emailDomain: email?.includes('@') ? email.slice(email.indexOf('@') + 1) : null },
     'error',
   );
   return 'FAN';

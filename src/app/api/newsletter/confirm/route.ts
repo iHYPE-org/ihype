@@ -1,9 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
-function htmlPage(heading: string, body: string, status: number) {
+/* `heading` and `body` are escaped HERE, not by the callers, because one of
+   them carries `Profile.name` — member-supplied text — and this route sits
+   outside the CSP middleware. Before 2026-09-02 a name containing markup ran
+   as script for anyone who clicked a real confirmation link. */
+function htmlPage(rawHeading: string, rawBody: string, status: number) {
+  const heading = escapeHtml(rawHeading);
+  const body = escapeHtml(rawBody);
   return new NextResponse(
     `<!doctype html>
 <html lang="en">

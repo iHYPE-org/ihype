@@ -32,6 +32,9 @@ export async function GET() {
         country: true,
         contactInfo: true,
         verificationNotes: true,
+        // Selected only to report WHETHER a document was attached; the bytes
+        // are served by GET /api/admin/verifications/[profileId]/proof.
+        verificationProofUrl: true,
         verificationStatus: true,
         verificationSubmittedAt: true,
         verificationReviewedAt: true,
@@ -50,7 +53,12 @@ export async function GET() {
       orderBy: [{ verificationSubmittedAt: 'asc' }, { createdAt: 'asc' }]
     });
 
-    return NextResponse.json({ profiles });
+    return NextResponse.json({
+      profiles: profiles.map(({ verificationProofUrl, ...profile }) => ({
+        ...profile,
+        hasProof: Boolean(verificationProofUrl),
+      })),
+    });
   } catch (err) {
     log.error('[api/admin/verifications]', err instanceof Error ? err : { error: String(err) }, 'error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

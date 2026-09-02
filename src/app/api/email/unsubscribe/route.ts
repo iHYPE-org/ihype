@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyUnsubscribeToken } from '@/lib/unsubscribe';
+import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,11 @@ const OPT_OUT = {
   weeklyDigest: false
 } as const;
 
-function htmlPage(heading: string, body: string, status: number) {
+// Every caller passes constants today; escaped anyway so the next caller who
+// interpolates a name does not reopen the hole `/api/newsletter/confirm` had.
+function htmlPage(rawHeading: string, rawBody: string, status: number) {
+  const heading = escapeHtml(rawHeading);
+  const body = escapeHtml(rawBody);
   return new NextResponse(
     `<!doctype html>
 <html lang="en">

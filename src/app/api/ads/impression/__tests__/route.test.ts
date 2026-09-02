@@ -22,15 +22,20 @@ vi.mock('@/lib/db', () => {
   return { db };
 });
 
-vi.mock('@/lib/auth', () => ({ auth: vi.fn().mockResolvedValue(null) }));
+// A signed-in listener by default: since the 2026-09-02 sweep an anonymous
+// caller is refused outright, because an impression spends real budget.
+vi.mock('@/lib/auth', () => ({ auth: vi.fn().mockResolvedValue({ user: { id: 'listener_1' } }) }));
 vi.mock('@/lib/rate-limit', () => ({
   consumeRateLimit: vi.fn().mockResolvedValue({ allowed: true, retryAfterSeconds: 0 }),
 }));
 vi.mock('@/lib/request-meta', () => ({ readClientAddress: vi.fn().mockReturnValue('9.9.9.9') }));
 
 import { db } from '@/lib/db';
+import { auth } from '@/lib/auth';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { POST } from '@/app/api/ads/impression/route';
+
+const mockAuth = auth as unknown as ReturnType<typeof vi.fn>;
 
 const mockDb = db as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
 const mockRate = consumeRateLimit as unknown as ReturnType<typeof vi.fn>;
@@ -47,6 +52,7 @@ function post(body: unknown) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockAuth.mockResolvedValue({ user: { id: 'listener_1' } });
   mockRate.mockResolvedValue({ allowed: true, retryAfterSeconds: 0 });
   mockDb.ad.findUnique.mockResolvedValue(null);
   mockDb.ad.updateMany.mockResolvedValue({ count: 1 });
@@ -137,6 +143,23 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     const res = await post({ adId: 'a1' });
     expect(res.status).toBe(429);
     expect(mockDb.ad.findUnique).not.toHaveBeenCalled();
+  });
+
+  it('refuses an anonymous caller before any DB work — adId is public and every hit spends budget', async () => {
+    mockAuth.mockResolvedValue(null);
+    mockDb.ad.findUnique.mockResolvedValue(ad());
+    const res = await post({ adId: 'a1' });
+    expect(res.status).toBe(401);
+    expect(mockDb.ad.findUnique).not.toHaveBeenCalled();
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('charges one listener once per ad per day', async () => {
+    mockDb.ad.findUnique.mockResolvedValue(ad());
+    mockDb.adImpression.findFirst.mockResolvedValue({ id: 'imp_1' });
+    const res = await post({ adId: 'a1' });
+    expect(await res.json()).toEqual({ ok: true, skipped: true });
+    expect(mockDb.ad.updateMany).not.toHaveBeenCalled();
   });
 
   it('requires an adId', async () => {

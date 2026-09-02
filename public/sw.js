@@ -18,7 +18,10 @@ const STATIC_ASSETS = [
 const CORE_PAGES = [
   '/',
   '/hype',
-  '/tickets',
+  // `/tickets` used to be precached here. It is a signed-in page listing one
+  // account's tickets, so precaching it stored one person's HTML for the next
+  // person on a shared device (security sweep, 2026-09-02). The TICKETS_CACHE
+  // below still holds the ticket API responses the offline wallet needs.
   // Precached so the real offline page is available when there is no network.
   // Install runs on a first visit while still online, so by the time it is
   // needed it is already here. See offlineFallback().
@@ -47,8 +50,35 @@ const NETWORK_ONLY_PATHS = [
   '/register',
   '/forgot',
   '/index.html',
-  '/api'
+  '/api',
+  // Signed-in surfaces outside /app that were being written to PAGE_CACHE
+  // (security sweep, 2026-09-02). The denylist is a second line: the caching
+  // helpers below also refuse any response the server marks private/no-store,
+  // which is what every dynamic signed-in page carries.
+  '/tickets',
+  '/settings',
+  '/me',
+  '/payouts',
+  '/payout',
+  '/support',
+  '/advertise/dashboard',
+  '/events/new',
+  '/verify',
+  '/verify-email',
+  '/welcome'
 ];
+
+// A response the server marked as private, or told us not to store, is one
+// account's page and must never land in the Cache API. Next.js sends exactly
+// this header on every dynamically rendered page, so honouring it protects
+// signed-in surfaces the denylist above does not name.
+function isCacheable(response) {
+  if (!response || !response.ok) return false;
+  const cacheControl = (response.headers.get('Cache-Control') || '').toLowerCase();
+  if (cacheControl.includes('no-store') || cacheControl.includes('private')) return false;
+  if (response.headers.get('Set-Cookie')) return false;
+  return true;
+}
 
 // Paths that should use stale-while-revalidate (ticket availability changes frequently)
 const SWR_PATHS = [
@@ -199,7 +229,7 @@ async function staleWhileRevalidate(request, cacheName) {
   const cached = await cache.match(request);
   const networkFetch = fetch(request)
     .then((response) => {
-      if (response.ok) cache.put(request, response.clone());
+      if (isCacheable(response)) cache.put(request, response.clone());
       return response;
     })
     .catch(() => null);
@@ -210,7 +240,7 @@ async function staleWhileRevalidate(request, cacheName) {
 async function networkWithCacheFallback(request, cacheName) {
   try {
     const response = await fetch(request);
-    if (response.ok && request.method === 'GET') {
+    if (isCacheable(response) && request.method === 'GET') {
       const cache = await caches.open(cacheName);
       await cache.put(request, response.clone());
     }

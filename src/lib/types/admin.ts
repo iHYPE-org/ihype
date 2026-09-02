@@ -9,6 +9,8 @@ export type VerificationProfile = {
   country: string | null;
   contactInfo: string | null;
   verificationNotes: string | null;
+  /** A proof document is attached; open it via /api/admin/verifications/[id]/proof. */
+  hasProof?: boolean;
   verificationStatus: string;
   verificationSubmittedAt: Date | string | null;
   verificationReviewedAt: Date | string | null;
