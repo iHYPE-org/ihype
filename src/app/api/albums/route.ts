@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { log } from '@/lib/logger';
+import { albumRelease, isReleaseInput, parseReleaseInput } from '@/lib/release-schedule';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +21,12 @@ export const dynamic = 'force-dynamic';
  */
 const MAX_ALBUMS_PER_PROFILE = 50;
 
+const releaseInput = z.string().refine(isReleaseInput, 'Invalid release date.');
+
 const createSchema = z.object({
   profileId: z.string().min(1).max(64),
   title: z.string().trim().min(1).max(120),
-  releasedOn: z.string().date().optional(),
+  releasedOn: releaseInput.optional(),
 });
 
 async function ownedArtist(profileId: string, session: Session | null) {
@@ -53,7 +56,8 @@ export async function GET(request: Request) {
       id: album.id,
       title: album.title,
       artworkUrl: album.artworkUrl,
-      releasedOn: album.releasedOn ? album.releasedOn.toISOString().slice(0, 10) : null,
+      releasedOn: album.releasedOn ? album.releasedOn.toISOString() : null,
+      release: albumRelease(album.releasedOn) ? (album.releasedOn!.getTime() <= Date.now() ? 'live' : 'scheduled') : 'undated',
       sortOrder: album.sortOrder,
       trackCount: album._count.tracks,
     })),
@@ -74,11 +78,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `A profile can hold ${MAX_ALBUMS_PER_PROFILE} albums.` }, { status: 400 });
     }
     const album = await db.album.create({
-      data: { profileId, title, releasedOn: releasedOn ? new Date(`${releasedOn}T00:00:00.000Z`) : null, sortOrder: count },
+      data: { profileId, title, releasedOn: releasedOn ? parseReleaseInput(releasedOn) : null, sortOrder: count },
       select: { id: true, title: true, artworkUrl: true, releasedOn: true, sortOrder: true },
     });
     return NextResponse.json(
-      { album: { ...album, releasedOn: album.releasedOn ? album.releasedOn.toISOString().slice(0, 10) : null, trackCount: 0 } },
+      { album: { ...album, releasedOn: album.releasedOn ? album.releasedOn.toISOString() : null, trackCount: 0 } },
       { status: 201 },
     );
   } catch (error) {

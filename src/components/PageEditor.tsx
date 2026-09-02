@@ -19,8 +19,22 @@ import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 type AvailabilityEntry = { id: string; date: string; note: string | null; kind?: 'TOUR' | 'AVAILABLE' };
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
 /* Albums, the folder version (2026-09-02). See /api/albums. */
-type AlbumRow = { id: string; title: string; artworkUrl: string | null; releasedOn: string | null; sortOrder: number; trackCount: number };
-type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; createdAt: string };
+type AlbumRow = { id: string; title: string; artworkUrl: string | null; releasedOn: string | null; release: 'live' | 'scheduled' | 'undated'; sortOrder: number; trackCount: number };
+type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; createdAt: string };
+
+/** Live · Scheduled · Held, from the two release columns (release-schedule.ts). */
+function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string): string {
+  if (!track.isPublished && !track.publishAt) return t('pageEditor.releaseHeld', 'Held for review');
+  if (track.isPublished && (!track.publishAt || new Date(track.publishAt).getTime() <= Date.now())) return t('pageEditor.releaseLive', 'Live');
+  return `${t('pageEditor.releaseScheduled', 'Scheduled')} · ${new Date(track.publishAt as string).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+}
+/** A `datetime-local` value for an ISO instant, in the viewer's zone. */
+function toLocalInput(iso: string | null): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
 /* One tile of the owner's stats board — see src/lib/profile-stat-board.ts.
    `value: null` is "could not read", rendered as a dash, never as 0. */
 type StatBoardEntry = { key: string; label: string; hint: string; value: number | null };
@@ -143,7 +157,7 @@ function TextAreaField({ value, onChange, placeholder, rows = 4, maxLength }: { 
   return <textarea maxLength={maxLength} onChange={(e) => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={{ ...inputStyle, resize: 'vertical', fontFamily: 'var(--font-body)', lineHeight: 1.5 }} value={value} />;
 }
 
-function ImageField({ label, value, onUpload, uploading }: { label: string; value: string | null; onUpload: (file: File) => void; uploading: boolean }) {
+function ImageField({ label, value, onUpload, uploading, onRemove }: { label: string; value: string | null; onUpload: (file: File) => void; uploading: boolean; onRemove?: () => void }) {
   const { t } = useI18n();
   const inputRef = useRef<HTMLInputElement>(null);
   return (
@@ -164,6 +178,17 @@ function ImageField({ label, value, onUpload, uploading }: { label: string; valu
           >
             {uploading ? t('pageEditor.imageUploading', 'Uploading…') : value ? t('pageEditor.imageReplace', 'Replace image') : t('pageEditor.imageUpload', 'Upload image')}
           </button>
+          {value && onRemove && (
+            <button
+              className="settings-btn settings-btn-ghost"
+              disabled={uploading}
+              onClick={onRemove}
+              style={{ marginLeft: 8 }}
+              type="button"
+            >
+              {t('pageEditor.imageRemove', 'Remove')}
+            </button>
+          )}
           <input
             accept="image/jpeg,image/png,image/gif,image/webp"
             hidden
@@ -240,6 +265,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const [albumBusy, setAlbumBusy] = useState<string | null>(null);
   const [albumError, setAlbumError] = useState<string | null>(null);
   const albumArtInputs = useRef<Record<string, HTMLInputElement | null>>({});
+  const trackArtInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const loadMedia = useCallback(() => {
     fetch(`/api/albums?profileId=${profileId}`)
@@ -467,6 +493,14 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
     await albumRequest(`/api/albums/${albumId}/artwork`, { method: 'POST', body: formData }, `art:${albumId}`);
   }
 
+  async function uploadTrackArt(hexId: string, file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    await albumRequest(`/api/artist-media/${hexId}/artwork`, { method: 'POST', body: formData }, `trackart:${hexId}`);
+  }
+
+  const jsonPatch = (body: unknown): RequestInit => ({ method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+
   async function uploadImage(field: 'heroImage' | 'avatarImage' | 'logoImage' | 'galleryImage', file: File) {
     setUploadingField(field);
     setError(null);
@@ -621,9 +655,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
           {isVenue && (
             <>
-              <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
-              <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
-              <ImageField label={t('pageEditor.galleryCoverLabel', 'Room photo')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
+              <ImageField label={t('pageEditor.logoLabel', 'Logo')} onRemove={() => set('logoImage', null)} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
+              <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onRemove={() => set('heroImage', null)} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
+              <ImageField label={t('pageEditor.galleryCoverLabel', 'Room photo')} onRemove={() => set('galleryImage', null)} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
             </>
           )}
 
@@ -755,7 +789,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               nowhere in the editor, so the one section named Media held four
               image slots and no music. TrackUploadPanel is the same component,
               mounted where an owner looks for it. */}
-          <TrackUploadPanel onUploaded={loadMedia} profileId={profileId} />
+          <TrackUploadPanel albums={albums ?? []} onUploaded={loadMedia} profileId={profileId} />
 
           {/* ── Albums ─────────────────────────────────────────────────
               A folder with a title, a date and one cover; tracks are filed
@@ -827,11 +861,36 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                           style={{ ...inputStyle, padding: '8px 10px' }}
                           type="text"
                         />
-                        <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 4 }}>
-                          {[
-                            album.releasedOn ?? null,
-                            `${album.trackCount} ${album.trackCount === 1 ? t('pageEditor.trackSingular', 'track') : t('pageEditor.trackPlural', 'tracks')}`,
-                          ].filter(Boolean).join(' · ')}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 6 }}>
+                          <span>{`${album.trackCount} ${album.trackCount === 1 ? t('pageEditor.trackSingular', 'track') : t('pageEditor.trackPlural', 'tracks')}`}</span>
+                          <span>·</span>
+                          {/* The album's release moment. Setting a future date schedules
+                              every track in the folder; "Launch now" releases them. */}
+                          <input
+                            aria-label={t('pageEditor.albumReleaseDate', 'Release date and time')}
+                            defaultValue={toLocalInput(album.releasedOn)}
+                            disabled={albumBusy !== null}
+                            onBlur={(e) => {
+                              const v = e.target.value;
+                              const next = v ? new Date(v).toISOString() : null;
+                              if (next !== album.releasedOn) {
+                                void albumRequest(`/api/albums/${album.id}`, jsonPatch({ releasedOn: next }), `date:${album.id}`);
+                              }
+                            }}
+                            style={{ ...inputStyle, width: 'auto', padding: '6px 8px', fontSize: '0.9375rem' }}
+                            type="datetime-local"
+                          />
+                          {album.release === 'scheduled' && (
+                            <button
+                              className="settings-btn settings-btn-ghost"
+                              disabled={albumBusy !== null}
+                              onClick={() => { void albumRequest(`/api/albums/${album.id}`, jsonPatch({ releasedOn: 'now' }), `launch:${album.id}`); }}
+                              type="button"
+                            >
+                              {t('pageEditor.launchNow', 'Launch now')}
+                            </button>
+                          )}
+                          {album.release === 'scheduled' && <span>{t('pageEditor.releaseScheduled', 'Scheduled')}</span>}
                         </div>
                       </div>
                       <input
@@ -849,11 +908,25 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                       >
                         {albumBusy === `art:${album.id}` ? t('pageEditor.uploading', 'Uploading…') : album.artworkUrl ? t('pageEditor.replaceCover', 'Replace cover') : t('pageEditor.addCover', 'Add cover')}
                       </button>
+                      {album.artworkUrl && (
+                        <button
+                          className="settings-btn settings-btn-ghost"
+                          disabled={albumBusy !== null}
+                          onClick={() => { void albumRequest(`/api/albums/${album.id}`, jsonPatch({ artworkUrl: null }), `unart:${album.id}`); }}
+                          type="button"
+                        >
+                          {t('pageEditor.removeCover', 'Remove cover')}
+                        </button>
+                      )}
                       <button
                         aria-label={t('pageEditor.deleteAlbum', 'Delete album')}
                         className="settings-btn settings-btn-ghost"
                         disabled={albumBusy !== null}
-                        onClick={() => { void albumRequest(`/api/albums/${album.id}`, { method: 'DELETE' }, `delete:${album.id}`); }}
+                        onClick={() => {
+                          if (window.confirm(t('pageEditor.deleteAlbumConfirm', 'Delete this album? Its tracks stay up as singles.'))) {
+                            void albumRequest(`/api/albums/${album.id}`, { method: 'DELETE' }, `delete:${album.id}`);
+                          }
+                        }}
                         title={t('pageEditor.deleteAlbumHint', 'Deletes the folder. Its tracks stay up as singles.')}
                         type="button"
                       >
@@ -886,13 +959,58 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                           : 'var(--hair-50)',
                         border: '1px solid var(--hair-100)',
                       }} />
-                      <span style={{ flex: 1, minWidth: 0, fontSize: '0.9375rem', color: 'var(--ink)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</span>
+                      <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                        <input
+                          aria-label={t('pageEditor.trackTitleLabel', 'Track title')}
+                          defaultValue={track.title}
+                          disabled={albumBusy !== null}
+                          maxLength={200}
+                          onBlur={(e) => {
+                            const title = e.target.value.trim();
+                            if (title && title !== track.title) void albumRequest(`/api/artist-media/${track.hexId}`, jsonPatch({ title }), `title:${track.hexId}`);
+                          }}
+                          style={{ ...inputStyle, padding: '6px 8px' }}
+                          type="text"
+                        />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
+                          <span>{trackReleaseLabel(track, t)}</span>
+                          {/* Release controls. A held track shows none: the hold is
+                              lifted in review, not by the artist's date picker. */}
+                          {(track.isPublished || track.publishAt) && (
+                            <>
+                              <input
+                                aria-label={t('pageEditor.trackReleaseAt', 'Release date and time')}
+                                defaultValue={toLocalInput(track.publishAt)}
+                                disabled={albumBusy !== null}
+                                onBlur={(e) => {
+                                  const v = e.target.value;
+                                  const next = v ? new Date(v).toISOString() : 'now';
+                                  const current = track.publishAt ?? 'now';
+                                  if (next !== current) void albumRequest(`/api/artist-media/${track.hexId}`, jsonPatch({ release: next }), `rel:${track.hexId}`);
+                                }}
+                                style={{ ...inputStyle, width: 'auto', padding: '4px 8px', fontSize: '0.9375rem' }}
+                                type="datetime-local"
+                              />
+                              {!track.isPublished && (
+                                <button
+                                  className="settings-btn settings-btn-ghost"
+                                  disabled={albumBusy !== null}
+                                  onClick={() => { void albumRequest(`/api/artist-media/${track.hexId}`, jsonPatch({ release: 'now' }), `launch:${track.hexId}`); }}
+                                  type="button"
+                                >
+                                  {t('pageEditor.launchNow', 'Launch now')}
+                                </button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
                       <select
                         aria-label={t('pageEditor.trackAlbumLabel', 'Album')}
                         disabled={albumBusy !== null || !albums}
                         onChange={(e) => {
                           const albumId = e.target.value || null;
-                          void albumRequest(`/api/artist-media/${track.hexId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ albumId }) }, `track:${track.hexId}`);
+                          void albumRequest(`/api/artist-media/${track.hexId}`, jsonPatch({ albumId }), `track:${track.hexId}`);
                         }}
                         style={{ ...inputStyle, width: 'auto', padding: '8px 10px' }}
                         value={track.albumId ?? ''}
@@ -900,6 +1018,45 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                         <option value="">{t('pageEditor.singleOption', 'Single')}</option>
                         {(albums ?? []).map((album) => <option key={album.id} value={album.id}>{album.title}</option>)}
                       </select>
+                      <input
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        hidden
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadTrackArt(track.hexId, f); e.target.value = ''; }}
+                        ref={(el) => { trackArtInputs.current[track.hexId] = el; }}
+                        type="file"
+                      />
+                      <button
+                        className="settings-btn settings-btn-ghost"
+                        disabled={albumBusy !== null}
+                        onClick={() => trackArtInputs.current[track.hexId]?.click()}
+                        type="button"
+                      >
+                        {albumBusy === `trackart:${track.hexId}` ? t('pageEditor.uploading', 'Uploading…') : track.artworkUrl ? t('pageEditor.replaceCover', 'Replace cover') : t('pageEditor.addCover', 'Add cover')}
+                      </button>
+                      {track.artworkUrl && (
+                        <button
+                          className="settings-btn settings-btn-ghost"
+                          disabled={albumBusy !== null}
+                          onClick={() => { void albumRequest(`/api/artist-media/${track.hexId}`, jsonPatch({ artworkUrl: null }), `unart:${track.hexId}`); }}
+                          type="button"
+                        >
+                          {t('pageEditor.removeCover', 'Remove cover')}
+                        </button>
+                      )}
+                      <button
+                        aria-label={t('pageEditor.deleteTrack', 'Delete track')}
+                        className="settings-btn settings-btn-ghost"
+                        disabled={albumBusy !== null}
+                        onClick={() => {
+                          if (window.confirm(t('pageEditor.deleteTrackConfirm', 'Delete this track? Its audio and cover are removed and cannot be recovered.'))) {
+                            void albumRequest(`/api/artist-media/${track.hexId}`, { method: 'DELETE' }, `deltrack:${track.hexId}`);
+                          }
+                        }}
+                        title={t('pageEditor.deleteTrackHint', 'Removes the track, its audio and its cover.')}
+                        type="button"
+                      >
+                        ✕
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -908,10 +1065,10 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
           </div>
 
           <div style={{ marginTop: 22 }}>
-            <ImageField label={t('pageEditor.avatarLabel', 'Avatar')} onUpload={(f) => uploadImage('avatarImage', f)} uploading={uploadingField === 'avatarImage'} value={data.avatarImage} />
-            <ImageField label={t('pageEditor.logoLabel', 'Logo')} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
-            <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
-            <ImageField label={t('pageEditor.galleryCoverLabel', 'Gallery cover')} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
+            <ImageField label={t('pageEditor.avatarLabel', 'Avatar')} onRemove={() => set('avatarImage', null)} onUpload={(f) => uploadImage('avatarImage', f)} uploading={uploadingField === 'avatarImage'} value={data.avatarImage} />
+            <ImageField label={t('pageEditor.logoLabel', 'Logo')} onRemove={() => set('logoImage', null)} onUpload={(f) => uploadImage('logoImage', f)} uploading={uploadingField === 'logoImage'} value={data.logoImage} />
+            <ImageField label={t('pageEditor.heroBannerLabel', 'Hero banner')} onRemove={() => set('heroImage', null)} onUpload={(f) => uploadImage('heroImage', f)} uploading={uploadingField === 'heroImage'} value={data.heroImage} />
+            <ImageField label={t('pageEditor.galleryCoverLabel', 'Gallery cover')} onRemove={() => set('galleryImage', null)} onUpload={(f) => uploadImage('galleryImage', f)} uploading={uploadingField === 'galleryImage'} value={data.galleryImage} />
           </div>
         </div>
       )}

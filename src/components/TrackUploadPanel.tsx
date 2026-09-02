@@ -22,12 +22,17 @@ const STAGGER_MS = 550;
  * exactly two values and only `"ARTIST"` was ever passed — `/promoters/[slug]`,
  * the one mount that sent `"DJ"`, was deleted in step 2c of the DJ removal.
  */
+type AlbumOption = { id: string; title: string; releasedOn: string | null };
+
 export function TrackUploadPanel({
   profileId,
   onUploaded,
+  albums = [],
 }: {
   profileId: string;
   onUploaded?: () => void;
+  /** The artist's album folders, so a track can be filed at upload. */
+  albums?: AlbumOption[];
 }) {
   const { t } = useI18n();
   const router = useRouter();
@@ -36,6 +41,12 @@ export function TrackUploadPanel({
   const [freeUseEnabled, setFreeUseEnabled] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [artworkFile, setArtworkFile] = useState<File | null>(null);
+  /* Launch now, or on a date the artist picks (owner, 2026-09-02). The date
+     is a local datetime in the picker and an ISO instant on the wire. Filing
+     into a dated album with "now" selected takes the album's date server-side. */
+  const [releaseMode, setReleaseMode] = useState<'now' | 'schedule'>('now');
+  const [releaseAt, setReleaseAt] = useState('');
+  const [albumId, setAlbumId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanLayers, setScanLayers] = useState<ScanLayer[] | null>(null);
@@ -79,6 +90,10 @@ export function TrackUploadPanel({
   async function submit() {
     if (!file) { setError(t('trackUploadPanel.chooseAudioFileError', 'Choose an audio file first.')); return; }
     if (!title.trim()) { setError(t('trackUploadPanel.giveTrackTitleError', 'Give the track a title.')); return; }
+    if (releaseMode === 'schedule' && (!releaseAt || Number.isNaN(new Date(releaseAt).getTime()))) {
+      setError(t('trackUploadPanel.pickReleaseDateError', 'Pick a release date and time, or choose "Now".'));
+      return;
+    }
     setSubmitting(true);
     setError(null);
     setScanLayers(null);
@@ -92,6 +107,8 @@ export function TrackUploadPanel({
       formData.set('freeUseEnabled', String(freeUseEnabled));
       formData.set('file', file);
       if (artworkFile) formData.set('artwork', artworkFile);
+      if (releaseMode === 'schedule' && releaseAt) formData.set('publishAt', new Date(releaseAt).toISOString());
+      if (albumId) formData.set('albumId', albumId);
 
       const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
       const data = await response.json();
@@ -107,6 +124,8 @@ export function TrackUploadPanel({
       setFreeUseEnabled(false);
       setFile(null);
       setArtworkFile(null);
+      setReleaseMode('now');
+      setReleaseAt('');
       onUploaded?.();
       router.refresh();
     } catch {
@@ -161,6 +180,42 @@ export function TrackUploadPanel({
           rows={2}
           value={notes}
         />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', fontSize: '0.9375rem' }}>
+          <span style={{ fontWeight: 600 }}>{t('trackUploadPanel.releaseLabel', 'Release')}</span>
+          {(['now', 'schedule'] as const).map((mode) => (
+            <button
+              key={mode}
+              aria-pressed={releaseMode === mode}
+              className={releaseMode === mode ? 'sub-tab active' : 'sub-tab'}
+              disabled={submitting}
+              onClick={() => setReleaseMode(mode)}
+              type="button"
+            >
+              {mode === 'now' ? t('trackUploadPanel.releaseNow', 'Now') : t('trackUploadPanel.releaseOnDate', 'On a date')}
+            </button>
+          ))}
+          {releaseMode === 'schedule' && (
+            <input
+              aria-label={t('trackUploadPanel.releaseAtLabel', 'Release date and time')}
+              className="field"
+              disabled={submitting}
+              min={new Date(Date.now() - 60_000).toISOString().slice(0, 16)}
+              onChange={(e) => setReleaseAt(e.target.value)}
+              style={{ flex: '1 1 200px' }}
+              type="datetime-local"
+              value={releaseAt}
+            />
+          )}
+        </div>
+        {albums.length > 0 && (
+          <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.9375rem' }}>
+            {t('trackUploadPanel.albumLabel', 'Album (optional)')}
+            <select className="field" disabled={submitting} onChange={(e) => setAlbumId(e.target.value)} value={albumId}>
+              <option value="">{t('trackUploadPanel.singleOption', 'Single')}</option>
+              {albums.map((album) => <option key={album.id} value={album.id}>{album.title}</option>)}
+            </select>
+          </label>
+        )}
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.9375rem' }}>
           <input
             checked={freeUseEnabled}

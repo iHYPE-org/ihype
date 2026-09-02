@@ -10,6 +10,7 @@ import { areDatabaseMediaUploadsEnabledRuntime, areUploadsEnabledRuntime } from 
 import { AUDIO_SNIFF_BYTES, PLAYABLE_AUDIO_FORMATS_LABEL, sniffAudio } from '@/lib/validate-upload';
 import { parseAudioDuration } from '@/lib/audio-duration';
 import { runTrackScanPipeline } from '@/lib/media-vetting';
+import { albumRelease, resolveRelease } from '@/lib/release-schedule';
 import { isObjectStorageConfigured, storeMediaFile } from '@/lib/object-storage';
 import { vetImageUpload } from '@/lib/image-vetting';
 import { recordAuditEvent } from '@/lib/audit';
@@ -78,6 +79,8 @@ export async function GET(request: Request) {
         freeUseEnabled: true,
         artworkUrl: true,
         albumId: true,
+        isPublished: true,
+        publishAt: true,
         createdAt: true,
       },
     }),
@@ -141,6 +144,16 @@ export async function POST(request: Request) {
     const requestedTitle = String(formData.get('title') ?? '').trim().slice(0, 200);
     const notesValue = String(formData.get('notes') ?? '').trim().slice(0, 1000);
     const freeUseEnabled = String(formData.get('freeUseEnabled') ?? '').toLowerCase() === 'true';
+    /* Release: absent/'now' launches the moment the scan clears; an ISO instant
+       in the future schedules it (the publish-scheduled cron flips it live and
+       tells the artist). An album id files the track into a folder, and a
+       folder with a future date sets the track's date when none was given. */
+    const releaseInput = formData.get('publishAt');
+    const release = resolveRelease(typeof releaseInput === 'string' ? releaseInput : undefined);
+    if (!release) {
+      return NextResponse.json({ error: 'Release date could not be read.' }, { status: 400 });
+    }
+    const albumIdInput = String(formData.get('albumId') ?? '').trim().slice(0, 64) || null;
     const file = formData.get('file');
     const artworkFile = formData.get('artwork');
 
@@ -215,6 +228,15 @@ export async function POST(request: Request) {
         { status: 403 },
       );
     }
+
+    let album: { id: string; releasedOn: Date | null } | null = null;
+    if (albumIdInput) {
+      album = await withDbRetry(() => db.album.findFirst({ where: { id: albumIdInput, profileId: profile.id }, select: { id: true, releasedOn: true } }));
+      if (!album) return NextResponse.json({ error: 'That album is not on this profile.' }, { status: 400 });
+    }
+    const effectiveRelease = (typeof releaseInput === 'string' && releaseInput !== '' && releaseInput !== 'now')
+      ? release
+      : (album ? albumRelease(album.releasedOn) ?? release : release);
 
     const title = (requestedTitle || deriveTitleFromFileName(file.name)).slice(0, 160);
     const hexId = createHexId();
@@ -347,6 +369,8 @@ export async function POST(request: Request) {
               durationSecs,
               artworkUrl,
               profileId: profile.id,
+              albumId: album?.id ?? null,
+              publishAt: effectiveRelease.publishAt,
               isPublished: false,
             },
             select: { id: true },
@@ -368,7 +392,10 @@ export async function POST(request: Request) {
             storageProvider: storedMedia?.provider ?? 'database',
             storageKey: storedMedia?.key ?? null,
             storageUrl: storedMedia?.url ?? null,
-            isPublished: vetting.cleared,
+            /* Live only if the scan cleared it AND the artist said "now". A
+               scheduled track stays unpublished with its date set; the
+               publish-scheduled cron flips it on and tells the artist. */
+            isPublished: vetting.cleared && effectiveRelease.isPublished,
           },
           select: {
             hexId: true,
