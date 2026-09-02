@@ -468,8 +468,10 @@ export function MmmMap({
     <div className="mmm-map-layer">
       {/* The document's name. The shell does not render the route's children
           while the map is the surface, so the heading lives here — visually
-          hidden, since the dock's knob already reads MAP. */}
-      <h1 className="sr-only">Map</h1>
+          hidden, since the dock's knob already reads MAP — and only while the
+          map IS the surface: the layer stays mounted under every pane, and two
+          h1s in one document is the other way to mis-name a page. */}
+      {active && <h1 className="sr-only">Map</h1>}
       <div className="mmm-map-canvas" ref={containerRef} />
       {/* The credit, HELD RATHER THAN TOGGLED (owner, 2026-08-25: "Tap the
           compass on map to show open maps badge and hide when let go").
