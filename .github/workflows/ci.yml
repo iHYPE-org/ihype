@@ -93,9 +93,9 @@ jobs:
         run: npm ci
 
       - name: Production dependency audit
-        # Dev-only advisories (currently @opentelemetry/core, transitively
-        # pinned by @sentry/nextjs and lighthouse) don't block merges — only
-        # vulnerabilities reachable from what actually ships to production do.
+        # Dev-only advisories don't block merges — only vulnerabilities
+        # reachable from what actually ships to production do. The accepted
+        # dev-only set, with reasons, is docs/dependency-advisories.md.
         run: npm audit --omit=dev --audit-level=high
 
       - name: Generate Prisma client

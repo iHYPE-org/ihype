@@ -34,6 +34,18 @@ export async function POST(request: Request) {
 
     if (!email) return NextResponse.json({ error: 'Email is required.' }, { status: 400 });
 
+    /* Per-ADDRESS limit on top of the per-IP one (security sweep, 2026-09-02).
+       The IP bucket alone let N addresses send 5N sign-in emails every 15
+       minutes to one member — inbox bombing, each mail carrying a live
+       15-minute bearer token. Answered `ok:true` like every other refusal
+       here, so the limit reveals nothing about whether the account exists. */
+    const perEmail = await consumeRateLimit(`magic-link:email:${email}`, {
+      limit: 3,
+      windowMs: 15 * 60 * 1000,
+      timeoutMs: 2500,
+    });
+    if (!perEmail.allowed) return NextResponse.json({ ok: true });
+
     const user = await db.user.findUnique({ where: { email }, select: { id: true, role: true } });
     if (!user) {
       // Do not reveal whether an account exists.

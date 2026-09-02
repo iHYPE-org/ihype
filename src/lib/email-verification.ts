@@ -3,7 +3,13 @@ import { isEmailDeliveryConfigured, sendGenericEmail } from '@/lib/mailer';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 
-const EXPIRY_MS = 24 * 60 * 60 * 1000; // 24 hours
+/* 30 minutes, down from 24 hours (security sweep, 2026-09-02). A six-digit
+   code has a million values and the only brake on guessing is the per-IP and
+   per-user rate limit (10 per 15 min); over 24 hours that allowed ~960
+   guesses per code, and on `/api/me/email` a correct guess binds SOMEONE
+   ELSE's address to the guesser's account. Half an hour is still generous
+   for a code that arrives in seconds. */
+const EXPIRY_MS = 30 * 60 * 1000;
 // Prefix stored in the `email` column to distinguish verification records
 // from password-reset records. The PasswordResetCode model requires an email
 // field — we store the real email prefixed with 'verify:' so queries can
@@ -77,7 +83,7 @@ export async function sendVerificationEmail(
   await sendGenericEmail({
     to: email,
     subject: 'Verify your iHYPE.org email',
-    text: `Your iHYPE.org verification code is: ${code}\n\nThis code expires in 24 hours.`,
-    html: `<p>Your iHYPE.org verification code is: <strong>${code}</strong></p><p>This code expires in 24 hours.</p>`
+    text: `Your iHYPE.org verification code is: ${code}\n\nThis code expires in 30 minutes.`,
+    html: `<p>Your iHYPE.org verification code is: <strong>${code}</strong></p><p>This code expires in 30 minutes.</p>`
   });
 }

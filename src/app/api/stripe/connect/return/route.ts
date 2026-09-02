@@ -1,5 +1,7 @@
 import { redirect } from 'next/navigation';
 import { type NextRequest } from 'next/server';
+import { auth } from '@/lib/auth';
+import { canManageOwnedResource } from '@/lib/permissions';
 import { db } from '@/lib/db';
 import { isConnectMerchantReady, isConnectPayoutReady, isStripeConfigured } from '@/lib/stripe';
 import { getProfilePathForType } from '@/lib/profile-paths';
@@ -25,12 +27,21 @@ export async function GET(request: NextRequest) {
 
     const profile = await db.profile.findUnique({
       where: { id: profileId },
-      select: { id: true, stripeConnectAccountId: true, slug: true, type: true }
+      select: { id: true, stripeConnectAccountId: true, slug: true, type: true, ownerId: true }
     });
 
     if (profile) fallback = getProfilePathForType(profile.type, profile.slug);
 
-    if (profile?.stripeConnectAccountId) {
+    /* Owner or admin only, like the sibling `refresh` route (security sweep,
+       2026-09-02). This was unauthenticated: anyone could name a profileId,
+       have the server ask Stripe about its account, and read the answer off
+       the redirect — and flip `stripeConnectOnboarded` early. The member is
+       signed in when Stripe sends them back here, so nothing legitimate is
+       refused; a stranger just gets the profile page. */
+    const session = await auth();
+    const allowed = profile ? canManageOwnedResource(session, profile.ownerId) : false;
+
+    if (allowed && profile?.stripeConnectAccountId) {
       /* Ask whether Stripe will accept a TRANSFER, not whether the account can
          take card payments. `charges_enabled` was the old test and it is the
          wrong question: iHYPE captures every ticket to its own balance and pays

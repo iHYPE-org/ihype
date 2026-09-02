@@ -194,6 +194,20 @@ async function productionSmoke(env: Env): Promise<Response> {
   );
 }
 
+/**
+ * Constant-time bearer check for the smoke endpoint. Exported for the test;
+ * deliberately not imported from `src/` — this worker is bundled on its own.
+ */
+export function isSmokeRequestAuthorized(header: string | null, secret: string | undefined): boolean {
+  if (!secret || !header) return false;
+  const expected = new TextEncoder().encode(`Bearer ${secret}`);
+  const actual = new TextEncoder().encode(header);
+  if (expected.byteLength !== actual.byteLength) return false;
+  let diff = 0;
+  for (let i = 0; i < expected.byteLength; i += 1) diff |= expected[i] ^ actual[i];
+  return diff === 0;
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
@@ -201,7 +215,11 @@ export default {
     if (request.method !== 'POST') {
       return new Response('Method not allowed', { status: 405, headers: { Allow: 'POST' } });
     }
-    if (request.headers.get('Authorization') !== `Bearer ${env.CRON_SECRET}`) {
+    /* Fails closed with no secret and compares in constant time. The old
+       `!==` accepted the literal "Bearer undefined" when CRON_SECRET was unset
+       and leaked the compare's length through timing (security sweep,
+       2026-09-02). */
+    if (!isSmokeRequestAuthorized(request.headers.get('Authorization'), env.CRON_SECRET)) {
       return new Response('Unauthorized', { status: 401 });
     }
     return productionSmoke(env);

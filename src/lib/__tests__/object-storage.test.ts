@@ -1,6 +1,7 @@
 import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import {
   isObjectStorageConfigured,
+  isStoredMediaUrl,
   isTrustedStorageUrl,
   objectPublicUrl,
   storeMediaFile,
@@ -121,8 +122,9 @@ describe('isTrustedStorageUrl', () => {
   // The SSRF gate: /api/advertise/campaigns fetches this URL server-side to
   // vet the audio, so anything it accepts is somewhere the server can be
   // pointed at.
-  it('accepts an inline data: URL', () => {
-    expect(isTrustedStorageUrl('data:audio/mpeg;base64,AAAA')).toBe(true);
+  it('refuses an inline data: URL from a client — that is an unbounded upload past every cap', () => {
+    expect(isTrustedStorageUrl('data:audio/mpeg;base64,AAAA')).toBe(false);
+    expect(isStoredMediaUrl('data:audio/mpeg;base64,AAAA')).toBe(true);
   });
 
   it('accepts our own /cdn/ path, which is what storeMediaFile now returns', () => {
@@ -130,9 +132,14 @@ describe('isTrustedStorageUrl', () => {
     expect(isTrustedStorageUrl('https://ihype.org/cdn/ads/audio/a.mp3')).toBe(true);
   });
 
-  it('still accepts a direct R2 host, for rows written before the rewrite', () => {
-    expect(isTrustedStorageUrl('https://acct123.r2.cloudflarestorage.com/ihype-media/a.mp3')).toBe(true);
-    expect(isTrustedStorageUrl('https://pub-abc123.r2.dev/a.mp3')).toBe(true);
+  it('refuses a direct R2 host from a client: anyone has an r2.dev bucket, and its object can be swapped after vetting', () => {
+    expect(isTrustedStorageUrl('https://acct123.r2.cloudflarestorage.com/ihype-media/a.mp3')).toBe(false);
+    expect(isTrustedStorageUrl('https://pub-abc123.r2.dev/a.mp3')).toBe(false);
+    // Rows written before the binding rewrite still carry these; the DB-value
+    // check keeps them deletable.
+    expect(isStoredMediaUrl('https://acct123.r2.cloudflarestorage.com/ihype-media/a.mp3')).toBe(true);
+    expect(isStoredMediaUrl('https://pub-abc123.r2.dev/a.mp3')).toBe(true);
+    expect(isStoredMediaUrl('https://evil.example.com/a.mp3')).toBe(false);
   });
 
   it('rejects our own origin OUTSIDE /cdn/', () => {

@@ -97,21 +97,22 @@ export function isObjectStorageConfigured(): boolean {
  * because rows written before it still carry those URLs.
  */
 export function isTrustedStorageUrl(url: string): boolean {
-  if (url.startsWith('data:')) return true;
-
+  /* CLIENT-SUBMITTED URLs get the strict arm only (security sweep,
+     2026-09-02). This used to also trust `data:` and ANY `*.r2.dev` /
+     `*.r2.cloudflarestorage.com` host — and anyone with a Cloudflare account
+     has a public r2.dev bucket. An advertiser could skip
+     `/api/advertise/audio-upload` (and its magic-byte, size and duration
+     checks) entirely, submit a spot from their own bucket, let vetting hear a
+     clean file, then REPLACE the object after approval: the station played
+     whatever they liked and nothing re-vetted it. The `data:` arm let a JSON
+     body carry an unbounded inline blob past every upload cap. Rows written
+     before the binding rewrite still carry R2-host URLs; those are DB values,
+     and `isStoredMediaUrl()` is the check for them. */
   let parsed: URL;
   try {
     parsed = new URL(url);
   } catch {
     return false;
-  }
-  // A bucket's own hostname: <account>.r2.cloudflarestorage.com or *.r2.dev.
-  // Always https — these are public Cloudflare endpoints and nothing else.
-  if (
-    parsed.protocol === 'https:' &&
-    /^[a-z0-9-]+\.r2\.(?:cloudflarestorage\.com|dev)$/i.test(parsed.hostname)
-  ) {
-    return true;
   }
 
   const base = publicBase();
@@ -132,6 +133,29 @@ export function isTrustedStorageUrl(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Is this a URL the app itself stored at some point — our `/cdn/` path, a
+ * direct R2 host from before the binding rewrite, or an inline `data:` copy?
+ * For values read from the DATABASE only (deciding whether a row's artwork can
+ * be deleted from the bucket), never for a value a client just sent — that is
+ * `isTrustedStorageUrl()`, which refuses the two legacy arms.
+ */
+export function isStoredMediaUrl(url: string): boolean {
+  if (url.startsWith('data:')) return true;
+  if (isTrustedStorageUrl(url)) return true;
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  // A bucket's own hostname: <account>.r2.cloudflarestorage.com or *.r2.dev.
+  return (
+    parsed.protocol === 'https:' &&
+    /^[a-z0-9-]+\.r2\.(?:cloudflarestorage\.com|dev)$/i.test(parsed.hostname)
+  );
 }
 
 export async function storeMediaFile(

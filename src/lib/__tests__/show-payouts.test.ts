@@ -24,6 +24,8 @@ vi.mock('@/lib/db', () => {
 vi.mock('@/lib/stripe', () => ({
   isStripeConfigured: vi.fn().mockReturnValue(true),
   createPayoutTransfer: vi.fn().mockResolvedValue('tr_default'),
+  // No prior transfer for any entry unless a test says otherwise.
+  findPayoutTransfer: vi.fn().mockResolvedValue(null),
 }));
 vi.mock('@/lib/mailer', () => ({ sendGenericEmail: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/env', () => ({ getAdminAlertRecipients: () => ['admin@ihype.org'] }));

@@ -41,7 +41,13 @@ export async function GET(
   { params }: { params: Promise<{ key: string[] }> },
 ) {
   const { key: segments } = await params;
-  const key = segments.map((segment) => decodeURIComponent(segment)).join('/');
+  let key: string;
+  try {
+    key = segments.map((segment) => decodeURIComponent(segment)).join('/');
+  } catch {
+    // A malformed escape (`%zz`) is a bad key, not a server fault.
+    return new Response('Not found', { status: 404 });
+  }
 
   // Traversal cannot escape a bucket the way it escapes a filesystem, but a
   // key containing ".." would still be matched against the prefix list before

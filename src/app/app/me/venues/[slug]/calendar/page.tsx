@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { canManageOwnedResource } from '@/lib/permissions';
 import { getServerT } from '@/lib/i18n/server';
 
 type Props = { params: Promise<{ slug: string }> };
@@ -29,10 +31,20 @@ export default async function VenueCalendarPage({ params }: Props) {
 
   const profile = await db.profile.findUnique({
     where: { slug },
-    select: { id: true, name: true, type: true, city: true, stateRegion: true }
+    select: { id: true, name: true, type: true, city: true, stateRegion: true, ownerId: true }
   });
 
   if (!profile || profile.type !== 'VENUE') notFound();
+
+  /* Owner (or admin) only, like every other page under /app/me/venues/[slug]
+     (security sweep, 2026-09-02). This one had no session check at all and
+     lists every non-cancelled show including DRAFTs — the title, date and
+     slug of a show whose own page 404s for everyone but its creator — to any
+     member who typed the venue's slug into the URL. The DRAFT rows are the
+     reason the query is not simply narrowed to public statuses: the owner
+     wants to see their unpublished dates on their own calendar. */
+  const session = await auth();
+  if (!canManageOwnedResource(session, profile.ownerId)) notFound();
 
   const now = new Date();
   const year = now.getFullYear();

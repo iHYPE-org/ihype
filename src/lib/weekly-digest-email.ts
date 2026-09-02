@@ -1,4 +1,5 @@
 import { sendMarketingEmail } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 
 export async function sendWeeklyDigestEmail(user: {
   id: string;
@@ -16,6 +17,6 @@ export async function sendWeeklyDigestEmail(user: {
     to: user.email,
     subject: `Your iHYPE week — ${user.hyped} hypes, ${user.saved} saves`,
     text: `Hey ${name}, here's your iHYPE week:\n\n• ${user.hyped} hypes\n• ${user.saved} saves\n\n${streakLine}\n\nOpen iHYPE: https://ihype.org/home`,
-    html: `<p>Hey ${name}, here's your iHYPE week:</p><ul><li><strong>${user.hyped}</strong> hypes</li><li><strong>${user.saved}</strong> saves</li></ul><p>${streakLine}</p><p><a href="https://ihype.org/home">Open iHYPE →</a></p>`,
+    html: `<p>Hey ${escapeHtml(name)}, here's your iHYPE week:</p><ul><li><strong>${user.hyped}</strong> hypes</li><li><strong>${user.saved}</strong> saves</li></ul><p>${streakLine}</p><p><a href="https://ihype.org/home">Open iHYPE →</a></p>`,
   });
 }

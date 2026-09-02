@@ -744,6 +744,30 @@ export async function createVenueDirectCheckoutSession({
  * entry via `transfer_group` + the entry's own id as the idempotency key,
  * so a retried payout run can never double-pay the same entry.
  */
+/**
+ * The transfer already made for a payable entry, if one exists.
+ *
+ * `createPayoutTransfer` is idempotent on `payable-entry:<id>`, but Stripe
+ * keeps idempotency keys for 24 hours and the payout job runs daily — so if a
+ * transfer succeeded and the RELEASED write that follows it failed (a pooler
+ * hiccup is enough), the next run would read the entry as PENDING and Stripe
+ * would create a SECOND transfer. Every transfer carries the entry id in its
+ * metadata and the show in its transfer group, so the job asks first
+ * (security sweep, 2026-09-02).
+ */
+export async function findPayoutTransfer({
+  payableEntryId,
+  showId,
+}: {
+  payableEntryId: string;
+  showId: string;
+}): Promise<string | null> {
+  const stripe = getStripe();
+  const transfers = await stripe.transfers.list({ transfer_group: `show:${showId}`, limit: 100 });
+  const match = transfers.data.find((transfer) => transfer.metadata?.payableEntryId === payableEntryId);
+  return match?.id ?? null;
+}
+
 export async function createPayoutTransfer({
   amountCents,
   connectAccountId,
@@ -1083,9 +1107,27 @@ export class WebhookSecretUnavailableError extends Error {
   }
 }
 
+/**
+ * Verifies against the platform endpoint's secret and, when one is configured,
+ * the Connect endpoint's (`STRIPE_CONNECT_WEBHOOK_SECRET`). A platform endpoint
+ * and a "listen to events on connected accounts" endpoint are two endpoints in
+ * the Stripe dashboard with two signing secrets; with one secret here, whichever
+ * endpoint is not configured is answered 400 forever and its events — venue-
+ * direct ticket sales, or the platform's own ad authorizations — never land.
+ * Tries the platform secret first; the last signature error is the one thrown.
+ */
 export function constructWebhookEvent(payload: string, signature: string): Stripe.Event {
   const stripe = getStripe();
-  const secret = readRuntimeEnv('STRIPE_WEBHOOK_SECRET');
-  if (!secret) throw new WebhookSecretUnavailableError();
-  return stripe.webhooks.constructEvent(payload, signature, secret);
+  const secrets = [readRuntimeEnv('STRIPE_WEBHOOK_SECRET'), readRuntimeEnv('STRIPE_CONNECT_WEBHOOK_SECRET')]
+    .filter((value): value is string => Boolean(value));
+  if (secrets.length === 0) throw new WebhookSecretUnavailableError();
+  let lastError: unknown = null;
+  for (const secret of secrets) {
+    try {
+      return stripe.webhooks.constructEvent(payload, signature, secret);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error('Invalid webhook signature.');
 }

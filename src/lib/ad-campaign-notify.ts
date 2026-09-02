@@ -1,4 +1,5 @@
 import { sendEmailToUser } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 import { getBaseUrl } from '@/lib/utils';
 
 type NotifyStatus = 'APPROVED' | 'REJECTED' | 'PENDING' | 'AWAITING_PAYMENT' | 'PAYMENT_FAILED' | 'SETTLED';
@@ -36,6 +37,6 @@ export async function notifyAdvertiser(
     to: email,
     subject: copy.subject,
     text: `Your campaign "${title}" ${copy.body}\n\nReasoning: ${reasoning}\n\n${ctaLabel}: ${ctaUrl}`,
-    html: `<p>Your campaign <strong>${title}</strong> ${copy.body}</p><p>Reasoning: ${reasoning}</p><p><a href="${ctaUrl}">${ctaLabel}</a></p>`,
+    html: `<p>Your campaign <strong>${escapeHtml(title)}</strong> ${copy.body}</p><p>Reasoning: ${escapeHtml(reasoning)}</p><p><a href="${escapeHtml(ctaUrl)}">${ctaLabel}</a></p>`,
   });
 }
