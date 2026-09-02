@@ -765,7 +765,7 @@ export function MmmCampaignBuilderPage() {
         <div className="adv-compact-rules">
           <div><b>{t('advertisePage.compactEligibleTitle', 'Who can advertise')}</b>{t('advertisePage.compactEligibleBody', 'Verified artists, venues, promoters and music-related businesses. Non-music campaigns are rejected.')}</div>
           <div><b>{t('advertisePage.compactScreenTitle', 'What gets screened')}</b>{t('advertisePage.compactScreenBody', 'Business eligibility, audio relevance, listener safety, copyright and misleading claims are checked before checkout.')}</div>
-          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'A campaign that passes vetting is paid in full at checkout. Whatever budget is unspent when the run ends is refunded to your card. Rejected spots never run and are never charged.')}</div>
+          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'A campaign that passes vetting is paid in full at checkout. Whatever budget is unspent when the run ends — or when you cancel — is refunded to the card you paid with, usually within 5–10 business days, and your dashboard shows the amount and the Stripe refund reference. iHYPE absorbs the card-processing fee. Rejected spots never run and are never charged.')}</div>
         </div>
       </details>
     </div>

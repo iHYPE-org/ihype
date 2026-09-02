@@ -1506,6 +1506,13 @@ model Ad {
   stripePaymentIntentId String?        @unique
   authorizedAt          DateTime?
   settledAt             DateTime?
+  // What settlement actually did with the money, so the advertiser can read
+  // it back (2026-09-02): the part of the charge that stayed charged, the
+  // part refunded, and the Stripe refund it is traceable by. Null on a
+  // campaign settled before these existed — rendered as unknown, never as 0.
+  settledChargedCents   Int?
+  refundedCents         Int?
+  stripeRefundId        String?
   createdAt             DateTime       @default(now())
   slot                  AdSlot         @relation(fields: [slotId], references: [id])
   advertiser            User           @relation(fields: [advertiserId], references: [id])

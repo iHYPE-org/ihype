@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS, pausedLongEnoughToSettle, planAdSettlement } from '../ad-settlement-plan';
+import { PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS, pausedLongEnoughToSettle, planAdSettlement, settlementFigures } from '../ad-settlement-plan';
 
 describe('planAdSettlement — charged up front (succeeded)', () => {
   it('refunds the unspent remainder and keeps what was delivered', () => {
@@ -49,5 +49,21 @@ describe('pausedLongEnoughToSettle', () => {
     expect(pausedLongEnoughToSettle(new Date(now.getTime() - PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS * day), now)).toBe(true);
     expect(pausedLongEnoughToSettle(new Date(now.getTime() - day), now)).toBe(false);
     expect(pausedLongEnoughToSettle(null, now)).toBe(false);
+  });
+});
+
+describe('settlementFigures — what the advertiser is shown', () => {
+  it('reports the refund and the kept charge for a refund plan', () => {
+    expect(settlementFigures({ action: 'refund', amountCents: 7500, chargedCents: 4500 }))
+      .toEqual({ chargedCents: 4500, refundedCents: 7500 });
+  });
+
+  it('reports a full-budget delivery as charged with nothing refunded', () => {
+    expect(settlementFigures({ action: 'none', chargedCents: 12000 })).toEqual({ chargedCents: 12000, refundedCents: 0 });
+  });
+
+  it('never calls a lapsed legacy hold a refund', () => {
+    expect(settlementFigures({ action: 'capture', amountCents: 4500 })).toEqual({ chargedCents: 4500, refundedCents: 0 });
+    expect(settlementFigures({ action: 'release' })).toEqual({ chargedCents: 0, refundedCents: 0 });
   });
 });

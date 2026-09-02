@@ -63,6 +63,33 @@ export function planAdSettlement(input: {
 }
 
 /**
+ * The two figures the advertiser is shown after settlement, derived from the
+ * plan so the dashboard and the email cannot disagree with what Stripe was
+ * asked to do. A legacy capture "refunds" nothing — the hold simply lapses on
+ * the uncaptured part — so `refundedCents` is the released amount only when
+ * a real refund was issued.
+ */
+export function settlementFigures(plan: AdSettlementPlan): { chargedCents: number; refundedCents: number } {
+  switch (plan.action) {
+    case 'refund':
+      return { chargedCents: plan.chargedCents, refundedCents: plan.amountCents };
+    case 'none':
+      return { chargedCents: plan.chargedCents, refundedCents: 0 };
+    case 'capture':
+      return { chargedCents: plan.amountCents, refundedCents: 0 };
+    case 'release':
+      return { chargedCents: 0, refundedCents: 0 };
+  }
+}
+
+/**
+ * Stripe's own published window for a card refund to show on a statement.
+ * Quoted everywhere the refund is promised so checkout, the confirm dialog,
+ * the dashboard and the email name the same number.
+ */
+export const REFUND_WINDOW_BUSINESS_DAYS = '5–10';
+
+/**
  * A paused campaign holds the advertiser's money with no end date. After this
  * long it is settled as if cancelled — the unspent budget goes back — rather
  * than sitting on iHYPE's balance indefinitely.

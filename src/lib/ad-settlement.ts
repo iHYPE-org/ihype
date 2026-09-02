@@ -1,6 +1,12 @@
 import { db } from '@/lib/db';
 import { settleAdCampaign, isStripeConfigured } from '@/lib/stripe';
-import { pausedLongEnoughToSettle, PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS, type AdSettlementPlan } from '@/lib/ad-settlement-plan';
+import {
+  pausedLongEnoughToSettle,
+  PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS,
+  REFUND_WINDOW_BUSINESS_DAYS,
+  settlementFigures,
+  type AdSettlementPlan,
+} from '@/lib/ad-settlement-plan';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
@@ -51,18 +57,22 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
 
   for (const ad of [...ended, ...paused.filter((row) => pausedLongEnoughToSettle(row.pausedAt, now))]) {
     try {
-      const plan = await settleAdCampaign(ad.stripePaymentIntentId!, ad.spentCents, ad.budgetCents);
+      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId!, ad.spentCents, ad.budgetCents);
       const wasPaused = ad.status === 'PAUSED';
       await db.ad.update({
         where: { id: ad.id },
-        data: { settledAt: now, ...(wasPaused ? { status: 'CANCELLED', pausedAt: null } : {}) },
+        data: {
+          settledAt: now,
+          ...settlementRecord(plan, refundId),
+          ...(wasPaused ? { status: 'CANCELLED', pausedAt: null } : {}),
+        },
       });
       deferWork(notifyAdvertiser(
         ad.advertiserId,
         ad.advertiser.email,
         ad.title,
         'SETTLED',
-        describeSettlement(plan, wasPaused),
+        describeSettlement(plan, wasPaused, refundId),
       ), 'ad-settlement-notification');
       settled += 1;
     } catch (error) {
@@ -77,20 +87,41 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
 const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
 /**
+ * The columns settlement writes so the dashboard can show the advertiser what
+ * happened to their money — one place, used by the cron and by cancellation.
+ */
+export function settlementRecord(plan: AdSettlementPlan, refundId: string | null) {
+  const figures = settlementFigures(plan);
+  return {
+    settledChargedCents: figures.chargedCents,
+    refundedCents: figures.refundedCents,
+    stripeRefundId: refundId,
+  };
+}
+
+/** The refund's timing and its reference, appended to every sentence that says one was issued. */
+function refundTrail(refundId: string | null): string {
+  const timing = ` It goes back to the card you paid with and usually appears on your statement within ${REFUND_WINDOW_BUSINESS_DAYS} business days.`;
+  return refundId ? `${timing} Refund reference: ${refundId}.` : timing;
+}
+
+/**
  * The sentence the advertiser reads has to match what Stripe did. Four plans,
  * four sentences — "refunded" and "charged" are not interchangeable, and the
  * old copy said "the rest of your authorized budget was released" for a model
- * that no longer exists.
+ * that no longer exists. A refund also says WHEN and carries its Stripe
+ * reference, because "refunded" with no date and no number is a claim the
+ * advertiser cannot check against their statement.
  */
-export function describeSettlement(plan: AdSettlementPlan, wasPaused: boolean): string {
+export function describeSettlement(plan: AdSettlementPlan, wasPaused: boolean, refundId: string | null = null): string {
   const lead = wasPaused
     ? `This campaign had been paused for ${PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS} days, so it has been closed. `
     : '';
   switch (plan.action) {
     case 'refund':
       return plan.chargedCents > 0
-        ? `${lead}You were charged ${dollars(plan.chargedCents)} for the spend actually delivered; the unspent ${dollars(plan.amountCents)} has been refunded to your card.`
-        : `${lead}This campaign delivered less than the ${dollars(50)} minimum a card can be charged, so the full ${dollars(plan.amountCents)} has been refunded.`;
+        ? `${lead}You were charged ${dollars(plan.chargedCents)} for the spend actually delivered; the unspent ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`
+        : `${lead}This campaign delivered less than the ${dollars(50)} minimum a card can be charged, so the full ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`;
     case 'none':
       return plan.chargedCents > 0
         ? `${lead}Your full budget of ${dollars(plan.chargedCents)} was delivered, so there is nothing to refund.`
