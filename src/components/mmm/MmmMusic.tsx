@@ -85,14 +85,6 @@ const DEMO_CHARTS: ChartRow[] = [
   { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044, mediaUrl: null, artworkUrl: null },
 ];
 
-const DEMO_RECOMMENDED: StationTrackRow[] = [
-  { id: 'demo-rec-1', hexId: '', title: 'Blue Hour Practice', artistName: 'North Common', artistSlug: '', mediaUrl: null, artworkUrl: null },
-  { id: 'demo-rec-2', hexId: '', title: 'Open Late', artistName: 'The Side Streets', artistSlug: '', mediaUrl: null, artworkUrl: null },
-  { id: 'demo-rec-3', hexId: '', title: 'Paper Satellites', artistName: 'Lena Vale', artistSlug: '', mediaUrl: null, artworkUrl: null },
-  { id: 'demo-rec-4', hexId: '', title: 'Room Tone', artistName: 'Signal Fires', artistSlug: '', mediaUrl: null, artworkUrl: null },
-  { id: 'demo-rec-5', hexId: '', title: 'Sunday Receiver', artistName: 'Low Current', artistSlug: '', mediaUrl: null, artworkUrl: null },
-];
-
 const DEMO_PLAYLISTS: PlaylistRow[] = [
   { id: 'demo-list-1', name: 'Saved from Discover', count: 18, items: [] },
   { id: 'demo-list-2', name: 'Portland After Dark', count: 12, items: [] },
@@ -561,14 +553,27 @@ function RadioTab() {
 }
 
 /**
- * "Recommended" — tracks shared or hyped by accounts the viewer follows. This
- * is the `friends` station resolved through the real station endpoint rather
- * than a fourth recommendation path, so the taxonomy stays one taxonomy.
+ * "Recommended" — the multi-signal recommender (`src/lib/recommendations.ts`)
+ * through `GET /api/recommend`: one playable track per recommended artist,
+ * each with the engine's own reason.
+ *
+ * Until 2026-09-01 this read the `friends` station (tracks from artists the
+ * viewer follows), which is a filter, and showed a DEMO preview when that was
+ * empty. Both are gone here by the owner's rule — "will say nothing yet until
+ * something makes sense" — so a viewer who has not yet hyped, followed, saved
+ * or asked a venue for anyone sees an empty state that says what will start
+ * it, and never a placeholder dressed as a recommendation. The `friends`
+ * station itself is still in the Radio tab's station list.
  */
+type RecommendPayload = { ready: boolean; tracks: StationTrackRow[] };
+
 function RecommendedTab() {
-  const { status, data } = useJson<StationTrackRow[]>(
-    '/api/stations/friends/tracks?limit=25',
-    (payload) => ((payload as { tracks?: StationTrackRow[] }).tracks ?? []),
+  const { status, data } = useJson<RecommendPayload>(
+    '/api/recommend',
+    (payload) => {
+      const body = payload as { ready?: boolean; tracks?: StationTrackRow[] };
+      return { ready: Boolean(body.ready), tracks: body.tracks ?? [] };
+    },
   );
 
   /* The whole list as one queue, started from the top by the joystick. These
@@ -578,28 +583,27 @@ function RecommendedTab() {
 
      The ROWS stay links. Turning them into play buttons is a design change
      nothing has asked for, and the transport is the control this is about. */
-  useRegisterQueue(data ?? []);
+  useRegisterQueue(data?.tracks ?? []);
 
   if (status === 'loading') return <Loading />;
   if (status === 'error') return <Empty>Recommendations are unavailable right now.</Empty>;
-  const realTracks = data ?? [];
-  const demo = realTracks.length === 0;
-  const tracks = demo ? DEMO_RECOMMENDED : realTracks;
+  if (!data?.ready) {
+    return (
+      <Empty>
+        Recommendations start once you hype an artist, follow one, save something from the deck, or ask a venue to book
+        someone. Nothing here is guessed.
+      </Empty>
+    );
+  }
+  const tracks = data.tracks;
+  if (tracks.length === 0) {
+    return <Empty>Nothing to recommend yet beyond what you already know. Check back as more artists release music.</Empty>;
+  }
 
   return (
     <div className="mmm-music-list">
-      {demo && <DemoHeader description="A preview of recommendations from artists and listeners you follow." />}
       {tracks.map((track) => (
-        demo ? (
-          <div aria-disabled="true" className="mmm-row mmm-demo-row" key={track.id}>
-            <span className="mmm-demo-art" aria-hidden="true">{track.artistName.charAt(0)}</span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
-              <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
-            </span>
-            <span className="mmm-row-meta">From people you follow</span>
-          </div>
-        ) : <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
+        <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
           <span style={{ flex: 1, minWidth: 0 }}>
             <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
             <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>

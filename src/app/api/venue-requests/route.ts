@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { detectRequestLocation } from '@/lib/request-location';
 import { log } from '@/lib/logger';
+import { notifyUser } from '@/lib/notify';
 
 const schema = z.object({
   venueProfileId: z.string().cuid(),
@@ -17,6 +18,8 @@ const schema = z.object({
   message: 'Select an artist profile or enter an artist/band name.',
   path: ['artistName']
 });
+
+const MAX_OPEN_ASKS_PER_ACT = 5;
 
 export async function GET() {
   const session = await auth();
@@ -59,7 +62,7 @@ export async function POST(request: Request) {
 
     const venueProfile = await db.profile.findUnique({
       where: { id: body.venueProfileId },
-      select: { id: true, type: true }
+      select: { id: true, type: true, name: true, ownerId: true }
     });
 
     if (!venueProfile || venueProfile.type !== 'VENUE') {
@@ -68,11 +71,12 @@ export async function POST(request: Request) {
 
     let artistProfileName: string | null = null;
     let artistProfileId = body.artistProfileId;
+    let artistOwner: { ownerId: string; slug: string } | null = null;
 
     if (artistProfileId) {
       const artistProfile = await db.profile.findUnique({
         where: { id: artistProfileId },
-        select: { id: true, name: true, type: true }
+        select: { id: true, name: true, type: true, ownerId: true, slug: true }
       });
 
       if (!artistProfile || !['ARTIST'].includes(artistProfile.type)) {
@@ -80,6 +84,7 @@ export async function POST(request: Request) {
       }
 
       artistProfileName = artistProfile.name;
+      artistOwner = { ownerId: artistProfile.ownerId, slug: artistProfile.slug };
     } else if (body.artistName) {
       /* The form asks for "Artist name or iHYPE handle" and sent only text, so
          a fan typing @handle or an exact name got a request attached to NO
@@ -94,12 +99,13 @@ export async function POST(request: Request) {
               type: 'ARTIST',
               OR: [{ slug: handle }, { name: { equals: body.artistName.trim(), mode: 'insensitive' } }],
             },
-            select: { id: true, name: true },
+            select: { id: true, name: true, ownerId: true, slug: true },
           }).catch(() => null)
         : null;
       if (matched) {
         artistProfileId = matched.id;
         artistProfileName = matched.name;
+        artistOwner = { ownerId: matched.ownerId, slug: matched.slug };
       }
     }
 
@@ -125,6 +131,29 @@ export async function POST(request: Request) {
     };
 
     const normalizedArtistName = (body.artistName || artistProfileName || '').trim().toLowerCase();
+
+    /* One fan, one act, at most MAX_OPEN_ASKS_PER_ACT venues at a time. Every
+       ask counts toward the artist's Requests figure and toward the fan's own
+       recommendations, so without a ceiling one fan could inflate both by
+       asking every room in the state. Five is enough to ask a real touring
+       radius; a venue answering frees a slot. Dismissed and booked asks do not
+       count — they are answered. */
+    const openForAct = await db.venueConnectionRequest.count({
+      where: {
+        requesterId: session.user.id,
+        status: 'PENDING',
+        ...(artistProfileId
+          ? { artistProfileId }
+          : { artistProfileId: null, artistName: { equals: normalizedArtistName, mode: 'insensitive' } }),
+      },
+    }).catch(() => 0);
+    if (openForAct >= MAX_OPEN_ASKS_PER_ACT) {
+      return NextResponse.json(
+        { error: `You already have ${MAX_OPEN_ASKS_PER_ACT} open asks for this act. When a venue answers one, you can ask another.` },
+        { status: 429 }
+      );
+    }
+
     const existingPendingRequests = await db.venueConnectionRequest.findMany({
       where: {
         venueProfileId: body.venueProfileId,
@@ -164,6 +193,29 @@ export async function POST(request: Request) {
         ...requesterLocation,
       }
     });
+
+    /* Tell the two people this is about. Until 2026-09-01 a request landed in
+       a table and stayed there: the venue found out only by visiting the
+       radar, and the artist never found out at all. `notifyUser` is in-app +
+       push and never throws; neither notice goes to the requester themselves
+       (a venue owner asking their own room is not news to them). */
+    const actName = artistProfileName || body.artistName || 'an act';
+    if (venueProfile.ownerId !== session.user.id) {
+      await notifyUser(venueProfile.ownerId, {
+        type: 'venue-request',
+        title: 'A fan wants an act booked',
+        body: `A fan asked you to book ${actName}. It is ranked on your demand radar.`,
+        link: '/app/me/booking',
+      });
+    }
+    if (artistOwner && artistOwner.ownerId !== session.user.id) {
+      await notifyUser(artistOwner.ownerId, {
+        type: 'fan-demand',
+        title: 'Fans want you somewhere',
+        body: `A fan asked ${venueProfile.name} to book you.`,
+        link: `/app/me/artists/${artistOwner.slug}/analytics`,
+      });
+    }
 
     return NextResponse.json(connectionRequest, { status: 201 });
   } catch (error) {

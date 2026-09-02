@@ -32,7 +32,7 @@ export default async function BookingPage() {
         <span className="booking-eyebrow">{t('meBookingPage.eyebrow', 'BOOK THESE ARTISTS')}{feed.venueCity ? ` · ${feed.venueCity.toUpperCase()}` : ''}</span>
         <h1 className="booking-title">{t('meBookingPage.title', 'Your demand radar')}</h1>
         <p className="booking-sub">
-          {t('meBookingPage.subPrefix', 'Artists to book at')} {feed.venueName ?? t('meBookingPage.yourVenue', 'your venue')} {t('meBookingPage.subSuffix', '— what fans asked you for first, weighed by how recently, how many, and how close they are; then genre, locality and hype momentum. Acts you’ve already booked are filtered out.')}
+          {t('meBookingPage.subPrefix', 'Artists to book at')} {feed.venueName ?? t('meBookingPage.yourVenue', 'your venue')} {t('meBookingPage.subSuffix', '— what fans asked you for first, weighed by how recently, how many, and how close they are; then genre, locality and hype momentum. Acts you’ve already booked are left out unless fans are asking for them again.')}
         </p>
         {feed.hasVenue && (
           <p className="booking-sub" style={{ marginTop: -14 }}>

@@ -7,11 +7,40 @@
 export const WEIGHTS = { taste: 0.28, geo: 0.18, social: 0.12, momentum: 0.10, collab: 0.22, comparable: 0.10 };
 
 export type RecommendationReason = {
-  kind: 'taste' | 'collab' | 'comparable' | 'geo' | 'momentum' | 'social';
+  kind: 'taste' | 'collab' | 'comparable' | 'geo' | 'momentum' | 'social' | 'request';
   text: string;
   artistName?: string;
   artistSlug?: string;
 };
+
+/**
+ * How the viewer came to know the artist a taste reason names. A hype, a
+ * follow and a fan request are three different sentences, and the request
+ * is the strongest of them (2026-09-01: fan requests feed recommendations).
+ */
+export type KnownVia = 'hype' | 'follow' | 'request';
+export type KnownArtist = { name: string; slug: string; via?: KnownVia };
+
+/** What each way of knowing an artist adds to the viewer's genre profile. */
+export const KNOWN_GENRE_WEIGHT: Record<KnownVia, number> = { hype: 1, follow: 2, request: 3 };
+
+export type ViewerSignals = { hypes: number; seeds: number; follows: number; requests: number };
+
+/**
+ * Whether the engine has anything to say to this viewer.
+ *
+ * Owner, 2026-09-01: "build it up so when activity comes in it will make those
+ * recommendations. Will say nothing yet until something makes sense." So the
+ * gate is a taste signal the viewer LEFT — a hype, a discover-deck action, a
+ * follow, or a request to a venue. Location alone is not enough: "popular
+ * near you" is a chart, not a recommendation, and the charts tab already
+ * says it. One signal is the floor rather than several because the first
+ * recommendation is what teaches a fan the engine is listening; it just has
+ * to be a recommendation and not a guess.
+ */
+export function isRecommendationReady(signals: ViewerSignals): boolean {
+  return signals.hypes + signals.seeds + signals.follows + signals.requests >= 1;
+}
 
 export type Signals = { taste: number | null; geo: number | null; social: number; momentum: number; collab: number | null; comparable: number | null };
 
@@ -73,7 +102,7 @@ export function historyBoost(seenArtistBefore: boolean, seenVenueBefore: boolean
 export function buildReason(
   signals: Signals,
   profileGenres: string[],
-  genreToArtist: Map<string, { name: string; slug: string }>,
+  genreToArtist: Map<string, KnownArtist>,
   profileCity: string | null,
 ): RecommendationReason {
   const contributions: [keyof typeof WEIGHTS, number][] = [];
@@ -89,7 +118,12 @@ export function buildReason(
       for (const g of profileGenres) {
         const artist = genreToArtist.get(g.toLowerCase());
         if (artist) {
-          return { kind: 'taste', text: `Because you hyped ${artist.name}`, artistName: artist.name, artistSlug: artist.slug };
+          const text = artist.via === 'request'
+            ? `Because you asked a venue to book ${artist.name}`
+            : artist.via === 'follow'
+              ? `Because you follow ${artist.name}`
+              : `Because you hyped ${artist.name}`;
+          return { kind: 'taste', text, artistName: artist.name, artistSlug: artist.slug };
         }
       }
       const genre = profileGenres[0];
