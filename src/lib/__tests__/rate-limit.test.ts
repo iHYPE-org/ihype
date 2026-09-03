@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '../rate-limit';
+import { consumeRateLimit, describeKvRefusal, rateLimitHeaders, rateLimitKey } from '../rate-limit';
 
 // Clear the in-process store between tests by consuming under a unique key prefix per test
 let testId = 0;
@@ -123,5 +123,37 @@ describe('rateLimitKey', () => {
 
   it('uses unknown when both userId and IP are absent', () => {
     expect(rateLimitKey('search', undefined, null)).toBe('search:ip:unknown');
+  });
+});
+
+describe('describeKvRefusal', () => {
+  /*
+   * The Sentry issue this exists for: 5 events over 22 days, every one from
+   * `POST /api/analytics/track`, which passes `atomic: false`. It read as a
+   * limiter outage — "KV fallback also failed; denying request" at ERROR —
+   * and was a slow KV read on a beacon that the route itself says is
+   * droppable. The words named a fallback that bucket does not have.
+   */
+  it('a bucket that opted out of the atomic backend warns, and says KV is its own backend', () => {
+    const { level, message } = describeKvRefusal(true);
+    expect(level).toBe('warn');
+    expect(message).not.toContain('fallback');
+    expect(message).toContain('non-atomic');
+  });
+
+  /*
+   * The case that must keep reaching Sentry: the Durable Object failed AND
+   * then KV failed, so a real limiter is down and a member is refused for
+   * nothing they did.
+   */
+  it('a genuinely degraded bucket still reports an error', () => {
+    const { level, message } = describeKvRefusal(false);
+    expect(level).toBe('error');
+    expect(message).toContain('fallback');
+  });
+
+  it('either way the request is refused — the level changes, the behaviour does not', () => {
+    expect(describeKvRefusal(true).message).toMatch(/refus|deny/i);
+    expect(describeKvRefusal(false).message).toMatch(/refus|deny/i);
   });
 });

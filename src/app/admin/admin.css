@@ -503,3 +503,112 @@
   text-decoration: none;
 }
 .admin-index a:hover { border-color: var(--accent-text); color: var(--accent-text); }
+
+/* ── Console tab strip ─────────────────────────────────────────────────
+   Five domains. Sticky under the shell's own chrome so the strip is still
+   reachable at the bottom of the System tab, which is the longest one. */
+.admin-tabstrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 18px;
+}
+.admin-tabstrip .button.small {
+  /* MOBILE.md's floor holds on desktop too — these are the console's primary
+     navigation and a 30px tab is not a target. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* ── Feature board ─────────────────────────────────────────────────────
+   Every capability the product offers a member, worst first. Sits above the
+   workbench: "can somebody buy a ticket right now" is a different question
+   from "what is waiting on me", and only one of them can be answered by a
+   queue that is empty because the feature is switched off.
+
+   State colour is a LEFT RULE rather than a fill: six states filling six
+   cards makes a grid that reads as decoration, and the badge already carries
+   the word. Every colour is a token — audit:retro fails on a literal here. */
+.admin-feature-summary { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-feature-pill {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+  border-radius: var(--radius-pill, 999px);
+  border: 1px solid var(--hair-100);
+  color: var(--ink-a80);
+}
+.admin-feature-pill.admin-feature-blocked { border-color: var(--danger); color: var(--danger); }
+.admin-feature-pill.admin-feature-attention { border-color: var(--warning); color: var(--warning-text); }
+
+.admin-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+.admin-feature-card {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--hair-70);
+  border-left: 3px solid var(--hair-100);
+  border-radius: var(--radius-card);
+  background: var(--hair-30);
+  color: inherit;
+  text-decoration: none;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.admin-feature-card:hover { background: var(--hair-50); transform: translateY(-1px); }
+.admin-feature-card.admin-feature-blocked { border-left-color: var(--danger); }
+.admin-feature-card.admin-feature-attention { border-left-color: var(--warning); }
+.admin-feature-card.admin-feature-unknown { border-left-color: var(--ink-a40); }
+.admin-feature-card.admin-feature-off { border-left-color: var(--ink-a25); }
+.admin-feature-card.admin-feature-idle { border-left-color: var(--hair-100); }
+.admin-feature-card.admin-feature-ok { border-left-color: var(--success); }
+
+.admin-feature-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.admin-feature-label { font-size: 0.9375rem; font-weight: 700; color: var(--ink); }
+.admin-feature-badge {
+  flex: 0 0 auto;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-a65);
+}
+.admin-feature-blocked .admin-feature-badge { color: var(--danger); }
+.admin-feature-attention .admin-feature-badge { color: var(--warning-text); }
+.admin-feature-member {
+  margin-top: 4px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ink-a80);
+}
+.admin-feature-reason {
+  margin-top: 4px;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--ink-a65);
+}
+.admin-feature-meta {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: .06em;
+  color: var(--ink-a65);
+}
+.admin-feature-journey { color: var(--ink-a40); }
+@media (prefers-reduced-motion: reduce) {
+  .admin-feature-card { transition: none; }
+  .admin-feature-card:hover { transform: none; }
+}
