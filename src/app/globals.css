@@ -4864,7 +4864,12 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 
 /* ── The tuner dial: a section switcher shaped like a slide-rule scale ────
-   Paired with src/components/TunerDial.tsx, which carries the reasoning for
+   Paired with the dock's own dial (`MmmDock.tsx` + the `.mmm-dial-*` block in
+   mmm.css). This used to name `src/components/TunerDial.tsx`, deleted
+   2026-09-03: the console rebuild draws the dial itself, so no route could
+   reach that file any more. Its three hard-won fixes live on in the dock —
+   the non-passive `wheel` listener above all, without which the page scrolls
+   out from under the gesture. It carried the reasoning for
    why this replaces a tab strip. In short: a strip divides one row by the
    number of tabs, so every strip in this codebase had drifted to 10-13px
    labels and two of the artist profile's six started off-screen at 393px.

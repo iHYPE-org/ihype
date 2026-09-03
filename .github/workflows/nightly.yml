@@ -1,0 +1,202 @@
+# The nightly list.
+#
+# **What this adds over CI, which runs most of the same things on every PR.**
+# CI answers "did this change break something". This answers "is the product
+# still whole" — and those differ whenever nothing changed in the diff:
+#
+#   * A surface goes dark because the page it lived on was retired in an
+#     unrelated PR. That is not hypothetical: ten components shipped with a
+#     live route behind them and no page rendering them (2026-09-03) — the
+#     offline wallet, the free-use crate, the community roadmap board, the
+#     owner's broadcast to their own followers. `audit:mounts` and walk items
+#     34-36 exist because of it, and a nightly run is what notices the next one
+#     on a quiet week rather than at the next release.
+#   * The advisory audits nobody has to clear to merge (`audit:spacing`,
+#     `audit:design`, `audit:shell --strict`) drift upward invisibly when they
+#     are only ever run by hand.
+#   * A dependency advisory lands against code nobody is touching.
+#
+# **Cost.** Nothing. This runs on our own machine, where minutes are free (see
+# docs/runbooks/ci-self-hosted-runner.md). The org's $5 GitHub budget is for
+# `deploy-production.yml`, which stays on hosted runners because it holds the
+# production secrets — a self-hosted job does not draw against it. That is why
+# a nightly is affordable here and would not have been before 2026-08-26.
+#
+# **Money items block rather than fail.** The walk reports BLOCKED for anything
+# needing Stripe unless `STRIPE_TEST_SECRET_KEY` is set on the repository. Set
+# it and the ticket, advertising and settlement items run for real every night;
+# leave it and the other three dozen still run. `scripts/e2e-workerd.mjs`
+# refuses a `sk_live_` key outright, so a misconfigured secret cannot touch
+# real money.
+name: Nightly
+
+on:
+  schedule:
+    # 07:00 UTC — after the 06:00 cron batch has run and well before the
+    # working day, so a failure is waiting rather than interrupting.
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  # A run still going when the next fires means something hung. Cancel the old
+  # one: two nightlies against one database is a flake factory.
+  group: nightly
+  cancel-in-progress: true
+
+jobs:
+  nightly:
+    name: Full audit set and the alpha acceptance walk
+    runs-on: [self-hosted, linux, x64, ihype-ci]
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ihype
+          POSTGRES_PASSWORD: ihype
+          POSTGRES_DB: ihype
+        ports:
+          - 55432:5432
+        options: >-
+          --health-cmd "pg_isready -U ihype"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+      AUTH_SECRET: ci-only-auth-secret-change-me-0123456789
+      NEXTAUTH_SECRET: ci-only-auth-secret-change-me-0123456789
+      AUTH_TRUST_HOST: 'true'
+      NEXT_PUBLIC_BASE_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
+      FEATURE_REQUIRE_INVITE_CODE: 'false'
+      FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+      NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
+
+    steps:
+      - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # ── The gates, same contracts as CI ──────────────────────────────────
+      - name: Unmounted-component gate
+        # The check this workflow was built around. A component no route can
+        # reach is either a missing surface or dead code; --max=0 either way.
+        run: npm run audit:mounts
+
+      - name: Wiring, routing and colour gates
+        # Each of these is --max=0 in CI too. Repeated here so a nightly
+        # failure is a complete picture rather than "CI would have caught it".
+        run: |
+          npm run guard:design
+          npm run guard:migrations
+          npm run guard:ds
+          npm run audit:css -- --max=0
+          npm run audit:routes -- --max-legacy=0
+          npm run audit:retro
+          npm run audit:contrast
+          npm run check:app-links
+
+      - name: Typecheck, lint and unit tests
+        run: |
+          npx tsc --noEmit
+          node scripts/lint-source.mjs
+          npm test
+
+      # ── The advisory audits, which nothing else runs on a schedule ───────
+      - name: Advisory audits (reported, never fatal)
+        # These are advisory ON PURPOSE and must stay that way: `audit:design`
+        # tests the DESIGN SYSTEM, whose fixes live in another repository, and
+        # `audit:spacing` sits at a number nobody has agreed to pay down. A red
+        # build here could not be cleared by anyone working in this one. What a
+        # nightly adds is that the numbers are written down every day, so a
+        # drift upward is visible before it is a project.
+        continue-on-error: true
+        run: |
+          {
+            echo '## Advisory audits'
+            echo '```'
+            npm run audit:spacing 2>&1 | tail -20 || true
+            echo '```'
+            echo '```'
+            npm run audit:design 2>&1 | tail -20 || true
+            echo '```'
+            echo '```'
+            npm run audit:shell 2>&1 | tail -20 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      # ── The walk, against the real Workers build ─────────────────────────
+      - name: Prepare scratch database
+        run: |
+          psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
+          npx prisma db push --accept-data-loss
+
+      - name: Build the Cloudflare worker
+        run: npm run cf:build
+
+      - name: Alpha acceptance walk
+        # Every member journey against the real Workers build: signup, uploads
+        # with real media, the discover deck, playlists, the HYPE economy and
+        # its ledger, community votes, the ticket path through sale, scan,
+        # webhook replay and refund — and items 34-36, which drive the nine
+        # surfaces that were built and mounted nowhere.
+        timeout-minutes: 25
+        run: |
+          set -o pipefail
+          node scripts/make-alpha-fixtures.mjs
+          node scripts/e2e-workerd.mjs --serve > nightly-walk-server.log 2>&1 &
+          SERVER_PID=$!
+          for _ in $(seq 1 60); do
+            curl -sf http://localhost:8787/api/health >/dev/null 2>&1 && break
+            sleep 2
+          done
+          npm run alpha:walk 2>&1 | tee nightly-walk.log
+          STATUS=${PIPESTATUS[0]}
+          kill "$SERVER_PID" 2>/dev/null || true
+          {
+            echo '## Alpha acceptance walk'
+            echo '```'
+            tail -40 nightly-walk.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$STATUS"
+        env:
+          ALPHA_BASE_URL: http://localhost:8787
+          ALPHA_SONG: e2e/fixtures/media/alpha-song.wav
+          ALPHA_GRAPHIC: e2e/fixtures/media/alpha-graphic.png
+          ALPHA_AD_AUDIO: e2e/fixtures/media/alpha-ad-spot.wav
+          E2E_WORKERD_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
+          AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          # Self-arming: absent, the money items report BLOCKED and the rest of
+          # the walk still runs. e2e-workerd.mjs refuses a live key.
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_TEST_WEBHOOK_SECRET }}
+
+      - name: Keep the logs of a failed night
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: nightly-logs
+          path: |
+            nightly-walk.log
+            nightly-walk-server.log
+          if-no-files-found: ignore
+          retention-days: 14

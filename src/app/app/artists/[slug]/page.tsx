@@ -514,15 +514,21 @@ export default async function MmmArtistPage({
         >
           {profile.headline && <p className="profile-standfirst">{profile.headline}</p>}
           <RichContent value={profile.bio} />
-          {/* "Sounds like" — `getSimilarArtists` narrows to same-genre acts in
-              the database and asks the model to rank them, falling back to the
-              most-hyped candidates when the binding is absent. Both it and this
-              row were built and called by nothing; the lib's own docstring
-              claimed "artist profile pages call this directly", and none did.
-              It renders nothing when there is no genre overlap, which on a new
-              install is most of the time. */}
-          <SimilarArtistsRow accent="var(--accent)" artists={similarArtists} heading="Sounds like" />
         </ProfilePanel>
+      )}
+
+      {/* "Sounds like" — `getSimilarArtists` narrows to same-genre acts in the
+          database and asks the model to rank them, falling back to the
+          most-hyped candidates when the binding is absent. Both it and this row
+          were built and called by nothing; the lib's own docstring claimed
+          "artist profile pages call this directly", and none did.
+
+          OUTSIDE the panel, not inside it. `ProfilePanel` renders its empty
+          sentence INSTEAD of its children, so a bio nobody has written yet took
+          the row down with it — and an artist with no bio is exactly the one a
+          reader most needs a way onward from. Caught by walk item 34. */}
+      {activeTab === 'bio' && (
+        <SimilarArtistsRow accent="var(--accent)" artists={similarArtists} heading="Sounds like" />
       )}
 
       {activeTab === 'merch' && (

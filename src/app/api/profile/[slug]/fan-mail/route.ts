@@ -98,5 +98,9 @@ export async function POST(
     data: { fanMailLastSentAt: new Date() },
   });
 
-  return NextResponse.json({ ok: true, sent });
+  /* Both numbers. `sent` counts deliveries the provider accepted; `recipients`
+     is how many the list resolved to. They differ whenever mail is degraded —
+     and reporting only `sent` made that indistinguishable from an empty list,
+     which is exactly what an owner needs to tell apart after pressing send. */
+  return NextResponse.json({ ok: true, sent, recipients: byAddress.size });
 }
