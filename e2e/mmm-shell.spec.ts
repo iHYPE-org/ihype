@@ -889,7 +889,10 @@ test.describe('Music · Map · Me shell', () => {
     const card = page.locator('.mmm-me-section:visible');
     await expect(card).toHaveCount(1);
     await expect(card).toHaveAttribute('aria-label', 'Profiles');
-    await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
+    /* Anchored on the card's own class, not its words. Matching text made this
+       assertion catch an unrelated mention of the HYPE link elsewhere on ME —
+       a negative assertion has to name the thing it denies. */
+    await expect(page.locator('.mmm-hype-link')).toHaveCount(0);
   });
 });
 
@@ -913,7 +916,13 @@ test.describe('ME with a real profile', () => {
   test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
     await page.goto('/app/me');
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
-    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
+    await expect(page.locator('.mmm-hype-link')).toBeVisible();
+    /* The claim moved behind a disclosure when the card was made compact
+       (2026-09-03) — it sits above every ME panel, so its resting height is a
+       tax on all of them. The LINK stays visible; only the explanation folds.
+       Asserting it after opening keeps the claim pinned without pinning the
+       340px card back into place. */
+    await page.getByRole('group').filter({ hasText: 'How this earns' }).locator('summary').first().click();
     await expect(page.getByText(/Promoting needs no role and no signup/i).first()).toBeVisible();
   });
 
@@ -1033,7 +1042,7 @@ test.describe('ME with a real profile', () => {
     await page.goto('/app/me?role=fan');
     // Settled first, same reason as the HYPE-link test above.
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
-    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
+    await expect(page.locator('.mmm-hype-link')).toBeVisible();
     await expect(page.getByText(/Your page/i)).toHaveCount(0);
   });
 });

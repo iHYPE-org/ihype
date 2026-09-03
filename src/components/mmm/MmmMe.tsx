@@ -333,22 +333,28 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
 
 
-      {/* The HYPE link is not a drawer. It stays above the four drawers and
-          remains visible without opening a section.
+      {/* The HYPE link is not a drawer, and it is not a page either.
 
-          It had been nested inside the old About Me drawer since the accordion
-          rebuild, which hid a fan's primary surface behind a collapsed panel
-          labelled "What artists and venues see" — the one thing the HYPE link
-          is not. Two e2e tests had been asserting it visible all along. */}
+          It stays above the four drawers and remains visible without opening a
+          section — it had been nested inside the old About Me drawer since the
+          accordion rebuild, which hid a fan's primary surface behind a
+          collapsed panel labelled "What artists and venues see", the one thing
+          the HYPE link is not. Two e2e tests assert it visible and that stays
+          true.
+
+          WHAT CHANGED 2026-09-03 (owner: "Hype link sits on the top of all ME
+          pages and takes up a ton of space"). It does sit on all of them —
+          this block is outside every `activeId` section, so Info, Settings and
+          Tickets all carried a ~340px card whose working part is one line. The
+          fix is not to hide it again: the LINK and its Copy button stay
+          visible on every panel, and only the EXPLANATION folds away. A
+          scoreboard reading "0 tickets · $0 earned" is also gone until there
+          is something to report — permanent zeros were a third of the card
+          saying nothing. */}
       {data.hypeLink && (
-        <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 7, fontSize: '0.9375rem' }}>Your HYPE link</div>
-          {data.role === 'fan' && (
-            <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 9 }}>
-              Share it — friends see what you hype, and shows you can go to together.
-            </div>
-          )}
-          <div className="mmm-link-field">
+        <div className="mmm-card mmm-hype-link">
+          <div className="mmm-hype-link-row">
+            <span className="mmm-eyebrow mmm-eyebrow-accent mmm-hype-link-label">HYPE link</span>
             <span className="mmm-link-value">{data.hypeLink.url}</span>
             <button
               className="mmm-btn-primary mmm-link-copy"
@@ -358,32 +364,29 @@ export function MmmMe({ data }: { data: MmmMeData }) {
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-          {/* Only figures that were actually read are rendered. A referral count
-              that failed to load is absent, not zero. */}
-          {(data.hypeLink.tickets !== null || data.hypeLink.earnedCents !== null) && (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7, marginBottom: 9 }}>
-              {data.hypeLink.tickets !== null && (
-                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
-                    {data.hypeLink.tickets}
-                  </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.9375rem' }}>Tickets</div>
-                </div>
-              )}
-              {data.hypeLink.earnedCents !== null && (
-                <div style={{ padding: 9, borderRadius: 9, background: 'var(--hair-30)', textAlign: 'center' }}>
-                  <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.05rem', color: 'var(--ink)', lineHeight: 1 }}>
-                    ${(data.hypeLink.earnedCents / 100).toFixed(0)}
-                  </div>
-                  <div className="mmm-stat-label" style={{ marginTop: 4, fontSize: '0.9375rem' }}>Earned</div>
-                </div>
-              )}
-            </div>
+
+          {/* Earned figures only once they exist. `null` is a failed read and
+              renders nothing at all; 0 is real but not worth a permanent board. */}
+          {(Boolean(data.hypeLink.tickets) || Boolean(data.hypeLink.earnedCents)) && (
+            <p className="mmm-hype-link-meta">
+              {data.hypeLink.tickets ? `${data.hypeLink.tickets} ticket${data.hypeLink.tickets === 1 ? '' : 's'}` : null}
+              {data.hypeLink.tickets && data.hypeLink.earnedCents ? ' · ' : null}
+              {data.hypeLink.earnedCents ? `$${(data.hypeLink.earnedCents / 100).toFixed(0)} earned` : null}
+            </p>
           )}
-          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>
-            Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool —
-            never the artist&rsquo;s 70%. Promoting needs no role and no signup.
-          </div>
+
+          <details className="mmm-hype-link-more">
+            <summary>How this earns</summary>
+            <div className="mmm-hype-link-body">
+              {data.role === 'fan' && (
+                <p>Share it — friends see what you hype, and shows you can go to together.</p>
+              )}
+              <p>
+                Share any show with this link. Every ticket it sells earns your proportional cut of the
+                10% promoter pool — never the artist&rsquo;s 70%. Promoting needs no role and no signup.
+              </p>
+            </div>
+          </details>
         </div>
       )}
 
