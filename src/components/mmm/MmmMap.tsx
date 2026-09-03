@@ -89,31 +89,38 @@ const SEARCH_PLACEHOLDER: Record<MapLayer, string> = {
  * maplibre Markers, because a Marker owns its own transform and would fight the
  * de-collision offset.
  */
-/* CARTO now requires a key on its basemaps, and REFUSING is not how it tells
-   you: an unkeyed request still answers 200 with a valid PNG, and the tile
-   simply carries an "API KEY REQUIRED" watermark. So this does not surface as
-   a broken map or an error in any log — it surfaces as a map that looks
-   slightly wrong, which is the kind of thing that ships for months. Measured
-   2026-09-03: the same tile is 33,863 bytes unkeyed and 35,505 keyed.
+/* CARTO requires a key on its basemaps, and WHAT THE KEY DOES DEPENDS ON THE
+   DELIVERY, which is worth stating precisely because the two were measured and
+   they differ.
 
-   The parameter is `key`, not `api_key` — the latter is accepted and ignored,
-   which fails exactly as silently. The `a`/`b`/`c`/`d` shard subdomains still
-   work, so only the query string changes.
+   On RASTER it is enforced and the enforcement is invisible: an unkeyed
+   request still answers 200 with a valid PNG, and the tile simply carries an
+   "API KEY REQUIRED" watermark. No 4xx, no error, no log line — the map just
+   looks slightly wrong. Measured 2026-09-03: the same tile is 33,863 bytes
+   unkeyed and 35,505 keyed.
 
-   THE KEY IS PUBLIC BY CONSTRUCTION and committing it is deliberate. It is
-   fetched by the browser on every tile, so it ships in the client bundle no
-   matter where it is stored — an env var would move it out of git while
-   changing nothing about who can read it, at the cost of a map that silently
-   returns to watermarks the first time someone deploys without setting it.
-   What actually protects it is a domain restriction on CARTO's side, not
-   secrecy here. `NEXT_PUBLIC_CARTO_BASEMAP_KEY` overrides it so the key can be
-   rotated without a code change. */
+   On VECTOR — what this file now uses — the key currently changes NOTHING
+   observable. Measured the same day: `style.json` is byte-identical keyed and
+   unkeyed, and so is a real `.mvt` tile. It is sent anyway, for two honest
+   reasons rather than a measured one: CARTO's terms make keys per-customer and
+   count the free tier against them, so the key is how this usage is attributed
+   to iHYPE rather than to nobody; and enforcement is plainly on its way, given
+   what already happened to raster. Do not read the raster measurement as proof
+   the vector map would break without it — that has not been shown.
+
+   The parameter is `key`. `api_key` is accepted and ignored, which on the
+   raster path failed exactly as silently as sending nothing.
+
+   THE KEY IS PUBLIC BY CONSTRUCTION and committing it is deliberate. The
+   browser fetches every tile, so it ships in the client bundle wherever it is
+   stored — an env var would move it out of git while changing nothing about
+   who can read it. What actually protects it is a domain restriction on
+   CARTO's side, not secrecy here. `NEXT_PUBLIC_CARTO_BASEMAP_KEY` overrides it
+   so the key can be rotated without a code change. */
 const CARTO_BASEMAP_KEY = process.env.NEXT_PUBLIC_CARTO_BASEMAP_KEY
   || 'cb1_2uct_1_4f4a36fe2c256aa044364a6f';
 
-const CARTO_TILE_URLS = ['a', 'b', 'c', 'd'].map(
-  (shard) => `https://${shard}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png?key=${CARTO_BASEMAP_KEY}`,
-);
+const CARTO_STYLE_URL = `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json?key=${CARTO_BASEMAP_KEY}`;
 
 export function MmmMap({
   active,
@@ -173,38 +180,38 @@ export function MmmMap({
         touchPitch: false,
         center: camera.center,
         zoom: camera.zoom,
-        // CARTO dark raster over OSM data, as the handoff specifies. Declared
-        // inline rather than fetched as a style JSON so the map has no
-        // additional network dependency before it can draw.
-        style: {
-          version: 8,
-          sources: {
-            carto: {
-              type: 'raster',
-              tiles: [
-                /* `voyager`, not `dark_all` and not `light_all`. Same
-                   provider and the same attribution — a style swap, not a
-                   vendor change.
+        /* VECTOR, not raster. Same CARTO Voyager cartography and the same
+           attribution — a delivery change, not a vendor or style change.
 
-                   dark_all is a hole cut in a cream cabinet. light_all
-                   (positron) was the first replacement and was WRONG for a
-                   different reason: it is deliberately washed out, so there is
-                   almost no ink in it to age, and the chart treatment in
-                   mmm.css rendered it as blank paper with faint smudges.
-                   Verified by pulling a real downtown Portland tile in all
-                   three styles and rendering them.
+           WHY: CARTO is retiring the raster service and has said it may stop
+           updating its data, so raster is a surface with an end date. Vector
+           is the supported path.
 
-                   voyager already has cream land, tan blocks and blue water —
-                   most of the way to a vintage chart before any filter. Note
-                   it lives under `rastertiles/`, unlike the other two. */
-                ...CARTO_TILE_URLS,
-              ],
-              tileSize: 256,
-              attribution: '© OpenStreetMap · CARTO',
-            },
-          },
-          layers: [{ id: 'carto', type: 'raster', source: 'carto' }],
-        },
+           WHAT IT COSTS, because this reverses a decision that was deliberate.
+           The style used to be declared INLINE precisely so the map could draw
+           with no prior network round-trip; a style URL means one fetch
+           (~104 KB) plus glyphs before the first label appears. That is the
+           trade, made knowingly: a slower first paint against a basemap that
+           still exists next year. Nothing else regresses — the chart treatment
+           in `mmm.css` filters the composited canvas, so it applies to vector
+           exactly as it did to raster, and labels now re-render at every zoom
+           instead of softening between raster levels.
+
+           THE ONE LIMIT WORTH KNOWING: the vector source is maxzoom 14, so
+           past that MapLibre overzooms — labels stay crisp, geometry gains no
+           detail. Measured against the live endpoint 2026-09-03.
+
+           CSP needed nothing: the style host and the `tiles-a`…`tiles-d` tile
+           hosts are all matched by the `https://*.basemaps.cartocdn.com`
+           wildcard already in `connect-src` (see `src/lib/csp-routes.ts`), and
+           `worker-src blob:` was already there for MapLibre.
+
+           `voyager`, not `positron` and not `dark-matter`: positron is
+           deliberately washed out and the chart treatment renders it as blank
+           paper with faint smudges, and dark-matter is a hole cut in a cream
+           cabinet. Voyager already has cream land, tan blocks and blue water —
+           most of the way to a vintage chart before any filter. */
+        style: CARTO_STYLE_URL,
       });
       /* The chart's scale bar ("1 mi"), from map.html's HUD. A ScaleControl
          rather than a drawing because it must re-derive with the zoom — a

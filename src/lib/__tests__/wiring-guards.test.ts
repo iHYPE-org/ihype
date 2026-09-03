@@ -231,21 +231,26 @@ describe('public media listings share one release rule', () => {
 });
 
 /* ── The basemap must be keyed, and nothing will tell you if it is not ─────
-   CARTO began requiring a key on its basemaps, and an unkeyed request does not
-   fail: it answers 200 with a valid PNG carrying an "API KEY REQUIRED"
-   watermark. There is no error, no 4xx and no log line — the map just looks
-   slightly wrong. Measured 2026-09-03: 33,863 bytes unkeyed against 35,505
-   keyed for the same tile. The parameter is `key`; `api_key` is accepted and
-   ignored, which fails the same silent way. */
-describe('the basemap tiles are keyed', () => {
+   CARTO requires a key, and on RASTER an unkeyed request does not fail: it
+   answers 200 with a valid PNG carrying an "API KEY REQUIRED" watermark — no
+   error, no 4xx, no log line, the map just looks slightly wrong. Measured
+   2026-09-03: 33,863 bytes unkeyed against 35,505 keyed for the same tile.
+
+   The map is VECTOR now, where the key is not yet enforced — style and tiles
+   measured byte-identical either way — so this guard is about attribution
+   rather than a broken map today: CARTO counts the free tier per key. It stays
+   because enforcement clearly arrives, and because the failure it guards
+   against is one nothing else would report. The parameter is `key`; `api_key`
+   is accepted and ignored, which fails the same silent way. */
+describe('the basemap is keyed', () => {
   const mapFile = 'src/components/mmm/MmmMap.tsx';
 
-  it('never builds a cartocdn tile URL without a key', () => {
+  it('never builds a cartocdn URL without a key', () => {
     const src = code(mapFile);
     const urls = [...src.matchAll(/https:\/\/[^'"`\s]*basemaps\.cartocdn\.com[^'"`\s]*/g)].map((m) => m[0]);
-    expect(urls.length, 'no tile URL found — has the basemap moved?').toBeGreaterThan(0);
+    expect(urls.length, 'no CARTO URL found — has the basemap moved?').toBeGreaterThan(0);
     const unkeyed = urls.filter((u) => !/[?&]key=/.test(u));
-    expect(unkeyed, 'an unkeyed CARTO tile is served watermarked, not refused').toEqual([]);
+    expect(unkeyed, 'CARTO counts the free tier per key; an unkeyed raster tile is also served watermarked').toEqual([]);
   });
 
   it('uses `key`, not the `api_key` CARTO silently ignores', () => {
