@@ -1,8 +1,9 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
 import { TicketClaimForm } from '@/components/TicketTransferPanel';
+import { OfflineTicketWarmer } from '@/components/OfflineTicketWarmer';
 
 const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
 
@@ -41,8 +42,22 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
   const demo = tickets.length === 0;
   const visibleTickets = demo ? DEMO_TICKETS : tickets;
 
+  /* The paths the service worker should hold for the door. REAL tickets only —
+     a demo row's id resolves to nothing, and warming it would spend a request
+     to cache a 404. Memoised because the warmer keys its effect on this array,
+     and a fresh one each render would re-warm on every keystroke elsewhere in
+     the shell. */
+  const ticketPaths = useMemo(
+    () => (demo ? [] : tickets.map((ticket) => `/app/me/tickets/${ticket.serializedId}`)),
+    [demo, tickets],
+  );
+
   return (
     <>
+      {/* "The wallet opens in airplane mode" — the design's promise, and until
+          now not true for a single ticket. See OfflineTicketWarmer: this list
+          is the one surface that knows every ticket the member holds. */}
+      <OfflineTicketWarmer paths={ticketPaths} />
       {/* Claiming sits on the LIST, not on a ticket page: the person redeeming a
           code does not have the ticket yet, so they cannot open its page. Above
           the list because on a first transfer the list below is empty or demo

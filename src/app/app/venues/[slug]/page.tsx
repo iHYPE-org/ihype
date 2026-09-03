@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { NewsletterSignup } from '@/components/NewsletterSignup';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -328,6 +329,15 @@ export default async function MmmVenuePage({
               <VenueRequestForm venueProfileId={profile.id} />
             </>
           )}
+          {/* Updates by email, for someone with no account. Same reasoning as
+              the artist pane: the double opt-in is the route's, and a confirmed
+              row is now a real recipient of this venue's fan mail rather than a
+              subscription nothing ever sent to. Shown to the owner too — that
+              is how they see what a visitor is offered. */}
+          <div className="profile-newsletter">
+            <h3 className="profile-panel-subhead">Get updates by email</h3>
+            <NewsletterSignup fixedProfile={{ id: profile.id, name: profile.name, type: profile.type }} />
+          </div>
         </ProfilePanel>
       )}
 

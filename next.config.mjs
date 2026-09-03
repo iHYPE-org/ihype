@@ -162,7 +162,10 @@ const nextConfig = {
       { source: '/radio', destination: '/app/music/radio', permanent: false },
       { source: '/for-you', destination: '/app/music/recommended', permanent: false },
       { source: '/this-weekend', destination: '/app/map?layer=events', permanent: false },
-      { source: '/community', destination: '/app/me?section=about', permanent: false },
+      /* Now that the roadmap board has a route again, `/community` lands ON it
+         rather than on the ME panel it used to be folded into. The URL is in
+         sent email and older release notes. */
+      { source: '/community', destination: '/app/me/info/community', permanent: false },
       { source: '/events/new', destination: '/app/me/events/new', permanent: false },
       { source: '/me/analytics', destination: '/app/me', permanent: false },
       { source: '/me/booking', destination: '/app/me/booking', permanent: false },

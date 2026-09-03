@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
@@ -125,6 +126,14 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
           <article><span>02</span><div><strong>Find the show</strong><p>Who is playing this week, at which room, for how much.</p></div></article>
           <article><span>03</span><div><strong>HYPE it</strong><p>Your HYPE moves an artist up your city&rsquo;s chart. That is the whole ranking.</p></div></article>
         </section>
+
+        {/* What is actually on, near whoever is reading. The signed-in answer
+            is the map and the map is behind auth, so before this a visitor
+            could read three sentences about finding local shows and not be
+            shown one. Renders a single opt-in line until they ask — no
+            geolocation is requested on load, and a refusal renders nothing
+            rather than an error. */}
+        <NearbyShowsWidget />
 
         <section aria-label="Live iHYPE platform statistics" className="fan-entry-stats">
           {stats}

@@ -63,6 +63,12 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        actually gone wrong. */
     { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support/tickets' },
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
+    /* The roadmap board. `/api/feedback` and `CommunityVoteBoard` were both
+       real and the board was mounted nowhere, so nothing in the product could
+       reach it — the legacy `/community` route is a redirect into this panel's
+       own screen. Above the legal documents and below the charter: it is the
+       one row here a member might act on rather than read. */
+    { label: 'Community roadmap', detail: 'See what members have asked for, add one, vote', href: '/app/me/info/community' },
     { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
     { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },
     { label: 'Privacy policy', detail: 'What is collected, and what never is', href: '/app/me/info/privacy' },

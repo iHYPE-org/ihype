@@ -23,7 +23,10 @@ export async function SimilarArtistsRow({
         {artists.map((a) => (
           <Link
             className="similar-artist-card"
-            href={`/artists/${a.slug}`}
+            /* The shell route, not `/artists/<slug>`. That is a redirect into
+               this same page, so linking to it from inside the shell costs a
+               hop and, on a slow connection, a flash of the redirect. */
+            href={`/app/artists/${a.slug}`}
             key={a.slug}
           >
             <div className="similar-artist-avatar">

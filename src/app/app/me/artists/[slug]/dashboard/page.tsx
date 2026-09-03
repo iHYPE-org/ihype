@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { FanMailButton } from '@/components/FanMailButton';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -172,6 +173,17 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
             <Link className="ad-btn ad-btn-outline ad-btn-full" href="/app/me/profiles">{t('artistsSlugDashboardPage.uploadTrack', 'Upload a track')}</Link>
             <Link className="ad-btn ad-btn-outline ad-btn-full" href={`/app/me/artists/${profile.slug}/analytics`}>{t('artistsSlugDashboardPage.viewAnalytics', 'View analytics')}</Link>
             <Link className="ad-btn ad-btn-outline ad-btn-full" href="/app/me/profiles">{t('artistsSlugDashboardPage.editMyPage', 'Edit my page')}</Link>
+            {/* Fan mail: one email to every follower who asked to hear from
+                this act, capped at once a week by `Profile.fanMailLastSentAt`.
+                The route has always required the session to OWN the profile,
+                and this page is owner-gated above, so the two agree. It was
+                built, tested and mounted nowhere — an artist had no way to
+                reach the people who followed them. */}
+            <FanMailButton
+              label={t('artistsSlugDashboardPage.sendFanMail', 'Email my followers')}
+              profileId={profile.id}
+              triggerClassName="ad-btn ad-btn-outline ad-btn-full"
+            />
           </div>
         </div>
       </div>

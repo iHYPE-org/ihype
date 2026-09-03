@@ -4405,6 +4405,31 @@ h2 {
   text-transform: uppercase;
 }
 .fan-entry-signal span { width: 30px; height: 1px; background: var(--fan-entry-orange); box-shadow: 0 0 12px var(--fan-entry-orange); }
+/* Shows near you, on the logged-out front door — see NearbyShowsWidget. Its
+   own classes, because the `.weekend-*` set it used to borrow went with the
+   `/this-weekend` page and it was rendering unstyled. */
+.nearby-shows { max-width: 900px; margin: 0 auto 28px; padding: 0 clamp(18px,3vw,42px); }
+.nearby-shows-prompt { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; }
+.nearby-shows-eyebrow { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-3); }
+.nearby-shows-note { font-size: 0.9375rem; color: var(--ink-2); max-width: 900px; margin: 0 auto 28px; padding: 0 clamp(18px,3vw,42px); }
+.nearby-shows-cta {
+  min-height: 44px; display: inline-flex; align-items: center; padding: 0 18px;
+  border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--bg-surface);
+  color: var(--ink); font-size: 0.9375rem; font-weight: 500; cursor: pointer;
+}
+.nearby-shows-list { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.nearby-shows-item { border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--bg-surface); }
+.nearby-shows-link { display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 12px 16px; text-decoration: none; color: inherit; }
+.nearby-shows-when { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-3); white-space: nowrap; }
+.nearby-shows-body { flex: 1; min-width: 0; }
+.nearby-shows-title { font-family: var(--font-display); font-size: 1rem; font-weight: 500; color: var(--ink); }
+.nearby-shows-meta { font-size: 0.9375rem; color: var(--ink-2); }
+.nearby-shows-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+/* Tracked to .14em, not .1em: at 12px the mono-eyebrow exemption needs the
+   tracking, and a metadata chip is exactly what that exemption is for. */
+.nearby-shows-tag { font-family: var(--font-mono); font-size: 0.75rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-3); border: 1px solid var(--line); border-radius: var(--radius-pill); padding: 2px 8px; }
+.nearby-shows-cta-text { font-size: 0.9375rem; color: var(--accent-text); white-space: nowrap; }
+
 .fan-entry-steps {
   width: min(1420px,calc(100% - clamp(36px,8vw,140px)));
   margin: 0 auto;
@@ -4839,7 +4864,12 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 
 /* ── The tuner dial: a section switcher shaped like a slide-rule scale ────
-   Paired with src/components/TunerDial.tsx, which carries the reasoning for
+   Paired with the dock's own dial (`MmmDock.tsx` + the `.mmm-dial-*` block in
+   mmm.css). This used to name `src/components/TunerDial.tsx`, deleted
+   2026-09-03: the console rebuild draws the dial itself, so no route could
+   reach that file any more. Its three hard-won fixes live on in the dock —
+   the non-passive `wheel` listener above all, without which the page scrolls
+   out from under the gesture. It carried the reasoning for
    why this replaces a tab strip. In short: a strip divides one row by the
    number of tabs, so every strip in this codebase had drifted to 10-13px
    labels and two of the artist profile's six started off-screen at 393px.
