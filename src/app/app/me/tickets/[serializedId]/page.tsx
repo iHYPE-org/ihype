@@ -4,6 +4,7 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { TicketVerificationCard } from '@/components/TicketVerificationCard';
 import { TicketReassignmentForm } from '@/components/TicketReassignmentForm';
 import { TicketCardActions } from '@/components/TicketCardActions';
+import { TicketTransferPanel } from '@/components/TicketTransferPanel';
 import { PushPrimerOnTicket } from '@/components/PushPrimerOnTicket';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -210,20 +211,32 @@ export default async function TicketPage({
             <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 500 }}>
               {t('ticketsSerializedIdPage.holderActionsHeading', 'What you can do with this ticket')}
             </h3>
-            {/* `TicketCardActions` replaces the bare transfer panel that used
-                to sit here. It carries the same transfer (same endpoint, same
-                order id) plus three things the product had built and mounted
-                nowhere: Share, List for resale — face value only, per the
-                ticket policy — and Resend confirmation. `showQrToggle` is off
-                because this page already prints the code above; a second
-                button revealing the same QR is a duplicate, not an action. */}
+            {/* `TicketCardActions` ADDS to the transfer panel; it does not
+                replace it, and the version of this page that swapped one for
+                the other was wrong in a way worth recording. The two
+                "transfers" are different operations and only one of them
+                works: the panel mints a CODE, and claiming a code moves
+                `buyerUserId` — which is what every ticket list is scoped by —
+                while the component's email path rewrites `holderEmail` only
+                and leaves the order in the sender's account forever. Swapping
+                them removed the transfer that works and kept the one that does
+                not. `e2e/ticket-transfer` caught it, which is the whole reason
+                that spec asserts on the panel's own words rather than on any
+                button named Transfer. So the panel stays, and the component is
+                asked for everything EXCEPT transfer: Share, List for resale
+                (face value only, per the ticket policy) and Resend
+                confirmation, all of which had live routes and no control
+                anywhere. `showQrToggle` is off because this page already
+                prints the code above. */}
             <TicketCardActions
               orderId={ticket.ticketOrderId}
               orderStatus={ticket.ticketOrder.status}
               showQrToggle={false}
+              showTransfer={false}
               showsAt={ticket.show.startsAt.toISOString()}
               tickets={[{ id: ticket.id, serializedId: ticket.serializedId }]}
             />
+            <TicketTransferPanel orderId={ticket.ticketOrderId} />
           </div>
         ) : null}
 

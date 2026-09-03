@@ -16,6 +16,7 @@ export function TicketCardActions({
   tickets,
   showsAt,
   showQrToggle = true,
+  showTransfer = true,
 }: {
   orderId: string;
   orderStatus?: string;
@@ -27,6 +28,16 @@ export function TicketCardActions({
    * that reveals the same thing is a duplicate rather than an action.
    */
   showQrToggle?: boolean;
+  /**
+   * Whether to offer the EMAIL transfer. False wherever `TicketTransferPanel`
+   * is also on the page, and the reason is not tidiness — the two are not the
+   * same operation and only one of them works. The email path rewrites
+   * `holderEmail` and leaves `buyerUserId`, and every ticket list is scoped by
+   * `buyerUserId`, so an emailed ticket stays in the sender's account forever;
+   * claiming a CODE is what actually moves the order. Offering both would put
+   * the broken one first. See `TicketTransferPanel`'s own docstring.
+   */
+  showTransfer?: boolean;
 }) {
   const [showQr, setShowQr] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -156,7 +167,9 @@ export function TicketCardActions({
             {showQr ? t('ticketCardActions.hideQrButton', 'Hide QR Code') : t('ticketCardActions.showQrButton', 'Show QR Code')}
           </button>
         )}
-        <button className="btn" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
+        {showTransfer && (
+          <button className="btn" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
+        )}
         <button className="btn" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
         {resaleTicket && (
           <button className="btn" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.listForResaleButton', 'List for resale')}</button>
@@ -191,7 +204,7 @@ export function TicketCardActions({
         </div>
       )}
 
-      {transferOpen && (
+      {showTransfer && transferOpen && (
         <div
           aria-modal="true"
           className="ihype-sheet-overlay"
