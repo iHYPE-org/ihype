@@ -170,6 +170,51 @@ for (const [name, tokens] of blocks) {
   }
 }
 
+/* THE PLATE, IN EVERY THEME — same discipline as the walnut block above, for
+   the same reason. `.mmm-card` is now a plate: a gradient body carrying the
+   theme's own --ink, ringed in brass, with an engraved brass header carrying
+   --ink-on-brass.
+
+   Two worst cases, and both are the DARKER stop rather than the lighter one,
+   which is the opposite of the walnut rule directly above: there the copy is
+   light on a dark material, so the lightest stop is worst; here the plate
+   holds dark-on-light in three themes and light-on-dark in the other three,
+   and the header always holds a dark glyph. So the plate is measured at
+   --plate-2 and the header at --brass-edge.
+
+   --brass-edge exists ONLY because of this check. Running the header
+   --brass -> --brass-deep put the glyph at 3.2-4.0:1 in five of six themes,
+   and on `street` nothing reaches AA on --brass-deep at all — pure black
+   measures 3.6:1 there. A header that stops short is the fix; a lighter glyph
+   would have inverted the nameplate. */
+{
+  for (const [name, tokens] of blocks) {
+    const plate = tokens.get('--plate-2');
+    const ink = tokens.get('--ink');
+    if (!plate) { failures.push(`plate [${name}]: --plate-2 is not defined`); continue; }
+    if (ink) {
+      const r = ratio(ink, plate);
+      if (r < AA) failures.push(`plate [${name}]: --ink ${ink} on --plate-2 ${plate} = ${r.toFixed(2)}:1`);
+    }
+    /* A field carries --ink too, and it is its own face rather than a tint of
+       the plate, so the plate's ratio says nothing about it. */
+    const field = tokens.get('--field');
+    if (!field) { failures.push(`plate [${name}]: --field is not defined`); continue; }
+    if (ink) {
+      const rf = ratio(ink, field);
+      if (rf < AA) failures.push(`plate [${name}]: --ink ${ink} on --field ${field} = ${rf.toFixed(2)}:1`);
+    }
+    const edge = tokens.get('--brass-edge');
+    const glyph = tokens.get('--ink-on-brass');
+    if (!edge) { failures.push(`plate [${name}]: --brass-edge is not defined`); continue; }
+    if (!glyph) { failures.push(`plate [${name}]: --ink-on-brass is not defined`); continue; }
+    const r = ratio(glyph, edge);
+    if (r < AA) {
+      failures.push(`plate [${name}]: --ink-on-brass ${glyph} on --brass-edge ${edge} = ${r.toFixed(2)}:1`);
+    }
+  }
+}
+
 if (failures.length) {
   console.error('Theme contrast failures:\n' + failures.map((f) => '  - ' + f).join('\n'));
   process.exit(1);

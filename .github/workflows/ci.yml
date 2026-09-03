@@ -168,6 +168,24 @@ jobs:
         # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
+      - name: Unstyled-class ratchet
+        # The other side of the same coin as the gate below. That one asks
+        # whether anything RENDERS a component; this asks whether anything
+        # DEFINES the classes a component renders with.
+        #
+        # `.mmm-player-range` sits on the full player's seek bar and volume
+        # control and was defined in no stylesheet, ever — both rendered as the
+        # browser's default blue on a walnut cabinet until someone looked at
+        # the screen and said so. A class that resolves to no rule is not an
+        # error in HTML, CSS, TypeScript or React; the element just renders
+        # bare and the build stays green.
+        #
+        # 52 is the debt that already existed, and it is a mix of real gaps and
+        # dead names left behind by renames — it needs triage, not a blanket
+        # fix, which is exactly why this is a ratchet rather than a gate at 0.
+        # THE NUMBER GOES DOWN, NEVER UP.
+        run: npm run --silent audit:unstyled -- --max=52
+
       - name: Unmounted-component gate
         # Components that exist and no route can reach. TypeScript cannot see
         # this — an unused module is not an error — and no other audit here
