@@ -258,6 +258,12 @@ jobs:
           E2E_WORKERD_DATABASE_URL: postgresql://ihype:ihype@localhost:55432/ihype
           AUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
           NEXTAUTH_SECRET: ci-only-e2e-workerd-secret-0123456789
+          # Without this the /admin console is unreachable in any browser run:
+          # the layout's device gate reads it and, finding nothing, redirects
+          # every admin URL to /admin/device-register. A scratch value, for a
+          # scratch worker against a scratch database — the console's real
+          # secret lives on the Worker and never comes near CI.
+          ADMIN_DEVICE_SECRET: ci-only-admin-device-secret-0123456789
           # Must match scripts/e2e-workerd.mjs's BASE (localhost:8787,
           # E2E_WORKERD_PORT default) exactly: NEXT_PUBLIC_* values are
           # inlined into the bundle at `next build` time, not read at

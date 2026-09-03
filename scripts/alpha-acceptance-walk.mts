@@ -35,16 +35,20 @@
 import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
 import { buildTicketVerificationUrl } from '../src/lib/tickets';
+import { exitCodeFor, renderBoard, rollUp } from '../src/lib/feature-health';
 
 const BASE = (process.env.ALPHA_BASE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 const CRON_SECRET = process.env.CRON_SECRET ?? '';
+/* `--report=<path>` writes the run as JSON so the board can be re-rendered
+   without driving the product again — the nightly reads it for its summary. */
+const REPORT_PATH = (process.argv.find((a) => a.startsWith('--report=')) ?? '').slice('--report='.length);
 const SONG_PATH = process.env.ALPHA_SONG ?? '';
 const GRAPHIC_PATH = process.env.ALPHA_GRAPHIC ?? '';
 /* A ≤30s spot. Deliberately NOT the song: an ad is a different artefact, and
@@ -79,6 +83,24 @@ async function item(name: string, fn: () => Promise<string | void>) {
 
 function blocked(reason: string): never {
   throw new Error(`BLOCKED: ${reason}`);
+}
+
+/*
+ * A 429 from `/api/register` says this SERVER has already run a walk, not that
+ * signup is broken.
+ *
+ * The limiter is keyed per client IP and every request here arrives from
+ * loopback, so a second walk against the same workerd process is one caller
+ * hammering signup — exactly what the bucket is for. Reported as FAIL it looks
+ * like the product refusing legitimate members, and it lands on the four items
+ * that open the walk, so the run reads as catastrophic when nothing is wrong.
+ * Restarting the worker clears it; the nightly starts a fresh one every time
+ * and never sees this.
+ */
+function blockIfSignupThrottled(res: { status: number }): void {
+  if (res.status === 429) {
+    blocked('the signup rate limiter still holds from an earlier walk against this server — restart the worker to clear it');
+  }
 }
 
 function assert(condition: unknown, message: string): asserts condition {
@@ -131,6 +153,30 @@ function preflight() {
   }
   if (STRIPE_KEY && !STRIPE_KEY.startsWith('sk_test_')) {
     throw new Error('Refusing to run: STRIPE_SECRET_KEY is not a test-mode key.');
+  }
+  /*
+   * A PLACEHOLDER key is not an absent one, and the difference has misled this
+   * project before. The prefix check above passes `sk_test_…` — eight real
+   * characters and a single non-ASCII ellipsis — which is exactly the value
+   * this sandbox carries. With it set, every money item runs, Stripe refuses
+   * the request ("An error occurred with our connection to Stripe", because
+   * the client cannot even encode the header), and the item reports FAIL as
+   * though the product were broken. Nine sibling items report BLOCK for the
+   * same underlying condition, so the run contradicts itself.
+   *
+   * Refuse it loudly instead. Absent means BLOCK; present-but-unusable means
+   * fix your configuration. Same distinction `generate-app-links.mjs --check`
+   * draws between a missing file and a malformed one.
+   */
+  if (STRIPE_KEY) {
+    const printableAscii = /^[\x21-\x7e]+$/.test(STRIPE_KEY);
+    if (!printableAscii || STRIPE_KEY.length < 30) {
+      throw new Error(
+        `Refusing to run: STRIPE_SECRET_KEY is ${STRIPE_KEY.length} characters` +
+          `${printableAscii ? '' : ' and contains a non-ASCII character'} — that is a placeholder, not a key. ` +
+          'Unset it to have the money items report BLOCKED, or set a real sk_test_ key to run them.',
+      );
+    }
   }
   if (!process.env.AUTH_SECRET && !process.env.NEXTAUTH_SECRET) {
     throw new Error('AUTH_SECRET is required to sign sessions.');
@@ -229,6 +275,8 @@ async function main() {
       body: JSON.stringify(payload),
     });
 
+    blockIfSignupThrottled(gated);
+
     /* Invite-only is the live posture, so the refusal is the correct first
        answer. Minting a code and retrying is the operator's real path. */
     if (gated.status === 403 || /invite/i.test(gated.body?.error ?? '')) {
@@ -273,6 +321,7 @@ async function main() {
     };
 
     const first = await register(`dup-one-${run}@example.com`);
+    blockIfSignupThrottled(first);
     ok(first, [200, 201]);
     const second = await register(`dup-two-${run}@example.com`);
     assert(
@@ -309,6 +358,7 @@ async function main() {
           turnstileToken: 'alpha-walk-token', inviteCode: code,
         }),
       });
+      blockIfSignupThrottled(result);
       assert(
         [200, 201].includes(result.status),
         `"${name}" was refused ${result.status}: ${result.body?.error}`,
@@ -1468,6 +1518,7 @@ async function main() {
         ref: referrerProfile.hexId,
       }),
     });
+    blockIfSignupThrottled(signup);
     ok(signup, [200, 201]);
 
     /* Rewards are queued off the request, so give the deferred work a moment
@@ -1862,8 +1913,29 @@ async function main() {
     console.log('');
   }
 
+  /*
+   * The same run, said in the member's words. "20c failed" does not tell
+   * anyone whether a ticket can still be bought; "advertising: BROKEN" does.
+   * The board also names the journeys NOTHING here touches, which a list of
+   * items structurally cannot do.
+   */
+  const health = rollUp(rows);
+  console.log(renderBoard(health));
+
+  if (REPORT_PATH) {
+    writeFileSync(
+      REPORT_PATH,
+      `${JSON.stringify({ at: new Date().toISOString(), target: BASE, rows }, null, 2)}\n`,
+      'utf8',
+    );
+    console.log(`  report written to ${REPORT_PATH}\n`);
+  }
+
   await prisma.$disconnect();
-  process.exit(fail > 0 ? 1 : 0);
+  /* Identical to the old `fail > 0` — a journey is BROKEN exactly when one of
+     its items failed. Stated through the board so there is one rule, not two
+     that could drift. */
+  process.exit(exitCodeFor(health));
 }
 
 main().catch((error) => {

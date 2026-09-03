@@ -288,6 +288,35 @@ async function consumeDurableObject(key: string, options: RateLimitOptions): Pro
   }
 }
 
+/**
+ * How to report a KV failure that ends in a refusal.
+ *
+ * Two different events reach that point and only one of them is a fault.
+ *
+ * A DEGRADED bucket got there because the Durable Object failed AND then KV
+ * failed: its limiter is entirely down and a member is being refused for no
+ * reason of their own. That is an error and belongs in Sentry.
+ *
+ * An OPTED-OUT bucket has no fallback to have failed — KV is its chosen
+ * primary, and `atomic: false` is the caller saying this bucket may be
+ * approximate. `/api/analytics/track` is the one that reaches here in practice
+ * (5 events in 22 days, one iPhone on a slow network), and by that route's own
+ * reasoning a refusal there drops one analytics beacon and nothing else.
+ *
+ * Reporting both at ERROR under the words "KV fallback also failed" was wrong
+ * twice: it named a fallback that does not exist for these buckets, and it put
+ * a dropped beacon in Sentry beside real faults. This module has already been
+ * bitten once by a misleading log line — one DO fault surfaced as two issues,
+ * the louder naming the wrong cause — which is the whole reason the 3-way
+ * `AtomicOutcome` exists. The refusal itself is unchanged in both cases:
+ * failing closed is the safe default for a limiter.
+ */
+export function describeKvRefusal(optedOut: boolean): { level: 'warn' | 'error'; message: string } {
+  return optedOut
+    ? { level: 'warn', message: 'KV timed out for a non-atomic bucket; refusing this request' }
+    : { level: 'error', message: 'KV fallback also failed; denying request' };
+}
+
 export async function consumeRateLimit(key: string, options: RateLimitOptions): Promise<RateLimitResult> {
   const optedOut = options.atomic === false;
   const atomic: AtomicOutcome = optedOut ? { kind: 'unavailable' } : await consumeDurableObject(key, options);
@@ -312,9 +341,14 @@ export async function consumeRateLimit(key: string, options: RateLimitOptions): 
       ? options
       : { limit: Math.max(1, Math.floor(options.limit / 2)), windowMs: options.windowMs };
     try {
-      return await withKvTimeout(consumeKvUnsafe(key, effective), 'KV rate limit fallback');
+      return await withKvTimeout(
+        consumeKvUnsafe(key, effective),
+        optedOut ? 'KV rate limit' : 'KV rate limit fallback',
+      );
     } catch (error) {
-      log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, 'KV fallback also failed; denying request');
+      const { level, message } = describeKvRefusal(optedOut);
+      if (level === 'warn') log.warn('[rate-limit]', { key }, message);
+      else log.error('[rate-limit]', error instanceof Error ? error : { error: String(error) }, message);
       return {
         allowed: false,
         remaining: 0,

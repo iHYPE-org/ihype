@@ -179,6 +179,14 @@ function writeStrippedConfig() {
     'CRON_SECRET',
     'FEATURE_ENABLE_TICKET_PAYMENTS',
     'STRIPE_ALLOW_TEST_MODE_REHEARSAL',
+    /* Without this the whole /admin console is unreachable from any browser
+       run: the layout's device gate reads it through `readRuntimeEnv`, finds
+       nothing, and redirects every admin URL to /admin/device-register. So no
+       spec, probe or measurement has ever rendered a single admin page. Same
+       shape as the session-cookie flag the nightly was missing — the harness
+       was the reason, not the product. Forwarded only when the caller has it,
+       like everything else here. */
+    'ADMIN_DEVICE_SECRET',
   ];
   for (const name of forwarded) {
     const value = process.env[name];

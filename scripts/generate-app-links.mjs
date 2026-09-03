@@ -98,47 +98,86 @@ function appleBody(id, teamId) {
   }, null, 2)}\n`;
 }
 
+/*
+ * `--check` reports TWO different states and they are not the same problem.
+ *
+ *   absent    Nobody has run the generator yet, because the Team ID and the
+ *             signing fingerprint live in accounts outside this repository.
+ *             Links open in the browser. Degraded, honest, and the state this
+ *             project has been in since the workflow was written — so a caller
+ *             that treats it as a failure fails every time, forever, and
+ *             anything sequenced after it never runs. That happened: this check
+ *             sat first in the nightly's gate step and the alpha acceptance
+ *             walk behind it never executed once.
+ *
+ *   malformed A file IS present and the OS will reject it. Both platforms cache
+ *             a verification failure for days, so this is worse than absent and
+ *             is a real defect.
+ *
+ * So: exit 1 for malformed, exit 2 for merely absent, 0 for verified. A caller
+ * that wants a gate checks for 1; a caller that wants a status line tolerates 2
+ * and prints it. Same convention as `stripe-payout-rehearsal.mjs`, which exits
+ * 2 when a mode could not be rehearsed rather than pretending it passed.
+ */
 async function check() {
-  const problems = [];
+  /* Present but wrong — fatal. */
+  const broken = [];
+  /* Not written yet — reportable, not fatal. */
+  const missing = [];
   const id = await appId();
 
   const android = await readFile(path.join(root, ANDROID), 'utf8').catch(() => null);
-  if (!android) problems.push(`${ANDROID} is absent — Android App Links are not verified, so https:// links open in the browser.`);
+  if (!android) missing.push(`${ANDROID} is absent — Android App Links are not verified, so https:// links open in the browser.`);
   else {
     try {
       const parsed = JSON.parse(android);
       const target = parsed?.[0]?.target;
-      if (target?.package_name !== id) problems.push(`${ANDROID}: package_name is "${target?.package_name}", expected "${id}".`);
+      if (target?.package_name !== id) broken.push(`${ANDROID}: package_name is "${target?.package_name}", expected "${id}".`);
       const print = target?.sha256_cert_fingerprints?.[0] ?? '';
       if (!SHA256.test(print)) {
-        problems.push(`${ANDROID}: "${print}" is not a SHA-256 fingerprint (32 colon-separated hex octets). A SHA-1 has 20 — both are on the same Play Console screen.`);
+        broken.push(`${ANDROID}: "${print}" is not a SHA-256 fingerprint (32 colon-separated hex octets). A SHA-1 has 20 — both are on the same Play Console screen.`);
       }
     } catch {
-      problems.push(`${ANDROID}: not valid JSON. Android caches the failure, so this is worse than an absent file.`);
+      broken.push(`${ANDROID}: not valid JSON. Android caches the failure, so this is worse than an absent file.`);
     }
   }
 
   const apple = await readFile(path.join(root, APPLE), 'utf8').catch(() => null);
-  if (!apple) problems.push(`${APPLE} is absent — iOS Universal Links are not verified.`);
+  if (!apple) missing.push(`${APPLE} is absent — iOS Universal Links are not verified.`);
   else {
     try {
       const parsed = JSON.parse(apple);
       const appID = parsed?.applinks?.details?.[0]?.appID ?? '';
       const [teamId, ...rest] = appID.split('.');
-      if (!TEAM_ID.test(teamId)) problems.push(`${APPLE}: appID starts with "${teamId}", which is not a 10-character Team ID.`);
-      if (rest.join('.') !== id) problems.push(`${APPLE}: appID names "${rest.join('.')}", expected "${id}".`);
+      if (!TEAM_ID.test(teamId)) broken.push(`${APPLE}: appID starts with "${teamId}", which is not a 10-character Team ID.`);
+      if (rest.join('.') !== id) broken.push(`${APPLE}: appID names "${rest.join('.')}", expected "${id}".`);
     } catch {
-      problems.push(`${APPLE}: not valid JSON. It must have no file extension and be served as application/json.`);
+      broken.push(`${APPLE}: not valid JSON. It must have no file extension and be served as application/json.`);
     }
   }
 
-  if (problems.length) {
-    console.error('App-link files are not ready:\n');
-    for (const problem of problems) console.error(`  ${problem}`);
-    console.error('\nBoth are generated, never hand-written:');
-    console.error('  node scripts/generate-app-links.mjs --team-id ABCDE12345 --sha256 AA:BB:...:FF\n');
+  const howToWrite = [
+    '',
+    'Both are generated, never hand-written:',
+    '  node scripts/generate-app-links.mjs --team-id ABCDE12345 --sha256 AA:BB:...:FF',
+    '',
+  ].join('\n');
+
+  if (broken.length) {
+    console.error('App-link files are PRESENT AND WRONG — the OS will cache the rejection:\n');
+    for (const problem of broken) console.error(`  ${problem}`);
+    for (const problem of missing) console.error(`  ${problem}`);
+    console.error(howToWrite);
     process.exit(1);
   }
+
+  if (missing.length) {
+    console.log('App-link files are not written yet (needs the Apple Team ID and the Play signing fingerprint):\n');
+    for (const problem of missing) console.log(`  ${problem}`);
+    console.log(howToWrite);
+    process.exit(2);
+  }
+
   console.log(`App-link files verified for ${id}: Android fingerprint present, Apple Team ID present.`);
 }
 
