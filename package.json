@@ -17,6 +17,7 @@
     "audit:shell": "node scripts/audit-shell-classes.mjs",
     "audit:design": "node scripts/audit-design-templates.mjs",
     "audit:css": "node scripts/audit-css.mjs",
+    "audit:unstyled": "node scripts/audit-unstyled-classes.mjs",
     "audit:contrast": "node scripts/audit-theme-contrast.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
     "audit:mounts": "node scripts/audit-mounts.mjs --max=0",

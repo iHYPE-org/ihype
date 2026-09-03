@@ -1311,6 +1311,32 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); } 50% { box-shadow: 0 0 0 6px rgba(255,60,60,0.22); } }
 .meta { font-size: 0.95rem; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+
+/* A ROUTE'S OWN LOADING/ERROR STATE. `/invite/[code]`'s `loading.tsx` and
+   `error.tsx` were written in Tailwind utilities — `flex items-center
+   justify-center min-h-[40vh]`, `animate-pulse text-sm text-gray-400` — and
+   THIS PROJECT HAS NO TAILWIND. Every one of those classes resolved to
+   nothing, so both states rendered as unstyled text jammed into the top-left
+   corner with no padding. Found by a scan for rendered classes that no
+   stylesheet defines, the same way the player's two default-blue sliders were.
+
+   Kept in globals.css rather than mmm.css on purpose: mmm.css is imported by
+   the /app layout alone, and /invite is outside it. */
+.route-state {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+}
+.route-state p { margin: 0; color: var(--ink-2); }
+/* The keyframe-disabling `prefers-reduced-motion` block further down this file
+   already covers this, so it needs no media query of its own. */
+.route-state[data-busy] p { animation: route-state-pulse 1.6s ease-in-out infinite; }
+@keyframes route-state-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 /* HypeButton's wrapper: the burst overlay is positioned against it. */
 .hype-cta { position: relative; }
 
