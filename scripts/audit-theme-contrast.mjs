@@ -196,6 +196,14 @@ for (const [name, tokens] of blocks) {
       const r = ratio(ink, plate);
       if (r < AA) failures.push(`plate [${name}]: --ink ${ink} on --plate-2 ${plate} = ${r.toFixed(2)}:1`);
     }
+    /* A field carries --ink too, and it is its own face rather than a tint of
+       the plate, so the plate's ratio says nothing about it. */
+    const field = tokens.get('--field');
+    if (!field) { failures.push(`plate [${name}]: --field is not defined`); continue; }
+    if (ink) {
+      const rf = ratio(ink, field);
+      if (rf < AA) failures.push(`plate [${name}]: --ink ${ink} on --field ${field} = ${rf.toFixed(2)}:1`);
+    }
     const edge = tokens.get('--brass-edge');
     const glyph = tokens.get('--ink-on-brass');
     if (!edge) { failures.push(`plate [${name}]: --brass-edge is not defined`); continue; }

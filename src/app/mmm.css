@@ -1578,6 +1578,129 @@ html:has(.mmm-frame) {
   cursor: pointer;
 }
 
+/* ══ INTERACTION ══════════════════════════════════════════════════════════
+   Measured before writing any of this: the shell had ZERO hover or active
+   states on the chip, either button or the row — 11 :hover/:active rules in
+   3,000 lines, none of them on a shared control. Nothing moved when you
+   touched it, which is most of what "feels unfinished" actually is. A
+   console's keys are the one thing that must answer.
+
+   Built on --duration-*, NOT --dur-*: only the former is zeroed by the
+   token-level `prefers-reduced-motion` block in globals.css, so honouring the
+   setting costs no media query here. Check that before switching namespace.
+
+   Every hover is behind `(hover: hover)`, which nothing in this file did
+   before. An unguarded :hover STICKS on a touchscreen — the finger leaves and
+   the key stays lit — and this app is a WebView on two phone platforms.
+   Press states are not guarded, because a press is real on both. */
+.mmm-chip,
+.mmm-btn-ghost,
+.mmm-btn-primary {
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    filter var(--duration-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .mmm-chip:hover,
+  .mmm-btn-ghost:hover {
+    border-color: var(--brass);
+    filter: brightness(1.04);
+  }
+  .mmm-btn-primary:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 10px 22px -10px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .34);
+  }
+  .mmm-row:hover { background: var(--ink-a10); }
+}
+/* The key goes DOWN and its cast collapses — the same 1px the dock's own
+   controls travel. A press that only changes colour reads as a hyperlink. */
+.mmm-chip:active,
+.mmm-btn-ghost:active,
+.mmm-btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+}
+.mmm-row {
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+/* --ink-a10 is derived from --ink, so it darkens a light plate and lightens a
+   dark one. A fixed white wash would vanish in three themes. */
+.mmm-row:active { background: var(--ink-a10); }
+
+/* The shell focus ring, which these four controls never had. Individual
+   components declare their own further down; this covers the shared set. */
+.mmm-chip:focus-visible,
+.mmm-btn-ghost:focus-visible,
+.mmm-btn-primary:focus-visible,
+.mmm-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ══ THE UNCLASSED FIELD ══════════════════════════════════════════════════
+   Fifteen `<input>` elements in the MMM shell carry no class at all, and this
+   file styles no `input[type=...]` anywhere, so they render as browser-default
+   boxes on a walnut console — the same defect `.mmm-player-range` had, found
+   the same way.
+
+   `:not([class])` is the whole trick and it is deliberate. Every deliberately
+   styled control in the shell HAS a class, several of them from `<style>`
+   blocks embedded in their own component (`MmmSettings`, `MmmAdvertiserSignup`),
+   which arrive after this file and would otherwise be fought on specificity —
+   `.mmm-pane input` is (0,1,1) and beats their (0,1,0). Restricting to
+   classless elements means this can only ever reach something nobody styled,
+   so it cannot silently repaint a considered control.
+
+   A recessed field, per the templates: pressed into the plate rather than
+   floating on it. */
+/* Written out rather than with `:is(input, textarea, select)`: the commas
+   inside `:is()` break audit-css.mjs's selector splitter, which then groups
+   the `:focus` and `::placeholder` rules with the base rule and reports normal
+   state layering as an override. Explicit selectors are identical to the
+   browser and legible to the gate. */
+.mmm-pane input:not([class]),
+.mmm-pane select:not([class]) {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: var(--field);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* 16px, and functional rather than typographic: Safari zooms the page on a
+     focused sub-16px field and never zooms back. mobile-fit.css states the
+     same rule for the legacy shell. */
+  font-size: 1rem;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+.mmm-pane textarea:not([class]) {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: var(--field);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+.mmm-pane input:not([class]):focus,
+.mmm-pane select:not([class]):focus,
+.mmm-pane textarea:not([class]):focus {
+  outline: none;
+  border-color: var(--brass);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22), 0 0 0 3px rgba(var(--accent-rgb), .22);
+}
+.mmm-pane input:not([class])::placeholder,
+.mmm-pane textarea:not([class])::placeholder { color: var(--ink-3); }
+
 /* The heart for non-track things — a paper chip in the print vocabulary,
    the glyph in brick ink when lit (accent-as-copy token, never the raw
    accent: 2.48:1 on cream is the lint rule's whole point). 44px floor. */

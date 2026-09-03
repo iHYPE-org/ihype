@@ -281,6 +281,11 @@
      themes: 55% white is a highlight on parchment and a white bar on the
      three dark grounds. */
   --plate-lit: rgba(255,255,255,.55);
+  /* A field is PRESSED INTO the plate, not floating on it, so it is its own
+     face rather than a tint of the plate. Warm near-white here; a well in
+     the three dark themes. Carries --ink like the plate does, and
+     audit:theme-contrast measures it in every block. */
+  --field: #fff6de;
   --brass-edge: #a1843e;
   --ink-on-brass: #2b1a0c;
   /* Paper grain — an SVG fractal-noise tile, inlined so it costs no request.
@@ -668,6 +673,7 @@
   --brass: #b08f42; --brass-deep: #7a5f26; --lamp: #ffb84a;
   --plate-1: #241c0f; --plate-2: #1b1509;
   --plate-lit: rgba(255,255,255,.07);
+  --field: #0f0b04;
   --brass-edge: #977b39; --ink-on-brass: #191204;  /* 15.15:1 ink on plate, 4.61:1 glyph on brass edge */
   --ink-on-walnut: #e3ddd6;    /* 10.90:1 on --walnut */
   --ink-on-walnut-2: #c4b9a9;  /*  7.60:1 */
@@ -722,6 +728,7 @@
   --brass: #9aa4b0; --brass-deep: #5e666f; --lamp: #ffb455;
   --plate-1: #212429; --plate-2: #17191c;
   --plate-lit: rgba(255,255,255,.07);
+  --field: #0d0f11;
   --brass-edge: #757d86; --ink-on-brass: #0d0f11;  /* 15.42:1 ink on plate, 4.60:1 glyph on brass edge */
   --ink-on-walnut: #e6e8e9;    /* 10.93:1 on --walnut */
   --ink-on-walnut-2: #bfc3c7;  /*  7.58:1 */
@@ -772,6 +779,7 @@
   --brass: #c3ccd6; --brass-deep: #79828c; --lamp: #d8f4ff;
   --plate-1: #1c1f23; --plate-2: #131518;
   --plate-lit: rgba(255,255,255,.08);
+  --field: #0b0d0f;
   --brass-edge: #797e85; --ink-on-brass: #0d0f11;  /* 15.28:1 ink on plate, 4.70:1 glyph on brass edge */
   --ink-on-walnut: #dddfe2;    /* 10.93:1 on --walnut */
   --ink-on-walnut-2: #b6bbc1;  /*  7.55:1 */
@@ -826,6 +834,7 @@
   --brass: #d8a08c; --brass-deep: #a06b58; --lamp: #ffb3c8;
   --plate-1: #fdf2f6; --plate-2: #f3e0ea;
   --plate-lit: rgba(255,255,255,.60);
+  --field: #fff7fb;
   --brass-edge: #a47a6a; --ink-on-brass: #2a1208;  /* 13.82:1 ink on plate, 4.69:1 glyph on brass edge */
   --ink-on-walnut: #fdfbfc;    /* 10.4:1 on --walnut — a hair off white on
                                   purpose, since a flat #fff reads as a hole
@@ -882,6 +891,7 @@
   --brass: #d4b25a; --brass-deep: #96762f; --lamp: #ffcc7a;
   --plate-1: #fbf6ea; --plate-2: #efe8d7;
   --plate-lit: rgba(255,255,255,.55);
+  --field: #fffaf0;
   --brass-edge: #9b8242; --ink-on-brass: #231a0e;  /* 14.03:1 ink on plate, 4.62:1 glyph on brass edge */
   --ink-on-walnut: #e9e3dd;    /* 10.88:1 on --walnut */
   --ink-on-walnut-2: #cbbeb0;  /*  7.61:1 */
