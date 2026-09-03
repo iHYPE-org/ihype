@@ -31,6 +31,11 @@ export type PlayableRow = {
   mediaUrl?: string | null;
   url?: string | null;
   artworkUrl?: string | null;
+  /* An advertising break mixed into a station rotation carries this; a music
+     row never does. It has to survive the conversion or the player cannot tell
+     a paid spot from a song, which is both an unbilled impression and a
+     MediaListen written against an artist who did not perform it. */
+  adClipId?: string | null;
 };
 
 /**
@@ -53,9 +58,13 @@ export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
     if (!url) continue;
     const id = row.hexId || row.id;
     if (!id) continue;
+    const adClipId = row.adClipId ?? null;
     queue.push({
       id,
-      mediaId: row.hexId || row.id || null,
+      /* An ad is not media anyone listened to, so it carries no `mediaId` —
+         that field is what gates the listen write in the player. */
+      mediaId: adClipId ? null : row.hexId || row.id || null,
+      adClipId,
       title: row.title || 'Untitled',
       artistName: row.artistName || 'Unknown artist',
       url,

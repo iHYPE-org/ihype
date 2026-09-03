@@ -51,6 +51,11 @@ type StationTrackRow = {
    *  disagree with why the row qualified. Optional so a response cached before
    *  the field existed renders without one rather than printing "undefined". */
   reason?: string | null;
+  /** Set only on an advertising break the station mixed into the rotation. A
+   *  `mkt_` prefix is a real campaign and is what an impression is billed
+   *  against; `toQueue` carries it through so the player can tell a paid spot
+   *  from a song. */
+  adClipId?: string | null;
 };
 
 /**

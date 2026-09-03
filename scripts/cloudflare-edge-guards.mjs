@@ -153,6 +153,38 @@ export function policyAllows(policies, adminEmail) {
     && (p.include ?? []).some((inc) => inc?.email?.email?.toLowerCase() === email)));
 }
 
+/**
+ * What to do with the app's allow policy: leave it, rewrite it, or add one.
+ *
+ * **Update in place, never add a second.** The first apply after
+ * `staff@ihype.org` became the second administrator tried to POST a new policy
+ * and Cloudflare refused with `12130 … policy precedences must be unique` —
+ * the new policy carried precedence 1 and so did the one already there. Two
+ * allow policies on one application would also be the wrong shape even if the
+ * API took it: the single-address policy would survive beside the pair, so
+ * removing an administrator later would mean deleting a policy rather than
+ * editing one, and this script would have no way to tell which of the two it
+ * owns.
+ *
+ * Ownership is by NAME. A policy someone wrote by hand is never rewritten;
+ * when one exists and admits everybody already, nothing happens at all. A
+ * genuinely new policy takes a precedence one past the highest in use, because
+ * that is the collision the API rejected.
+ */
+export function planAccessPolicy(policies, desired) {
+  const list = policies ?? [];
+  const mine = list.find((p) => p.name === desired.name);
+  if (mine) {
+    // An owned policy that already admits everyone needs no write. Compare
+    // through `policyAllows` so the check is the same one the caller ran.
+    const emails = (desired.include ?? []).map((inc) => inc?.email?.email).filter(Boolean);
+    if (policyAllows([mine], emails.join(','))) return { action: 'unchanged', id: mine.id, policy: mine };
+    return { action: 'update', id: mine.id, policy: { ...desired, precedence: mine.precedence ?? desired.precedence } };
+  }
+  const highest = list.reduce((max, p) => Math.max(max, Number(p.precedence) || 0), 0);
+  return { action: 'create', id: null, policy: { ...desired, precedence: highest + 1 } };
+}
+
 export function planAccessApp(existingApps, desired) {
   const found = (existingApps ?? []).find((app) =>
     app.domain === desired.domain || (app.self_hosted_domains ?? []).includes(desired.domain));
@@ -302,11 +334,15 @@ async function applyAccess({ token, accountId, apply, zoneName, adminEmail }) {
   if (policyAllows(policies.json.result, adminEmail)) {
     console.log(`  = an allow policy already admits ${adminEmail}`);
   } else {
-    console.log(`  + allow policy for ${adminEmail} (none of the ${policies.json.result?.length ?? 0} existing policies admits that address)`);
+    const policyPlan = planAccessPolicy(policies.json.result, desired.policies[0]);
+    const verb = policyPlan.action === 'update' ? 'rewrite' : 'add';
+    console.log(`  + ${verb} the allow policy for ${adminEmail} (none of the ${policies.json.result?.length ?? 0} existing policies admits every address)`);
     if (apply) {
-      const res = await cf(token, 'POST', `/accounts/${accountId}/access/apps/${app.id}/policies`, desired.policies[0]);
-      if (!res.ok) fail(`Creating the allow policy failed: ${describeErrors(res)}`);
-      console.log('  ✓ created the allow policy');
+      const res = policyPlan.action === 'update'
+        ? await cf(token, 'PUT', `/accounts/${accountId}/access/apps/${app.id}/policies/${policyPlan.id}`, policyPlan.policy)
+        : await cf(token, 'POST', `/accounts/${accountId}/access/apps/${app.id}/policies`, policyPlan.policy);
+      if (!res.ok) fail(`${policyPlan.action === 'update' ? 'Rewriting' : 'Creating'} the allow policy failed: ${describeErrors(res)}`);
+      console.log(`  ✓ ${policyPlan.action === 'update' ? 'rewrote' : 'created'} the allow policy`);
     }
   }
   return 0;

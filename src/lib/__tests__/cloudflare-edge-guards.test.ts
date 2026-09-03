@@ -7,6 +7,7 @@ import {
   adminAccessApp,
   isAuthError,
   planAccessApp,
+  planAccessPolicy,
   planRateLimitRules,
   policyAllows,
   ruleMatches,
@@ -94,5 +95,62 @@ describe('cloudflare edge guards — Access in front of /admin', () => {
     // A policy that admits only the first operator does not count as admitting both.
     expect(policyAllows([{ decision: 'allow', include: [{ email: { email: ADMIN_EMAIL_DEFAULT } }] }], ADMIN_EMAILS_DEFAULT)).toBe(false);
     expect(policyAllows([{ decision: 'allow', include: ADMIN_EMAILS_DEFAULT.map((email: string) => ({ email: { email } })) }], ADMIN_EMAILS_DEFAULT)).toBe(true);
+  });
+});
+
+/**
+ * Adding the second administrator to an application that already had one.
+ *
+ * The first real apply failed here: the script POSTed a new allow policy at
+ * precedence 1 beside the existing one and Cloudflare answered
+ * `12130 … policy precedences must be unique`. The policy this script owns is
+ * rewritten in place instead — and two allow policies on one application would
+ * be the wrong shape regardless, because the single-address one would survive
+ * beside the pair.
+ */
+describe('cloudflare edge guards — the allow policy', () => {
+  const desired = adminAccessApp().policies[0];
+
+  it('rewrites the policy it owns rather than adding a second at the same precedence', () => {
+    const existing = {
+      id: 'pol_1',
+      name: 'iHYPE admin (allow)',
+      decision: 'allow',
+      precedence: 1,
+      include: [{ email: { email: ADMIN_EMAIL_DEFAULT } }],
+    };
+    const plan = planAccessPolicy([existing], desired);
+    expect(plan.action).toBe('update');
+    expect(plan.id).toBe('pol_1');
+    // The precedence it already holds — changing it would collide all over again.
+    expect(plan.policy.precedence).toBe(1);
+    expect(policyAllows([plan.policy], ADMIN_EMAILS_DEFAULT)).toBe(true);
+  });
+
+  it('leaves an owned policy alone once it admits everybody', () => {
+    const existing = { id: 'pol_1', ...desired };
+    expect(planAccessPolicy([existing], desired).action).toBe('unchanged');
+  });
+
+  it('creates past the highest precedence in use, never at 1', () => {
+    // Someone else's policies occupy 1 and 2; a new one has to clear them.
+    const plan = planAccessPolicy(
+      [{ id: 'a', name: 'Contractors', decision: 'allow', precedence: 1, include: [] },
+       { id: 'b', name: 'Deny the rest', decision: 'deny', precedence: 2, include: [] }],
+      desired,
+    );
+    expect(plan.action).toBe('create');
+    expect(plan.id).toBeNull();
+    expect(plan.policy.precedence).toBe(3);
+  });
+
+  it('never rewrites a policy it does not own, even one that allows an admin', () => {
+    const handWritten = {
+      id: 'pol_x', name: 'Ops on call', decision: 'allow', precedence: 4,
+      include: [{ email: { email: ADMIN_EMAIL_DEFAULT } }],
+    };
+    const plan = planAccessPolicy([handWritten], desired);
+    expect(plan.action).toBe('create');
+    expect(plan.policy.precedence).toBe(5);
   });
 });

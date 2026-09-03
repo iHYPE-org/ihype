@@ -27,14 +27,35 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 
 ## Payment and ticket rehearsal
 
-> **None of this has ever executed.** Live mode holds zero PaymentIntents, zero
-> connected accounts and zero balance — nothing has ever been sold. The payout
-> code was *rewritten* after a severe routing bug (the old version sent the
-> whole charge to one Connect account instead of splitting 70/20/10), and the
-> replacement — separate charges and transfers, one `stripe.transfers.create()`
-> per `AccountsPayableEntry` — has never run against Stripe at all. An alpha's
-> first ticket sale would be its first execution. Treat this section as
-> blocking, not as a formality.
+> **The app's money path HAS now executed against test-mode Stripe (2026-09-03),
+> and this warning used to say it never had.** `npm run alpha:walk` against the
+> real Workers build and a scratch PG17 database passed **43 of 44** items with
+> zero failures (41 of 42 on the first run; two items were added the same day —
+> a closed sale being refused rather than charged, and a paid ad spot actually
+> airing on the station a member listens to), including: a ticket sold and
+> CAPTURED (1952c), three payables with
+> the promoter earning exactly 10% of face value, the QR scanned once and a
+> replay refused 409, the same Stripe event delivered twice issuing one ticket
+> and one payout, a show cancellation refunding for real (`re_…` 1865c) with
+> every payable VOID, and an ad hold authorized then released because delivered
+> spend was under Stripe's 50c floor. The single non-pass is environmental:
+> Stripe refuses a `localhost` `business_url`, so Connect onboarding cannot
+> complete on loopback — the same call with `https://ihype.org/…` succeeded.
+>
+> **Why it had never run, which is worth keeping.** `scripts/e2e-workerd.mjs`
+> forwarded only the database and auth variables into the Worker. The walk
+> passed `STRIPE_SECRET_KEY` to ITSELF and nothing passed it to the WORKER,
+> where `getPaymentProcessingReadiness()` reads it through `readRuntimeEnv`. So
+> every ticket and card call answered 503 and the ad checkout threw
+> "STRIPE_SECRET_KEY is not configured" — and the walk recorded those as
+> FAILURES OF THE PRODUCT. They were failures of the harness. It now forwards
+> the Stripe, cron and payments-flag variables when the caller has them, and
+> refuses a live key outright.
+>
+> **Still not executed, and still blocking:** `npm run stripe:rehearsal` (the
+> Stripe-side semantics, which needs no database), and `triggerShowPayouts()`
+> run TWICE against an ended show to see `released: 0` the second time. The walk
+> creates payables and voids them on refund; it does not release them.
 >
 > **Step 0, before any of the below:** `STRIPE_SECRET_KEY=sk_test_… npm run
 > stripe:rehearsal`. It refuses any key that is not `sk_test_`, and it

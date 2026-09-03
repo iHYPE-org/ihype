@@ -24,6 +24,12 @@ export type MediaTrack = {
   artistName: string;
   url: string;
   mediaId?: string | null;
+  /* Set only on an advertising break mixed into a station rotation. A `mkt_`
+     prefix means a real marketplace campaign (`mkt_<Ad.id>`) and is what an
+     impression is reported against; anything else is a built-in placeholder
+     clip and is never billed. An ad carries no `mediaId`, so it can never
+     write a MediaListen row against an artist who did not perform it. */
+  adClipId?: string | null;
   artistProfileSlug?: string | null;
   notes?: string | null;
   artworkUrl?: string | null;
@@ -113,6 +119,7 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const preloadRef = useRef<HTMLAudioElement | null>(null);
   const completedMediaIdsRef = useRef<Set<string>>(new Set());
+  const reportedAdClipsRef = useRef<Set<string>>(new Set());
   // A track whose audio fails to load used to do nothing at all: no `error`
   // listener existed, so the UI kept showing "playing", the position never
   // moved, and the queue never advanced. One dead URL silently ended the
@@ -491,6 +498,27 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     } else {
       audio.pause();
     }
+  }, [currentTrack, isPlaying]);
+
+  /* ── Ad impressions ─────────────────────────────────────────────────────────
+     An advertising break that actually starts playing is what spends an
+     advertiser's budget, so this is the station's counterpart to the same call
+     in `ShowSequencePlayer`. Only a `mkt_` clip is a real campaign; a built-in
+     placeholder has no `Ad` row to bill. Reported once per clip per mounted
+     player — the route itself is the authority on the real limit (signed in,
+     once per member per ad per day), so a duplicate here is refused there
+     rather than double-charged. */
+  useEffect(() => {
+    if (!isPlaying) return;
+    const clipId = currentTrack?.adClipId;
+    if (!clipId || !clipId.startsWith('mkt_')) return;
+    if (reportedAdClipsRef.current.has(clipId)) return;
+    reportedAdClipsRef.current.add(clipId);
+    void fetch('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ adId: clipId.slice(4) })
+    }).catch(() => {});
   }, [currentTrack, isPlaying]);
 
   function persistCompletedMediaListen(track: MediaTrack | null) {

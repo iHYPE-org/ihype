@@ -45,7 +45,14 @@ crons = [
   "30 8 * * 1",   # social-digest (Monday)
   "*/15 * * * *", # publish-scheduled (every 15min)
   "0 16 * * *",   # post-show-recap (morning-after recap for attendees)
-  # NOTE: nearby-show-notify runs at "0 9 * * *" (already covered by daily 9am slot)
+  # This slot used to be a NOTE reading 'nearby-show-notify runs at "0 9 * * *"
+  # (already covered by daily 9am slot)'. There was no daily 9am slot: the two
+  # nine-o'clock entries are "0 9 * * 1" (Monday) and "0 9 1 * *" (the 1st).
+  # The dispatcher matches `job.schedule === event.cron` EXACTLY, so the job
+  # never once fired — fans were never told about a show near them. A test now
+  # asserts every dispatcher schedule appears here, because the thing that hid
+  # this was a comment claiming coverage rather than a check measuring it.
+  "0 9 * * *",    # nearby-show-notify
   # NOTE: rsvp-reminders runs at "0 * * * *" (already covered by hourly slot)
   # NOTE: capacity-alerts runs at "0 * * * *" (already covered by hourly slot)
   # NOTE: weekly-digest runs at "0 9 * * 1" (already covered by Monday 9am slot)

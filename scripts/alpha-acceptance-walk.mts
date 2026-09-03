@@ -473,6 +473,12 @@ async function main() {
         ticketCapacity: 50,
         artistPayoutPercent: 70,
         venuePayoutPercent: 20,
+        /* On sale from now. `isTicketingOpen()` reads this column and the
+           purchase route refuses a closed sale, so a ticketed show created
+           without it can be published and never sold — which is exactly the
+           state the product shipped in until the creator form started sending
+           this. The walk sends what the form sends. */
+        ticketingOpensAt: new Date().toISOString(),
       }),
       cookie: creator.cookie,
     }), [200, 201]);
@@ -1012,7 +1018,61 @@ async function main() {
     });
     assert([200, 201].includes(impression.status), `impression answered ${impression.status}`);
     const after = await prisma.ad.findUnique({ where: { id: approved.id } });
-    return `station served ${sequence.length} item(s), ${adItems.length} break(s); impression moved spend ${before}c -> ${after?.spentCents}c`;
+
+    /* The surface a member actually listens on. `/api/radio/station` is the
+       always-on station and nothing in the MMM shell calls it; MUSIC reads
+       `/api/stations/[slug]/tracks`, which served music and nothing else — so
+       an APPROVED campaign was paid for and never aired. Assert the break is
+       in the rotation the shell plays, and that it is a `mkt_` clip, since a
+       placeholder carries no Ad row to bill. */
+    return `station served ${sequence.length} item(s), ${adItems.length} break(s); impression moved spend ${before}c -> ${after?.spentCents}c (airing on the MUSIC station is item 33)`;
+  });
+
+  await item('22b. A closed ticket sale is refused rather than charged', async () => {
+    /* `TicketSaleCard` used to render the whole purchase form for a show that
+       was not on sale, promising the buyer their card would be charged "when
+       the venue opens the event". Nothing charges later — checkout captures
+       immediately — and the purchase route ignored `isTicketingOpen()`
+       entirely. Both halves are fixed; this proves the server half. */
+    const closed = ok(await api('/api/shows', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        title: `Closed Doors ${run}`,
+        status: 'SCHEDULED',
+        startsAt: new Date(Date.now() + 30 * 86_400_000).toISOString(),
+        venueProfileId: venueProfile.id,
+        headlinerProfileId: artistProfile.id,
+        isTicketed: true,
+        ticketPriceCents: TICKET_PRICE_CENTS,
+        ticketCapacity: 10,
+        artistPayoutPercent: 70,
+        venuePayoutPercent: 20,
+        // Deliberately omitted: no ticketingOpensAt means sales are not open.
+      }),
+      cookie: creator.cookie,
+    }), [200, 201]);
+    const closedId = (closed?.show ?? closed)?.id;
+    assert(closedId, 'could not create the closed-sale show');
+
+    const attempt = await api(`/api/shows/${closedId}/tickets`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      // The bot gate runs first and refuses an absent token with a 400, which
+      // would measure Turnstile rather than the sale being closed.
+      body: JSON.stringify({ quantity: 1, turnstileToken: 'alpha-walk-token' }),
+      cookie: fan.cookie,
+    });
+    /* Payment readiness is checked BEFORE the ticketing gate, so a runner with
+       no Stripe key answers 503 and never reaches the rule under test. That is
+       the environment, not the product — the same reason the money-path items
+       above block rather than fail. */
+    if (attempt.status === 503) {
+      blocked(`payments are not configured here, so the request stops at readiness (503 "${attempt.body?.error ?? ''}") before the ticketing gate`);
+    }
+    assert(attempt.status === 409, `a closed sale answered ${attempt.status} (${attempt.body?.error ?? ''}), expected 409`);
+    assert(attempt.body?.code === 'TICKETING_NOT_OPEN', `code was ${attempt.body?.code}`);
+    return `a show with no opening time refuses the sale (409 TICKETING_NOT_OPEN) instead of charging the card`;
   });
 
   // ── 23/26. Create, edit and delete a playlist ────────────────────────────
@@ -1544,6 +1604,71 @@ async function main() {
   });
 
   /* ------------------------------------------------------------------ report */
+
+  /* ── 33. The paid spot actually airs on the surface members listen on ──
+     Last on purpose, because it changes the fixture: a second track and a
+     re-opened campaign window would move the recommendation items above, and
+     those assert exact reasons. */
+  await item('33. A paid spot airs on the MUSIC station a member actually listens to', async () => {
+    /* The gap this measures: ad interleaving lived only behind
+       `getStationState()` → `GET /api/radio/station`, and nothing calls that
+       route — `src/app/radio` went with the show creator, and the MMM shell
+       reads `/api/stations/[slug]/tracks`, which served music only. An
+       advertiser could be vetted, charged, and heard by nobody. */
+    if (!song.length) blocked('ALPHA_SONG not set, so no second track can be uploaded');
+
+    // A break is never placed first or last, so one track has nowhere to put
+    // one. Two is the minimum rotation that can carry an ad at all.
+    const second = new FormData();
+    second.set('profileId', artistProfile.id);
+    second.set('title', 'Live A Lie (Reprise)');
+    second.set('notes', 'TEST ARTIST SONG 2 — gives the station a rotation');
+    second.set('freeUseEnabled', 'false');
+    second.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song-2.m4a');
+    ok(await api('/api/artist-media', { method: 'POST', body: second, cookie: creator.cookie }), [200, 201]);
+
+    /* Item 20d deliberately expires the campaign to exercise settlement, so
+       by here nothing is in flight. Re-open the window rather than buying a
+       second campaign: what is under test is the airing, not the purchase. */
+    const campaign = await prisma.ad.findFirst({
+      where: { status: 'APPROVED', audioUrl: { not: null } },
+      orderBy: { createdAt: 'desc' },
+    });
+    /* Item 20 buys the campaign through Stripe Checkout, so on a runner with
+       no key there is nothing APPROVED to air. Blocking says that plainly;
+       failing would report a product gap that is really a missing secret. */
+    if (!campaign) blocked('no APPROVED campaign with audio exists here — item 20 needs a Stripe key to create one');
+    await prisma.ad.update({
+      where: { id: campaign.id },
+      data: { startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 86_400_000) },
+    });
+
+    const stations = ok(await api('/api/stations', { cookie: fan.cookie }));
+    const slugs: string[] = (stations?.stations ?? []).map((entry: any) => entry?.slug).filter(Boolean);
+    assert(slugs.length > 0, 'no stations to check');
+
+    let best: { slug: string; rows: any[] } | null = null;
+    for (const slug of slugs) {
+      const page = ok(await api(`/api/stations/${slug}/tracks?limit=40`, { cookie: fan.cookie }));
+      const pageRows: any[] = page?.tracks ?? [];
+      if (!best || pageRows.length > best.rows.length) best = { slug, rows: pageRows };
+    }
+    const stationRows = best?.rows ?? [];
+    assert(stationRows.length >= 2, `longest station "${best?.slug}" served ${stationRows.length} row(s); a break needs two`);
+
+    const breaks = stationRows.filter((row) => row?.adClipId);
+    assert(breaks.length > 0, `station "${best?.slug}" served ${stationRows.length} rows and no ad break with a live campaign`);
+    assert(breaks.every((row) => String(row.adClipId).startsWith('mkt_')),
+      'a break carried a placeholder clip, which bills nobody');
+    assert(breaks.some((row) => String(row.adClipId) === `mkt_${campaign.id}`),
+      'the live campaign is not the one airing');
+    // Never first, never last — a listener opening a station hears music.
+    assert(!stationRows[0]?.adClipId && !stationRows[stationRows.length - 1]?.adClipId,
+      'a break was placed at the head or tail of the rotation');
+    assert(breaks.every((row) => row.mediaUrl), 'a break was served with no audio to play');
+
+    return `station "${best?.slug}" served ${stationRows.length} row(s) including ${breaks.length} paid break(s), all mkt_ and all playable, none at head or tail`;
+  });
 
   const pass = rows.filter((r) => r.status === 'PASS').length;
   const fail = rows.filter((r) => r.status === 'FAIL').length;

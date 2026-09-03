@@ -160,6 +160,37 @@ function writeStrippedConfig() {
   })) {
     varsSection = upsertTomlVariable(varsSection, name, value);
   }
+
+  /* THE MONEY PATH IS ONLY TESTABLE IF THE WORKER GETS THE MONEY VARIABLES.
+     Everything above is unconditional; these are forwarded only when the
+     caller already has them in its own environment, so an ordinary spec run
+     is unchanged and still boots with no Stripe at all.
+     Why this exists: the alpha walk passes STRIPE_SECRET_KEY to ITSELF, and
+     for a long time nothing passed it to the WORKER. `getPaymentProcessingReadiness()`
+     reads it through `readRuntimeEnv`, i.e. out of the worker's own bindings,
+     so every ticket and card call answered 503 "Paid ticketing is temporarily
+     unavailable" and the ad checkout threw "STRIPE_SECRET_KEY is not
+     configured". The walk recorded those as FAILURES of the product. They were
+     failures of the harness: the money items had never actually run. */
+  const forwarded = [
+    'STRIPE_SECRET_KEY',
+    'STRIPE_WEBHOOK_SECRET',
+    'STRIPE_CONNECT_WEBHOOK_SECRET',
+    'CRON_SECRET',
+    'FEATURE_ENABLE_TICKET_PAYMENTS',
+    'STRIPE_ALLOW_TEST_MODE_REHEARSAL',
+  ];
+  for (const name of forwarded) {
+    const value = process.env[name];
+    if (!value) continue;
+    /* A live key must never reach a scratch worker pointed at a scratch
+       database. Refuse rather than warn: the whole point of this harness is
+       that it charges cards, and the only safe card to charge is a test one. */
+    if (name === 'STRIPE_SECRET_KEY' && /^(sk|rk)_live_/.test(value)) {
+      throw new Error('e2e-workerd refuses a live Stripe key. Use sk_test_ for the harness.');
+    }
+    varsSection = upsertTomlVariable(varsSection, name, value);
+  }
   stripped = stripped.replace(varsPattern, varsSection);
 
   writeFileSync(TMP_CONFIG, stripped);
