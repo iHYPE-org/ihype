@@ -10,6 +10,7 @@ import { FeatureToggle } from '@/components/admin/FeatureToggle';
 import { BulkActions } from '@/components/admin/BulkActions';
 import { SocialPostCopy } from '@/components/admin/SocialPostCopy';
 import { AdminWorkbench } from '@/components/admin/AdminWorkbench';
+import { AdminFeatureBoard } from '@/components/admin/AdminFeatureBoard';
 import { AdminPulse } from '@/components/admin/AdminPulse';
 import { AdminDevices } from '@/components/admin/AdminDevices';
 import { auth } from '@/lib/auth';
@@ -58,7 +59,43 @@ function metaText(meta: Record<string, unknown>, key: string) {
   return typeof value === 'string' && value.trim() ? value : 'n/a';
 }
 
-export default async function AdminPage({ searchParams }: { searchParams?: Promise<{ userSearch?: string }> }) {
+
+/*
+ * The console is five domains behind a tab strip, not one scroll.
+ *
+ * It was 25 panels in a single column, and the two boards that answer "what
+ * needs me" (`AdminWorkbench`) and "what is happening" (`AdminPulse`) sat
+ * above a wall of detail repeating much of what they said. Reaching the
+ * revenue figure meant scrolling past the signup funnel.
+ *
+ * Every panel MOVED — none was rewritten, none was dropped. The transform was
+ * mechanical and checked by conservation: each of the 745 body lines lands in
+ * exactly one tab, and the single two-column grid that held nine panels
+ * belonging to four different domains is re-opened per tab rather than split
+ * across a stray closing tag.
+ *
+ * `?tab=` resolves on the SERVER and only the active tab renders, the shape
+ * `/admin/review` already uses. The strip is plain links for that reason: a
+ * console shipping a hydration boundary to switch between server-rendered
+ * panels pays twice for one job.
+ *
+ * Queries are still one `Promise.all` of independently-caught reads, so every
+ * tab still pays for all of them. Making them per-tab is a real improvement
+ * and a SEPARATE change: doing it in the same pass as a 748-line move would
+ * have made the conservation check meaningless, and that check is the only
+ * thing standing between this refactor and a silently deleted panel.
+ */
+const ADMIN_TABS = [
+  { id: 'overview', label: 'Overview' },
+  { id: 'activity', label: 'Activity' },
+  { id: 'support', label: 'Support' },
+  { id: 'finance', label: 'Finance' },
+  { id: 'system', label: 'System' },
+] as const;
+
+type AdminTab = (typeof ADMIN_TABS)[number]['id'];
+
+export default async function AdminPage({ searchParams }: { searchParams?: Promise<{ userSearch?: string; tab?: string }> }) {
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -70,7 +107,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   }
 
   const t = await getServerT();
-  const { userSearch } = searchParams ? await searchParams : {};
+  const { userSearch, tab: rawTab } = searchParams ? await searchParams : {};
+  /* An unknown tab falls back to Overview rather than rendering nothing — a
+     bookmarked ?tab= from before this split must still land somewhere. */
+  const tab: AdminTab = ADMIN_TABS.find((entry) => entry.id === rawTab)?.id ?? 'overview';
   // Rendered on the server so the board is populated on first paint rather
   // than flashing empty while the first poll lands. Guarded like every other
   // read here: a snapshot that could not be built must not take the console
@@ -359,744 +399,795 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </div>
       </section>
 
-      {/* The consolidated console index (owner, 2026-08-24: "consolidated
-          menu buttons so I don't have to scroll down so far"): every
-          destination the shell's rail and subnav reach, in one band at the
-          top. The four hero pills this replaces covered a sixth of it. */}
-      <nav aria-label={t('adminPage.consoleIndex', 'Console index')} className="admin-index">
-        <Link href="/admin/users">{t('adminPage.idxUsers', 'Users & roles')}</Link>
-        <Link href="/admin/moderation">{t('adminPage.idxModeration', 'Moderation')}</Link>
-        <Link href="/admin/review?tab=verifications">{t('adminPage.idxVerifications', 'Verifications')}</Link>
-        {/* `/admin/media` has never existed. Held tracks are moderation rows
-            filtered to tracks — the same href `admin-workbench.ts` gives the
-            queue it renders directly above this index. */}
-        <Link href="/admin/moderation?type=track">{t('adminPage.idxHeldTracks', 'Held tracks')}</Link>
-        <Link href="/admin/ads">{t('adminPage.idxAds', 'Ad campaigns')}</Link>
-        <Link href="/admin/finance">{t('adminPage.idxFinance', 'Finance')}</Link>
-        <Link href="/admin/tickets">{t('adminPage.idxTickets', 'Events & tickets')}</Link>
-        <Link href="/admin/tickets/support">{t('adminPage.idxSupport', 'Support')}</Link>
-        <Link href="/admin/broadcast">{t('adminPage.idxBroadcast', 'Broadcast email')}</Link>
-        <Link href="/admin/feedback">{t('adminPage.idxFeedback', 'Feedback')}</Link>
-        <Link href="/admin/analytics">{t('adminPage.idxAnalytics', 'Analytics')}</Link>
-        <Link href="/admin/growth">{t('adminPage.idxGrowth', 'Growth')}</Link>
-        <Link href="/admin/journal">{t('adminPage.idxJournal', 'Journal')}</Link>
-        <Link href="/admin/community">{t('adminPage.idxCommunity', 'Community')}</Link>
-        <Link href="/admin/playlists">{t('adminPage.idxPlaylists', 'Playlists')}</Link>
-        <Link href="/admin/authorizations">{t('adminPage.idxDevices', 'Devices & holds')}</Link>
-        {/* `/admin/invite` has never existed either. Minting lives in a
-            section of THIS page, so the index scrolls to it. */}
-        <Link href="#invite-codes">{t('adminPage.idxInvites', 'Invite codes')}</Link>
-        <Link href="/admin/audit">{t('adminPage.idxAudit', 'Audit log')}</Link>
+      {/* One strip, five domains. Plain links: the server already knows which
+          tab is active, so switching costs a navigation rather than a
+          hydrated client component. */}
+      <nav aria-label="Console sections" className="admin-tabstrip">
+        {ADMIN_TABS.map((entry) => (
+          <Link
+            aria-current={entry.id === tab ? 'page' : undefined}
+            className={`button small${entry.id === tab ? '' : ' secondary'}`}
+            href={`/admin?tab=${entry.id}`}
+            key={entry.id}
+          >
+            {entry.label}
+          </Link>
+        ))}
       </nav>
 
-      {/* The live board. Six sections behind a tab strip, refreshing
-          themselves every 20s — this is the surface an operator actually
-          watches, so it comes before the static bands below.
+      {tab === 'overview' && (
+        <>
+        {/* Above the workbench on purpose: a queue that is empty because the
+            feature is switched off looks exactly like a queue that is empty
+            because the work is done. */}
+        <AdminFeatureBoard />
 
-          It does NOT replace anything under it: the panels further down are
-          the console's interactive tools (feature flags, invite minting, bulk
-          actions, user search) and each carries wiring that took sessions to
-          build. This is additive on purpose. */}
-      {pulse && <AdminPulse initial={pulse} />}
+        {/* The consolidated console index (owner, 2026-08-24: "consolidated
+            menu buttons so I don't have to scroll down so far"): every
+            destination the shell's rail and subnav reach, in one band at the
+            top. The four hero pills this replaces covered a sixth of it. */}
+        <nav aria-label={t('adminPage.consoleIndex', 'Console index')} className="admin-index">
+          <Link href="/admin/users">{t('adminPage.idxUsers', 'Users & roles')}</Link>
+          <Link href="/admin/moderation">{t('adminPage.idxModeration', 'Moderation')}</Link>
+          <Link href="/admin/review?tab=verifications">{t('adminPage.idxVerifications', 'Verifications')}</Link>
+          {/* `/admin/media` has never existed. Held tracks are moderation rows
+              filtered to tracks — the same href `admin-workbench.ts` gives the
+              queue it renders directly above this index. */}
+          <Link href="/admin/moderation?type=track">{t('adminPage.idxHeldTracks', 'Held tracks')}</Link>
+          <Link href="/admin/ads">{t('adminPage.idxAds', 'Ad campaigns')}</Link>
+          <Link href="/admin/finance">{t('adminPage.idxFinance', 'Finance')}</Link>
+          <Link href="/admin/tickets">{t('adminPage.idxTickets', 'Events & tickets')}</Link>
+          <Link href="/admin/tickets/support">{t('adminPage.idxSupport', 'Support')}</Link>
+          <Link href="/admin/broadcast">{t('adminPage.idxBroadcast', 'Broadcast email')}</Link>
+          <Link href="/admin/feedback">{t('adminPage.idxFeedback', 'Feedback')}</Link>
+          <Link href="/admin/analytics">{t('adminPage.idxAnalytics', 'Analytics')}</Link>
+          <Link href="/admin/growth">{t('adminPage.idxGrowth', 'Growth')}</Link>
+          <Link href="/admin/journal">{t('adminPage.idxJournal', 'Journal')}</Link>
+          <Link href="/admin/community">{t('adminPage.idxCommunity', 'Community')}</Link>
+          <Link href="/admin/playlists">{t('adminPage.idxPlaylists', 'Playlists')}</Link>
+          <Link href="/admin/authorizations">{t('adminPage.idxDevices', 'Devices & holds')}</Link>
+          {/* `/admin/invite` has never existed either. Minting lives in a
+              section of THIS page, so the index scrolls to it. */}
+          <Link href="#invite-codes">{t('adminPage.idxInvites', 'Invite codes')}</Link>
+          <Link href="/admin/audit">{t('adminPage.idxAudit', 'Audit log')}</Link>
+        </nav>
 
-      {/* Which machines can open this console. Sits with the workbench rather
-          than in the flags below because it is an operational fact about the
-          console itself, not a setting. */}
-      <AdminDevices />
+        {/* The live board. Six sections behind a tab strip, refreshing
+            themselves every 20s — this is the surface an operator actually
+            watches, so it comes before the static bands below.
 
-      {/* Everything waiting on a human, before anything else on the page.
-          The stats below are for reading; this is for doing. */}
-      <AdminWorkbench />
+            It does NOT replace anything under it: the panels further down are
+            the console's interactive tools (feature flags, invite minting, bulk
+            actions, user search) and each carries wiring that took sessions to
+            build. This is additive on purpose. */}
+        {pulse && <AdminPulse initial={pulse} />}
 
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <h2>{t('adminPage.needsAttention', 'Needs attention')}</h2>
-        </div>
-        <div className="admin-health-grid">
-          <Link className="admin-health-card" href="/admin/review?tab=verifications">
-            <span>{t('adminPage.pendingVerifications', 'Pending verifications')}</span>
-            <strong className={pendingVerificationCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingVerificationCount}</strong>
-          </Link>
-          <Link className="admin-health-card" href="/admin/review?tab=reports">
-            <span>{t('adminPage.openReports', 'Open reports')}</span>
-            <strong className={openReportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openReportCount}</strong>
-          </Link>
-          <Link className="admin-health-card" href="/admin#support-requests">
-            <span>{t('adminPage.openSupportRequests', 'Open support requests')}</span>
-            <strong className={openSupportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openSupportCount}</strong>
-          </Link>
-          <Link className="admin-health-card" href="/admin/ads">
-            <span>{t('adminPage.adsAwaitingApproval', 'Ads awaiting approval')}</span>
-            <strong className={pendingAds.length > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingAds.length}</strong>
-          </Link>
-        </div>
-        {healthOperations && healthOperations.reservedTicketOrders > 0 && (
-          <div className="admin-alert-row">
-            <span>{healthOperations.reservedTicketOrders} {healthOperations.reservedTicketOrders === 1 ? t('adminPage.ticketOrderSingular', 'ticket order') : t('adminPage.ticketOrderPlural', 'ticket orders')} {t('adminPage.reservedUnpaidWarning', 'reserved (unpaid) — check Finance if this stays high')}</span>
-          </div>
-        )}
-        {pendingVerificationCount === 0 && openReportCount === 0 && openSupportCount === 0 && pendingAds.length === 0 && (
-          <div className="admin-alert-row admin-alert-row-ok">
-            <span>{t('adminPage.nothingNeedsReview', 'Nothing needs review right now.')}</span>
-          </div>
-        )}
-      </section>
+        {/* Everything waiting on a human, before anything else on the page.
+            The stats below are for reading; this is for doing. */}
+        <AdminWorkbench />
 
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.userSearch', 'User search')}</h2>
-            <p className="meta">{t('adminPage.userSearchDesc', 'Search by email or username.')}</p>
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <h2>{t('adminPage.needsAttention', 'Needs attention')}</h2>
           </div>
-        </div>
-        <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults.length ? 16 : 0 }}>
-          <input
-            name="userSearch"
-            defaultValue={userSearch ?? ''}
-            placeholder={t('adminPage.userSearchPlaceholder', 'Email or username…')}
-            style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: '0.9375rem' }}
-          />
-          <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
-          {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
-        </form>
-        {userSearchResults.length > 0 && (
-          <div className="admin-list">
-            {userSearchResults.map(u => (
-              <div className="admin-list-row" key={u.id}>
-                <span>{u.username ?? u.email}</span>
-                <strong>{u.role}</strong>
-                <small>{u.email}</small>
-                <small>{u.profiles.map(p => p.type).join(', ') || t('adminPage.noProfiles', 'no profiles')}</small>
-                <small>{u.createdAt.toISOString().slice(0, 10)}</small>
-              </div>
-            ))}
+          <div className="admin-health-grid">
+            <Link className="admin-health-card" href="/admin/review?tab=verifications">
+              <span>{t('adminPage.pendingVerifications', 'Pending verifications')}</span>
+              <strong className={pendingVerificationCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingVerificationCount}</strong>
+            </Link>
+            <Link className="admin-health-card" href="/admin/review?tab=reports">
+              <span>{t('adminPage.openReports', 'Open reports')}</span>
+              <strong className={openReportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openReportCount}</strong>
+            </Link>
+            <Link className="admin-health-card" href="/admin#support-requests">
+              <span>{t('adminPage.openSupportRequests', 'Open support requests')}</span>
+              <strong className={openSupportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openSupportCount}</strong>
+            </Link>
+            <Link className="admin-health-card" href="/admin/ads">
+              <span>{t('adminPage.adsAwaitingApproval', 'Ads awaiting approval')}</span>
+              <strong className={pendingAds.length > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingAds.length}</strong>
+            </Link>
           </div>
-        )}
-        {userSearch && userSearchResults.length === 0 && (
-          <div className="empty">{t('adminPage.noUsersFound', 'No users found for')} &ldquo;{userSearch}&rdquo;.</div>
-        )}
-      </section>
+          {healthOperations && healthOperations.reservedTicketOrders > 0 && (
+            <div className="admin-alert-row">
+              <span>{healthOperations.reservedTicketOrders} {healthOperations.reservedTicketOrders === 1 ? t('adminPage.ticketOrderSingular', 'ticket order') : t('adminPage.ticketOrderPlural', 'ticket orders')} {t('adminPage.reservedUnpaidWarning', 'reserved (unpaid) — check Finance if this stays high')}</span>
+            </div>
+          )}
+          {pendingVerificationCount === 0 && openReportCount === 0 && openSupportCount === 0 && pendingAds.length === 0 && (
+            <div className="admin-alert-row admin-alert-row-ok">
+              <span>{t('adminPage.nothingNeedsReview', 'Nothing needs review right now.')}</span>
+            </div>
+          )}
+        </section>
 
-      <section className="admin-metric-grid">
-        <article className="card admin-metric-card">
-          <span>{t('adminPage.revenueCaptured', 'Revenue (captured)')}</span>
-          <strong>{revenueLabel}</strong>
-        </article>
-      </section>
-
-      <section className="admin-metric-grid">
-        {[
-          [t('adminPage.metricUsers', 'Users'), userCount],
-          [t('adminPage.metricProfiles', 'Profiles'), profileCount],
-          [t('adminPage.metricPendingVerification', 'Pending verification'), pendingVerificationCount],
-          [t('adminPage.metricOpenReports', 'Open reports'), openReportCount],
-          [t('adminPage.metricSupportRequests', 'Support requests'), openSupportCount],
-          [t('adminPage.metricMediaAssets', 'Media assets'), mediaCount],
-          [t('adminPage.metricTicketOrders', 'Ticket orders'), ticketOrderCount]
-        ].map(([label, value]) => (
-          <article className="card admin-metric-card" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </article>
-        ))}
-      </section>
-
-      <section className="panel admin-console-panel admin-health-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.launchHealth', 'Launch health')}</h2>
-            <p className="meta">
-              {t('adminPage.publicUptimeEndpoint', 'Public uptime endpoint:')} <Link className="text-link" href="/api/health">/api/health</Link>
-            </p>
-          </div>
-          <strong className={health.status === 'ok' ? 'admin-health-status ok' : 'admin-health-status warn'}>
-            {health.status}
-          </strong>
-        </div>
-        <div className="admin-health-grid">
-          <div className="admin-health-card">
-            <span>{t('adminPage.dbLatency', 'DB latency')}</span>
-            <strong>{health.latencyMs}ms</strong>
-          </div>
-          <div className="admin-health-card">
-            <span>{t('adminPage.failedEmail24h', 'Failed email 24h')}</span>
-            <strong>{healthOperations ? healthOperations.failedEmails24h : t('adminPage.notApplicable', 'n/a')}</strong>
-          </div>
-          <div className="admin-health-card">
-            <span>{t('adminPage.reservedTickets', 'Reserved tickets')}</span>
-            <strong>{healthOperations ? healthOperations.reservedTicketOrders : t('adminPage.notApplicable2', 'n/a')}</strong>
-          </div>
-          <div className="admin-health-card">
-            <span>{t('adminPage.paymentCapture', 'Payment capture')}</span>
-            <strong>{healthIntegrations?.ticketPaymentCapture ? t('adminPage.ready', 'Ready') : t('adminPage.blocked', 'Blocked')}</strong>
-          </div>
-        </div>
-      </section>
-
-      {betaMetrics && (
         <section className="panel admin-console-panel">
           <div className="admin-console-panel-head">
             <div>
-              <h2>{t('adminPage.betaMetrics', 'Beta metrics')}</h2>
-              <p className="meta">
-                {t('adminPage.betaMetricsDesc', "Real activity only — activation means the user has hyped, RSVP'd, or listened at least once. Demo accounts excluded.")}
-              </p>
+              <h2>{t('adminPage.userSearch', 'User search')}</h2>
+              <p className="meta">{t('adminPage.userSearchDesc', 'Search by email or username.')}</p>
+            </div>
+          </div>
+          <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults.length ? 16 : 0 }}>
+            <input
+              name="userSearch"
+              defaultValue={userSearch ?? ''}
+              placeholder={t('adminPage.userSearchPlaceholder', 'Email or username…')}
+              style={{ flex: 1, padding: '8px 12px', borderRadius: 7, border: '1px solid var(--line-2)', background: 'var(--bg-2)', color: 'inherit', fontSize: '0.9375rem' }}
+            />
+            <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
+            {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
+          </form>
+          {userSearchResults.length > 0 && (
+            <div className="admin-list">
+              {userSearchResults.map(u => (
+                <div className="admin-list-row" key={u.id}>
+                  <span>{u.username ?? u.email}</span>
+                  <strong>{u.role}</strong>
+                  <small>{u.email}</small>
+                  <small>{u.profiles.map(p => p.type).join(', ') || t('adminPage.noProfiles', 'no profiles')}</small>
+                  <small>{u.createdAt.toISOString().slice(0, 10)}</small>
+                </div>
+              ))}
+            </div>
+          )}
+          {userSearch && userSearchResults.length === 0 && (
+            <div className="empty">{t('adminPage.noUsersFound', 'No users found for')} &ldquo;{userSearch}&rdquo;.</div>
+          )}
+        </section>
+
+        </>
+      )}
+
+      {tab === 'activity' && (
+        <>
+        <section className="admin-metric-grid">
+          <article className="card admin-metric-card">
+            <span>{t('adminPage.revenueCaptured', 'Revenue (captured)')}</span>
+            <strong>{revenueLabel}</strong>
+          </article>
+        </section>
+
+        <section className="admin-metric-grid">
+          {[
+            [t('adminPage.metricUsers', 'Users'), userCount],
+            [t('adminPage.metricProfiles', 'Profiles'), profileCount],
+            [t('adminPage.metricPendingVerification', 'Pending verification'), pendingVerificationCount],
+            [t('adminPage.metricOpenReports', 'Open reports'), openReportCount],
+            [t('adminPage.metricSupportRequests', 'Support requests'), openSupportCount],
+            [t('adminPage.metricMediaAssets', 'Media assets'), mediaCount],
+            [t('adminPage.metricTicketOrders', 'Ticket orders'), ticketOrderCount]
+          ].map(([label, value]) => (
+            <article className="card admin-metric-card" key={label}>
+              <span>{label}</span>
+              <strong>{value}</strong>
+            </article>
+          ))}
+        </section>
+
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.signupFunnel', 'Signup funnel')}</h2>
+              <p className="meta">{t('adminPage.signupFunnelDesc', 'Last 7 days from audit events. Use this to spot passkey/email dropoff.')}</p>
+            </div>
+            <div className="admin-signup-actions">
+              <AdminSignupTestPanel />
+              <Link className="button small secondary" href="/for-artists">
+                {t('adminPage.testSignupUi', 'Test signup UI')}
+              </Link>
+            </div>
+          </div>
+          {funnelAlerts.length ? (
+            <div className="admin-alert-row">
+              {funnelAlerts.map((alert) => <span key={alert}>{alert}</span>)}
+            </div>
+          ) : (
+            <div className="admin-alert-row admin-alert-row-ok"><span>{t('adminPage.noSignupAlerts', 'No signup alerts in the 7d funnel window.')}</span></div>
+          )}
+          <div className="admin-health-grid">
+            {funnelDropoff.map(([label, value]) => (
+              <div className="admin-health-card" key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))}
+          </div>
+          {Object.keys(variantCounts).length ? (
+            <div className="admin-variant-grid">
+              {Object.entries(variantCounts).map(([variant, counts]) => (
+                <div className="admin-health-card" key={variant}>
+                  <span>{variant.replace('_', ' ')}</span>
+                  <strong>{counts.accounts}/{counts.views}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <div className="admin-diagnostic-list">
+            <strong>{t('adminPage.passkeyDiagnostics', 'Passkey diagnostics')}</strong>
+            {passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
+              <div className="admin-diagnostic-row" key={`${action}-${index}`}>
+                <span>{action}</span>
+                <small>{metaText(meta, 'browser')} / {metaText(meta, 'platform')} / {metaText(meta, 'webauthn')} / {metaText(meta, 'errorName')}</small>
+                <em>{metaText(meta, 'reason')}</em>
+              </div>
+            )) : <p className="meta">{t('adminPage.noPasskeyFailures', 'No recent passkey failures captured.')}</p>}
+          </div>
+        </section>
+
+        <section className="grid grid-2 admin-console-grid">
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.recentShows', 'Recent shows')}</h2>
+            <div className="admin-list">
+              {recentShows.length ? (
+                recentShows.map((show) => (
+                  <div className="admin-list-row" key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <span style={{ flex: 1 }}>{show.title}</span>
+                    <small>{show.venueProfile?.name ?? '—'}</small>
+                    <small>{show.startsAt.toISOString().slice(0, 10)}</small>
+                    <small>{show._count.tickets} {t('adminPage.tix', 'tix')}</small>
+                    <FeatureToggle showId={show.id} initialFeatured={show.featured} />
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noShowsYet', 'No shows yet.')}</div>
+              )}
+            </div>
+          </article>
+
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.recentUsers', 'Recent users')}</h2>
+            <div className="admin-list">
+              {recentUsers.map((user) => (
+                <div className="admin-list-row" key={user.email}>
+                  <span>{user.username || user.email}</span>
+                  <strong>{user.role}</strong>
+                </div>
+              ))}
+            </div>
+          </article>
+
+        </section>
+        {/* Artist Funnel */}
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.artistFunnel', 'Artist Funnel')}</h2>
+              <p className="meta">{t('adminPage.artistFunnelDesc', 'Where artists drop off before their first show.')}</p>
             </div>
           </div>
           <div className="admin-health-grid">
             <div className="admin-health-card">
-              <span>{t('adminPage.signups7d', 'Signups (7d)')}</span>
-              <strong>{betaMetrics.signups7d}</strong>
+              <span>{t('adminPage.noUploadsYet', 'No uploads yet')}</span>
+              <strong style={{ color: funnelStage1 > 0 ? 'var(--danger)' : 'inherit' }}>{funnelStage1}</strong>
             </div>
             <div className="admin-health-card">
-              <span>{t('adminPage.activation', 'Activation')}</span>
-              <strong>
-                {Math.round(betaMetrics.activationRate * 100)}%
-                {' '}({betaMetrics.activatedUsers}/{betaMetrics.totalUsers})
-              </strong>
+              <span>{t('adminPage.uploadsNoShows', 'Uploads, no shows')}</span>
+              <strong style={{ color: funnelStage2 > 0 ? 'var(--warning-text)' : 'inherit' }}>{funnelStage2}</strong>
             </div>
             <div className="admin-health-card">
-              <span>{t('adminPage.weeklyActive', 'Weekly active')}</span>
-              <strong>
-                {Math.round(betaMetrics.weeklyActiveRate * 100)}%
-                {' '}({betaMetrics.weeklyActiveUsers}/{betaMetrics.totalUsers})
-              </strong>
-            </div>
-            <div className="admin-health-card">
-              <span>{t('adminPage.djsOnRadio30d', 'DJs on radio (30d)')}</span>
-              <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} {t('adminPage.recurring', 'recurring')}</strong>
+              <span>{t('adminPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
+              <strong>{funnelStage3}</strong>
             </div>
           </div>
-          <h3 style={{ margin: '1rem 0 .5rem' }}>{t('adminPage.inviteConversion30d', 'Invite conversion (30d)')}</h3>
-          {betaMetrics.inviteChannels.length === 0 ? (
-            <p className="meta">{t('adminPage.noSignups30d', 'No signups recorded in the last 30 days.')}</p>
+          {funnelStage1Recent.length > 0 && (
+            <div className="admin-list" style={{ marginTop: 12 }}>
+              <strong style={{ fontSize: '0.9375rem', marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
+              {funnelStage1Recent.map((p) => (
+                <div className="admin-list-row" key={p.slug}>
+                  <span>{p.name}</span>
+                  <small>{p.slug} · {t('adminPage.joined', 'joined')} {p.createdAt.toISOString().slice(0, 10)}</small>
+                </div>
+              ))}
+            </div>
+          )}
+          <BulkActions
+            items={funnelStage1Recent.map((p) => ({ id: p.slug, label: p.name }))}
+            type="profiles"
+          />
+        </section>
+
+        {/* Social Posts */}
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.socialPosts', 'Social Posts')}</h2>
+              <p className="meta">{t('adminPage.socialPostsDesc', 'Recent auto-generated social digest posts.')}</p>
+            </div>
+          </div>
+          {recentSocialPosts.length === 0 ? (
+            <div className="empty">{t('adminPage.noSocialPostsYet', 'No social posts yet. Monday digest will generate them.')}</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {recentSocialPosts.map((post) => (
+                <div key={post.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <pre style={{ fontFamily: 'inherit', fontSize: '0.9375rem', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
+                    <small style={{ color: 'var(--ink-3)', fontSize: '0.9375rem' }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
+                  </div>
+                  <SocialPostCopy text={post.text} />
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Content Calendar */}
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.upcomingCalendar', 'Upcoming Calendar')}</h2>
+              <p className="meta">{t('adminPage.upcomingCalendarDesc', 'Scheduled shows in the next 30 days.')}</p>
+            </div>
+          </div>
+          {calendarShows.length === 0 ? (
+            <div className="empty">{t('adminPage.noScheduledShows30d', 'No scheduled shows in the next 30 days.')}</div>
+          ) : (
+            <div>
+              {Object.entries(
+                calendarShows.reduce((acc: Record<string, typeof calendarShows>, show) => {
+                  const date = show.startsAt.toLocaleDateString();
+                  acc[date] ??= [];
+                  acc[date].push(show);
+                  return acc;
+                }, {})
+              ).map(([date, shows]) => (
+                <div key={date} style={{ marginBottom: 14 }}>
+                  <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
+                  {shows.map((show) => (
+                    <div key={show.id} className="admin-list-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <span style={{ flex: 1 }}>{show.title}</span>
+                      <small>{show.venueProfile?.name ?? '—'}</small>
+                      <small>{show.headlinerProfile?.name ?? '—'}</small>
+                      <small>{show.ticketsSoldCount}/{show.ticketCapacity ?? '∞'} {t('adminPage.tix2', 'tix')}</small>
+                      <FeatureToggle showId={show.id} initialFeatured={show.featured} />
+                    </div>
+                  ))}
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        </>
+      )}
+
+      {tab === 'support' && (
+        <>
+        <section className="grid grid-2 admin-console-grid">
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.contentReports', 'Content reports')}</h2>
+            <div className="admin-list">
+              {recentReports.length ? (
+                recentReports.map((report) => (
+                  <div className="admin-list-row" key={report.id}>
+                    <span>{report.reason}</span>
+                    <strong>{report.status}</strong>
+                    <small>
+                      {report.targetType}:{report.targetId} {t('adminPage.by', 'by')} {report.reporter?.username ?? report.reporter?.email ?? t('adminPage.unknown', 'unknown')}
+                    </small>
+                    <AdminReportActions reportId={report.id} />
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noReportsYet', 'No reports yet.')}</div>
+              )}
+            </div>
+          </article>
+
+          <article className="panel admin-console-panel" id="support-requests">
+            <h2>{t('adminPage.supportRequests', 'Support requests')}</h2>
+            <div className="admin-list">
+              {recentSupport.length ? (
+                recentSupport.map((request) => (
+                  <div className="admin-list-row" key={request.id}>
+                    <span>{request.subject}</span>
+                    <strong>{request.priority}</strong>
+                    <small>
+                      {request.type} | {request.status} | {request.email ?? request.name ?? t('adminPage.anonymous', 'anonymous')}
+                    </small>
+                    {request.type.startsWith('PRIVACY_') && request.status === 'OPEN' ? (
+                      <AdminPrivacyRequestActions requestId={request.id} requestType={request.type} />
+                    ) : null}
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noSupportRequestsYet', 'No support requests yet.')}</div>
+              )}
+            </div>
+          </article>
+
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.verificationQueue', 'Verification queue')}</h2>
+            <div className="admin-list">
+              {pendingVerifications.length ? (
+                pendingVerifications.map((profile) => (
+                  <div className="admin-list-row" key={profile.id}>
+                    <span>{profile.name}</span>
+                    <strong>{profile.type}</strong>
+                    <small>{profile.contactInfo || profile.verificationNotes || t('adminPage.noDetailsProvided', 'No details provided')}</small>
+                    <AdminVerificationActions profileId={profile.id} />
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noPendingVerificationRequests', 'No pending verification requests.')}</div>
+              )}
+            </div>
+          </article>
+
+        </section>
+        {/* ── Ads ───────────────────────────────────────────────── */}
+        <section className="section">
+          <h2>{t('adminPage.adsPendingReview', 'Ads — Pending Review')}</h2>
+          {pendingAds.length === 0 ? (
+            <p className="meta">{t('adminPage.noPendingAds', 'No pending ads.')}</p>
           ) : (
             <div className="admin-list">
-              {betaMetrics.inviteChannels.map((channel) => (
-                <div className="admin-list-row" key={channel.code}>
-                  <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{channel.code}</code>
+              {pendingAds.map((ad) => (
+                <div className="admin-list-row" key={ad.id} style={{ flexWrap: 'wrap', gap: 8 }}>
+                  <strong>{ad.title}</strong>
+                  <span>{ad.slot?.name}</span>
+                  <small>{ad.advertiser?.username ?? ad.advertiser?.email}</small>
+                  <small>{ad.createdAt.toISOString().slice(0, 10)}</small>
+                  {/* These used to be two HTML forms POSTing to
+                      /api/admin/ads/[adId], which only exports PATCH — a form
+                      can't send PATCH, so both buttons always 405'd and no
+                      campaign was ever decided from this page. Approving also
+                      opens a real Stripe authorization and now needs a
+                      step-up passkey check, so rather than duplicate that
+                      flow a third time this links to /admin/ads, where
+                      AdminAdsClient already does it properly. The i18n pass
+                      wrapped the old forms' labels; those strings went with
+                      the forms. */}
+                  <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: '0.9375rem' }}>
+                    {t('adminPage.review', 'Review')}
+                  </Link>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="meta" style={{ marginTop: 8 }}>
+            {t('adminPage.manageViaAdsQueue', 'Approve or reject campaigns in the')}{' '}
+            <Link href="/admin/ads">{t('adminPage.adsQueue', 'Ads queue')}</Link>.
+          </p>
+        </section>
+        </>
+      )}
+
+      {tab === 'finance' && (
+        <>
+        <section className="grid grid-2 admin-console-grid">
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.ticketOrders', 'Ticket orders')}</h2>
+            <div className="admin-list">
+              {recentTicketOrders.length ? (
+                recentTicketOrders.map((order) => (
+                  <div className="admin-list-row" key={order.id}>
+                    <span>{order.show?.title ?? t('adminPage.unknownShow', 'Unknown show')}</span>
+                    <strong>{order.status}</strong>
+                    <small>{order.buyerEmail} · ${(order.totalChargeCents / 100).toFixed(2)}</small>
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noTicketOrders', 'No ticket orders yet.')}</div>
+              )}
+            </div>
+          </article>
+
+        </section>
+        {/* ── Revenue Dashboard ──────────────────────────────────── */}
+        <section className="section">
+          <h2>{t('adminPage.revenue', 'Revenue')}</h2>
+          <div className="admin-list" style={{ marginBottom: 16 }}>
+            <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{`$${(revenueCents / 100).toFixed(2)}`}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{`$${(platformFeeTotal / 100).toFixed(2)}`}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{`$${(payoutPaid / 100).toFixed(2)}`}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{`$${(payoutPending / 100).toFixed(2)}`}</span></div>
+          </div>
+          {monthlyRows.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
+              <div className="admin-list">
+                {monthlyRows.map(([month, cents]) => (
+                  <div className="admin-list-row" key={month}>
+                    <span>{month}</span>
+                    <strong>{`$${(cents / 100).toFixed(2)}`}</strong>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+          {topEarners.length > 0 && (
+            <>
+              <h3 style={{ fontSize: '0.9375rem', marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
+              <div className="admin-list">
+                {topEarners.map((e) => (
+                  <div className="admin-list-row" key={e.profileId}>
+                    <span>{e.profileId ?? t('adminPage.unknown2', 'unknown')}</span>
+                    <strong>{`$${((e._sum.amountCents ?? 0) / 100).toFixed(2)}`}</strong>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        </>
+      )}
+
+      {tab === 'system' && (
+        <>
+        {/* Which machines can open this console. Sits with the workbench rather
+            than in the flags below because it is an operational fact about the
+            console itself, not a setting. */}
+        <AdminDevices />
+
+        <section className="panel admin-console-panel admin-health-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.launchHealth', 'Launch health')}</h2>
+              <p className="meta">
+                {t('adminPage.publicUptimeEndpoint', 'Public uptime endpoint:')} <Link className="text-link" href="/api/health">/api/health</Link>
+              </p>
+            </div>
+            <strong className={health.status === 'ok' ? 'admin-health-status ok' : 'admin-health-status warn'}>
+              {health.status}
+            </strong>
+          </div>
+          <div className="admin-health-grid">
+            <div className="admin-health-card">
+              <span>{t('adminPage.dbLatency', 'DB latency')}</span>
+              <strong>{health.latencyMs}ms</strong>
+            </div>
+            <div className="admin-health-card">
+              <span>{t('adminPage.failedEmail24h', 'Failed email 24h')}</span>
+              <strong>{healthOperations ? healthOperations.failedEmails24h : t('adminPage.notApplicable', 'n/a')}</strong>
+            </div>
+            <div className="admin-health-card">
+              <span>{t('adminPage.reservedTickets', 'Reserved tickets')}</span>
+              <strong>{healthOperations ? healthOperations.reservedTicketOrders : t('adminPage.notApplicable2', 'n/a')}</strong>
+            </div>
+            <div className="admin-health-card">
+              <span>{t('adminPage.paymentCapture', 'Payment capture')}</span>
+              <strong>{healthIntegrations?.ticketPaymentCapture ? t('adminPage.ready', 'Ready') : t('adminPage.blocked', 'Blocked')}</strong>
+            </div>
+          </div>
+        </section>
+
+        {betaMetrics && (
+          <section className="panel admin-console-panel">
+            <div className="admin-console-panel-head">
+              <div>
+                <h2>{t('adminPage.betaMetrics', 'Beta metrics')}</h2>
+                <p className="meta">
+                  {t('adminPage.betaMetricsDesc', "Real activity only — activation means the user has hyped, RSVP'd, or listened at least once. Demo accounts excluded.")}
+                </p>
+              </div>
+            </div>
+            <div className="admin-health-grid">
+              <div className="admin-health-card">
+                <span>{t('adminPage.signups7d', 'Signups (7d)')}</span>
+                <strong>{betaMetrics.signups7d}</strong>
+              </div>
+              <div className="admin-health-card">
+                <span>{t('adminPage.activation', 'Activation')}</span>
+                <strong>
+                  {Math.round(betaMetrics.activationRate * 100)}%
+                  {' '}({betaMetrics.activatedUsers}/{betaMetrics.totalUsers})
+                </strong>
+              </div>
+              <div className="admin-health-card">
+                <span>{t('adminPage.weeklyActive', 'Weekly active')}</span>
+                <strong>
+                  {Math.round(betaMetrics.weeklyActiveRate * 100)}%
+                  {' '}({betaMetrics.weeklyActiveUsers}/{betaMetrics.totalUsers})
+                </strong>
+              </div>
+              <div className="admin-health-card">
+                <span>{t('adminPage.djsOnRadio30d', 'DJs on radio (30d)')}</span>
+                <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} {t('adminPage.recurring', 'recurring')}</strong>
+              </div>
+            </div>
+            <h3 style={{ margin: '1rem 0 .5rem' }}>{t('adminPage.inviteConversion30d', 'Invite conversion (30d)')}</h3>
+            {betaMetrics.inviteChannels.length === 0 ? (
+              <p className="meta">{t('adminPage.noSignups30d', 'No signups recorded in the last 30 days.')}</p>
+            ) : (
+              <div className="admin-list">
+                {betaMetrics.inviteChannels.map((channel) => (
+                  <div className="admin-list-row" key={channel.code}>
+                    <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{channel.code}</code>
+                    <small>
+                      {channel.signups} {channel.signups === 1 ? t('adminPage.signupSingular', 'signup') : t('adminPage.signupPlural', 'signups')}
+                      {channel.kind !== '—' ? ` | ${channel.kind}` : ''}
+                    </small>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+        )}
+
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.rateLimitHits1h', 'Rate limit hits (1h)')}</h2>
+              <p className="meta">{t('adminPage.rateLimitHitsDesc', 'Top buckets that returned 429 in the last hour.')}</p>
+            </div>
+          </div>
+          <div className="admin-list">
+            {rateLimitMetrics.length ? (
+              rateLimitMetrics.map((row) => (
+                <div className="admin-list-row" key={row.bucket}>
+                  <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem' }}>{row.bucket}</span>
+                  <strong>{row.hits}</strong>
+                </div>
+              ))
+            ) : (
+              <div className="empty">{t('adminPage.noRateLimitHits', 'No rate limit hits in the last hour.')}</div>
+            )}
+          </div>
+        </section>
+
+        <section className="grid grid-2 admin-console-grid">
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.featureFlags', 'Feature flags')}</h2>
+            <div className="admin-export-row" aria-label={t('adminPage.adminCsvExportsAriaLabel', 'Admin CSV exports')}>
+              {(['reports', 'support', 'verifications', 'tickets', 'audits'] as const).map((kind) => (
+                <Link className="button small secondary" href={`/api/admin/export/${kind}`} key={kind}>
+                  {t('adminPage.export', 'Export')} {kind}
+                </Link>
+              ))}
+            </div>
+            <AdminFeatureFlags initialFlags={featureFlags} />
+          </article>
+
+          <article className="panel admin-console-panel">
+            <h2>{t('adminPage.emailMfaDelivery', 'Email/MFA delivery')}</h2>
+            <div className="admin-list">
+              {recentEmails.length ? (
+                recentEmails.map((email) => (
+                  <div className="admin-list-row" key={email.id}>
+                    <span>{email.type}</span>
+                    <strong>{email.status}</strong>
+                    <small>{email.recipient}</small>
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noEmailDeliveryRecordsYet', 'No email delivery records yet.')}</div>
+              )}
+            </div>
+          </article>
+
+          <article className="panel admin-console-panel admin-console-panel-wide">
+            <h2>{t('adminPage.auditLog', 'Audit log')}</h2>
+            <div className="admin-list">
+              {recentAudits.length ? (
+                recentAudits.map((audit) => (
+                  <div className="admin-list-row" key={audit.id}>
+                    <span>{audit.action}</span>
+                    <strong>{audit.entityType}</strong>
+                    <small>{audit.actor?.username ?? audit.actor?.email ?? t('adminPage.system', 'system')} | {audit.entityId ?? t('adminPage.noId', 'no id')}</small>
+                  </div>
+                ))
+              ) : (
+                <div className="empty">{t('adminPage.noAuditEventsYet', 'No audit events yet.')}</div>
+              )}
+            </div>
+          </article>
+        </section>
+        <section className="panel admin-console-panel">
+          <div className="admin-console-panel-head">
+            <div>
+              <h2>{t('adminPage.security', 'Security')}</h2>
+              <p className="meta">{t('adminPage.securityDesc', 'Spam flags and login activity in the last 24 hours.')}</p>
+            </div>
+          </div>
+          <div className="admin-metric-grid" style={{ marginBottom: '1rem' }}>
+            <article className="card admin-metric-card">
+              <span>{t('adminPage.spamFlags24h', 'Spam flags (24h)')}</span>
+              <strong>{recentSpamFlags.length}</strong>
+            </article>
+            <article className="card admin-metric-card">
+              <span>{t('adminPage.logins24h', 'Logins (24h)')}</span>
+              <strong>{recentLoginsCount}</strong>
+            </article>
+          </div>
+          {recentSpamFlags.length > 0 && (
+            <div className="admin-list">
+              {recentSpamFlags.map((flag) => (
+                <div className="admin-list-row" key={flag.id}>
+                  <span>{flag.body}</span>
+                  <small>{flag.user?.username ?? flag.user?.email ?? flag.userId} | {flag.createdAt.toISOString()}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="section" id="invite-codes">
+          <h2>{t('adminPage.inviteCodes', 'Invite Codes')}</h2>
+          {/* The only door, while `invite_code_sharing` is off: a request comes
+              in through the workbench queue above, and the operator issues a
+              single-use code here. */}
+          <MintInviteCodes />
+          <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
+            <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9375rem' }}>
+              {t('adminPage.viewAllViaApi', 'View all via API')}
+            </a>
+            <a className="button" href="/api/admin/test-email" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9375rem' }}>
+              {t('adminPage.sendTestEmail', 'Send test email')}
+            </a>
+          </div>
+          {recentInviteCodes.length === 0 ? (
+            <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet — mint one above to admit someone from the access-request queue.')}</p>
+          ) : (
+            <div className="admin-list">
+              {recentInviteCodes.map((code) => (
+                <div className="admin-list-row" key={code.id}>
+                  <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{code.code}</code>
                   <small>
-                    {channel.signups} {channel.signups === 1 ? t('adminPage.signupSingular', 'signup') : t('adminPage.signupPlural', 'signups')}
-                    {channel.kind !== '—' ? ` | ${channel.kind}` : ''}
+                    {code.usedAt ? `${t('adminPage.used', 'Used')} ${code.usedAt.toISOString()}` : code.expiresAt && code.expiresAt < new Date() ? t('adminPage.expired', 'Expired') : t('adminPage.available', 'Available')}
+                    {' | '}{t('adminPage.created', 'created')} {code.createdAt.toISOString()}
                   </small>
                 </div>
               ))}
             </div>
           )}
         </section>
+
+        <section className="section">
+          <h2>{t('adminPage.backups', 'Backups')}</h2>
+          <article className="panel" style={{ padding: '1rem 1.25rem' }}>
+            <p className="meta" style={{ marginTop: 0 }}>
+              {t('adminPage.backupsDesc', 'iHYPE does not currently run an automated database backup job. Postgres backups should be taken from the managed provider dashboard on a regular cadence (daily for production).')}
+            </p>
+            <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0', lineHeight: 1.6 }}>
+              <li>
+                <strong>{t('adminPage.supabaseLabel', 'Supabase:')}</strong>{' '}
+                <a href="https://supabase.com/dashboard" rel="noopener noreferrer" target="_blank">
+                  supabase.com/dashboard
+                </a>{' '}
+                — {t('adminPage.supabaseDesc', 'branch the production database for point-in-time snapshots.')}
+              </li>
+              <li>
+                <strong>{t('adminPage.cloudflareLabel', 'Cloudflare:')}</strong>{' '}
+                <a href="https://dash.cloudflare.com/" rel="noopener noreferrer" target="_blank">
+                  dash.cloudflare.com
+                </a>{' '}
+                — {t('adminPage.cloudflareDesc', 'review Workers logs, R2 storage, and analytics.')}
+              </li>
+              <li>
+                {t('adminPage.adHocExports', 'For ad-hoc exports run')} <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
+                {t('adminPage.fromTrustedWorkstation', 'from a trusted workstation.')}
+              </li>
+            </ul>
+            <p className="meta" style={{ marginBottom: 0 }}>
+              {t('adminPage.backupsNote', 'Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet — this section is informational so admins know where to look.')}
+            </p>
+          </article>
+        </section>
+
+        {/* ── Rate Limits ───────────────────────────────────────── */}
+        <section className="section">
+          <h2>{t('adminPage.rateLimitsLast24h', 'Rate Limits (last 24h)')}</h2>
+          {recentSpamFlags.length === 0 ? (
+            <p className="meta">{t('adminPage.noSpamFlagNotifications', 'No SPAM_FLAG notifications in the last 24 hours.')}</p>
+          ) : (
+            <div className="admin-list">
+              {recentSpamFlags.map((n) => (
+                <div className="admin-list-row" key={n.id}>
+                  <span>{n.user?.username ?? n.user?.email ?? n.userId}</span>
+                  <small>{n.body}</small>
+                  <small>{n.createdAt.toISOString().slice(0, 16)}</small>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+
+        </>
       )}
 
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.signupFunnel', 'Signup funnel')}</h2>
-            <p className="meta">{t('adminPage.signupFunnelDesc', 'Last 7 days from audit events. Use this to spot passkey/email dropoff.')}</p>
-          </div>
-          <div className="admin-signup-actions">
-            <AdminSignupTestPanel />
-            <Link className="button small secondary" href="/for-artists">
-              {t('adminPage.testSignupUi', 'Test signup UI')}
-            </Link>
-          </div>
-        </div>
-        {funnelAlerts.length ? (
-          <div className="admin-alert-row">
-            {funnelAlerts.map((alert) => <span key={alert}>{alert}</span>)}
-          </div>
-        ) : (
-          <div className="admin-alert-row admin-alert-row-ok"><span>{t('adminPage.noSignupAlerts', 'No signup alerts in the 7d funnel window.')}</span></div>
-        )}
-        <div className="admin-health-grid">
-          {funnelDropoff.map(([label, value]) => (
-            <div className="admin-health-card" key={label}>
-              <span>{label}</span>
-              <strong>{value}</strong>
-            </div>
-          ))}
-        </div>
-        {Object.keys(variantCounts).length ? (
-          <div className="admin-variant-grid">
-            {Object.entries(variantCounts).map(([variant, counts]) => (
-              <div className="admin-health-card" key={variant}>
-                <span>{variant.replace('_', ' ')}</span>
-                <strong>{counts.accounts}/{counts.views}</strong>
-              </div>
-            ))}
-          </div>
-        ) : null}
-        <div className="admin-diagnostic-list">
-          <strong>{t('adminPage.passkeyDiagnostics', 'Passkey diagnostics')}</strong>
-          {passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
-            <div className="admin-diagnostic-row" key={`${action}-${index}`}>
-              <span>{action}</span>
-              <small>{metaText(meta, 'browser')} / {metaText(meta, 'platform')} / {metaText(meta, 'webauthn')} / {metaText(meta, 'errorName')}</small>
-              <em>{metaText(meta, 'reason')}</em>
-            </div>
-          )) : <p className="meta">{t('adminPage.noPasskeyFailures', 'No recent passkey failures captured.')}</p>}
-        </div>
-      </section>
-
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.rateLimitHits1h', 'Rate limit hits (1h)')}</h2>
-            <p className="meta">{t('adminPage.rateLimitHitsDesc', 'Top buckets that returned 429 in the last hour.')}</p>
-          </div>
-        </div>
-        <div className="admin-list">
-          {rateLimitMetrics.length ? (
-            rateLimitMetrics.map((row) => (
-              <div className="admin-list-row" key={row.bucket}>
-                <span style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem' }}>{row.bucket}</span>
-                <strong>{row.hits}</strong>
-              </div>
-            ))
-          ) : (
-            <div className="empty">{t('adminPage.noRateLimitHits', 'No rate limit hits in the last hour.')}</div>
-          )}
-        </div>
-      </section>
-
-      <section className="grid grid-2 admin-console-grid">
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.featureFlags', 'Feature flags')}</h2>
-          <div className="admin-export-row" aria-label={t('adminPage.adminCsvExportsAriaLabel', 'Admin CSV exports')}>
-            {(['reports', 'support', 'verifications', 'tickets', 'audits'] as const).map((kind) => (
-              <Link className="button small secondary" href={`/api/admin/export/${kind}`} key={kind}>
-                {t('adminPage.export', 'Export')} {kind}
-              </Link>
-            ))}
-          </div>
-          <AdminFeatureFlags initialFlags={featureFlags} />
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.ticketOrders', 'Ticket orders')}</h2>
-          <div className="admin-list">
-            {recentTicketOrders.length ? (
-              recentTicketOrders.map((order) => (
-                <div className="admin-list-row" key={order.id}>
-                  <span>{order.show?.title ?? t('adminPage.unknownShow', 'Unknown show')}</span>
-                  <strong>{order.status}</strong>
-                  <small>{order.buyerEmail} · ${(order.totalChargeCents / 100).toFixed(2)}</small>
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noTicketOrders', 'No ticket orders yet.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.recentShows', 'Recent shows')}</h2>
-          <div className="admin-list">
-            {recentShows.length ? (
-              recentShows.map((show) => (
-                <div className="admin-list-row" key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <span style={{ flex: 1 }}>{show.title}</span>
-                  <small>{show.venueProfile?.name ?? '—'}</small>
-                  <small>{show.startsAt.toISOString().slice(0, 10)}</small>
-                  <small>{show._count.tickets} {t('adminPage.tix', 'tix')}</small>
-                  <FeatureToggle showId={show.id} initialFeatured={show.featured} />
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noShowsYet', 'No shows yet.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.recentUsers', 'Recent users')}</h2>
-          <div className="admin-list">
-            {recentUsers.map((user) => (
-              <div className="admin-list-row" key={user.email}>
-                <span>{user.username || user.email}</span>
-                <strong>{user.role}</strong>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.contentReports', 'Content reports')}</h2>
-          <div className="admin-list">
-            {recentReports.length ? (
-              recentReports.map((report) => (
-                <div className="admin-list-row" key={report.id}>
-                  <span>{report.reason}</span>
-                  <strong>{report.status}</strong>
-                  <small>
-                    {report.targetType}:{report.targetId} {t('adminPage.by', 'by')} {report.reporter?.username ?? report.reporter?.email ?? t('adminPage.unknown', 'unknown')}
-                  </small>
-                  <AdminReportActions reportId={report.id} />
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noReportsYet', 'No reports yet.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel" id="support-requests">
-          <h2>{t('adminPage.supportRequests', 'Support requests')}</h2>
-          <div className="admin-list">
-            {recentSupport.length ? (
-              recentSupport.map((request) => (
-                <div className="admin-list-row" key={request.id}>
-                  <span>{request.subject}</span>
-                  <strong>{request.priority}</strong>
-                  <small>
-                    {request.type} | {request.status} | {request.email ?? request.name ?? t('adminPage.anonymous', 'anonymous')}
-                  </small>
-                  {request.type.startsWith('PRIVACY_') && request.status === 'OPEN' ? (
-                    <AdminPrivacyRequestActions requestId={request.id} requestType={request.type} />
-                  ) : null}
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noSupportRequestsYet', 'No support requests yet.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.verificationQueue', 'Verification queue')}</h2>
-          <div className="admin-list">
-            {pendingVerifications.length ? (
-              pendingVerifications.map((profile) => (
-                <div className="admin-list-row" key={profile.id}>
-                  <span>{profile.name}</span>
-                  <strong>{profile.type}</strong>
-                  <small>{profile.contactInfo || profile.verificationNotes || t('adminPage.noDetailsProvided', 'No details provided')}</small>
-                  <AdminVerificationActions profileId={profile.id} />
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noPendingVerificationRequests', 'No pending verification requests.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel">
-          <h2>{t('adminPage.emailMfaDelivery', 'Email/MFA delivery')}</h2>
-          <div className="admin-list">
-            {recentEmails.length ? (
-              recentEmails.map((email) => (
-                <div className="admin-list-row" key={email.id}>
-                  <span>{email.type}</span>
-                  <strong>{email.status}</strong>
-                  <small>{email.recipient}</small>
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noEmailDeliveryRecordsYet', 'No email delivery records yet.')}</div>
-            )}
-          </div>
-        </article>
-
-        <article className="panel admin-console-panel admin-console-panel-wide">
-          <h2>{t('adminPage.auditLog', 'Audit log')}</h2>
-          <div className="admin-list">
-            {recentAudits.length ? (
-              recentAudits.map((audit) => (
-                <div className="admin-list-row" key={audit.id}>
-                  <span>{audit.action}</span>
-                  <strong>{audit.entityType}</strong>
-                  <small>{audit.actor?.username ?? audit.actor?.email ?? t('adminPage.system', 'system')} | {audit.entityId ?? t('adminPage.noId', 'no id')}</small>
-                </div>
-              ))
-            ) : (
-              <div className="empty">{t('adminPage.noAuditEventsYet', 'No audit events yet.')}</div>
-            )}
-          </div>
-        </article>
-      </section>
-
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.security', 'Security')}</h2>
-            <p className="meta">{t('adminPage.securityDesc', 'Spam flags and login activity in the last 24 hours.')}</p>
-          </div>
-        </div>
-        <div className="admin-metric-grid" style={{ marginBottom: '1rem' }}>
-          <article className="card admin-metric-card">
-            <span>{t('adminPage.spamFlags24h', 'Spam flags (24h)')}</span>
-            <strong>{recentSpamFlags.length}</strong>
-          </article>
-          <article className="card admin-metric-card">
-            <span>{t('adminPage.logins24h', 'Logins (24h)')}</span>
-            <strong>{recentLoginsCount}</strong>
-          </article>
-        </div>
-        {recentSpamFlags.length > 0 && (
-          <div className="admin-list">
-            {recentSpamFlags.map((flag) => (
-              <div className="admin-list-row" key={flag.id}>
-                <span>{flag.body}</span>
-                <small>{flag.user?.username ?? flag.user?.email ?? flag.userId} | {flag.createdAt.toISOString()}</small>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Artist Funnel */}
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.artistFunnel', 'Artist Funnel')}</h2>
-            <p className="meta">{t('adminPage.artistFunnelDesc', 'Where artists drop off before their first show.')}</p>
-          </div>
-        </div>
-        <div className="admin-health-grid">
-          <div className="admin-health-card">
-            <span>{t('adminPage.noUploadsYet', 'No uploads yet')}</span>
-            <strong style={{ color: funnelStage1 > 0 ? 'var(--danger)' : 'inherit' }}>{funnelStage1}</strong>
-          </div>
-          <div className="admin-health-card">
-            <span>{t('adminPage.uploadsNoShows', 'Uploads, no shows')}</span>
-            <strong style={{ color: funnelStage2 > 0 ? 'var(--warning-text)' : 'inherit' }}>{funnelStage2}</strong>
-          </div>
-          <div className="admin-health-card">
-            <span>{t('adminPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
-            <strong>{funnelStage3}</strong>
-          </div>
-        </div>
-        {funnelStage1Recent.length > 0 && (
-          <div className="admin-list" style={{ marginTop: 12 }}>
-            <strong style={{ fontSize: '0.9375rem', marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
-            {funnelStage1Recent.map((p) => (
-              <div className="admin-list-row" key={p.slug}>
-                <span>{p.name}</span>
-                <small>{p.slug} · {t('adminPage.joined', 'joined')} {p.createdAt.toISOString().slice(0, 10)}</small>
-              </div>
-            ))}
-          </div>
-        )}
-        <BulkActions
-          items={funnelStage1Recent.map((p) => ({ id: p.slug, label: p.name }))}
-          type="profiles"
-        />
-      </section>
-
-      {/* Social Posts */}
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.socialPosts', 'Social Posts')}</h2>
-            <p className="meta">{t('adminPage.socialPostsDesc', 'Recent auto-generated social digest posts.')}</p>
-          </div>
-        </div>
-        {recentSocialPosts.length === 0 ? (
-          <div className="empty">{t('adminPage.noSocialPostsYet', 'No social posts yet. Monday digest will generate them.')}</div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {recentSocialPosts.map((post) => (
-              <div key={post.id} style={{ background: 'var(--bg-2)', border: '1px solid var(--line-2)', borderRadius: 8, padding: '10px 14px', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <pre style={{ fontFamily: 'inherit', fontSize: '0.9375rem', margin: 0, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{post.text}</pre>
-                  <small style={{ color: 'var(--ink-3)', fontSize: '0.9375rem' }}>{post.generatedAt.toISOString().slice(0, 16)}</small>
-                </div>
-                <SocialPostCopy text={post.text} />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Content Calendar */}
-      <section className="panel admin-console-panel">
-        <div className="admin-console-panel-head">
-          <div>
-            <h2>{t('adminPage.upcomingCalendar', 'Upcoming Calendar')}</h2>
-            <p className="meta">{t('adminPage.upcomingCalendarDesc', 'Scheduled shows in the next 30 days.')}</p>
-          </div>
-        </div>
-        {calendarShows.length === 0 ? (
-          <div className="empty">{t('adminPage.noScheduledShows30d', 'No scheduled shows in the next 30 days.')}</div>
-        ) : (
-          <div>
-            {Object.entries(
-              calendarShows.reduce((acc: Record<string, typeof calendarShows>, show) => {
-                const date = show.startsAt.toLocaleDateString();
-                acc[date] ??= [];
-                acc[date].push(show);
-                return acc;
-              }, {})
-            ).map(([date, shows]) => (
-              <div key={date} style={{ marginBottom: 14 }}>
-                <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--ink-3)', marginBottom: 6, letterSpacing: '.08em', textTransform: 'uppercase' }}>{date}</div>
-                {shows.map((show) => (
-                  <div key={show.id} className="admin-list-row" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <span style={{ flex: 1 }}>{show.title}</span>
-                    <small>{show.venueProfile?.name ?? '—'}</small>
-                    <small>{show.headlinerProfile?.name ?? '—'}</small>
-                    <small>{show.ticketsSoldCount}/{show.ticketCapacity ?? '∞'} {t('adminPage.tix2', 'tix')}</small>
-                    <FeatureToggle showId={show.id} initialFeatured={show.featured} />
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="section" id="invite-codes">
-        <h2>{t('adminPage.inviteCodes', 'Invite Codes')}</h2>
-        {/* The only door, while `invite_code_sharing` is off: a request comes
-            in through the workbench queue above, and the operator issues a
-            single-use code here. */}
-        <MintInviteCodes />
-        <div style={{ display: 'flex', gap: 12, marginBottom: 12, flexWrap: 'wrap', alignItems: 'center' }}>
-          <a className="button" href="/api/admin/invite-codes" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9375rem' }}>
-            {t('adminPage.viewAllViaApi', 'View all via API')}
-          </a>
-          <a className="button" href="/api/admin/test-email" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.9375rem' }}>
-            {t('adminPage.sendTestEmail', 'Send test email')}
-          </a>
-        </div>
-        {recentInviteCodes.length === 0 ? (
-          <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet — mint one above to admit someone from the access-request queue.')}</p>
-        ) : (
-          <div className="admin-list">
-            {recentInviteCodes.map((code) => (
-              <div className="admin-list-row" key={code.id}>
-                <code style={{ fontFamily: 'monospace', letterSpacing: 1 }}>{code.code}</code>
-                <small>
-                  {code.usedAt ? `${t('adminPage.used', 'Used')} ${code.usedAt.toISOString()}` : code.expiresAt && code.expiresAt < new Date() ? t('adminPage.expired', 'Expired') : t('adminPage.available', 'Available')}
-                  {' | '}{t('adminPage.created', 'created')} {code.createdAt.toISOString()}
-                </small>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section className="section">
-        <h2>{t('adminPage.backups', 'Backups')}</h2>
-        <article className="panel" style={{ padding: '1rem 1.25rem' }}>
-          <p className="meta" style={{ marginTop: 0 }}>
-            {t('adminPage.backupsDesc', 'iHYPE does not currently run an automated database backup job. Postgres backups should be taken from the managed provider dashboard on a regular cadence (daily for production).')}
-          </p>
-          <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0', lineHeight: 1.6 }}>
-            <li>
-              <strong>{t('adminPage.supabaseLabel', 'Supabase:')}</strong>{' '}
-              <a href="https://supabase.com/dashboard" rel="noopener noreferrer" target="_blank">
-                supabase.com/dashboard
-              </a>{' '}
-              — {t('adminPage.supabaseDesc', 'branch the production database for point-in-time snapshots.')}
-            </li>
-            <li>
-              <strong>{t('adminPage.cloudflareLabel', 'Cloudflare:')}</strong>{' '}
-              <a href="https://dash.cloudflare.com/" rel="noopener noreferrer" target="_blank">
-                dash.cloudflare.com
-              </a>{' '}
-              — {t('adminPage.cloudflareDesc', 'review Workers logs, R2 storage, and analytics.')}
-            </li>
-            <li>
-              {t('adminPage.adHocExports', 'For ad-hoc exports run')} <code>pg_dump &quot;$DATABASE_URL&quot; &gt; ihype-backup.sql</code>{' '}
-              {t('adminPage.fromTrustedWorkstation', 'from a trusted workstation.')}
-            </li>
-          </ul>
-          <p className="meta" style={{ marginBottom: 0 }}>
-            {t('adminPage.backupsNote', 'Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet — this section is informational so admins know where to look.')}
-          </p>
-        </article>
-      </section>
-
-      {/* ── Revenue Dashboard ──────────────────────────────────── */}
-      <section className="section">
-        <h2>{t('adminPage.revenue', 'Revenue')}</h2>
-        <div className="admin-list" style={{ marginBottom: 16 }}>
-          <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{`$${(revenueCents / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{`$${(platformFeeTotal / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{`$${(payoutPaid / 100).toFixed(2)}`}</span></div>
-          <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{`$${(payoutPending / 100).toFixed(2)}`}</span></div>
-        </div>
-        {monthlyRows.length > 0 && (
-          <>
-            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
-            <div className="admin-list">
-              {monthlyRows.map(([month, cents]) => (
-                <div className="admin-list-row" key={month}>
-                  <span>{month}</span>
-                  <strong>{`$${(cents / 100).toFixed(2)}`}</strong>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-        {topEarners.length > 0 && (
-          <>
-            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
-            <div className="admin-list">
-              {topEarners.map((e) => (
-                <div className="admin-list-row" key={e.profileId}>
-                  <span>{e.profileId ?? t('adminPage.unknown2', 'unknown')}</span>
-                  <strong>{`$${((e._sum.amountCents ?? 0) / 100).toFixed(2)}`}</strong>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </section>
-
-      {/* ── Rate Limits ───────────────────────────────────────── */}
-      <section className="section">
-        <h2>{t('adminPage.rateLimitsLast24h', 'Rate Limits (last 24h)')}</h2>
-        {recentSpamFlags.length === 0 ? (
-          <p className="meta">{t('adminPage.noSpamFlagNotifications', 'No SPAM_FLAG notifications in the last 24 hours.')}</p>
-        ) : (
-          <div className="admin-list">
-            {recentSpamFlags.map((n) => (
-              <div className="admin-list-row" key={n.id}>
-                <span>{n.user?.username ?? n.user?.email ?? n.userId}</span>
-                <small>{n.body}</small>
-                <small>{n.createdAt.toISOString().slice(0, 16)}</small>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
-
-
-      {/* ── Ads ───────────────────────────────────────────────── */}
-      <section className="section">
-        <h2>{t('adminPage.adsPendingReview', 'Ads — Pending Review')}</h2>
-        {pendingAds.length === 0 ? (
-          <p className="meta">{t('adminPage.noPendingAds', 'No pending ads.')}</p>
-        ) : (
-          <div className="admin-list">
-            {pendingAds.map((ad) => (
-              <div className="admin-list-row" key={ad.id} style={{ flexWrap: 'wrap', gap: 8 }}>
-                <strong>{ad.title}</strong>
-                <span>{ad.slot?.name}</span>
-                <small>{ad.advertiser?.username ?? ad.advertiser?.email}</small>
-                <small>{ad.createdAt.toISOString().slice(0, 10)}</small>
-                {/* These used to be two HTML forms POSTing to
-                    /api/admin/ads/[adId], which only exports PATCH — a form
-                    can't send PATCH, so both buttons always 405'd and no
-                    campaign was ever decided from this page. Approving also
-                    opens a real Stripe authorization and now needs a
-                    step-up passkey check, so rather than duplicate that
-                    flow a third time this links to /admin/ads, where
-                    AdminAdsClient already does it properly. The i18n pass
-                    wrapped the old forms' labels; those strings went with
-                    the forms. */}
-                <Link className="button small" href={`/admin/ads?status=PENDING&q=${encodeURIComponent(ad.title)}`} style={{ fontSize: '0.9375rem' }}>
-                  {t('adminPage.review', 'Review')}
-                </Link>
-              </div>
-            ))}
-          </div>
-        )}
-        <p className="meta" style={{ marginTop: 8 }}>
-          {t('adminPage.manageViaAdsQueue', 'Approve or reject campaigns in the')}{' '}
-          <Link href="/admin/ads">{t('adminPage.adsQueue', 'Ads queue')}</Link>.
-        </p>
-      </section>
     </div>
   );
 }
