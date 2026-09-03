@@ -190,9 +190,17 @@ jobs:
             curl -sf http://localhost:8787/api/health >/dev/null 2>&1 && break
             sleep 2
           done
-          npm run alpha:walk 2>&1 | tee nightly-walk.log
+          npm run alpha:walk -- --report=nightly-walk-report.json 2>&1 | tee nightly-walk.log
           STATUS=${PIPESTATUS[0]}
           kill "$SERVER_PID" 2>/dev/null || true
+
+          # The board FIRST, because it is the thing a person reads at 08:00:
+          # it says which member experience broke, not which item number did.
+          # Rendered from the saved report rather than grepped out of the log,
+          # so the summary cannot describe a different run than the one above.
+          if [ -f nightly-walk-report.json ]; then
+            npm run --silent feature:health -- nightly-walk-report.json --markdown >> "$GITHUB_STEP_SUMMARY" || true
+          fi
           {
             echo '## Alpha acceptance walk'
             echo '```'
@@ -229,5 +237,6 @@ jobs:
           path: |
             nightly-walk.log
             nightly-walk-server.log
+            nightly-walk-report.json
           if-no-files-found: ignore
           retention-days: 14

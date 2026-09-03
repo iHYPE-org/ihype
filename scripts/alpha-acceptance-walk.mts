@@ -35,16 +35,20 @@
 import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { readFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
 import { buildTicketVerificationUrl } from '../src/lib/tickets';
+import { exitCodeFor, renderBoard, rollUp } from '../src/lib/feature-health';
 
 const BASE = (process.env.ALPHA_BASE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
 const DATABASE_URL = process.env.DATABASE_URL ?? '';
 const STRIPE_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 const CRON_SECRET = process.env.CRON_SECRET ?? '';
+/* `--report=<path>` writes the run as JSON so the board can be re-rendered
+   without driving the product again — the nightly reads it for its summary. */
+const REPORT_PATH = (process.argv.find((a) => a.startsWith('--report=')) ?? '').slice('--report='.length);
 const SONG_PATH = process.env.ALPHA_SONG ?? '';
 const GRAPHIC_PATH = process.env.ALPHA_GRAPHIC ?? '';
 /* A ≤30s spot. Deliberately NOT the song: an ad is a different artefact, and
@@ -1909,8 +1913,29 @@ async function main() {
     console.log('');
   }
 
+  /*
+   * The same run, said in the member's words. "20c failed" does not tell
+   * anyone whether a ticket can still be bought; "advertising: BROKEN" does.
+   * The board also names the journeys NOTHING here touches, which a list of
+   * items structurally cannot do.
+   */
+  const health = rollUp(rows);
+  console.log(renderBoard(health));
+
+  if (REPORT_PATH) {
+    writeFileSync(
+      REPORT_PATH,
+      `${JSON.stringify({ at: new Date().toISOString(), target: BASE, rows }, null, 2)}\n`,
+      'utf8',
+    );
+    console.log(`  report written to ${REPORT_PATH}\n`);
+  }
+
   await prisma.$disconnect();
-  process.exit(fail > 0 ? 1 : 0);
+  /* Identical to the old `fail > 0` — a journey is BROKEN exactly when one of
+     its items failed. Stated through the board so there is one rule, not two
+     that could drift. */
+  process.exit(exitCodeFor(health));
 }
 
 main().catch((error) => {
