@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   ADMIN_EMAIL_DEFAULT,
+  ADMIN_EMAILS_DEFAULT,
+  adminEmailList,
   RATE_LIMIT_RULES,
   adminAccessApp,
   isAuthError,
@@ -74,7 +76,11 @@ describe('cloudflare edge guards — Access in front of /admin', () => {
     expect(app.domain).not.toContain('/api/');
     expect(app.type).toBe('self_hosted');
     expect(app.policies[0].decision).toBe('allow');
-    expect(app.policies[0].include).toEqual([{ email: { email: ADMIN_EMAIL_DEFAULT } }]);
+    expect(app.policies[0].include).toEqual(ADMIN_EMAILS_DEFAULT.map((email: string) => ({ email: { email } })));
+    expect(ADMIN_EMAILS_DEFAULT).toEqual(['admin@ihype.org', 'staff@ihype.org']);
+    // The edge gate must name the same people as the app's allowlist.
+    expect(adminEmailList('  Staff@iHYPE.org, admin@ihype.org ,staff@ihype.org')).toEqual(['staff@ihype.org', 'admin@ihype.org']);
+    expect(adminEmailList('')).toEqual(ADMIN_EMAILS_DEFAULT);
   });
 
   it('finds an existing application by either domain field and recognises an allowing policy', () => {
@@ -85,5 +91,8 @@ describe('cloudflare edge guards — Access in front of /admin', () => {
     expect(policyAllows([{ decision: 'allow', include: [{ email: { email: 'ADMIN@ihype.org' } }] }], ADMIN_EMAIL_DEFAULT)).toBe(true);
     expect(policyAllows([{ decision: 'deny', include: [{ email: { email: ADMIN_EMAIL_DEFAULT } }] }], ADMIN_EMAIL_DEFAULT)).toBe(false);
     expect(policyAllows([{ decision: 'allow', include: [{ email_domain: { domain: 'ihype.org' } }] }], ADMIN_EMAIL_DEFAULT)).toBe(false);
+    // A policy that admits only the first operator does not count as admitting both.
+    expect(policyAllows([{ decision: 'allow', include: [{ email: { email: ADMIN_EMAIL_DEFAULT } }] }], ADMIN_EMAILS_DEFAULT)).toBe(false);
+    expect(policyAllows([{ decision: 'allow', include: ADMIN_EMAILS_DEFAULT.map((email: string) => ({ email: { email } })) }], ADMIN_EMAILS_DEFAULT)).toBe(true);
   });
 });
