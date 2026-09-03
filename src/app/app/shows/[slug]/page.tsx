@@ -7,6 +7,7 @@ import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
+import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
 import { canViewShow, formatShowWhere, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
@@ -49,6 +50,9 @@ export default async function MmmShowPage({
 }) {
   const { slug } = await params;
   const query = searchParams ? await searchParams : {};
+  /* Read once, beside the session, so both branches below agree — the whole
+     defect was two surfaces disagreeing about one condition. */
+  const paymentsReady = isPaymentProcessingConfigured();
   const session = await auth();
   // The layout gates this too; every destination keeps its own check.
   if (!session?.user?.id) redirect(`/login?callbackUrl=/app/shows/${slug}`);
@@ -249,7 +253,25 @@ export default async function MmmShowPage({
         </div>
       )}
 
-      {show.isTicketed && venue && show.headlinerProfile && splits ? (
+      {/* THE SAME PAYMENT GATE THE PUBLIC COPY HAS, and it was missing here.
+          `/shows/[slug]` renders an honest "Paid tickets · Coming soon" notice
+          when `isPaymentProcessingConfigured()` is false; this copy rendered
+          the whole purchase form regardless. The purchase route refuses that
+          state with 503 `TICKET_PAYMENTS_DISABLED`, so a member picked a
+          quantity, pressed Buy and got an error — and this is the SIGNED-IN
+          shell, so it was every real member seeing the broken half while only
+          logged-out visitors saw the honest one. Same shape as the
+          `ticketingOpensAt` bug of 2026-09-03, and the same disagreement
+          `show-detail.ts` exists to prevent. `wiring-guards.test.ts` now
+          asserts both pages consult this. */}
+      {show.isTicketed && venue && show.headlinerProfile && splits && !paymentsReady ? (
+        <div className="mmm-empty">
+          <strong style={{ display: 'block', marginBottom: 6 }}>Paid tickets · Coming soon</strong>
+          Ticket sales haven&apos;t opened on iHYPE yet. Face-value pricing with the locked 70/20/10 split starts the moment they do.
+        </div>
+      ) : null}
+
+      {show.isTicketed && venue && show.headlinerProfile && splits && paymentsReady ? (
         <div className="mmm-show-sale">
           <TicketSaleCard
             heading="Tickets"

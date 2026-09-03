@@ -117,3 +117,39 @@ describe('cron wiring', () => {
     expect(missing).toEqual([]);
   });
 });
+
+/* ── The two copies of the show page must agree about selling ──────────────
+   A show renders twice: `/shows/[slug]` (public, the URL people share) and
+   `/app/shows/[slug]` (the same show in the signed-in shell). `show-detail.ts`
+   exists because they had drifted before; this is the half a shared module
+   cannot cover, because the gate reads runtime env and that module is pure.
+
+   The drift found on 2026-09-03: the public copy checked
+   `isPaymentProcessingConfigured()` and rendered an honest "Paid tickets ·
+   Coming soon" notice, while the shell copy rendered the whole purchase form
+   unconditionally. `POST /api/shows/[showId]/tickets` refuses that state with
+   503 TICKET_PAYMENTS_DISABLED, so a member picked a quantity, pressed Buy and
+   got an error — on the SIGNED-IN surface, which is the one real members use,
+   while only logged-out visitors saw the honest half. */
+describe('the show page sells the same way on both copies', () => {
+  const pages = [
+    'src/app/shows/[slug]/page.tsx',
+    'src/app/app/shows/[slug]/page.tsx',
+  ];
+
+  /* Comments are stripped before matching. The first version of this guard
+     did not, and passed while reading the explanatory comment beside the very
+     gate it was meant to prove — caught by deleting the gate and watching it
+     stay green. A comment is not coverage. */
+  const code = (f: string) => readFileSync(f, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+
+  it('gates the sale on payment readiness in both copies', () => {
+    const ungated = pages.filter((f) => !code(f).includes('isPaymentProcessingConfigured'));
+    expect(
+      ungated,
+      'this copy offers a purchase form the ticket route answers 503 to — see the public copy for the notice to render instead',
+    ).toEqual([]);
+  });
+});
