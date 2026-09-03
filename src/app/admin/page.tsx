@@ -111,11 +111,26 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   /* An unknown tab falls back to Overview rather than rendering nothing — a
      bookmarked ?tab= from before this split must still land somewhere. */
   const tab: AdminTab = ADMIN_TABS.find((entry) => entry.id === rawTab)?.id ?? 'overview';
+
+  /*
+   * Only the active tab's reads run.
+   *
+   * The move that split this page deliberately left one `Promise.all` of every
+   * query, because gating them in the same pass would have made the
+   * conservation check meaningless. This is that follow-up: each entry names
+   * the tabs whose panels read it and resolves to its OWN existing `.catch()`
+   * fallback otherwise, so every variable keeps its name, its type and its
+   * shape and not one line of JSX changed.
+   *
+   * `health` is the exception and always runs: it has no `.catch()` to borrow
+   * a fallback from, and three of the five tabs read it anyway.
+   */
+  const needs = (...owners: AdminTab[]) => owners.includes(tab);
   // Rendered on the server so the board is populated on first paint rather
   // than flashing empty while the first poll lands. Guarded like every other
   // read here: a snapshot that could not be built must not take the console
   // down with it, so the board simply does not mount.
-  const pulse = await getAdminPulse().catch(() => null);
+  const pulse = tab === 'overview' ? await getAdminPulse().catch(() => null) : null;
   const funnelSince = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
   const [
     userCount,
@@ -147,143 +162,243 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     recentSocialPosts,
     calendarShows,
   ] = await Promise.all([
-    db.user.count().catch(() => 0),
-    db.profile.count().catch(() => 0),
-    db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0),
-    db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0),
-    db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0),
-    db.artistMediaAsset.count().catch(() => 0),
-    db.ticketOrder.count().catch(() => 0),
-    db.contentReport.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-      include: { reporter: { select: { email: true, username: true } } }
-    }).catch(() => []),
-    db.supportRequest.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6
-    }).catch(() => []),
-    db.profile.findMany({
-      where: { verificationStatus: 'PENDING', verificationRequested: true },
-      orderBy: { verificationSubmittedAt: 'desc' },
-      take: 6,
-      select: {
-        id: true,
-        name: true,
-        type: true,
-        contactInfo: true,
-        verificationNotes: true,
-        verificationSubmittedAt: true
-      }
-    }).catch(() => []),
-    db.emailDeliveryLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6
-    }).catch(() => []),
-    db.auditLog.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 8,
-      include: { actor: { select: { email: true, username: true } } }
-    }).catch(() => []),
-    db.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 6,
-      select: { email: true, username: true, role: true, createdAt: true }
-    }).catch(() => []),
-    db.auditLog.findMany({
-      where: { action: { startsWith: 'signup_funnel:' }, createdAt: { gte: funnelSince } },
-      orderBy: { createdAt: 'desc' },
-      take: 250,
-      select: { action: true, metadata: true }
-    }).catch(() => []),
+    /* userCount */
+    needs('activity')
+      ? db.user.count().catch(() => 0)
+      : Promise.resolve(0),
+    /* profileCount */
+    needs('activity')
+      ? db.profile.count().catch(() => 0)
+      : Promise.resolve(0),
+    /* pendingVerificationCount */
+    needs('activity', 'overview')
+      ? db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* openReportCount */
+    needs('activity', 'overview')
+      ? db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* openSupportCount */
+    needs('activity', 'overview')
+      ? db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* mediaCount */
+    needs('activity')
+      ? db.artistMediaAsset.count().catch(() => 0)
+      : Promise.resolve(0),
+    /* ticketOrderCount */
+    needs('activity')
+      ? db.ticketOrder.count().catch(() => 0)
+      : Promise.resolve(0),
+    /* recentReports */
+    needs('support')
+      ? db.contentReport.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        include: { reporter: { select: { email: true, username: true } } }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentSupport */
+    needs('support')
+      ? db.supportRequest.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* pendingVerifications */
+    needs('overview', 'support')
+      ? db.profile.findMany({
+        where: { verificationStatus: 'PENDING', verificationRequested: true },
+        orderBy: { verificationSubmittedAt: 'desc' },
+        take: 6,
+        select: {
+          id: true,
+          name: true,
+          type: true,
+          contactInfo: true,
+          verificationNotes: true,
+          verificationSubmittedAt: true
+        }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentEmails */
+    needs('system')
+      ? db.emailDeliveryLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentAudits */
+    needs('system')
+      ? db.auditLog.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 8,
+        include: { actor: { select: { email: true, username: true } } }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentUsers */
+    needs('activity')
+      ? db.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 6,
+        select: { email: true, username: true, role: true, createdAt: true }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* signupFunnelAudits */
+    needs('activity')
+      ? db.auditLog.findMany({
+        where: { action: { startsWith: 'signup_funnel:' }, createdAt: { gte: funnelSince } },
+        orderBy: { createdAt: 'desc' },
+        take: 250,
+        select: { action: true, metadata: true }
+      }).catch(() => [])
+      : Promise.resolve([]),
     getHealthSnapshot(),
-    db.ticketOrder.findMany({
-      take: 10,
-      orderBy: { createdAt: 'desc' },
-      include: { show: { select: { title: true } } }
-    }).catch(() => []),
-    db.ticketOrder.aggregate({
-      where: { status: 'CAPTURED' },
-      _sum: { totalChargeCents: true }
-    }).catch(() => ({ _sum: { totalChargeCents: null } })),
-    db.show.findMany({
-      take: 8,
-      orderBy: { createdAt: 'desc' },
-      include: {
-        venueProfile: { select: { name: true } },
-        _count: { select: { tickets: true } }
-      }
-    }).catch(() => []),
-    db.notification.findMany({
-      where: { type: 'SPAM_FLAG', createdAt: { gte: new Date(Date.now() - 86400000) } },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-      include: { user: { select: { email: true, username: true } } }
-    }).catch(() => []),
-    db.user.count({ where: { lastLoginAt: { gte: new Date(Date.now() - 86400000) } } }).catch(() => 0),
-    userSearch ? db.user.findMany({
-      where: { OR: [
-        { email: { contains: userSearch, mode: 'insensitive' } },
-        { username: { contains: userSearch, mode: 'insensitive' } }
-      ]},
-      select: { id: true, email: true, username: true, role: true, createdAt: true, profiles: { select: { type: true, slug: true } } },
-      take: 10,
-    }).catch(() => []) : Promise.resolve([]),
-    db.inviteCode.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    }).catch(() => []),
-    // Artist funnel — stage 1
-    db.profile.count({ where: { type: 'ARTIST', mediaUploads: { none: {} } } }).catch(() => 0),
-    // Artist funnel — stage 2
-    db.profile.count({ where: { type: 'ARTIST', mediaUploads: { some: {} }, hostedShows: { none: {} }, headlinerShows: { none: {} } } }).catch(() => 0),
-    // Artist funnel — stage 3
-    db.show.count({ where: { hypeCount: 0, status: { not: 'DRAFT' } } }).catch(() => 0),
-    // Recent stage-1 artists
-    db.profile.findMany({ where: { type: 'ARTIST', mediaUploads: { none: {} } }, select: { name: true, slug: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => []),
-    // Recent social posts
-    db.socialPost.findMany({ orderBy: { generatedAt: 'desc' }, take: 5 }).catch(() => []),
-    // Upcoming calendar (next 30 days)
-    db.show.findMany({
-      where: { status: 'SCHEDULED', startsAt: { gte: new Date(), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
-      select: { id: true, title: true, startsAt: true, featured: true, venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } }, ticketsSoldCount: true, ticketCapacity: true },
-      orderBy: { startsAt: 'asc' },
-      take: 100,
-    }).catch(() => [] as Array<{ id: string; title: string; startsAt: Date; featured: boolean; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null; ticketsSoldCount: number; ticketCapacity: number | null }>),
-  ]);
+    /* recentTicketOrders */
+    needs('finance')
+      ? db.ticketOrder.findMany({
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: { show: { select: { title: true } } }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* Activity's metric grid renders this too, through `revenueLabel`.
+       Gating it on finance alone painted a confident $0.00 there — the
+       null-is-not-zero rule, broken by the change that was meant to be
+       invisible, and caught by driving the page rather than by reading it. */
+    /* revenueAgg */
+    needs('finance', 'activity')
+      ? db.ticketOrder.aggregate({
+        where: { status: 'CAPTURED' },
+        _sum: { totalChargeCents: true }
+      }).catch(() => ({ _sum: { totalChargeCents: null } }))
+      : Promise.resolve(({ _sum: { totalChargeCents: null } })),
+    /* recentShows */
+    needs('activity')
+      ? db.show.findMany({
+        take: 8,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          venueProfile: { select: { name: true } },
+          _count: { select: { tickets: true } }
+        }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentSpamFlags */
+    needs('system')
+      ? db.notification.findMany({
+        where: { type: 'SPAM_FLAG', createdAt: { gte: new Date(Date.now() - 86400000) } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+        include: { user: { select: { email: true, username: true } } }
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentLoginsCount */
+    needs('system')
+      ? db.user.count({ where: { lastLoginAt: { gte: new Date(Date.now() - 86400000) } } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* Already conditional on a query being typed, so the tab gate folds into
+       that condition rather than nesting a ternary. */
+    /* userSearchResults */
+    needs('overview') && userSearch
+      ? db.user.findMany({
+        where: { OR: [
+          { email: { contains: userSearch, mode: 'insensitive' } },
+          { username: { contains: userSearch, mode: 'insensitive' } }
+        ]},
+        select: { id: true, email: true, username: true, role: true, createdAt: true, profiles: { select: { type: true, slug: true } } },
+        take: 10,
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentInviteCodes */
+    needs('system')
+      ? db.inviteCode.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* funnelStage1 */
+    needs('activity')
+      ? // Artist funnel — stage 1
+      db.profile.count({ where: { type: 'ARTIST', mediaUploads: { none: {} } } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* funnelStage2 */
+    needs('activity')
+      ? // Artist funnel — stage 2
+      db.profile.count({ where: { type: 'ARTIST', mediaUploads: { some: {} }, hostedShows: { none: {} }, headlinerShows: { none: {} } } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* funnelStage3 */
+    needs('activity')
+      ? // Artist funnel — stage 3
+      db.show.count({ where: { hypeCount: 0, status: { not: 'DRAFT' } } }).catch(() => 0)
+      : Promise.resolve(0),
+    /* funnelStage1Recent */
+    needs('activity')
+      ? // Recent stage-1 artists
+      db.profile.findMany({ where: { type: 'ARTIST', mediaUploads: { none: {} } }, select: { name: true, slug: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    /* recentSocialPosts */
+    needs('activity')
+      ? // Recent social posts
+      db.socialPost.findMany({ orderBy: { generatedAt: 'desc' }, take: 5 }).catch(() => [])
+      : Promise.resolve([]),
+    /* calendarShows */
+    needs('activity')
+      ? // Upcoming calendar (next 30 days)
+      db.show.findMany({
+        where: { status: 'SCHEDULED', startsAt: { gte: new Date(), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
+        select: { id: true, title: true, startsAt: true, featured: true, venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } }, ticketsSoldCount: true, ticketCapacity: true },
+        orderBy: { startsAt: 'asc' },
+        take: 100,
+      }).catch(() => [] as Array<{ id: string; title: string; startsAt: Date; featured: boolean; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null; ticketsSoldCount: number; ticketCapacity: number | null }>)
+      : Promise.resolve([] as Array<{ id: string; title: string; startsAt: Date; featured: boolean; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null; ticketsSoldCount: number; ticketCapacity: number | null }>)]);
 
   const [
     monthlyRevenue,
     topEarners,
     payoutTotals,
     pendingAds,
+    /* Gated per ENTRY, not as a block. The first draft of this change gated
+       the whole array on `finance` and was wrong twice over: there are four
+       reads here, not three, and `pendingAds` is read by Overview's "needs
+       attention" summary and by Support's queue — neither of which is
+       finance. Caught by the compiler, which is the only reason it is not a
+       blank panel on two tabs. */
   ] = await Promise.all([
-    // Monthly revenue: last 12 months
-    db.ticketOrder.findMany({
-      where: { status: 'CAPTURED', chargedAt: { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } },
-      select: { chargedAt: true, totalChargeCents: true },
-    }).catch(() => [] as { chargedAt: Date | null; totalChargeCents: number }[]),
-    // Top earners by profileId
-    db.accountsPayableEntry.groupBy({
-      by: ['profileId'],
-      where: { profileId: { not: null } },
-      _sum: { amountCents: true },
-      orderBy: { _sum: { amountCents: 'desc' } },
-      take: 10,
-    }).catch(() => []),
-    // Payout totals
-    db.accountsPayableEntry.groupBy({
-      by: ['status'],
-      _sum: { amountCents: true },
-    }).catch(() => []),
-    // Pending ads
-    db.ad.findMany({
-      where: { status: 'PENDING' },
-      include: { advertiser: { select: { email: true, username: true } }, slot: { select: { name: true } } },
-      orderBy: { createdAt: 'desc' },
-      take: 20,
-    }).catch(() => []),
-    // A/B tests
+    /* monthlyRevenue */
+    needs('finance')
+      ? db.ticketOrder.findMany({
+        where: { status: 'CAPTURED', chargedAt: { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } },
+        select: { chargedAt: true, totalChargeCents: true },
+      }).catch(() => [] as { chargedAt: Date | null; totalChargeCents: number }[])
+      : Promise.resolve([] as { chargedAt: Date | null; totalChargeCents: number }[]),
+    /* topEarners */
+    needs('finance')
+      ? db.accountsPayableEntry.groupBy({
+        by: ['profileId'],
+        where: { profileId: { not: null } },
+        _sum: { amountCents: true },
+        orderBy: { _sum: { amountCents: 'desc' } },
+        take: 10,
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* payoutTotals */
+    needs('finance')
+      ? db.accountsPayableEntry.groupBy({
+        by: ['status'],
+        _sum: { amountCents: true },
+      }).catch(() => [])
+      : Promise.resolve([]),
+    /* Overview counts them, Support lists them. */
+    /* pendingAds */
+    needs('overview', 'support')
+      ? db.ad.findMany({
+        where: { status: 'PENDING' },
+        include: { advertiser: { select: { email: true, username: true } }, slot: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        take: 20,
+      }).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   const [
@@ -301,21 +416,30 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     ticketsEnabled,
     radioEnabled,
     mapsEnabled,
+  /* Every one of these is a KV read and only the System tab draws the flag
+     board, so the other four should not pay for fourteen of them.
+
+     Gated one entry at a time rather than by swapping the whole array for a
+     placeholder of the right length. The placeholder version was written
+     first and carried the exact hazard `invite-code-sharing.test.ts` exists
+     to catch: a fifteenth flag would have left a fourteen-long skip array,
+     and every flag after it would report its neighbour's state on four of
+     the five tabs. There is no count to keep in step this way. */
   ] = await Promise.all([
-    areDemoLoginsEnabledRuntime(),
-    isInviteCodeRequiredRuntime(),
-    isInviteCodeSharingEnabledRuntime(),
-    shouldHideDemoContentRuntime(),
-    getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()),
-    getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()),
-    areRegistrationsEnabledRuntime(),
-    areUploadsEnabledRuntime(),
-    isOutboundEmailEnabledRuntime(),
-    isAdvertisingEnabledRuntime(),
-    arePaymentsEnabledRuntime(),
-    isTicketingEnabledRuntime(),
-    isRadioEnabledRuntime(),
-    areMapsEnabledRuntime(),
+    needs('system') ? areDemoLoginsEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? isInviteCodeRequiredRuntime() : Promise.resolve(false),
+    needs('system') ? isInviteCodeSharingEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? shouldHideDemoContentRuntime() : Promise.resolve(false),
+    needs('system') ? getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()) : Promise.resolve(false),
+    needs('system') ? getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()) : Promise.resolve(false),
+    needs('system') ? areRegistrationsEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? areUploadsEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? isOutboundEmailEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? isAdvertisingEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? arePaymentsEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? isTicketingEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? isRadioEnabledRuntime() : Promise.resolve(false),
+    needs('system') ? areMapsEnabledRuntime() : Promise.resolve(false),
   ]);
   const featureFlags = [
     { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
@@ -333,8 +457,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     { key: 'radio_enabled', label: 'Radio delivery and creation', enabled: radioEnabled },
     { key: 'maps_enabled', label: 'Location map lookups', enabled: mapsEnabled },
   ];
-  const rateLimitMetrics = await getRateLimitMetrics(10);
-  const betaMetrics = await getBetaMetrics().catch(() => null);
+  const rateLimitMetrics = needs('system') ? await getRateLimitMetrics(10) : [];
+  const betaMetrics = needs('system') ? await getBetaMetrics().catch(() => null) : null;
   const revenueCents = revenueAgg._sum.totalChargeCents ?? 0;
   const revenueLabel = `$${(revenueCents / 100).toFixed(2)}`;
   const healthOperations = health.status === 'ok' ? health.operations : null;
