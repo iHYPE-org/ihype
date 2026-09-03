@@ -1,10 +1,14 @@
 /**
  * Who is allowed to hold ADMIN, as one list in one place.
  *
- * The rule: **only `admin@ihype.org` may be an administrator.** An explicit
- * product decision, and it matches how the platform already bootstraps —
- * `POST /api/admin/setup` has always hardcoded that address when it creates the
- * account. What did not exist was anything stopping a *different* row from
+ * The rule: **only `admin@ihype.org` and `staff@ihype.org` may be
+ * administrators.** The first is the address the product is documented around
+ * and the one `POST /api/admin/setup` bootstraps; the second was added
+ * 2026-09-03 by owner instruction ("staff@ihype.org is the 2nd") because the
+ * alpha readiness gate and the release checklist both require TWO
+ * administrators — a single admin is a single point of lockout — and until
+ * then the two locks below were pinned to one address, so a second
+ * administrator was impossible without a code change. This is that change. What did not exist was anything stopping a *different* row from
  * holding the role: `isAdminSession()` asked only whether `role === 'ADMIN'`,
  * so any user record that acquired that value — by an operator's hand, a bad
  * migration, a restored backup, or a compromised endpoint — was an admin.
@@ -31,8 +35,17 @@
  * everybody out of `/admin` including the person trying to fix it.
  */
 
-/** The one address the product is documented around. */
+/** The one address the product is documented around, and the one setup bootstraps. */
 export const DEFAULT_ADMIN_EMAIL = 'admin@ihype.org';
+
+/**
+ * Every address that may hold ADMIN when `ADMIN_ALLOWED_EMAILS` is unset. Both
+ * locks (the jwt clamp in `auth.ts` and `isAdminSession()`) read this list, so
+ * adding an operator here is the whole of granting them the role's eligibility;
+ * the User row still has to carry `role = 'ADMIN'` and the account still has to
+ * register an admin device.
+ */
+export const DEFAULT_ADMIN_EMAILS: readonly string[] = [DEFAULT_ADMIN_EMAIL, 'staff@ihype.org'];
 
 export function normalizeEmail(value: string | null | undefined): string {
   return (value ?? '').trim().toLowerCase();
@@ -47,7 +60,7 @@ export function adminAllowlist(raw?: string | null): string[] {
     .split(',')
     .map(normalizeEmail)
     .filter((entry) => entry.includes('@'));
-  return parsed.length ? parsed : [DEFAULT_ADMIN_EMAIL];
+  return parsed.length ? parsed : [...DEFAULT_ADMIN_EMAILS];
 }
 
 /**

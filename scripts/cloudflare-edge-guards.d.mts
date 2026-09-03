@@ -6,6 +6,10 @@
 
 export const ZONE_NAME_DEFAULT: string;
 export const ADMIN_EMAIL_DEFAULT: string;
+/** Every address the Access application admits; mirrors DEFAULT_ADMIN_EMAILS in src/lib/admin-allowlist.ts. */
+export const ADMIN_EMAILS_DEFAULT: string[];
+/** One address, a comma-separated list, or an array → de-duplicated lowercase list (defaults when empty). */
+export function adminEmailList(value?: string | readonly string[] | null): string[];
 
 export type RateLimitSpec = {
   characteristics: string[];
@@ -44,7 +48,7 @@ export type AccessApp = {
   policies?: AccessPolicy[];
 };
 
-export function adminAccessApp(zoneName?: string, adminEmail?: string): Required<Pick<AccessApp, 'name' | 'type' | 'domain' | 'self_hosted_domains' | 'session_duration' | 'policies'>> & AccessApp;
+export function adminAccessApp(zoneName?: string, adminEmail?: string | readonly string[]): Required<Pick<AccessApp, 'name' | 'type' | 'domain' | 'self_hosted_domains' | 'session_duration' | 'policies'>> & AccessApp;
 
 export function ruleMatches(existing: Partial<RateLimitRule> | null | undefined, desired: RateLimitRule): boolean;
 
@@ -53,7 +57,7 @@ export function planRateLimitRules(
   desired?: RateLimitRule[],
 ): { create: RateLimitRule[]; update: RateLimitRule[]; unchanged: RateLimitRule[] };
 
-export function policyAllows(policies: AccessPolicy[] | null | undefined, adminEmail: string): boolean;
+export function policyAllows(policies: AccessPolicy[] | null | undefined, adminEmail: string | readonly string[]): boolean;
 
 export function planAccessApp(
   existingApps: AccessApp[] | null | undefined,
