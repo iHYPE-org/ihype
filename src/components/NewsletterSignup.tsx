@@ -107,8 +107,14 @@ export function NewsletterSignup({ fixedProfile }: { fixedProfile?: ProfileHit }
         {!profile && open && results.length > 0 && (
           <div style={{
             position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50, marginTop: 4,
-            background: '#1a1510', border: '1px solid var(--hair-100)', borderRadius: 8,
-            overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,.5)',
+            /* `--bg-raised`, not the `#1a1510` this carried. The colour was
+               written for the DS8 navy ground and survived the console
+               conversion, so on cream it painted a near-black popover under
+               `var(--ink)` copy that is itself near-black — an unreadable
+               dropdown. It only escaped notice because the artist and venue
+               panes pass a `profile` and never open the search. */
+            background: 'var(--bg-raised)', border: '1px solid var(--hair-100)', borderRadius: 8,
+            overflow: 'hidden', boxShadow: 'var(--shadow-raised)',
           }}>
             {results.map((p) => (
               <button
