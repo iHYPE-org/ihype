@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-7ac13dba';
+const CACHE_VERSION = 'ihype-d5f99133';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -126,7 +126,7 @@ self.addEventListener('message', (event) => {
       // batch if any one request fails, and a single expired ticket must not
       // cost the holder every other one.
       for (const path of data.paths.slice(0, 50)) {
-        if (typeof path !== 'string' || !path.startsWith('/tickets/')) continue;
+        if (typeof path !== 'string' || !isTicketDetail(path)) continue;
         try {
           const response = await fetch(path, { credentials: 'same-origin' });
           if (response.ok) await cache.put(path, response.clone());
@@ -191,6 +191,19 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (url.origin !== location.origin) return;
+
+  /* BEFORE the network-only gate, not after. `/app` is network-only — it is a
+     signed-in surface — and the ticket now lives under it, so the early return
+     below used to swallow the one page this whole cache exists for. The wallet
+     did not "work for tickets you had already opened", as the comments here
+     claimed: it did not work at all, at any door, for any ticket. */
+  if (request.destination === 'document' && isTicketDetail(url.pathname)) {
+    // The one place a private page is stored on purpose — see the note on
+    // NETWORK_ONLY_PATHS. Sign-out clears this cache.
+    event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
+    return;
+  }
+
   if (isNetworkOnly(url.pathname)) return;
 
   if (isStaticAsset(url.pathname)) {
@@ -199,14 +212,7 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (request.destination === 'document' || url.pathname.endsWith('.html')) {
-    // Individual purchased ticket pages — network-first, fall back to cache
-    // so the holder can show their QR at the venue door with no connectivity.
-    if (url.pathname.startsWith('/tickets/')) {
-      // The one place a private page is stored on purpose — see the note on
-      // NETWORK_ONLY_PATHS. Sign-out clears this cache.
-      event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
-      return;
-    }
+    // Ticket pages are handled above, before the network-only gate.
     // Show and artist pages: stale-while-revalidate (ticket availability changes)
     if (SWR_PATHS.some((p) => url.pathname.startsWith(p))) {
       event.respondWith(staleWhileRevalidate(request, PAGE_CACHE));
@@ -221,6 +227,24 @@ self.addEventListener('fetch', (event) => {
 
 function isNetworkOnly(pathname) {
   return NETWORK_ONLY_PATHS.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+/**
+ * One holder's own ticket, at the URL the app actually serves it from.
+ *
+ * `/tickets/<id>` is a REDIRECT to `/app/me/tickets/<id>` and has been since
+ * the MMM cutover, so every rule in this file that keyed on the old prefix was
+ * keyed on a 307. Both are matched: the new path is what gets cached and
+ * served, the old one still resolves for a link already in someone's inbox.
+ *
+ * The trailing segment is required. `/app/me/tickets` on its own is not a
+ * detail page (there is no such route — the list lives at `/app/me?section=
+ * tickets`), and an index of one account's tickets is exactly the thing the
+ * 2026-09-02 sweep took OUT of the precache. One ticket, deliberately stored;
+ * never the list.
+ */
+function isTicketDetail(pathname) {
+  return /^\/app\/me\/tickets\/[^/]+$/.test(pathname) || /^\/tickets\/[^/]+$/.test(pathname);
 }
 
 async function cacheFirst(request, cacheName) {

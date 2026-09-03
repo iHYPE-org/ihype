@@ -40,25 +40,54 @@ export async function POST(
     return NextResponse.json({ error: 'subject and content are required.' }, { status: 400 });
   }
 
-  // Get followers
-  const follows = await db.follow.findMany({
-    where: { followeeProfileId: slug, notifyShows: true },
-    include: { follower: { select: { email: true, emailBounced: true } } },
-  });
+  /* Two ways to be on this list, and both are an explicit opt-in.
+     
+     A FOLLOWER with `notifyShows` ticked has an account and said yes inside the
+     app. A NEWSLETTER SUBSCRIBER came in from a public page, has no account,
+     and completed a double opt-in — the row only counts once `confirmedAt` is
+     set by the emailed link, so an address nobody confirmed is never written
+     to. Until now only the first group was read: `NewsletterSubscription` was
+     collected, confirmed, and sent NOTHING, ever, by anything. A confirmation
+     email that leads to no email is a promise the product was not keeping. */
+  const [follows, subscribers] = await Promise.all([
+    db.follow.findMany({
+      where: { followeeProfileId: slug, notifyShows: true },
+      include: { follower: { select: { email: true, emailBounced: true } } },
+    }),
+    db.newsletterSubscription.findMany({
+      where: { profileId: slug, confirmedAt: { not: null } },
+      select: { email: true },
+    }),
+  ]);
 
-  const recipients = follows
-    .map(f => f.follower)
-    .filter(u => u.email && !u.emailBounced);
+  type Recipient = { email: string; because: 'follow' | 'newsletter' };
+  const byAddress = new Map<string, Recipient>();
+  for (const follow of follows) {
+    const email = follow.follower.email;
+    if (!email || follow.follower.emailBounced) continue;
+    byAddress.set(email.toLowerCase(), { email, because: 'follow' });
+  }
+  for (const subscriber of subscribers) {
+    // Keyed by address so someone who both follows and subscribed gets ONE
+    // email, and the follower wording wins because it is the closer relationship.
+    const key = subscriber.email.toLowerCase();
+    if (byAddress.has(key)) continue;
+    byAddress.set(key, { email: subscriber.email, because: 'newsletter' });
+  }
 
   let sent = 0;
-  for (const user of recipients) {
-    if (!user.email) continue;
+  for (const recipient of byAddress.values()) {
+    // The reason line has to match how they actually got here, or the
+    // unsubscribe instruction points at a control they do not have.
+    const because = recipient.because === 'follow'
+      ? `You received this because you follow ${escapeHtml(profile.name)} on iHYPE.`
+      : `You received this because you confirmed email updates from ${escapeHtml(profile.name)} on iHYPE.`;
     try {
       await sendGenericEmail({
-        to: user.email,
+        to: recipient.email,
         subject: `${profile.name}: ${subject}`,
         text: content,
-        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>You received this because you follow ${escapeHtml(profile.name)} on iHYPE. <a href="https://ihype.org">ihype.org</a></small></p>`,
+        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>${because} <a href="https://ihype.org">ihype.org</a></small></p>`,
       });
       sent++;
     } catch { /* continue */ }
@@ -69,5 +98,9 @@ export async function POST(
     data: { fanMailLastSentAt: new Date() },
   });
 
-  return NextResponse.json({ ok: true, sent });
+  /* Both numbers. `sent` counts deliveries the provider accepted; `recipients`
+     is how many the list resolved to. They differ whenever mail is degraded —
+     and reporting only `sent` made that indistinguishable from an empty list,
+     which is exactly what an owner needs to tell apart after pressing send. */
+  return NextResponse.json({ ok: true, sent, recipients: byAddress.size });
 }

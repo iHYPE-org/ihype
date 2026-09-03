@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import { getSimilarArtists, type SimilarArtist } from '@/lib/sounds-like';
+import { SimilarArtistsRow } from '@/components/SimilarArtistsRow';
+import { NewsletterSignup } from '@/components/NewsletterSignup';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -99,7 +102,7 @@ export default async function MmmArtistPage({
      artist's "tonight" is still today at 3am UTC and dropping the gig while
      the band is on stage would be the wrong kind of precise. */
   const calendarFloor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 12 * 3_600_000);
-  const [userHype, upcoming, releases, calendar, albums, listeners] = await Promise.all([
+  const [userHype, upcoming, releases, calendar, albums, listeners, similarArtists] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
@@ -206,6 +209,10 @@ export default async function MmmArtistPage({
           .then((rows) => rows.length)
         : 0))
       .catch((): number | null => null),
+    /* Same-genre acts, ranked. Independently caught like every other read on
+       this page: a similarity lookup that fails must cost the Bio tab a row,
+       never the whole profile. */
+    getSimilarArtists(profile.slug, 6).catch((): SimilarArtist[] => []),
   ]);
   const albumById = new Map(albums.map((album) => [album.id, album]));
   const coverFor = (release: { artworkUrl: string | null; albumId: string | null }) =>
@@ -510,6 +517,20 @@ export default async function MmmArtistPage({
         </ProfilePanel>
       )}
 
+      {/* "Sounds like" — `getSimilarArtists` narrows to same-genre acts in the
+          database and asks the model to rank them, falling back to the
+          most-hyped candidates when the binding is absent. Both it and this row
+          were built and called by nothing; the lib's own docstring claimed
+          "artist profile pages call this directly", and none did.
+
+          OUTSIDE the panel, not inside it. `ProfilePanel` renders its empty
+          sentence INSTEAD of its children, so a bio nobody has written yet took
+          the row down with it — and an artist with no bio is exactly the one a
+          reader most needs a way onward from. Caught by walk item 34. */}
+      {activeTab === 'bio' && (
+        <SimilarArtistsRow accent="var(--accent)" artists={similarArtists} heading="Sounds like" />
+      )}
+
       {activeTab === 'merch' && (
         <ProfilePanel
           tabId="merch"
@@ -554,6 +575,15 @@ export default async function MmmArtistPage({
               <dd>{profile.verificationStatus === 'VERIFIED' ? 'Verified by iHYPE' : 'Not yet verified by iHYPE'}</dd>
             </div>
           </dl>
+          {/* Updates by email, for someone who does not want an account. The
+              double opt-in is the route's; the confirmed row is now a real
+              recipient of this profile's fan mail, which it was not before —
+              the subscription existed and nothing ever sent to it. The picker
+              is skipped: on this page the answer is this page. */}
+          <div className="profile-newsletter">
+            <h3 className="profile-panel-subhead">Get updates by email</h3>
+            <NewsletterSignup fixedProfile={{ id: profile.id, name: profile.name, type: profile.type }} />
+          </div>
         </ProfilePanel>
       )}
 

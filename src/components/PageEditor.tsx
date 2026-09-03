@@ -20,7 +20,7 @@ type AvailabilityEntry = { id: string; date: string; note: string | null; kind?:
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
 /* Albums, the folder version (2026-09-02). See /api/albums. */
 type AlbumRow = { id: string; title: string; artworkUrl: string | null; releasedOn: string | null; release: 'live' | 'scheduled' | 'undated'; sortOrder: number; trackCount: number };
-type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; createdAt: string };
+type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string };
 
 /** Live · Scheduled · Held, from the two release columns (release-schedule.ts). */
 function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string): string {
@@ -1003,6 +1003,32 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                                 </button>
                               )}
                             </>
+                          )}
+                          {/* Free use, changeable AFTER upload. `GET /api/artist-media`
+                              has always returned this column and `PATCH` has always
+                              accepted it, but the only control that wrote it lived in
+                              `ArtistMediaPlaylist`, which is mounted on no page — so an
+                              artist could set free use once, in the upload form, and
+                              never take it back. Consent that cannot be withdrawn is
+                              not consent. Held tracks are excluded for the same reason
+                              the release controls are: nothing an artist ticks should
+                              move a track that is under review. */}
+                          {(track.isPublished || track.publishAt) && (
+                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: 6, cursor: albumBusy !== null ? 'default' : 'pointer' }}>
+                              <input
+                                checked={track.freeUseEnabled}
+                                disabled={albumBusy !== null}
+                                onChange={(e) => {
+                                  void albumRequest(
+                                    `/api/artist-media/${track.hexId}`,
+                                    jsonPatch({ freeUseEnabled: e.target.checked }),
+                                    `freeuse:${track.hexId}`,
+                                  );
+                                }}
+                                type="checkbox"
+                              />
+                              {t('pageEditor.trackFreeUse', 'Free use — promoters may add this to playlists')}
+                            </label>
                           )}
                         </div>
                       </div>

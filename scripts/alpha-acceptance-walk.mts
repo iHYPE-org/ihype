@@ -1642,6 +1642,18 @@ async function main() {
       where: { id: campaign.id },
       data: { startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 86_400_000) },
     });
+    /* This run must own the inventory it asserts on. The scratch database
+       accumulates campaigns across runs, and `resolveWeightedAdBreakClips`
+       orders by `impressions: asc` — so an older APPROVED ad from a previous
+       run, never served and therefore at zero impressions, outranks the one
+       re-opened above and the assertion below fails on a fixture rather than
+       on the product. Close every other window instead of widening the
+       assertion: a run that controls its own inventory is the only one whose
+       result means anything. */
+    await prisma.ad.updateMany({
+      where: { id: { not: campaign.id }, status: 'APPROVED' },
+      data: { endsAt: new Date(Date.now() - 60_000) },
+    });
 
     const stations = ok(await api('/api/stations', { cookie: fan.cookie }));
     const slugs: string[] = (stations?.stations ?? []).map((entry: any) => entry?.slug).filter(Boolean);
@@ -1668,6 +1680,170 @@ async function main() {
     assert(breaks.every((row) => row.mediaUrl), 'a break was served with no audio to play');
 
     return `station "${best?.slug}" served ${stationRows.length} row(s) including ${breaks.length} paid break(s), all mkt_ and all playable, none at head or tail`;
+  });
+
+  /* ── 34-36. The surfaces that were built and mounted nowhere ────────────
+     Ten components shipped with a live route behind them and no page rendering
+     them (2026-09-03). `audit:mounts` catches the static half — a component no
+     route can reach — but it cannot tell a mounted component from a working
+     one. These drive the real worker. */
+
+  await item('34. Every surface that was mounted nowhere now renders', async () => {
+    /* `getSimilarArtists` narrows to acts sharing a genre, and the fixture
+       profiles have none — so the row correctly renders nothing and asserting
+       on it would be asserting the fixture, not the wiring. Give this artist a
+       genre and one neighbour who shares it. */
+    await prisma.profile.update({ where: { id: artistProfile.id }, data: { genres: ['walk-genre'] } });
+    await prisma.profile.upsert({
+      where: { slug: `walk-neighbour-${run}` },
+      update: { genres: ['walk-genre'] },
+      create: {
+        slug: `walk-neighbour-${run}`,
+        // `hexId` is required and has no default — it is the public address
+        // every embed and short link uses, so nothing may invent one lazily.
+        hexId: `0x${randomUUID().replace(/-/g, '').slice(0, 16)}`,
+        name: `Walk Neighbour ${run}`,
+        type: 'ARTIST',
+        genres: ['walk-genre'],
+        ownerId: creator.user.id,
+      },
+    });
+
+    const checks: Array<[string, string, string, string | undefined]> = [
+      // [what, path, a string only that component puts on the page, cookie]
+      // The landing page is LOGGED OUT on purpose: a session on `/` redirects
+      // to the workbench, so fetching it with a cookie measures the redirect.
+      ['NearbyShowsWidget (logged out)', '/', 'Turn on precise location', undefined],
+      ['SimilarArtistsRow', `/app/artists/${artistProfile.slug}?tab=bio`, 'Sounds like', creator.cookie],
+      ['NewsletterSignup · artist', `/app/artists/${artistProfile.slug}?tab=contact`, 'Get updates by email', creator.cookie],
+      ['NewsletterSignup · venue', `/app/venues/${venueProfile.slug}?tab=contact`, 'Get updates by email', creator.cookie],
+      ['FanMailButton · artist', `/app/me/artists/${artistProfile.slug}/dashboard`, 'Email my followers', creator.cookie],
+      ['FanMailButton · venue', `/app/me/venues/${venueProfile.slug}/dashboard`, 'Email my followers', creator.cookie],
+      ['CommunityVoteBoard', '/app/me/info/community', 'Community roadmap', creator.cookie],
+    ];
+
+    const missing: string[] = [];
+    for (const [what, path, marker, cookie] of checks) {
+      const response = await api(path, cookie ? { cookie } : {});
+      if (response.status !== 200) { missing.push(`${what}: ${path} answered ${response.status}`); continue; }
+      /* The marker is copy only that component emits. A page that renders but
+         has quietly lost the mount answers 200 with the marker gone — which is
+         precisely the failure this whole item exists for. */
+      if (!(response.text ?? '').includes(marker)) missing.push(`${what}: "${marker}" is not on ${path}`);
+    }
+    assert(missing.length === 0, missing.join(' · '));
+
+    /* The ticket page's holder actions. The block is deliberately gated on
+       `status !== 'SCANNED'` — transfer and resale are both meaningless once
+       the code has been used at the door — and item 19 scans the walk's only
+       ticket, so reading it as-is measures the gate rather than the mount.
+       Buying a fresh one is not open either: item 32 cancels the show to
+       exercise refunds, and a cancelled show sells nothing. So restore the
+       precondition the block is written for, assert, and put the scan back
+       so nothing downstream reads a door record that never happened. */
+    let ticketNote = 'no ticket was sold here, so the holder actions were not checked';
+    if (serializedId) {
+      const scanned = await prisma.ticket.findFirst({ where: { serializedId } });
+      if (scanned?.status === 'SCANNED') {
+        await prisma.ticket.update({ where: { id: scanned.id }, data: { status: 'VALID' } });
+      }
+      const page = await api(`/app/me/tickets/${serializedId}`, { cookie: fan.cookie });
+      if (scanned?.status === 'SCANNED') {
+        await prisma.ticket.update({ where: { id: scanned.id }, data: { status: 'SCANNED' } });
+      }
+      assert(page.status === 200, `the ticket page answered ${page.status}`);
+      assert((page.text ?? '').includes('What you can do with this ticket'),
+        'TicketCardActions is not on the ticket page');
+      assert((page.text ?? '').includes('List for resale') || (page.text ?? '').includes('Resend confirmation'),
+        'the ticket page renders the actions block with neither resale nor resend in it');
+      ticketNote = 'ticket page carries the holder actions';
+    }
+    return `${checks.length} surface(s) render their component; ${ticketNote}`;
+  });
+
+  await item('35. Free use can be withdrawn, and the crate lists published tracks only', async () => {
+    if (!mediaHexId) blocked('no track was uploaded');
+
+    /* The gap this closes: the tick was write-once. `TrackUploadPanel` set it
+       and the only control that could clear it was mounted on no page. */
+    const on = await api(`/api/artist-media/${mediaHexId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ freeUseEnabled: true }),
+      cookie: creator.cookie,
+    });
+    ok(on);
+    const listed = ok(await api('/api/artist-media/free-use?limit=50'));
+    const inCrate = (listed.tracks as any[]).some((track) => track.hexId === mediaHexId);
+    assert(inCrate, 'a track marked free-use is not in the crate');
+
+    const off = await api(`/api/artist-media/${mediaHexId}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ freeUseEnabled: false }),
+      cookie: creator.cookie,
+    });
+    ok(off);
+    const after = ok(await api('/api/artist-media/free-use?limit=50'));
+    assert(!(after.tracks as any[]).some((track) => track.hexId === mediaHexId),
+      'a withdrawn track is still in the crate — consent that cannot be withdrawn is not consent');
+
+    /* A HELD upload is `isPublished: false` with no `publishAt`. It must never
+       appear in a public crate with a playable stream url, free-use or not. */
+    await prisma.artistMediaAsset.update({
+      where: { hexId: mediaHexId },
+      data: { freeUseEnabled: true, isPublished: false, publishAt: null },
+    });
+    const withHeld = ok(await api('/api/artist-media/free-use?limit=50'));
+    const heldLeaked = (withHeld.tracks as any[]).some((track) => track.hexId === mediaHexId);
+    await prisma.artistMediaAsset.update({
+      where: { hexId: mediaHexId },
+      data: { freeUseEnabled: false, isPublished: true },
+    });
+    assert(!heldLeaked, 'a HELD track marked free-use is listed publicly with a playable stream url');
+
+    return 'free use goes on and comes back off; a held track never enters the crate';
+  });
+
+  await item('36. Fan mail reaches a confirmed newsletter subscriber', async () => {
+    /* `NewsletterSubscription` was collected, double-opt-in confirmed, and read
+       by nothing but the privacy export — a confirmation email that led to no
+       email. The broadcast now counts subscribers alongside followers. */
+    const address = `alpha-subscriber-${run}@example.com`;
+    await prisma.newsletterSubscription.create({
+      data: { email: address, profileId: artistProfile.id, confirmedAt: new Date() },
+    });
+    // An UNCONFIRMED row must never be written to.
+    await prisma.newsletterSubscription.create({
+      data: { email: `alpha-unconfirmed-${run}@example.com`, profileId: artistProfile.id },
+    });
+    await prisma.profile.update({ where: { id: artistProfile.id }, data: { fanMailLastSentAt: null } });
+
+    const sendResult = await api(`/api/profile/${artistProfile.id}/fan-mail`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ subject: `Walk ${run}`, content: 'A new track is up.' }),
+      cookie: creator.cookie,
+    });
+    const body = ok(sendResult);
+    /* `recipients` is the list; `sent` is what the provider accepted. This
+       runner has no mail provider, so `sent` is 0 and asserting on it would be
+       measuring the absence of a secret. The list is the thing under test —
+       before this change a confirmed subscriber was never on it at all. */
+    assert(typeof body?.recipients === 'number',
+      `fan-mail did not report a recipient count: ${JSON.stringify(body).slice(0, 120)}`);
+    assert(body.recipients >= 1,
+      `fan mail resolved ${body.recipients} recipients with one confirmed subscriber on the list`);
+
+    const again = await api(`/api/profile/${artistProfile.id}/fan-mail`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ subject: 'Twice', content: 'Again.' }),
+      cookie: creator.cookie,
+    });
+    assert(again.status === 429, `a second broadcast inside 7 days answered ${again.status}, expected 429`);
+
+    return `${body.recipients} recipient(s) resolved including the confirmed subscriber (${body.sent} delivered — no mail provider here); a second send inside 7 days is refused 429`;
   });
 
   const pass = rows.filter((r) => r.status === 'PASS').length;

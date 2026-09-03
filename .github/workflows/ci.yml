@@ -168,6 +168,23 @@ jobs:
         # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
+      - name: Unmounted-component gate
+        # Components that exist and no route can reach. TypeScript cannot see
+        # this — an unused module is not an error — and no other audit here
+        # asks the question: the rest check whether a component is NAMED or
+        # PAINTED right, not whether anything renders it.
+        #
+        # It cost ten features at once on 2026-09-03, among them the offline
+        # wallet, the free-use crate, the community roadmap board and the
+        # owner's broadcast to their own followers. Every one had a live route
+        # behind it; every one was dark, because the surface it used to live on
+        # was retired and nothing failed when it was left behind.
+        #
+        # Reachability from src/app, not "is imported somewhere": a barrel that
+        # re-exports a component is not a mount, and two dead components must
+        # not vouch for each other. --max=0, and it goes down, never up.
+        run: npm run audit:mounts
+
       - name: Theme contrast gate
         # Every [data-theme] block in globals.css (plus :root and the walnut
         # material) is re-measured: ink and the copy tokens must clear 4.5:1 on

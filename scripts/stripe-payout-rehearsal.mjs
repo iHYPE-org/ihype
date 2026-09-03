@@ -186,6 +186,10 @@ async function step1CaptureToPlatform() {
   return captured;
 }
 
+/* How many connected accounts DO have an active `transfers` capability, so the
+   skip can name the shortfall rather than implying there are none. */
+let connectShortfall = 0;
+
 async function resolveConnectAccounts() {
   const fromEnv = (process.env.REHEARSAL_CONNECT_ACCOUNTS ?? '')
     .split(',')
@@ -197,16 +201,23 @@ async function resolveConnectAccounts() {
   const payable = existing.data.filter((a) => a.capabilities?.transfers === 'active');
   if (payable.length >= 3) return payable.slice(0, 3).map((a) => a.id);
 
+  /* Report what was actually found, not "none". The split has three
+     destinations, so two onboarded accounts skip this step exactly as zero
+     does — and the message used to say no account existed, which is a
+     different problem with a different fix. Measured 2026-09-03: this test
+     account holds 37 connected accounts, 2 of them fully active with no
+     requirements due, and the run still read as "nobody has onboarded". */
+  connectShortfall = payable.length;
   return null;
 }
 
 async function step2SplitTransfers(captured, accounts) {
   console.log('\n[2] 70/20/10 transfers out of the platform balance');
   if (!accounts) {
-    console.log('  SKIP  no connected account with an active `transfers` capability exists in this test account.');
-    console.log('        Stripe will not transfer to an account that has not completed onboarding, so this');
-    console.log('        step cannot be faked. Create three test Express accounts, complete the hosted');
-    console.log('        onboarding for each with Stripe\'s test values, then re-run with:');
+    console.log(`  SKIP  the 70/20/10 split needs THREE payable destinations and this test account has ${connectShortfall}`);
+    console.log('        with an active `transfers` capability. Stripe will not transfer to an account that');
+    console.log('        has not completed onboarding, so this step cannot be faked. Complete hosted');
+    console.log(`        onboarding for ${Math.max(0, 3 - connectShortfall)} more account(s) with Stripe's test values, then re-run with:`);
     console.log('          REHEARSAL_CONNECT_ACCOUNTS=acct_1,acct_2,acct_3');
     console.log('        The application has the same prerequisite: triggerShowPayouts() can pay nobody');
     console.log('        until at least one real profile finishes Connect onboarding.');

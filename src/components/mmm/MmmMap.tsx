@@ -350,9 +350,13 @@ export function MmmMap({
       (position) => {
         const next: [number, number] = [position.coords.longitude, position.coords.latitude];
         setHome(next);
-        if (flownHome.current) return;
+        /* Fly only if the canvas is actually up. When it is not, the flight is
+           left to the deferred effect below rather than dropped on the floor —
+           `flyTo` on a map that has not finished initialising does nothing and
+           reports nothing. */
+        if (flownHome.current || !mapRef.current?.loaded()) return;
         flownHome.current = true;
-        mapRef.current?.flyTo({ center: next, zoom: 12, duration: 800 });
+        mapRef.current.flyTo({ center: next, zoom: 12, duration: 800 });
       },
       // A refusal or a timeout leaves the seeded county camera up, which is the
       // same thing the map showed before anyone answered. Nothing to report.
@@ -361,17 +365,39 @@ export function MmmMap({
     );
   }, []);
 
-  /* Asked once the canvas exists, not on mount: `getCurrentPosition` can answer
-     from cache in a few milliseconds, and a `flyTo` on a map that has not
-     finished initialising is dropped — which showed up as location being
-     granted and the camera never moving. `ready` is what makes the answer
-     land. */
+  /* ASKED ON ARRIVAL, NOT ON `ready` — and this used to be the other way round.
+     The reason it was gated is real and is preserved: `getCurrentPosition` can
+     answer from cache in a few milliseconds, and a `flyTo` on a map that has
+     not finished initialising is dropped, which showed up as location being
+     granted and the camera never moving. But that is a fact about the FLIGHT,
+     and gating the ASK on it made the whole question conditional on a third
+     party: `ready` is set by maplibre's `load`, which never fires while the
+     raster source cannot reach the tile CDN. So a member behind a proxy that
+     blocks cartocdn, or on a connection that drops the tiles, was never asked
+     where they were at all — the seeded county camera stayed up and the app
+     never put the question. The owner's instruction is that the map "should
+     always start where you are", and a tile miss is not a reason to stop
+     asking. Measured 2026-09-03 against the real worker: tiles answered
+     ERR_CONNECTION_RESET, `load` never fired, and the ask count stayed 0
+     through 40 seconds — which is also what had `e2e/mmm-shell.spec.ts`'s
+     "the map asks for location itself" failing on main.
+
+     The flight keeps the protection it always had, in the effect below. */
   const asked = useRef(false);
   useEffect(() => {
-    if (!ready || asked.current) return;
+    if (asked.current) return;
     asked.current = true;
     requestPosition();
-  }, [ready, requestPosition]);
+  }, [requestPosition]);
+
+  /* The deferred half: an answer that arrived before the canvas was up still
+     gets its flight, once. Without this, moving the ask earlier would trade a
+     question nobody was asked for an answer nobody acted on. */
+  useEffect(() => {
+    if (!ready || !home || flownHome.current) return;
+    flownHome.current = true;
+    mapRef.current?.flyTo({ center: home, zoom: 12, duration: 800 });
+  }, [ready, home]);
 
   /* Where the artists layer flies. Kept as its own callback because it falls
      back to the seeded camera when there is no position — which is what makes

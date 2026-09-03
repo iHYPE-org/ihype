@@ -13,16 +13,26 @@ export async function GET(request: Request) {
     const limit = Math.min(Math.max(1, Number.isNaN(limitParam) ? 100 : limitParam), 200);
     const cursor = searchParams.get('cursor') ?? undefined;
 
+    /* Published only. `freeUseEnabled` says the artist is happy for a promoter
+       to use the track; it does not say the track is out yet. Without this the
+       crate listed a HELD upload (one the copyright scan flagged, awaiting
+       review) and a SCHEDULED one (an unannounced release), to anyone, with a
+       playable stream URL — the two states the whole release pipeline exists to
+       keep off public surfaces. `isPublished` is the same flag every other
+       public listing filters on. */
+    const published = { isPublished: true } as const;
+
     const where = q
       ? {
           freeUseEnabled: true,
+          ...published,
           ...getDemoProfileRelationExclusion(),
           OR: [
             { title: { contains: q, mode: 'insensitive' as const } },
             { profile: { name: { contains: q, mode: 'insensitive' as const } } }
           ]
         }
-      : { freeUseEnabled: true, ...getDemoProfileRelationExclusion() };
+      : { freeUseEnabled: true, ...published, ...getDemoProfileRelationExclusion() };
 
     const tracks = await db.artistMediaAsset.findMany({
       where,
