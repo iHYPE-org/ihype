@@ -29,8 +29,11 @@ Do not put credentials, customer data, or full webhook payloads in this file.
 
 > **The app's money path HAS now executed against test-mode Stripe (2026-09-03),
 > and this warning used to say it never had.** `npm run alpha:walk` against the
-> real Workers build and a scratch PG17 database passed 41 of 42 items with zero
-> failures, including: a ticket sold and CAPTURED (1952c), three payables with
+> real Workers build and a scratch PG17 database passed **43 of 44** items with
+> zero failures (41 of 42 on the first run; two items were added the same day —
+> a closed sale being refused rather than charged, and a paid ad spot actually
+> airing on the station a member listens to), including: a ticket sold and
+> CAPTURED (1952c), three payables with
 > the promoter earning exactly 10% of face value, the QR scanned once and a
 > replay refused 409, the same Stripe event delivered twice issuing one ticket
 > and one payout, a show cancellation refunding for real (`re_…` 1865c) with

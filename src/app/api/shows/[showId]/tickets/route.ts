@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
+import { isTicketingOpen } from '@/lib/show-detail';
 import { consumeDualRateLimit } from '@/lib/rate-limit';
 import { verifyTurnstileToken } from '@/lib/turnstile';
 import {
@@ -191,6 +192,20 @@ export async function POST(
     }
     if (!['SCHEDULED', 'LIVE'].includes(show.status)) {
       return NextResponse.json({ error: 'Tickets are only available for scheduled or live shows' }, { status: 400 });
+    }
+    /* On sale, not merely ticketed. `isTicketingOpen()` is the one rule every
+       other surface already reads — `showRowTrail()` prints "Tickets soon"
+       from it, and `TicketSaleCard` renders no form when it is false — and
+       until now the purchase route was the only place that ignored it. A show
+       created with a future `ticketingOpensAt` would take the money anyway,
+       while the card told the buyer they would be charged when the venue
+       opened the event. Nothing charges later; there is no reserve-then-
+       capture path. So a closed sale is refused here rather than half-honoured. */
+    if (!isTicketingOpen(show)) {
+      return NextResponse.json(
+        { error: 'Tickets for this show are not on sale yet.', code: 'TICKETING_NOT_OPEN' },
+        { status: 409 },
+      );
     }
 
     let affiliatePromoterProfile: {

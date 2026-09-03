@@ -142,6 +142,11 @@ export default function EventsNewPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [publishedSlug, setPublishedSlug] = useState<string | null>(null);
+  /* What the member owns, so the form can tell a venue scheduling its own night
+     apart from an act asking for one. Loaded once; an empty list simply means
+     every venue is someone else's, which is the safe reading. */
+  const [myProfiles, setMyProfiles] = useState<ProfileHit[]>([]);
+  const [savedAsDraft, setSavedAsDraft] = useState(false);
 
   const draft = useMemo(() => ({
     step, title, date, time, venueProfile, headliner, price, capacity,
@@ -176,12 +181,13 @@ export default function EventsNewPage() {
 
   useEffect(() => {
     const venueId = new URLSearchParams(window.location.search).get('venue');
-    if (!venueId) return;
     let cancelled = false;
     fetch('/api/pages/home')
       .then((response) => response.ok ? response.json() : null)
       .then((data: { myProfiles?: ProfileHit[] } | null) => {
         if (cancelled) return;
+        setMyProfiles(data?.myProfiles ?? []);
+        if (!venueId) return;
         const ownedVenue = data?.myProfiles?.find((profile) => profile.id === venueId && profile.type === 'VENUE');
         if (ownedVenue) setVenueProfile(ownedVenue);
       })
@@ -189,22 +195,53 @@ export default function EventsNewPage() {
     return () => { cancelled = true; };
   }, []);
 
-  async function publish() {
+  /* Who may actually schedule this date. `POST /api/shows` lets the venue's
+     owner publish, and lets anyone who owns the act save an unticketed DRAFT
+     for that venue to review. The form has to say which of the two is about to
+     happen — before this it always sent SCHEDULED with a ticket price, so an
+     act picking a venue they do not own filled in four steps and was told
+     "Only the venue owner can schedule events for this venue" at the end. */
+  const ownsVenue = Boolean(venueProfile && myProfiles.some((profile) => profile.id === venueProfile.id));
+  const ownsHeadliner = Boolean(headliner && myProfiles.some((profile) => profile.id === headliner.id));
+  const mustRequest = Boolean(venueProfile && !ownsVenue);
+  const canRequest = mustRequest && ownsHeadliner;
+
+  /**
+   * Create the show, either published or as a draft.
+   *
+   * Three things this form used to get wrong, all in one call. It hardcoded
+   * `status: 'SCHEDULED'`, so nothing could ever produce the DRAFT a lineup
+   * proposal needs — `/app/me/shows/[slug]/lineup` was linked from two
+   * dashboards for DRAFT shows only and was therefore unreachable. It sent a
+   * venue it might not own with `isTicketed`, which the route refuses. And it
+   * never sent `ticketingOpensAt`, so a published ticketed event was not on
+   * sale: `isTicketingOpen()` reads that column, and only the organiser's own
+   * "open" action ever wrote it — an action with no control anywhere.
+   */
+  async function submitShow(mode: 'publish' | 'draft') {
     setSubmitting(true);
     setError(null);
     try {
       const datetime = date ? `${date}T${time || '21:00'}` : undefined;
+      const publishing = mode === 'publish';
+      // A request to someone else's venue is a private, unticketed draft — the
+      // only shape the route accepts from anyone but the venue's owner.
+      const ticketed = publishing && priceDollars > 0 && !mustRequest;
       const res = await fetch('/api/shows', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim() || 'Untitled Event',
           description: description.trim() || undefined,
-          status: 'SCHEDULED',
+          status: publishing ? 'SCHEDULED' : 'DRAFT',
           startsAt: datetime ? new Date(datetime).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
-          isTicketed: priceDollars > 0,
+          isTicketed: ticketed,
           ticketPriceCents: Math.round(priceDollars * 100),
           ticketCapacity: cap || undefined,
+          // Sales open the moment the event is published. The alternative is
+          // the state the product was actually in: a live event nobody could
+          // buy a ticket for, because the column that opens sales had no UI.
+          ticketingOpensAt: ticketed ? new Date().toISOString() : undefined,
           venuePayoutPercent: 20,
           artistPayoutPercent: 70,
           promoterPayoutPercent: 10,
@@ -221,6 +258,7 @@ export default function EventsNewPage() {
       }
       clearDraft();
       setPublishedSlug(data.slug);
+      setSavedAsDraft(!publishing);
       setStep(4);
     } catch {
       setError('Network error — please try again');
@@ -396,8 +434,12 @@ export default function EventsNewPage() {
         {/* Step 3: Review */}
         {step === 3 && (
           <>
-            <h1>{t('eventsNewPage.reviewTitle', 'Review & publish.')}</h1>
-            <p className="sub">{t('eventsNewPage.reviewSubtitle', 'Once published, your event goes live and tickets are available immediately.')}</p>
+            <h1>{mustRequest ? t('eventsNewPage.reviewRequestTitle', 'Review & send request.') : t('eventsNewPage.reviewTitle', 'Review & publish.')}</h1>
+            <p className="sub">
+              {mustRequest
+                ? t('eventsNewPage.reviewRequestSubtitle', 'You do not run this venue, so this goes to them as a private date request. They confirm the night and open ticket sales.')
+                : t('eventsNewPage.reviewSubtitle', 'Once published, your event goes live and tickets are available immediately.')}
+            </p>
             <div className="card">
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.1rem', marginBottom: 4 }}>{title || t('eventsNewPage.untitledEvent', 'Untitled Event')}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginBottom: 14 }}>
@@ -428,9 +470,33 @@ export default function EventsNewPage() {
             <div aria-atomic="true" aria-live="polite">
               {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
             </div>
-            <button className="btn-primary" disabled={submitting} onClick={publish} type="button">
-              {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}
-            </button>
+            {mustRequest ? (
+              <>
+                <button className="btn-primary" disabled={submitting || !canRequest} onClick={() => void submitShow('draft')} type="button">
+                  {submitting
+                    ? t('eventsNewPage.sendingRequest', 'Sending…')
+                    : t('eventsNewPage.sendRequestCta', 'Send date request to the venue')}
+                </button>
+                {!canRequest && (
+                  <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.6, marginTop: 10 }}>
+                    {t('eventsNewPage.requestNeedsOwnAct', 'Pick a headliner you run to send this. A date request has to come from the venue that is hosting or the act that is playing.')}
+                  </p>
+                )}
+              </>
+            ) : (
+              <>
+                <button className="btn-primary" disabled={submitting} onClick={() => void submitShow('publish')} type="button">
+                  {submitting ? t('eventsNewPage.publishing', 'Publishing…') : t('eventsNewPage.publishCta', 'Publish event & lock charter')}
+                </button>
+                {/* The way in to the lineup & split agreement. A multi-act
+                    split is proposed on a DRAFT show and the show goes live
+                    when every act accepts, so a venue that wants one has to be
+                    able to create a draft — and nothing in the product could. */}
+                <button className="btn-ghost" disabled={submitting} onClick={() => void submitShow('draft')} type="button">
+                  {t('eventsNewPage.saveDraftCta', 'Save as draft — propose a lineup split first')}
+                </button>
+              </>
+            )}
             <button className="btn-ghost" onClick={() => setStep(2)} type="button">{t('eventsNewPage.backCta', 'Back')}</button>
           </>
         )}
@@ -441,13 +507,29 @@ export default function EventsNewPage() {
             <div style={{ width: 60, height: 60, borderRadius: 16, background: 'rgba(var(--role-venue-rgb),.12)', border: '2px solid var(--role-venue)', display: 'grid', placeItems: 'center', margin: '0 auto 16px' }}>
               <svg fill="none" height="28" stroke="var(--role-venue)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="28"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" /><path d="M13 5v2M13 11v2M13 17v2" /></svg>
             </div>
-            <h1 style={{ marginBottom: '.5rem' }}>{t('eventsNewPage.publishedTitle', 'Event published.')}</h1>
+            <h1 style={{ marginBottom: '.5rem' }}>
+              {savedAsDraft
+                ? mustRequest
+                  ? t('eventsNewPage.requestSentTitle', 'Request sent.')
+                  : t('eventsNewPage.draftSavedTitle', 'Draft saved.')
+                : t('eventsNewPage.publishedTitle', 'Event published.')}
+            </h1>
             <p className="sub" style={{ textAlign: 'center', maxWidth: '34ch', margin: '0 auto 1.5rem' }}>
-              {t('eventsNewPage.publishedSubtitle', 'Your event is live. Tickets are on sale. Fans who hyped the artist will get notified first.')}
+              {savedAsDraft
+                ? mustRequest
+                  ? t('eventsNewPage.requestSentSubtitle', 'The venue can see the date now. It stays private until they confirm it and open ticket sales.')
+                  : t('eventsNewPage.draftSavedSubtitle', 'The draft is private. Propose the lineup and split next — the event goes live when every act accepts.')
+                : t('eventsNewPage.publishedSubtitle', 'Your event is live. Tickets are on sale. Fans who hyped the artist will get notified first.')}
             </p>
             {publishedSlug && (
-              <Link className="btn-primary" href={`/app/shows/${publishedSlug}`} style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 10 }}>
-                {t('eventsNewPage.viewEventPage', 'View event page →')}
+              <Link
+                className="btn-primary"
+                href={savedAsDraft ? `/app/me/shows/${publishedSlug}/lineup` : `/app/shows/${publishedSlug}`}
+                style={{ display: 'block', textAlign: 'center', textDecoration: 'none', marginBottom: 10 }}
+              >
+                {savedAsDraft
+                  ? t('eventsNewPage.openLineup', 'Open lineup & split →')
+                  : t('eventsNewPage.viewEventPage', 'View event page →')}
               </Link>
             )}
             <Link className="btn-ghost" href="/app/music/discover" style={{ display: 'block', textAlign: 'center', textDecoration: 'none' }}>

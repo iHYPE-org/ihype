@@ -104,3 +104,42 @@ describe('the queue memo key', () => {
     expect(queueKey([{ hexId: 'a' }])).not.toBe(queueKey([{ hexId: 'a' }, { hexId: 'b' }]));
   });
 });
+
+/**
+ * Advertising breaks in a station rotation.
+ *
+ * The station endpoint mixes paid spots into the rows it serves, and the player
+ * has to be able to tell one from a song for two separate reasons: an ad that
+ * looks like a track is never billed, and a track that looks like an ad — or an
+ * ad carrying a `mediaId` — writes a listen against an artist who did not
+ * perform it. Both hang on this conversion carrying one field through.
+ */
+describe('toQueue and advertising breaks', () => {
+  it('carries adClipId through so the player can report the impression', () => {
+    const [ad] = toQueue([
+      { hexId: 'mkt_ad1', title: 'Spot', mediaUrl: 'https://cdn/spot.mp3', adClipId: 'mkt_ad1' },
+    ]);
+    expect(ad.adClipId).toBe('mkt_ad1');
+  });
+
+  it('gives an ad no mediaId, so it can never write a MediaListen', () => {
+    const [ad] = toQueue([
+      { hexId: 'mkt_ad1', title: 'Spot', mediaUrl: 'https://cdn/spot.mp3', adClipId: 'mkt_ad1' },
+    ]);
+    // `persistCompletedMediaListen` returns early without one — that null is
+    // the whole guard, not a tidiness choice.
+    expect(ad.mediaId).toBeNull();
+  });
+
+  it('leaves a music row exactly as it was', () => {
+    const [track] = toQueue([{ hexId: 'abc', title: 'Song', mediaUrl: 'https://cdn/song.mp3' }]);
+    expect(track.mediaId).toBe('abc');
+    expect(track.adClipId).toBeNull();
+  });
+
+  it('drops an ad with no audio, like any other unplayable row', () => {
+    // A break the player cannot decode is a stall, not a skip — the same reason
+    // the filter exists for tracks.
+    expect(toQueue([{ hexId: 'mkt_ad1', title: 'Spot', adClipId: 'mkt_ad1', mediaUrl: null }])).toHaveLength(0);
+  });
+});
