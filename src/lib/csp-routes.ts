@@ -26,14 +26,36 @@
  * `/app/me`, defeating the reason it stays mounted.
  */
 
-/** Hosts the live map fetches tiles from. */
+/**
+ * Hosts the live map fetches its basemap from.
+ *
+ * BOTH ENTRIES ARE LOAD-BEARING AND THE APEX IS NOT REDUNDANT. A CSP wildcard
+ * requires at least one label to stand in for: `*.basemaps.cartocdn.com`
+ * matches `tiles.basemaps.cartocdn.com` and does NOT match
+ * `basemaps.cartocdn.com` itself. That is the whole of the outage on
+ * 2026-09-03 — the raster basemap fetched only from `a.`…`d.` subdomains, the
+ * vector one fetches its `style.json` from the apex, and the note left behind
+ * on the move said the wildcard already covered it. The style request was
+ * refused by our own policy, MapLibre never got a style, `load` never fired,
+ * and the map rendered as bare parchment: the CSS chart treatment paints the
+ * ground and the ruled grid whether or not a single tile arrives, so a totally
+ * blocked basemap looks like an empty map rather than a broken one.
+ *
+ * Everything else CARTO needs — vector tiles, glyphs, sprites — really is on
+ * `tiles.`, so the wildcard is doing real work too. Measured in Chromium
+ * against the exact `connect-src` production was serving, using
+ * `securitypolicyviolation` (CSP refuses before any connection, so the verdict
+ * needs no network): the apex BLOCKED, `tiles.json` and glyphs allowed.
+ *
+ * `csp-routes.test.ts` now resolves every URL `MmmMap.tsx` builds against this
+ * list under real host-source semantics. The test that was here asserted the
+ * list CONTAINED the wildcard string, which is true and was true throughout
+ * the outage.
+ */
 export const MAP_TILE_HOSTS = [
-  /* src/components/mmm/MmmMap.tsx — the real map. A wildcard because CARTO
-     spreads one basemap over several subdomains: the vector style comes from
-     the apex, its glyphs and sprites from `tiles.`, and the tiles themselves
-     from `tiles-a` … `tiles-d`. The map moved from raster to vector on
-     2026-09-03 and this line needed no change, which is the reason it is a
-     wildcard rather than four literals. */
+  /* The vector style document. */
+  'https://basemaps.cartocdn.com',
+  /* Its tiles, glyphs and sprites — `tiles.`, and `tiles-a` … `tiles-d`. */
   'https://*.basemaps.cartocdn.com',
 ] as const;
 
