@@ -36,6 +36,21 @@ import { fileURLToPath } from 'node:url';
 
 export const ZONE_NAME_DEFAULT = 'ihype.org';
 export const ADMIN_EMAIL_DEFAULT = 'admin@ihype.org';
+/**
+ * Every address the Access application admits. Mirrors `DEFAULT_ADMIN_EMAILS`
+ * in `src/lib/admin-allowlist.ts` — the edge gate and the app gate must name
+ * the same people, or an administrator the app accepts is stopped at the PIN
+ * page. `EDGE_GUARD_ADMIN_EMAIL` may be a comma-separated list.
+ */
+export const ADMIN_EMAILS_DEFAULT = [ADMIN_EMAIL_DEFAULT, 'staff@ihype.org'];
+
+/** Normalise one address or a comma-separated list into a de-duplicated array. */
+export function adminEmailList(value) {
+  const list = (Array.isArray(value) ? value : String(value ?? '').split(','))
+    .map((e) => String(e).trim().toLowerCase())
+    .filter((e) => e.includes('@'));
+  return list.length ? [...new Set(list)] : [...ADMIN_EMAILS_DEFAULT];
+}
 const API = 'https://api.cloudflare.com/client/v4';
 
 /**
@@ -80,7 +95,8 @@ export const RATE_LIMIT_RULES = [
  * Access redirect on an XHR is a broken page, not a login prompt. The app's
  * `isAdminSession()` still guards every one of those routes.
  */
-export function adminAccessApp(zoneName = ZONE_NAME_DEFAULT, adminEmail = ADMIN_EMAIL_DEFAULT) {
+export function adminAccessApp(zoneName = ZONE_NAME_DEFAULT, adminEmail = ADMIN_EMAILS_DEFAULT) {
+  const emails = adminEmailList(adminEmail);
   const domain = `${zoneName}/admin`;
   return {
     name: 'iHYPE admin',
@@ -95,7 +111,7 @@ export function adminAccessApp(zoneName = ZONE_NAME_DEFAULT, adminEmail = ADMIN_
         name: 'iHYPE admin (allow)',
         decision: 'allow',
         precedence: 1,
-        include: [{ email: { email: adminEmail } }],
+        include: emails.map((email) => ({ email: { email } })),
       },
     ],
   };
@@ -129,11 +145,12 @@ export function planRateLimitRules(existingRules, desired = RATE_LIMIT_RULES) {
   return plan;
 }
 
-/** Does an Access policy list already let the admin in? */
+/** Does an Access policy list already let EVERY listed admin in? */
 export function policyAllows(policies, adminEmail) {
-  return (policies ?? []).some((p) =>
+  const emails = adminEmailList(adminEmail);
+  return emails.every((email) => (policies ?? []).some((p) =>
     p.decision === 'allow'
-    && (p.include ?? []).some((inc) => inc?.email?.email?.toLowerCase() === adminEmail.toLowerCase()));
+    && (p.include ?? []).some((inc) => inc?.email?.email?.toLowerCase() === email)));
 }
 
 export function planAccessApp(existingApps, desired) {
@@ -303,7 +320,7 @@ async function main() {
   const accountId = env.CLOUDFLARE_ACCOUNT_ID;
   if (!token) fail('CLOUDFLARE_API_TOKEN is not set.');
   const zoneName = env.EDGE_GUARD_ZONE_NAME || ZONE_NAME_DEFAULT;
-  const adminEmail = env.EDGE_GUARD_ADMIN_EMAIL || ADMIN_EMAIL_DEFAULT;
+  const adminEmail = adminEmailList(env.EDGE_GUARD_ADMIN_EMAIL).join(', ');
 
   console.log(`Cloudflare edge guards — ${apply ? 'APPLYING' : 'dry run (pass --apply to make changes)'}`);
   await verifyToken(token);

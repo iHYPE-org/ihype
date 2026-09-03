@@ -1,22 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_ADMIN_EMAIL,
+  DEFAULT_ADMIN_EMAILS,
   adminAllowlist,
   isAllowedAdminEmail,
   normalizeEmail,
 } from '@/lib/admin-allowlist';
 
 describe('adminAllowlist', () => {
-  it('is admin@ihype.org by default', () => {
-    expect(adminAllowlist()).toEqual(['admin@ihype.org']);
+  it('is the two operator addresses by default', () => {
+    expect(adminAllowlist()).toEqual(['admin@ihype.org', 'staff@ihype.org']);
     expect(DEFAULT_ADMIN_EMAIL).toBe('admin@ihype.org');
+    expect(DEFAULT_ADMIN_EMAILS).toEqual(['admin@ihype.org', 'staff@ihype.org']);
   });
 
   it('falls back to the default rather than to an empty list', () => {
     // An empty allowlist locks everybody out of /admin, including the person
     // trying to fix it. Every one of these is a plausible bad env value.
     for (const raw of ['', '   ', ',,,', 'not-an-address', undefined, null]) {
-      expect(adminAllowlist(raw)).toEqual([DEFAULT_ADMIN_EMAIL]);
+      expect(adminAllowlist(raw)).toEqual([...DEFAULT_ADMIN_EMAILS]);
     }
   });
 
@@ -29,8 +31,8 @@ describe('adminAllowlist', () => {
 });
 
 describe('isAllowedAdminEmail', () => {
-  it('allows the documented address in any casing or padding', () => {
-    for (const value of ['admin@ihype.org', 'ADMIN@IHYPE.ORG', ' Admin@iHype.Org ']) {
+  it('allows both operator addresses in any casing or padding', () => {
+    for (const value of ['admin@ihype.org', 'ADMIN@IHYPE.ORG', ' Admin@iHype.Org ', 'staff@ihype.org', ' Staff@iHYPE.org ']) {
       expect(isAllowedAdminEmail(value)).toBe(true);
     }
   });
