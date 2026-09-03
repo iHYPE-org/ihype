@@ -1540,6 +1540,79 @@ html:has(.mmm-frame) {
 .mmm-like[data-active] { color: var(--accent-text); }
 
 .mmm-link-copy { flex-shrink: 0; padding: 10px 14px; }
+/* THE HYPE LINK, COMPACT. It sits above every ME panel, so its resting height
+   is a tax on Info, Settings and Tickets alike — it used to be ~340px whose
+   working part is one line. The link and Copy stay on one row at every width;
+   the explanation is a `<details>` that costs a 44px summary when shut.
+   Painted here rather than inline so themes reach it and `audit:retro` can see
+   it. */
+.mmm-hype-link { padding: 11px 12px; margin-bottom: 12px; }
+
+.mmm-hype-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 9px;
+  border-radius: 9px;
+  background: var(--bg-3);
+  border: 1px solid var(--hair-100);
+}
+/* The label is metadata on the row, not a heading above it — that heading was
+   a whole line of vertical space for two words. It drops below 360px, where
+   the URL and the button need the width more than the reader needs the name. */
+.mmm-hype-link-label {
+  flex: 0 0 auto;
+  /* 11px under DS8's mono-eyebrow exemption, which needs the mono family AND
+     tracking >= .14em declared together — `.mmm-eyebrow` tracks at .12em, so
+     inheriting alone puts this below the content floor. */
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: .16em;
+}
+@media (max-width: 360px) { .mmm-hype-link-label { display: none; } }
+
+.mmm-hype-link-meta {
+  margin: 8px 2px 0;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.mmm-hype-link-more { margin-top: 4px; }
+.mmm-hype-link-more > summary {
+  display: flex;
+  align-items: center;
+  /* The 44px floor holds on desktop too — this is a control. */
+  min-height: 44px;
+  padding: 0 2px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  cursor: pointer;
+  list-style: none;
+}
+.mmm-hype-link-more > summary::-webkit-details-marker { display: none; }
+.mmm-hype-link-more > summary::after {
+  content: '\25be';
+  margin-left: 6px;
+  transition: transform var(--duration-fast, .15s) var(--ease, ease);
+}
+.mmm-hype-link-more[open] > summary::after { transform: rotate(180deg); }
+.mmm-hype-link-more > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+.mmm-hype-link-body p {
+  margin: 0 2px 8px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink-3);
+}
+.mmm-hype-link-body p:last-child { margin-bottom: 4px; }
+
 .mmm-link-field {
   display: flex;
   align-items: center;

@@ -28,8 +28,12 @@
 
 /** Hosts the live map fetches tiles from. */
 export const MAP_TILE_HOSTS = [
-  // src/components/mmm/MmmMap.tsx — the real map. Raster tiles over a
-  // wildcard because the source rotates a./b./c./d. subdomains.
+  /* src/components/mmm/MmmMap.tsx — the real map. A wildcard because CARTO
+     spreads one basemap over several subdomains: the vector style comes from
+     the apex, its glyphs and sprites from `tiles.`, and the tiles themselves
+     from `tiles-a` … `tiles-d`. The map moved from raster to vector on
+     2026-09-03 and this line needed no change, which is the reason it is a
+     wildcard rather than four literals. */
   'https://*.basemaps.cartocdn.com',
 ] as const;
 

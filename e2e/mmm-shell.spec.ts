@@ -789,6 +789,26 @@ test.describe('Music · Map · Me shell', () => {
 
     test('the in-shell buy pane renders the real split and the sale card', async ({ page }) => {
       await page.goto(`/app/shows/${seeded.slug}`);
+
+      /* WHICH HALF OF THE PANE RENDERS DEPENDS ON WHETHER STRIPE IS
+         CONFIGURED, and the harness forwards a key only when the caller has
+         one — so this spec runs in both states and has to assert whichever it
+         is in. The pane offers a purchase form only when payment processing is
+         ready; when it is not, it says so instead, because the ticket route
+         answers that state 503 and a form that cannot complete is worse than
+         an honest notice. Pinning the sale card unconditionally is what made
+         this test fail the day that gate was added — it encoded one
+         environment rather than the rule. */
+      const saleReady = await page.locator('.mmm-show-sale').count() > 0;
+      if (!saleReady) {
+        await expect(page.getByText('Paid tickets · Coming soon')).toBeVisible();
+        await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
+        await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
+        await expect(page.getByText('Split locked at publish')).toBeVisible();
+        await expect(page.getByText('70 / 20 / 10 · iHYPE $0')).toBeVisible();
+        return;
+      }
+
       // Wait for the pane to SETTLE before counting anything. This route's
       // layout is async and the page streams, so mid-flight Next holds a copy
       // of the content in a hidden staging node and moves it into place with a
@@ -869,7 +889,10 @@ test.describe('Music · Map · Me shell', () => {
     const card = page.locator('.mmm-me-section:visible');
     await expect(card).toHaveCount(1);
     await expect(card).toHaveAttribute('aria-label', 'Profiles');
-    await expect(page.getByText(/Your HYPE link/i)).toHaveCount(0);
+    /* Anchored on the card's own class, not its words. Matching text made this
+       assertion catch an unrelated mention of the HYPE link elsewhere on ME —
+       a negative assertion has to name the thing it denies. */
+    await expect(page.locator('.mmm-hype-link')).toHaveCount(0);
   });
 });
 
@@ -893,7 +916,13 @@ test.describe('ME with a real profile', () => {
   test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
     await page.goto('/app/me');
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
-    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
+    await expect(page.locator('.mmm-hype-link')).toBeVisible();
+    /* The claim moved behind a disclosure when the card was made compact
+       (2026-09-03) — it sits above every ME panel, so its resting height is a
+       tax on all of them. The LINK stays visible; only the explanation folds.
+       Asserting it after opening keeps the claim pinned without pinning the
+       340px card back into place. */
+    await page.getByRole('group').filter({ hasText: 'How this earns' }).locator('summary').first().click();
     await expect(page.getByText(/Promoting needs no role and no signup/i).first()).toBeVisible();
   });
 
@@ -1013,7 +1042,7 @@ test.describe('ME with a real profile', () => {
     await page.goto('/app/me?role=fan');
     // Settled first, same reason as the HYPE-link test above.
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
-    await expect(page.getByText(/Your HYPE link/i).first()).toBeVisible();
+    await expect(page.locator('.mmm-hype-link')).toBeVisible();
     await expect(page.getByText(/Your page/i)).toHaveCount(0);
   });
 });
