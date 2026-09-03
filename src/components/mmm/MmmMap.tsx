@@ -122,6 +122,12 @@ const CARTO_BASEMAP_KEY = process.env.NEXT_PUBLIC_CARTO_BASEMAP_KEY
 
 const CARTO_STYLE_URL = `https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json?key=${CARTO_BASEMAP_KEY}`;
 
+/* How long the basemap gets before the map admits it has not arrived. Generous
+   against a slow phone connection — the style is ~104 KB before a single tile
+   — and it withdraws itself the moment `load` fires, so erring long costs a
+   member nothing and erring short would cry wolf on a train. */
+const BASEMAP_LOAD_DEADLINE_MS = 15_000;
+
 export function MmmMap({
   active,
   initialLayer,
@@ -168,6 +174,27 @@ export function MmmMap({
   useEffect(() => {
     if (!containerRef.current) return;
     let disposed = false;
+    /* A basemap that never arrives must SAY SO rather than draw as an empty
+       chart. `failed` used to mean only "the maplibre bundle would not load",
+       so the one failure that actually happened in production — our own CSP
+       refusing the style document — presented as a blank map with no message
+       at all, and the owner had to report it. The whole ground and its ruled
+       grid are painted by `mmm.css` over the canvas, so a totally dead basemap
+       and a genuinely empty region look identical.
+
+       `load` is the signal, because MapLibre fires it once the style and the
+       first tiles are up and never fires it when the style cannot be fetched
+       (measured 2026-09-03: with tiles unreachable it had not fired after 40
+       seconds — the note on the geolocation effect below records the same
+       observation). A deadline rather than an error listener because a style
+       refused by CSP, a DNS failure and a dropped connection are one thing to
+       a member and arrive as three different events.
+
+       SELF-CORRECTING ON PURPOSE: a slow connection that finishes at 20s
+       clears the line and shows the map. So this is "not yet", never a claim
+       the map is permanently broken, and being wrong costs one sentence that
+       then withdraws itself. */
+    let basemapDeadline: ReturnType<typeof setTimeout> | undefined;
     void import('maplibre-gl').then((maplibre) => {
       if (disposed || !containerRef.current) return;
       const camera = SCOPE_CAMERAS.county;
@@ -201,10 +228,20 @@ export function MmmMap({
            past that MapLibre overzooms — labels stay crisp, geometry gains no
            detail. Measured against the live endpoint 2026-09-03.
 
-           CSP needed nothing: the style host and the `tiles-a`…`tiles-d` tile
-           hosts are all matched by the `https://*.basemaps.cartocdn.com`
-           wildcard already in `connect-src` (see `src/lib/csp-routes.ts`), and
-           `worker-src blob:` was already there for MapLibre.
+           CSP DID NEED SOMETHING, AND THIS COMMENT SAID IT DID NOT. That was
+           the outage: the raster tiles came from `a.`…`d.` subdomains, the
+           vector STYLE comes from the apex `basemaps.cartocdn.com`, and a CSP
+           wildcard stands in for one or more labels — so
+           `https://*.basemaps.cartocdn.com` never matched it. Our own policy
+           refused the style, MapLibre got none, `load` never fired, and the
+           map drew as bare parchment for every member for about nine hours.
+           The apex is now its own entry in `MAP_TILE_HOSTS`
+           (`src/lib/csp-routes.ts`) and `csp-routes.test.ts` resolves every
+           URL built in this file against that list under real host-source
+           rules. `worker-src blob:` really was already there for MapLibre.
+
+           The tiles, glyphs and sprites the style then reaches for are all on
+           `tiles.`, so the wildcard is doing real work alongside it.
 
            `voyager`, not `positron` and not `dark-matter`: positron is
            deliberately washed out and the chart treatment renders it as blank
@@ -219,7 +256,15 @@ export function MmmMap({
       map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
-      map.on('load', () => { setReady(true); bump(); });
+      basemapDeadline = setTimeout(() => {
+        if (!disposed) setFailed(true);
+      }, BASEMAP_LOAD_DEADLINE_MS);
+      map.on('load', () => {
+        clearTimeout(basemapDeadline);
+        setFailed(false);
+        setReady(true);
+        bump();
+      });
       map.on('move', bump);
       map.on('moveend', bump);
       map.on('resize', bump);
@@ -233,6 +278,7 @@ export function MmmMap({
     }).catch(() => setFailed(true));
     return () => {
       disposed = true;
+      clearTimeout(basemapDeadline);
       mapRef.current?.remove();
       mapRef.current = null;
     };
