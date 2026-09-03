@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-ac8ba66a';
+const CACHE_VERSION = 'ihype-7ac13dba';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
@@ -17,7 +17,14 @@ const STATIC_ASSETS = [
 
 const CORE_PAGES = [
   '/',
-  '/hype',
+  /* `/hype` was here and is REMOVED (2026-09-03). It is not a page — it is a
+     307 to `/` (next.config.mjs), which is already the entry above it. Two
+     things are wrong with precaching a redirect. The copy is a duplicate of
+     the homepage stored under a second key, so it buys nothing; and the
+     response it stores has `redirected: true`, which `FetchEvent.respondWith`
+     refuses for a NAVIGATION request — so serving it offline fails with a
+     TypeError instead of rendering, the one situation this cache exists for.
+     Only real, non-redirecting pages belong in this list; a test asserts it. */
   // `/tickets` used to be precached here. It is a signed-in page listing one
   // account's tickets, so precaching it stored one person's HTML for the next
   // person on a shared device (security sweep, 2026-09-02). Individual ticket

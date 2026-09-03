@@ -5,6 +5,8 @@ import { log } from '@/lib/logger';
 import { findStation, stationWhere, type StationContext } from '@/lib/stations';
 import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
 import { loadRequestSignals } from '@/lib/request-signals';
+import { resolveWeightedAdBreakClips } from '@/lib/ad-clip-selection';
+import { interleaveStationAds, type StationItemLike } from '@/lib/station-breaks';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +21,19 @@ export type StationTrack = {
   artworkUrl: string | null;
   mediaUrl: string | null;
   durationSecs: number | null;
+  /**
+   * Set only on an AD slot, and only for a real purchased spot (`mkt_<Ad.id>`).
+   * The player bills the advertiser off this: see `GlobalMediaPlayer`.
+   *
+   * This is what makes a paid campaign audible. Until 2026-09-03 the ad
+   * interleaving lived only behind `getStationState()` → `GET /api/radio/station`,
+   * and NOTHING called that route — `src/app/radio` was deleted with the show
+   * creator, and the Music shell has always read THIS endpoint, which returned
+   * tracks and nothing else. So an advertiser could pass vetting, pay, and have
+   * their spot played by nobody. Measured by the acceptance walk: an APPROVED
+   * campaign, a station serving 0 breaks.
+   */
+  adClipId?: string;
   /** Why this track is in this station, for the viewer. Derived from the
    *  context the station was already resolved with, so it costs no extra
    *  query — see `reasonFor` below. */
@@ -54,6 +69,57 @@ function reasonFor(
     case 'friends': return 'Shared by someone you follow';
     default: return station.kind === 'friends' ? 'Shared by someone you follow' : 'In this station';
   }
+}
+
+/**
+ * Mixes real ad breaks into one page of a station, using the SAME placement
+ * rules the always-on station has always used (`interleaveStationAds`: never
+ * first, never last, and never zero breaks on a rotation long enough to hold
+ * one). Sharing that helper is the point — two placement policies would drift.
+ *
+ * **Real spots only.** `resolveWeightedAdBreakClips()` falls back to the
+ * built-in placeholder catalogue (`0x…` clip ids) when no campaign has
+ * inventory, which is the right fail-soft for a fixture and the wrong one for
+ * a listener: a member would hear "Local spot A" and no advertiser would be
+ * billed. No inventory therefore means no break.
+ *
+ * Failure is silent by design: an ad lookup that throws must not take the
+ * station down. A station with no ads still plays.
+ */
+async function withAdBreaks(tracks: StationTrack[]): Promise<StationTrack[]> {
+  if (tracks.length < 2) return tracks;
+  const clips = (await resolveWeightedAdBreakClips().catch(() => []))
+    .filter((clip) => clip.clipId.startsWith('mkt_'));
+  if (!clips.length) return tracks;
+
+  /* A track with no stored audio keeps its place (the client drops it) but
+     contributes no time, so it cannot pull a break forward. */
+  const items: StationItemLike[] = tracks.map((track) => ({
+    hexId: track.hexId,
+    title: track.title,
+    url: track.mediaUrl ?? '',
+    artistName: track.artistName,
+    artistSlug: track.artistSlug,
+    artworkUrl: track.artworkUrl,
+    durationSecs: track.mediaUrl ? track.durationSecs ?? 0 : 0,
+  }));
+
+  const byHexId = new Map(tracks.map((track) => [track.hexId, track]));
+  return interleaveStationAds(items, clips).map((item) => {
+    if (!item.adClipId) return byHexId.get(item.hexId) ?? null;
+    return {
+      id: item.adClipId,
+      hexId: item.adClipId,
+      title: item.title,
+      artistName: item.artistName,
+      artistSlug: '',
+      artworkUrl: null,
+      mediaUrl: item.url,
+      durationSecs: item.durationSecs,
+      adClipId: item.adClipId,
+      reason: 'Advertisement',
+    } satisfies StationTrack;
+  }).filter((track): track is StationTrack => track !== null);
 }
 
 /**
@@ -126,7 +192,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
 
     const hasMore = rows.length > limit;
     const page = hasMore ? rows.slice(0, limit) : rows;
-    const tracks: StationTrack[] = page.map((row) => ({
+    const musicOnly: StationTrack[] = page.map((row) => ({
       id: row.id,
       hexId: row.hexId,
       title: row.title,
@@ -139,11 +205,17 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       reason: reasonFor(row.profileId, row.profile.city, station, context),
     }));
 
+    /* The cursor is the last MUSIC row, resolved before any ad is mixed in:
+       an ad slot is not a database row and must never become a page cursor. */
+    const nextCursor = hasMore ? page[page.length - 1]?.id ?? null : null;
+
+    const tracks = await withAdBreaks(musicOnly);
+
     return NextResponse.json(
       {
         station: { slug: station.slug, kind: station.kind, title: station.title, subtitle: station.subtitle },
         tracks,
-        nextCursor: hasMore ? page[page.length - 1]?.id ?? null : null,
+        nextCursor,
       },
       { headers: { 'Cache-Control': 'private, no-store' } },
     );

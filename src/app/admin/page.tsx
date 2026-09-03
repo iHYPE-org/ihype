@@ -367,7 +367,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <Link href="/admin/users">{t('adminPage.idxUsers', 'Users & roles')}</Link>
         <Link href="/admin/moderation">{t('adminPage.idxModeration', 'Moderation')}</Link>
         <Link href="/admin/review?tab=verifications">{t('adminPage.idxVerifications', 'Verifications')}</Link>
-        <Link href="/admin/media">{t('adminPage.idxHeldTracks', 'Held tracks')}</Link>
+        {/* `/admin/media` has never existed. Held tracks are moderation rows
+            filtered to tracks — the same href `admin-workbench.ts` gives the
+            queue it renders directly above this index. */}
+        <Link href="/admin/moderation?type=track">{t('adminPage.idxHeldTracks', 'Held tracks')}</Link>
         <Link href="/admin/ads">{t('adminPage.idxAds', 'Ad campaigns')}</Link>
         <Link href="/admin/finance">{t('adminPage.idxFinance', 'Finance')}</Link>
         <Link href="/admin/tickets">{t('adminPage.idxTickets', 'Events & tickets')}</Link>
@@ -380,7 +383,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <Link href="/admin/community">{t('adminPage.idxCommunity', 'Community')}</Link>
         <Link href="/admin/playlists">{t('adminPage.idxPlaylists', 'Playlists')}</Link>
         <Link href="/admin/authorizations">{t('adminPage.idxDevices', 'Devices & holds')}</Link>
-        <Link href="/admin/invite">{t('adminPage.idxInvites', 'Invite codes')}</Link>
+        {/* `/admin/invite` has never existed either. Minting lives in a
+            section of THIS page, so the index scrolls to it. */}
+        <Link href="#invite-codes">{t('adminPage.idxInvites', 'Invite codes')}</Link>
         <Link href="/admin/audit">{t('adminPage.idxAudit', 'Audit log')}</Link>
       </nav>
 
@@ -938,7 +943,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         )}
       </section>
 
-      <section className="section">
+      <section className="section" id="invite-codes">
         <h2>{t('adminPage.inviteCodes', 'Invite Codes')}</h2>
         {/* The only door, while `invite_code_sharing` is off: a request comes
             in through the workbench queue above, and the operator issues a

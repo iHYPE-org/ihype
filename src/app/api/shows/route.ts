@@ -218,11 +218,22 @@ export async function POST(request: NextRequest) {
     const canManagePromoterProfile = Boolean(
       promoterProfile && (isAdmin || promoterProfile.ownerId === session.user.id)
     );
-    const isPromoterVenueDraft = Boolean(
+    const canManageHeadlinerProfile = Boolean(
+      headlinerProfile && (isAdmin || headlinerProfile.ownerId === session.user.id)
+    );
+    /* An event REQUEST at someone else's venue: a private, unticketed DRAFT the
+       venue reviews. This used to be open to promoters only, which left an
+       artist with no way to propose a date at all — the picker searches every
+       venue and the publish then 403'd, so the whole creator flow dead-ended
+       for the role the product is built around. An artist proposing themselves
+       (they own the headliner profile) is the same act as a promoter proposing
+       an act, under the same three restrictions: draft, unticketed, and the
+       venue owner decides. */
+    const isRequestedVenueDraft = Boolean(
       body.venueProfileId &&
         body.status === 'DRAFT' &&
         !body.isTicketed &&
-        canManagePromoterProfile
+        (canManagePromoterProfile || canManageHeadlinerProfile)
     );
 
     if (body.venueProfileId) {
@@ -230,7 +241,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Venue profile not found' }, { status: 404 });
       }
 
-      if (!canManageVenueProfile && !isPromoterVenueDraft) {
+      if (!canManageVenueProfile && !isRequestedVenueDraft) {
         return NextResponse.json(
           { error: 'Only the venue owner can schedule events for this venue. Promoters can save draft event requests for venue review.' },
           { status: 403 }

@@ -52,7 +52,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
 
   const show = await db.show.findUnique({
     where: { id: showId },
-    select: { id: true, slug: true, title: true, status: true, venueProfile: { select: { ownerId: true, name: true } } },
+    select: {
+      id: true, slug: true, title: true, status: true,
+      isTicketed: true, ticketingOpensAt: true,
+      venueProfile: { select: { ownerId: true, name: true } },
+    },
   });
   if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
@@ -83,7 +87,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
   const allAccepted = remainingSlots.length > 0 && remainingSlots.every((s) => s.status === 'ACCEPTED');
 
   if (allAccepted && show.status === 'DRAFT') {
-    await db.show.update({ where: { id: showId }, data: { status: 'SCHEDULED' } });
+    /* Opening sales is part of locking the booking, not a separate act. The
+       notification below has always said the show is "now scheduled and on
+       sale" — and it was not: `isTicketingOpen()` reads `ticketingOpensAt`,
+       nothing here wrote it, and the purchase route now refuses a closed sale
+       outright rather than charging a buyer who was told they would be charged
+       later. An organiser who set their own future opening date keeps it. */
+    await db.show.update({
+      where: { id: showId },
+      data: {
+        status: 'SCHEDULED',
+        ...(show.isTicketed && !show.ticketingOpensAt ? { ticketingOpensAt: new Date() } : {}),
+      },
+    });
     if (show.venueProfile?.ownerId) {
       await notifyUser(show.venueProfile.ownerId, {
         type: 'lineup_split_locked',

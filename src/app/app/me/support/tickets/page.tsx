@@ -52,7 +52,7 @@ export default async function SupportTicketsPage() {
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
       <Link
-        href="/support"
+        href="/app/me/info"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
           fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)',
@@ -62,7 +62,7 @@ export default async function SupportTicketsPage() {
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="15 18 9 12 15 6" />
         </svg>
-        {tr('supportTicketsPage.backToSupport', 'Back to Support')}
+        {tr('supportTicketsPage.backToInfo', 'Back to Info')}
       </Link>
 
       <span style={{
@@ -86,8 +86,10 @@ export default async function SupportTicketsPage() {
           border: '1px solid var(--line)', borderRadius: 'var(--radius-lg)', background: 'var(--bg2)',
           padding: '30px 24px', textAlign: 'center', color: 'var(--ink-a65)', fontSize: '0.9375rem',
         }}>
-          {tr('supportTicketsPage.emptyState', "You haven't sent us anything yet.")}{' '}
-          <Link href="/support" style={{ color: 'var(--role-venue)' }}>{tr('supportTicketsPage.contactSupport', 'Contact support')}</Link>.
+          {/* The composer is directly above, so this said "Contact support" and
+              linked out of the shell to the legacy /support page — a one-way
+              door out of MMM to reach a form already on this screen. */}
+          {tr('supportTicketsPage.emptyState', "You haven't sent us anything yet. Use the form above and it will appear here.")}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

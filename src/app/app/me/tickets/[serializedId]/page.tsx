@@ -4,6 +4,7 @@ import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { TicketVerificationCard } from '@/components/TicketVerificationCard';
 import { TicketReassignmentForm } from '@/components/TicketReassignmentForm';
 import { TicketTransferPanel } from '@/components/TicketTransferPanel';
+import { PushPrimerOnTicket } from '@/components/PushPrimerOnTicket';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
@@ -94,6 +95,10 @@ export default async function TicketPage({
   ];
 
   return (
+    <>
+      {/* The designed moment for the push ask: a fan holding a ticket. See the
+          component — nothing else in the app ever called requestPermissions. */}
+      <PushPrimerOnTicket />
     <div className="mmm-show" data-surface="ticket">
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 460, marginInline: 'auto' }}>
 
@@ -247,5 +252,6 @@ export default async function TicketPage({
 
       </div>
     </div>
+    </>
   );
 }

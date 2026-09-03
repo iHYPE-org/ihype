@@ -317,8 +317,12 @@ const nextConfig = {
         permanent: false
       },
       {
+        /* `/forgot` has never existed and cannot: iHYPE has no password, so
+           there is nothing to forget. Sign-in IS the recovery path — a magic
+           link to the address on the account, or the passkey. This alias used
+           to land on a 404. */
         source: '/ihype-forgot.html',
-        destination: '/forgot',
+        destination: '/login',
         permanent: false
       },
       {

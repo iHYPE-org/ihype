@@ -30,6 +30,8 @@ export type RateLimitRule = {
 export const RATE_LIMIT_RULES: RateLimitRule[];
 
 export type AccessPolicy = {
+  /** Cloudflare's own id, present on a policy read back from the API. */
+  id?: string;
   name?: string;
   decision: string;
   precedence?: number;
@@ -58,6 +60,11 @@ export function planRateLimitRules(
 ): { create: RateLimitRule[]; update: RateLimitRule[]; unchanged: RateLimitRule[] };
 
 export function policyAllows(policies: AccessPolicy[] | null | undefined, adminEmail: string | readonly string[]): boolean;
+
+export function planAccessPolicy(
+  policies: AccessPolicy[] | null | undefined,
+  desired: AccessPolicy,
+): { action: 'unchanged' | 'update' | 'create'; id: string | null; policy: AccessPolicy };
 
 export function planAccessApp(
   existingApps: AccessApp[] | null | undefined,

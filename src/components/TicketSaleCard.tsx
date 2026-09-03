@@ -220,9 +220,15 @@ export function TicketSaleCard({
           <strong>{remainingTickets === null ? t('ticketSaleCard.openLabel', 'Open') : remainingTickets}</strong>
           {t('ticketSaleCard.remainingLabel', 'Remaining')}
         </div>
+        {/* "Charge state" described a reserve-then-capture model the purchase
+            path does not implement: every sale goes through Stripe Checkout and
+            is captured on `payment_intent.succeeded`. What this figure can
+            honestly say is whether tickets are ON SALE — which is what
+            `isTicketingOpen()` actually decides, and what `showRowTrail()`
+            already says on every row that links here. */}
         <div className="stat">
-          <strong>{ticketingOpen ? t('ticketSaleCard.openNowLabel', 'Open now') : ticketingOpensAtLabel ?? t('ticketSaleCard.waitingForVenueOpenLabel', 'Waiting for venue open')}</strong>
-          {t('ticketSaleCard.chargeStateLabel', 'Charge state')}
+          <strong>{ticketingOpen ? t('ticketSaleCard.onSaleNowLabel', 'On sale now') : t('ticketSaleCard.notOnSaleYetLabel', 'Not yet')}</strong>
+          {t('ticketSaleCard.saleStateLabel', 'Ticket sales')}
         </div>
       </div>
 
@@ -289,6 +295,18 @@ export function TicketSaleCard({
 
       {remainingTickets === 0 ? (
         <div className="empty">{t('ticketSaleCard.soldOut', 'This ticket allocation is sold out.')}</div>
+      ) : !ticketingOpen ? (
+        /* Tickets that are not on sale cannot be bought, and the card used to
+           offer the whole purchase form anyway with a sentence promising the
+           charge would come later. It would not: `POST /api/shows/[showId]/
+           tickets` opens a Stripe Checkout session and the card is charged
+           there and then. The route now refuses a closed sale with the same
+           reason, so the two cannot disagree. */
+        <div className="empty">
+          {ticketingOpensAtLabel
+            ? t('ticketSaleCard.notOnSaleWithDate', 'Tickets are not on sale yet. The organiser opens sales on {date}.').replace('{date}', ticketingOpensAtLabel)
+            : t('ticketSaleCard.notOnSale', 'Tickets are not on sale yet. The organiser opens sales for this event; check back, or follow the venue to hear when they do.')}
+        </div>
       ) : !currentFan ? (
         <div className="empty">
           {t('ticketSaleCard.signInPrompt', 'Sign in with a fan account to buy tickets securely through Stripe.')}
@@ -445,12 +463,12 @@ export function TicketSaleCard({
             </div>
           </div>
 
+          {/* One sentence, no branch. The three it replaces described a
+              reserve-then-charge-later flow that no code path implements —
+              two of them are now unreachable anyway, since the form only
+              renders once sales are open. */}
           <div className="empty">
-            {ticketingOpen
-              ? t('ticketSaleCard.openNotice', 'This event is officially open. Your stored payment token will be charged now and QR tickets will be emailed immediately.')
-              : ticketingOpensAtLabel
-                ? t('ticketSaleCard.notOpenYetWithDateNotice', 'This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event ({date}).').replace('{date}', ticketingOpensAtLabel)
-                : t('ticketSaleCard.notOpenYetNotice', 'This event is not open yet. Your quantity will be reserved now, then charged to your stored token when the venue opens the event.')}
+            {t('ticketSaleCard.checkoutNotice', 'Checkout is handled by Stripe. Your card is charged when you complete it, and your QR tickets are emailed as soon as the payment settles.')}
           </div>
 
           {/* Bot check. Usually invisible — Turnstile only shows an interactive
@@ -465,9 +483,9 @@ export function TicketSaleCard({
           <div className="cta-row" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
             {/* The reference's CTA carries the amount ("Pay $18.82"): the
                 number on the button is the number Stripe will charge, so a
-                buyer never approves a figure they have not seen. Reserve mode
-                keeps its own verb — a reservation charges later, and "Pay"
-                on it would claim something that is not yet true. */}
+                buyer never approves a figure they have not seen. There is no
+                longer a second, "Continue to Stripe" verb for a closed sale —
+                a closed sale renders no form at all. */}
             <button
               className="button"
               disabled={pending || awaitingTurnstile}
@@ -475,12 +493,8 @@ export function TicketSaleCard({
               type="submit"
             >
               {pending
-                ? ticketingOpen
-                  ? t('ticketSaleCard.chargingButton', 'Charging...')
-                  : t('ticketSaleCard.reservingButton', 'Reserving...')
-                : ticketingOpen
-                  ? `${t('ticketSaleCard.payButton', 'Pay')} ${formatCurrencyFromCents(preview.totalChargeCents)}`
-                  : t('ticketSaleCard.continueToStripeButton', 'Continue to Stripe')}
+                ? t('ticketSaleCard.chargingButton', 'Charging...')
+                : `${t('ticketSaleCard.payButton', 'Pay')} ${formatCurrencyFromCents(preview.totalChargeCents)}`}
             </button>
             <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
               {t('ticketSaleCard.stripeCaption', 'Stripe · split frozen at publish')}

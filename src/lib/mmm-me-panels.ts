@@ -61,7 +61,7 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        First, not last: everything below is reference material a member reads
        once, and this is the row someone opens Info to find when something has
        actually gone wrong. */
-    { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support' },
+    { label: 'Support', detail: 'Get help, report a problem, or check a request you filed', href: '/app/me/support/tickets' },
     { label: 'The charter', detail: '70% artist · 20% venue · 10% promoters · $0 iHYPE', href: '/app/me/info/charter' },
     { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
     { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },
