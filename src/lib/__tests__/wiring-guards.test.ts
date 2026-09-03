@@ -229,3 +229,26 @@ describe('public media listings share one release rule', () => {
     expect(notListings).toEqual([]);
   });
 });
+
+/* ── The basemap must be keyed, and nothing will tell you if it is not ─────
+   CARTO began requiring a key on its basemaps, and an unkeyed request does not
+   fail: it answers 200 with a valid PNG carrying an "API KEY REQUIRED"
+   watermark. There is no error, no 4xx and no log line — the map just looks
+   slightly wrong. Measured 2026-09-03: 33,863 bytes unkeyed against 35,505
+   keyed for the same tile. The parameter is `key`; `api_key` is accepted and
+   ignored, which fails the same silent way. */
+describe('the basemap tiles are keyed', () => {
+  const mapFile = 'src/components/mmm/MmmMap.tsx';
+
+  it('never builds a cartocdn tile URL without a key', () => {
+    const src = code(mapFile);
+    const urls = [...src.matchAll(/https:\/\/[^'"`\s]*basemaps\.cartocdn\.com[^'"`\s]*/g)].map((m) => m[0]);
+    expect(urls.length, 'no tile URL found — has the basemap moved?').toBeGreaterThan(0);
+    const unkeyed = urls.filter((u) => !/[?&]key=/.test(u));
+    expect(unkeyed, 'an unkeyed CARTO tile is served watermarked, not refused').toEqual([]);
+  });
+
+  it('uses `key`, not the `api_key` CARTO silently ignores', () => {
+    expect(code(mapFile)).not.toMatch(/basemaps\.cartocdn\.com[^'"`\s]*[?&]api_key=/);
+  });
+});

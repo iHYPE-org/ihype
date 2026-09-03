@@ -89,6 +89,32 @@ const SEARCH_PLACEHOLDER: Record<MapLayer, string> = {
  * maplibre Markers, because a Marker owns its own transform and would fight the
  * de-collision offset.
  */
+/* CARTO now requires a key on its basemaps, and REFUSING is not how it tells
+   you: an unkeyed request still answers 200 with a valid PNG, and the tile
+   simply carries an "API KEY REQUIRED" watermark. So this does not surface as
+   a broken map or an error in any log — it surfaces as a map that looks
+   slightly wrong, which is the kind of thing that ships for months. Measured
+   2026-09-03: the same tile is 33,863 bytes unkeyed and 35,505 keyed.
+
+   The parameter is `key`, not `api_key` — the latter is accepted and ignored,
+   which fails exactly as silently. The `a`/`b`/`c`/`d` shard subdomains still
+   work, so only the query string changes.
+
+   THE KEY IS PUBLIC BY CONSTRUCTION and committing it is deliberate. It is
+   fetched by the browser on every tile, so it ships in the client bundle no
+   matter where it is stored — an env var would move it out of git while
+   changing nothing about who can read it, at the cost of a map that silently
+   returns to watermarks the first time someone deploys without setting it.
+   What actually protects it is a domain restriction on CARTO's side, not
+   secrecy here. `NEXT_PUBLIC_CARTO_BASEMAP_KEY` overrides it so the key can be
+   rotated without a code change. */
+const CARTO_BASEMAP_KEY = process.env.NEXT_PUBLIC_CARTO_BASEMAP_KEY
+  || 'cb1_2uct_1_4f4a36fe2c256aa044364a6f';
+
+const CARTO_TILE_URLS = ['a', 'b', 'c', 'd'].map(
+  (shard) => `https://${shard}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png?key=${CARTO_BASEMAP_KEY}`,
+);
+
 export function MmmMap({
   active,
   initialLayer,
@@ -171,10 +197,7 @@ export function MmmMap({
                    voyager already has cream land, tan blocks and blue water —
                    most of the way to a vintage chart before any filter. Note
                    it lives under `rastertiles/`, unlike the other two. */
-                'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-                'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-                'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
-                'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}@2x.png',
+                ...CARTO_TILE_URLS,
               ],
               tileSize: 256,
               attribution: '© OpenStreetMap · CARTO',
@@ -331,7 +354,7 @@ export function MmmMap({
      control that no longer exists — the layer is the dock dial's now, and a dial
      names one station at full size with nothing to scroll. */
 
-  const flownHome = useRef(false);
+const flownHome = useRef(false);
   /**
    * Ask the browser where we are, and fly there when it answers.
    *
