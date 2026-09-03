@@ -1,5 +1,22 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readdirSync } from 'node:fs';
+
+/* Source with comments removed. Every guard in this file matches on CODE, and
+   three separate versions of these checks passed while reading an explanatory
+   comment that merely mentioned the thing they were meant to prove. A comment
+   is not coverage — strip first, then match. */
+function code(file: string): string {
+  return readFileSync(file, 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+}
+
+function listFiles(dir: string): string[] {
+  return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+    e.isDirectory() ? listFiles(`${dir}/${e.name}`) : e.name.endsWith('.ts') ? [`${dir}/${e.name}`] : [],
+  );
+}
 
 /**
  * Every scheduled job is actually scheduled, and every job it names exists.
@@ -137,19 +154,78 @@ describe('the show page sells the same way on both copies', () => {
     'src/app/app/shows/[slug]/page.tsx',
   ];
 
-  /* Comments are stripped before matching. The first version of this guard
-     did not, and passed while reading the explanatory comment beside the very
-     gate it was meant to prove — caught by deleting the gate and watching it
-     stay green. A comment is not coverage. */
-  const code = (f: string) => readFileSync(f, 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
-    .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+  it('derives the money from one place in both copies', () => {
+    /* The public copy painted its 70/20/10 bar with `price * (pct/100)` and
+       `toFixed(2)` — three independent roundings of a float, disagreeing with
+       the integer-cent helper (and so with the payout entries) by a cent at
+       ordinary prices. Both copies read `splitFaceValueCents` now. */
+    const handRolled = pages.filter((f) => !/\bsplitFaceValueCents\b/.test(code(f)));
+    expect(
+      handRolled,
+      'this copy computes the split itself — use splitFaceValueCents, which the payout entries follow',
+    ).toEqual([]);
+  });
 
   it('gates the sale on payment readiness in both copies', () => {
-    const ungated = pages.filter((f) => !code(f).includes('isPaymentProcessingConfigured'));
+    const ungated = pages.filter((f) => !/\bisPaymentProcessingConfigured\b/.test(code(f)));
     expect(
       ungated,
       'this copy offers a purchase form the ticket route answers 503 to — see the public copy for the notice to render instead',
     ).toEqual([]);
+  });
+});
+
+/* ── One release rule, not fourteen ────────────────────────────────────────
+   Whether a track may be shown publicly is `releasedMediaWhere()`: published
+   AND its publish moment unset or past. A listing that writes its own version
+   serves the states the release pipeline exists to hide — a HELD upload the
+   copyright scan flagged, or an unannounced release.
+
+   The free-use crate had `{ isPublished: true }` inline, dropping the
+   `publishAt` half, and was the only public listing of the fourteen not
+   reading the helper.
+
+   WHAT THIS CHECKS, AND WHAT IT DOES NOT. It pins an explicit list: each of
+   these surfaces must read the helper. Two heuristic versions came first and
+   both were wrong in ways worth recording — one flagged `data:` writes and
+   `select:` projections that merely share the syntax (a guard that cries wolf
+   is a guard someone switches off), and the next could not see through the
+   real bug's own shape, a filter assigned to a variable and spread into
+   `where`, so it passed while the defect was reinstated. A list cannot be
+   fooled by either. Its cost is that a NEW public listing is not covered until
+   it is added here, which is the honest trade. */
+describe('public media listings share one release rule', () => {
+  const publicListings = [
+    'src/app/api/artist-media/free-use/route.ts',
+    'src/app/api/charts/route.ts',
+    'src/app/api/discover/seeds/route.ts',
+    'src/app/api/media-listens/route.ts',
+    'src/app/api/profile/[slug]/route.ts',
+    'src/app/api/public-media/[hexId]/route.ts',
+    'src/app/api/radio/route.ts',
+    'src/app/api/recommend/route.ts',
+    'src/app/api/search/route.ts',
+    'src/app/api/shows/[showId]/media/[hexId]/route.ts',
+    'src/lib/radioStation.ts',
+    /* Delegates: its where-clause is `stationWhere()`, which composes
+       `releasedMediaWhere` in src/lib/stations.ts. Listing the route rather
+       than the builder keeps this list to surfaces that actually serve rows. */
+    'src/app/api/stations/[slug]/tracks/route.ts',
+  ];
+
+  const readsTheRule = (f: string) => /\b(releasedMediaWhere|stationWhere)\b/.test(code(f));
+
+  it('reads releasedMediaWhere on every public listing', () => {
+    const handRolled = publicListings.filter((f) => !readsTheRule(f));
+    expect(
+      handRolled,
+      'use releasedMediaWhere() — an inline isPublished check omits the publishAt half',
+    ).toEqual([]);
+  });
+
+  it('names only files that really list media', () => {
+    // A stale entry would pass forever while guarding nothing.
+    const notListings = publicListings.filter((f) => !/artistMediaAsset\.(findMany|findFirst)/.test(code(f)));
+    expect(notListings).toEqual([]);
   });
 });

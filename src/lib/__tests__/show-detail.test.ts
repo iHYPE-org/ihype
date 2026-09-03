@@ -122,3 +122,35 @@ describe('splitFaceValueCents', () => {
     expect(splitFaceValueCents(1800, { artist: 0, venue: 0, promoter: 0 })).toBeNull();
   });
 });
+
+/* The float version this replaced, kept so the test states what it is testing
+   AGAINST: three independent roundings of a dollar float, which is what
+   `/shows/[slug]` painted its split bar with until 2026-09-03. */
+function floatSplitDollars(faceValueCents: number, pct: number): string {
+  return ((faceValueCents / 100) * (pct / 100)).toFixed(2);
+}
+
+describe('the split a reader is shown is the split that is paid', () => {
+  const charter = { artist: 70, venue: 20, promoter: 10 };
+
+  it('never disagrees with the payout arithmetic, at any price', () => {
+    const disagreements: string[] = [];
+    for (let cents = 100; cents <= 15000; cents += 1) {
+      const shares = splitFaceValueCents(cents, charter)!;
+      // What the reader sees must sum to exactly what they are charged.
+      if (shares.artist + shares.venue + shares.promoter !== cents) {
+        disagreements.push(`${cents}c does not sum`);
+      }
+    }
+    expect(disagreements).toEqual([]);
+  });
+
+  it('is why the float version had to go — it differs on ordinary prices', () => {
+    /* $19.95 is the case that made this concrete: the artist row read $13.96
+       against the $13.97 actually paid. If this ever stops differing the float
+       version is no longer a hazard and this test has lost its subject. */
+    const shares = splitFaceValueCents(1995, charter)!;
+    expect((shares.artist / 100).toFixed(2)).toBe('13.97');
+    expect(floatSplitDollars(1995, 70)).toBe('13.96');
+  });
+});

@@ -34,7 +34,7 @@ import { ShowTabs } from '@/components/ShowTabs';
 import { ShowComments } from '@/components/ShowComments';
 /* Shared with the shell copy of this page — see the module header for what had
    already drifted between the two. */
-import { canViewShow, isTicketingOpen } from '@/lib/show-detail';
+import { canViewShow, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
 import { buildShowJsonLd } from '@/lib/show-jsonld';
 
 const getShowMeta = cache((slug: string) =>
@@ -333,6 +333,10 @@ export default async function ShowDetailPage({
   const date = show.startsAt ? new Date(show.startsAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
   const time = show.startsAt ? new Date(show.startsAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
   const price = show.isTicketed ? show.ticketPriceCents / 100 : 0;
+  /* Resolved once, from the same module the shell copy reads, so the two pages
+     cannot report different money for one show. */
+  const ticketSplits = show.isTicketed ? resolveShowSplits(show) : null;
+  const faceSplit = ticketSplits ? splitFaceValueCents(show.ticketPriceCents, ticketSplits) : null;
   const sold  = show.ticketsSoldCount || 0;
   const cap   = show.ticketCapacity ?? null;
   const pct   = cap ? Math.round((sold / cap) * 100) : 0;
@@ -447,19 +451,28 @@ export default async function ShowDetailPage({
             <p className="meta">{t('showsSlugPage.draftPreviewNotice', 'Draft previews stay private until the promoter broadcasts the show live.')}</p>
           )}
 
-          {show.isTicketed && show.venuePayoutPercent !== null && show.artistPayoutPercent !== null && (
+          {/* THE SAME ARITHMETIC THE SHELL COPY AND THE PAYOUT ENTRIES USE.
+              This bar used to compute each share as `price * (pct / 100)` and
+              `toFixed(2)` it — three independent roundings of a float, where
+              `splitFaceValueCents` rounds in integer cents and lets the last
+              share absorb the remainder. They disagree by a cent on ordinary
+              prices: at $19.95 the float version told an artist $13.96 against
+              the $13.97 they are actually paid, and at $5.55 the promoter row
+              differed. This is the page people SHARE to sell a ticket, so it
+              was the most-read wrong number in the product. */}
+          {ticketSplits && faceSplit && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
-              <div style={{ flex: Math.max(show.artistPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>${(price * (show.artistPayoutPercent / 100)).toFixed(2)}</div>
+              <div style={{ flex: Math.max(ticketSplits.artist, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>{formatCurrencyFromCents(faceSplit.artist)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
-              <div style={{ flex: Math.max(show.venuePayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>${(price * (show.venuePayoutPercent / 100)).toFixed(2)}</div>
+              <div style={{ flex: Math.max(ticketSplits.venue, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>{formatCurrencyFromCents(faceSplit.venue)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
               </div>
-              {show.promoterPayoutPercent > 0 && (
-                <div style={{ flex: Math.max(show.promoterPayoutPercent, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>${(price * (show.promoterPayoutPercent / 100)).toFixed(2)}</div>
+              {ticketSplits.promoter > 0 && (
+                <div style={{ flex: Math.max(ticketSplits.promoter, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>{formatCurrencyFromCents(faceSplit.promoter)}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
                 </div>
               )}
