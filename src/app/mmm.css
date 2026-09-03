@@ -1405,16 +1405,53 @@ html:has(.mmm-frame) {
 
 .mmm-card {
   padding: 14px;
-  /* A printed paper box — the chart's venue-tag vocabulary (ink rule, cut
-     corner, pressed offset shadow), calmer for a content card. */
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 var(--ink-a10);
+  /* A RING-BOUND PLATE, which is what ConsoleSettings.dc.html draws and what
+     this rule did not. It painted a flat --bg-surface, and --bg-surface sits a
+     hair off --bg: measured, a card was findable only by its own 1px hairline.
+     That passed audit:shell, audit:retro and audit:contrast — none of them can
+     see "correct and flat" — and it is most of why the shell reads as plain.
+
+     Two rings, not one: the 1px border is the plate's own dark edge and stays
+     a BORDER so `.mmm-card-accent` can still recolour it, and the brass ring
+     rides outside it in the shadow. The cast is what actually lifts the plate
+     off the ground; the old `2px 3px 0` offset was invisible on a card the
+     same colour as the page. */
+  border-radius: 5px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
 }
 .mmm-card-accent {
   border-color: rgba(var(--accent-rgb), 0.22);
   background: rgba(var(--accent-rgb), 0.05);
+}
+
+/* The engraved brass header. A card's FIRST eyebrow becomes the plate's
+   nameplate, bled to the edges with negative margins rather than by zeroing
+   the card's padding — every other `.mmm-card` in the shell puts loose content
+   straight inside, so removing that padding would unstyle all of them.
+
+   10px is below the 12.5px content floor and takes DS8's mono-eyebrow
+   exemption, which needs the mono family AND >= .14em tracking declared on the
+   same rule; both are here, and this is metadata rather than content. Ink is
+   --ink-on-brass, measured against --brass-edge (the darker stop) in all six
+   themes — see the token block in globals.css for why the gradient stops short
+   of --brass-deep. */
+.mmm-card > .mmm-eyebrow:first-child {
+  display: block;
+  margin: -14px -14px 12px;
+  padding: 11px 15px;
+  background: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  color: var(--ink-on-brass);
+  font-family: var(--font-mono);
+  /* 11px, not the template's 10px. The tracked-mono exemption bottoms out at
+     11px in lint-source.mjs (its message says 9px and the constant says 11 —
+     the constant governs), and the dock nameplate took the same raise for the
+     same reason. */
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
 }
 
 .mmm-row {
@@ -3063,6 +3100,60 @@ html:has(.mmm-frame) {
 .mmm-full-name[data-plain] { text-decoration: none; cursor: default; }
 .mmm-full-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mmm-full-seek, .mmm-full-volume { display: flex; align-items: center; gap: 11px; }
+
+/* THE TWO SLIDERS THAT HAD NO STYLING AT ALL. `.mmm-player-range` is on the
+   seek bar and the volume control and was never defined in any stylesheet —
+   `git log -S` finds it was never added, so both have always rendered as the
+   browser's default blue track on the walnut cabinet. Reported as "the full
+   media player looks shitty", and it was the only unstyled thing on it.
+
+   The ELEMENT keeps the 44px tap target MOBILE.md requires on every control;
+   only the TRACK is 8px. Sizing the element to the track is the obvious
+   version and it renders a 56px pill, because the floor wins. */
+.mmm-player-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.mmm-player-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-player-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+}
+.mmm-player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  /* (8px track - 22px thumb) / 2 - 1px border: centres the knob on the rail. */
+  margin-top: -8px;
+  border-radius: 50%;
+  border: 1px solid var(--brass-deep);
+  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+.mmm-player-range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+}
+.mmm-player-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--brass-deep);
+  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
 .mmm-full-seek { margin-top: 22px; }
 .mmm-full-volume { margin-top: 18px; }
 .mmm-full-clock {
