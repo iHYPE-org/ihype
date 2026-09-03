@@ -4,54 +4,54 @@ iHYPE alpha acceptance walk
   target   http://localhost:8787
   song     /tmp/claude-0/-home-user-ihype/0e7c8ecf-ef1c-57f6-bb51-5b76ecc2e876/scratchpad/alpha-assets/test-artist-song.m4a (4.51 MB)
   graphic  /tmp/claude-0/-home-user-ihype/0e7c8ecf-ef1c-57f6-bb51-5b76ecc2e876/scratchpad/alpha-assets/test-artist-graphic.png (98 KB)
-  run id   1f173761
+  run id   b0ee2ab4
 
-  cast     artist=e2e-artist-cmtku418 venue=e2e-venue-cmtku418 fan=cmtku41b00003vy7dchdsbcla
+  cast     artist=e2e-artist-cmtkwg09 venue=e2e-venue-cmtkwg09 fan=cmtkwg0hf00035h7dmpk8124e
 
-  PASS  1. Create a user — invite gate refused an un-coded signup, then a minted code created alpha-signup-1f173761@example.com
+  PASS  1. Create a user — invite gate refused an un-coded signup, then a minted code created alpha-signup-b0ee2ab4@example.com
   PASS  1b. A second member with the same display name can sign up — both members registered; usernames de-duplicated
-  PASS  1c. Members with apostrophes, accents and non-Latin names can sign up — Sarah O'Brien -> sarahobrien4 · 李明 -> userh5qh20mu
-  PASS  3. Login (session authenticates against the real worker) — /api/me resolved alpha-fan-1f173761@example.com
-  PASS  7. Upload song (real 4.7 MB m4a) — asset cmtku42q · 4725820 bytes · 4 scan layers · artwork stored
-  PASS  8. Upload graphic (real 2000x1500 PNG) — avatarImage = https://ihype.org/cdn/profile/cmtku419k0001vy7dizgcwa1i/grap
-  PASS  9. Create seed (uploaded track reaches the discover deck) — deck served 5 card(s), including the uploaded track
+  PASS  1c. Members with apostrophes, accents and non-Latin names can sign up — Sarah O'Brien -> sarahobrien5 · 李明 -> usermz4vqclm
+  PASS  3. Login (session authenticates against the real worker) — /api/me resolved alpha-fan-b0ee2ab4@example.com
+  PASS  7. Upload song (real 4.7 MB m4a) — asset cmtkwg1s · 4725820 bytes · 4 scan layers · artwork stored
+  PASS  8. Upload graphic (real 2000x1500 PNG) — avatarImage = https://ihype.org/cdn/profile/cmtkwg0dy00015h7d0s8s3osg/grap
+  PASS  9. Create seed (uploaded track reaches the discover deck) — deck served 7 card(s), including the uploaded track
   PASS  10/11. Play seed as fan, and play the song — MediaListen written (1); history endpoint returned 0 row(s)
   PASS  13. Hype the seed, and hype the track — seed hype wrote a Seed row; artist hype wrote 2 ProfileHypeEvent (no per-track hype exists by design)
-  PASS  15. Add event — show alpha-night-1f173761-mez5t · 70/20/10 split · 1837c
+  PASS  15. Add event — show alpha-night-b0ee2ab4-r2uug · 70/20/10 split · 1837c
   PASS  16 + 31. Sell a ticket (with a HYPE-link promoter attached) — order CAPTURED 1952c · 3 payables · promoter earned 184c = 10.0% of the 1837c face value
   PASS  19. Scan the ticket QR (and refuse a replay) — QR served as SVG and its URL opens with GET (307); first scan accepted, replay refused (409)
   PASS  Replay: the same Stripe event twice issues one ticket, one payout, one email — duplicate acknowledged; tickets 1, payables 3, jobs 1, sold 2 — all unchanged
-  PASS  17. Refund the ticket (via show cancellation, the only path) — show CANCELED · refunded=2 skipped=1 failed=0 · Stripe refund re_3UBPGmLuZsyulVGR0Ex0e9sA succeeded 1865c · scanned order left CAPTURED
-  PASS  20. Create an advertising campaign — Ad cmtku4bx status=PENDING budget=420c · spot stored at https://ihype.org/cdn/ads/audio/aaa19c0d-f294-… (?s)
-  PASS  20b. Advertising: the hold authorizes and the campaign goes live — hold pi_3UBPGqLuZsyulVGR1yxsd48A authorized 420c; campaign APPROVED for 7 days from authorization
+  PASS  17. Refund the ticket (via show cancellation, the only path) — show CANCELED · refunded=2 skipped=1 failed=0 · Stripe refund re_3UBQHyLuZsyulVGR1r90ApkR succeeded 1865c · scanned order left CAPTURED
+  PASS  20. Create an advertising campaign — Ad cmtkwgc0 status=PENDING budget=420c · spot stored at https://ihype.org/cdn/ads/audio/7067367a-cc68-… (?s)
+  PASS  20b. Advertising: the hold authorizes and the campaign goes live — hold pi_3UBQI3LuZsyulVGR1h8xXeOf authorized 420c; campaign APPROVED for 7 days from authorization
   PASS  20c. Advertising: the spot reaches a listener and spends real budget — station served 0 item(s), 0 break(s) — none from this campaign yet; spend 0c -> 9c across 1 impression(s)
   PASS  20d. Advertising: settlement captures the delivered spend, not the whole hold — delivered 9c is under Stripe's 50c floor, so the 420c hold was released and nothing charged; second pass captured nothing further
   PASS  21. Listen to radio — 8 station(s); "for-you" served 1 item(s), 1 with audio
   PASS  22. Listen to an ad (clip served, impression spends budget) — station served 0 item(s), 0 break(s); impression moved spend 9c -> 9c (airing on the MUSIC station is item 33)
   PASS  22b. A closed ticket sale is refused rather than charged — a show with no opening time refuses the sale (409 TICKETING_NOT_OPEN) instead of charging the card
-  PASS  23. Create a playlist — playlist cmtku4f9 created with 1 item(s) — the real uploaded track
-  PASS  24. Check the discovery playlist — artists=7 venues=4
+  PASS  23. Create a playlist — playlist cmtkwgew created with 1 item(s) — the real uploaded track
+  PASS  24. Check the discovery playlist — artists=9 venues=5
   PASS  25. Check the liked playlist — liked list returned 1 entry(ies), artist present=true
   PASS  26. Edit and delete the playlist — renamed, then deleted; both persisted
-  PASS  27. Check recommended (the engine speaks only once the fan has left a signal) — cold fan: ready=false, 0 tracks · warm fan: ready=true, 3 track(s), signals {"hypes":1,"seeds":1,"follows":0,"requests":0}
-  PASS  32a. A fan asks the venue to book the artist (by @handle) — ask cmtku4ga → artist e2e-artist-cmtku418, duplicate refused 409
-  PASS  32b. The venue owner and the artist owner are both told — venue-request → /app/me/booking · fan-demand → /app/me/artists/e2e-artist-cmtku418/analytics
-  PASS  32c. The venue's demand radar ranks the act, with the fan's reason — radar names Test Artist 1f173761 · "1 fan asked" · 1 request analysed
-  PASS  32d. The artist's analytics shows where fans want them — analytics lists Test Venue 1f173761 under "Where fans want you"
+  PASS  27. Check recommended (the engine speaks only once the fan has left a signal) — cold fan: ready=false, 0 tracks · warm fan: ready=true, 4 track(s), signals {"hypes":1,"seeds":1,"follows":0,"requests":0}
+  PASS  32a. A fan asks the venue to book the artist (by @handle) — ask cmtkwgfx → artist e2e-artist-cmtkwg09, duplicate refused 409
+  PASS  32b. The venue owner and the artist owner are both told — venue-request → /app/me/booking · fan-demand → /app/me/artists/e2e-artist-cmtkwg09/analytics
+  PASS  32c. The venue's demand radar ranks the act, with the fan's reason — radar names Test Artist b0ee2ab4 · "1 fan asked" · 1 request analysed
+  PASS  32d. The artist's analytics shows where fans want them — analytics lists Test Venue b0ee2ab4 under "Where fans want you"
   PASS  32e. Both stats boards count the ask — artist requests=1 recommendations=1 · venue requests=1 recommendations=1 · non-owner 404
   PASS  32f. The ask feeds the asker's own recommendations: station, deck, engine — station + deck carry "You asked a venue to book them", deck leads with it, engine ready with signals {"hypes":0,"seeds":0,"follows":0,"requests":2}
-  PASS  32g. A fan who follows the venue hears what other fans want there — follower's station and engine both say "Fans want them at Test Venue 1f173761"
+  PASS  32g. A fan who follows the venue hears what other fans want there — follower's station and engine both say "Fans want them at Test Venue b0ee2ab4"
   PASS  32h. The venue books the act; every ask is answered and the fan is told — BOOKED · asker notified once · artist Recommendations back to 0 · fan Asks page 200
-  PASS  28. Update payment method — setup-mode Checkout session created — https://checkout.stripe.com/c/pay/cs_test_c1s4znpLdpqgWL…
-  BLOCK 29. Update payout method (Stripe Connect onboarding) — Stripe rejects a localhost business_url, so this route cannot succeed on loopback. Same create with https://ihype.org/… succeeded (acct_1UBPGzLuZsGWQUCh). Environment, not code.
-  PASS  30. HYPE link referral — /h/0x50ec86f0… → 307 (redirect); /invite → 200
+  PASS  28. Update payment method — setup-mode Checkout session created — https://checkout.stripe.com/c/pay/cs_test_c1Op1f09aRjvZ7…
+  BLOCK 29. Update payout method (Stripe Connect onboarding) — Stripe rejects a localhost business_url, so this route cannot succeed on loopback. Same create with https://ihype.org/… succeeded (acct_1UBQIBLuZsZERyOT). Environment, not code.
+  PASS  30. HYPE link referral — /h/0x07259734… → 307 (redirect); /invite → 200
   PASS  H1. Completing a song rewards HYPE exactly once — +1 on first play, +0 on replay, 1 ledger entry, balance 1
   PASS  H2. Attending rewards HYPE when the ticket is scanned — EVENT_ATTENDED +5 recorded with its ticket id
   PASS  H3. A referral rewards the referrer once, and cannot be farmed — referrer +10 (one FAN_REFERRED entry), new member got 1 WELCOME grant
   PASS  H4. The ledger reconciles with every balance it claims to explain — 10 member ledgers reconcile: every balanceAfter matches, and every unseeded balance equals its entries
   PASS  V1. A community vote counts once, and voting again withdraws it — one member counts once; a second tap withdraws rather than double-counting
   PASS  R1. A refund reconciles across the database, Stripe and the payables — order 4EBCDA77 · Stripe 1865c succeeded = 1952c charge - 87c fee · 3 payable(s) all VOID · tickets VOID
-  PASS  33. A paid spot airs on the MUSIC station a member actually listens to — station "new" served 8 row(s) including 2 paid break(s), all mkt_ and all playable, none at head or tail
+  PASS  33. A paid spot airs on the MUSIC station a member actually listens to — station "new" served 10 row(s) including 2 paid break(s), all mkt_ and all playable, none at head or tail
 
 ────────────────────────────────────────────────────────────────────────
   43 passed · 0 failed · 1 blocked

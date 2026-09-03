@@ -1063,6 +1063,13 @@ async function main() {
       body: JSON.stringify({ quantity: 1, turnstileToken: 'alpha-walk-token' }),
       cookie: fan.cookie,
     });
+    /* Payment readiness is checked BEFORE the ticketing gate, so a runner with
+       no Stripe key answers 503 and never reaches the rule under test. That is
+       the environment, not the product — the same reason the money-path items
+       above block rather than fail. */
+    if (attempt.status === 503) {
+      blocked(`payments are not configured here, so the request stops at readiness (503 "${attempt.body?.error ?? ''}") before the ticketing gate`);
+    }
     assert(attempt.status === 409, `a closed sale answered ${attempt.status} (${attempt.body?.error ?? ''}), expected 409`);
     assert(attempt.body?.code === 'TICKETING_NOT_OPEN', `code was ${attempt.body?.code}`);
     return `a show with no opening time refuses the sale (409 TICKETING_NOT_OPEN) instead of charging the card`;
@@ -1627,7 +1634,10 @@ async function main() {
       where: { status: 'APPROVED', audioUrl: { not: null } },
       orderBy: { createdAt: 'desc' },
     });
-    assert(campaign, 'no APPROVED campaign with audio to air');
+    /* Item 20 buys the campaign through Stripe Checkout, so on a runner with
+       no key there is nothing APPROVED to air. Blocking says that plainly;
+       failing would report a product gap that is really a missing secret. */
+    if (!campaign) blocked('no APPROVED campaign with audio exists here — item 20 needs a Stripe key to create one');
     await prisma.ad.update({
       where: { id: campaign.id },
       data: { startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 86_400_000) },
@@ -1650,7 +1660,7 @@ async function main() {
     assert(breaks.length > 0, `station "${best?.slug}" served ${stationRows.length} rows and no ad break with a live campaign`);
     assert(breaks.every((row) => String(row.adClipId).startsWith('mkt_')),
       'a break carried a placeholder clip, which bills nobody');
-    assert(breaks.some((row) => String(row.adClipId) === `mkt_${campaign!.id}`),
+    assert(breaks.some((row) => String(row.adClipId) === `mkt_${campaign.id}`),
       'the live campaign is not the one airing');
     // Never first, never last — a listener opening a station hears music.
     assert(!stationRows[0]?.adClipId && !stationRows[stationRows.length - 1]?.adClipId,
