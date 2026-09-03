@@ -514,15 +514,23 @@ html:has(.mmm-frame) {
   align-items: center;
   min-height: 44px;
   padding: 7px 13px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  color: var(--ink-2);
+  /* A machined key. It was a pill on flat --bg-surface with a 1px ink edge,
+     which on a plate reads as a web button sitting on a console. Radius,
+     brass edge and the lit top come from the templates' own controls.
+
+     The LABEL is deliberately left alone — body font, mixed case. The
+     templates set their chips in tracked uppercase mono, but this class is
+     also the map's layer and genre filters, and uppercasing those mangles
+     proper nouns. Shape carries the character; the words stay readable. */
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  color: var(--ink);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
-  box-shadow: 1.5px 2px 0 var(--ink-a10);
+  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
   white-space: nowrap;
 }
 .mmm-chip[aria-pressed='true'] {
@@ -1405,16 +1413,60 @@ html:has(.mmm-frame) {
 
 .mmm-card {
   padding: 14px;
-  /* A printed paper box — the chart's venue-tag vocabulary (ink rule, cut
-     corner, pressed offset shadow), calmer for a content card. */
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 var(--ink-a10);
+  /* A RING-BOUND PLATE, which is what ConsoleSettings.dc.html draws and what
+     this rule did not. It painted a flat --bg-surface, and --bg-surface sits a
+     hair off --bg: measured, a card was findable only by its own 1px hairline.
+     That passed audit:shell, audit:retro and audit:contrast — none of them can
+     see "correct and flat" — and it is most of why the shell reads as plain.
+
+     Two rings, not one: the 1px border is the plate's own dark edge and stays
+     a BORDER so `.mmm-card-accent` can still recolour it, and the brass ring
+     rides outside it in the shadow. The cast is what actually lifts the plate
+     off the ground; the old `2px 3px 0` offset was invisible on a card the
+     same colour as the page. */
+  border-radius: 5px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
 }
 .mmm-card-accent {
   border-color: rgba(var(--accent-rgb), 0.22);
   background: rgba(var(--accent-rgb), 0.05);
+}
+
+/* The engraved brass header. A card's FIRST eyebrow becomes the plate's
+   nameplate, bled to the edges with negative margins rather than by zeroing
+   the card's padding — every other `.mmm-card` in the shell puts loose content
+   straight inside, so removing that padding would unstyle all of them.
+
+   10px is below the 12.5px content floor and takes DS8's mono-eyebrow
+   exemption, which needs the mono family AND >= .14em tracking declared on the
+   same rule; both are here, and this is metadata rather than content. Ink is
+   --ink-on-brass, measured against --brass-edge (the darker stop) in all six
+   themes — see the token block in globals.css for why the gradient stops short
+   of --brass-deep. */
+.mmm-card > .mmm-eyebrow:first-child {
+  display: block;
+  margin: -14px -14px 12px;
+  padding: 11px 15px;
+  /* Real brushed metal under the gradient, the same asset and the same
+     `overlay` blend the dock's plate uses — a flat gradient reads as a
+     coloured bar, and the texture is already shipped. */
+  background-image:
+    linear-gradient(180deg, var(--brass), var(--brass-edge)),
+    url('/console/brushed.png');
+  background-size: auto, 120px;
+  background-blend-mode: normal, overlay;
+  color: var(--ink-on-brass);
+  font-family: var(--font-mono);
+  /* 11px, not the template's 10px. The tracked-mono exemption bottoms out at
+     11px in lint-source.mjs (its message says 9px and the constant says 11 —
+     the constant governs), and the dock nameplate took the same raise for the
+     same reason. */
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
 }
 
 .mmm-row {
@@ -1494,10 +1546,15 @@ html:has(.mmm-frame) {
   justify-content: center;
   min-height: 44px;
   padding: 10px 0;
-  border-radius: var(--radius-panel);
-  border: 1px solid rgba(61, 44, 12, .9);
-  box-shadow: 2px 3px 0 var(--ink-a20);
-  background: var(--accent);
+  /* The lit key. A flat fill with a 2px 3px offset read as a web button; the
+     template's CTA is a gradient with a hard edge and a real cast. The sheen
+     is a white wash over the fill rather than a second hue, so it needs no
+     token and cannot drift from --accent. */
+  border-radius: 4px;
+  border: 2px solid rgba(61, 44, 12, .9);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  background-color: var(--accent);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
   color: var(--ink-on-accent);
   font-family: var(--font-body);
   font-weight: 700;
@@ -1511,15 +1568,138 @@ html:has(.mmm-frame) {
   justify-content: center;
   min-height: 44px;
   padding: 10px 14px;
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 var(--ink-a10);
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
   color: var(--ink-2);
   font-family: var(--font-body);
   font-size: 0.9375rem;
   cursor: pointer;
 }
+
+/* ══ INTERACTION ══════════════════════════════════════════════════════════
+   Measured before writing any of this: the shell had ZERO hover or active
+   states on the chip, either button or the row — 11 :hover/:active rules in
+   3,000 lines, none of them on a shared control. Nothing moved when you
+   touched it, which is most of what "feels unfinished" actually is. A
+   console's keys are the one thing that must answer.
+
+   Built on --duration-*, NOT --dur-*: only the former is zeroed by the
+   token-level `prefers-reduced-motion` block in globals.css, so honouring the
+   setting costs no media query here. Check that before switching namespace.
+
+   Every hover is behind `(hover: hover)`, which nothing in this file did
+   before. An unguarded :hover STICKS on a touchscreen — the finger leaves and
+   the key stays lit — and this app is a WebView on two phone platforms.
+   Press states are not guarded, because a press is real on both. */
+.mmm-chip,
+.mmm-btn-ghost,
+.mmm-btn-primary {
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    filter var(--duration-fast) var(--ease-out);
+}
+@media (hover: hover) {
+  .mmm-chip:hover,
+  .mmm-btn-ghost:hover {
+    border-color: var(--brass);
+    filter: brightness(1.04);
+  }
+  .mmm-btn-primary:hover {
+    filter: brightness(1.06);
+    box-shadow: 0 10px 22px -10px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .34);
+  }
+  .mmm-row:hover { background: var(--ink-a10); }
+}
+/* The key goes DOWN and its cast collapses — the same 1px the dock's own
+   controls travel. A press that only changes colour reads as a hyperlink. */
+.mmm-chip:active,
+.mmm-btn-ghost:active,
+.mmm-btn-primary:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+}
+.mmm-row {
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+/* --ink-a10 is derived from --ink, so it darkens a light plate and lightens a
+   dark one. A fixed white wash would vanish in three themes. */
+.mmm-row:active { background: var(--ink-a10); }
+
+/* The shell focus ring, which these four controls never had. Individual
+   components declare their own further down; this covers the shared set. */
+.mmm-chip:focus-visible,
+.mmm-btn-ghost:focus-visible,
+.mmm-btn-primary:focus-visible,
+.mmm-row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ══ THE UNCLASSED FIELD ══════════════════════════════════════════════════
+   Fifteen `<input>` elements in the MMM shell carry no class at all, and this
+   file styles no `input[type=...]` anywhere, so they render as browser-default
+   boxes on a walnut console — the same defect `.mmm-player-range` had, found
+   the same way.
+
+   `:not([class])` is the whole trick and it is deliberate. Every deliberately
+   styled control in the shell HAS a class, several of them from `<style>`
+   blocks embedded in their own component (`MmmSettings`, `MmmAdvertiserSignup`),
+   which arrive after this file and would otherwise be fought on specificity —
+   `.mmm-pane input` is (0,1,1) and beats their (0,1,0). Restricting to
+   classless elements means this can only ever reach something nobody styled,
+   so it cannot silently repaint a considered control.
+
+   A recessed field, per the templates: pressed into the plate rather than
+   floating on it. */
+/* Written out rather than with `:is(input, textarea, select)`: the commas
+   inside `:is()` break audit-css.mjs's selector splitter, which then groups
+   the `:focus` and `::placeholder` rules with the base rule and reports normal
+   state layering as an override. Explicit selectors are identical to the
+   browser and legible to the gate. */
+.mmm-pane input:not([class]),
+.mmm-pane select:not([class]) {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: var(--field);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22);
+  color: var(--ink);
+  font-family: var(--font-body);
+  /* 16px, and functional rather than typographic: Safari zooms the page on a
+     focused sub-16px field and never zooms back. mobile-fit.css states the
+     same rule for the legacy shell. */
+  font-size: 1rem;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+.mmm-pane textarea:not([class]) {
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: var(--field);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color var(--duration-fast) var(--ease-out),
+              box-shadow var(--duration-fast) var(--ease-out);
+}
+.mmm-pane input:not([class]):focus,
+.mmm-pane select:not([class]):focus,
+.mmm-pane textarea:not([class]):focus {
+  outline: none;
+  border-color: var(--brass);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .22), 0 0 0 3px rgba(var(--accent-rgb), .22);
+}
+.mmm-pane input:not([class])::placeholder,
+.mmm-pane textarea:not([class])::placeholder { color: var(--ink-3); }
 
 /* The heart for non-track things — a paper chip in the print vocabulary,
    the glyph in brick ink when lit (accent-as-copy token, never the raw
@@ -3063,6 +3243,60 @@ html:has(.mmm-frame) {
 .mmm-full-name[data-plain] { text-decoration: none; cursor: default; }
 .mmm-full-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mmm-full-seek, .mmm-full-volume { display: flex; align-items: center; gap: 11px; }
+
+/* THE TWO SLIDERS THAT HAD NO STYLING AT ALL. `.mmm-player-range` is on the
+   seek bar and the volume control and was never defined in any stylesheet —
+   `git log -S` finds it was never added, so both have always rendered as the
+   browser's default blue track on the walnut cabinet. Reported as "the full
+   media player looks shitty", and it was the only unstyled thing on it.
+
+   The ELEMENT keeps the 44px tap target MOBILE.md requires on every control;
+   only the TRACK is 8px. Sizing the element to the track is the obvious
+   version and it renders a 56px pill, because the floor wins. */
+.mmm-player-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+.mmm-player-range:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-player-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+}
+.mmm-player-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 22px;
+  height: 22px;
+  /* (8px track - 22px thumb) / 2 - 1px border: centres the knob on the rail. */
+  margin-top: -8px;
+  border-radius: 50%;
+  border: 1px solid var(--brass-deep);
+  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
+.mmm-player-range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+}
+.mmm-player-range::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--brass-deep);
+  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+}
 .mmm-full-seek { margin-top: 22px; }
 .mmm-full-volume { margin-top: 18px; }
 .mmm-full-clock {

@@ -255,6 +255,39 @@
   --walnut-2: #34200f;
   --walnut-3: #1a1206;
   --lamp: #ffb84a;
+
+  /* THE PLATE — the console's content card, and the reason a pane stopped
+     looking like a machine. `.mmm-card` painted --bg-surface, which sits a
+     hair off --bg, so a card was findable only by its 1px hairline: correct
+     against every audit and flat to look at. ConsoleSettings.dc.html draws a
+     card as a ring-bound parchment plate with an engraved brass header, and
+     that is what these four tokens carry.
+
+     --plate-1/-2 are a LIFT of each theme's own ground, never a fixed
+     parchment: card contents paint with --ink, so a light plate hardcoded for
+     the cream theme would be light ink on light plate in the three dark
+     themes. Measured worst case (--ink on --plate-2, the darker stop) is
+     13.38:1 here and 13.4-15.4:1 across the six.
+
+     --brass-edge is the header gradient's BOTTOM stop and is deliberately
+     LIGHTER than --brass-deep. Running the header brass -> brass-deep puts
+     dark glyphs on 3.2-4.0:1 in five of six themes, and on `street` no ink at
+     all reaches AA on --brass-deep: pure black measures 3.6:1. So the header
+     stops early. --ink-on-brass measures 4.69:1 on --brass-edge (the worst
+     case, being the darker stop) and 7.15:1 on --brass itself. */
+  --plate-1: #f8f0d8;
+  --plate-2: #eadcb8;
+  /* The lit top edge of a machined key. An alpha over the plate, so it
+     themes: 55% white is a highlight on parchment and a white bar on the
+     three dark grounds. */
+  --plate-lit: rgba(255,255,255,.55);
+  /* A field is PRESSED INTO the plate, not floating on it, so it is its own
+     face rather than a tint of the plate. Warm near-white here; a well in
+     the three dark themes. Carries --ink like the plate does, and
+     audit:theme-contrast measures it in every block. */
+  --field: #fff6de;
+  --brass-edge: #a1843e;
+  --ink-on-brass: #2b1a0c;
   /* Paper grain — an SVG fractal-noise tile, inlined so it costs no request.
      Used by the map's foxing and available to any surface that needs the
      age-spotting of printed stock. It was `var(--grain, none)` at the call
@@ -638,6 +671,10 @@
      measures the ramp in every block rather than only in :root. */
   --walnut: #3c2211; --walnut-2: #2a1709; --walnut-3: #140d04;
   --brass: #b08f42; --brass-deep: #7a5f26; --lamp: #ffb84a;
+  --plate-1: #241c0f; --plate-2: #1b1509;
+  --plate-lit: rgba(255,255,255,.07);
+  --field: #0f0b04;
+  --brass-edge: #977b39; --ink-on-brass: #191204;  /* 15.15:1 ink on plate, 4.61:1 glyph on brass edge */
   --ink-on-walnut: #e3ddd6;    /* 10.90:1 on --walnut */
   --ink-on-walnut-2: #c4b9a9;  /*  7.60:1 */
   --ink-on-walnut-3: #ab9c86;  /*  5.48:1 — the floor */
@@ -689,6 +726,10 @@
      wall. Hardware goes galvanised, the lamp goes sodium-orange. */
   --walnut: #2c2f34; --walnut-2: #1f2226; --walnut-3: #14161a;
   --brass: #9aa4b0; --brass-deep: #5e666f; --lamp: #ffb455;
+  --plate-1: #212429; --plate-2: #17191c;
+  --plate-lit: rgba(255,255,255,.07);
+  --field: #0d0f11;
+  --brass-edge: #757d86; --ink-on-brass: #0d0f11;  /* 15.42:1 ink on plate, 4.60:1 glyph on brass edge */
   --ink-on-walnut: #e6e8e9;    /* 10.93:1 on --walnut */
   --ink-on-walnut-2: #bfc3c7;  /*  7.58:1 */
   --ink-on-walnut-3: #a1a6ac;  /*  5.48:1 */
@@ -736,6 +777,10 @@
   /* Gunmetal and chrome. The lamp is a cold instrument light, not a bulb. */
   --walnut: #26292e; --walnut-2: #1a1d21; --walnut-3: #0f1114;
   --brass: #c3ccd6; --brass-deep: #79828c; --lamp: #d8f4ff;
+  --plate-1: #1c1f23; --plate-2: #131518;
+  --plate-lit: rgba(255,255,255,.08);
+  --field: #0b0d0f;
+  --brass-edge: #797e85; --ink-on-brass: #0d0f11;  /* 15.28:1 ink on plate, 4.70:1 glyph on brass edge */
   --ink-on-walnut: #dddfe2;    /* 10.93:1 on --walnut */
   --ink-on-walnut-2: #b6bbc1;  /*  7.55:1 */
   --ink-on-walnut-3: #989fa8;  /*  5.46:1 */
@@ -787,6 +832,10 @@
      and a pale cabinet under pale panes loses the dock's edge entirely. */
   --walnut: #5a3341; --walnut-2: #40232e; --walnut-3: #25131b;
   --brass: #d8a08c; --brass-deep: #a06b58; --lamp: #ffb3c8;
+  --plate-1: #fdf2f6; --plate-2: #f3e0ea;
+  --plate-lit: rgba(255,255,255,.60);
+  --field: #fff7fb;
+  --brass-edge: #a47a6a; --ink-on-brass: #2a1208;  /* 13.82:1 ink on plate, 4.69:1 glyph on brass edge */
   --ink-on-walnut: #fdfbfc;    /* 10.4:1 on --walnut — a hair off white on
                                   purpose, since a flat #fff reads as a hole
                                   rather than as lit ivory */
@@ -840,6 +889,10 @@
      now agrees with it. */
   --walnut: #46231a; --walnut-2: #31170f; --walnut-3: #1a0b06;
   --brass: #d4b25a; --brass-deep: #96762f; --lamp: #ffcc7a;
+  --plate-1: #fbf6ea; --plate-2: #efe8d7;
+  --plate-lit: rgba(255,255,255,.55);
+  --field: #fffaf0;
+  --brass-edge: #9b8242; --ink-on-brass: #231a0e;  /* 14.03:1 ink on plate, 4.62:1 glyph on brass edge */
   --ink-on-walnut: #e9e3dd;    /* 10.88:1 on --walnut */
   --ink-on-walnut-2: #cbbeb0;  /*  7.61:1 */
   --ink-on-walnut-3: #b3a08c;  /*  5.49:1 */
@@ -1258,6 +1311,32 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); } 50% { box-shadow: 0 0 0 6px rgba(255,60,60,0.22); } }
 .meta { font-size: 0.95rem; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+
+/* A ROUTE'S OWN LOADING/ERROR STATE. `/invite/[code]`'s `loading.tsx` and
+   `error.tsx` were written in Tailwind utilities — `flex items-center
+   justify-center min-h-[40vh]`, `animate-pulse text-sm text-gray-400` — and
+   THIS PROJECT HAS NO TAILWIND. Every one of those classes resolved to
+   nothing, so both states rendered as unstyled text jammed into the top-left
+   corner with no padding. Found by a scan for rendered classes that no
+   stylesheet defines, the same way the player's two default-blue sliders were.
+
+   Kept in globals.css rather than mmm.css on purpose: mmm.css is imported by
+   the /app layout alone, and /invite is outside it. */
+.route-state {
+  min-height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 32px;
+  text-align: center;
+}
+.route-state p { margin: 0; color: var(--ink-2); }
+/* The keyframe-disabling `prefers-reduced-motion` block further down this file
+   already covers this, so it needs no media query of its own. */
+.route-state[data-busy] p { animation: route-state-pulse 1.6s ease-in-out infinite; }
+@keyframes route-state-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .55; } }
 /* HypeButton's wrapper: the burst overlay is positioned against it. */
 .hype-cta { position: relative; }
 

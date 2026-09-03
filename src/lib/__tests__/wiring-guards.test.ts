@@ -257,3 +257,45 @@ describe('the basemap is keyed', () => {
     expect(code(mapFile)).not.toMatch(/basemaps\.cartocdn\.com[^'"`\s]*[?&]api_key=/);
   });
 });
+
+/*
+ * The native shell's ground must be the app's ground.
+ *
+ * `capacitor.config.ts`'s `backgroundColor` is the one colour in the product
+ * NO STYLESHEET CAN REACH: it paints behind the WebView, so it is what a member
+ * sees as the launch flash and behind every overscroll bounce. It is also the
+ * only colour outside the fast loop — every other surface follows `--bg` on the
+ * next Cloudflare deploy, while this one waits for a native build.
+ *
+ * So it goes stale silently, and it has done so TWICE. It was still the retired
+ * warm near-black #0a0805 after DS8 moved the ground to ink navy; it was then
+ * corrected to #0b1220, which the console conversion retired on 2026-08-19/20
+ * in favour of warm cream — leaving both phone apps flashing dark navy at
+ * launch on a cream app until 2026-09-03.
+ *
+ * Nothing could catch it: it is valid TypeScript, a real hex, and no page
+ * renders it. This test is the only thing standing between that and a third.
+ */
+describe('the native shell paints the app\'s ground', () => {
+  const bgOf = (css: string) => /^\s*--bg:\s*(#[0-9a-fA-F]{3,8})\s*;/m.exec(css)?.[1]?.toLowerCase();
+
+  it('capacitor backgroundColor matches --bg, on both platforms', () => {
+    const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
+    expect(ground, '--bg is not the first declaration in :root any more — this guard is reading the wrong token').toBeTruthy();
+
+    const config = code('capacitor.config.ts');
+    const colours = [...config.matchAll(/backgroundColor:\s*'(#[0-9a-fA-F]{3,8})'/g)].map((m) => m[1].toLowerCase());
+    expect(colours.length, 'expected an iOS and an Android backgroundColor').toBe(2);
+    for (const colour of colours) {
+      expect(colour, `the native shell paints ${colour} behind a ${ground} app — a launch flash and an overscroll bounce in a retired ground`).toBe(ground);
+    }
+  });
+
+  /* themeColor is the browser/PWA half of the same value and drifts the same way. */
+  it('themeColor matches it too', () => {
+    const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
+    const theme = /themeColor:\s*'(#[0-9a-fA-F]{3,8})'/.exec(code('src/app/layout.tsx'))?.[1]?.toLowerCase();
+    expect(theme, 'no themeColor found in layout.tsx').toBeTruthy();
+    expect(theme).toBe(ground);
+  });
+});

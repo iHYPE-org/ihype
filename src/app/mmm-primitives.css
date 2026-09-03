@@ -82,9 +82,16 @@
 .mmm-migrated-surface .ticket-verification-panel,
 .mmm-migrated-surface .vaa-card,
 .mmm-migrated-surface .vdash-card {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--bg-surface);
+  /* THE PLATE, reaching the 74 aliased names rather than only `.mmm-card`.
+     This painted a flat --bg-surface, which sits a hair off --bg, so a card in
+     a migrated workflow was findable only by its 1px hairline — the same
+     defect `.mmm-card` had, in the place where most of the shell's cards
+     actually are. Two rings: the border stays a BORDER so a variant can
+     recolour it, and the brass rides outside in the shadow. */
+  border: 1px solid var(--brass-deep);
+  border-radius: 5px;
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
 }
 
 
@@ -101,9 +108,14 @@
 .mmm-migrated-surface .vdash-activity-row,
 .mmm-migrated-surface .vdash-show-row {
   padding: 12px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--bg-surface);
+  /* A ROW IS A SLAT, NOT A PLATE. Same face and edge as the card so a list
+     reads as one material, but NO brass ring and a shallower cast: a dozen
+     event rows each wearing their own ring turns a list into a stack of
+     picture frames. Verified by rendering a real list before choosing. */
+  border: 1px solid var(--brass-deep);
+  border-radius: 4px;
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .16);
 }
 .mmm-migrated-surface a.aa-event-row,
 .mmm-migrated-surface a.ad-activity-row,
@@ -126,9 +138,16 @@
 .mmm-migrated-surface .ad-stat-card,
 .mmm-migrated-surface .stat {
   padding: 18px 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-panel);
-  background: var(--bg-surface);
+  /* THE PLATE, reaching the 74 aliased names rather than only `.mmm-card`.
+     This painted a flat --bg-surface, which sits a hair off --bg, so a card in
+     a migrated workflow was findable only by its 1px hairline — the same
+     defect `.mmm-card` had, in the place where most of the shell's cards
+     actually are. Two rings: the border stays a BORDER so a variant can
+     recolour it, and the brass rides outside in the shadow. */
+  border: 1px solid var(--brass-deep);
+  border-radius: 5px;
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
   text-align: center;
 }
 .mmm-migrated-surface .aa-stat-val,

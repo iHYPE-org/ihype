@@ -20,12 +20,31 @@ const config: CapacitorConfig = {
   // near-black (#0a0805) after Design System 8 moved the ground to ink navy —
   // visible as a launch flash and on overscroll, on both platforms. Changing it
   // needs a native build, not a web deploy.
+  //
+  // AND IT WENT STALE AGAIN, ONE GENERATION LATER (2026-09-03). The comment
+  // above was written about #0a0805; the value it was corrected TO — DS8's ink
+  // navy #0b1220 — was itself retired on 2026-08-19/20 when the console
+  // conversion moved the ground to warm cream. So both native apps have been
+  // flashing dark navy at launch and showing it behind every overscroll bounce
+  // on a cream app.
+  //
+  // It rots for a structural reason worth naming: it is the only colour
+  // OUTSIDE the fast loop. Every other surface follows --bg on the next
+  // Cloudflare deploy; this one waits for a native build, so a ground change
+  // silently leaves it behind. It must match --bg in globals.css, and
+  // `themeColor` in src/app/layout.tsx (already #f0dfb8) is the same value —
+  // when one moves, all three move.
+  //
+  // One value, six themes: cream is the DEFAULT ground and the config cannot
+  // theme, so a dark-theme member still gets a cream flash. That is the right
+  // trade — it is a fraction of a second against the majority case being
+  // correct — and it is a limit of the native shell, not a decision to revisit.
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#0b1220',
+    backgroundColor: '#f0dfb8',
   },
   android: {
-    backgroundColor: '#0b1220',
+    backgroundColor: '#f0dfb8',
   },
   plugins: {
     // Shows the OS notification banner/sound/badge while the app is already
