@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'ihype-ac8ba66a';
+const CACHE_VERSION = 'ihype-54aa0550';
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const PAGE_CACHE = `${CACHE_VERSION}-pages`;
 
