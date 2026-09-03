@@ -514,15 +514,23 @@ html:has(.mmm-frame) {
   align-items: center;
   min-height: 44px;
   padding: 7px 13px;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  color: var(--ink-2);
+  /* A machined key. It was a pill on flat --bg-surface with a 1px ink edge,
+     which on a plate reads as a web button sitting on a console. Radius,
+     brass edge and the lit top come from the templates' own controls.
+
+     The LABEL is deliberately left alone — body font, mixed case. The
+     templates set their chips in tracked uppercase mono, but this class is
+     also the map's layer and genre filters, and uppercasing those mangles
+     proper nouns. Shape carries the character; the words stay readable. */
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  color: var(--ink);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
-  box-shadow: 1.5px 2px 0 var(--ink-a10);
+  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
   white-space: nowrap;
 }
 .mmm-chip[aria-pressed='true'] {
@@ -1441,7 +1449,14 @@ html:has(.mmm-frame) {
   display: block;
   margin: -14px -14px 12px;
   padding: 11px 15px;
-  background: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  /* Real brushed metal under the gradient, the same asset and the same
+     `overlay` blend the dock's plate uses — a flat gradient reads as a
+     coloured bar, and the texture is already shipped. */
+  background-image:
+    linear-gradient(180deg, var(--brass), var(--brass-edge)),
+    url('/console/brushed.png');
+  background-size: auto, 120px;
+  background-blend-mode: normal, overlay;
   color: var(--ink-on-brass);
   font-family: var(--font-mono);
   /* 11px, not the template's 10px. The tracked-mono exemption bottoms out at
@@ -1531,10 +1546,15 @@ html:has(.mmm-frame) {
   justify-content: center;
   min-height: 44px;
   padding: 10px 0;
-  border-radius: var(--radius-panel);
-  border: 1px solid rgba(61, 44, 12, .9);
-  box-shadow: 2px 3px 0 var(--ink-a20);
-  background: var(--accent);
+  /* The lit key. A flat fill with a 2px 3px offset read as a web button; the
+     template's CTA is a gradient with a hard edge and a real cast. The sheen
+     is a white wash over the fill rather than a second hue, so it needs no
+     token and cannot drift from --accent. */
+  border-radius: 4px;
+  border: 2px solid rgba(61, 44, 12, .9);
+  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  background-color: var(--accent);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
   color: var(--ink-on-accent);
   font-family: var(--font-body);
   font-weight: 700;
@@ -1548,10 +1568,10 @@ html:has(.mmm-frame) {
   justify-content: center;
   min-height: 44px;
   padding: 10px 14px;
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--ink-a45);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 var(--ink-a10);
+  border-radius: 4px;
+  border: 1.5px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
   color: var(--ink-2);
   font-family: var(--font-body);
   font-size: 0.9375rem;
