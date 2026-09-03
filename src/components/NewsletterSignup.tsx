@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
-type ProfileHit = { id: string; name: string; type: string };
+export type ProfileHit = { id: string; name: string; type: string };
 
 /**
  * Get-updates-by-email form for POST /api/newsletter/subscribe. That route
@@ -14,12 +14,15 @@ type ProfileHit = { id: string; name: string; type: string };
  * they want updates from, reusing the same /api/search endpoint the event
  * creator's ProfilePicker (src/app/events/new/page.tsx) already queries.
  */
-export function NewsletterSignup() {
+export function NewsletterSignup({ fixedProfile }: { fixedProfile?: ProfileHit } = {}) {
   const { t } = useI18n();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<ProfileHit[]>([]);
   const [open, setOpen] = useState(false);
-  const [profile, setProfile] = useState<ProfileHit | null>(null);
+  /* On a profile page the answer to "updates from whom" is the page itself, so
+     the picker is skipped and cannot be un-picked. Everywhere else the form is
+     sitewide and the search is the first field. */
+  const [profile, setProfile] = useState<ProfileHit | null>(fixedProfile ?? null);
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -84,6 +87,7 @@ export function NewsletterSignup() {
 
   return (
     <form className="form" onSubmit={submit}>
+      {fixedProfile ? null : (
       <div className="field" ref={containerRef} style={{ position: 'relative' }}>
         <span>{t('newsletterSignup.profileFieldLabel', 'Artist, venue, or DJ')}</span>
         {profile ? (
@@ -120,6 +124,7 @@ export function NewsletterSignup() {
           </div>
         )}
       </div>
+      )}
 
       <label className="field">
         <span>{t('newsletterSignup.emailFieldLabel', 'Email')}</span>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { FanMailButton } from '@/components/FanMailButton';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -139,6 +140,14 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
             )}
             <Link className="vdash-action" href={`/app/me/venues/${profile.slug}/analytics`}>{t('venuesSlugDashboardPage.viewAnalytics', 'View analytics')}</Link>
             <Link className="vdash-action" href="/app/me/profiles">{t('venuesSlugDashboardPage.editMyPage', 'Edit my page')}</Link>
+            {/* Same control, same reasoning as the artist dashboard: a venue's
+                followers asked to hear about its nights, and nothing in the
+                product could write to them. */}
+            <FanMailButton
+              label={t('venuesSlugDashboardPage.sendFanMail', 'Email my followers')}
+              profileId={profile.id}
+              triggerClassName="vdash-action"
+            />
           </div>
         </div>
       </div>

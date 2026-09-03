@@ -15,11 +15,18 @@ export function TicketCardActions({
   orderStatus,
   tickets,
   showsAt,
+  showQrToggle = true,
 }: {
   orderId: string;
   orderStatus?: string;
   tickets: TicketRef[];
   showsAt?: string;
+  /**
+   * Whether to offer the QR toggle. False on a surface that already prints the
+   * code — the ticket page renders its own, server-side, so a second button
+   * that reveals the same thing is a duplicate rather than an action.
+   */
+  showQrToggle?: boolean;
 }) {
   const [showQr, setShowQr] = useState(false);
   const [transferOpen, setTransferOpen] = useState(false);
@@ -144,9 +151,11 @@ export function TicketCardActions({
   return (
     <>
       <div className="ticket-actions">
-        <button className="btn btn-primary" onClick={() => setShowQr((v) => !v)} type="button">
-          {showQr ? t('ticketCardActions.hideQrButton', 'Hide QR Code') : t('ticketCardActions.showQrButton', 'Show QR Code')}
-        </button>
+        {showQrToggle && (
+          <button className="btn btn-primary" onClick={() => setShowQr((v) => !v)} type="button">
+            {showQr ? t('ticketCardActions.hideQrButton', 'Hide QR Code') : t('ticketCardActions.showQrButton', 'Show QR Code')}
+          </button>
+        )}
         <button className="btn" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
         <button className="btn" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
         {resaleTicket && (
@@ -162,7 +171,7 @@ export function TicketCardActions({
         <p style={{ fontSize: '0.9375rem', marginTop: 8, color: resendError ? 'var(--accent-text)' : 'var(--role-venue)' }}>{resendError ?? resendDone}</p>
       )}
 
-      {showQr && (
+      {showQrToggle && showQr && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 16, marginTop: 16 }}>
           {tickets.map((ticket) => (
             <div key={ticket.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>

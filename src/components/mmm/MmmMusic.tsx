@@ -9,6 +9,7 @@ import { useRegisterPlayIntent, useRegisterQueue } from '@/components/mmm/MmmPla
 import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
+import { MmmFreeUseCrate } from '@/components/mmm/MmmFreeUseCrate';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
@@ -1096,11 +1097,19 @@ function PlaylistsTab() {
     && likedArtists.length === 0 && likedVenues.length === 0 && stationRows.length === 0;
 
   if (nothing) {
+    /* The crate rides along under the empty plate rather than behind it. A
+       member who has saved nothing yet is exactly the one with no reason to
+       come back — and the crate is the one thing on this tab that has content
+       before they do. It renders nothing of its own when the crate is empty,
+       so this cannot become an empty state followed by a second empty state. */
     return (
-      <Empty>
-        Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue
-        pages save them here too — everything stays until you unlike it.
-      </Empty>
+      <div className="mmm-music-list">
+        <Empty>
+          Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue
+          pages save them here too — everything stays until you unlike it.
+        </Empty>
+        <MmmFreeUseCrate playlists={[]} />
+      </div>
     );
   }
 
@@ -1134,6 +1143,11 @@ function PlaylistsTab() {
           ))}
         </>
       )}
+
+      {/* The free-use crate. Placed after the member's OWN lists because the
+          select on each row targets one of them — the thing you add to should
+          be on screen before the thing you add. */}
+      <MmmFreeUseCrate playlists={ownLists.map((list) => ({ id: list.id, name: list.name }))} />
 
       {stationRows.length > 0 && (
         <>

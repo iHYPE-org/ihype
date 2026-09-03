@@ -362,6 +362,15 @@ export function MmmSettings() {
     }
   }
 
+  /* One sentence, used by the OS share sheet and by the three channel links
+     below it, so a member's link never arrives bare with no idea what it is. */
+  const hypeLinkShareText = inviteHexId
+    ? t(
+        'settingsPage.hypeLinkShareText',
+        'Come find live music with me on iHYPE — artists keep 70% of every ticket: https://ihype.org/invite/{code}',
+      ).replace('{code}', inviteHexId)
+    : '';
+
   async function shareInviteLink() {
     if (!inviteHexId) return;
     const link = `https://ihype.org/invite/${inviteHexId}`;
@@ -491,6 +500,32 @@ export function MmmSettings() {
                   detail={`ihype.org/invite/${inviteHexId}`}
                   label={t('settingsPage.yourHypeLink', 'Share everything through it')}
                 />
+                {/* Somewhere to send it. "Share" is the OS sheet, which is the
+                    right default on a phone and nothing at all on a desktop
+                    where `navigator.share` is absent — so the three channels
+                    people actually use are here as plain links. Ported from
+                    `PagesReferralTab`, a second implementation of this whole
+                    section that was mounted on no page and is now deleted: it
+                    had these and the scoreboard below has everything else. */}
+                <div className="settings-hype-channels">
+                  <a className="settings-btn settings-btn-ghost" href={`sms:?body=${encodeURIComponent(hypeLinkShareText)}`}>
+                    {t('settingsPage.shareByMessage', 'Message')}
+                  </a>
+                  <a
+                    className="settings-btn settings-btn-ghost"
+                    href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(hypeLinkShareText)}`}
+                    rel="noreferrer noopener"
+                    target="_blank"
+                  >
+                    {t('settingsPage.shareOnX', 'X')}
+                  </a>
+                  <a
+                    className="settings-btn settings-btn-ghost"
+                    href={`mailto:?subject=${encodeURIComponent(t('settingsPage.shareEmailSubject', 'Join me on iHYPE'))}&body=${encodeURIComponent(hypeLinkShareText)}`}
+                  >
+                    {t('settingsPage.shareByEmail', 'Email')}
+                  </a>
+                </div>
                 <p className="settings-invite-note">
                   {t('settingsPage.hypeLinkNote', 'Your HYPE link shares liked playlists and events, invites new members past the alpha gate, and earns you the 10% promoter share on any show it sells.')}
                 </p>
@@ -801,6 +836,10 @@ export function MmmSettings() {
         .settings-row-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
         .settings-row-detail { font-size: 0.9375rem; color: var(--ink-2); margin-top: 2px; }
         .settings-invite-note { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.5; margin: 10px 2px 0; }
+        /* Wraps rather than scrolls: three short labels, and a row that
+           overflows on a 375px screen is the one thing MOBILE.md rules out. */
+        .settings-hype-channels { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 2px 0; }
+        .settings-hype-channels > a { text-decoration: none; }
 
         .settings-toggle { position: relative; width: 42px; height: 24px; flex-shrink: 0; display: block; }
         .settings-toggle input { opacity: 0; width: 0; height: 0; }

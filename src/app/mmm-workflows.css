@@ -155,6 +155,18 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 /* The facts a coordinator needs read as one plate under the owner's own words. */
 .profile-facts-coordination { margin-top: 18px; }
 
+/* Email updates, under the coordination sheet on both public panes. A rule
+   above it rather than a card: it is the last thing in the panel, not a second
+   panel inside the first. */
+.profile-newsletter { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
+.profile-panel-subhead {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0 0 10px;
+}
+
 /* Releases: a shelf of sleeves. */
 /* An album folder on the Albums tab (2026-09-02): a header row shaped like a
    release row — cover, title, year · count — with its tracks listed under it.

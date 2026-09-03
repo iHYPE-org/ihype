@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { TicketVerificationCard } from '@/components/TicketVerificationCard';
 import { TicketReassignmentForm } from '@/components/TicketReassignmentForm';
-import { TicketTransferPanel } from '@/components/TicketTransferPanel';
+import { TicketCardActions } from '@/components/TicketCardActions';
 import { PushPrimerOnTicket } from '@/components/PushPrimerOnTicket';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -208,9 +208,22 @@ export default async function TicketPage({
         {isHolder && ticket.status !== 'SCANNED' ? (
           <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', background: 'var(--bg-surface)', padding: '16px 18px' }}>
             <h3 style={{ margin: '0 0 8px', fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 500 }}>
-              {t('ticketsSerializedIdPage.transferHeading', 'Transfer this ticket')}
+              {t('ticketsSerializedIdPage.holderActionsHeading', 'What you can do with this ticket')}
             </h3>
-            <TicketTransferPanel orderId={ticket.ticketOrderId} />
+            {/* `TicketCardActions` replaces the bare transfer panel that used
+                to sit here. It carries the same transfer (same endpoint, same
+                order id) plus three things the product had built and mounted
+                nowhere: Share, List for resale — face value only, per the
+                ticket policy — and Resend confirmation. `showQrToggle` is off
+                because this page already prints the code above; a second
+                button revealing the same QR is a duplicate, not an action. */}
+            <TicketCardActions
+              orderId={ticket.ticketOrderId}
+              orderStatus={ticket.ticketOrder.status}
+              showQrToggle={false}
+              showsAt={ticket.show.startsAt.toISOString()}
+              tickets={[{ id: ticket.id, serializedId: ticket.serializedId }]}
+            />
           </div>
         ) : null}
 

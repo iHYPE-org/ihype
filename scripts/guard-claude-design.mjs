@@ -98,7 +98,12 @@ for (const [source, destination] of [
   ['/pages', '/app/me/profiles'],
   ['/payouts', '/app/me/payouts'],
   ['/me/dashboard', '/app/me'],
-  ['/community', '/app/me?section=about'],
+  /* Was '/app/me?section=about' — the ME panel the board was folded into
+     while `CommunityVoteBoard` was mounted on no page at all. The board has a
+     route again (2026-09-03), so the alias lands on it. What this guard is
+     actually protecting is unchanged: it must be a CONFIG redirect, because a
+     `redirect()` in a page cannot answer 307 under the root loading boundary. */
+  ['/community', '/app/me/info/community'],
 ]) {
   const rule = `source: '${source}', destination: '${destination}'`;
   if (!nextConfigSource.includes(rule)) {
