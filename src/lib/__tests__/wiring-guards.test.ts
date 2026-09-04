@@ -432,6 +432,50 @@ describe('the native shell paints the app\'s ground', () => {
 });
 
 /**
+ * THE ENTITLEMENTS FILE HAS TO BE REFERENCED, NOT MERELY PRESENT.
+ *
+ * `App.entitlements` claims the two capabilities the app cannot work without:
+ * `applinks:` (a magic link, and the store-review sign-in link, must open the
+ * APP rather than Safari — otherwise the session lands in the browser and the
+ * app stays signed out) and `webcredentials:` (without it a passkey cannot
+ * scope to a domain inside WKWebView at all).
+ *
+ * A file sitting in `ios/App/App/` does none of that. Only
+ * `CODE_SIGN_ENTITLEMENTS` puts it into the signature, and it must be set on
+ * BOTH the app target's Debug and Release configurations — the release one is
+ * the only build that signs. This repository has already been bitten by the
+ * same shape once: `PrivacyInfo.xcprivacy` was on disk and referenced, but
+ * missing from the Resources build phase, so it shipped in no `.ipa` and was
+ * rejected exactly as if it had never been written.
+ *
+ * Neither failure is visible locally: the unsigned debug build compiles with
+ * signing disabled, so the first thing that ever checks is a signed release
+ * job or Apple's own upload validator.
+ */
+describe('iOS entitlements', () => {
+  const project = 'ios/App/App.xcodeproj/project.pbxproj';
+
+  it('exists and claims both associated-domain services', () => {
+    const path = 'ios/App/App/App.entitlements';
+    expect(existsSync(path), `${path} is missing — universal links and passkeys both depend on it`).toBe(true);
+
+    const plist = readFileSync(path, 'utf8');
+    for (const claim of ['applinks:ihype.org', 'webcredentials:ihype.org', 'aps-environment']) {
+      expect(plist.includes(claim), `App.entitlements no longer claims ${claim}`).toBe(true);
+    }
+  });
+
+  it('is wired into BOTH build configurations, not just present on disk', () => {
+    const pbx = readFileSync(project, 'utf8');
+    const wired = pbx.match(/CODE_SIGN_ENTITLEMENTS = App\/App\.entitlements;/g)?.length ?? 0;
+    expect(
+      wired,
+      'CODE_SIGN_ENTITLEMENTS must be set on the app target Debug AND Release — a file on disk that nothing references ships in nothing',
+    ).toBe(2);
+  });
+});
+
+/**
  * NO ARITHMETIC INSIDE `${{ }}`.
  *
  * The GitHub Actions expression language has logical and comparison operators

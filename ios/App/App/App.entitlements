@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  iHYPE iOS entitlements.
+
+	  These claim capabilities that must ALSO be enabled on the App ID at
+	  developer.apple.com. Both halves or neither works: an entitlement the App
+	  ID does not carry makes `xcodebuild -exportArchive` fail outright, and a
+	  capability on the App ID that the binary does not claim simply does
+	  nothing. The App ID was registered with Push Notifications and Associated
+	  Domains on 2026-09-04, which is what made this file safe to add.
+
+	  The unsigned debug build cannot catch a mismatch here, because it builds
+	  with signing disabled — so the first thing that ever checks this is the
+	  signed release job.
+	-->
+
+	<!--
+	  APNs environment. `development` is correct for both debug builds AND
+	  TestFlight: Apple promotes the token to production automatically when the
+	  build goes to the App Store, and a build claiming `production` cannot
+	  receive a development push. Nothing sends to APNs yet — see
+	  NativePushRegistration.tsx — but the capability has to be on the App ID
+	  from the start, because adding one later means regenerating the
+	  provisioning profile.
+	-->
+	<key>aps-environment</key>
+	<string>development</string>
+
+	<!--
+	  Associated domains. Two claims on the same host, doing different jobs:
+
+	  · `applinks:` is universal links — it is what makes an ihype.org URL open
+	    the APP rather than Safari, for the paths listed in
+	    src/app/.well-known/apple-app-site-association/route.ts. This is not
+	    cosmetic any more: the store-review sign-in link and every emailed
+	    magic link have to land inside the app, and without this they land in
+	    Safari with the app still signed out.
+
+	  · `webcredentials:` is what lets a passkey work in the WebView at all.
+	    Without it WKWebView has no associated domain to scope a credential to,
+	    so `navigator.credentials.get()` finds nothing, and the app's only
+	    other sign-in is the magic link above.
+
+	  No `?mode=developer` suffix. That variant tells the device to skip
+	  Apple's CDN and fetch the association file directly, which is a debugging
+	  aid — it also requires Developer Mode on the device and silently changes
+	  where iOS looks. Ship the plain form; if verification needs debugging,
+	  add it temporarily and take it out again.
+	-->
+	<key>com.apple.developer.associated-domains</key>
+	<array>
+		<string>applinks:ihype.org</string>
+		<string>webcredentials:ihype.org</string>
+	</array>
+</dict>
+</plist>
