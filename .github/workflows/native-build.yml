@@ -378,9 +378,31 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          # THE ARITHMETIC HAPPENS IN THE SHELL, BECAUSE GITHUB HAS NONE.
+          #
+          # This was an expression multiplying run_number by 100 and adding
+          # run_attempt — written out here rather than quoted verbatim, because
+          # a `${{ }}` token inside a `run:` block is interpolated even when it
+          # sits behind a `#`, so quoting the broken form can re-break the file.
+          # It took the whole workflow down: the Actions expression language
+          # has logical and comparison operators only — no `*`, no `+` — so an
+          # arithmetic expression is a parse error, and a parse error anywhere
+          # in the file is a STARTUP FAILURE. The run completes in under a
+          # second with zero jobs and a red tick, which looks nothing like a
+          # broken build step and carries no log to read.
+          #
+          # It therefore broke the debug builds too, on every push and on
+          # branches whose diff never touched this file — that is what made it
+          # readable as somebody else's problem rather than as this line.
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
+          # Still run_number-major so a re-run of a failed release outranks the
+          # attempt before it: Play refuses a versionCode it has already seen.
+          VERSION_CODE=$(( RUN_NUMBER * 100 + RUN_ATTEMPT ))
+          echo "versionCode $VERSION_CODE"
           ./gradlew bundleRelease \
-            -Pandroid.injected.version.code=${{ github.run_number * 100 + github.run_attempt }} \
+            -Pandroid.injected.version.code="$VERSION_CODE" \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \

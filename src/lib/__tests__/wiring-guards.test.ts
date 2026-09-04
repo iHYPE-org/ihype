@@ -432,6 +432,57 @@ describe('the native shell paints the app\'s ground', () => {
 });
 
 /**
+ * NO ARITHMETIC INSIDE `${{ }}`.
+ *
+ * The GitHub Actions expression language has logical and comparison operators
+ * and nothing else — no `*`, `+`, `-` or `/`. An arithmetic expression is a
+ * PARSE ERROR, and a parse error anywhere in a workflow file is a startup
+ * failure: the run completes in under a second with **zero jobs**, a red tick
+ * and no log to read.
+ *
+ * `native-build.yml` shipped `${{ github.run_number * 100 + github.run_attempt }}`
+ * on 2026-09-04 and took the whole workflow — including the debug builds that
+ * run on every push — down with it. Two things made it hard to see: the run
+ * looks nothing like a failing build step, and it failed identically on
+ * branches whose diff never touched the file, which reads as somebody else's
+ * problem. Do the arithmetic in the shell, where arithmetic exists.
+ *
+ * This is a repository whose current priority is shipping two store binaries,
+ * and the workflow that builds them was silently dead. That is why it is a
+ * guard and not a comment.
+ */
+describe('workflow expressions', () => {
+  it('no workflow does arithmetic inside an expression', () => {
+    const dir = '.github/workflows';
+    const files = readdirSync(dir).filter((name) => /\.ya?ml$/.test(name));
+    expect(files.length, 'no workflow files found — this guard is measuring nothing').toBeGreaterThan(3);
+
+    const offenders: string[] = [];
+    for (const name of files) {
+      readFileSync(`${dir}/${name}`, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          for (const [, body] of line.matchAll(/\$\{\{([^}]*)\}\}/g)) {
+            /* Quoted text first: a default like `|| 'ihype-backups'` and any
+               literal containing a hyphen are not operators, and flagging them
+               would get this switched off within a day. */
+            const bare = body.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
+            /* Space-delimited so `||`/`&&` and an identifier's own characters
+               cannot match. Arithmetic in a real expression always looks like
+               `a * b`, because there is no other way to write it. */
+            if (/\s[*+/-]\s/.test(bare)) offenders.push(`${dir}/${name}:${index + 1}`);
+          }
+        });
+    }
+
+    expect(
+      offenders,
+      `GitHub expressions have no arithmetic — this is a STARTUP FAILURE, zero jobs, no log. Compute it in the shell: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+});
+
+/**
  * NOBODY GETS A PASSWORD.
  *
  * Owner instruction, 2026-09-04: *"I don't want users to have a password. I
