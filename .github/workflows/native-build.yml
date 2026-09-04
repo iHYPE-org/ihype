@@ -16,6 +16,14 @@ on:
       - 'capacitor.config.ts'
       - 'capacitor-shell/**'
       - 'package.json'
+      # THE WORKFLOW TESTS ITSELF. Without this line a change to this file
+      # triggers nothing, so an edit to the release plumbing reaches main with
+      # no signal at all — which is exactly how an invalid expression got in
+      # on 2026-09-04 and left the whole workflow unable to parse. The only
+      # reason anyone noticed is that GitHub manufactures a startup-failure
+      # run for an unparseable file regardless of triggers, and even that
+      # reported `event: push` on a workflow that has no push trigger.
+      - '.github/workflows/native-build.yml'
   workflow_dispatch:
     inputs:
       publish:
