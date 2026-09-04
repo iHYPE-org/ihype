@@ -13,6 +13,7 @@ import { AdminWorkbench } from '@/components/admin/AdminWorkbench';
 import { AdminFeatureBoard } from '@/components/admin/AdminFeatureBoard';
 import { AdminPulse } from '@/components/admin/AdminPulse';
 import { AdminDevices } from '@/components/admin/AdminDevices';
+import { AdminReviewLink } from '@/components/admin/AdminReviewLink';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBetaMetrics } from '@/lib/beta-metrics';
@@ -1044,6 +1045,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             than in the flags below because it is an operational fact about the
             console itself, not a setting. */}
         <AdminDevices />
+
+        {/* Sits beside AdminDevices for the same reason: both are operational
+            facts about who can get in, not product settings. */}
+        <AdminReviewLink />
 
         <section className="panel admin-console-panel admin-health-panel">
           <div className="admin-console-panel-head">
