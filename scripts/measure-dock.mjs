@@ -4,41 +4,49 @@
  *
  * ## Why this exists
  *
- * The dock is the app's whole navigation and every figure in it is load-bearing
- * on the others — the knob drives the bar's height, the bar's height is what the
- * panes clear, and the dial gets whatever is left over. `SHELL_LOCK` is blunt
- * about the consequence: change one and re-derive the rest, then MEASURE.
+ * The dock is the app's whole navigation and its height is what every pane
+ * clears, so a bar that measures anything other than `--mmm-chrome-size` means
+ * content is sliding under it or floating above a gap. `SHELL_LOCK` is blunt
+ * about the rule: change one figure and re-derive the rest, then MEASURE.
  *
  * `audit:mobile` is the real instrument for rendered geometry, but it needs a
  * built app and a signed-in session — `/app/*` is behind auth, and seeding a
  * session needs a database. This needs neither: it mounts the REAL `MmmDock`
- * (the hardware translated from `Console Dock.dc.html`) with the app's own
- * token layer and the real font files, sliced out of `mmm.css` at run time so
- * the harness cannot drift from what ships. `next/navigation` is aliased to a
- * recording stub — the component is a client component and the router is its
- * only Next dependency.
+ * with the app's own token layer and the real font files, sliced out of
+ * `mmm.css` at run time so the harness cannot drift from what ships.
+ * `next/navigation` and `next/link` are aliased to recording stubs.
+ *
+ * ## It measures BOTH states, and that is the point
+ *
+ * The dock has two heights (MIDDLE ROAD, 2026-09-04): 46px of tabs when nothing
+ * is loaded, and that plus a 56px mini player when something is. Both are
+ * derived from the geometry table — the second through the one `:has()` rule in
+ * `mmm.css` that is allowed to move `--mmm-chrome-size` — and a probe that only
+ * ever saw the idle bar would pass while every list on the app hid its last row
+ * behind a playing mini player. So each width is driven twice.
  *
  * ## What it checks, and why each one is here
  *
- *   · **the bar's height equals the geometry table** — `--mmm-chrome-size` is
- *     what every pane clears, so a bar that measures anything else means
- *     content is sliding under the dock or floating above a gap;
- *   · **the two knobs match at 74px** — the design: "both knobs are 74px,
- *     matched … if one is smaller the dock looks broken";
- *   · **the module readout fits its brass cap** — the engraved legend takes
- *     the 11px tracked-mono floor, and "MUSIC" must fit the 48px cap;
- *   · **the station name is not clipped from 375px up** — a destination you
- *     cannot read is the exact failure the dial exists to fix. The drum's
- *     neighbours slide out of the window by design (the window clips the
- *     cylinder), so THEY may clip; the centre name may not;
- *   · **both step affordances take their own taps** — they are the keyboard's
- *     and Playwright's only way to turn the dial;
- *   · **the nameplate's tap target clears 44px** — the visible badge is 17px
- *     of brass; the floor is met by an invisible skirt, and a skirt is exactly
- *     the kind of thing that silently stops working;
- *   · **the needle, the pilot bead and the tick card are rendered** — the
- *     instrument parts of the meter, each one structural DOM this harness
- *     would otherwise not notice losing.
+ *   · **the bar's height equals the geometry table, in BOTH states** — see
+ *     above; this is the check the whole file exists for;
+ *   · **exactly one transport, always** — the radio key when idle, the mini
+ *     player's key when loaded, never both and never neither. The universal
+ *     transport is a promise the console made and this one keeps: on MAP, ME, a
+ *     profile and a ticket nothing else on screen can start audio;
+ *   · **every control clears 44x44** — MOBILE.md's floor, desktop included,
+ *     measured as a rendered box rather than read off a stylesheet;
+ *   · **no tab label is clipped from 320px up** — four tabs and a fixed 58px
+ *     transport at 320 leaves 65px a tab, and "TICKETS" at 11px/.14em is the
+ *     longest. A destination you cannot read is the failure a labelled bar
+ *     exists to avoid, so unlike the dial's drum this one has no excuse at any
+ *     width;
+ *   · **the bar is one row, the right width, and centred** — it holds ONE width
+ *     on every screen (`--mmm-frame-max`, read from the CSS rather than
+ *     restated here) and is an object on the desk, not a strip painted across;
+ *   · **exactly one tab is lit** — two would be a routing bug and none means a
+ *     member cannot tell where they are;
+ *   · **the mini player's title is not clipped** and its artwork box is square,
+ *     because the fallback initial is centred in it.
  *
  * Usage: `npm run measure:dock` · `--json` for the raw rows ·
  * `DOCK_SHOT=/path/prefix` also writes `<prefix>-<width>.png` screenshots.
@@ -82,7 +90,12 @@ for (const tex of ['walnut-v3.png', 'grain.png', 'brushed.png', 'brass-turned.pn
    relative so `file://` can serve them. */
 const frame = slice('src/app/mmm.css', '.mmm-frame {', '/* ── Map layer').replace('.mmm-frame {', '#root {');
 const dock = slice('src/app/mmm.css', '/* ── The dock ', "/* The design system's ONE breakpoint")
-  .replaceAll("url('/console/", "url('console/");
+  .replaceAll("url('/console/", "url('console/")
+  /* The mini player's chrome-size override is keyed on the frame, and the
+     harness's root IS the frame. Renaming only `.mmm-frame {` above left this
+     rule matching nothing, so the probe measured a 111px bar against a 55px
+     table and reported the app broken when it was the harness. */
+  .replaceAll('.mmm-frame:has(', '#root:has(');
 
 await writeFile(path.join(dir, 'probe.css'), `
 @font-face { font-family: 'JB'; src: url('fonts/JetBrainsMono-Variable.woff2') format('woff2'); }
@@ -99,6 +112,12 @@ await writeFile(path.join(dir, 'probe.css'), `
   --duration-default: 200ms; --duration-medium: 320ms; --duration-slow: 420ms;
   --radius-panel: 3px; --z-sticky: 30;
 }
+/* globals.css sets this on every element in the app, and the probe slices only
+   mmm.css - without it the tab's min-height sized its CONTENT box and every tab
+   measured 56px against a 46px table. The bar was correct in the app and wrong
+   here, which is the harness-drifts-from-the-app failure this file's own
+   history records against PR #747. */
+*, *::before, *::after { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); }
 /* globals.css's phone-width button floor, restated here because the probe
    slices only mmm.css — its absence is how a floored 44px nameplate hanging
@@ -116,6 +135,16 @@ export function useRouter() {
   };
 }
 export function usePathname() { return '/app/music/recommended'; }
+export function useSearchParams() { return new URLSearchParams(); }
+`);
+
+/* `next/link` pulls the whole App Router client in; an anchor is all the dock
+   uses it for, and an anchor is also what it renders in the browser. */
+await writeFile(path.join(dir, 'link-stub.tsx'), `
+import * as React from 'react';
+export default function Link(props: React.ComponentProps<'a'> & { href: string }) {
+  return <a {...props} />;
+}
 `);
 
 await writeFile(path.join(dir, 'entry.tsx'), `
@@ -123,23 +152,38 @@ import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { MmmDock } from '${root}/src/components/mmm/MmmDock';
 
-/* The real component with the real manifests: pathname puts the dial on the
-   MUSIC set, parked on "Recommended" — the longest station name the app
-   ships, and the whole reason the width rules exist. */
-createRoot(document.getElementById('root')!).render(
-  <MmmDock
-    canTogglePlay={false}
-    layer={null}
-    onCollapse={() => {}}
-    onExpand={() => {}}
-    onNext={() => {}}
-    onPlayFallback={() => {}}
-    onPrev={() => {}}
-    onTogglePlay={() => {}}
-    pathname="/app/music/recommended"
-    playing={false}
-  />,
-);
+/* The real component with the real manifest. The pathname parks it on MUSIC,
+   whose tab is the one whose label ("Listen") differs from its module name —
+   so a bar drawing \`label\` instead of \`tabLabel\` fails here rather than in
+   production. The track is the longest title and artist the fixtures carry,
+   because the mini player's clipping is measured against real ink. */
+const TRACK = {
+  title: 'Anchor Room Sessions, Volume Two',
+  artist: 'Kestrel and the Long Way Round',
+  initial: 'K',
+  artworkUrl: null,
+};
+
+function Probe() {
+  const [track, setTrack] = React.useState<typeof TRACK | null>(null);
+  (window as unknown as { __setTrack: (on: boolean) => void }).__setTrack =
+    (on) => setTrack(on ? TRACK : null);
+  return (
+    <MmmDock
+      canTogglePlay={Boolean(track)}
+      onExpand={() => {}}
+      onNext={() => {}}
+      onPlayFallback={() => {}}
+      onPrev={() => {}}
+      onTogglePlay={() => {}}
+      pathname="/app/music/recommended"
+      playing={Boolean(track)}
+      track={track}
+    />
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<Probe />);
 `);
 
 await writeFile(path.join(dir, 'index.html'),
@@ -153,7 +197,10 @@ await build({
   /* Something on MmmDock's import graph reads `process` beyond NODE_ENV; a
      browser page has no such global, so give it an empty one. */
   banner: { js: 'var process = process || { env: { NODE_ENV: "production" } };' },
-  alias: { 'next/navigation': path.join(dir, 'router-stub.ts') },
+  alias: {
+    'next/navigation': path.join(dir, 'router-stub.ts'),
+    'next/link': path.join(dir, 'link-stub.tsx'),
+  },
   nodePaths: [path.join(root, 'node_modules')],
   logLevel: 'error',
 });
@@ -176,104 +223,92 @@ async function launch() {
 }
 
 const browser = await launch();
+
+/* The one measurement, run once per state. Everything it reads is a rendered
+   box or a resolved custom property — never a number restated from the CSS,
+   which is the mistake this file exists to catch. */
+const MEASURE = () => {
+  const dock = document.querySelector('.mmm-dock');
+  const dockBox = dock.getBoundingClientRect();
+  const bar = dock.querySelector('.mmm-tabs');
+  const tabs = [...dock.querySelectorAll('.mmm-tab')].map((tab) => {
+    const box = tab.getBoundingClientRect();
+    const label = tab.querySelector('.mmm-tab-label');
+    return {
+      text: label?.textContent ?? '',
+      w: Math.round(box.width),
+      h: Math.round(box.height),
+      on: tab.getAttribute('data-on') === 'true',
+      radio: tab.classList.contains('mmm-tab-radio'),
+      px: label ? parseFloat(getComputedStyle(label).fontSize) : 0,
+      /* +1: sub-pixel layout rounds scrollWidth up by a fraction on a box that
+         fits exactly, and a probe that fails on 0.4px of nothing is a probe
+         people learn to re-run rather than read. */
+      clipped: label ? Math.max(0, Math.round(label.scrollWidth - label.clientWidth) - 1) : 0,
+      glyph: !!tab.querySelector('svg'),
+    };
+  });
+  const mini = dock.querySelector('.mmm-mini');
+  const miniTitle = dock.querySelector('.mmm-mini-title');
+  const art = dock.querySelector('.mmm-mini-art');
+  const artBox = art?.getBoundingClientRect();
+  const keys = [...dock.querySelectorAll('.mmm-key')].map((key) => {
+    const box = key.getBoundingClientRect();
+    return { label: key.getAttribute('aria-label') ?? '', w: Math.round(box.width), h: Math.round(box.height) };
+  });
+  return {
+    dockH: Math.round(dockBox.height),
+    dockW: Math.round(dockBox.width),
+    /* The cap the CSS itself resolves, so this probe never carries a second
+       copy of the figure — the same rule as --mmm-chrome-size below. */
+    frameMax: Math.round(parseFloat(
+      getComputedStyle(document.getElementById('root')).getPropertyValue('--mmm-frame-max'),
+    )) || 0,
+    centred: Math.abs((dockBox.left + dockBox.width / 2) - window.innerWidth / 2) <= 1,
+    oneRow: (() => {
+      const kids = [...bar.children].map((child) => child.getBoundingClientRect());
+      return kids.every((r) => r.top < kids[0].bottom && r.bottom > kids[0].top);
+    })(),
+    tabs,
+    hasMini: !!mini,
+    miniH: mini ? Math.round(mini.getBoundingClientRect().height) : 0,
+    /* NOT `scrollWidth - clientWidth`: a correctly ellipsised element always
+       has more scroll than client, so that reads as a failure precisely when
+       the truncation is working. What actually matters is whether the title
+       escapes the bar, which is what an un-ellipsised one does. */
+    miniTitleOverflow: miniTitle
+      ? Math.max(0, Math.round(miniTitle.getBoundingClientRect().right - dockBox.right))
+      : 0,
+    miniTitleEllipsis: miniTitle ? getComputedStyle(miniTitle).textOverflow === 'ellipsis' : false,
+    art: artBox ? [Math.round(artBox.width), Math.round(artBox.height)] : null,
+    keys,
+    pageScrollW: document.documentElement.scrollWidth,
+    chrome: (() => {
+      /* The geometry table's own answer, resolved by the browser. */
+      const probe = document.createElement('div');
+      probe.style.height = 'var(--mmm-chrome-size)';
+      document.getElementById('root').appendChild(probe);
+      const h = Math.round(probe.getBoundingClientRect().height);
+      probe.remove();
+      return h;
+    })(),
+  };
+};
+
 const rows = [];
 for (const width of WIDTHS) {
   const page = await browser.newPage({ viewport: { width, height: 852 } });
   await page.goto(`file://${path.join(dir, 'index.html')}`);
-  await page.waitForSelector('.mmm-dock .mmm-knob');
+  await page.waitForSelector('.mmm-dock .mmm-tabs');
   await page.evaluate(() => document.fonts.ready);
-  /* Let the boot strike finish so the screenshot is the lit dial, not the
-     dark one, and the label spring has settled. */
-  await page.waitForTimeout(1600);
-  rows.push({ width, ...await page.evaluate(() => {
-    const dock = document.querySelector('.mmm-dock');
-    const dockBox = dock.getBoundingClientRect();
-    const plate = dock.querySelector('.mmm-dock-plate');
-    const kids = [...plate.children].map((child) => child.getBoundingClientRect());
-    const knob = dock.querySelector('.mmm-knob').getBoundingClientRect();
-    const gate = dock.querySelector('.mmm-gate').getBoundingClientRect();
-    const readout = dock.querySelector('.mmm-knob-readout');
-    const dialNode = dock.querySelector('.mmm-hifi-dial');
-    const dial = dialNode.getBoundingClientRect();
-    const stationsRow = dock.querySelector('.mmm-dial-stations').getBoundingClientRect();
-    const station = dock.querySelector('.mmm-dial-station[role="tab"]');
-    const stationBox = station.getBoundingClientRect();
-    const wings = [...dock.querySelectorAll('.mmm-dial-station[aria-hidden="true"]')].map((wing) => {
-      const box = wing.getBoundingClientRect();
-      return {
-        text: wing.textContent,
-        px: parseFloat(getComputedStyle(wing).fontSize),
-        opacity: parseFloat(getComputedStyle(wing).opacity),
-        /* Some of a neighbour must be IN the window — a wing entirely outside
-           it is a hint nobody can see. Ink sliding past the window's edge is
-           the drum metaphor working, so partial is fine. */
-        inWindow: box.right > stationsRow.left && box.left < stationsRow.right,
-      };
-    });
-    const badge = dock.querySelector('.mmm-dock-badge');
-    const badgeBox = badge.getBoundingClientRect();
-    const badgeCx = badgeBox.left + badgeBox.width / 2;
-    const badgeCy = badgeBox.top + badgeBox.height / 2;
-    const hits = (x, y) => {
-      const el = document.elementFromPoint(x, y);
-      return el === badge || badge.contains(el);
-    };
-    const at = (x) => {
-      const el = document.elementFromPoint(x, dial.top + dial.height / 2);
-      return el?.getAttribute('aria-label') ?? el?.className ?? 'nothing';
-    };
-    return {
-      dockH: Math.round(dockBox.height),
-      dockW: Math.round(dockBox.width),
-      /* The cap the CSS itself resolves, so this probe never carries a second
-         copy of the figure — the same rule as --mmm-chrome-size below. */
-      frameMax: Math.round(parseFloat(
-        getComputedStyle(document.getElementById('root')).getPropertyValue('--mmm-frame-max'),
-      )) || 0,
-      centred: Math.abs((dockBox.left + dockBox.width / 2) - window.innerWidth / 2) <= 1,
-      oneRow: kids.every((r) => r.top < kids[0].bottom && r.bottom > kids[0].top),
-      knobs: [Math.round(knob.width), Math.round(gate.width)],
-      dialW: Math.round(dial.width),
-      readout: readout.textContent,
-      readoutPx: parseFloat(getComputedStyle(readout).fontSize),
-      /* The engraved legend against the brass cap circle (knob inset 13 each
-         side). Proud of the cap reads as broken hardware. Measured as the
-         TEXT's own box via a Range — the readout div spans the whole knob, so
-         its scrollWidth is the div, not the ink. */
-      readoutSpill: (() => {
-        const range = document.createRange();
-        range.selectNodeContents(readout);
-        return Math.max(0, Math.round(range.getBoundingClientRect().width - (knob.width - 26)));
-      })(),
-      station: station.textContent,
-      stationPx: parseFloat(getComputedStyle(station).fontSize),
-      /* The centre name against the window — the row clips, the label doesn't. */
-      stationClipped: Math.max(0, Math.round(stationBox.width - stationsRow.width)),
-      wings,
-      steps: [at(dial.left + 8), at(dial.right - 8)],
-      /* The nameplate's effective target: probe the skirt's reach. */
-      badge44: hits(badgeCx, badgeCy - 21) && hits(badgeCx, badgeCy + 21) && hits(badgeCx - 21, badgeCy) && hits(badgeCx + 21, badgeCy),
-      instrument: {
-        needle: !!dock.querySelector('.mmm-dial-needle'),
-        pilot: !!dock.querySelector('.mmm-dial-pilot'),
-        card: (() => {
-          const card = dock.querySelector('.mmm-dial-card');
-          return card ? Math.round(card.getBoundingClientRect().width) : 0;
-        })(),
-      },
-      pageScrollW: document.documentElement.scrollWidth,
-      chrome: (() => {
-        /* The geometry table's own answer, resolved by the browser. */
-        const probe = document.createElement('div');
-        probe.style.height = 'var(--mmm-chrome-size)';
-        document.getElementById('root').appendChild(probe);
-        const h = Math.round(probe.getBoundingClientRect().height);
-        probe.remove();
-        return h;
-      })(),
-    };
-  }) });
-  if (SHOT) {
+  await page.waitForTimeout(120);
+
+  for (const playing of [false, true]) {
+    await page.evaluate((on) => (window).__setTrack(on), playing);
+    await page.waitForTimeout(60);
+    rows.push({ width, playing, ...await page.evaluate(MEASURE) });
+  }
+if (SHOT) {
     await page.screenshot({ path: `${SHOT}-${width}.png`, clip: { x: 0, y: 852 - 140, width, height: 140 } });
   }
   await page.close();
@@ -283,45 +318,72 @@ await browser.close();
 if (JSON_OUT) {
   console.log(JSON.stringify(rows, null, 2));
 } else {
-  console.log('\n  width  dock  chrome  knobs   dial   readout          station                     wings');
+  console.log('\n  width  state    dock  chrome  mini  tabs (label @ w x h)');
   for (const r of rows) {
-    console.log(`  ${String(r.width).padStart(5)}  ${String(r.dockH).padStart(4)}  ${String(r.chrome).padStart(6)}  ${`${r.knobs[0]}/${r.knobs[1]}`.padEnd(6)}  ${String(r.dialW).padStart(4)}   `
-      + `"${r.readout}" ${r.readoutPx}px${r.readoutSpill ? ` SPILLS ${r.readoutSpill}` : ''}`.padEnd(16)
-      + `  "${r.station}" ${r.stationPx}px${r.stationClipped ? ` CLIPPED ${r.stationClipped}` : ''}`.padEnd(27)
-      + `  ${r.wings.map((wing) => `${wing.text || '·'}@${wing.px}px${wing.inWindow ? '' : ' OUT'}`).join(' | ')}`);
+    console.log(`  ${String(r.width).padStart(5)}  ${(r.playing ? 'playing' : 'idle').padEnd(7)}  ${String(r.dockH).padStart(4)}  ${String(r.chrome).padStart(6)}  ${String(r.miniH).padStart(4)}  `
+      + r.tabs.map((t) => `${t.on ? '[' : ''}${t.text}${t.on ? ']' : ''} ${t.w}x${t.h}${t.clipped ? ` CLIP ${t.clipped}` : ''}`).join('  '));
   }
 }
 
 const problems = [];
 for (const r of rows) {
-  if (!r.oneRow) problems.push(`${r.width}px: the dock wrapped onto two rows.`);
+  const at = `${r.width}px ${r.playing ? 'playing' : 'idle'}`;
+  if (!r.oneRow) problems.push(`${at}: the tab row wrapped onto two lines.`);
   /* The console holds ONE width on every screen and centres above it: the
      dc.html's 430 doubled for a desk (owner, 2026-08-25), read from
      `--mmm-frame-max` rather than restated here. A phone is unaffected — the
      viewport is the smaller term long before the cap is. */
-  if (!r.frameMax) problems.push(`${r.width}px: --mmm-frame-max did not resolve — the frame's width token moved, so this probe is measuring nothing.`);
-  else if (r.dockW !== Math.min(r.width, r.frameMax)) problems.push(`${r.width}px: the bar measures ${r.dockW}px wide — it should be min(viewport, ${r.frameMax}).`);
-  if (!r.centred) problems.push(`${r.width}px: the bar is not centred.`);
-  if (r.dockH !== r.chrome) problems.push(`${r.width}px: the bar measures ${r.dockH}px but --mmm-chrome-size says ${r.chrome}px — the panes will clear the wrong height.`);
-  if (r.knobs[0] !== 74 || r.knobs[1] !== 74) problems.push(`${r.width}px: the knobs measure ${r.knobs.join('/')} — the design says 74, matched.`);
-  if (r.readoutSpill) problems.push(`${r.width}px: "${r.readout}" spills ${r.readoutSpill}px past the brass cap.`);
-  if (r.readoutPx > 12) problems.push(`${r.width}px: the cap legend is ${r.readoutPx}px — it takes the 11px tracked-mono floor.`);
-  if (r.pageScrollW > r.width) problems.push(`${r.width}px: the page scrolls sideways (${r.pageScrollW}px).`);
-  if (!r.steps.every((hit) => /station/i.test(hit))) problems.push(`${r.width}px: a step affordance is covered (${r.steps.join(', ')}).`);
-  if (!r.badge44) problems.push(`${r.width}px: the nameplate's tap target is under 44px.`);
-  if (!r.instrument.needle || !r.instrument.pilot) problems.push(`${r.width}px: the meter lost its ${!r.instrument.needle ? 'needle' : 'pilot bead'}.`);
-  if (r.instrument.card !== 840) problems.push(`${r.width}px: the tick card measures ${r.instrument.card}px — the compass disc geometry moved.`);
-  /* 320px is below MOBILE.md's design width and clips the longest MUSIC name.
-     Reported, not failed — the alternative is a name below the type floor. */
-  if (r.stationClipped && r.width >= 375) problems.push(`${r.width}px: "${r.station}" is clipped by ${r.stationClipped}px.`);
-  if (r.width >= 375) {
-    if (r.wings.length !== 2) problems.push(`${r.width}px: expected two drum neighbours, measured ${r.wings.length}.`);
-    for (const wing of r.wings) {
-      if (!wing.text) problems.push(`${r.width}px: a drum neighbour rendered empty.`);
-      if (wing.opacity <= 0.05) problems.push(`${r.width}px: the "${wing.text}" neighbour is invisible.`);
-      if (!wing.inWindow) problems.push(`${r.width}px: the "${wing.text}" neighbour sits entirely outside the window.`);
-      if (wing.px < 14.9) problems.push(`${r.width}px: the "${wing.text}" neighbour is ${wing.px}px — a resting neighbour is content and takes the 15px floor.`);
-    }
+  if (!r.frameMax) problems.push(`${at}: --mmm-frame-max did not resolve — the frame's width token moved, so this probe is measuring nothing.`);
+  else if (r.dockW !== Math.min(r.width, r.frameMax)) problems.push(`${at}: the bar measures ${r.dockW}px wide — it should be min(viewport, ${r.frameMax}).`);
+  if (!r.centred) problems.push(`${at}: the bar is not centred.`);
+  /* THE check. Both states, and the playing one only passes because of the
+     single `:has()` rule in mmm.css that is allowed to move the token. */
+  if (r.dockH !== r.chrome) problems.push(`${at}: the bar measures ${r.dockH}px but --mmm-chrome-size says ${r.chrome}px — the panes will clear the wrong height.`);
+  if (r.pageScrollW > r.width) problems.push(`${at}: the page scrolls sideways (${r.pageScrollW}px).`);
+
+  /* The mini player is present exactly when a track is loaded — the whole of
+     the height saving depends on it being absent otherwise. */
+  if (r.hasMini !== r.playing) {
+    problems.push(r.playing
+      ? `${at}: a track is loaded and there is no mini player.`
+      : `${at}: nothing is loaded and the mini player is on screen — the idle bar is supposed to be tabs only.`);
+  }
+
+  /* Exactly one transport, always. Neither state may have none (the universal
+     transport is dead on MAP, ME, a profile and a ticket without it) and
+     neither may have both (two controls for one value is what the console's own
+     notes call the drift). */
+  const radio = r.tabs.filter((t) => t.radio).length;
+  const keys = r.keys.length;
+  if (r.playing && (radio !== 0 || keys !== 3)) problems.push(`${at}: expected the mini player's three keys and no radio key, measured ${keys} key(s) and ${radio} radio.`);
+  if (!r.playing && (radio !== 1 || keys !== 0)) problems.push(`${at}: expected one radio key and no mini keys, measured ${radio} radio and ${keys} key(s).`);
+
+  /* Exactly one destination lit. Two is a routing bug; none means a member
+     cannot tell where they are. The radio key is a control, never lit as a
+     destination. */
+  const lit = r.tabs.filter((t) => t.on);
+  if (lit.length !== 1) problems.push(`${at}: ${lit.length} tab(s) lit — exactly one destination is current.`);
+  else if (lit[0].text !== 'Listen') problems.push(`${at}: "${lit[0].text}" is lit on /app/music — the bar is drawing the module name instead of its tab label.`);
+
+  for (const tab of r.tabs) {
+    /* MOBILE.md's floor, desktop included, as a rendered box. */
+    if (tab.h < 44) problems.push(`${at}: the "${tab.text}" control is ${tab.h}px tall — the floor is 44.`);
+    if (tab.w < 44) problems.push(`${at}: the "${tab.text}" control is ${tab.w}px wide — the floor is 44.`);
+    /* Unlike the dial's drum, a labelled bar has no width at which a clipped
+       destination is acceptable: the label IS the affordance. */
+    if (tab.clipped) problems.push(`${at}: "${tab.text}" is clipped by ${tab.clipped}px.`);
+    if (tab.px > 12) problems.push(`${at}: "${tab.text}" is set at ${tab.px}px — a tab label takes the 11px tracked-mono floor.`);
+    if (!tab.glyph) problems.push(`${at}: the "${tab.text}" control lost its glyph.`);
+  }
+
+  for (const key of r.keys) {
+    if (key.h < 44 || key.w < 44) problems.push(`${at}: the "${key.label}" key is ${key.w}x${key.h} — the floor is 44x44.`);
+  }
+  if (r.playing) {
+    if (r.miniTitleOverflow) problems.push(`${at}: the mini player's title runs ${r.miniTitleOverflow}px past the bar.`);
+    if (!r.miniTitleEllipsis) problems.push(`${at}: the mini player's title does not ellipsise — a long song name will push the transport off the edge.`);
+    if (!r.art) problems.push(`${at}: the mini player has no artwork box.`);
+    else if (r.art[0] !== r.art[1]) problems.push(`${at}: the artwork box is ${r.art.join('x')} — the fallback initial is centred in a square.`);
   }
 }
 
@@ -330,5 +392,6 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-const narrow = rows.find((r) => r.width === 320);
-console.log(`\n  Dock geometry holds from 375px up.${narrow?.stationClipped ? ` At 320px "${narrow.station}" clips by ${narrow.stationClipped}px, which is below MOBILE.md's design width.` : ''}\n`);
+const idle = rows.find((r) => r.width === 393 && !r.playing);
+const playing = rows.find((r) => r.width === 393 && r.playing);
+console.log(`\n  Dock geometry holds at every width, in both states — ${idle?.dockH}px idle, ${playing?.dockH}px with a track loaded.\n`);

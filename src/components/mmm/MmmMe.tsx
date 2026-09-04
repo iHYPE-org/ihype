@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MMM_ME_PANELS } from '@/lib/mmm-nav';
-import { MmmTickets } from './MmmTickets';
 import { useRegisterStations } from './MmmStations';
 import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
@@ -88,8 +87,13 @@ function ListeningCard() {
  * Profiles · My Tickets · Info · Settings. All four start closed so ME opens
  * as a clean index rather than choosing a destination for the member.
  */
-type MeSectionId = 'profiles' | 'tickets';
-const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles', 'tickets'];
+/* One section with a body of its own, since My Tickets was promoted to a
+   top-level tab (MIDDLE ROAD, 2026-09-04). `?section=tickets` still exists in
+   links people already have and is redirected to `/app/tickets` by the page
+   above, not silently dropped here — a deep link that lands on a screen with
+   nothing on it is the worse failure. */
+type MeSectionId = 'profiles';
+const ME_SECTION_IDS: readonly MeSectionId[] = ['profiles'];
 
 function isMeSectionId(value: string | null): value is MeSectionId {
   return value !== null && (ME_SECTION_IDS as readonly string[]).includes(value);
@@ -140,20 +144,23 @@ function isMeSectionId(value: string | null): value is MeSectionId {
  * structural rather than a rule every toggle has to remember.
  */
 /**
- * ME's four subnav options, as the DIAL's stations (owner, 2026-08-25:
- * "Profiles My Tickets Info Settings for the four subnav options in Me").
+ * ME's subnav, rendered by `MmmSectionStrip` at the top of the pane.
  *
- * The dial used to offer only Info and Settings — `MMM_ME_PANELS`, the two that
- * have rows — so half of ME's list was reachable only by scrolling to its card
- * and tapping it. That was survivable while every card was on screen at once;
- * it stopped being survivable the moment ME started showing one card at a time,
- * because closing the open one became the only route back to the other three.
- * The dial is the subnav, so the subnav has to be all four.
+ * Owner, 2026-08-25: "Profiles My Tickets Info Settings for the four subnav
+ * options in Me". **It is three now, and only because My Tickets was
+ * PROMOTED** (MIDDLE ROAD, 2026-09-04) — the wallet is a top-level tab at
+ * `/app/tickets` rather than a section here. Nothing was dropped: the same
+ * `MmmTickets`, from the same loader, one level shallower. Do not re-add it as
+ * a section; two homes for a door credential is worse than either one.
+ *
+ * The set has to be ALL of what remains, for the reason it had to be all four
+ * before: ME shows one card at a time, so a section missing from the subnav is
+ * reachable only by closing whatever is open.
  *
  * Deliberately NOT added to `MMM_ME_PANELS`: that list drives the panel loop and
- * indexes `ME_PANEL_ROWS`, and Profiles and My Tickets have no rows there — they
- * are sections with bodies of their own. Two lists, because they answer two
- * different questions.
+ * indexes `ME_PANEL_ROWS`, and Profiles has no rows there — it is a section
+ * with a body of its own. Two lists, because they answer two different
+ * questions.
  *
  * Module-level so its identity is stable. `useRegisterStations` compares
  * `stations` by reference in its effect, so an array rebuilt each render would
@@ -162,7 +169,6 @@ function isMeSectionId(value: string | null): value is MeSectionId {
  */
 const ME_STATIONS: readonly { id: string; label: string }[] = [
   { id: 'profiles', label: 'Profiles' },
-  { id: 'tickets', label: 'My Tickets' },
   { id: 'info', label: 'Info' },
   { id: 'settings', label: 'Settings' },
 ];
@@ -266,18 +272,17 @@ export function MmmMe({ data }: { data: MmmMeData }) {
    */
   const activeId: MeSectionId | MePanelId = openSection ?? openPanel ?? 'profiles';
 
-  /* Wire the four to the dial. The callback goes through a ref so its identity
-     is permanently stable — same reason and same shape as `navigateRef` in
-     MmmDock — because `useRegisterStations` also depends on `onChange` by
-     reference, and this one closes over `openPanel`, the router and the search
-     params, all of which change. */
+  /* Hand the set to the pane's section strip. The callback goes through a ref
+     so its identity is permanently stable, because `useRegisterStations`
+     depends on `onChange` by reference and this one closes over `openPanel`,
+     the router and the search params, all of which change. */
   const selectStation = useRef<(id: string) => void>(() => {});
   selectStation.current = (id: string) => {
-    if (id === 'profiles' || id === 'tickets') {
+    if (id === 'profiles') {
       setMeGroup(id);
       // Only touch the URL when there is actually a panel to close, or every
-      // dial turn pushes a history entry identical to the current one and Back
-      // walks through dead steps.
+      // tap pushes a history entry identical to the current one and Back walks
+      // through dead steps.
       if (openPanel) setPanel(null);
       return;
     }
@@ -290,10 +295,10 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
   useRegisterStations({
     stations: ME_STATIONS,
-    /* The card on screen, which is now always exactly one. The dial must name a
-       real station — the vendored TunerDial warns and silently falls back to
-       index 0 when handed an `active` naming nothing, a confident wrong
-       readout — and `activeId` cannot be null, so it always does. */
+    /* The card on screen, which is always exactly one. The strip lights nothing
+       when handed an `active` naming no section, which on ME's own root would
+       be a control that looks broken; `activeId` cannot be null, so it always
+       names one. */
     active: activeId,
     onChange: onStationChange,
     label: 'Sections in ME',
@@ -488,15 +493,6 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       </section>
       )}
 
-      {activeId === 'tickets' && (
-      <section aria-label="My Tickets" className="mmm-me-section">
-        {/* The tickets themselves, not a link out to them. This used to be two
-            buttons into the legacy shell, which is a different header, a
-            different player and no route back into MMM for the rest of the
-            session — the same trap row 273 closed for the LISTEN destinations. */}
-        <MmmTickets tickets={data.tickets} />
-      </section>
-      )}
 
       {/* Account panels open IN PLACE, one at a time. They used to be separate
           routes under /app/me/[panel]; the 2026-08-10 template makes ME one
