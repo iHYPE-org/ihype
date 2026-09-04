@@ -4,6 +4,7 @@ import { buildAuthSessionCookie } from '@/lib/auth-session';
 import { checkAndRecordLogin } from '@/lib/login-security';
 import { resolvePostAuthRedirect } from '@/lib/auth-redirects';
 import { hashMagicLinkToken } from '@/lib/magic-link-token';
+import { planRedemption } from '@/lib/review-access';
 import { log } from '@/lib/logger';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { deferWork } from '@/lib/defer-work';
@@ -36,14 +37,31 @@ export async function GET(request: NextRequest) {
     user = await db.$transaction(async (tx) => {
       const record = await tx.magicLinkToken.findUnique({
         where: { token: tokenHash },
-        select: { id: true, userId: true, expiresAt: true, used: true },
+        select: { id: true, userId: true, expiresAt: true, used: true, remainingUses: true },
       });
 
       if (!record || record.used || record.expiresAt <= now) return null;
 
+      /* A member's link is single-use and `remainingUses` is null for it, which
+         `planRedemption` maps to exactly the previous behaviour. A store-review
+         link (see `src/lib/review-access.ts`) carries a small count instead,
+         because a reviewer cannot ask us for another one mid-review. */
+      const plan = planRedemption(record.remainingUses);
+      if (!plan.allowed) return null;
+
+      /* Still one atomic conditional write, and the guard now includes the
+         COUNT as well as `used`: two concurrent redemptions of a multi-use
+         link must spend two, not one. Matching on the value we read is what
+         makes this a compare-and-set rather than a read-then-write — the same
+         race `/api/shows/[showId]/scan` was fixed for. */
       const consumed = await tx.magicLinkToken.updateMany({
-        where: { id: record.id, used: false, expiresAt: { gt: now } },
-        data: { used: true },
+        where: {
+          id: record.id,
+          used: false,
+          expiresAt: { gt: now },
+          remainingUses: record.remainingUses,
+        },
+        data: { used: plan.markUsed, remainingUses: plan.nextRemaining },
       });
       if (consumed.count !== 1) return null;
 

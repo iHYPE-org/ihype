@@ -432,6 +432,69 @@ describe('the native shell paints the app\'s ground', () => {
 });
 
 /**
+ * NOBODY GETS A PASSWORD.
+ *
+ * Owner instruction, 2026-09-04: *"I don't want users to have a password. I
+ * want magic key via email or passkey only. It's WAY safer."*
+ *
+ * This is a guard rather than a comment because the pressure to add one is
+ * real and recurring, and it arrives disguised as something narrow. It was
+ * built and reverted the same day the instruction was given: a reviewer cannot
+ * receive our email or hold our passkey, so "one account, one secret, for the
+ * App Store only" reads as obviously safe right up to the moment there is a
+ * password field on the platform's only sign-in page. The password-free answer
+ * is `src/lib/review-access.ts` — the same magic link, minted rather than
+ * emailed.
+ *
+ * A password reintroduces things the current design does not have at all:
+ * something guessable, something reusable, something worth phishing, a login
+ * form worth attacking, and a reset flow that becomes the real attack surface.
+ * None of that is bought back by narrowing who may use it.
+ */
+describe('the product has no password', () => {
+  it('NextAuth has no credentials provider', () => {
+    /* `providers: []` is what makes every sign-in out-of-band. A credentials
+       provider here is the one-line version of the whole mistake. */
+    for (const file of ['src/lib/auth.config.ts', 'src/lib/auth.ts']) {
+      const source = code(file);
+      expect(/providers\s*:\s*\[\s*\]/.test(source), `${file} no longer declares an empty providers array`).toBe(true);
+      expect(/Credentials\s*\(|CredentialsProvider/.test(source), `${file} added a credentials provider`).toBe(false);
+    }
+  });
+
+  it('no page collects a password, except the one bootstrap secret', () => {
+    /**
+     * `AdminSetupClient` is the single exemption and it is a real one: the
+     * field holds `ADMIN_SETUP_SECRET`, an operator-held environment value
+     * used once to bootstrap the first admin before any passkey exists. It is
+     * not a member credential, nothing is stored, and `type="password"` there
+     * is masking rather than authentication. Named explicitly so the exemption
+     * is a record rather than a silence — and so a SECOND one has to be
+     * argued for here rather than slipped in.
+     */
+    const allowed = new Set(['src/components/AdminSetupClient.tsx']);
+
+    const offenders = listFiles('src')
+      .filter((file) => /\.tsx$/.test(file) && !allowed.has(file))
+      .filter((file) => /type=\{?['"]password['"]\}?/.test(code(file)));
+
+    expect(
+      offenders,
+      `these collect a password — iHYPE is passkey and magic-link only; for store review use src/lib/review-access.ts: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  /* The floor that proves the check above scanned anything. Without it, a
+     rename of `src/` reports a triumphant zero — the failure mode this file
+     has already been bitten by once today, when the money-navigation guard
+     collected only `.ts` and every component is `.tsx`. */
+  it('scanned a real number of components', () => {
+    const scanned = listFiles('src').filter((file) => /\.tsx$/.test(file));
+    expect(scanned.length, 'the component collector found almost nothing — it is measuring nothing').toBeGreaterThan(100);
+  });
+});
+
+/**
  * Every writer that creates a TICKETED show also opens its ticketing.
  *
  * `isTicketingOpen()` reads `Show.ticketingOpensAt`, and a null means NOT on

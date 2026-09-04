@@ -52,14 +52,42 @@ export async function GET() {
            * the exclusions that matter are made by omission and are listed
            * here so the omission reads as a decision:
            *
-           *   · `/api/*`, `/login`, `/register`, `/auth/*` — the magic-link
-           *     and passkey ceremonies must finish in the browser that STARTED
-           *     them. A magic link that opens the app hands the token to a
-           *     WebView with no pending challenge and strands the member.
+           *   · `/login`, `/register`, `/auth/*`, the rest of `/api/*` — a
+           *     PASSKEY ceremony must finish in the browser that started it:
+           *     handing an assertion to a WebView with no pending challenge
+           *     strands the member.
            *   · `/.well-known/*` — fetched by the OS, never tapped.
            *
            * `/radio` was in this list and is a DELETED route (the always-on
            * station is a tab of `/app/music`), so it claimed a URL that 404s.
+           *
+           * ## `/api/auth/magic` IS included, reversing what this comment said
+           *
+           * The exclusion above used to cover the magic link too, on the
+           * reasoning that it "hands the token to a WebView with no pending
+           * challenge". That is true of a passkey and false of a magic link:
+           * the token is a bearer secret consumed server-side by this GET, and
+           * there is no challenge to be pending. Nothing was stranded by
+           * including it — the opposite was true.
+           *
+           * What the exclusion actually cost is the whole of native sign-in.
+           * A member taps Continue in the app, opens Mail, taps the link — it
+           * opens SAFARI, the session cookie is set there, and the app they
+           * started in stays signed out with no way forward. Magic link is one
+           * of iHYPE's only two sign-ins and it could not complete inside the
+           * app at all.
+           *
+           * Note Android was never in this state: `assetlinks.json` grants
+           * `handle_all_urls`, which is all-or-nothing, so once verified every
+           * ihype.org link already opens the app there — the magic link
+           * included. iOS was the outlier, and this is the two platforms
+           * agreeing rather than a new behaviour.
+           *
+           * The cost, stated because it is real: a member signing in from
+           * mobile Safari with the app installed now lands in the APP rather
+           * than back in the tab they started in. That is the better
+           * destination for an app-first product, and it is the same trade
+           * Android has always made.
            */
           paths: [
             '/shows/*',      // the URL that sells tickets, and the one people share
@@ -68,6 +96,7 @@ export async function GET() {
             '/tickets',      // Stripe Checkout's success_url lands here
             '/h/*',          // HYPE short links
             '/app/*',        // every in-app destination, once signed in
+            '/api/auth/magic', // sign-in must be able to FINISH in the app
           ],
         },
       ],

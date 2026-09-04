@@ -1208,6 +1208,13 @@ model MagicLinkToken {
   expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  /// NULL is the member link this model was built for: single use, via `used`.
+  /// A number is a store-review link that may be redeemed that many more times
+  /// (see `src/lib/review-access.ts`); `used` is still set when it hits zero,
+  /// so every existing query and the expiry sweep see a spent token either way.
+  remainingUses Int?
+  /// Names a minted link in the admin console. NULL for member links.
+  label         String?
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
