@@ -1,0 +1,95 @@
+# Refresh the preview content on production — from a phone.
+#
+# `npm run seed:preview` needs Node, the repository and the production
+# DATABASE_URL, none of which are on a handset. This is the same command run
+# by a runner that already holds all three, so the operator taps
+# Actions -> Seed preview content -> Run workflow.
+#
+# It is a REFRESH, not a one-shot. Show dates and chart hypes both age out of
+# the windows the product reads them through — the charts count seven days, and
+# a scheduled show becomes a past one — so a seed that ran once and was left
+# alone silently empties. Re-run this whenever the map looks quiet or the charts
+# look blank; it upserts on the reserved `preview-` namespace, so it never
+# duplicates a row and never touches anything a real member made.
+#
+# Deliberately NO `prisma migrate deploy` step, unlike `seed-launch-content.yml`
+# which carries one. The production deploy takes an encrypted backup
+# immediately before it migrates (see `scripts/backup-database.mjs`); applying a
+# pending migration from here would skip that, and the schema this needs is
+# already deployed anyway.
+name: Seed preview content
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Seed (refresh) or remove'
+        required: true
+        default: seed
+        type: choice
+        options: [seed, remove]
+      confirm:
+        description: 'Type: seed ihype preview'
+        required: true
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: Production – ihype
+    if: github.event.inputs.confirm == 'seed ihype preview'
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DIRECT_URL: ${{ secrets.DIRECT_URL }}
+    steps:
+      - uses: actions/checkout@e8d4307400f9427dba7cb98e488d6ab85f1cec5f
+
+      - uses: actions/setup-node@04be95cf3511ea51ebf9f224ddfb99cc7ab87cd4
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      # `--include=dev` because `dotenv` and `prisma` are devDependencies and
+      # the seeder needs both — the npm script imports dotenv, and the root
+      # `postinstall: prisma generate` needs the CLI. NODE_ENV is deliberately
+      # NOT set to production here (unlike `seed-launch-content.yml`, whose
+      # script reads it): npm reads that as --omit=dev, which is what made that
+      # sibling workflow unable to get past `npm ci`.
+      - run: npm ci --include=dev
+
+      # The result goes in the job SUMMARY, not only the log. A phone reading a
+      # collapsed Actions log to find out whether a ticket can be bought is the
+      # failure this whole workflow exists to avoid; the summary is the first
+      # thing the mobile app shows.
+      - name: Seed
+        if: github.event.inputs.action == 'seed'
+        run: |
+          set -o pipefail
+          npm run seed:preview 2>&1 | tee seed.out
+          {
+            echo '### Preview content refreshed'
+            echo ''
+            echo '```json'
+            sed -n '/^{/,/^}/p' seed.out
+            echo '```'
+            echo ''
+            echo 'A healthy refresh reads `upcomingShows: 6` and `showsOnSale: 6`.'
+            echo 'Zero on sale means a ticketed show has no `ticketingOpensAt`, which is'
+            echo 'the defect DESIGN_SYNC row 344 fixed — the seeder would be out of date.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Remove
+        if: github.event.inputs.action == 'remove'
+        run: |
+          set -o pipefail
+          npm run seed:preview:remove 2>&1 | tee remove.out
+          {
+            echo '### Preview content removed'
+            echo ''
+            # The script's OWN sentence, in both cases — it says either
+            # "Removed N preview accounts, …" or "Nothing to remove — no
+            # preview accounts found." Substituting a summary of my own here
+            # would let this line disagree with what actually happened, and the
+            # last-line fallback keeps that true if the wording ever changes.
+            grep -m1 -E '^(Removed |Nothing to remove)' remove.out \
+              || tail -n 1 remove.out
+          } >> "$GITHUB_STEP_SUMMARY"
