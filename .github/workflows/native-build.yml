@@ -496,14 +496,55 @@ jobs:
       # `android.injected.signing.*` has never run against a real keystore in
       # this repository. If gradle emits an unsigned bundle, learn it here
       # rather than from Play's upload dialog.
+      #
+      # NOT `-strict`, AND NOT THE EXIT CODE. Both halves of the original
+      # check were wrong, in opposite directions, and the first real signed
+      # build is what showed it.
+      #
+      # An Android upload key is SELF-SIGNED by design — there is no CA above
+      # it, and Play App Signing re-signs the bundle with Google's own key
+      # before anything ships. `-strict` promotes "signer certificate is
+      # self-signed" and "unable to find valid certification path" to a
+      # non-zero exit, so the gate failed a correctly signed bundle and would
+      # have failed every legitimate Android release this project ever builds.
+      #
+      # The exit code is no better in the other direction: `jarsigner -verify`
+      # on an UNSIGNED jar prints "jar is unsigned" and exits 0. So the thing
+      # this step exists to catch was the one thing the exit code could not
+      # report. The OUTPUT STRING is the test.
+      #
+      # "jar verified, with signer errors." is the expected success line for a
+      # self-signed release bundle. An expired certificate is still refused,
+      # because that one is real — matched on jarsigner's exact wording rather
+      # than on "expire", which also appears in the harmless no-timestamp
+      # warning ("...after any of the signer certificates expire").
       - name: Verify the .aab is signed
         if: steps.check.outputs.configured == 'true'
         run: |
           set -euo pipefail
           AAB=$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)
           [ -n "$AAB" ] || { echo "::error::no .aab was produced"; exit 1; }
-          jarsigner -verify -strict "$AAB" \
-            || { echo "::error::the .aab is not signed — check the keystore secrets"; exit 1; }
+
+          VERIFY=$(jarsigner -verify "$AAB" 2>&1) || true
+
+          case "$VERIFY" in
+            *"certificate has expired"*)
+              echo "$VERIFY" | head -20
+              echo "::error::the .aab is signed with an EXPIRED certificate — generate a new upload keystore."
+              exit 1
+              ;;
+            *"jar verified"*)
+              # jarsigner's own inconsistency notice runs to hundreds of lines
+              # on an .aab and says nothing useful, so only the verdict is kept.
+              echo "$VERIFY" | head -3
+              echo "signed: $AAB"
+              ;;
+            *)
+              echo "$VERIFY" | head -20
+              echo "::error::the .aab is not signed — check the keystore secrets."
+              exit 1
+              ;;
+          esac
 
       # Uploads to the Play *internal testing* track and releases it to your
       # internal testers immediately (status: completed) — that's the one-click
