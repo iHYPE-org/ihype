@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
 import { useRegisterPlayIntent, useRegisterQueue } from '@/components/mmm/MmmPlayIntent';
 import { toQueue, type PlayableRow } from '@/lib/mmm-play';
+import { MmmShelf } from '@/components/mmm/MmmShelf';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 import { MmmFreeUseCrate } from '@/components/mmm/MmmFreeUseCrate';
@@ -207,34 +208,29 @@ function RecentsRail() {
   if (status !== 'ready' || !data || data.length === 0) return null;
   const queue = toQueue(data);
   if (queue.length === 0) return null;
+  /* The rail this used to draw by hand is `MmmShelf` now — same behaviour, same
+     queue, same play-or-pause on the current track. What it gains by being the
+     shared primitive: the plate material every other surface uses, a real
+     heading in the document outline, and the edge fade that only appears when
+     there is something past the edge. */
   return (
-    <div className="mmm-recents">
-      <p className="mmm-eyebrow">Recently played</p>
-      <div className="mmm-recents-rail">
-        {queue.map((entry, index) => {
-          const active = currentTrack?.id === entry.id;
-          return (
-            <button
-              aria-label={active && isPlaying ? `Pause ${entry.title}` : `Play ${entry.title} by ${entry.artistName}`}
-              className="mmm-recents-card"
-              data-playing={active && isPlaying ? 'true' : undefined}
-              key={entry.id}
-              onClick={() => { if (active) togglePlayback(); else playTrack(entry, queue.slice(index).concat(queue.slice(0, index))); }}
-              type="button"
-            >
-              <span aria-hidden="true" className="mmm-recents-art">
-                {entry.artworkUrl
-                  // eslint-disable-next-line @next/next/no-img-element -- uploader-sized remote artwork, same as the full player
-                  ? <img alt="" src={entry.artworkUrl} />
-                  : (entry.artistName || entry.title).charAt(0).toUpperCase()}
-              </span>
-              <span className="mmm-recents-title">{entry.title}</span>
-              <span className="mmm-recents-sub">{entry.artistName}</span>
-            </button>
-          );
-        })}
-      </div>
-    </div>
+    <MmmShelf
+      heading="Recently played"
+      tiles={queue.map((entry, index) => ({
+        id: entry.id,
+        title: entry.title,
+        sub: entry.artistName,
+        artworkUrl: entry.artworkUrl,
+        active: currentTrack?.id === entry.id,
+        label: currentTrack?.id === entry.id && isPlaying
+          ? `Pause ${entry.title}`
+          : `Play ${entry.title} by ${entry.artistName}`,
+        onSelect: () => {
+          if (currentTrack?.id === entry.id) { togglePlayback(); return; }
+          playTrack(entry, queue.slice(index).concat(queue.slice(0, index)));
+        },
+      }))}
+    />
   );
 }
 
@@ -893,20 +889,23 @@ function TrackRow({ row, active, playing, onPlay }: {
 function LikedProfileRows({ rows, heading, hrefFor }: {
   rows: LikeRow[]; heading: string; hrefFor: (row: LikeRow) => string;
 }) {
-  if (rows.length === 0) return null;
+  /* A shelf, not rows (MIDDLE ROAD, 2026-09-04). An artist and a venue are
+     COLLECTIONS — one object with an identity — which is the half of the
+     library that shelves; the liked TRACKS above stay a vertical list, because
+     fifty of them behind a horizontal scroll is strictly worse than a list. No
+     `LikeRow` carries an image, so every tile takes the deterministic walnut
+     fallback, which at alpha is what almost every tile is anyway. */
   return (
-    <>
-      <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>{heading} · {rows.length}</p>
-      {rows.map((row) => (
-        <Link className="mmm-row" href={hrefFor(row)} key={row.targetId} style={{ display: 'flex' }}>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mmm-row-title" style={{ display: 'block' }}>{row.name}</span>
-            {row.meta && <span className="mmm-row-sub" style={{ display: 'block' }}>{row.meta}</span>}
-          </span>
-          <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-        </Link>
-      ))}
-    </>
+    <MmmShelf
+      count={rows.length}
+      heading={heading}
+      tiles={rows.map((row) => ({
+        id: row.targetId,
+        title: row.name ?? 'Unnamed',
+        sub: row.meta,
+        href: hrefFor(row),
+      }))}
+    />
   );
 }
 
@@ -1149,30 +1148,29 @@ function PlaylistsTab() {
           be on screen before the thing you add. */}
       <MmmFreeUseCrate playlists={ownLists.map((list) => ({ id: list.id, name: list.name }))} />
 
-      {stationRows.length > 0 && (
-        <>
-          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Automatically assembled · {stationRows.length}</p>
-          {stationRows.map((station) => (
-            <button
-              aria-label={`Play ${station.title}`}
-              className="mmm-row"
-              key={station.slug}
-              onClick={() => void playStation(station.slug)}
-              style={{ display: 'flex', width: '100%', textAlign: 'left' }}
-              type="button"
-            >
-              <span aria-hidden="true" style={{ color: 'var(--ink-3)', width: 22 }}>▶︎</span>
-              <span style={{ flex: 1, minWidth: 0 }}>
-                <span className="mmm-row-title" style={{ display: 'block' }}>{station.title}</span>
-                <span className="mmm-row-sub" style={{ display: 'block' }}>{station.subtitle}</span>
-              </span>
-              {/* A null count means the count could not be read, so it renders
-                  nothing rather than claiming a station is empty. */}
-              {station.trackCount !== null && <span className="mmm-row-meta">{station.trackCount}</span>}
-            </button>
-          ))}
-        </>
-      )}
+      {/* The computed stations, as a shelf. A station is a collection and this
+          is not the surface that browses them — the RADIO tab is, and it stays
+          a vertical list there, where every station's subtitle and count has
+          room and where the whole set is the content. Here it is one of five
+          things in a library, so it gets one row.
+
+          `subtitle` survives as the tile's second line. The track COUNT does
+          not fit a 104px tile and is dropped rather than truncated — the Radio
+          tab still shows it, and a null there has always meant "could not be
+          read", never zero. */}
+      <MmmShelf
+        count={stationRows.length}
+        heading="Automatically assembled"
+        seeAll="/app/music/radio"
+        seeAllLabel="Radio"
+        tiles={stationRows.map((station) => ({
+          id: station.slug,
+          title: station.title,
+          sub: station.subtitle,
+          label: `Play ${station.title}`,
+          onSelect: () => void playStation(station.slug),
+        }))}
+      />
 
       <LikedProfileRows
         heading="Liked artists"

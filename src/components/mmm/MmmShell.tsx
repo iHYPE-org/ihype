@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { MmmDock } from '@/components/mmm/MmmDock';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
+import { MmmSectionStrip } from '@/components/mmm/MmmSectionStrip';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
 import { MmmSheet } from '@/components/mmm/MmmSheet';
 import { MmmPlayIntentProvider } from '@/components/mmm/MmmPlayIntent';
@@ -146,7 +147,7 @@ export function MmmShell({
      `playPrevious()` on the double — and when nothing is playing there is
      nothing to re-cue, so the single throw falls through to previous too. */
   const lastBackThrow = useRef(0);
-  const stickBack = useCallback(() => {
+  const skipBack = useCallback(() => {
     const now = Date.now();
     const doubled = now - lastBackThrow.current < 1000;
     lastBackThrow.current = doubled ? 0 : now;
@@ -308,6 +309,25 @@ export function MmmShell({
      plain text and the panel has no target to open. */
   const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
 
+  /* The DOCK's mini player shows `currentTrack` and nothing else — never
+     `nowPlaying`. The two are not interchangeable here even though they are in
+     the full player: `nowPlaying` is a server-resolved last listen with NO url,
+     so a mini player showing it would sit under a play key that cannot start
+     it. Tapping would fall through to the radio and begin a different song than
+     the one named an inch above the thumb. With nothing loaded the dock draws
+     its Radio key instead, which promises exactly what it does.
+
+     (What would close that gap is `nowPlaying` carrying a playable url so the
+     key could read "Resume". That is an endpoint change, not a chrome one.) */
+  const dockTrack = currentTrack
+    ? {
+        title: currentTrack.title,
+        artist: currentTrack.artistName,
+        initial: (currentTrack.artistName || currentTrack.title).charAt(0).toUpperCase(),
+        artworkUrl: currentTrack.artworkUrl ?? null,
+      }
+    : null;
+
   useEffect(() => {
     setQueueOpen(false);
     setFullOpen(false);
@@ -387,6 +407,14 @@ export function MmmShell({
 
         {!mapActive && (
           <div className="mmm-pane">
+            {/* A screen's own sections, drawn once here rather than by each
+                screen. Every surface that had a set already registered it with
+                MmmStationsProvider for the dock's dial to tune; retiring the
+                dial moved the CONSUMER and left all four registrations alone,
+                which is why this reached profiles, ME and the page editor
+                without touching any of them. Screens that register nothing
+                (MUSIC) fall back to their route set. See MmmSectionStrip.tsx. */}
+            <MmmSectionStrip />
             {/* The migrated workflows already use the shared primitive aliases
                 scoped beneath .mmm-migrated-surface. This nested surface
                 activates those paint-only aliases without reviving any retired
@@ -440,26 +468,26 @@ export function MmmShell({
           playing={Boolean(currentTrack) && isPlaying}
           progress={duration > 0 ? (currentTime / duration) * 100 : 0}
           queue={upNext}
-          track={displayTrack}
+          track={dockTrack}
           volume={volume * 100}
         />
 
-        {/* The whole of the chrome. One walnut dock, three controls, every
-            width — see MmmDock.tsx. Three things decide what a tap does, in
-            order: pause the current track, else start whatever the surface
-            registered (MmmPlayIntent.tsx), else turn the radio on. The last one
-            is what makes the transport universal — it is never inert, on any
-            surface, which for a music app is the point. */}
+        {/* The whole of the chrome. One walnut cabinet, four labelled tabs and
+            a mini player — see MmmDock.tsx for what the hardware cost and why
+            it went. The transport's resolution order is UNCHANGED and is the
+            thing not to break here: pause the current track, else start
+            whatever the surface registered (MmmPlayIntent.tsx), else turn the
+            radio on. That last branch is what keeps it from being inert on MAP,
+            ME, a profile and a ticket, none of which register anything. */}
         <MmmDock
           canTogglePlay={Boolean(currentTrack)}
-          layer={requestedLayer ?? null}
           onPlayFallback={startRadio}
-          onCollapse={() => setFullOpen(false)}
           onExpand={() => setFullOpen(true)}
           onNext={playNext}
-          onPrev={stickBack}
+          onPrev={skipBack}
           onTogglePlay={togglePlayback}
           pathname={pathname}
+          track={dockTrack}
           playing={Boolean(currentTrack) && isPlaying}
         />
       </div>

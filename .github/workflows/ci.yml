@@ -184,7 +184,7 @@ jobs:
         # dead names left behind by renames — it needs triage, not a blanket
         # fix, which is exactly why this is a ratchet rather than a gate at 0.
         # THE NUMBER GOES DOWN, NEVER UP.
-        run: npm run --silent audit:unstyled -- --max=52
+        run: npm run --silent audit:unstyled -- --max=33
 
       - name: Unmounted-component gate
         # Components that exist and no route can reach. TypeScript cannot see

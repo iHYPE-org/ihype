@@ -16,8 +16,17 @@ import {
 } from '@/lib/mmm-nav';
 
 describe('MMM_NAV manifest', () => {
-  it('is the three modules', () => {
-    expect(MMM_NAV.map((module) => module.label)).toEqual(['MAP', 'MUSIC', 'ME']);
+  it('is the four tab-bar destinations, in the order the bar draws them', () => {
+    expect(MMM_NAV.map((module) => module.label)).toEqual(['MUSIC', 'MAP', 'TICKETS', 'ME']);
+  });
+
+  /* The bar engraves `tabLabel`, not `label`, and MUSIC's two differ on
+     purpose. Asserted because a missing one renders an empty tab: a glyph with
+     nothing under it, which reads as a broken icon rather than a missing
+     string. */
+  it('every destination carries a tab label', () => {
+    for (const module of MMM_NAV) expect(module.tabLabel.length).toBeGreaterThan(0);
+    expect(MMM_NAV.find((module) => module.id === 'music')!.tabLabel).toBe('Listen');
   });
 
   // The app-shell redesign dropped Search and added Recommended. Asserting the
@@ -170,9 +179,12 @@ describe('detail surfaces', () => {
  * an empty pane, which a browser test caught and no static check could.
  */
 describe('every /app detail route renders as a pane', () => {
-  // The three module roots own their own rendering; everything else under
-  // `/app` is a detail surface and needs a prefix.
-  const MODULE_SEGMENTS = new Set(['map', 'music', 'me']);
+  /* The module roots own their own rendering; everything else under `/app` is
+     a detail surface and needs a prefix. Derived from `MMM_MODULES` rather than
+     hand-listed, so promoting a surface to a tab (as TICKETS was on
+     2026-09-04) cannot leave this test demanding a detail prefix for a route
+     that is now a destination. */
+  const MODULE_SEGMENTS = new Set<string>(MMM_MODULES);
 
   const detailSegments = readdirSync('src/app/app', { withFileTypes: true })
     .filter((entry) => entry.isDirectory())
@@ -192,7 +204,19 @@ describe('every /app detail route renders as a pane', () => {
   it('a module root is NOT a detail path', () => {
     expect(isMmmDetailPath('/app/map')).toBe(false);
     expect(isMmmDetailPath('/app/music/discover')).toBe(false);
+    expect(isMmmDetailPath('/app/tickets')).toBe(false);
     expect(isMmmDetailPath('/app/me')).toBe(false);
+  });
+
+  /* Both directions on the pair that shares a word. `/app/tickets` is the
+     wallet and a destination; `/app/me/tickets/<id>` is one ticket and a detail
+     pane, and it did not move — that URL is in sent email and in already
+     installed service-worker caches. `moduleForPath` tests tickets BEFORE me,
+     so the order is what makes this pass. */
+  it('the ticket LIST is a destination and a single ticket is not', () => {
+    expect(moduleForPath('/app/tickets')).toBe('tickets');
+    expect(moduleForPath('/app/me/tickets/DEMO-1')).toBe('me');
+    expect(moduleForPath('/app/me')).toBe('me');
   });
 });
 
@@ -248,10 +272,21 @@ describe('stationsForPath', () => {
     }
   });
 
-  it('gives every module at least two stations, so the dial is never a label', () => {
+  /* A set of ONE is what the strip refuses to draw — a single pill is not a
+     choice, it is a label that looks tappable. So every module either has two
+     or more sections or has none at all; exactly one is the bug. */
+  it('never gives a module exactly one section', () => {
     for (const module of MMM_MODULES) {
       const href = MMM_NAV.find((entry) => entry.id === module)!.href;
-      expect(stationsForPath(href).stations.length).toBeGreaterThan(1);
+      expect(stationsForPath(href).stations.length).not.toBe(1);
     }
+  });
+
+  /* TICKETS returns an EMPTY set rather than falling through to another
+     module's list. Without its own branch it would have inherited ME's panels,
+     and a strip reading "Info · Settings" above a wallet is the kind of wrong
+     that looks deliberate. */
+  it('gives TICKETS no sections at all', () => {
+    expect(stationsForPath(`${MMM_BASE}/tickets`)).toEqual({ stations: [], active: '' });
   });
 });

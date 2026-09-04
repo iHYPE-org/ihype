@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { describeDayKeys, monthGrid, shiftMonth, toDatesParam, toggleDay } from '@/lib/map-dates';
+import { MmmSectionStrip } from '@/components/mmm/MmmSectionStrip';
 import {
   MAP_SCOPES,
   PIN_COLLISION,
@@ -675,6 +676,19 @@ const flownHome = useRef(false);
               onOpenSheet={onOpenSheet}
               venues={venues}
             />
+            {/* The layer control, back on the map (MIDDLE ROAD, 2026-09-04).
+                The comment above this block explains why it was removed: the
+                dock's dial tuned the layer, and a chip row saying EVENTS ·
+                VENUES · ARTISTS beside a dial reading "Events" is two controls
+                for one value. The dial is gone, so the value has no control at
+                all unless it is here — and the layer is the map's primary
+                filter, not a preference.
+
+                Still `?layer=`, still authoritative, still the route: these are
+                real links from MMM_MAP_LAYERS and the effect below follows the
+                URL exactly as it did for the dial. `setLayer` keeps its single
+                caller. */}
+            <MmmSectionStrip variant="brass" />
           </div>
           {/* No standing result caption: the map's design source has none, and
               "tap a pin for their page" is an instruction the pins already

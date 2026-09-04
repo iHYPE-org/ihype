@@ -1,30 +1,38 @@
 /**
- * The Music · Map · Me navigation manifest, and the station sets the dock's
- * tuner tunes.
+ * The Music · Map · Me navigation manifest, and the section sets each surface
+ * renders for itself.
  *
  * Source: `design/handoff-console-2026-08-21/README.md` ("The navigation
- * model") and `templates/console-shell/`. The whole of the app's navigation is
- * one walnut dock at the bottom of every screen: a `RotaryNav` knob stepping
- * MAP · MUSIC · ME, a `TunerDial` tuning the sections of whatever you are
- * looking at, and a `JoystickTransport` for playback.
+ * model"), as amended by the MIDDLE ROAD (2026-09-04, owner: "let's do it —
+ * build and implement the middle ground").
  *
- * **The radial arc is retired** (2026-08-22, owner decision: "I don't want any
- * previous design … Bottom hifi nav system is the only thing I want"). The arc
- * tables, `arcTransform`, `arcSlotsFor`, `ARC_NARROW_MAX_WIDTH` and `navHint`
- * went with it — they described a fan of discs opening from a logo trigger that
- * no longer exists. Do not restore them: two ways to switch module is the thing
- * the dock replaces, and the knob reports the module itself, so the hint chip
- * has nothing left to say.
+ * ## What the middle road changed here, and what it did not
  *
- * Two rules from the handoff shape what is here:
+ * The dock's HARDWARE is retired. A `RotaryNav` knob stepping the modules and
+ * a `TunerDial` tuning the sections of the current screen are both gone; the
+ * cabinet survives as a walnut TAB BAR carrying four labelled destinations, and
+ * a screen with its own sections draws its own strip. See `MmmDock.tsx`.
  *
- *   1. **One dial per screen, and it is the dock's.** A page must not render a
- *      selector of its own beside it — "an in-page tab strip alongside it puts
- *      two identical-looking dials on screen meaning different things". A page
- *      with its own section set hands it to the dock through
- *      `MmmStationsProvider` instead.
- *   2. **Module, tab and panel are ROUTES, not state.** Every station carries
- *      an href, so the dial is navigation and Back walks it.
+ * **The rule this reverses was load-bearing and its reasoning is worth keeping,
+ * because it was right about the thing it was solving.** The handoff said "one
+ * dial per screen, and it is the dock's" — an in-page tab strip alongside the
+ * dock's dial "puts two identical-looking dials on screen meaning different
+ * things", which really did ship (a profile drew its own dial ten pixels above
+ * the dock's). That hazard is a consequence of the dial EXISTING. With no dial
+ * in the chrome there is no second control to collide with, so a page drawing
+ * its own strip is now the correct answer rather than the forbidden one. Do not
+ * re-derive the old rule from the old reasoning: check whether the chrome still
+ * carries a section control first. It does not.
+ *
+ * **The radial arc stays retired** (2026-08-22). The arc tables, `arcTransform`,
+ * `arcSlotsFor`, `ARC_NARROW_MAX_WIDTH` and `navHint` are gone and are not
+ * coming back — two ways to switch module is exactly what a single bar
+ * replaces, whether the bar is knurled or labelled.
+ *
+ * The one rule that survives untouched:
+ *
+ *   **Module, tab and panel are ROUTES, not state.** Every destination carries
+ *   an href, so navigation is navigation and Back walks it.
  *
  * Pure and dependency-light (no `@/lib/db`, no `next/*`): imported by client
  * components and by tests.
@@ -32,25 +40,38 @@
 
 export const MMM_BASE = '/app';
 
-export const MMM_MODULES = ['map', 'music', 'me'] as const;
+/* The tab bar's four destinations, in the order it draws them. TICKETS is new
+   with the middle road: the dock used to carry three controls and no room for a
+   fourth destination, so the door credential lived as a section inside ME, two
+   taps and a drag away from a fan standing at a door. A labelled bar has room,
+   and this is the surface with the least tolerance for being hard to find. */
+export const MMM_MODULES = ['music', 'map', 'tickets', 'me'] as const;
 export type MmmModuleId = (typeof MMM_MODULES)[number];
 
 export type MmmNavItem = { id: string; label: string; href: string };
 
 export type MmmModule = {
   id: MmmModuleId;
-  /** Level-1 pill label — Bricolage Grotesque 800, 19px, as drawn. */
+  /** The historic all-caps module name. Still what analytics and the tests
+   *  identify a module by; not what the bar draws. */
   label: string;
+  /** What the tab bar engraves under the glyph, in tracked mono.
+   *
+   *  MUSIC is labelled **Listen**, and the difference is a product statement
+   *  rather than a synonym: "Music" names a category the app contains, "Listen"
+   *  names the thing a member came to do. It is also the one tab whose job is
+   *  not obvious from its glyph. */
+  tabLabel: string;
   href: string;
   /** Level-2 fan-out items. Empty means the pill navigates directly. */
   items: MmmNavItem[];
 };
 
 export const MMM_NAV: readonly MmmModule[] = [
-  { id: 'map', label: 'MAP', href: `${MMM_BASE}/map`, items: [] },
   {
     id: 'music',
     label: 'MUSIC',
+    tabLabel: 'Listen',
     href: `${MMM_BASE}/music/discover`,
     items: [
       { id: 'discover', label: 'Discover', href: `${MMM_BASE}/music/discover` },
@@ -65,8 +86,10 @@ export const MMM_NAV: readonly MmmModule[] = [
          surface exists, one tab to the left. */
     ],
   },
+  { id: 'map', label: 'MAP', tabLabel: 'Map', href: `${MMM_BASE}/map`, items: [] },
+  { id: 'tickets', label: 'TICKETS', tabLabel: 'Tickets', href: `${MMM_BASE}/tickets`, items: [] },
   // No submenu, by design — see the header note.
-  { id: 'me', label: 'ME', href: `${MMM_BASE}/me`, items: [] },
+  { id: 'me', label: 'ME', tabLabel: 'Me', href: `${MMM_BASE}/me`, items: [] },
 ];
 
 export const MMM_MUSIC_TABS = MMM_NAV.find((module) => module.id === 'music')!.items;
@@ -125,6 +148,11 @@ export function isMmmDetailPath(pathname: string | null | undefined): boolean {
 
 export function moduleForPath(pathname: string): MmmModuleId {
   if (pathname.startsWith(`${MMM_BASE}/music`)) return 'music';
+  /* Before `${MMM_BASE}/me`, and the order is the whole of it: the ticket LIST
+     is `/app/tickets` and a single ticket is still `/app/me/tickets/<id>`, so a
+     prefix test on `/app/me` first would answer 'me' for the list too if the
+     paths ever converge. Tested in both directions. */
+  if (pathname === `${MMM_BASE}/tickets` || pathname.startsWith(`${MMM_BASE}/tickets/`)) return 'tickets';
   if (pathname.startsWith(`${MMM_BASE}/me`)) return 'me';
   return 'map';
 }
@@ -173,14 +201,24 @@ export const MMM_MAP_LAYERS: readonly MmmNavItem[] = [
 ];
 
 /**
- * What the dock's dial tunes on this route, and which station is lit.
+ * The section set a surface draws for itself, and which one is lit.
+ *
+ * This used to answer "what does the dock's dial tune here"; with the dial
+ * retired it answers the same question for the page's own strip, which is why
+ * it survived the middle road unchanged in behaviour.
  *
  * `active` is resolved here rather than in the component because the answer is
  * not always in the path: a module's own root (`/app/music` with no tab) is the
- * FIRST station, not "no station", and the vendored `TunerDial` warns and falls
- * back to index 0 when handed an `active` naming nothing — a confident, wrong
- * readout. Resolving it once, in a tested pure function, is what keeps the
- * needle on a real station.
+ * FIRST section, not "no section", and a strip handed an `active` naming
+ * nothing lights nothing — a control that looks broken on the one route people
+ * arrive at by typing. Resolving it once, in a tested pure function, is what
+ * keeps exactly one pill lit.
+ *
+ * TICKETS has no sections and returns an EMPTY set with an empty `active`
+ * rather than falling through to another module's list. The old version had no
+ * branch for it because there was no such module; without one it would have
+ * handed the ticket list ME's panels, and a strip reading "Info · Settings"
+ * above a wallet is the kind of wrong that looks deliberate.
  */
 export function stationsForPath(
   pathname: string,
@@ -193,6 +231,8 @@ export function stationsForPath(
     const active = MMM_MAP_LAYERS.find((layer) => layer.id === requested)?.id ?? MMM_MAP_LAYERS[0].id;
     return { stations: MMM_MAP_LAYERS, active };
   }
+
+  if (module === 'tickets') return { stations: [], active: '' };
 
   const stations: readonly MmmNavItem[] = module === 'music' ? MMM_MUSIC_TABS : MMM_ME_PANELS;
   const found = itemForPath(pathname) ?? panelForPath(pathname);
