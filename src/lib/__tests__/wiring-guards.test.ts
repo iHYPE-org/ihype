@@ -316,6 +316,34 @@ describe('the native shell paints the app\'s ground', () => {
     expect(launcher, `the launcher icon sits on ${launcher} behind a ${ground} app`).toBe(ground);
   });
 
+  /**
+   * The WebView may navigate to Stripe, and to nothing broader.
+   *
+   * Two regressions are realistic and both are silent. Removing
+   * `allowNavigation` puts the app back where it was on 2026-09-04 — a fan
+   * ejected into Safari at checkout and never returned, because Stripe's
+   * `success_url` is a server redirect and those do not open an app. And
+   * broadening it to `*.stripe.com` (or worse) would widen something most
+   * people do not realise it controls: on Android those hosts are handed to
+   * `WebViewCompat.addWebMessageListener(webView, "androidBridge", …)`
+   * (`MessageHandler.java:36`), so a listed origin can call native plugins.
+   *
+   * Exact hosts only. A wildcard here is not a convenience, it is a grant.
+   */
+  it('the native WebView may navigate to Stripe, and nothing wider', () => {
+    const config = code('capacitor.config.ts');
+    const list = /allowNavigation:\s*\[([^\]]*)\]/.exec(config)?.[1];
+    expect(list, 'capacitor.config.ts no longer declares server.allowNavigation — checkout ejects to the system browser').toBeTruthy();
+
+    const hosts = [...(list ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
+    for (const required of ['checkout.stripe.com', 'connect.stripe.com']) {
+      expect(hosts, `${required} must stay allowed or that flow ejects`).toContain(required);
+    }
+    for (const host of hosts) {
+      expect(host.includes('*'), `"${host}" is a wildcard — this list grants native bridge access on Android, so it takes exact hosts only`).toBe(false);
+    }
+  });
+
   /* themeColor is the browser/PWA half of the same value and drifts the same way. */
   it('themeColor matches it too', () => {
     const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
