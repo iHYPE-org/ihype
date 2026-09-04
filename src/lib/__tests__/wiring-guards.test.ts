@@ -432,6 +432,120 @@ describe('the native shell paints the app\'s ground', () => {
 });
 
 /**
+ * NO ARITHMETIC INSIDE `${{ }}`.
+ *
+ * The GitHub Actions expression language has logical and comparison operators
+ * and nothing else — no `*`, `+`, `-` or `/`. An arithmetic expression is a
+ * PARSE ERROR, and a parse error anywhere in a workflow file is a startup
+ * failure: the run completes in under a second with **zero jobs**, a red tick
+ * and no log to read.
+ *
+ * `native-build.yml` shipped `${{ github.run_number * 100 + github.run_attempt }}`
+ * on 2026-09-04 and took the whole workflow — including the debug builds that
+ * run on every push — down with it. Two things made it hard to see: the run
+ * looks nothing like a failing build step, and it failed identically on
+ * branches whose diff never touched the file, which reads as somebody else's
+ * problem. Do the arithmetic in the shell, where arithmetic exists.
+ *
+ * This is a repository whose current priority is shipping two store binaries,
+ * and the workflow that builds them was silently dead. That is why it is a
+ * guard and not a comment.
+ */
+describe('workflow expressions', () => {
+  it('no workflow does arithmetic inside an expression', () => {
+    const dir = '.github/workflows';
+    const files = readdirSync(dir).filter((name) => /\.ya?ml$/.test(name));
+    expect(files.length, 'no workflow files found — this guard is measuring nothing').toBeGreaterThan(3);
+
+    const offenders: string[] = [];
+    for (const name of files) {
+      readFileSync(`${dir}/${name}`, 'utf8')
+        .split('\n')
+        .forEach((line, index) => {
+          for (const [, body] of line.matchAll(/\$\{\{([^}]*)\}\}/g)) {
+            /* Quoted text first: a default like `|| 'ihype-backups'` and any
+               literal containing a hyphen are not operators, and flagging them
+               would get this switched off within a day. */
+            const bare = body.replace(/'[^']*'/g, "''").replace(/"[^"]*"/g, '""');
+            /* Space-delimited so `||`/`&&` and an identifier's own characters
+               cannot match. Arithmetic in a real expression always looks like
+               `a * b`, because there is no other way to write it. */
+            if (/\s[*+/-]\s/.test(bare)) offenders.push(`${dir}/${name}:${index + 1}`);
+          }
+        });
+    }
+
+    expect(
+      offenders,
+      `GitHub expressions have no arithmetic — this is a STARTUP FAILURE, zero jobs, no log. Compute it in the shell: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+});
+
+/**
+ * NOBODY GETS A PASSWORD.
+ *
+ * Owner instruction, 2026-09-04: *"I don't want users to have a password. I
+ * want magic key via email or passkey only. It's WAY safer."*
+ *
+ * This is a guard rather than a comment because the pressure to add one is
+ * real and recurring, and it arrives disguised as something narrow. It was
+ * built and reverted the same day the instruction was given: a reviewer cannot
+ * receive our email or hold our passkey, so "one account, one secret, for the
+ * App Store only" reads as obviously safe right up to the moment there is a
+ * password field on the platform's only sign-in page. The password-free answer
+ * is `src/lib/review-access.ts` — the same magic link, minted rather than
+ * emailed.
+ *
+ * A password reintroduces things the current design does not have at all:
+ * something guessable, something reusable, something worth phishing, a login
+ * form worth attacking, and a reset flow that becomes the real attack surface.
+ * None of that is bought back by narrowing who may use it.
+ */
+describe('the product has no password', () => {
+  it('NextAuth has no credentials provider', () => {
+    /* `providers: []` is what makes every sign-in out-of-band. A credentials
+       provider here is the one-line version of the whole mistake. */
+    for (const file of ['src/lib/auth.config.ts', 'src/lib/auth.ts']) {
+      const source = code(file);
+      expect(/providers\s*:\s*\[\s*\]/.test(source), `${file} no longer declares an empty providers array`).toBe(true);
+      expect(/Credentials\s*\(|CredentialsProvider/.test(source), `${file} added a credentials provider`).toBe(false);
+    }
+  });
+
+  it('no page collects a password, except the one bootstrap secret', () => {
+    /**
+     * `AdminSetupClient` is the single exemption and it is a real one: the
+     * field holds `ADMIN_SETUP_SECRET`, an operator-held environment value
+     * used once to bootstrap the first admin before any passkey exists. It is
+     * not a member credential, nothing is stored, and `type="password"` there
+     * is masking rather than authentication. Named explicitly so the exemption
+     * is a record rather than a silence — and so a SECOND one has to be
+     * argued for here rather than slipped in.
+     */
+    const allowed = new Set(['src/components/AdminSetupClient.tsx']);
+
+    const offenders = listFiles('src')
+      .filter((file) => /\.tsx$/.test(file) && !allowed.has(file))
+      .filter((file) => /type=\{?['"]password['"]\}?/.test(code(file)));
+
+    expect(
+      offenders,
+      `these collect a password — iHYPE is passkey and magic-link only; for store review use src/lib/review-access.ts: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  /* The floor that proves the check above scanned anything. Without it, a
+     rename of `src/` reports a triumphant zero — the failure mode this file
+     has already been bitten by once today, when the money-navigation guard
+     collected only `.ts` and every component is `.tsx`. */
+  it('scanned a real number of components', () => {
+    const scanned = listFiles('src').filter((file) => /\.tsx$/.test(file));
+    expect(scanned.length, 'the component collector found almost nothing — it is measuring nothing').toBeGreaterThan(100);
+  });
+});
+
+/**
  * Every writer that creates a TICKETED show also opens its ticketing.
  *
  * `isTicketingOpen()` reads `Show.ticketingOpensAt`, and a null means NOT on

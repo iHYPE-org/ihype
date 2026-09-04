@@ -2131,6 +2131,48 @@ body:has(#wt-wrap) .site-shell > main {
 .admin-console-panel-wide {
   grid-column: 1 / -1;
 }
+/* Store-review sign-in link (see src/components/admin/AdminReviewLink.tsx).
+   A textarea rather than an input so the whole URL is visible for copying —
+   an operator who copies a truncated sign-in link finds out when a reviewer
+   cannot get in, which is the failure the whole feature exists to prevent. */
+.admin-review-minted {
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card);
+  margin-top: 0.75rem;
+  padding: 0.75rem;
+}
+.admin-review-url {
+  background: var(--bg-2);
+  border: 1px solid var(--ink-a20);
+  border-radius: var(--radius-card);
+  color: var(--ink);
+  font-family: var(--font-mono), monospace;
+  /* 15px, the content floor. A sign-in URL is the most consequential string
+     in this console to mis-transcribe, so it is the last thing that should be
+     set small — it wraps instead. */
+  font-size: 0.9375rem;
+  padding: 0.5rem;
+  resize: vertical;
+  width: 100%;
+  word-break: break-all;
+}
+.admin-review-list {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+}
+.admin-review-list li {
+  align-items: center;
+  border-top: 1px solid var(--ink-a10);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.6rem 0;
+}
+.admin-review-list small {
+  color: var(--ink-2);
+  display: block;
+}
 .admin-health-panel {
   padding: 1rem;
 }
