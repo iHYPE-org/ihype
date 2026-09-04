@@ -17,9 +17,20 @@ function code(file: string): string {
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 }
 
+/**
+ * `.tsx` TOO — it collected only `.ts` until 2026-09-04, and every React
+ * component in this repository is `.tsx`. A guard added that day scanned
+ * `src/components` for a banned call and passed over ZERO files; it was caught
+ * only by deliberately introducing the regression and watching the suite stay
+ * green, which is the whole reason this repo verifies a guard in both
+ * directions. Widening it can only ever find more, never less — the Show-writer
+ * guard below now covers a `.tsx` writer as well, which it silently did not.
+ */
 function listFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? listFiles(`${dir}/${e.name}`) : e.name.endsWith('.ts') ? [`${dir}/${e.name}`] : [],
+    e.isDirectory()
+      ? listFiles(`${dir}/${e.name}`)
+      : /\.tsx?$/.test(e.name) ? [`${dir}/${e.name}`] : [],
   );
 }
 
@@ -317,31 +328,53 @@ describe('the native shell paints the app\'s ground', () => {
   });
 
   /**
-   * The WebView may navigate to Stripe, and to nothing broader.
+   * Money never leaves through `window.location` on native.
    *
-   * Two regressions are realistic and both are silent. Removing
-   * `allowNavigation` puts the app back where it was on 2026-09-04 — a fan
-   * ejected into Safari at checkout and never returned, because Stripe's
-   * `success_url` is a server redirect and those do not open an app. And
-   * broadening it to `*.stripe.com` (or worse) would widen something most
-   * people do not realise it controls: on Android those hosts are handed to
-   * `WebViewCompat.addWebMessageListener(webView, "androidBridge", …)`
-   * (`MessageHandler.java:36`), so a listed origin can call native plugins.
+   * Capacitor ejects a top-level navigation off `server.url` into the system
+   * browser, and Stripe's `success_url` is a server redirect, which does not
+   * open an app — so a fan who tapped Buy landed in Safari and never came
+   * back. Measured across seven call sites on 2026-09-04.
    *
-   * Exact hosts only. A wildcard here is not a convenience, it is a grant.
+   * The fix is `openExternalUrl` (`src/lib/open-external.ts`): an in-app
+   * browser tab on native, a plain navigation on the web. This guard is what
+   * stops the eighth call site being written the old way — the failure is
+   * invisible in a browser, where `window.location` is exactly right, and only
+   * appears on a device.
+   *
+   * `allowNavigation` in `capacitor.config.ts` is the OTHER way to fix it and
+   * was shipped for six hours. It must stay absent: on Android those hosts
+   * reach the native bridge, and no allowlist can cover a 3-D Secure redirect
+   * to an issuing bank.
    */
-  it('the native WebView may navigate to Stripe, and nothing wider', () => {
-    const config = code('capacitor.config.ts');
-    const list = /allowNavigation:\s*\[([^\]]*)\]/.exec(config)?.[1];
-    expect(list, 'capacitor.config.ts no longer declares server.allowNavigation — checkout ejects to the system browser').toBeTruthy();
+  it('sends checkout and onboarding through the in-app browser, never window.location', () => {
+    const scanned = listFiles('src/components').concat(listFiles('src/app'));
+    /* A floor, because the first version of this guard passed over an empty
+       set: `listFiles` collected only `.ts` and every component is `.tsx`. An
+       assertion that runs over nothing is worse than no assertion, because it
+       reads as coverage. */
+    expect(scanned.length, 'the component scan collected no files — this guard is measuring nothing').toBeGreaterThan(200);
 
-    const hosts = [...(list ?? '').matchAll(/'([^']+)'/g)].map((m) => m[1]);
-    for (const required of ['checkout.stripe.com', 'connect.stripe.com']) {
-      expect(hosts, `${required} must stay allowed or that flow ejects`).toContain(required);
+    const offenders: string[] = [];
+    for (const file of scanned) {
+      const source = code(file);
+      for (const match of source.matchAll(/window\.location\.(?:assign\s*\(|href\s*=)\s*([^;\n]+)/g)) {
+        /* Only the money trips. A `window.location` to an internal path is
+           normal and is not what ejects a payment. */
+        if (!/checkoutUrl|onboardingUrl|stripe/i.test(match[1])) continue;
+        offenders.push(`${file}:${source.slice(0, match.index).split('\n').length}`);
+      }
     }
-    for (const host of hosts) {
-      expect(host.includes('*'), `"${host}" is a wildcard — this list grants native bridge access on Android, so it takes exact hosts only`).toBe(false);
-    }
+    expect(
+      offenders,
+      `these navigate to Stripe with window.location, which ejects the native app into Safari — use openExternalUrl: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('capacitor.config.ts does not re-add allowNavigation', () => {
+    expect(
+      /allowNavigation\s*:/.test(code('capacitor.config.ts')),
+      'allowNavigation is back — it grants native bridge access on Android and cannot cover a 3DS redirect; route the flow through openExternalUrl instead',
+    ).toBe(false);
   });
 
   /* themeColor is the browser/PWA half of the same value and drifts the same way. */

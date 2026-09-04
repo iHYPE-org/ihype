@@ -15,49 +15,36 @@ const config: CapacitorConfig = {
     androidScheme: 'https',
     cleartext: false,
     /**
-     * WITHOUT THIS, A FAN CANNOT BUY A TICKET IN THE APP (2026-09-04).
+     * NO `allowNavigation`, DELIBERATELY — and it was here for six hours.
      *
      * Capacitor ejects any top-level navigation off `server.url` into the
-     * system browser — Android `Bridge.launchIntent()`, iOS
-     * `WebViewDelegationHandler` `UIApplication.shared.open` + `.cancel`. The
-     * app navigates off-origin for money in SEVEN places: `TicketSaleCard`
-     * (checkout), `PayoutConnectButton`, `MmmSettings` ×2, `AdvertisePage`,
-     * `CampaignCancelButton` and `ArtistOnboardingWizard` (Connect onboarding).
-     * So the buyer landed in Safari, and Stripe's `success_url` is a SERVER
-     * redirect, which never triggers a universal link — they did not come back
-     * either.
+     * system browser, so the seven places this app sends a member to Stripe
+     * (ticket checkout, ad checkout, ad cancellation, four Connect onboarding
+     * buttons) threw them into Safari and never brought them back — Stripe's
+     * `success_url` is a SERVER redirect, and those do not open an app.
      *
-     * ## What this costs, measured rather than assumed
+     * `allowNavigation: ['checkout.stripe.com', 'connect.stripe.com']` fixed
+     * that in one line and was shipped first. It is now removed, because
+     * `src/lib/open-external.ts` opens those URLs in an in-app browser tab
+     * instead, and the allowlist would keep two costs for no remaining
+     * benefit:
      *
-     * On Android `allowNavigation` is not only a navigation allowlist: the same
-     * hosts are passed to `WebViewCompat.addWebMessageListener(webView,
-     * "androidBridge", …)` in `MessageHandler.java:36`, so a listed origin can
-     * reach the NATIVE BRIDGE. The blast radius here is small and was checked
-     * before shipping — the only plugins installed are `@capacitor/app` and
-     * `@capacitor/push-notifications`, so it is app-state and the push token,
-     * not filesystem or camera — and the origins are Stripe's. It is still a
-     * real widening, which is why the list is two exact hosts and must never
-     * become `*.stripe.com`.
+     *   1. On Android the listed hosts are handed to
+     *      `WebViewCompat.addWebMessageListener(webView, "androidBridge", …)`
+     *      (`MessageHandler.java:36`), so an allowlisted origin can reach the
+     *      NATIVE BRIDGE. Small here — only `@capacitor/app` and
+     *      `@capacitor/push-notifications` are installed — but real.
+     *   2. It cannot cover 3-D Secure. A card challenge can send the top-level
+     *      frame to the ISSUING BANK's domain, and bank domains are not
+     *      enumerable. Ejecting mid-3DS is worse than ejecting at the start.
      *
-     * ## The reason this is a STOPGAP and (b) is still the right end state
-     *
-     * A card that triggers 3-D Secure can send the top-level frame to the
-     * ISSUING BANK's domain, and the set of bank domains is not enumerable —
-     * so an allowlist cannot cover it, and a payment that ejects mid-3DS is a
-     * worse failure than one that ejects at the start, because the buyer has
-     * already entered card details. Modern Stripe Checkout usually handles 3DS
-     * in an iframe on `checkout.stripe.com`, which this covers; "usually" is
-     * not a guarantee and nothing here can make it one.
-     *
-     * The end state is `@capacitor/browser` — an in-app Custom Tab /
-     * SFSafariViewController, which needs no allowlist at all because it is
-     * not the app's WebView, grants no bridge access, and follows a redirect
-     * chain to any bank. It is not shipped here because the RETURN leg needs
-     * real work (a server redirect does not open the app; it wants an
-     * app-resume listener that re-reads order state). Ship that before the
-     * first real sale.
+     * A Custom Tab / `SFSafariViewController` is not the app's WebView: no
+     * allowlist, no bridge, any redirect chain, and it shows the real URL and
+     * padlock, which a WebView cannot. **Do not re-add this key** — if a money
+     * flow ejects, the fix is to route it through `openExternalUrl`, and
+     * `wiring-guards.test.ts` fails the build on a `window.location` to a
+     * checkout or onboarding URL.
      */
-    allowNavigation: ['checkout.stripe.com', 'connect.stripe.com'],
   },
   // The ground behind the WebView. This is the one colour in the product that
   // no stylesheet can reach, which is why it was still the RETIRED warm

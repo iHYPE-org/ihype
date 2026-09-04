@@ -11,6 +11,7 @@ import {
   formatCurrencyFromCents,
   formatPercent
 } from '@/lib/ticketing';
+import { openExternalUrl } from '@/lib/open-external';
 
 type TicketSaleCardProps = {
   showId: string;
@@ -166,7 +167,10 @@ export function TicketSaleCard({
 
     if (response.ok) {
       if (data.checkoutUrl) {
-        window.location.assign(data.checkoutUrl);
+        /* In-app browser on native, a plain navigation on the web — see
+           `openExternalUrl`. The refresh is the return leg: Stripe's webhook
+           has finalised the order by the time the member closes the tab. */
+        await openExternalUrl(data.checkoutUrl, { onReturn: () => router.refresh() });
         return;
       }
       setQuantity('1');
