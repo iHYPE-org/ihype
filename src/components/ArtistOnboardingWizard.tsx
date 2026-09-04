@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { useMarkOnboarded } from '@/lib/use-mark-onboarded';
+import { useRouter } from 'next/navigation';
+import { openExternalUrl } from '@/lib/open-external';
 
 // Step 2 is verification. Artists previously had no such step at all, while
 // the DJ and venue wizards both did — an artist claimed a stage name and the
@@ -30,6 +32,7 @@ export function ArtistOnboardingWizard({
 }) {
   const { t } = useI18n();
   const alreadyVerified = initialVerificationStatus === 'VERIFIED';
+  const router = useRouter();
   const [step, setStep] = useState<Step>(0);
   const [proofLink, setProofLink] = useState(initialLink);
   const [proofFile, setProofFile] = useState<File | null>(null);
@@ -134,7 +137,7 @@ export function ArtistOnboardingWizard({
         return;
       }
       if (data.onboardingUrl) {
-        window.location.href = data.onboardingUrl;
+        await openExternalUrl(data.onboardingUrl, { onReturn: () => router.refresh() });
         return;
       }
       setPayoutError(t('artistOnboardingWizard.payoutNoLink', 'Stripe did not return an onboarding link. Please try again.'));

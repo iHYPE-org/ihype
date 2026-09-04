@@ -10,6 +10,7 @@ import {
 } from '@/lib/ad-pricing';
 import { useI18n } from '@/components/I18nProvider';
 import { useFormDraft } from '@/lib/use-form-draft';
+import { openExternalUrl } from '@/lib/open-external';
 
 /* ── Types ───────────────────────────────────────────────── */
 type ScanSub = { n: string; k: string; tag: string; copy: string; body: string; gates: [string, string, 'pass' | 'fail'][]; ok: boolean };
@@ -236,7 +237,7 @@ function CoverageBuilder() {
       if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
         clearDraft();
         setSubmit({ phase: 'redirecting' });
-        window.location.href = result.checkoutUrl;
+        await openExternalUrl(result.checkoutUrl);
         return;
       }
       setSubmit({ phase: 'done', ...result.vetting });

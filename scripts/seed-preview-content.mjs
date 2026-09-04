@@ -296,6 +296,27 @@ async function main() {
         status: offsetDays < 0 ? 'ENDED' : 'SCHEDULED',
         startsAt,
         ticketingOpensAt,
+        /**
+         * THE SPLIT, without which the ticket box does not render at all.
+         *
+         * `venuePayoutPercent` and `artistPayoutPercent` are `Int?` with NO
+         * default (prisma/schema.prisma), and `/shows/[slug]/page.tsx` gates
+         * the entire ticket aside on both being non-null. So a seeded show
+         * with an open `ticketingOpensAt` and null percents renders NEITHER a
+         * purchase form NOR the "not on sale yet" sentence — the sidebar is
+         * simply absent and the page says nothing at all about tickets.
+         *
+         * Measured on production 2026-09-04, immediately after the
+         * ticketingOpensAt fix: eight shows on sale by the API's reckoning and
+         * zero buyable by the page's. Fixing one nullable column had exposed
+         * the next one, which is the argument for the guard in
+         * wiring-guards.test.ts covering the whole set rather than one field.
+         *
+         * 70/20 are the charter's figures; the promoter's 10 is
+         * `@default(10)` and is deliberately not restated here.
+         */
+        artistPayoutPercent: 70,
+        venuePayoutPercent: 20,
       };
       await prisma.show.upsert({
         where: { slug },

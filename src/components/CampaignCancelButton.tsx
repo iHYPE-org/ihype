@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useI18n } from '@/components/I18nProvider';
 import { REFUND_WINDOW_BUSINESS_DAYS } from '@/lib/ad-settlement-plan';
+import { openExternalUrl } from '@/lib/open-external';
 
 type Action = 'cancel' | 'pause' | 'resume' | 'retry-checkout';
 
@@ -53,7 +54,7 @@ export function CampaignCancelButton({
       const data = (await res.json()) as { checkoutUrl?: string; settlement?: string };
       if (action === 'retry-checkout') {
         if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl;
+          await openExternalUrl(data.checkoutUrl, { onReturn: () => router.refresh() });
           return;
         }
       }

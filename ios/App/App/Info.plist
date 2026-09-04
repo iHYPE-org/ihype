@@ -51,16 +51,22 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<!-- Export compliance, answered in the binary.
+
+	     Without this key EVERY upload parks in App Store Connect at "Missing
+	     Compliance" until a human answers the encryption question by hand, per
+	     build — a step that is invisible until the first TestFlight upload sits
+	     there not distributing.
+
+	     false is correct here: iHYPE uses only HTTPS/TLS, which is exempt under
+	     the standard exemption. It ships no custom or proprietary cryptography.
+	     If that ever changes, this key changes with it and the answer becomes a
+	     real filing, not a checkbox. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>

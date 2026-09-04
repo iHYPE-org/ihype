@@ -339,22 +339,28 @@ export function MmmDock({
           );
         })}
 
-        {/* The transport when nothing is loaded. It is in the tab ROW rather
-            than a strip of its own so it costs no height, and it is rendered
-            only when the mini player is not — one transport, always reachable,
-            never two. Labelled "Radio" because that is what it does from cold:
-            `onPlayFallback` turns the always-on station on. */}
-        {!track && (
-          <button
-            aria-label="Play the radio"
-            className="mmm-tab mmm-tab-radio"
-            onClick={() => { press(); togglePlay(); }}
-            type="button"
-          >
-            <span className="mmm-tab-glyph"><PlayGlyph playing={playing} /></span>
-            <span className="mmm-tab-label">Radio</span>
-          </button>
-        )}
+        {/* THE COLD-START RADIO KEY IS DELETED (2026-09-04, owner: "remove
+            radio tab on bottom it's already under listen").
+
+            It used to sit here whenever nothing was loaded, as the transport
+            of last resort. The objection is correct and is about the BAR, not
+            about the transport: Radio is a tab of LISTEN, so the dock offered
+            a fifth destination-shaped control that duplicated something one
+            tap away, and five keys in a four-key bar is what made it read as
+            a nav item rather than a play button.
+
+            WHAT THIS COSTS, stated plainly because the rule it bends is real
+            and is written in CLAUDE.md: "the transport is universal and never
+            inert." With nothing loaded there is now no transport in the
+            chrome — a member on MAP, ME or a ticket has no play control until
+            they start something from LISTEN. That is the trade the owner
+            asked for, and it is defensible because the alternative was a
+            permanent control whose only job was to reach a tab.
+
+            The mini player is unchanged and still carries the transport
+            whenever a track IS loaded, which is the case that matters. Do not
+            re-add a second play control here to "restore" the rule without
+            reading that instruction first. */}
       </nav>
     </div>
   );

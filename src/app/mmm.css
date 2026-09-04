@@ -2179,17 +2179,6 @@ html:has(.mmm-frame) {
   border-radius: 4px;
 }
 
-/* The transport, when nothing is loaded. In the tab ROW rather than a strip of
-   its own so it costs no height, and sized as a control rather than a fifth
-   equal destination — a hairline and a fixed width are what say "this is not a
-   place you can go". */
-.mmm-tab-radio {
-  flex: 0 0 auto;
-  min-width: 58px;
-  border-left: 1px solid rgba(201, 165, 78, 0.28);
-  color: var(--ink-on-walnut-2);
-}
-
 /* ── The mini player ──────────────────────────────────────────────────────
    Present only while a track is loaded. Everything it can do, the full player
    could already do; what is new is that it says WHAT IS PLAYING without being
