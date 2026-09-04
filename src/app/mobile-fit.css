@@ -130,10 +130,8 @@
      own — hence the names, chosen to avoid the `-tab`/`-pill` suffixes that
      `audit:shell` reserves for paint primitives.
 
-       .weekend-cta        149x38  — the primary CTA on /this-weekend
        .payouts-tablink     60x39  — the History/Settings/Show tabs
        .support-ticketlink 133x36  — "my support tickets" on /support  */
-  .weekend-cta,
   .payouts-tablink,
   .support-ticketlink {
     display: inline-flex;
@@ -161,16 +159,11 @@
   }
 
   /* ── Link rows ────────────────────────────────────────────────────────── */
-  /* The worst offenders on the site: footer and nav links measured 15–16px
-     tall, because an inline <a> is only as tall as its line box. Padding is
-     the fix rather than min-height — `min-height` on an inline element does
-     nothing at all, which is the trap here. `inline-flex` + `align-items`
-     keeps them on the same baseline they had. */
-  .ihype-footer a {
-    display: inline-flex;
-    align-items: center;
-    min-height: 44px;
-  }
+  /* The sitewide footer's floor was here and went with the footer (deleted as
+     old-design chrome; a member reaches those links through ME). The rule it
+     taught is still live for anything that replaces it: an inline <a> is only
+     as tall as its line box, and `min-height` on an inline element does
+     nothing at all — `inline-flex` plus `align-items` is the fix. */
 
   /* A skip link is keyboard-only, but it measured 16px and is the first thing
      in the tab order on every page — including for a switch-control user on a

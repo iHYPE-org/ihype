@@ -178,36 +178,38 @@ html:has(.mmm-frame) {
   --mmm-safe-left: env(safe-area-inset-left, 0px);
   --mmm-safe-right: env(safe-area-inset-right, 0px);
 
-  /* ONE FIGURE DRIVES THE DOCK, and it is the knob.
-     `design/handoff-console-2026-08-21/README.md`: "both knobs are 74px,
-     matched. They are the same brass body by design; if one is smaller the dock
-     looks broken." So the knob is the origin and every other figure here is
-     derived from it — the same contract the old chrome table had, with the
-     trigger swapped for the hardware that replaced it.
+  /* ONE FIGURE DRIVES THE DOCK, and it is the tab row.
+     (MIDDLE ROAD, 2026-09-04 — the knob was the origin until this date and its
+     74px is gone with it. See `MmmDock.tsx` for why the hardware went.)
 
-     What this REPLACED, and why the shape changed rather than the numbers: the
-     chrome used to be three absolutely-positioned pieces (trigger, dial, pill)
-     floating bottom-left over the map, each offset from the last. The console
-     template draws a real BAR — full width, brass lip along the top, three
-     controls in a flex row — so the offsets that placed those pieces
-     (`--mmm-chrome-gap`, `--mmm-dial-w`, `--mmm-player-left`, and the resting
-     `--mmm-bottom`) have nothing left to place and are gone. Layout does the
-     work the calc chain used to.
+     What survives from the console table, and it is the important half: the
+     chrome's height is DERIVED, in one place, and everything that must clear it
+     reads `--mmm-chrome-size` rather than a number. That contract is why
+     replacing three hand-fitted controls with a flex bar moved no pane by hand.
 
-     `--mmm-chrome-size` survives with its name and its meaning intact: the
-     height of the chrome band content must clear. It is the dock's now,
-     including its safe-area padding, which is why the panes needed no change. */
-  --mmm-knob: 74px;
-  --mmm-dock-pad: 8px;
-  /* The hi-fi plate the controls sit ON, recessed into the walnut (Console
-     Dock.dc.html: "the console is an object sitting in the woodwork"). Its
-     padding is real height, so it is in the chrome derivation below. */
-  --mmm-plate-pad: 6px;
+     The bar is two stacked rows and only one of them is always there:
+
+       tabs      46px  always. 44px is the control floor (MOBILE.md, desktop
+                       included) and 46 leaves the active underline 2px that is
+                       not stolen from the target.
+       mini      56px  ONLY while a track is loaded. Conditional on purpose — a
+                       bar that always carried a player would be 111px, which is
+                       the old dock with different furniture and no saving at
+                       all. Idle the chrome is 55px + safe area against the
+                       console dock's 105px; playing it is 111px, and what the
+                       extra 6px buys is the title, the artist, the artwork and
+                       a skip, none of which the console could show.
+
+     `--mmm-chrome-size` therefore has a second declaration under `:has()`
+     further down this file, and that is the ONLY place it is allowed to move. */
+  --mmm-tab-h: 46px;
+  --mmm-mini-h: 56px;
+  --mmm-dock-pad: 3px;
   /* The brass lip is a real 3px border on the dock, so it is part of the height
      content has to clear - not decoration sitting inside the padding. */
   --mmm-dock-lip: 3px;
   --mmm-chrome-size: calc(
-    var(--mmm-knob) + (var(--mmm-dock-pad) + var(--mmm-plate-pad)) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
+    var(--mmm-tab-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
   );
   /* The pane's own horizontal padding, named because a surface inside the
      pane sometimes has to cancel it — a horizontally scrolling strip has to
@@ -418,6 +420,10 @@ html:has(.mmm-frame) {
    overflows both ways, and at 14px the right half went off the viewport — the
    clipped "3000 F" in the report. The rule's own maxWidth went 56 -> 96 in
    MmmMap for the same reason: a longer rule fits its own label. */
+/* MapLibre adds `.maplibregl-ctrl-*` to nodes it creates at runtime, so no
+   source file names them and `audit:css --dead` reports the two below as dead.
+   They are not: deleting them puts the zoom controls back under the search bar
+   and the scale bar back in the default corner. Verified 2026-09-04. */
 .mmm-map-canvas .maplibregl-ctrl-top-right { top: 198px; right: 18px; }
 .mmm-map-canvas .maplibregl-ctrl-scale {
   background: none;
@@ -800,61 +806,139 @@ html:has(.mmm-frame) {
    Horizontal scroll, card floors from mobile-fit's 44px rule met by the art
    block itself. Paint-only from tokens; the rail scrolls inside itself so the
    pane never scrolls sideways. */
-.mmm-recents { margin-bottom: 14px; }
-.mmm-recents > .mmm-eyebrow { display: block; padding: 2px 2px 8px; }
-.mmm-recents-rail {
+/* ── The shelf ────────────────────────────────────────────────────────────
+   One named row of artwork tiles that scrolls sideways. Borrowed from Apple
+   Music's structure by the MIDDLE ROAD (2026-09-04); `MmmShelf.tsx` carries
+   what shelves and what deliberately does not.
+
+   This REPLACES `.mmm-recents-*`, which was the same idea built once for one
+   caller: a 96px tile on `--bg-3` with a hairline border. The material is now
+   the plate vocabulary every card and row in the shell already uses — brass
+   edge, cast shadow — so a shelf reads as the same machine as everything around
+   it, and one definition serves five callers instead of one. */
+.mmm-shelf { margin-bottom: 16px; }
+.mmm-shelf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 9px;
+}
+/* The nameplate is a real heading. It was a `<p>` in the rail this replaces, so
+   a screen reader walking the headings of MUSIC found none of its collections;
+   `.mmm-eyebrow` supplies the paint and the h3 supplies the outline. */
+.mmm-shelf-name { margin: 0; font-weight: inherit; }
+.mmm-shelf-count { color: var(--ink-3); }
+.mmm-shelf-more {
+  flex: 0 0 auto;
+  /* 44px of target on a control whose ink is 15px, per MOBILE.md's floor —
+     desktop included. The padding does it; the type does not grow. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .mmm-shelf-more:hover { text-decoration: underline; }
+}
+.mmm-shelf-rail {
   display: flex;
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
-.mmm-recents-rail::-webkit-scrollbar { display: none; }
-.mmm-recents-card {
+.mmm-shelf-rail::-webkit-scrollbar { display: none; }
+/* Only when it really overflows — the same rule as the section strip. A fade on
+   a shelf that fits says "truncated" about a complete collection. */
+.mmm-shelf-rail[data-overflow='true'] {
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+.mmm-shelf-tile {
   flex: 0 0 auto;
-  width: 96px;
+  width: 104px;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
   color: var(--ink);
   font-family: var(--font-body);
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
 }
-.mmm-recents-art {
+.mmm-shelf-art {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 6px;
-  border: 1.5px solid var(--line);
+  width: 104px;
+  height: 104px;
+  margin-bottom: 7px;
+  overflow: hidden;
+  border: 1px solid var(--brass-deep);
   border-radius: var(--radius-card);
-  background: var(--bg-3);
-  color: var(--ink-3);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 0 0 1px rgba(255, 240, 215, .3) inset;
+  color: var(--ink-on-walnut);
   font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  overflow: hidden;
+  line-height: 1;
 }
-.mmm-recents-art img { width: 100%; height: 100%; object-fit: cover; }
-.mmm-recents-card[data-playing] .mmm-recents-art { border-color: var(--accent); }
-.mmm-recents-title {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-.mmm-recents-sub {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.mmm-shelf-art img { width: 100%; height: 100%; object-fit: cover; }
+/* Six deterministic treatments, keyed off the item's own id in `MmmShelf.tsx`
+   so an artist gets the same tile on every surface and in every session.
+
+   THREE DARK AND THREE LIGHT, alternating, and the alternation is the whole
+   point: the first version ran all six between the three walnut stops, which
+   are `#6e4c2b`, `#4e3418` and `#331f0c` — three dark browns. Rendered against
+   the real stylesheet it was six near-identical squares, which is worse than no
+   variety because it looks like a bug. Cutting the cabinet with the plate gives
+   a shelf real rhythm.
+
+   No new colour was invented to get it. Every stop is a token whose ink is
+   already measured — `--ink-on-walnut` is 10.87:1 on `--walnut`, the lightest
+   of the three, so every dark tile is that or better; `--ink` on `--plate-2`
+   is the plate pairing every card in the shell already uses. **The role hues
+   were considered and refused**: they are semantic (venue teal, the promoter's
+   10% slice) and a track tile coloured "venue" states something false.
+   `--accent` is refused too — cream on it measures 2.70:1. */
+.mmm-shelf-art[data-tone='0'] { background: linear-gradient(150deg, var(--walnut), var(--walnut-3)); }
+.mmm-shelf-art[data-tone='2'] { background: linear-gradient(200deg, var(--walnut-2), var(--walnut-3)); }
+.mmm-shelf-art[data-tone='4'] { background: linear-gradient(70deg, var(--walnut-3), var(--walnut)); }
+.mmm-shelf-art[data-tone='1'],
+.mmm-shelf-art[data-tone='3'],
+.mmm-shelf-art[data-tone='5'] {
   color: var(--ink-3);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 1px 0 rgba(255, 255, 255, .7) inset;
+}
+.mmm-shelf-art[data-tone='1'] { background: linear-gradient(35deg, var(--plate-1), var(--plate-2)); }
+.mmm-shelf-art[data-tone='3'] { background: linear-gradient(115deg, var(--plate-2), var(--plate-1)); }
+.mmm-shelf-art[data-tone='5'] { background: linear-gradient(255deg, var(--plate-1), var(--plate-2)); }
+.mmm-shelf-tile[data-active='true'] .mmm-shelf-art {
+  border-color: var(--accent);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 0 0 2px var(--accent) inset;
+}
+.mmm-shelf-tile:active .mmm-shelf-art { transform: translateY(1px); }
+.mmm-shelf-tile:focus-visible .mmm-shelf-art { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-shelf-title,
+.mmm-shelf-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.9375rem;
 }
+.mmm-shelf-title { font-weight: 600; }
+.mmm-shelf-sub { color: var(--ink-3); }
+
 .mmm-demo-head {
   display: flex;
   align-items: center;
@@ -875,19 +959,6 @@ html:has(.mmm-frame) {
   text-transform: uppercase;
 }
 .mmm-demo-row { display: flex; align-items: center; gap: 12px; cursor: default; }
-.mmm-demo-art {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line-2);
-  border-radius: 13px;
-  background: linear-gradient(145deg, rgba(var(--accent-rgb), 0.32), var(--bg-2));
-  color: var(--ink);
-  font: 800 0.9375rem var(--font-display);
-}
-.mmm-demo-playlist-art { color: var(--accent-text); font-size: 1.2rem; }
 .mmm-ticket-demo-head { margin-bottom: 4px; }
 .mmm-ticket-transfer[aria-disabled='true'] { opacity: 0.55; cursor: default; }
 @media (max-width: 520px) {
@@ -1409,6 +1480,25 @@ html:has(.mmm-frame) {
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* The nameplate's lead-in, on a section header that is not inside a card.
+   A card's first eyebrow already becomes a full engraved brass plate (the rule
+   below); a standalone one has no plate to sit on, so it takes the same
+   vocabulary at hairline scale — the machined dash the dock's own labels use.
+   One rule reaches every section header in the shell, which is what "brass
+   nameplates on every section header" costs when the eyebrow is already a
+   primitive. Card nameplates opt out: a dash on a brass plate is a scratch. */
+.mmm-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 14px;
+  height: 2px;
+  margin-right: 8px;
+  border-radius: 1px;
+  vertical-align: 0.24em;
+  background: linear-gradient(90deg, var(--brass), transparent);
+}
+.mmm-card > .mmm-eyebrow:first-child::before { content: none; }
+
 .mmm-eyebrow-accent { color: var(--accent-text); }
 
 .mmm-card {
@@ -1793,16 +1883,6 @@ html:has(.mmm-frame) {
 }
 .mmm-hype-link-body p:last-child { margin-bottom: 4px; }
 
-.mmm-link-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--bg-3);
-  border: 1px solid var(--hair-100);
-  margin-bottom: 9px;
-}
 .mmm-link-value {
   flex: 1;
   min-width: 0;
@@ -1930,23 +2010,26 @@ html:has(.mmm-frame) {
 }
 
 /* ── The dock ─────────────────────────────────────────────────────────────
-   The whole of the app's navigation, and the only persistent chrome — now the
-   design's own hardware, translated from
-   `design/handoff-console/reference/console-dock/Console Dock.dc.html`
-   (2026-08-24, owner: "I want the design console view. Make it work").
+   The whole of the app's navigation, and the only persistent chrome. Still the
+   design's walnut cabinet from
+   `design/handoff-console/reference/console-dock/Console Dock.dc.html`; no
+   longer its hardware.
 
-   That file is the design system's production-scale build of the console: it
-   hand-draws the dock at K=74 with photographed textures, and it is what
-   superseded the specimen-scale JSX trio that `UPSTREAM_FIXES.md` records as
-   unmountable at 74px. Everything static about it lives HERE as classes at
-   k=1; only the live values (rotation, tilt, speculars, backlight strike) are
-   written inline by `MmmDock.tsx`, which is the dc.html's own split ("the dock
-   is drawn once per scale and then only its live values are written").
+   MIDDLE ROAD, 2026-09-04 (owner: "let's do it — build and implement the middle
+   ground"). The knob, the tuner dial and the thumbstick are gone; four labelled
+   tabs and a mini player sit on the same cabinet. `MmmDock.tsx` carries the
+   three reasons and what each one cost. **The cabinet itself is deliberately
+   untouched** — walnut, brass lip, film grain, the frame cap, the safe area.
+   The middle road keeps the console as a SURFACE and spends the rest of its
+   distinctiveness on the map, so painting this bar flat would be undoing the
+   decision rather than completing it.
 
-   The four texture files are the design's own, served from `/console/`:
-   walnut-v3 (the cabinet — "real grain photographed, not a repeating stripe"),
-   brushed (the plate), brass-turned (the lathe path on the knob cap), grain
-   (film grain, "the single strongest anti-CG cue").
+   Three of the four textures are still in use and still the design's own,
+   served from `/console/`: walnut-v3 (the cabinet — "real grain photographed,
+   not a repeating stripe") and grain (film grain, "the single strongest
+   anti-CG cue"). `brushed.png` went with the plate and `brass-turned.png` with
+   the knob cap; both files stay in `public/console/` because the map and the
+   plates still reach for them.
 
    ## Three things this must keep doing
 
@@ -1954,24 +2037,13 @@ html:has(.mmm-frame) {
       is the bottom-most element, so the home-indicator zone is its problem.
       Bottom padding carries `--mmm-safe-bottom`, and `--mmm-chrome-size`
       includes it so the panes clear the whole bar.
-   2. **Stay one row at 375px.** Both knobs are fixed at 74px and the dial takes
-      what is left — `flex: 1; min-width: 0`, which stops the dial's content
-      from setting a floor and pushing a knob off the edge.
-   3. **Keep the geometry table honest.** The plate adds real height, so
-      `--mmm-plate-pad` is in the `--mmm-chrome-size` derivation — the bar is
-      105px + safe area now, not the old 93. Content clearance follows the
-      token, which is the rule that makes this a one-line change.
-
-   ## Two deviations from the dc.html, both floor-driven
-
-   The nameplate ("iHYPE") and nothing else: the dc.html engraves it at 9px
-   display-face with .08em tracking, which fails the type floor that governs
-   this codebase (sub-15px is legal only as tracked mono). It takes the same
-   treatment as the knob cap — 11px mono at .14em — which is the exemption's
-   own shape. And the dial gains two step affordances ("Previous station" /
-   "Next station") the dc.html does not draw: a drag-only dial is unreachable
-   by keyboard and untestable by Playwright, and the vendored dial these
-   replace had both. They are painted as engraving, not as buttons. */
+   2. **Stay one row at 375px.** Four tabs at `flex: 1 1 0; min-width: 0` and a
+      fixed 58px transport: 375 - 58 = 79px a tab, which holds "TICKETS" at
+      11px/.14em with room. Nothing here may take an intrinsic width.
+   3. **Keep the geometry table honest.** `--mmm-chrome-size` is derived once
+      and has exactly one conditional override (the `:has()` rule for the mini
+      player). Content clearance follows the token, which is the rule that made
+      swapping the whole of the chrome move no pane by hand. */
 .mmm-dock {
   position: absolute;
   left: 0;
@@ -1988,6 +2060,9 @@ html:has(.mmm-frame) {
   margin-inline: auto;
   z-index: 45;
   padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
+  /* The nameplate used to straddle the lip, so the bar could not clip. It is
+     gone and nothing overhangs any more, so the grain and the lip meet the
+     cabinet's own edge. */
   border-top: var(--mmm-dock-lip) solid var(--brass);
   background-image:
     linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54)),
@@ -1996,8 +2071,7 @@ html:has(.mmm-frame) {
   background-blend-mode: multiply, normal;
   background-color: var(--walnut);
   box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
-  /* The nameplate straddles the brass lip, so the bar must not clip. */
-  overflow: visible;
+  overflow: hidden;
   /* The controls are the only interactive chrome; the bar itself swallows taps
      rather than passing them to the map underneath. */
   pointer-events: auto;
@@ -2014,591 +2088,210 @@ html:has(.mmm-frame) {
   mix-blend-mode: overlay;
   opacity: 0.09;
 }
-/* The fascia sheen is GONE (owner, 2026-08-25: "Let's drop the reflection in
-   the console base, it's distracting"). It was a screen-blended gradient
-   spanning the whole bar, rewritten live by the pointer/tilt light — so on a
-   phone the largest surface in the app carried a moving highlight that tracked
-   the handset's every tilt, which reads as glare rather than as material. The
-   controls kept theirs at the time, on the argument that a highlight the size
-   of a knob describes a dome while one the size of the cabinet just moves.
+/* NOTHING ON THE DOCK REFLECTS, and that predates the middle road (owner,
+   2026-08-25: "Let's drop the reflection in the console base, it's
+   distracting", then "Remove reflective element from console"). The fascia
+   sheen was a screen-blended gradient rewritten live by pointer and tilt, so on
+   a phone the largest surface in the app carried a highlight that tracked the
+   handset's every move — glare, not material. The controls' speculars went with
+   it. What remains is occlusion and light SOURCES, never an image of the room.
+   Do not reinstate any of them: the request came twice, and a dome that has to
+   be explained is not describing itself. */
+/* ── The tab row ──────────────────────────────────────────────────────────
+   Four labelled destinations and, when nothing is loaded, the transport.
 
-   NOTHING ON THE DOCK REFLECTS ANY MORE (owner, 2026-08-25: "Remove
-   reflective element from console"). `.mmm-knob-spec`, `.mmm-knob-sheen`, the
-   dial glass sheen and the stick cap's specular all went with the fascia's.
-   That argument above is recorded because it lost: the request came twice, and
-   a dome that has to be explained is not describing itself. What remains is
-   occlusion and light SOURCES — the contact shadows, the pointer, the lamp —
-   never an image of the room. Do not reinstate any of them. */
-/* The machined plate the three controls are seated in. */
-.mmm-dock-plate {
+   What used to be here: `.mmm-dock-plate`, `.mmm-dock-badge*`, `.mmm-knob-*`
+   (11 layers: fluted bakelite skirt, lathe-turned brass cap, wear, pointer,
+   occlusion, readout), `.mmm-hifi-dial` and `.mmm-dial-*` (backlight, spill,
+   smudge, two glass layers, a rotating compass card, a tapered needle, a pilot
+   bead, two engraved step affordances), `.mmm-gate*` and `.mmm-stick-*`. About
+   550 lines. It is in the history if a figure from it is ever wanted again;
+   `git show HEAD~1:src/app/mmm.css` is the whole of it.
+
+   The three things the console table got right and this keeps: the height is
+   derived from one token, the safe area belongs to the bottom-most element, and
+   the bar is the same object at every width (`--mmm-frame-max`), an item on the
+   desk rather than a strip painted across the screen. */
+.mmm-tabs {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: stretch;
+}
+.mmm-tab {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--mmm-tab-h);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 4px 2px 6px;
+  border: 0;
+  background: none;
+  text-decoration: none;
+  position: relative;
+  /* The floor's own ink. Resting tabs take `-3` (5.51:1 on walnut, the measured
+     floor of the ramp) and the active one takes the primary, so "which tab am I
+     on" is carried by ink weight AND by the brass underline below — never by
+     colour alone, which a member who cannot separate the two would lose. */
+  color: var(--ink-on-walnut-3);
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+}
+.mmm-tab-glyph { display: block; line-height: 0; }
+.mmm-tab-label {
+  /* 11px tracked mono is the type floor's own exemption shape (mono family AND
+     tracking >= .14em). A tab label is metadata under a glyph, which is exactly
+     what that exemption is for — it is not body copy. */
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  line-height: 1;
+  white-space: nowrap;
+}
+.mmm-tab[data-on='true'] { color: var(--ink-on-walnut); }
+/* The lit rail under the active tab. Brass, fading at both ends, so it reads as
+   a lamp behind the fascia rather than a border. */
+.mmm-tab[data-on='true']::after {
+  content: '';
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(90deg, transparent, var(--brass), transparent);
+}
+@media (hover: hover) {
+  /* Behind `hover: hover` without exception — an unguarded :hover STICKS on a
+     touchscreen, so the last tab tapped would stay lit next to the real one. */
+  .mmm-tab:hover { color: var(--ink-on-walnut-2); }
+  .mmm-tab[data-on='true']:hover { color: var(--ink-on-walnut); }
+}
+.mmm-tab:active .mmm-tab-glyph { transform: translateY(1px); }
+.mmm-tab:focus-visible {
+  outline: 2px solid var(--brass);
+  outline-offset: -3px;
+  border-radius: 4px;
+}
+
+/* The transport, when nothing is loaded. In the tab ROW rather than a strip of
+   its own so it costs no height, and sized as a control rather than a fifth
+   equal destination — a hairline and a fixed width are what say "this is not a
+   place you can go". */
+.mmm-tab-radio {
+  flex: 0 0 auto;
+  min-width: 58px;
+  border-left: 1px solid rgba(201, 165, 78, 0.28);
+  color: var(--ink-on-walnut-2);
+}
+
+/* ── The mini player ──────────────────────────────────────────────────────
+   Present only while a track is loaded. Everything it can do, the full player
+   could already do; what is new is that it says WHAT IS PLAYING without being
+   opened, which the console's pilot bead could not. */
+.mmm-mini {
   position: relative;
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: var(--mmm-dock-pad);
-  padding: var(--mmm-plate-pad);
-  border-radius: 14px;
-  background-image:
-    linear-gradient(180deg, rgba(28, 16, 4, .46), rgba(28, 16, 4, .2)),
-    url('/console/brushed.png');
-  background-size: auto, 120px;
-  background-blend-mode: normal, overlay;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .6), inset 0 -1px 0 rgba(255, 214, 160, .14), 0 0 0 1px var(--brass-deep);
+  gap: 4px;
+  height: var(--mmm-mini-h);
+  padding: 0 2px;
+  border-bottom: 1px solid rgba(201, 165, 78, 0.3);
 }
-
-/* ── The nameplate ── a brass maker's plate on the lip, straddling the top
-   edge of the cabinet, and the dock's HOME: wherever the subnav has taken you,
-   pressing the badge re-seats the console on MAP. */
-.mmm-dock-badge {
-  position: absolute;
-  left: 50%;
-  /* The BUTTON is the tap target and is a real 44px box — no invisible skirt:
-     the runbook's gate 6 measures element boxes, the 768px button floor
-     measures element boxes, and a target only a hit-test can see fails both
-     while passing the finger. The visible brass is the inner plate below,
-     held at the designed spot (straddling the lip, -12..+7 relative to the
-     bar) while the box extends UPWARD over the map — never down toward the
-     dial's station row, which is how PR #747's hit-test failed when the
-     grown box reached it. */
-  top: calc(-1 * (var(--mmm-dock-lip) + 22px));
-  transform: translateX(-50%);
-  height: 44px;
-  min-width: 44px;
-  box-sizing: border-box;
-  /* The plate sits in flow so the button's width is the plate's — 13px of
-     top padding lands it at the designed -12px relative to the bar. */
-  padding: 13px 0 0;
-  z-index: 12;
-  cursor: pointer;
-  user-select: none;
-  -webkit-user-select: none;
-  border: 0;
-  background: none;
-}
-.mmm-dock-badge:hover .mmm-dock-badge-plate { filter: brightness(1.12); }
-/* The maker's plate itself — the only visible part of the control. */
-.mmm-dock-badge-plate {
-  display: inline-block;
-  padding: 1.5px 7px;
-  border-radius: 1.5px;
-  box-sizing: border-box;
-  border: 0.8px solid rgba(61, 44, 12, .9);
-  background: linear-gradient(180deg, #f2dca4 0%, var(--brass) 30%, var(--brass-deep) 100%);
-  box-shadow: 0 1.5px 3px rgba(0, 0, 0, .45), inset 0 0.8px 0 rgba(255, 250, 232, .6);
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  line-height: 1.3;
-  letter-spacing: 0.14em;
-  color: #33240a;
-  text-shadow: 0 0.8px 0 rgba(255, 248, 224, .5);
-  white-space: nowrap;
-}
-
-/* ── The knob ── bakelite fluted skirt, lathe-turned brass cap, cream pointer.
-   MAP · MUSIC · ME. The rotation is written live; everything here is the
-   metal. */
-.mmm-knob {
-  position: relative;
-  width: var(--mmm-knob);
-  height: var(--mmm-knob);
-  flex: 0 0 auto;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  cursor: grab;
-  touch-action: none;
-  /* Bakelite. No token is black plastic — the dc.html's own deliberate
-     exception, same as TicketQR's scanner plate. */
-  background: #120c05;
-  box-shadow: 0 6px 12px -5px rgba(0, 0, 0, .85), inset 0 0 0 1px var(--rule-on-walnut);
-}
-.mmm-knob-rotor {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  will-change: transform;
-}
-.mmm-knob-flutes {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, #0d0904 0deg 2.4deg, #3f3325 2.4deg 3.8deg, #17110a 3.8deg 6deg);
-}
-.mmm-knob-skirtlight {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 34% 24%, rgba(255, 244, 224, .3), transparent 54%),
-    radial-gradient(circle at 50% 50%, transparent 58%, rgba(0, 0, 0, .55) 97%);
-}
-/* A thumb has rubbed the lower flank of the knurl bright over months of use.
-   The polish lives ON the metal, so it sits in the rotor and turns with it. */
-.mmm-knob-wear {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(46% 30% at 26% 76%, rgba(255, 244, 214, .11) 0%, transparent 66%);
-}
-.mmm-knob-cap {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 36% 28%, #f4e2ab 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%);
-  box-shadow: inset 0 1px 2px rgba(255, 246, 220, .6), inset 0 -2px 4px rgba(0, 0, 0, .5);
-}
-/* Turned brass is ANISOTROPIC — it reflects differently along the tool path
-   than across it; a plain radial gradient has no direction at all, which is
-   why it reads as plastic. The lathe path is the design's own photograph. */
-.mmm-knob-lathe {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  background-image: url('/console/brass-turned.png');
-  background-size: 100% 100%;
-  mix-blend-mode: overlay;
-  opacity: 0.6;
-  pointer-events: none;
-}
-/* Environment reflection: bright sky above, dark horizon, warm bounce from
-   the cabinet below. Metal looks like metal because of what it reflects. */
-.mmm-knob-env {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .4) 0%, rgba(255, 252, 240, .1) 26%, rgba(52, 30, 6, .34) 49%, rgba(58, 34, 8, .16) 56%, rgba(255, 214, 150, .26) 76%, rgba(255, 232, 190, .1) 100%);
-}
-/* The anisotropic glint — light scattered ALONG the lathe path, which is a
-   property of the machined surface rather than an image of the room, so it is
-   correct for this one to turn with the rotor and it survives the removal of
-   the dock's reflections. It is the last bright thing on the brass; if the
-   knob still reads as glossy, this is the next one to go. */
-.mmm-knob-glint {
-  position: absolute;
-  inset: 13px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(30% 22% at 33% 22%, rgba(255, 255, 255, .26) 0%, rgba(255, 255, 255, .07) 42%, transparent 72%);
-}
-.mmm-knob-pointer {
-  position: absolute;
-  left: 50%;
-  top: 3px;
-  transform: translateX(-50%);
-  width: 2.5px;
-  height: 11px;
-  border-radius: 0 0 2px 2px;
-  background: linear-gradient(180deg, #fff8e6, #e8d5aa);
-  box-shadow: 0 0 5px rgba(255, 240, 200, .6);
-}
-/* Contact shadow, driven by press: ambient occlusion is a function of how
-   close two surfaces are, so pressing the knob into its seat darkens and
-   TIGHTENS the shadow. Box-shadow written live. */
-.mmm-knob-ao {
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  pointer-events: none;
-  will-change: box-shadow;
-  transition: box-shadow 90ms var(--ease);
-}
-/* The cap reads out the module — mono at the 11px eyebrow floor, EMBOSSED:
-   one dark edge below and one light edge above, so the letters read as
-   stamped into the brass rather than printed on it. Sub-pixel offsets on
-   purpose; a full pixel of relief at this size doubles the stroke. */
-.mmm-knob-readout {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  color: #5d4415;
-  pointer-events: none;
-  text-shadow: 0 0.75px 0.5px rgba(255, 248, 224, .72), 0 -0.5px 0.5px rgba(28, 16, 4, .55);
-}
-
-/* ── The dial ── a backlit cream meter window in a brass ring, tuning the
-   sections of whatever you are looking at. Its stations ride a compass card
-   (R = 420px below the window) so the ticks RADIATE and the labels sink and
-   roll along the same arc — an instrument scale, not a tape. */
-.mmm-hifi-dial {
-  position: relative;
-  flex: 1 1 0;
+.mmm-mini-open {
+  flex: 1;
   min-width: 0;
-  height: var(--mmm-knob);
-  border-radius: 10px;
-  cursor: grab;
-  touch-action: none;
-  overflow: hidden;
-  background: radial-gradient(130% 170% at 50% 6%, #f3e7c8 0%, #e8d6a8 44%, #d4bd88 82%, #b9a06a 100%);
-  box-shadow: 0 0 0 2px var(--brass), inset 0 2px 8px rgba(92, 62, 20, .32), inset 0 -12px 20px -8px color-mix(in oklab, var(--lamp) 34%, transparent);
-}
-/* Analog backlight: three warm bulbs pooling from the bottom edge, plus the
-   hot line where light spills under the bezel. Turned DOWN on purpose — the
-   brighter version washed the ticks toward the amber and cost the readout its
-   contrast. A lamp behind glass is dim; what sells it is the unevenness and
-   the falloff, not the output. The boot strike writes `filter` live. */
-.mmm-dial-backlight {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  animation: ihBacklight 5.5s var(--ease-in-out) infinite;
-  background:
-    radial-gradient(44% 128% at 18% 122%, rgba(214, 128, 44, .5) 0%, rgba(196, 110, 32, .26) 32%, rgba(180, 100, 28, .09) 56%, transparent 76%),
-    radial-gradient(50% 136% at 50% 128%, rgba(226, 148, 62, .58) 0%, rgba(202, 118, 36, .3) 30%, rgba(180, 100, 28, .1) 54%, transparent 76%),
-    radial-gradient(44% 128% at 82% 122%, rgba(214, 128, 44, .5) 0%, rgba(196, 110, 32, .26) 32%, rgba(180, 100, 28, .09) 56%, transparent 76%),
-    linear-gradient(180deg, rgba(74, 43, 22, .26) 0%, transparent 34%);
-}
-.mmm-dial-spill {
-  position: absolute;
-  left: 10%;
-  right: 10%;
-  bottom: -1px;
-  height: 3px;
-  border-radius: 50%;
-  pointer-events: none;
-  filter: blur(1.5px);
-  background: radial-gradient(ellipse, rgba(236, 176, 96, .62), rgba(206, 132, 48, .24) 58%, transparent 80%);
-}
-/* The glass, above everything on the dial: one hard-edged reflection sweep, a
-   fainter second sweep from the back surface, and dust. Without them the
-   ticks look printed on the cabinet. */
-.mmm-dial-glass-1 {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-  background: linear-gradient(107deg, rgba(255, 255, 255, .3) 0%, rgba(255, 255, 255, .13) 7%, transparent 8%, transparent 20%, rgba(255, 255, 255, .09) 21%, rgba(255, 255, 255, .03) 27%, transparent 28%);
-}
-.mmm-dial-glass-2 {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, .16) 0%, transparent 12%),
-    radial-gradient(120% 90% at 50% 118%, transparent 62%, rgba(58, 34, 8, .22) 100%);
-}
-.mmm-dial-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 6;
-  background-image: url('/console/grain.png');
-  background-size: 110px;
-  mix-blend-mode: overlay;
-  opacity: 0.11;
-}
-/* Fingerprints — two faint smears where thumbs have tuned it. At legible
-   opacity they read as dirt; at 4% they read as use. */
-.mmm-dial-smudge {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  z-index: 2;
-  pointer-events: none;
-  mix-blend-mode: screen;
-  background:
-    radial-gradient(30% 42% at 66% 60%, rgba(255, 255, 255, .045) 0%, transparent 70%),
-    radial-gradient(20% 30% at 32% 38%, rgba(255, 255, 255, .035) 0%, transparent 70%);
-}
-/* Station row: a real drum. All three labels are identical in style and driven
-   purely by their continuous distance from centre — three points on a rotating
-   cylinder, so the halfway swap is invisible. Transforms and sizes are written
-   live; the rest sits here. The rest size is 26px (15 + 11 at distance 0),
-   which is why the base is above the content floor. */
-.mmm-dial-stations {
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  top: 9px;
-  height: 36px;
-  overflow: hidden;
-  pointer-events: none;
-  /* The drum's resting type size, unitless — MmmDock's paint reads it and the
-     ramp runs rest → 15 (the content floor) by distance from centre. The
-     dc.html's own figure is 26, drawn at 430px; at 375 the window is 171px and
-     "Recommended" at 26px is 184, so the resting name loses its tail on the
-     design width MOBILE.md says to design at first. One step down fits it
-     exactly (170px) — measured, the same trade the knob cap already made. */
-  --mmm-drum-rest: 26;
-}
-@media (max-width: 392px) {
-  .mmm-dial-stations { --mmm-drum-rest: 24; }
-}
-.mmm-dial-station {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  font-family: var(--font-display);
-  font-size: 1.625rem;
-  line-height: 1.05;
-  letter-spacing: normal;
-  color: var(--ink-1);
-  white-space: nowrap;
-  transform-origin: 50% 50%;
-  will-change: transform, opacity, font-size;
-  background: none;
-  border: 0;
-  padding: 0;
-}
-/* The keyboard's way in: the centre station is a real focusable tab. */
-.mmm-dial-station[role="tab"] { pointer-events: auto; cursor: inherit; }
-/* The tick window: a compass card, not a tape. Two discs (major and minor
-   ticks hang at different depths, cut by radial masks) plus a printed rail arc
-   the ticks hang from — the rail is on the face, not the rotor, so it is
-   static. Card rotation is written live. */
-.mmm-dial-scale {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 8px;
-  height: 14px;
-  overflow: hidden;
-  pointer-events: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
-}
-.mmm-dial-card,
-.mmm-dial-card-2,
-.mmm-dial-rail {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  width: 840px;
-  height: 840px;
-  margin-left: -420px;
-  border-radius: 50%;
-}
-.mmm-dial-card {
-  will-change: transform;
-  background: repeating-conic-gradient(from -0.1023deg, rgba(28, 20, 8, .82) 0 0.2046deg, transparent 0.2046deg 6.2762deg);
-  -webkit-mask-image: radial-gradient(circle, transparent 410px, #000 410px 420px, transparent 420px);
-  mask-image: radial-gradient(circle, transparent 410px, #000 410px 420px, transparent 420px);
-}
-.mmm-dial-card-2 {
-  will-change: transform;
-  background: repeating-conic-gradient(from -0.0682deg, rgba(28, 20, 8, .32) 0 0.1364deg, transparent 0.1364deg 1.2552deg);
-  -webkit-mask-image: radial-gradient(circle, transparent 406px, #000 406px 412px, transparent 412px);
-  mask-image: radial-gradient(circle, transparent 406px, #000 406px 412px, transparent 412px);
-}
-.mmm-dial-rail {
-  box-sizing: border-box;
-  border: 1.1px solid rgba(28, 20, 8, .42);
-  pointer-events: none;
-}
-/* The needle casts a shadow onto the card — the one cue that says the pointer
-   and the scale live at different depths under the same glass. Tapered, like
-   a meter needle: a parallel-sided bar is a cursor, a taper is an instrument. */
-.mmm-dial-needle-shadow {
-  position: absolute;
-  left: 50%;
-  bottom: 7px;
-  width: 4px;
-  height: 22px;
-  margin-left: -1.1px;
-  pointer-events: none;
-  background: rgba(20, 12, 4, .32);
-  filter: blur(1px);
-  clip-path: polygon(50% 0%, 84% 100%, 16% 100%);
-}
-.mmm-dial-needle {
-  position: absolute;
-  left: 50%;
-  bottom: 8px;
-  width: 4px;
-  height: 22px;
-  margin-left: -2px;
-  pointer-events: none;
-  background: linear-gradient(180deg, var(--live) 0%, color-mix(in oklab, var(--live) 75%, #5e0f04) 100%);
-  clip-path: polygon(50% 0%, 84% 100%, 16% 100%);
-  filter: drop-shadow(0 0 3px color-mix(in oklab, var(--live) 55%, transparent));
-}
-/* The pilot bead — dead until the transport plays. A dial with a live needle
-   and no pilot lamp doesn't say whether the set is ON. */
-.mmm-dial-pilot {
-  position: absolute;
-  right: 10px;
-  top: 8px;
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: rgba(58, 34, 8, .35);
-  box-shadow: inset 0 0.8px 1px rgba(0, 0, 0, .5);
-  transition: background 300ms var(--ease), box-shadow 300ms var(--ease);
-}
-.mmm-dial-pilot[data-lit='true'] {
-  background: var(--lamp);
-  box-shadow: 0 0 6px 1.5px color-mix(in oklab, var(--lamp) 65%, transparent), inset 0 -0.8px 1px rgba(120, 60, 10, .5), inset 0 0.8px 0.8px rgba(255, 255, 255, .65);
-}
-/* The two step affordances — see the deviations note in the header. Painted
-   as the face's own engraving, full height so the target clears 44px against
-   the 74px dial. */
-.mmm-dial-step {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 26px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 6px;
   border: 0;
   background: none;
+  text-align: left;
+  color: inherit;
+  border-radius: 4px;
   cursor: pointer;
-  z-index: 7;
-  color: rgba(92, 62, 20, .55);
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+.mmm-mini-art {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 3px;
+  border: 1px solid var(--brass-deep);
   display: grid;
   place-items: center;
-  padding: 0;
+  background: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  color: var(--ink-on-walnut-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
 }
-.mmm-dial-step[data-dir='prev'] { left: 0; }
-.mmm-dial-step[data-dir='next'] { right: 0; }
-
-/* ── The transport ── a brass thumbstick in a recessed round gate on the
-   plate. Four brass detent notches mark the throws; the stick sinks on press
-   (the play/pause gesture) and springs back through centre on release. */
-.mmm-gate {
-  position: relative;
-  width: var(--mmm-knob);
-  height: var(--mmm-knob);
-  flex: 0 0 auto;
-  perspective: 178px;
+.mmm-mini-art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.mmm-mini-meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.mmm-mini-title {
+  /* 15px, the shell's content floor. A mini player's title is the name of a
+     song, which is content — the tracked-mono exemption that lets a tab label
+     sit at 11px does not reach it, and `lint-source.mjs` says so. */
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-on-walnut);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.mmm-gate-well {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 50% 30%, #050301 0%, #0e0a05 60%, #1e160c 100%);
-  box-shadow: inset 0 5px 10px rgba(0, 0, 0, .95), 0 0 0 2px var(--brass-deep);
+.mmm-mini-artist {
+  font-size: 0.9375rem;
+  color: var(--ink-on-walnut-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.mmm-gate-notch {
-  position: absolute;
-  border-radius: 1px;
-  background: var(--brass);
-  opacity: .72;
-  pointer-events: none;
-}
-.mmm-gate-notch[data-at='top'] { left: 50%; top: 1.5px; transform: translateX(-50%); width: 1.5px; height: 5px; }
-.mmm-gate-notch[data-at='bottom'] { left: 50%; bottom: 1.5px; transform: translateX(-50%); width: 1.5px; height: 5px; }
-.mmm-gate-notch[data-at='left'] { left: 1.5px; top: 50%; transform: translateY(-50%); width: 5px; height: 1.5px; }
-.mmm-gate-notch[data-at='right'] { right: 1.5px; top: 50%; transform: translateY(-50%); width: 5px; height: 1.5px; }
-/* Dust in the gate recess — a machined well collects it. */
-.mmm-gate-dust {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  border-radius: 50%;
-  pointer-events: none;
-}
-.mmm-stick-shadow {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 52px;
-  height: 52px;
-  margin: -26px 0 0 -26px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(circle, rgba(0, 0, 0, .7) 40%, transparent 72%);
-  transition: transform var(--duration-default) var(--ease-spring), opacity var(--duration-default) var(--ease);
-}
-.mmm-stick {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 52px;
-  height: 52px;
-  margin: -26px 0 0 -26px;
-  border-radius: 50%;
-  transform-style: preserve-3d;
-  will-change: transform;
-  cursor: grab;
-  touch-action: none;
-  background: none;
+.mmm-mini-transport { display: flex; align-items: center; gap: 2px; }
+/* A machined key: brass edge, lit top, one pixel of travel on press. The same
+   material vocabulary the plates and slats use, at control scale. */
+.mmm-key {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
   border: 0;
-  padding: 0;
+  background: none;
+  border-radius: 4px;
+  color: var(--ink-on-walnut-2);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.mmm-stick-ring {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: radial-gradient(circle at 34% 24%, #f6e6b6 0%, var(--brass) 30%, var(--brass-deep) 72%, #4a3712 100%);
-  box-shadow: 0 6px 12px -4px rgba(0, 0, 0, .9), 0 2px 0 #3a2a0e, inset 0 1px 1px rgba(255, 248, 224, .5);
-}
-.mmm-stick-knurl {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  background: repeating-conic-gradient(from 0deg, rgba(0, 0, 0, .3) 0deg 1.4deg, transparent 1.4deg 4.6deg);
-  -webkit-mask-image: radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%);
-  mask-image: radial-gradient(circle, transparent 72%, #000 76%, #000 98%, transparent 100%);
-}
-/* Concave dish — shadow at the near wall, light at the far wall, so it reads
-   as a bowl rather than a dome. */
-.mmm-stick-dish {
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 50% 4%, rgba(0, 0, 0, .78) 0%, rgba(0, 0, 0, .28) 36%, transparent 66%),
-    radial-gradient(circle at 50% 96%, #f4dfa8 0%, #d6b26c 26%, var(--brass-deep) 64%, #38290c 100%);
-  box-shadow: inset 0 6px 11px rgba(0, 0, 0, .72), inset 0 -5px 8px rgba(255, 242, 206, .26);
-}
-/* Machined rim: one crisp turned edge where the dish meets the cap, catching
-   light on its lower half. The dish read as moulded without it. */
-.mmm-stick-rim {
-  position: absolute;
-  inset: 6.2px;
-  border-radius: 50%;
-  pointer-events: none;
-  box-sizing: border-box;
-  border: 0.8px solid rgba(255, 246, 214, .3);
-  -webkit-mask-image: linear-gradient(180deg, transparent 18%, #000 62%);
-  mask-image: linear-gradient(180deg, transparent 18%, #000 62%);
-}
-/* Lit while playing. Opacity flipped by data-lit. */
-.mmm-stick-lit {
-  position: absolute;
-  inset: 7px;
-  border-radius: 50%;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 300ms var(--ease);
-  box-shadow: inset 0 0 10px color-mix(in oklab, var(--accent) 55%, transparent), 0 0 12px -2px color-mix(in oklab, var(--accent) 50%, transparent);
-}
-.mmm-stick[data-lit='true'] .mmm-stick-lit { opacity: 1; }
-/* Press occlusion, written live. The cap's specular was removed with the
-   dock's other reflections (2026-08-25). */
-.mmm-stick-ao {
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  transition: box-shadow 90ms var(--ease);
+.mmm-key[data-lit='true'] { color: var(--ink-on-walnut); }
+.mmm-key:active { transform: translateY(1px); }
+.mmm-key:focus-visible { outline: 2px solid var(--brass); outline-offset: -3px; }
+@media (hover: hover) {
+  .mmm-mini-open:hover,
+  .mmm-key:hover { background: rgba(255, 232, 190, 0.08); }
+  .mmm-key:hover { color: var(--ink-on-walnut); }
 }
 
-/* The bulb flicker — a very slight, uneven breathe. A perfectly steady glow
-   reads as an LED panel rather than a lamp behind glass. A KEYFRAME, not a
-   transition, per the design's own note (ADHERENCE 23). */
-@keyframes ihBacklight {
-  0%, 100% { opacity: .94; }
-  43% { opacity: 1; }
-  71% { opacity: .97; }
+/* The ONE place `--mmm-chrome-size` is allowed to move, and it moves because
+   the dock really is taller: the panes must clear the mini player or the last
+   row of every list sits behind it. `:has()` rather than a class on the frame
+   because the dock owns the answer — it is the component that knows whether a
+   track is loaded, and a second copy of that state on an ancestor is a second
+   thing to keep in sync. */
+.mmm-frame:has(.mmm-dock[data-mini='true']) {
+  --mmm-chrome-size: calc(
+    var(--mmm-tab-h) + var(--mmm-mini-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
+  );
 }
-@media (prefers-reduced-motion: reduce) {
-  /* A dial that never stops pulsing is exactly what this setting is for. The
-     boot strike and the springs check the same query in MmmDock. */
-  .mmm-dial-backlight { animation: none; }
-}
-
 
 /* Reduced motion: the sheet settles instantly. Complements the token-level
    duration zeroing in globals.css, which cannot disable a keyframe. The arc's
@@ -2608,13 +2301,12 @@ html:has(.mmm-frame) {
 }
 
 /* The design system's ONE breakpoint (`MOBILE.md`) has nothing left to move.
-   The dock is the same bar at every width — two 74px knobs and a dial that takes
-   what is left — which is what "there is no separate mobile build" means in
+   The dock is the same bar at every width — four flexed tabs and a fixed
+   transport — which is what "there is no separate mobile build" means in
    practice. The block that was here redefined the whole chrome table for the
-   phone (56px trigger, tighter gap, a derived dial width) because three
-   absolutely-positioned pieces had to be re-fitted at that width; a flex row
-   re-fits itself. The 44px floors in `mobile-fit.css` still apply, and both
-   knobs are 74. */
+   phone because three absolutely-positioned pieces had to be re-fitted at that
+   width; a flex row re-fits itself. The 44px floors in `mobile-fit.css` still
+   apply, and every control in this bar clears them at every width. */
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
 
@@ -2637,6 +2329,113 @@ html:has(.mmm-frame) {
     to { transform: translate(-50%, 0); opacity: 1; }
   }
   .mmm-sheet { animation-name: mmmSheetUpWide; }
+}
+
+/* ── The section strip ────────────────────────────────────────────────────
+   A screen's own sections, drawn on the screen — what the dock's tuner dial
+   used to tune (MIDDLE ROAD, 2026-09-04; `MmmSectionStrip.tsx` carries why the
+   handoff's "one dial per screen" rule no longer applies).
+
+   Two variants and they are not interchangeable. `pane` sits on cream paper and
+   takes the plate material every card and row already uses. `brass` sits over
+   the printed chart, where a translucent pill is unreadable for the same reason
+   `.mmm-map-chip` takes a solid fill rather than a tint — so it is a real
+   engraved segmented control, one piece of metal with divisions cut into it. */
+.mmm-strip {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  /* Scrolls rather than wraps: MUSIC has five sections and a profile can have
+     four, and a strip that reflows to two rows moves every pane below it by
+     44px when a label happens to be long in one of the twelve locales. */
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
+}
+/* The fade is what makes the scroll honest — and ONLY on a row that overflows.
+   A row ending flush looks like the whole set; one that fades looks like there
+   is more. Unconditionally, that second reading is a lie about every set that
+   fits, which is what the map's three layers looked like. `MmmSectionStrip`
+   measures and sets `data-overflow`, because CSS cannot ask. `mask-image`
+   rather than a gradient overlay because the strip sits on two different
+   grounds (paper and brass) and an overlay would have to know which. */
+.mmm-strip[data-overflow='true'] {
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 26px), transparent 100%);
+}
+.mmm-strip::-webkit-scrollbar { display: none; }
+.mmm-strip-item {
+  flex: 0 0 auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border-radius: 4px;
+  /* 13px tracked mono: the exemption's own shape (mono family AND tracking
+     >= .14em), which is what a section label is — the name of a place in this
+     screen, set as a legend rather than as prose. */
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  cursor: pointer;
+}
+
+/* ── pane ── */
+.mmm-strip[data-variant='pane'] {
+  padding: 2px 0 10px;
+}
+.mmm-strip[data-variant='pane'] .mmm-strip-item {
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  color: var(--ink-2);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+}
+.mmm-strip[data-variant='pane'] .mmm-strip-item[data-on='true'] {
+  color: var(--ink);
+  background: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 0 0 1px var(--brass) inset;
+}
+@media (hover: hover) {
+  .mmm-strip[data-variant='pane'] .mmm-strip-item:hover { color: var(--ink); }
+}
+.mmm-strip-item:active { transform: translateY(1px); }
+.mmm-strip-item:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ── brass ── one plate, divisions cut into it */
+.mmm-strip[data-variant='brass'] {
+  gap: 0;
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid var(--brass-deep);
+  /* `--brass-edge`, NOT `--brass-deep`, and globals.css says why in the token's
+     own comment: --brass-edge is the header gradient's bottom stop and is
+     deliberately lighter, because no ink reaches AA on --brass-deep (pure black
+     measures 3.6:1 there). Rendering it against the real stylesheet is how this
+     was caught — the first version ran to --brass-deep and the two resting
+     segments were unreadable. --ink-on-brass measures 4.69:1 on --brass-edge,
+     which is the worst case of this pair. */
+  background: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  box-shadow: 0 2px 8px -2px rgba(28, 20, 8, 0.45), 0 1px 0 rgba(255, 240, 205, 0.5) inset;
+}
+.mmm-strip[data-variant='brass'] .mmm-strip-item {
+  flex: 1 1 0;
+  justify-content: center;
+  border-radius: 0;
+  padding: 0 8px;
+  color: var(--ink-on-brass);
+  border-right: 1px solid rgba(59, 44, 11, 0.32);
+}
+.mmm-strip[data-variant='brass'] .mmm-strip-item:last-child { border-right: 0; }
+.mmm-strip[data-variant='brass'] .mmm-strip-item[data-on='true'] {
+  background: linear-gradient(180deg, var(--plate-lit), var(--plate-2));
+  box-shadow: 0 0 0 1px rgba(59, 44, 11, 0.25) inset;
+  color: var(--ink);
 }
 
 /* ── MAP controls ─────────────────────────────────────────────────────────
@@ -2906,31 +2705,6 @@ html:has(.mmm-frame) {
 .mmm-show-by { margin-top: 4px; font-size: 0.9375rem; }
 .mmm-show-by a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); text-decoration: none; }
 
-/* The split bar. Each part grows by its own percentage, so the bar IS the
-   split rather than a picture of one — a 60/30/10 show draws itself. */
-.mmm-show-split {
-  display: flex;
-  margin-top: 18px;
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-  border: 1px solid var(--hair-70);
-}
-.mmm-show-split-part {
-  flex-basis: 0;
-  padding: 9px 6px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--ink-on-accent);
-}
-.mmm-show-split-part[data-role='artist'] { background: var(--accent); }
-.mmm-show-split-part[data-role='venue'] { background: var(--role-venue); }
-.mmm-show-split-part[data-role='promoter'] { background: var(--role-promoter); }
 .mmm-show-fee {
   margin-top: 8px;
   font-family: var(--font-mono);
@@ -2998,7 +2772,6 @@ html:has(.mmm-frame) {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.mmm-profile-shows { list-style: none; margin: 0; padding: 0; }
 .mmm-profile-show {
   display: flex;
   align-items: flex-start;
@@ -3010,22 +2783,7 @@ html:has(.mmm-frame) {
   text-decoration: none;
   color: inherit;
 }
-.mmm-profile-shows li:last-child .mmm-profile-show { border-bottom: 0; }
-.mmm-profile-heat {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 6px;
-}
 .mmm-profile-show-main { display: flex; flex-direction: column; min-width: 0; }
-.mmm-profile-show-when {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
 .mmm-profile-show-title {
   margin-top: 2px;
   font-family: var(--font-display);

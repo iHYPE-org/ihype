@@ -31,6 +31,7 @@
     "measure:datepick": "node scripts/measure-datepicker.mjs",
     "app-links:write": "node scripts/generate-app-links.mjs",
     "check:app-links": "node scripts/generate-app-links.mjs --check",
+    "check:basemap": "node scripts/check-basemap.mjs",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:acrcloud": "tsx --env-file-if-exists=.env scripts/verify-acrcloud.ts",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",

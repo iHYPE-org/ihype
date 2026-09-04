@@ -110,6 +110,22 @@ jobs:
           npm run audit:retro
           npm run audit:contrast
 
+      - name: The map's basemap actually loads
+        # NOT in the gate step above, and deliberately non-fatal: this reaches
+        # a third party (CARTO), so a red here can mean their outage rather
+        # than our bug, and a nightly that fails for someone else's reason is a
+        # nightly people stop reading.
+        #
+        # It exists because on 2026-09-03 `/app/map` drew as bare parchment for
+        # nine hours and NOTHING here noticed — the map is the landing surface
+        # of the whole app and no instrument touched it. Run twice: against the
+        # source's own host list, and against the CSP production is really
+        # serving, which is the half that would have caught that outage.
+        continue-on-error: true
+        run: |
+          npm run check:basemap
+          npm run check:basemap -- --base=https://ihype.org
+
       - name: Store-distribution readiness
         # NOT in the gate step above, and the reason is the whole point of this
         # job. `check:app-links` exits 2 while the two universal-link files are

@@ -352,14 +352,19 @@ assertIncludes(
 );
 /* One dial per screen, and it is the dock's. A page that renders its own puts
    two identical-looking dials on screen meaning different things — which is
-   what shipped while `ProfileTabs` drew one ten pixels above the dock's. */
+   what shipped while `ProfileTabs` drew one ten pixels above the dock's.
+
+   **The dial is retired (MIDDLE ROAD, 2026-09-04) and this assertion outlived
+   it.** A profile still must not draw a control of its own: it registers with
+   `MmmStations` and `MmmSectionStrip` draws the ONE strip, once, at the top of
+   the pane. Two controls on one screen is the failure either way. */
 assertNotIncludes(
   'src/components/profile/ProfileTabs.tsx',
   '<TunerDial',
-  'A profile registers its tabs with the dock (useRegisterStations) rather than drawing a second dial.'
+  'A profile registers its tabs (useRegisterStations) and draws no control of its own; MmmSectionStrip draws the one strip.'
 );
 
-/* The section switcher is the tuner dial, and there is one of it.
+/* ONE section switcher on a screen, and it is the pane's strip.
  *
  * Three separate horizontal tab strips used to sit at the top of a page —
  * `SiteNavTabs` in the site header, and `.section-tabstrip` on Events and
@@ -370,17 +375,23 @@ assertNotIncludes(
  *
  * They are gone, and the reason to assert it is that re-adding one is the
  * obvious thing to do when a page grows a section — it is what every other
- * codebase does. The dial costs the same row and names ONE destination at
- * 26px, which is the whole reason the type could get bigger.
+ * codebase does.
+ *
+ * **What replaced them is a strip again**, which is not a reversal: the
+ * measured failure above was DIVIDING a fixed row, and `.mmm-strip` does not
+ * divide. Its labels are a fixed 13px, the row scrolls rather than compressing,
+ * the active section is scrolled into view and the right edge is masked so the
+ * scroll is visible. A new strip that shrinks its labels to fit is the thing
+ * these two assertions exist to stop, whatever it is called.
  */
 assertMissing(
   'src/components/SiteNavTabs.tsx',
-  'The header no longer carries a section selector; the site tab bar and the tuner dial do.'
+  'The header carries no section selector; the site tab bar and the pane strip do.'
 );
 assertNotIncludes(
   'src/app/globals.css',
   '.section-tabstrip',
-  'The wrapping pill strip is retired — use TunerDial for a section switcher.'
+  'The wrapping pill strip is retired — a section switcher is MmmSectionStrip, which scrolls instead of shrinking.'
 );
 
-console.log('Design guard passed: one signed-in app surface, one section switcher, no retired shells resurrected.');
+console.log('Design guard passed: one signed-in app surface, one section switcher per screen, no retired shells resurrected.');

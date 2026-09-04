@@ -79,7 +79,6 @@
 .mmm-migrated-surface .fan-ref-box,
 .mmm-migrated-surface .lsp-card,
 .mmm-migrated-surface .payout-card,
-.mmm-migrated-surface .ticket-verification-panel,
 .mmm-migrated-surface .vaa-card,
 .mmm-migrated-surface .vdash-card {
   /* THE PLATE, reaching the 74 aliased names rather than only `.mmm-card`.
@@ -375,7 +374,7 @@
 /* ── Primitive: Skeleton ─────────────────────────────────────────────────
    Backlog item 5 pairs EmptyState with Skeleton. Both already existed — the
    empty state under 22 names (converted above) and the skeleton under three:
-   `.skeleton`, `.ihype-skeleton`, and an inline `Shimmer` in
+   `.skeleton` and an inline `Shimmer` in
    src/app/shows/loading.tsx whose hex fallback (#1a1712) is not even the
    token it claims to fall back from. Same treatment: one definition, every
    name pointed at it.
@@ -384,7 +383,7 @@
    placeholder that is a different shape from the thing it becomes is a
    layout shift waiting to happen. Animation is gated by the reduce-motion
    block in mmm.css, which covers the canonical shell. */
-.mmm-migrated-surface :is(.skeleton, .ihype-skeleton, [data-skeleton]) {
+.mmm-migrated-surface :is(.skeleton, [data-skeleton]) {
   background: linear-gradient(
     90deg,
     rgba(var(--surface-tint-rgb), 0.04) 25%,

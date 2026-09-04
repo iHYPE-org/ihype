@@ -1029,7 +1029,6 @@ body:has(.site-dock) .site-shell {
 100% { opacity: 1; }
   50% { opacity: .4; }
 }
-.animate-pulse { animation: ihype-pulse 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
 /* Pop: the signature hype bounce — scale 1 → 1.18 → 0.95 → 1 over 350ms. */
 @keyframes ihype-pop {
   0%   { transform: scale(1); }
@@ -2385,31 +2384,11 @@ body:has(#wt-wrap) .site-shell > main {
 .ticket-price-badge span {
   color: var(--muted);
 }
-.ticketing-split-grid {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin: 1rem 0;
-}
 .ticketing-split-preview {
   padding: 1rem;
   border-radius: 18px;
   border: 1px solid var(--line);
   background: var(--hair-20);
-}
-.ticketing-order-summary {
-  display: grid;
-  gap: 0.65rem;
-  margin-top: 0.85rem;
-}
-.ticketing-order-summary div {
-  display: flex;
-  justify-content: space-between;
-  gap: 1rem;
-  color: var(--muted);
-}
-.ticketing-order-summary strong {
-  color: var(--text);
 }
 .signal-card {
   display: grid;
@@ -2427,7 +2406,6 @@ body:has(#wt-wrap) .site-shell > main {
   line-height: 1.5;
 }
 .field textarea { resize: vertical; min-height: 120px; }
-.request-history { margin-top: 1.5rem; }
 .request-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 @keyframes fan-companion-bob {
   0%,
@@ -2488,62 +2466,6 @@ body:has(#wt-wrap) .site-shell > main {
 .artist-media-upload-form {
   display: grid;
   gap: 0.9rem;
-}
-.artist-media-list {
-  display: grid;
-  gap: 0.9rem;
-  margin-top: 1.25rem;
-}
-.artist-media-card {
-  display: flex;
-  gap: 1rem;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem 1.1rem;
-  border-radius: 20px;
-  border: 1px solid var(--hair-80);
-  background: var(--hair-30);
-}
-.artist-media-card.active {
-  border-color: rgba(35,208,216,0.35);
-  background: linear-gradient(135deg, rgba(35,208,216,0.12), rgba(143,91,255,0.12));
-}
-.artist-media-card-copy {
-  display: flex;
-  gap: 0.95rem;
-  align-items: center;
-  min-width: 0;
-}
-.artist-media-card-copy strong {
-  display: block;
-  font-size: 1.05rem;
-  margin-bottom: 0.2rem;
-}
-.artist-media-index {
-  min-width: 48px;
-  padding: 0.55rem 0.7rem;
-  border-radius: 999px;
-  background: var(--line);
-  color: #d8caff;
-  text-align: center;
-  font-size: 0.9375rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-.artist-media-track-art {
-  width: 64px;
-  height: 60px;
-  border-radius: 12px;
-  object-fit: cover;
-  flex-shrink: 0;
-  border: 1px solid var(--hair-80);
-}
-.artist-media-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
-  justify-content: flex-end;
-  flex-shrink: 0;
 }
 .track-scan-gate {
   display: grid;
@@ -2657,6 +2579,9 @@ body:has(#wt-wrap) .site-shell > main {
   border-color: rgba(35,208,216,0.35);
   background: linear-gradient(135deg, rgba(35,208,216,0.12), rgba(143,91,255,0.12));
 }
+/* Same repaint as `.composer-media-code` above: pale cyan `#aef4f6` on a
+   translucent cyan fill was DS8's, and on cream it is a number you cannot
+   read. The 44px min-width stays — it is a control-sized target. */
 .composer-sequence-index {
   display: inline-flex;
   align-items: center;
@@ -2664,9 +2589,12 @@ body:has(#wt-wrap) .site-shell > main {
   min-width: 44px;
   padding: 0.45rem 0.65rem;
   margin-right: 0.75rem;
-  border-radius: 999px;
-  background: rgba(35,208,216,0.14);
-  color: #aef4f6;
+  border-radius: 3px;
+  border: 1px solid rgba(111, 88, 36, .42);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -2797,10 +2725,7 @@ body:has(#wt-wrap) .site-shell > main {
     max-height: 30svh;
   }
   .artist-media-upload-header { flex-direction: column; align-items: flex-start; }
-  .artist-media-card { flex-direction: column; align-items: flex-start; }
-  .artist-media-actions { justify-content: flex-start; }
   .ticketing-panel-header,
-.ticketing-split-grid { grid-template-columns: 1fr; flex-direction: column; }
   .ticket-price-badge { width: 100%; text-align: left; }
   .nav-logo-mark {
     font-size: 0.9375rem;
@@ -4045,16 +3970,6 @@ a.ihype-card {
   0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
-.ihype-skeleton {
-  background: linear-gradient(90deg,
-    var(--hair-50) 25%,
-    var(--hair-100) 50%,
-    var(--hair-50) 75%
-  );
-  background-size: 200% 100%;
-  animation: ihype-shimmer 1.6s ease-in-out infinite;
-  border-radius: 6px;
-}
 
 /* Stat / number count-up feel — subtle pop when value changes */
 @keyframes stat-pop {
@@ -4100,7 +4015,6 @@ a.ihype-card {
 /* ── SVG empty-state icons ──────────────────────────────────────────────── */
 
 @media (max-width: 480px) {
-  .site-footer-rights-suffix { display: none; }
 }
 
 /* Sitewide heading face.
@@ -4136,7 +4050,6 @@ h2 {
 @media print {
   .site-nav,
 .site-tabbar,
-.ihype-footer,
 .ihype-cookie-consent,
 .site-dock-l {
     display: none !important;
@@ -4146,7 +4059,6 @@ h2 {
 /* Mobile has the same Advertise/Privacy/etc. links in the hamburger drawer's
    secondary link list, so the desktop text footer is redundant there. */
 @media (max-width: 768px) {
-  .ihype-footer { display: none; }
 }
 
 /* ── Skip to content ─────────────────────────────────────────────────────
@@ -4256,23 +4168,6 @@ h2 {
 .adaptive-site-header.is-scrolled .search-bar-desktop { max-width: 0; opacity: 0; overflow: hidden; pointer-events: none; }
 .adaptive-site-header-spacer { flex: 1 1 auto; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
-.theme-toggle {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 auto;
-  display: inline-grid;
-  place-items: center;
-  padding: 0;
-  border: 1px solid var(--line-2);
-  border-radius: 999px;
-  color: var(--ink);
-  background: var(--hair-50);
-  cursor: pointer;
-  font-size: 1.0625rem;
-  transition: background .16s ease, border-color .16s ease, transform .16s ease;
-}
-.theme-toggle:hover { background: var(--hair-100); border-color: var(--hair-220); transform: translateY(-1px); }
-.theme-toggle:focus-visible { outline: 2px solid var(--accent-3, var(--role-venue)); outline-offset: 3px; }
 @keyframes scene-landing-drift {
   from { transform: scale(1.015) translate3d(0,0,0); }
   to { transform: scale(1.04) translate3d(-.45%,.35%,0); }
@@ -4578,7 +4473,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-header { height: 64px; padding: 8px 12px; }
   .fan-entry-logo { width: 46px; height: 46px; border-radius: 12px; }
   .fan-entry-nav { gap: 8px; }
-  .fan-entry-nav .theme-toggle { width: 36px; height: 36px; }
   .fan-entry-nav a { min-height: 44px; font-size: 0.9375rem; }
   .fan-entry-signin { padding-inline: 4px; }
   .fan-entry-join { min-width: 94px; padding-inline: 14px; }
@@ -4746,7 +4640,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
     padding: 0 12px 0 34px;
     font-size: 0.9375rem;
   }
-  .adaptive-site-header .theme-toggle { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   .site-dock-marquee-track { animation: none; }
@@ -4942,167 +4835,114 @@ body:has(.fan-entry) #main-content { width: 100%; }
   text-wrap: pretty;
 }
 
-/* ── The tuner dial: a section switcher shaped like a slide-rule scale ────
-   Paired with the dock's own dial (`MmmDock.tsx` + the `.mmm-dial-*` block in
-   mmm.css). This used to name `src/components/TunerDial.tsx`, deleted
-   2026-09-03: the console rebuild draws the dial itself, so no route could
-   reach that file any more. Its three hard-won fixes live on in the dock —
-   the non-passive `wheel` listener above all, without which the page scrolls
-   out from under the gesture. It carried the reasoning for
-   why this replaces a tab strip. In short: a strip divides one row by the
-   number of tabs, so every strip in this codebase had drifted to 10-13px
-   labels and two of the artist profile's six started off-screen at 393px.
-   The dial spends the same row on ONE destination at 26px.
+/* ── The public show page's own blocks ────────────────────────────────────
+   `/shows/[slug]` is the URL that sells tickets and the one member-facing page
+   that must render logged out, and 20 of its 33 class names were defined by no
+   stylesheet at all (found 2026-09-04 by the full audit; `audit:unstyled` had
+   been carrying them inside its budget). Its appearance came almost entirely
+   from 107 inline styles, and anything wearing one of these names rendered as
+   a bare div.
 
-   Cream glass in a brass bezel, lit from behind — on cream glass that means
-   the paper glows rather than the ink, the opposite of how a dark-faced
-   version of this control would work. Built from the material tokens, so it
-   is the same brass as the dock's transport and the station's frame. */
-.tuner-mount {
-  display: flex;
-  align-items: stretch;
-  gap: 10px;
-  margin: 0 0 18px;
-}
-.tuner-dial {
-  position: relative;
-  flex: 1;
-  min-width: 0;
-  border-radius: 3px;
-  padding: 5px 12px 6px;
-  overflow: hidden;
-  cursor: grab;
-  /* Both are needed and they do different jobs: touch-action stops the browser
-     scrolling the page instead of tuning, user-select stops a native text-drag
-     firing pointercancel mid-gesture and killing the drag in one direction. */
-  touch-action: none;
-  user-select: none;
-  -webkit-user-select: none;
-  background:
-    radial-gradient(150% 200% at 50% 130%, #fff3d4 0%, var(--bg) 42%, #e2cea0 78%, #d4bd8c 100%);
-  background-color: #eeddb4;
-  box-shadow:
-    0 0 0 1px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    0 0 0 4px #6d5222,
-    inset 0 2px 5px rgba(92, 62, 20, .45),
-    inset 0 -1px 0 rgba(255, 252, 235, .8);
-}
-.tuner-dial:active { cursor: grabbing; }
-.tuner-dial:focus-within { outline: 2px solid var(--accent); outline-offset: 5px; }
+   Most of them are the PRODUCTION PLAN panel, which is reachable only for a
+   show that already carries a `Show.productionPlan` — nothing can author one
+   since `RadioShowCreator` was retired, but the rows exist and
+   `ShowSequencePlayer` still plays them, so the panel is legacy rather than
+   dead. Styled rather than deleted for that reason: a member holding a ticket
+   to one of those shows is the person looking at this.
 
-/* Curved reflection on the glass. Decorative, so it must never eat a pointer
-   event — the whole face is the drag target. */
-.tuner-dial::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(150% 90% at 18% -34%, rgba(255, 255, 255, .55), transparent 56%),
-    linear-gradient(174deg, rgba(255, 255, 255, .3) 0%, transparent 30%);
-}
-
-/* The tuned station, engraved. Serif on cream is the classic move and it
-   measures 13.8:1 — the most legible thing on the page, which is the point of
-   the whole control. rem, not px: this follows the Text size setting like
-   everything else. */
-.tuner-station {
-  display: none;
-  width: 100%;
-  border: 0;
-  background: none;
-  padding: 0;
-  font-family: var(--f-s);
-  font-size: 1.625rem;
-  line-height: 1.12;
-  letter-spacing: .005em;
-  text-align: center;
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: inherit;
-}
-.tuner-station[data-current="true"] { display: block; }
-
-/* The slide-rule scale. Graduations only — the station is already set at 26px
-   directly above, so printing it again small would say the same thing twice
-   and say it worse the second time. */
-.tuner-scale {
-  position: relative;
-  display: block;
-  height: 20px;
-  margin-top: 2px;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-}
-/* Two repeating gradients: a major graduation per station, four minors
-   between. Because a repeating gradient has no end the scale is infinite in
-   both directions for free — no cloned strip, no seam, and the stations wrap.
-   The 46px major pitch is the same number as PITCH in TunerDial.tsx; they are
-   one measurement and must move together. */
-.tuner-ticks {
-  position: absolute;
-  inset: 0;
-  background-image:
-    repeating-linear-gradient(90deg, rgba(28,20,8,.85) 0 2px, transparent 2px 46px),
-    repeating-linear-gradient(90deg, rgba(28,20,8,.42) 0 1px, transparent 1px 9.2px);
-  background-size: auto 15px, auto 8px;
-  background-repeat: repeat-x, repeat-x;
-  background-position-y: 0, 0;
-  will-change: background-position;
-}
-/* The snap back to a station is eased; the drag itself is not, or the scale
-   lags the thumb. `--duration-slow` is zeroed by the token-level
-   reduced-motion block, so this needs no media query of its own. */
-.tuner-dial:not(.is-tuning) .tuner-ticks {
-  transition: background-position var(--duration-slow, 420ms) cubic-bezier(.22, 1, .3, 1);
-}
-
-/* The pointer: a hairline with a lozenge head, fixed while the scale moves
-   under it. --accent is a FILL here, which is the one job it is right for. */
-.tuner-needle {
-  position: absolute;
-  top: 0; bottom: 0; left: 50%;
-  width: 1.5px;
-  margin-left: -.75px;
-  background: var(--accent);
-  z-index: 3;
-  box-shadow: 0 0 3px rgba(var(--accent-rgb), .8);
-}
-.tuner-needle::before {
-  content: "";
-  position: absolute;
-  top: -2px; left: 50%;
-  width: 7px; height: 7px;
-  margin-left: -3.5px;
-  border-radius: 1px;
-  background: var(--accent);
-  transform: rotate(45deg);
-  box-shadow: 0 0 4px rgba(var(--accent-rgb), .7);
-}
-
-/* Step buttons. A dial you can only drag is a dial a mouse user has to
-   discover; these are the detents. 44px wide so they clear the touch floor
-   without mobile-fit.css having to rescue them. */
-.tuner-step {
-  flex: 0 0 auto;
-  width: 44px;
-  min-height: 44px;
-  border-radius: 3px;
+   Paint only, in the console's own vocabulary — plate, slat, brass nameplate —
+   so the page stops being the one surface with no material. No layout: the
+   grid and the spacing are the page's own inline styles, and moving those is
+   the separate inline-styles pass. */
+.video-shell {
   border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, var(--brass) 0%, var(--brass-deep) 100%);
-  color: var(--walnut-3);
-  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: inset 0 1px 0 rgba(255, 244, 214, .55);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 2px 6px -1px rgba(28, 20, 8, .22);
 }
-.tuner-step:hover { background: linear-gradient(180deg, var(--lamp) 0%, var(--brass) 100%); }
-.tuner-step:active { box-shadow: inset 0 2px 5px rgba(92, 62, 20, .5); }
+.explanation-block {
+  border-left: 2px solid var(--brass);
+  padding: 2px 0 2px 14px;
+  margin: 14px 0;
+  color: var(--ink-2);
+}
+.explanation-block h3 { margin: 0 0 6px; font-size: 1rem; color: var(--ink); }
+.launch-list { margin: 8px 0 0; padding-left: 20px; color: var(--ink-2); line-height: 1.6; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.composer-plan-panel { border-color: var(--brass-deep); }
+.composer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.composer-header h2 { margin: 8px 0 4px; }
+.composer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.composer-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* A plate, same as `.mmm-card` — dark edge, brass ring in the cast, real lift.
+   A flat surface on a near-flat ground is findable only by its hairline, which
+   is most of why this page reads as plain. */
+.composer-card {
+  padding: 14px;
+  border: 1px solid var(--brass-deep);
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 2px 6px -1px rgba(28, 20, 8, .22);
+}
+.composer-card h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass-deep);
+}
+.composer-library-list,
+.composer-voice-list,
+.composer-sequence-list { display: flex; flex-direction: column; gap: 8px; }
+/* Slats: the same material with no ring, which is how a row differs from a
+   card everywhere else in the product. */
+.composer-media-card,
+.composer-voice-card,
+.composer-sample-card,
+.composer-sequence-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  min-width: 0;
+  border: 1px solid rgba(111, 88, 36, .42);
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 2px rgba(28, 20, 8, .14);
+}
+.composer-media-card > div,
+.composer-voice-card > div { min-width: 0; }
+.composer-sample-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+/* `.composer-media-code` and `.composer-sequence-index` are NOT here. Both
+   were already defined further up this file and the first draft of this block
+   redefined them — caught by `audit:css`, whose whole instruction is "fix the
+   ORIGINAL rule; do not add another block below it". Both originals were
+   repainted in place instead, and each was still carrying a DS8 navy-era
+   literal that is invisible on cream. */
+.composer-media-actions { margin-left: auto; display: flex; gap: 8px; flex: 0 0 auto; }
+.composer-audio-preview { width: 100%; margin-top: 8px; }
+
+/* ── The tuner dial's stylesheet is DELETED (2026-09-04) ──────────────────
+   ~150 lines painting the vendored `src/components/ds/TunerDial.tsx`, which
+   nothing has mounted since 2026-09-03 and which the MIDDLE ROAD retired as a
+   control outright — section switching is `MmmSectionStrip.tsx`. The component
+   stays (it is generated from Claude Design and `guard:ds` checks it against
+   its source); its paint does not, because a stylesheet for a component no
+   route renders is bytes every visitor downloads for nothing.
+
+   Two things it knew are recorded where they are still true: its three
+   hard-won interaction fixes — the non-passive `wheel` listener above all,
+   without which the page scrolls out from under the gesture — and its measured
+   objection to tab strips (labels drift to 10-13px; two of six start
+   off-screen at 393px), which `MmmSectionStrip.tsx` answers rather than
+   ignores. `git show 576a6797:src/app/globals.css` has the rules. */
 
 /* The logged-out front door's legal line. It replaces the sitewide
    `SiteFooter`, which was old-design chrome rendered on every page including

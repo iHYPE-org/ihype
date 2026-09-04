@@ -15,7 +15,12 @@ export default async function MmmMePage({
   // The layout already gated this, but every destination keeps its own
   // server-side check — the same rule the legacy shell's role gates follow.
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me');
-  const role = (await searchParams)?.role;
+  const query = await searchParams;
+  /* My Tickets left ME for its own tab (MIDDLE ROAD, 2026-09-04). This URL is
+     in links members already hold, so it forwards rather than rendering an ME
+     with an unknown section and no card open. */
+  if (query?.section === 'tickets') redirect('/app/tickets');
+  const role = query?.role;
   const data = await loadMmmMe(session.user.id, role, isAdminSession(session));
   return (
     <>
