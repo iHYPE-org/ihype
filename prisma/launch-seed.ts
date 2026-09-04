@@ -119,6 +119,10 @@ async function main() {
       venueProfileId: venue.id,
       headlinerProfileId: artist.id,
       promoterProfileId: promoter.id,
+      // A ticketed show with a null `ticketingOpensAt` is permanently NOT on
+      // sale — see the comment in `scripts/seed-preview-content.mjs`. This is
+      // the launch night; it has to be buyable.
+      ticketingOpensAt: new Date(),
       hypeCount: 31
     },
     create: {
@@ -132,6 +136,7 @@ async function main() {
       headlinerProfileId: artist.id,
       promoterProfileId: promoter.id,
       isTicketed: true,
+      ticketingOpensAt: new Date(),
       ticketPriceCents: 1200,
       ticketCapacity: 150,
       venuePayoutPercent: 20,

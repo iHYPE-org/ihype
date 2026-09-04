@@ -24,11 +24,22 @@ Every item here was found by measuring something, and each says what it costs.
    migration failure that stopped production shipping for a day while three PRs
    merged green. `docs/monitoring.md`.
 4. **An `sk_test_` Stripe key.** Unblocks the rehearsal below.
-5. **Run `npm run seed:preview` against production.** This is why every surface
-   still looks broken. Measured 2026-08-16: production holds **1 user, 2
-   profiles, 0 shows, 0 tracks** — so `/app/music/discover` says "No seeds
-   waiting", the map has no pins and the charts are blank, and all three are
-   *correct*. No page change fixes it; there is nothing to render.
+5. **Re-run `npm run seed:preview` against production.** ✅ **Run once, on
+   2026-08-16** — and it needs running again, for two reasons found by measuring
+   production on 2026-09-04. **(a)** Every seeded show was ticketed with a null
+   `ticketingOpensAt`, which means permanently NOT on sale, so all eight
+   rendered "Tickets soon" and the purchase route would have answered 409 — the
+   whole ticket path unbuyable on the only platform anyone can look at. **(b)**
+   The seeder's shows used `update: {}`, so the seed AGED OUT: three weeks on,
+   six of the eight had ENDED and the map was down to two pins. Both are fixed
+   (DESIGN_SYNC row 344) and a re-run now restores **6 upcoming, 6 on sale** —
+   but only a re-run does, because the fix is in the writer and the rows on
+   production are already written.
+   The original finding, kept because it is what this item is for: measured
+   2026-08-16, production held **1 user, 2 profiles, 0 shows, 0 tracks** — so
+   `/app/music/discover` said "No seeds waiting", the map had no pins and the
+   charts were blank, and all three were *correct*. No page change fixes it;
+   there is nothing to render.
    `scripts/seed-preview-content.mjs` was written for exactly this and had
    **never been run** — it was not in `package.json`, which is most of why.
    It now is (`seed:preview`, `seed:preview:remove`). Needs a `DATABASE_URL`

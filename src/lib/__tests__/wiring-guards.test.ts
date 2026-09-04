@@ -8,7 +8,12 @@ import { readdirSync } from 'node:fs';
    is not coverage — strip first, then match. */
 function code(file: string): string {
   return readFileSync(file, 'utf8')
-    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    /* Newlines, not a space: collapsing a block comment to one character
+       shifts every line after it, so any guard that reports a line number
+       points at the wrong one. That is the same defect `audit:css` carried,
+       where it also silently deleted the exemption markers written above the
+       lines they excused. */
+    .replace(/\/\*[\s\S]*?\*\//g, (block) => block.replace(/[^\n]/g, ' '))
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 }
 
@@ -297,5 +302,98 @@ describe('the native shell paints the app\'s ground', () => {
     const theme = /themeColor:\s*'(#[0-9a-fA-F]{3,8})'/.exec(code('src/app/layout.tsx'))?.[1]?.toLowerCase();
     expect(theme, 'no themeColor found in layout.tsx').toBeTruthy();
     expect(theme).toBe(ground);
+  });
+});
+
+/**
+ * Every writer that creates a TICKETED show also opens its ticketing.
+ *
+ * `isTicketingOpen()` reads `Show.ticketingOpensAt`, and a null means NOT on
+ * sale. That default is deliberate — the column is venue-controlled — but it
+ * makes "ticketed" and "buyable" two separate facts, and a writer that sets the
+ * first and forgets the second builds a show whose ticket form never renders
+ * and whose purchase route answers 409 `TICKETING_NOT_OPEN`.
+ *
+ * That is not hypothetical twice over. `POST /api/shows` shipped it until
+ * 2026-09-03, so no event created through the product was ever buyable; the fix
+ * went to that one route, and on 2026-09-04 production still held **eight
+ * ticketed shows and not one ticket that could be bought**, because the preview
+ * seeder is the OTHER thing that writes a Show and nobody had looked at it. The
+ * dev seed, the launch seed and the e2e fixture all had it too — and the e2e
+ * fixture is why no test could see any of this: the suite's own show was closed
+ * for sales, so the specs built on it never exercised a purchase.
+ *
+ * A rule that lives in a column rather than in a schema default has to be known
+ * by every writer. This is the only thing that knows how many writers there are.
+ */
+describe('a ticketed show is a buyable show', () => {
+  /* The argument of one `.show.create(` / `.show.upsert(` call, by brace
+     matching from its opening paren — a line window would spill into the
+     neighbouring show in the seeds, where the calls sit back to back. */
+  function callArguments(source: string, open: number): string {
+    let depth = 0;
+    for (let i = open; i < source.length; i += 1) {
+      if (source[i] === '(') depth += 1;
+      else if (source[i] === ')') {
+        depth -= 1;
+        if (depth === 0) return source.slice(open, i);
+      }
+    }
+    return source.slice(open);
+  }
+
+  /* One hop through `...dated`. A seeder that shares its dated fields between
+     the create and the update clause writes them once as an object and spreads
+     it twice, which is the right shape and which a literal-text guard cannot
+     see — so follow the spread rather than pushing the call site into
+     duplicating three fields to keep this check simple. One hop only: a spread
+     of a spread is rare enough to be worth failing loudly over. */
+  function withSpreads(source: string, args: string): string {
+    let expanded = args;
+    for (const spread of args.matchAll(/\.\.\.([A-Za-z_$][\w$]*)/g)) {
+      const declaration = new RegExp(`\\b(?:const|let|var)\\s+${spread[1]}\\s*=\\s*\\{`).exec(source);
+      if (!declaration) continue;
+      const open = declaration.index + declaration[0].length - 1;
+      let depth = 0;
+      for (let i = open; i < source.length; i += 1) {
+        if (source[i] === '{') depth += 1;
+        else if (source[i] === '}') {
+          depth -= 1;
+          if (depth === 0) { expanded += source.slice(open, i); break; }
+        }
+      }
+    }
+    return expanded;
+  }
+
+  const roots = ['src', 'scripts', 'prisma', 'e2e'];
+  const files = roots
+    .filter((root) => existsSync(root))
+    .flatMap((root) => listFiles(root))
+    .concat(['scripts/seed-preview-content.mjs'].filter(existsSync))
+    .filter((file) => !file.includes('__tests__'));
+
+  it('finds the writers at all', () => {
+    /* A rename of the Prisma model or the seeds would otherwise leave this
+       guard reporting a serene pass over nothing at all. */
+    const found = files.filter((file) => /\.show\.(create|upsert)\(/.test(code(file)));
+    expect(found.length, 'no Show writers found — this guard is measuring nothing').toBeGreaterThanOrEqual(4);
+  });
+
+  it('never sets isTicketed: true without ticketingOpensAt', () => {
+    const closed: string[] = [];
+    for (const file of files) {
+      const source = code(file);
+      for (const match of source.matchAll(/\.show\.(?:create|upsert)\s*\(/g)) {
+        const args = withSpreads(source, callArguments(source, match.index + match[0].length - 1));
+        if (!/isTicketed:\s*true/.test(args)) continue;
+        if (/ticketingOpensAt/.test(args)) continue;
+        closed.push(`${file}:${source.slice(0, match.index).split('\n').length}`);
+      }
+    }
+    expect(
+      closed,
+      `these writers create a ticketed show that can never be bought: ${closed.join(', ')}`,
+    ).toEqual([]);
   });
 });

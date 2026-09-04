@@ -961,6 +961,18 @@ async function main() {
     }
   });
 
+  /**
+   * Every seeded show below is ON SALE.
+   *
+   * `isTicketingOpen()` reads `Show.ticketingOpensAt` and a null means NOT on
+   * sale — deliberately, because the column is venue-controlled. So a seed that
+   * sets `isTicketed: true` and leaves this null builds a catalogue of shows
+   * whose ticket form never renders and whose purchase route answers 409, which
+   * is what every seeder in this repository did until 2026-09-04. A demo
+   * database exists to be looked at and clicked through; the doors are open.
+   */
+  const seedTicketingOpensAt = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
+
   const liveShow = await prisma.show.upsert({
     where: { slug: 'midnight-frequency-live' },
     update: {
@@ -973,6 +985,7 @@ async function main() {
       headlinerProfileId: dj.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
       venuePayoutPercent: 20,
@@ -993,6 +1006,7 @@ async function main() {
       headlinerProfileId: dj.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3200,
       ticketCapacity: 260,
       venuePayoutPercent: 20,
@@ -1016,6 +1030,7 @@ async function main() {
       headlinerProfileId: artist.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
       venuePayoutPercent: 15,
@@ -1036,6 +1051,7 @@ async function main() {
       headlinerProfileId: artist.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2800,
       ticketCapacity: 180,
       venuePayoutPercent: 15,
@@ -1059,6 +1075,7 @@ async function main() {
       headlinerProfileId: chicagoArtist.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
       venuePayoutPercent: 19,
@@ -1079,6 +1096,7 @@ async function main() {
       headlinerProfileId: chicagoArtist.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3500,
       ticketCapacity: 400,
       venuePayoutPercent: 19,
@@ -1102,6 +1120,7 @@ async function main() {
       headlinerProfileId: regionalPromoter.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2400,
       ticketCapacity: 150,
       venuePayoutPercent: 25,
@@ -1122,6 +1141,7 @@ async function main() {
       headlinerProfileId: regionalPromoter.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2400,
       ticketCapacity: 150,
       venuePayoutPercent: 25,
@@ -1146,6 +1166,7 @@ async function main() {
       headlinerProfileId: dj.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
       venuePayoutPercent: 20,
@@ -1167,6 +1188,7 @@ async function main() {
       headlinerProfileId: dj.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 1800,
       ticketCapacity: 240,
       venuePayoutPercent: 20,
@@ -1190,6 +1212,7 @@ async function main() {
       headlinerProfileId: velvetCircuit.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
       venuePayoutPercent: 17,
@@ -1210,6 +1233,7 @@ async function main() {
       headlinerProfileId: velvetCircuit.id,
       promoterProfileId: dj.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 2600,
       ticketCapacity: 190,
       venuePayoutPercent: 17,
@@ -1234,6 +1258,7 @@ async function main() {
       headlinerProfileId: staticBloom.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
       venuePayoutPercent: 18,
@@ -1255,6 +1280,7 @@ async function main() {
       headlinerProfileId: staticBloom.id,
       promoterProfileId: regionalPromoter.id,
       isTicketed: true,
+      ticketingOpensAt: seedTicketingOpensAt,
       ticketPriceCents: 3000,
       ticketCapacity: 220,
       venuePayoutPercent: 18,
