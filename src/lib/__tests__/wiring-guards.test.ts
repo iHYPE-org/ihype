@@ -380,6 +380,39 @@ describe('a ticketed show is a buyable show', () => {
     expect(found.length, 'no Show writers found — this guard is measuring nothing').toBeGreaterThanOrEqual(4);
   });
 
+  /**
+   * The SPLIT, for the same reason and found the same way one day later.
+   *
+   * Fixing `ticketingOpensAt` exposed the next nullable column behind it:
+   * `/shows/[slug]/page.tsx` gates the whole ticket aside on
+   * `venuePayoutPercent !== null && artistPayoutPercent !== null`, both `Int?`
+   * with no default. A seeded show with sales open and null percents rendered
+   * NEITHER a purchase form NOR the "not on sale" sentence — the sidebar was
+   * absent and the page said nothing about tickets at all. Measured on
+   * production, after the previous fix had been declared a success.
+   *
+   * That is the argument for checking the SET rather than the one field that
+   * bit: a ticketed show is only buyable when every column the page reads is
+   * populated, and each fix that stops at one field just moves the silence.
+   */
+  it('never sets isTicketed: true without the payout split', () => {
+    const missing: string[] = [];
+    for (const file of files) {
+      const source = code(file);
+      for (const match of source.matchAll(/\.show\.(?:create|upsert)\s*\(/g)) {
+        const args = withSpreads(source, callArguments(source, match.index + match[0].length - 1));
+        if (!/isTicketed:\s*true/.test(args)) continue;
+        const absent = ['artistPayoutPercent', 'venuePayoutPercent'].filter((f) => !args.includes(f));
+        if (!absent.length) continue;
+        missing.push(`${file}:${source.slice(0, match.index).split('\n').length} (${absent.join(', ')})`);
+      }
+    }
+    expect(
+      missing,
+      `these writers create a ticketed show whose ticket box cannot render: ${missing.join(', ')}`,
+    ).toEqual([]);
+  });
+
   it('never sets isTicketed: true without ticketingOpensAt', () => {
     const closed: string[] = [];
     for (const file of files) {
