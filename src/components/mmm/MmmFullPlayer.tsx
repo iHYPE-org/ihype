@@ -293,11 +293,36 @@ export function MmmFullPlayer({
         <p className="mmm-full-state">{playing ? 'Now playing' : 'Paused'}</p>
 
         <div className="mmm-full-art">
-          {track.artworkUrl && (
+          {track.artworkUrl ? (
             // eslint-disable-next-line @next/next/no-img-element -- an R2/remote
             // URL already sized by the uploader; next/image would add a loader
             // round trip for one image that is the whole point of this screen.
             <img alt="" src={track.artworkUrl} />
+          ) : (
+            /* THE PLACEHOLDER THIS BOX WAS ALREADY DESIGNED FOR. `.mmm-full-art`
+               sets the display face at 6rem, centres its content and colours it
+               --ink-on-walnut — its own comment says the rule "carries the
+               placeholder glyph" — and nothing ever put a glyph in it. So the
+               largest artwork on the app, 300px in a machined brass bezel, has
+               been an empty walnut hole for every track without a cover, which
+               at alpha is nearly all of them.
+
+               Not a new idea: `.mmm-recents-art` and `.mmm-profile-art` both
+               already fall back to an initial exactly like this. The full
+               player is the one surface that missed the pattern.
+
+               `initial` is a field ON `MmmPlayerTrack` — the type has carried
+               it all along for exactly this, and the full player never read it.
+               So all three parts of the design were present (the field, the
+               glyph styling, the centring) and only the line joining them was
+               missing. Do not recompute it from the title here: MmmShell
+               derives it once, at the two places it builds a track (search for
+               `initial:` there), so a second rule would be free to disagree.
+
+               aria-hidden because it is decoration: the title and artist are
+               announced by the heading directly below, and a lone letter read
+               out between them is noise. */
+            <span aria-hidden="true">{track.initial}</span>
           )}
         </div>
 
