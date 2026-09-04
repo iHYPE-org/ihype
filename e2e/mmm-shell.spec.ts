@@ -633,7 +633,7 @@ test.describe('Music · Map · Me shell', () => {
      Accessibility under Settings, so neither is a section of its own; their
      retired routes resolve onto the parent card. This asserts the sections that
      exist rather than the navigation that moved. */
-  test('the ME surface carries Settings and Info as dial sections, not a fan-out', async ({ page }) => {
+  test('the ME surface carries Settings and Info as strip sections, not a fan-out', async ({ page }) => {
     await page.goto('/app/me');
     /* Read the CARDS, by their own aria-label. There is no header row to match
        on any more — the dial's drum is the label — so the section element
@@ -647,15 +647,21 @@ test.describe('Music · Map · Me shell', () => {
     // Exactly one card, and with nothing chosen it is Profiles.
     await expect.poll(labels).toEqual(['Profiles']);
 
-    // Each of the four is reachable by its own deep link, alone.
+    // Each section is reachable by its own deep link, alone.
     for (const [param, label] of [
-      ['section=tickets', 'My Tickets'],
       ['panel=legal', 'Info'],
       ['panel=settings', 'Settings'],
     ] as const) {
       await page.goto(`/app/me?${param}`);
       await expect.poll(labels, `deep link ${param}`).toEqual([label]);
     }
+    /* `section=tickets` was in this table and is not any more: the wallet is a
+       top-level destination since the middle road (2026-09-04), so the deep
+       link FORWARDS rather than opening a card here. Asserted, not deleted —
+       the URL is in links members already hold, and silently rendering an ME
+       with no card open is the failure this replaces. */
+    await page.goto('/app/me?section=tickets');
+    await expect(page).toHaveURL(/\/app\/tickets$/);
 
     // Legal and Accessibility are rows INSIDE those cards, never cards.
     await expect(page.locator('.mmm-me-section[aria-label="Legal"]')).toHaveCount(0);

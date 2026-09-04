@@ -420,6 +420,10 @@ html:has(.mmm-frame) {
    overflows both ways, and at 14px the right half went off the viewport — the
    clipped "3000 F" in the report. The rule's own maxWidth went 56 -> 96 in
    MmmMap for the same reason: a longer rule fits its own label. */
+/* MapLibre adds `.maplibregl-ctrl-*` to nodes it creates at runtime, so no
+   source file names them and `audit:css --dead` reports the two below as dead.
+   They are not: deleting them puts the zoom controls back under the search bar
+   and the scale bar back in the default corner. Verified 2026-09-04. */
 .mmm-map-canvas .maplibregl-ctrl-top-right { top: 198px; right: 18px; }
 .mmm-map-canvas .maplibregl-ctrl-scale {
   background: none;
@@ -955,19 +959,6 @@ html:has(.mmm-frame) {
   text-transform: uppercase;
 }
 .mmm-demo-row { display: flex; align-items: center; gap: 12px; cursor: default; }
-.mmm-demo-art {
-  width: 40px;
-  height: 40px;
-  flex: 0 0 40px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--line-2);
-  border-radius: 13px;
-  background: linear-gradient(145deg, rgba(var(--accent-rgb), 0.32), var(--bg-2));
-  color: var(--ink);
-  font: 800 0.9375rem var(--font-display);
-}
-.mmm-demo-playlist-art { color: var(--accent-text); font-size: 1.2rem; }
 .mmm-ticket-demo-head { margin-bottom: 4px; }
 .mmm-ticket-transfer[aria-disabled='true'] { opacity: 0.55; cursor: default; }
 @media (max-width: 520px) {
@@ -1892,16 +1883,6 @@ html:has(.mmm-frame) {
 }
 .mmm-hype-link-body p:last-child { margin-bottom: 4px; }
 
-.mmm-link-field {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--bg-3);
-  border: 1px solid var(--hair-100);
-  margin-bottom: 9px;
-}
 .mmm-link-value {
   flex: 1;
   min-width: 0;
@@ -2724,31 +2705,6 @@ html:has(.mmm-frame) {
 .mmm-show-by { margin-top: 4px; font-size: 0.9375rem; }
 .mmm-show-by a { display: inline-flex; align-items: center; min-height: 44px; color: var(--accent-text); text-decoration: none; }
 
-/* The split bar. Each part grows by its own percentage, so the bar IS the
-   split rather than a picture of one — a 60/30/10 show draws itself. */
-.mmm-show-split {
-  display: flex;
-  margin-top: 18px;
-  border-radius: var(--radius-pill);
-  overflow: hidden;
-  border: 1px solid var(--hair-70);
-}
-.mmm-show-split-part {
-  flex-basis: 0;
-  padding: 9px 6px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--ink-on-accent);
-}
-.mmm-show-split-part[data-role='artist'] { background: var(--accent); }
-.mmm-show-split-part[data-role='venue'] { background: var(--role-venue); }
-.mmm-show-split-part[data-role='promoter'] { background: var(--role-promoter); }
 .mmm-show-fee {
   margin-top: 8px;
   font-family: var(--font-mono);
@@ -2816,7 +2772,6 @@ html:has(.mmm-frame) {
   letter-spacing: -0.01em;
   color: var(--ink);
 }
-.mmm-profile-shows { list-style: none; margin: 0; padding: 0; }
 .mmm-profile-show {
   display: flex;
   align-items: flex-start;
@@ -2828,22 +2783,7 @@ html:has(.mmm-frame) {
   text-decoration: none;
   color: inherit;
 }
-.mmm-profile-shows li:last-child .mmm-profile-show { border-bottom: 0; }
-.mmm-profile-heat {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  margin-top: 6px;
-}
 .mmm-profile-show-main { display: flex; flex-direction: column; min-width: 0; }
-.mmm-profile-show-when {
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
 .mmm-profile-show-title {
   margin-top: 2px;
   font-family: var(--font-display);

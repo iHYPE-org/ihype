@@ -583,6 +583,12 @@
   text-transform: uppercase;
   color: var(--ink-a65);
 }
+/* `audit:css --dead` reports these six as referenced by nothing and it is
+   right about the text and wrong about the fact: `AdminFeatureBoard.tsx`
+   builds them as `admin-feature-${state.toLowerCase()}`, so no source file
+   contains the literal string. Left as a comment rather than silenced,
+   because the alternative — six state classes written out at the call site —
+   is worse code to make a scanner happy. Verified 2026-09-04. */
 .admin-feature-blocked .admin-feature-badge { color: var(--danger); }
 .admin-feature-attention .admin-feature-badge { color: var(--warning-text); }
 .admin-feature-member {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { MMM_NAV, moduleForPath } from '@/lib/mmm-nav';
@@ -63,9 +63,31 @@ import { MMM_NAV, moduleForPath } from '@/lib/mmm-nav';
  *  - `playing` lights the transport.
  *  - Destinations are real `Link`s, so Back walks them. That was the one
  *    navigation rule the console model already got right and it is untouched.
+ *  - **The commit rescue** (see below), which is not new either — the retired
+ *    nameplate had one and losing it in the rewrite made the bar unable to
+ *    escape a detail page.
  *  - `wakeAudio` survives verbatim: browsers only start audio inside a user
  *    gesture, so the context is resumed on pointerdown. Deleting it would make
  *    the first play of a session silently fail on iOS.
+ *
+ * ## The commit rescue, and why a plain `Link` is not enough here
+ *
+ * A soft `router.push` from a detail route under the `/app` layout sometimes
+ * never commits: the click lands, the router accepts it, and the URL does not
+ * move. It is recorded in DESIGN_SYNC row 309 and it is why the retired
+ * nameplate hard-assigned after 1.5s. **The first version of this bar dropped
+ * that**, on the reasoning that a `Link` naming an absolute destination cannot
+ * have the nameplate's OTHER bug (guessing a module it could not resolve). It
+ * cannot — and it inherits this one anyway, which CI caught: from
+ * `/app/artists/<slug>`, tapping Me did nothing at all. On a bar that is the
+ * app's only navigation, that is a member stuck on a profile.
+ *
+ * So each tab arms a 1.2s timer on click and hard-assigns if the pathname has
+ * not moved by then. It cancels itself the instant the soft navigation commits
+ * (the effect keyed on `pathname`), so the fast path stays a normal client
+ * navigation and the rescue costs nothing when it is not needed. Modified
+ * clicks are left alone — a cmd-click opens a tab and must not also navigate
+ * this one.
  *
  * ## What went with the hardware
  *
@@ -215,6 +237,30 @@ export function MmmDock({
     try { if (navigator.vibrate) navigator.vibrate(6); } catch { /* no haptics */ }
   }, [wakeAudio]);
 
+  /* The commit rescue. See the note above: a soft push from a detail route can
+     silently fail to commit, and this bar is the only way anywhere. */
+  const pending = useRef<{ href: string; timer: ReturnType<typeof setTimeout> } | null>(null);
+  useEffect(() => {
+    /* The navigation committed — MmmShell re-rendered us with the new path — so
+       there is nothing left to rescue. Also runs on unmount. */
+    if (pending.current) {
+      clearTimeout(pending.current.timer);
+      pending.current = null;
+    }
+  }, [pathname]);
+  const armCommitGuard = useCallback((event: React.MouseEvent, href: string) => {
+    // A cmd/ctrl/shift/middle click opens elsewhere; this window must not move.
+    if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
+    if (pending.current) clearTimeout(pending.current.timer);
+    pending.current = {
+      href,
+      timer: setTimeout(() => {
+        pending.current = null;
+        if (typeof window !== 'undefined' && window.location.pathname !== href) window.location.assign(href);
+      }, 1200),
+    };
+  }, []);
+
   return (
     <div className="mmm-dock" data-mini={track ? 'true' : 'false'}>
       <div aria-hidden="true" className="mmm-dock-grain" />
@@ -285,6 +331,7 @@ export function MmmDock({
               data-on={on}
               href={module.href}
               key={module.id}
+              onClick={(event) => armCommitGuard(event, module.href)}
             >
               <span className="mmm-tab-glyph"><Glyph /></span>
               <span className="mmm-tab-label">{module.tabLabel}</span>

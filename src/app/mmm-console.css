@@ -26,7 +26,6 @@
   --font-body: 'Work Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-serif: 'Instrument Serif', serif;
-  --mmm-knob: 74px; --mmm-dock-h: 93px; --mmm-dock-pad: 8px; --mmm-dock-lip: 3px;
 }
 
 /* V10 paper rules: content panes are print. */
@@ -37,47 +36,14 @@
 }
 .mmm-pane hr { border: 0; border-top: 1px solid var(--line); }
 
-/* The dock: the only ornate object. */
-.console-dock {
-  position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  height: var(--mmm-dock-h); padding: var(--mmm-dock-pad) 10px;
-  padding-bottom: calc(var(--mmm-dock-pad) + env(safe-area-inset-bottom, 0px));
-  display: flex; align-items: center; gap: 10px;
-  background: linear-gradient(180deg, #6e4c2b 0%, #4e3418 42%, #331f0c 100%);
-  border-top: var(--mmm-dock-lip) solid var(--brass);
-  box-shadow: inset 0 1px 0 rgba(255,220,160,.32);
-}
-.console-dock__knob {
-  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto;
-  border: none; border-radius: 50%; cursor: pointer;
-  display: grid; place-items: center;
-  font-family: var(--font-mono); font-size: 0.6875rem; letter-spacing: .14em; color: #33240a;
-  background: radial-gradient(circle at 36% 28%, #f0d9a0 0%, var(--brass) 34%, var(--brass-deep) 78%, #4d3a15 100%);
-  box-shadow: inset 0 2px 3px rgba(255,246,220,.5), inset 0 -3px 6px rgba(0,0,0,.5), 0 3px 8px rgba(0,0,0,.6);
-}
-.console-dock__knob:active { transform: translateY(1px); }
-.console-dock__dial {
-  flex: 1; height: var(--mmm-knob); border-radius: var(--radius-panel);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
-  touch-action: pan-y; user-select: none; cursor: grab;
-  background: radial-gradient(120% 150% at 50% 112%, #fffdf4 0%, #f6ecd0 44%, #e4d3a8 100%);
-  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 2px 8px rgba(92,62,20,.3), inset 0 -14px 22px -10px rgba(255,150,60,.3);
-}
-.console-dock__dial-label { font-family: var(--font-display); font-size: 1.1875rem; line-height: 1; color: #1c1408; }
-.console-dock__dial-ticks { width: 78%; height: 10px; opacity: .45;
-  background: repeating-linear-gradient(90deg, #1c1408 0 1px, transparent 1px 7px); }
-.console-dock__stick-well {
-  width: var(--mmm-knob); height: var(--mmm-knob); flex: 0 0 auto; border-radius: 50%;
-  display: grid; place-items: center; touch-action: none;
-  background: radial-gradient(circle at 50% 40%, #0a0703 0%, #1e160c 100%);
-  box-shadow: 0 0 0 2px var(--brass-deep), inset 0 4px 10px rgba(0,0,0,.85);
-}
-.console-dock__stick {
-  width: 46px; height: 46px; border-radius: 50%; cursor: grab;
-  background: radial-gradient(circle at 50% 80%, #f0d9a0 0%, var(--brass) 42%, var(--brass-deep) 100%);
-  box-shadow: inset 0 -3px 7px rgba(255,246,220,.42), inset 0 5px 9px rgba(0,0,0,.55), 0 2px 5px rgba(0,0,0,.5);
-  transition: transform 150ms cubic-bezier(.2,.7,.3,1);
-}
+/* The dock's skin is DELETED (2026-09-04). This block drew a knob, a dial, a
+   tick scale and a thumbstick in a well — the hardware the MIDDLE ROAD
+   retired. `MmmDock.tsx` is four labelled tabs and a mini player now, painted
+   by `.mmm-tab-*` and `.mmm-mini-*` in mmm.css. Nothing in `src/` has ever
+   rendered a `.console-dock__*` element: this was the handoff's own skin
+   sheet, adopted for its tokens and never for its markup, so the rules went
+   the day the shapes did. `--mmm-knob` and `--mmm-dock-h` above went with
+   them; the geometry lives in mmm.css and is derived from `--mmm-tab-h`. */
 
 /* Content above the dock never hides beneath it. This reads the geometry
    table's own --mmm-chrome-size (which already includes the safe area) rather
