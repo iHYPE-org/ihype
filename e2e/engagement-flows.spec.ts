@@ -108,9 +108,15 @@ test.describe('liking', () => {
     await page.getByRole('button', { name: /^Like E2E Listed Artist$/ }).click();
     await expect(page.getByRole('button', { name: /^Unlike E2E Listed Artist$/ })).toBeVisible();
 
+    /* A SHELF since the middle road (2026-09-04), not a list of rows — an
+       artist is a collection with an identity, which is the half of the library
+       that shelves. Asserted as the named region rather than as loose text, so
+       a future change that drops the section is caught rather than being
+       satisfied by the words appearing anywhere on the page. */
     await page.goto('/app/music/playlists');
-    await expect(page.getByText(/Liked artists/i).first()).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByText('E2E Listed Artist').first()).toBeVisible();
+    const shelf = page.getByRole('region', { name: /Liked artists/i });
+    await expect(shelf).toBeVisible({ timeout: 15_000 });
+    await expect(shelf.getByText('E2E Listed Artist').first()).toBeVisible();
   });
 });
 

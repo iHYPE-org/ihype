@@ -802,61 +802,139 @@ html:has(.mmm-frame) {
    Horizontal scroll, card floors from mobile-fit's 44px rule met by the art
    block itself. Paint-only from tokens; the rail scrolls inside itself so the
    pane never scrolls sideways. */
-.mmm-recents { margin-bottom: 14px; }
-.mmm-recents > .mmm-eyebrow { display: block; padding: 2px 2px 8px; }
-.mmm-recents-rail {
+/* ── The shelf ────────────────────────────────────────────────────────────
+   One named row of artwork tiles that scrolls sideways. Borrowed from Apple
+   Music's structure by the MIDDLE ROAD (2026-09-04); `MmmShelf.tsx` carries
+   what shelves and what deliberately does not.
+
+   This REPLACES `.mmm-recents-*`, which was the same idea built once for one
+   caller: a 96px tile on `--bg-3` with a hairline border. The material is now
+   the plate vocabulary every card and row in the shell already uses — brass
+   edge, cast shadow — so a shelf reads as the same machine as everything around
+   it, and one definition serves five callers instead of one. */
+.mmm-shelf { margin-bottom: 16px; }
+.mmm-shelf-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 9px;
+}
+/* The nameplate is a real heading. It was a `<p>` in the rail this replaces, so
+   a screen reader walking the headings of MUSIC found none of its collections;
+   `.mmm-eyebrow` supplies the paint and the h3 supplies the outline. */
+.mmm-shelf-name { margin: 0; font-weight: inherit; }
+.mmm-shelf-count { color: var(--ink-3); }
+.mmm-shelf-more {
+  flex: 0 0 auto;
+  /* 44px of target on a control whose ink is 15px, per MOBILE.md's floor —
+     desktop included. The padding does it; the type does not grow. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--accent-text);
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .mmm-shelf-more:hover { text-decoration: underline; }
+}
+.mmm-shelf-rail {
   display: flex;
   gap: 10px;
   overflow-x: auto;
   padding-bottom: 6px;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x proximity;
 }
-.mmm-recents-rail::-webkit-scrollbar { display: none; }
-.mmm-recents-card {
+.mmm-shelf-rail::-webkit-scrollbar { display: none; }
+/* Only when it really overflows — the same rule as the section strip. A fade on
+   a shelf that fits says "truncated" about a complete collection. */
+.mmm-shelf-rail[data-overflow='true'] {
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 28px), transparent 100%);
+}
+.mmm-shelf-tile {
   flex: 0 0 auto;
-  width: 96px;
+  width: 104px;
   padding: 0;
   border: none;
   background: none;
   cursor: pointer;
   text-align: left;
+  text-decoration: none;
   color: var(--ink);
   font-family: var(--font-body);
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
 }
-.mmm-recents-art {
+.mmm-shelf-art {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 96px;
-  height: 96px;
-  margin-bottom: 6px;
-  border: 1.5px solid var(--line);
+  width: 104px;
+  height: 104px;
+  margin-bottom: 7px;
+  overflow: hidden;
+  border: 1px solid var(--brass-deep);
   border-radius: var(--radius-card);
-  background: var(--bg-3);
-  color: var(--ink-3);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 0 0 1px rgba(255, 240, 215, .3) inset;
+  color: var(--ink-on-walnut);
   font-family: var(--font-display);
-  font-size: 1.75rem;
+  font-size: 2.25rem;
   font-weight: 700;
-  overflow: hidden;
+  line-height: 1;
 }
-.mmm-recents-art img { width: 100%; height: 100%; object-fit: cover; }
-.mmm-recents-card[data-playing] .mmm-recents-art { border-color: var(--accent); }
-.mmm-recents-title {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.9375rem;
-  font-weight: 600;
-}
-.mmm-recents-sub {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.mmm-shelf-art img { width: 100%; height: 100%; object-fit: cover; }
+/* Six deterministic treatments, keyed off the item's own id in `MmmShelf.tsx`
+   so an artist gets the same tile on every surface and in every session.
+
+   THREE DARK AND THREE LIGHT, alternating, and the alternation is the whole
+   point: the first version ran all six between the three walnut stops, which
+   are `#6e4c2b`, `#4e3418` and `#331f0c` — three dark browns. Rendered against
+   the real stylesheet it was six near-identical squares, which is worse than no
+   variety because it looks like a bug. Cutting the cabinet with the plate gives
+   a shelf real rhythm.
+
+   No new colour was invented to get it. Every stop is a token whose ink is
+   already measured — `--ink-on-walnut` is 10.87:1 on `--walnut`, the lightest
+   of the three, so every dark tile is that or better; `--ink` on `--plate-2`
+   is the plate pairing every card in the shell already uses. **The role hues
+   were considered and refused**: they are semantic (venue teal, the promoter's
+   10% slice) and a track tile coloured "venue" states something false.
+   `--accent` is refused too — cream on it measures 2.70:1. */
+.mmm-shelf-art[data-tone='0'] { background: linear-gradient(150deg, var(--walnut), var(--walnut-3)); }
+.mmm-shelf-art[data-tone='2'] { background: linear-gradient(200deg, var(--walnut-2), var(--walnut-3)); }
+.mmm-shelf-art[data-tone='4'] { background: linear-gradient(70deg, var(--walnut-3), var(--walnut)); }
+.mmm-shelf-art[data-tone='1'],
+.mmm-shelf-art[data-tone='3'],
+.mmm-shelf-art[data-tone='5'] {
   color: var(--ink-3);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 1px 0 rgba(255, 255, 255, .7) inset;
+}
+.mmm-shelf-art[data-tone='1'] { background: linear-gradient(35deg, var(--plate-1), var(--plate-2)); }
+.mmm-shelf-art[data-tone='3'] { background: linear-gradient(115deg, var(--plate-2), var(--plate-1)); }
+.mmm-shelf-art[data-tone='5'] { background: linear-gradient(255deg, var(--plate-1), var(--plate-2)); }
+.mmm-shelf-tile[data-active='true'] .mmm-shelf-art {
+  border-color: var(--accent);
+  box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 0 0 2px var(--accent) inset;
+}
+.mmm-shelf-tile:active .mmm-shelf-art { transform: translateY(1px); }
+.mmm-shelf-tile:focus-visible .mmm-shelf-art { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mmm-shelf-title,
+.mmm-shelf-sub {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.9375rem;
 }
+.mmm-shelf-title { font-weight: 600; }
+.mmm-shelf-sub { color: var(--ink-3); }
+
 .mmm-demo-head {
   display: flex;
   align-items: center;

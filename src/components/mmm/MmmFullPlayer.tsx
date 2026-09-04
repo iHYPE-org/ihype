@@ -307,9 +307,10 @@ export function MmmFullPlayer({
                been an empty walnut hole for every track without a cover, which
                at alpha is nearly all of them.
 
-               Not a new idea: `.mmm-recents-art` and `.mmm-profile-art` both
-               already fall back to an initial exactly like this. The full
-               player is the one surface that missed the pattern.
+               Not a new idea: `.mmm-shelf-art` (the rail this predates, since
+               generalised) and `.mmm-profile-art` both already fall back to an
+               initial exactly like this. The full player is the one surface
+               that missed the pattern.
 
                `initial` is a field ON `MmmPlayerTrack` — the type has carried
                it all along for exactly this, and the full player never read it.
