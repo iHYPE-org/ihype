@@ -2579,6 +2579,9 @@ body:has(#wt-wrap) .site-shell > main {
   border-color: rgba(35,208,216,0.35);
   background: linear-gradient(135deg, rgba(35,208,216,0.12), rgba(143,91,255,0.12));
 }
+/* Same repaint as `.composer-media-code` above: pale cyan `#aef4f6` on a
+   translucent cyan fill was DS8's, and on cream it is a number you cannot
+   read. The 44px min-width stays — it is a control-sized target. */
 .composer-sequence-index {
   display: inline-flex;
   align-items: center;
@@ -2586,9 +2589,12 @@ body:has(#wt-wrap) .site-shell > main {
   min-width: 44px;
   padding: 0.45rem 0.65rem;
   margin-right: 0.75rem;
-  border-radius: 999px;
-  background: rgba(35,208,216,0.14);
-  color: #aef4f6;
+  border-radius: 3px;
+  border: 1px solid rgba(111, 88, 36, .42);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  color: var(--ink-2);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
   font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -4828,6 +4834,100 @@ body:has(.fan-entry) #main-content { width: 100%; }
   color: var(--ink-2);
   text-wrap: pretty;
 }
+
+/* ── The public show page's own blocks ────────────────────────────────────
+   `/shows/[slug]` is the URL that sells tickets and the one member-facing page
+   that must render logged out, and 20 of its 33 class names were defined by no
+   stylesheet at all (found 2026-09-04 by the full audit; `audit:unstyled` had
+   been carrying them inside its budget). Its appearance came almost entirely
+   from 107 inline styles, and anything wearing one of these names rendered as
+   a bare div.
+
+   Most of them are the PRODUCTION PLAN panel, which is reachable only for a
+   show that already carries a `Show.productionPlan` — nothing can author one
+   since `RadioShowCreator` was retired, but the rows exist and
+   `ShowSequencePlayer` still plays them, so the panel is legacy rather than
+   dead. Styled rather than deleted for that reason: a member holding a ticket
+   to one of those shows is the person looking at this.
+
+   Paint only, in the console's own vocabulary — plate, slat, brass nameplate —
+   so the page stops being the one surface with no material. No layout: the
+   grid and the spacing are the page's own inline styles, and moving those is
+   the separate inline-styles pass. */
+.video-shell {
+  border: 1px solid var(--brass-deep);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 2px 6px -1px rgba(28, 20, 8, .22);
+}
+.explanation-block {
+  border-left: 2px solid var(--brass);
+  padding: 2px 0 2px 14px;
+  margin: 14px 0;
+  color: var(--ink-2);
+}
+.explanation-block h3 { margin: 0 0 6px; font-size: 1rem; color: var(--ink); }
+.launch-list { margin: 8px 0 0; padding-left: 20px; color: var(--ink-2); line-height: 1.6; }
+.tag-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.composer-plan-panel { border-color: var(--brass-deep); }
+.composer-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.composer-header h2 { margin: 8px 0 4px; }
+.composer-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin-top: 18px;
+}
+.composer-column { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+/* A plate, same as `.mmm-card` — dark edge, brass ring in the cast, real lift.
+   A flat surface on a near-flat ground is findable only by its hairline, which
+   is most of why this page reads as plain. */
+.composer-card {
+  padding: 14px;
+  border: 1px solid var(--brass-deep);
+  border-radius: var(--radius-card);
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .6) inset, 0 2px 6px -1px rgba(28, 20, 8, .22);
+}
+.composer-card h3 {
+  margin: 0 0 10px;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--brass-deep);
+}
+.composer-library-list,
+.composer-voice-list,
+.composer-sequence-list { display: flex; flex-direction: column; gap: 8px; }
+/* Slats: the same material with no ring, which is how a row differs from a
+   card everywhere else in the product. */
+.composer-media-card,
+.composer-voice-card,
+.composer-sample-card,
+.composer-sequence-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  min-width: 0;
+  border: 1px solid rgba(111, 88, 36, .42);
+  border-radius: 3px;
+  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  box-shadow: 0 1px 2px rgba(28, 20, 8, .14);
+}
+.composer-media-card > div,
+.composer-voice-card > div { min-width: 0; }
+.composer-sample-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+/* `.composer-media-code` and `.composer-sequence-index` are NOT here. Both
+   were already defined further up this file and the first draft of this block
+   redefined them — caught by `audit:css`, whose whole instruction is "fix the
+   ORIGINAL rule; do not add another block below it". Both originals were
+   repainted in place instead, and each was still carrying a DS8 navy-era
+   literal that is invisible on cream. */
+.composer-media-actions { margin-left: auto; display: flex; gap: 8px; flex: 0 0 auto; }
+.composer-audio-preview { width: 100%; margin-top: 8px; }
 
 /* ── The tuner dial's stylesheet is DELETED (2026-09-04) ──────────────────
    ~150 lines painting the vendored `src/components/ds/TunerDial.tsx`, which
