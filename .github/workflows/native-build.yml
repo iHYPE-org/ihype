@@ -215,6 +215,43 @@ jobs:
           decode_secret IOS_DIST_CERTIFICATE_BASE64 "$IOS_DIST_CERTIFICATE_BASE64" "$CERT_PATH" 1000
           decode_secret IOS_PROVISIONING_PROFILE_BASE64 "$IOS_PROVISIONING_PROFILE_BASE64" "$PROFILE_PATH" 1000
 
+          # THE SAME FILE IN BOTH BOXES. Seven secrets are pasted by hand from
+          # a clipboard that holds one thing at a time, so pasting one value
+          # twice is the likeliest mistake of the whole setup — and it is
+          # invisible to every check above, because the wrong file is still
+          # valid base64 of a plausible size. It happened on run 266: both
+          # decoded to exactly 3178 bytes, and the byte counts were the only
+          # reason anyone could tell.
+          #
+          # A .p12 and a .mobileprovision are never the same size — the profile
+          # embeds the certificate plus the entitlements — so identical output
+          # means one paste went into two fields.
+          if cmp -s "$CERT_PATH" "$PROFILE_PATH"; then
+            echo "::error::IOS_DIST_CERTIFICATE_BASE64 and IOS_PROVISIONING_PROFILE_BASE64 decode to the SAME bytes. One value was pasted into both secrets — re-copy each from its own file (Distribution.p12 and the .mobileprovision)."
+            exit 1
+          fi
+
+          # A .mobileprovision is a CMS-signed blob. Checking it HERE, rather
+          # than letting `security cms -D` fail thirty lines down, means a
+          # certificate pasted into the profile field is named as such instead
+          # of surfacing as an unrelated plist error.
+          if ! security cms -D -i "$PROFILE_PATH" > /dev/null 2>&1; then
+            echo "::error::IOS_PROVISIONING_PROFILE_BASE64 is not a provisioning profile — it decoded, but it is not a CMS-signed .mobileprovision. Check you encoded the .mobileprovision and not the certificate."
+            exit 1
+          fi
+
+          # THE PASSWORD, CHECKED BY THE TOOL THAT CAN NAME IT.
+          #
+          # `security import` answers a wrong password with "SecKeychainItemImport:
+          # The user name or passphrase you entered is not correct" — which reads
+          # like the KEYCHAIN's password (generated randomly two lines above and
+          # never wrong) rather than the .p12's. That sent this debugging session
+          # down the wrong path once already. openssl says which.
+          if ! openssl pkcs12 -in "$CERT_PATH" -passin pass:"$IOS_DIST_CERTIFICATE_PASSWORD" -nokeys -noout 2>/dev/null; then
+            echo "::error::IOS_DIST_CERTIFICATE_PASSWORD does not open IOS_DIST_CERTIFICATE_BASE64. The two are a pair: if you re-exported the .p12, BOTH secrets must be updated together."
+            exit 1
+          fi
+
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
