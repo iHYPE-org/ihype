@@ -14,6 +14,37 @@ const config: CapacitorConfig = {
     url: process.env.CAPACITOR_SERVER_URL || 'https://ihype.org',
     androidScheme: 'https',
     cleartext: false,
+    /**
+     * NO `allowNavigation`, DELIBERATELY — and it was here for six hours.
+     *
+     * Capacitor ejects any top-level navigation off `server.url` into the
+     * system browser, so the seven places this app sends a member to Stripe
+     * (ticket checkout, ad checkout, ad cancellation, four Connect onboarding
+     * buttons) threw them into Safari and never brought them back — Stripe's
+     * `success_url` is a SERVER redirect, and those do not open an app.
+     *
+     * `allowNavigation: ['checkout.stripe.com', 'connect.stripe.com']` fixed
+     * that in one line and was shipped first. It is now removed, because
+     * `src/lib/open-external.ts` opens those URLs in an in-app browser tab
+     * instead, and the allowlist would keep two costs for no remaining
+     * benefit:
+     *
+     *   1. On Android the listed hosts are handed to
+     *      `WebViewCompat.addWebMessageListener(webView, "androidBridge", …)`
+     *      (`MessageHandler.java:36`), so an allowlisted origin can reach the
+     *      NATIVE BRIDGE. Small here — only `@capacitor/app` and
+     *      `@capacitor/push-notifications` are installed — but real.
+     *   2. It cannot cover 3-D Secure. A card challenge can send the top-level
+     *      frame to the ISSUING BANK's domain, and bank domains are not
+     *      enumerable. Ejecting mid-3DS is worse than ejecting at the start.
+     *
+     * A Custom Tab / `SFSafariViewController` is not the app's WebView: no
+     * allowlist, no bridge, any redirect chain, and it shows the real URL and
+     * padlock, which a WebView cannot. **Do not re-add this key** — if a money
+     * flow ejects, the fix is to route it through `openExternalUrl`, and
+     * `wiring-guards.test.ts` fails the build on a `window.location` to a
+     * checkout or onboarding URL.
+     */
   },
   // The ground behind the WebView. This is the one colour in the product that
   // no stylesheet can reach, which is why it was still the RETIRED warm

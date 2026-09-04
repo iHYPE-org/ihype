@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { useRouter } from 'next/navigation';
+import { openExternalUrl } from '@/lib/open-external';
 
 /**
  * Real "Connect"/"Reconnect" action for a profile's Stripe Connect payout
@@ -26,6 +28,7 @@ const STATE_LABEL: Record<ConnectState, [string, string]> = {
 
 export function PayoutConnectButton({ profileId, state }: { profileId: string; state: ConnectState }) {
   const { t } = useI18n();
+  const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const label = t(...STATE_LABEL[state]);
@@ -45,7 +48,7 @@ export function PayoutConnectButton({ profileId, state }: { profileId: string; s
         setBusy(false);
         return;
       }
-      window.location.href = data.onboardingUrl;
+      await openExternalUrl(data.onboardingUrl, { onReturn: () => router.refresh() });
     } catch {
       setError(t('poConnectFailed', 'Connection failed — try again.'));
       setBusy(false);

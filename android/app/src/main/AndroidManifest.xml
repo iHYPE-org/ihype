@@ -52,5 +52,21 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ will not show the push prompt unless this is declared. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- FINE beside COARSE, and the map does not work without it below API 31.
+
+         Capacitor's BridgeWebChromeClient.onGeolocationPermissionsShowPrompt
+         requests ACCESS_FINE_LOCATION and ACCESS_COARSE_LOCATION together and
+         ANDs every result in one shared callback, so an undeclared FINE is an
+         automatic denial that fails the whole request. Its coarse-only rescue
+         path is gated on SDK_INT >= 31, and minSdkVersion here is 24 — so on
+         Android 7 through 11 the map silently never started where the member
+         is, even after they tapped Allow. /app/map is WORKBENCH_PATH, the
+         surface the app opens on.
+
+         Declaring FINE does not force precise location on anyone: Android 12+
+         still shows the Precise/Approximate choice in the OS dialog, and the
+         member can pick Approximate. What it removes is the case where they
+         are given no working option at all. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 </manifest>

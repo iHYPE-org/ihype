@@ -145,6 +145,23 @@ export function MmmMap({
   /* Collapsed by default — the credit is one tap, not a standing line. */
   const [creditOpen, setCreditOpen] = useState(false);
   const [failed, setFailed] = useState(false);
+  /**
+   * WHY the map could not load, not just that it could not.
+   *
+   * The failure line used to read "The map could not load. Everything else
+   * still works." and nothing else — true, useless, and identical for every
+   * cause. MapLibre knows the real reason (it emits an `error` event carrying
+   * the status and the URL) and this component was throwing it away into a
+   * `console.warn`, so diagnosing a blank map required the OWNER to open a
+   * console — which is exactly how the nine-hour outage was found, and how the
+   * next one would be too.
+   *
+   * Only errors that arrive BEFORE `load` are kept: those are the ones that
+   * stop the map existing. A tile 404 mid-session degrades one frame and must
+   * not rewrite the line or reach Sentry, which is what the handler's original
+   * comment was protecting and is still right.
+   */
+  const [failReason, setFailReason] = useState<string | null>(null);
   const [scope, setScope] = useState<MapScope>('county');
   const [layer, setLayer] = useState<MapLayer>(initialLayer);
 
@@ -273,8 +290,22 @@ export function MmmMap({
       // §3's "an early version threw on the first update and silently disabled
       // the map for the rest of the session".
       map.on('error', (event) => {
-        // eslint-disable-next-line no-console -- surfaced to the browser only; a tile miss is not a Sentry event
+        // eslint-disable-next-line no-console -- the full object is worth having in the console too
         console.warn('mmm map error', event?.error?.message ?? event);
+        /* Before `load` only. After it, the map works and a tile miss is
+           noise — see the state declaration above. `loaded()` is maplibre's
+           own answer, so this cannot disagree with the `load` handler. */
+        if (map.loaded()) return;
+        const error = event?.error as { message?: string; status?: number; url?: string } | undefined;
+        const status = typeof error?.status === 'number' ? error.status : undefined;
+        /* Name the HOST, never the full URL: the style URL carries the CARTO
+           key as a query parameter and this string is rendered on screen. */
+        let host: string | undefined;
+        try { host = error?.url ? new URL(error.url).host : undefined; } catch { host = undefined; }
+        setFailReason([
+          status ? `HTTP ${status}` : error?.message?.slice(0, 120),
+          host ? `from ${host}` : undefined,
+        ].filter(Boolean).join(' ') || null);
       });
     }).catch(() => setFailed(true));
     return () => {
@@ -697,7 +728,15 @@ const flownHome = useRef(false);
           {(failed || paused) && (
             <div className="mmm-result-line" role="status">
               {failed
-                ? 'The map could not load. Everything else still works.'
+                ? failReason
+                  /* The reason is for whoever is looking at the blank map,
+                     which at alpha is as often the owner as a member — one
+                     screenshot now carries the cause instead of prompting a
+                     round trip through a browser console. A blocked request
+                     and an expired key are the same picture and different
+                     fixes. */
+                  ? `The map could not load (${failReason}). Everything else still works.`
+                  : 'The map could not load. Everything else still works.'
                 : 'Map lookups are paused right now — try again shortly.'}
             </div>
           )}

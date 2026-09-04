@@ -161,7 +161,11 @@ test.describe('Music · Map · Me shell', () => {
     for (const label of ['Listen', 'Map', 'Tickets', 'Me']) {
       await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
     }
-    await expect(page.getByRole('button', { name: 'Play the radio' })).toBeVisible();
+    /* And NO play key in the tab row — retired 2026-09-04, see the idle-bar
+       test below. Asserted absent rather than left unmentioned: a retired
+       control comes back one piece at a time, which is the same reason the
+       list of dead selectors below exists. */
+    await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
 
     for (const retired of [
       // The pre-console chrome.
@@ -214,9 +218,14 @@ test.describe('Music · Map · Me shell', () => {
         };
       });
       expect(box.overlapping, `the bar wrapped at ${width}px`).toBe(true);
-      // Four destinations plus the radio key, which is only there while nothing
-      // is loaded — which is exactly the state a fresh session is in.
-      expect(box.count, `wrong number of controls at ${width}px`).toBe(5);
+      /* FOUR destinations and nothing else. It was five until the owner
+         retired the cold-start radio key ("remove radio tab on bottom it's
+         already under listen"), and this assertion survived that change while
+         three siblings in this file were updated — so CI failed the app for
+         obeying the instruction, which is the exact failure the header of the
+         `measure:dock` script warns about. A mini player adds no `.mmm-tab`,
+         so this figure is 4 in both bar states. */
+      expect(box.count, `wrong number of controls at ${width}px`).toBe(4);
       expect(box.under44, `a control is under the 44px floor at ${width}px`).toBe(0);
       expect(box.scrollWidth, `page scrolls sideways at ${width}px`).toBeLessThanOrEqual(width);
     }
@@ -317,11 +326,17 @@ test.describe('Music · Map · Me shell', () => {
      negotiable and MAP, ME, a profile and a ticket have nothing of their own —
      so the radio key stands in for it, and it says what it does rather than
      being a glyph that silently starts a station. */
-  test('over silence there is a radio key and no mini player', async ({ page }) => {
+  test('over silence the bar carries no transport at all', async ({ page }) => {
     await page.goto('/app/music/discover');
     await expect(page.locator('.mmm-dock:visible')).toHaveCount(1);
-    await expect(page.getByRole('button', { name: 'Play the radio' })).toBeVisible();
-    // Exactly one transport: the mini player's keys must not also be present.
+    /* This test asserted the OPPOSITE until 2026-09-04 — that an idle bar
+       carries a "Radio" key, because the console's rule was that the transport
+       is universal and never inert. The owner retired that key ("remove radio
+       tab on bottom it's already under listen"), so the idle bar is tabs only
+       and that is now the correct state rather than a regression. The rule it
+       bends is real and the trade is recorded in MmmDock.tsx; what survives of
+       it is that there is never MORE than one transport. */
+    await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
     await expect(page.locator('.mmm-dock .mmm-mini')).toHaveCount(0);
     await expect(page.locator('.mmm-dock .mmm-key')).toHaveCount(0);
     /* `MmmFullPlayer` renders NOTHING without a track (its contract returns
@@ -360,7 +375,7 @@ test.describe('Music · Map · Me shell', () => {
     // Library registers the liked tracks; an account with none falls through
     // to the radio, which is still "the transport is never inert".
   ] as const) {
-    test(`the transport starts playback on ${surface}`, async ({ page, request }) => {
+    test(`a surface's own play control loads the mini player on ${surface}`, async ({ page, request }) => {
       /* Asked before the page loads, and cached across the file — see
          `radioHasAudio`. A fixture with no playable audio cannot start
          anything, and the honest result there is a skip rather than accepting
@@ -377,19 +392,33 @@ test.describe('Music · Map · Me shell', () => {
       const dock = page.locator('.mmm-dock:visible');
       await expect(dock).toHaveCount(1);
 
-      const play = page.getByRole('button', { name: 'Play the radio' });
-      await expect(play, 'the transport should offer the radio before anything is loaded').toBeVisible();
+      /* The bar no longer carries a cold-start transport, so this can no
+         longer be driven from the dock — it is driven from the SURFACE's own
+         play control, which is how a member starts audio now. What the test
+         proves is unchanged and is the part worth keeping: once something is
+         loaded the mini player appears, it carries the transport, and the bar
+         never ends up with two. */
+      await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
 
       if (!playable) {
-        test.skip(true, 'the default station has no playable track — nothing for the transport to start');
+        test.skip(true, 'the default station has no playable track — nothing to start');
       }
 
+      /* Any control whose accessible name starts "Play " — track rows label
+         themselves `Play <title> by <artist>` and shelf tiles carry their own.
+         A regex rather than a fixed string because the label names the CONTENT,
+         which is fixture data and must not be hardcoded here. */
+      const play = page.getByRole('button', { name: /^Play / }).first();
+      if (await play.count() === 0) {
+        test.skip(true, `${surface} offers no play control for this account`);
+      }
       await play.click();
+
       // The mini player only exists once a track is loaded, so its arrival is
-      // the proof the tap reached the media player rather than the dock.
+      // the proof the tap reached the media player rather than the surface.
       await expect(dock.locator('.mmm-mini')).toBeVisible();
       await expect(dock.getByRole('button', { name: 'Pause' })).toBeVisible();
-      // And the transport moved rather than doubling.
+      // And still exactly one transport, in the mini player.
       await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
     });
   }

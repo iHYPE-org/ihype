@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useI18n } from '@/components/I18nProvider';
+import { openExternalUrl } from '@/lib/open-external';
 
 interface Prefs {
   newShows: boolean;
@@ -403,7 +404,7 @@ export function MmmSettings() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.checkoutUrl) throw new Error(data.error ?? t('settingsPage.paymentMethodFailed', 'Could not open the payment form.'));
-      window.location.href = data.checkoutUrl;
+      await openExternalUrl(data.checkoutUrl, { onReturn: () => router.refresh() });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settingsPage.paymentMethodFailed', 'Could not open the payment form.'));
       setMoneyBusy(null);
@@ -422,7 +423,7 @@ export function MmmSettings() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.onboardingUrl) throw new Error(data.error ?? t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
-      window.location.href = data.onboardingUrl;
+      await openExternalUrl(data.onboardingUrl, { onReturn: () => router.refresh() });
     } catch (err) {
       setError(err instanceof Error ? err.message : t('settingsPage.payoutConnectFailed', 'Could not open payout onboarding.'));
       setMoneyBusy(null);

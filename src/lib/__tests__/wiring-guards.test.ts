@@ -17,9 +17,20 @@ function code(file: string): string {
     .replace(/(^|[^:])\/\/[^\n]*/g, '$1');
 }
 
+/**
+ * `.tsx` TOO — it collected only `.ts` until 2026-09-04, and every React
+ * component in this repository is `.tsx`. A guard added that day scanned
+ * `src/components` for a banned call and passed over ZERO files; it was caught
+ * only by deliberately introducing the regression and watching the suite stay
+ * green, which is the whole reason this repo verifies a guard in both
+ * directions. Widening it can only ever find more, never less — the Show-writer
+ * guard below now covers a `.tsx` writer as well, which it silently did not.
+ */
 function listFiles(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
-    e.isDirectory() ? listFiles(`${dir}/${e.name}`) : e.name.endsWith('.ts') ? [`${dir}/${e.name}`] : [],
+    e.isDirectory()
+      ? listFiles(`${dir}/${e.name}`)
+      : /\.tsx?$/.test(e.name) ? [`${dir}/${e.name}`] : [],
   );
 }
 
@@ -296,6 +307,121 @@ describe('the native shell paints the app\'s ground', () => {
     }
   });
 
+  /**
+   * The Android adaptive-icon background is the THIRD copy of the ground, and
+   * it was still the retired warm near-black `#0A0805` — two conversions
+   * behind — on 2026-09-04, while capacitor.config.ts had already been
+   * corrected twice. It shows as the plate behind the launcher icon on every
+   * Android home screen, so it is the first thing anyone sees of the app.
+   *
+   * Same structural reason as the other two: outside the fast loop, changed
+   * only by a native build, and no page renders it, so nothing here could see
+   * it. Guarded rather than merely fixed, for exactly that reason.
+   */
+  it('the Android launcher background matches --bg', () => {
+    const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
+    const launcher = /<color name="ic_launcher_background">\s*(#[0-9a-fA-F]{3,8})\s*<\/color>/
+      .exec(readFileSync('android/app/src/main/res/values/ic_launcher_background.xml', 'utf8'))?.[1]
+      ?.toLowerCase();
+    expect(launcher, 'ic_launcher_background.xml no longer declares a colour in the shape this guard reads').toBeTruthy();
+    expect(launcher, `the launcher icon sits on ${launcher} behind a ${ground} app`).toBe(ground);
+  });
+
+  /**
+   * Money never leaves through `window.location` on native.
+   *
+   * Capacitor ejects a top-level navigation off `server.url` into the system
+   * browser, and Stripe's `success_url` is a server redirect, which does not
+   * open an app — so a fan who tapped Buy landed in Safari and never came
+   * back. Measured across seven call sites on 2026-09-04.
+   *
+   * The fix is `openExternalUrl` (`src/lib/open-external.ts`): an in-app
+   * browser tab on native, a plain navigation on the web. This guard is what
+   * stops the eighth call site being written the old way — the failure is
+   * invisible in a browser, where `window.location` is exactly right, and only
+   * appears on a device.
+   *
+   * `allowNavigation` in `capacitor.config.ts` is the OTHER way to fix it and
+   * was shipped for six hours. It must stay absent: on Android those hosts
+   * reach the native bridge, and no allowlist can cover a 3-D Secure redirect
+   * to an issuing bank.
+   */
+  it('sends checkout and onboarding through the in-app browser, never window.location', () => {
+    const scanned = listFiles('src/components').concat(listFiles('src/app'));
+    /* A floor, because the first version of this guard passed over an empty
+       set: `listFiles` collected only `.ts` and every component is `.tsx`. An
+       assertion that runs over nothing is worse than no assertion, because it
+       reads as coverage. */
+    expect(scanned.length, 'the component scan collected no files — this guard is measuring nothing').toBeGreaterThan(200);
+
+    const offenders: string[] = [];
+    for (const file of scanned) {
+      const source = code(file);
+      for (const match of source.matchAll(/window\.location\.(?:assign\s*\(|href\s*=)\s*([^;\n]+)/g)) {
+        /* Only the money trips. A `window.location` to an internal path is
+           normal and is not what ejects a payment. */
+        if (!/checkoutUrl|onboardingUrl|stripe/i.test(match[1])) continue;
+        offenders.push(`${file}:${source.slice(0, match.index).split('\n').length}`);
+      }
+    }
+    expect(
+      offenders,
+      `these navigate to Stripe with window.location, which ejects the native app into Safari — use openExternalUrl: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('capacitor.config.ts does not re-add allowNavigation', () => {
+    expect(
+      /allowNavigation\s*:/.test(code('capacitor.config.ts')),
+      'allowNavigation is back — it grants native bridge access on Android and cannot cover a 3DS redirect; route the flow through openExternalUrl instead',
+    ).toBe(false);
+  });
+
+  /**
+   * The dock's tab count is decided by MMM_NAV, and a spec restated it as a
+   * literal.
+   *
+   * `e2e/mmm-shell.spec.ts` asserts the bar is one row with no target under
+   * 44px, and counts `.mmm-tab` to prove it measured a real bar rather than an
+   * empty selector. That count was `5` — four destinations plus the cold-start
+   * radio key — and it SURVIVED the owner removing that key on 2026-09-04,
+   * while three sibling assertions in the same file were updated. So CI failed
+   * the app for obeying the instruction, and the only thing that caught it was
+   * a full browser run on a self-hosted runner: `tsc`, lint and 1091 unit
+   * tests were all green.
+   *
+   * The fix is the number; this guard is what stops the next nav change
+   * leaving it stale again. It is deliberately NOT an import of MMM_NAV into
+   * the spec — no e2e file imports from `@/` today, and introducing that for
+   * one integer is a larger change than the failure needs. A stray play key
+   * appearing in the tab row is a different claim and `measure:dock` already
+   * makes it.
+   */
+  it('the e2e tab-count assertion matches MMM_NAV', () => {
+    const spec = code('e2e/mmm-shell.spec.ts');
+    const asserted = /wrong number of controls at \$\{width\}px`\)\.toBe\((\d+)\)/.exec(spec)?.[1];
+    expect(
+      asserted,
+      'the tab-count assertion is gone or reworded — this guard is now measuring nothing, which is how the stale 5 survived',
+    ).toBeTruthy();
+
+    /* Counted from the manifest's own source rather than imported, so this
+       stays a text guard like every other check in this file. `tabLabel` is
+       the thing counted rather than a brace, because a module's `items` are
+       object literals too and only a MODULE carries a tab label — which is
+       also the exact property the bar renders. */
+    const nav = code('src/lib/mmm-nav.ts');
+    const list = /export const MMM_NAV[^=]*=\s*\[([\s\S]*?)\n\];/.exec(nav)?.[1];
+    expect(list, 'MMM_NAV is not an array literal any more — re-derive this guard').toBeTruthy();
+    const entries = (list as string).match(/\btabLabel\s*:/g)?.length ?? 0;
+    expect(entries, 'parsed zero MMM_NAV entries').toBeGreaterThan(0);
+
+    expect(
+      Number(asserted),
+      `e2e/mmm-shell.spec.ts expects ${asserted} dock tabs and MMM_NAV has ${entries}`,
+    ).toBe(entries);
+  });
+
   /* themeColor is the browser/PWA half of the same value and drifts the same way. */
   it('themeColor matches it too', () => {
     const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
@@ -378,6 +504,39 @@ describe('a ticketed show is a buyable show', () => {
        guard reporting a serene pass over nothing at all. */
     const found = files.filter((file) => /\.show\.(create|upsert)\(/.test(code(file)));
     expect(found.length, 'no Show writers found — this guard is measuring nothing').toBeGreaterThanOrEqual(4);
+  });
+
+  /**
+   * The SPLIT, for the same reason and found the same way one day later.
+   *
+   * Fixing `ticketingOpensAt` exposed the next nullable column behind it:
+   * `/shows/[slug]/page.tsx` gates the whole ticket aside on
+   * `venuePayoutPercent !== null && artistPayoutPercent !== null`, both `Int?`
+   * with no default. A seeded show with sales open and null percents rendered
+   * NEITHER a purchase form NOR the "not on sale" sentence — the sidebar was
+   * absent and the page said nothing about tickets at all. Measured on
+   * production, after the previous fix had been declared a success.
+   *
+   * That is the argument for checking the SET rather than the one field that
+   * bit: a ticketed show is only buyable when every column the page reads is
+   * populated, and each fix that stops at one field just moves the silence.
+   */
+  it('never sets isTicketed: true without the payout split', () => {
+    const missing: string[] = [];
+    for (const file of files) {
+      const source = code(file);
+      for (const match of source.matchAll(/\.show\.(?:create|upsert)\s*\(/g)) {
+        const args = withSpreads(source, callArguments(source, match.index + match[0].length - 1));
+        if (!/isTicketed:\s*true/.test(args)) continue;
+        const absent = ['artistPayoutPercent', 'venuePayoutPercent'].filter((f) => !args.includes(f));
+        if (!absent.length) continue;
+        missing.push(`${file}:${source.slice(0, match.index).split('\n').length} (${absent.join(', ')})`);
+      }
+    }
+    expect(
+      missing,
+      `these writers create a ticketed show whose ticket box cannot render: ${missing.join(', ')}`,
+    ).toEqual([]);
   });
 
   it('never sets isTicketed: true without ticketingOpensAt', () => {

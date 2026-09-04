@@ -29,14 +29,19 @@
  *
  *   · **the bar's height equals the geometry table, in BOTH states** — see
  *     above; this is the check the whole file exists for;
- *   · **exactly one transport, always** — the radio key when idle, the mini
- *     player's key when loaded, never both and never neither. The universal
- *     transport is a promise the console made and this one keeps: on MAP, ME, a
- *     profile and a ticket nothing else on screen can start audio;
+ *   · **the transport is the mini player's, and there is never a second one** —
+ *     it used to also check that an idle bar carried a "Radio" key, on the
+ *     rule that the transport is universal. The owner removed that key on
+ *     2026-09-04 ("remove radio tab on bottom it's already under listen"), so
+ *     an idle bar now correctly has NO transport and this check would have
+ *     failed the app for obeying the instruction. What it still refuses is
+ *     TWO: a bar carrying both a mini player and a tab-row play key is the
+ *     drift the console's own notes name;
  *   · **every control clears 44x44** — MOBILE.md's floor, desktop included,
  *     measured as a rendered box rather than read off a stylesheet;
- *   · **no tab label is clipped from 320px up** — four tabs and a fixed 58px
- *     transport at 320 leaves 65px a tab, and "TICKETS" at 11px/.14em is the
+ *   · **no tab label is clipped from 320px up** — four tabs share the full
+ *     width now that the 58px transport is gone, so 320px leaves 80px a tab
+ *     rather than 65px; "TICKETS" at 11px/.14em is still the
  *     longest. A destination you cannot read is the failure a labelled bar
  *     exists to avoid, so unlike the dial's drum this one has no excuse at any
  *     width;
@@ -349,18 +354,18 @@ for (const r of rows) {
       : `${at}: nothing is loaded and the mini player is on screen — the idle bar is supposed to be tabs only.`);
   }
 
-  /* Exactly one transport, always. Neither state may have none (the universal
-     transport is dead on MAP, ME, a profile and a ticket without it) and
-     neither may have both (two controls for one value is what the console's own
-     notes call the drift). */
+  /* Never two transports, and never a stray play key in the tab row.
+     The idle bar carries NO transport by owner instruction (see the header) —
+     that is the state, not a fault — so the only thing left to refuse is a
+     second control for the same value. */
   const radio = r.tabs.filter((t) => t.radio).length;
   const keys = r.keys.length;
-  if (r.playing && (radio !== 0 || keys !== 3)) problems.push(`${at}: expected the mini player's three keys and no radio key, measured ${keys} key(s) and ${radio} radio.`);
-  if (!r.playing && (radio !== 1 || keys !== 0)) problems.push(`${at}: expected one radio key and no mini keys, measured ${radio} radio and ${keys} key(s).`);
+  if (radio !== 0) problems.push(`${at}: the tab row carries ${radio} play key(s) — the radio key was removed on 2026-09-04 and must not come back.`);
+  if (r.playing && keys !== 3) problems.push(`${at}: expected the mini player's three keys, measured ${keys}.`);
+  if (!r.playing && keys !== 0) problems.push(`${at}: nothing is loaded but ${keys} mini key(s) are on screen.`);
 
   /* Exactly one destination lit. Two is a routing bug; none means a member
-     cannot tell where they are. The radio key is a control, never lit as a
-     destination. */
+     cannot tell where they are. */
   const lit = r.tabs.filter((t) => t.on);
   if (lit.length !== 1) problems.push(`${at}: ${lit.length} tab(s) lit — exactly one destination is current.`);
   else if (lit[0].text !== 'Listen') problems.push(`${at}: "${lit[0].text}" is lit on /app/music — the bar is drawing the module name instead of its tab label.`);

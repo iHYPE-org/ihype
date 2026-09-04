@@ -144,6 +144,29 @@ const PUBLIC_EXACT: readonly string[] = [
 const PUBLIC_PREFIXES: readonly string[] = [
   '/login', '/register', '/auth',
   '/info', '/journal',
+  /**
+   * `.well-known` BY NAME, because the extension heuristic cannot see it.
+   *
+   * `isStaticAsset()` calls a path static when its last segment contains a
+   * dot, and its own comment names `.well-known/*` as one of the things it
+   * covers. That is true for `assetlinks.json` and false for
+   * **`apple-app-site-association`**, which by Apple's specification has NO
+   * extension — so default-deny caught it and
+   * `https://ihype.org/.well-known/apple-app-site-association` answered
+   * **HTTP 307 to /login** (measured 2026-09-04).
+   *
+   * Apple's CDN does not follow redirects. It fetches once, sees a redirect,
+   * and records the domain as unverified — so Universal Links could never have
+   * worked, silently, while the route handler sat there serving correct JSON
+   * to anyone who happened to be signed in.
+   *
+   * A prefix rather than one exact path because the whole namespace is public
+   * by definition (RFC 8615), and every future extensionless member of it
+   * would otherwise hit the same wall on the day it was added — presenting as
+   * "the third party says our domain is not verified" rather than as an auth
+   * bug.
+   */
+  '/.well-known',
 ];
 
 /**
