@@ -172,8 +172,48 @@ jobs:
           CERT_PATH="$RUNNER_TEMP/dist_certificate.p12"
           PROFILE_PATH="$RUNNER_TEMP/profile.mobileprovision"
 
-          echo -n "$IOS_DIST_CERTIFICATE_BASE64" | base64 --decode -o "$CERT_PATH"
-          echo -n "$IOS_PROVISIONING_PROFILE_BASE64" | base64 --decode -o "$PROFILE_PATH"
+          # SAY WHICH SECRET, AND WHY.
+          #
+          # This was two bare `base64 --decode` calls, and a bad value produced
+          # exactly one line — `base64: stdin: (null): error decoding base64
+          # input stream` — with no way to tell WHICH of the two failed, because
+          # `set -e` stops at the first one and both look identical. Three real
+          # runs were burned guessing. The value can never be printed, so the
+          # log has to carry everything else: which secret, how long it was, and
+          # what was wrong with it.
+          #
+          # Whitespace is stripped first, and that is a FIX rather than only a
+          # diagnostic: a value pasted through a terminal or an editor can pick
+          # up newlines or a stray space, and BSD base64 on the macOS runner is
+          # stricter about those than the GNU one most people test against.
+          #
+          # The byte floor catches the case no decoder can: a value that IS
+          # valid base64 but is the wrong thing — a password, a filename, a
+          # truncated paste. It decodes happily and fails much later as an
+          # unreadable keychain item.
+          decode_secret() {
+            local name="$1" value="$2" out="$3" floor="$4"
+            local raw=${#value}
+            if [ "$raw" -eq 0 ]; then
+              echo "::error::$name is empty. Add it under Settings > Secrets and variables > Actions (a REPOSITORY secret, not an environment one)."
+              return 1
+            fi
+            local cleaned; cleaned=$(printf '%s' "$value" | tr -d '[:space:]')
+            local clean_len=${#cleaned}
+            if ! printf '%s' "$cleaned" | base64 --decode > "$out" 2>/dev/null; then
+              echo "::error::$name is not valid base64 ($raw chars, $clean_len after removing whitespace). Re-copy it with the B64 helper and paste again — this usually means something other than the base64 output reached the clipboard."
+              return 1
+            fi
+            local bytes; bytes=$(wc -c < "$out" | tr -d ' ')
+            if [ "$bytes" -lt "$floor" ]; then
+              echo "::error::$name decoded to only $bytes bytes, expected at least $floor. It is valid base64 of the WRONG thing — check you encoded the right file."
+              return 1
+            fi
+            echo "$name: $raw chars -> $bytes bytes"
+          }
+
+          decode_secret IOS_DIST_CERTIFICATE_BASE64 "$IOS_DIST_CERTIFICATE_BASE64" "$CERT_PATH" 1000
+          decode_secret IOS_PROVISIONING_PROFILE_BASE64 "$IOS_PROVISIONING_PROFILE_BASE64" "$PROFILE_PATH" 1000
 
           security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
