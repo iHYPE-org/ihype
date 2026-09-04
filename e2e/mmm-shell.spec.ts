@@ -659,7 +659,10 @@ test.describe('Music · Map · Me shell', () => {
        top-level destination since the middle road (2026-09-04), so the deep
        link FORWARDS rather than opening a card here. Asserted, not deleted —
        the URL is in links members already hold, and silently rendering an ME
-       with no card open is the failure this replaces. */
+       with no card open is the failure this replaces. THE ONLY test that may
+       navigate to it: everywhere else goes straight to `/app/tickets`, because
+       a `goto` of a redirecting URL races the redirect and the read that
+       follows dies with "execution context was destroyed". */
     await page.goto('/app/me?section=tickets');
     await expect(page).toHaveURL(/\/app\/tickets$/);
 
@@ -784,7 +787,7 @@ test.describe('Music · Map · Me shell', () => {
     test('a held ticket appears in ME and opens its sheet', async ({ page }) => {
       // Deep-linked rather than tuned: the dial is covered by its own test, and
       // this one is about the ticket.
-      await page.goto('/app/me?section=tickets');
+      await page.goto('/app/tickets');
 
       const row = page.locator('.mmm-ticket-row', { hasText: seeded.title });
       await expect(row).toBeVisible();
@@ -816,7 +819,7 @@ test.describe('Music · Map · Me shell', () => {
         startsAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
       });
 
-      await page.goto('/app/me?section=tickets');
+      await page.goto('/app/tickets');
 
       const statuses = await page.locator('.mmm-ticket-status:visible').allInnerTexts();
       const firstAttended = statuses.findIndex((s) => /attended/i.test(s));
@@ -1069,9 +1072,15 @@ test.describe('ME with a real profile', () => {
 
   test('the fan role has no page card — the fan page creator was removed', async ({ page }) => {
     await page.goto('/app/me?role=fan');
-    // Settled first, same reason as the HYPE-link test above.
+    // Settled first, same reason as the HYPE-link test above — and the card
+    // itself is matched with `:visible` and a COUNT, not asserted visible
+    // directly. While the route streams there are two `.mmm-hype-link` nodes,
+    // the live one and Next's staging copy, and `toBeVisible()` on a locator
+    // matching both fails strict mode ("resolved to 2 elements") rather than
+    // waiting. Twelfth member of the duplication family in this file; it went
+    // green on retry, which is exactly how a flake hides.
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
-    await expect(page.locator('.mmm-hype-link')).toBeVisible();
+    await expect(page.locator('.mmm-hype-link:visible')).toHaveCount(1);
     await expect(page.getByText(/Your page/i)).toHaveCount(0);
   });
 });
