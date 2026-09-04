@@ -31,11 +31,14 @@
  * opposite of the point. This namespace is deliberately outside that filter,
  * so what is seeded is what is seen.
  *
- * ## It is additive and idempotent
+ * ## It is additive, and re-running it is a REFRESH
  *
- * Every write is an upsert on a deterministic slug, so running it twice
- * changes nothing the second time, and it never touches a row it did not
- * create. It does not alter `User.role` for anyone, and it creates no
+ * Every write is an upsert on a deterministic slug, so it never touches a row
+ * it did not create. What re-running changes is exactly the dated rows — show
+ * dates and chart hypes — because both age out of the windows the product
+ * reads them through, and a seed that silently expires is the "why is it blank
+ * again" this script exists to prevent. Everything else is left as first
+ * written. It does not alter `User.role` for anyone, and it creates no
  * credentials — these accounts have no passkey and no session, so none of them
  * can be signed into.
  *
@@ -260,14 +263,47 @@ async function main() {
         where: { email: email(VENUES[index % VENUES.length].slug) },
         select: { id: true },
       });
+      const startsAt = new Date(now + offsetDays * day);
+      /**
+       * A ticketed show with no `ticketingOpensAt` is permanently NOT on sale —
+       * `isTicketingOpen()` reads that column and a null means closed, on
+       * purpose. So every show this script has ever written rendered "Tickets
+       * soon" and answered 409 from `POST /api/shows/[showId]/tickets`, which
+       * measured on production 2026-09-04 as **eight ticketed shows and not one
+       * ticket buyable** on the only platform anyone can look at.
+       *
+       * This is the same defect the event creator carried until 2026-09-03
+       * (CLAUDE.md, `TicketSaleCard` row): the fix went to the creator, and the
+       * seeder is the OTHER thing in this repository that writes a Show. When a
+       * rule lives in a column rather than in a default, every writer has to
+       * know it.
+       *
+       * Two weeks before the doors, or at once for a show already inside that
+       * window — a past show therefore also reads as having been on sale, which
+       * is what makes a venue's history look like a venue's history.
+       */
+      const ticketingOpensAt = new Date(Math.min(now, startsAt.getTime() - 14 * day));
+      /**
+       * A show is DATED, and a dated row has to be re-dated on every run for
+       * the same reason the hype rows below are — see their comment. `update:
+       * {}` meant the seed aged out silently: three weeks after the one run
+       * this script has had, six of its eight shows had ENDED, the map was down
+       * to two pins, and re-running would have changed nothing at all. Only the
+       * three derived fields move; price, capacity and the counters stay as
+       * first created, so an operator's hand-edit survives a refresh.
+       */
+      const dated = {
+        status: offsetDays < 0 ? 'ENDED' : 'SCHEDULED',
+        startsAt,
+        ticketingOpensAt,
+      };
       await prisma.show.upsert({
         where: { slug },
-        update: {},
+        update: dated,
         create: {
           slug,
           title,
-          status: offsetDays < 0 ? 'ENDED' : 'SCHEDULED',
-          startsAt: new Date(now + offsetDays * day),
+          ...dated,
           creatorId: owner.id,
           venueProfileId: venue.id,
           headlinerProfileId: artist.id,
@@ -347,6 +383,20 @@ async function main() {
       profiles: await prisma.profile.count({ where: { slug: { startsWith: PREVIEW_PREFIX } } }),
       tracks: await prisma.artistMediaAsset.count({ where: { profile: { slug: { startsWith: PREVIEW_PREFIX } } } }),
       shows: await prisma.show.count({ where: { slug: { startsWith: PREVIEW_PREFIX } } }),
+      /* Reported separately because "8 shows" is what the old run printed while
+         every one of them was unbuyable and most had already happened. These
+         two are the figures that say the seed is doing its job. */
+      upcomingShows: await prisma.show.count({
+        where: { slug: { startsWith: PREVIEW_PREFIX }, startsAt: { gte: new Date() } },
+      }),
+      showsOnSale: await prisma.show.count({
+        where: {
+          slug: { startsWith: PREVIEW_PREFIX },
+          isTicketed: true,
+          startsAt: { gte: new Date() },
+          ticketingOpensAt: { lte: new Date() },
+        },
+      }),
       chartHypes: await prisma.seed.count({ where: { action: 'hype', user: { email: { endsWith: `@${PREVIEW_DOMAIN}` } } } }),
       profileHypes: await prisma.profileHypeEvent.count({ where: { profile: { slug: { startsWith: PREVIEW_PREFIX } } } }),
       follows: await prisma.follow.count({ where: { followeeProfile: { slug: { startsWith: PREVIEW_PREFIX } } } }),

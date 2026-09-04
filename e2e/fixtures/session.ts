@@ -318,13 +318,24 @@ export async function seedShowWithTicket({
        run wrote. */
     const showTitle = `E2E Night ${key}`;
     const showStartsAt = startsAt ?? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    /* On sale, and this fixture is why the closed-ticketing bug survived so
+       long. `isTicketingOpen()` reads `ticketingOpensAt` and a null means NOT
+       on sale; every show this fixture had ever built was ticketed with a null,
+       so `TicketSaleCard` rendered no form and the purchase route would have
+       answered 409 — under a suite where nothing asserts on either, because the
+       specs that use this seed are about a ticket somebody already holds. A
+       fixture that cannot buy a ticket cannot notice that nobody can. */
+    const ticketingOpensAt = new Date(
+      Math.min(Date.now(), showStartsAt.getTime() - 14 * 24 * 60 * 60 * 1000),
+    );
     const show = await prisma.show.upsert({
       where: { slug: showSlug },
-      update: { title: showTitle, startsAt: showStartsAt },
+      update: { title: showTitle, startsAt: showStartsAt, ticketingOpensAt },
       create: {
         slug: showSlug,
         title: showTitle,
         startsAt: showStartsAt,
+        ticketingOpensAt,
         creatorId: buyerUserId,
         venueProfileId: venue.id,
         headlinerProfileId: artist.id,
