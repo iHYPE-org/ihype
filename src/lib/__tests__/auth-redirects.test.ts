@@ -112,6 +112,32 @@ describe('isProtectedPath', () => {
     }
   });
 
+  /**
+   * The association files, and why the test above could not catch them.
+   *
+   * That loop passes `/.well-known/security.txt`, which has a DOT — so it
+   * exercised `isStaticAsset()`'s extension heuristic and proved nothing about
+   * the namespace. `apple-app-site-association` has no extension by Apple's
+   * specification, so default-deny caught it and production answered
+   * **HTTP 307 to /login** (measured 2026-09-04). Apple's CDN does not follow
+   * redirects: it records the domain as unverified and Universal Links can
+   * never work, while the route handler sits there serving correct JSON to
+   * anyone who happens to be signed in.
+   *
+   * Asserted as literal strings rather than by walking the directory, because
+   * these exact names are what Apple and Google fetch — a rename is a silent
+   * outage at a third party.
+   */
+  it('never gates an extensionless .well-known file', () => {
+    for (const path of [
+      '/.well-known/apple-app-site-association',
+      '/.well-known/assetlinks.json',
+      '/.well-known/openid-configuration',
+    ]) {
+      expect(isProtectedPath(path), path).toBe(false);
+    }
+  });
+
   // The public part of /shows is exactly the show page. Door-staff and
   // organiser tooling lives one segment deeper and must stay gated, even
   // though each of those routes also defends itself.

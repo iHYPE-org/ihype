@@ -171,7 +171,13 @@ jobs:
           security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
           security import "$CERT_PATH" -P "$IOS_DIST_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
-          security list-keychain -d user -s "$KEYCHAIN_PATH" "$(security list-keychains -d user | sed 's/"//g' | tr -d '\n ')"
+          # `tr -d '\n '` collapses EVERY existing keychain into one nonsense
+          # path. It happens to work on a stock macos-15 runner because there
+          # is exactly one, and breaks the moment there are two — surfacing as
+          # a codesign failure that never mentions the keychain line. Read them
+          # as separate words instead.
+          # shellcheck disable=SC2046
+          security list-keychain -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | sed 's/[":]//g')
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
 
           mkdir -p ~/Library/MobileDevice/"Provisioning Profiles"
@@ -183,6 +189,11 @@ jobs:
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
           echo "PROFILE_UUID=$PROFILE_UUID" >> "$GITHUB_ENV"
 
+      # BUILD NUMBER = run_number.run_attempt, not run_number alone.
+      # App Store Connect rejects a duplicate build number permanently, so
+      # re-running a failed run — the single most likely thing to happen on a
+      # first release — would upload a number already burned and fail with a
+      # message about the build rather than about the re-run.
       - name: Archive
         if: steps.check.outputs.configured == 'true'
         working-directory: ios/App
@@ -197,7 +208,7 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE="$PROFILE_UUID" \
             DEVELOPMENT_TEAM="$IOS_TEAM_ID" \
-            CURRENT_PROJECT_VERSION=${{ github.run_number }} \
+            CURRENT_PROJECT_VERSION=${{ github.run_number }}.${{ github.run_attempt }} \
             archive
 
       - name: Export .ipa
@@ -229,6 +240,23 @@ jobs:
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
+
+      # PROVE IT IS SIGNED before uploading. `xcodebuild -exportArchive` can
+      # emit an .ipa whose signing silently did not take, and the failure then
+      # arrives from App Store Connect minutes later as a rejected upload with
+      # a message about entitlements. Fail here, where the log still has the
+      # signing steps in it.
+      - name: Verify the .ipa is signed
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          IPA=$(find "$RUNNER_TEMP/export" -name '*.ipa' | head -1)
+          [ -n "$IPA" ] || { echo "::error::no .ipa was produced"; exit 1; }
+          WORK=$(mktemp -d); unzip -q "$IPA" -d "$WORK"
+          APP=$(find "$WORK/Payload" -maxdepth 1 -name '*.app' | head -1)
+          codesign -dv --verbose=2 "$APP" 2>&1 | tee "$RUNNER_TEMP/codesign.txt"
+          grep -q 'Authority=Apple Distribution' "$RUNNER_TEMP/codesign.txt" \
+            || { echo "::error::the .ipa is not signed with an Apple Distribution identity"; exit 1; }
 
       - name: Upload to TestFlight
         if: steps.check.outputs.configured == 'true' && inputs.publish == true
@@ -322,7 +350,14 @@ jobs:
 
       - name: Decode keystore
         if: steps.check.outputs.configured == 'true'
-        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/release.keystore"
+        # Through `env:`, never `${{ }}` inside the script. A secret
+        # interpolated into the shell is pasted as literal text, so a value
+        # that arrived with line breaks (GNU base64 wraps at 76 columns unless
+        # -w0) injects raw newlines into the generated bash rather than
+        # reaching base64 as one string.
+        env:
+          KEYSTORE_B64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: printf '%s' "$KEYSTORE_B64" | tr -d '\n' | base64 -d > "$RUNNER_TEMP/release.keystore"
 
       # Signing properties are passed on the command line (Android Gradle
       # Plugin's built-in android.injected.signing.* mechanism) rather than
@@ -345,11 +380,23 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           ./gradlew bundleRelease \
-            -Pandroid.injected.version.code=${{ github.run_number }} \
+            -Pandroid.injected.version.code=${{ github.run_number * 100 + github.run_attempt }} \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+
+      # `android.injected.signing.*` has never run against a real keystore in
+      # this repository. If gradle emits an unsigned bundle, learn it here
+      # rather than from Play's upload dialog.
+      - name: Verify the .aab is signed
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          AAB=$(find android/app/build/outputs/bundle/release -name '*.aab' | head -1)
+          [ -n "$AAB" ] || { echo "::error::no .aab was produced"; exit 1; }
+          jarsigner -verify -strict "$AAB" \
+            || { echo "::error::the .aab is not signed — check the keystore secrets"; exit 1; }
 
       # Uploads to the Play *internal testing* track and releases it to your
       # internal testers immediately (status: completed) — that's the one-click

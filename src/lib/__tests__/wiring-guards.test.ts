@@ -296,6 +296,26 @@ describe('the native shell paints the app\'s ground', () => {
     }
   });
 
+  /**
+   * The Android adaptive-icon background is the THIRD copy of the ground, and
+   * it was still the retired warm near-black `#0A0805` — two conversions
+   * behind — on 2026-09-04, while capacitor.config.ts had already been
+   * corrected twice. It shows as the plate behind the launcher icon on every
+   * Android home screen, so it is the first thing anyone sees of the app.
+   *
+   * Same structural reason as the other two: outside the fast loop, changed
+   * only by a native build, and no page renders it, so nothing here could see
+   * it. Guarded rather than merely fixed, for exactly that reason.
+   */
+  it('the Android launcher background matches --bg', () => {
+    const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
+    const launcher = /<color name="ic_launcher_background">\s*(#[0-9a-fA-F]{3,8})\s*<\/color>/
+      .exec(readFileSync('android/app/src/main/res/values/ic_launcher_background.xml', 'utf8'))?.[1]
+      ?.toLowerCase();
+    expect(launcher, 'ic_launcher_background.xml no longer declares a colour in the shape this guard reads').toBeTruthy();
+    expect(launcher, `the launcher icon sits on ${launcher} behind a ${ground} app`).toBe(ground);
+  });
+
   /* themeColor is the browser/PWA half of the same value and drifts the same way. */
   it('themeColor matches it too', () => {
     const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
