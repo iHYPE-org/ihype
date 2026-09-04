@@ -218,9 +218,14 @@ test.describe('Music · Map · Me shell', () => {
         };
       });
       expect(box.overlapping, `the bar wrapped at ${width}px`).toBe(true);
-      // Four destinations plus the radio key, which is only there while nothing
-      // is loaded — which is exactly the state a fresh session is in.
-      expect(box.count, `wrong number of controls at ${width}px`).toBe(5);
+      /* FOUR destinations and nothing else. It was five until the owner
+         retired the cold-start radio key ("remove radio tab on bottom it's
+         already under listen"), and this assertion survived that change while
+         three siblings in this file were updated — so CI failed the app for
+         obeying the instruction, which is the exact failure the header of the
+         `measure:dock` script warns about. A mini player adds no `.mmm-tab`,
+         so this figure is 4 in both bar states. */
+      expect(box.count, `wrong number of controls at ${width}px`).toBe(4);
       expect(box.under44, `a control is under the 44px floor at ${width}px`).toBe(0);
       expect(box.scrollWidth, `page scrolls sideways at ${width}px`).toBeLessThanOrEqual(width);
     }

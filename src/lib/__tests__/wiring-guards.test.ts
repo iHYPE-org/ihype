@@ -377,6 +377,51 @@ describe('the native shell paints the app\'s ground', () => {
     ).toBe(false);
   });
 
+  /**
+   * The dock's tab count is decided by MMM_NAV, and a spec restated it as a
+   * literal.
+   *
+   * `e2e/mmm-shell.spec.ts` asserts the bar is one row with no target under
+   * 44px, and counts `.mmm-tab` to prove it measured a real bar rather than an
+   * empty selector. That count was `5` — four destinations plus the cold-start
+   * radio key — and it SURVIVED the owner removing that key on 2026-09-04,
+   * while three sibling assertions in the same file were updated. So CI failed
+   * the app for obeying the instruction, and the only thing that caught it was
+   * a full browser run on a self-hosted runner: `tsc`, lint and 1091 unit
+   * tests were all green.
+   *
+   * The fix is the number; this guard is what stops the next nav change
+   * leaving it stale again. It is deliberately NOT an import of MMM_NAV into
+   * the spec — no e2e file imports from `@/` today, and introducing that for
+   * one integer is a larger change than the failure needs. A stray play key
+   * appearing in the tab row is a different claim and `measure:dock` already
+   * makes it.
+   */
+  it('the e2e tab-count assertion matches MMM_NAV', () => {
+    const spec = code('e2e/mmm-shell.spec.ts');
+    const asserted = /wrong number of controls at \$\{width\}px`\)\.toBe\((\d+)\)/.exec(spec)?.[1];
+    expect(
+      asserted,
+      'the tab-count assertion is gone or reworded — this guard is now measuring nothing, which is how the stale 5 survived',
+    ).toBeTruthy();
+
+    /* Counted from the manifest's own source rather than imported, so this
+       stays a text guard like every other check in this file. `tabLabel` is
+       the thing counted rather than a brace, because a module's `items` are
+       object literals too and only a MODULE carries a tab label — which is
+       also the exact property the bar renders. */
+    const nav = code('src/lib/mmm-nav.ts');
+    const list = /export const MMM_NAV[^=]*=\s*\[([\s\S]*?)\n\];/.exec(nav)?.[1];
+    expect(list, 'MMM_NAV is not an array literal any more — re-derive this guard').toBeTruthy();
+    const entries = (list as string).match(/\btabLabel\s*:/g)?.length ?? 0;
+    expect(entries, 'parsed zero MMM_NAV entries').toBeGreaterThan(0);
+
+    expect(
+      Number(asserted),
+      `e2e/mmm-shell.spec.ts expects ${asserted} dock tabs and MMM_NAV has ${entries}`,
+    ).toBe(entries);
+  });
+
   /* themeColor is the browser/PWA half of the same value and drifts the same way. */
   it('themeColor matches it too', () => {
     const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
