@@ -25,6 +25,13 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
-      - run: npm ci
+      # `--include=dev` is load-bearing under the NODE_ENV above: npm treats
+      # NODE_ENV=production as --omit=dev, and `prisma` is a devDependency, so
+      # the root `postinstall: prisma generate` would fail and take `npm ci`
+      # with it. NODE_ENV cannot simply be dropped — `prisma/launch-seed.ts`
+      # only enforces its confirmation guard when it is 'production'.
+      # (Measured 2026-09-04. This workflow had never been run, so the fault
+      # had never been observed.)
+      - run: npm ci --include=dev
       - run: npx prisma migrate deploy
       - run: npm run prisma:seed:launch
