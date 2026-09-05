@@ -527,20 +527,40 @@ jobs:
 
           VERIFY=$(jarsigner -verify "$AAB" 2>&1) || true
 
+          # NO `| head`. THAT IS A RACE, AND IT PASSED LOCALLY AND FAILED HERE.
+          #
+          # jarsigner's inconsistency notice runs to ~450 lines on an .aab, and
+          # `echo "$VERIFY" | head -3` makes `head` exit after three of them.
+          # Whether `echo` is still writing at that moment decides whether it
+          # takes SIGPIPE — and under `set -o pipefail` a SIGPIPE'd writer fails
+          # the whole pipeline, which `set -e` turns into an exit 1. So the step
+          # classified the bundle CORRECTLY as signed and then died printing the
+          # good news:
+          #
+          #   line 16: echo: write error: Broken pipe
+          #   jar verified.
+          #
+          # A stub with the same line count won that race on one machine and
+          # lost it on the runner, so testing this line locally proves nothing.
+          # The first line is taken with parameter expansion instead — no pipe,
+          # no second process, nothing to race.
+          VERDICT=${VERIFY%%$'\n'*}
+
           case "$VERIFY" in
             *"certificate has expired"*)
-              echo "$VERIFY" | head -20
+              echo "$VERDICT"
               echo "::error::the .aab is signed with an EXPIRED certificate — generate a new upload keystore."
               exit 1
               ;;
             *"jar verified"*)
-              # jarsigner's own inconsistency notice runs to hundreds of lines
-              # on an .aab and says nothing useful, so only the verdict is kept.
-              echo "$VERIFY" | head -3
+              echo "$VERDICT"
               echo "signed: $AAB"
               ;;
             *)
-              echo "$VERIFY" | head -20
+              # An unsigned or unreadable jar answers in a line or two, so the
+              # whole thing is worth printing on this path — the 450-line notice
+              # only appears on success.
+              echo "$VERIFY"
               echo "::error::the .aab is not signed — check the keystore secrets."
               exit 1
               ;;
