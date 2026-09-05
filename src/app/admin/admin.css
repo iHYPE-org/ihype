@@ -634,6 +634,10 @@
   font-size: 0.9375rem;
 }
 .routine-tab[data-active] .routine-tab-badge { background: var(--bg); color: var(--ink); }
+/* The tab's name on its own, so a badge beside it never becomes part of the
+   name — "Monthly1" is what a due drill reads as otherwise, in a test and in
+   a screen reader alike. `audit:unstyled` counts a class no rule reaches. */
+.routine-tab-label { white-space: nowrap; }
 .routine-panel { padding-top: 10px; }
 .routine-lede,
 .routine-empty { margin: 0 0 8px; font-size: 0.9375rem; color: var(--ink-2); }
