@@ -11,10 +11,12 @@
  * translation happens at the DRAW, keyed on the English the manifest carries,
  * and the manifests stay pure.
  *
- * Every call here is a literal `t('key', 'English')`, because
- * `scripts/extract-i18n-keys.mjs` reads the source for exactly that shape and
- * `apply-i18n-batch.mjs` refuses a key the extractor cannot see. A
- * `t(row.labelKey, row.label)` would be tidier and would be invisible to both.
+ * Every call here is a literal t() with a quoted key AND a quoted English
+ * fallback, because `scripts/extract-i18n-keys.mjs` reads the source for
+ * exactly that shape and `apply-i18n-batch.mjs` refuses a key the extractor
+ * cannot see. A `t(row.labelKey, row.label)` would be tidier and would be
+ * invisible to both. (Do not write the literal shape in a comment either: the
+ * extractor cannot tell prose from code, and once did.)
  *
  * `t` is passed in rather than imported: the same switch serves a client
  * component's `useI18n().t` and a server page's `getServerT()`.
