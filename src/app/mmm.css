@@ -3400,6 +3400,12 @@ html:has(.mmm-frame) {
 }
 .mmm-profile-body { padding: 0 22px 22px; display: flex; flex-direction: column; gap: 18px; }
 .mmm-profile-head { display: flex; align-items: flex-end; gap: 14px; margin-top: -34px; }
+/* The head is pulled UP over the band by the negative margin above, and the band
+   is `position: relative`, so without a stacking position of its own the head
+   painted UNDER the band — the top of the avatar and the type pill disappeared
+   behind the gradient (owner, 2026-09-05: "red banner at top is empty and
+   blocking text underneath"). Positioned, it paints over the band as drawn. */
+.mmm-profile-head { position: relative; z-index: 1; }
 .mmm-profile-head-label { padding-bottom: 4px; }
 .mmm-profile-art {
   width: 76px;

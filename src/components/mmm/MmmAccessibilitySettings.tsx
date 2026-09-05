@@ -64,10 +64,10 @@ export function MmmAccessibilitySettings() {
 
   return (
     <div className="mmm-settings-route mmm-settings-route-narrow">
-      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Me</Link>
-      <span className="mmm-eyebrow" style={{ color: 'var(--role-fan)' }}>
-        {t('appShell.section.settings', 'Settings')}
-      </span>
+      {/* One line: the way back. The section strip above already says
+          "Settings", so a second "SETTINGS" eyebrow here read as two headers
+          run together — "‹ MeSETTINGS" on the owner's screen (2026-09-05). */}
+      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ {t('mmmMe.back', 'Me')}</Link>
       <h1 className="mmm-settings-title">{t('appShell.nav.accessibility', 'Accessibility')}</h1>
 
       <div className="mmm-settings-stack">

@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePlayIntent } from '@/components/mmm/MmmPlayIntent';
 import { MMM_NAV, moduleForPath } from '@/lib/mmm-nav';
+import { translateTabLabel } from '@/lib/mmm-shell-labels';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * The console dock — still the whole of the app's navigation, and still the
@@ -212,6 +214,7 @@ export function MmmDock({
   /** What the mini player shows. Null means nothing is loaded. */
   track: MmmDockTrack | null;
 }) {
+  const { t } = useI18n();
   const activeModule = moduleForPath(pathname);
 
   /* A tap always does something, in this order: pause the current track, start
@@ -334,7 +337,7 @@ export function MmmDock({
               onClick={(event) => armCommitGuard(event, module.href)}
             >
               <span className="mmm-tab-glyph"><Glyph /></span>
-              <span className="mmm-tab-label">{module.tabLabel}</span>
+              <span className="mmm-tab-label">{translateTabLabel(t, module.id, module.tabLabel)}</span>
             </Link>
           );
         })}

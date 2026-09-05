@@ -14,10 +14,12 @@ import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/li
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
+import { getServerT } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
+import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
 import { ArtistRequestForm } from '@/components/ArtistRequestForm';
 
 export const dynamic = 'force-dynamic';
@@ -91,6 +93,7 @@ export default async function MmmArtistPage({
   // this route's layout is async and has already flushed. See `MmmMissing`.
   if (!profile || profile.type !== 'ARTIST') return <MmmMissing title="No such artist" body="That profile may have been removed, or the link may be older than it is. The map still knows who is playing." />;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing title="No such artist" body="That profile may have been removed, or the link may be older than it is. The map still knows who is playing." />;
+  const t = await getServerT();
 
   const activeTab = resolveTab(ARTIST_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
@@ -221,6 +224,17 @@ export default async function MmmArtistPage({
     .map((album) => ({ album, tracks: releases.filter((release) => release.albumId === album.id) }))
     .filter((group) => group.tracks.length > 0);
   const singles = releases.filter((release) => !release.albumId || !albumById.has(release.albumId));
+  /* One queue, shared by the dock's transport and every row's play key, so
+     pressing a row plays it in the same order the transport would. */
+  const playableRows = releases.map((release) => ({
+    hexId: release.hexId,
+    title: release.title,
+    artistName: profile.name,
+    artistSlug: profile.slug,
+    mediaUrl: release.storageUrl,
+    artworkUrl: coverFor(release),
+  }));
+  const playableById = new Map(playableRows.map((row) => [row.hexId, row]));
 
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   const sub = [profile.genres.slice(0, 3).join(' · ') || null, where || null].filter(Boolean).join(' · ');
@@ -244,7 +258,7 @@ export default async function MmmArtistPage({
          would delete four panels' worth of content */
   return (
     <div className="mmm-show mmm-public-profile" data-profile-type="artist">
-      <Link className="mmm-show-back" href="/app/music/charts">← Music</Link>
+      <Link className="mmm-show-back" href="/app/music/charts">← {t('artistPane.backMusic', 'Music')}</Link>
 
       <div className="mmm-profile-card">
         <div className="mmm-profile-band">
@@ -268,7 +282,7 @@ export default async function MmmArtistPage({
                   reads it to tell the artist pane from the venue pane, and in
                   S6 this pill is what carries that label. */}
               <span className="mmm-show-eyebrow">
-                {profile.verificationStatus === 'VERIFIED' ? 'ARTIST · VERIFIED' : 'ARTIST'}
+                {profile.verificationStatus === 'VERIFIED' ? t('artistPane.eyebrowVerified', 'ARTIST · VERIFIED') : t('artistPane.eyebrow', 'ARTIST')}
               </span>
             </div>
           </div>
@@ -309,9 +323,9 @@ export default async function MmmArtistPage({
               a figure that could not be read is a dash, not a zero. */}
           <ProfileCounters
             counters={[
-              { label: 'Hypes', value: profile.hypeCount },
-              { label: 'Followers', value: profile._count.followers },
-              { label: 'Listeners', value: listeners },
+              { label: t('profilePane.counterHypes', 'Hypes'), value: profile.hypeCount },
+              { label: t('profilePane.counterFollowers', 'Followers'), value: profile._count.followers },
+              { label: t('artistPane.counterListeners', 'Listeners'), value: listeners },
             ]}
           />
         </div>
@@ -321,16 +335,9 @@ export default async function MmmArtistPage({
           transport, in the artist's own order. Registered outside the tab
           condition on purpose: the joystick should play them whichever section
           of the profile is showing. */}
-      <MmmPlayHere rows={releases.map((release) => ({
-        hexId: release.hexId,
-        title: release.title,
-        artistName: profile.name,
-        artistSlug: profile.slug,
-        mediaUrl: release.storageUrl,
-        artworkUrl: coverFor(release),
-      }))} />
+      <MmmPlayHere rows={playableRows} />
 
-      <ProfileTabs active={activeTab} label="Artist sections" tabs={ARTIST_TABS} />
+      <ProfileTabs active={activeTab} label={t('artistPane.sectionsAria', 'Artist sections')} tabs={ARTIST_TABS} />
 
       {activeTab === 'albums' && isOwner && (
         /* The upload form, for the artist's own eyes.
@@ -346,7 +353,7 @@ export default async function MmmArtistPage({
            Here rather than in ME, because this is where an artist's releases
            are listed: the panel sits directly above the list it adds to, and a
            listener never sees it. */
-        <ProfilePanel empty="" isEmpty={false} tabId="albums" title="Upload a track">
+        <ProfilePanel empty="" isEmpty={false} tabId="albums" title={t('artistPane.uploadTitle', 'Upload a track')}>
           <TrackUploadPanel profileId={profile.id} />
         </ProfilePanel>
       )}
@@ -354,9 +361,9 @@ export default async function MmmArtistPage({
       {activeTab === 'albums' && (
         <ProfilePanel
           tabId="albums"
-          empty={`${profile.name} has not published any releases yet.`}
+          empty={t('artistPane.albumsEmpty', '{name} has not published any releases yet.').replace('{name}', profile.name)}
           isEmpty={releases.length === 0}
-          title="Albums"
+          title={t('mmmStrip.albums', 'Albums')}
         >
           {albumGroups.map(({ album, tracks }) => (
             <section className="profile-album" key={album.id}>
@@ -369,14 +376,14 @@ export default async function MmmArtistPage({
                   <span className="profile-release-meta">
                     {[
                       album.releasedOn ? album.releasedOn.getUTCFullYear() : null,
-                      `${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}`,
+                      tracks.length === 1 ? t('artistPane.oneTrack', '1 track') : t('artistPane.nTracks', '{n} tracks').replace('{n}', String(tracks.length)),
                     ].filter(Boolean).join(' · ')}
                   </span>
                 </span>
               </header>
               <ul className="profile-releases">
                 {tracks.map((release) => (
-              <li key={release.id}>
+              <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
                         ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
@@ -393,6 +400,7 @@ export default async function MmmArtistPage({
                         </span>
                       </span>
                     </Link>
+                    <ReleasePlayButton label={release.title} rows={playableRows} track={playableById.get(release.hexId)!} />
                   </li>
                 ))}
               </ul>
@@ -403,13 +411,13 @@ export default async function MmmArtistPage({
               {albumGroups.length > 0 && (
                 <header className="profile-album-lead">
                   <span className="profile-release-body">
-                    <span className="profile-release-title">Singles</span>
+                    <span className="profile-release-title">{t('artistPane.singles', 'Singles')}</span>
                   </span>
                 </header>
               )}
               <ul className="profile-releases">
                 {singles.map((release) => (
-              <li key={release.id}>
+              <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
                         ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
@@ -426,6 +434,7 @@ export default async function MmmArtistPage({
                         </span>
                       </span>
                     </Link>
+                    <ReleasePlayButton label={release.title} rows={playableRows} track={playableById.get(release.hexId)!} />
                   </li>
                 ))}
               </ul>
@@ -437,9 +446,9 @@ export default async function MmmArtistPage({
       {activeTab === 'tour' && (
         <ProfilePanel
           tabId="tour"
-          empty="No dates announced yet."
+          empty={t('artistPane.tourEmpty', 'No dates announced yet.')}
           isEmpty={upcoming.length === 0 && calendar.length === 0 && !unwrap(profile.tourContent)}
-          title="Tour"
+          title={t('mmmStrip.tour', 'Tour')}
         >
           {/* Legacy free text. The editor no longer writes it; a profile that
               set it before the calendar existed keeps its paragraph. */}
@@ -470,10 +479,10 @@ export default async function MmmArtistPage({
                   key={entry.id}
                   date={entry.date}
                   meta={[
-                    entry.kind === 'TOUR' ? 'Playing' : 'Open to book',
+                    entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'),
                     entry.date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
                   ].join(' · ')}
-                  title={entry.note || (entry.kind === 'TOUR' ? 'Playing' : 'Open to book')}
+                  title={entry.note || (entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'))}
                   utc
                 />
               ))}
@@ -488,16 +497,16 @@ export default async function MmmArtistPage({
            page's form files, entered from here, so it lands on the venue's
            radar AND in this artist's analytics. On Tour because that is where
            a fan looks for a date near them and finds none. */
-        <ProfilePanel empty="" isEmpty={false} tabId="tour" title={isOwner ? 'Where fans want you' : 'Want them near you?'}>
+        <ProfilePanel empty="" isEmpty={false} tabId="tour" title={isOwner ? t('artistPane.demandOwnerTitle', 'Where fans want you') : t('artistPane.demandTitle', 'Want them near you?')}>
           {isOwner ? (
             <p className="profile-standfirst">
-              Fans can ask a venue to book you from here. Every ask ranks on that venue&apos;s demand radar and on your{' '}
-              <Link href={`/app/me/artists/${profile.slug}/analytics`}>analytics</Link>, weighed by how recently, how many, and how close they are.
+              {t('artistPane.demandOwnerBody', 'Fans can ask a venue to book you from here. Every ask ranks on that venue’s demand radar and on your')}{' '}
+              <Link href={`/app/me/artists/${profile.slug}/analytics`}>{t('artistPane.demandOwnerAnalytics', 'analytics')}</Link>{t('artistPane.demandOwnerBodyTail', ', weighed by how recently, how many, and how close they are.')}
             </p>
           ) : (
             <>
               <p className="profile-standfirst">
-                Pick a venue near you, or one you follow, and {profile.name} and the venue both see the ask.
+                {t('artistPane.demandBody', 'Pick a venue near you, or one you follow, and {name} and the venue both see the ask.').replace('{name}', profile.name)}
               </p>
               <ArtistRequestForm artistName={profile.name} artistProfileId={profile.id} />
             </>
@@ -508,9 +517,9 @@ export default async function MmmArtistPage({
       {activeTab === 'bio' && (
         <ProfilePanel
           tabId="bio"
-          empty={`${profile.name} has not written a bio yet.`}
+          empty={t('artistPane.bioEmpty', '{name} has not written a bio yet.').replace('{name}', profile.name)}
           isEmpty={!profile.headline && !profile.bio}
-          title="Bio"
+          title={t('mmmStrip.bio', 'Bio')}
         >
           {profile.headline && <p className="profile-standfirst">{profile.headline}</p>}
           <RichContent value={profile.bio} />
@@ -528,15 +537,15 @@ export default async function MmmArtistPage({
           the row down with it — and an artist with no bio is exactly the one a
           reader most needs a way onward from. Caught by walk item 34. */}
       {activeTab === 'bio' && (
-        <SimilarArtistsRow accent="var(--accent)" artists={similarArtists} heading="Sounds like" />
+        <SimilarArtistsRow accent="var(--accent)" artists={similarArtists} heading={t('artistPane.soundsLike', 'Sounds like')} />
       )}
 
       {activeTab === 'merch' && (
         <ProfilePanel
           tabId="merch"
-          empty={`${profile.name} is not selling merch through iHYPE yet.`}
+          empty={t('artistPane.merchEmpty', '{name} is not selling merch through iHYPE yet.').replace('{name}', profile.name)}
           isEmpty={!unwrap(profile.merchContent)}
-          title="Merch"
+          title={t('mmmStrip.merch', 'Merch')}
         >
           <RichContent value={profile.merchContent} />
         </ProfilePanel>
@@ -550,29 +559,29 @@ export default async function MmmArtistPage({
            charter fixes, the ticket terms, and whether iHYPE has verified
            who this is. Every line points at something the product already
            holds; nothing here is a new document. */
-        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Contact">
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title={t('mmmStrip.contact', 'Contact')}>
           {unwrap(profile.contactInfo)
             ? <RichContent value={profile.contactInfo} />
-            : <p className="profile-standfirst">{profile.name} has not added contact details. Hype the profile and they will see the interest.</p>}
+            : <p className="profile-standfirst">{t('artistPane.contactEmpty', '{name} has not added contact details. Hype the profile and they will see the interest.').replace('{name}', profile.name)}</p>}
           <dl className="profile-facts profile-facts-coordination">
             <div>
-              <dt>Booking</dt>
+              <dt>{t('profilePane.factBooking', 'Booking')}</dt>
               <dd>
-                Venues book from their <Link href="/app/me/booking">demand radar</Link>; fans <Link href="?tab=tour">ask a venue</Link> from Tour.
+                {t('artistPane.factBookingLead', 'Venues book from their')} <Link href="/app/me/booking">{t('profilePane.demandRadar', 'demand radar')}</Link>; {t('artistPane.factBookingFans', 'fans')} <Link href="?tab=tour">{t('artistPane.factBookingAsk', 'ask a venue')}</Link> {t('artistPane.factBookingTail', 'from Tour.')}
               </dd>
             </div>
-            <div><dt>Press</dt><dd><Link href="?tab=press">Press kit</Link></dd></div>
+            <div><dt>{t('artistPane.factPress', 'Press')}</dt><dd><Link href="?tab=press">{t('mmmStrip.pressKitLower', 'Press kit')}</Link></dd></div>
             <div>
-              <dt>Split</dt>
-              <dd>70% artist · 20% venue · 10% promoters, fixed by the <Link href="/info?tab=charter">charter</Link>.</dd>
+              <dt>{t('profilePane.factSplit', 'Split')}</dt>
+              <dd>{t('profilePane.factSplitBody', '70% artist · 20% venue · 10% promoters, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
             </div>
             <div>
-              <dt>Tickets</dt>
-              <dd>All sales are final; a cancelled show refunds every ticket. <Link href="/ticket-policy">Ticket policy</Link>.</dd>
+              <dt>{t('profilePane.factTickets', 'Tickets')}</dt>
+              <dd>{t('profilePane.factTicketsBody', 'All sales are final; a cancelled show refunds every ticket.')} <Link href="/ticket-policy">{t('profilePane.ticketPolicy', 'Ticket policy')}</Link>.</dd>
             </div>
             <div>
-              <dt>Identity</dt>
-              <dd>{profile.verificationStatus === 'VERIFIED' ? 'Verified by iHYPE' : 'Not yet verified by iHYPE'}</dd>
+              <dt>{t('profilePane.factIdentity', 'Identity')}</dt>
+              <dd>{profile.verificationStatus === 'VERIFIED' ? t('profilePane.verifiedByIhype', 'Verified by iHYPE') : t('profilePane.notVerifiedByIhype', 'Not yet verified by iHYPE')}</dd>
             </div>
           </dl>
           {/* Updates by email, for someone who does not want an account. The
@@ -581,7 +590,7 @@ export default async function MmmArtistPage({
               the subscription existed and nothing ever sent to it. The picker
               is skipped: on this page the answer is this page. */}
           <div className="profile-newsletter">
-            <h3 className="profile-panel-subhead">Get updates by email</h3>
+            <h3 className="profile-panel-subhead">{t('profilePane.newsletterHead', 'Get updates by email')}</h3>
             <NewsletterSignup fixedProfile={{ id: profile.id, name: profile.name, type: profile.type }} />
           </div>
         </ProfilePanel>
@@ -590,9 +599,9 @@ export default async function MmmArtistPage({
       {activeTab === 'press' && (
         <ProfilePanel
           tabId="press"
-          empty={`${profile.name} has not published a press kit yet.`}
+          empty={t('artistPane.pressEmpty', '{name} has not published a press kit yet.').replace('{name}', profile.name)}
           isEmpty={!unwrap(profile.pressKitContent)}
-          title="Press Kit"
+          title={t('mmmStrip.pressKit', 'Press Kit')}
         >
           <RichContent value={profile.pressKitContent} />
         </ProfilePanel>
