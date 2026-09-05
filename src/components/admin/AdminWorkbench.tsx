@@ -1,60 +1,36 @@
-import Link from 'next/link';
-import { formatAge, getWorkbenchQueues, orderByUrgency } from '@/lib/admin-workbench';
+import { getRoutineBoard } from '@/lib/admin-routine-data';
+import { routineHeadline } from '@/lib/admin-routine';
+import { getWorkbenchQueues } from '@/lib/admin-workbench';
 import { getServerT } from '@/lib/i18n/server';
+import { AdminRoutine } from '@/components/admin/AdminRoutine';
 
 /**
  * The daily standing question — "what does the platform need from me today?" —
- * answered in one place at the top of /admin.
+ * answered in one place at the top of /admin, and now also "how often", and
+ * "which of this does the machine do for me".
  *
- * Ordering is by urgency, not by category: anything overdue against its own
- * stated SLA floats up, then anything else with work in it, then the clear
- * queues. Clear queues are still rendered rather than hidden, because "no
- * verifications waiting" and "the verifications query silently returned
- * nothing" look identical when the row is absent.
+ * Until 2026-09-05 this was a grid of eight queue cards at equal weight. It
+ * became the routine board (`admin-routine.ts`) by owner instruction —
+ * "reinforce daily vs weekly todo and nightly tasks" — because a 24-hour payout
+ * promise and an inbox with no promise at all should not look the same, and
+ * because nothing on the console said that payouts, settlement, backups and the
+ * acceptance walk run on a schedule with nobody watching. The queues are the
+ * same `getWorkbenchQueues()` rows the digest, the pulse and the feature board
+ * read; the cadence is derived from each queue's own promise.
  */
 export async function AdminWorkbench() {
   const [t, queues] = await Promise.all([getServerT(), getWorkbenchQueues()]);
-
-  const sorted = orderByUrgency(queues);
-
-  const waiting = queues.reduce((sum, q) => sum + q.count, 0);
-  const overdue = queues.filter((q) => q.overdue).length;
+  const board = await getRoutineBoard(queues);
 
   return (
     <section className="section admin-workbench">
       <div className="admin-workbench-head">
         <div>
           <h2 style={{ margin: 0 }}>{t('adminWorkbench.title', 'Today')}</h2>
-          <p className="meta" style={{ margin: '4px 0 0' }}>
-            {waiting === 0
-              ? t('adminWorkbench.allClear', 'Nothing is waiting on you.')
-              : overdue > 0
-                ? `${waiting} ${t('adminWorkbench.itemsWaiting', 'items waiting')} · ${overdue} ${t('adminWorkbench.queuesOverdue', 'queue(s) past their promised turnaround')}`
-                : `${waiting} ${t('adminWorkbench.itemsWaitingAllOnTime', 'items waiting, all within their promised turnaround')}`}
-          </p>
+          <p className="meta" style={{ margin: '4px 0 0' }}>{routineHeadline(board)}</p>
         </div>
       </div>
-
-      <div className="admin-workbench-grid">
-        {sorted.map((q) => {
-          const state = q.overdue ? 'overdue' : q.count > 0 ? 'active' : 'clear';
-          return (
-            <Link className={`admin-workbench-card admin-workbench-${state}`} href={q.href} key={q.id}>
-              <div className="admin-workbench-card-top">
-                <span className="admin-workbench-count">{q.count}</span>
-                {q.count > 0 && q.oldestHours !== null && (
-                  <span className="admin-workbench-age" title={t('adminWorkbench.oldestItemTitle', 'Age of the oldest waiting item')}>
-                    {formatAge(q.oldestHours)}
-                    {q.slaHours ? ` / ${formatAge(q.slaHours)}` : ''}
-                  </span>
-                )}
-              </div>
-              <div className="admin-workbench-label">{q.label}</div>
-              <div className="admin-workbench-detail">{q.detail}</div>
-            </Link>
-          );
-        })}
-      </div>
+      <AdminRoutine board={board} />
     </section>
   );
 }

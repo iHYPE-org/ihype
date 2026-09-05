@@ -2,7 +2,7 @@ import Link from 'next/link';
 
 import { formatAge } from '@/lib/admin-workbench';
 import { getFeatureBoard } from '@/lib/admin-feature-board-data';
-import { headlineFor, summarizeBoard, type FeatureState } from '@/lib/admin-feature-board';
+import { headlineFor, summarizeBoard, type FeatureRow, type FeatureState } from '@/lib/admin-feature-board';
 
 /**
  * Every capability the product offers, worst first.
@@ -31,6 +31,41 @@ function figure(value: number | null): string {
   return value === null ? '—' : String(value);
 }
 
+function FeatureCard({ row, range }: { row: FeatureRow; range: string }) {
+  return (
+    <Link
+      className={`admin-feature-card admin-feature-${row.state.toLowerCase()}`}
+      href={row.feature.href}
+    >
+      <div className="admin-feature-card-top">
+        <span className="admin-feature-label">{row.feature.label}</span>
+        <span className="admin-feature-badge" title={STATE_COPY[row.state].title}>
+          {STATE_COPY[row.state].badge}
+        </span>
+      </div>
+      <div className="admin-feature-member">{row.feature.member}</div>
+      <div className="admin-feature-reason">{row.reason}</div>
+      <div className="admin-feature-meta">
+        {row.issues !== null && row.issues > 0 && (
+          <span>
+            {row.issues} waiting
+            {row.oldestHours !== null ? ` · oldest ${formatAge(row.oldestHours)}` : ''}
+          </span>
+        )}
+        {row.feature.metric && <span>{figure(row.activity)} in {range}</span>}
+        {row.feature.journey && (
+          <span
+            className="admin-feature-journey"
+            title="The nightly acceptance walk proves this capability under this journey"
+          >
+            nightly: {row.feature.journey}
+          </span>
+        )}
+      </div>
+    </Link>
+  );
+}
+
 export async function AdminFeatureBoard() {
   const board = await getFeatureBoard().catch(() => null);
 
@@ -49,6 +84,9 @@ export async function AdminFeatureBoard() {
 
   const { rows, range } = board;
   const summary = summarizeBoard(rows);
+  const needsDecision = (state: FeatureState) => state === 'BLOCKED' || state === 'ATTENTION' || state === 'UNKNOWN';
+  const open = rows.filter((row) => needsDecision(row.state));
+  const rest = rows.filter((row) => !needsDecision(row.state));
 
   return (
     <section className="section admin-feature-board">
@@ -70,41 +108,33 @@ export async function AdminFeatureBoard() {
         </div>
       </div>
 
-      <div className="admin-feature-grid">
-        {rows.map((row) => (
-          <Link
-            className={`admin-feature-card admin-feature-${row.state.toLowerCase()}`}
-            href={row.feature.href}
-            key={row.feature.id}
-          >
-            <div className="admin-feature-card-top">
-              <span className="admin-feature-label">{row.feature.label}</span>
-              <span className="admin-feature-badge" title={STATE_COPY[row.state].title}>
-                {STATE_COPY[row.state].badge}
-              </span>
-            </div>
-            <div className="admin-feature-member">{row.feature.member}</div>
-            <div className="admin-feature-reason">{row.reason}</div>
-            <div className="admin-feature-meta">
-              {row.issues !== null && row.issues > 0 && (
-                <span>
-                  {row.issues} waiting
-                  {row.oldestHours !== null ? ` · oldest ${formatAge(row.oldestHours)}` : ''}
-                </span>
-              )}
-              {row.feature.metric && <span>{figure(row.activity)} in {range}</span>}
-              {row.feature.journey && (
-                <span
-                  className="admin-feature-journey"
-                  title="The nightly acceptance walk proves this capability under this journey"
-                >
-                  nightly: {row.feature.journey}
-                </span>
-              )}
-            </div>
-          </Link>
-        ))}
-      </div>
+      {/* Worst first, and only the worst OPEN. On a 393px phone the full board
+          measured 2,957px — eighteen cards, most of them saying "working" —
+          before the operator reached anything they could act on. The rows that
+          need a decision (BLOCKED, ATTENTION, UNKNOWN) render as cards; the
+          rest are one tap away under a summary that already carries their
+          count, so a board that is all green is one line tall. Every card is
+          still in the document in worst-first order, which is what the e2e
+          asserts; a closed <details> hides, it does not remove. */}
+      {open.length > 0 ? (
+        <div className="admin-feature-grid">{open.map((row) => <FeatureCard key={row.feature.id} row={row} range={range} />)}</div>
+      ) : (
+        <p className="admin-feature-clear">No feature needs a decision right now.</p>
+      )}
+      {rest.length > 0 && (
+        <details className="admin-feature-rest">
+          <summary className="admin-feature-rest-summary">
+            <span>{rest.length} more {rest.length === 1 ? 'feature is' : 'features are'} on and clear</span>
+            <span className="admin-feature-rest-counts">
+              {(['OFF', 'IDLE', 'OK'] as const)
+                .filter((state) => summary[state] > 0)
+                .map((state) => `${summary[state]} ${STATE_COPY[state].badge.toLowerCase()}`)
+                .join(' · ')}
+            </span>
+          </summary>
+          <div className="admin-feature-grid">{rest.map((row) => <FeatureCard key={row.feature.id} row={row} range={range} />)}</div>
+        </details>
+      )}
     </section>
   );
 }

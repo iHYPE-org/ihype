@@ -92,7 +92,12 @@ test.describe('admin console', () => {
       /* Never `networkidle` here: AdminPulse polls, so the network never goes
          idle and the wait can only time out. */
       await page.goto(`/admin?tab=${tab}`, { waitUntil: 'domcontentloaded' });
-      await expect(page.locator('.admin-tabstrip')).toBeVisible();
+      /* `.first()`: the page streams under `loading.tsx`, and for a frame the
+         strip can be in the document twice while React swaps the streamed
+         segment in — measured (a 1,2,1 sequence sampled at 50ms). Strict mode
+         fails on that frame; the count assertion below is what proves there is
+         exactly one once the page has settled. */
+      await expect(page.locator('.admin-tabstrip').first()).toBeVisible();
       /* The gate redirects rather than 403s, so a URL check is what proves we
          are actually on the console and not looking at the map. */
       expect(new URL(page.url()).pathname, `${tab} redirected away`).toBe('/admin');
@@ -111,6 +116,24 @@ test.describe('admin console', () => {
     await page.goto('/admin?tab=overview', { waitUntil: 'domcontentloaded' });
     const { FEATURE_CATALOGUE } = await import('../src/lib/admin-feature-board');
     await expect(page.locator('.admin-feature-card')).toHaveCount(FEATURE_CATALOGUE.length);
+    /* The fold: rows that need a decision are open, the rest are one summary
+       line under a closed <details>. Every card is still in the document — a
+       fold hides, it does not remove — so the count above holds whether the
+       fold is open or shut, and this checks the shut half is really shut. */
+    const rest = page.locator('.admin-feature-rest');
+    if (await rest.count()) {
+      await expect(rest).not.toHaveAttribute('open', /.*/);
+      await expect(rest.locator('.admin-feature-card').first()).toBeHidden();
+    }
+    /* The routine board: four cadences behind one strip, one panel showing. */
+    const routine = page.getByTestId('admin-routine');
+    await expect(routine).toBeVisible();
+    /* The tabs by NAME, not by full text — a tab with work in it carries a
+       count badge, and "Monthly1" is what a due restore drill reads as. */
+    await expect(routine.locator('[role="tab"] .routine-tab-label')).toHaveText(['Daily', 'Weekly', 'Monthly', 'Automated']);
+    await expect(routine.locator('[role="tabpanel"]')).toHaveCount(1);
+    await routine.getByRole('tab', { name: 'Automated' }).click();
+    await expect(routine.locator('.routine-row[data-kind="job"]').first()).toBeVisible();
     /* Worst first: whatever the environment, the top card must not be an OK
        one while a blocked one exists further down. */
     const states = await page.locator('.admin-feature-card').evaluateAll((cards) =>

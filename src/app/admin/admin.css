@@ -161,65 +161,16 @@
 }
 
 /* ── Workbench ─────────────────────────────────────────────────────────
-   The "what needs me today" board at the top of /admin. Cards are links,
-   so the whole tile is the target rather than a small chevron. */
+   The "what needs me today" board at the top of /admin. Its body is the
+   ROUTINE board (`.routine-*` below) as of 2026-09-05; the eight-card grid it
+   used to draw measured 1,204px on a 393px phone and said nothing about how
+   often each queue needs a look. */
 .admin-workbench-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 14px;
-}
-.admin-workbench-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 10px;
-}
-.admin-workbench-card {
-  display: block;
-  padding: 14px 16px;
-  border: 1px solid var(--hair-70);
-  /* --radius-card, not the sm/md/lg ramp: DS8 added it as a NEW name because
-     --radius-lg means 18px here and 10px in the design system, and the two
-     were deliberately not reconciled. New work reaches for --radius-card. */
-  border-radius: var(--radius-card);
-  background: var(--hair-30);
-  color: inherit;
-  text-decoration: none;
-  transition: background .18s ease, border-color .18s ease, transform .18s ease;
-}
-.admin-workbench-card:hover { background: var(--hair-50); border-color: var(--hair-100); transform: translateY(-1px); }
-.admin-workbench-card-top {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.admin-workbench-count {
-  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  font-weight: 800;
-  font-size: 1.7rem;
-  line-height: 1;
-  letter-spacing: -.03em;
-  color: var(--ink);
-}
-.admin-workbench-age {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.9375rem;
-  letter-spacing: .06em;
-  color: var(--ink-a65);
-}
-.admin-workbench-label { font-size: 0.9375rem; font-weight: 700; color: var(--ink); }
-.admin-workbench-detail {
-  margin-top: 3px;
-  font-size: 0.9375rem;
-  line-height: 1.45;
-  color: var(--ink-a65);
-}
-@media (prefers-reduced-motion: reduce) {
-  .admin-workbench-card { transition: none; }
-  .admin-workbench-card:hover { transform: none; }
 }
 
 /* "View app" — the console's one link out to the product it administers.
@@ -632,4 +583,200 @@
 @media (prefers-reduced-motion: reduce) {
   .admin-feature-card { transition: none; }
   .admin-feature-card:hover { transform: none; }
+}
+
+/* ── Routine ───────────────────────────────────────────────────────────
+   Daily · Weekly · Monthly · Automated behind one strip, the same shape and
+   the same tokens as the pulse's strip directly above it. A row is 44px
+   floored, one label, one line of note, one status word — and it is a LIST,
+   not cards, because the number of rows is what decides how far a thumb
+   travels and a list spends 48px on a row where a card spent 130. */
+.routine { margin-top: 12px; }
+.routine-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 2px;
+}
+.routine-tabs::-webkit-scrollbar { display: none; }
+.routine-tab {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font-family: var(--f-m, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.routine-tab[data-active] { border-color: var(--accent); background: var(--accent); color: var(--ink-on-accent); }
+.routine-tab[data-urgent] { border-color: var(--warning); color: var(--warning-text); }
+.routine-tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--warning);
+  color: var(--ink-on-accent);
+  font-size: 0.9375rem;
+}
+.routine-tab[data-active] .routine-tab-badge { background: var(--bg); color: var(--ink); }
+/* The tab's name on its own, so a badge beside it never becomes part of the
+   name — "Monthly1" is what a due drill reads as otherwise, in a test and in
+   a screen reader alike. `audit:unstyled` counts a class no rule reaches. */
+.routine-tab-label { white-space: nowrap; }
+.routine-panel { padding-top: 10px; }
+.routine-lede,
+.routine-empty { margin: 0 0 8px; font-size: 0.9375rem; color: var(--ink-2); }
+.routine-list { list-style: none; margin: 0; padding: 0; }
+.routine-row + .routine-row { border-top: 1px solid var(--line); }
+.routine-row-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 7px 0;
+  color: inherit;
+  text-decoration: none;
+}
+.routine-row-text { flex: 1 1 auto; min-width: 0; }
+.routine-row-label { display: block; font-size: 0.9375rem; font-weight: 600; }
+.routine-row-when {
+  font-family: var(--f-m, monospace);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+  margin-left: 6px;
+}
+.routine-row-note {
+  display: block;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.routine-row-status {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-family: var(--f-m, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.routine-row-status strong { font-family: var(--f-d, sans-serif); font-size: 1.125rem; letter-spacing: 0; color: var(--ink); }
+.routine-row-status[data-status="overdue"],
+.routine-row-status[data-status="due"] { color: var(--danger); }
+.routine-row-status[data-status="waiting"] { color: var(--warning-text); }
+.routine-row-status[data-status="clear"] { color: var(--success-text, var(--ink-3)); }
+.routine-row-status[data-tone="warn"] { color: var(--warning-text); }
+.routine-row-status[data-tone="ok"] { color: var(--success-text, var(--ink-3)); }
+.routine-group { border-top: 1px solid var(--line); margin-top: 8px; }
+.routine-group-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+  cursor: pointer;
+  font-family: var(--f-m, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  list-style: none;
+}
+.routine-group-summary::-webkit-details-marker { display: none; }
+.routine-group-summary::before { content: '›'; display: inline-block; margin-right: 8px; transition: transform .15s; }
+.routine-group[open] > .routine-group-summary::before { transform: rotate(90deg); }
+.routine-group-summary > span:first-child { flex: 1 1 auto; }
+.routine-group-count { color: var(--ink-3); }
+
+/* A standalone alert above the routine board — the reserved-order warning
+   the retired "Needs attention" panel carried. */
+.admin-alert-standalone { margin: 0; }
+
+/* ── The feature board's fold ──────────────────────────────────────────
+   Rows that need a decision are cards; the rest sit under one summary line
+   that carries their count, so an all-green board is one line tall. */
+.admin-feature-clear { margin: 0; font-size: 0.9375rem; color: var(--ink-2); }
+.admin-feature-rest { margin-top: 10px; }
+.admin-feature-rest-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 4px;
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+  list-style: none;
+}
+.admin-feature-rest-summary::-webkit-details-marker { display: none; }
+.admin-feature-rest-summary::before { content: '›'; display: inline-block; margin-right: 8px; transition: transform .15s; }
+.admin-feature-rest[open] > .admin-feature-rest-summary::before { transform: rotate(90deg); }
+.admin-feature-rest-summary > span:first-child { flex: 1 1 auto; }
+.admin-feature-rest-counts {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9375rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.admin-feature-rest > .admin-feature-grid { margin-top: 10px; }
+
+/* ── The console on a phone ────────────────────────────────────────────
+   Measured before this block existed: /admin at 393px was 6,538px tall —
+   7.7 screens — and the System tab 5,706px. Nothing below removes a panel;
+   each rule takes height out of something that was spending it on air.
+     · the hero drops its subtitle and half its type (254px → ~90px);
+     · the tab strip scrolls sideways instead of wrapping to two rows;
+     · the console index is one scrolling row of chips, not nine rows of grid;
+     · a feature card drops the member line — the reason line is the finding;
+     · a long list scrolls inside its panel past 300px rather than pushing the
+       next panel a screen away, which is what made System 6.7 screens. */
+@media (max-width: 700px) {
+  .ops-main .admin-console { gap: 0.75rem; }
+  .ops-main .admin-console-hero { padding: 0.9rem 1rem; }
+  .ops-main .admin-console-hero h1 { font-size: 1.5rem; margin: 0.35rem 0 0; }
+  .ops-main .admin-console-hero .subtitle,
+  .ops-main .admin-console-hero .badge { display: none; }
+  .ops-main .admin-tabstrip { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-bottom: 10px; padding-bottom: 2px; }
+  .ops-main .admin-tabstrip::-webkit-scrollbar { display: none; }
+  .ops-main .admin-tabstrip .button.small { flex: 0 0 auto; white-space: nowrap; }
+  .ops-main .admin-index { display: flex; overflow-x: auto; scrollbar-width: none; gap: 6px; margin-top: 0; padding-bottom: 2px; }
+  .ops-main .admin-index::-webkit-scrollbar { display: none; }
+  .ops-main .admin-index a { flex: 0 0 auto; white-space: nowrap; }
+  .ops-main .admin-feature-card { padding: 10px 12px; }
+  .ops-main .admin-feature-member { display: none; }
+  .ops-main .admin-feature-meta { margin-top: 5px; }
+  .ops-main .admin-workbench-head { margin-bottom: 8px; }
+  .ops-main .admin-console-panel .admin-list,
+  .ops-main .admin-console-grid .admin-list,
+  .ops-main .section .admin-list { max-height: 300px; overflow-y: auto; }
+  .ops-main .pulse { padding: 12px; margin-bottom: 0; }
+  /* Two columns for the small stat cards, not one: a label over a number is
+     ~80px tall and 180px wide, so a single column on System stacked four of
+     them into 490px where two rows hold the same four. globals.css puts these
+     grids at one column under 920px; this is the phone's narrower answer. */
+  .ops-main .admin-health-grid,
+  .ops-main .admin-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
