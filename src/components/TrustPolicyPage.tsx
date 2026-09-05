@@ -30,6 +30,7 @@ export function TrustPolicyPage({ badge, title, intro, lastUpdated, sections }: 
           <Link className="text-link" href="/ticket-policy">{t('trustPolicyPage.ticketPolicyLink', 'Ticket policy')}</Link>
           <Link className="text-link" href="/community-rules">{t('trustPolicyPage.communityRulesLink', 'Community rules')}</Link>
           <Link className="text-link" href="/info?tab=charter">{t('trustPolicyPage.charterLink', 'The Charter')}</Link>
+          <Link className="text-link" href="/delete-account">{t('trustPolicyPage.deleteAccountLink', 'Delete your account')}</Link>
           <Link className="text-link" href="/support">{t('trustPolicyPage.supportLink', 'Support')}</Link>
         </div>
       </section>

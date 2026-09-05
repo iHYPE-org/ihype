@@ -2044,7 +2044,6 @@
   "settingsPage.deleteAccountDetail": "永久操作。所有数据将在 30 天内移除。",
   "settingsPage.deleteAccountFailed": "无法删除账户。",
   "settingsPage.deleteAccountLabel": "删除账户",
-  "settingsPage.deletionScheduled": "已安排账户删除。你会收到一封确认邮件。",
   "settingsPage.demandRadarDetail": "艺人可以在需求雷达中看到你的场地并申请档期",
   "settingsPage.demandRadarLabel": "在需求雷达中显示我",
   "settingsPage.detachNow": "立即分离",

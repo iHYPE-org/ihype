@@ -2051,7 +2051,6 @@
   "settingsPage.deleteAccountDetail": "取り消せません。すべてのデータは30日以内に削除されます。",
   "settingsPage.deleteAccountFailed": "アカウントを削除できませんでした。",
   "settingsPage.deleteAccountLabel": "アカウントを削除",
-  "settingsPage.deletionScheduled": "アカウント削除を予約しました。確認メールが届きます。",
   "settingsPage.demandRadarDetail": "アーティストが需要レーダーであなたの会場を見つけ、枠をリクエストできます",
   "settingsPage.demandRadarLabel": "需要レーダーに表示する",
   "settingsPage.detachNow": "今すぐ切り離す",
