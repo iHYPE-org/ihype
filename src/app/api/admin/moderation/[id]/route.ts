@@ -23,8 +23,18 @@ type EnforcementOutcome = { ok: true } | { ok: false; error: string };
 async function enforceRemoval(targetType: string, targetId: string, reason: string): Promise<EnforcementOutcome> {
   switch (targetType) {
     case 'track':
-      await db.artistMediaAsset.updateMany({ where: { hexId: targetId }, data: { isPublished: false, freeUseEnabled: false } });
+    case 'media': {
+      /* Two names for one thing. The scan pipeline files `track` with the
+         asset's hexId; POST /api/content-reports lets a MEMBER file `media`,
+         and until 2026-09-05 this switch had no arm for it — approving such a
+         report marked it ACTIONED and unpublished nothing, found by the walk's
+         moderation item on its first run. A member may hold either public id. */
+      await db.artistMediaAsset.updateMany({
+        where: { OR: [{ hexId: targetId }, { id: targetId }] },
+        data: { isPublished: false, freeUseEnabled: false },
+      });
       break;
+    }
     case 'comment':
       await db.showComment.updateMany({ where: { id: targetId }, data: { deletedAt: new Date() } });
       break;

@@ -240,6 +240,14 @@ jobs:
           # is why the browser suites never needed it here; in `--serve` mode
           # the walk is a SEPARATE process and inherits nothing from that child.
           PLAYWRIGHT_AUTH_COOKIE_SECURE: 'true'
+          # The mail sink: the worker posts every email to this loopback URL
+          # instead of Resend (src/lib/mailer.ts honours loopback ONLY), and
+          # the walk listens there — so "a notification leaves the building"
+          # is measured on the real message rather than inferred from a row.
+          # One env block serves both processes in this step, which is what
+          # lets the worker and the walk agree on the address.
+          EMAIL_SINK_URL: http://127.0.0.1:8791/emails
+          EMAIL_FROM: admin@ihype.org
           # Self-arming: absent, the money items report BLOCKED and the rest of
           # the walk still runs. e2e-workerd.mjs refuses a live key.
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}

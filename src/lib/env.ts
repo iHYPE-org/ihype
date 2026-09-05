@@ -26,6 +26,11 @@ const envSchema = z.object({
   SMTP_FROM: optEmail,
   EMAIL_FROM: optEmail,
   RESEND_API_KEY: optStr,
+  /* Test-only mail sink. When set to a LOOPBACK URL the mailer posts every
+     email there instead of Resend, so the acceptance walk can read back what
+     would have left the building. Any non-loopback value is ignored — see
+     `emailSinkUrl()` in mailer.ts. */
+  EMAIL_SINK_URL: optStr,
   // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
   STRIPE_SECRET_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('sk_') ? s : undefined; }),
   STRIPE_WEBHOOK_SECRET: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('whsec_') ? s : undefined; }),

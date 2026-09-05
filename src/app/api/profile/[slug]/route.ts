@@ -114,8 +114,10 @@ export async function GET(
     profile.type === 'ARTIST'
       ? db.artistMediaAsset.findMany({
           // Released tracks only for anyone but the owner: a held, unpublished
-          // or future-scheduled title is not public yet.
-          where: { profileId: profile.id, freeUseEnabled: true, ...(isOwner ? {} : releasedMediaWhere(now)) },
+          // or future-scheduled title is not public yet. Not gated on
+          // `freeUseEnabled` — that is promoter consent, not visibility (the
+          // same misreading search carried; see /api/search's track query).
+          where: { profileId: profile.id, ...(isOwner ? {} : releasedMediaWhere(now)) },
           orderBy: { createdAt: 'desc' },
           take: 12,
           select: { hexId: true, title: true, mimeType: true, notes: true, createdAt: true }

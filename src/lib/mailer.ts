@@ -20,8 +20,33 @@ export function isResendEmailConfigured() {
   return Boolean(env.RESEND_API_KEY && getEmailFrom());
 }
 
+/**
+ * The walk's mail sink, honoured ONLY on loopback.
+ *
+ * Nothing nightly could prove an email leaves the building: the only path
+ * was a live Resend call, and the nightly has no key, so "sent" was asserted
+ * nowhere while Notification rows were. With `EMAIL_SINK_URL` set to a
+ * 127.0.0.1 / localhost / ::1 URL the mailer posts the same payload it would
+ * hand Resend to that URL instead, and the walk reads it back. The loopback
+ * rule is the whole safety of it: a production Worker cannot usefully point
+ * at its own loopback, so a leaked or mistaken value there sends nothing
+ * anywhere rather than diverting members' mail to a third party.
+ */
+export function emailSinkUrl(): string | null {
+  const raw = env.EMAIL_SINK_URL;
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    const host = url.hostname.replace(/^\[|\]$/g, '');
+    if (host !== '127.0.0.1' && host !== 'localhost' && host !== '::1') return null;
+    return url.toString();
+  } catch {
+    return null;
+  }
+}
+
 export function isEmailDeliveryConfigured() {
-  return isResendEmailConfigured();
+  return isResendEmailConfigured() || Boolean(emailSinkUrl() && getEmailFrom());
 }
 
 export function getEmailDeliveryReadiness() {
@@ -172,6 +197,19 @@ async function sendConfiguredEmail(input: ConfiguredEmailInput) {
   const from = getEmailFrom();
   if (!from) {
     throw new Error('Email sender is not configured.');
+  }
+
+  const sink = emailSinkUrl();
+  if (sink) {
+    /* Same payload Resend would receive, so the walk asserts on the real
+       message — recipient, subject, the link in the text — not on a stub. */
+    const sunk = await fetch(sink, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ from, to: input.to, subject: input.subject, text: input.text, html: input.html, headers: input.headers ?? null, idempotencyKey: input.idempotencyKey ?? null }),
+    });
+    if (!sunk.ok) throw new Error(`Email sink refused the message: HTTP ${sunk.status}`);
+    return 'sink' as const;
   }
 
   if (!isResendEmailConfigured()) {

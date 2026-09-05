@@ -46,6 +46,7 @@ public/i18n/*.json
 # library's own import.meta.url into the build machine's file path (DESIGN_SYNC row 350).
 public/vendor/maplibre-gl/
 .wrangler-e2e-workerd.toml
+.wrangler-e2e-workerd.persist
 # Same shape, written by hand when running audit:mobile against a local build.
 .wrangler-audit.toml
 
