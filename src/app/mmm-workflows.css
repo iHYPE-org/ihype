@@ -225,8 +225,8 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
    outside the link — a button inside an anchor is invalid and reads to a
    screen reader as one control — and takes the shell's key tokens so it is a
    flat tinted disc on iOS and a brass-edged key on the console themes. */
-.profile-release-row { display: flex; align-items: center; gap: 10px; }
-.profile-release-row .profile-release { flex: 1 1 auto; min-width: 0; }
+.profile-release-entry { display: flex; align-items: center; gap: 10px; }
+.profile-release-entry .profile-release { flex: 1 1 auto; min-width: 0; }
 .profile-release-play {
   flex: none;
   width: 44px;

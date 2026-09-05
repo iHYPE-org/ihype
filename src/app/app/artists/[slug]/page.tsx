@@ -383,7 +383,7 @@ export default async function MmmArtistPage({
               </header>
               <ul className="profile-releases">
                 {tracks.map((release) => (
-              <li className="profile-release-row" key={release.id}>
+              <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
                         ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
@@ -417,7 +417,7 @@ export default async function MmmArtistPage({
               )}
               <ul className="profile-releases">
                 {singles.map((release) => (
-              <li className="profile-release-row" key={release.id}>
+              <li className="profile-release-entry" key={release.id}>
                     <Link className="profile-release" href={`/app/tracks/${release.hexId}`}>
                       {coverFor(release)
                         ? <img alt="" className="profile-release-art" src={coverFor(release) ?? undefined} />
