@@ -14,14 +14,22 @@ export function getStripe(): Stripe {
     /* Moves with the SDK, and is not free to choose. `Stripe.LatestApiVersion`
        is a SINGLE-LITERAL type in each release, so bumping the `stripe` package
        forces this string forward and typecheck fails until it matches — which
-       is how the 22.3.2 -> 22.5.0 bump in #753 turned up as a red PR rather
+       is how the 22.3.2 -> 22.5.0 bump in #753, and the 22.5.0 -> 22.6.0 bump
+       that moved this to 2026-08-26.dahlia, both turned up as a red PR rather
        than a silent behaviour change.
        Worth knowing that it IS a behaviour change and not a version label: an
        API version fixes response shapes and defaults, so what actually
        verifies this is the Stripe-side rehearsal in
        docs/runbooks/money-path-rehearsal.md, not this file compiling. Live mode
        still holds zero PaymentIntents, so nothing in production has ever
-       depended on the old version's shapes. */
+       depended on the old version's shapes.
+       NOT re-rehearsed against Stripe for 2026-08-26.dahlia: that needs a real
+       `sk_test_` key, and this sandbox carries the 11-character placeholder.
+       Both versions are in the same `dahlia` train, where breaking changes
+       arrive with a new NAME rather than a new date, so the exposure is small
+       — but small is not measured. Run `npm run stripe:rehearsal` from the
+       operator's machine before the first live sale, which the runbook already
+       requires for other reasons. */
     /* `httpClient` is REQUIRED in a Workers runtime, not an optimisation.
        stripe-node picks its transport by sniffing for Node, and OpenNext
        polyfills `process` in workerd — so without this the SDK selects its
@@ -34,7 +42,7 @@ export function getStripe(): Stripe {
        Cloudflare Workers, and `fetch` is native in every runtime this app
        has (workerd, Node 18+, vitest). */
     _stripe = new Stripe(key, {
-      apiVersion: '2026-07-29.dahlia',
+      apiVersion: '2026-08-26.dahlia',
       httpClient: Stripe.createFetchHttpClient(),
     });
   }
