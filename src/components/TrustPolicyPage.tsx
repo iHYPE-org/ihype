@@ -1,3 +1,9 @@
+'use client';
+
+/* A client component because it reads `useI18n()`. It was a server component
+   calling a client hook, which Next reports as "Attempted to call useI18n()
+   from the server" on every render of the seven policy pages; the props are
+   plain strings, so nothing is lost by moving it. */
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 

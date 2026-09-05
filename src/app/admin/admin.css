@@ -42,13 +42,17 @@
 .ops-chip-sm{font-size: 0.9375rem;padding:2px 5px}
 .ops-topbar-avatar{width:26px;height:26px;border-radius:50%;background:rgba(var(--accent-rgb),.15);border:1px solid rgba(var(--accent-rgb),.3);display:flex;align-items:center;justify-content:center;font-size: 0.9375rem;font-weight:700;font-family:var(--f-m,monospace);color: var(--accent-text);letter-spacing:.04em}
 .ops-body{flex:1;display:flex;overflow:hidden;min-height:0}
-.ops-rail{width:56px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow-y:auto}
+/* 96px, from 56 (2026-09-05). The rail was sized for 10px labels; when the type
+   floor raised them to 15px mono nothing widened it, so "Overview", "Payments"
+   and "Tickets" rendered as "vervie", "ayment", "ickets" at every desktop
+   width — measured at 1280. */
+.ops-rail{width:96px;flex-shrink:0;border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow-y:auto}
 .ops-rail-item{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 0;width:100%;text-decoration:none;color:var(--ink-3);font-size: 0.9375rem;font-family:var(--f-m,monospace);letter-spacing:.04em;transition:color .15s;position:relative}
 .ops-rail-item:hover{color:var(--ink-2)}
 .ops-rail-item.ops-rail-active{color: var(--accent-text)}
 .ops-rail-item.ops-rail-active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);height:20px;width:2px;background:var(--accent);border-radius:0 1px 1px 0}
 .ops-rail-glyph{font-size: 1rem;line-height:1}
-.ops-rail-label{font-size: 0.9375rem}
+.ops-rail-label{font-size: 0.9375rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
 .ops-main{flex:1;overflow-y:auto;min-width:0}
 .ops-subnav{display:flex;gap:6px;padding:10px 16px;border-bottom:1px solid var(--line);overflow-x:auto}
 .ops-subnav-link{font-family:var(--f-m,monospace);font-size: 0.9375rem;letter-spacing:.06em;color:var(--ink-2);text-decoration:none;padding:4px 9px;border-radius:5px;border:1px solid var(--line);white-space:nowrap;transition:color .15s,border-color .15s}
@@ -135,6 +139,17 @@
 .ops-main .button.secondary:focus-visible {
   background: var(--hair-80);
   border-color: var(--hair-200);
+}
+/* A count beside a page title — "Users (9 total)". Inside an h1 it inherited
+   the display face's -.045em tracking and 800 weight and rendered as a
+   squashed "(9total)"; it is supporting copy and takes the body face. */
+.ops-main h1 .meta {
+  font-family: var(--f-b);
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink-3);
+  margin-left: 6px;
 }
 .ops-main .badge {
   background: rgba(var(--accent-rgb),.1);

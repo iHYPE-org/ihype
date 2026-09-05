@@ -414,6 +414,21 @@
      hero, then name, then actions on white — so the card is the ground here
      and a plate on the console. On a grey card every grey key vanished. */
   --card-bg: var(--bg);
+  /* The back link at the top of a sub-page: iOS's chevron-and-word in the
+     tint colour, no pill; the console's outlined tracked-mono pill. */
+  --back-edge: transparent;
+  --back-bg: transparent;
+  --back-ink: var(--accent-text);
+  --back-font: var(--font-body);
+  --back-case: none;
+  --back-tracking: 0;
+  --back-pad: 0;
+  /* The marketing site's ambient ground — two blurred colour orbs and a
+     ruled grid — and the auth pages' accent wash. Off on iOS: Apple's pages
+     are white. The character themes keep theirs. */
+  --site-orb-opacity: 0;
+  --site-grid-opacity: 0;
+  --auth-wash: none;
   /* A selected chip is FILLED, the way Apple Music's filter pills are —
      black on white, white on black — not a tint the eye has to compare. */
   --chip-on-bg: var(--ink);
@@ -942,6 +957,16 @@
   --seg-item-radius: 0;
   --seg-divider: var(--line);
   --card-bg: var(--bg-surface);
+  --back-edge: var(--line-2);
+  --back-bg: transparent;
+  --back-ink: var(--ink-2);
+  --back-font: var(--font-mono);
+  --back-case: uppercase;
+  --back-tracking: .1em;
+  --back-pad: 14px;
+  --site-orb-opacity: .2;
+  --site-grid-opacity: .08;
+  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1076,6 +1101,16 @@
   --seg-item-radius: 0;
   --seg-divider: var(--line);
   --card-bg: var(--bg-surface);
+  --back-edge: var(--line-2);
+  --back-bg: transparent;
+  --back-ink: var(--ink-2);
+  --back-font: var(--font-mono);
+  --back-case: uppercase;
+  --back-tracking: .1em;
+  --back-pad: 14px;
+  --site-orb-opacity: .2;
+  --site-grid-opacity: .08;
+  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1210,6 +1245,16 @@
   --seg-item-radius: 0;
   --seg-divider: var(--line);
   --card-bg: var(--bg-surface);
+  --back-edge: var(--line-2);
+  --back-bg: transparent;
+  --back-ink: var(--ink-2);
+  --back-font: var(--font-mono);
+  --back-case: uppercase;
+  --back-tracking: .1em;
+  --back-pad: 14px;
+  --site-orb-opacity: .2;
+  --site-grid-opacity: .08;
+  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1339,6 +1384,16 @@
   --seg-item-radius: 0;
   --seg-divider: var(--line);
   --card-bg: var(--bg-surface);
+  --back-edge: var(--line-2);
+  --back-bg: transparent;
+  --back-ink: var(--ink-2);
+  --back-font: var(--font-mono);
+  --back-case: uppercase;
+  --back-tracking: .1em;
+  --back-pad: 14px;
+  --site-orb-opacity: .2;
+  --site-grid-opacity: .08;
+  --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1635,7 +1690,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   padding: 0 0.28rem;
   border-radius: 999px;
   background: rgba(35,208,216,0.16);
-  color: #dffcff;
+  color: var(--ink);
   font-size: 0.9375rem;
   line-height: 1;
 }
@@ -1761,7 +1816,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   font-weight: 700;
 }
 .hero { padding: 4rem 0 2rem; display: grid; gap: 1.5rem; } .panel{ border: 1px solid var(--line); }
-.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,.38); background: rgba(255,122,24,.1); color: var(--accent-text); padding: 0.3rem 0.8rem; font-size: 0.9375rem; font-weight: 700; letter-spacing: .04em; }
+.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(var(--accent-rgb),.3); background: rgba(var(--accent-rgb),.08); color: var(--accent-text); padding: 0.3rem 0.8rem; font-size: 0.9375rem; font-weight: 700; letter-spacing: .04em; }
 .title { font-size: clamp(2rem, 5vw, 4rem); margin: 0.75rem 0; line-height: 1; }
 .subtitle { max-width: 60ch; line-height: 1.6; }
 .grid { display: grid; gap: 1rem; }
@@ -1979,12 +2034,16 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   padding: 0;
   border: 0;
   background: transparent;
-  color: #aef4f6;
+  /* Was `#aef4f6`, a DS8 dark-ground cyan: 1.2:1 on white, so every
+     `.text-link` on the policy pages was an invisible link. The accent as
+     copy, like every other prose link. */
+  color: var(--accent-text);
   cursor: pointer;
   font-weight: 700;
 }
 .text-link:hover {
-  color: #d8f8ff;
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .status-note {
   margin: 1rem 0 0;
@@ -1992,7 +2051,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   border-radius: 18px;
   border: 1px solid rgba(35,208,216,0.18);
   background: rgba(35,208,216,0.08);
-  color: #d8f8ff;
+  color: var(--ink-2);
 }
 
 :focus-visible {
@@ -2017,7 +2076,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   /* Opaque on purpose. The .dc.html's wash ends at var(--bg-base); leaving it
      transparent lets the sitewide body gradient show through and the page
      picks up a stray teal cast on the right in dark mode. */
-  background: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%), var(--bg);
+  background: var(--auth-wash), var(--bg);
 }
 .authcard-wrap {
   width: min(400px, 100%);
@@ -2123,10 +2182,12 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 4px;
-  background: var(--hair-30);
-  border: 1px solid var(--line-2);
-  border-radius: 12px;
-  padding: 4px;
+  /* iOS's segmented control: the grey key track, no rule, a filled selected
+     segment. The console's tinted version returns through the same tokens. */
+  background: var(--key-bg);
+  border: 1px solid var(--key-edge);
+  border-radius: var(--key-radius);
+  padding: 3px;
   margin-bottom: 28px;
 }
 .authcard-tab {
@@ -2144,9 +2205,9 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   transition: all 160ms cubic-bezier(.2,.7,.3,1);
 }
 .authcard-tab.active {
-  background: rgba(var(--accent-rgb),.12);
-  color: var(--ink);
-  box-shadow: inset 0 0 0 1px rgba(var(--accent-rgb),.3);
+  background: var(--chip-on-bg);
+  color: var(--chip-on-ink);
+  box-shadow: 0 0 0 1px var(--chip-on-edge) inset;
 }
 
 .authcard-field { margin-bottom: 16px; }
@@ -2569,6 +2630,9 @@ body:has(#wt-wrap) .site-shell > main {
   font-size: clamp(2rem, 5vw, 4rem);
   line-height: 0.95;
   letter-spacing: -0.055em;
+  /* Primary ink, stated: it inherited a secondary grey from the panel and the
+     console's own title was the lowest-contrast text on the screen. */
+  color: var(--ink);
 }
 .admin-metric-grid {
   display: grid;
@@ -2660,7 +2724,7 @@ body:has(#wt-wrap) .site-shell > main {
 }
 .admin-health-status.ok {
   background: rgba(34, 197, 94, 0.14);
-  color: #86efac;
+  color: var(--success-text);
 }
 .admin-health-status.warn {
   background: rgba(245, 158, 11, 0.16);
@@ -2698,7 +2762,7 @@ body:has(#wt-wrap) .site-shell > main {
   border: 1px solid rgba(35,208,216,0.18);
   border-radius: 999px;
   background: rgba(35,208,216,0.08);
-  color: #d8f8ff;
+  color: var(--ink-2);
   padding: 0.35rem 0.7rem;
   font-size: 0.9375rem;
   font-weight: 800;
@@ -3035,7 +3099,7 @@ body:has(#wt-wrap) .site-shell > main {
   margin-bottom: 0.45rem;
   border-radius: 999px;
   background: var(--line);
-  color: #d8caff;
+  color: var(--ink-2);
   font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -3172,7 +3236,7 @@ body:has(#wt-wrap) .site-shell > main {
   height: 620px;
 }
 .site-background-grid {
-  opacity: 0.08;
+  opacity: var(--site-grid-opacity);
   background-size: 56px 56px;
   mask-image: radial-gradient(circle at 50% 0%, rgba(0,0,0,0.96), rgba(0,0,0,0.45) 64%, transparent 100%);
 }
@@ -3196,12 +3260,15 @@ body:has(#wt-wrap) .site-shell > main {
 .subtitle,
 .meta,
 .kicker {
-  color: #90a1b5;
+  /* Was `#90a1b5`, DS8's blue-grey as a literal: 3.0:1 on the white ground,
+     which is why every subtitle, meta line and kicker on the public and admin
+     pages read as washed out. The secondary ink token measures 7:1. */
+  color: var(--ink-3);
 }
 .tag {
   border: 1px solid var(--hair-80);
   background: var(--hair-45);
-  color: #d9e7f7;
+  color: var(--ink-2);
   font-size: 0.9375rem;
   letter-spacing: 0.02em;
 }
@@ -3226,7 +3293,7 @@ body:has(#wt-wrap) .site-shell > main {
   border-style: solid;
   border-color: var(--line);
   background: var(--hair-30);
-  color: #95a7bc;
+  color: var(--ink-3);
 }
 @media (max-width: 900px) { .grid-3,
 .grid-2{ grid-template-columns: 1fr; }
@@ -3288,7 +3355,10 @@ body:has(#wt-wrap) .site-shell > main {
 .fan-playlist-item,
 .panel,
 .card{
-  background: linear-gradient(180deg, rgba(15, 20, 32, 0.9), rgba(10, 14, 23, 0.94));
+  /* Was DS8's navy gradient as a literal — dead under the rule further down
+     that repaints these from the surface token, and the last raw ground in
+     this file. The token, so a theme decides. */
+  background: var(--bg-surface);
   border-color: var(--hair-70);
 }
 .fan-playlist-panel{
@@ -3303,7 +3373,7 @@ body:has(#wt-wrap) .site-shell > main {
 
 .site-background-orb {
   filter: blur(72px);
-  opacity: 0.2;
+  opacity: var(--site-orb-opacity);
 }
 
 /* .button used to be in both groups below; it now carries the console
@@ -3311,12 +3381,16 @@ body:has(#wt-wrap) .site-shell > main {
    and these later same-specificity rules would silently win over it. */
 .panel,
 .card{
-  border-radius: 26px;
+  /* 12px on iOS (a grouped cell), the console's cut edge on its themes — the
+     26px this carried read as a phone app icon on a policy page. */
+  border-radius: var(--radius-panel);
 }
 
 .panel,
 .card{
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  /* iOS grouped cells cast nothing; the console's brass ring and cast return
+     through the same token `.mmm-card` reads. */
+  box-shadow: var(--plate-ring);
 }.ticketing-panel{
   box-shadow: none;
 }
