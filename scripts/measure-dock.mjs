@@ -102,20 +102,27 @@ const dock = slice('src/app/mmm.css', '/* ── The dock ', "/* The design syst
      table and reported the app broken when it was the harness. */
   .replaceAll('.mmm-frame:has(', '#root:has(');
 
+/* THE REAL TOKENS, NOT A RESTATED LIST. This harness used to carry its own
+   `:root` with ~20 hand-copied colour tokens, and on 2026-09-05 the dock moved
+   its material onto NEW tokens (--dock-lip, --dock-bg, --tab-rail, ...) that the
+   list did not have. `border-top: 3px solid var(--dock-lip)` with --dock-lip
+   undefined is an invalid declaration, so the border vanished and the probe
+   measured a 52px bar against a 55px table and reported the app broken — the
+   harness-drifts-from-the-app failure this file's own comments record TWICE
+   already (box-sizing, then the button floor). A re-declared token table is
+   the same defect as a re-declared geometry table. So the probe now slices
+   globals.css's own `:root`, by its landmarks, and can no longer disagree with
+   it. Only the two font aliases are overridden, to the copied local files. */
+const tokens = slice('src/app/globals.css', ':root {', '\n}')
+  .replaceAll("url('/console/", "url('console/") + '\n}';
+
 await writeFile(path.join(dir, 'probe.css'), `
 @font-face { font-family: 'JB'; src: url('fonts/JetBrainsMono-Variable.woff2') format('woff2'); }
 @font-face { font-family: 'BG'; src: url('fonts/BricolageGrotesque-Variable.woff2') format('woff2'); }
+${tokens}
 :root {
   --font-mono: 'JB', monospace; --font-display: 'BG', sans-serif;
-  --bg: #f0dfb8; --ink: #1c1408; --ink-1: #1c1408;
-  --accent: #ff5029; --accent-rgb: 255, 80, 41;
-  --walnut: #6e4c2b; --walnut-2: #4e3418; --walnut-3: #331f0c;
-  --brass: #c9a54e; --brass-deep: #8a6a2c; --lamp: #ff8f2d; --live: #c81f10;
-  --rule-on-walnut: rgba(246, 236, 217, .22);
-  --ease: cubic-bezier(.4, 0, .2, 1); --ease-in-out: cubic-bezier(.4, 0, .2, 1);
-  --ease-spring: cubic-bezier(.34, 1.56, .64, 1);
-  --duration-default: 200ms; --duration-medium: 320ms; --duration-slow: 420ms;
-  --radius-panel: 3px; --z-sticky: 30;
+  --z-sticky: 30;
 }
 /* globals.css sets this on every element in the app, and the probe slices only
    mmm.css - without it the tab's min-height sized its CONTENT box and every tab

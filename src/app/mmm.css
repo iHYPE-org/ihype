@@ -725,9 +725,7 @@ html:has(.mmm-frame) {
   position: fixed;
   inset: 0;
   pointer-events: none;
-  background-image:
-    radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%),
-    url('/console/grain.png');
+  background-image: var(--pane-wash), var(--grain-texture);
   background-size: auto, 160px;
   /* The map's own values (overlay at ~0.1). The first cut used multiply at
      0.5 and turned the paper into sandpaper — grain is an exposure cue, not
@@ -827,7 +825,20 @@ html:has(.mmm-frame) {
 /* The nameplate is a real heading. It was a `<p>` in the rail this replaces, so
    a screen reader walking the headings of MUSIC found none of its collections;
    `.mmm-eyebrow` supplies the paint and the h3 supplies the outline. */
-.mmm-shelf-name { margin: 0; font-weight: inherit; }
+/* Apple Music names a shelf with a bold title, not a legend: 20px, weight 700,
+   sentence case, the display face. This overrides the `.mmm-eyebrow` paint the
+   element also carries — `.mmm-eyebrow` supplies the outline role, this the
+   type — and is why it must stay after that rule. */
+.mmm-shelf-name {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ink);
+}
+.mmm-shelf-name::before { content: none; }
 .mmm-shelf-count { color: var(--ink-3); }
 .mmm-shelf-more {
   flex: 0 0 auto;
@@ -910,9 +921,9 @@ html:has(.mmm-frame) {
    were considered and refused**: they are semantic (venue teal, the promoter's
    10% slice) and a track tile coloured "venue" states something false.
    `--accent` is refused too — cream on it measures 2.70:1. */
-.mmm-shelf-art[data-tone='0'] { background: linear-gradient(150deg, var(--walnut), var(--walnut-3)); }
-.mmm-shelf-art[data-tone='2'] { background: linear-gradient(200deg, var(--walnut-2), var(--walnut-3)); }
-.mmm-shelf-art[data-tone='4'] { background: linear-gradient(70deg, var(--walnut-3), var(--walnut)); }
+.mmm-shelf-art[data-tone='0'] { background: linear-gradient(150deg, var(--tile-1), var(--tile-3)); }
+.mmm-shelf-art[data-tone='2'] { background: linear-gradient(200deg, var(--tile-2), var(--tile-3)); }
+.mmm-shelf-art[data-tone='4'] { background: linear-gradient(70deg, var(--tile-3), var(--tile-1)); }
 .mmm-shelf-art[data-tone='1'],
 .mmm-shelf-art[data-tone='3'],
 .mmm-shelf-art[data-tone='5'] {
@@ -1489,7 +1500,9 @@ html:has(.mmm-frame) {
    primitive. Card nameplates opt out: a dash on a brass plate is a scratch. */
 .mmm-eyebrow::before {
   content: '';
-  display: inline-block;
+  /* The machined dash is console hardware: `none` on the iOS default, restored
+     by the character themes through the token. */
+  display: var(--eyebrow-dash);
   width: 14px;
   height: 2px;
   margin-right: 8px;
@@ -1514,10 +1527,10 @@ html:has(.mmm-frame) {
      rides outside it in the shadow. The cast is what actually lifts the plate
      off the ground; the old `2px 3px 0` offset was invisible on a card the
      same colour as the page. */
-  border-radius: 5px;
-  border: 1px solid var(--brass-deep);
+  border-radius: var(--radius-panel);
+  border: 1px solid var(--plate-border);
   background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
-  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  box-shadow: var(--plate-ring);
 }
 .mmm-card-accent {
   border-color: rgba(var(--accent-rgb), 0.22);
@@ -1542,12 +1555,10 @@ html:has(.mmm-frame) {
   /* Real brushed metal under the gradient, the same asset and the same
      `overlay` blend the dock's plate uses — a flat gradient reads as a
      coloured bar, and the texture is already shipped. */
-  background-image:
-    linear-gradient(180deg, var(--brass), var(--brass-edge)),
-    url('/console/brushed.png');
+  background-image: var(--plate-header-bg), var(--plate-header-texture);
   background-size: auto, 120px;
   background-blend-mode: normal, overlay;
-  color: var(--ink-on-brass);
+  color: var(--plate-header-ink);
   font-family: var(--font-mono);
   /* 11px, not the template's 10px. The tracked-mono exemption bottoms out at
      11px in lint-source.mjs (its message says 9px and the constant says 11 —
@@ -1556,7 +1567,7 @@ html:has(.mmm-frame) {
   font-size: 0.6875rem;
   font-weight: 700;
   letter-spacing: 0.2em;
-  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
+  box-shadow: var(--plate-header-shadow);
 }
 
 .mmm-row {
@@ -2063,14 +2074,21 @@ html:has(.mmm-frame) {
   /* The nameplate used to straddle the lip, so the bar could not clip. It is
      gone and nothing overhangs any more, so the grain and the lip meet the
      cabinet's own edge. */
-  border-top: var(--mmm-dock-lip) solid var(--brass);
-  background-image:
-    linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54)),
-    url('/console/walnut-v3.png');
+  /* MATERIAL FROM TOKENS (2026-09-05, owner: "Make design like Apple Music iOS
+     style"). The walnut photograph, its darkening tint, the brass lip and the
+     cast shadow were written here; they are `--dock-*` tokens in globals.css
+     now, `none` by default and restored by the four character themes. The
+     default is iOS's tab bar: a translucent light material with a saturating
+     blur, a hairline on top, nothing photographed. Geometry is untouched —
+     `--mmm-dock-lip` still feeds `--mmm-chrome-size`; only its colour moved. */
+  border-top: var(--mmm-dock-lip) solid var(--dock-lip);
+  background-image: var(--dock-tint), var(--dock-texture);
   background-size: auto, 300px auto;
   background-blend-mode: multiply, normal;
-  background-color: var(--walnut);
-  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  background-color: var(--dock-bg);
+  -webkit-backdrop-filter: var(--dock-blur);
+  backdrop-filter: var(--dock-blur);
+  box-shadow: var(--dock-shadow);
   overflow: hidden;
   /* The controls are the only interactive chrome; the bar itself swallows taps
      rather than passing them to the map underneath. */
@@ -2083,7 +2101,7 @@ html:has(.mmm-frame) {
   inset: 0;
   pointer-events: none;
   z-index: 3;
-  background-image: url('/console/grain.png');
+  background-image: var(--grain-texture);
   background-size: 160px;
   mix-blend-mode: overlay;
   opacity: 0.09;
@@ -2153,7 +2171,8 @@ html:has(.mmm-frame) {
   line-height: 1;
   white-space: nowrap;
 }
-.mmm-tab[data-on='true'] { color: var(--ink-on-walnut); }
+/* The lit tab. Accent on the iOS bar, the cabinet's primary ink on the console. */
+.mmm-tab[data-on='true'] { color: var(--tab-on-ink); }
 /* The lit rail under the active tab. Brass, fading at both ends, so it reads as
    a lamp behind the fascia rather than a border. */
 .mmm-tab[data-on='true']::after {
@@ -2164,17 +2183,17 @@ html:has(.mmm-frame) {
   bottom: 0;
   height: 2px;
   border-radius: 1px;
-  background: linear-gradient(90deg, transparent, var(--brass), transparent);
+  background: linear-gradient(90deg, transparent, var(--tab-rail), transparent);
 }
 @media (hover: hover) {
   /* Behind `hover: hover` without exception — an unguarded :hover STICKS on a
      touchscreen, so the last tab tapped would stay lit next to the real one. */
   .mmm-tab:hover { color: var(--ink-on-walnut-2); }
-  .mmm-tab[data-on='true']:hover { color: var(--ink-on-walnut); }
+  .mmm-tab[data-on='true']:hover { color: var(--tab-on-ink); }
 }
 .mmm-tab:active .mmm-tab-glyph { transform: translateY(1px); }
 .mmm-tab:focus-visible {
-  outline: 2px solid var(--brass);
+  outline: 2px solid var(--accent);
   outline-offset: -3px;
   border-radius: 4px;
 }
@@ -2191,7 +2210,7 @@ html:has(.mmm-frame) {
   gap: 4px;
   height: var(--mmm-mini-h);
   padding: 0 2px;
-  border-bottom: 1px solid rgba(201, 165, 78, 0.3);
+  border-bottom: 1px solid var(--line);
 }
 .mmm-mini-open {
   flex: 1;
@@ -2360,15 +2379,15 @@ html:has(.mmm-frame) {
   display: inline-flex;
   align-items: center;
   padding: 0 14px;
-  border-radius: 4px;
-  /* 13px tracked mono: the exemption's own shape (mono family AND tracking
-     >= .14em), which is what a section label is — the name of a place in this
-     screen, set as a legend rather than as prose. */
-  font-family: var(--font-mono);
-  font-size: 0.8125rem;
+  border-radius: var(--pill-radius);
+  /* Apple Music's filter pills: 15px of the system face, sentence case, weight
+     600. 15px is the body floor, so no exemption is needed and none is taken —
+     the tracked-mono legend this used to be is history. */
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   text-decoration: none;
   white-space: nowrap;
   scroll-snap-align: start;
@@ -2380,15 +2399,17 @@ html:has(.mmm-frame) {
   padding: 2px 0 10px;
 }
 .mmm-strip[data-variant='pane'] .mmm-strip-item {
-  border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  border: 1px solid var(--plate-border);
+  background: var(--pill-bg);
   color: var(--ink-2);
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+  box-shadow: var(--pill-shadow);
 }
+/* Selected: Apple Music fills the pill with the label colour and inverts the
+   text; the console themes light the plate instead. Both from tokens. */
 .mmm-strip[data-variant='pane'] .mmm-strip-item[data-on='true'] {
-  color: var(--ink);
-  background: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.7) inset, 0 0 0 1px var(--brass) inset;
+  color: var(--pill-on-ink);
+  background: var(--pill-on-bg);
+  box-shadow: var(--pill-on-ring);
 }
 @media (hover: hover) {
   .mmm-strip[data-variant='pane'] .mmm-strip-item:hover { color: var(--ink); }
@@ -2401,30 +2422,31 @@ html:has(.mmm-frame) {
   gap: 0;
   border-radius: 4px;
   overflow: hidden;
-  border: 1px solid var(--brass-deep);
-  /* `--brass-edge`, NOT `--brass-deep`, and globals.css says why in the token's
-     own comment: --brass-edge is the header gradient's bottom stop and is
-     deliberately lighter, because no ink reaches AA on --brass-deep (pure black
-     measures 3.6:1 there). Rendering it against the real stylesheet is how this
-     was caught — the first version ran to --brass-deep and the two resting
-     segments were unreadable. --ink-on-brass measures 4.69:1 on --brass-edge,
-     which is the worst case of this pair. */
-  background: linear-gradient(180deg, var(--brass), var(--brass-edge));
-  box-shadow: 0 2px 8px -2px rgba(28, 20, 8, 0.45), 0 1px 0 rgba(255, 240, 205, 0.5) inset;
+  border: 1px solid var(--plate-border);
+  /* Over the map this is the same translucent bar as the dock by default and
+     the brass plate on the console themes. On brass the ink is --ink-on-brass
+     against --brass-edge — the lighter stop, deliberately, because no ink
+     reaches AA on --brass-deep (pure black measures 3.6:1); that measurement
+     lives on in the character themes' --map-strip-* tokens. */
+  border-radius: var(--pill-radius);
+  background: var(--map-strip-bg);
+  -webkit-backdrop-filter: var(--dock-blur);
+  backdrop-filter: var(--dock-blur);
+  box-shadow: var(--map-strip-shadow);
 }
 .mmm-strip[data-variant='brass'] .mmm-strip-item {
   flex: 1 1 0;
   justify-content: center;
   border-radius: 0;
   padding: 0 8px;
-  color: var(--ink-on-brass);
-  border-right: 1px solid rgba(59, 44, 11, 0.32);
+  color: var(--map-strip-ink);
+  border-right: 1px solid var(--line);
 }
 .mmm-strip[data-variant='brass'] .mmm-strip-item:last-child { border-right: 0; }
 .mmm-strip[data-variant='brass'] .mmm-strip-item[data-on='true'] {
-  background: linear-gradient(180deg, var(--plate-lit), var(--plate-2));
-  box-shadow: 0 0 0 1px rgba(59, 44, 11, 0.25) inset;
-  color: var(--ink);
+  background: var(--pill-on-bg);
+  box-shadow: var(--pill-on-ring);
+  color: var(--pill-on-ink);
 }
 
 /* ── MAP controls ─────────────────────────────────────────────────────────

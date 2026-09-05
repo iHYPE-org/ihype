@@ -21,10 +21,23 @@
      could not catch it, because color-scheme is not one. */
   color-scheme: light;
   /* ── Surfaces (warm cream board, low → high elevation) ─────────────── */
-  --bg:    #f0dfb8;
-  --bg-2:  #e9dcc0;
-  --bg-3:  #dfd0ac;
-  --bg-4:  #d2c6a4;
+  /* APPLE MUSIC, iOS (owner, 2026-09-05: "Make design like Apple Music iOS
+     style. Keep all the same functionality"). This is the SIXTH ground this
+     block has carried and, like every one before it, a value-only edit: no
+     token NAME moves, so mmm.css needed nothing for the colour half. What is
+     new is that the console's photographed materials — walnut, brass, film
+     grain — are no longer painted by default; they became `--*-texture` tokens
+     that resolve to `none` here and to the PNGs in the four character themes,
+     so the cabinet is a theme now rather than the chassis. The retired cream
+     ground was #f0dfb8 / ink #1c1408; it is gone from :root and survives only
+     as the tint the character themes lay over their own textures.
+
+     iOS system colours, named for what they are on the device: systemBackground,
+     secondarySystemGroupedBackground, systemGray5, systemGray4. */
+  --bg:    #ffffff;
+  --bg-2:  #f2f2f7;
+  --bg-3:  #e5e5ea;
+  --bg-4:  #d1d1d6;
   /* Aliases — several components use var(--bg2)/var(--bg3) (no hyphen);
      without these they silently resolve to nothing and those surfaces
      render transparent instead of the intended card background. */
@@ -32,8 +45,12 @@
   --bg3: var(--bg-3);
 
   /* ── Ink (cool off-white → muted slate) ──────────────────────────── */
-  --ink:         #1c1408;
-  --ink-2:       #3f3018;
+  /* label / secondaryLabel. --ink-3 is NOT systemGray (#8e8e93): that is
+     3.3:1 on --bg-4 and the audit measures every ink on every ground. #545458
+     clears 4.95:1 there and 7.54:1 on white. Apple gets away with lighter
+     grey beside SF Symbols; a word carries no icon. */
+  --ink:         #0a0a0a;
+  --ink-2:       #3a3a3c;
   /* The faintest copy in the system — the design system's 10px eyebrows sit on
      it, so it carries the 4.5:1 AA floor rather than the large-text one.
      Design System 8 re-anchored it to #8792a6 and states 4.91:1 worst case on
@@ -43,36 +60,36 @@
      the same headroom the warm-palette value had (4.77:1) before the
      overhaul. Same method rows 262/265/266 used — the floor is the codebase's
      own and does not bend to a handoff's arithmetic. */
-  --ink-3:       #5d4a26;
-  --ink-4:       #8a7442;
+  --ink-3:       #545458;
+  --ink-4:       #8e8e93;
   --ink-on-tint: #a7b1c4;
   /* Alpha-ink scale — foreground ink at fixed opacities, theme-aware so
      translucent text/hairlines stay legible in light mode. Dark values are
      byte-identical to the rgba(238,241,246,·) literals they replace, so the
      canonical dark UI is unchanged. Overridden per-opacity under
      [data-theme="light"]. */
-  --ink-a10: rgba(28,20,8,.1);
-  --ink-a20: rgba(28,20,8,.2);
-  --ink-a22: rgba(28,20,8,.22);
-  --ink-a25: rgba(28,20,8,.25);
-  --ink-a28: rgba(28,20,8,.28);
-  --ink-a30: rgba(28,20,8,.3);
-  --ink-a32: rgba(28,20,8,.32);
-  --ink-a35: rgba(28,20,8,.35);
-  --ink-a38: rgba(28,20,8,.38);
-  --ink-a40: rgba(28,20,8,.4);
-  --ink-a42: rgba(28,20,8,.42);
-  --ink-a45: rgba(28,20,8,.45);
-  --ink-a50: rgba(28,20,8,.5);
-  --ink-a55: rgba(28,20,8,.55);
-  --ink-a60: rgba(28,20,8,.6);
-  --ink-a65: rgba(28,20,8,.65);
-  --ink-a70: rgba(28,20,8,.7);
-  --ink-a72: rgba(28,20,8,.72);
-  --ink-a75: rgba(28,20,8,.75);
-  --ink-a80: rgba(28,20,8,.8);
-  --ink-a85: rgba(28,20,8,.85);
-  --ink-a90: rgba(28,20,8,.9);
+  --ink-a10: rgba(10,10,10,.1);
+  --ink-a20: rgba(10,10,10,.2);
+  --ink-a22: rgba(10,10,10,.22);
+  --ink-a25: rgba(10,10,10,.25);
+  --ink-a28: rgba(10,10,10,.28);
+  --ink-a30: rgba(10,10,10,.3);
+  --ink-a32: rgba(10,10,10,.32);
+  --ink-a35: rgba(10,10,10,.35);
+  --ink-a38: rgba(10,10,10,.38);
+  --ink-a40: rgba(10,10,10,.4);
+  --ink-a42: rgba(10,10,10,.42);
+  --ink-a45: rgba(10,10,10,.45);
+  --ink-a50: rgba(10,10,10,.5);
+  --ink-a55: rgba(10,10,10,.55);
+  --ink-a60: rgba(10,10,10,.6);
+  --ink-a65: rgba(10,10,10,.65);
+  --ink-a70: rgba(10,10,10,.7);
+  --ink-a72: rgba(10,10,10,.72);
+  --ink-a75: rgba(10,10,10,.75);
+  --ink-a80: rgba(10,10,10,.8);
+  --ink-a85: rgba(10,10,10,.85);
+  --ink-a90: rgba(10,10,10,.9);
   /* Hairline/surface white-alpha scale — subtle borders, dividers, and
      fill tints. Dark = white at the given opacity (byte-identical to the
      literals replaced); light = black at the same opacity, so dark-surface
@@ -101,12 +118,18 @@
   --hair-280: rgba(255,255,255,.28);
 
   /* ── Hairlines ───────────────────────────────────────────────────── */
-  --line:   rgba(138,106,44,.34);
-  --line-2: rgba(138,106,44,.52);
+  /* iOS separator: label at 29%, the exact system value. */
+  --line:   rgba(60,60,67,.29);
+  --line-2: rgba(60,60,67,.5);
 
   /* ── Brand accents ───────────────────────────────────────────────── */
-  --accent:      #ff5029;
-  --accent-2:    #ff3e9a;
+  /* Apple Music red, deepened ONE step so WHITE clears AA on it. Apple's
+     #fa2d48 puts white at 3.9:1 and the audit refuses it; #e0263e puts white at
+     4.65:1 and still reads as the same red. That also retires the dark ink on
+     the brand fill the console needed — a white label on a red key is what an
+     Apple Music button looks like, and now it measures. */
+  --accent:      #e0263e;
+  --accent-2:    #ff375f;
   /* The accent as TEXT. This token exists because the brand fill cannot serve
      as copy on either theme, and the two themes fail it for opposite reasons —
      light was 2.46:1 against --bg-3, found by axe on the cookie banner's
@@ -121,17 +144,17 @@
      untouched** — every fill, chip, bar and gradient is the brand orange
      exactly as before. This is copy only, which is the whole point of the
      token existing. */
-  --accent-text: #923319;
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2) 40%, #b983ff);
+  --accent-text: #c8102e;   /* 5.88:1 on white */
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
   /* The warm CTA gradient. Seven pages had hand-written
      `linear-gradient(135deg, #ff5029, #ff3e6e)` on their primary button —
      same two stops, same angle, copied by hand each time. */
-  --accent-grad-warm: linear-gradient(135deg, var(--accent), #ff3e6e);
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
 
   /* Ink ON a brand fill — the inverse of --accent-text, which is the accent
      used AS copy over a page background. The dark neutral keeps the orange
      unchanged while clearing WCAG AA in both themes (white was only 3.27:1). */
-  --ink-on-accent: #1c1408;
+  --ink-on-accent: #ffffff;   /* 4.65:1 on --accent, measured */
 
   /* Ink and scrim for content sitting ON media — a photo, or one of the seed
      deck's saturated gradient cards. These are white and black in BOTH
@@ -152,8 +175,8 @@
      change would have missed ~60 surfaces. Unlike --bg-base-rgb and
      --ink-1-rgb these are brand fills, identical in both themes, so they
      are NOT re-stated in the light block. */
-  --accent-rgb:      255, 80, 41;   /* #ff5029 */
-  --accent-2-rgb:    255, 62, 154;  /* #ff3e9a */
+  --accent-rgb:      224, 38, 62;   /* #e0263e */
+  --accent-2-rgb:    255, 55, 95;   /* #ff375f */
   --role-fan-rgb:    185, 131, 255; /* #b983ff */
   --role-venue-rgb:  34, 229, 212;  /* #22e5d4 */
   --role-promoter-rgb: 255, 62, 154; /* #ff3e9a — see --role-promoter below */
@@ -163,7 +186,7 @@
      "this failed" chip is not a branded surface, and the two must be able to
      diverge without hunting for which rgba() meant which. Not re-stated in the
      light block, like every other fill triplet above. */
-  --danger-rgb:      255, 80, 41;   /* #ff5029 */
+  --danger-rgb:      224, 38, 62;   /* #e0263e */
 
   /* ── Role colors ─────────────────────────────────────────────────── */
   --role-fan:      #5b3d8f;
@@ -173,7 +196,7 @@
      removal landed. It has landed, and all of their call sites went with it.
      Do not reintroduce them: promoter is the surviving concept and
      --role-promoter is its token. */
-  --role-artist:   #ff5029;
+  --role-artist:   var(--accent);
   --role-venue:    #0f6b62;
   /* The venue teal as TEXT. It is 10.6:1 on the dark charter card but 1.26:1
      on the light one, whose surface is that same teal at 10% over a light
@@ -249,12 +272,18 @@
      is dark ink on the console board — dark on near-black, invisible, and
      invisible only while music was playing, which is why no page scan
      ever caught it. Ink on a material comes from the material. */
-  --brass: #c9a54e;
-  --brass-deep: #8a6a2c;
-  --walnut: #4a2b16;
-  --walnut-2: #34200f;
-  --walnut-3: #1a1206;
-  --lamp: #ffb84a;
+  /* THE CABINET IS THE TAB BAR NOW. Same token names, because 60-odd rules in
+     mmm.css read them and every one still means "the chrome's material" —
+     but the material is iOS's translucent bar (systemGray6 at 92% under a
+     blur) and its hardware is systemGray3/4. The photographed textures that
+     used to sit under these colours are `--*-texture` tokens further down,
+     `none` here; the four character themes set both halves back. */
+  --brass: #c7c7cc;
+  --brass-deep: #aeaeb2;
+  --walnut: #f9f9f9;
+  --walnut-2: #f2f2f7;
+  --walnut-3: #1c1c1e;
+  --lamp: #ffcc00;
 
   /* THE PLATE — the console's content card, and the reason a pane stopped
      looking like a machine. `.mmm-card` painted --bg-surface, which sits a
@@ -275,19 +304,64 @@
      all reaches AA on --brass-deep: pure black measures 3.6:1. So the header
      stops early. --ink-on-brass measures 4.69:1 on --brass-edge (the worst
      case, being the darker stop) and 7.15:1 on --brass itself. */
-  --plate-1: #f8f0d8;
-  --plate-2: #eadcb8;
+  --plate-1: #f2f2f7;
+  --plate-2: #f2f2f7;   /* flat: an iOS grouped cell is one colour, not a gradient */
   /* The lit top edge of a machined key. An alpha over the plate, so it
      themes: 55% white is a highlight on parchment and a white bar on the
      three dark grounds. */
-  --plate-lit: rgba(255,255,255,.55);
+  --plate-lit: rgba(255,255,255,.9);
   /* A field is PRESSED INTO the plate, not floating on it, so it is its own
      face rather than a tint of the plate. Warm near-white here; a well in
      the three dark themes. Carries --ink like the plate does, and
      audit:theme-contrast measures it in every block. */
-  --field: #fff6de;
-  --brass-edge: #a1843e;
-  --ink-on-brass: #2b1a0c;
+  --field: #ffffff;
+  --brass-edge: #d1d1d6;
+  --ink-on-brass: #1c1c1e;   /* 11.18:1 on --brass-edge */
+
+  /* ── What the chrome is MADE OF (2026-09-05) ──────────────────────────────
+     The console painted its materials straight into mmm.css: a walnut
+     photograph under the dock, brushed metal under every plate header, film
+     grain over the pane. Apple Music is flat and translucent, so those became
+     tokens. `none` is the default; the four character themes point them back
+     at the PNGs in public/console/ and restore the brass, so the cabinet is
+     still there for anyone who picks it — as a theme, not as the chassis. */
+  --dock-texture: none;
+  --dock-tint: none;
+  --dock-bg: rgba(249, 249, 249, .92);
+  --dock-blur: saturate(180%) blur(20px);
+  --dock-lip: var(--line);
+  --dock-shadow: none;
+  --grain-texture: none;
+  --pane-wash: none;
+  --tab-rail: transparent;
+  --tab-on-ink: var(--accent);
+  --plate-border: transparent;
+  --plate-ring: none;
+  --plate-header-bg: none;
+  --plate-header-texture: none;
+  --plate-header-ink: var(--ink-3);
+  --plate-header-shadow: none;
+  --pill-radius: var(--radius-pill);
+  --pill-bg: var(--bg-2);
+  --pill-shadow: none;
+  --pill-on-bg: var(--ink);
+  --pill-on-ink: var(--bg);
+  --pill-on-ring: none;
+  --map-strip-bg: rgba(249, 249, 249, .92);
+  --map-strip-ink: var(--ink-2);
+  --map-strip-shadow: 0 1px 3px rgba(0, 0, 0, .12);
+  --eyebrow-dash: none;
+  /* The shelf's fallback artwork: three tones the tile generator alternates
+     with the plate. systemGray4/5/3 here; the walnut stops on the console. */
+  --tile-1: #d1d1d6;
+  --tile-2: #e5e5ea;
+  --tile-3: #aeaeb2;
+  /* The chart: Apple Maps rather than a survey print. No tone, no ruled grid,
+     no vignette. The character themes restore theirs. */
+  --map-filter: none;
+  --map-rule: transparent;
+  --map-vignette: transparent;
+  --map-blend: normal;
   /* Paper grain — an SVG fractal-noise tile, inlined so it costs no request.
      Used by the map's foxing and available to any surface that needs the
      age-spotting of printed stock. It was `var(--grain, none)` at the call
@@ -302,16 +376,16 @@
 
      Warm, not white — white on walnut reads as a screen laid over furniture
      rather than ink printed on it. */
-  --ink-on-walnut:   #f6ecd9;  /* 10.87:1 on --walnut */
-  --ink-on-walnut-2: #d8c6a6;  /*  7.61:1 — secondary copy */
+  --ink-on-walnut:   #0a0a0a;  /* 18.80:1 on --walnut */
+  --ink-on-walnut-2: #3a3a3c;  /* 10.78:1 — secondary copy */
   /* The dimmest rank a WORD may use. Anything fainter is a hairline, and the
      hairline tokens below are where that belongs. */
-  --ink-on-walnut-3: #bda882;  /*  5.51:1 — the floor */
+  --ink-on-walnut-3: #545458;  /*  7.16:1 — resting tab ink */
   /* Hairlines and rails ON the material. The page's --line/--hair-* are dark
      alphas under the console theme, so a scrub rail drawn with them vanishes
      into the timber — the same class of mistake as the ink, one layer down. */
-  --rule-on-walnut:   rgba(246, 236, 217, .22);
-  --rule-on-walnut-2: rgba(246, 236, 217, .38);
+  --rule-on-walnut:   rgba(60, 60, 67, .29);
+  --rule-on-walnut-2: rgba(60, 60, 67, .5);
 
   /* ── Status ──────────────────────────────────────────────────────── */
   --live:    #ff3c3c;
@@ -357,9 +431,9 @@
   /* RGB triplets, for composed alpha (`rgba(var(--bg-base-rgb), 0.9)`).
      A custom property cannot be decomposed in CSS, so these are maintained
      alongside their hex counterparts above and re-stated per theme. */
-  --bg-base-rgb:      240,223,184;    /* #0b1220 */
-  --ink-1-rgb:        28,20,8; /* #eef1f6 */
-  --surface-tint-rgb: 28,20,8; /* the tint that lifts a surface on hover */
+  --bg-base-rgb:      255,255,255;
+  --ink-1-rgb:        10,10,10;
+  --surface-tint-rgb: 10,10,10; /* the tint that lifts a surface on hover */
 
   /* Semantic success surface — the charter card and the player's transport
      hover both paint from it. The design system ships four such pairs; the
@@ -379,7 +453,7 @@
   /* Danger AS COPY. --danger is #ff5029, i.e. the accent, and carries the
      same trap: fine as a fill, 2.48:1 as a word on the console board. Every
      theme restates this one. 8.14:1 here. */
-  --danger-text:      #9c2707;
+  --danger-text:      #b3001b;
   /* Success AS COPY, for the same reason as the two above. --success is the
      teal #22e5d4: 11.79:1 on navy, 1.21:1 on the cream board — one of the
      worst inversions in the palette, and it was carrying the signup page's
@@ -400,7 +474,7 @@
   /* Behind the map tiles. Paper, not void — the tiles are toned to an aged
      chart, so what shows at the edges and while they load has to be the same
      stock or the frame reads as a hole in the cabinet. */
-  --map-void:    #e6d8b4;
+  --map-void:    #e5e5ea;
   --scrim:       rgba(6, 10, 20, .74);  /* nav overlay */
   --hairline:    var(--ink-a10);        /* the design system's borders/dividers name */
 
@@ -416,8 +490,12 @@
      opsz the pixel size is the point of choosing it: see --opsz-* below and
      the display ramp, which sets font-variation-settings rather than
      scaling one static instance. */
-  --f-d: var(--font-bricolage, 'Bricolage Grotesque', sans-serif);
-  --f-b: var(--font-work,      'Work Sans', sans-serif);
+  /* SF Pro where it exists, which is every device this app ships to. The
+     system stack costs no download and is what makes the shell read as the
+     platform's own; Bricolage and Work Sans stay loaded for the four character
+     themes, which set --f-d/--f-b back. */
+  --f-d: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --f-b: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
   --f-m: var(--font-jb,        'JetBrains Mono', monospace);
   --f-s: var(--font-serif,     'Instrument Serif', serif);
   --font-display:      var(--f-d);
@@ -524,13 +602,13 @@
      call sites depend on --radius-lg being 18px while the system's own
      --radius-lg is 10px. Reach for --radius-card and --radius-pill in new
      work; leave the sm/md/lg/xl ramp to the surfaces already built on it. */
-  --radius-card:    3px;
+  --radius-card:    10px;   /* iOS: 10 on artwork and cells (was the console's 3px cut edge) */
   --radius-trigger: 26px;
   /* The radius the shared card/row/stat primitives actually use, named so a
      theme can retune every card in both shells at once instead of a theme
      having to restate a class list it does not own. The primitives carried a
      hardcoded 12px until 2026-08-19; this is that 12px, now with a name. */
-  --radius-panel:   3px;
+  --radius-panel:   12px;
 
   /* ── Shadows ─────────────────────────────────────────────────────── */
   /* Re-anchored to the navy ground (Design System 8). Pure black over
@@ -627,68 +705,55 @@
      stays BARE [data-theme] — do not "tidy" it to :root[data-theme].
    The default (no attribute) is the console cream above. */
 [data-theme="dark"] {
-  /* After-hours: the cabinet with the room lights off. */
+  /* Apple Music with the lights off: iOS dark system colours. Was "the cabinet
+     at night" until 2026-09-05; the cabinet is a character theme now, and dark
+     is the plain companion to the default, as it is on the device. */
   color-scheme: dark;
-  --bg: #171209; --bg-2: #1e180c; --bg-3: #271f10; --bg-4: #302715;
-  --ink: #f2ead9; --ink-2: #d9cdb4; --ink-3: #b3a482; --ink-4: #8a7c5c;
-  --bg-base-rgb: 23,18,9; --ink-1-rgb: 242,234,217; --surface-tint-rgb: 242,234,217;
-  --ink-a10: rgba(242,234,217,.1);
-  --ink-a20: rgba(242,234,217,.2);
-  --ink-a22: rgba(242,234,217,.22);
-  --ink-a25: rgba(242,234,217,.25);
-  --ink-a28: rgba(242,234,217,.28);
-  --ink-a30: rgba(242,234,217,.3);
-  --ink-a32: rgba(242,234,217,.32);
-  --ink-a35: rgba(242,234,217,.35);
-  --ink-a38: rgba(242,234,217,.38);
-  --ink-a40: rgba(242,234,217,.4);
-  --ink-a42: rgba(242,234,217,.42);
-  --ink-a45: rgba(242,234,217,.45);
-  --ink-a50: rgba(242,234,217,.5);
-  --ink-a55: rgba(242,234,217,.55);
-  --ink-a60: rgba(242,234,217,.6);
-  --ink-a65: rgba(242,234,217,.65);
-  --ink-a70: rgba(242,234,217,.7);
-  --ink-a72: rgba(242,234,217,.72);
-  --ink-a75: rgba(242,234,217,.75);
-  --ink-a80: rgba(242,234,217,.8);
-  --ink-a85: rgba(242,234,217,.85);
-  --ink-a90: rgba(242,234,217,.9);
-  --line: rgba(242,234,217,.2); --line-2: rgba(242,234,217,.36);
-  --accent-text: #ff8a63; --danger-text: #ff8a63; --warning-text: #ffc670; --success-text: #3fe8d8;
-  /* DS8's dark-ground role hues — the console set is dark-on-dark here. */
+  --bg: #000000; --bg-2: #1c1c1e; --bg-3: #2c2c2e; --bg-4: #3a3a3c;
+  --ink: #ffffff; --ink-2: #d1d1d6; --ink-3: #aeaeb2; --ink-4: #8e8e93;
+  --bg-base-rgb: 0,0,0; --ink-1-rgb: 255,255,255; --surface-tint-rgb: 255,255,255;
+  --ink-a10: rgba(255,255,255,.10);
+  --ink-a20: rgba(255,255,255,.20);
+  --ink-a22: rgba(255,255,255,.22);
+  --ink-a25: rgba(255,255,255,.25);
+  --ink-a28: rgba(255,255,255,.28);
+  --ink-a30: rgba(255,255,255,.30);
+  --ink-a32: rgba(255,255,255,.32);
+  --ink-a35: rgba(255,255,255,.35);
+  --ink-a38: rgba(255,255,255,.38);
+  --ink-a40: rgba(255,255,255,.40);
+  --ink-a42: rgba(255,255,255,.42);
+  --ink-a45: rgba(255,255,255,.45);
+  --ink-a50: rgba(255,255,255,.50);
+  --ink-a55: rgba(255,255,255,.55);
+  --ink-a60: rgba(255,255,255,.60);
+  --ink-a65: rgba(255,255,255,.65);
+  --ink-a70: rgba(255,255,255,.70);
+  --ink-a72: rgba(255,255,255,.72);
+  --ink-a75: rgba(255,255,255,.75);
+  --ink-a80: rgba(255,255,255,.80);
+  --ink-a85: rgba(255,255,255,.85);
+  --ink-a90: rgba(255,255,255,.90);
+  --line: rgba(84,84,88,.6); --line-2: rgba(84,84,88,.85);
+  --accent-text: #ff6b7f; --danger-text: #ff6b7f; --warning-text: #ffd60a; --success-text: #30d158;
   --role-venue: #22e5d4; --role-promoter: #ff3e9a; --role-fan: #b983ff; --role-advertiser: #ffb84a;
-  /* ── THE MACHINE THEMES TOO (2026-08-26) ─────────────────────────────────
-     Owner: "Themes should adjust console graphics, map graphic, buttons, and
-     fonts as well (for each of the theme options)." This REVERSES the earlier
-     rule that the walnut dock, brass and parchment chart do not theme because
-     they are "the machine, not the room". They are the room's machine now.
-
-     Every ink value below is COMPUTED against its own cabinet, not eyeballed:
-     the base ramp's ratios (10.87 / 7.61 / 5.51 on the lightest stop) are
-     reproduced per theme, because moving --walnut without moving its ink is
-     how a themed cabinet ends up with 2:1 copy on it. `audit:contrast` now
-     measures the ramp in every block rather than only in :root. */
-  --walnut: #3c2211; --walnut-2: #2a1709; --walnut-3: #140d04;
-  --brass: #b08f42; --brass-deep: #7a5f26; --lamp: #ffb84a;
-  --plate-1: #241c0f; --plate-2: #1b1509;
-  --plate-lit: rgba(255,255,255,.07);
-  --field: #0f0b04;
-  --brass-edge: #977b39; --ink-on-brass: #191204;  /* 15.15:1 ink on plate, 4.61:1 glyph on brass edge */
-  --ink-on-walnut: #e3ddd6;    /* 10.90:1 on --walnut */
-  --ink-on-walnut-2: #c4b9a9;  /*  7.60:1 */
-  --ink-on-walnut-3: #ab9c86;  /*  5.48:1 — the floor */
-  --rule-on-walnut: rgba(227,221,214,.22); --rule-on-walnut-2: rgba(227,221,214,.38);
-  /* The chart at night: the same clear-classic recipe, dimmed. Darkening
-     BEFORE sepia, per the note in mmm.css — brightness last clips a near-white
-     tile to white and loses the tone entirely. */
-  --map-filter: brightness(.82) sepia(.24) saturate(1.05) contrast(1.06);
-  --map-rule: rgba(255,236,194,.09); --map-vignette: rgba(0,0,0,.34);
-  --map-blend: normal;
-  /* Dark used to share console's display face on the reasoning that it is
-     the same machine with the lights off. It gets its own now: a cooler,
-     squarer grotesk, so all six themes have a distinct voice. */
-  --f-d: var(--font-space, 'Space Grotesk', sans-serif);
+  --walnut: #1c1c1e; --walnut-2: #2c2c2e; --walnut-3: #000000;
+  --brass: #8e8e93; --brass-deep: #636366; --lamp: #ffd60a;
+  --plate-1: #1c1c1e; --plate-2: #1c1c1e;
+  --plate-lit: rgba(255,255,255,.08);
+  --field: #2c2c2e;
+  --brass-edge: #8e8e93; --ink-on-brass: #000000;  /* 17.01:1 ink on plate, 6.44:1 glyph on brass edge */
+  --ink-on-walnut: #ffffff;    /* 17.01:1 on --walnut */
+  --ink-on-walnut-2: #d1d1d6;  /* 11.18:1 */
+  --ink-on-walnut-3: #aeaeb2;  /*  7.69:1 */
+  --rule-on-walnut: rgba(84,84,88,.6); --rule-on-walnut-2: rgba(84,84,88,.85);
+  --dock-bg: rgba(22, 22, 24, .92);
+  --map-strip-bg: rgba(22, 22, 24, .92);
+  --tile-1: #2c2c2e; --tile-2: #3a3a3c; --tile-3: #1c1c1e;
+  --map-strip-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  /* A light basemap inverted is the standard way to get a dark chart out of a
+     tile set that only ships light; the hue rotation puts water back to blue. */
+  --map-filter: invert(.92) hue-rotate(180deg) brightness(.9) contrast(1.05);
 }
 [data-theme="street"] {
   /* Asphalt and primer grey; the poster wall at night. */
@@ -741,6 +806,40 @@
   /* A poster face, not a borrowed mono: heavy condensed caps are what a
      paste-up wall reads as. Loaded on demand — see layout.tsx. */
   --f-d: var(--font-anton, 'Anton', 'Arial Narrow', sans-serif);
+  /* THE CONSOLE CHASSIS, kept as this theme's character (2026-09-05): the
+     photographed walnut, brushed plate headers, film grain, brass rail, the
+     3px cut edge and the two loaded faces. Everything :root turned off. */
+  --dock-texture: url('/console/walnut-v3.png');
+  --dock-tint: linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54));
+  --dock-bg: var(--walnut);
+  --dock-blur: none;
+  --dock-lip: var(--brass);
+  --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  --grain-texture: url('/console/grain.png');
+  --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
+  --tab-rail: var(--brass);
+  --tab-on-ink: var(--ink-on-walnut);
+  --plate-border: var(--brass-deep);
+  --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  --plate-header-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --plate-header-texture: url('/console/brushed.png');
+  --plate-header-ink: var(--ink-on-brass);
+  --plate-header-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
+  --pill-radius: 4px;
+  --pill-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --pill-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+  --pill-on-bg: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
+  --pill-on-ink: var(--ink);
+  --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
+  --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --map-strip-ink: var(--ink-on-brass);
+  --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
+  --eyebrow-dash: inline-block;
+  --tile-1: var(--walnut); --tile-2: var(--walnut-2); --tile-3: var(--walnut-3);
+  --radius-card: 3px;
+  --radius-panel: 3px;
+  --map-rule: rgba(120, 94, 52, .07); --map-vignette: rgba(120, 94, 52, .13); --map-blend: multiply;
+  --f-b: var(--font-work, 'Work Sans', sans-serif);
 }
 [data-theme="metal"] {
   /* Cold gunmetal; stage blacks and steel. */
@@ -796,6 +895,39 @@
      display face is squared and technical to match the 1px panel radius. */
   --f-b: var(--font-jb, 'JetBrains Mono', monospace);
   --f-d: var(--font-chakra, 'Chakra Petch', sans-serif);
+  /* THE CONSOLE CHASSIS, kept as this theme's character (2026-09-05): the
+     photographed walnut, brushed plate headers, film grain, brass rail, the
+     3px cut edge and the two loaded faces. Everything :root turned off. */
+  --dock-texture: url('/console/walnut-v3.png');
+  --dock-tint: linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54));
+  --dock-bg: var(--walnut);
+  --dock-blur: none;
+  --dock-lip: var(--brass);
+  --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  --grain-texture: url('/console/grain.png');
+  --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
+  --tab-rail: var(--brass);
+  --tab-on-ink: var(--ink-on-walnut);
+  --plate-border: var(--brass-deep);
+  --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  --plate-header-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --plate-header-texture: url('/console/brushed.png');
+  --plate-header-ink: var(--ink-on-brass);
+  --plate-header-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
+  --pill-radius: 4px;
+  --pill-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --pill-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+  --pill-on-bg: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
+  --pill-on-ink: var(--ink);
+  --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
+  --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --map-strip-ink: var(--ink-on-brass);
+  --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
+  --eyebrow-dash: inline-block;
+  --tile-1: var(--walnut); --tile-2: var(--walnut-2); --tile-3: var(--walnut-3);
+  --radius-card: 3px;
+  --radius-panel: 3px;
+  --map-rule: rgba(120, 94, 52, .07); --map-vignette: rgba(120, 94, 52, .13); --map-blend: multiply;
 }
 [data-theme="flowery"] {
   /* Petal pink over deep plum ink. */
@@ -852,6 +984,40 @@
      display serif, which is a quirky text face rather than an elegant one, so
      the two read as different rooms rather than the same one twice. */
   --f-d: var(--font-playfair, 'Playfair Display', Georgia, serif);
+  /* THE CONSOLE CHASSIS, kept as this theme's character (2026-09-05): the
+     photographed walnut, brushed plate headers, film grain, brass rail, the
+     3px cut edge and the two loaded faces. Everything :root turned off. */
+  --dock-texture: url('/console/walnut-v3.png');
+  --dock-tint: linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54));
+  --dock-bg: var(--walnut);
+  --dock-blur: none;
+  --dock-lip: var(--brass);
+  --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  --grain-texture: url('/console/grain.png');
+  --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
+  --tab-rail: var(--brass);
+  --tab-on-ink: var(--ink-on-walnut);
+  --plate-border: var(--brass-deep);
+  --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  --plate-header-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --plate-header-texture: url('/console/brushed.png');
+  --plate-header-ink: var(--ink-on-brass);
+  --plate-header-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
+  --pill-radius: 4px;
+  --pill-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --pill-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+  --pill-on-bg: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
+  --pill-on-ink: var(--ink);
+  --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
+  --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --map-strip-ink: var(--ink-on-brass);
+  --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
+  --eyebrow-dash: inline-block;
+  --tile-1: var(--walnut); --tile-2: var(--walnut-2); --tile-3: var(--walnut-3);
+  --radius-card: 3px;
+  --radius-panel: 3px;
+  --map-rule: rgba(120, 94, 52, .07); --map-vignette: rgba(120, 94, 52, .13); --map-blend: multiply;
+  --f-b: var(--font-work, 'Work Sans', sans-serif);
 }
 [data-theme="classical"] {
   /* Concert-hall ivory; the display face goes serif. */
@@ -902,6 +1068,40 @@
   --map-filter: sepia(.3) saturate(1.06) contrast(1.1);
   --map-rule: rgba(96,68,34,.1); --map-vignette: rgba(96,68,34,.18);
   --radius-panel: 4px;
+  /* THE CONSOLE CHASSIS, kept as this theme's character (2026-09-05): the
+     photographed walnut, brushed plate headers, film grain, brass rail, the
+     3px cut edge and the two loaded faces. Everything :root turned off. */
+  --dock-texture: url('/console/walnut-v3.png');
+  --dock-tint: linear-gradient(180deg, rgba(24, 13, 3, .34), rgba(24, 13, 3, .54));
+  --dock-bg: var(--walnut);
+  --dock-blur: none;
+  --dock-lip: var(--brass);
+  --dock-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18), 0 -10px 24px -12px rgba(0, 0, 0, .55);
+  --grain-texture: url('/console/grain.png');
+  --pane-wash: radial-gradient(120% 100% at 50% 30%, transparent 55%, rgba(120, 94, 52, .12) 100%);
+  --tab-rail: var(--brass);
+  --tab-on-ink: var(--ink-on-walnut);
+  --plate-border: var(--brass-deep);
+  --plate-ring: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  --plate-header-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --plate-header-texture: url('/console/brushed.png');
+  --plate-header-ink: var(--ink-on-brass);
+  --plate-header-shadow: inset 0 -1px 0 rgba(0, 0, 0, .22);
+  --pill-radius: 4px;
+  --pill-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --pill-shadow: 0 1px 0 rgba(255, 255, 255, .5) inset;
+  --pill-on-bg: linear-gradient(180deg, var(--plate-lit), var(--plate-1));
+  --pill-on-ink: var(--ink);
+  --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
+  --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  --map-strip-ink: var(--ink-on-brass);
+  --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
+  --eyebrow-dash: inline-block;
+  --tile-1: var(--walnut); --tile-2: var(--walnut-2); --tile-3: var(--walnut-3);
+  --radius-card: 3px;
+  --radius-panel: 3px;
+  --map-rule: rgba(120, 94, 52, .07); --map-vignette: rgba(120, 94, 52, .13); --map-blend: multiply;
+  --f-b: var(--font-work, 'Work Sans', sans-serif);
 }
 
 /* The design system ships a reduced-motion block that zeroes its durations.

@@ -49,15 +49,17 @@ const picker = slice('src/app/mmm.css', '/* ── MAP date picker', '/* ── 
 const search = slice('src/app/mmm.css', '/* ── Universal search', '.mmm-search-key {');
 const mapSearch = slice('src/app/mmm.css', '.mmm-map-search {', '/* ── Universal search');
 
+/* THE REAL TOKENS, NOT A RESTATED LIST — the same fix measure-dock.mjs took on
+   2026-09-05, for the same reason: a hand-copied `:root` here still carried
+   the cream ground and the console radii after the app moved to Apple Music's,
+   so this probe would have laid the picker out on a page the app no longer
+   paints. globals.css's own `:root`, sliced by its landmarks. Only the font
+   aliases are overridden, to faces the probe does not load. */
+const tokens = slice('src/app/globals.css', ':root {', '\n}').replaceAll("url('/console/", "url('console/") + '\n}';
+
 await writeFile(path.join(dir, 'probe.css'), `
-:root {
-  --f-m: monospace; --f-s: serif; --f-b: system-ui;
-  --bg: #f0dfb8; --bg-2: #e8d3a6; --ink: #1c1408; --ink-2: #4a3a22; --ink-3: #7a6844;
-  --line: #c9b384; --line-2: #d8c69c;
-  --accent: #ff5029; --accent-rgb: 255, 80, 41; --accent-text: #923319;
-  --ink-on-accent: #1c1408;
-  --radius-panel: 3px; --radius-pill: 9999px;
-}
+${tokens}
+:root { --f-m: monospace; --f-s: serif; --f-b: system-ui; --f-d: system-ui; }
 /* globals.css's own reset. Not optional and not cosmetic: without it the
    popover's 12px of padding is ADDED to its width, so a probe measures 364px
    where the app renders 338 — which reported a 91px overflow that does not
