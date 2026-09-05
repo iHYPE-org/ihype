@@ -2042,7 +2042,8 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   font-weight: 700;
 }
 .text-link:hover {
-  color: var(--accent);
+  color: var(--accent-text);
+  text-decoration: underline;
 }
 .status-note {
   margin: 1rem 0 0;
