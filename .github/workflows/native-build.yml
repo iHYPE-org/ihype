@@ -40,7 +40,7 @@ jobs:
   # a real "does the native shell still compile" check on every change.
   ios-debug-build:
     name: iOS — debug build (unsigned)
-    runs-on: macos-15
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
@@ -100,7 +100,7 @@ jobs:
   # the pattern in deploy-production.yml.
   ios-release-build:
     name: iOS — signed release build
-    runs-on: macos-15
+    runs-on: macos-26
     # Store publication is an explicit release action, never a side effect of
     # merging an otherwise routine native or dependency change.
     if: github.event_name == 'workflow_dispatch'
@@ -146,6 +146,49 @@ jobs:
             echo "configured=false" >> "$GITHUB_OUTPUT"
             echo "::notice::iOS release signing secrets not fully configured yet — skipping signed build. Needs an Apple Developer Program account, a distribution certificate + provisioning profile for com.ihype.app, and an App Store Connect API key."
           fi
+
+      # THE SDK IS A SUBMISSION GATE, AND NOTHING HERE WAS CHECKING IT.
+      #
+      # Run 282 signed, archived and exported a perfectly good .ipa and was
+      # refused by App Store Connect at the last step:
+      #
+      #   Validation failed (409) SDK version issue. This app was built with
+      #   the iOS 18.5 SDK. All iOS and iPadOS apps must be built with the
+      #   iOS 26 SDK or later, included in Xcode 26 or later.
+      #
+      # macos-15 defaults to Xcode 16.4. Apple's floor moves roughly yearly and
+      # is enforced by the UPLOAD, so the whole job can be green and the build
+      # still unusable — which is why this is asserted here, before the archive,
+      # rather than discovered after one. The available Xcodes are printed so a
+      # future floor raise names what the image actually has instead of leaving
+      # someone guessing at the runner label.
+      - name: Select Xcode and assert the iOS SDK is new enough
+        if: steps.check.outputs.configured == 'true'
+        run: |
+          set -euo pipefail
+          ls -d /Applications/Xcode*.app 2>/dev/null || true
+
+          # Newest by version, not by name order: Xcode_26.1 must beat
+          # Xcode_9.0, and a lexical sort does not.
+          NEWEST=$(ls -d /Applications/Xcode*.app 2>/dev/null | sort -V | tail -1)
+          if [ -n "$NEWEST" ]; then
+            sudo xcode-select -s "$NEWEST/Contents/Developer"
+          fi
+
+          xcodebuild -version
+          SDK=$(xcrun --sdk iphoneos --show-sdk-version)
+          echo "iphoneos SDK: $SDK"
+
+          MAJOR=${SDK%%.*}
+          if [ "$MAJOR" -lt "$MIN_IOS_SDK_MAJOR" ]; then
+            echo "::error::iOS SDK $SDK is below the App Store floor of $MIN_IOS_SDK_MAJOR. Apple refuses the upload with a 409 after a successful archive, so this fails here instead. The runner image needs an Xcode carrying SDK $MIN_IOS_SDK_MAJOR or later."
+            exit 1
+          fi
+        env:
+          # Apple's current floor. Raise this the day Apple raises theirs; a
+          # build that passes here and is refused by altool means this number
+          # is stale, not that the build is broken.
+          MIN_IOS_SDK_MAJOR: '26'
 
       - name: Install dependencies
         if: steps.check.outputs.configured == 'true'
