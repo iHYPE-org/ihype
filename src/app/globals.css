@@ -1816,7 +1816,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   font-weight: 700;
 }
 .hero { padding: 4rem 0 2rem; display: grid; gap: 1.5rem; } .panel{ border: 1px solid var(--line); }
-.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(255,122,24,.38); background: rgba(255,122,24,.1); color: var(--accent-text); padding: 0.3rem 0.8rem; font-size: 0.9375rem; font-weight: 700; letter-spacing: .04em; }
+.badge { display: inline-flex; align-items: center; gap: 0.4rem; border: 1px solid rgba(var(--accent-rgb),.3); background: rgba(var(--accent-rgb),.08); color: var(--accent-text); padding: 0.3rem 0.8rem; font-size: 0.9375rem; font-weight: 700; letter-spacing: .04em; }
 .title { font-size: clamp(2rem, 5vw, 4rem); margin: 0.75rem 0; line-height: 1; }
 .subtitle { max-width: 60ch; line-height: 1.6; }
 .grid { display: grid; gap: 1rem; }
@@ -3256,7 +3256,10 @@ body:has(#wt-wrap) .site-shell > main {
 .subtitle,
 .meta,
 .kicker {
-  color: #90a1b5;
+  /* Was `#90a1b5`, DS8's blue-grey as a literal: 3.0:1 on the white ground,
+     which is why every subtitle, meta line and kicker on the public and admin
+     pages read as washed out. The secondary ink token measures 7:1. */
+  color: var(--ink-3);
 }
 .tag {
   border: 1px solid var(--hair-80);
