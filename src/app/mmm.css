@@ -110,7 +110,7 @@ html.mmm-locked .site-shell > main {
    console is mounted makes whatever Safari extends read as the cabinet the
    dock is part of. Scoped with :has so nothing outside /app/* changes. */
 html:has(.mmm-frame) {
-  background: var(--walnut-3);
+  background: var(--chrome-ground);
 }
 .mmm-frame {
   position: fixed;
@@ -202,7 +202,11 @@ html:has(.mmm-frame) {
 
      `--mmm-chrome-size` therefore has a second declaration under `:has()`
      further down this file, and that is the ONLY place it is allowed to move. */
-  --mmm-tab-h: 46px;
+  /* 50px, from 46 (2026-09-05): iOS's tab bar is 49pt and the row now carries
+     a 26px glyph over a 12px label with the 44px floor met at every width.
+     Everything below derives from this figure, so the bar grew by 4px and no
+     pane was re-measured by hand — measure:dock reads the table. */
+  --mmm-tab-h: 50px;
   --mmm-mini-h: 56px;
   --mmm-dock-pad: 3px;
   /* The brass lip is a real 3px border on the dock, so it is part of the height
@@ -528,21 +532,23 @@ html:has(.mmm-frame) {
      templates set their chips in tracked uppercase mono, but this class is
      also the map's layer and genre filters, and uppercasing those mangles
      proper nouns. Shape carries the character; the words stay readable. */
-  border-radius: 4px;
-  border: 1.5px solid var(--brass-deep);
-  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  border-radius: var(--key-radius);
+  border: 1.5px solid var(--key-edge);
+  background: var(--key-bg);
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
-  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
+  box-shadow: var(--key-shadow);
   white-space: nowrap;
 }
+/* Selected: FILLED on iOS (Apple Music's filter pill inverts), the accent tint
+   on the console. A tint asks the eye to compare two greys; a fill does not. */
 .mmm-chip[aria-pressed='true'] {
-  border-color: rgba(var(--accent-rgb), 0.5);
-  background: rgba(var(--accent-rgb), 0.16);
-  color: var(--accent-text);
+  border-color: var(--chip-on-edge);
+  background: var(--chip-on-bg);
+  color: var(--chip-on-ink);
   font-weight: 700;
 }
 /* Charts' chip rows — dataset, then the area scope or the genre list under it.
@@ -643,8 +649,11 @@ html:has(.mmm-frame) {
 .mmm-pin-tag {
   padding: 4px 9px;
   border-radius: var(--radius-panel);
-  background: var(--bg-surface);
-  border: 1.5px solid var(--ink-2);
+  /* A label floating over the map is a material too. */
+  background: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  border: var(--paper-rule) solid var(--paper-edge);
   font-family: var(--font-mono);
   font-weight: 700;
   /* map.html says 12px; the console floor says content clears 15px, and a
@@ -653,7 +662,7 @@ html:has(.mmm-frame) {
   letter-spacing: 0.04em;
   color: var(--ink);
   white-space: nowrap;
-  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.2);
+  box-shadow: var(--float-shadow);
 }
 /* Leader line. A de-collided pin gets a longer one so its true location stays
    readable — see placePins()'s `offset`. */
@@ -1080,10 +1089,12 @@ html:has(.mmm-frame) {
      is bought back to make 44 fit at 375. */
   width: min(338px, calc(100vw - 28px));
   padding: 12px;
-  border: 1px solid var(--line-2);
+  border: 1px solid var(--material-line);
   border-radius: var(--radius-panel);
-  background: var(--bg-2);
-  box-shadow: 0 18px 40px rgba(28, 20, 8, 0.28);
+  background: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  box-shadow: var(--float-shadow-deep);
 }
 .mmm-datepick-head {
   display: flex;
@@ -1260,10 +1271,10 @@ html:has(.mmm-frame) {
   max-width: 100%;
   min-height: 44px;
   padding: 11px 16px;
-  border: 1px solid var(--ink-a45);
+  border: 1px solid var(--key-edge);
   border-radius: var(--radius-pill);
-  background: var(--bg-surface);
-  box-shadow: 1.5px 2px 0 var(--ink-a10);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
   color: var(--ink);
   font-family: var(--font-display);
   font-weight: 600;
@@ -1301,11 +1312,14 @@ html:has(.mmm-frame) {
   margin: 6px 0 0;
   padding: 30px 22px;
   text-align: center;
-  border: 2px dashed var(--line-2);
+  /* The console's dashed plate in its serif; iOS's filled grey cell in the
+     body face. Same rule, the theme decides. */
+  border: var(--empty-edge);
   border-radius: var(--radius-panel);
-  font-family: var(--f-s, Georgia, serif);
-  font-size: 1.1875rem;
-  line-height: 1.45;
+  background: var(--empty-bg);
+  font-family: var(--empty-font);
+  font-size: 1.0625rem;
+  line-height: 1.5;
   color: var(--ink-2);
 }
 .mmm-loading { border-style: dotted; color: var(--ink-3); }
@@ -1348,21 +1362,25 @@ html:has(.mmm-frame) {
    pad than the one in the MUSIC pane — it floats over moving tiles rather than
    sitting on a solid pane, and needs the separation. */
 .mmm-map-search .mmm-search-field {
-  padding: 8px 8px 8px 18px;
-  /* Parchment, not glass: the survey chart's field is a paper box with an ink
-     rule and a pressed offset shadow (map.html `.searchbar`), replacing the
-     navy blur-shadow this rule carried from the dark chart. */
-  border: 1.5px solid var(--ink-2);
+  padding: 6px 6px 6px 16px;
+  /* Glass over the map by default (2026-09-05): a thick iOS material with a
+     soft cast, so the city shows through the field as colour. The survey
+     chart's parchment — paper box, ink rule, pressed offset (map.html
+     `.searchbar`) — is the same rule on the character themes, through the
+     --paper-* and --float-shadow tokens. */
+  border: var(--paper-rule) solid var(--paper-edge);
   border-radius: var(--radius-panel);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.22);
+  background: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  box-shadow: var(--float-shadow);
 }
 .mmm-map-search .mmm-search-input {
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
+  font-family: var(--map-search-font);
+  letter-spacing: var(--map-search-tracking);
 }
-/* The chart sets its placeholder in tracked caps; the copy stays the layer's. */
-.mmm-map-search .mmm-search-input::placeholder { text-transform: uppercase; }
+/* The chart sets its placeholder in tracked caps; iOS in sentence case. */
+.mmm-map-search .mmm-search-input::placeholder { text-transform: var(--map-search-case); }
 /* A result row here is a button, not a link — selecting one flies the camera
    and opens a sheet rather than navigating. It therefore needs the type and
    alignment the anchor gets for free. */
@@ -1381,16 +1399,31 @@ html:has(.mmm-frame) {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 9px 16px;
-  /* The chart's search bar, everywhere: paper box, ink rule, pressed offset
-     shadow — one instrument, one finish, whichever pane it sits on. */
-  border: 1.5px solid var(--ink-2);
-  border-radius: var(--radius-panel);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
+  padding: 6px 14px;
+  /* One instrument, one finish, whichever pane it sits on — and the finish is
+     the theme's. iOS: the search bar's tinted grey, no rule, no cast. The
+     console's paper box with its ink rule and pressed offset returns through
+     the --paper-* tokens on the character themes. */
+  border: var(--paper-rule) solid var(--paper-edge);
+  border-radius: var(--key-radius);
+  background: var(--field-fill);
+  box-shadow: var(--paper-shadow);
+}
+/* The input is the whole field and paints nothing of its own. Three compounds
+   on purpose: `.mmm-migrated-surface :is(input[type="search"], …)` in
+   mmm-primitives.css is (0,2,1) and gives every field inside a migrated pane
+   its own white box and border — which is right for a form and wrong here,
+   where it drew a second box inside the first (measured: a white inset with a
+   hairline, inside the grey field, on every MUSIC tab). */
+.mmm-pane .mmm-search-field .mmm-search-input,
+.mmm-search-field .mmm-search-input {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
 }
 .mmm-search-field:focus-within { border-color: rgba(var(--accent-rgb), 0.5); }
-.mmm-search-glyph { color: var(--ink-3); font-size: 0.9375rem; line-height: 1; }
+.mmm-search-glyph { color: var(--ink-3); font-size: 1.0625rem; line-height: 1; }
 .mmm-search-input {
   flex: 1;
   min-width: 0;
@@ -1402,9 +1435,10 @@ html:has(.mmm-frame) {
   outline: none;
   color: var(--ink);
   font-family: inherit;
-  /* 16px floor, not a design size: Safari zooms the page on a focused input
-     below 16px and never zooms back. Same rule as mobile-fit.css. */
-  font-size: max(16px, 0.85rem);
+  /* 17px — iOS's search-bar size — and never under the 16px floor: Safari
+     zooms the page on a focused input below 16px and never zooms back. Same
+     rule as mobile-fit.css. */
+  font-size: max(16px, 1.0625rem);
 }
 .mmm-search-input::placeholder { color: var(--ink-3); }
 /* The search-type clear affordance is Safari's own and does not follow the
@@ -1461,10 +1495,14 @@ html:has(.mmm-frame) {
      floating above where it collapsed to. */
   max-height: min(46dvh, 420px);
   overflow-y: auto;
-  background: var(--bg-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-card);
-  box-shadow: var(--shadow-raised);
+  /* A thick material: the list floats over the pane and the pane shows
+     through it as colour, never as text. */
+  background: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  border: 1px solid var(--material-line);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--float-shadow-deep);
   padding: 6px;
 }
 .mmm-search-note {
@@ -1647,7 +1685,9 @@ html:has(.mmm-frame) {
   font-size: 0.9375rem;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--ink-3);
+  /* -2, not -3: the label under a figure is what the figure MEANS, and on a
+     grey tile the lighter ink measured as the faintest text on the screen. */
+  color: var(--ink-2);
   margin-top: 6px;
 }
 
@@ -1661,15 +1701,17 @@ html:has(.mmm-frame) {
      template's CTA is a gradient with a hard edge and a real cast. The sheen
      is a white wash over the fill rather than a second hue, so it needs no
      token and cannot drift from --accent. */
-  border-radius: 4px;
-  border: 2px solid rgba(61, 44, 12, .9);
-  box-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  border-radius: var(--key-radius);
+  border: 2px solid var(--cta-edge);
+  box-shadow: var(--cta-shadow);
   background-color: var(--accent);
-  background-image: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
+  background-image: var(--cta-sheen);
   color: var(--ink-on-accent);
   font-family: var(--font-body);
   font-weight: 700;
-  font-size: 0.9375rem;
+  /* 16px: a primary action is the one label on the screen that may be a step
+     above the body floor. */
+  font-size: 1rem;
   text-align: center;
   cursor: pointer;
 }
@@ -1679,12 +1721,15 @@ html:has(.mmm-frame) {
   justify-content: center;
   min-height: 44px;
   padding: 10px 14px;
-  border-radius: 4px;
-  border: 1.5px solid var(--brass-deep);
-  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
-  box-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
-  color: var(--ink-2);
+  border-radius: var(--key-radius);
+  border: 1.5px solid var(--key-edge);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
+  /* Primary ink and 600: a secondary action is still an action, and grey
+     medium text on a grey key was the least legible control in the shell. */
+  color: var(--ink);
   font-family: var(--font-body);
+  font-weight: 600;
   font-size: 0.9375rem;
   cursor: pointer;
 }
@@ -1716,12 +1761,12 @@ html:has(.mmm-frame) {
 @media (hover: hover) {
   .mmm-chip:hover,
   .mmm-btn-ghost:hover {
-    border-color: var(--brass);
-    filter: brightness(1.04);
+    border-color: var(--key-edge-hover);
+    filter: brightness(var(--key-hover-dim));
   }
   .mmm-btn-primary:hover {
     filter: brightness(1.06);
-    box-shadow: 0 10px 22px -10px rgba(0, 0, 0, .62), inset 0 1px 0 rgba(255, 255, 255, .34);
+    box-shadow: var(--cta-shadow);
   }
   .mmm-row:hover { background: var(--ink-a10); }
 }
@@ -1731,7 +1776,10 @@ html:has(.mmm-frame) {
 .mmm-btn-ghost:active,
 .mmm-btn-primary:active {
   transform: translateY(1px);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+  box-shadow: var(--key-press-shadow);
+  /* iOS presses DIM (the highlight state of a filled control); the console's
+     key goes down into its cast instead, so its dim is 1. */
+  filter: brightness(var(--key-press-dim));
 }
 .mmm-row {
   transition: background-color var(--duration-fast) var(--ease-out);
@@ -1819,10 +1867,10 @@ html:has(.mmm-frame) {
   min-width: 44px;
   min-height: 44px;
   padding: 0 12px;
-  border: 1.5px solid var(--ink-2);
-  border-radius: var(--radius-panel);
-  background: var(--bg-surface);
-  box-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), 0.18);
+  border: var(--paper-rule) solid var(--paper-edge);
+  border-radius: var(--key-radius);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
   color: var(--ink-2);
   font-size: 1.2rem;
   line-height: 1;
@@ -1935,8 +1983,11 @@ html:has(.mmm-frame) {
   z-index: 51;
   max-height: 86%;
   overflow-y: auto;
-  background: var(--bg-surface);
-  border-top: 2px solid var(--ink-2);
+  /* A thick material: the pane under the sheet shows through as colour. */
+  background: var(--material-thick);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+  border-top: var(--sheet-edge);
   border-radius: var(--radius-panel) var(--radius-panel) 0 0;
   padding: 18px 18px 22px;
   animation: mmmSheetUp var(--sheet-enter-dur) var(--ease-out);
@@ -2154,7 +2205,7 @@ html:has(.mmm-frame) {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
+  gap: 2px;
   padding: 4px 2px 6px;
   border: 0;
   background: none;
@@ -2169,20 +2220,30 @@ html:has(.mmm-frame) {
   cursor: pointer;
 }
 .mmm-tab-glyph { display: block; line-height: 0; }
+/* 26px, over the SVG's own 21 (2026-09-05, "better visibility"): iOS draws its
+   tab glyphs at roughly 25pt, and a 21px outline at 1.5px stroke on a phone
+   read as a hairline sketch. Sized here rather than in the markup so a theme
+   can move it. */
+.mmm-tab-glyph svg { width: 26px; height: 26px; }
 .mmm-tab-label {
-  /* 11px tracked mono is the type floor's own exemption shape (mono family AND
+  /* 12px tracked mono — the type floor's own exemption shape (mono family AND
      tracking >= .14em). A tab label is metadata under a glyph, which is exactly
-     what that exemption is for — it is not body copy. */
+     what that exemption is for — it is not body copy. Was 11px; the extra
+     pixel is the difference between a label and a caption on a phone. */
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   line-height: 1;
   white-space: nowrap;
 }
-/* The lit tab. Accent on the iOS bar, the cabinet's primary ink on the console. */
+/* The lit tab. Accent on the iOS bar, the cabinet's primary ink on the console —
+   and heavier, so "where am I" is carried by weight as well as hue. */
 .mmm-tab[data-on='true'] { color: var(--tab-on-ink); }
+.mmm-tab[data-on='true'] .mmm-tab-label { font-weight: 700; }
+.mmm-tab[data-on='true'] .mmm-tab-glyph svg { stroke-width: 0; }
+.mmm-tab[data-on='true'] .mmm-tab-glyph [stroke] { stroke-width: 2; }
 /* The lit rail under the active tab. Brass, fading at both ends, so it reads as
    a lamp behind the fascia rather than a border. */
 .mmm-tab[data-on='true']::after {
@@ -2243,11 +2304,11 @@ html:has(.mmm-frame) {
   height: 40px;
   flex: 0 0 auto;
   overflow: hidden;
-  border-radius: 3px;
-  border: 1px solid var(--brass-deep);
+  border-radius: 6px;
+  border: 1px solid var(--art-edge);
   display: grid;
   place-items: center;
-  background: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  background: var(--mini-art-bg);
   color: var(--ink-on-walnut-2);
   font-family: var(--font-display);
   font-weight: 700;
@@ -2292,7 +2353,7 @@ html:has(.mmm-frame) {
 }
 .mmm-key[data-lit='true'] { color: var(--ink-on-walnut); }
 .mmm-key:active { transform: translateY(1px); }
-.mmm-key:focus-visible { outline: 2px solid var(--brass); outline-offset: -3px; }
+.mmm-key:focus-visible { outline: 2px solid var(--tab-on-ink); outline-offset: -3px; }
 @media (hover: hover) {
   .mmm-mini-open:hover,
   .mmm-key:hover { background: rgba(255, 232, 190, 0.08); }
@@ -2429,7 +2490,14 @@ html:has(.mmm-frame) {
 
 /* ── brass ── one plate, divisions cut into it */
 .mmm-strip[data-variant='brass'] {
-  gap: 0;
+  /* iOS's segmented control by default (2026-09-05): inset from the edges like
+     the search field above it, a padded track, rounded segments, no dividers.
+     The console's plate — full-bleed, divisions cut in — is the same rule with
+     the --seg-* tokens at zero. It used to be a full-width pill whose rounded
+     right end sat exactly at the viewport edge and read as a cut-off block. */
+  margin: 0 var(--seg-inset);
+  padding: var(--seg-pad);
+  gap: var(--seg-gap);
   border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--plate-border);
@@ -2447,10 +2515,10 @@ html:has(.mmm-frame) {
 .mmm-strip[data-variant='brass'] .mmm-strip-item {
   flex: 1 1 0;
   justify-content: center;
-  border-radius: 0;
+  border-radius: var(--seg-item-radius);
   padding: 0 8px;
   color: var(--map-strip-ink);
-  border-right: 1px solid var(--line);
+  border-right: 1px solid var(--seg-divider);
 }
 .mmm-strip[data-variant='brass'] .mmm-strip-item:last-child { border-right: 0; }
 .mmm-strip[data-variant='brass'] .mmm-strip-item[data-on='true'] {
@@ -3306,8 +3374,8 @@ html:has(.mmm-frame) {
 .mmm-profile-card {
   display: flex;
   flex-direction: column;
-  background: var(--bg-surface);
-  border: 1px solid var(--line);
+  background: var(--card-bg);
+  border: 1px solid var(--plate-border);
   border-radius: var(--radius-panel);
   overflow: hidden;
 }
@@ -3337,7 +3405,7 @@ html:has(.mmm-frame) {
   display: grid;
   place-items: center;
   overflow: hidden;
-  border: 1px solid var(--brass);
+  border: 1px solid var(--art-edge);
   border-radius: var(--radius-panel);
   background: var(--bg-raised);
   font-family: var(--font-display);
@@ -3386,8 +3454,9 @@ html:has(.mmm-frame) {
   flex-direction: column;
   gap: 3px;
   padding: 13px;
-  border: 1px solid var(--line);
+  border: 1px solid var(--tile-edge);
   border-radius: var(--radius-panel);
+  background: var(--tile-bg);
 }
 .mmm-profile-counter-value { font-family: var(--font-mono); font-size: 1.3125rem; color: var(--ink); }
 .mmm-profile-counter-label {
