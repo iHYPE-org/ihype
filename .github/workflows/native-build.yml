@@ -598,6 +598,14 @@ jobs:
             *"jar verified"*)
               echo "$VERDICT"
               echo "signed: $AAB"
+              # WHICH KEY. Google's Android Developer Console and Play Console
+              # both ask for the SHA-256 of the signing certificate, and the
+              # value on the operator's disk is only the right one if the
+              # keystore was never regenerated after the secret was set. The
+              # bundle itself is the authority: this is the certificate that
+              # actually signed what CI built, read back out of the .aab.
+              echo "::notice::Upload-key certificate that signed this bundle — register THIS SHA-256 where Google asks for the upload key:"
+              keytool -printcert -jarfile "$AAB" | grep -E "Owner:|SHA256:" | sed 's/^[[:space:]]*/  /'
               ;;
             *)
               # An unsigned or unreadable jar answers in a line or two, so the
