@@ -74,13 +74,16 @@ export function MmmAccessibilitySettings() {
         <section className="mmm-settings-card">
           <h2 className="mmm-settings-card-title">{t('appShell.a11y.theme', 'Theme')}</h2>
           <p className="mmm-settings-card-hint">
-            {t('appShell.a11y.themeHint', 'The room the console sits in. The walnut deck and the chart stay the same.')}
+            {t('appShell.a11y.themeHint', 'Light and Dark follow the phone. The other four keep the console: walnut, brass and the chart.')}
           </p>
           <MmmSegmentedTabs
             className="mmm-settings-card-controls"
             items={THEMES.map((name) => ({
               id: name,
-              label: t(`appShell.a11y.theme_${name}`, name === 'console' ? 'Console' : name[0].toUpperCase() + name.slice(1)),
+              /* 'console' is the stored id of the DEFAULT theme and stays so saved
+                 preferences keep resolving; since 2026-09-05 the default is the
+                 Apple Music light look, so its label says what it is. */
+              label: t(`appShell.a11y.theme_${name}`, name === 'console' ? 'Light' : name[0].toUpperCase() + name.slice(1)),
               active: settings.theme === name,
               onSelect: () => updateSetting('theme', name),
             }))}

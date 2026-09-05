@@ -11,8 +11,8 @@
     "minimal-ui"
   ],
   "orientation": "portrait-primary",
-  "background_color": "#f0dfb8",
-  "theme_color": "#f0dfb8",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "categories": [
     "music",
     "entertainment",

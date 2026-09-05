@@ -189,7 +189,7 @@ export const viewport: Viewport = {
    * Leaving the old pair here would have been the quiet half of this change:
    * an OS-dark phone would have painted a navy notch above a cream page.
    */
-  themeColor: '#f0dfb8',
+  themeColor: '#ffffff',
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {

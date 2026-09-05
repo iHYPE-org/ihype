@@ -63,7 +63,7 @@ const config: CapacitorConfig = {
   // OUTSIDE the fast loop. Every other surface follows --bg on the next
   // Cloudflare deploy; this one waits for a native build, so a ground change
   // silently leaves it behind. It must match --bg in globals.css, and
-  // `themeColor` in src/app/layout.tsx (already #f0dfb8) is the same value —
+  // `themeColor` in src/app/layout.tsx (already #ffffff) is the same value —
   // when one moves, all three move.
   //
   // One value, six themes: cream is the DEFAULT ground and the config cannot
@@ -72,10 +72,10 @@ const config: CapacitorConfig = {
   // correct — and it is a limit of the native shell, not a decision to revisit.
   ios: {
     contentInset: 'automatic',
-    backgroundColor: '#f0dfb8',
+    backgroundColor: '#ffffff',
   },
   android: {
-    backgroundColor: '#f0dfb8',
+    backgroundColor: '#ffffff',
   },
   plugins: {
     // Shows the OS notification banner/sound/badge while the app is already
