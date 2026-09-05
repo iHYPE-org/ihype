@@ -172,15 +172,15 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       ? db.profile.count().catch(() => 0)
       : Promise.resolve(0),
     /* pendingVerificationCount */
-    needs('activity', 'overview')
+    needs('activity')
       ? db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0)
       : Promise.resolve(0),
     /* openReportCount */
-    needs('activity', 'overview')
+    needs('activity')
       ? db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0)
       : Promise.resolve(0),
     /* openSupportCount */
-    needs('activity', 'overview')
+    needs('activity')
       ? db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0)
       : Promise.resolve(0),
     /* mediaCount */
@@ -361,10 +361,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     pendingAds,
     /* Gated per ENTRY, not as a block. The first draft of this change gated
        the whole array on `finance` and was wrong twice over: there are four
-       reads here, not three, and `pendingAds` is read by Overview's "needs
+       reads here, not three, and `pendingAds` was read by Overview's "needs
        attention" summary and by Support's queue — neither of which is
        finance. Caught by the compiler, which is the only reason it is not a
-       blank panel on two tabs. */
+       blank panel on two tabs. (The overview half is gone since 2026-09-05:
+       that summary duplicated the workbench queues and was folded into the
+       routine board, so Support is the one reader left.) */
   ] = await Promise.all([
     /* monthlyRevenue */
     needs('finance')
@@ -390,9 +392,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         _sum: { amountCents: true },
       }).catch(() => [])
       : Promise.resolve([]),
-    /* Overview counts them, Support lists them. */
+    /* Support lists them; the overview reads the same count through the workbench queues. */
     /* pendingAds */
-    needs('overview', 'support')
+    needs('support')
       ? db.ad.findMany({
         where: { status: 'PENDING' },
         include: { advertiser: { select: { email: true, username: true } }, slot: { select: { name: true } } },
@@ -587,43 +589,21 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             build. This is additive on purpose. */}
         {pulse && <AdminPulse initial={pulse} />}
 
-        {/* Everything waiting on a human, before anything else on the page.
-            The stats below are for reading; this is for doing. */}
-        <AdminWorkbench />
+        {/* Everything waiting on a human, before anything else on the page,
+            cut by cadence: daily, weekly, monthly, and what the machine does
+            unasked. The stats below are for reading; this is for doing.
 
-        <section className="panel admin-console-panel">
-          <div className="admin-console-panel-head">
-            <h2>{t('adminPage.needsAttention', 'Needs attention')}</h2>
+            The "Needs attention" panel that followed it until 2026-09-05 is
+            gone: its four counts were four of the workbench queues drawn a
+            second time, 522px of them on a phone. Its one row that was not a
+            duplicate — reserved, unpaid ticket orders, which is a health figure
+            and not a queue — stays here as an alert above the board. */}
+        {healthOperations && healthOperations.reservedTicketOrders > 0 && (
+          <div className="admin-alert-row admin-alert-standalone">
+            <span>{healthOperations.reservedTicketOrders} {healthOperations.reservedTicketOrders === 1 ? t('adminPage.ticketOrderSingular', 'ticket order') : t('adminPage.ticketOrderPlural', 'ticket orders')} {t('adminPage.reservedUnpaidWarning', 'reserved (unpaid) — check Finance if this stays high')}</span>
           </div>
-          <div className="admin-health-grid">
-            <Link className="admin-health-card" href="/admin/review?tab=verifications">
-              <span>{t('adminPage.pendingVerifications', 'Pending verifications')}</span>
-              <strong className={pendingVerificationCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingVerificationCount}</strong>
-            </Link>
-            <Link className="admin-health-card" href="/admin/review?tab=reports">
-              <span>{t('adminPage.openReports', 'Open reports')}</span>
-              <strong className={openReportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openReportCount}</strong>
-            </Link>
-            <Link className="admin-health-card" href="/admin#support-requests">
-              <span>{t('adminPage.openSupportRequests', 'Open support requests')}</span>
-              <strong className={openSupportCount > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{openSupportCount}</strong>
-            </Link>
-            <Link className="admin-health-card" href="/admin/ads">
-              <span>{t('adminPage.adsAwaitingApproval', 'Ads awaiting approval')}</span>
-              <strong className={pendingAds.length > 0 ? 'admin-health-status warn' : 'admin-health-status ok'}>{pendingAds.length}</strong>
-            </Link>
-          </div>
-          {healthOperations && healthOperations.reservedTicketOrders > 0 && (
-            <div className="admin-alert-row">
-              <span>{healthOperations.reservedTicketOrders} {healthOperations.reservedTicketOrders === 1 ? t('adminPage.ticketOrderSingular', 'ticket order') : t('adminPage.ticketOrderPlural', 'ticket orders')} {t('adminPage.reservedUnpaidWarning', 'reserved (unpaid) — check Finance if this stays high')}</span>
-            </div>
-          )}
-          {pendingVerificationCount === 0 && openReportCount === 0 && openSupportCount === 0 && pendingAds.length === 0 && (
-            <div className="admin-alert-row admin-alert-row-ok">
-              <span>{t('adminPage.nothingNeedsReview', 'Nothing needs review right now.')}</span>
-            </div>
-          )}
-        </section>
+        )}
+        <AdminWorkbench />
 
         <section className="panel admin-console-panel">
           <div className="admin-console-panel-head">
