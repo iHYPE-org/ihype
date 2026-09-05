@@ -491,6 +491,31 @@ test.describe('Music · Map · Me shell', () => {
     }
   });
 
+  /* The basemap's worker is a module of OURS, not the page.
+
+     MapLibre v6 parses vector tiles in a worker whose URL it derives from
+     `import.meta.url`; webpack compiled that to the build machine's file path,
+     MapLibre fell back to "", and `new Worker("")` loaded /app/map itself as
+     the worker — which died on the first byte of HTML. No error, no `load`,
+     and "The map could not load" for every member from the vector switch on.
+     Measured with exactly this listener: the worker was created from
+     `http://localhost:8787/app/map` and closed at once. Tiles cannot be
+     fetched in CI, so the assertion is about the worker, which is spawned by
+     the Map constructor before any tile is asked for. */
+  test('the basemap worker is served from this origin and stays alive', async ({ page }) => {
+    const workerPromise = page.waitForEvent('worker', { timeout: 20_000 });
+    await page.goto('/app/map');
+    const worker = await workerPromise;
+    expect(new URL(worker.url()).pathname).toBe('/vendor/maplibre-gl/maplibre-gl-worker.mjs');
+    /* A worker that loaded HTML closes within a frame; one that loaded the
+       module is still there two seconds later. */
+    await page.waitForTimeout(2000);
+    expect(page.workers().map((w) => new URL(w.url()).pathname)).toContain('/vendor/maplibre-gl/maplibre-gl-worker.mjs');
+    const response = await page.request.get('/vendor/maplibre-gl/maplibre-gl-worker.mjs');
+    expect(response.status()).toBe(200);
+    expect(response.headers()['content-type'] ?? '').toMatch(/javascript/);
+  });
+
   // The map is the base layer and must survive a module change, or returning to
   // MAP loses your pan and zoom.
   test('the map element is not remounted when switching modules', async ({ page }) => {

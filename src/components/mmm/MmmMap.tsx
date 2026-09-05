@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Map as MapLibreMap } from 'maplibre-gl';
+import { describeBasemapStall } from '@/lib/basemap-stall';
+import { MAPLIBRE_WORKER_URL } from '@/lib/maplibre-worker';
 import { describeDayKeys, monthGrid, shiftMonth, toDatesParam, toggleDay } from '@/lib/map-dates';
 import { MmmSectionStrip } from '@/components/mmm/MmmSectionStrip';
 import {
@@ -215,6 +217,13 @@ export function MmmMap({
     let basemapDeadline: ReturnType<typeof setTimeout> | undefined;
     void import('maplibre-gl').then((maplibre) => {
       if (disposed || !containerRef.current) return;
+      /* BEFORE the map exists: the dispatcher spawns its workers in the Map
+         constructor. Left to itself MapLibre v6 builds the worker URL from
+         `import.meta.url`, which webpack compiled to the build machine's
+         file:// path, so it fell back to "" and loaded THIS PAGE as the
+         worker — measured, and the reason the vector map stalled for every
+         member from 2026-09-03 (`scripts/vendor-maplibre-worker.mjs`). */
+      maplibre.setWorkerUrl(MAPLIBRE_WORKER_URL);
       const camera = SCOPE_CAMERAS.county;
       const map = new maplibre.Map({
         attributionControl: false,
@@ -274,9 +283,48 @@ export function MmmMap({
       map.addControl(new maplibre.ScaleControl({ maxWidth: 96, unit: 'imperial' }), 'top-right');
       mapRef.current = map;
       const bump = () => setCameraTick((tick) => tick + 1);
-      basemapDeadline = setTimeout(() => {
-        if (!disposed) setFailed(true);
-      }, BASEMAP_LOAD_DEADLINE_MS);
+      /* Readings for the deadline's verdict — see `describeBasemapStall`. `load`
+         fires FROM a render frame, and frames come from requestAnimationFrame,
+         so a tab in the background can have a healthy network and no `load`
+         for as long as it stays there. Counting frames is what tells that
+         apart from a stalled request, and it is why a hidden tab is never
+         judged: the deadline re-arms when the tab is shown instead. */
+      let framesRendered = 0;
+      let contextLost = false;
+      let errorsBeforeLoad = 0;
+      map.on('render', () => { framesRendered += 1; });
+      map.on('webglcontextlost', () => { contextLost = true; });
+      map.on('webglcontextrestored', () => { contextLost = false; });
+      const judge = () => {
+        if (disposed || map.loaded()) return;
+        const stage = {
+          styleLoaded: Boolean(map.isStyleLoaded()),
+          tilesLoaded: map.areTilesLoaded(),
+          framesRendered,
+          contextLost,
+          errors: errorsBeforeLoad,
+          hidden: typeof document !== 'undefined' && document.visibilityState === 'hidden',
+          styleHost: new URL(CARTO_STYLE_URL).host,
+          deadlineMs: BASEMAP_LOAD_DEADLINE_MS,
+        };
+        const stall = describeBasemapStall(stage);
+        if (stall === null) {
+          /* Hidden: wait for the tab, then give the map the full deadline again. */
+          const onVisible = () => {
+            document.removeEventListener('visibilitychange', onVisible);
+            if (!disposed && !map.loaded()) basemapDeadline = setTimeout(judge, BASEMAP_LOAD_DEADLINE_MS);
+          };
+          document.addEventListener('visibilitychange', onVisible);
+          return;
+        }
+        // eslint-disable-next-line no-console -- the readings behind the on-screen line, for a console screenshot
+        console.warn('mmm map stalled', stage);
+        setFailed(true);
+        /* An `error` event's reason (a status and a host) is more specific than
+           the stage reading and wins when it exists. */
+        setFailReason((existing) => existing ?? stall);
+      };
+      basemapDeadline = setTimeout(judge, BASEMAP_LOAD_DEADLINE_MS);
       map.on('load', () => {
         clearTimeout(basemapDeadline);
         setFailed(false);
@@ -296,6 +344,7 @@ export function MmmMap({
            noise — see the state declaration above. `loaded()` is maplibre's
            own answer, so this cannot disagree with the `load` handler. */
         if (map.loaded()) return;
+        errorsBeforeLoad += 1;
         const error = event?.error as { message?: string; status?: number; url?: string } | undefined;
         const status = typeof error?.status === 'number' ? error.status : undefined;
         /* Name the HOST, never the full URL: the style URL carries the CARTO

@@ -35,6 +35,12 @@
  *      template).
  *   4. For each resulting URL, checks it against `connect-src` under real host-
  *      source semantics and then FETCHES it.
+ *   5. With `--base`, fetches MapLibre's tile-parsing WORKER from that origin
+ *      at the URL `src/lib/maplibre-worker.ts` names, plus the module it
+ *      imports, and requires a JavaScript content-type. Vector tiles parse only
+ *      in that worker; the 2026-09-05 outage was a worker URL that resolved to
+ *      the page itself, which every row above passed straight through — the
+ *      style, sprite, glyphs and tiles all answered 200 while nothing drew.
  *
  * A URL that CSP refuses fails even if it fetches, because the browser never
  * gets that far — CSP refuses before any connection, which is also why this
@@ -66,6 +72,15 @@ if (!KEY) {
   console.error('  No basemap key resolved — MmmMap.tsx changed shape, or the default was removed.');
   process.exit(2);
 }
+
+/* ── the worker URL, read from the module MmmMap hands to setWorkerUrl ──── */
+const workerSource = readFileSync(path.join(root, 'src/lib/maplibre-worker.ts'), 'utf8');
+const workerMatch = workerSource.match(/MAPLIBRE_WORKER_URL = '(\/[^']+)'/);
+if (!workerMatch || !mapSource.includes('setWorkerUrl(MAPLIBRE_WORKER_URL)')) {
+  console.error('  maplibre-worker.ts no longer names the worker URL, or MmmMap stopped handing it to setWorkerUrl — the worker half of this probe is measuring nothing.');
+  process.exit(2);
+}
+const WORKER_URL = workerMatch[1];
 
 /* ── the policy: the source list, or what the origin really serves ─────── */
 async function connectSources() {
@@ -125,19 +140,31 @@ const { origin, sources } = await connectSources();
 const rows = [];
 
 async function probe(role, url) {
-  const ok = allowed(url, sources);
+  /* The worker is not a fetch: `worker-src 'self'` governs it, and 'self' means
+     same origin as the page — which the connect-src matcher above cannot say. */
+  const isWorker = role.startsWith('worker');
+  const ok = isWorker ? new URL(url).origin === new URL(BASE).origin : allowed(url, sources);
   let status = 0;
   let note = '';
   if (ok) {
     try {
       const response = await fetch(url, { headers: { Referer: 'https://ihype.org/app/map' } });
       status = response.status;
+      if (role.startsWith('worker') && response.ok) {
+        const type = response.headers.get('content-type') ?? '';
+        if (!/javascript|ecmascript/i.test(type)) {
+          /* A module worker served as text/html or octet-stream is refused by
+             the browser with a MIME error — same outcome as a 404, so the
+             status is overridden to say so. */
+          return { role, url, allowed: ok, status: 0, note: `served as "${type || 'no content-type'}", not JavaScript — a module worker will not run it`, body: '' };
+        }
+      }
       return { role, url, allowed: ok, status, note, body: response.ok ? await response.text() : '' };
     } catch (error) {
       note = error instanceof Error ? error.message : String(error);
     }
   } else {
-    note = 'refused by connect-src before any request';
+    note = isWorker ? "not same-origin — worker-src 'self' refuses it before any request" : 'refused by connect-src before any request';
   }
   return { role, url, allowed: ok, status, note, body: '' };
 }
@@ -168,6 +195,20 @@ if (style.body) {
         }
       }
       for (const template of source.tiles ?? []) rows.push(await probe(`tile:${name}`, concrete(template)));
+    }
+  }
+}
+
+/* ── the worker: same origin, so worker-src 'self' permits it; what can go
+   wrong is the file not being there (the build step did not run) or being
+   served as HTML/octet-stream, which a module worker refuses to execute. ── */
+if (BASE) {
+  const worker = await probe('worker', `${BASE}${WORKER_URL}`);
+  rows.push(worker);
+  if (worker.body) {
+    const siblings = [...worker.body.matchAll(/from\s*"(\.\/[^"]+)"/g)].map((m) => m[1].slice(2));
+    for (const file of siblings) {
+      rows.push(await probe('worker:import', new URL(file, `${BASE}${WORKER_URL}`).href));
     }
   }
 }
