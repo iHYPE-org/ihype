@@ -2042,7 +2042,6 @@
   "settingsPage.deleteAccountDetail": "دائم. تُزال كل البيانات خلال 30 يومًا.",
   "settingsPage.deleteAccountFailed": "تعذّر حذف الحساب.",
   "settingsPage.deleteAccountLabel": "حذف الحساب",
-  "settingsPage.deletionScheduled": "تمت جدولة حذف الحساب. ستصلك رسالة تأكيد بالبريد.",
   "settingsPage.demandRadarDetail": "يمكن للفنانين رؤية مكانك في رادار الطلب وطلب موعد",
   "settingsPage.demandRadarLabel": "أظهرني في رادار الطلب",
   "settingsPage.detachNow": "افصل الآن",

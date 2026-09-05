@@ -2058,7 +2058,6 @@
   "settingsPage.deleteAccountDetail": "Définitif. Toutes les données sont supprimées sous 30 jours.",
   "settingsPage.deleteAccountFailed": "Impossible de supprimer le compte.",
   "settingsPage.deleteAccountLabel": "Supprimer le compte",
-  "settingsPage.deletionScheduled": "Suppression du compte programmée. Vous recevrez un e-mail de confirmation.",
   "settingsPage.demandRadarDetail": "Les artistes peuvent voir votre salle dans le radar de demande et demander un créneau",
   "settingsPage.demandRadarLabel": "M'afficher dans le radar de demande",
   "settingsPage.detachNow": "Détacher maintenant",

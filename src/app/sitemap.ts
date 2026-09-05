@@ -35,6 +35,7 @@ const STATIC: MetadataRoute.Sitemap = [
   { url: `${base}/launch`,         changeFrequency: 'monthly', priority: 0.4 },
   { url: `${base}/ticket-policy`,  changeFrequency: 'monthly', priority: 0.3 },
   { url: `${base}/copyright`,      changeFrequency: 'monthly', priority: 0.3 },
+  { url: `${base}/delete-account`, changeFrequency: 'monthly', priority: 0.3 },
   { url: `${base}/dmca`,           changeFrequency: 'monthly', priority: 0.3 },
   /* `/register` and `/login` are NOT here, and that is not an oversight:
      `robots.ts` disallows both. Submitting a URL in the sitemap that robots.txt

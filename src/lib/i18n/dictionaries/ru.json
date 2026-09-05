@@ -2058,7 +2058,6 @@
   "settingsPage.deleteAccountDetail": "Безвозвратно. Все данные удаляются в течение 30 дней.",
   "settingsPage.deleteAccountFailed": "Не удалось удалить аккаунт.",
   "settingsPage.deleteAccountLabel": "Удалить аккаунт",
-  "settingsPage.deletionScheduled": "Удаление аккаунта запланировано. Вы получите письмо с подтверждением.",
   "settingsPage.demandRadarDetail": "Артисты видят вашу площадку в радаре спроса и могут запросить слот",
   "settingsPage.demandRadarLabel": "Показывать меня в радаре спроса",
   "settingsPage.detachNow": "Отвязать сейчас",

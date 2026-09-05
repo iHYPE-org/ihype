@@ -206,3 +206,35 @@ describe('isProtectedPath', () => {
     expect(getDeviceCookieName()).toBe(ADMIN_DEVICE_COOKIE);
   });
 });
+
+/**
+ * The two URLs the app stores hold us to, asserted because a silent redirect
+ * to /login is what failure looks like here — not an error, not a 404, just a
+ * sign-in wall where a reviewer expected a page.
+ *
+ * `/delete-account` is Google Play's Data Safety deletion URL. It must open
+ * with no account and no app installed; behind default-deny it would answer a
+ * redirect to /login, which is the exact thing the URL exists to disprove.
+ *
+ * `/.well-known/apple-app-site-association` is the same class of mistake and
+ * has already happened once: it has NO file extension, so the static-asset
+ * heuristic could not see it, production answered 307, and Apple's CDN — which
+ * does not follow redirects — could only ever have recorded the domain as
+ * unverified.
+ */
+describe('store-facing URLs stay reachable signed out', () => {
+  it('serves the Play account-deletion page without a session', () => {
+    expect(isProtectedPath('/delete-account')).toBe(false);
+  });
+
+  it('serves both association files without a session', () => {
+    expect(isProtectedPath('/.well-known/apple-app-site-association')).toBe(false);
+    expect(isProtectedPath('/.well-known/assetlinks.json')).toBe(false);
+  });
+
+  it('still gates a members-only page, so the check above means something', () => {
+    /* Without this the suite would pass just as happily if isPublicPath
+       answered "not protected" for everything. */
+    expect(isProtectedPath('/app/me/settings')).toBe(true);
+  });
+});

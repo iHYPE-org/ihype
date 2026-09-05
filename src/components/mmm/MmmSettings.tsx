@@ -459,7 +459,18 @@ export function MmmSettings() {
       body: JSON.stringify({ confirm: 'DELETE' }),
     });
     if (res.ok) {
-      alert(t('settingsPage.deletionScheduled', 'Account deletion scheduled. You will receive a confirmation email.'));
+      /* SAY WHAT HAPPENED, NOT WHAT SOUNDS GENTLER. This read "Account
+         deletion scheduled. You will receive a confirmation email." and both
+         halves were false: POST /api/settings/delete-account awaits
+         `executeAccountErasure` and returns `deleted: true`, so the erasure is
+         already done when this line runs, and nothing anywhere sends a
+         deletion email — the address it would go to has just been scrubbed.
+         Found while writing /delete-account, which has to describe this
+         truthfully for Google Play's Data Safety form; a member told to wait
+         for an email that never arrives has no way to tell a completed
+         deletion from a failed one. The key was renamed with the text, so no
+         translation keeps saying "scheduled". */
+      alert(t('settingsPage.deletionComplete', 'Your account has been deleted. Signing you out now.'));
       // Same reasoning as the sign-out row, and more pressing: this account is
       // being deleted, so nothing of it should survive in a cache on the device.
       clearPrivateCaches();

@@ -138,6 +138,11 @@ const PUBLIC_EXACT: readonly string[] = [
   // Legal and policy, plus the legacy URLs that still appear in sent email,
   // consent copy and app-store listings.
   '/community-rules', '/copyright', '/ticket-policy',
+  // Google Play's Data Safety form requires an account-deletion URL a
+  // reviewer can open with NO account and no app installed. Behind the
+  // default-deny below it would answer a redirect to /login — a sign-in
+  // wall at the exact URL that exists to prove there isn't one.
+  '/delete-account',
   '/about', '/audit', '/charter', '/dmca', '/legal', '/privacy', '/terms', '/transparency',
 ];
 
