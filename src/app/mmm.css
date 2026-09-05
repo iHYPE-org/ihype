@@ -1242,12 +1242,22 @@ html:has(.mmm-frame) {
 
 /* Add artist / add venue. Tinted by role on hover only — the resting state is
    neutral because these are two of several controls in the section, and two
-   permanently coloured buttons would read as the section's subject. */
+   permanently coloured buttons would read as the section's subject.
+
+   The link WRAPS its own contents (2026-09-05). It was a one-line inline-flex,
+   so its minimum width was label + chip side by side — 355px at the 140% text
+   maximum on a 343px pane, five pixels inside the edge with Bricolage and
+   24px past it with the wider system sans that the Apple Music skin resolves
+   to on Android and Linux (CI measured `a.mmm-me-add w=379` in a 375 viewport).
+   With `flex-wrap` the chip drops under the label when it has to, and the
+   `max-width` is the guarantee: a row control is never wider than its row. */
 .mmm-me-add-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
 .mmm-me-add {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
+  max-width: 100%;
   min-height: 44px;
   padding: 11px 16px;
   border: 1px solid var(--ink-a45);
