@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useRegisteredStations } from '@/components/mmm/MmmStations';
-import { MMM_NAV, moduleForPath, stationsForPath } from '@/lib/mmm-nav';
+import { moduleForPath, stationsForPath } from '@/lib/mmm-nav';
+import { translateStationLabel, translateStripName } from '@/lib/mmm-shell-labels';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * A screen's own sections, drawn on the screen.
@@ -72,6 +74,7 @@ export function MmmSectionStrip({
   variant?: 'pane' | 'brass';
 }) {
   const registered = useRegisteredStations();
+  const { t } = useI18n();
   const pathname = usePathname() ?? '';
   const params = useSearchParams();
 
@@ -82,8 +85,7 @@ export function MmmSectionStrip({
      name and a screen reader announces it before the pills, so it has to say
      which screen's sections these are. A registered set brings its own — a
      profile's is "Sections in Half Waif". */
-  const label = registered?.label
-    ?? `Sections in ${MMM_NAV.find((module) => module.id === moduleForPath(pathname))?.label ?? 'this screen'}`;
+  const label = registered?.label ?? translateStripName(t, moduleForPath(pathname));
 
   /* Bring the lit section into view on arrival. A member landing on
      `?tab=merch` with Merch fourth of four would otherwise see three pills and
@@ -143,7 +145,7 @@ export function MmmSectionStrip({
               role="tab"
               type="button"
             >
-              {station.label}
+              {translateStationLabel(t, station.label)}
             </button>
           );
         }
@@ -157,7 +159,7 @@ export function MmmSectionStrip({
             key={station.id}
             role="tab"
           >
-            {station.label}
+            {translateStationLabel(t, station.label)}
           </Link>
         );
       })}

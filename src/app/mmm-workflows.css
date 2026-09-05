@@ -220,3 +220,30 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   letter-spacing: .06em;
   color: var(--ink-3);
 }
+
+/* A release row is the link plus its play key (2026-09-05). The key sits
+   outside the link — a button inside an anchor is invalid and reads to a
+   screen reader as one control — and takes the shell's key tokens so it is a
+   flat tinted disc on iOS and a brass-edged key on the console themes. */
+.profile-release-row { display: flex; align-items: center; gap: 10px; }
+.profile-release-row .profile-release { flex: 1 1 auto; min-width: 0; }
+.profile-release-play {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 0 2px;
+  border: 1px solid var(--key-edge);
+  border-radius: 50%;
+  background: var(--key-bg);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--key-shadow);
+}
+.profile-release-play:hover { border-color: var(--key-edge-hover); }
+.profile-release-play:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.profile-release-play[data-playing] { padding-left: 0; background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); letter-spacing: -0.08em; }

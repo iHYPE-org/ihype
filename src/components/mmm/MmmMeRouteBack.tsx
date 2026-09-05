@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { mmmMeBackTarget, mmmMeRouteTrail } from '@/lib/mmm-me-back';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Backstop for ME subpages.
@@ -14,12 +15,13 @@ import { mmmMeBackTarget, mmmMeRouteTrail } from '@/lib/mmm-me-back';
  */
 export function MmmMeRouteBack() {
   const pathname = usePathname();
+  const { t } = useI18n();
   const target = mmmMeBackTarget(pathname);
   if (!target) return null;
   const trail = mmmMeRouteTrail(pathname);
   return (
-    <nav aria-label="Me workspace" className="mmm-me-route-context">
-      <Link className="mmm-charter-back mmm-me-route-back" href={target}>‹ Me</Link>
+    <nav aria-label={t('mmmMe.workspaceAria', 'Me workspace')} className="mmm-me-route-context">
+      <Link className="mmm-charter-back mmm-me-route-back" href={target}>‹ {t('mmmMe.back', 'Me')}</Link>
       {trail.length > 0 && (
         <span className="mmm-me-route-trail">
           {trail.map((part, index) => <span key={part}>{index > 0 && <i aria-hidden="true">/</i>}{part}</span>)}

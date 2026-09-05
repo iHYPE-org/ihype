@@ -10,6 +10,7 @@ import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/li
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
+import { getServerT } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
@@ -85,6 +86,7 @@ export default async function MmmVenuePage({
   if (!profile || profile.type !== 'VENUE') return missing;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
 
+  const t = await getServerT();
   const activeTab = resolveTab(VENUE_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
 
@@ -145,7 +147,7 @@ export default async function MmmVenuePage({
      profile panes were the same object drawn in two eras. */
   return (
     <div className="mmm-show mmm-public-profile" data-profile-type="venue">
-      <Link className="mmm-show-back" href="/app/map">← Map</Link>
+      <Link className="mmm-show-back" href="/app/map">← {t('venuePane.backMap', 'Map')}</Link>
 
       <div className="mmm-profile-card">
         <div className="mmm-profile-band">
@@ -166,7 +168,7 @@ export default async function MmmVenuePage({
               {/* `.mmm-show-eyebrow` is the hook e2e reads to tell this pane
                   from the artist's. */}
               <span className="mmm-show-eyebrow">
-                {profile.verificationStatus === 'VERIFIED' ? 'VENUE · VERIFIED' : 'VENUE'}
+                {profile.verificationStatus === 'VERIFIED' ? t('venuePane.eyebrowVerified', 'VENUE · VERIFIED') : t('venuePane.eyebrow', 'VENUE')}
               </span>
             </div>
           </div>
@@ -198,22 +200,22 @@ export default async function MmmVenuePage({
               Venue Info, where a coordinator looks for it. */}
           <ProfileCounters
             counters={[
-              { label: 'Hypes', value: profile.hypeCount },
-              { label: 'Followers', value: profile._count.followers },
-              { label: 'Tickets sold', value: ticketsSold },
+              { label: t('profilePane.counterHypes', 'Hypes'), value: profile.hypeCount },
+              { label: t('profilePane.counterFollowers', 'Followers'), value: profile._count.followers },
+              { label: t('venuePane.counterTicketsSold', 'Tickets sold'), value: ticketsSold },
             ]}
           />
         </div>
       </div>
 
-      <ProfileTabs active={activeTab} label="Venue sections" tabs={VENUE_TABS} />
+      <ProfileTabs active={activeTab} label={t('venuePane.sectionsAria', 'Venue sections')} tabs={VENUE_TABS} />
 
       {activeTab === 'calendar' && (
         <ProfilePanel
           tabId="calendar"
-          empty="Nothing on the calendar yet."
+          empty={t('venuePane.calendarEmpty', 'Nothing on the calendar yet.')}
           isEmpty={upcoming.length === 0}
-          title="Event Calendar"
+          title={t('mmmStrip.eventCalendar', 'Event Calendar')}
         >
           <ul className="mmm-profile-rows">
             {upcoming.map((show) => (
@@ -237,29 +239,29 @@ export default async function MmmVenuePage({
            the map. */
         <ProfilePanel
           tabId="info"
-          empty={`${profile.name} has not added room details yet.`}
+          empty={t('venuePane.infoEmpty', '{name} has not added room details yet.').replace('{name}', profile.name)}
           isEmpty={
             !profile.capacity && !profile.roomType && !profile.addressLine1
             && !profile.hoursText && !profile.bio && !profile.headline
           }
-          title="Venue Info"
+          title={t('mmmStrip.venueInfo', 'Venue Info')}
         >
           {profile.headline && <p className="profile-standfirst">{profile.headline}</p>}
           <dl className="profile-facts">
             {profile.capacity && (
-              <div><dt>Capacity</dt><dd>{profile.capacity.toLocaleString()}</dd></div>
+              <div><dt>{t('venuePane.factCapacity', 'Capacity')}</dt><dd>{profile.capacity.toLocaleString()}</dd></div>
             )}
-            {profile.roomType && <div><dt>Room</dt><dd>{profile.roomType}</dd></div>}
+            {profile.roomType && <div><dt>{t('venuePane.factRoom', 'Room')}</dt><dd>{profile.roomType}</dd></div>}
             {address && (
               <div>
-                <dt>Address</dt>
-                <dd>{address} · <Link href="/app/map?layer=venues">Map</Link></dd>
+                <dt>{t('venuePane.factAddress', 'Address')}</dt>
+                <dd>{address} · <Link href="/app/map?layer=venues">{t('venuePane.backMap', 'Map')}</Link></dd>
               </div>
             )}
-            {profile.hoursText && <div><dt>Hours</dt><dd>{profile.hoursText}</dd></div>}
+            {profile.hoursText && <div><dt>{t('venuePane.factHours', 'Hours')}</dt><dd>{profile.hoursText}</dd></div>}
             <div>
-              <dt>Identity</dt>
-              <dd>{profile.verificationStatus === 'VERIFIED' ? 'Verified by iHYPE' : 'Not yet verified by iHYPE'}</dd>
+              <dt>{t('profilePane.factIdentity', 'Identity')}</dt>
+              <dd>{profile.verificationStatus === 'VERIFIED' ? t('profilePane.verifiedByIhype', 'Verified by iHYPE') : t('profilePane.notVerifiedByIhype', 'Not yet verified by iHYPE')}</dd>
             </div>
           </dl>
           <RichContent value={profile.bio} />
@@ -269,9 +271,9 @@ export default async function MmmVenuePage({
       {activeTab === 'rules' && (
         <ProfilePanel
           tabId="rules"
-          empty={`${profile.name} has not published house rules yet. Ask them through Contact.`}
+          empty={t('venuePane.rulesEmpty', '{name} has not published house rules yet. Ask them through Contact.').replace('{name}', profile.name)}
           isEmpty={!unwrap(profile.requestContent)}
-          title="Rules & FAQs"
+          title={t('mmmStrip.rulesFaqs', 'Rules & FAQs')}
         >
           <RichContent value={profile.requestContent} />
         </ProfilePanel>
@@ -283,26 +285,26 @@ export default async function MmmVenuePage({
            under — where booking happens, the split the charter fixes, the
            ticket terms, the per-show lineup agreement. Every line points at
            something the product already holds; nothing here is a new document. */
-        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Contact">
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title={t('mmmStrip.contact', 'Contact')}>
           {unwrap(profile.contactInfo)
             ? <RichContent value={profile.contactInfo} />
-            : <p className="profile-standfirst">{profile.name} has not added contact details yet.</p>}
+            : <p className="profile-standfirst">{t('venuePane.contactEmpty', '{name} has not added contact details yet.').replace('{name}', profile.name)}</p>}
           <dl className="profile-facts profile-facts-coordination">
             <div>
-              <dt>Booking</dt>
-              <dd>Fans ask below; the venue books from its <Link href="/app/me/booking">demand radar</Link>.</dd>
+              <dt>{t('profilePane.factBooking', 'Booking')}</dt>
+              <dd>{t('venuePane.factBookingBody', 'Fans ask below; the venue books from its')} <Link href="/app/me/booking">{t('profilePane.demandRadar', 'demand radar')}</Link>.</dd>
             </div>
             <div>
-              <dt>Split</dt>
-              <dd>70% artist · 20% venue · 10% promoters, fixed by the <Link href="/info?tab=charter">charter</Link>.</dd>
+              <dt>{t('profilePane.factSplit', 'Split')}</dt>
+              <dd>{t('profilePane.factSplitBody', '70% artist · 20% venue · 10% promoters, fixed by the')} <Link href="/info?tab=charter">{t('profilePane.charter', 'charter')}</Link>.</dd>
             </div>
             <div>
-              <dt>Lineup</dt>
-              <dd>A multi-act bill splits the artist share by a lineup agreement every act accepts, on the show&apos;s own page.</dd>
+              <dt>{t('venuePane.factLineup', 'Lineup')}</dt>
+              <dd>{t('venuePane.factLineupBody', 'A multi-act bill splits the artist share by a lineup agreement every act accepts, on the show’s own page.')}</dd>
             </div>
             <div>
-              <dt>Tickets</dt>
-              <dd>All sales are final; a cancelled show refunds every ticket. <Link href="/ticket-policy">Ticket policy</Link>.</dd>
+              <dt>{t('profilePane.factTickets', 'Tickets')}</dt>
+              <dd>{t('profilePane.factTicketsBody', 'All sales are final; a cancelled show refunds every ticket.')} <Link href="/ticket-policy">{t('profilePane.ticketPolicy', 'Ticket policy')}</Link>.</dd>
             </div>
           </dl>
         </ProfilePanel>
@@ -315,16 +317,16 @@ export default async function MmmVenuePage({
            nothing to analyse. It lives on Contact because "bring this act
            here" is the one thing a fan has to say to a venue. The owner sees
            where the answers land instead of a form addressed to themselves. */
-        <ProfilePanel empty="" isEmpty={false} tabId="contact" title="Ask them to book someone">
+        <ProfilePanel empty="" isEmpty={false} tabId="contact" title={t('venuePane.askTitle', 'Ask them to book someone')}>
           {isOwner ? (
             <p className="profile-standfirst">
-              Fans use this form to ask you to book an act. Their requests rank on your{' '}
-              <Link href="/app/me/booking">demand radar</Link>, weighed by how recently, how many, and how close they are.
+              {t('venuePane.askOwnerBody', 'Fans use this form to ask you to book an act. Their requests rank on your')}{' '}
+              <Link href="/app/me/booking">{t('profilePane.demandRadar', 'demand radar')}</Link>{t('venuePane.askOwnerBodyTail', ', weighed by how recently, how many, and how close they are.')}
             </p>
           ) : (
             <>
               <p className="profile-standfirst">
-                Want to see someone play here? Name the act and {profile.name} sees the request, ranked with everyone else who asked.
+                {t('venuePane.askBody', 'Want to see someone play here? Name the act and {name} sees the request, ranked with everyone else who asked.').replace('{name}', profile.name)}
               </p>
               <VenueRequestForm venueProfileId={profile.id} />
             </>
@@ -335,7 +337,7 @@ export default async function MmmVenuePage({
               subscription nothing ever sent to. Shown to the owner too — that
               is how they see what a visitor is offered. */}
           <div className="profile-newsletter">
-            <h3 className="profile-panel-subhead">Get updates by email</h3>
+            <h3 className="profile-panel-subhead">{t('profilePane.newsletterHead', 'Get updates by email')}</h3>
             <NewsletterSignup fixedProfile={{ id: profile.id, name: profile.name, type: profile.type }} />
           </div>
         </ProfilePanel>

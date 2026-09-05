@@ -7,8 +7,8 @@ import { MMM_ME_PANELS } from '@/lib/mmm-nav';
 import { useRegisterStations } from './MmmStations';
 import { ME_PANEL_ROWS, canonicalMePanelId, isMePanelId, type MePanelId } from '@/lib/mmm-me-panels';
 import type { MmmMeData, MmmMeRole } from '@/lib/mmm-me';
-
-const ROLE_LABELS: Record<MmmMeRole, string> = { fan: 'Fan', artist: 'Artist', venue: 'Venue' };
+import { useI18n } from '@/components/I18nProvider';
+import { translateMeRow, translateMeStatLabel, translateRoleLabel } from '@/lib/mmm-shell-labels';
 
 type ListeningSummary = {
   tracksThisMonth: number | null;
@@ -27,6 +27,7 @@ type ListeningSummary = {
  * never finished a track: a scoreboard of dashes on day one is noise.
  */
 function ListeningCard() {
+  const { t } = useI18n();
   const [summary, setSummary] = useState<ListeningSummary | null>(null);
   useEffect(() => {
     let stale = false;
@@ -43,26 +44,26 @@ function ListeningCard() {
   return (
     <>
       <div className="mmm-me-stats-head">
-        <span className="mmm-eyebrow">Your listening</span>
+        <span className="mmm-eyebrow">{t('mmmMe.listening.eyebrow', 'Your listening')}</span>
         <span aria-hidden="true" className="mmm-me-stats-rule" />
       </div>
       <div className="mmm-stat-grid" style={{ marginBottom: 12 }}>
         <div className="mmm-card">
           <div className="mmm-stat-value">{figure(summary.tracksThisMonth)}</div>
-          <div className="mmm-stat-label">Tracks this month</div>
+          <div className="mmm-stat-label">{t('mmmMe.listening.tracksThisMonth', 'Tracks this month')}</div>
         </div>
         <div className="mmm-card">
           <div className="mmm-stat-value">{figure(summary.tracksTotal)}</div>
-          <div className="mmm-stat-label">Tracks all time</div>
+          <div className="mmm-stat-label">{t('mmmMe.listening.tracksAllTime', 'Tracks all time')}</div>
         </div>
         <div className="mmm-card">
           <div className="mmm-stat-value">{figure(summary.hypesThisMonth)}</div>
-          <div className="mmm-stat-label">HYPEs this month</div>
+          <div className="mmm-stat-label">{t('mmmMe.listening.hypesThisMonth', 'HYPEs this month')}</div>
         </div>
       </div>
       {summary.topArtists && summary.topArtists.length > 0 && (
         <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow" style={{ marginBottom: 8 }}>Most played artists</div>
+          <div className="mmm-eyebrow" style={{ marginBottom: 8 }}>{t('mmmMe.listening.mostPlayed', 'Most played artists')}</div>
           {summary.topArtists.map((artist, index) => (
             <div key={`${artist.name}-${index}`} style={{ display: 'flex', gap: 10, alignItems: 'baseline', padding: '4px 0' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
@@ -73,7 +74,7 @@ function ListeningCard() {
               ) : (
                 <span style={{ flex: 1, fontWeight: 600, color: 'var(--ink)' }}>{artist.name}</span>
               )}
-              <span style={{ color: 'var(--ink-3)', fontSize: '0.9375rem' }}>{artist.tracks} track{artist.tracks === 1 ? '' : 's'}</span>
+              <span style={{ color: 'var(--ink-3)', fontSize: '0.9375rem' }}>{artist.tracks === 1 ? t('mmmMe.listening.oneTrack', '1 track') : t('mmmMe.listening.nTracks', '{n} tracks').replace('{n}', String(artist.tracks))}</span>
             </div>
           ))}
         </div>
@@ -174,16 +175,17 @@ const ME_STATIONS: readonly { id: string; label: string }[] = [
 ];
 
 function AboutMeActivity({ data }: { data: MmmMeData }) {
+  const { t } = useI18n();
   return (
     <div className="mmm-me-about-in-profiles">
-      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>About me · visible activity</div>
+      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{t('mmmMe.activity.eyebrow', 'About me · visible activity')}</div>
       {data.activity.length === 0 ? (
         <div className="mmm-empty-state">
-          <strong>Build your visible activity</strong>
-          <p>HYPE a track, follow local artists or save a show. This is the activity artists and venues can see.</p>
+          <strong>{t('mmmMe.activity.emptyTitle', 'Build your visible activity')}</strong>
+          <p>{t('mmmMe.activity.emptyBody', 'HYPE a track, follow local artists or save a show. This is the activity artists and venues can see.')}</p>
           <div className="mmm-empty-actions">
-            <Link className="mmm-btn-primary" href="/app/music/discover">Discover music</Link>
-            <Link className="mmm-btn-ghost" href="/app/map">Explore the map</Link>
+            <Link className="mmm-btn-primary" href="/app/music/discover">{t('mmmMe.activity.discover', 'Discover music')}</Link>
+            <Link className="mmm-btn-ghost" href="/app/map">{t('mmmMe.activity.exploreMap', 'Explore the map')}</Link>
           </div>
         </div>
       ) : (
@@ -209,6 +211,7 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
 }
 
 export function MmmMe({ data }: { data: MmmMeData }) {
+  const { t } = useI18n();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [copied, setCopied] = useState(false);
@@ -301,7 +304,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
        names one. */
     active: activeId,
     onChange: onStationChange,
-    label: 'Sections in ME',
+    label: t('mmmStrip.sectionsInMe', 'Sections in ME'),
   });
 
   const copy = async () => {
@@ -328,7 +331,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
               style={{ backdropFilter: 'none' }}
               type="button"
             >
-              {ROLE_LABELS[role]}
+              {translateRoleLabel(t, role)}
             </button>
           ))}
         </div>
@@ -359,14 +362,14 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       {data.hypeLink && (
         <div className="mmm-card mmm-hype-link">
           <div className="mmm-hype-link-row">
-            <span className="mmm-eyebrow mmm-eyebrow-accent mmm-hype-link-label">HYPE link</span>
+            <span className="mmm-eyebrow mmm-eyebrow-accent mmm-hype-link-label">{t('mmmMe.hypeLink.label', 'HYPE link')}</span>
             <span className="mmm-link-value">{data.hypeLink.url}</span>
             <button
               className="mmm-btn-primary mmm-link-copy"
               onClick={() => void copy()}
               type="button"
             >
-              {copied ? 'Copied' : 'Copy'}
+              {copied ? t('mmmMe.hypeLink.copied', 'Copied') : t('mmmMe.hypeLink.copy', 'Copy')}
             </button>
           </div>
 
@@ -374,21 +377,20 @@ export function MmmMe({ data }: { data: MmmMeData }) {
               renders nothing at all; 0 is real but not worth a permanent board. */}
           {(Boolean(data.hypeLink.tickets) || Boolean(data.hypeLink.earnedCents)) && (
             <p className="mmm-hype-link-meta">
-              {data.hypeLink.tickets ? `${data.hypeLink.tickets} ticket${data.hypeLink.tickets === 1 ? '' : 's'}` : null}
+              {data.hypeLink.tickets ? (data.hypeLink.tickets === 1 ? t('mmmMe.hypeLink.oneTicket', '1 ticket') : t('mmmMe.hypeLink.nTickets', '{n} tickets').replace('{n}', String(data.hypeLink.tickets))) : null}
               {data.hypeLink.tickets && data.hypeLink.earnedCents ? ' · ' : null}
-              {data.hypeLink.earnedCents ? `$${(data.hypeLink.earnedCents / 100).toFixed(0)} earned` : null}
+              {data.hypeLink.earnedCents ? t('mmmMe.hypeLink.earned', '${amount} earned').replace('{amount}', (data.hypeLink.earnedCents / 100).toFixed(0)) : null}
             </p>
           )}
 
           <details className="mmm-hype-link-more">
-            <summary>How this earns</summary>
+            <summary>{t('mmmMe.hypeLink.howThisEarns', 'How this earns')}</summary>
             <div className="mmm-hype-link-body">
               {data.role === 'fan' && (
-                <p>Share it — friends see what you hype, and shows you can go to together.</p>
+                <p>{t('mmmMe.hypeLink.fanBody', 'Share it — friends see what you hype, and shows you can go to together.')}</p>
               )}
               <p>
-                Share any show with this link. Every ticket it sells earns your proportional cut of the
-                10% promoter pool — never the artist&rsquo;s 70%. Promoting needs no role and no signup.
+                {t('mmmMe.hypeLink.body', 'Share any show with this link. Every ticket it sells earns your proportional cut of the 10% promoter pool — never the artist’s 70%. Promoting needs no role and no signup.')}
               </p>
             </div>
           </details>
@@ -396,7 +398,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       )}
 
       {activeId === 'profiles' && (
-      <section aria-label="Profiles" className="mmm-me-section">
+      <section aria-label={t('mmmStrip.profiles', 'Profiles')} className="mmm-me-section">
       {/* The stats that used to sit in a separate "Your year" section. The
           2026-08-10 template folds them under Profiles and labels them by role,
           because a figure like "Shows attended" belongs to the profile it was
@@ -406,14 +408,14 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       {data.stats.length > 0 && (
         <>
           <div className="mmm-me-stats-head">
-            <span className="mmm-eyebrow">{ROLE_LABELS[data.role]} stats</span>
+            <span className="mmm-eyebrow">{t('mmmMe.roleStats', '{role} stats').replace('{role}', translateRoleLabel(t, data.role))}</span>
             <span aria-hidden="true" className="mmm-me-stats-rule" />
           </div>
           <div className="mmm-stat-grid" style={{ marginBottom: 16 }}>
             {data.stats.map((stat) => (
               <div className="mmm-card" key={stat.label}>
                 <div className="mmm-stat-value">{stat.value}</div>
-                <div className="mmm-stat-label">{stat.label}</div>
+                <div className="mmm-stat-label">{translateMeStatLabel(t, stat.label)}</div>
               </div>
             ))}
           </div>
@@ -423,15 +425,15 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
       {data.page && (
         <div className="mmm-card mmm-card-accent" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.9375rem' }}>Your page</div>
+          <div className="mmm-eyebrow mmm-eyebrow-accent" style={{ marginBottom: 6, fontSize: '0.9375rem' }}>{t('mmmMe.page.eyebrow', 'Your page')}</div>
           <div style={{ fontWeight: 600, fontSize: '0.95rem', color: 'var(--ink)', marginBottom: 3 }}>{data.page.name}</div>
-          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status}</div>
+          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5, marginBottom: 12 }}>{data.page.status.split(' · ').map((part) => translateMeStatLabel(t, part)).join(' · ')}</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>Edit page</Link>
+            <Link className="mmm-btn-primary" href="/app/me/profiles" style={{ flex: 1, display: 'block', textDecoration: 'none' }}>{t('mmmMe.page.edit', 'Edit page')}</Link>
             {/* `kind` is 'artists' | 'venues', and both now have a pane inside the
                 shell — so previewing your own page no longer means leaving the
                 design to look at it. */}
-            <Link className="mmm-btn-ghost" href={`/app/${data.page.kind}/${data.page.slug}`}>Preview</Link>
+            <Link className="mmm-btn-ghost" href={`/app/${data.page.kind}/${data.page.slug}`}>{t('mmmMe.page.preview', 'Preview')}</Link>
           </div>
         </div>
       )}
@@ -457,13 +459,13 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       <div className="mmm-me-add-row">
         <Link className="mmm-me-add" data-kind="artist" href="/app/me/profiles?create=artist">
           <span aria-hidden="true">＋</span>
-          Add artist profile
-          <span className="mmm-me-add-chip">Verification required</span>
+          {t('mmmMe.add.artist', 'Add artist profile')}
+          <span className="mmm-me-add-chip">{t('mmmMe.add.verificationRequired', 'Verification required')}</span>
         </Link>
         <Link className="mmm-me-add" data-kind="venue" href="/app/me/profiles?create=venue">
           <span aria-hidden="true">＋</span>
-          Add venue profile
-          <span className="mmm-me-add-chip">Verification required</span>
+          {t('mmmMe.add.venue', 'Add venue profile')}
+          <span className="mmm-me-add-chip">{t('mmmMe.add.verificationRequired', 'Verification required')}</span>
         </Link>
         {!data.hasAdvertiser && (
           /* Advertiser is a real fifth account type with no Profile row, so it
@@ -479,15 +481,14 @@ export function MmmMe({ data }: { data: MmmMeData }) {
              an account, i.e. every member who could see this button. */
           <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising/start">
             <span aria-hidden="true">＋</span>
-            Add advertiser profile
-            <span className="mmm-me-add-chip">Verification required</span>
+            {t('mmmMe.add.advertiser', 'Add advertiser profile')}
+            <span className="mmm-me-add-chip">{t('mmmMe.add.verificationRequired', 'Verification required')}</span>
           </Link>
         )}
       </div>
 
       <p className="mmm-me-note">
-        Promoting is not a profile. Every account can promote by sharing its HYPE Link,
-        and earns from the 10% promoter pool when a ticket sells through it.
+        {t('mmmMe.promotingNote', 'Promoting is not a profile. Every account can promote by sharing its HYPE Link, and earns from the 10% promoter pool when a ticket sells through it.')}
       </p>
       <AboutMeActivity data={data} />
       </section>
@@ -519,17 +520,20 @@ export function MmmMe({ data }: { data: MmmMeData }) {
           // renders nothing at all — not a collapsed header.
           if (activeId !== panelId) return null;
           return (
-            <section aria-label={panel.label} className="mmm-me-section" key={panel.id}>
+            <section aria-label={translateMeRow(t, { href: '', label: panel.label, detail: '' }).label} className="mmm-me-section" key={panel.id}>
               <div className="mmm-me-accordion-body">
-                {ME_PANEL_ROWS[panelId].map((row) => (
+                {ME_PANEL_ROWS[panelId].map((row) => {
+                  const text = translateMeRow(t, row);
+                  return (
                   <Link className="mmm-row" href={row.href} key={row.href + row.label} style={{ display: 'flex' }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span className="mmm-row-title" style={{ display: 'block' }}>{row.label}</span>
-                      <span className="mmm-row-sub" style={{ display: 'block' }}>{row.detail}</span>
+                      <span className="mmm-row-title" style={{ display: 'block' }}>{text.label}</span>
+                      <span className="mmm-row-sub" style={{ display: 'block' }}>{text.detail}</span>
                     </span>
                     <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
                   </Link>
-                ))}
+                  );
+                })}
                 {/* The admin console, for the one account allowed to hold ADMIN.
 
                     It rides in SETTINGS, which is a menu of destinations that
@@ -552,8 +556,8 @@ export function MmmMe({ data }: { data: MmmMeData }) {
                 {panelId === 'settings' && data.isAdmin && (
                   <Link className="mmm-row" href="/admin" style={{ display: 'flex' }}>
                     <span style={{ flex: 1, minWidth: 0 }}>
-                      <span className="mmm-row-title" style={{ display: 'block' }}>Admin console</span>
-                      <span className="mmm-row-sub" style={{ display: 'block' }}>Platform operations · opens the ops shell</span>
+                      <span className="mmm-row-title" style={{ display: 'block' }}>{t('mmmMe.adminConsole', 'Admin console')}</span>
+                      <span className="mmm-row-sub" style={{ display: 'block' }}>{t('mmmMe.adminConsoleDetail', 'Platform operations · opens the ops shell')}</span>
                     </span>
                     <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
                   </Link>
