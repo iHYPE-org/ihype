@@ -327,8 +327,8 @@
      still there for anyone who picks it — as a theme, not as the chassis. */
   --dock-texture: none;
   --dock-tint: none;
-  --dock-bg: rgba(249, 249, 249, .92);
-  --dock-blur: saturate(180%) blur(20px);
+  --dock-bg: var(--material-regular);
+  --dock-blur: var(--material-blur);
   --dock-lip: var(--line);
   --dock-shadow: none;
   --grain-texture: none;
@@ -347,7 +347,7 @@
   --pill-on-bg: var(--ink);
   --pill-on-ink: var(--bg);
   --pill-on-ring: none;
-  --map-strip-bg: rgba(249, 249, 249, .92);
+  --map-strip-bg: var(--material-regular);
   --map-strip-ink: var(--ink-2);
   --map-strip-shadow: 0 1px 3px rgba(0, 0, 0, .12);
   --eyebrow-dash: none;
@@ -362,6 +362,85 @@
   --map-rule: transparent;
   --map-vignette: transparent;
   --map-blend: normal;
+
+  /* ── iOS MATERIALS AND THE CONTROL VOCABULARY (2026-09-05, owner: "Keep
+     redesigning for iOS transparency and better visibility") ─────────────
+     iOS chrome is not a colour, it is a MATERIAL: a translucent fill with a
+     saturating blur, so the content scrolling under the tab bar, a sheet or a
+     floating search field shows through as colour without competing as text.
+     Three thicknesses, the way UIKit names them — thick for a sheet that
+     carries reading matter, regular for the bar and the strip over the map,
+     thin for a popover. The alphas are measured so --ink still clears 4.5:1
+     on each over a pure-white AND a mid-grey ground (audit:contrast reads the
+     opaque fallbacks below); the blur is what keeps the ink legible over
+     artwork, which a flat alpha cannot promise.
+
+     The second group is the CONTROL vocabulary the console wrote as literals
+     in mmm.css — a 1.5px ink rule on every paper box, a 2px 3px pressed
+     offset shadow, a brass edge and a lit top on every key, a dashed plate for
+     an empty state. Each is a token now: iOS values here (flat fills, no
+     rules, no cast, 10px corners), the console's own literals restored in the
+     four character themes. mmm.css reads these and paints nothing directly. */
+  --material-thick: rgba(246, 246, 246, .86);
+  --material-regular: rgba(249, 249, 249, .78);
+  --material-thin: rgba(250, 250, 250, .66);
+  --material-blur: saturate(180%) blur(20px);
+  --material-line: var(--line);
+  /* What Safari paints into the overscroll gap under the bar. The walnut
+     cabinet on the console; the page ground here, or a white app would end
+     in a near-black strip on every rubber-band. */
+  --chrome-ground: var(--bg);
+  /* Floating things over the map: a soft cast, never an offset print shadow. */
+  --float-shadow: 0 2px 10px rgba(0, 0, 0, .14), 0 0 0 0.5px rgba(0, 0, 0, .06);
+  --float-shadow-deep: 0 18px 40px rgba(0, 0, 0, .18), 0 0 0 0.5px rgba(0, 0, 0, .08);
+  /* Keys: chips, ghost buttons, the add-profile pills. iOS's tinted grey. */
+  --key-radius: 10px;
+  --key-edge: transparent;
+  --key-edge-hover: transparent;
+  --key-bg: var(--bg-2);
+  --key-shadow: none;
+  --key-press-shadow: none;
+  --key-press-dim: .88;
+  --key-hover-dim: .94;
+  /* The segmented control over the map: iOS insets it from the edges, pads
+     the track and rounds each segment; the console's brass plate is
+     full-bleed with divisions cut into it. */
+  --seg-inset: 12px;
+  --seg-pad: 3px;
+  --seg-gap: 2px;
+  --seg-item-radius: var(--radius-pill);
+  --seg-divider: transparent;
+  /* The profile card's ground. Apple Music's artist page is the page itself —
+     hero, then name, then actions on white — so the card is the ground here
+     and a plate on the console. On a grey card every grey key vanished. */
+  --card-bg: var(--bg);
+  /* A selected chip is FILLED, the way Apple Music's filter pills are —
+     black on white, white on black — not a tint the eye has to compare. */
+  --chip-on-bg: var(--ink);
+  --chip-on-ink: var(--bg);
+  --chip-on-edge: var(--ink);
+  /* The primary: a filled rounded rectangle. No machined edge, no sheen. */
+  --cta-edge: transparent;
+  --cta-sheen: none;
+  --cta-shadow: none;
+  /* Paper boxes — the search field, the like key, a pin's label. */
+  --paper-edge: transparent;
+  --paper-rule: 1px;
+  --paper-shadow: none;
+  --field-fill: rgba(118, 118, 128, .12);   /* iOS search-bar grey */
+  --map-search-font: var(--font-body);
+  --map-search-tracking: 0;
+  --map-search-case: none;
+  /* Stat tiles and profile counters: a filled grey cell, not a ruled box. */
+  --tile-edge: transparent;
+  --tile-bg: var(--bg-2);
+  --art-edge: transparent;
+  --mini-art-bg: var(--bg-3);
+  /* The empty plate: a quiet filled cell in the body face. */
+  --empty-edge: 1px solid var(--line);
+  --empty-bg: var(--bg-2);
+  --empty-font: var(--font-body);
+  --sheet-edge: 1px solid var(--material-line);
   /* Paper grain — an SVG fractal-noise tile, inlined so it costs no request.
      Used by the map's foxing and available to any surface that needs the
      age-spotting of printed stock. It was `var(--grain, none)` at the call
@@ -747,8 +826,15 @@
   --ink-on-walnut-2: #d1d1d6;  /* 11.18:1 */
   --ink-on-walnut-3: #aeaeb2;  /*  7.69:1 */
   --rule-on-walnut: rgba(84,84,88,.6); --rule-on-walnut-2: rgba(84,84,88,.85);
-  --dock-bg: rgba(22, 22, 24, .92);
-  --map-strip-bg: rgba(22, 22, 24, .92);
+  --dock-bg: var(--material-regular);
+  --map-strip-bg: var(--material-regular);
+  --material-thick: rgba(28, 28, 30, .88);
+  --material-regular: rgba(22, 22, 24, .78);
+  --material-thin: rgba(30, 30, 32, .66);
+  --float-shadow: 0 2px 10px rgba(0, 0, 0, .5), 0 0 0 0.5px rgba(255, 255, 255, .08);
+  --float-shadow-deep: 0 18px 40px rgba(0, 0, 0, .6), 0 0 0 0.5px rgba(255, 255, 255, .1);
+  --field-fill: rgba(118, 118, 128, .24);
+  --mini-art-bg: var(--bg-3);
   --tile-1: #2c2c2e; --tile-2: #3a3a3c; --tile-3: #1c1c1e;
   --map-strip-shadow: 0 1px 3px rgba(0, 0, 0, .5);
   /* A light basemap inverted is the standard way to get a dark chart out of a
@@ -832,6 +918,51 @@
   --pill-on-ink: var(--ink);
   --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
   --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  /* The console's control vocabulary, restored (see :root). These are the
+     literals mmm.css carried until 2026-09-05, verbatim. */
+  --material-thick: var(--bg-surface);
+  --material-regular: var(--bg-2);
+  --material-thin: var(--bg-2);
+  --material-blur: none;
+  --material-line: var(--line-2);
+  --chrome-ground: var(--walnut-3);
+  --float-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .22);
+  --float-shadow-deep: 0 18px 40px rgba(28, 20, 8, .28);
+  --key-radius: 4px;
+  --key-edge: var(--brass-deep);
+  --key-edge-hover: var(--brass);
+  --key-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --key-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
+  --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+  --key-press-dim: 1;
+  --key-hover-dim: 1.04;
+  --seg-inset: 0;
+  --seg-pad: 0;
+  --seg-gap: 0;
+  --seg-item-radius: 0;
+  --seg-divider: var(--line);
+  --card-bg: var(--bg-surface);
+  --chip-on-bg: rgba(var(--accent-rgb), .16);
+  --chip-on-ink: var(--accent-text);
+  --chip-on-edge: rgba(var(--accent-rgb), .5);
+  --cta-edge: rgba(61, 44, 12, .9);
+  --cta-sheen: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
+  --cta-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  --paper-edge: var(--ink-2);
+  --paper-rule: 1.5px;
+  --paper-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .18);
+  --field-fill: var(--bg-surface);
+  --map-search-font: var(--font-mono);
+  --map-search-tracking: .04em;
+  --map-search-case: uppercase;
+  --tile-edge: var(--line);
+  --tile-bg: transparent;
+  --art-edge: var(--brass);
+  --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --empty-edge: 2px dashed var(--line-2);
+  --empty-bg: transparent;
+  --empty-font: var(--f-s, Georgia, serif);
+  --sheet-edge: 2px solid var(--ink-2);
   --map-strip-ink: var(--ink-on-brass);
   --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
   --eyebrow-dash: inline-block;
@@ -921,6 +1052,51 @@
   --pill-on-ink: var(--ink);
   --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
   --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  /* The console's control vocabulary, restored (see :root). These are the
+     literals mmm.css carried until 2026-09-05, verbatim. */
+  --material-thick: var(--bg-surface);
+  --material-regular: var(--bg-2);
+  --material-thin: var(--bg-2);
+  --material-blur: none;
+  --material-line: var(--line-2);
+  --chrome-ground: var(--walnut-3);
+  --float-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .22);
+  --float-shadow-deep: 0 18px 40px rgba(28, 20, 8, .28);
+  --key-radius: 4px;
+  --key-edge: var(--brass-deep);
+  --key-edge-hover: var(--brass);
+  --key-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --key-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
+  --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+  --key-press-dim: 1;
+  --key-hover-dim: 1.04;
+  --seg-inset: 0;
+  --seg-pad: 0;
+  --seg-gap: 0;
+  --seg-item-radius: 0;
+  --seg-divider: var(--line);
+  --card-bg: var(--bg-surface);
+  --chip-on-bg: rgba(var(--accent-rgb), .16);
+  --chip-on-ink: var(--accent-text);
+  --chip-on-edge: rgba(var(--accent-rgb), .5);
+  --cta-edge: rgba(61, 44, 12, .9);
+  --cta-sheen: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
+  --cta-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  --paper-edge: var(--ink-2);
+  --paper-rule: 1.5px;
+  --paper-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .18);
+  --field-fill: var(--bg-surface);
+  --map-search-font: var(--font-mono);
+  --map-search-tracking: .04em;
+  --map-search-case: uppercase;
+  --tile-edge: var(--line);
+  --tile-bg: transparent;
+  --art-edge: var(--brass);
+  --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --empty-edge: 2px dashed var(--line-2);
+  --empty-bg: transparent;
+  --empty-font: var(--f-s, Georgia, serif);
+  --sheet-edge: 2px solid var(--ink-2);
   --map-strip-ink: var(--ink-on-brass);
   --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
   --eyebrow-dash: inline-block;
@@ -1010,6 +1186,51 @@
   --pill-on-ink: var(--ink);
   --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
   --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  /* The console's control vocabulary, restored (see :root). These are the
+     literals mmm.css carried until 2026-09-05, verbatim. */
+  --material-thick: var(--bg-surface);
+  --material-regular: var(--bg-2);
+  --material-thin: var(--bg-2);
+  --material-blur: none;
+  --material-line: var(--line-2);
+  --chrome-ground: var(--walnut-3);
+  --float-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .22);
+  --float-shadow-deep: 0 18px 40px rgba(28, 20, 8, .28);
+  --key-radius: 4px;
+  --key-edge: var(--brass-deep);
+  --key-edge-hover: var(--brass);
+  --key-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --key-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
+  --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+  --key-press-dim: 1;
+  --key-hover-dim: 1.04;
+  --seg-inset: 0;
+  --seg-pad: 0;
+  --seg-gap: 0;
+  --seg-item-radius: 0;
+  --seg-divider: var(--line);
+  --card-bg: var(--bg-surface);
+  --chip-on-bg: rgba(var(--accent-rgb), .16);
+  --chip-on-ink: var(--accent-text);
+  --chip-on-edge: rgba(var(--accent-rgb), .5);
+  --cta-edge: rgba(61, 44, 12, .9);
+  --cta-sheen: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
+  --cta-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  --paper-edge: var(--ink-2);
+  --paper-rule: 1.5px;
+  --paper-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .18);
+  --field-fill: var(--bg-surface);
+  --map-search-font: var(--font-mono);
+  --map-search-tracking: .04em;
+  --map-search-case: uppercase;
+  --tile-edge: var(--line);
+  --tile-bg: transparent;
+  --art-edge: var(--brass);
+  --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --empty-edge: 2px dashed var(--line-2);
+  --empty-bg: transparent;
+  --empty-font: var(--f-s, Georgia, serif);
+  --sheet-edge: 2px solid var(--ink-2);
   --map-strip-ink: var(--ink-on-brass);
   --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
   --eyebrow-dash: inline-block;
@@ -1094,6 +1315,51 @@
   --pill-on-ink: var(--ink);
   --pill-on-ring: 0 1px 0 rgba(255, 255, 255, .7) inset, 0 0 0 1px var(--brass) inset;
   --map-strip-bg: linear-gradient(180deg, var(--brass), var(--brass-edge));
+  /* The console's control vocabulary, restored (see :root). These are the
+     literals mmm.css carried until 2026-09-05, verbatim. */
+  --material-thick: var(--bg-surface);
+  --material-regular: var(--bg-2);
+  --material-thin: var(--bg-2);
+  --material-blur: none;
+  --material-line: var(--line-2);
+  --chrome-ground: var(--walnut-3);
+  --float-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .22);
+  --float-shadow-deep: 0 18px 40px rgba(28, 20, 8, .28);
+  --key-radius: 4px;
+  --key-edge: var(--brass-deep);
+  --key-edge-hover: var(--brass);
+  --key-bg: linear-gradient(180deg, var(--plate-1), var(--plate-2));
+  --key-shadow: inset 0 1px 0 var(--plate-lit), 0 1px 2px rgba(0, 0, 0, .18);
+  --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
+  --key-press-dim: 1;
+  --key-hover-dim: 1.04;
+  --seg-inset: 0;
+  --seg-pad: 0;
+  --seg-gap: 0;
+  --seg-item-radius: 0;
+  --seg-divider: var(--line);
+  --card-bg: var(--bg-surface);
+  --chip-on-bg: rgba(var(--accent-rgb), .16);
+  --chip-on-ink: var(--accent-text);
+  --chip-on-edge: rgba(var(--accent-rgb), .5);
+  --cta-edge: rgba(61, 44, 12, .9);
+  --cta-sheen: linear-gradient(180deg, rgba(255, 255, 255, .18), rgba(255, 255, 255, 0) 62%);
+  --cta-shadow: 0 8px 18px -10px rgba(0, 0, 0, .6), inset 0 1px 0 rgba(255, 255, 255, .28);
+  --paper-edge: var(--ink-2);
+  --paper-rule: 1.5px;
+  --paper-shadow: 2px 3px 0 rgba(var(--ink-1-rgb), .18);
+  --field-fill: var(--bg-surface);
+  --map-search-font: var(--font-mono);
+  --map-search-tracking: .04em;
+  --map-search-case: uppercase;
+  --tile-edge: var(--line);
+  --tile-bg: transparent;
+  --art-edge: var(--brass);
+  --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --empty-edge: 2px dashed var(--line-2);
+  --empty-bg: transparent;
+  --empty-font: var(--f-s, Georgia, serif);
+  --sheet-edge: 2px solid var(--ink-2);
   --map-strip-ink: var(--ink-on-brass);
   --map-strip-shadow: 0 2px 8px -2px rgba(28, 20, 8, .45), 0 1px 0 rgba(255, 240, 205, .5) inset;
   --eyebrow-dash: inline-block;
@@ -1560,20 +1826,30 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 .follow-btn[data-variant='chip'] {
   width: 100%;
   padding: 7px 10px;
-  border-radius: var(--radius-panel);
-  border: 1px solid var(--hair-120);
-  background: var(--hair-50);
-  color: var(--ink-a65);
-  font-family: var(--font-mono);
+  /* The key vocabulary (2026-09-05). This was a hairline box on a 50% hairline
+     wash in tracked mono — on the white iOS ground it rendered as bare
+     "+ Follow" text beside a filled Hype key, the one action on the profile
+     card that did not look like one. Same fill, edge, corner and cast as every
+     chip and ghost key in the shell, in every theme. */
+  border-radius: var(--key-radius);
+  border: 1px solid var(--key-edge);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
   font-size: 0.9375rem;
-  letter-spacing: .06em;
 }
 .follow-btn[data-variant='hero'] {
   flex-shrink: 0;
   padding: 10px 18px;
-  border-radius: 9px;
-  border: 1px solid var(--hair-100);
-  background: var(--line);
+  /* The key vocabulary (2026-09-05): it painted a hairline box on a --line
+     wash, which on the white iOS ground was a bare "+ Follow" beside a filled
+     Hype key — the one action on the card that did not look like one. */
+  border-radius: var(--key-radius);
+  border: 1px solid var(--key-edge);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
   color: var(--ink);
   font-size: 0.9375rem;
   font-weight: 700;
@@ -1592,11 +1868,11 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
      rule carried the pre-DS8 cyan-to-amber gradient through TWO ground
      conversions (owner, 2026-08-24: "Old button design") — every surface that
      never got its own button style was still wearing it. */
-  border: 1px solid rgba(61, 44, 12, .9);
-  border-radius: var(--radius-panel);
+  border: 1px solid var(--cta-edge);
+  border-radius: var(--key-radius);
   background: var(--accent);
   color: var(--ink-on-accent);
-  box-shadow: 2px 3px 0 var(--ink-a20);
+  box-shadow: var(--paper-shadow);
   font-weight: 700;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -1610,15 +1886,16 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   /* The press: the button travels INTO its offset shadow, like the dock's
      own hardware, rather than dropping a soft blur under a floating chip. */
   transform: translate(1px, 1.5px) !important;
-  box-shadow: 1px 1.5px 0 var(--ink-a20) !important;
+  box-shadow: var(--key-press-shadow) !important;
+  filter: brightness(var(--key-press-dim));
   transition-duration: 60ms !important;
 }
 .button.secondary {
   /* The console ghost: paper surface, inked hairline, lighter press shadow. */
-  border-color: var(--ink-a45);
-  background: var(--bg-surface);
-  color: var(--ink-2);
-  box-shadow: 2px 3px 0 var(--ink-a10);
+  border-color: var(--key-edge);
+  background: var(--key-bg);
+  color: var(--ink);
+  box-shadow: var(--key-shadow);
 }
 .button.secondary:hover,
 .button.secondary:focus-visible {
