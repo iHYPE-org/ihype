@@ -7,8 +7,7 @@ import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-lim
 import { sendGenericEmail } from '@/lib/mailer';
 import { checkAndAwardBadges } from '@/lib/badges';
 import { getBaseUrl } from '@/lib/utils';
-import { sendPushNotification } from '@/lib/push-notify';
-import { notifyUser } from '@/lib/notify';
+import { notifyUser, sendPushToAllDevices } from '@/lib/notify';
 import { log } from '@/lib/logger';
 import { applyHypeEntry, InsufficientHypeError } from '@/lib/hype-ledger';
 import { formatHypeWait, hypeWaitMs, nextHypeAt } from '@/lib/hype-window';
@@ -284,7 +283,7 @@ export async function POST(request: NextRequest) {
       db.show.findUnique({ where: { id: payload.targetId }, select: { creatorId: true, title: true } })
         .then(show => {
           if (show && show.creatorId !== session.user.id) {
-            sendPushNotification(show.creatorId, {
+            sendPushToAllDevices(show.creatorId, {
               title: 'Your show got hyped!',
               body: `Someone just hyped '${show.title}' on iHYPE.`,
             }).catch(() => {});
@@ -395,7 +394,7 @@ export async function POST(request: NextRequest) {
     db.profile.findUnique({ where: { id: payload.targetId }, select: { ownerId: true, name: true } })
       .then(profile => {
         if (profile && profile.ownerId !== session.user.id) {
-          sendPushNotification(profile.ownerId, {
+          sendPushToAllDevices(profile.ownerId, {
             title: 'Your track got hyped!',
             body: `Someone just hyped ${profile.name} on iHYPE.`,
           }).catch(() => {});

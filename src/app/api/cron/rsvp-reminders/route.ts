@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { sendPushNotification } from '@/lib/push-notify';
+import { sendPushToAllDevices } from '@/lib/notify';
 import { sendOperationalEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
 
@@ -42,7 +42,7 @@ async function deliver(tasks: ReminderTask[]): Promise<number> {
     const chunk = tasks.slice(i, i + SEND_CHUNK_SIZE);
     await Promise.allSettled(
       chunk.map(async (task) => {
-        await sendPushNotification(task.userId, task.push).catch(() => {});
+        await sendPushToAllDevices(task.userId, task.push).catch(() => {});
         if (task.email) {
           await sendOperationalEmail(task.email, 'rsvp-reminders');
         }

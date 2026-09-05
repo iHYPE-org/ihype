@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { sendPushNotification } from '@/lib/push-notify';
+import { sendPushToAllDevices } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
 
   // Notify each artist
   for (const asset of assets) {
-    await sendPushNotification(asset.profile.ownerId, {
+    await sendPushToAllDevices(asset.profile.ownerId, {
       title: 'Your track is now live!',
       body: `"${asset.title}" is now published on iHYPE`,
       url: `/artists/${asset.profile.ownerId}`,

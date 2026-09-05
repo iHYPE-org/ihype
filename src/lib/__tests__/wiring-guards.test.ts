@@ -714,3 +714,46 @@ describe('a ticketed show is a buyable show', () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * Push reaches PHONES, not just browsers — enforced, because the comment
+ * claiming it was already there and was false.
+ *
+ * Two independent transports exist: web push over VAPID (`push-notify.ts`) and
+ * native APNs/FCM (`native-push.ts`). A member who installed the app has a
+ * NativeDeviceToken and may have no PushSubscription at all, so a call site
+ * using only the web sender reaches nobody on a phone — silently, since both
+ * senders are best-effort and "this member has no subscriptions" looks exactly
+ * like a successful send.
+ *
+ * `notify.ts` fanned out to both and its docstring said "every existing and
+ * future call site gets native push for free through this one fan-in point".
+ * Six call sites imported the web sender directly and did not: the RSVP
+ * reminder, the capacity alert, the nearby-show alert, the publish-scheduled
+ * notice, the post-show recap, and two of the three hype paths — the most
+ * time-sensitive things the product sends, which is to say the ones that
+ * justify a native app rather than a bookmark.
+ *
+ * So the invariant is a test now: those two modules are imported by
+ * `src/lib/notify.ts` and by nothing else. Adding a seventh caller that
+ * bypasses the fan-out fails here rather than in a member's silence.
+ */
+describe('every push reaches native devices too', () => {
+  const SENDERS = ['@/lib/push-notify', '@/lib/native-push'];
+  const ONLY_IMPORTER = 'src/lib/notify.ts';
+
+  it('is imported by the fan-out and nothing else', () => {
+    const files = listFiles('src').filter((f) => f !== ONLY_IMPORTER);
+    const offenders = files.filter((f) => SENDERS.some((m) => code(f).includes(`from '${m}'`)));
+    expect(offenders, `these bypass sendPushToAllDevices: ${offenders.join(', ')}`).toEqual([]);
+  });
+
+  it('and the fan-out really does call both, so the rule above is worth having', () => {
+    /* Without this the suite would pass just as well if notify.ts stopped
+       sending native push entirely — every other file would still be clean. */
+    const notify = code(ONLY_IMPORTER);
+    expect(notify).toContain('sendPushNotification(');
+    expect(notify).toContain('sendNativePushNotification(');
+    expect(notify).toContain('export async function sendPushToAllDevices');
+  });
+});
