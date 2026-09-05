@@ -125,11 +125,20 @@ self.addEventListener('message', (event) => {
       // Sequential and individually guarded: cache.addAll rejects the whole
       // batch if any one request fails, and a single expired ticket must not
       // cost the holder every other one.
+      const statics = await caches.open(STATIC_CACHE);
       for (const path of data.paths.slice(0, 50)) {
         if (typeof path !== 'string' || !isTicketDetail(path)) continue;
         try {
           const response = await fetch(path, { credentials: 'same-origin' });
-          if (response.ok) await cache.put(path, response.clone());
+          if (!response.ok) continue;
+          await cache.put(path, response.clone());
+          /* The page's own scripts and styles, too. The HTML alone is not the
+             ticket: the shell's shared chunks are cached from earlier visits,
+             so offline React hydrates, cannot load this route's chunk, and
+             replaces the server-rendered ticket with the loading fallback —
+             measured 2026-09-05 with the HTML in cache and the code visible in
+             it. Hashed, immutable and same-origin, so cache-first is right. */
+          await warmPageAssets(await response.text(), statics);
         } catch {
           // Offline already, or the ticket is gone. Nothing to do.
         }
@@ -341,6 +350,25 @@ self.addEventListener('notificationclick', (event) => {
  * cache. That is why this is not simply a redirect to `/offline` — a redirect
  * with nothing cached to redirect to is a dead end.
  */
+/**
+ * Every `/_next/static/...` script and stylesheet a page's HTML names, fetched
+ * into the static cache if not already there. Fonts referenced from inside the
+ * CSS are deliberately not chased: the fallback face still renders the ticket.
+ */
+async function warmPageAssets(html, statics) {
+  const urls = new Set();
+  for (const match of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+\.(?:js|css))"/g)) urls.add(match[1]);
+  for (const url of urls) {
+    try {
+      if (await statics.match(url)) continue;
+      const asset = await fetch(url);
+      if (asset.ok) await statics.put(url, asset);
+    } catch {
+      // One missing chunk is one missing chunk; the rest still help.
+    }
+  }
+}
+
 async function offlineFallback() {
   try {
     const cached = await caches.match('/offline');

@@ -35,8 +35,10 @@
 import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
+import { createServer } from 'node:http';
+import { spawn } from 'node:child_process';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
 import { buildTicketVerificationUrl } from '../src/lib/tickets';
 import { exitCodeFor, renderBoard, rollUp } from '../src/lib/feature-health';
@@ -75,9 +77,12 @@ async function item(name: string, fn: () => Promise<string | void>) {
     const detail = await fn();
     record(name, 'PASS', typeof detail === 'string' ? detail : '');
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    /* undici says "fetch failed" and puts the reason (ECONNRESET, ECONNREFUSED,
+       a dead keep-alive socket) on `cause`; without it the line is useless. */
+    const cause = error instanceof Error && error.cause instanceof Error ? ` (${error.cause.message})` : '';
+    const message = (error instanceof Error ? error.message : String(error)) + cause;
     if (message.startsWith('BLOCKED:')) record(name, 'BLOCKED', message.slice(8).trim());
-    else record(name, 'FAIL', message.slice(0, 240));
+    else record(name, 'FAIL', message.slice(0, 280));
   }
 }
 
@@ -113,7 +118,7 @@ function cookieHeader(cookie: string) {
   return `${sessionCookieName()}=${cookie}`;
 }
 
-type ApiResult = { status: number; body: any; text: string };
+type ApiResult = { status: number; body: any; text: string; location: string | null; setCookie: string | null };
 
 async function api(
   path: string,
@@ -131,7 +136,13 @@ async function api(
   const text = await response.text();
   let body: any = null;
   try { body = JSON.parse(text); } catch { /* HTML or empty is fine */ }
-  return { status: response.status, body, text };
+  return {
+    status: response.status,
+    body,
+    text,
+    location: response.headers.get('location'),
+    setCookie: response.headers.get('set-cookie'),
+  };
 }
 
 function ok(result: ApiResult, expected: number[] = [200, 201]) {
@@ -140,6 +151,113 @@ function ok(result: ApiResult, expected: number[] = [200, 201]) {
     `expected ${expected.join('/')}, got ${result.status}: ${(result.body?.error ?? result.text ?? '').toString().slice(0, 160)}`,
   );
   return result.body;
+}
+
+/* ------------------------------------------------------------ mail sink */
+
+/**
+ * "A notification actually leaves the building" was UNCOVERED because the only
+ * exit was a live Resend call and the nightly has no key. `src/lib/mailer.ts`
+ * now posts every message to `EMAIL_SINK_URL` instead — on LOOPBACK only, so
+ * a production Worker cannot be pointed anywhere by it — and this is the other
+ * end: a plain HTTP listener collecting what the worker sends, for items to
+ * read back. The worker and the walk must agree on the URL, which is why it
+ * is one env var set on both (see the nightly's walk step).
+ */
+type SunkEmail = { from: string; to: string | string[]; subject: string; text: string; html: string; receivedAt: number };
+const EMAIL_SINK_URL = process.env.EMAIL_SINK_URL ?? '';
+
+async function startEmailSink(inbox: SunkEmail[]): Promise<{ close: () => Promise<void>; error: string | null }> {
+  if (!EMAIL_SINK_URL) return { close: async () => {}, error: 'EMAIL_SINK_URL is not set' };
+  let url: URL;
+  try { url = new URL(EMAIL_SINK_URL); } catch { return { close: async () => {}, error: `EMAIL_SINK_URL is not a URL: ${EMAIL_SINK_URL}` }; }
+  const server = createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      try {
+        const parsed = JSON.parse(Buffer.concat(chunks).toString('utf8')) as Omit<SunkEmail, 'receivedAt'>;
+        inbox.push({ ...parsed, receivedAt: Date.now() });
+        res.writeHead(202).end();
+      } catch {
+        res.writeHead(400).end();
+      }
+    });
+  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(Number(url.port || 80), url.hostname === 'localhost' ? '127.0.0.1' : url.hostname, () => resolve());
+    });
+  } catch (error) {
+    return { close: async () => {}, error: error instanceof Error ? error.message : String(error) };
+  }
+  return { close: () => new Promise<void>((resolve) => server.close(() => resolve())), error: null };
+}
+
+async function waitFor<T>(probe: () => T | undefined | null, timeoutMs: number, everyMs = 250): Promise<T | null> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const found = probe();
+    if (found) return found;
+    if (Date.now() >= deadline) return null;
+    await new Promise((resolve) => setTimeout(resolve, everyMs));
+  }
+}
+
+/**
+ * Records an admin re-auth the way `POST /api/admin/reauth` does after a
+ * passkey assertion — the same KV key `src/lib/admin-confirmation.ts` writes,
+ * into the same store the worker reads. The walk cannot perform a passkey
+ * ceremony (no authenticator), exactly as it cannot sign in and seeds a
+ * session cookie instead; the item asserts the gate FIRST (401 without this)
+ * so what is measured is the enforcement, not the shortcut. Reaching the
+ * store needs the harness's persist directory, which `scripts/e2e-workerd.mjs`
+ * publishes in a sidecar; against any other worker this BLOCKS with the reason.
+ */
+async function seedAdminReauth(userId: string): Promise<void> {
+  const sidecar = '.wrangler-e2e-workerd.persist';
+  if (!existsSync(sidecar)) {
+    blocked(`no ${sidecar} — the worker is not scripts/e2e-workerd.mjs, so its KV cannot be reached to record the admin re-auth`);
+  }
+  const persist = readFileSync(sidecar, 'utf8').trim();
+  if (!persist || !existsSync(persist)) blocked(`the harness's persist dir "${persist}" does not exist`);
+  const wrangler = 'node_modules/wrangler/bin/wrangler.js';
+  if (!existsSync(wrangler)) blocked('wrangler is not installed here, so the admin re-auth key cannot be written');
+  /* The binding carries both an `id` and a `preview_id`, and wrangler refuses
+     to guess which one a local put means. `wrangler dev` reads the preview
+     namespace when one is configured; written to both, the key is there
+     whichever store the worker opened, and a scratch store has no third party
+     to mind the duplicate. */
+  for (const preview of ['--preview', '--preview=false']) {
+    /* Awaited, not spawnSync: each wrangler run takes seconds, and a blocked
+       event loop cannot see the worker close an idle keep-alive socket in the
+       meantime — the next PATCH then goes out on a dead socket and undici
+       reports "fetch failed" for a request it will not retry. Measured. */
+    const result = await new Promise<{ status: number | null; stdout: string; stderr: string }>((resolve) => {
+      const child = spawn(process.execPath, [
+        wrangler, 'kv', 'key', 'put', '--local', preview,
+        '--persist-to', persist,
+        '--config', '.wrangler-e2e-workerd.toml',
+        '--binding', 'KV',
+        `admin_reauth:${userId}`, String(Date.now()),
+      ], { stdio: ['ignore', 'pipe', 'pipe'] });
+      let stdout = '';
+      let stderr = '';
+      child.stdout.on('data', (chunk: Buffer) => { stdout += chunk.toString('utf8'); });
+      child.stderr.on('data', (chunk: Buffer) => { stderr += chunk.toString('utf8'); });
+      const timer = setTimeout(() => child.kill('SIGKILL'), 90_000);
+      child.on('close', (status) => { clearTimeout(timer); resolve({ status, stdout, stderr }); });
+    });
+    const said = `${result.stdout}\n${result.stderr}`;
+    /* wrangler exits 0 on its own configuration errors, so the text is the
+       verdict; the proxy notice it prints in this sandbox is not one. */
+    const failed = result.status !== 0 || /ERROR/.test(said);
+    if (failed) {
+      const reason = said.split('\n').filter((line) => /ERROR|rror:/.test(line)).join(' ').replace(/\u001b\[[0-9;]*m/g, '').trim() || said.trim().slice(-400);
+      blocked(`wrangler kv key put ${preview} failed (exit ${result.status}): ${reason}`);
+    }
+  }
 }
 
 /* --------------------------------------------------------------- preflight */
@@ -195,6 +313,9 @@ async function main() {
   const stripe = STRIPE_KEY ? new Stripe(STRIPE_KEY) : null;
   const run = randomUUID().slice(0, 8);
 
+  const sinkInbox: SunkEmail[] = [];
+  const sink = await startEmailSink(sinkInbox);
+
   const song = readFileSync(SONG_PATH);
   const graphic = readFileSync(GRAPHIC_PATH);
   const adSpot = AD_AUDIO_PATH ? readFileSync(AD_AUDIO_PATH) : null;
@@ -203,7 +324,8 @@ async function main() {
   console.log(`  target   ${BASE}`);
   console.log(`  song     ${SONG_PATH} (${(song.length / 1024 / 1024).toFixed(2)} MB)`);
   console.log(`  graphic  ${GRAPHIC_PATH} (${(graphic.length / 1024).toFixed(0)} KB)`);
-  console.log(`  run id   ${run}\n`);
+  console.log(`  run id   ${run}`);
+  console.log(`  mail     ${sink.error ? `no sink (${sink.error})` : `sink listening at ${EMAIL_SINK_URL}`}\n`);
 
   /* The cast. Seeded directly rather than registered, because registration is
      itself item 1 and the other 30 must not depend on it passing. */
@@ -1897,6 +2019,176 @@ async function main() {
     return `${body.recipients} recipient(s) resolved including the confirmed subscriber (${body.sent} delivered — no mail provider here); a second send inside 7 days is refused 429`;
   });
 
+  // ── 37-41. The journeys the health board called UNCOVERED ─────────────────
+  const json = { 'Content-Type': 'application/json' };
+
+  /* PageEditor PATCHes its ENTIRE state back on every save, and the route's
+     emptyToNull reads an omitted field as "unchanged" but a null one as
+     "cleared" — so an item that sent only the field it changed would be
+     exercising a request the product never makes. Mirror the client: read,
+     change, write everything back. The three optional non-text fields cannot
+     be null on the way in (the schema types them as absent-or-value). */
+  const editorPayload = (current: Record<string, unknown>, changes: Record<string, unknown>) => {
+    const { id: _id, slug: _slug, type: _type, ownerId: _ownerId, ...fields } = current;
+    for (const key of ['capacity', 'fanShareEnabled', 'discoverable', 'pinnedStats']) {
+      if (fields[key] === null) delete fields[key];
+    }
+    return { ...fields, ...changes, profileId: current.id };
+  };
+
+  await item('37. An artist edits their page and the public pane shows it', async () => {
+    const editor = ok(await api(`/api/profile-editor?profileId=${artistProfile.id}`, { cookie: creator.cookie }));
+    const current = (editor.profile ?? editor) as Record<string, unknown>;
+    assert(current?.id === artistProfile.id, 'the editor GET did not return the artist profile');
+    const bio = `Walk bio ${run}. Three piece from Portland Maine.`;
+    ok(await api('/api/profile-editor', {
+      method: 'PATCH', cookie: creator.cookie, headers: json,
+      body: JSON.stringify(editorPayload(current, { bio, hometown: 'Portland, ME' })),
+    }));
+    const publicJson = ok(await api(`/api/profile/${artistProfile.slug}`, { cookie: fan.cookie }));
+    const publicProfile = publicJson.profile ?? publicJson;
+    assert(publicProfile.bio === bio, `the public profile JSON reads bio "${publicProfile.bio}" after the save`);
+    const pane = await api(`/app/artists/${artistProfile.slug}?tab=bio`, { cookie: fan.cookie });
+    assert(pane.status === 200, `the artist pane answered ${pane.status}`);
+    assert(pane.text.includes(bio), 'the saved bio is not on the public artist pane');
+
+    /* And nobody else can: a fan holding the profile id is refused, not
+       silently ignored. */
+    const stranger = await api('/api/profile-editor', {
+      method: 'PATCH', cookie: fan.cookie, headers: json,
+      body: JSON.stringify({ profileId: artistProfile.id, bio: 'vandalised' }),
+    });
+    assert(stranger.status === 403, `a non-owner's edit answered ${stranger.status}, not 403`);
+    const untouched = ok(await api(`/api/profile/${artistProfile.slug}`, { cookie: fan.cookie }));
+    assert((untouched.profile ?? untouched).bio === bio, "the refused edit still changed the bio");
+
+    /* The venue's page is the same editor with a different section set. */
+    const venueEditor = ok(await api(`/api/profile-editor?profileId=${venueProfile.id}`, { cookie: creator.cookie }));
+    const hours = `Doors at seven, walk ${run}`;
+    ok(await api('/api/profile-editor', {
+      method: 'PATCH', cookie: creator.cookie, headers: json,
+      body: JSON.stringify(editorPayload((venueEditor.profile ?? venueEditor) as Record<string, unknown>, { hoursText: hours })),
+    }));
+    const venuePane = await api(`/app/venues/${venueProfile.slug}?tab=info`, { cookie: fan.cookie });
+    assert(venuePane.status === 200, `the venue pane answered ${venuePane.status}`);
+    assert(venuePane.text.includes(hours), 'the saved hours are not on the public venue pane');
+    return 'artist bio and venue hours saved, read back as JSON and on both public panes; a non-owner is refused 403 and changes nothing';
+  });
+
+  await item('38. Search finds the seeded act, venue, track and show by name', async () => {
+    type Hit = { type: string; id: string; slug?: string; name: string };
+    const find = async (q: string) => (ok(await api(`/api/search?q=${encodeURIComponent(q)}&limit=60`, { cookie: fan.cookie })).results ?? []) as Hit[];
+    const misses: string[] = [];
+    const byArtist = await find(`Test Artist ${run}`);
+    if (!byArtist.some((r) => r.type === 'artist' && r.slug === artistProfile.slug)) misses.push(`artist "Test Artist ${run}"`);
+    /* The track query matches on the ARTIST's name too, which is how a fan who
+       remembers the band and not the song finds it — and how this item finds
+       ours among every other run's copy of the same title. */
+    if (mediaHexId && !byArtist.some((r) => r.type === 'song' && r.id === mediaHexId)) misses.push(`the uploaded track under "Test Artist ${run}"`);
+    const byVenue = await find(`Test Venue ${run}`);
+    if (!byVenue.some((r) => r.type === 'venue' && r.slug === venueProfile.slug)) misses.push(`venue "Test Venue ${run}"`);
+    const byShow = await find(`Vote Night ${run}`);
+    if (!byShow.some((r) => r.type === 'show' && r.name === `Vote Night ${run}`)) misses.push(`show "Vote Night ${run}"`);
+    assert(misses.length === 0, `search returned nothing for: ${misses.join(' · ')}`);
+    const nothing = ok(await api(`/api/search?q=${encodeURIComponent(`zqx-${run}-nothing-here`)}`));
+    assert(Array.isArray(nothing.results) && nothing.results.length === 0, `a nonsense query returned ${nothing.results?.length} result(s)`);
+    return `artist, its track, venue and show all found by name${mediaHexId ? '' : ' (no track to look for)'}; a nonsense query returns []`;
+  });
+
+  await item('39. A notification leaves the building: the magic-link email reaches the sink and signs in', async () => {
+    if (!EMAIL_SINK_URL) blocked('set EMAIL_SINK_URL (a loopback URL, e.g. http://127.0.0.1:8791/emails) and EMAIL_FROM on BOTH the worker and the walk — the worker posts each email there instead of Resend');
+    if (sink.error) blocked(`the walk could not listen at ${EMAIL_SINK_URL}: ${sink.error}`);
+    const fanEmail = fan.user.email;
+    assert(fanEmail, 'the fan has no email address');
+    const before = sinkInbox.length;
+    const asked = await api('/api/auth/magic-link', { method: 'POST', headers: json, body: JSON.stringify({ email: fanEmail }) });
+    assert(asked.status === 200 && asked.body?.ok === true, `the magic-link request answered ${asked.status}: ${asked.text.slice(0, 160)}`);
+    const mail = await waitFor(
+      () => sinkInbox.slice(before).find((m) => [m.to].flat().includes(fanEmail) && /\/api\/auth\/magic\?token=/.test(m.text ?? '')),
+      15_000,
+    );
+    assert(mail, `no magic-link email for ${fanEmail} reached the sink within 15s (${sinkInbox.length - before} other message(s) did; ${sinkInbox.length} in total so far) — the route answered ok:true either way, which is exactly why this item exists`);
+    const link = mail.text.match(/https?:\/\/\S+\/api\/auth\/magic\?token=[A-Za-z0-9_-]+/)?.[0];
+    assert(link, 'the email carries no magic link in its text');
+    const target = new URL(link);
+    const followed = await api(`${target.pathname}${target.search}`);
+    assert([302, 303, 307].includes(followed.status), `following the link answered ${followed.status}`);
+    assert(!/error=/.test(followed.location ?? ''), `the link redirected to an error: ${followed.location}`);
+    assert((followed.setCookie ?? '').includes(sessionCookieName()), 'following the link set no session cookie');
+    const replay = await api(`${target.pathname}${target.search}`);
+    assert(/error=/.test(replay.location ?? ''), `the same link worked twice (${replay.status} → ${replay.location})`);
+    return `email to ${fanEmail} ("${mail.subject}") reached the sink; its link signed the fan in once and was refused on replay; ${sinkInbox.length} email(s) left the worker during this walk`;
+  });
+
+  await item('40. A member exports their data, deletes their account, and nobody else loses a row', async () => {
+    const leaver = await seedSessionCookie(`alpha-leaver-${run}@example.com`, {
+      profiles: [{ type: 'ARTIST', name: `Leaving Act ${run}` }],
+    });
+    const leaverEmail = leaver.user.email!;
+    const ticketsBefore = await prisma.ticket.count();
+    const showsBefore = await prisma.show.count();
+    const creatorProfilesBefore = await prisma.profile.count({ where: { ownerId: creator.user.id } });
+
+    const anonymous = await api('/api/privacy/export');
+    assert(anonymous.status === 401, `an anonymous export answered ${anonymous.status}`);
+    const exported = await api('/api/privacy/export', { cookie: leaver.cookie });
+    assert(exported.status === 200, `the export answered ${exported.status}: ${exported.text.slice(0, 160)}`);
+    assert(exported.body && typeof exported.body === 'object', 'the export is not JSON');
+    assert(exported.text.includes(leaverEmail), "the export does not carry the member's own email");
+    assert(exported.text.includes(`Leaving Act ${run}`), "the export does not carry the member's profile");
+
+    const wrongWord = await api('/api/settings/delete-account', { method: 'POST', cookie: leaver.cookie, headers: json, body: JSON.stringify({ confirm: 'yes' }) });
+    assert(wrongWord.status === 400, `deletion without the exact confirmation answered ${wrongWord.status}`);
+    const deleted = await api('/api/settings/delete-account', { method: 'POST', cookie: leaver.cookie, headers: json, body: JSON.stringify({ confirm: 'DELETE' }) });
+    assert(deleted.status === 200, `deletion answered ${deleted.status}: ${deleted.text.slice(0, 200)}`);
+
+    const after = await prisma.user.findUnique({ where: { id: leaver.user.id }, select: { email: true, name: true } });
+    assert(!after || (after.email === null && after.name === null), `the erased member still carries ${after?.email ? 'an email' : 'a name'}`);
+    const survivors = await prisma.profile.findMany({ where: { ownerId: leaver.user.id }, select: { name: true } });
+    assert(survivors.every((p) => p.name !== `Leaving Act ${run}`), `the erased member's profile still carries its name (${survivors.length} row(s))`);
+    /* The 2026-09-02 sweep found delete-account CASCADING every buyer's ticket
+       and every payable on the organiser's shows. This is the row-count proof
+       that erasing one member is erasing ONE member. */
+    assert(await prisma.ticket.count() === ticketsBefore, 'erasing one member changed how many tickets other members hold');
+    assert(await prisma.show.count() === showsBefore, 'erasing one member changed how many shows exist');
+    assert(await prisma.profile.count({ where: { ownerId: creator.user.id } }) === creatorProfilesBefore, "erasing one member touched another member's profiles");
+    const ghost = await api('/api/me', { cookie: leaver.cookie });
+    assert(!(ghost.status === 200 && ghost.text.includes(leaverEmail)), 'the erased account still answers /api/me with its email');
+    return `export 200 with email and profile (401 anonymous); delete refused without DELETE, then 200; member anonymised, ${survivors.length} profile row(s) left without the name; tickets ${ticketsBefore}, shows ${showsBefore} and the creator's profiles unchanged`;
+  });
+
+  await item('41. An admin acts on a report and the track comes down', async () => {
+    assert(mediaHexId, 'no uploaded track to report (item 7 did not produce one)');
+    ok(await api('/api/content-reports', {
+      method: 'POST', cookie: fan.cookie, headers: json,
+      body: JSON.stringify({ targetType: 'media', targetId: mediaHexId, reason: `walk ${run}: this is a rip` }),
+    }));
+    const report = await prisma.contentReport.findFirst({ where: { targetType: 'media', targetId: mediaHexId }, orderBy: { createdAt: 'desc' } });
+    assert(report, 'no ContentReport row was written for the filed report');
+    const approve = (cookie: string) => api(`/api/admin/moderation/${report.id}`, { method: 'PATCH', cookie, headers: json, body: JSON.stringify({ action: 'approve' }) });
+
+    const asFan = await approve(fan.cookie);
+    assert(asFan.status === 403, `a fan approving a report answered ${asFan.status}`);
+    /* The real admin address: auth()'s jwt callback clamps role to ADMIN only
+       for an allowlisted email, so any other seeded "admin" lands as a fan. */
+    const admin = await seedSessionCookie('admin@ihype.org', { role: 'ADMIN' });
+    const cold = await approve(admin.cookie);
+    assert(cold.status === 401 && cold.body?.requiresReauth === true, `an admin without a recent passkey check answered ${cold.status} (${cold.text.slice(0, 120)}) — the step-up gate is gone`);
+
+    await seedAdminReauth(admin.user.id);
+    const approved = await approve(admin.cookie);
+    assert(approved.status === 200, `approve answered ${approved.status}: ${approved.text.slice(0, 200)}`);
+    const track = await prisma.artistMediaAsset.findUnique({ where: { hexId: mediaHexId }, select: { isPublished: true, freeUseEnabled: true } });
+    assert(track && track.isPublished === false, 'the report was approved and the track is still published — enforcement did not run for a member-filed media report');
+    assert(track.freeUseEnabled === false, 'the track came down but is still offered in the free-use crate');
+    const row = await prisma.contentReport.findUnique({ where: { id: report.id }, select: { status: true } });
+    assert(row?.status === 'ACTIONED', `the report reads ${row?.status}, not ACTIONED`);
+    /* Put the track back so a later run of this walk against the same scratch
+       database is not measuring this one's enforcement. */
+    await prisma.artistMediaAsset.update({ where: { hexId: mediaHexId }, data: { isPublished: true } });
+    return 'fan refused 403, cold admin refused 401 requiresReauth, re-authed admin approved: track unpublished and out of the crate, report ACTIONED';
+  });
+
   const pass = rows.filter((r) => r.status === 'PASS').length;
   const fail = rows.filter((r) => r.status === 'FAIL').length;
   const block = rows.filter((r) => r.status === 'BLOCKED').length;
@@ -1931,6 +2223,7 @@ async function main() {
     console.log(`  report written to ${REPORT_PATH}\n`);
   }
 
+  await sink.close();
   await prisma.$disconnect();
   /* Identical to the old `fail > 0` — a journey is BROKEN exactly when one of
      its items failed. Stated through the board so there is one rule, not two

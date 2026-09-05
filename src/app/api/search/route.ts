@@ -115,7 +115,14 @@ export async function GET(request: NextRequest) {
     includeSongs
       ? db.artistMediaAsset.findMany({
           where: {
-            freeUseEnabled: true,
+            /* NOT gated on `freeUseEnabled`. That flag is the artist's consent
+               for promoters to add the track to their own playlists (it
+               defaults off and the upload form leaves it off); it was written
+               into this filter in April as if it meant "public", so search
+               found no track whose artist had not opted into free use — i.e.
+               almost none. Found by acceptance-walk item 38 on 2026-09-05,
+               the first time anything searched for a seeded track by name.
+               Released and discoverable is the whole test of visibility. */
             profile: { discoverable: true },
             AND: [
               releasedMediaWhere(),

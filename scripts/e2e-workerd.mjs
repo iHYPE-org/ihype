@@ -61,6 +61,13 @@ const SHUTDOWN_TIMEOUT_MS = 5_000;
    at all still fails the run instead of looping. */
 const MAX_DEV_SERVER_RESTARTS = 5;
 const TMP_CONFIG = '.wrangler-e2e-workerd.toml';
+/* Where the running worker's local KV/R2/D1 state lives, published for the
+   acceptance walk (a separate process in --serve mode). The admin console's
+   destructive actions want a recent passkey re-auth recorded in KV, and the
+   only honest way for the walk to satisfy that from outside the worker is to
+   write the same key the reauth route writes — into the same store, with
+   `wrangler kv key put --local --persist-to <this path>`. */
+const PERSIST_SIDECAR = '.wrangler-e2e-workerd.persist';
 const WRANGLER_CLI = join(process.cwd(), 'node_modules', 'wrangler', 'bin', 'wrangler.js');
 const PLAYWRIGHT_CLI = join(process.cwd(), 'node_modules', 'playwright', 'cli.js');
 const SERVE_ONLY = process.argv.includes('--serve');
@@ -97,7 +104,7 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/engagement-flows.spec.ts'],
   ['e2e/auth.spec.ts', 'e2e/passkey.spec.ts'],
   ['e2e/mmm-shell.spec.ts'],
-  ['e2e/ticket-transfer.spec.ts'],
+  ['e2e/ticket-transfer.spec.ts', 'e2e/offline-ticket.spec.ts'],
   ['e2e/mmm-panes.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
@@ -187,6 +194,13 @@ function writeStrippedConfig() {
        was the reason, not the product. Forwarded only when the caller has it,
        like everything else here. */
     'ADMIN_DEVICE_SECRET',
+    /* The walk's mail sink (src/lib/mailer.ts `emailSinkUrl`): the worker
+       posts every email to this loopback URL instead of Resend, and the walk
+       listens there. EMAIL_FROM rides with it because the mailer refuses to
+       send from nobody, sink or not. Both honoured only when the caller set
+       them, so an ordinary spec run still sends nothing anywhere. */
+    'EMAIL_SINK_URL',
+    'EMAIL_FROM',
   ];
   for (const name of forwarded) {
     const value = process.env[name];
@@ -419,6 +433,7 @@ async function runShard(tests, index) {
 
 async function run() {
   writeStrippedConfig();
+  writeFileSync(PERSIST_SIDECAR, `${join(PERSIST_ROOT, 'shard-1')}\n`);
 
   let exitCode = 0;
   try {
@@ -431,6 +446,7 @@ async function run() {
     }
   } finally {
     rmSync(TMP_CONFIG, { force: true });
+    rmSync(PERSIST_SIDECAR, { force: true });
     try {
       rmSync(PERSIST_ROOT, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
     } catch (error) {

@@ -204,56 +204,56 @@ export const JOURNEYS: Journey[] = [
     keys: ['34'],
   },
 
-  /* ── Journeys with nothing behind them ──────────────────────────────────
-     Named on purpose. Each is a real thing a member does that no nightly
-     instrument touches, and leaving them off the board would make the board
-     a list of what we happen to test rather than of what the product does. */
+  /* ── The journeys that had nothing behind them until 2026-09-05 ──────────
+     Named on purpose. Each is a real thing a member does, and for two days
+     no nightly instrument touched any of them — leaving them off the board
+     would have made it a list of what we happen to test rather than of what
+     the product does. Items 37-41 and the offline spec now speak for them. */
   {
     id: 'profile-edit',
     name: 'An artist or venue edits their own page',
     tier: 'core',
-    keys: [],
-    toProve: 'a walk item driving PageEditor: change a section, save, read it back on the public pane',
+    keys: ['37'],
   },
   {
     id: 'search',
     name: 'Someone searches for an act, venue or show',
     tier: 'supporting',
-    keys: [],
-    toProve: 'a walk item hitting /api/search for a seeded artist, venue and show',
+    keys: ['38'],
   },
   {
     id: 'offline-ticket',
     name: 'A ticket opens at the door with no signal',
     tier: 'core',
     keys: [],
-    /* Item 34 proves the component is MOUNTED. Nothing proves the service
-       worker actually serves the ticket page offline, which is the only
-       moment the feature exists for. */
-    toProve: 'a Playwright item that warms the ticket, goes offline, and reloads the ticket page',
+    /* Item 34 proves the component is MOUNTED. Serving the page with the
+       network gone needs a browser with a service worker, which the walk is
+       not, so the proof lives in the Playwright suite: warm the ticket from
+       the wallet, cut the network, reload the ticket page. */
+    provenElsewhere: 'e2e/offline-ticket.spec.ts (full-CI, and deploy-production re-runs the suite)',
   },
   {
     id: 'notifications-delivery',
     name: 'A notification actually leaves the building',
     tier: 'core',
-    keys: [],
-    /* The walk asserts rows land in Notification and that routes resolve
-       recipients; no mail provider is configured, so "sent" is never proven. */
-    toProve: 'a mail-provider stub the walk can read back, or a Resend test key',
+    /* The walk runs a loopback mail sink (`EMAIL_SINK_URL`, honoured by the
+       mailer on loopback only) and reads the real message back: recipient,
+       subject, and a magic link that then signs the member in. */
+    keys: ['39'],
+    toProve: 'set EMAIL_SINK_URL and EMAIL_FROM on the worker and the walk (the nightly does)',
   },
   {
     id: 'account-privacy',
     name: 'A member exports or deletes their account',
     tier: 'core',
-    keys: [],
-    toProve: 'a walk item running the export and executeAccountErasure against a throwaway member',
+    keys: ['40'],
   },
   {
     id: 'moderation',
     name: 'An admin acts on a report and it takes effect',
     tier: 'supporting',
-    keys: [],
-    toProve: 'a walk item filing a ContentReport and approving it, asserting enforceRemoval ran',
+    keys: ['41'],
+    toProve: 'run under scripts/e2e-workerd.mjs, which publishes the worker KV path the admin re-auth is recorded in',
   },
 ];
 

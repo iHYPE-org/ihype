@@ -122,8 +122,13 @@ describe('rollUp', () => {
 
   it('a journey with no items at all is UNCOVERED, never HEALTHY', () => {
     const health = rollUp([]);
-    expect(stateOf(health, 'search')).toBe('UNCOVERED');
+    /* Both are proven in the Playwright suite rather than by a walk item, so
+       their key lists are empty on purpose and they stay UNCOVERED here with
+       a `provenElsewhere` note; the board says so rather than implying a gap. */
+    expect(stateOf(health, 'auth-ceremony')).toBe('UNCOVERED');
     expect(stateOf(health, 'offline-ticket')).toBe('UNCOVERED');
+    /* Search was the example here until 2026-09-05, when item 38 covered it. */
+    expect(stateOf(health, 'search')).toBe('UNPROVEN');
     /* An empty run must not paint a covered journey green either. */
     expect(stateOf(health, 'join')).toBe('UNPROVEN');
     expect(exitCodeFor(health)).toBe(0);
