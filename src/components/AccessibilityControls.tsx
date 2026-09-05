@@ -155,6 +155,15 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     if (typeof window === 'undefined') {
       return;
     }
+    // Nothing is applied until the stored settings are in hand. This effect
+    // used to run once with `defaultSettings` on the very first commit — the
+    // load effect above sets state but the re-render has not happened yet — so
+    // every page load REMOVED the `data-theme` the <head> bootstrap had just
+    // stamped and put it back a frame later: a flash of the default ground for
+    // every themed member, and a reload that measured `null` for a beat
+    // (caught by e2e/accessibility-settings.spec.ts, 2026-09-05). The bootstrap
+    // owns the first paint; this effect owns every change after it.
+    if (!hasLoaded) return;
 
     // The default ground is the ABSENCE of the attribute — a data-theme that
     // names no block would still flip any [data-theme] selector a stylesheet
