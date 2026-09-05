@@ -39,6 +39,20 @@ describe('the basemap probe can still find what it reads', () => {
     expect(hosts).toContain('https://*.basemaps.cartocdn.com');
   });
 
+  it('maplibre-worker.ts names the worker URL in the shape the probe parses, and MmmMap uses it', () => {
+    /* The worker row is the one that would have caught the 2026-09-05 stall:
+       every style/sprite/glyph/tile row answered 200 while the worker URL
+       resolved to the page. The probe reads the URL from the module rather
+       than restating it, so the module has to keep this exact shape. */
+    const worker = readFileSync('src/lib/maplibre-worker.ts', 'utf8');
+    const match = worker.match(/MAPLIBRE_WORKER_URL = '(\/[^']+)'/);
+    expect(match, 'MAPLIBRE_WORKER_URL moved — check-basemap.mjs exits 2').not.toBeNull();
+    expect(match![1].endsWith('.mjs')).toBe(true);
+    expect(map).toContain('setWorkerUrl(MAPLIBRE_WORKER_URL)');
+    expect(probe).toContain("probe('worker'");
+    expect(probe).toContain('not JavaScript');
+  });
+
   it('the probe refuses to report success on a collapsed walk', () => {
     // Fewer than three dependencies means the style did not resolve, so a
     // "healthy" line would be a reassuring nothing — the same failure mode
