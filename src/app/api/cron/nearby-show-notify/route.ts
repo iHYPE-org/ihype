@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { sendPushNotification } from '@/lib/push-notify';
+import { sendPushToAllDevices } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
       });
       if (recent) continue;
 
-      await sendPushNotification(user.ownerId, {
+      await sendPushToAllDevices(user.ownerId, {
         title: 'New show near you',
         body: `${show.title} @ ${venueName} on ${dateStr}`,
         url: `/shows/${show.slug}`,

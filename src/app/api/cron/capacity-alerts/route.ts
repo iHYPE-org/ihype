@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
-import { sendPushNotification } from '@/lib/push-notify';
+import { sendPushToAllDevices } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
     const pctDisplay = Math.round(pct * 100);
 
     for (const fan of fans) {
-      await sendPushNotification(fan.userId, {
+      await sendPushToAllDevices(fan.userId, {
         title: `${pctDisplay}% sold — don't miss it`,
         body: `${show.title} by ${artistName} is almost full`,
         url: `/shows/${show.slug}`,

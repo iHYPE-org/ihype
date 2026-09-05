@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { parseAndroidFingerprints } from '@/lib/android-fingerprints';
+import { log } from '@/lib/logger';
 
 /**
  * Android App Links association file, served at exactly this path over HTTPS.
@@ -53,14 +55,34 @@ import { readRuntimeEnv } from '@/lib/runtime-env';
 export async function GET() {
   // Via readRuntimeEnv, same reason as the Apple association route: this
   // arrives as a Worker secret and is invisible to process.env on workerd.
-  const fingerprints = (readRuntimeEnv('ANDROID_CERT_SHA256_FINGERPRINTS') ?? '')
-    .split(',')
-    .map((fp) => fp.trim())
-    .filter(Boolean);
+  /* VALIDATED, not merely split. The docstring above says "take the SHA-256,
+     never the SHA-1 shown directly above it on the same screen" — and this
+     used to accept any non-empty string, so following that screen's SHA-1 row
+     produced a served, well-formed, permanently-failing association file. A
+     wrong fingerprint is worse than none, because Google caches the failure;
+     an instruction in a comment is not a check. */
+  const { valid, rejected } = parseAndroidFingerprints(
+    readRuntimeEnv('ANDROID_CERT_SHA256_FINGERPRINTS'),
+  );
 
-  if (fingerprints.length === 0) {
+  if (rejected.length > 0) {
+    /* Named, with the length, because the SHA-1 mistake is invisible by eye:
+       both are colon-separated uppercase hex and only the count differs. A
+       certificate digest is not a secret — it is published in this very file
+       — so logging it costs nothing and saves a day of "why won't it
+       verify". */
+    log.error(
+      '[assetlinks]',
+      { rejected: rejected.map((fp) => `${fp} (${fp.replace(/:/g, '').length} hex chars, expected 64)`) },
+      'ANDROID_CERT_SHA256_FINGERPRINTS contains entries that are not SHA-256 digests',
+    );
+  }
+
+  if (valid.length === 0) {
     return new NextResponse('Not found', { status: 404 });
   }
+
+  const fingerprints = valid;
 
   const body = [
     {
