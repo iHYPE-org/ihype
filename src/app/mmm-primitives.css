@@ -87,10 +87,12 @@
      defect `.mmm-card` had, in the place where most of the shell's cards
      actually are. Two rings: the border stays a BORDER so a variant can
      recolour it, and the brass rides outside in the shadow. */
-  border: 1px solid var(--brass-deep);
-  border-radius: 5px;
+  /* From the same tokens as `.mmm-card` (2026-09-05): a flat grouped cell on
+     iOS, the ring-bound brass plate on the console. */
+  border: 1px solid var(--plate-border);
+  border-radius: var(--radius-panel);
   background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
-  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  box-shadow: var(--plate-ring);
 }
 
 
@@ -111,10 +113,12 @@
      reads as one material, but NO brass ring and a shallower cast: a dozen
      event rows each wearing their own ring turns a list into a stack of
      picture frames. Verified by rendering a real list before choosing. */
-  border: 1px solid var(--brass-deep);
-  border-radius: 4px;
-  background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
-  box-shadow: 0 1px 2px rgba(0, 0, 0, .16);
+  /* The key vocabulary: a grouped grey row on iOS, a brass-edged slat on
+     the console (its cast is the key's, its lit top the plate's). */
+  border: 1px solid var(--key-edge);
+  border-radius: var(--key-radius);
+  background: var(--key-bg);
+  box-shadow: var(--key-shadow);
 }
 .mmm-migrated-surface a.aa-event-row,
 .mmm-migrated-surface a.ad-activity-row,
@@ -143,10 +147,10 @@
      defect `.mmm-card` had, in the place where most of the shell's cards
      actually are. Two rings: the border stays a BORDER so a variant can
      recolour it, and the brass rides outside in the shadow. */
-  border: 1px solid var(--brass-deep);
-  border-radius: 5px;
+  border: 1px solid var(--plate-border);
+  border-radius: var(--radius-panel);
   background: linear-gradient(180deg, var(--plate-1), var(--plate-2));
-  box-shadow: 0 0 0 1px var(--brass), 0 14px 26px -16px rgba(0, 0, 0, .55);
+  box-shadow: var(--plate-ring);
   text-align: center;
 }
 .mmm-migrated-surface .aa-stat-val,
@@ -207,13 +211,18 @@
   letter-spacing: -0.02em;
   color: var(--ink-1);
 }
-.mmm-migrated-surface .ad-section-head :is(a, button),
-.mmm-migrated-surface .believers-head :is(a, button),
-.mmm-migrated-surface .booking-head :is(a, button),
-.mmm-migrated-surface .vaa-head :is(a, button),
-.mmm-migrated-surface .vaa-section-head :is(a, button),
-.mmm-migrated-surface .vdash-head :is(a, button),
-.mmm-migrated-surface .vdash-section-head :is(a, button) {
+.mmm-migrated-surface .ad-section-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .believers-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .booking-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .vaa-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .vaa-section-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .vdash-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']),
+.mmm-migrated-surface .vdash-section-head :is(a, button):not(.vdash-btn-solid):not(.mmm-btn-primary):not([class*='btn-solid']) {
+  /* The "View all ›" affordance beside a heading. It used to reach every
+     anchor in the head, including the venue dashboard's filled "+ Create
+     Event" key, whose white label went venue-teal on a venue-teal fill and
+     disappeared — measured: colour and background both rgb(15,107,98). A
+     filled key keeps its own ink. */
   color: var(--role-venue-text);
   font-family: var(--f-b);
   font-size: 0.9375rem;
@@ -255,9 +264,9 @@
 .mmm-migrated-surface .vaa-empty,
 .mmm-migrated-surface .vdash-empty {
   padding: 40px 24px;
-  border: 1px dashed var(--line-2);
+  border: var(--empty-edge);
   border-radius: var(--radius-panel);
-  background: transparent;
+  background: var(--empty-bg);
   text-align: center;
   color: var(--ink-2);
 }
@@ -345,7 +354,7 @@
 .mmm-migrated-surface :is(input[type="text"], input[type="email"], input[type="url"], input[type="search"], input[type="number"], input[type="tel"], input[type="password"], input[type="date"], input[type="time"], input[type="datetime-local"], select, textarea) {
   padding: 12px 14px;
   border: 1px solid var(--line-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--key-radius);
   background: var(--bg-base);
   color: var(--ink-1);
   font-family: var(--f-b);

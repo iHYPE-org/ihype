@@ -992,7 +992,10 @@ html:has(.mmm-frame) {
 .mmm-advertiser { max-width: 920px; margin-inline: auto; padding-bottom: 32px; }
 .mmm-advertiser-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; margin: 20px 0 24px; }
 .mmm-advertiser h1 { margin: 6px 0 0; color: var(--ink); font: 800 clamp(2rem, 6vw, 3.6rem)/0.95 var(--font-display); letter-spacing: -0.045em; }
-.mmm-advertiser a { color: var(--accent-text); }
+/* Prose links only. This used to reach every anchor, so the two primary
+   keys on the page — filled accent — took accent text and read as red on
+   red; the label of "+ New Campaign" was invisible. */
+.mmm-advertiser a:not(.mmm-btn-primary):not(.mmm-btn-ghost) { color: var(--accent-text); }
 .mmm-advertiser .meta { color: var(--ink-3); font-size: 0.9375rem; line-height: 1.5; }
 .mmm-advertiser-new { flex: 0 0 auto; min-height: 44px; display: inline-flex; align-items: center; text-decoration: none; }
 .mmm-advertiser .ad-dash-stats { gap: 10px; }
@@ -3720,20 +3723,28 @@ html:has(.mmm-frame) {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid var(--line-2);
+  /* iOS: a chevron and a word in the tint, no pill (--back-pad 0). The
+     console's outlined tracked-mono pill comes back through the tokens. */
+  padding: 0 var(--back-pad);
+  border: 1px solid var(--back-edge);
   border-radius: var(--radius-pill);
-  color: var(--ink-2);
+  background: var(--back-bg);
+  color: var(--back-ink);
   text-decoration: none;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--back-font);
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: var(--back-tracking);
+  text-transform: var(--back-case);
+  white-space: nowrap;
 }
 .mmm-me-route-back { margin-bottom: 12px; }
 .mmm-me-route-context { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.mmm-me-route-context .mmm-me-route-back { margin-bottom: 0; }
-.mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mmm-me-route-context .mmm-me-route-back { margin-bottom: 0; flex: 0 0 auto; }
+/* The trail takes the back link's own face: sentence-case body on iOS, tracked
+   mono caps on the console. It measured as "‹\nME" beside it at 393px when the
+   pill was allowed to shrink — a two-line back key is not a back key. */
+.mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--back-font); font-size: 0.9375rem; letter-spacing: var(--back-tracking); text-transform: var(--back-case); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mmm-me-route-trail span { display: inline-flex; gap: 7px; }
 .mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
 .mmm-empty-state { padding: 18px; border: 1px dashed var(--ink-a45); border-radius: var(--radius-panel); background: transparent; }
