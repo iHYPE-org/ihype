@@ -250,9 +250,7 @@ model Profile {
   // src/app/api/profile/onboarding-complete/route.ts.
   onboardedAt                   DateTime?
   pageDraft                     String?
-  pageDraftUpdatedAt            DateTime?
   pagePublished                 String?
-  pagePublishedAt               DateTime?
   addressLine1                  String?
   contactInfo                   String?
   hoursText                     String?
@@ -330,7 +328,6 @@ model Profile {
   availabilityDates             AvailabilityDate[]
   albums                        Album[]
   receivedBookingRequests       BookingRequest[]            @relation("BookingRequestToProfile")
-  promoCodes                    PromoCode[]
   fanMailLastSentAt             DateTime?
   newsletterSubscriptions       NewsletterSubscription[]
 
@@ -605,7 +602,6 @@ model Show {
   description            String?
   recapText              String?
   productionPlan         Json?
-  productionPlanVersion  Int                    @default(1)
   isRadioShow            Boolean                @default(false)
   status                 ShowStatus             @default(DRAFT)
   startsAt               DateTime
@@ -645,7 +641,6 @@ model Show {
   attendees              ShowAttendee[]
   setlistProgress        Json?
   setlistVotes           SetlistVote[]
-  promoCodes             PromoCode[]
   moderationStatus       String                 @default("APPROVED")
   featured               Boolean                @default(false)
   capacityAlertSentAt    DateTime?
@@ -776,8 +771,6 @@ model TicketOrder {
   tickets                    Ticket[]
   transferCodes              TicketTransferCode[]
   accountsPayableEntries     AccountsPayableEntry[]
-  promoCodeId                String?
-  promoCode                  PromoCode?             @relation(fields: [promoCodeId], references: [id])
 
   @@index([buyerUserId])
 }
@@ -1349,18 +1342,6 @@ model BookingRequest {
   @@index([fromUserId, createdAt])
 }
 
-model CollabBoardPost {
-  id        String   @id @default(cuid())
-  userId    String
-  type      String // "looking-for" | "available"
-  role      String // "drummer" | "venue" | "vocalist" | "producer" | "guitarist" | "bassist" | "other"
-  body      String   @db.Text
-  contact   String?
-  createdAt DateTime @default(now())
-
-  @@index([createdAt])
-}
-
 model FeatureRequest {
   id                    String        @id @default(cuid())
   userId                String?
@@ -1417,13 +1398,6 @@ model AuxItem {
   @@index([queueId])
 }
 
-model FeatureFlag {
-  key         String   @id
-  enabled     Boolean  @default(false)
-  description String?
-  updatedAt   DateTime @updatedAt
-}
-
 model InviteCode {
   id           String    @id @default(cuid())
   code         String    @unique
@@ -1434,25 +1408,6 @@ model InviteCode {
   createdAt    DateTime  @default(now())
 
   @@index([createdAt])
-}
-
-model PromoCode {
-  id            String        @id @default(cuid())
-  code          String        @unique
-  showId        String?
-  profileId     String?
-  discountType  String
-  discountValue Int
-  maxUses       Int?
-  useCount      Int           @default(0)
-  expiresAt     DateTime?
-  createdAt     DateTime      @default(now())
-  show          Show?         @relation(fields: [showId], references: [id])
-  profile       Profile?      @relation(fields: [profileId], references: [id])
-  orders        TicketOrder[]
-
-  @@index([showId])
-  @@index([profileId])
 }
 
 model SocialPost {

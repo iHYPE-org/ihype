@@ -308,7 +308,7 @@ export async function GET(request: NextRequest) {
     // The playlist scope puts the CALLER'S OWN rows in this body. A shared
     // cache in front of that is a cross-account leak, so any response that
     // could carry them is private and uncacheable — the same rule
-    // /api/analytics/summary follows. Everything else stays public and
+    // the analytics engine (`analytics-metrics.ts`) follows. Everything else stays public and
     // CDN-cacheable, which is what absorbs repeated popular queries.
     headers: {
       'Cache-Control': includePlaylists

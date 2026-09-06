@@ -3,9 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
-import { sortShowsForFeed } from '@/lib/integrity';
 import { canManageOwnedResource, isAdminSession } from '@/lib/permissions';
-import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
 import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/ticketing';
@@ -77,69 +75,6 @@ async function createShowWithUniqueSlug<T>(title: string, create: (slug: string)
     }
   }
   throw lastError ?? new Error('Could not allocate a unique show slug');
-}
-
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const mine = searchParams.get('mine') === '1' || searchParams.get('mine') === 'true';
-  const radioOnly = searchParams.get('radioShows') === '1' || searchParams.get('radioShows') === 'true';
-
-  if (mine) {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Login required' }, { status: 401 });
-    }
-
-    const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
-    const shows = await db.show.findMany({
-      include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
-      where: { creatorId: session.user.id, ...(radioOnly ? { isRadioShow: true } : {}) },
-      orderBy: [{ createdAt: 'desc' }],
-      take: 200
-    });
-    return NextResponse.json(shows);
-  }
-
-  if (radioOnly) {
-    const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
-    const shows = await db.show.findMany({
-      omit: PRIVATE_SHOW_COLUMNS,
-      include: {
-        venueProfile: profileSelect,
-        headlinerProfile: { select: { ...profileSelect.select, genres: true } },
-        promoterProfile: profileSelect,
-        // Powers /radio's up-next crate and real show durations — all public
-        // fields already displayed on the show detail page.
-        radioTracks: {
-          select: { id: true, title: true, artistName: true, position: true, durationSecs: true },
-          orderBy: { position: 'asc' as const },
-        },
-      },
-      where: { isRadioShow: true, status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] }, ...getDemoCreatorExclusion() },
-      orderBy: [{ startsAt: 'desc' }],
-      take: 50,
-    });
-    return NextResponse.json(shows, {
-      headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
-    });
-  }
-
-  const profileSelect = { select: { id: true, name: true, slug: true, type: true, avatarImage: true, city: true, stateRegion: true } };
-  const shows = await db.show.findMany({
-    include: { venueProfile: profileSelect, headlinerProfile: profileSelect, promoterProfile: profileSelect },
-    omit: PRIVATE_SHOW_COLUMNS,
-    where: {
-      status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
-      ...getDemoCreatorExclusion()
-    },
-    // Without an explicit order, Postgres returns an *arbitrary* 200 rows —
-    // recent shows would randomly vanish from the feed as the table grows.
-    orderBy: [{ startsAt: 'desc' }],
-    take: 200
-  });
-  return NextResponse.json(sortShowsForFeed(shows), {
-    headers: { 'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=120' }
-  });
 }
 
 export async function POST(request: NextRequest) {

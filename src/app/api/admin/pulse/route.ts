@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic';
  * `isAdminSession()` is both locks — the ADMIN role and the allowlisted
  * address. The response is `private, no-store`: it carries member email
  * addresses, support-request subjects and revenue, and a shared cache in front
- * of that is a cross-account leak. Same rule `/api/analytics/summary` follows
+ * of that is a cross-account leak. Same rule the analytics engine (`analytics-metrics.ts`) follows
  * for platform scope.
  *
  * Note this endpoint deliberately does NOT check the admin device cookie. The

@@ -25,7 +25,6 @@ import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import {
-  areDemoLoginsEnabledRuntime,
   areRegistrationsEnabledRuntime,
   areUploadsEnabledRuntime,
   getRuntimeFlag,
@@ -37,7 +36,6 @@ import {
   isInviteCodeRequiredRuntime,
   isInviteCodeSharingEnabledRuntime,
   isOutboundEmailEnabledRuntime,
-  shouldHideDemoContentRuntime
 } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
 
@@ -405,10 +403,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ]);
 
   const [
-    demoLoginsEnabled,
     inviteOnlySignupEnabled,
     inviteCodeSharingEnabled,
-    demoContentHidden,
     blobMediaStorageEnabled,
     ticketPaymentCaptureEnabled,
     registrationsEnabled,
@@ -429,10 +425,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
      and every flag after it would report its neighbour's state on four of
      the five tabs. There is no count to keep in step this way. */
   ] = await Promise.all([
-    needs('system') ? areDemoLoginsEnabledRuntime() : Promise.resolve(false),
     needs('system') ? isInviteCodeRequiredRuntime() : Promise.resolve(false),
     needs('system') ? isInviteCodeSharingEnabledRuntime() : Promise.resolve(false),
-    needs('system') ? shouldHideDemoContentRuntime() : Promise.resolve(false),
     needs('system') ? getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()) : Promise.resolve(false),
     needs('system') ? getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()) : Promise.resolve(false),
     needs('system') ? areRegistrationsEnabledRuntime() : Promise.resolve(false),
@@ -445,10 +439,8 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     needs('system') ? areMapsEnabledRuntime() : Promise.resolve(false),
   ]);
   const featureFlags = [
-    { key: 'demo_logins', label: 'Demo logins', enabled: demoLoginsEnabled },
     { key: 'invite_only_signup', label: 'Invite-only signup', enabled: inviteOnlySignupEnabled },
     { key: 'invite_code_sharing', label: 'Invite code sharing (shared beta codes + member HYPE links)', enabled: inviteCodeSharingEnabled },
-    { key: 'hide_demo_content', label: 'Hide demo content', enabled: demoContentHidden },
     { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
     { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled },
     { key: 'registrations_enabled', label: 'New registrations', enabled: registrationsEnabled },

@@ -457,6 +457,10 @@ export function MmmShell({
           }}
           onNext={playNext}
           onOpenArtist={artistSlug ? () => { setFullOpen(false); router.push(`/app/artists/${artistSlug}`); } : undefined}
+          /* Albums is the artist pane's first tab, so the album name lands on
+             the grouped release list. The callback existed and was never
+             passed, so the name rendered as plain text (2026-09-06 audit). */
+          onOpenAlbum={artistSlug ? () => { setFullOpen(false); router.push(`/app/artists/${artistSlug}`); } : undefined}
           onPickTrack={pickTrack}
           onPrev={playPrevious}
           onSeek={(value) => { if (duration > 0) seekTo((value / 100) * duration); }}

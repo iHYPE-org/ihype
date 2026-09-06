@@ -398,17 +398,3 @@ export async function getAdminPulse(
     sections,
   };
 }
-
-/**
- * Sections worth opening the console for, hardest first.
- *
- * Pure, so it is tested without a database. Urgent before not; within each,
- * the larger badge first; a section with no badge sorts last among its peers
- * rather than above them.
- */
-export function orderPulseSections(sections: PulseSection[]): PulseSection[] {
-  return [...sections].sort((a, b) => {
-    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
-    return (b.badge ?? -1) - (a.badge ?? -1);
-  });
-}

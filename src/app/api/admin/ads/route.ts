@@ -3,40 +3,10 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
-import { AD_CAMPAIGN_STATUSES, type AdCampaignStatus } from '@/lib/ad-vetting';
 import { notifyAdvertiser } from '@/lib/ad-campaign-notify';
 import { createAdCampaignCheckoutSession } from '@/lib/stripe';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
-
-export async function GET(request: Request) {
-  try {
-    const session = await auth();
-    if (!isAdminSession(session)) return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
-
-    const { searchParams } = new URL(request.url);
-    // Ad.status is a plain String column, so an unrecognised filter doesn't
-    // error — it silently matches nothing, which reads in the admin UI as
-    // "there are no campaigns." Reject the typo instead of showing an
-    // empty queue.
-    const requestedStatus = searchParams.get('status');
-    if (requestedStatus && !AD_CAMPAIGN_STATUSES.includes(requestedStatus as AdCampaignStatus)) {
-      return NextResponse.json({ error: 'Unknown status filter.' }, { status: 400 });
-    }
-    const status = requestedStatus ?? undefined;
-
-    const ads = await db.ad.findMany({
-      where: status ? { status } : undefined,
-      orderBy: { createdAt: 'desc' },
-      include: { advertiser: { select: { name: true, email: true } }, slot: { select: { name: true } } },
-    });
-
-    return NextResponse.json({ ads });
-  } catch (err) {
-    log.error('[api/admin/ads]', err instanceof Error ? err : { error: String(err) }, 'error');
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
-}
 
 export async function PATCH(request: Request) {
   try {

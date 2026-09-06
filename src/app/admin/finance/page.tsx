@@ -16,7 +16,7 @@ const PAGE_SIZE = 50;
 export default async function AdminFinancePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; from?: string; to?: string; promoStatus?: string; payoutStatus?: string; ticketStatus?: string; page?: string }>;
+  searchParams?: Promise<{ tab?: string; from?: string; to?: string; payoutStatus?: string; ticketStatus?: string; page?: string }>;
 }) {
   const t = await getServerT();
   const session = await auth();
@@ -32,21 +32,16 @@ export default async function AdminFinancePage({
   const fromDate = sp.from ? new Date(sp.from) : defaultFrom;
   const toDate = sp.to ? new Date(sp.to) : new Date();
 
-  const promoStatus = sp.promoStatus ?? '';
   const payoutStatus = sp.payoutStatus ?? '';
   const ticketStatus = sp.ticketStatus ?? '';
 
   const payoutWhere: Record<string, unknown> = {};
   if (payoutStatus) payoutWhere.status = payoutStatus;
 
-  const promoWhere: Record<string, unknown> = {};
-  if (promoStatus === 'active') promoWhere.OR = [{ expiresAt: null }, { expiresAt: { gt: new Date() } }];
-  if (promoStatus === 'expired') promoWhere.expiresAt = { lte: new Date() };
-
   const ticketWhere: Record<string, unknown> = {};
   if (ticketStatus) ticketWhere.status = ticketStatus;
 
-  const [monthlyOrders, payoutEntries, payoutTotal, recentPromos, promoTotal, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
+  const [monthlyOrders, payoutEntries, payoutTotal, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
     db.ticketOrder.findMany({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       select: { chargedAt: true, totalChargeCents: true },
@@ -59,13 +54,6 @@ export default async function AdminFinancePage({
       include: { profile: { select: { name: true, slug: true } } },
     }).catch(() => []),
     db.accountsPayableEntry.count({ where: payoutWhere }).catch(() => 0),
-    db.promoCode.findMany({
-      where: promoWhere,
-      orderBy: { createdAt: 'desc' },
-      take: PAGE_SIZE,
-      skip: (page - 1) * PAGE_SIZE,
-    }).catch(() => []),
-    db.promoCode.count({ where: promoWhere }).catch(() => 0),
     db.ticketOrder.aggregate({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       _sum: { totalChargeCents: true },
@@ -98,12 +86,11 @@ export default async function AdminFinancePage({
   const payoutPending = payoutEntries.filter(e => e.status === 'PENDING').reduce((s, e) => s + e.amountCents, 0);
 
   const payoutPages = Math.ceil(payoutTotal / PAGE_SIZE);
-  const promoPages = Math.ceil(promoTotal / PAGE_SIZE);
   const ticketPages = Math.ceil(ticketOrderTotal / PAGE_SIZE);
 
   const tabHref = (t: string) => `/admin/finance?tab=${t}`;
   const pageHref = (p: number) => {
-    const params = new URLSearchParams({ tab: activeTab, ...(sp.from ? { from: sp.from } : {}), ...(sp.to ? { to: sp.to } : {}), ...(promoStatus ? { promoStatus } : {}), ...(payoutStatus ? { payoutStatus } : {}), ...(ticketStatus ? { ticketStatus } : {}), page: String(p) });
+    const params = new URLSearchParams({ tab: activeTab, ...(sp.from ? { from: sp.from } : {}), ...(sp.to ? { to: sp.to } : {}), ...(payoutStatus ? { payoutStatus } : {}), ...(ticketStatus ? { ticketStatus } : {}), page: String(p) });
     return `/admin/finance?${params}`;
   };
 
@@ -111,7 +98,6 @@ export default async function AdminFinancePage({
     { key: 'revenue', label: t('adminFinancePage.tabRevenue', 'Revenue') },
     { key: 'payouts', label: t('adminFinancePage.tabPayouts', 'Payouts') },
     { key: 'tickets', label: t('adminFinancePage.tabTickets', 'Tickets') },
-    { key: 'promo-codes', label: t('adminFinancePage.tabPromoCodes', 'Promo Codes') },
   ];
 
   return (
@@ -233,44 +219,6 @@ export default async function AdminFinancePage({
                 {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>{t('adminFinancePage.prev', '← Prev')}</Link>}
                 <span className="meta">{t('adminFinancePage.pageOf', 'Page')} {page} {t('adminFinancePage.of', 'of')} {ticketPages}</span>
                 {page < ticketPages && <Link className="button small secondary" href={pageHref(page + 1)}>{t('adminFinancePage.next', 'Next →')}</Link>}
-              </div>
-            )}
-          </>
-        )}
-
-        {activeTab === 'promo-codes' && (
-          <>
-            <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, alignItems: 'flex-end' }}>
-              <input type="hidden" name="tab" value="promo-codes" />
-              <select name="promoStatus" defaultValue={promoStatus} className="input" style={{ width: 140 }}>
-                <option value="">{t('adminFinancePage.allCodes', 'All codes')}</option>
-                <option value="active">{t('adminFinancePage.promoActive', 'Active')}</option>
-                <option value="expired">{t('adminFinancePage.promoExpired', 'Expired')}</option>
-              </select>
-              <input type="hidden" name="page" value="1" />
-              <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
-            </form>
-            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.promoCodesHeading', 'Promo Codes')} ({promoTotal})</h3>
-            {recentPromos.length === 0 ? <div className="empty">{t('adminFinancePage.noPromoCodes', 'No promo codes.')}</div> : (
-              <div className="admin-list">
-                {recentPromos.map(p => (
-                  <div className="admin-list-row" key={p.id}>
-                    <code style={{ fontFamily: 'monospace' }}>{p.code}</code>
-                    <strong>{p.discountType}</strong>
-                    <small>{p.discountValue}% {t('adminFinancePage.off', 'off')}</small>
-                    <small>{p.useCount}/{p.maxUses ?? '∞'} {t('adminFinancePage.uses', 'uses')}</small>
-                    <small style={{ color: p.expiresAt && p.expiresAt < new Date() ? 'var(--ink-3)' : 'var(--role-venue)' }}>
-                      {p.expiresAt && p.expiresAt < new Date() ? t('adminFinancePage.expired', 'EXPIRED') : t('adminFinancePage.active', 'ACTIVE')}
-                    </small>
-                  </div>
-                ))}
-              </div>
-            )}
-            {promoPages > 1 && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 12, alignItems: 'center' }}>
-                {page > 1 && <Link className="button small secondary" href={pageHref(page - 1)}>{t('adminFinancePage.prev', '← Prev')}</Link>}
-                <span className="meta">{t('adminFinancePage.pageOf', 'Page')} {page} {t('adminFinancePage.of', 'of')} {promoPages}</span>
-                {page < promoPages && <Link className="button small secondary" href={pageHref(page + 1)}>{t('adminFinancePage.next', 'Next →')}</Link>}
               </div>
             )}
           </>

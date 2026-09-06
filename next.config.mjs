@@ -147,7 +147,7 @@ const nextConfig = {
       { source: '/playlist/:slug', destination: '/app/playlists/:slug', permanent: false },
       { source: '/tracks/:hexId', destination: '/app/tracks/:hexId', permanent: false },
       { source: '/tickets/:serializedId', destination: '/app/me/tickets/:serializedId', permanent: false },
-      { source: '/tickets', destination: '/app/me?section=tickets', permanent: false },
+      { source: '/tickets', destination: '/app/tickets', permanent: false },
       { source: '/payout/:id', destination: '/app/me/payouts/:id', permanent: false },
       { source: '/payouts', destination: '/app/me/payouts', permanent: false },
       { source: '/settings/accessibility', destination: '/app/me/accessibility', permanent: false },
@@ -395,17 +395,17 @@ const nextConfig = {
       },
       {
         source: '/ihype-governance.html',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
         source: '/ihype-investor.html',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
         source: '/ihype-beta.html',
-        destination: '/beta',
+        destination: '/register',
         permanent: false
       },
       {
@@ -520,12 +520,12 @@ const nextConfig = {
       },
       {
         source: '/governance',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
         source: '/investor',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
@@ -535,17 +535,17 @@ const nextConfig = {
       },
       {
         source: '/trust',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
         source: '/promise',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {
         source: '/integrity',
-        destination: '/about',
+        destination: '/info?tab=charter',
         permanent: false
       },
       {

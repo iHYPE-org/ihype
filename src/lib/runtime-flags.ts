@@ -18,11 +18,15 @@ function parseBooleanFlag(value: unknown, defaultValue: boolean) {
   return defaultValue;
 }
 
+/* `demo_logins` and `hide_demo_content` were KV keys here until 2026-09-06 and
+   were read by NOTHING that enforced them: every demo gate calls the
+   synchronous `shouldHideDemoContent()`, which reads the environment only. The
+   admin panel offered two toggles that changed the dashboard's own display and
+   nothing else. Demo visibility is `NODE_ENV` + `FEATURE_ENABLE_DEMO_LOGINS`,
+   one switch, and the panel no longer pretends otherwise. */
 export type RuntimeFlagKey =
-  | 'demo_logins'
   | 'invite_only_signup'
   | 'invite_code_sharing'
-  | 'hide_demo_content'
   | 'blob_media_storage'
   | 'ticket_payment_capture'
   | 'registrations_enabled'
@@ -147,9 +151,6 @@ function areDemoLoginsEnabled() {
   );
 }
 
-export async function areDemoLoginsEnabledRuntime() {
-  return getRuntimeFlag('demo_logins', areDemoLoginsEnabled());
-}
 
 function isDemoIdentifier(identifier: string | null | undefined) {
   if (!identifier) return false;
@@ -164,12 +165,6 @@ export function shouldHideDemoContent() {
   return process.env.NODE_ENV === 'production' && !areDemoLoginsEnabled();
 }
 
-export async function shouldHideDemoContentRuntime() {
-  return getRuntimeFlag(
-    'hide_demo_content',
-    process.env.NODE_ENV === 'production' && !(await areDemoLoginsEnabledRuntime()),
-  );
-}
 
 export function getDemoOwnerExclusion() {
   return shouldHideDemoContent() ? { owner: { email: { notIn: demoUserEmails } } } : {};
@@ -196,6 +191,7 @@ export function isReservedPlatformEmail(email: string | null | undefined) {
   return email.trim().toLowerCase().endsWith('@ihype.org');
 }
 
+/** Read by `prisma/seed.ts` only — the guard that keeps the seed off production. */
 export function isProductionSeedingAllowed() {
   return parseBooleanFlag(process.env.ALLOW_PRODUCTION_SEEDING, false);
 }

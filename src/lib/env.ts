@@ -40,13 +40,6 @@ const envSchema = z.object({
   ADMIN_ALERT_EMAIL: optEmail
 });
 
-// Resolved on access, not at module load: module scope runs before any
-// Cloudflare request context exists, so a dashboard/secret ADMIN_ALERT_EMAIL
-// was invisible here and every alert silently went to the default address.
-export function getAdminEmail(): string {
-  return readRuntimeEnv('ADMIN_ALERT_EMAIL') ?? 'admin@ihype.org';
-}
-
 /**
  * Every address that should receive an operational alert.
  *
@@ -66,13 +59,6 @@ export function getAdminAlertRecipients(): string[] {
     .filter((entry) => entry.includes('@'));
   return parsed.length > 0 ? parsed : ['admin@ihype.org'];
 }
-
-/**
- * @deprecated Read at module load, before any Cloudflare request context
- * exists, so a Worker-provided ADMIN_ALERT_EMAIL is invisible to it and it
- * always resolves to the default. Use getAdminAlertRecipients().
- */
-export const ADMIN_EMAIL = process.env.ADMIN_ALERT_EMAIL ?? 'admin@ihype.org';
 
 type Env = z.infer<typeof envSchema>;
 

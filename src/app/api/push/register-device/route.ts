@@ -54,21 +54,3 @@ export async function POST(request: Request) {
 }
 
 /** Called on sign-out from the native shell so a shared/reset device stops receiving another user's pushes. */
-export async function DELETE(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized.' }, { status: 401 });
-
-  let token: string;
-  try {
-    const body = await request.json();
-    token = body.token;
-  } catch {
-    return NextResponse.json({ error: 'Invalid body.' }, { status: 400 });
-  }
-
-  if (!token) return NextResponse.json({ error: 'token required.' }, { status: 400 });
-
-  await db.nativeDeviceToken.deleteMany({ where: { token, userId: session.user.id } });
-
-  return NextResponse.json({ ok: true });
-}

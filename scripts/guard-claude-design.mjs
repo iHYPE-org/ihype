@@ -90,7 +90,10 @@ for (const [source, destination] of [
   ['/playlist/:slug', '/app/playlists/:slug'],
   ['/radio', '/app/music/radio'],
   ['/search', '/app/music/discover?focus=search'],
-  ['/tickets', '/app/me?section=tickets'],
+  // `/tickets` points at `/app/tickets` directly since 2026-09-06: the old
+  // destination `/app/me?section=tickets` is itself a forward to the wallet
+  // tab (row 341), so the alias was a two-hop chain.
+  ['/tickets', '/app/tickets'],
   ['/for-you', '/app/music/recommended'],
   ['/this-weekend', '/app/map?layer=events'],
   ['/settings', '/app/me/settings'],
