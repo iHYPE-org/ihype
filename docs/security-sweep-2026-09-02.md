@@ -72,14 +72,28 @@ sweep can tell "reviewed" from "nobody looked".
 
 ## Accepted or deferred, with reasons
 
-- **Sign-out does not revoke the JWT** (12-hour lifetime). Bumping
-  `userSecurityVersion` on sign-out would sign every device out at once, which
-  is a product decision; a per-device denylist needs a store. Follow-up.
-- **Passkey challenges live in an httpOnly cookie** with no server-side
-  consumption, so a captured assertion could be replayed within 5 minutes by
-  setting the cookie. Needs a KV-backed single-use record. Follow-up.
-- **Magic link consumed on GET** — a link-previewing mail scanner can burn it.
-  Follow-up (confirm page with auto-POST).
+- ~~**Sign-out does not revoke the JWT**~~ — **CLOSED 2026-09-06**, per
+  device rather than per account. Every token already carries a `jti`, so the
+  sign-out route writes a KV tombstone under it and `auth()` refuses a token
+  that has one. Bumping `userSecurityVersion` was the one-line version and
+  would have signed a member out of their phone when they closed a session on
+  a library computer; that is "sign out everywhere", a different button.
+  `src/lib/session-revocation.ts`.
+- ~~**Passkey challenges live in an httpOnly cookie**~~ — **CLOSED
+  2026-09-06.** `claimPasskeyChallenge()` marks a challenge spent in KV at
+  verify time, on all four ceremonies (sign-in, admin step-up, admin device
+  binding, adding a passkey). The marker is written on USE rather than at
+  issue, so KV lag can only weaken the barrier, never refuse a member's first
+  and only attempt on the one sign-in path that has no password behind it.
+  `src/lib/passkey-challenge.ts`.
+- ~~**Magic link consumed on GET**~~ — **CLOSED 2026-09-06.** GET now reads
+  and writes nothing and forwards to `/auth/confirm`, which posts the token
+  back; POST is the half that spends it. Worth stating how bad this was: a
+  scanner that fetches every link in a message burned the token before the
+  member saw it, asking for another produced another one the scanner burned,
+  and with no password anywhere in the product that locks a whole corporate
+  mail domain out permanently. Walk item 39 now asserts two GETs spend
+  nothing and the POST works exactly once.
 - **Impressions are self-reported by the player.** A signed-in member is now
   capped at one charge per ad per day; a signed play token minted with the
   station payload would make the charge provable. Follow-up. The always-on
@@ -161,3 +175,36 @@ the first sweep had only listed as "gated". Everything below verified in code.
   `/embed/[hexId]` ignores `discoverable`; anonymous audit-log writes from
   `/api/referral/click` and `/api/analytics/signup-funnel` can be inflated.
   Low, and each is a small product decision about what is public.
+
+## Follow-ups closed (2026-09-06, DESIGN_SYNC row 355)
+
+The owner asked for the sweep's open items to be worked. Three of the six
+"accepted or deferred" entries above are now fixed and are struck through in
+place; the reasoning for each lives in its module's header, because the
+DIRECTION each control fails in is the part that would be silently reversed by
+a later edit that only reads the code.
+
+One rule shaped all three and is worth carrying: **a security control on the
+only way into an account has to fail towards letting the member in.** iHYPE has
+no password. If the passkey replay barrier refused whenever KV was slow, or if
+a KV outage invalidated every live session, the failure would not be a
+degraded defence — it would be every member locked out at once, with no
+recovery path that does not go through the same machinery. So the passkey
+marker is written on use rather than at issue, and the revocation check treats
+an unreadable KV as "not revoked". The security-version check in `auth.ts`
+deliberately does the opposite, because a database outage means the primary
+control cannot be evaluated at all; the contrast is noted in both files.
+
+Still open from the list above, unchanged and deliberately not bundled here:
+
+- **Impressions are self-reported.** A signed play token minted with the
+  station payload is the fix, and it is a design change to the player contract
+  rather than a patch — its own piece of work.
+- **Unreferenced `ads/audio/` keys.** A member can park public audio there
+  without a campaign row. The fix is a sweep of keys no `Ad.audioUrl` points
+  at, which means an R2 listing and a DELETE path, and mixing a destructive
+  storage job into a change to the auth paths would make both harder to
+  review. Needs a grace period too: the upload legitimately precedes the
+  campaign row by minutes.
+- **`/believers` and `/epk` render for any member.** Still a question about
+  intent, not a defect anyone can fix without the answer.

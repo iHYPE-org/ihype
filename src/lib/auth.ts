@@ -16,6 +16,7 @@ import { log } from '@/lib/logger';
 import { readImpersonatorId } from '@/lib/impersonation';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { isSessionRevoked } from '@/lib/session-revocation';
 
 /**
  * ADMIN is granted by the User row, but ALLOWED by the address on it.
@@ -63,6 +64,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           return null;
         }
       } else if (token.sub) {
+        /* Signed out on this device? The cookie is gone from the browser that
+           pressed the button, but the token is self-contained and lives twelve
+           hours, so a copy taken beforehand kept working until this check
+           existed. Read before the database: a revoked token needs no further
+           questions asked of it. Unreadable KV answers "not revoked" — see
+           src/lib/session-revocation.ts for why this one control fails open
+           where the version check below fails closed. */
+        if (await isSessionRevoked((token as { jti?: unknown }).jti)) return null;
+
         // Check security version on every full auth() call so suspensions and
         // password changes take effect. Not checked in middleware (no DB there).
         try {

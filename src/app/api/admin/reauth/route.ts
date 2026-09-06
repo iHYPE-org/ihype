@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/lib/passkey';
+import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { markAdminReauth } from '@/lib/admin-confirmation';
 import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
@@ -46,6 +47,14 @@ export async function POST(request: NextRequest) {
     const challenge = jar.get('admin_reauth_challenge')?.value;
     if (!challenge) {
       return NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+    }
+    // Single-use, for the same reason as sign-in and with more at stake: this
+    // is the step-up gate in front of the destructive admin actions, so a
+    // replayed assertion would re-arm it without the administrator present.
+    if ((await claimPasskeyChallenge('admin-reauth', challenge)) === 'replay') {
+      const stale = NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+      stale.cookies.delete('admin_reauth_challenge');
+      return stale;
     }
     const body = await request.json();
     const verifiedUserId = await verifyPasskeyAuthentication(body, challenge);
