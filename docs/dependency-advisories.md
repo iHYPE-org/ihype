@@ -74,7 +74,7 @@ _Reviewed 2026-08-13 against `@capacitor/cli@8.5.0`, `xcode@3.0.1`,
 
 ---
 
-## `deepmerge-ts < 8.0.0` and `mysql2 < 3.22.0` via `prisma` → `@prisma/config` (high, GHSA-ggr8-5vv4-36mx and GHSA-3f6p-5ww8-9rcr)
+## `deepmerge-ts < 8.0.0` and `mysql2 <= 3.23.0` via `prisma` → `@prisma/config` (high, GHSA-ggr8-5vv4-36mx, GHSA-3f6p-5ww8-9rcr and GHSA-rgwj-5xj2-c3m3)
 
 **Status: accepted. Do not run `npm audit fix --force` for these.**
 
@@ -85,9 +85,15 @@ its `@prisma/config` package. Neither is reachable from anything that ships:
   CLI to merge `prisma.config.ts` — a file in this repository, not an input
   anyone else supplies. It runs at `prisma generate` and `prisma migrate
   deploy` time, on a developer machine or a CI runner.
-- `mysql2` (authentication downgrade) is a MySQL driver. iHYPE's database is
-  PostgreSQL behind Hyperdrive; no code, config or connection string here names
-  MySQL, so the driver is never instantiated.
+- `mysql2` carries two advisories now — an authentication downgrade to
+  `mysql_clear_password` that leaks plaintext credentials to a hostile server,
+  and an unbounded `zlib` inflate in the compressed-protocol handler that a
+  hostile server can use as a decompression bomb. **Both require this process
+  to open a MySQL connection, and it never does.** iHYPE's `datasource` is
+  `provider = "postgresql"` behind Hyperdrive; no code, config or connection
+  string here names MySQL, so the driver is never instantiated. Note what the
+  two share: the attacker in each is *the database server you connected to*,
+  which is the one role nothing in this repository can hand to a stranger.
 
 `npm audit --omit=dev` (the check CI runs) reports **0** advisories: nothing in
 the Worker or the browser bundle is affected.
@@ -101,6 +107,17 @@ That trades a working migration pipeline for closing two paths nothing walks.
 ### When to revisit
 
 When Prisma publishes a 7.x release whose `@prisma/config` carries
-`deepmerge-ts >= 8` and `mysql2 >= 3.22`, take it as a normal upgrade.
+`deepmerge-ts >= 8` and `mysql2 > 3.23.0`, take it as a normal upgrade.
 
 _Reviewed 2026-09-02 against `prisma@7.10.0`._
+
+_Re-reviewed 2026-09-06, prompted by the second mysql2 advisory
+(GHSA-rgwj-5xj2-c3m3) widening the range from `< 3.22.0` to `<= 3.23.0` and
+surfacing as a Dependabot alert. Nothing about the conclusion changed and both
+load-bearing facts were re-measured rather than assumed: `mysql2@3.15.3` still
+arrives only through `prisma@7.10.0` (a devDependency — `npm ls mysql2 --all`
+shows that one path), the built Worker bundle contains **zero** occurrences of
+the string `mysql2`, and `npm audit --omit=dev` still reports **0
+vulnerabilities**. The offered fix is still `prisma@6.19.3`, still a downgrade
+across a major version. **Do not run `npm audit fix --force` here** — it would
+take the ORM back a major version to close two paths nothing walks._
