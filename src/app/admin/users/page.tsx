@@ -5,9 +5,15 @@ import { auth } from '@/lib/auth';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
-import { promoteToAdminAction, suspendUserAction } from './actions';
+import { approveAccessRequestAction, deleteAccessRequestAction, promoteToAdminAction, suspendUserAction } from './actions';
 import { getServerT } from '@/lib/i18n/server';
 import { ImpersonateButton } from '@/components/admin/ImpersonateButton';
+import {
+  canApproveAccessRequest,
+  describeAccessRequestState,
+  orderAccessRequests,
+  type AccessRequestState,
+} from '@/lib/access-requests';
 
 export const metadata: Metadata = {
   title: 'User management | iHYPE Admin',
@@ -52,7 +58,42 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
     db.user.count({ where }),
   ]);
 
-  const tab = sp.tab === 'stats' ? 'stats' : 'roles';
+  const tab = sp.tab === 'stats' ? 'stats' : sp.tab === 'requests' ? 'requests' : 'roles';
+
+  /* Alpha/beta access requests — the inbound funnel of a closed alpha.
+     Only read on its own tab, the same rule the Stats tab follows.
+
+     Two queries rather than one because the row's stored status is not the
+     whole truth: an address that has since acquired an account got in by
+     another door, and offering to mint them a single-use code would spend one
+     on nobody. That join is what makes the queue self-clearing — see
+     `describeAccessRequestState`. */
+  const requestRows = tab !== 'requests' ? null : await db.accessRequest.findMany({
+    orderBy: { createdAt: 'asc' },
+    take: 200,
+    select: { id: true, email: true, role: true, note: true, status: true, inviteCode: true, createdAt: true, decidedAt: true },
+  }).catch(() => null);
+
+  const requestAccounts = !requestRows?.length ? [] : await db.user.findMany({
+    where: { email: { in: requestRows.map((r) => r.email), mode: 'insensitive' } },
+    select: { email: true },
+  }).catch(() => []);
+
+  const accountEmails = new Set(requestAccounts.map((u) => (u.email ?? '').toLowerCase()));
+  const requests = requestRows === null ? null : orderAccessRequests(
+    requestRows.map((row) => ({
+      ...row,
+      state: describeAccessRequestState(row.status, accountEmails.has(row.email.toLowerCase())),
+    })),
+  );
+  const waitingCount = requests?.filter((r) => r.state === 'waiting').length ?? 0;
+
+  const STATE_LABEL: Record<AccessRequestState, string> = {
+    waiting: t('adminUsersPage.reqWaiting', 'Waiting'),
+    approved: t('adminUsersPage.reqApproved', 'Invited'),
+    'signed-up': t('adminUsersPage.reqSignedUp', 'Signed up'),
+    declined: t('adminUsersPage.reqDeclined', 'Declined'),
+  };
 
   // Only paid for on the Stats tab. Each read is independently caught and
   // renders as an em dash on failure — a dashboard showing 0 for "could not be
@@ -94,6 +135,9 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
         <div className="admin-export-row" style={{ marginBottom: 16 }}>
           <Link className={`button small ${tab === 'roles' ? '' : 'secondary'}`} href="/admin/users">
             {t('adminUsersPage.tabRoles', 'Roles')}
+          </Link>
+          <Link className={`button small ${tab === 'requests' ? '' : 'secondary'}`} href="/admin/users?tab=requests">
+            {t('adminUsersPage.tabRequests', 'Access requests')}
           </Link>
           <Link className={`button small ${tab === 'stats' ? '' : 'secondary'}`} href="/admin/users?tab=stats">
             {t('adminUsersPage.tabStats', 'Stats')}
@@ -158,6 +202,57 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
             </>
           );
         })()}
+
+        {tab === 'requests' && (
+          requests === null ? (
+            /* A read that failed is not an empty queue. Saying "no requests"
+               here would tell the operator the funnel is quiet when what
+               actually happened is that nobody knows. */
+            <div className="empty">
+              {t('adminUsersPage.reqUnavailable', 'Access requests could not be read just now. Reload to try again.')}
+            </div>
+          ) : requests.length === 0 ? (
+            <div className="empty">
+              {t('adminUsersPage.reqEmpty', 'No access requests yet. They arrive from the request form on the landing page.')}
+            </div>
+          ) : (
+            <>
+              <p className="meta" style={{ marginBottom: 12 }}>
+                {waitingCount} {t('adminUsersPage.reqWaitingSuffix', 'waiting')} · {requests.length} {t('adminUsersPage.reqTotalSuffix', 'in the last 200')}
+                {' — '}
+                {t('adminUsersPage.reqApproveNote', 'Approving mints a single-use invite code and emails it to them.')}
+              </p>
+              <div className="admin-list">
+                {requests.map((req) => (
+                  <div className="admin-list-row" key={req.id} style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                    <strong style={{ minWidth: 220 }}>{req.email}</strong>
+                    <small style={{ minWidth: 90 }}>{STATE_LABEL[req.state]}</small>
+                    <small>{req.createdAt.toISOString().slice(0, 10)}</small>
+                    {req.role && <small>{req.role}</small>}
+                    {/* The code stays on screen after approval, because the
+                        invite email is the one thing here that can fail
+                        silently — an operator who needs to send it by hand
+                        must be able to read it back. */}
+                    {req.inviteCode && <small><code>{req.inviteCode}</code></small>}
+                    {req.note && <small style={{ flexBasis: '100%', opacity: 0.8 }}>{req.note}</small>}
+                    <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+                      {canApproveAccessRequest(req.state) && (
+                        <form action={approveAccessRequestAction}>
+                          <input type="hidden" name="requestId" value={req.id} />
+                          <button className="button small" type="submit">{t('adminUsersPage.reqApprove', 'Approve')}</button>
+                        </form>
+                      )}
+                      <form action={deleteAccessRequestAction}>
+                        <input type="hidden" name="requestId" value={req.id} />
+                        <button className="button small secondary" type="submit">{t('adminUsersPage.reqDelete', 'Delete')}</button>
+                      </form>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )
+        )}
 
         {tab === 'roles' && (
         <form method="get" style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap', alignItems: 'flex-end' }}>
