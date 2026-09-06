@@ -79,3 +79,28 @@ e2e/fixtures/media/
 *.mobileprovision
 *.certSigningRequest
 ios_distribution.key
+
+# Extended 2026-09-06, from a real `git status` on the owner's machine. The
+# patterns above caught the four that matter (the .p8 APNs key, the .p12, the
+# distribution key and the upload keystore) and these five were sitting beside
+# them, untracked and unignored:
+#
+#   distribution.cer  distribution.pem  app-release.aab
+#   profile.plist     ihypefullhistory<date>.bundle
+#
+# None is a private key — a certificate is public by definition and a signed
+# .aab is what you hand to Play — so this is tidiness rather than a second
+# leak. It is worth having anyway, because the root of a working clone is
+# where signing runs and the next `git add -A` does not distinguish between
+# the file that is merely large and the one next to it that is a key.
+#
+# The .bundle pattern is for a full-history git bundle, which is a copy of the
+# entire repository and has no business inside it.
+#
+# Same check as the block above: `git ls-files` matches none of these, so no
+# tracked file is silently dropped from the index.
+*.cer
+*.pem
+*.aab
+*.apk
+*.bundle
