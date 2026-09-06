@@ -187,8 +187,15 @@ async function step1CaptureToPlatform() {
 }
 
 /* How many connected accounts DO have an active `transfers` capability, so the
-   skip can name the shortfall rather than implying there are none. */
+   skip can name the shortfall rather than implying there are none — and WHY the
+   others do not count, which is the part that cost a whole session on
+   2026-09-06. Ten accounts existed, every one of them read `Restricted` in the
+   dashboard, and this counted 0: `Restricted` means requirements are
+   outstanding, which means the capability is not `active`. The count alone
+   reads as "nobody has onboarded" and sends someone to create an eleventh
+   account, which does not help. */
 let connectShortfall = 0;
+let connectDiagnosis = '';
 
 async function resolveConnectAccounts() {
   const fromEnv = (process.env.REHEARSAL_CONNECT_ACCOUNTS ?? '')
@@ -208,6 +215,17 @@ async function resolveConnectAccounts() {
      account holds 37 connected accounts, 2 of them fully active with no
      requirements due, and the run still read as "nobody has onboarded". */
   connectShortfall = payable.length;
+
+  /* Say what the other accounts are, not just that they are not payable.
+     `requirements.currently_due` non-empty is what the dashboard draws as
+     `Restricted`, and it is the fix — finish the outstanding requirements on an
+     account that already exists — rather than onboarding another one. */
+  const notPayable = existing.data.filter((a) => a.capabilities?.transfers !== 'active');
+  const restricted = notPayable.filter((a) => (a.requirements?.currently_due ?? []).length > 0);
+  connectDiagnosis =
+    `${existing.data.length} connected account(s) exist; ${payable.length} can take a transfer. ` +
+    `Of the ${notPayable.length} that cannot, ${restricted.length} have outstanding requirements ` +
+    `(that is what the dashboard shows as "Restricted").`;
   return null;
 }
 
@@ -219,6 +237,10 @@ async function step2SplitTransfers(captured, accounts) {
     console.log('        has not completed onboarding, so this step cannot be faked. Complete hosted');
     console.log(`        onboarding for ${Math.max(0, 3 - connectShortfall)} more account(s) with Stripe's test values, then re-run with:`);
     console.log('          REHEARSAL_CONNECT_ACCOUNTS=acct_1,acct_2,acct_3');
+    if (connectDiagnosis) console.log(`        ${connectDiagnosis}`);
+    console.log('        A restricted account is finished in the dashboard, not replaced. And when you do');
+    console.log('        create one, tick the option that pays money OUT to it: the merchant checkbox asks');
+    console.log('        for `card_payments`, which is what step 7 needs and not what this step needs.');
     console.log('        The application has the same prerequisite: triggerShowPayouts() can pay nobody');
     console.log('        until at least one real profile finishes Connect onboarding.');
     return null;
