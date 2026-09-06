@@ -87,7 +87,6 @@ export async function GET() {
           journalPosts: true,
           setlistTemplates: true,
           availabilityDates: true,
-          promoCodes: true,
           _count: {
             select: {
               hostedShows: true,
@@ -108,7 +107,6 @@ export async function GET() {
       shows: {
         include: {
           radioTracks: true,
-          promoCodes: true,
           advertisingConfig: true,
           _count: {
             select: {

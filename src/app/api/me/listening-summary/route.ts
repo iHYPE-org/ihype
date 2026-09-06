@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
  * the figures claim. Top artists are likewise ranked by distinct tracks, not
  * plays, and say so.
  *
- * Session-scoped only — the same IDOR rule as `/api/analytics/summary`: the
+ * Session-scoped only — the same IDOR rule as the analytics engine (`analytics-metrics.ts`): the
  * caller gets their own listening and nobody else's, and the response is
  * private/no-store because a shared cache in front of per-account figures is a
  * cross-account leak.

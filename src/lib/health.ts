@@ -3,7 +3,6 @@ import { getEmailDeliveryReadiness, isEmailDeliveryConfigured, isSmtpEmailConfig
 import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
 import { getPaymentProcessingReadiness, isPaymentProcessingConfigured } from '@/lib/payments';
 import {
-  areDemoLoginsEnabledRuntime,
   areRegistrationsEnabledRuntime,
   areUploadsEnabledRuntime,
   isAdvertisingEnabledRuntime,
@@ -13,7 +12,7 @@ import {
   areMapsEnabledRuntime,
   isInviteCodeRequiredRuntime,
   isOutboundEmailEnabledRuntime,
-  shouldHideDemoContentRuntime,
+  shouldHideDemoContent,
 } from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { buildAlphaBlockers, evaluateRestoreDrill } from '@/lib/alpha-readiness';
@@ -69,9 +68,7 @@ export async function getHealthSnapshot() {
       ]);
 
     const [
-      demoLogins,
       inviteOnlySignup,
-      demoContentHidden,
       registrationsEnabled,
       uploadsEnabled,
       outboundEmailEnabled,
@@ -81,9 +78,7 @@ export async function getHealthSnapshot() {
       radioEnabled,
       mapsEnabled,
     ] = await Promise.all([
-      areDemoLoginsEnabledRuntime(),
       isInviteCodeRequiredRuntime(),
-      shouldHideDemoContentRuntime(),
       areRegistrationsEnabledRuntime(),
       areUploadsEnabledRuntime(),
       isOutboundEmailEnabledRuntime(),
@@ -163,9 +158,11 @@ export async function getHealthSnapshot() {
         ticketPaymentCapture: isPaymentProcessingConfigured()
       },
       safety: {
-        demoLogins,
         inviteOnlySignup,
-        demoContentHidden,
+        // The one demo switch: NODE_ENV plus FEATURE_ENABLE_DEMO_LOGINS, read
+        // synchronously by every gate. The KV toggles that used to sit beside
+        // it here were read by nothing that enforced them (2026-09-06 audit).
+        demoContentHidden: shouldHideDemoContent(),
         registrationsEnabled,
         uploadsEnabled,
         outboundEmailEnabled,

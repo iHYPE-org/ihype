@@ -55,7 +55,7 @@ describe('admin feature flag wiring', () => {
   // Anchored on the destructuring, which appears once — `] = await
   // Promise.all([` alone does not, and matching the first one reads a
   // different block entirely.
-  const start = source.indexOf('  const [\n    demoLoginsEnabled');
+  const start = source.indexOf('  const [\n    inviteOnlySignupEnabled');
   const flagAwait = source.slice(start, source.indexOf('\n  ]);', start));
   const [namesBlock, callsBlock] = flagAwait.split('] = await Promise.all([');
 

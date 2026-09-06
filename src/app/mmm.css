@@ -3692,14 +3692,6 @@ html:has(.mmm-frame) {
   cursor: pointer;
 }
 .mmm-deck-hype[data-hyped] { background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); }
-.mmm-deck-hype[data-locked] { background: rgba(var(--accent-rgb), 0.08); border-color: rgba(var(--accent-rgb), 0.28); }
-.mmm-deck-hype-wait {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 0.9375rem;
-  letter-spacing: 0.04em;
-  opacity: 0.85;
-}
 .mmm-deck-round:focus-visible,
 .mmm-deck-hype:focus-visible,
 .mmm-deck-play:focus-visible,

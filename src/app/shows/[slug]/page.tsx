@@ -227,12 +227,22 @@ export default async function ShowDetailPage({
   // `show-social.ts` when the show gained a second surface in the MMM shell —
   // a "latest row per account wins" reduction copied into two pages drifts
   // silently, and one of them would keep counting cancelled RSVPs.
-  const [rsvp, setlistTracks] = await Promise.all([
+  // The reminder state is the same lookup GET /api/shows/[id]/remind makes;
+  // the page used to hardcode `initialReminded={false}`, so a fan who had set
+  // a reminder was offered the button again on every visit (2026-09-06 audit).
+  const [rsvp, setlistTracks, viewerReminder] = await Promise.all([
     loadShowRsvpState(show.id, session?.user?.id),
     loadShowSetlist(show.id),
+    session?.user?.id
+      ? db.notification.findFirst({
+          where: { userId: session.user.id, type: 'show_reminder_pending', link: `/shows/${show.id}` },
+          select: { id: true },
+        }).catch(() => null)
+      : Promise.resolve(null),
   ]);
   const rsvpCount = rsvp.count;
   const viewerGoing = rsvp.viewerGoing;
+  const viewerReminded = Boolean(viewerReminder);
 
   const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
 
@@ -437,7 +447,7 @@ export default async function ShowDetailPage({
               canRsvp={Boolean(session?.user?.id)}
               initialCount={rsvpCount}
               initialGoing={viewerGoing}
-              initialReminded={false}
+              initialReminded={viewerReminded}
               showEnded={show.status === 'ENDED'}
               showId={show.id}
             />

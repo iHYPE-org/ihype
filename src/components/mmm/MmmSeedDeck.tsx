@@ -88,8 +88,6 @@ function palette(seed: string): { c1: string; c2: string } {
 export function MmmSeedDeck({
   busy = false,
   clipSeconds = 22,
-  hypeLocked = false,
-  hypeLabel,
   hyped = false,
   index,
   items,
@@ -104,8 +102,6 @@ export function MmmSeedDeck({
   /** A verdict is in flight. The controls stay visible and stop responding. */
   busy?: boolean;
   clipSeconds?: number;
-  hypeLabel?: string;
-  hypeLocked?: boolean;
   hyped?: boolean;
   index: number;
   items: MmmSeedItem[];
@@ -348,22 +344,20 @@ export function MmmSeedDeck({
           <span aria-hidden="true">✕</span>
         </button>
 
+        {/* The deck's hype is a verdict recorded by the seed route, which has
+            no 24-hour window of its own; the full player's cooldown props
+            (`hypeLocked`/`hypeLabel`) were declared here too and never passed
+            by the only mount, so they are gone (2026-09-06 audit). */}
         <button
-          aria-label={
-            hypeLocked
-              ? `Already hyped ${item.artistName}${hypeLabel ? `. Available again in ${hypeLabel}` : ''}`
-              : `HYPE ${item.artistName}`
-          }
+          aria-label={`HYPE ${item.artistName}`}
           aria-pressed={hyped}
           className="mmm-deck-hype"
           data-hyped={hyped || undefined}
-          data-locked={hypeLocked || undefined}
-          disabled={hypeLocked || busy}
+          disabled={busy}
           onClick={() => onHype(item)}
           type="button"
         >
           <span>HYPE</span>
-          {hypeLocked && hypeLabel ? <span className="mmm-deck-hype-wait">{hypeLabel}</span> : null}
         </button>
 
         <button

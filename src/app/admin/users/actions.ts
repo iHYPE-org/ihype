@@ -56,20 +56,3 @@ export async function promoteToAdminAction(formData: FormData) {
 
   revalidatePath('/admin/users');
 }
-
-export async function featureShowAction(formData: FormData) {
-  const session = await requireAdmin();
-  const showId = String(formData.get('showId') ?? '');
-  if (!showId) return;
-
-  // Schema has no featured field — record an audit event instead.
-  await recordAuditEvent({
-    actorUserId: session.user!.id!,
-    action: 'admin_show_featured',
-    entityType: 'Show',
-    entityId: showId,
-    metadata: { note: 'feature toggle via admin console (no schema field)' }
-  });
-
-  revalidatePath('/admin');
-}
