@@ -22,6 +22,17 @@
  * averages six hours between dumps, and it is the VARIANCE in the delay that
  * opens a long gap. Judge the gap; report the delay.
  *
+ * WHAT ITS FIRST RUN FOUND, which is a rule about scheduled workflows in
+ * general: **changing a workflow's cron drops the tick that was already
+ * pending.** `backup-database.yml` moved from :00 to :37 at 01:53 UTC on
+ * 2026-09-07, and the 00:xx and 06:xx dumps then never ran — a **16.70 h gap**
+ * on the only copy of the database outside the live cluster, caused by the
+ * change intended to shorten the gaps. So: after editing the schedule of any
+ * workflow whose job is to run on time, dispatch it once by hand. The move
+ * itself worked — the next run landed 21 min after its slot against a 4.08 h
+ * median before it — which is exactly the kind of claim that needs a probe
+ * rather than an argument.
+ *
  * WHY IT WARNS RATHER THAN FAILING at the target: the delay is GitHub's
  * queue, not something anybody working in this repository can clear, and a
  * check nobody can clear is a wall in front of the instruments rather than a
@@ -36,12 +47,28 @@
  *   1  a gap past the ceiling, or the workflow has stopped running entirely
  *   2  could not be measured (no network, no runs) — honest degradation, NOT a pass
  *
+ * A CALLER MUST DECIDE WHERE TO FAIL, NOT ONLY WHETHER TO. Sequenced as a
+ * hard gate near the top of the nightly, exit 1 here skipped the unit tests,
+ * every audit and the entire acceptance walk — the fault that job's own
+ * comments document about `check:app-links`, re-created by the check written
+ * to avoid it. The nightly now records this exit code and fails at the END.
+ *
  * Usage: npm run check:backup-cadence [-- --json] [-- --repo=owner/name]
  */
 import { fileURLToPath } from 'node:url';
 
 /** The slots `backup-database.yml` asks for, in UTC hours. Keep in step with its cron. */
 export const SCHEDULED_HOURS = [0, 6, 12, 18];
+
+/**
+ * ...and the minute within them. The first version of this file measured
+ * against the HOUR alone, which made it blind to the one change it exists to
+ * judge: the cron moved to :37 on 2026-09-07 to get off GitHub's most
+ * congested minute, and every delay then read 37 minutes high — the run that
+ * fired 21 min after its slot was reported as 58 min late. A probe that cannot
+ * see the intervention is not evidence about the intervention.
+ */
+export const SCHEDULED_MINUTE = 37;
 
 /**
  * What we PROMISE, in `docs/runbooks/backup-restore-drill.md`.
@@ -61,6 +88,25 @@ export const RPO_CEILING_HOURS = 12;
 export const SILENCE_CEILING_HOURS = 26;
 
 /**
+ * How far back the VERDICT looks — the distribution above it is reported over
+ * the whole window the API returns, but pass/fail is judged on the last two
+ * days.
+ *
+ * WHY, and it is the difference between an instrument and a nuisance: the
+ * question is "are the backups protecting us NOW", not "has a gap ever
+ * exceeded the ceiling". Judged over the full ~100-run history, the 16.70 h
+ * gap of 2026-09-07 would have failed the nightly every night for a week for a
+ * one-off with a known cause and a written fix — and a board that is red every
+ * night for a reason nobody can clear is a board people stop reading, which is
+ * the failure this repository has already had once (`check:app-links`, sitting
+ * in front of the whole nightly). A STANDING fault re-breaches on its own,
+ * because new gaps keep arriving; only a resolved one ages out. Two days also
+ * means a nightly shouts twice about any incident before it clears, so a
+ * breach cannot slip past on one unread morning.
+ */
+export const BREACH_WINDOW_HOURS = 48;
+
+/**
  * Delay of one run against the most recent slot at or before it, in hours.
  *
  * KNOWN LIMIT, and the reason the gap rather than the delay is what gets
@@ -70,20 +116,19 @@ export const SILENCE_CEILING_HOURS = 26;
  * That under-reports congestion but cannot corrupt the RPO figure, because the
  * gap between consecutive dumps never asks which slot a run belonged to.
  */
-export function delayAgainstSlot(when, scheduledHours = SCHEDULED_HOURS) {
+export function delayAgainstSlot(when, scheduledHours = SCHEDULED_HOURS, scheduledMinute = SCHEDULED_MINUTE) {
   const hours = [...scheduledHours].sort((a, b) => a - b);
-  const hour = when.getUTCHours();
-  // A run delayed past midnight belongs to the previous day's last slot, so
-  // fall back to it rather than reporting a spuriously tiny delay.
-  const at = [...hours].reverse().find((h) => h <= hour);
-  const slot = new Date(when);
-  if (at === undefined) {
-    slot.setUTCDate(slot.getUTCDate() - 1);
-    slot.setUTCHours(hours[hours.length - 1], 0, 0, 0);
-  } else {
-    slot.setUTCHours(at, 0, 0, 0);
-  }
-  return (when.getTime() - slot.getTime()) / 3_600_000;
+  const slots = hours.map((h) => {
+    const slot = new Date(when);
+    slot.setUTCHours(h, scheduledMinute, 0, 0);
+    return slot;
+  });
+  // The previous day's last slot, so a run landing before the day's first one
+  // is measured against yesterday rather than reporting a negative delay.
+  const yesterday = new Date(slots[slots.length - 1]);
+  yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+  const at = [yesterday, ...slots].reverse().find((s) => s.getTime() <= when.getTime());
+  return (when.getTime() - at.getTime()) / 3_600_000;
 }
 
 /**
@@ -96,12 +141,14 @@ export function summariseCadence(runTimes, now, options = {}) {
   const target = options.targetHours ?? RPO_TARGET_HOURS;
   const ceiling = options.ceilingHours ?? RPO_CEILING_HOURS;
   const silence = options.silenceHours ?? SILENCE_CEILING_HOURS;
+  const window = options.windowHours ?? BREACH_WINDOW_HOURS;
   const scheduledHours = options.scheduledHours ?? SCHEDULED_HOURS;
+  const scheduledMinute = options.scheduledMinute ?? SCHEDULED_MINUTE;
 
   const times = [...runTimes].sort((a, b) => a.getTime() - b.getTime());
   if (times.length === 0) return { measurable: false, reason: 'no successful scheduled runs found', runs: 0 };
 
-  const delays = times.map((t) => delayAgainstSlot(t, scheduledHours));
+  const delays = times.map((t) => delayAgainstSlot(t, scheduledHours, scheduledMinute));
   const gaps = [];
   for (let i = 1; i < times.length; i += 1) {
     gaps.push({
@@ -115,10 +162,19 @@ export function summariseCadence(runTimes, now, options = {}) {
   const overTarget = gaps.filter((g) => g.hours > target);
   const worst = gaps.reduce((a, b) => (b.hours > a.hours ? b : a), gaps[0] ?? { hours: 0 });
 
+  // The verdict looks only at the last `window` hours; the figures above it
+  // describe the whole sample. See BREACH_WINDOW_HOURS for why.
+  const since = now.getTime() - window * 3_600_000;
+  const recentGaps = gaps.filter((g) => g.to.getTime() >= since);
+  const recentOverTarget = recentGaps.filter((g) => g.hours > target);
+  const recentWorst = recentGaps.length
+    ? recentGaps.reduce((a, b) => (b.hours > a.hours ? b : a))
+    : null;
+
   // Silence is judged on the CURRENT gap, which no historical gap can show: a
   // workflow that stopped firing yesterday still has a perfect gap history.
   const stalled = sinceLast > silence;
-  const breached = gaps.some((g) => g.hours > ceiling) || sinceLast > ceiling;
+  const breached = recentGaps.some((g) => g.hours > ceiling) || sinceLast > ceiling;
 
   return {
     measurable: true,
@@ -135,9 +191,19 @@ export function summariseCadence(runTimes, now, options = {}) {
     gapCount: gaps.length,
     target,
     ceiling,
+    window,
+    recentGapCount: recentGaps.length,
+    recentOverTargetCount: recentOverTarget.length,
+    recentWorstGap: recentWorst,
     stalled,
     breached,
-    verdict: stalled ? 'stalled' : breached ? 'breached' : overTarget.length ? 'over-target' : 'ok',
+    verdict: stalled
+      ? 'stalled'
+      : breached
+        ? 'breached'
+        : recentOverTarget.length
+          ? 'over-target'
+          : 'ok',
   };
 }
 
@@ -150,6 +216,14 @@ function hrs(n) {
   return `${n.toFixed(2)} h`;
 }
 
+function stamp(d) {
+  return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+function when(gap) {
+  return `${hrs(gap.hours)} · ${stamp(gap.from)} → ${stamp(gap.to)} UTC`;
+}
+
 export function renderReport(summary) {
   if (!summary.measurable) return `  Backup cadence NOT MEASURED — ${summary.reason}`;
   const lines = [];
@@ -160,17 +234,24 @@ export function renderReport(summary) {
   if (summary.gaps) {
     lines.push(`  gap between     min ${hrs(summary.gaps.min)}   median ${hrs(summary.gaps.median)}   max ${hrs(summary.gaps.max)}`);
     lines.push(`  over the ${summary.target} h target: ${summary.overTargetCount} of ${summary.gapCount}`);
+    if (summary.worstGap) lines.push(`  worst was ${when(summary.worstGap)}`);
   }
   lines.push(`  since last dump: ${hrs(summary.sinceLastHours)}`);
   lines.push('');
+  // The verdict names its window every time, so nobody reads a green line as a
+  // claim about the whole history printed directly above it.
+  lines.push(`  verdict over the last ${summary.window} h · ${summary.recentGapCount} gaps`);
   if (summary.verdict === 'stalled') {
     lines.push(`  STALLED — no successful scheduled backup for ${hrs(summary.sinceLastHours)}.`);
     lines.push('  The workflow is not running. Check Actions, the budget, and BACKUP_PASSPHRASE.');
   } else if (summary.verdict === 'breached') {
     lines.push(`  BREACHED — a gap exceeded the ${summary.ceiling} h ceiling.`);
+    if (summary.recentWorstGap) lines.push(`  ${when(summary.recentWorstGap)}`);
     lines.push('  The promise has doubled. Add a slot, or move the schedule off GitHub\'s queue.');
+    lines.push('  If the schedule was just edited, that is the cause: a cron change drops the');
+    lines.push('  pending tick. Dispatch backup-database.yml by hand, then let it age out.');
   } else if (summary.verdict === 'over-target') {
-    lines.push(`  OVER TARGET — ${summary.overTargetCount} of ${summary.gapCount} gaps exceeded ${summary.target} h.`);
+    lines.push(`  OVER TARGET — ${summary.recentOverTargetCount} of ${summary.recentGapCount} recent gaps exceeded ${summary.target} h.`);
     lines.push('  Advisory: GitHub does not guarantee schedule times. Re-measure before');
     lines.push('  changing the documented RPO in docs/runbooks/backup-restore-drill.md.');
   } else {

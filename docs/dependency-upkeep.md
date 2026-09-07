@@ -128,6 +128,14 @@ needs to read the number — but read it, because it is the one figure here
 protecting the only copy of the database outside the live cluster, and it was
 wrong by 48% of gaps for at least six days before anything measured it.
 
+**If you change the backup workflow's schedule, dispatch it once by hand.**
+Editing a cron drops the tick already pending. The :37 move merged at 01:53 UTC
+on 2026-09-07; the 00:xx and 06:xx dumps then never ran, leaving a **16.70 h
+gap** — caused by the change intended to shorten the gaps, and found by the new
+probe's own first nightly run. The move itself worked (the next dump landed
+21 min after its slot against a 4.08 h median), so the lesson is about the
+transition, not the schedule.
+
 ## 6. Dependabot
 
 Read the alerts. Cross-check `docs/dependency-advisories.md` first: it records

@@ -4,6 +4,7 @@ import {
   RPO_CEILING_HOURS,
   RPO_TARGET_HOURS,
   SCHEDULED_HOURS,
+  SCHEDULED_MINUTE,
   delayAgainstSlot,
   summariseCadence,
 } from '../../../scripts/check-backup-cadence.mjs';
@@ -22,19 +23,32 @@ const at = (iso: string) => new Date(iso);
 
 describe('delayAgainstSlot', () => {
   it('measures a run against the slot it belongs to', () => {
-    expect(delayAgainstSlot(at('2026-09-06T15:19:00Z'))).toBeCloseTo(3.32, 2);
-    expect(delayAgainstSlot(at('2026-09-06T20:16:00Z'))).toBeCloseTo(2.27, 2);
+    expect(delayAgainstSlot(at('2026-09-06T15:19:00Z'))).toBeCloseTo(2.70, 2);
+    expect(delayAgainstSlot(at('2026-09-06T20:16:00Z'))).toBeCloseTo(1.65, 2);
+  });
+
+  it('measures from the MINUTE the cron asks for, not the hour', () => {
+    // The defect this replaces: measuring from the hour made the probe blind
+    // to the :37 move it exists to judge. The 2026-09-07 12:37 run landed at
+    // 12:58 — 21 min late, and reported as 58 min under the old arithmetic.
+    expect(delayAgainstSlot(at('2026-09-07T12:58:32Z'))).toBeCloseTo(0.36, 2);
   });
 
   it('is zero for a run that fires exactly on its slot', () => {
-    expect(delayAgainstSlot(at('2026-09-06T12:00:00Z'))).toBe(0);
+    expect(delayAgainstSlot(at('2026-09-06T12:37:00Z'))).toBe(0);
   });
 
   it('attributes a run to the nearest slot at or before it', () => {
-    // 01:30 reads as the 00:00 run 1.5 h late, which is the right call at the
-    // observed delays (2.21-5.48 h): the alternative reading, an 18:00 run
-    // 7.5 h late, is the rarer one.
-    expect(delayAgainstSlot(at('2026-09-07T01:30:00Z'))).toBeCloseTo(1.5, 2);
+    // 01:30 reads as the 00:37 run 53 min late, which is the right call at the
+    // observed delays: the alternative reading, an 18:37 run 6.9 h late, is
+    // the rarer one.
+    expect(delayAgainstSlot(at('2026-09-07T01:30:00Z'))).toBeCloseTo(0.88, 2);
+  });
+
+  it('measures a run landing BEFORE the day\'s first slot against yesterday', () => {
+    // 00:10 precedes 00:37, so the slot it belongs to is yesterday's 18:37.
+    // Getting this wrong reports a negative delay, which reads as early.
+    expect(delayAgainstSlot(at('2026-09-07T00:10:00Z'))).toBeCloseTo(5.55, 2);
   });
 
   it('under-reports a run delayed past a whole interval — a known limit, not a bug', () => {
@@ -43,14 +57,14 @@ describe('delayAgainstSlot', () => {
     // asked for. So delay is diagnostic only. The GAP between dumps is the RPO
     // figure and is immune to this entirely: it never asks which slot a run
     // belonged to. Judge the gap; read the delay as a hint about the queue.
-    const sevenHoursLateFor18 = at('2026-09-07T01:00:00Z');
+    const sevenHoursLateFor18 = at('2026-09-07T01:37:00Z');
     expect(delayAgainstSlot(sevenHoursLateFor18)).toBeCloseTo(1, 2); // not 7
   });
 
   it('wraps to the previous day when no slot precedes the run', () => {
     // Only reachable on a schedule with no midnight slot, but the branch has
     // to be right or such a schedule reports negative delays.
-    expect(delayAgainstSlot(at('2026-09-07T02:00:00Z'), [6, 12, 18])).toBeCloseTo(8, 2);
+    expect(delayAgainstSlot(at('2026-09-07T02:37:00Z'), [6, 12, 18])).toBeCloseTo(8, 2);
   });
 });
 
@@ -115,6 +129,39 @@ describe('summariseCadence', () => {
     expect(summariseCadence(runs, at('2026-09-07T01:31:00Z'), { targetHours: 6 }).overTargetCount).toBe(2);
     expect(s.overTargetCount).toBe(0);
   });
+
+  it('catches the 16.70 h gap its first real run found', () => {
+    // The night of 2026-09-07. The cron moved from :00 to :37 at 01:53 UTC and
+    // the 00:xx and 06:xx dumps never ran — changing a workflow's schedule
+    // drops the tick already pending. That is a real exposure on the only copy
+    // of the database outside the live cluster, so it must breach, not merely
+    // warn: it is over DOUBLE the promise, and the fix (dispatch the workflow
+    // by hand after a schedule change) is entirely in our own hands.
+    const runs = [
+      '2026-09-06T15:19:02Z', '2026-09-06T20:16:39Z', '2026-09-07T12:58:32Z',
+    ].map(at);
+    const s = summariseCadence(runs, at('2026-09-07T13:26:00Z'));
+    expect(s.gaps!.max).toBeCloseTo(16.70, 2);
+    expect(s.verdict).toBe('breached');
+  });
+
+  it('lets a resolved breach age out of the verdict while keeping it in the record', () => {
+    // The same gap, read three days later. Judged over the full history it
+    // would fail the nightly every night for a week for one incident with a
+    // known cause and a written fix — which is how a board stops being read.
+    // A STANDING fault keeps producing fresh gaps and so keeps breaching; only
+    // a resolved one ages out. The figure stays in the reported history.
+    const runs = [
+      '2026-09-06T15:19:02Z', '2026-09-06T20:16:39Z', '2026-09-07T12:58:32Z',
+      '2026-09-07T18:39:00Z', '2026-09-08T00:38:00Z', '2026-09-08T06:41:00Z',
+      '2026-09-08T12:38:00Z', '2026-09-08T18:40:00Z', '2026-09-09T00:39:00Z',
+      '2026-09-09T06:38:00Z', '2026-09-09T12:40:00Z',
+    ].map(at);
+    const s = summariseCadence(runs, at('2026-09-09T13:26:00Z'));
+    expect(s.gaps!.max).toBeCloseTo(16.70, 2); // still in the record
+    expect(s.verdict).toBe('ok');
+    expect(s.breached).toBe(false);
+  });
 });
 
 describe('the probe agrees with the workflow it measures', () => {
@@ -129,12 +176,14 @@ describe('the probe agrees with the workflow it measures', () => {
     expect(hours).toEqual(SCHEDULED_HOURS);
   });
 
-  it('does not schedule on the hour, which is GitHub\'s most congested minute', () => {
+  it('reads the same MINUTE the cron asks for', () => {
     // Moved off :00 on 2026-09-07 after 24 runs measured a 2.21-5.48 h delay,
-    // never once on time. Putting it back re-enters the queue everything else
-    // in the world is also asking for.
+    // never once on time; the next run landed 21 min late. Putting it back
+    // re-enters the queue everything else in the world is also asking for, and
+    // a probe carrying a stale minute reports every delay 37 min wrong.
     const cron = workflow.match(/- cron: '(\d+) ([\d,]+) \* \* \*'/);
     expect(Number(cron![1])).toBeGreaterThan(0);
+    expect(Number(cron![1])).toBe(SCHEDULED_MINUTE);
   });
 
   it('keeps the ceiling above the target, or the advisory band vanishes', () => {
