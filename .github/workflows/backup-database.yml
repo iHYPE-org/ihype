@@ -38,6 +38,18 @@ on:
     # Moving off :00 is a HYPOTHESIS about the queue, not a measurement: run
     # `npm run check:backup-cadence` in a week and let it say whether it
     # worked. Do not lower the documented RPO on the strength of this comment.
+    #
+    # FIRST EVIDENCE, 2026-09-07: the next run landed 21 min after its slot,
+    # against a 4.08 h median before. One run is not a week — but see the cost,
+    # below, which is the part to act on.
+    #
+    # **AFTER CHANGING THIS CRON, DISPATCH THE WORKFLOW BY HAND.** Editing the
+    # schedule drops the tick already pending: the :37 move merged at 01:53 UTC
+    # on 2026-09-07 and the 00:xx and 06:xx dumps then never ran at all, a
+    # measured 16.70 h gap on the only copy of the database outside the live
+    # cluster — caused by the change intended to SHORTEN the gaps, and caught
+    # by check:backup-cadence's own first nightly run. One `workflow_dispatch`
+    # immediately after the merge costs two minutes and closes the hole.
     - cron: '37 0,6,12,18 * * *'
   workflow_dispatch:
     inputs:

@@ -135,12 +135,28 @@ jobs:
         # (measured 2026-09-06). A scheduled workflow is a request, not a
         # guarantee, so the cadence has to be measured from what ran.
         #
-        # NOT continue-on-error: unlike check:basemap this reaches no third
-        # party but GitHub's own API, and its failure condition is a gap past
-        # DOUBLE the promise or a workflow that has stopped firing — both real
-        # data-loss exposure on the only copy of the database outside the live
-        # cluster. Drifting past the target merely prints loudly and exits 0.
-        run: npm run check:backup-cadence
+        # A BREACH STILL FAILS THE NIGHT — but at the END of it, in the gate
+        # step below, not here. Written as a hard gate at this position it
+        # re-created the exact fault the step below this one exists to
+        # document: its first run (2026-09-07) found a real 16.70 h gap, exited
+        # 1, and `set -e` skipped the unit tests, every audit, the worker build
+        # and the whole acceptance walk. A backup-cadence finding says nothing
+        # about whether a member can buy a ticket, so it must not be able to
+        # stop the run that would answer that. **Where a check fails is a
+        # separate decision from whether it fails**, and this one had only ever
+        # been argued on the second half.
+        id: backup-cadence
+        run: |
+          set +e
+          npm run check:backup-cadence
+          code=$?
+          set -e
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          # Exit 2 is honest degradation (no network, no runs) and is reported
+          # rather than failed, same rule as check:app-links below.
+          if [ "$code" -eq 2 ]; then
+            echo "::notice title=Backup cadence::Not measured this run — see the step log."
+          fi
 
       - name: Store-distribution readiness
         # NOT in the gate step above, and the reason is the whole point of this
@@ -268,6 +284,26 @@ jobs:
           # the walk still runs. e2e-workerd.mjs refuses a live key.
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_TEST_WEBHOOK_SECRET }}
+
+      - name: Blocking findings from earlier steps
+        # The other half of the backup-cadence step near the top. That check
+        # runs early because it is cheap and because its output belongs beside
+        # the other gates in the log — but a gap past DOUBLE the promised RPO
+        # is real data-loss exposure on the only copy of the database outside
+        # the live cluster, so the night must still go red for it. Failing
+        # here, after every instrument has spoken, is how both are true.
+        #
+        # `always()` so this runs even when an earlier step failed; it can only
+        # ADD a failure, never mask one, because GitHub fails a job on any
+        # failed step.
+        if: always()
+        run: |
+          code='${{ steps.backup-cadence.outputs.code }}'
+          if [ "$code" = "1" ]; then
+            echo "::error title=Backup RPO breached::A gap between database dumps exceeded the 12 h ceiling. Read the 'Backup cadence' step above, then docs/runbooks/backup-restore-drill.md."
+            exit 1
+          fi
+          echo "No blocking findings held over from earlier steps."
 
       - name: Keep the logs of a failed night
         if: failure()

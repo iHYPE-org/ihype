@@ -3,11 +3,13 @@
  * script stays plain ESM so node can run it from the nightly and by hand.
  */
 export const SCHEDULED_HOURS: number[];
+export const SCHEDULED_MINUTE: number;
 export const RPO_TARGET_HOURS: number;
 export const RPO_CEILING_HOURS: number;
 export const SILENCE_CEILING_HOURS: number;
+export const BREACH_WINDOW_HOURS: number;
 
-export function delayAgainstSlot(when: Date, scheduledHours?: number[]): number;
+export function delayAgainstSlot(when: Date, scheduledHours?: number[], scheduledMinute?: number): number;
 
 export interface CadenceGap {
   hours: number;
@@ -40,6 +42,11 @@ export interface CadenceSummary {
   gapCount?: number;
   target?: number;
   ceiling?: number;
+  /** The verdict's window in hours; the figures above it cover the whole sample. */
+  window?: number;
+  recentGapCount?: number;
+  recentOverTargetCount?: number;
+  recentWorstGap?: CadenceGap | null;
   stalled?: boolean;
   breached?: boolean;
   verdict?: 'ok' | 'over-target' | 'breached' | 'stalled';
@@ -53,6 +60,8 @@ export function summariseCadence(
     ceilingHours?: number;
     silenceHours?: number;
     scheduledHours?: number[];
+    scheduledMinute?: number;
+    windowHours?: number;
   },
 ): CadenceSummary;
 
