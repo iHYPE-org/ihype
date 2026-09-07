@@ -128,13 +128,24 @@ needs to read the number — but read it, because it is the one figure here
 protecting the only copy of the database outside the live cluster, and it was
 wrong by 48% of gaps for at least six days before anything measured it.
 
-**If you change the backup workflow's schedule, dispatch it once by hand.**
-Editing a cron drops the tick already pending. The :37 move merged at 01:53 UTC
-on 2026-09-07; the 00:xx and 06:xx dumps then never ran, leaving a **16.70 h
-gap** — caused by the change intended to shorten the gaps, and found by the new
-probe's own first nightly run. The move itself worked (the next dump landed
-21 min after its slot against a 4.08 h median), so the lesson is about the
-transition, not the schedule.
+**If you edit the backup workflow at all, dispatch it once by hand** (`slot:
+manual`, which writes its own key). Not just a cron change — it happened twice
+on 2026-09-07. The :37 move merged at 01:53 and the 00:xx and 06:xx dumps never
+ran, leaving a **16.70 h gap**, caused by the change intended to shorten the
+gaps. The rule written that afternoon said "after changing this cron"; two
+comment-only edits later the same day were followed by the 18:37 slot not
+firing either.
+
+The mechanism is unproven — a missing slot is also consistent with queue lag,
+and delays here have run to 5.48 h. The rule is wide because the trade is
+lopsided: two free runner-minutes against the only off-cluster copy of the
+database. The :37 move itself does look to have worked (the 12:37 dump landed
+21 min after its slot against a 4.08 h median).
+
+Note also that `check:backup-cadence` **reports** manual dumps but never lets
+them clear a verdict. That is deliberate: gaps, delays and the stalled check
+ask whether the automation is alive, and a dead schedule propped up by
+hand-dispatches must not read healthy.
 
 ## 6. Dependabot
 
