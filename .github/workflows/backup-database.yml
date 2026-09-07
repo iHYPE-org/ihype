@@ -6,9 +6,13 @@
 # backups either. The daily `backup-verify` cron proves the live database is up
 # and populated. It has never proven a copy exists, because one did not.
 #
-# CADENCE. Every 6 hours, which sets the RPO: a disaster loses at most the
-# transactions since the last dump. That is worse than PITR's seconds and is
-# recorded as an accepted risk in docs/runbooks/backup-restore-drill.md. Six
+# CADENCE. Requested every 6 hours; DELIVERED in 8 or less, which is what sets
+# the RPO: a disaster loses at most the transactions since the last dump. The
+# two differ because a scheduled workflow is a request GitHub does not
+# guarantee — measured 2026-09-06, this had never once fired on time and 48% of
+# gaps exceeded the 6 h that every document here promised. `npm run
+# check:backup-cadence` measures the delivered gaps and runs nightly; the
+# accepted risk is recorded in docs/runbooks/backup-restore-drill.md. Six
 # hours is also chosen against the Actions allowance — this repository has
 # already had CI runs cancelled and one production deploy never created because
 # the budget ran out (see deploy-production.yml's workflow_dispatch note).
@@ -22,10 +26,19 @@ name: Database backup
 
 on:
   schedule:
-    # 00:00, 06:00, 12:00, 18:00 UTC. The 00:00 run additionally writes the
-    # day-of-month slot, giving ~a month of daily copies alongside the week of
-    # 6-hourly ones.
-    - cron: '0 0,6,12,18 * * *'
+    # 00:00, 06:00, 12:00, 18:00 UTC — requested at :37, not :00. The 00:00
+    # run additionally writes the day-of-month slot, giving ~a month of daily
+    # copies alongside the week of 6-hourly ones.
+    #
+    # WHY :37. A scheduled workflow is a REQUEST, not a guarantee, and GitHub
+    # queues heaviest at the top of the hour. Measured over 24 successful runs
+    # (2026-09-01 to 09-06) this fired 2.21-5.48 h late EVERY time, median
+    # 4.14 h, and because the delay varies the gap between dumps swung 4.47 to
+    # 7.93 h — 48% of gaps past the 6 h RPO every document here promised.
+    # Moving off :00 is a HYPOTHESIS about the queue, not a measurement: run
+    # `npm run check:backup-cadence` in a week and let it say whether it
+    # worked. Do not lower the documented RPO on the strength of this comment.
+    - cron: '37 0,6,12,18 * * *'
   workflow_dispatch:
     inputs:
       slot:

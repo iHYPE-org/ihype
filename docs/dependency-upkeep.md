@@ -120,7 +120,15 @@ workflows** — `actions/checkout` and `actions/setup-node`. Converging them is 
 decision about which release to stand on, not a bump; report the drift, and
 resolve a new pin only against a named release tag.
 
-## 5. Dependabot
+## 5. Backup cadence
+
+`npm run check:backup-cadence` measures the delivered gaps between database
+dumps against the documented RPO. The nightly runs it, so the weekly sweep only
+needs to read the number — but read it, because it is the one figure here
+protecting the only copy of the database outside the live cluster, and it was
+wrong by 48% of gaps for at least six days before anything measured it.
+
+## 6. Dependabot
 
 Read the alerts. Cross-check `docs/dependency-advisories.md` first: it records
 what was examined and what the three standing `overrides` are for, including
