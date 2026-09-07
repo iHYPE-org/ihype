@@ -39,6 +39,8 @@ on:
 
 permissions:
   contents: read
+  # check:backup-cadence reads this repo's own workflow-run history.
+  actions: read
 
 concurrency:
   # A run still going when the next fires means something hung. Cancel the old
@@ -125,6 +127,20 @@ jobs:
         run: |
           npm run check:basemap
           npm run check:basemap -- --base=https://ihype.org
+
+      - name: Backup cadence against the documented RPO
+        # The instrument that was missing. Every check here asked whether a
+        # backup run SUCCEEDED; they all did, while 48% of the real gaps
+        # exceeded the 6 h RPO every document promised, for at least six days
+        # (measured 2026-09-06). A scheduled workflow is a request, not a
+        # guarantee, so the cadence has to be measured from what ran.
+        #
+        # NOT continue-on-error: unlike check:basemap this reaches no third
+        # party but GitHub's own API, and its failure condition is a gap past
+        # DOUBLE the promise or a workflow that has stopped firing — both real
+        # data-loss exposure on the only copy of the database outside the live
+        # cluster. Drifting past the target merely prints loudly and exits 0.
+        run: npm run check:backup-cadence
 
       - name: Store-distribution readiness
         # NOT in the gate step above, and the reason is the whole point of this

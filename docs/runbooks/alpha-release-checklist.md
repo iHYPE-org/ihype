@@ -19,7 +19,9 @@
 - [ ] Confirm registration, upload, outbound-email, advertising, payment,
       ticketing, radio, and map switches have the intended values.
 - [ ] Confirm the most recent backup verification passed.
-- [ ] Confirm the **Database backup** workflow ran within the last 6 hours and its
+- [ ] Confirm the **Database backup** workflow ran within the last 8 hours (the
+      measured RPO — GitHub delivers the 6-hourly schedule 2-5 h late, so 6 would
+      fail on a normal day; `npm run check:backup-cadence` is the real check) and its
       job summary names the keys it wrote. There is no Supabase PITR on this plan,
       so those encrypted dumps are the only copy of the database outside the live
       cluster — a run that says "SKIPPED — not configured" means there is none.

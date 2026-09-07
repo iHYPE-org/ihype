@@ -12,7 +12,8 @@
   a copy, because until now there was no copy.
 
   WHAT IT DOES NOT BUY YOU. PITR restores to an arbitrary second. This restores
-  to the last dump, so the RPO is the schedule interval (6 h) rather than
+  to the last dump, so the RPO is the DELIVERED interval (8 h measured; the
+  schedule asks for 6 and GitHub runs it 2-5 h late) rather than
   seconds. That difference is recorded as an accepted risk in
   docs/runbooks/backup-restore-drill.md — it is a worse RPO, not an absent
   capability. The moment where those seconds actually matter is a destructive
