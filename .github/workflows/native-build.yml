@@ -91,6 +91,22 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug
 
+      # KEEP THE APK. Until 2026-09-07 this job built one and threw it away,
+      # so the only Android artifact this repository could produce was the
+      # signed .aab — and **an .aab cannot be installed on a phone**; it is an
+      # upload format Play expands into per-device APKs. So there was no way
+      # to put a build on a device without a Play release, which is the one
+      # thing you want before making one. Debug-signed and therefore NOT
+      # uploadable to Play: this is for `adb install` and for handing a tester
+      # a file, nothing else.
+      - name: Retain the debug APK
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v4
+        with:
+          name: ihype-android-debug-${{ github.run_number }}
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
   # Signed release builds need an Apple Developer Program account and a
   # Google Play Console account. The steps below are real — not placeholders
   # — but have never run against a real account/credential set (neither
