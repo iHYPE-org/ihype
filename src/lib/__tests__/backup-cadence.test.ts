@@ -164,6 +164,50 @@ describe('summariseCadence', () => {
   });
 });
 
+describe('a dump taken outside the schedule', () => {
+  const evenly = (count: number, stepHours: number, start = '2026-09-01T00:00:00Z') =>
+    Array.from({ length: count }, (_, i) => new Date(Date.parse(start) + i * stepHours * 3_600_000));
+
+  it('is reported as protection but NEVER clears the verdict', () => {
+    // 2026-09-07: the 18:37 slot did not fire, so a manual dispatch took the
+    // dump at 18:56. The data was protected 20 minutes later while the probe
+    // went on reporting "since last dump: 6 h" — a false alarm worth fixing.
+    const scheduled = [at('2026-09-06T20:16:39Z'), at('2026-09-07T12:58:32Z')];
+    const s = summariseCadence(scheduled, at('2026-09-07T19:16:00Z'), {
+      offScheduleTimes: [at('2026-09-07T18:56:45Z')],
+    });
+    expect(s.sinceLastHours).toBeCloseTo(6.29, 1); // the SCHEDULE is 6 h stale
+    expect(s.sinceAnyDumpHours).toBeCloseTo(0.32, 1); // the DATA is 19 min old
+    expect(s.verdict).toBe('breached'); // and the 16.70 h gap still stands
+  });
+
+  it('cannot prop up a dead schedule — the whole reason it is not judged', () => {
+    // The naive fix. A schedule that stopped three days ago, with somebody
+    // dispatching by hand every few hours, must still read STALLED: gaps,
+    // delays and silence all ask whether the AUTOMATION is alive, and a
+    // hand-fed one that reads healthy is the failure this file exists to stop.
+    const scheduled = evenly(6, 6);
+    const dead = new Date(scheduled[scheduled.length - 1].getTime() + 72 * 3_600_000);
+    const s = summariseCadence(scheduled, dead, {
+      offScheduleTimes: [new Date(dead.getTime() - 3_600_000)],
+    });
+    expect(s.stalled).toBe(true);
+    expect(s.verdict).toBe('stalled');
+    expect(s.sinceAnyDumpHours).toBeCloseTo(1, 5);
+  });
+
+  it('is ignored when it is older than the last scheduled dump', () => {
+    // Only a dump MORE RECENT than the schedule's own tells the reader
+    // anything; an older one would understate how protected the data is.
+    const scheduled = [at('2026-09-07T06:37:00Z'), at('2026-09-07T12:37:00Z')];
+    const s = summariseCadence(scheduled, at('2026-09-07T13:00:00Z'), {
+      offScheduleTimes: [at('2026-09-07T04:00:00Z')],
+    });
+    expect(s.lastOffScheduleDump).toBeNull();
+    expect(s.sinceAnyDumpHours).toBe(s.sinceLastHours);
+  });
+});
+
 describe('the probe agrees with the workflow it measures', () => {
   const workflow = readFileSync('.github/workflows/backup-database.yml', 'utf8');
 

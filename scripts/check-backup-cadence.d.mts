@@ -34,7 +34,11 @@ export interface CadenceSummary {
   runs: number;
   first?: Date;
   last?: Date;
+  /** Since the last SCHEDULED dump — what the verdict is built on. */
   sinceLastHours?: number;
+  /** Since the last dump of ANY kind — what the data is actually protected to. */
+  sinceAnyDumpHours?: number;
+  lastOffScheduleDump?: Date | null;
   delays?: CadenceSpread;
   gaps?: CadenceSpread | null;
   worstGap?: CadenceGap | null;
@@ -62,6 +66,8 @@ export function summariseCadence(
     scheduledHours?: number[];
     scheduledMinute?: number;
     windowHours?: number;
+    /** Successful dumps not taken by the schedule; reported, never judged. */
+    offScheduleTimes?: Date[];
   },
 ): CadenceSummary;
 

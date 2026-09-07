@@ -142,6 +142,10 @@ export function summariseCadence(runTimes, now, options = {}) {
   const ceiling = options.ceilingHours ?? RPO_CEILING_HOURS;
   const silence = options.silenceHours ?? SILENCE_CEILING_HOURS;
   const window = options.windowHours ?? BREACH_WINDOW_HOURS;
+  /* Successful dumps that were NOT taken by the schedule — a manual
+     workflow_dispatch, usually the mitigation after an incident. They are
+     REPORTED and deliberately do not touch the verdict; see below. */
+  const offSchedule = options.offScheduleTimes ?? [];
   const scheduledHours = options.scheduledHours ?? SCHEDULED_HOURS;
   const scheduledMinute = options.scheduledMinute ?? SCHEDULED_MINUTE;
 
@@ -159,6 +163,22 @@ export function summariseCadence(runTimes, now, options = {}) {
   }
 
   const sinceLast = (now.getTime() - times[times.length - 1].getTime()) / 3_600_000;
+
+  /* THE DISTINCTION THIS DRAWS, and the reason the naive version is wrong.
+     A manual dump really does protect the data, so "since last dump: 7 h"
+     beside a 20-minute-old backup in R2 is a false alarm. But feeding manual
+     runs into the VERDICT is strictly worse than that noise: gaps, delays and
+     the stalled check all ask *is the automation alive*, and a dead schedule
+     propped up by hand-dispatches would then read healthy — which is the one
+     thing this file exists to make impossible. So the protection figure is
+     reported and the automation figure is judged. */
+  const lastOffSchedule = offSchedule
+    .filter((t) => t.getTime() > times[times.length - 1].getTime())
+    .sort((a, b) => a.getTime() - b.getTime())
+    .pop() ?? null;
+  const sinceAnyDump = lastOffSchedule
+    ? (now.getTime() - lastOffSchedule.getTime()) / 3_600_000
+    : sinceLast;
   const overTarget = gaps.filter((g) => g.hours > target);
   const worst = gaps.reduce((a, b) => (b.hours > a.hours ? b : a), gaps[0] ?? { hours: 0 });
 
@@ -182,6 +202,8 @@ export function summariseCadence(runTimes, now, options = {}) {
     first: times[0],
     last: times[times.length - 1],
     sinceLastHours: sinceLast,
+    sinceAnyDumpHours: sinceAnyDump,
+    lastOffScheduleDump: lastOffSchedule,
     delays: { min: Math.min(...delays), median: middle(delays), max: Math.max(...delays) },
     gaps: gaps.length
       ? { min: Math.min(...gaps.map((g) => g.hours)), median: middle(gaps.map((g) => g.hours)), max: worst.hours }
@@ -236,7 +258,12 @@ export function renderReport(summary) {
     lines.push(`  over the ${summary.target} h target: ${summary.overTargetCount} of ${summary.gapCount}`);
     if (summary.worstGap) lines.push(`  worst was ${when(summary.worstGap)}`);
   }
-  lines.push(`  since last dump: ${hrs(summary.sinceLastHours)}`);
+  lines.push(`  since last scheduled dump: ${hrs(summary.sinceLastHours)}`);
+  if (summary.lastOffScheduleDump) {
+    lines.push(`  since ANY dump: ${hrs(summary.sinceAnyDumpHours)} — a dump outside the schedule at ${stamp(summary.lastOffScheduleDump)} UTC`);
+    lines.push('  The data IS protected to that point. The verdict below still judges');
+    lines.push('  the SCHEDULE, because a dead one propped up by hand is not a cadence.');
+  }
   lines.push('');
   // The verdict names its window every time, so nobody reads a green line as a
   // claim about the whole history printed directly above it.
@@ -244,12 +271,17 @@ export function renderReport(summary) {
   if (summary.verdict === 'stalled') {
     lines.push(`  STALLED — no successful scheduled backup for ${hrs(summary.sinceLastHours)}.`);
     lines.push('  The workflow is not running. Check Actions, the budget, and BACKUP_PASSPHRASE.');
+    if (summary.lastOffScheduleDump) {
+      lines.push('  (A manual dump exists, so this is an AUTOMATION failure rather than an');
+      lines.push('  unprotected database — but it will become one the moment nobody dispatches.)');
+    }
   } else if (summary.verdict === 'breached') {
     lines.push(`  BREACHED — a gap exceeded the ${summary.ceiling} h ceiling.`);
     if (summary.recentWorstGap) lines.push(`  ${when(summary.recentWorstGap)}`);
     lines.push('  The promise has doubled. Add a slot, or move the schedule off GitHub\'s queue.');
-    lines.push('  If the schedule was just edited, that is the cause: a cron change drops the');
-    lines.push('  pending tick. Dispatch backup-database.yml by hand, then let it age out.');
+    lines.push('  If backup-database.yml was edited recently, suspect that first: an edit');
+    lines.push('  appears to drop the pending tick, and a comment-only one may be enough.');
+    lines.push('  Dispatch it by hand with slot: manual, then let the gap age out.');
   } else if (summary.verdict === 'over-target') {
     lines.push(`  OVER TARGET — ${summary.recentOverTargetCount} of ${summary.recentGapCount} recent gaps exceeded ${summary.target} h.`);
     lines.push('  Advisory: GitHub does not guarantee schedule times. Re-measure before');
@@ -264,6 +296,9 @@ async function main() {
   const args = new Set(process.argv.slice(2));
   const repoArg = [...args].find((a) => a.startsWith('--repo='));
   const repo = repoArg ? repoArg.slice('--repo='.length) : process.env.GITHUB_REPOSITORY || 'ihype-org/ihype';
+  /* No `event=` filter: manual dispatches are wanted too, so the report can say
+     the data is protected even while the SCHEDULE is failing. They are split
+     apart below and only the scheduled ones reach the verdict. */
   const url = `https://api.github.com/repos/${repo}/actions/workflows/backup-database.yml/runs?per_page=100&status=success`;
 
   const headers = { accept: 'application/vnd.github+json', 'user-agent': 'ihype-backup-cadence' };
@@ -301,12 +336,13 @@ async function main() {
     process.exit(2);
   }
 
-  const times = (payload.workflow_runs ?? [])
-    .filter((r) => r.event === 'schedule' && r.conclusion === 'success')
-    .map((r) => new Date(r.run_started_at))
-    .filter((d) => !Number.isNaN(d.getTime()));
+  const successes = (payload.workflow_runs ?? []).filter((r) => r.conclusion === 'success');
+  const at = (r) => new Date(r.run_started_at);
+  const ok = (d) => !Number.isNaN(d.getTime());
+  const times = successes.filter((r) => r.event === 'schedule').map(at).filter(ok);
+  const offSchedule = successes.filter((r) => r.event !== 'schedule').map(at).filter(ok);
 
-  const summary = summariseCadence(times, new Date());
+  const summary = summariseCadence(times, new Date(), { offScheduleTimes: offSchedule });
   if (args.has('--json')) {
     console.log(JSON.stringify(summary, null, 2));
   } else {

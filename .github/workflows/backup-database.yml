@@ -43,13 +43,22 @@ on:
     # against a 4.08 h median before. One run is not a week — but see the cost,
     # below, which is the part to act on.
     #
-    # **AFTER CHANGING THIS CRON, DISPATCH THE WORKFLOW BY HAND.** Editing the
-    # schedule drops the tick already pending: the :37 move merged at 01:53 UTC
-    # on 2026-09-07 and the 00:xx and 06:xx dumps then never ran at all, a
-    # measured 16.70 h gap on the only copy of the database outside the live
-    # cluster — caused by the change intended to SHORTEN the gaps, and caught
-    # by check:backup-cadence's own first nightly run. One `workflow_dispatch`
-    # immediately after the merge costs two minutes and closes the hole.
+    # **AFTER ANY EDIT TO THIS FILE, DISPATCH THE WORKFLOW BY HAND** — not only
+    # after a cron change. It happened twice on 2026-09-07. First the :37 move
+    # merged at 01:53 and the 00:xx and 06:xx dumps never ran: a measured
+    # 16.70 h gap on the only copy of the database outside the live cluster,
+    # caused by the change intended to SHORTEN the gaps. The rule written that
+    # afternoon said "after changing this cron" — and then two COMMENT-ONLY
+    # edits to this file (#846 at 13:49, #845 at 13:58) were followed by the
+    # 18:37 slot not firing either.
+    #
+    # Whether an edit really drops the tick is NOT proven — GitHub publishes
+    # nothing about it, and the historical delays here ran to 5.48 h, so a
+    # missing slot is also consistent with plain queue lag. The rule is written
+    # wide anyway because the asymmetry is extreme: a dispatch costs two
+    # minutes on a runner whose minutes are free, and the thing it insures is
+    # the only off-cluster copy of the database. Use `slot: manual`, which
+    # writes its own key and cannot clobber a rotating schedule slot.
     - cron: '37 0,6,12,18 * * *'
   workflow_dispatch:
     inputs:
