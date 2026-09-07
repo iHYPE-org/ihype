@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { isAllowedAdminEmail } from '@/lib/admin-allowlist';
 import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/lib/passkey';
+import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { generateDeviceToken, getDeviceCookieName, signDeviceCookieValue } from '@/lib/admin-device';
 import { registerAdminDevice } from '@/lib/admin-device-store';
 import { consumeRateLimit } from '@/lib/rate-limit';
@@ -80,6 +81,13 @@ export async function POST(request: NextRequest) {
 
   const challenge = request.cookies.get(CHALLENGE_COOKIE)?.value;
   if (!challenge) return NextResponse.json({ error: 'The passkey challenge expired — try again.' }, { status: 400 });
+
+  // Single-use. This ceremony registers a DEVICE against the admin console, so
+  // a replayed assertion would enrol the replayer's browser rather than merely
+  // re-reading something.
+  if ((await claimPasskeyChallenge('admin-device', challenge)) === 'replay') {
+    return NextResponse.json({ error: 'The passkey challenge expired — try again.' }, { status: 400 });
+  }
 
   const body = (await request.json().catch(() => null)) as AuthenticationResponseJSON | null;
   if (!body?.id) return NextResponse.json({ error: 'Invalid passkey response.' }, { status: 400 });

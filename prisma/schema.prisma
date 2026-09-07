@@ -968,15 +968,15 @@ model ProfileHypeEvent {
 }
 
 model VenueConnectionRequest {
-  id              String                  @id @default(cuid())
-  venueProfileId  String
-  artistProfileId String?
-  requesterId     String
-  requesterType   ConnectionRequestType
-  status          ConnectionRequestStatus @default(PENDING)
-  artistName      String
-  note            String?
-  notifyOnBooking Boolean                 @default(false)
+  id                   String                  @id @default(cuid())
+  venueProfileId       String
+  artistProfileId      String?
+  requesterId          String
+  requesterType        ConnectionRequestType
+  status               ConnectionRequestStatus @default(PENDING)
+  artistName           String
+  note                 String?
+  notifyOnBooking      Boolean                 @default(false)
   /// Where the fan was when they asked, captured once at submission so the
   /// venue's demand radar can weigh a request by how close the fan lives:
   /// the fan's own profile location when it has one, else the request's edge
@@ -986,12 +986,12 @@ model VenueConnectionRequest {
   requesterStateRegion String?
   requesterLatitude    Float?
   requesterLongitude   Float?
-  createdAt       DateTime                @default(now())
-  respondedAt     DateTime?
-  updatedAt       DateTime                @updatedAt
-  venueProfile    Profile                 @relation("VenueConnectionRequests", fields: [venueProfileId], references: [id], onDelete: Cascade)
-  artistProfile   Profile?                @relation("RecommendedProfileConnectionRequests", fields: [artistProfileId], references: [id], onDelete: SetNull)
-  requester       User                    @relation(fields: [requesterId], references: [id], onDelete: Cascade)
+  createdAt            DateTime                @default(now())
+  respondedAt          DateTime?
+  updatedAt            DateTime                @updatedAt
+  venueProfile         Profile                 @relation("VenueConnectionRequests", fields: [venueProfileId], references: [id], onDelete: Cascade)
+  artistProfile        Profile?                @relation("RecommendedProfileConnectionRequests", fields: [artistProfileId], references: [id], onDelete: SetNull)
+  requester            User                    @relation(fields: [requesterId], references: [id], onDelete: Cascade)
 
   @@index([venueProfileId, requesterId])
   @@index([requesterId])
@@ -1195,12 +1195,12 @@ model CommentReaction {
 }
 
 model MagicLinkToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    String
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  createdAt DateTime @default(now())
+  id            String   @id @default(cuid())
+  token         String   @unique
+  userId        String
+  expiresAt     DateTime
+  used          Boolean  @default(false)
+  createdAt     DateTime @default(now())
   /// NULL is the member link this model was built for: single use, via `used`.
   /// A number is a store-review link that may be redeemed that many more times
   /// (see `src/lib/review-access.ts`); `used` is still set when it hits zero,
@@ -1208,7 +1208,7 @@ model MagicLinkToken {
   remainingUses Int?
   /// Names a minted link in the admin console. NULL for member links.
   label         String?
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
@@ -1396,6 +1396,46 @@ model AuxItem {
   queue    AuxQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
 
   @@index([queueId])
+}
+
+/// An alpha/beta access request from the landing page's request form.
+///
+/// This exists because a request used to be an `AuditLog` row and nothing
+/// else. An audit row is append-only by design and carries no state, so there
+/// was no way to approve one, no way to clear one, and the admin queue could
+/// only ever point at a raw audit dump. For a closed alpha whose front page
+/// makes request-access the only way in, that put the whole inbound funnel
+/// somewhere nobody could work it.
+///
+/// The audit row is still written and is still the historical record of the
+/// ask. This table is the WORK ITEM: it can be decided, and deleting it does
+/// not erase the fact that somebody asked.
+///
+/// `email` is unique and stored lower-cased, so a second ask updates the same
+/// row rather than creating a queue entry per attempt — one person waiting is
+/// one row, and `createdAt` stays the moment they FIRST asked, which is what
+/// the workbench orders its queues by.
+model AccessRequest {
+  id         String              @id @default(cuid())
+  email      String              @unique
+  role       String?
+  note       String?
+  status     AccessRequestStatus @default(PENDING)
+  /// The single-use `InviteCode.code` minted when this request was approved.
+  inviteCode String?
+  decidedAt  DateTime?
+  decidedBy  String?
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+enum AccessRequestStatus {
+  PENDING
+  APPROVED
+  DECLINED
 }
 
 model InviteCode {

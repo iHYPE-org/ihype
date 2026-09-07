@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getPasskeyRegistrationOptions, verifyPasskeyRegistration } from '@/lib/passkey';
+import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
@@ -53,6 +54,16 @@ export async function POST(request: Request) {
   const jar = await cookies();
   const challenge = jar.get('pk_reg_challenge')?.value;
   if (!challenge) return NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+
+  // Single-use, like every other ceremony here. This one already sits behind a
+  // live session, so the replay window is narrower — but a challenge is spent
+  // by being presented, and having one path that does not say so is how the
+  // rule gets forgotten on the next ceremony somebody adds.
+  if ((await claimPasskeyChallenge('register', challenge)) === 'replay') {
+    const stale = NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+    stale.cookies.delete('pk_reg_challenge');
+    return stale;
+  }
 
   const raw = await request.json() as Record<string, unknown>;
   const name = typeof raw._name === 'string' ? raw._name : undefined;

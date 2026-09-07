@@ -7,6 +7,9 @@ import { sendGenericEmail } from '@/lib/mailer';
 import { deferWork } from '@/lib/defer-work';
 import { getAdminAlertRecipients } from '@/lib/env';
 import { escapeHtml } from '@/lib/html-escape';
+import { db } from '@/lib/db';
+import { normaliseRequestEmail } from '@/lib/access-requests';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +46,44 @@ export async function POST(request: NextRequest) {
       note: body.note?.slice(0, 500) ?? null
     }
   });
+
+  /* The audit row above is the append-only record that somebody asked. This is
+     the WORK ITEM an operator can approve or clear at /admin/users?tab=requests
+     — until now this route wrote the audit row and an email and nothing else,
+     so the whole inbound funnel of a closed alpha lived in one inbox with no
+     queue behind it.
+
+     Upsert rather than create: a second ask from the same address is the same
+     person waiting, so it refreshes what they told us without resetting
+     `createdAt` — the queue is ordered by longest wait, and re-asking must not
+     send someone to the back of it. `status` is deliberately NOT in the update:
+     role and note are refreshed so an operator revisiting the row reads what
+     the person said most recently, but a decision already made is never
+     re-opened by the applicant asking again.
+
+     Caught rather than awaited into the response: the member has already been
+     accepted, the audit row and the admin email have both landed, and failing
+     their request because a queue row could not be written would be the wrong
+     trade on the only door into the product. */
+  const email = normaliseRequestEmail(body.email);
+  if (email) {
+    try {
+      await db.accessRequest.upsert({
+        where: { email },
+        create: {
+          email,
+          role: body.role?.slice(0, 40) ?? null,
+          note: body.note?.slice(0, 500) ?? null
+        },
+        update: {
+          role: body.role?.slice(0, 40) ?? null,
+          note: body.note?.slice(0, 500) ?? null
+        }
+      });
+    } catch (error) {
+      log.error('[beta-access-request]', error instanceof Error ? error : { error: String(error) }, 'could not record the access request queue row');
+    }
+  }
 
   const textLines = [
     `Email: ${body.email}`,

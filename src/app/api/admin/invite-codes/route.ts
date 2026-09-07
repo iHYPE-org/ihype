@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
 import { db } from '@/lib/db';
-import { randomBytes } from 'crypto';
 import { z } from 'zod';
-
-function generateCode() {
-  return randomBytes(6).toString('hex').toUpperCase();
-}
+// One generator, shared with the approve action on the access-request queue,
+// so a code minted for a named requester and one minted in a batch here can
+// never drift into different alphabets or lengths.
+import { generateInviteCode } from '@/lib/access-requests';
 
 export async function GET() {
   const session = await auth();
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
     Array.from({ length: body.count }, () =>
       db.inviteCode.create({
         data: {
-          code: generateCode(),
+          code: generateInviteCode(),
           createdBy: session.user?.id,
           expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
         },

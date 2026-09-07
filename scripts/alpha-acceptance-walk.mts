@@ -2111,13 +2111,37 @@ async function main() {
     const link = mail.text.match(/https?:\/\/\S+\/api\/auth\/magic\?token=[A-Za-z0-9_-]+/)?.[0];
     assert(link, 'the email carries no magic link in its text');
     const target = new URL(link);
-    const followed = await api(`${target.pathname}${target.search}`);
-    assert([302, 303, 307].includes(followed.status), `following the link answered ${followed.status}`);
-    assert(!/error=/.test(followed.location ?? ''), `the link redirected to an error: ${followed.location}`);
-    assert((followed.setCookie ?? '').includes(sessionCookieName()), 'following the link set no session cookie');
-    const replay = await api(`${target.pathname}${target.search}`);
-    assert(/error=/.test(replay.location ?? ''), `the same link worked twice (${replay.status} → ${replay.location})`);
-    return `email to ${fanEmail} ("${mail.subject}") reached the sink; its link signed the fan in once and was refused on replay; ${sinkInbox.length} email(s) left the worker during this walk`;
+
+    /* A GET must SPEND NOTHING. Corporate mail security fetches every link in
+       a message before the recipient sees it, and while this route consumed on
+       GET that scanner burned the token — so the member clicked, was told the
+       link had expired, and asking for another produced another one the same
+       scanner burned. Twice, because once could be a fluke and the whole
+       property is that looking is repeatable. */
+    const looked = await api(`${target.pathname}${target.search}`);
+    assert([302, 303, 307].includes(looked.status), `following the link answered ${looked.status}`);
+    assert(!/error=/.test(looked.location ?? ''), `following the link redirected to an error: ${looked.location}`);
+    assert(
+      !(looked.setCookie ?? '').includes(sessionCookieName()),
+      'a GET of the magic link signed somebody in — a mail scanner would spend the token before the member reads the message',
+    );
+    const lookedAgain = await api(`${target.pathname}${target.search}`);
+    assert(!/error=/.test(lookedAgain.location ?? ''), `a second look burned the link: ${lookedAgain.location}`);
+
+    // The POST the confirm page makes is the half that signs in.
+    const confirmBody = new URLSearchParams({ token: new URL(looked.location ?? link, BASE).searchParams.get('token') ?? '' });
+    const signIn = () => api('/api/auth/magic', {
+      method: 'POST',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+      body: confirmBody.toString(),
+    });
+    const signedIn = await signIn();
+    assert([302, 303, 307].includes(signedIn.status), `posting the token answered ${signedIn.status}`);
+    assert(!/error=/.test(signedIn.location ?? ''), `posting the token redirected to an error: ${signedIn.location}`);
+    assert((signedIn.setCookie ?? '').includes(sessionCookieName()), 'posting the token set no session cookie');
+    const replay = await signIn();
+    assert(/error=/.test(replay.location ?? ''), `the same token worked twice (${replay.status} → ${replay.location})`);
+    return `email to ${fanEmail} ("${mail.subject}") reached the sink; two GETs of its link spent nothing, the posted token signed the fan in once and was refused on replay; ${sinkInbox.length} email(s) left the worker during this walk`;
   });
 
   await item('40. A member exports their data, deletes their account, and nobody else loses a row', async () => {

@@ -4,6 +4,7 @@ import { isSafeLocalRedirect, resolvePostAuthRedirect } from '@/lib/auth-redirec
 import { buildAuthSessionCookie } from '@/lib/auth-session';
 import { checkAndRecordLogin } from '@/lib/login-security';
 import { getPasskeyAuthenticationOptions, verifyPasskeyAuthentication } from '@/lib/passkey';
+import { claimPasskeyChallenge } from '@/lib/passkey-challenge';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
 import { log } from '@/lib/logger';
@@ -74,6 +75,16 @@ export async function POST(request: Request) {
     const challenge = jar.get('pk_auth_challenge')?.value;
     const callbackRedirect = jar.get('pk_auth_callback')?.value;
     if (!challenge) return NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 });
+
+    // Spend the challenge before verifying it. The cookie used to be the only
+    // record it had ever been issued, so a captured request — assertion body
+    // plus its Cookie header — could be replayed for five minutes and handed a
+    // session. The refusal wears the same sentence as an expired challenge on
+    // purpose: a distinct message would tell whoever is replaying exactly
+    // which barrier they hit.
+    if ((await claimPasskeyChallenge('signin', challenge)) === 'replay') {
+      return clearChallenge(NextResponse.json({ error: 'Challenge expired. Try again.' }, { status: 400 }));
+    }
 
     const body = await request.json();
 

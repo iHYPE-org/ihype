@@ -154,7 +154,8 @@ jobs:
 
       - name: Detect pending migrations
         # Decides whether this deploy is about to change the production schema,
-        # which is the one moment where the 6-hourly backup's RPO is not good
+        # which is the one moment where the scheduled backup's RPO (8 h
+        # measured, not the 6 h the cron asks for) is not good
         # enough: a migration that drops or rewrites a column is exactly what
         # point-in-time recovery exists for, and this project has no PITR (paid
         # add-on, no capital — see docs/runbooks/backup-restore-drill.md).

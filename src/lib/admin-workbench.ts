@@ -62,94 +62,49 @@ function build(
 /**
  * Alpha access requests that have not become accounts yet.
  *
- * `POST /api/beta-access-request` records an `AuditLog` row and emails the
- * admin recipients, and until now that was the whole story: **nothing on any
- * admin page showed a single request.** For a closed alpha whose front page
- * makes request-access the only way in, that put the entire inbound funnel in
- * one inbox — and this platform has already lost 35 days of outbound email
- * once without noticing (DESIGN_SYNC row 254). A queue nobody can see is a
- * queue nobody works.
+ * `POST /api/beta-access-request` records the ask twice: an append-only
+ * `AuditLog` row, and an `AccessRequest` row that an operator can actually
+ * decide at /admin/users?tab=requests. This counts the second.
  *
- * Why this needs two round trips rather than a `count()`: an audit row has no
- * "handled" state, so counting them would produce a number that only ever goes
- * up, which is worse than no number at all on a board whose whole ordering is
- * by how long the oldest item has waited. "Waiting" is therefore defined as
- * *requested an invite and does not yet have an account* — which clears by
- * itself the moment the person signs up, with nothing to mark off by hand.
+ * It used to scan the audit log, because that was all there was — 500 rows
+ * over 90 days, deduplicated by address in memory, which under-counted a
+ * busier funnel and could not tell an approved request from an untouched one.
+ * The table it reads now is already one row per address and carries the
+ * decision, so the count is exact and a request an operator has already
+ * handled leaves the queue.
  *
- * Bounded deliberately: the newest `SCAN` rows within `WINDOW_DAYS`. This is a
- * board that has to render fast, and a request from six months ago is not
- * work-in-progress. Both queries are caught independently, like every other
- * count here — a failure hides the badge rather than claiming zero.
+ * The second query stays, and it is the reason this is not a bare `count()`:
+ * an address that has since acquired an account got in by another door, and
+ * a queue that goes on demanding attention for somebody already inside is a
+ * queue people learn to ignore. That clears itself with nothing to mark off
+ * by hand — the same rule the tab renders as "Signed up".
+ *
+ * Both queries are caught together, like every other count here: a failure
+ * hides the badge rather than claiming zero.
  */
 async function pendingAccessRequests(): Promise<{ count: number; oldest: Date | null }> {
-  const WINDOW_DAYS = 90;
   const SCAN = 500;
   try {
-    const rows = await db.auditLog.findMany({
-      where: {
-        action: 'beta_access_request',
-        createdAt: { gte: new Date(Date.now() - WINDOW_DAYS * 864e5) },
-      },
-      orderBy: { createdAt: 'desc' },
+    const rows = await db.accessRequest.findMany({
+      where: { status: 'PENDING' },
+      orderBy: { createdAt: 'asc' },
       take: SCAN,
-      select: { createdAt: true, metadata: true },
+      select: { email: true, createdAt: true },
     });
     if (rows.length === 0) return { count: 0, oldest: null };
 
-    const asked = firstAskByEmail(rows);
-    if (asked.size === 0) return { count: 0, oldest: null };
-
     const onboarded = await db.user.findMany({
-      where: { email: { in: [...asked.keys()], mode: 'insensitive' } },
+      where: { email: { in: rows.map((r) => r.email), mode: 'insensitive' } },
       select: { email: true },
     });
-    return stillWaiting(asked, onboarded.map((u) => u.email));
+    const hasAccount = new Set(onboarded.map((u) => (u.email ?? '').trim().toLowerCase()));
+
+    // Ordered oldest-first above, so the first survivor IS the longest wait.
+    const waiting = rows.filter((r) => !hasAccount.has(r.email.trim().toLowerCase()));
+    return { count: waiting.length, oldest: waiting[0]?.createdAt ?? null };
   } catch {
     return { count: 0, oldest: null };
   }
-}
-
-/**
- * One entry per address, dated by the FIRST time that address asked — somebody
- * who asked three times is one person waiting, and their wait started with the
- * first ask, not the most recent one. Rows whose metadata carries no usable
- * address are skipped rather than counted as an anonymous request nobody could
- * action. Pure, so the part most likely to be wrong is the part under test.
- */
-export function firstAskByEmail(
-  rows: ReadonlyArray<{ createdAt: Date; metadata: unknown }>,
-): Map<string, Date> {
-  const firstAsk = new Map<string, Date>();
-  for (const row of rows) {
-    const email = (row.metadata as { email?: unknown } | null)?.email;
-    if (typeof email !== 'string' || !email.includes('@')) continue;
-    const key = email.trim().toLowerCase();
-    const seen = firstAsk.get(key);
-    if (!seen || row.createdAt < seen) firstAsk.set(key, row.createdAt);
-  }
-  return firstAsk;
-}
-
-/**
- * Drops everyone who now has an account. Case-insensitively, because the
- * request form takes whatever the person typed and `User.email` is whatever
- * they later registered with — matching those exactly would leave a request
- * "waiting" forever because someone capitalised their own address. Pure.
- */
-export function stillWaiting(
-  asked: Map<string, Date>,
-  onboardedEmails: ReadonlyArray<string | null>,
-): { count: number; oldest: Date | null } {
-  const waiting = new Map(asked);
-  for (const email of onboardedEmails) {
-    if (email) waiting.delete(email.trim().toLowerCase());
-  }
-  const dates = [...waiting.values()];
-  return {
-    count: dates.length,
-    oldest: dates.length ? new Date(Math.min(...dates.map((d) => d.getTime()))) : null,
-  };
 }
 
 export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
@@ -304,7 +259,7 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
       'access-requests',
       'Alpha access requests',
       'People who asked for an invite from the landing page and have no account yet',
-      '/admin/audit?action=beta_access_request',
+      '/admin/users?tab=requests',
       accessRequests.count,
       accessRequests.oldest,
       // No SLA, and that is not an oversight: the form promises "we will reach

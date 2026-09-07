@@ -110,7 +110,7 @@ export const OPERATOR_DUTIES: readonly RoutineDuty[] = [
     cadence: 'weekly',
     label: 'Confirm the encrypted backup ran and named its keys',
     detail:
-      'Every six hours a pg_dump is encrypted and written to R2. There is no Supabase PITR on this plan, so those objects are the only copy outside the live cluster — a run that says SKIPPED means there is none.',
+      'A pg_dump is encrypted and written to R2 on a six-hourly schedule that GitHub delivers in eight hours or less (measured; it runs 2-5 h late every time). There is no Supabase PITR on this plan, so those objects are the only copy outside the live cluster — a run that says SKIPPED means there is none.',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/backup-database.yml',
     when: 'any day',
   },
@@ -218,7 +218,7 @@ export const SCHEDULED_WORKFLOWS: readonly ScheduledWorkflow[] = [
   },
   {
     file: 'backup-database.yml',
-    schedule: '0 0,6,12,18 * * *',
+    schedule: '37 0,6,12,18 * * *',
     label: 'Database backup',
     what: 'Encrypted pg_dump to R2, decrypted once to prove it opens, into rotating daily, weekly and monthly slots',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/backup-database.yml',
