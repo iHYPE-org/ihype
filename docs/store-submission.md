@@ -9,7 +9,9 @@ change it here too — the two privacy questionnaires are separately submitted
 and separately auditable, and the fastest way to fail a review is to have them
 disagree with each other or with `/info?tab=privacy`.
 
-Last checked against the code: 2026-09-05.
+Last checked against the code: 2026-09-07 — and against the live
+production endpoints and the workflow run history, which is how two of the
+steps below turned out to be already done.
 
 ---
 
@@ -229,8 +231,20 @@ Questions: admin@ihype.org
 
 ## Assets still needed
 
-Neither store accepts a submission without these, and none of them can be
-generated from this repository.
+**Screenshots CAN be generated from this repository — that is new as of
+2026-09-07 and this section said the opposite.** `npm run store:screenshots`
+drives the real signed-in product against a built worker at both stores' exact
+frame sizes, using the same session fixture and proxy handling `measure:layout`
+has used since 2026-08-25. The claim below that "none of them can be generated
+here" was never tested; the machinery was already in the repository.
+
+Run it against a database with real-looking content, and **look at every frame
+before uploading**: the script refuses an obviously empty one, but it cannot
+judge a page that is merely thin, and a store listing is the one place where an
+empty fixture is indistinguishable from an empty product.
+
+The icon and feature graphic below are still genuinely outside this repository —
+they are artwork, not screens.
 
 **Google Play**
 - App icon 512×512 PNG, 32-bit, no alpha
@@ -258,8 +272,11 @@ a word of marketing copy.
 2. Take the **App signing** SHA-256 from Test and release → Setup → App signing
    and set it as the Worker secret `ANDROID_CERT_SHA256_FINGERPRINTS`. Not the
    upload key's fingerprint — Google re-signs, and the wrong one fails silently.
-3. **Apple** — set `APPLE_TEAM_ID` (`662XY74534`) as a Worker secret so
-   `/.well-known/apple-app-site-association` stops answering 404, then push a
-   build to TestFlight and fill App Privacy.
+3. **Apple — steps 1 and 2 of this are DONE (verified 2026-09-07).**
+   `APPLE_TEAM_ID` is set: `/.well-known/apple-app-site-association` answers
+   **200** in production with `662XY74534.com.ihype.app`. And a build was
+   **already uploaded to TestFlight** on 2026-09-05 (run `33977825909`, step
+   "Upload to TestFlight — success"). What is left on the Apple side is App
+   Privacy, screenshots and the submission itself.
 4. Mint the review link from `/admin` → System, paste it into both sets of
    review notes, and submit.
