@@ -129,18 +129,22 @@ protecting the only copy of the database outside the live cluster, and it was
 wrong by 48% of gaps for at least six days before anything measured it.
 
 **If you edit the backup workflow at all, dispatch it once by hand** (`slot:
-manual`, which writes its own key). Not just a cron change — it happened twice
-on 2026-09-07. The :37 move merged at 01:53 and the 00:xx and 06:xx dumps never
-ran, leaving a **16.70 h gap**, caused by the change intended to shorten the
-gaps. The rule written that afternoon said "after changing this cron"; two
-comment-only edits later the same day were followed by the 18:37 slot not
-firing either.
+manual`, which writes its own key). It is cheap insurance, not a fix for a
+known cause — and the reasoning behind it was corrected on 2026-09-08.
 
-The mechanism is unproven — a missing slot is also consistent with queue lag,
-and delays here have run to 5.48 h. The rule is wide because the trade is
-lopsided: two free runner-minutes against the only off-cluster copy of the
-database. The :37 move itself does look to have worked (the 12:37 dump landed
-21 min after its slot against a 4.08 h median).
+**Do not judge a slot missing before about 6 hours.** On 09-07 the 18:37 slot
+was written up as a second case of "an edit dropped the tick". It fired, at
+**21:44:44 — 3.12 h late**, inside this schedule's own measured band. It had
+been called missing at 105 minutes past, while `check:backup-cadence` on the
+same screen reported a median delay of 3.47 h and a max of 4.86 h. The data
+needed to avoid that mistake was already on the screen.
+
+What is still true: the 09-07 00:xx and 06:xx dumps never ran at all, a
+measured **16.70 h gap**. But the 06:xx slot was ~4.7 h after the merge with no
+pending tick to drop, so the edit theory does not explain that one either. The
+likeliest cause is GitHub skipping runs under load, which its docs allow for.
+The :37 move itself does look to have worked (the 12:37 dump landed 21 min
+after its slot against a 4.08 h median).
 
 Note also that `check:backup-cadence` **reports** manual dumps but never lets
 them clear a verdict. That is deliberate: gaps, delays and the stalled check
