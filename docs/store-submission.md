@@ -208,6 +208,20 @@ Open it in the app (or in a browser on the review device) and you will be
 signed in as a normal member account. The link works several times and expires
 on its own.
 
+CREATING A NEW ACCOUNT
+iHYPE is in closed alpha, so public signup is invite-only: "Request access" on
+the landing page files a request an administrator approves by hand. That is
+deliberate, not a fault. If you want to walk the signup flow yourself, use one
+of these single-use invite codes — each admits one account, so please use a
+fresh one per attempt:
+
+  <PASTE INVITE CODE 1>
+  <PASTE INVITE CODE 2>
+  <PASTE INVITE CODE 3>
+
+Enter one at https://ihype.org/register. Signup opens to everyone at public
+beta; nothing about the app changes when it does.
+
 TICKET PURCHASES
 Ticket sales are for real-world admission to live events, so In-App Purchase
 does not apply (App Store Review Guideline 3.1.3(e) / 3.1.5(a)). Checkout is
@@ -245,6 +259,14 @@ empty fixture is indistinguishable from an empty product.
 
 The icon and feature graphic below are still genuinely outside this repository —
 they are artwork, not screens.
+
+**Invite codes for the review notes** — not an asset, but the same kind of
+thing: mint them in `/admin/users` → Access requests, or `POST
+/api/admin/invite-codes`, and paste them into the block above. **Mint three,
+not one.** They are single-use and consumed on signup, so one fumbled attempt
+strands a reviewer at the wall and costs a review cycle. See
+`docs/runbooks/alpha-to-beta.md` for what the gate is and the one key that
+opens it for beta.
 
 **Google Play**
 - App icon 512×512 PNG, 32-bit, no alpha
