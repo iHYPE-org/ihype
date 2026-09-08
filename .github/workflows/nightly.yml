@@ -159,14 +159,20 @@ jobs:
           fi
 
       - name: Store-distribution readiness
-        # NOT in the gate step above, and the reason is the whole point of this
-        # job. `check:app-links` exits 2 while the two universal-link files are
-        # unwritten — which they are, and will be until someone with the Apple
-        # and Play accounts runs the generator. Sequenced as a gate it failed
-        # every night by construction, and `set -e` meant every step after it
-        # was skipped: the first nightly run (2026-09-03) never reached the
-        # alpha acceptance walk at all. A check that cannot pass is not a gate,
-        # it is a wall in front of the instruments.
+        # **THIS PASSES NOW — as of 2026-09-08 both association files answer 200
+        # in production** (Apple Team ID 662XY74534; three Android SHA-256
+        # fingerprints). The check was rewired the same day: it used to read
+        # `public/.well-known/` off disk, and both paths are ROUTE HANDLERS
+        # reading Worker secrets, so it reported "absent" while production
+        # served them correctly. It probes the live origin now.
+        #
+        # The tolerance below stays anyway, and the history is why. It exited 2
+        # for as long as the files were unwritten, and sequenced as a gate it
+        # failed every night by construction — `set -e` meant the first nightly
+        # run (2026-09-03) never reached the acceptance walk at all. A check
+        # that cannot pass is not a gate, it is a wall in front of the
+        # instruments. If a secret is ever unset the same 2 returns, and the
+        # night must still reach the walk.
         #
         # Exit 1 still fails the build. That is a file present and MALFORMED,
         # which both platforms cache as a verification failure for days.

@@ -22,9 +22,13 @@
  * ## Getting the two values
  *
  *   Team ID       Apple Developer → Membership details → Team ID (10 chars).
- *   Fingerprint   Play Console → Test and release → App integrity → App
- *                 signing key certificate → SHA-256. If you have the keystore
- *                 instead:
+ *   Fingerprint   Play Console → **Protected with Play → App signing** — the
+ *                 `/keymanagement` page. NOT "Test and release → App integrity",
+ *                 which this said until 2026-09-08 and which now renders only
+ *                 "App Integrity settings have moved". Take the **App signing
+ *                 key certificate** SHA-256 and the **Upload key certificate**
+ *                 SHA-256, comma-separated; a quantum-ready key adds a third.
+ *                 If you have the keystore instead:
  *                   keytool -list -v -keystore upload.jks -alias upload
  *                 Take the SHA-256 line, colon-separated hex.
  *
@@ -54,6 +58,9 @@ const flag = (name) => {
   return index >= 0 ? args[index + 1] : undefined;
 };
 const CHECK = args.includes('--check');
+/* The origin to VERIFY. Both files are served by route handlers reading Worker
+   secrets, so what is on disk says nothing about what the OS will fetch. */
+const BASE = (args.find((a) => a.startsWith('--base=')) ?? '--base=https://ihype.org').slice('--base='.length).replace(/\/$/, '');
 
 /* 10 uppercase alphanumerics. Apple's own format, and worth asserting: a Team ID
    with a stray space verifies as absent, which looks identical to not having
@@ -119,6 +126,31 @@ function appleBody(id, teamId) {
  * and prints it. Same convention as `stripe-payout-rehearsal.mjs`, which exits
  * 2 when a mode could not be rehearsed rather than pretending it passed.
  */
+/**
+ * Fetch one association file. `null` means 404 (the secret is unset — honest
+ * degradation); a throw means the origin could not be reached at all, which is
+ * NOT the same as "not configured" and must not be reported as one.
+ *
+ * Node's fetch ignores HTTPS_PROXY and the sandboxes this is developed in reach
+ * the network only through one, where the same URL answers under curl and fails
+ * under fetch. Same fix and same reason as check-backup-cadence.mjs; CI runners
+ * set no proxy, so it is inert there.
+ */
+async function fetchAssociation(url) {
+  const proxy = process.env.HTTPS_PROXY || process.env.https_proxy;
+  const options = {};
+  if (proxy) {
+    try {
+      const { ProxyAgent } = await import('undici');
+      options.dispatcher = new ProxyAgent(proxy);
+    } catch { /* connect directly */ }
+  }
+  const response = await fetch(url, options);
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(`${url} answered ${response.status}`);
+  return await response.text();
+}
+
 async function check() {
   /* Present but wrong — fatal. */
   const broken = [];
@@ -126,24 +158,31 @@ async function check() {
   const missing = [];
   const id = await appId();
 
-  const android = await readFile(path.join(root, ANDROID), 'utf8').catch(() => null);
-  if (!android) missing.push(`${ANDROID} is absent — Android App Links are not verified, so https:// links open in the browser.`);
+  const android = await fetchAssociation(`${BASE}/.well-known/assetlinks.json`);
+  if (android === null) missing.push(`${BASE}/.well-known/assetlinks.json answers 404 — ANDROID_CERT_SHA256_FINGERPRINTS is unset (or every entry was rejected), so https:// links open in the browser.`);
   else {
     try {
       const parsed = JSON.parse(android);
       const target = parsed?.[0]?.target;
       if (target?.package_name !== id) broken.push(`${ANDROID}: package_name is "${target?.package_name}", expected "${id}".`);
-      const print = target?.sha256_cert_fingerprints?.[0] ?? '';
-      if (!SHA256.test(print)) {
-        broken.push(`${ANDROID}: "${print}" is not a SHA-256 fingerprint (32 colon-separated hex octets). A SHA-1 has 20 — both are on the same Play Console screen.`);
+      /* EVERY entry, not just the first. The operator is told to set three —
+         the Play app-signing cert, its post-quantum sibling, and the upload
+         cert — and one bad entry among good ones is the case that presents as
+         flakiness: store installs verify, local installs do not. */
+      const prints = target?.sha256_cert_fingerprints ?? [];
+      if (prints.length === 0) broken.push('assetlinks.json: sha256_cert_fingerprints is empty. Google caches that as a verification failure.');
+      for (const print of prints) {
+        if (!SHA256.test(print)) {
+          broken.push(`assetlinks.json: "${print}" is not a SHA-256 fingerprint (32 colon-separated hex octets). A SHA-1 has 20 — both are on the same Play Console screen.`);
+        }
       }
     } catch {
       broken.push(`${ANDROID}: not valid JSON. Android caches the failure, so this is worse than an absent file.`);
     }
   }
 
-  const apple = await readFile(path.join(root, APPLE), 'utf8').catch(() => null);
-  if (!apple) missing.push(`${APPLE} is absent — iOS Universal Links are not verified.`);
+  const apple = await fetchAssociation(`${BASE}/.well-known/apple-app-site-association`);
+  if (apple === null) missing.push(`${BASE}/.well-known/apple-app-site-association answers 404 — APPLE_TEAM_ID is unset.`);
   else {
     try {
       const parsed = JSON.parse(apple);
@@ -156,10 +195,18 @@ async function check() {
     }
   }
 
+  /* NOT "run the generator". Both paths are ROUTE HANDLERS reading Worker
+     secrets; writing static files into public/.well-known/ would shadow them.
+     The fix is a secret, and it needs no deploy. */
   const howToWrite = [
     '',
-    'Both are generated, never hand-written:',
-    '  node scripts/generate-app-links.mjs --team-id ABCDE12345 --sha256 AA:BB:...:FF',
+    'Both are served by route handlers from Worker secrets — no deploy needed:',
+    '  npx wrangler secret put APPLE_TEAM_ID                      # 10 chars, Apple Developer -> Membership',
+    '  npx wrangler secret put ANDROID_CERT_SHA256_FINGERPRINTS   # comma-separated SHA-256s',
+    '',
+    'The Android fingerprints live in Play Console -> Protected with Play -> App signing',
+    '(the /keymanagement page): the App signing key certificate SHA-256, and your Upload',
+    'key certificate SHA-256. Never the SHA-1 rows beside them.',
     '',
   ].join('\n');
 
@@ -178,7 +225,7 @@ async function check() {
     process.exit(2);
   }
 
-  console.log(`App-link files verified for ${id}: Android fingerprint present, Apple Team ID present.`);
+  console.log(`App links verified for ${id} at ${BASE}: Android fingerprints present, Apple Team ID present.`);
 }
 
 if (CHECK) {
