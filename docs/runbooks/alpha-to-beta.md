@@ -17,6 +17,13 @@ Last verified against the code: 2026-09-08.
 | Who can sign up | **invite only** | `invite_only_signup`, default **true** |
 | Which invites work | **admin-issued single-use codes only** | `invite_code_sharing`, default **false** |
 
+Those are the flag names the code uses. **In KV they carry a `flags:` prefix** —
+see the beta section below, where getting it wrong fails silently.
+
+Both defaults are the code's own fallback, so neither has to be set for the
+state above to hold — but a default is not a reading. `GET /api/health`'s
+`safety.inviteOnlySignup` is what the product is actually doing right now.
+
 `POST /api/register` has three invite channels and only one is live:
 
 1. a shared `BETA_INVITE_CODES` string — one code, a whole channel of people
@@ -39,12 +46,44 @@ yourself.
 
 ## Opening the doors for beta
 
-**One key, no deploy.** The flag is read per request:
+**One key, no deploy.** The flag is read per request.
+
+**The key is `flags:invite_only_signup`, with the prefix.** `readRuntimeOverride`
+in `src/lib/runtime-flags.ts` reads `flags:${key}`, so a key written as bare
+`invite_only_signup` is stored successfully and read by nothing — the quietest
+possible failure, since the door simply stays shut and the command reported
+success. (The `limits:*` keys in `media-limits.ts` use a different prefix; do
+not carry one over to the other.)
+
+PowerShell, one line — `\` is a bash continuation and PowerShell will run the
+first half on its own:
 
 ```
-npx wrangler kv key put --namespace-id b6330641874a4420b240d3a82760a9aa \
-  invite_only_signup false
+npx wrangler kv key put --remote --namespace-id b6330641874a4420b240d3a82760a9aa flags:invite_only_signup false
 ```
+
+bash, if you prefer it wrapped:
+
+```
+npx wrangler kv key put --remote \
+  --namespace-id b6330641874a4420b240d3a82760a9aa \
+  flags:invite_only_signup false
+```
+
+Pass `--remote` explicitly rather than relying on the default: the `--local`
+form writes into the `.wrangler` store on your own machine, which production
+never reads, and it reports success exactly the same way.
+
+**Confirm it took** — `safety.inviteOnlySignup` in `GET /api/health` is the
+live answer, and it is the same call every other surface makes:
+
+```
+(irm https://ihype.org/api/health).safety.inviteOnlySignup
+```
+
+`False` means signup is open. Read it BEFORE you change anything too: this
+document states the CODE's default, and only that read can tell you what the
+live flag actually is.
 
 To go back, delete the key (the code's `true` default returns) or set it
 `true`.
