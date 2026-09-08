@@ -279,9 +279,10 @@ export function renderReport(summary) {
     lines.push(`  BREACHED — a gap exceeded the ${summary.ceiling} h ceiling.`);
     if (summary.recentWorstGap) lines.push(`  ${when(summary.recentWorstGap)}`);
     lines.push('  The promise has doubled. Add a slot, or move the schedule off GitHub\'s queue.');
-    lines.push('  If backup-database.yml was edited recently, suspect that first: an edit');
-    lines.push('  appears to drop the pending tick, and a comment-only one may be enough.');
-    lines.push('  Dispatch it by hand with slot: manual, then let the gap age out.');
+    lines.push('  Before concluding a slot was DROPPED, check the delay column above:');
+    lines.push('  this schedule runs hours late routinely, and a slot judged missing at');
+    lines.push('  105 min on 2026-09-07 arrived at 3.12 h. Do not judge one before ~6 h.');
+    lines.push('  If a dump really is absent, dispatch by hand with slot: manual.');
   } else if (summary.verdict === 'over-target') {
     lines.push(`  OVER TARGET — ${summary.recentOverTargetCount} of ${summary.recentGapCount} recent gaps exceeded ${summary.target} h.`);
     lines.push('  Advisory: GitHub does not guarantee schedule times. Re-measure before');

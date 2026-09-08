@@ -43,22 +43,28 @@ on:
     # against a 4.08 h median before. One run is not a week — but see the cost,
     # below, which is the part to act on.
     #
-    # **AFTER ANY EDIT TO THIS FILE, DISPATCH THE WORKFLOW BY HAND** — not only
-    # after a cron change. It happened twice on 2026-09-07. First the :37 move
-    # merged at 01:53 and the 00:xx and 06:xx dumps never ran: a measured
-    # 16.70 h gap on the only copy of the database outside the live cluster,
-    # caused by the change intended to SHORTEN the gaps. The rule written that
-    # afternoon said "after changing this cron" — and then two COMMENT-ONLY
-    # edits to this file (#846 at 13:49, #845 at 13:58) were followed by the
-    # 18:37 slot not firing either.
+    # **AFTER ANY EDIT TO THIS FILE, DISPATCH THE WORKFLOW BY HAND** — cheap
+    # insurance, and read the next paragraph before believing why.
     #
-    # Whether an edit really drops the tick is NOT proven — GitHub publishes
-    # nothing about it, and the historical delays here ran to 5.48 h, so a
-    # missing slot is also consistent with plain queue lag. The rule is written
-    # wide anyway because the asymmetry is extreme: a dispatch costs two
-    # minutes on a runner whose minutes are free, and the thing it insures is
-    # the only off-cluster copy of the database. Use `slot: manual`, which
-    # writes its own key and cannot clobber a rotating schedule slot.
+    # **THE EVIDENCE THIS RULE WAS BUILT ON WAS WRONG, AND THE CORRECTION IS
+    # THE MORE USEFUL LESSON (2026-09-08).** On 09-07 two comment-only edits
+    # (#846 13:49, #845 13:58) were followed by the 18:37 slot appearing not to
+    # fire, and that was written up here as a second confirmed case. It fired —
+    # at **21:44:44, 3.12 h late**, squarely inside this schedule's own
+    # measured band. It was judged missing at 105 minutes past the slot, while
+    # the probe on the same screen reported a **median delay of 3.47 h and a
+    # max of 4.86 h**. The data needed to not make that call was already in
+    # front of whoever made it. **Do not judge a slot missing before ~6 h.**
+    #
+    # What remains true: the 09-07 00:xx and 06:xx dumps really never ran, a
+    # measured 16.70 h gap. But the 06:xx slot was ~4.7 h AFTER the merge, with
+    # no pending tick left to drop, so the edit theory does not explain it
+    # either. The likeliest cause is simply that GitHub skipped runs under
+    # load, which its own docs allow for. The dispatch rule stays because the
+    # asymmetry is extreme — two free runner-minutes against the only
+    # off-cluster copy of the database — NOT because an edit is a known cause.
+    # Use `slot: manual`, which writes its own key and cannot clobber a
+    # rotating schedule slot.
     - cron: '37 0,6,12,18 * * *'
   workflow_dispatch:
     inputs:
