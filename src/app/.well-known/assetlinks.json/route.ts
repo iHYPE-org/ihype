@@ -30,10 +30,15 @@ import { log } from '@/lib/logger';
  *
  * ## Where the fingerprint comes from
  *
- * Play Console → your app → Test and release → **App integrity** → App signing
- * key certificate → the **SHA-256** line. It only exists after the first bundle
- * is uploaded, because Play generates the app signing key itself. Take the
- * SHA-256, never the SHA-1 shown directly above it on the same screen.
+ * Play Console → **Protected with Play → App signing** (the `/keymanagement`
+ * page) → **App signing key certificate** → the **SHA-256** line. It only
+ * exists after the first bundle is uploaded, because Play generates the app
+ * signing key itself. Take the SHA-256, never the SHA-1 beside it.
+ *
+ * This said "Test and release → App integrity" until 2026-09-08, and that page
+ * now renders nothing but "App Integrity settings have moved" — which cost a
+ * real operator four wrong turns. Google has relocated this three times; if the
+ * path here is wrong again, `/keymanagement` is the durable part of the URL.
  *
  * Set BOTH once you have them, comma-separated: the Play app-signing
  * certificate AND your upload certificate. A build installed from a locally

@@ -269,9 +269,17 @@ a word of marketing copy.
 1. **Play** — create the app, upload the first `.aab` by hand to Internal
    testing (the API refuses an app with no release), then fill the listing,
    Data Safety, content rating and ads declaration.
-2. Take the **App signing** SHA-256 from Test and release → Setup → App signing
-   and set it as the Worker secret `ANDROID_CERT_SHA256_FINGERPRINTS`. Not the
-   upload key's fingerprint — Google re-signs, and the wrong one fails silently.
+2. **DONE 2026-09-08.** Take the SHA-256s from **Protected with Play → App
+   signing** (the `/keymanagement` page — NOT "Test and release → Setup → App
+   signing", which no longer exists, nor "App integrity", which now only says
+   the settings moved) and set them comma-separated as the Worker secret
+   `ANDROID_CERT_SHA256_FINGERPRINTS`. Set **both** the App signing key
+   certificate and the Upload key certificate — with only the Play one, store
+   installs verify and your own local installs do not, which reads as
+   flakiness. A quantum-ready key adds a third; extra correct entries are
+   harmless because Android matches against any of them. Never the SHA-1 rows.
+   `https://ihype.org/.well-known/assetlinks.json` now answers 200 with three
+   fingerprints, and `npm run check:app-links` verifies the live origin.
 3. **Apple — steps 1 and 2 of this are DONE (verified 2026-09-07).**
    `APPLE_TEAM_ID` is set: `/.well-known/apple-app-site-association` answers
    **200** in production with `662XY74534.com.ihype.app`. And a build was
