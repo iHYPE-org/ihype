@@ -486,6 +486,11 @@ model ArtistMediaAsset {
   // exceed it between samples.
   loudnessLufs     Float?
   peakDbfs         Float?
+  // 4x-oversampled true peak. Separate from peakDbfs because they answer
+  // different questions: the sample peak says whether the FILE clipped, this
+  // says what a converter will produce from it — and it is the one a boost
+  // divides its headroom by. A track without it is never boosted.
+  truePeakDbtp     Float?
   artworkUrl       String?
   sortOrder        Int              @default(0)
   profileId        String

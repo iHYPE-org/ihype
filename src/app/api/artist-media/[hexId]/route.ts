@@ -88,6 +88,7 @@ export async function PATCH(
       }
       data.loudnessLufs = loudness;
       data.peakDbfs = clampMeasuredPeak(body.peakDbfs);
+      data.truePeakDbtp = clampMeasuredPeak(body.truePeakDbtp);
     }
     /* Only removal here — `artworkUrl: null`. A new cover comes through
        POST /api/artist-media/[hexId]/artwork, which vets and stores it. */

@@ -110,17 +110,85 @@ function channelWeight(index: number): number {
   return index >= 3 ? 1.41 : 1.0;
 }
 
+/**
+ * 4x-oversampled true peak, per BS.1770-4 Annex 2.
+ *
+ * WHY IT IS NOT A SECOND FULL PASS. Interpolating every sample of a
+ * five-minute stereo master through a 48-tap kernel is hundreds of millions of
+ * multiply-accumulates in a phone browser, for one number. The peak can only
+ * be near a sample that is itself near the peak, so only the neighbourhoods of
+ * the loudest samples are oversampled — everything below the threshold cannot
+ * reach the maximum however it interpolates. A heavily limited master puts
+ * tens of thousands of samples on the ceiling, so the candidate list is
+ * strided to a bound rather than followed to the end.
+ *
+ * The result is >= the sample peak by construction, and that matters: it is
+ * the number a boost pass divides its headroom by, and a true peak read too
+ * LOW is the one that clips.
+ */
+const TRUE_PEAK_PHASES = 4;
+const TRUE_PEAK_TAPS = 12;
+/** Samples within 1 dB of the loudest are the only ones worth interpolating. */
+const CANDIDATE_FLOOR = 0.891;
+const MAX_CANDIDATES = 20000;
+
+function sincKernel(phase: number): Float64Array {
+  const taps = new Float64Array(TRUE_PEAK_TAPS);
+  const centre = TRUE_PEAK_TAPS / 2 - 1;
+  for (let i = 0; i < TRUE_PEAK_TAPS; i += 1) {
+    const x = i - centre - phase / TRUE_PEAK_PHASES;
+    // Blackman-windowed sinc: the window is what stops the truncated kernel
+    // ringing and reporting a peak the signal does not have.
+    const w = 2 * Math.PI * (i / (TRUE_PEAK_TAPS - 1));
+    const window = 0.42 - 0.5 * Math.cos(w) + 0.08 * Math.cos(2 * w);
+    taps[i] = window * (x === 0 ? 1 : Math.sin(Math.PI * x) / (Math.PI * x));
+  }
+  return taps;
+}
+
+const KERNELS = Array.from({ length: TRUE_PEAK_PHASES - 1 }, (_, i) => sincKernel(i + 1));
+
+export function measureTruePeak(channels: readonly Float32Array[], samplePeak: number): number {
+  if (samplePeak <= 0) return 0;
+  let peak = samplePeak;
+  const centre = TRUE_PEAK_TAPS / 2 - 1;
+  const threshold = samplePeak * CANDIDATE_FLOOR;
+
+  for (const channel of channels) {
+    let candidates = 0;
+    for (let i = 0; i < channel.length; i += 1) {
+      if (Math.abs(channel[i]) < threshold) continue;
+      candidates += 1;
+      if (candidates > MAX_CANDIDATES && candidates % 8 !== 0) continue;
+      for (const kernel of KERNELS) {
+        let sum = 0;
+        for (let tap = 0; tap < TRUE_PEAK_TAPS; tap += 1) {
+          sum += kernel[tap] * (channel[i - centre + tap] ?? 0);
+        }
+        const magnitude = Math.abs(sum);
+        if (magnitude > peak) peak = magnitude;
+      }
+    }
+  }
+  return peak;
+}
+
 export type LoudnessMeasurement = {
   /** Gated programme loudness, LUFS. */
   integratedLufs: number;
   /**
-   * SAMPLE peak in dBFS, deliberately not true peak: a true-peak reading
-   * needs 4x oversampling, and the only thing peak is used for here is
-   * refusing to boost into a clip — which cannot happen, because playback
-   * never boosts. A future boost pass MUST re-measure true peak rather than
-   * trusting this column.
+   * SAMPLE peak in dBFS: the largest value actually stored. Kept beside the
+   * true peak below because they answer different questions — this one says
+   * whether the file itself clipped, the other says what a converter will
+   * produce from it.
    */
   peakDbfs: number;
+  /**
+   * True peak in dBTP: the highest value the reconstructed waveform reaches,
+   * which can exceed the sample peak between samples. This is the one a boost
+   * pass must divide its headroom by; `peakDbfs` cannot be trusted for that.
+   */
+  truePeakDbtp: number;
 };
 
 /**
@@ -191,8 +259,11 @@ export function measureLoudness(channels: Float32Array[], sampleRate: number): L
   const mean = pool.reduce((total, power) => total + power, 0) / pool.length;
   if (!(mean > 0)) return null;
 
+  const truePeak = measureTruePeak(channels, peak);
+
   return {
     integratedLufs: loudnessOf(mean),
     peakDbfs: peak > 0 ? 20 * Math.log10(peak) : -Infinity,
+    truePeakDbtp: truePeak > 0 ? 20 * Math.log10(truePeak) : -Infinity,
   };
 }

@@ -85,6 +85,7 @@ export async function GET(request: Request) {
            route; `storageUrl` is the same URL the player already uses. */
         storageUrl: true,
         loudnessLufs: true,
+        truePeakDbtp: true,
       },
     }),
   );
@@ -178,6 +179,7 @@ export async function POST(request: Request) {
     };
     const loudnessLufs = clampMeasuredLoudness(numericField('loudnessLufs'));
     const peakDbfs = clampMeasuredPeak(numericField('peakDbfs'));
+    const truePeakDbtp = clampMeasuredPeak(numericField('truePeakDbtp'));
     const file = formData.get('file');
     const artworkFile = formData.get('artwork');
 
@@ -405,6 +407,7 @@ export async function POST(request: Request) {
               bitDepth: shape?.bitDepth ?? null,
               loudnessLufs,
               peakDbfs,
+              truePeakDbtp,
               artworkUrl,
               profileId: profile.id,
               albumId: album?.id ?? null,

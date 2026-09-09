@@ -123,6 +123,7 @@ export function TrackUploadPanel({
       if (loudness) {
         formData.set('loudnessLufs', String(loudness.loudnessLufs));
         formData.set('peakDbfs', String(loudness.peakDbfs));
+        formData.set('truePeakDbtp', String(loudness.truePeakDbtp));
       }
 
       const response = await fetch('/api/artist-media', { method: 'POST', body: formData });

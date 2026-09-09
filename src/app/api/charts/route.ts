@@ -188,6 +188,7 @@ export async function GET(request: NextRequest) {
       durationSecs: true,
       storageUrl: true,
       loudnessLufs: true,
+      truePeakDbtp: true,
       artworkUrl: true,
       profile: { select: { name: true, slug: true, city: true, genres: true } },
     },
@@ -226,6 +227,7 @@ export async function GET(request: NextRequest) {
       color: PALETTE[i % PALETTE.length],
       mediaUrl: m.storageUrl ?? '',
       loudnessLufs: m.loudnessLufs,
+      truePeakDbtp: m.truePeakDbtp,
       durationSec: m.durationSecs ?? 0,
       artworkUrl: m.artworkUrl,
     }));

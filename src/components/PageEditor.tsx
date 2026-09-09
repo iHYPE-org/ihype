@@ -21,7 +21,7 @@ type AvailabilityEntry = { id: string; date: string; note: string | null; kind?:
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
 /* Albums, the folder version (2026-09-02). See /api/albums. */
 type AlbumRow = { id: string; title: string; artworkUrl: string | null; releasedOn: string | null; release: 'live' | 'scheduled' | 'undated'; sortOrder: number; trackCount: number };
-type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string; storageUrl: string | null; loudnessLufs: number | null };
+type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string; storageUrl: string | null; loudnessLufs: number | null; truePeakDbtp: number | null };
 
 /** Live · Scheduled · Held, from the two release columns (release-schedule.ts). */
 function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string): string {

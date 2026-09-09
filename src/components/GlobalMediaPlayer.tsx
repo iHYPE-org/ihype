@@ -17,7 +17,7 @@ import { PlayerQueuePanel } from '@/components/PlayerQueuePanel';
 import { usePlayerKeyboard } from '@/lib/usePlayerKeyboard';
 import { useI18n } from '@/components/I18nProvider';
 import { resolvePlaybackFailure } from '@/lib/player-recovery';
-import { trackGainMultiplier } from '@/lib/track-gain';
+import { resolvePlaybackGain } from '@/lib/track-gain';
 
 export type MediaTrack = {
   id: string;
@@ -39,6 +39,9 @@ export type MediaTrack = {
      Null on anything older or unmeasured, which plays at unity. See
      src/lib/track-gain.ts — playback only ever attenuates. */
   loudnessLufs?: number | null;
+  /** True peak in dBTP. Absent means the track is never boosted — see
+   *  resolvePlaybackGain: guessing at headroom is how a boost clips. */
+  truePeakDbtp?: number | null;
 };
 
 export type RepeatMode = 'off' | 'one' | 'all';
@@ -144,6 +147,26 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
      MULTIPLIER of the member's own volume, never a replacement for it, or the
      volume slider stops working on levelled tracks. */
   const trackGainRef = useRef(1);
+  /* Boost — the half a media element cannot do. `HTMLMediaElement.volume` is
+     capped at 1, so lifting a quiet track needs a Web Audio GainNode, and
+     this graph is built LAZILY: only when a track actually asks for boost, so
+     a member who never plays a quiet track never has one.
+
+     THREE THINGS ABOUT THIS GRAPH THAT ARE NOT OPTIONAL.
+     (1) `createMediaElementSource` may be called ONCE per element for the
+         life of the page, and from then on ALL audio flows through the graph
+         — there is no un-routing. `graphRef` is the once-only guard.
+     (2) A cross-origin element routed through Web Audio without CORS yields
+         SILENCE, not an error. Every audio URL this app plays is relative
+         (tracks and covers on /cdn, the placeholder ad clips under /audio),
+         and `wiring-guards.test.ts` fails if that stops being true — so the
+         graph can never be handed tainted media.
+     (3) If anything at all throws, the flag is set and it is never retried.
+         The element was never re-routed in that case, so playback continues
+         exactly as it did before boost existed. Boost is the feature that is
+         allowed to be missing; playback is not. */
+  const audioGraphRef = useRef<{ context: AudioContext; gain: GainNode } | null>(null);
+  const graphUnavailableRef = useRef(false);
   const autoplayFetchingRef = useRef(false);
 
   const [queue, setQueue] = useState<MediaTrack[]>([]);
@@ -226,12 +249,56 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     }, 500);
   }, [queue, currentIndex, currentTrack, volume, repeatMode, isShuffle, playbackRate, isAutoplay, isMuted]);
 
+  /**
+   * Build the boost graph, once, on the first track that needs it. Returns
+   * null whenever boost cannot be had, which every caller treats as "play it
+   * flat" rather than as a failure.
+   */
+  const ensureAudioGraph = useCallback((): GainNode | null => {
+    if (audioGraphRef.current) return audioGraphRef.current.gain;
+    if (graphUnavailableRef.current) return null;
+    const element = audioRef.current;
+    if (!element) return null;
+    try {
+      const Ctor = window.AudioContext
+        ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+      if (!Ctor) throw new Error('no AudioContext');
+      const context = new Ctor();
+      const source = context.createMediaElementSource(element);
+      const gain = context.createGain();
+      source.connect(gain);
+      gain.connect(context.destination);
+      audioGraphRef.current = { context, gain };
+      return gain;
+    } catch {
+      graphUnavailableRef.current = true;
+      return null;
+    }
+  }, []);
+
   // ── Volume / mute / loudness sync ──────────────────────────────────────────
   useEffect(() => {
-    trackGainRef.current = trackGainMultiplier(currentTrack?.loudnessLufs);
+    const gain = resolvePlaybackGain(currentTrack ?? {});
+    trackGainRef.current = gain.elementMultiplier;
     const a = audioRef.current;
     if (a) a.volume = isMuted ? 0 : volume * trackGainRef.current;
-  }, [volume, isMuted, currentTrack]);
+
+    /* A boost of 1 must not build the graph — that would route every member's
+       audio through Web Audio for a correction of nothing. An existing graph
+       is set back to unity instead. */
+    if (gain.boost > 1) {
+      const node = ensureAudioGraph();
+      if (node) {
+        node.gain.value = gain.boost;
+        /* A context created before the member has touched anything starts
+           suspended, and a suspended graph is silence. Resuming is a no-op
+           once it is running. */
+        void audioGraphRef.current?.context.resume().catch(() => undefined);
+      }
+    } else if (audioGraphRef.current) {
+      audioGraphRef.current.gain.gain.value = 1;
+    }
+  }, [volume, isMuted, currentTrack, ensureAudioGraph]);
 
   // ── Playback rate sync ─────────────────────────────────────────────────────
   useEffect(() => {

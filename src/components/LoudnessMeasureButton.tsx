@@ -30,6 +30,7 @@ type Measurable = {
   title: string;
   storageUrl: string | null;
   loudnessLufs: number | null;
+  truePeakDbtp: number | null;
 };
 
 export function LoudnessMeasureButton({
@@ -46,7 +47,12 @@ export function LoudnessMeasureButton({
   /* Only tracks with audio we can actually fetch. A row whose upload never
      reached storage has nothing to decode, and offering to measure it would
      promise something that cannot happen. */
-  const pending = tracks.filter((track) => track.loudnessLufs === null && track.storageUrl);
+  /* A track measured before true peak existed has a loudness and no headroom
+     figure, which reads as "never boost this" — so it is re-measured too. A
+     partial reading is not a measurement. */
+  const pending = tracks.filter(
+    (track) => (track.loudnessLufs === null || track.truePeakDbtp === null) && track.storageUrl,
+  );
   if (pending.length === 0) return null;
 
   async function measureAll() {

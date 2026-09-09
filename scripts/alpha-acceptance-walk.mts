@@ -2275,10 +2275,13 @@ async function main() {
     assert(junk.status === 400, `a loudness of +42 LUFS was accepted with ${junk.status} — the clamp is gone`);
 
     ok(await api(`/api/artist-media/${mediaHexId}`, {
-      method: 'PATCH', cookie: artist.cookie, headers: json, body: JSON.stringify({ loudnessLufs: -8.25, peakDbfs: -0.5 }),
+      method: 'PATCH', cookie: artist.cookie, headers: json, body: JSON.stringify({ loudnessLufs: -8.25, peakDbfs: -0.5, truePeakDbtp: -0.2 }),
     }));
-    const levelled = await prisma.artistMediaAsset.findUnique({ where: { hexId: mediaHexId }, select: { loudnessLufs: true, peakDbfs: true } });
-    assert(levelled?.loudnessLufs === -8.25 && levelled.peakDbfs === -0.5, `the reading came back as ${JSON.stringify(levelled)}`);
+    const levelled = await prisma.artistMediaAsset.findUnique({ where: { hexId: mediaHexId }, select: { loudnessLufs: true, peakDbfs: true, truePeakDbtp: true } });
+    assert(
+      levelled?.loudnessLufs === -8.25 && levelled.peakDbfs === -0.5 && levelled.truePeakDbtp === -0.2,
+      `the reading came back as ${JSON.stringify(levelled)}`,
+    );
 
     return `Accept-Ranges served, 0-3 and the suffix both correct against ${size} bytes, 416 past the end, and a -8.25 LUFS reading stored (stranger 403, +42 refused 400)`;
   });

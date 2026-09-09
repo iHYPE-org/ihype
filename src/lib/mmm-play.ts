@@ -40,6 +40,8 @@ export type PlayableRow = {
      mastered single and a bedroom bounce play back at the same level; absent
      on an older track, which plays at unity. */
   loudnessLufs?: number | null;
+  /** True peak, which is what bounds a boost. Absent means never boost. */
+  truePeakDbtp?: number | null;
 };
 
 /**
@@ -78,6 +80,7 @@ export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
          against a music target would quietly under-deliver what an
          advertiser bought. */
       loudnessLufs: adClipId ? null : row.loudnessLufs ?? null,
+      truePeakDbtp: adClipId ? null : row.truePeakDbtp ?? null,
     });
   }
   return queue;
