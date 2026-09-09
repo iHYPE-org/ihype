@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { consumeRateLimit } from '@/lib/rate-limit';
 import { readClientAddress } from '@/lib/request-meta';
+import { verifyAdPlayToken } from '@/lib/ad-play-token';
+import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +19,14 @@ export async function POST(request: NextRequest) {
      impression rows and an anonymous listener on a 24-hour address+ad bucket
      (the public show page plays ads to signed-out visitors, so refusing them
      outright was free airtime), which caps what any one caller can cost an
-     advertiser at nine cents per ad per day. */
+     advertiser at nine cents per ad per day.
+
+     That cap was the whole defence until 2026-09-09 and it capped the wrong
+     thing: it bounded how much any one caller could cost a campaign, and never
+     asked whether the ad had been served to them at all. The play token below
+     is what asks. The dedup stays — it is what makes a legitimately held token
+     unprofitable to replay, which is why the token does not need to be
+     single-use. */
   const userId = session?.user?.id ?? null;
   const ip = readClientAddress(request);
 
@@ -26,11 +35,40 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Rate limit exceeded.' }, { status: 429 });
   }
 
-  let body: { adId?: unknown };
+  let body: { adId?: unknown; playToken?: unknown };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
 
-  const adId = typeof body.adId === 'string' ? body.adId.slice(0, 64) : '';
-  if (!adId) return NextResponse.json({ error: 'adId is required.' }, { status: 400 });
+  /* THE CAMPAIGN COMES OUT OF THE TOKEN, NEVER OFF THE BODY. `adId` is public
+     in every station payload and every show production plan, so a route that
+     believed the body would spend a stranger's budget for anyone who could
+     read one — the rate limit and the daily dedup only capped how MUCH, never
+     whether the ad had been served at all. `playToken` is the server's own
+     receipt for serving this spot to this listener; see
+     `src/lib/ad-play-token.ts`, including why it fails towards not charging.
+
+     `adId` is still read, purely as a cross-check: a client sending both and
+     disagreeing is a bug worth surfacing rather than silently resolving in
+     favour of one of them. */
+  const verified = verifyAdPlayToken(typeof body.playToken === 'string' ? body.playToken : null, userId);
+  if (!verified.ok) {
+    if (verified.reason === 'unconfigured') {
+      /* No signing secret means no impression can be proven, so none is
+         charged. Loud, because it silently zeroes ad delivery. */
+      log.error('[api/ads/impression]', { error: 'AUTH_SECRET unreadable; ad impressions cannot be verified' }, 'play token unconfigured');
+      return NextResponse.json({ error: 'Impression reporting is unavailable.' }, { status: 503 });
+    }
+    if (verified.reason === 'expired') {
+      // An honest late report from a queue served hours ago. Not an error, and
+      // not a charge either.
+      return NextResponse.json({ ok: true, skipped: true, reason: 'expired' });
+    }
+    return NextResponse.json({ error: 'A valid play token is required.', reason: verified.reason }, { status: 400 });
+  }
+
+  const adId = verified.adId;
+  if (typeof body.adId === 'string' && body.adId !== adId) {
+    return NextResponse.json({ error: 'The play token names a different campaign.', reason: 'ad_mismatch' }, { status: 400 });
+  }
 
   // One charge per listener per ad per day. A member is deduplicated on the
   // impression rows; an anonymous listener (the public show page plays ads to

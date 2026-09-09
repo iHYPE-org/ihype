@@ -3,6 +3,7 @@ import { getDemoOwnerExclusion } from '@/lib/runtime-flags';
 import { stationPositionAt } from '@/lib/growth-util';
 import { resolveWeightedAdBreakClips } from '@/lib/ad-clip-selection';
 import { interleaveStationAds } from '@/lib/station-breaks';
+import { createAdPlayToken, marketplaceAdIdFromClipId } from '@/lib/ad-play-token';
 import { releasedMediaWhere } from '@/lib/media-release';
 
 export type StationTrack = {
@@ -19,6 +20,18 @@ export type StationTrack = {
    * `builtInAdClips` and bills nobody. Absent on music.
    */
   adClipId?: string;
+  /**
+   * The server's receipt that this spot was really served — the impression
+   * route reads the campaign out of it and refuses a bare id.
+   *
+   * Minted with NO listener bound to it, unlike `/api/stations/:slug/tracks`.
+   * This route answers `public, s-maxage=5` and every listener shares the
+   * response, so a member-bound token here would be handed to whoever fetched
+   * it next and refused for all of them. A bearer token is the honest shape
+   * for a shared cache; what caps its worth is the impression route's own
+   * once-per-address-per-ad-per-day dedup.
+   */
+  adPlayToken?: string;
 };
 
 export type StationState = {
@@ -119,7 +132,12 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
   // music down with it — the station being silent is a worse outcome than the
   // station being unmonetised for one request.
   const adClips = await resolveWeightedAdBreakClips().catch(() => []);
-  const sequence = interleaveStationAds(rotation, adClips);
+  const sequence = interleaveStationAds(rotation, adClips).map((item) => {
+    const adId = marketplaceAdIdFromClipId(item.adClipId);
+    if (!adId) return item;
+    const adPlayToken = createAdPlayToken(adId, '');
+    return adPlayToken ? { ...item, adPlayToken } : item;
+  });
 
   const { index, offset } = stationPositionAt(
     sequence.map((t) => t.durationSecs),

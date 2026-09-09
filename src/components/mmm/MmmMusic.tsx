@@ -62,6 +62,10 @@ type StationTrackRow = {
    *  against; `toQueue` carries it through so the player can tell a paid spot
    *  from a song. */
   adClipId?: string | null;
+  /** The server's receipt that this spot was served to this listener. Only a
+   *  break carries one, and without it the impression route refuses to bill —
+   *  see `src/lib/ad-play-token.ts`. */
+  adPlayToken?: string | null;
 };
 
 /**

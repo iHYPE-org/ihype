@@ -36,6 +36,10 @@ export type PlayableRow = {
      a paid spot from a song, which is both an unbilled impression and a
      MediaListen written against an artist who did not perform it. */
   adClipId?: string | null;
+  /* The server's receipt that this spot was served to this listener. Without
+     it the impression is refused, so it has to survive the conversion for the
+     same reason `adClipId` does. */
+  adPlayToken?: string | null;
   /* Programme loudness, when the uploader's browser measured it. Carried so a
      mastered single and a bedroom bounce play back at the same level; absent
      on an older track, which plays at unity. */
@@ -71,6 +75,7 @@ export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
          that field is what gates the listen write in the player. */
       mediaId: adClipId ? null : row.hexId || row.id || null,
       adClipId,
+      adPlayToken: adClipId ? row.adPlayToken ?? null : null,
       title: row.title || 'Untitled',
       artistName: row.artistName || 'Unknown artist',
       url,

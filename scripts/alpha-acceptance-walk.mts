@@ -360,6 +360,66 @@ async function main() {
 
   console.log(`  cast     artist=${artistProfile.slug} venue=${venueProfile.slug} fan=${fan.user.id}\n`);
 
+  /* ── Ad delivery helpers, shared by items 20c, 22 and 33 ────────────────
+     A break is never placed first or last, so a one-track station has nowhere
+     to put one — two is the minimum rotation that can carry an ad at all. The
+     walk's artist uploads one track, so a second is seeded on demand, once per
+     run, rather than by each item that needs it. */
+  let stationRotationSeeded = false;
+  /* The second track's public id, so the recommendation items can accept
+     EITHER of the act's tracks — see item 32f. */
+  let secondMediaHexId = '';
+  async function ensureStationRotation(): Promise<void> {
+    if (stationRotationSeeded) return;
+    if (!song.length) return;
+    const second = new FormData();
+    second.set('profileId', artistProfile.id);
+    second.set('title', 'Live A Lie (Reprise)');
+    second.set('notes', 'TEST ARTIST SONG 2 — gives the station a rotation');
+    second.set('freeUseEnabled', 'false');
+    second.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song-2.m4a');
+    const upload = await api('/api/artist-media', { method: 'POST', body: second, cookie: creator.cookie });
+    /* Flagged only once the track really landed, so a transient upload failure
+       is retried by the next caller rather than leaving every later item
+       measuring a one-track station and blaming the product for it. */
+    if (upload.status === 200 || upload.status === 201) {
+      stationRotationSeeded = true;
+      secondMediaHexId = String((upload.body as any)?.asset?.hexId ?? (upload.body as any)?.hexId ?? '');
+    }
+  }
+
+  /* This run must own the inventory it asserts on. The scratch database
+     accumulates campaigns across runs and `resolveWeightedAdBreakClips` orders
+     by `impressions: asc`, so a never-served campaign from last night outranks
+     the one under test and the assertion fails on a fixture rather than on the
+     product. Close every other window instead of widening the assertion. */
+  async function ownAdInventory(adId: string): Promise<void> {
+    await prisma.ad.updateMany({
+      where: { id: { not: adId }, status: 'APPROVED' },
+      data: { endsAt: new Date(Date.now() - 60_000) },
+    });
+  }
+
+  /* The play token is the only thing that can bill a campaign: the impression
+     route reads the ad out of it and refuses a bare id (src/lib/ad-play-token.ts).
+     So the walk has to be SERVED one, exactly as a listener is — minting one
+     here would prove nothing about the wiring under test. */
+  async function findServedAdPlayToken(adId: string, cookie: string): Promise<{ token: string; where: string } | null> {
+    const stations = await api('/api/stations', { cookie });
+    const slugs: string[] = ((stations.body as any)?.stations ?? []).map((entry: any) => entry?.slug).filter(Boolean);
+    for (const slug of slugs) {
+      const page = await api(`/api/stations/${slug}/tracks?limit=40`, { cookie });
+      const rows: any[] = (page.body as any)?.tracks ?? [];
+      const hit = rows.find((row) => row?.adClipId === `mkt_${adId}` && row?.adPlayToken);
+      if (hit) return { token: String(hit.adPlayToken), where: `station "${slug}"` };
+    }
+    const radio = await api('/api/radio/station', { cookie });
+    const body = radio.body as any;
+    const seq: any[] = [body?.nowPlaying, ...(body?.upNext ?? [])].filter(Boolean);
+    const hit = seq.find((row) => row?.adClipId === `mkt_${adId}` && row?.adPlayToken);
+    return hit ? { token: String(hit.adPlayToken), where: '/api/radio/station' } : null;
+  }
+
   /* Carried between items. */
   let mediaId = '';
   let mediaHexId = '';
@@ -1082,26 +1142,39 @@ async function main() {
     const live = await prisma.ad.findUnique({ where: { id: adId } });
     if (live?.status !== 'APPROVED') blocked('the campaign never went live, so nothing can air');
 
-    const station = await api('/api/radio/station', { cookie: fan.cookie });
-    assert(station.status === 200, `/api/radio/station answered ${station.status}`);
-    const sequence: any[] = station.body?.sequence ?? station.body?.items ?? [];
-    const breaks = sequence.filter((entry) => entry?.adClipId);
-    const mine = breaks.filter((entry) => String(entry.adClipId).includes(adId));
+    await ensureStationRotation();
+    await ownAdInventory(adId);
 
-    const before = live.spentCents;
-    const impression = await api('/api/ads/impression', {
+    /* A bare `adId` is public in every station payload, and until the play
+       token existed it was enough to spend a stranger's budget. Assert the
+       refusal FIRST, so a regression that reopens it fails here rather than
+       being masked by the successful token path below. */
+    const forged = await api('/api/ads/impression', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ adId }),
       cookie: fan.cookie,
     });
+    assert(forged.status === 400, `a bare adId was accepted with ${forged.status}; it must be refused`);
+
+    const served = await findServedAdPlayToken(adId, fan.cookie);
+    assert(served !== null, 'no surface served a play token for this campaign, so nothing can bill it');
+
+    const before = live.spentCents;
+    const impression = await api('/api/ads/impression', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ playToken: served!.token }),
+      cookie: fan.cookie,
+    });
     ok(impression, [200, 201]);
+    assert((impression.body as any)?.skipped !== true, `the impression was skipped: ${(impression.body as any)?.reason}`);
     const after = await prisma.ad.findUnique({ where: { id: adId } });
     assert((after?.spentCents ?? 0) > before, `an impression did not spend budget (${before}c -> ${after?.spentCents}c)`);
     const impressions = await prisma.adImpression.count({ where: { adId } });
     assert(impressions > 0, 'budget moved but no AdImpression row was written');
 
-    return `station served ${sequence.length} item(s), ${breaks.length} break(s)${mine.length ? ` (${mine.length} this campaign)` : ' — none from this campaign yet'}; spend ${before}c -> ${after?.spentCents}c across ${impressions} impression(s)`;
+    return `bare adId refused 400; ${served!.where} served a play token; spend ${before}c -> ${after?.spentCents}c across ${impressions} impression(s)`;
   });
 
   await item('20d. Advertising: settlement captures the delivered spend, not the whole hold', async () => {
@@ -1173,7 +1246,12 @@ async function main() {
        result through /api/radio/station. */
     const station = await api('/api/radio/station', { cookie: fan.cookie });
     assert(station.status === 200, `/api/radio/station answered ${station.status}`);
-    const sequence: any[] = station.body?.sequence ?? station.body?.items ?? [];
+    /* `getStationState()` returns `nowPlaying` + `upNext`, never `sequence` or
+       `items` — reading those printed "0 item(s)" for a station that was
+       playing perfectly well, which is the same class of quiet lie the rest of
+       this walk exists to catch. */
+    const body = station.body as any;
+    const sequence: any[] = [body?.nowPlaying, ...(body?.upNext ?? [])].filter(Boolean);
     const adItems = sequence.filter((s) => s?.adClipId);
 
     const approved = await prisma.ad.findFirst({ where: { status: 'APPROVED' }, orderBy: { createdAt: 'desc' } });
@@ -1181,15 +1259,45 @@ async function main() {
       return `station served ${sequence.length} item(s), ${adItems.length} ad break(s); no APPROVED campaign exists, so impression spend is not exercised here (20b-20d cover it)`;
     }
 
-    const before = approved.spentCents;
+    await ensureStationRotation();
+    await ownAdInventory(approved.id);
+    /* Item 20d deliberately expires the campaign to exercise settlement, so by
+       the time this runs nothing is in flight and no station can serve a
+       break. Re-open the window: what is under test here is the airing, not
+       the purchase — the same fixture control item 33 uses. Until 2026-09-09
+       this item posted a bare `adId` and asserted only that the response was
+       200, which a `{ok:true, skipped:true, reason:'not_active'}` satisfies —
+       so it had been passing while measuring nothing. */
+    await prisma.ad.update({
+      where: { id: approved.id },
+      data: { startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 86_400_000) },
+    });
+    /* Served, not minted: the impression route reads the campaign out of the
+       play token and refuses a bare id, so asking the product for one is the
+       only report a listener could actually make. */
+    const served = await findServedAdPlayToken(approved.id, fan.cookie);
+    assert(served !== null, 'an APPROVED campaign exists but no surface served a play token for it');
+
+    const before = (await prisma.ad.findUnique({ where: { id: approved.id }, select: { spentCents: true } }))?.spentCents ?? approved.spentCents;
     const impression = await api('/api/ads/impression', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ adId: approved.id }),
+      body: JSON.stringify({ playToken: served!.token }),
       cookie: fan.cookie,
     });
     assert([200, 201].includes(impression.status), `impression answered ${impression.status}`);
     const after = await prisma.ad.findUnique({ where: { id: approved.id } });
+
+    /* This fan already heard this spot in item 20c, and one member is charged
+       once per ad per day — so a second charge here would be the bug. What
+       must be true is that the report was ACCEPTED rather than refused for a
+       token reason: a 400 means the receipt did not verify, and a `skipped`
+       carrying a reason means the campaign was not servable. A bare `skipped`
+       is the daily dedup doing its job. */
+    const reported = impression.body as any;
+    assert(reported?.reason === undefined, `the impression was refused: ${reported?.reason}`);
+    const charged = (after?.spentCents ?? 0) > before;
+    assert(charged || reported?.skipped === true, 'the impression neither spent budget nor deduplicated');
 
     /* The surface a member actually listens on. `/api/radio/station` is the
        always-on station and nothing in the MMM shell calls it; MUSIC reads
@@ -1197,7 +1305,7 @@ async function main() {
        an APPROVED campaign was paid for and never aired. Assert the break is
        in the rotation the shell plays, and that it is a `mkt_` clip, since a
        placeholder carries no Ad row to bill. */
-    return `station served ${sequence.length} item(s), ${adItems.length} break(s); impression moved spend ${before}c -> ${after?.spentCents}c (airing on the MUSIC station is item 33)`;
+    return `station served ${sequence.length} item(s), ${adItems.length} break(s); ${served!.where} served a play token and the report was ${charged ? `charged (${before}c -> ${after?.spentCents}c)` : 'deduplicated (this fan already heard it in 20c)'} (airing on the MUSIC station is item 33)`;
   });
 
   await item('22b. A closed ticket sale is refused rather than charged', async () => {
@@ -1430,16 +1538,24 @@ async function main() {
   });
 
   await item("32f. The ask feeds the asker's own recommendations: station, deck, engine", async () => {
+    /* EITHER of the act's tracks satisfies this, and that is the point rather
+       than a loosened assertion: a fan asks a venue to book an ACT, so the
+       signal is artist-level and which of their tracks surfaces is the
+       recommender's choice. Pinning it to the first upload passed only while
+       the fixture artist happened to have exactly one track — which stopped
+       being true when items 20c and 22 began needing a rotation of two. */
+    const byTheAct = (hexId: unknown) => hexId === mediaHexId || (secondMediaHexId !== '' && hexId === secondMediaHexId);
+
     const station = ok(await api('/api/stations/for-you/tracks?limit=25', { cookie: asker.cookie }));
-    const mine = (station.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    const mine = (station.tracks as any[]).find((t) => byTheAct(t.hexId));
     assert(mine, 'the asked-for act is not in the asker\'s For You station');
     assert(mine.reason === 'You asked a venue to book them', `station reason was "${mine.reason}"`);
 
     const deck = ok(await api('/api/discover/seeds', { cookie: asker.cookie }));
-    const card = (deck.seeds as any[]).find((c) => c.hexId === mediaHexId);
+    const card = (deck.seeds as any[]).find((c) => byTheAct(c.hexId));
     assert(card, 'the asked-for act is not in the asker\'s discover deck');
     assert(card.reason === 'You asked a venue to book them', `deck reason was "${card.reason}"`);
-    assert((deck.seeds as any[])[0]?.hexId === mediaHexId, 'the request card does not lead the deck');
+    assert(byTheAct((deck.seeds as any[])[0]?.hexId), 'the request card does not lead the deck');
 
     const engine = ok(await api('/api/recommend', { cookie: asker.cookie }));
     assert(engine.ready === true, `a fan with one ask got ready=${engine.ready} (${JSON.stringify(engine.signals)})`);
@@ -1449,13 +1565,15 @@ async function main() {
 
   await item('32g. A fan who follows the venue hears what other fans want there', async () => {
     await prisma.follow.create({ data: { followerId: friend.user.id, followeeProfileId: venueProfile.id } });
+    // Artist-level, for the same reason as 32f above.
+    const byTheAct = (hexId: unknown) => hexId === mediaHexId || (secondMediaHexId !== '' && hexId === secondMediaHexId);
     const station = ok(await api('/api/stations/friends/tracks?limit=25', { cookie: friend.cookie }));
-    const row = (station.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    const row = (station.tracks as any[]).find((t) => byTheAct(t.hexId));
     assert(row, 'the wanted act is not in the follower\'s Recommended-by-friends station');
     assert(row.reason === `Fans want them at ${venueProfile.name}`, `reason was "${row.reason}"`);
     const engine = ok(await api('/api/recommend', { cookie: friend.cookie }));
     assert(engine.ready === true, `a fan with one follow got ready=${engine.ready}`);
-    const rec = (engine.tracks as any[]).find((t) => t.hexId === mediaHexId);
+    const rec = (engine.tracks as any[]).find((t) => byTheAct(t.hexId));
     assert(rec, 'the engine did not recommend the act fans want at the followed venue');
     assert(rec.reason === `Fans want them at ${venueProfile.name}`, `engine reason was "${rec.reason}"`);
     return `follower's station and engine both say "${row.reason}"`;
@@ -1792,13 +1910,7 @@ async function main() {
 
     // A break is never placed first or last, so one track has nowhere to put
     // one. Two is the minimum rotation that can carry an ad at all.
-    const second = new FormData();
-    second.set('profileId', artistProfile.id);
-    second.set('title', 'Live A Lie (Reprise)');
-    second.set('notes', 'TEST ARTIST SONG 2 — gives the station a rotation');
-    second.set('freeUseEnabled', 'false');
-    second.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song-2.m4a');
-    ok(await api('/api/artist-media', { method: 'POST', body: second, cookie: creator.cookie }), [200, 201]);
+    await ensureStationRotation();
 
     /* Item 20d deliberately expires the campaign to exercise settlement, so
        by here nothing is in flight. Re-open the window rather than buying a
@@ -1815,18 +1927,7 @@ async function main() {
       where: { id: campaign.id },
       data: { startsAt: new Date(Date.now() - 60_000), endsAt: new Date(Date.now() + 86_400_000) },
     });
-    /* This run must own the inventory it asserts on. The scratch database
-       accumulates campaigns across runs, and `resolveWeightedAdBreakClips`
-       orders by `impressions: asc` — so an older APPROVED ad from a previous
-       run, never served and therefore at zero impressions, outranks the one
-       re-opened above and the assertion below fails on a fixture rather than
-       on the product. Close every other window instead of widening the
-       assertion: a run that controls its own inventory is the only one whose
-       result means anything. */
-    await prisma.ad.updateMany({
-      where: { id: { not: campaign.id }, status: 'APPROVED' },
-      data: { endsAt: new Date(Date.now() - 60_000) },
-    });
+    await ownAdInventory(campaign.id);
 
     const stations = ok(await api('/api/stations', { cookie: fan.cookie }));
     const slugs: string[] = (stations?.stations ?? []).map((entry: any) => entry?.slug).filter(Boolean);
@@ -1851,8 +1952,12 @@ async function main() {
     assert(!stationRows[0]?.adClipId && !stationRows[stationRows.length - 1]?.adClipId,
       'a break was placed at the head or tail of the rotation');
     assert(breaks.every((row) => row.mediaUrl), 'a break was served with no audio to play');
+    /* Airing is only half of it: without the server's own receipt the player
+       can report nothing and the spot is delivered but unbilled. */
+    assert(breaks.every((row) => typeof row.adPlayToken === 'string' && row.adPlayToken.length > 0),
+      'a break was served with no play token, so it can air and never bill');
 
-    return `station "${best?.slug}" served ${stationRows.length} row(s) including ${breaks.length} paid break(s), all mkt_ and all playable, none at head or tail`;
+    return `station "${best?.slug}" served ${stationRows.length} row(s) including ${breaks.length} paid break(s), all mkt_, all playable, all carrying a play token, none at head or tail`;
   });
 
   /* ── 34-36. The surfaces that were built and mounted nowhere ────────────

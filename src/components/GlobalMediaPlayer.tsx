@@ -31,6 +31,7 @@ export type MediaTrack = {
      clip and is never billed. An ad carries no `mediaId`, so it can never
      write a MediaListen row against an artist who did not perform it. */
   adClipId?: string | null;
+  adPlayToken?: string | null;
   artistProfileSlug?: string | null;
   notes?: string | null;
   artworkUrl?: string | null;
@@ -592,12 +593,17 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
     if (!isPlaying) return;
     const clipId = currentTrack?.adClipId;
     if (!clipId || !clipId.startsWith('mkt_')) return;
+    /* No receipt, no report. The route reads the campaign out of the token and
+       refuses a bare id, so posting without one is a wasted request that also
+       looks, in the logs, exactly like the forgery the token exists to stop. */
+    const playToken = currentTrack?.adPlayToken;
+    if (!playToken) return;
     if (reportedAdClipsRef.current.has(clipId)) return;
     reportedAdClipsRef.current.add(clipId);
     void fetch('/api/ads/impression', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adId: clipId.slice(4) })
+      body: JSON.stringify({ playToken })
     }).catch(() => {});
   }, [currentTrack, isPlaying]);
 
