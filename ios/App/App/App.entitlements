@@ -21,10 +21,18 @@
 	  APNs environment. `development` is correct for both debug builds AND
 	  TestFlight: Apple promotes the token to production automatically when the
 	  build goes to the App Store, and a build claiming `production` cannot
-	  receive a development push. Nothing sends to APNs yet — see
-	  NativePushRegistration.tsx — but the capability has to be on the App ID
-	  from the start, because adding one later means regenerating the
-	  provisioning profile.
+	  receive a development push. The capability had to be on the App ID from
+	  the start, because adding one later means regenerating the provisioning
+	  profile.
+
+	  This comment used to end "Nothing sends to APNs yet". That is no longer
+	  true: `GoogleService-Info.plist` landed 2026-09-09, so the device now
+	  registers a real token with `/api/push/register-device`, and
+	  `src/lib/native-push.ts` sends to it through FCM v1 — which proxies to
+	  APNs once the APNs auth key is uploaded in the Firebase console. The
+	  remaining gate is not code: it is that key, plus the three
+	  `FCM_*` Worker secrets the sender reads. Both are operator steps, and
+	  `native-push.ts` no-ops loudly rather than failing when they are absent.
 	-->
 	<key>aps-environment</key>
 	<string>development</string>

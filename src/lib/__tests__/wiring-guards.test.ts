@@ -476,6 +476,75 @@ describe('iOS entitlements', () => {
 });
 
 /**
+ * A RESOURCE SHIPS ONLY IF IT IS IN THE RESOURCES BUILD PHASE.
+ *
+ * Four places in `project.pbxproj` mention a bundled file — PBXBuildFile,
+ * PBXFileReference, the PBXGroup, and PBXResourcesBuildPhase — and only the
+ * LAST one puts it inside the `.ipa`. The first three make it visible in
+ * Xcode's navigator, which is exactly why the omission reads as done.
+ *
+ * `PrivacyInfo.xcprivacy` shipped that way once: on disk, referenced, absent
+ * from the Resources phase, and rejected at upload as if it had never been
+ * written. `GoogleService-Info.plist` is now the second file with the same
+ * exposure, and its failure is quieter still — no rejection, no error, just
+ * an app that registers no APNs token while everything else looks healthy.
+ *
+ * So this asserts membership INSIDE the PBXResourcesBuildPhase block rather
+ * than anywhere in the file. Searching the whole document would match the
+ * PBXBuildFile line on its own and pass on precisely the broken state.
+ */
+describe('iOS bundled resources', () => {
+  const project = 'ios/App/App.xcodeproj/project.pbxproj';
+
+  const resourcesPhase = () => {
+    const pbx = readFileSync(project, 'utf8');
+    const block = pbx.match(
+      /\/\* Begin PBXResourcesBuildPhase section \*\/([\s\S]*?)\/\* End PBXResourcesBuildPhase section \*\//,
+    );
+    expect(block, 'no PBXResourcesBuildPhase section — the project file shape changed').not.toBeNull();
+    return block![1];
+  };
+
+  it.each([
+    ['PrivacyInfo.xcprivacy', 'ios/App/App/PrivacyInfo.xcprivacy'],
+    ['GoogleService-Info.plist', 'ios/App/App/GoogleService-Info.plist'],
+  ])('%s is on disk and in the Resources build phase', (name, path) => {
+    expect(existsSync(path), `${path} is missing`).toBe(true);
+    expect(
+      resourcesPhase().includes(`${name} in Resources`),
+      `${name} is not in the Resources build phase — it will ship in no .ipa`,
+    ).toBe(true);
+  });
+});
+
+/**
+ * Android push needs `google-services.json`, and its absence is SILENT.
+ *
+ * `android/app/build.gradle` applies the google-services plugin only when the
+ * file exists and otherwise logs at `info` level and carries on, so the build
+ * succeeds and push simply never works. That is the right behaviour for a
+ * contributor with no Firebase access; it is the wrong thing to discover from
+ * a store release.
+ *
+ * The package name is checked too: a config generated for a different
+ * application id makes the plugin fail the build at a point that reads as a
+ * Gradle problem rather than a wrong-file problem.
+ */
+describe('Android Firebase config', () => {
+  it('exists and matches the application id', () => {
+    const path = 'android/app/google-services.json';
+    expect(existsSync(path), `${path} is missing — FCM registration cannot happen without it`).toBe(true);
+
+    const config = JSON.parse(readFileSync(path, 'utf8'));
+    const packages = (config.client ?? []).map(
+      (client: { client_info?: { android_client_info?: { package_name?: string } } }) =>
+        client.client_info?.android_client_info?.package_name,
+    );
+    expect(packages, 'google-services.json carries no entry for com.ihype.app').toContain('com.ihype.app');
+  });
+});
+
+/**
  * NO ARITHMETIC INSIDE `${{ }}`.
  *
  * The GitHub Actions expression language has logical and comparison operators
