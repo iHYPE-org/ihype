@@ -258,10 +258,33 @@ frame sizes, using the same session fixture and proxy handling `measure:layout`
 has used since 2026-08-25. The claim below that "none of them can be generated
 here" was never tested; the machinery was already in the repository.
 
-Run it against a database with real-looking content, and **look at every frame
-before uploading**: the script refuses an obviously empty one, but it cannot
-judge a page that is merely thin, and a store listing is the one place where an
-empty fixture is indistinguishable from an empty product.
+The exact sequence, because two of these steps are not optional and were both
+learned by producing unusable frames (2026-09-09):
+
+```
+npm run seed:preview                     # 13 profiles, 26 tracks, 8 shows
+node scripts/e2e-workerd.mjs --serve     # in another shell
+npm run store:screenshots -- --out=store-shots \
+  --artist=preview-the-brine --venue=preview-state-theatre
+```
+
+**Without `--artist=` and `--venue=` the script photographs the signed-in
+user's OWN profile**, which renders the owner view — an upload form, every
+counter at zero — and sails through the emptiness guard, because a form is
+plenty of text. The script now warns loudly when it falls back; the flags are
+what you actually want.
+
+**The map frame cannot be produced from a sandboxed environment.** Chromium's
+connection to `basemaps.cartocdn.com` is reset by the agent proxy (Node's is
+not — see the `maplibre` row in CLAUDE.md), so `/app/map` captures as bare
+parchment with "The map could not load". The map works in production; shoot
+that frame from a machine with unrestricted egress, or from a device.
+
+And **look at every frame before uploading**: the script refuses an obviously
+empty one, but it cannot judge a page that is merely thin — nor tell an error
+message from content, which is how the failed map frame counted as "0 flagged
+thin". A store listing is the one place where an empty fixture is
+indistinguishable from an empty product.
 
 **The icon is NOT outside this repository, and this line used to say it was
 (corrected 2026-09-09).** Only the Play feature graphic is genuinely missing.
@@ -269,7 +292,7 @@ What already exists, measured rather than assumed:
 
 | Asset | Where | Measured |
 |---|---|---|
-| Play icon 512×512 | `public/icons/icon-512.png` | 512×512, colour type 2 — **no alpha channel**, which is the requirement Play rejects uploads for |
+| Play icon 512×512 | `public/icons/icon-512.png` | 512×512, colour type 2 — 24-bit RGB, no transparency. Play documents a **32-bit** PNG and refuses a transparent icon (it applies its own mask), so the no-transparency half is satisfied and the bit depth is the uncertain half. If the upload bounces, re-encode rather than redesign: `scripts/store-icon-32bit.mts` writes an identical 512×512 in colour type 6 with every alpha byte opaque |
 | iOS app icon | `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` | 1024×1024, no alpha. Ships inside the binary; Apple takes no separate upload |
 | Android launcher | `mipmap-*/ic_launcher_foreground.png` at all five densities, over `ic_launcher_background` `#ffffff` | a real adaptive icon, not Capacitor's default |
 | **Play feature graphic 1024×500** | — | **missing. Artwork, and the one asset nothing here can produce.** |

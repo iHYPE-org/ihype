@@ -34,6 +34,7 @@
     "check:app-links": "node scripts/generate-app-links.mjs --check",
     "check:basemap": "node scripts/check-basemap.mjs",
     "store:screenshots": "tsx scripts/store-screenshots.mts",
+    "store:icon32": "tsx scripts/store-icon-32bit.mts",
     "check:alpha": "node --import dotenv/config scripts/beta-launch-check.mjs",
     "verify:acrcloud": "tsx --env-file-if-exists=.env scripts/verify-acrcloud.ts",
     "verify:restore": "node --import dotenv/config scripts/verify-restored-backup.mjs",
