@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "707299188578",
+    "project_id": "ihype-d2083",
+    "storage_bucket": "ihype-d2083.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:707299188578:android:1f9bb235aaa392dfe2963b",
+        "android_client_info": {
+          "package_name": "com.ihype.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNGTOVucyRrccdpPQ-gEtch8ptqLe8MHg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
