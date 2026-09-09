@@ -15,6 +15,7 @@ import {
   shouldHideDemoContent,
 } from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { isNativePushConfigured } from '@/lib/native-push';
 import { buildAlphaBlockers, evaluateRestoreDrill } from '@/lib/alpha-readiness';
 
 export async function getHealthSnapshot() {
@@ -155,7 +156,14 @@ export async function getHealthSnapshot() {
         emailDelivery: isEmailDeliveryConfigured(),
         smtpEmail: isSmtpEmailConfigured(),
         blobMediaStorage: isBlobMediaStorageConfigured(),
-        ticketPaymentCapture: isPaymentProcessingConfigured()
+        ticketPaymentCapture: isPaymentProcessingConfigured(),
+        // CONFIGURATION, not delivery. True means the three FCM service-account
+        // secrets are set, which is the leg whose absence is silent — the app
+        // registers device tokens and nothing ever arrives. It does NOT mean a
+        // push reaches an iPhone: FCM proxies to APNs only once the APNs auth
+        // key is uploaded in the Firebase console, and that is Apple-side state
+        // nothing here can read. See docs/runbooks/push-setup.md.
+        nativePush: isNativePushConfigured(),
       },
       safety: {
         inviteOnlySignup,

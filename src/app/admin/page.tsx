@@ -14,6 +14,7 @@ import { AdminFeatureBoard } from '@/components/admin/AdminFeatureBoard';
 import { AdminPulse } from '@/components/admin/AdminPulse';
 import { AdminDevices } from '@/components/admin/AdminDevices';
 import { AdminReviewLink } from '@/components/admin/AdminReviewLink';
+import { AdminPushTest } from '@/components/admin/AdminPushTest';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getBetaMetrics } from '@/lib/beta-metrics';
@@ -1021,6 +1022,12 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         {/* Sits beside AdminDevices for the same reason: both are operational
             facts about who can get in, not product settings. */}
         <AdminReviewLink />
+
+        {/* Beside the two above rather than under Launch health: this is a
+            thing an operator DOES, not a figure they read, and the figure it
+            would otherwise hide behind (integrations.nativePush) reports
+            configuration while this reports reach. */}
+        <AdminPushTest />
 
         <section className="panel admin-console-panel admin-health-panel">
           <div className="admin-console-panel-head">
