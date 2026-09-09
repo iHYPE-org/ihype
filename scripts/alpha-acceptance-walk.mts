@@ -2232,15 +2232,26 @@ async function main() {
       whole.headers.get('accept-ranges') === 'bytes',
       'the CDN does not advertise Accept-Ranges, so a media element will never ask for one and every seek re-downloads the file',
     );
-    const size = Number(whole.headers.get('content-length'));
-    assert(Number.isFinite(size) && size > 8, `no usable Content-Length on the whole object (${whole.headers.get('content-length')})`);
     const body = new Uint8Array(await whole.arrayBuffer());
+    assert(body.length > 8, `the whole object came back as ${body.length} bytes`);
 
+    /* The SIZE comes from the 206's Content-Range, not from Content-Length on
+       the 200 — the first draft of this item read the latter and failed here,
+       because the route serves a stream and the runtime frames a streamed
+       response itself rather than honouring a Content-Length we set. The
+       total in Content-Range is the authoritative figure either way, and it
+       is the one a media element reads to size its seek bar. */
     const head = await fetch(`${BASE}${path}`, { headers: { range: 'bytes=0-3' } });
     assert(head.status === 206, `an opening probe answered ${head.status}, not 206`);
-    assert(head.headers.get('content-range') === `bytes 0-3/${size}`, `Content-Range read ${head.headers.get('content-range')}`);
+    const contentRange = head.headers.get('content-range') ?? '';
+    const total = Number(contentRange.split('/')[1]);
+    assert(Number.isFinite(total) && total > 0, `no usable total in Content-Range (${contentRange || 'absent'})`);
+    assert(total === body.length, `Content-Range says ${total} bytes; the whole object is ${body.length}`);
+    const size = total;
+    assert(contentRange === `bytes 0-3/${size}`, `Content-Range read ${contentRange}`);
     const first = new Uint8Array(await head.arrayBuffer());
     assert(first.length === 4, `a four-byte range returned ${first.length} bytes`);
+    assert(first.every((byte, i) => byte === body[i]), 'the opening probe did not return the first four bytes');
 
     /* The suffix form, which is the one that is easy to serve backwards: it
        must be the LAST bytes. A wrong reading here is audible as a glitch and
@@ -2283,7 +2294,7 @@ async function main() {
       `the reading came back as ${JSON.stringify(levelled)}`,
     );
 
-    return `Accept-Ranges served, 0-3 and the suffix both correct against ${size} bytes, 416 past the end, and a -8.25 LUFS reading stored (stranger 403, +42 refused 400)`;
+    return `Accept-Ranges served, 0-3 and the suffix byte-compared against the whole ${size}-byte object, 416 past the end, and a -8.25 LUFS reading stored (stranger 403, +42 refused 400)`;
   });
 
   const pass = rows.filter((r) => r.status === 'PASS').length;
