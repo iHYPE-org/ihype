@@ -925,3 +925,57 @@ describe('every playback volume carries the track gain', () => {
     expect(remote, `these would taint the Web Audio graph and silence playback: ${remote.join(', ')}`).toEqual([]);
   });
 });
+
+/**
+ * An ad impression spends a real advertiser's money, and `adId` is public in
+ * every station payload and every show production plan. The route therefore
+ * reads the campaign out of a signed play token and refuses a bare id — see
+ * `src/lib/ad-play-token.ts`.
+ *
+ * The failure this guards against is not a forged request, which the route
+ * already refuses; it is an honest one. A future caller written from the shape
+ * of the old code (`{ adId: clipId.slice(4) }`) posts something the route will
+ * always reject, and the symptom is an advertiser quietly under-delivering on
+ * one surface — invisible, because nothing errors and the other surfaces still
+ * bill. So the assertion is on the CALLERS, not on the route.
+ */
+describe('every ad impression carries the server\'s own receipt', () => {
+  const IMPRESSION = '/api/ads/impression';
+
+  function callers(): string[] {
+    const roots = ['src/components', 'src/app'];
+    const found: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const rel = `${dir}/${entry.name}`;
+        if (entry.isDirectory()) { walk(rel); continue; }
+        if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+        if (rel.includes('__tests__')) continue;
+        if (readFileSync(rel, 'utf8').includes(IMPRESSION)) found.push(rel);
+      }
+    };
+    roots.forEach(walk);
+    return found;
+  }
+
+  it('is posted by at least the two players, and every one of them sends a playToken', () => {
+    const files = callers().filter((file) => !file.includes('/api/'));
+    expect(files.length, 'nothing posts an ad impression any more — did the players move?').toBeGreaterThanOrEqual(2);
+
+    for (const file of files) {
+      const source = code(file);
+      const body = source.slice(source.indexOf(IMPRESSION));
+      expect(body, `${file} posts an impression without a playToken`).toContain('playToken');
+      /* `adId:` in the body is the old shape. The route refuses it outright,
+         so a caller still writing it is delivering nothing. */
+      expect(/body:\s*JSON\.stringify\(\{\s*adId:/.test(body), `${file} still names the campaign in the body`).toBe(false);
+    }
+  });
+
+  it('and the route never trusts a body adId as the thing to charge', () => {
+    const route = code('src/app/api/ads/impression/route.ts');
+    expect(route).toContain('verifyAdPlayToken(');
+    expect(route).toContain('const adId = verified.adId;');
+    expect(/const adId = [^;]*body\.adId/.test(route), 'the route is reading the campaign off the request body again').toBe(false);
+  });
+});

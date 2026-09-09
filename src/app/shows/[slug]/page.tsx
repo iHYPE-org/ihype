@@ -12,6 +12,7 @@ import { ReferralClickTracker } from '@/components/ReferralClickTracker';
 import { ReportButton } from '@/components/ReportButton';
 import { ShareButton } from '@/components/ShareButton';
 import { ShowSequencePlayer } from '@/components/ShowSequencePlayer';
+import { createAdPlayToken, marketplaceAdIdFromClipId } from '@/lib/ad-play-token';
 import { TicketSaleCard } from '@/components/TicketSaleCard';
 import { db } from '@/lib/db';
 import { loadShowRsvpState, loadShowSetlist } from '@/lib/show-social';
@@ -187,6 +188,21 @@ export default async function ShowDetailPage({
   const productionPlan = canWatch && rawProductionPlan
     ? protectShowProductionPlan(rawProductionPlan, show.id)
     : null;
+  /* One receipt per purchased spot in this show's plan, minted here because
+     `buildResolvedSequence` runs in the browser off a plan the client already
+     holds — so the clip ids in it prove nothing on their own. Keyed by clip id
+     rather than by sequence position: a plan can air the same spot twice, and
+     the two plays are one campaign. A DRAFT preview bills nobody, so it is
+     handed no receipts at all rather than relying on the player's own guard. */
+  const adPlayTokens: Record<string, string> = {};
+  if (productionPlan && show.status !== 'DRAFT') {
+    for (const clip of productionPlan.advertising?.clips ?? []) {
+      const adId = marketplaceAdIdFromClipId(clip.clipId);
+      if (!adId) continue;
+      const token = createAdPlayToken(adId, session?.user?.id ?? '');
+      if (token) adPlayTokens[clip.clipId] = token;
+    }
+  }
 
   const base = getBaseUrl();
   /* Structured data is `@/lib/show-jsonld`'s, and is tested there. It used to
@@ -367,6 +383,7 @@ export default async function ShowDetailPage({
                 autoPlay={show.status === 'LIVE'}
                 isPreview={show.status === 'DRAFT'}
                 productionPlan={productionPlan}
+                adPlayTokens={adPlayTokens}
                 showId={show.id}
                 showSlug={show.slug}
                 title={show.title}

@@ -94,11 +94,16 @@ sweep can tell "reviewed" from "nobody looked".
   and with no password anywhere in the product that locks a whole corporate
   mail domain out permanently. Walk item 39 now asserts two GETs spend
   nothing and the POST works exactly once.
-- **Impressions are self-reported by the player.** A signed-in member is now
+- **Impressions are self-reported by the player.** ~~A signed-in member is now
   capped at one charge per ad per day; a signed play token minted with the
-  station payload would make the charge provable. Follow-up. The always-on
-  station does not report impressions at all today — station ads are unbilled,
-  which is a revenue gap rather than an exposure.
+  station payload would make the charge provable. Follow-up.~~ **CLOSED
+  2026-09-09** — the token exists (`src/lib/ad-play-token.ts`) and the route
+  reads the campaign out of it rather than off the request body. Two claims in
+  the rest of this bullet were already stale when it was written and are
+  corrected rather than deleted: station ads ARE reported (`GlobalMediaPlayer`
+  fires the same call the sequence player does, wired 2026-09-03), so they
+  were never unbilled. What is still self-reported is that the audio reached a
+  speaker: the token proves the spot was SERVED to this listener, not heard.
 - **Any signed-in member can park public audio under `ads/audio/`** without a
   campaign row. Bounded by 10 MB × 10/hour; a sweep of unreferenced keys is
   the fix. Follow-up.
@@ -197,9 +202,19 @@ control cannot be evaluated at all; the contrast is noted in both files.
 
 Still open from the list above, unchanged and deliberately not bundled here:
 
-- **Impressions are self-reported.** A signed play token minted with the
+- ~~**Impressions are self-reported.** A signed play token minted with the
   station payload is the fix, and it is a design change to the player contract
-  rather than a patch — its own piece of work.
+  rather than a patch — its own piece of work.~~ **Done 2026-09-09**, as its
+  own piece of work exactly as predicted: `src/lib/ad-play-token.ts`, minted
+  wherever a `mkt_` clip is served (`/api/stations/:slug/tracks` bound to the
+  listener, `/api/radio/station` as a bearer token because that response is a
+  shared CDN cache, and the show page for the clips in its production plan),
+  carried by both players, and read by `POST /api/ads/impression` as the only
+  thing that may name a campaign to charge. It fails towards NOT charging —
+  the opposite of the auth controls above, and the module says why. The token
+  is deliberately not single-use: the per-listener-per-day dedup already makes
+  replaying one you hold worthless, and a KV spend-marker would put a write on
+  the serving path for nothing.
 - **Unreferenced `ads/audio/` keys.** A member can park public audio there
   without a campaign row. The fix is a sweep of keys no `Ad.audioUrl` points
   at, which means an R2 listing and a DELETE path, and mixing a destructive

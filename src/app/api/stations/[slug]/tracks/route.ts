@@ -7,6 +7,7 @@ import { isRadioEnabledRuntime } from '@/lib/runtime-flags';
 import { loadRequestSignals } from '@/lib/request-signals';
 import { resolveWeightedAdBreakClips } from '@/lib/ad-clip-selection';
 import { interleaveStationAds, type StationItemLike } from '@/lib/station-breaks';
+import { createAdPlayToken, marketplaceAdIdFromClipId } from '@/lib/ad-play-token';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,13 @@ export type StationTrack = {
    * campaign, a station serving 0 breaks.
    */
   adClipId?: string;
+  /**
+   * The server's receipt that it served this spot to this listener. The
+   * impression route reads the campaign out of THIS, never off the request
+   * body — see `src/lib/ad-play-token.ts`. Absent when the signing secret is
+   * unreadable, and the impression is then refused rather than charged.
+   */
+  adPlayToken?: string;
   /** Why this track is in this station, for the viewer. Derived from the
    *  context the station was already resolved with, so it costs no extra
    *  query — see `reasonFor` below. */
@@ -91,7 +99,7 @@ function reasonFor(
  * Failure is silent by design: an ad lookup that throws must not take the
  * station down. A station with no ads still plays.
  */
-async function withAdBreaks(tracks: StationTrack[]): Promise<StationTrack[]> {
+async function withAdBreaks(tracks: StationTrack[], listenerId: string | null): Promise<StationTrack[]> {
   if (tracks.length < 2) return tracks;
   const clips = (await resolveWeightedAdBreakClips().catch(() => []))
     .filter((clip) => clip.clipId.startsWith('mkt_'));
@@ -126,6 +134,9 @@ async function withAdBreaks(tracks: StationTrack[]): Promise<StationTrack[]> {
       truePeakDbtp: null,
       durationSecs: item.durationSecs,
       adClipId: item.adClipId,
+      /* Minted here, where the spot is actually chosen for this listener, and
+         bound to them because this response is `private, no-store`. */
+      adPlayToken: createAdPlayToken(marketplaceAdIdFromClipId(item.adClipId) ?? '', listenerId) ?? undefined,
       reason: 'Advertisement',
     } satisfies StationTrack;
   }).filter((track): track is StationTrack => track !== null);
@@ -220,7 +231,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
        an ad slot is not a database row and must never become a page cursor. */
     const nextCursor = hasMore ? page[page.length - 1]?.id ?? null : null;
 
-    const tracks = await withAdBreaks(musicOnly);
+    const tracks = await withAdBreaks(musicOnly, userId);
 
     return NextResponse.json(
       {

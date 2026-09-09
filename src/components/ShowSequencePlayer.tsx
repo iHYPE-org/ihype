@@ -9,6 +9,11 @@ type ShowSequencePlayerProps = {
   showSlug: string;
   title: string;
   productionPlan: ShowProductionPlan;
+  /** One signed receipt per purchased clip in the plan, keyed by clip id. The
+   *  impression route reads the campaign out of the receipt and refuses a bare
+   *  id, so a clip with no entry here reports nothing — see
+   *  `src/lib/ad-play-token.ts`. */
+  adPlayTokens?: Record<string, string>;
   isPreview?: boolean;
   autoPlay?: boolean;
 };
@@ -18,6 +23,7 @@ export function ShowSequencePlayer({
   showSlug,
   title,
   productionPlan,
+  adPlayTokens,
   isPreview = false,
   autoPlay = false
 }: ShowSequencePlayerProps) {
@@ -102,15 +108,17 @@ export function ShowSequencePlayer({
     if (isPreview || !isPlaying) return;
     const clipId = activeItem?.kind === 'AD' ? activeItem.adClipId : undefined;
     if (!clipId?.startsWith('mkt_') || pingedAdClipIdsRef.current.has(clipId)) return;
+    const playToken = adPlayTokens?.[clipId];
+    if (!playToken) return;
     pingedAdClipIdsRef.current.add(clipId);
     void fetch('/api/ads/impression', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ adId: clipId.slice(4) })
+      body: JSON.stringify({ playToken })
     }).catch(() => {
       // Keep playback resilient if impression tracking fails.
     });
-  }, [activeItem, isPlaying, isPreview]);
+  }, [activeItem, isPlaying, isPreview, adPlayTokens]);
 
   function moveToIndex(nextIndex: number) {
     const boundedIndex = Math.max(0, Math.min(nextIndex, resolvedSequence.length - 1));
