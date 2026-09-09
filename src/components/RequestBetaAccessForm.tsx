@@ -80,17 +80,42 @@ export function RequestBetaAccessForm({ role, defaultOpen = false }: Props) {
         .beta-access-toggle { background: none; border: none; padding: 0; color: var(--ink-2); font-family: var(--font-mono); font-size: 0.9375rem; text-decoration: underline; cursor: pointer; }
         .beta-access-panel { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--hair-30); }
         .beta-access-label { font-family: var(--font-mono); font-size: 0.9375rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
-        .beta-access-row { display: flex; gap: 8px; }
-        .beta-access-row input { flex: 1; min-width: 0; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: var(--font-body); font-size: max(16px, .9rem); }
+        .beta-access-row { display: flex; flex-wrap: wrap; gap: 8px; }
+        .beta-access-row input { flex: 1 1 14rem; min-width: min(14rem, 100%); min-height: 44px; background: var(--bg); border: 1px solid var(--line-2); border-radius: 8px; padding: 10px 12px; color: var(--ink); font-family: var(--font-body); font-size: max(16px, .9rem); }
         /* max(16px, …) is functional, not typographic: Safari zooms the page
            on a focused input under 16px and never zooms back. Set here rather
            than relying on mobile-fit.css's bare input rule, because this
            block is injected into the body and would win on source order —
-           the same trap .ihype-consent-btn fell into. min-width:0 lets the
-           flex item shrink below its intrinsic width instead of pushing the
-           row past the viewport. */
-        .beta-access-row button { background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem; cursor: pointer; white-space: nowrap; }
+           the same trap .ihype-consent-btn fell into.
+
+           THE FIELD MUST NOT BE ALLOWED TO SHRINK TO NOTHING, and it was.
+           This row used to be a non-wrapping flex with min-width: 0 on the
+           input, added to stop the row pushing past the viewport. It did that
+           by letting the field absorb every pixel the button did not want —
+           and the button holds its intrinsic width, because its label is
+           white-space: nowrap. Measured on the built page: 140px of field
+           at 393px, 67px at 320px. About twelve characters of an email
+           address, and four. The owner reported it from a real iPhone after
+           submitting the wrong address, which is exactly what a field you
+           cannot read produces.
+
+           min-width: min(14rem, 100%) keeps both properties instead of
+           trading one for the other: never narrower than 14rem while the
+           container allows it, never wider than the container, so the row
+           still cannot overflow. When 14rem plus the button will not fit, the
+           row WRAPS and the button takes its own full-width line — which is
+           the right phone layout anyway; a field beside a submit button is a
+           desktop pattern. 44px floors on both, per MOBILE.md: the row
+           measured 41px, so the control was under the tap target too. */
+        .beta-access-row button { flex: 0 0 auto; min-height: 44px; background: var(--accent); color: var(--ink-on-accent); border: none; border-radius: 8px; padding: 10px 16px; font-family: var(--font-display); font-weight: 700; font-size: 0.9375rem; cursor: pointer; white-space: nowrap; }
         .beta-access-row button:disabled { opacity: .6; cursor: default; }
+        /* Full width on its own line below MOBILE.md's ONE breakpoint, rather
+           than letting the button flex-grow: growing it fills the line on a
+           phone and also stretches "Request access" to 564px on a desktop,
+           which measured worse than the bug being fixed. flex-basis: 100%
+           forces the wrap deterministically instead of depending on where the
+           natural wrap happens to fall for a given label length. */
+        @media (max-width: 620px) { .beta-access-row button { flex: 1 0 100%; } }
         .beta-access-error { font-size: 0.9375rem; color: var(--accent-text); margin: 0; }
         .beta-access-sent p { margin: 0; font-size: 0.9375rem; color: var(--ink-2); }
       `}</style>
