@@ -52,6 +52,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
          can be published before its audio is stored. */
       storageUrl: true,
       loudnessLufs: true,
+      truePeakDbtp: true,
       artworkUrl: true,
       profile: { select: { id: true, slug: true, name: true, genre: true, genres: true, hypeCount: true } },
     },
@@ -112,6 +113,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
         artistSlug: asset.profile.slug,
         mediaUrl: asset.storageUrl,
         loudnessLufs: asset.loudnessLufs,
+        truePeakDbtp: asset.truePeakDbtp,
         artworkUrl: asset.artworkUrl,
       }]} />
       <h1 className="mmm-show-title">{asset.title}</h1>

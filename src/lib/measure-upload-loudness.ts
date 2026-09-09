@@ -26,7 +26,7 @@ const MAX_MEASURED_SECONDS = 15 * 60;
 
 type AudioContextCtor = new (...args: never[]) => BaseAudioContext;
 
-export type MeasuredLoudness = { loudnessLufs: number; peakDbfs: number };
+export type MeasuredLoudness = { loudnessLufs: number; peakDbfs: number; truePeakDbtp: number };
 
 export async function measureFileLoudness(file: Blob): Promise<MeasuredLoudness | null> {
   if (typeof window === 'undefined') return null;
@@ -62,7 +62,14 @@ export async function measureFileLoudness(file: Blob): Promise<MeasuredLoudness 
     if (!measured || !Number.isFinite(measured.integratedLufs) || !Number.isFinite(measured.peakDbfs)) {
       return null;
     }
-    return { loudnessLufs: measured.integratedLufs, peakDbfs: measured.peakDbfs };
+    return {
+      loudnessLufs: measured.integratedLufs,
+      peakDbfs: measured.peakDbfs,
+      /* A true peak that could not be computed falls back to the sample peak
+         rather than to nothing: it is conservative in the safe direction, so
+         the worst it can do is under-boost. */
+      truePeakDbtp: Number.isFinite(measured.truePeakDbtp) ? measured.truePeakDbtp : measured.peakDbfs,
+    };
   } catch {
     return null;
   }

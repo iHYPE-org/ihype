@@ -495,11 +495,32 @@ both of which Stripe's own support notes people get wrong:
 Subscribe to the `configuration.recipient` **and** `configuration.merchant`
 variants — a venue needs both, and only the merchant one has any v1 equivalent.
 
-### The remaining steps still need a human
+### What is left, corrected 2026-09-09
 
-Step 2 needs a staging database and forwarded webhooks; step 3 is the one-way
-door. Every step is written to be done in one sitting, in order, with what "good"
-looks like stated so a partial pass is not mistaken for a pass.
+**This section used to read "the remaining steps still need a human — step 2
+needs a staging database and forwarded webhooks; step 3 is the one-way door".
+Both were already done when it said that, and it was never updated.** Step 2
+was walked on 2026-08-30 against a scratch Postgres and a real worker in all
+three settlement modes (see the section near the top of this document — it
+found and fixed a real refund defect, with transfer and refund ids), and
+step 3 was done on 2026-08-31: `FEATURE_ENABLE_TICKET_PAYMENTS = "true"` is in
+`wrangler.toml` today.
+
+A stale "still needs a human" line is worse than no line, because the next
+reader either redoes a two-hour walk or refuses to ship something already
+shipped. Check the artefacts before believing one: the fix step 2 found is
+quoted in `refundTicketPaymentIntent`'s own comment, and the flag is one grep
+of `wrangler.toml`.
+
+**The one thing genuinely not exercised end to end** is the real webhook leg.
+The 08-30 walk ran `REHEARSAL_PAY_MODE=api`, which creates a genuine confirmed
+PaymentIntent but **synthesizes** the `checkout.session.completed` envelope —
+correctly signed, and delivered the same way, but not delivered by Stripe.
+What that leaves unproven is Stripe's own delivery and retry behaviour against
+the live endpoint, not the route's handling of the event. Re-running the walk
+in its default mode on a machine whose browser can reach `checkout.stripe.com`
+closes it; this sandbox's TLS-re-signing proxy cannot, which is why API mode
+exists.
 
 ---
 

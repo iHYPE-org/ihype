@@ -79,6 +79,13 @@ export async function GET(request: Request) {
         isPublished: true,
         publishAt: true,
         createdAt: true,
+        /* The owner's editor measures loudness for tracks uploaded before the
+           browser did it at upload — so it needs the audio to decode and the
+           current reading to know which tracks still want one. Owner-gated
+           route; `storageUrl` is the same URL the player already uses. */
+        storageUrl: true,
+        loudnessLufs: true,
+        truePeakDbtp: true,
       },
     }),
   );
@@ -172,6 +179,7 @@ export async function POST(request: Request) {
     };
     const loudnessLufs = clampMeasuredLoudness(numericField('loudnessLufs'));
     const peakDbfs = clampMeasuredPeak(numericField('peakDbfs'));
+    const truePeakDbtp = clampMeasuredPeak(numericField('truePeakDbtp'));
     const file = formData.get('file');
     const artworkFile = formData.get('artwork');
 
@@ -399,6 +407,7 @@ export async function POST(request: Request) {
               bitDepth: shape?.bitDepth ?? null,
               loudnessLufs,
               peakDbfs,
+              truePeakDbtp,
               artworkUrl,
               profileId: profile.id,
               albumId: album?.id ?? null,

@@ -14,13 +14,14 @@ import { parsePressKit, serializePressKit } from '@/lib/press-kit';
 import { statOptionsForRole, type StatKey } from '@/lib/profile-stats-catalog';
 import { MUSIC_GENRES } from '@/lib/genres';
 import { useI18n } from '@/components/I18nProvider';
+import { LoudnessMeasureButton } from '@/components/LoudnessMeasureButton';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 
 type AvailabilityEntry = { id: string; date: string; note: string | null; kind?: 'TOUR' | 'AVAILABLE' };
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
 /* Albums, the folder version (2026-09-02). See /api/albums. */
 type AlbumRow = { id: string; title: string; artworkUrl: string | null; releasedOn: string | null; release: 'live' | 'scheduled' | 'undated'; sortOrder: number; trackCount: number };
-type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string };
+type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string; storageUrl: string | null; loudnessLufs: number | null; truePeakDbtp: number | null };
 
 /** Live · Scheduled · Held, from the two release columns (release-schedule.ts). */
 function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string): string {
@@ -944,6 +945,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 hint={t('pageEditor.trackAlbumsHint', 'Which album each track sits in. Leave it blank for a single.')}
                 label={t('pageEditor.tracksLabel', 'Tracks')}
               >
+                {/* Renders nothing once every track carries a reading, so it
+                    is a task that finishes rather than a permanent control. */}
+                <LoudnessMeasureButton onMeasured={loadMedia} tracks={tracks} />
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   {tracks.map((track) => (
                     <div

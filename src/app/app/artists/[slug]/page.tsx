@@ -173,6 +173,7 @@ export default async function MmmArtistPage({
              drops those rather than stalling the player on a dead entry. */
           storageUrl: true,
           loudnessLufs: true,
+          truePeakDbtp: true,
         },
       })
       .catch(() => []),
@@ -234,6 +235,7 @@ export default async function MmmArtistPage({
     artistSlug: profile.slug,
     mediaUrl: release.storageUrl,
     loudnessLufs: release.loudnessLufs,
+    truePeakDbtp: release.truePeakDbtp,
     artworkUrl: coverFor(release),
   }));
   const playableById = new Map(playableRows.map((row) => [row.hexId, row]));

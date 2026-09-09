@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import Link from 'next/link';
 
+import { useI18n } from '@/components/I18nProvider';
+import type { Translate } from '@/lib/mmm-shell-labels';
+
 /**
  * The universal search field, from Design System 8's `templates/simplified-app/`.
  *
@@ -88,6 +91,36 @@ function hrefFor(result: SearchResult): string {
   }
 }
 
+/* Translated at the DRAW, keyed on the English the constant declares — the
+   same rule as `mmm-shell-labels.ts`, and for the same reason: the extractor
+   reads the source for a literal `t('key', 'English')`, so a `t(entry.key)`
+   would be invisible to it and could never be given a translation. */
+function translateScope(t: Translate, label: string): string {
+  switch (label) {
+    case 'Everything': return t('mmmSearch.scopeEverything', 'Everything');
+    case 'Artists': return t('mmmSearch.scopeArtists', 'Artists');
+    case 'Tracks': return t('mmmSearch.scopeTracks', 'Tracks');
+    case 'Venues': return t('mmmSearch.scopeVenues', 'Venues');
+    case 'Cities': return t('mmmSearch.scopeCities', 'Cities');
+    case 'Playlists': return t('mmmSearch.scopePlaylists', 'Playlists');
+    default: return label;
+  }
+}
+
+function translateKind(t: Translate, kind: string): string {
+  switch (kind) {
+    case 'Artist': return t('mmmSearch.kindArtist', 'Artist');
+    case 'Venue': return t('mmmSearch.kindVenue', 'Venue');
+    case 'Promoter': return t('mmmSearch.kindPromoter', 'Promoter');
+    case 'Track': return t('mmmSearch.kindTrack', 'Track');
+    case 'Show': return t('mmmSearch.kindShow', 'Show');
+    case 'Genre': return t('mmmSearch.kindGenre', 'Genre');
+    case 'City': return t('mmmSearch.kindCity', 'City');
+    case 'Playlist': return t('mmmSearch.kindPlaylist', 'Playlist');
+    default: return kind;
+  }
+}
+
 const KIND_LABEL: Record<SearchResult['type'], string> = {
   artist: 'Artist',
   venue: 'Venue',
@@ -120,6 +153,7 @@ export function MmmSearch({
   });
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = useId();
+  const { t } = useI18n();
 
   // ⌘K / Ctrl-K focuses the field, matching the hint the field itself renders.
   // A key hint that does nothing is a promise the UI does not keep.
@@ -187,12 +221,12 @@ export function MmmSearch({
       <div className="mmm-search-field">
         <span aria-hidden="true" className="mmm-search-glyph">⌕</span>
         <input
-          aria-label="Search artists, tracks, venues, cities and playlists"
+          aria-label={t('mmmSearch.inputLabel', 'Search artists, tracks, venues, cities and playlists')}
           className="mmm-search-input"
           onBlur={onBlur}
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setFocused(true)}
-          placeholder="Search artists, tracks, venues, cities, playlists"
+          placeholder={t('mmmSearch.placeholder', 'Search artists, tracks, venues, cities, playlists')}
           ref={inputRef}
           type="search"
           value={query}
@@ -215,24 +249,29 @@ export function MmmSearch({
               }}
               type="button"
             >
-              {entry.label}
+              {translateScope(t, entry.label)}
             </button>
           ))}
         </div>
       )}
 
       {showResults && (
-        <div aria-label="Search results" aria-live="polite" className="mmm-search-results" id={listId} role="region">
+        <div aria-label={t('mmmSearch.resultsLabel', 'Search results')} aria-live="polite" className="mmm-search-results" id={listId} role="region">
           {state.status === 'loading' && state.results.length === 0 && (
-            <p className="mmm-search-note" role="status">Searching…</p>
+            <p className="mmm-search-note" role="status">{t('mmmSearch.searching', 'Searching…')}</p>
           )}
           {state.status === 'error' && (
-            <p className="mmm-search-note">Search is unavailable right now.</p>
+            <p className="mmm-search-note">{t('mmmSearch.unavailable', 'Search is unavailable right now.')}</p>
           )}
           {state.status === 'ready' && state.results.length === 0 && (
             <p className="mmm-search-note">
-              Nothing matched “{trimmed}”
-              {scope === 'all' ? '.' : ` in ${SCOPES.find((s) => s.id === scope)?.label.toLowerCase()}.`}
+              {/* The scope is interpolated rather than concatenated so a
+                  language that orders the sentence differently can move it. */}
+              {scope === 'all'
+                ? t('mmmSearch.noMatch', 'Nothing matched “{query}”.').replace('{query}', trimmed)
+                : t('mmmSearch.noMatchInScope', 'Nothing matched “{query}” in {scope}.')
+                    .replace('{query}', trimmed)
+                    .replace('{scope}', translateScope(t, SCOPES.find((entry) => entry.id === scope)?.label ?? '').toLowerCase())}
             </p>
           )}
           {state.results.map((result) => (
@@ -241,7 +280,7 @@ export function MmmSearch({
                 <span className="mmm-row-title">{result.name}</span>
                 {result.subtitle && <span className="mmm-row-sub">{result.subtitle}</span>}
               </span>
-              <span className="mmm-search-kind">{KIND_LABEL[result.type]}</span>
+              <span className="mmm-search-kind">{translateKind(t, KIND_LABEL[result.type])}</span>
             </Link>
           ))}
         </div>

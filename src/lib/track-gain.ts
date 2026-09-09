@@ -1,8 +1,26 @@
 /**
  * How a measured loudness becomes a playback level.
  *
- * ONE RULE, AND EVERYTHING ELSE FOLLOWS FROM IT: playback only ever
- * ATTENUATES. A track measured louder than the target is turned down; a track
+ * TWO PATHS, AND THE DIFFERENCE IS WHY THIS FILE IS SHAPED THE WAY IT IS.
+ * Turning a loud track DOWN needs nothing but `HTMLMediaElement.volume`, so
+ * it works everywhere, always. Turning a quiet track UP needs gain above
+ * unity, which a media element cannot do — only a Web Audio `GainNode` can —
+ * so it is best-effort and falls back to unity wherever that graph cannot be
+ * built. `resolvePlaybackGain()` returns the two separately for that reason:
+ * the attenuation half must never depend on the boost half working.
+ *
+ * WHAT BOOST COSTS, STATED BECAUSE IT WEAKENS A GUARANTEE THIS FILE USED TO
+ * MAKE. While playback only attenuated, a client-reported measurement was
+ * safe by construction: under-reporting bought exactly what not measuring
+ * bought, so no lie won. With boost, under-reporting can win up to
+ * `MAX_BOOST_DB`. Three things bound it and none of them is a server-side
+ * check, because the Worker cannot decode audio to verify anything: the cap
+ * is small, the headroom rule below refuses boost to anything that would
+ * clip, and a track with no measurement is never boosted. A member who
+ * reports -30 LUFS for a loud master gets at most 6 dB, and gets none of it
+ * if they report the true peak honestly.
+ *
+ * THE OLD RULE, still true of the attenuation half: playback attenuates. A track measured louder than the target is turned down; a track
  * measured quieter is left exactly as it is, and so is a track nobody
  * measured. That is what makes a client-reported measurement safe to trust.
  * The figure is measured in the uploader's own browser (`src/lib/loudness.ts`)
@@ -25,6 +43,21 @@
  *  converged on, so a track that already went through one of them arrives
  *  needing no correction at all. */
 export const TARGET_LUFS = -14;
+
+/**
+ * The most a track is ever turned UP. Small on purpose: it is the size of the
+ * advantage an under-reported measurement can buy, and no real recording that
+ * needs more than 6 dB is going to sound good with it.
+ */
+export const MAX_BOOST_DB = 6;
+
+/**
+ * Boost never takes the reconstructed waveform above this. A true peak is
+ * what a converter actually produces, so -1 dBTP is the working headroom
+ * every mastering guide asks for; boosting to 0 clips on playback in a way
+ * that is audible and permanent.
+ */
+export const TRUE_PEAK_CEILING_DBTP = -1;
 
 /**
  * The most a track is ever turned down. A measurement can be wrong — a
@@ -79,9 +112,52 @@ export function trackGainDb(loudnessLufs: number | null | undefined): number {
  * The same figure as a multiplier for `HTMLMediaElement.volume`, in (0, 1].
  * Multiply the member's own volume by this; never assign it directly, or the
  * volume control stops working on normalised tracks.
+ *
+ * Attenuation only — a quiet track reads 1 here, and comes up through the
+ * boost half of `resolvePlaybackGain()` if a Web Audio graph is available.
  */
 export function trackGainMultiplier(loudnessLufs: number | null | undefined): number {
   const db = trackGainDb(loudnessLufs);
   if (db === 0) return 1;
   return Math.pow(10, db / 20);
+}
+
+export type PlaybackGain = {
+  /** For `HTMLMediaElement.volume`, in (0, 1]. Always applicable. */
+  elementMultiplier: number;
+  /** For a Web Audio `GainNode`, >= 1. Needs the graph; 1 means none needed. */
+  boost: number;
+};
+
+/**
+ * How much of the correction each half of the chain carries.
+ *
+ * A track needing attenuation puts it all on the element and asks for no
+ * boost, which is exactly what shipped before boost existed. A track needing
+ * lift asks for it only as far as its own headroom allows: the reported true
+ * peak decides, and a track that never reported one is NOT boosted, because
+ * the alternative is guessing at headroom and clipping when the guess is
+ * wrong. `peakDbfs` is accepted as a fallback and is conservative — a sample
+ * peak is never above the true peak, so using it can only under-boost.
+ */
+export function resolvePlaybackGain(track: {
+  loudnessLufs?: number | null;
+  truePeakDbtp?: number | null;
+  peakDbfs?: number | null;
+}): PlaybackGain {
+  const measured = clampMeasuredLoudness(track.loudnessLufs);
+  if (measured === null) return { elementMultiplier: 1, boost: 1 };
+
+  const wanted = TARGET_LUFS - measured;
+  if (wanted <= 0) {
+    return { elementMultiplier: trackGainMultiplier(measured), boost: 1 };
+  }
+
+  const peak = clampMeasuredPeak(track.truePeakDbtp) ?? clampMeasuredPeak(track.peakDbfs);
+  if (peak === null) return { elementMultiplier: 1, boost: 1 };
+
+  const headroom = TRUE_PEAK_CEILING_DBTP - peak;
+  const db = Math.min(wanted, MAX_BOOST_DB, headroom);
+  if (db <= 0) return { elementMultiplier: 1, boost: 1 };
+  return { elementMultiplier: 1, boost: Math.pow(10, db / 20) };
 }

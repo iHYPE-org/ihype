@@ -24,7 +24,15 @@ and nothing in the pipeline measured it.
 
 **What shipped.** ITU-R BS.1770-4 programme loudness, measured in the
 uploader's browser from `decodeAudioData` output, stored on the track, applied
-at playback as an attenuation of the member's own volume.
+at playback — as an attenuation of the member's own volume for a loud track,
+and as Web Audio gain for a quiet one.
+
+**Tracks that predate it are measured too.** Levelling at upload reaches only
+what is uploaded afterwards, so every track already in the library would have
+played un-levelled forever — real and inert. There is no server-side backfill
+available at all (the Worker cannot decode), so `LoudnessMeasureButton` in the
+Media section does it on the artist's own machine, one track at a time,
+disappearing once every track carries a reading.
 
 - `src/lib/loudness.ts` — the arithmetic. Pure, imports nothing, so the unit
   suite drives it against the standard's own calibration: a 1 kHz sine reads
@@ -52,12 +60,43 @@ lie that wins. That is a stronger guarantee than any server-side check this
 product could afford, and it is the reason to keep the attenuation-only rule
 even when boost becomes possible.
 
-**What it costs.** A quiet upload stays quiet. Fixing that needs gain above
-unity, which `HTMLMediaElement.volume` cannot do — it needs a Web Audio
-`GainNode` wired through `GlobalMediaPlayer`, the one component that must never
-break. The measurements are stored now so that pass can be built later without
-asking every artist to re-upload. **It must re-measure TRUE peak first**:
-`peakDbfs` is a sample peak, and a signal can exceed it between samples.
+**Boost — added 2026-09-09, and it changes the guarantee above.** A quiet
+upload no longer stays quiet: `resolvePlaybackGain()` lifts it through a Web
+Audio `GainNode`, because `HTMLMediaElement.volume` is capped at 1. **This
+weakens the "no lie wins" property and the weakening is bounded, not
+eliminated** — under-reporting can now buy up to `MAX_BOOST_DB` (6 dB). Three
+things hold it there, and none of them is a server-side check, because the
+Worker still cannot decode audio to verify anything:
+
+- the cap is small, and no real recording needing more than 6 dB survives it
+  sounding good;
+- **a track is boosted only as far as its own reported true peak allows**
+  (`TRUE_PEAK_CEILING_DBTP`, -1 dBTP), so a loud master claiming -30 LUFS gets
+  nothing unless it also lies about its peak;
+- a track with no true peak is **never** boosted. Guessing at headroom is how
+  a boost clips.
+
+The attenuation half must never come to depend on the boost half. That is why
+`resolvePlaybackGain()` returns the two separately: attenuation rides on the
+element and works everywhere, boost needs the graph and is allowed to be
+absent.
+
+**The graph has three properties that are not optional**, all in
+`GlobalMediaPlayer`'s own comment: `createMediaElementSource` may be called
+once per element for the life of the page and cannot be un-routed; a
+cross-origin element routed through Web Audio without CORS yields **silence**,
+not an error, so the graph is safe only while every audio URL is same-origin
+(asserted in `wiring-guards.test.ts`, verified by breaking it); and any throw
+sets a flag and is never retried, leaving the element exactly as it was.
+
+**True peak** is measured at 4x oversampling per BS.1770-4 Annex 2, but not as
+a second full pass — interpolating every sample of a five-minute master
+through a 48-tap kernel is hundreds of millions of operations in a phone
+browser for one number. Only the neighbourhoods of the loudest samples are
+oversampled, since the peak cannot be near a sample that is not; a limited
+master that puts tens of thousands of samples on the ceiling is strided to a
+bound. The test that matters is a sine sampled off its crests: samples read
+-3.01 dBFS, the waveform reaches 0 dBTP.
 
 **Two things a later edit will want to undo and must not.** The gain is a
 *multiplier* of the member's volume, never a replacement, or the volume slider

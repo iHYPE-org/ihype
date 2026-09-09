@@ -865,3 +865,63 @@ describe('every push reaches native devices too', () => {
     expect(notify).toContain('export async function sendPushToAllDevices');
   });
 });
+
+describe('every playback volume carries the track gain', () => {
+  /**
+   * Loudness levelling is applied by MULTIPLYING the member's own volume at
+   * each place `GlobalMediaPlayer` writes `audio.volume` — four of them, in
+   * three different code paths (the volume/mute effect, the src-change
+   * effect, and two `toggleMute` callbacks). Nothing about that is visible
+   * from any one site, so the way this breaks is a fifth site added later, or
+   * one of the four edited back to a bare `volume`. The failure is silent: a
+   * mastered single is simply loud again, and no test that does not look at
+   * the assignments can see it.
+   *
+   * The rule is also what protects the member's control — assigning the gain
+   * INSTEAD of multiplying would make the volume slider do nothing on a
+   * levelled track — so this asserts the shape, not merely the presence.
+   */
+  const PLAYER = 'src/components/GlobalMediaPlayer.tsx';
+
+  it('multiplies rather than replaces, at every assignment', () => {
+    const source = code(PLAYER);
+    const assignments = [...source.matchAll(/\.volume\s*=\s*([^;]+);/g)].map((m) => m[1].trim());
+
+    expect(assignments.length, 'no volume assignments found — did the player move?').toBeGreaterThan(0);
+
+    const bare = assignments.filter((expression) => !expression.includes('trackGainRef.current'));
+    expect(bare, `these set volume without the track gain: ${bare.join(' | ')}`).toEqual([]);
+
+    const replacing = assignments.filter((expression) => /^\s*trackGainRef\.current\s*$/.test(expression));
+    expect(replacing, 'volume is being set TO the gain rather than multiplied by it').toEqual([]);
+  });
+
+  it('and the gain is kept in a ref, because three of the four sites cannot read state', () => {
+    const source = code(PLAYER);
+    expect(source).toContain('trackGainRef.current = gain.elementMultiplier;');
+    expect(source).toContain('resolvePlaybackGain(');
+    expect(source).toContain("from '@/lib/track-gain'");
+  });
+
+  /**
+   * The boost half routes the audio element through a Web Audio graph, and a
+   * MediaElementAudioSourceNode built from CROSS-ORIGIN media without CORS
+   * yields silence rather than an error. The routing is also permanent —
+   * `createMediaElementSource` may be called once per element, ever — so a
+   * single cross-origin URL introduced later would silence it for the rest of
+   * the session, on a page that had been playing fine.
+   *
+   * Every audio URL this app plays is relative today. That is the invariant
+   * the graph is safe under, so it is asserted rather than assumed: if a
+   * future change plays audio from another host, this fails and points at the
+   * decision instead of at a silent player.
+   */
+  it('every audio URL the player is handed is same-origin', () => {
+    const clips = code('src/lib/show-composer.ts');
+    const catalogue = clips.slice(clips.indexOf('builtInAdClips'));
+    const urls = [...catalogue.matchAll(/url:\s*'([^']+)'/g)].map((m) => m[1]);
+    expect(urls.length, 'no built-in clip URLs found — did the catalogue move?').toBeGreaterThan(0);
+    const remote = urls.filter((url) => /^[a-z]+:\/\//i.test(url));
+    expect(remote, `these would taint the Web Audio graph and silence playback: ${remote.join(', ')}`).toEqual([]);
+  });
+});
