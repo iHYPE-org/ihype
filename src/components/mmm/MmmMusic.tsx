@@ -26,7 +26,7 @@ type SeedCard = MmmSeedItem & {
   /** The playable track, for the clip. Null when the row carries no media. */
   url: string | null;
 };
-type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number; mediaUrl: string | null; artworkUrl: string | null };
+type ChartRow = { id: string; title: string; artistName: string; artistSlug: string; hypeCount: number; mediaUrl: string | null; artworkUrl: string | null; loudnessLufs: number | null };
 type PlaylistRow = {
   id: string;
   name: string;
@@ -48,6 +48,10 @@ type StationTrackRow = {
   // both are nullable in the underlying row.
   mediaUrl: string | null;
   artworkUrl: string | null;
+  /** Programme loudness, so the station levels between tracks. Nullable and
+   *  optional for the same reason `reason` is: a response cached before the
+   *  field existed must play, at unity. */
+  loudnessLufs?: number | null;
   /** Why this track is in this station, for this viewer. Derived server-side
    *  from the same context the station was resolved with, so it cannot
    *  disagree with why the row qualified. Optional so a response cached before
@@ -84,12 +88,12 @@ const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
    play demo content even on a surface that is showing it. A placeholder that
    could be played is a placeholder that will be. */
 const DEMO_CHARTS: ChartRow[] = [
-  { id: 'demo-chart-1', title: 'Neon Weather', artistName: 'Velvet Static', artistSlug: '', hypeCount: 2841, mediaUrl: null, artworkUrl: null },
-  { id: 'demo-chart-2', title: 'Southbound Signals', artistName: 'June Arcade', artistSlug: '', hypeCount: 2317, mediaUrl: null, artworkUrl: null },
-  { id: 'demo-chart-3', title: 'Borrowed Light', artistName: 'Harborline', artistSlug: '', hypeCount: 1986, mediaUrl: null, artworkUrl: null },
-  { id: 'demo-chart-4', title: 'No Fixed Address', artistName: 'Mara North', artistSlug: '', hypeCount: 1642, mediaUrl: null, artworkUrl: null },
-  { id: 'demo-chart-5', title: 'Glassroom', artistName: 'Afterimage Club', artistSlug: '', hypeCount: 1298, mediaUrl: null, artworkUrl: null },
-  { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044, mediaUrl: null, artworkUrl: null },
+  { id: 'demo-chart-1', title: 'Neon Weather', artistName: 'Velvet Static', artistSlug: '', hypeCount: 2841, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
+  { id: 'demo-chart-2', title: 'Southbound Signals', artistName: 'June Arcade', artistSlug: '', hypeCount: 2317, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
+  { id: 'demo-chart-3', title: 'Borrowed Light', artistName: 'Harborline', artistSlug: '', hypeCount: 1986, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
+  { id: 'demo-chart-4', title: 'No Fixed Address', artistName: 'Mara North', artistSlug: '', hypeCount: 1642, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
+  { id: 'demo-chart-5', title: 'Glassroom', artistName: 'Afterimage Club', artistSlug: '', hypeCount: 1298, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
+  { id: 'demo-chart-6', title: 'Last Train Local', artistName: 'Citywide', artistSlug: '', hypeCount: 1044, mediaUrl: null, artworkUrl: null, loudnessLufs: null },
 ];
 
 const DEMO_PLAYLISTS: PlaylistRow[] = [
@@ -716,6 +720,7 @@ function ChartsTab() {
            discarded field. */
         mediaUrl: typeof row.mediaUrl === 'string' && row.mediaUrl ? row.mediaUrl : null,
         artworkUrl: typeof row.artworkUrl === 'string' && row.artworkUrl ? row.artworkUrl : null,
+        loudnessLufs: typeof row.loudnessLufs === 'number' ? row.loudnessLufs : null,
       })),
       genres: Array.isArray(body.genres) ? body.genres.map(String) : [],
       viewerPlace: {

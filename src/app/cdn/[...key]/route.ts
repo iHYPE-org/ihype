@@ -1,3 +1,4 @@
+import { parseRangeHeader } from '@/lib/http-range';
 import { readRuntimeBinding } from '@/lib/runtime-env';
 
 /**
@@ -34,10 +35,31 @@ type R2ObjectLike = {
   httpEtag?: string;
 };
 
-type R2BucketLike = { get(key: string): Promise<R2ObjectLike | null> };
+type R2GetOptions = { range?: { offset: number; length: number } };
+type R2BucketLike = {
+  get(key: string, options?: R2GetOptions): Promise<R2ObjectLike | null>;
+  /* Metadata only, no body. Optional because the binding is reached through a
+     structural type and a test double need not implement it; without it a
+     ranged request simply falls back to serving the whole object. */
+  head?(key: string): Promise<R2ObjectLike | null>;
+};
+
+/* Audio is the reason this route serves ranges, and a media element will not
+   ask for one unless the first response says it can. Both headers go on the
+   200 as well as the 206. */
+function baseHeaders(object: Partial<R2ObjectLike>): Record<string, string> {
+  return {
+    'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
+    'Accept-Ranges': 'bytes',
+    // Keys carry a UUID and objects are replaced rather than mutated, so a
+    // long immutable cache is safe and keeps repeat plays off the Worker.
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    ...(object.httpEtag ? { ETag: object.httpEtag } : {}),
+  };
+}
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ key: string[] }> },
 ) {
   const { key: segments } = await params;
@@ -65,16 +87,57 @@ export async function GET(
     : null;
   if (!bucket) return new Response('Not found', { status: 404 });
 
-  const object = await bucket.get(key).catch(() => null);
-  if (!object?.body) return new Response('Not found', { status: 404 });
+  const rangeHeader = request.headers.get('range');
 
-  return new Response(object.body as unknown as BodyInit, {
+  /* No range asked for: one read, whole object, and `Accept-Ranges` on it so
+     the player knows it may ask next time. */
+  if (!rangeHeader) {
+    const object = await bucket.get(key).catch(() => null);
+    if (!object?.body) return new Response('Not found', { status: 404 });
+    return new Response(object.body as unknown as BodyInit, {
+      headers: {
+        ...baseHeaders(object),
+        ...(typeof object.size === 'number' ? { 'Content-Length': String(object.size) } : {}),
+      },
+    });
+  }
+
+  /* A range was asked for, so the object's LENGTH has to be known before the
+     read: satisfiability, the 416's `Content-Range`, and the clamp on an
+     overshooting end all need it. `head` answers that without a body — asking
+     for the object and cancelling its stream would work and is a worse shape,
+     since a leaked stream on a Worker is a request that never settles. */
+  const meta = typeof bucket.head === 'function' ? await bucket.head(key).catch(() => null) : null;
+  const size = typeof meta?.size === 'number' ? meta.size : null;
+  const wanted = size === null ? ({ kind: 'full' } as const) : parseRangeHeader(rangeHeader, size);
+
+  if (wanted.kind === 'unsatisfiable') {
+    return new Response(null, {
+      status: 416,
+      headers: { ...baseHeaders(meta ?? {}), 'Content-Range': `bytes */${size}` },
+    });
+  }
+
+  if (wanted.kind === 'full') {
+    // Either the header was one this parser does not handle, or the size could
+    // not be read. Serving everything is always correct, just less efficient.
+    const object = await bucket.get(key).catch(() => null);
+    if (!object?.body) return new Response('Not found', { status: 404 });
+    return new Response(object.body as unknown as BodyInit, { headers: baseHeaders(object) });
+  }
+
+  const length = wanted.end - wanted.start + 1;
+  const ranged = await bucket
+    .get(key, { range: { offset: wanted.start, length } })
+    .catch(() => null);
+  if (!ranged?.body) return new Response('Not found', { status: 404 });
+
+  return new Response(ranged.body as unknown as BodyInit, {
+    status: 206,
     headers: {
-      'Content-Type': object.httpMetadata?.contentType ?? 'application/octet-stream',
-      // Keys carry a UUID and objects are replaced rather than mutated, so a
-      // long immutable cache is safe and keeps repeat plays off the Worker.
-      'Cache-Control': 'public, max-age=31536000, immutable',
-      ...(object.httpEtag ? { ETag: object.httpEtag } : {}),
+      ...baseHeaders(ranged),
+      'Content-Range': `bytes ${wanted.start}-${wanted.end}/${size}`,
+      'Content-Length': String(length),
     },
   });
 }

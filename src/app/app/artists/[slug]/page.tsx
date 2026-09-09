@@ -172,6 +172,7 @@ export default async function MmmArtistPage({
              asset can be published before its audio is stored, and `toQueue`
              drops those rather than stalling the player on a dead entry. */
           storageUrl: true,
+          loudnessLufs: true,
         },
       })
       .catch(() => []),
@@ -232,6 +233,7 @@ export default async function MmmArtistPage({
     artistName: profile.name,
     artistSlug: profile.slug,
     mediaUrl: release.storageUrl,
+    loudnessLufs: release.loudnessLufs,
     artworkUrl: coverFor(release),
   }));
   const playableById = new Map(playableRows.map((row) => [row.hexId, row]));

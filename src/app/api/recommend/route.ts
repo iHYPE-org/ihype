@@ -36,6 +36,7 @@ export type RecommendTrack = {
   artistName: string;
   artistSlug: string;
   mediaUrl: string | null;
+  loudnessLufs: number | null;
   artworkUrl: string | null;
   reason: string;
   reasonKind: string;
@@ -71,7 +72,7 @@ export async function GET() {
       ? await db.artistMediaAsset.findMany({
           where: { profileId: { in: artistIds }, storageUrl: { not: null }, ...releasedMediaWhere(), profile: { discoverable: true } },
           orderBy: [{ createdAt: 'desc' }],
-          select: { id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, profileId: true, album: { select: { artworkUrl: true } } },
+          select: { id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, loudnessLufs: true, profileId: true, album: { select: { artworkUrl: true } } },
         }).catch(() => [])
       : [];
     const newestByArtist = new Map<string, (typeof rows)[number]>();
@@ -88,6 +89,7 @@ export async function GET() {
         artistName: profile.name,
         artistSlug: profile.slug,
         mediaUrl: track.storageUrl,
+        loudnessLufs: track.loudnessLufs,
         artworkUrl: track.artworkUrl ?? track.album?.artworkUrl ?? profile.avatarImage,
         reason: profile.reason.text,
         reasonKind: profile.reason.kind,

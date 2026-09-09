@@ -471,6 +471,21 @@ model ArtistMediaAsset {
   storageUrl       String?
   freeUseEnabled   Boolean          @default(false)
   durationSecs     Int?
+  // What the uploaded file's own header said. Every one is nullable and a null
+  // means "the header did not say", never a default — see src/lib/audio-duration.ts.
+  audioCodec       String?
+  sampleRateHz     Int?
+  channels         Int?
+  bitDepth         Int?
+  // Programme loudness and SAMPLE peak, measured in the BROWSER at upload from
+  // the decoded PCM (src/lib/loudness.ts). Client-reported and therefore
+  // clamped server-side; see src/lib/track-gain.ts for why a lie can only make
+  // an artist quieter. Null means unmeasured, and unmeasured plays at 0 dB.
+  // peakDbfs is a sample peak, not a true peak: a boost pass must re-measure
+  // with oversampling before it trusts this column, because a signal can
+  // exceed it between samples.
+  loudnessLufs     Float?
+  peakDbfs         Float?
   artworkUrl       String?
   sortOrder        Int              @default(0)
   profileId        String

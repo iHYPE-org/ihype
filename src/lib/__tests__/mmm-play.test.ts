@@ -115,6 +115,27 @@ describe('the queue memo key', () => {
  * perform it. Both hang on this conversion carrying one field through.
  */
 describe('toQueue and advertising breaks', () => {
+  it('carries a measured loudness through so the player can level the track', () => {
+    const [track] = toQueue([
+      { hexId: 'a1', title: 'Song', mediaUrl: 'https://cdn/a1.mp3', loudnessLufs: -8.2 },
+    ]);
+    expect(track.loudnessLufs).toBe(-8.2);
+  });
+
+  it('leaves loudness null on a track nobody measured, which plays at unity', () => {
+    const [track] = toQueue([{ hexId: 'a1', title: 'Song', mediaUrl: 'https://cdn/a1.mp3' }]);
+    expect(track.loudnessLufs).toBeNull();
+  });
+
+  it('never levels an ad break', () => {
+    // A spot is levelled by whoever cut it, and attenuating it against a music
+    // target under-delivers what the advertiser paid for.
+    const [ad] = toQueue([
+      { hexId: 'mkt_ad1', title: 'Spot', mediaUrl: 'https://cdn/spot.mp3', adClipId: 'mkt_ad1', loudnessLufs: -6 },
+    ]);
+    expect(ad.loudnessLufs).toBeNull();
+  });
+
   it('carries adClipId through so the player can report the impression', () => {
     const [ad] = toQueue([
       { hexId: 'mkt_ad1', title: 'Spot', mediaUrl: 'https://cdn/spot.mp3', adClipId: 'mkt_ad1' },
