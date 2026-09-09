@@ -36,6 +36,10 @@ export type PlayableRow = {
      a paid spot from a song, which is both an unbilled impression and a
      MediaListen written against an artist who did not perform it. */
   adClipId?: string | null;
+  /* Programme loudness, when the uploader's browser measured it. Carried so a
+     mastered single and a bedroom bounce play back at the same level; absent
+     on an older track, which plays at unity. */
+  loudnessLufs?: number | null;
 };
 
 /**
@@ -70,6 +74,10 @@ export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
       url,
       artistProfileSlug: row.artistSlug || null,
       artworkUrl: row.artworkUrl ?? null,
+      /* An ad is levelled by whoever cut it, and attenuating a paid spot
+         against a music target would quietly under-deliver what an
+         advertiser bought. */
+      loudnessLufs: adClipId ? null : row.loudnessLufs ?? null,
     });
   }
   return queue;

@@ -20,6 +20,10 @@ export type StationTrack = {
   artistSlug: string;
   artworkUrl: string | null;
   mediaUrl: string | null;
+  /* Programme loudness measured at upload, so the station can play a mastered
+     single and a bedroom bounce at the same level. Null on an older track,
+     which plays at unity — see src/lib/track-gain.ts. */
+  loudnessLufs: number | null;
   durationSecs: number | null;
   /**
    * Set only on an AD slot, and only for a real purchased spot (`mkt_<Ad.id>`).
@@ -115,6 +119,9 @@ async function withAdBreaks(tracks: StationTrack[]): Promise<StationTrack[]> {
       artistSlug: '',
       artworkUrl: null,
       mediaUrl: item.url,
+      /* An ad is levelled by whoever cut it; attenuating a paid spot against a
+         music target would under-deliver what the advertiser bought. */
+      loudnessLufs: null,
       durationSecs: item.durationSecs,
       adClipId: item.adClipId,
       reason: 'Advertisement',
@@ -183,7 +190,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       take: limit + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
       select: {
-        id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, durationSecs: true,
+        id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, durationSecs: true, loudnessLufs: true,
         profileId: true,
         album: { select: { artworkUrl: true } },
         profile: { select: { name: true, slug: true, city: true } },
@@ -201,6 +208,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       // Per track, else the album's — the artist's choice of which to give.
       artworkUrl: row.artworkUrl ?? row.album?.artworkUrl ?? null,
       mediaUrl: row.storageUrl,
+      loudnessLufs: row.loudnessLufs,
       durationSecs: row.durationSecs,
       reason: reasonFor(row.profileId, row.profile.city, station, context),
     }));

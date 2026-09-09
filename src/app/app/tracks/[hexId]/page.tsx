@@ -51,6 +51,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
          music app with no way to hear it. Both are nullable in the row: a track
          can be published before its audio is stored. */
       storageUrl: true,
+      loudnessLufs: true,
       artworkUrl: true,
       profile: { select: { id: true, slug: true, name: true, genre: true, genres: true, hypeCount: true } },
     },
@@ -110,6 +111,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
         artistName: asset.profile.name,
         artistSlug: asset.profile.slug,
         mediaUrl: asset.storageUrl,
+        loudnessLufs: asset.loudnessLufs,
         artworkUrl: asset.artworkUrl,
       }]} />
       <h1 className="mmm-show-title">{asset.title}</h1>

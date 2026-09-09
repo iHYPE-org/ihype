@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { measureFileLoudness } from '@/lib/measure-upload-loudness';
 
 type ScanLayer = {
   layer: 0 | 1 | 2 | 3;
@@ -103,6 +104,13 @@ export function TrackUploadPanel({
     setFinalMessage(null);
 
     try {
+      /* Measured HERE because the Worker cannot decode audio, and skipped
+         silently on any failure — an unmeasured track plays at unity, so a
+         browser without Web Audio costs this upload its levelling and
+         nothing else. See src/lib/track-gain.ts for why a figure the client
+         reports is safe to accept. */
+      const loudness = await measureFileLoudness(file);
+
       const formData = new FormData();
       formData.set('profileId', profileId);
       formData.set('title', title.trim());
@@ -112,6 +120,10 @@ export function TrackUploadPanel({
       if (artworkFile) formData.set('artwork', artworkFile);
       if (releaseMode === 'schedule' && releaseAt) formData.set('publishAt', new Date(releaseAt).toISOString());
       if (albumId) formData.set('albumId', albumId);
+      if (loudness) {
+        formData.set('loudnessLufs', String(loudness.loudnessLufs));
+        formData.set('peakDbfs', String(loudness.peakDbfs));
+      }
 
       const response = await fetch('/api/artist-media', { method: 'POST', body: formData });
       const data = await response.json();

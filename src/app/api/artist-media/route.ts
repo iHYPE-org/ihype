@@ -8,7 +8,8 @@ import { deleteArtistMediaFromBlob, isBlobMediaStorageAvailable, uploadArtistMed
 import { canManageOwnedResource } from '@/lib/permissions';
 import { areDatabaseMediaUploadsEnabledRuntime, areUploadsEnabledRuntime } from '@/lib/runtime-flags';
 import { AUDIO_SNIFF_BYTES, PLAYABLE_AUDIO_FORMATS_LABEL, sniffAudio } from '@/lib/validate-upload';
-import { parseAudioDuration } from '@/lib/audio-duration';
+import { describeAudio } from '@/lib/audio-duration';
+import { clampMeasuredLoudness, clampMeasuredPeak } from '@/lib/track-gain';
 import { runTrackScanPipeline } from '@/lib/media-vetting';
 import { albumRelease, resolveRelease } from '@/lib/release-schedule';
 import { GB, MB, getMediaLimits } from '@/lib/media-limits';
@@ -155,6 +156,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Release date could not be read.' }, { status: 400 });
     }
     const albumIdInput = String(formData.get('albumId') ?? '').trim().slice(0, 64) || null;
+    /* Loudness is measured in the uploader's browser and CLAMPED here — a
+       reading outside the plausible range is discarded rather than stored,
+       and a discarded reading means the track plays at unity. Trusting the
+       client costs nothing because playback only ever attenuates; see
+       src/lib/track-gain.ts. */
+    const numericField = (name: string): number | null => {
+      /* Never `Number(formData.get(...))` here: an absent field is null,
+         `Number(null)` is 0, and 0 is a legal loudness — so a form that sent
+         nothing would read as a track at full scale and be attenuated. */
+      const raw = formData.get(name);
+      if (typeof raw !== 'string' || raw.trim() === '') return null;
+      const parsed = Number(raw);
+      return Number.isFinite(parsed) ? parsed : null;
+    };
+    const loudnessLufs = clampMeasuredLoudness(numericField('loudnessLufs'));
+    const peakDbfs = clampMeasuredPeak(numericField('peakDbfs'));
     const file = formData.get('file');
     const artworkFile = formData.get('artwork');
 
@@ -254,7 +271,15 @@ export async function POST(request: Request) {
     }
 
     const fileBytes = new Uint8Array(await file.arrayBuffer());
-    const durationSecs = parseAudioDuration(fileBytes) ?? null;
+    /* One header read answers both questions. Duration was always parsed
+       here; the rest of the shape — codec, sample rate, channels, bit depth —
+       was computed on the way to it and thrown away, so nothing downstream
+       could tell a 96 kHz 24-bit master from a phone recording without
+       fetching the file again. Every field is nullable and a null means
+       UNREAD, never a default: a shape we could not parse must not read as
+       44.1/16 stereo. */
+    const shape = describeAudio(fileBytes);
+    const durationSecs = shape?.durationSecs ?? null;
 
     // Every upload runs the full 4-layer scan pipeline (ID3 tag check,
     // acoustic fingerprinting, feature/motif matching, vocal/synth AI
@@ -368,6 +393,12 @@ export async function POST(request: Request) {
               storageProvider: 'pending',
               freeUseEnabled: effectiveFreeUse,
               durationSecs,
+              audioCodec: shape?.codec ?? null,
+              sampleRateHz: shape?.sampleRateHz ?? null,
+              channels: shape?.channels ?? null,
+              bitDepth: shape?.bitDepth ?? null,
+              loudnessLufs,
+              peakDbfs,
               artworkUrl,
               profileId: profile.id,
               albumId: album?.id ?? null,

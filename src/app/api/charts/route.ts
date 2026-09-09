@@ -187,6 +187,7 @@ export async function GET(request: NextRequest) {
       title: true,
       durationSecs: true,
       storageUrl: true,
+      loudnessLufs: true,
       artworkUrl: true,
       profile: { select: { name: true, slug: true, city: true, genres: true } },
     },
@@ -224,6 +225,7 @@ export async function GET(request: NextRequest) {
       hypeCount: hypeCount.get(m.id) ?? 0,
       color: PALETTE[i % PALETTE.length],
       mediaUrl: m.storageUrl ?? '',
+      loudnessLufs: m.loudnessLufs,
       durationSec: m.durationSecs ?? 0,
       artworkUrl: m.artworkUrl,
     }));
