@@ -6,6 +6,7 @@ import { log } from '@/lib/logger';
 import { deleteArtistMediaFromBlob } from '@/lib/media-storage';
 import { deleteMediaFile, isStoredMediaUrl } from '@/lib/object-storage';
 import { albumRelease, isHeld, resolveRelease } from '@/lib/release-schedule';
+import { clampMeasuredLoudness, clampMeasuredPeak } from '@/lib/track-gain';
 
 /** Best-effort removal of a stored cover; a missing object is not an error. */
 async function deleteStoredImage(url: string | null) {
@@ -74,6 +75,20 @@ export async function PATCH(
       if (!release) return NextResponse.json({ error: 'Release date could not be read.' }, { status: 400 });
       Object.assign(data, release);
     }
+    /* A loudness measurement for a track uploaded before the browser made
+       one. Same clamp as the upload route, for the same reason: the figure is
+       measured on the artist's own machine because the Worker cannot decode
+       audio, and it is safe to accept because playback only ever attenuates
+       (src/lib/track-gain.ts). Both fields move together or not at all — a
+       peak without its loudness describes nothing. */
+    if ('loudnessLufs' in body) {
+      const loudness = clampMeasuredLoudness(body.loudnessLufs);
+      if (loudness === null) {
+        return NextResponse.json({ error: 'That loudness reading is not usable.' }, { status: 400 });
+      }
+      data.loudnessLufs = loudness;
+      data.peakDbfs = clampMeasuredPeak(body.peakDbfs);
+    }
     /* Only removal here — `artworkUrl: null`. A new cover comes through
        POST /api/artist-media/[hexId]/artwork, which vets and stores it. */
     if ('artworkUrl' in body && body.artworkUrl === null) {
@@ -85,7 +100,7 @@ export async function PATCH(
       db.artistMediaAsset.update({
         where: { id: asset.id },
         data,
-        select: { hexId: true, title: true, notes: true, freeUseEnabled: true, albumId: true, artworkUrl: true, isPublished: true, publishAt: true }
+        select: { hexId: true, title: true, notes: true, freeUseEnabled: true, albumId: true, artworkUrl: true, isPublished: true, publishAt: true, loudnessLufs: true }
       })
     );
 

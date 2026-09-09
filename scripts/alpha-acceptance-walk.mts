@@ -2213,6 +2213,76 @@ async function main() {
     return 'fan refused 403, cold admin refused 401 requiresReauth, re-authed admin approved: track unpublished and out of the crate, report ACTIONED';
   });
 
+  await item('42. A player can seek: the CDN serves byte ranges, and levelling survives the round trip', async () => {
+    assert(mediaHexId, 'no uploaded track to range-request (item 7 did not produce one)');
+    const stored = await prisma.artistMediaAsset.findUnique({
+      where: { hexId: mediaHexId },
+      select: { storageUrl: true, fileSizeBytes: true, profile: { select: { ownerId: true } } },
+    });
+    /* Only an object really in R2 is served by /cdn. When the harness falls
+       back to database storage there is no object to range at all, and
+       measuring the fallback would prove nothing about the route. */
+    const url = stored?.storageUrl;
+    if (!url || !url.includes('/cdn/')) blocked('the uploaded track is not stored in R2, so /cdn has no object to range');
+    const path = url.slice(url.indexOf('/cdn/'));
+
+    const whole = await fetch(`${BASE}${path}`);
+    assert(whole.status === 200, `the whole object answered ${whole.status}`);
+    assert(
+      whole.headers.get('accept-ranges') === 'bytes',
+      'the CDN does not advertise Accept-Ranges, so a media element will never ask for one and every seek re-downloads the file',
+    );
+    const size = Number(whole.headers.get('content-length'));
+    assert(Number.isFinite(size) && size > 8, `no usable Content-Length on the whole object (${whole.headers.get('content-length')})`);
+    const body = new Uint8Array(await whole.arrayBuffer());
+
+    const head = await fetch(`${BASE}${path}`, { headers: { range: 'bytes=0-3' } });
+    assert(head.status === 206, `an opening probe answered ${head.status}, not 206`);
+    assert(head.headers.get('content-range') === `bytes 0-3/${size}`, `Content-Range read ${head.headers.get('content-range')}`);
+    const first = new Uint8Array(await head.arrayBuffer());
+    assert(first.length === 4, `a four-byte range returned ${first.length} bytes`);
+
+    /* The suffix form, which is the one that is easy to serve backwards: it
+       must be the LAST bytes. A wrong reading here is audible as a glitch and
+       looks like a working 206 from the outside. */
+    const tail = await fetch(`${BASE}${path}`, { headers: { range: 'bytes=-4' } });
+    assert(tail.status === 206, `a suffix range answered ${tail.status}`);
+    const last = new Uint8Array(await tail.arrayBuffer());
+    assert(
+      last.length === 4 && last.every((byte, i) => byte === body[size - 4 + i]),
+      'bytes=-4 did not return the last four bytes — the suffix range is being read from the start',
+    );
+
+    const past = await fetch(`${BASE}${path}`, { headers: { range: `bytes=${size + 10}-` } });
+    assert(past.status === 416, `a range past the end answered ${past.status}, not 416`);
+    assert(past.headers.get('content-range') === `bytes */${size}`, `the 416 carried ${past.headers.get('content-range')}`);
+
+    /* The levelling half: a measurement the artist's browser would send has
+       to be accepted, clamped, and readable back by the surface that plays
+       the track. A nonsense one is refused rather than stored. */
+    const owner = await seedSessionCookie(`alpha-level-${run}@example.com`);
+    const asStranger = await api(`/api/artist-media/${mediaHexId}`, {
+      method: 'PATCH', cookie: owner.cookie, headers: json, body: JSON.stringify({ loudnessLufs: -9.5 }),
+    });
+    assert(asStranger.status === 403, `a stranger levelling someone else's track answered ${asStranger.status}`);
+
+    const artistOwner = await prisma.user.findUnique({ where: { id: stored!.profile.ownerId }, select: { email: true } });
+    assert(artistOwner?.email, 'the track owner has no address to sign in as');
+    const artist = await seedSessionCookie(artistOwner.email);
+    const junk = await api(`/api/artist-media/${mediaHexId}`, {
+      method: 'PATCH', cookie: artist.cookie, headers: json, body: JSON.stringify({ loudnessLufs: 42 }),
+    });
+    assert(junk.status === 400, `a loudness of +42 LUFS was accepted with ${junk.status} — the clamp is gone`);
+
+    ok(await api(`/api/artist-media/${mediaHexId}`, {
+      method: 'PATCH', cookie: artist.cookie, headers: json, body: JSON.stringify({ loudnessLufs: -8.25, peakDbfs: -0.5 }),
+    }));
+    const levelled = await prisma.artistMediaAsset.findUnique({ where: { hexId: mediaHexId }, select: { loudnessLufs: true, peakDbfs: true } });
+    assert(levelled?.loudnessLufs === -8.25 && levelled.peakDbfs === -0.5, `the reading came back as ${JSON.stringify(levelled)}`);
+
+    return `Accept-Ranges served, 0-3 and the suffix both correct against ${size} bytes, 416 past the end, and a -8.25 LUFS reading stored (stranger 403, +42 refused 400)`;
+  });
+
   const pass = rows.filter((r) => r.status === 'PASS').length;
   const fail = rows.filter((r) => r.status === 'FAIL').length;
   const block = rows.filter((r) => r.status === 'BLOCKED').length;
