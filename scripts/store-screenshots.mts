@@ -111,6 +111,19 @@ for (const profile of profiles) {
   if (profile.type === 'ARTIST' && !ARTIST) SHOTS.splice(1, 0, { id: '2-artist', route: `/app/artists/${profile.slug}` });
   if (profile.type === 'VENUE' && !VENUE) SHOTS.push({ id: '6-venue-radar', route: `/app/me/venues/${profile.slug}/analytics` });
 }
+/* The paragraph above was already written, and the next reader still fell into
+   it — which is the difference between a comment and a check. Falling back is
+   legitimate for proving the harness runs, so this warns rather than refusing;
+   what it must not do is stay quiet, because an owner-view frame full of empty
+   counters passes every automated gate here. */
+if (!ARTIST || !VENUE) {
+  const missing = [!ARTIST && '--artist=', !VENUE && '--venue='].filter(Boolean).join(' and ');
+  console.warn(
+    `\n  !!  No ${missing} given, so the frames below use the SIGNED-IN USER'S OWN profile.\n` +
+    `      That page renders the owner view — an upload form and counters at zero — and is\n` +
+    `      not a store screenshot. Seed content (npm run seed:preview) and pass a public slug.\n`,
+  );
+}
 
 // Same reason as measure-layout and audit-mobile: Chromium does not read
 // HTTPS_PROXY itself, and does NOT bypass loopback for a proxy handed to it
