@@ -9,9 +9,14 @@ change it here too — the two privacy questionnaires are separately submitted
 and separately auditable, and the fastest way to fail a review is to have them
 disagree with each other or with `/info?tab=privacy`.
 
-Last checked against the code: 2026-09-07 — and against the live
-production endpoints and the workflow run history, which is how two of the
-steps below turned out to be already done.
+Last checked against the code: 2026-09-09 — and against the live production
+endpoints and the workflow run history, which is how several of the steps below
+turned out to be already done. **Re-check before quoting any status line here.**
+Three of them had gone stale within two days of being written, and a submission
+pack that overstates what is left is the same problem as one that understates
+it: on 09-07 this file asked for a Play icon that was already in the repository,
+and told Apple that ticketing was switched off when it had been live since
+08-31.
 
 ---
 
@@ -225,9 +230,10 @@ beta; nothing about the app changes when it does.
 TICKET PURCHASES
 Ticket sales are for real-world admission to live events, so In-App Purchase
 does not apply (App Store Review Guideline 3.1.3(e) / 3.1.5(a)). Checkout is
-Stripe-hosted. Ticketing is disabled in the review environment unless you ask
-us to enable it — email admin@ihype.org and we will turn it on for your test
-account.
+Stripe-hosted and is live: a ticket bought in review is a real purchase against
+a real card. If you would rather not complete one, tell us at admin@ihype.org
+and we will stand up a free-entry event for your account so you can walk the
+whole flow end to end without a charge.
 
 PERMISSIONS
 · Location — used to centre the map on where you are. Declining leaves the map
@@ -257,8 +263,21 @@ before uploading**: the script refuses an obviously empty one, but it cannot
 judge a page that is merely thin, and a store listing is the one place where an
 empty fixture is indistinguishable from an empty product.
 
-The icon and feature graphic below are still genuinely outside this repository —
-they are artwork, not screens.
+**The icon is NOT outside this repository, and this line used to say it was
+(corrected 2026-09-09).** Only the Play feature graphic is genuinely missing.
+What already exists, measured rather than assumed:
+
+| Asset | Where | Measured |
+|---|---|---|
+| Play icon 512×512 | `public/icons/icon-512.png` | 512×512, colour type 2 — **no alpha channel**, which is the requirement Play rejects uploads for |
+| iOS app icon | `ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png` | 1024×1024, no alpha. Ships inside the binary; Apple takes no separate upload |
+| Android launcher | `mipmap-*/ic_launcher_foreground.png` at all five densities, over `ic_launcher_background` `#ffffff` | a real adaptive icon, not Capacitor's default |
+| **Play feature graphic 1024×500** | — | **missing. Artwork, and the one asset nothing here can produce.** |
+
+The white launcher background is the brand ground (2026-09-05, the Apple Music
+skin), not a placeholder — do not "fix" it to something darker without checking
+`--bg` first. What no check here can tell you is whether the mark reads at 48dp
+on a home screen; look at the debug APK on a real device before you ship it.
 
 **Invite codes for the review notes** — not an asset, but the same kind of
 thing: mint them in `/admin/users` → Access requests, or `POST
@@ -269,8 +288,8 @@ strands a reviewer at the wall and costs a review cycle. See
 opens it for beta.
 
 **Google Play**
-- App icon 512×512 PNG, 32-bit, no alpha
-- Feature graphic 1024×500 PNG or JPEG
+- ~~App icon 512×512 PNG, 32-bit, no alpha~~ — in the repository, see the table above
+- Feature graphic 1024×500 PNG or JPEG — **still needed**
 - At least 2 phone screenshots (16:9 or 9:16, 320–3840px on the short side)
 - Optional but recommended: 7-inch and 10-inch tablet screenshots
 
@@ -288,9 +307,23 @@ a word of marketing copy.
 
 ## Order of operations
 
-1. **Play** — create the app, upload the first `.aab` by hand to Internal
-   testing (the API refuses an app with no release), then fill the listing,
-   Data Safety, content rating and ads declaration.
+0. **Push should work before you submit, and it is the only remaining item that
+   is about the product rather than paperwork.** The standing approval risk is
+   Apple guideline 4.2: `server.url` points the WebView at production, which is
+   what makes a web deploy reach both stores in two minutes and also the shape
+   Apple rejects as "just a website". Push and location are the defence, and a
+   reviewer can check both. Two operator legs remain — the APNs `.p8` uploaded
+   in Firebase, and the `FCM_PROJECT_ID` / `FCM_CLIENT_EMAIL` / `FCM_PRIVATE_KEY`
+   Worker secrets. `docs/runbooks/push-setup.md` has the sequence and explains
+   why the second leg is the one that bites: without it, devices register
+   tokens, the console reads healthy, and nothing is ever delivered. **Read the
+   live answer at `/admin` → System (`integrations.nativePush`) rather than
+   inferring it** — `/api/health` gives an unauthenticated caller liveness only.
+1. **Play — creating the app and the first upload are DONE.** The evidence is
+   step 2: Play only exposes an app-signing certificate once a bundle has been
+   uploaded and Play App Signing is on, and those fingerprints are live in
+   `assetlinks.json` today. What is left here is the listing, Data Safety,
+   content rating and the ads declaration.
 2. **DONE 2026-09-08.** Take the SHA-256s from **Protected with Play → App
    signing** (the `/keymanagement` page — NOT "Test and release → Setup → App
    signing", which no longer exists, nor "App integrity", which now only says
@@ -308,5 +341,17 @@ a word of marketing copy.
    **already uploaded to TestFlight** on 2026-09-05 (run `33977825909`, step
    "Upload to TestFlight — success"). What is left on the Apple side is App
    Privacy, screenshots and the submission itself.
-4. Mint the review link from `/admin` → System, paste it into both sets of
-   review notes, and submit.
+4. Mint the review link from `/admin` → System **and three single-use invite
+   codes** from `/admin/users` → Access requests, paste both into the review
+   notes above, and submit. The link is few-use by design (12 redemptions, 60
+   days — `src/lib/review-access.ts`); the invite codes are single-use, which is
+   why three.
+
+**What is NOT left, so nobody re-does it:** every signing secret works. Native
+build run 307 (2026-09-09, off `main`) produced a signed `.ipa` and a signed
+`.aab`; both upload steps were skipped only because the dispatch had
+`publish=false`. `npm run check:app-links` passes against production for both
+platforms. A build has been on TestFlight since 2026-09-05. To publish, dispatch
+the workflow with `publish=true` — iOS goes to TestFlight and Android to Play
+from the one run. `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is still unset and only
+automates the Play half; a hand upload needs no secret at all.
