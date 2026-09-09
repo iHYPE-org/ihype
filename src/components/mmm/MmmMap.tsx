@@ -19,6 +19,8 @@ import {
 import type { MapCluster, MapEventPin } from '@/app/api/map/events/route';
 import type { MapVenuePin } from '@/app/api/map/venues/route';
 import type { MapArtistCity } from '@/app/api/map/artists/route';
+import { useI18n } from '@/components/I18nProvider';
+import type { Translate } from '@/lib/mmm-shell-labels';
 
 export type MapLayer = 'events' | 'venues' | 'artists';
 export type MapSheetTarget =
@@ -62,6 +64,18 @@ const SEARCH_PLACEHOLDER: Record<MapLayer, string> = {
   events: 'Search shows, venues, cities',
   venues: 'Search venues, streets, cities',
 };
+
+/* Translated at the DRAW, keyed on the English above — the extractor reads the
+   source for a literal `t('key', 'English')`, so translating inside the record
+   would make these invisible to it. Same rule as `mmm-shell-labels.ts`. */
+function translatePlaceholder(t: Translate, layer: MapLayer): string {
+  switch (layer) {
+    case 'artists': return t('mmmMap.searchArtists', 'Search artists, genres, cities');
+    case 'events': return t('mmmMap.searchEvents', 'Search shows, venues, cities');
+    case 'venues': return t('mmmMap.searchVenues', 'Search venues, streets, cities');
+    default: return SEARCH_PLACEHOLDER[layer];
+  }
+}
 
 /**
  * The Map module — a real slippy map with bounded queries and de-collided pins.
@@ -141,6 +155,7 @@ export function MmmMap({
   initialLayer: MapLayer;
   onOpenSheet: (target: MapSheetTarget) => void;
 }) {
+  const { t } = useI18n();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [ready, setReady] = useState(false);
@@ -695,7 +710,7 @@ const flownHome = useRef(false);
           keyboard without inventing a key handler — a tab to the compass reads
           the label and paints the credit. */}
       <button
-        aria-label="Hold to show the map data credit"
+        aria-label={t('mmmMap.creditLabel', 'Hold to show the map data credit')}
         className="mmm-map-compass"
         onBlur={() => setCreditOpen(false)}
         onFocus={() => setCreditOpen(true)}
@@ -784,9 +799,9 @@ const flownHome = useRef(false);
                      round trip through a browser console. A blocked request
                      and an expired key are the same picture and different
                      fixes. */
-                  ? `The map could not load (${failReason}). Everything else still works.`
-                  : 'The map could not load. Everything else still works.'
-                : 'Map lookups are paused right now — try again shortly.'}
+                  ? t('mmmMap.failedWithReason', 'The map could not load ({reason}). Everything else still works.').replace('{reason}', failReason)
+                  : t('mmmMap.failed', 'The map could not load. Everything else still works.')
+                : t('mmmMap.paused', 'Map lookups are paused right now — try again shortly.')}
             </div>
           )}
         </>
@@ -833,6 +848,7 @@ function MapLayerSearch({
   onOpenSheet: (target: MapSheetTarget) => void;
   venues: MapVenuePin[];
 }) {
+  const { t } = useI18n();
   const [term, setTerm] = useState('');
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -916,7 +932,7 @@ function MapLayerSearch({
       <div className="mmm-search-field">
         <span aria-hidden="true" className="mmm-search-glyph">⌕</span>
         <input
-          aria-label={SEARCH_PLACEHOLDER[layer]}
+          aria-label={translatePlaceholder(t, layer)}
           autoComplete="off"
           className="mmm-search-input"
           onChange={(event) => setTerm(event.target.value)}
@@ -925,7 +941,7 @@ function MapLayerSearch({
             setTerm('');
             inputRef.current?.blur();
           }}
-          placeholder={SEARCH_PLACEHOLDER[layer]}
+          placeholder={translatePlaceholder(t, layer)}
           ref={inputRef}
           type="search"
           value={term}
@@ -944,15 +960,15 @@ function MapLayerSearch({
             <>
               <p className="mmm-search-note">
                 {layer === 'artists'
-                  ? 'No artists match that in view. Try a city, a genre or part of the name — or move the map.'
-                  : 'No venues match that in view. Try a city, a street or part of the name — or move the map.'}
+                  ? t('mmmMap.noArtists', 'No artists match that in view. Try a city, a genre or part of the name — or move the map.')
+                  : t('mmmMap.noVenues', 'No venues match that in view. Try a city, a street or part of the name — or move the map.')}
               </p>
               {/* The one honest way out of a viewport-bounded search: a page
                   that really does search everything. */}
               <Link className="mmm-search-result" href={`/app/music/discover?q=${encodeURIComponent(term.trim())}`}>
                 <span className="mmm-search-result-main">
                   <span className="mmm-row-title">Search all of iHYPE for “{term.trim()}”</span>
-                  <span className="mmm-row-sub">Leaves the map</span>
+                  <span className="mmm-row-sub">{t('mmmMap.leavesTheMap', 'Leaves the map')}</span>
                 </span>
                 <span aria-hidden="true" className="mmm-search-kind">→</span>
               </Link>
@@ -999,6 +1015,7 @@ function MapDatePicker({
   onChange: (next: ReadonlySet<string>) => void;
   selected: ReadonlySet<string>;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState(() => new Date());
   const popRef = useRef<HTMLDivElement | null>(null);
@@ -1046,14 +1063,14 @@ function MapDatePicker({
 
       {open && (
         <div
-          aria-label="Filter by date"
+          aria-label={t('mmmMap.filterByDate', 'Filter by date')}
           className="mmm-datepick-pop"
           ref={popRef}
           role="dialog"
         >
           <div className="mmm-datepick-head">
             <button
-              aria-label="Previous month"
+              aria-label={t('mmmMap.previousMonth', 'Previous month')}
               className="mmm-datepick-page"
               onClick={() => setAnchor((current) => shiftMonth(current, -1))}
               type="button"
@@ -1062,7 +1079,7 @@ function MapDatePicker({
             </button>
             <span className="mmm-datepick-month">{month.title}</span>
             <button
-              aria-label="Next month"
+              aria-label={t('mmmMap.nextMonth', 'Next month')}
               className="mmm-datepick-page"
               onClick={() => setAnchor((current) => shiftMonth(current, 1))}
               type="button"

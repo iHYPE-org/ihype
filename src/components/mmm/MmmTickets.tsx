@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
 import { TicketClaimForm } from '@/components/TicketTransferPanel';
 import { OfflineTicketWarmer } from '@/components/OfflineTicketWarmer';
+import { useI18n } from '@/components/I18nProvider';
 
 const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
 
@@ -38,6 +39,7 @@ function dayParts(iso: string) {
 }
 
 export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState<MmmMeTicket | null>(null);
   const demo = tickets.length === 0;
   const visibleTickets = demo ? DEMO_TICKETS : tickets;
@@ -67,8 +69,8 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
       </div>
       {demo && (
         <div className="mmm-demo-head mmm-ticket-demo-head">
-          <span className="mmm-demo-badge">Demo content</span>
-          <p>Your real tickets, entry codes and transfer status will appear here.</p>
+          <span className="mmm-demo-badge">{t('mmmTickets.demoBadge', 'Demo content')}</span>
+          <p>{t('mmmTickets.demoBody', 'Your real tickets, entry codes and transfer status will appear here.')}</p>
         </div>
       )}
       <div className="mmm-ticket-list">
@@ -91,15 +93,15 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
               </div>
               <div className="mmm-ticket-actions">
                 <span className="mmm-ticket-status" data-attended={attended || undefined}>
-                  {attended ? 'Attended' : 'Upcoming'}
+                  {attended ? t('mmmTickets.attended', 'Attended') : t('mmmTickets.upcoming', 'Upcoming')}
                 </span>
                 {attended ? (
                   <span className="mmm-ticket-checkin">
-                    Checked in {dayParts(ticket.scannedAt!).time}
+                    {t('mmmTickets.checkedIn', 'Checked in {time}').replace('{time}', dayParts(ticket.scannedAt!).time)}
                   </span>
                 ) : (
                   <>
-                    <span className="mmm-ticket-checkin">Doors {when.time}</span>
+                    <span className="mmm-ticket-checkin">{t('mmmTickets.doors', 'Doors {time}').replace('{time}', when.time)}</span>
                     <button className="mmm-ticket-view" onClick={() => setOpen(ticket)} type="button">
                       View ticket
                     </button>
@@ -117,6 +119,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
 }
 
 function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () => void; ticket: MmmMeTicket }) {
+  const { t } = useI18n();
   const when = dayParts(ticket.startsAt);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
@@ -147,12 +150,12 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
         onPointerDown={(event) => event.stopPropagation()}
         role="dialog"
       >
-        <button aria-label="Close ticket" className="mmm-ticket-close" onClick={onClose} ref={closeRef} type="button">
+        <button aria-label={t('mmmTickets.close', 'Close ticket')} className="mmm-ticket-close" onClick={onClose} ref={closeRef} type="button">
           ✕
         </button>
 
         <div className="mmm-ticket-eyebrow">
-          {demo ? 'Demo ticket · ' : ''}{ticket.scannedAt ? 'Attended' : 'Upcoming'} · {when.full}
+          {demo ? `${t('mmmTickets.demoTicket', 'Demo ticket')} · ` : ''}{ticket.scannedAt ? t('mmmTickets.attended', 'Attended') : t('mmmTickets.upcoming', 'Upcoming')} · {when.full}
         </div>
         <h3 className="mmm-ticket-sheet-title" id="mmm-ticket-title">{ticket.title}</h3>
         {ticket.where && <div className="mmm-ticket-sheet-where">{ticket.where}</div>}
@@ -164,11 +167,11 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
           <img alt={`Entry code ${ticket.serializedId}`} src={ticket.qrDataUrl} />
         </div>
         <div className="mmm-ticket-code">{ticket.serializedId}</div>
-        <div className="mmm-ticket-rule">Doors {when.time} · One scan, one entry</div>
+        <div className="mmm-ticket-rule">{t('mmmTickets.doors', 'Doors {time}').replace('{time}', when.time)} · {t('mmmTickets.oneScan', 'One scan, one entry')}</div>
 
         <div className="mmm-ticket-money">
           <div className="mmm-ticket-money-row">
-            <span>Face value</span>
+            <span>{t('mmmTickets.faceValue', 'Face value')}</span>
             <strong>{ticket.faceValue ?? '—'}</strong>
           </div>
           {/* Stripe's cost of moving the money, paid by the buyer. iHYPE is a
@@ -177,12 +180,12 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
               existed — a $0.00 there would read as a fee that was waived. */}
           {ticket.processingFee && (
             <div className="mmm-ticket-money-row">
-              <span>Stripe processing, paid by the buyer</span>
+              <span>{t('mmmTickets.processing', 'Stripe processing, paid by the buyer')}</span>
               <strong>{ticket.processingFee}</strong>
             </div>
           )}
           <div className="mmm-ticket-money-row">
-            <span>iHYPE fee</span>
+            <span>{t('mmmTickets.ihypeFee', 'iHYPE fee')}</span>
             <strong className="mmm-ticket-zero">$0.00</strong>
           </div>
         </div>
@@ -201,10 +204,10 @@ function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () =>
             the legacy ticket page for now; this links there rather than
             pretending to do it here. */}
         {demo ? (
-          <span aria-disabled="true" className="mmm-ticket-transfer">Transfer preview</span>
+          <span aria-disabled="true" className="mmm-ticket-transfer">{t('mmmTickets.transferPreview', 'Transfer preview')}</span>
         ) : (
           <a className="mmm-ticket-transfer" href={`/app/me/tickets/${ticket.serializedId}`}>
-            Transfer this ticket
+            {t('mmmTickets.transfer', 'Transfer this ticket')}
           </a>
         )}
       </div>
