@@ -79,6 +79,17 @@ and accepts a paste containing real newlines. `native-push.ts` also applies
 **Use one or the other.** Pasting real newlines into an already-escaped string
 produces a key that parses as neither.
 
+## Reading whether legs 1 and 3 are set
+
+`GET /api/health` reports **`integrations.nativePush`** — true when all three
+secrets are readable by the Worker. The detail is admin-scoped; the public
+payload is only `{status, scope}`, so read it signed in as an administrator.
+
+**It reports CONFIGURATION, not delivery**, and the distinction is the whole
+point: FCM proxies to APNs for iOS solely once the auth key of leg 2 is
+uploaded, and that is Apple-side state nothing here can see. A green reading
+with no APNs key means Android works and iOS silently does not.
+
 ## Proving it works
 
 Configured is not delivered, and every layer here fails quietly, so walk it:

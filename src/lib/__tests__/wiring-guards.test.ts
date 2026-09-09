@@ -803,17 +803,56 @@ describe('a ticketed show is a buyable show', () => {
  * time-sensitive things the product sends, which is to say the ones that
  * justify a native app rather than a bookmark.
  *
- * So the invariant is a test now: those two modules are imported by
+ * So the invariant is a test now: the two SEND functions are imported by
  * `src/lib/notify.ts` and by nothing else. Adding a seventh caller that
  * bypasses the fan-out fails here rather than in a member's silence.
+ *
+ * This checked the MODULE path until 2026-09-09, which was exact only while
+ * those modules exported nothing but senders. `native-push.ts` now also
+ * exports `getNativePushReadiness`, a pure read of the three FCM secrets that
+ * sends nothing and exists so `/api/health` can report whether push is
+ * configured at all — the leg whose absence is otherwise silent. A module-path
+ * check calls that a bypass, which is wrong and would push the reader into a
+ * second file away from the config read it describes.
+ *
+ * The rule is therefore on the SYMBOL. A namespace import is still refused
+ * outright, because `push.sendNativePushNotification(...)` bypasses the
+ * fan-out exactly as a named import does while carrying no sender name for a
+ * symbol check to find.
  */
 describe('every push reaches native devices too', () => {
-  const SENDERS = ['@/lib/push-notify', '@/lib/native-push'];
+  const SENDER_MODULES = ['@/lib/push-notify', '@/lib/native-push'];
+  const SEND_FUNCTIONS = ['sendPushNotification', 'sendNativePushNotification'];
   const ONLY_IMPORTER = 'src/lib/notify.ts';
 
-  it('is imported by the fan-out and nothing else', () => {
+  it('the send functions are imported by the fan-out and nothing else', () => {
     const files = listFiles('src').filter((f) => f !== ONLY_IMPORTER);
-    const offenders = files.filter((f) => SENDERS.some((m) => code(f).includes(`from '${m}'`)));
+
+    /* Walk backwards from each `from '<module>'` rather than matching the
+       import clause with a lazy `[\s\S]*?`. That pattern is quadratic on a
+       file with no match — the engine rescans to end-of-file from every
+       `import` — and over 857 files it does not finish inside the 5s test
+       timeout. Measured: it timed out, it did not fail. A bounded lookbehind
+       is linear, and an import clause is only ever a few dozen characters. */
+    const clauseBefore = (source: string, at: number) => {
+      const window = source.slice(Math.max(0, at - 500), at);
+      const start = window.lastIndexOf('import');
+      return start === -1 ? '' : window.slice(start);
+    };
+
+    const offenders = files.filter((file) => {
+      const source = code(file);
+      return SENDER_MODULES.some((module) => {
+        const needle = `from '${module}'`;
+        for (let at = source.indexOf(needle); at !== -1; at = source.indexOf(needle, at + 1)) {
+          const clause = clauseBefore(source, at);
+          if (clause.includes('*')) return true;
+          if (SEND_FUNCTIONS.some((fn) => new RegExp(`\\b${fn}\\b`).test(clause))) return true;
+        }
+        return false;
+      });
+    });
+
     expect(offenders, `these bypass sendPushToAllDevices: ${offenders.join(', ')}`).toEqual([]);
   });
 

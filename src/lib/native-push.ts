@@ -84,22 +84,71 @@ async function getFcmAccessToken(clientEmail: string, privateKeyPem: string): Pr
  * the FCM service account isn't configured yet, or the user has no registered
  * devices — this is always a side effect of notifyUser(), never load-bearing.
  */
-export async function sendNativePushNotification(userId: string, payload: NativePushPayload): Promise<void> {
-  // Read through readRuntimeEnv, NOT process.env: these three are Worker
-  // *secrets*, and on workerd secrets never appear on process.env — they are
-  // only reachable via the Cloudflare env binding (see src/lib/runtime-env.ts).
-  // Read the old way, every one of them is undefined in production, so the
-  // guard below no-ops native push permanently no matter how correctly the
-  // secrets are set. Same latent fault that had transactional email dead for
-  // 36 days and that reportToSentry() was migrated off.
+type FcmServiceAccount = { projectId: string; clientEmail: string; privateKey: string };
+
+/**
+ * The ONE place the three FCM secrets are read.
+ *
+ * Read through readRuntimeEnv, NOT process.env: these are Worker *secrets*,
+ * and on workerd a secret never appears on process.env — it is only reachable
+ * via the Cloudflare env binding (see src/lib/runtime-env.ts). Read the old
+ * way, all three are undefined in production and native push no-ops
+ * permanently no matter how correctly the secrets are set. Same latent fault
+ * that had transactional email dead for 36 days and that reportToSentry() was
+ * migrated off.
+ *
+ * `FCM_PRIVATE_KEY` is a multi-line PEM. `wrangler secret put` accepts a paste
+ * with real newlines; the unescape below also accepts the single-line form
+ * with literal `\n`. Setting it with BOTH — escaping a value that already
+ * carries real newlines — yields a key that parses as neither, which is why
+ * the readiness check below reports the key as present and sending still
+ * fails at the JWT signature rather than here.
+ */
+function readFcmServiceAccount(): FcmServiceAccount | null {
   const projectId = readRuntimeEnv('FCM_PROJECT_ID');
   const clientEmail = readRuntimeEnv('FCM_CLIENT_EMAIL');
   const privateKey = readRuntimeEnv('FCM_PRIVATE_KEY')?.replace(/\\n/g, '\n');
 
-  if (!projectId || !clientEmail || !privateKey) {
+  if (!projectId || !clientEmail || !privateKey) return null;
+  return { projectId, clientEmail, privateKey };
+}
+
+/**
+ * Whether native push can reach a device at all, and what is missing if not.
+ *
+ * This exists because the absence of these secrets is the QUIETEST failure in
+ * the whole notification stack: the app registers real device tokens, rows
+ * land in `NativeDeviceToken`, every console reads healthy, and not one
+ * notification is ever delivered — `sendNativePushNotification` logs and
+ * returns. Before this, nothing outside a Worker log could answer "is push
+ * configured", so the only way to find out was a physical device.
+ *
+ * It reports CONFIGURATION only. A green reading does not mean a push
+ * arrives: FCM proxies to APNs for iOS solely once the APNs auth key is
+ * uploaded in the Firebase console, and that is Apple-side state this
+ * codebase cannot see. Do not let a caller present it as "push works".
+ */
+export function getNativePushReadiness(): { ready: boolean; blockers: string[] } {
+  const blockers: string[] = [];
+  if (!readRuntimeEnv('FCM_PROJECT_ID')) blockers.push('Set FCM_PROJECT_ID (the service account JSON\'s project_id).');
+  if (!readRuntimeEnv('FCM_CLIENT_EMAIL')) blockers.push('Set FCM_CLIENT_EMAIL (its client_email).');
+  if (!readRuntimeEnv('FCM_PRIVATE_KEY')) blockers.push('Set FCM_PRIVATE_KEY (its private_key).');
+  return { ready: blockers.length === 0, blockers };
+}
+
+export function isNativePushConfigured() {
+  return getNativePushReadiness().ready;
+}
+
+export async function sendNativePushNotification(userId: string, payload: NativePushPayload): Promise<void> {
+  const account = readFcmServiceAccount();
+
+  if (!account) {
     console.warn('[native-push] FCM service account not configured — skipping native push for user', userId);
     return;
   }
+
+  const { projectId, clientEmail, privateKey } = account;
 
   const devices = await db.nativeDeviceToken.findMany({
     where: { userId },
