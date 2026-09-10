@@ -127,6 +127,17 @@ export async function getHealthSnapshot() {
     /* Either source of restore evidence: the operator's stamp, or the nightly
        drill's own pass key. An unreadable KV is no evidence, not a failure. */
     const automatedDrillAt = await kvGet<number | string>('cron-alive:restore-drill').then(parseAutomatedDrillAt).catch(() => null);
+    /* Last night's Stripe reconciliation, as the cron stored it: how many
+       disagreements about money, and when it looked. Absent means the job
+       has not run in three days, which the stale-cron alert also says. */
+    const stripeReconciliation = await kvGet<string | { at?: string; money?: number; info?: number }>('stripe-reconcile:last')
+      .then((raw) => {
+        const parsed = typeof raw === 'string' ? (JSON.parse(raw) as { at?: string; money?: number; info?: number }) : raw;
+        return parsed && typeof parsed === 'object' && typeof parsed.at === 'string'
+          ? { at: parsed.at, money: Number(parsed.money ?? 0), info: Number(parsed.info ?? 0) }
+          : null;
+      })
+      .catch(() => null);
     const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'), Date.now(), automatedDrillAt);
     const alphaBlockers = buildAlphaBlockers({
       administrators: administratorCount,
@@ -151,6 +162,7 @@ export async function getHealthSnapshot() {
         openSupportRequests: openSupportCount,
         failedEmails24h: failedEmailCount,
         sentEmails24h: sentEmailCount,
+        stripeReconciliation,
         pendingVerifications: pendingVerificationCount,
         reservedTicketOrders: reservedTicketCount,
         notificationJobs: {

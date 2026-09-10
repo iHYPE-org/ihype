@@ -175,6 +175,7 @@ export const AUTOMATED_JOBS: readonly AutomatedJob[] = [
   { path: '/api/cron/dmca-enforce', schedule: '30 3 * * *', label: 'DMCA enforcement', what: 'Acts on CONFIRMED notices only — a notice is confirmed by a person, never automatically' },
   { path: '/api/cron?job=audit-log-rotate', schedule: '0 4 * * 1', label: 'Audit log rotation', what: 'Archives audit rows past retention', aliveKey: 'audit-log-rotate' },
   { path: '/api/cron/backup-verify', schedule: '0 5 * * *', label: 'Backup verification', what: 'Confirms the live database and migration state; warns when the restore drill is due' },
+  { path: '/api/cron?job=stripe-reconcile', schedule: '0 5 * * *', label: 'Stripe reconciliation', what: 'Compares a week of PaymentIntents (platform and venue accounts) with ticket orders and campaigns and emails the administrators when the two disagree about money — reports, never changes a row', aliveKey: 'stripe-reconcile' },
   { path: '/api/cron?job=feature-shows', schedule: '0 6 * * *', label: 'Feature shows', what: 'Picks the shows the discover surfaces feature today', aliveKey: 'feature-shows' },
   { path: '/api/cron/daily-ops', schedule: '0 7 * * *', label: 'Daily ops report', what: 'Emails the administrators yesterday’s signups, revenue, open support and flagged shows' },
   { path: '/api/cron?job=digest', schedule: '0 8 * * *', label: 'Member digest', what: 'Emails members their daily digest', aliveKey: 'digest' },

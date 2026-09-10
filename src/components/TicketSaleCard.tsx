@@ -185,7 +185,11 @@ export function TicketSaleCard({
     } else {
       setAgeGated(data.code === 'AGE_18_REQUIRED');
       setEmailUnverified(data.code === 'EMAIL_NOT_VERIFIED');
-      setMessage(data.error ?? t('ticketSaleCard.ticketRequestErrorFallback', 'Could not complete the ticket request.'));
+      setMessage(
+        data.code === 'PAYMENTS_UNAVAILABLE'
+          ? t('ticketSaleCard.paymentsUnavailable', 'Card payments are unavailable right now. Nothing was charged and your seats were released — please try again in a few minutes.')
+          : (data.error ?? t('ticketSaleCard.ticketRequestErrorFallback', 'Could not complete the ticket request.')),
+      );
     }
 
     // Turnstile tokens are single-use — without this, a buyer who hits the
