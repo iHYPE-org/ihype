@@ -104,8 +104,11 @@ function reportLoadedAssets(worker: ServiceWorker): void {
   if (loaded.length) worker.postMessage({ type: 'WARM_ASSETS', urls: loaded });
 }
 
+/** Sign-out must never hang on a worker that is not answering. */
+const CLEAR_READY_TIMEOUT_MS = 1_500;
+
 /**
- * Drops the ticket and page caches. Called on sign-out.
+ * Drops the ticket and page caches. Called on sign-out and on account deletion.
  *
  * A ticket page is personalised and carries a QR that admits its holder to a
  * show, and the ticket cache is deliberately version-independent so a service
@@ -113,11 +116,43 @@ function reportLoadedAssets(worker: ServiceWorker): void {
  * shared device the next person to sign in could be served the previous
  * account's ticket.
  *
- * Fire-and-forget by design: `postMessage` reaches the service worker, which
- * outlives the page, so the navigation that follows does not need to wait.
+ * IT READ `controller` TOO, AND THAT IS THE SAME HOLE AS `warmTicketCache`
+ * (2026-09-10). `sw.js` calls `clients.claim()` on activate, so a page becomes
+ * controlled only AFTER the worker installs and activates — before that,
+ * `navigator.serviceWorker.controller` is null and this posted to nobody. The
+ * consequence is the one the paragraph above describes: the previous account's
+ * ticket QR pages stay on the device, in the one cache nothing else ever
+ * clears. Found by scanning for siblings of the warm bug rather than by
+ * anything failing.
+ *
+ * NOT fire-and-forget any more, and the ordering is the delicate part: both
+ * callers navigate immediately afterwards, so an `await` that resolves late
+ * would unload the page before the message went out — worse than the bug it
+ * fixes. It races `serviceWorker.ready` against a short timeout and resolves
+ * either way, and the callers navigate in a `finally`. **Sign-out must happen
+ * whatever this returns**; a member trying to leave a shared device must never
+ * be held by a cache.
+ *
+ * Resolves true when the message was handed to a worker.
  */
-export function clearPrivateCaches(): void {
-  controller()?.postMessage({ type: 'CLEAR_PRIVATE' });
+export async function clearPrivateCaches(): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker) return false;
+  /* The fast path: on any page that is already controlled — which is every
+     page after the first load of a session — this sends synchronously and the
+     await below resolves on the microtask queue. */
+  const active = controller();
+  if (active) {
+    active.postMessage({ type: 'CLEAR_PRIVATE' });
+    return true;
+  }
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready.catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), CLEAR_READY_TIMEOUT_MS)),
+  ]);
+  const worker = registration?.active ?? navigator.serviceWorker.controller;
+  if (!worker) return false;
+  worker.postMessage({ type: 'CLEAR_PRIVATE' });
+  return true;
 }
 
 /**

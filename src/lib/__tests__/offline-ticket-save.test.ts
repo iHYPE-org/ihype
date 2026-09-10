@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 
-import { warmTicketCache } from '@/lib/private-cache';
+import { clearPrivateCaches, warmTicketCache } from '@/lib/private-cache';
 
 /**
  * The fan's half of "my ticket opens at a door with no signal".
@@ -97,6 +97,48 @@ describe('the control is told what was actually stored', () => {
   it('does nothing and claims nothing for a member with no tickets', async () => {
     installServiceWorker({ ready: null });
     await expect(warmTicketCache([])).resolves.toEqual({ ok: true, stored: 0, failed: 0 });
+  });
+});
+
+describe('signing out clears the tickets even before the worker has claimed the page', () => {
+  /* THE SAME READ, WITH WORSE CONSEQUENCES (found 2026-09-10 by scanning for
+     siblings of the warm bug, not by anything failing). `clearPrivateCaches`
+     also read `controller`, and `sw.js` calls `clients.claim()` on activate —
+     so on a first load the page is uncontrolled and the message went nowhere.
+     What stays behind is the previous account's ticket QR pages, in the one
+     cache that is deliberately version-independent so nothing else ever wipes
+     it. That is the exact risk the function's own docstring describes. */
+  it('sends through the controller when the page already has one', async () => {
+    const worker: FakeWorker = { postMessage: vi.fn() };
+    installServiceWorker({ ready: Promise.resolve({ active: worker }), controller: worker });
+
+    await expect(clearPrivateCaches()).resolves.toBe(true);
+    expect(worker.postMessage).toHaveBeenCalledWith({ type: 'CLEAR_PRIVATE' });
+  });
+
+  it('falls back to the registration when there is no controller yet', async () => {
+    const worker: FakeWorker = { postMessage: vi.fn() };
+    installServiceWorker({ ready: Promise.resolve({ active: worker }), controller: null });
+
+    await expect(clearPrivateCaches()).resolves.toBe(true);
+    expect(worker.postMessage).toHaveBeenCalledWith({ type: 'CLEAR_PRIVATE' });
+  });
+
+  /* Sign-out must never be held by a cache operation. The callers navigate in
+     a `finally`, and this is the half that makes that safe: it resolves. */
+  it('resolves false rather than hanging when there is no worker at all', async () => {
+    installServiceWorker({ ready: null });
+    await expect(clearPrivateCaches()).resolves.toBe(false);
+  });
+
+  it('gives up on a registration that never resolves', async () => {
+    vi.useFakeTimers();
+    installServiceWorker({ ready: new Promise(() => {}), controller: null });
+
+    const pending = clearPrivateCaches();
+    await vi.advanceTimersByTimeAsync(5_000);
+
+    await expect(pending).resolves.toBe(false);
   });
 });
 
