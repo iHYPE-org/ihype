@@ -19,6 +19,7 @@ const order = (over: Partial<ReconcileOrder> = {}): ReconcileOrder => ({
   status: 'CAPTURED',
   stripePaymentIntentId: 'pi_1',
   settlementAccountId: null,
+  refundedAt: null,
   totalChargeCents: 2000,
   createdAt: old,
   updatedAt: old,
@@ -46,6 +47,63 @@ const ad = (over: Partial<ReconcileAd> = {}): ReconcileAd => ({
 function run(input: { orders?: ReconcileOrder[]; ads?: ReconcileAd[]; intents?: ReconcileIntent[] }) {
   return reconcileStripe({ orders: input.orders ?? [], ads: input.ads ?? [], intents: input.intents ?? [], since, now });
 }
+
+describe('the false alarms that would have paged an operator about nothing', () => {
+  it('says nothing about a refunded order, whose intent Stripe leaves succeeded', () => {
+    /* A refund voids the order and lives on the CHARGE, so the PaymentIntent
+       stays `succeeded` with amount_received intact. Before this, cancelling
+       a show with 40 sold tickets sent 40 "paid, not fulfilled" money
+       findings and a Sentry error on the night it was cancelled. */
+    const findings = reconcileStripe({
+      orders: [order({ status: 'VOID', refundedAt: old })],
+      ads: [],
+      intents: [intent({ metadata: { confirmationCode: 'ABCD1234' } })],
+      since,
+      now,
+    });
+    expect(findings).toEqual([]);
+  });
+
+  it('still reports a VOID order that was never refunded', () => {
+    const findings = reconcileStripe({
+      orders: [order({ status: 'VOID', refundedAt: null })],
+      ads: [],
+      intents: [intent({ metadata: { confirmationCode: 'ABCD1234' } })],
+      since,
+      now,
+    });
+    expect(findings.map((f) => f.kind)).toEqual(['paid-order-not-captured']);
+  });
+
+  it('does not call an order unpaid because its account could not be listed', () => {
+    const orders = [order({ settlementAccountId: 'acct_venue', stripePaymentIntentId: 'pi_missing' })];
+    const judged = reconcileStripe({ orders, ads: [], intents: [], since, now });
+    expect(judged.map((f) => f.kind)).toEqual(['captured-intent-unknown']);
+
+    const withCoverage = reconcileStripe({
+      orders,
+      ads: [],
+      intents: [],
+      accounts: [{ account: 'acct_venue', truncated: false, failed: true }],
+      since,
+      now,
+    });
+    expect(withCoverage.map((f) => f.kind)).toEqual(['account-not-compared']);
+    expect(withCoverage[0].severity).toBe('info');
+  });
+
+  it('treats a truncated list the same way, because the oldest are the ones judged', () => {
+    const findings = reconcileStripe({
+      orders: [order({ stripePaymentIntentId: 'pi_missing' })],
+      ads: [],
+      intents: [],
+      accounts: [{ account: null, truncated: true, failed: false }],
+      since,
+      now,
+    });
+    expect(findings.map((f) => f.kind)).toEqual(['account-not-compared']);
+  });
+});
 
 describe('reconcileStripe — the two ledgers side by side', () => {
   it('reports nothing when they agree', () => {

@@ -28,6 +28,10 @@
 export type ReconcileOrder = {
   confirmationCode: string;
   status: 'RESERVED' | 'CAPTURED' | 'VOID';
+  /** Set when the order was refunded. A refund voids the order and leaves the
+   *  intent `succeeded` — Stripe keeps refunds on the charge — so without this
+   *  every refunded ticket reads as money paid and not fulfilled. */
+  refundedAt: Date | null;
   stripePaymentIntentId: string | null;
   settlementAccountId: string | null;
   totalChargeCents: number;
@@ -62,7 +66,12 @@ export type ReconcileFindingKind =
   | 'paid-order-missing'
   | 'paid-ad-not-live'
   | 'paid-ad-missing'
-  | 'live-ad-without-intent';
+  | 'live-ad-without-intent'
+  /* Not a disagreement: a note that one account could not be compared at all,
+     so the silence about it means nothing. Carried as `info` so the headline
+     count stays "money", and reported so a quiet night is not read as a clean
+     one. */
+  | 'account-not-compared';
 
 export type ReconcileFinding = {
   kind: ReconcileFindingKind;
@@ -74,8 +83,22 @@ export type ReconcileFinding = {
   detail: string;
 };
 
+/** Whether each account's intent list is complete enough to compare against. */
+export type ReconcileAccountCoverage = {
+  /** null for the platform account. */
+  account: string | null;
+  /** The list hit the per-account cap, so the OLDEST intents are missing. */
+  truncated: boolean;
+  /** Stripe refused the list; nothing was read for this account. */
+  failed: boolean;
+};
+
+/** Stands in for the platform account in the coverage set, which is keyed by string. */
+export const PLATFORM_ACCOUNT = 'platform';
+
 export type ReconcileInput = {
   orders: ReconcileOrder[];
+  accounts?: ReconcileAccountCoverage[];
   ads: ReconcileAd[];
   intents: ReconcileIntent[];
   /** Intents were listed from this instant on. An order or campaign older than
@@ -103,6 +126,13 @@ export function reconcileStripe(input: ReconcileInput): ReconcileFinding[] {
   const settled = (at: Date) => input.now.getTime() - at.getTime() > SETTLE_GRACE_MS;
   const inWindow = (at: Date) => at.getTime() >= input.since.getTime();
 
+  /* An account whose list came back short or not at all cannot be compared:
+     an intent absent from a truncated page looks exactly like an intent that
+     does not exist. Judging those orders anyway turns a transient Stripe
+     failure into "a fan paid and holds nothing". */
+  const unusableAccounts = new Set(
+    (input.accounts ?? []).filter((a) => a.truncated || a.failed).map((a) => a.account ?? PLATFORM_ACCOUNT),
+  );
   const intentsById = new Map(input.intents.map((intent) => [intent.id, intent]));
   const ordersByCode = new Map(input.orders.map((order) => [order.confirmationCode, order]));
   const adsById = new Map(input.ads.map((ad) => [ad.id, ad]));
@@ -126,6 +156,7 @@ export function reconcileStripe(input: ReconcileInput): ReconcileFinding[] {
     if (!intent) {
       /* Only a finding when the list should have held it: an order older than
          the window has an intent older than the window, legitimately absent. */
+      if (unusableAccounts.has(order.settlementAccountId ?? PLATFORM_ACCOUNT)) continue;
       if (inWindow(order.createdAt) && settled(order.updatedAt)) {
         findings.push({
           kind: 'captured-intent-unknown',
@@ -146,6 +177,20 @@ export function reconcileStripe(input: ReconcileInput): ReconcileFinding[] {
         detail: `order ${order.confirmationCode} is CAPTURED but its intent is ${intent.status} — tickets were issued for money Stripe does not hold`,
       });
     }
+  }
+
+  for (const coverage of input.accounts ?? []) {
+    if (!coverage.truncated && !coverage.failed) continue;
+    const who = coverage.account ?? 'the platform account';
+    findings.push({
+      kind: 'account-not-compared',
+      severity: 'info',
+      ref: coverage.account,
+      intent: null,
+      detail: coverage.failed
+        ? `Stripe would not list PaymentIntents for ${who}, so its orders were not compared this run`
+        : `the intent list for ${who} hit its cap, so the oldest of the window is missing and its orders were not compared this run`,
+    });
   }
 
   for (const ad of input.ads) {
@@ -177,7 +222,7 @@ export function reconcileStripe(input: ReconcileInput): ReconcileFinding[] {
           intent: describeIntent(intent),
           detail: `${describeIntent(intent)} succeeded for ${intent.amountReceived}c naming order ${code}, and no such order exists — a fan paid and holds nothing`,
         });
-      } else if (order.status !== 'CAPTURED') {
+      } else if (order.status !== 'CAPTURED' && !order.refundedAt) {
         findings.push({
           kind: 'paid-order-not-captured',
           severity: 'money',

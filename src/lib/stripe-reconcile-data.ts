@@ -7,6 +7,7 @@ import {
   LIVE_AD_STATUSES,
   reconcileStripe,
   summarizeReconciliation,
+  type ReconcileAccountCoverage,
   type ReconcileIntent,
   type ReconcileSummary,
 } from '@/lib/stripe-reconcile';
@@ -48,15 +49,24 @@ function toIntent(pi: Stripe.PaymentIntent, account: string | null): ReconcileIn
   };
 }
 
-async function listIntents(stripe: Stripe, sinceSeconds: number, account: string | null): Promise<ReconcileIntent[]> {
+async function listIntents(
+  stripe: Stripe,
+  sinceSeconds: number,
+  account: string | null,
+): Promise<{ intents: ReconcileIntent[]; truncated: boolean }> {
   const out: ReconcileIntent[] = [];
   const params: Stripe.PaymentIntentListParams = { created: { gte: sinceSeconds }, limit: 100 };
   const options: Stripe.RequestOptions = account ? { stripeAccount: account } : {};
+  let truncated = false;
   for await (const pi of stripe.paymentIntents.list(params, options)) {
     out.push(toIntent(pi, account));
-    if (out.length >= MAX_INTENTS_PER_ACCOUNT) break;
+    /* Stripe lists newest first, so hitting the cap drops the OLDEST of the
+       window — exactly the intents past the settle grace and therefore the
+       ones judged. The caller must know, or an absent intent reads as a
+       missing payment. */
+    if (out.length >= MAX_INTENTS_PER_ACCOUNT) { truncated = true; break; }
   }
-  return out;
+  return { intents: out, truncated };
 }
 
 export async function runStripeReconciliation(now = new Date()): Promise<ReconcileSummary | { skipped: string }> {
@@ -71,6 +81,7 @@ export async function runStripeReconciliation(now = new Date()): Promise<Reconci
         status: true,
         stripePaymentIntentId: true,
         settlementAccountId: true,
+        refundedAt: true,
         totalChargeCents: true,
         createdAt: true,
         updatedAt: true,
@@ -87,13 +98,20 @@ export async function runStripeReconciliation(now = new Date()): Promise<Reconci
   const sinceSeconds = Math.floor(since.getTime() / 1000);
   const intents: ReconcileIntent[] = [];
   /* Each account independently caught: a venue whose account was closed must
-     not cost the platform's own comparison. A failed list is logged, and the
-     orders on that account are then judged only on what the database says. */
+     not cost the platform's own comparison. What the comparison then needs to
+     know is WHICH accounts it could not read, because an order whose intent
+     was never listed is indistinguishable from an order whose payment never
+     happened — and reporting the second when it is the first pages someone
+     about missing money that is not missing. */
+  const coverage: ReconcileAccountCoverage[] = [];
   for (const account of [null, ...accounts]) {
     try {
-      intents.push(...(await listIntents(stripe, sinceSeconds, account)));
+      const { intents: listed, truncated } = await listIntents(stripe, sinceSeconds, account);
+      intents.push(...listed);
+      coverage.push({ account, truncated, failed: false });
     } catch (error) {
       log.error('[stripe-reconcile]', error instanceof Error ? error : { error: String(error) }, `could not list PaymentIntents for ${account ?? 'the platform account'}`);
+      coverage.push({ account, truncated: false, failed: true });
     }
   }
 
@@ -101,6 +119,7 @@ export async function runStripeReconciliation(now = new Date()): Promise<Reconci
     orders: orders.map((o) => ({ ...o, status: o.status as 'RESERVED' | 'CAPTURED' | 'VOID' })),
     ads,
     intents,
+    accounts: coverage,
     since,
     now,
   });

@@ -150,3 +150,28 @@ describe('canWorkTheDoor — the same four people as the cancel route', () => {
     expect(canWorkTheDoor(session('fan'), { creatorId: null, venueProfile: null, headlinerProfile: null })).toBe(false);
   });
 });
+
+describe('judgeOffline — only an admission is a duplicate', () => {
+  /* A ticket bought AFTER the list was downloaded is judged unknown and
+     recorded `local-only`. Treating that as a duplicate meant the next
+     presentation of the same QR short-circuited to "Already checked in here"
+     and was never posted to the server, so a valid ticket was permanently
+     unadmittable from that phone. */
+  const scan = (sync: LocalDoorScan['sync']): LocalDoorScan => ({
+    code: '0xabc', hash: 'h1', name: null, at: '2026-09-10T20:00:00.000Z', sync,
+  });
+
+  it('lets a ticket refused for not being on the list through on a later try', () => {
+    expect(judgeOffline(null, [scan('local-only')], 'h1')).toEqual({ kind: 'unknown' });
+  });
+
+  it('still refuses a second presentation of one it admitted', () => {
+    expect(judgeOffline(null, [scan('pending')], 'h1').kind).toBe('duplicate');
+    expect(judgeOffline(null, [scan('synced')], 'h1').kind).toBe('duplicate');
+    expect(judgeOffline(null, [scan('duplicate')], 'h1').kind).toBe('duplicate');
+  });
+
+  it('does not treat a server refusal as an admission', () => {
+    expect(judgeOffline(null, [scan('refused')], 'h1')).toEqual({ kind: 'unknown' });
+  });
+});
