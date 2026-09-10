@@ -291,6 +291,27 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_TEST_WEBHOOK_SECRET }}
 
+      - name: Record that the night ran
+        # `cron-alive:nightly-walk`, the same shape every cron job writes with
+        # pingCronAlive(). The health-check cron alerts when it is absent for
+        # two days and the admin routine board shows when the walk last
+        # passed. This is what makes a night that never RAN — GitHub skipped
+        # the schedule, the runner was down, an early step died — read as a
+        # finding rather than as a quiet night: a workflow that only turns red
+        # when it runs is silent in exactly the failure that matters most.
+        # Only after everything above passed; `continue-on-error` because a
+        # failed key write leaves the key absent, which is the alert.
+        if: success()
+        continue-on-error: true
+        run: |
+          npx wrangler kv key put --remote \
+            --namespace-id b6330641874a4420b240d3a82760a9aa \
+            --ttl 172800 \
+            "cron-alive:nightly-walk" "$(date +%s%3N)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Blocking findings from earlier steps
         # The other half of the backup-cadence step near the top. That check
         # runs early because it is cheap and because its output belongs beside

@@ -20,7 +20,30 @@ function controller(): ServiceWorker | null {
  */
 export function warmTicketCache(paths: readonly string[]): void {
   if (!paths.length) return;
-  controller()?.postMessage({ type: 'WARM_TICKETS', paths: [...paths] });
+  const worker = controller();
+  if (!worker) return;
+  worker.postMessage({ type: 'WARM_TICKETS', paths: [...paths] });
+  /* And the assets THIS page loaded — the wallet's own chunks, the shell's
+     dynamically imported map chunks. The door page needed this first (see
+     `warmDoorCache`); the wallet only escaped because its <Link>s prefetch the
+     ticket page's chunk while online, which is luck, not a guarantee. */
+  reportLoadedAssets(worker);
+}
+
+/**
+ * Hands the worker every same-origin `/_next/static/` asset this page has
+ * loaded, from the performance timeline, so the ones that never passed through
+ * the fetch handler are stored too. On the first visit of a session the worker
+ * claims the page AFTER its scripts were fetched, so without this a cached
+ * document can hydrate into the error boundary offline — measured on the door
+ * page, 2026-09-10. The worker keeps only same-origin static entries.
+ */
+function reportLoadedAssets(worker: ServiceWorker): void {
+  if (typeof performance === 'undefined') return;
+  const loaded = performance.getEntriesByType('resource')
+    .map((entry) => entry.name)
+    .filter((name) => name.includes('/_next/static/'));
+  if (loaded.length) worker.postMessage({ type: 'WARM_ASSETS', urls: loaded });
 }
 
 /**
@@ -58,19 +81,7 @@ export async function warmDoorCache(path: string): Promise<boolean> {
     const worker = registration.active ?? navigator.serviceWorker.controller;
     if (!worker) return false;
     worker.postMessage({ type: 'WARM_DOOR', paths: [path] });
-    /* And everything this page has ALREADY loaded. On the first visit of a
-       session the worker was not yet controlling the page when its scripts
-       were fetched, so none of them — the shell's dynamically imported map
-       chunks above all, which no HTML names — reached the static cache, and
-       the cached document hydrated into the error boundary offline. The
-       performance timeline is the one complete list of what the page needed;
-       the worker keeps only same-origin `/_next/static/` entries from it. */
-    const loaded = typeof performance !== 'undefined'
-      ? performance.getEntriesByType('resource')
-        .map((entry) => entry.name)
-        .filter((name) => name.includes('/_next/static/'))
-      : [];
-    if (loaded.length) worker.postMessage({ type: 'WARM_ASSETS', urls: loaded });
+    reportLoadedAssets(worker);
     return true;
   } catch {
     return false;

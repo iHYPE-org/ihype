@@ -24,16 +24,49 @@ export const ALPHA_CONTENT_TARGETS = {
 
 const RESTORE_EVIDENCE_MAX_AGE_DAYS = 35;
 
-export function evaluateRestoreDrill(raw: string | undefined, now = Date.now()) {
-  if (!raw) return { ready: false, verifiedAt: null, ageDays: null };
-  const timestamp = Date.parse(raw);
-  if (!Number.isFinite(timestamp) || timestamp > now) return { ready: false, verifiedAt: null, ageDays: null };
-  const ageDays = Math.floor((now - timestamp) / 86_400_000);
+export type RestoreDrillEvidence = {
+  ready: boolean;
+  verifiedAt: string | null;
+  ageDays: number | null;
+  /** Who produced the evidence: an operator who set RESTORE_DRILL_VERIFIED_AT
+   *  after the hand drill, or the nightly restore-drill workflow's
+   *  `cron-alive:restore-drill` key. Absent when there is no evidence. */
+  source?: 'operator' | 'automated';
+};
+
+/**
+ * The freshest restore evidence from either source.
+ *
+ * `raw` is the operator's RESTORE_DRILL_VERIFIED_AT (ISO), set by hand after
+ * the runbook. `automatedAt` is the epoch-ms the nightly restore drill wrote
+ * when it last PASSED (restore-drill.yml → `cron-alive:restore-drill`). The
+ * newer of the two is the evidence; a future or unparseable value from either
+ * is no evidence at all rather than a claim.
+ */
+export function evaluateRestoreDrill(raw: string | undefined, now = Date.now(), automatedAt?: number | null): RestoreDrillEvidence {
+  const candidates: Array<{ at: number; source: 'operator' | 'automated' }> = [];
+  if (raw) {
+    const timestamp = Date.parse(raw);
+    if (Number.isFinite(timestamp) && timestamp <= now) candidates.push({ at: timestamp, source: 'operator' });
+  }
+  if (typeof automatedAt === 'number' && Number.isFinite(automatedAt) && automatedAt > 0 && automatedAt <= now) {
+    candidates.push({ at: automatedAt, source: 'automated' });
+  }
+  if (candidates.length === 0) return { ready: false, verifiedAt: null, ageDays: null };
+  const newest = candidates.reduce((a, b) => (b.at > a.at ? b : a));
+  const ageDays = Math.floor((now - newest.at) / 86_400_000);
   return {
     ready: ageDays <= RESTORE_EVIDENCE_MAX_AGE_DAYS,
-    verifiedAt: new Date(timestamp).toISOString(),
+    verifiedAt: new Date(newest.at).toISOString(),
     ageDays,
+    source: newest.source,
   };
+}
+
+/** Reads the nightly drill's liveness key as epoch-ms, or null. Pure over the raw KV value. */
+export function parseAutomatedDrillAt(raw: unknown): number | null {
+  const at = typeof raw === 'number' ? raw : typeof raw === 'string' ? Number(raw) : NaN;
+  return Number.isFinite(at) && at > 0 ? at : null;
 }
 
 export function buildAlphaBlockers({

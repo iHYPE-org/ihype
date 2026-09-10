@@ -17,6 +17,11 @@ export async function checkCronHealth(): Promise<{ stale: string[] }> {
     'onboarding', 'feature-shows', 'stripe-connect-health',
     'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',
+    /* Not cron jobs: the two GitHub workflows that write their own key when a
+       run PASSES (nightly.yml, restore-drill.yml). A workflow that only goes
+       red when it runs says nothing when it never runs, so its absence has to
+       be measured from here — two days without a key is the alert. */
+    'nightly-walk', 'restore-drill',
   ];
   const stale: string[] = [];
   try {

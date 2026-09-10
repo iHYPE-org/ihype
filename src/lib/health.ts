@@ -16,7 +16,8 @@ import {
 } from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
 import { isNativePushConfigured } from '@/lib/native-push';
-import { buildAlphaBlockers, evaluateRestoreDrill } from '@/lib/alpha-readiness';
+import { buildAlphaBlockers, evaluateRestoreDrill, parseAutomatedDrillAt } from '@/lib/alpha-readiness';
+import { kvGet } from '@/lib/kv';
 
 export async function getHealthSnapshot() {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -30,6 +31,7 @@ export async function getHealthSnapshot() {
       openReportCount,
       openSupportCount,
       failedEmailCount,
+      sentEmailCount,
       pendingVerificationCount,
       reservedTicketCount,
       pendingNotificationCount,
@@ -46,6 +48,7 @@ export async function getHealthSnapshot() {
         db.contentReport.count({ where: { status: 'OPEN' } }),
         db.supportRequest.count({ where: { status: 'OPEN' } }),
         db.emailDeliveryLog.count({ where: { status: 'FAILED', createdAt: { gte: since } } }),
+        db.emailDeliveryLog.count({ where: { status: 'SENT', createdAt: { gte: since } } }),
         db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }),
         db.ticketOrder.count({ where: { status: 'RESERVED' } }),
         db.notificationJob.count({ where: { status: 'PENDING' } }),
@@ -121,7 +124,10 @@ export async function getHealthSnapshot() {
         ? [`Notification delivery is backlogged; oldest pending job is ${oldestPendingNotificationAgeMinutes} minutes old.`]
         : []),
     ];
-    const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'));
+    /* Either source of restore evidence: the operator's stamp, or the nightly
+       drill's own pass key. An unreadable KV is no evidence, not a failure. */
+    const automatedDrillAt = await kvGet<number | string>('cron-alive:restore-drill').then(parseAutomatedDrillAt).catch(() => null);
+    const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'), Date.now(), automatedDrillAt);
     const alphaBlockers = buildAlphaBlockers({
       administrators: administratorCount,
       discoverableArtists: discoverableArtistCount,
@@ -144,6 +150,7 @@ export async function getHealthSnapshot() {
         openReports: openReportCount,
         openSupportRequests: openSupportCount,
         failedEmails24h: failedEmailCount,
+        sentEmails24h: sentEmailCount,
         pendingVerifications: pendingVerificationCount,
         reservedTicketOrders: reservedTicketCount,
         notificationJobs: {

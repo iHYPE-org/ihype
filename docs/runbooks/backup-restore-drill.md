@@ -4,6 +4,12 @@
 
 The daily `backup-verify` cron proves the *live* database is up, populated, and fresh. It does **not** prove a backup can be restored. This drill does. (SOC 2 A1.2 / ISO 27002 8.13 / NIST CSF RC.RP — recovery must be *tested*, not assumed.)
 
+## The drill runs itself every night (2026-09-10)
+
+`.github/workflows/restore-drill.yml` does steps 1–4 of this runbook by machine at 03:37 UTC: it downloads `latest.dump.gpg` from R2, decrypts it, restores it into an empty Postgres 17 service container with `--exit-on-error`, runs `npm run verify:restore` (rows, completed migrations, and the four critical-column checks), and compares the restored migration count with `prisma/migrations/` on `main` through `scripts/assert-restore-schema.mjs` — a dump may trail the code by at most three migrations and may never lead it. **On a pass it writes `cron-alive:restore-drill` into the runtime KV** with a two-day TTL. Three things read that key: `checkCronHealth()` in the six-hourly health check alerts when it is absent (so a drill that never ran is reported, which a workflow that only turns red when it runs cannot do for itself); the admin routine board shows when the drill last passed; and `evaluateRestoreDrill()` counts it as restore evidence beside `RESTORE_DRILL_VERIFIED_AT`, so the alpha-readiness gate and the monthly duty read clear from the automated pass. The `backup-verify` email names the last automated pass and only calls the hand drill due when none is recorded.
+
+**The hand drill below is still worth knowing**, for three reasons: it is what to do when the automated one fails and its report artifact says why; it is the only version that restores a `week/` or `month/` slot rather than `latest`; and it is the only one that reads counts against the live database, which the workflow deliberately never connects to (`PRODUCTION_DATABASE_URL` is passed to it only so the same-identity guard has something to refuse). Set `RESTORE_DRILL_VERIFIED_AT` after a hand drill as before; the newer of the two sources is the evidence.
+
 ## What backs this platform up, and what it does not
 
 **There is no Supabase point-in-time recovery, on purpose.** PITR is a paid add-on and this project has no starting capital. The free plan does not include downloadable daily backups either, so the encrypted dumps written by `.github/workflows/backup-database.yml` are the **only** copy of the database that exists outside the live cluster. That workflow is not a convenience; it is the backup.

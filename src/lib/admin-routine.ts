@@ -205,9 +205,14 @@ export type ScheduledWorkflow = {
   label: string;
   what: string;
   href: string;
+  /** `cron-alive:<key>` the workflow writes itself when a run PASSES, so the
+   *  board can show when it last did — and `checkCronHealth` can alert when it
+   *  has not. A GitHub workflow that only turns red when it runs says nothing
+   *  when it never runs; the key is what makes that silence measurable. */
+  aliveKey?: string;
 };
 
-/** The two things GitHub runs on a schedule. Guarded against the yml, like the crons. */
+/** The three things GitHub runs on a schedule. Guarded against the yml, like the crons. */
 export const SCHEDULED_WORKFLOWS: readonly ScheduledWorkflow[] = [
   {
     file: 'nightly.yml',
@@ -215,6 +220,7 @@ export const SCHEDULED_WORKFLOWS: readonly ScheduledWorkflow[] = [
     label: 'Nightly',
     what: 'Every audit gate, typecheck, lint and unit tests, the basemap and store-link checks, then the full alpha acceptance walk against a built worker and the feature-health board',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/nightly.yml',
+    aliveKey: 'nightly-walk',
   },
   {
     file: 'backup-database.yml',
@@ -222,6 +228,14 @@ export const SCHEDULED_WORKFLOWS: readonly ScheduledWorkflow[] = [
     label: 'Database backup',
     what: 'Encrypted pg_dump to R2, decrypted once to prove it opens, into rotating daily, weekly and monthly slots',
     href: 'https://github.com/iHYPE-org/ihype/actions/workflows/backup-database.yml',
+  },
+  {
+    file: 'restore-drill.yml',
+    schedule: '37 3 * * *',
+    label: 'Restore drill',
+    what: 'Restores the newest encrypted dump into a scratch Postgres, verifies rows, critical columns and the schema against main — the proof a backup RESTORES, every night instead of by hand once a month',
+    href: 'https://github.com/iHYPE-org/ihype/actions/workflows/restore-drill.yml',
+    aliveKey: 'restore-drill',
   },
 ];
 
@@ -298,7 +312,9 @@ export type AutomatedJobRow = AutomatedJob & {
   liveness: LivenessRead | null;
 };
 
-export type RestoreDrillRead = { ready: boolean; verifiedAt: string | null; ageDays: number | null };
+export type ScheduledWorkflowRow = ScheduledWorkflow & { liveness: LivenessRead | null };
+
+export type RestoreDrillRead = { ready: boolean; verifiedAt: string | null; ageDays: number | null; source?: 'operator' | 'automated' };
 
 export type RoutineBoardInput = {
   queues: WorkbenchQueue[];
@@ -311,7 +327,7 @@ export type RoutineBoardInput = {
 export type RoutineBoard = {
   duties: RoutineDutyRow[];
   automated: AutomatedJobRow[];
-  workflows: ScheduledWorkflow[];
+  workflows: ScheduledWorkflowRow[];
   /** When the board was built. Relative times render against THIS, never against
    *  the client's clock, so the server and the hydrated client print the same
    *  text. */
@@ -348,11 +364,12 @@ function queueDuty(queue: WorkbenchQueue): RoutineDutyRow {
 
 function restoreDrillDuty(duty: RoutineDuty, drill: RestoreDrillRead | null): RoutineDutyRow {
   if (!drill) return { ...duty, status: 'info', count: null, note: duty.when ?? '' };
-  if (drill.verifiedAt === null) return { ...duty, status: 'due', count: null, note: 'no drill recorded — RESTORE_DRILL_VERIFIED_AT is unset' };
+  if (drill.verifiedAt === null) return { ...duty, status: 'due', count: null, note: 'no drill recorded — the nightly restore drill has not passed and RESTORE_DRILL_VERIFIED_AT is unset' };
   const age = drill.ageDays ?? 0;
+  const by = drill.source === 'automated' ? 'by the nightly drill' : 'by hand';
   return drill.ready
-    ? { ...duty, status: 'clear', count: null, note: `verified ${age}d ago · due again at 35d` }
-    : { ...duty, status: 'due', count: null, note: `last verified ${age}d ago — past the 35-day limit` };
+    ? { ...duty, status: 'clear', count: null, note: `verified ${age}d ago ${by} · due again at 35d` }
+    : { ...duty, status: 'due', count: null, note: `last verified ${age}d ago ${by} — past the 35-day limit` };
 }
 
 export function buildRoutineBoard(input: RoutineBoardInput): RoutineBoard {
@@ -375,7 +392,12 @@ export function buildRoutineBoard(input: RoutineBoardInput): RoutineBoard {
     liveness: job.aliveKey ? input.liveness[job.aliveKey] ?? null : null,
   }));
 
-  return { duties, automated, workflows: [...SCHEDULED_WORKFLOWS], now: input.now ?? Date.now() };
+  const workflows: ScheduledWorkflowRow[] = SCHEDULED_WORKFLOWS.map((wf) => ({
+    ...wf,
+    liveness: wf.aliveKey ? input.liveness[wf.aliveKey] ?? null : null,
+  }));
+
+  return { duties, automated, workflows, now: input.now ?? Date.now() };
 }
 
 export function dutiesFor(board: RoutineBoard, cadence: OperatorCadence): RoutineDutyRow[] {

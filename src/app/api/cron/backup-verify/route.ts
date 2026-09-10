@@ -43,7 +43,21 @@ export async function GET(request: NextRequest) {
     const isWarning = userCount === 0 || profileCount === 0 || migrationCount === null || isStale;
 
     const now = new Date();
-    const restoreDrillDue = now.getUTCDate() === 1;
+    /* The restore drill runs itself every night (restore-drill.yml) and writes
+       `cron-alive:restore-drill` when it PASSES. When that key is fresh the
+       monthly hand drill is not due — the machine did it last night, against
+       the real dump. When it is absent, the reminder stands, and says why. */
+    const { kvGet } = await import('@/lib/kv');
+    let automatedDrillAt: number | null = null;
+    try {
+      const raw = await kvGet<number | string>('cron-alive:restore-drill');
+      const at = typeof raw === 'number' ? raw : Number(raw);
+      if (Number.isFinite(at) && at > 0) automatedDrillAt = at;
+    } catch {
+      automatedDrillAt = null;
+    }
+    const automatedDrillFresh = automatedDrillAt !== null && now.getTime() - automatedDrillAt < 2 * 24 * 60 * 60 * 1000;
+    const restoreDrillDue = now.getUTCDate() === 1 && !automatedDrillFresh;
 
     const subject = isWarning
       ? `⚠️ iHYPE backup check WARNING`
@@ -65,14 +79,15 @@ export async function GET(request: NextRequest) {
       `Applied migrations: ${migrationCount ?? 'UNKNOWN'}${latestMigration ? ` (latest: ${latestMigration})` : ''}`,
       `Newest user:       ${latestUser?.createdAt.toISOString() ?? 'none'}`,
       `Newest audit event: ${latestAudit?.createdAt.toISOString() ?? 'none'}`,
+      `Nightly restore drill: ${automatedDrillAt ? `passed ${new Date(automatedDrillAt).toISOString()}` : 'NO PASS RECORDED in the last two days — read the Restore drill workflow'}`,
       '',
       ...(warningLines.length ? warningLines : ['All counts look healthy.']),
       ...(restoreDrillDue
         ? [
             '',
-            'MONTHLY RESTORE DRILL DUE: this check only proves the live DB is up.',
-            'Run the restore drill in docs/runbooks/backup-restore-drill.md (Supabase',
-            'PITR restore to a branch, compare these counts) and note the result.',
+            'MONTHLY RESTORE DRILL DUE: this check only proves the live DB is up,',
+            'and the nightly restore drill has not recorded a pass in two days.',
+            'Run docs/runbooks/backup-restore-drill.md by hand and note the result.',
           ]
         : []),
       '',
