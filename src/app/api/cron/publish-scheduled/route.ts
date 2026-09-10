@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
       publishAt: { lte: now },
     },
     include: {
-      profile: { select: { ownerId: true, name: true } },
+      /* `slug` is what an artist URL is keyed on. Without it the notice below
+         built its link out of `ownerId` — a User id in a profile-slug path,
+         so every "your track is live" notification landed on a 404. */
+      profile: { select: { ownerId: true, name: true, slug: true } },
     },
     take: 100,
   });
@@ -34,12 +37,24 @@ export async function GET(request: NextRequest) {
     data: { isPublished: true },
   });
 
-  // Notify each artist
+  /* Notify each artist, if they asked to hear about it.
+     `crateUploads` is the Settings toggle for this, and until 2026-09-10
+     nothing read it: an artist could switch "Track uploads" off and keep
+     getting these. A preference that changes nothing is worse than no
+     preference, because the member believes they have acted. */
+  const owners = Array.from(new Set(assets.map((a) => a.profile.ownerId)));
+  const muted = new Set(
+    (await db.notificationPreference
+      .findMany({ where: { userId: { in: owners }, crateUploads: false }, select: { userId: true } })
+      .catch(() => []))
+      .map((row) => row.userId),
+  );
   for (const asset of assets) {
+    if (muted.has(asset.profile.ownerId)) continue;
     await sendPushToAllDevices(asset.profile.ownerId, {
       title: 'Your track is now live!',
       body: `"${asset.title}" is now published on iHYPE`,
-      url: `/artists/${asset.profile.ownerId}`,
+      url: `/app/artists/${asset.profile.slug}`,
     });
   }
 

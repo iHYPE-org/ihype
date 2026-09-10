@@ -121,10 +121,10 @@ export function TicketCardActions({
       });
       const data = await res.json();
       if (!res.ok) {
-        setResaleError(data.error ?? t('ticketCardActions.resaleErrorFallback', 'Could not list ticket for resale.'));
+        setResaleError(data.error ?? t('ticketCardActions.resaleErrorFallbackAsk', 'Could not record your asking price.'));
         return;
       }
-      setResaleDone(data.message ?? t('ticketCardActions.resaleDoneFallback', 'Ticket listed for resale.'));
+      setResaleDone(data.message ?? t('ticketCardActions.resaleDoneFallbackAsk', 'Asking price recorded.'));
       router.refresh();
     } catch {
       setResaleError(t('ticketCardActions.networkError', 'Network error'));
@@ -172,7 +172,7 @@ export function TicketCardActions({
         )}
         <button className="mmm-btn-ghost" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
         {resaleTicket && (
-          <button className="mmm-btn-ghost" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.listForResaleButton', 'List for resale')}</button>
+          <button className="mmm-btn-ghost" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.registerResaleButton', 'Register a resale price')}</button>
         )}
         {(orderStatus === undefined || orderStatus === 'CAPTURED') && (
           <button className="mmm-btn-ghost" disabled={resendSubmitting} onClick={resendConfirmation} type="button">
@@ -261,7 +261,7 @@ export function TicketCardActions({
           role="dialog"
         >
           <div className="ihype-sheet-panel">
-            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitle', 'List for resale')}</h3>
+            <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.125rem', fontWeight: 800, marginBottom: 16 }}>{t('ticketCardActions.resaleModalTitleAsk', 'Register a resale price')}</h3>
             {resaleDone ? (
               <>
                 <p style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
@@ -269,6 +269,13 @@ export function TicketCardActions({
               </>
             ) : (
               <>
+                {/* The promise has to be made before the button, not after
+                    it: the response used to be the first place a member
+                    learned what this does, and it told them buyers would be
+                    notified, which nothing does. */}
+                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 14, lineHeight: 1.5 }}>
+                  {t('ticketCardActions.resaleNoMarketplace', 'There is no public resale marketplace yet. This records your asking price for the organiser — nothing goes on sale and no buyer is contacted. To hand this ticket to someone you know, close this and use Transfer.')}
+                </p>
                 <label htmlFor="ticket-resale-price" style={{ display: 'block', fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 6 }}>{t('ticketCardActions.resalePriceLabel', 'Resale price (max 110% of face value)')}</label>
                 <input
                   id="ticket-resale-price"
@@ -284,7 +291,7 @@ export function TicketCardActions({
                 <div style={{ display: 'flex', gap: 10 }}>
                   <button className="mmm-btn-ghost" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
                   <button className="mmm-btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
-                    {resaleSubmitting ? t('ticketCardActions.listingButton', 'Listing…') : t('ticketCardActions.listForResaleButton', 'List for resale')}
+                    {resaleSubmitting ? t('ticketCardActions.registeringButton', 'Recording…') : t('ticketCardActions.registerResaleButton', 'Register a resale price')}
                   </button>
                 </div>
               </>

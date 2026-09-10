@@ -86,7 +86,18 @@ export async function POST(request: Request) {
      `close-stale-bookings` flipped it to `expired` telling neither party.
      Best-effort: an offer that was accepted into the database must not fail
      because a notification did. */
-  if (profile.ownerId && profile.ownerId !== session.user.id) {
+  /* `bookingRequests` is the Settings toggle named for exactly this notice,
+     and nothing read it until 2026-09-10 — a recipient who switched "Booking
+     requests" off went on getting them. Unreadable preference means SEND: the
+     offer reaching its recipient is the point of row 383, and a failed
+     preference read must not silently mute a venue's inbox. */
+  const wantsBookingNotices =
+    profile.ownerId
+      ? (await db.notificationPreference
+          .findUnique({ where: { userId: profile.ownerId }, select: { bookingRequests: true } })
+          .catch(() => null))?.bookingRequests !== false
+      : false;
+  if (profile.ownerId && profile.ownerId !== session.user.id && wantsBookingNotices) {
     await notifyUser(profile.ownerId, {
       type: 'booking-request',
       title: 'A booking request',

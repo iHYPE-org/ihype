@@ -681,12 +681,24 @@ export function MmmSettings() {
               <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
               <Row action={<Toggle checked={prefs.journalPosts} label={t('settingsPage.journalPosts', 'Journal posts')} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
               <Row action={<Toggle checked={prefs.weeklyDigest} label={t('settingsPage.weeklyDigest', 'Weekly digest')} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
-              <Row action={<Toggle checked={prefs.radioLive} label={t('settingsPage.radioShows', 'Radio shows')} onChange={(v) => setPrefs((p) => ({ ...p, radioLive: v }))} />} detail={t('settingsPage.radioShowsDetail', 'When a show you follow goes live')} label={t('settingsPage.radioShows', 'Radio shows')} />
+              {/* NO "Radio shows" ROW (2026-09-10). It read "When a show you
+                  follow goes live" and no show can go live: DJ show creation
+                  was retired as a product decision and what replaced it is the
+                  always-on station, which nobody follows and which is never
+                  announced. `radioLive` therefore had no sender and never
+                  could have. The column is KEPT rather than dropped — live
+                  shows are still a stated product intention — but a switch is
+                  a promise that pressing it changes something, so it does not
+                  ship until there is something for it to mute. */}
               {role === 'ARTIST' && (
-                <Row action={<Toggle checked={prefs.crateUploads} label={t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetail', 'When your upload clears screening')} label={t('settingsPage.trackUploads', 'Track uploads')} />
+                <Row action={<Toggle checked={prefs.crateUploads} label={t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetailRelease', 'When a release you scheduled goes live')} label={t('settingsPage.trackUploads', 'Track uploads')} />
               )}
-              {role === 'VENUE' && (
-                <Row action={<Toggle checked={prefs.bookingRequests} label={t('settingsPage.bookingRequests', 'Booking requests')} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetail', 'When an artist requests a slot')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
+              {(role === 'VENUE' || role === 'ARTIST') && (
+                /* An ARTIST receives these too — the demand radar is a venue
+                   writing to an act — so gating this on VENUE hid the control
+                   from half the people it governs, the same type-gate bug the
+                   booking inbox itself carried until row 383. */
+                <Row action={<Toggle checked={prefs.bookingRequests} label={t('settingsPage.bookingRequests', 'Booking requests')} onChange={(v) => setPrefs((p) => ({ ...p, bookingRequests: v }))} />} detail={t('settingsPage.bookingRequestsDetailEither', 'When someone asks to book you')} label={t('settingsPage.bookingRequests', 'Booking requests')} />
               )}
               <Row
                 action={<Toggle checked={pushSubscribed} disabled={!pushSupported || pushBusy} label={t('settingsPage.pushLabel', 'Push notifications (this browser)')} onChange={(v) => void togglePush(v)} />}

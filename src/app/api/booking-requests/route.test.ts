@@ -11,6 +11,7 @@ const notifyUser = vi.fn().mockResolvedValue(undefined);
 vi.mock('@/lib/notify', () => ({ notifyUser: (...a: unknown[]) => notifyUser(...a) }));
 
 const profileFindUnique = vi.fn();
+const prefFindUnique = vi.fn();
 const requestFindFirst = vi.fn();
 const requestCreate = vi.fn();
 const requestFindUnique = vi.fn();
@@ -18,6 +19,7 @@ const requestUpdate = vi.fn();
 vi.mock('@/lib/db', () => ({
   db: {
     profile: { findUnique: (...a: unknown[]) => profileFindUnique(...a) },
+    notificationPreference: { findUnique: (...a: unknown[]) => prefFindUnique(...a) },
     bookingRequest: {
       findFirst: (...a: unknown[]) => requestFindFirst(...a),
       create: (...a: unknown[]) => requestCreate(...a),
@@ -42,6 +44,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(auth).mockResolvedValue({ user: { id: 'venue-owner', email: 'v@example.com', role: 'LISTENER' }, expires: '' } as never);
   profileFindUnique.mockResolvedValue({ id: 'p_artist', ownerId: 'artist-owner', name: 'The Band', slug: 'the-band', type: 'ARTIST' });
+  prefFindUnique.mockResolvedValue({ bookingRequests: true });
   requestFindFirst.mockResolvedValue(null);
   requestCreate.mockResolvedValue({ id: 'br1', status: 'pending', createdAt: new Date() });
   requestFindUnique.mockResolvedValue({ fromUserId: 'venue-owner', toProfile: { ownerId: 'artist-owner', name: 'The Band' } });
@@ -85,5 +88,30 @@ describe('a booking request reaches the act, and the answer reaches the sender',
     profileFindUnique.mockResolvedValue({ id: 'p_self', ownerId: 'venue-owner', name: 'Mine', slug: 'mine', type: 'ARTIST' });
     await POST(req('POST', { toProfileId: 'p_self', message: 'A note to myself about booking.' }));
     expect(notifyUser).not.toHaveBeenCalled();
+  });
+
+  /* The `bookingRequests` preference was written by Settings and read by
+     nothing, so switching it off changed nothing at all. */
+  it('honours a recipient who switched booking notices off', async () => {
+    prefFindUnique.mockResolvedValue({ bookingRequests: false });
+    const res = await POST(req('POST', { toProfileId: 'p_artist', message: 'We would love to have you play in March.' }));
+    expect(res.status).toBe(201);
+    expect(notifyUser).not.toHaveBeenCalled();
+  });
+
+  /* An unreadable preference must SEND. The offer reaching its recipient is
+     the whole point of this notification, so a failed read may not silently
+     mute an inbox — the same direction the auth controls fail in. */
+  it('still notifies when the preference cannot be read', async () => {
+    prefFindUnique.mockRejectedValue(new Error('database is down'));
+    await POST(req('POST', { toProfileId: 'p_artist', message: 'We would love to have you play in March.' }));
+    expect(notifyUser).toHaveBeenCalled();
+  });
+
+  /* A recipient who never opened Settings has no row at all. */
+  it('notifies a recipient who has no preference row', async () => {
+    prefFindUnique.mockResolvedValue(null);
+    await POST(req('POST', { toProfileId: 'p_artist', message: 'We would love to have you play in March.' }));
+    expect(notifyUser).toHaveBeenCalled();
   });
 });

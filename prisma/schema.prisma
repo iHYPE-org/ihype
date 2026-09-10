@@ -1158,9 +1158,19 @@ model NotificationPreference {
   weeklyDigest    Boolean  @default(true)
   // Creator notification categories that have no honest match among the
   // four general preference fields above.
-  radioLive       Boolean  @default(true) // a followed artist is featured on radio
-  crateUploads    Boolean  @default(true) // your own track/crate upload clears vetting
-  bookingRequests Boolean  @default(true) // a venue receives a new booking request
+  //
+  // All three were written by Settings and read by NOTHING until 2026-09-10.
+  // `crateUploads` now gates the publish-scheduled notice ("your track is
+  // live") and `bookingRequests` gates the booking-request notice; both are
+  // rendered in Settings again because pressing them now changes something.
+  // `radioLive` has NO SENDER AND CANNOT HAVE ONE — DJ show creation was
+  // retired and the always-on station is never announced — so its row is not
+  // rendered. The column is kept rather than dropped because live shows are
+  // still a stated product intention; restore the row with the feature, not
+  // before.
+  radioLive       Boolean  @default(true) // reserved: a followed show goes live (no sender today)
+  crateUploads    Boolean  @default(true) // a release you scheduled goes live
+  bookingRequests Boolean  @default(true) // someone asks to book you
   updatedAt       DateTime @updatedAt
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -386,10 +386,10 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
-            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly)}`, v: money(total) }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
+            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly)}`, v: money(total) }].map(r => (
               <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem' }}>
                 <span style={{ color: 'var(--ink-2)', letterSpacing: '.06em' }}>{r.k}</span>
-                <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
+                <span>{r.v}</span>
               </div>
             ))}
             <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
@@ -935,7 +935,6 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                 {[
                   [t('advertisePage.memberBenefit1Title', 'Instant eligibility.'), t('advertisePage.memberBenefit1Body', 'Role verification carries over — no separate application.')],
                   [t('advertisePage.memberBenefit2Title', 'Promote your own catalog.'), t('advertisePage.memberBenefit2Body', 'Your releases and shows are pre-cleared for copyright.')],
-                  [t('advertisePage.memberBenefit3Title', 'Referral reach.'), t('advertisePage.memberBenefit3Body', 'Fans with a referral link can co-fund coverage for artists they back.')],
                 ].map(([b, body]) => (
                   <div key={b} style={{ display: 'flex', gap: 11, fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)', marginTop: 6, flexShrink: 0 }} />
@@ -943,10 +942,15 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
                   </div>
                 ))}
               </div>
-              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--color-info)' }} />
-                {t('advertisePage.referralNote', 'Referral-funded spots split billing across backers automatically.')}
-              </div>
+              {/* NO CO-FUNDING CLAIMS (2026-09-10). This card offered
+                  "Referral reach — fans with a referral link can co-fund
+                  coverage for artists they back" and "Referral-funded spots
+                  split billing across backers automatically", and the receipt
+                  above carried a "Co-op handling · 0%" line at $0.00. There is
+                  no co-funding, no backer, and no split billing anywhere in
+                  the advertise API or the ad libraries — one advertiser pays
+                  one sponsorship on one card. Two true benefits beat three
+                  with an invented one. */}
               <div style={{ marginTop: 'auto', paddingTop: 22 }}>
                 <a href="#build" className="adv-btn-solid">{t('advertisePage.buyFromDashboard', 'Buy from dashboard →')}</a>
               </div>
