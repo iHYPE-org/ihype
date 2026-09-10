@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { sendGenericEmail } from '@/lib/mailer';
+import { buildUnsubscribeUrl, sendGenericEmail } from '@/lib/mailer';
+import { newsletterUnsubscribeUrl } from '@/lib/newsletter-unsubscribe';
 import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
@@ -52,27 +53,37 @@ export async function POST(
   const [follows, subscribers] = await Promise.all([
     db.follow.findMany({
       where: { followeeProfileId: slug, notifyShows: true },
-      include: { follower: { select: { email: true, emailBounced: true } } },
+      include: { follower: { select: { id: true, email: true, emailBounced: true, notificationPreference: { select: { newShows: true, journalPosts: true, milestones: true, weeklyDigest: true } } } } },
     }),
     db.newsletterSubscription.findMany({
       where: { profileId: slug, confirmedAt: { not: null } },
-      select: { email: true },
+      select: { id: true, email: true },
     }),
   ]);
 
-  type Recipient = { email: string; because: 'follow' | 'newsletter' };
+  type Recipient = { email: string; because: 'follow' | 'newsletter'; unsubscribeUrl: string };
   const byAddress = new Map<string, Recipient>();
   for (const follow of follows) {
     const email = follow.follower.email;
     if (!email || follow.follower.emailBounced) continue;
-    byAddress.set(email.toLowerCase(), { email, because: 'follow' });
+    /* THE ONE-CLICK UNSUBSCRIBE WAS NOT HONOURED HERE (2026-09-10). This
+       route reaches an artist's whole audience through `sendGenericEmail`,
+       which sends whatever it is given; the preference check lives in
+       `sendMarketingEmail`, which this never called. So a member who pressed
+       Unsubscribe in Gmail — the RFC 8058 link, which turns all four toggles
+       off and answers "you will no longer receive marketing email from
+       iHYPE" — kept receiving artist broadcasts. The same rule as
+       `sendMarketingEmail`: all four off means out. */
+    const prefs = follow.follower.notificationPreference;
+    if (prefs && !prefs.newShows && !prefs.journalPosts && !prefs.milestones && !prefs.weeklyDigest) continue;
+    byAddress.set(email.toLowerCase(), { email, because: 'follow', unsubscribeUrl: buildUnsubscribeUrl(follow.follower.id) });
   }
   for (const subscriber of subscribers) {
     // Keyed by address so someone who both follows and subscribed gets ONE
     // email, and the follower wording wins because it is the closer relationship.
     const key = subscriber.email.toLowerCase();
     if (byAddress.has(key)) continue;
-    byAddress.set(key, { email: subscriber.email, because: 'newsletter' });
+    byAddress.set(key, { email: subscriber.email, because: 'newsletter', unsubscribeUrl: newsletterUnsubscribeUrl(subscriber.id) });
   }
 
   let sent = 0;
@@ -86,8 +97,16 @@ export async function POST(
       await sendGenericEmail({
         to: recipient.email,
         subject: `${profile.name}: ${subject}`,
-        text: content,
-        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>${because} <a href="https://ihype.org">ihype.org</a></small></p>`,
+        text: `${content}\n\n—\n${recipient.because === 'follow' ? `You follow ${profile.name} on iHYPE.` : `You confirmed email updates from ${profile.name}.`}\nUnsubscribe: ${recipient.unsubscribeUrl}`,
+        html: `<p style="white-space:pre-wrap">${content.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</p><hr><p><small>${because} <a href="${recipient.unsubscribeUrl}">Unsubscribe</a></small></p>`,
+        /* Every recipient can now leave from inside the message, which is
+           what the header promises mail clients — and for a newsletter
+           subscriber it is the ONLY control that exists. */
+        headers: {
+          'List-Unsubscribe': `<${recipient.unsubscribeUrl}>`,
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
+        deliveryType: 'fan-mail',
       });
       sent++;
     } catch { /* continue */ }

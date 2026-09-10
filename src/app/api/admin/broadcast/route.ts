@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit } from '@/lib/rate-limit';
-import { sendGenericEmail } from '@/lib/mailer';
+import { sendMarketingEmail } from '@/lib/mailer';
 import { readClientAddress } from '@/lib/request-meta';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 import { log } from '@/lib/logger';
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       target === 'ALL'
         ? { email: { not: null } }
         : { email: { not: null }, role: target },
-    select: { email: true, name: true },
+    select: { id: true, email: true, name: true },
     take: 5000
   });
 
@@ -73,10 +73,23 @@ export async function POST(request: Request) {
 
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
   for (const r of recipients) {
     if (!r.email) continue;
     try {
-      await sendGenericEmail({ to: r.email, subject, text: messageBody, html });
+      /* THROUGH `sendMarketingEmail`, NOT `sendGenericEmail` (2026-09-10).
+         An announcement to every member is the most marketing thing this
+         product sends, and it was the one path that skipped the wrapper
+         holding the unsubscribe state — so a member who pressed Unsubscribe
+         in their mail client, and was told they would receive no more
+         announcements, kept receiving them. It also ignored `emailBounced`,
+         so every dead address was retried on every broadcast, which is how
+         a sending domain's reputation goes. The wrapper checks both, appends
+         the footer and sets the List-Unsubscribe header; it reports
+         `skipped` rather than throwing, so an opted-out member is not
+         counted as a failure. */
+      const result = await sendMarketingEmail(r.id, { to: r.email, subject, text: messageBody, html, deliveryType: 'admin-broadcast' });
+      if (result.skipped) { skipped += 1; continue; }
       sent += 1;
     } catch (err) {
       failed += 1;
@@ -89,8 +102,10 @@ export async function POST(request: Request) {
     action: 'admin_broadcast_email',
     entityType: 'Broadcast',
     ipAddress: readClientAddress(request),
-    metadata: { subject, targetRole: target, recipientCount: recipients.length, sent, failed }
+    metadata: { subject, targetRole: target, recipientCount: recipients.length, sent, failed, skipped }
   });
 
-  return NextResponse.json({ ok: true, sent, failed, total: recipients.length });
+  /* `skipped` is reported, never folded into `sent`: an operator who
+     announces to 400 members and reaches 380 should see why. */
+  return NextResponse.json({ ok: true, sent, failed, skipped, total: recipients.length });
 }
