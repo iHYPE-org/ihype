@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
+import { useI18n } from '@/components/I18nProvider';
 import type { MapSheetTarget } from '@/components/mmm/MmmMap';
 
 const SPLIT_LINE = '70% artist · 20% venue · 10% promoters · $0 iHYPE fee';
@@ -38,6 +39,7 @@ type SheetContent = {
  * same rule the shell's badge counts follow.
  */
 export function MmmSheet({ onClose, target }: { onClose: () => void; target: MapSheetTarget }) {
+  const { t } = useI18n();
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -58,7 +60,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
 
   return (
     <>
-      <button aria-label="Close details" className="mmm-sheet-scrim" onClick={onClose} type="button" />
+      <button aria-label={t('mmmSheet.closeDetails', 'Close details')} className="mmm-sheet-scrim" onClick={onClose} type="button" />
       <div aria-labelledby="mmm-sheet-title" aria-modal="true" className="mmm-sheet" ref={sheetRef} role="dialog">
         <div aria-hidden="true" className="mmm-sheet-handle" />
         <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
@@ -71,7 +73,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <h2 className="mmm-sheet-title" id="mmm-sheet-title">{content.title}</h2>
-              {content.verified && <span aria-label="Verified" className="mmm-verified" role="img">✓</span>}
+              {content.verified && <span aria-label={t('mmmSheet.verified', 'Verified')} className="mmm-verified" role="img">✓</span>}
             </div>
             <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4, lineHeight: 1.5 }}>
               {content.subtitle}
@@ -136,7 +138,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
           )}
           <button className="mmm-sheet-dismiss" onClick={onClose} type="button">
             <span aria-hidden="true">✕</span>
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('mmmSheet.close', 'Close')}</span>
           </button>
         </div>
       </div>
