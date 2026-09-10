@@ -27,8 +27,10 @@ export function PromoteShareButton({ link, title, slug }: { link: string; title:
     }
   }
 
+  // Same as BelieverShareButton: `promote-share-btn` styles nothing, so the
+  // shell's ghost button carries the control and the hook class stays.
   return (
-    <button type="button" onClick={handleShare} className="promote-share-btn">
+    <button type="button" onClick={handleShare} className="mmm-btn-ghost promote-share-btn">
       {status === 'done' ? t('promoteShareButton.copied', 'Copied ✓') : t('promoteShareButton.shareAndEarn', 'Share & earn')}
     </button>
   );

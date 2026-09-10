@@ -197,7 +197,11 @@ export function ArtistOnboardingWizard({
               {saving ? t('artistOnboardingWizard.saving', 'Saving…') : t('artistOnboardingWizard.continue', 'Continue →')}
             </button>
             <div className="aow-alt-link">
-              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/pages?tab=creator">{t('artistOnboardingWizard.aiPageCreator', 'build it in the Page Creator →')}</Link>
+              {/* `/pages?tab=creator` was deleted 2026-09-01 with the AI page
+                  creator itself (CLAUDE.md: the generator is not coming back),
+                  so this first-run link answered a redirect to nothing for nine
+                  days. The profile editor is the thing it meant. */}
+              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/app/me/profiles">{t('artistOnboardingWizard.aiPageCreator', 'edit your profile →')}</Link>
             </div>
           </div>
         )}

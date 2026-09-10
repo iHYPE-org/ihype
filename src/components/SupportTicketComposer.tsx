@@ -86,6 +86,8 @@ export function SupportTicketComposer() {
             fontFamily: 'var(--font-display)', fontWeight: 700, fontSize: '0.9375rem', cursor: 'pointer',
             padding: '10px 18px', borderRadius: 'var(--radius-md)', border: 'none',
             background: 'var(--accent)', color: 'var(--ink-on-accent)',
+            // 126×38 measured at 1280 (2026-09-10): the 44px floor, desktop included.
+            minHeight: 44,
           }}
         >
           {composing ? t('supportTicketComposer.closeButton', 'Close') : t('supportTicketComposer.newTicketButton', 'New ticket')}
