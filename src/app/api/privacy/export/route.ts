@@ -191,6 +191,13 @@ export async function GET() {
       setlistVotes: true,
       sentBookingRequests: true,
       advertisedAds: true,
+      /* The advertiser's own identity record — company, contact, website,
+         category and pitch. The campaigns were already exported through
+         `advertisedAds`, which made the omission easy to miss: the subject
+         got everything they had BOUGHT and nothing about who we hold them to
+         be. Erasure was missing it too (privacy-actions.ts), for the separate
+         reason that its cascade from `User` never fires. */
+      advertiserAccount: true,
     },
   });
 

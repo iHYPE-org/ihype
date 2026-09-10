@@ -129,13 +129,29 @@ export async function GET(request: NextRequest) {
       }
 
       const cronHealth = await checkCronHealth();
-      if (cronHealth.stale.length > 0) {
+      /* `unknown` is KV refusing to answer for a job, and it alerts alongside
+         `stale` rather than being folded into health: a store this check
+         cannot read is a check that knows nothing, and reporting nothing as
+         "all clear" is how a dead scheduler stays invisible. It is logged to
+         Sentry as well, because the alert itself travels by email and the
+         email path is one of the things that can be down. */
+      if (cronHealth.unknown.length > 0) {
+        log.error('[cron-health]', { unknown: cronHealth.unknown }, 'KV could not be read for these jobs — their liveness is unknown, not healthy');
+      }
+      if (cronHealth.stale.length > 0 || cronHealth.unknown.length > 0) {
         try {
           const { kvGet, kvPut } = await import('@/lib/kv');
           const lastCronAlert = await kvGet<number>('health-alert:stale-crons');
           const shouldAlert = !lastCronAlert || Date.now() - lastCronAlert > 24 * 60 * 60 * 1000;
           if (shouldAlert) {
-            await sendOperationalEmail({ to: getAdminAlertRecipients(), subject: '[iHYPE] Stale cron jobs detected', text: `These cron jobs haven't run in their expected window: ${cronHealth.stale.join(', ')}`, html: `<p>Stale crons: <strong>${cronHealth.stale.join(', ')}</strong></p>` }, 'stale-crons');
+            const staleLine = cronHealth.stale.length > 0 ? `Not run in their expected window: ${cronHealth.stale.join(', ')}.` : '';
+            const unknownLine = cronHealth.unknown.length > 0 ? `Liveness UNKNOWN (the key store could not be read): ${cronHealth.unknown.join(', ')}.` : '';
+            await sendOperationalEmail({
+              to: getAdminAlertRecipients(),
+              subject: cronHealth.stale.length > 0 ? '[iHYPE] Stale cron jobs detected' : '[iHYPE] Cron liveness could not be read',
+              text: [staleLine, unknownLine].filter(Boolean).join('\n'),
+              html: [staleLine, unknownLine].filter(Boolean).map((line) => `<p>${line}</p>`).join(''),
+            }, 'stale-crons');
             await kvPut('health-alert:stale-crons', Date.now(), { ex: 24 * 60 * 60 });
           }
         } catch { /* KV unavailable */ }

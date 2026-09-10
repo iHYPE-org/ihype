@@ -149,7 +149,20 @@ export function judgeOffline(
   localScans: readonly LocalDoorScan[],
   hash: string,
 ): OfflineVerdict {
-  const mine = localScans.find((scan) => scan.hash === hash && scan.sync !== 'refused');
+  /* ONLY AN ADMISSION COUNTS AS A DUPLICATE, and reading this as "anything
+     but refused" refused a good ticket for the rest of the night (2026-09-10).
+     A ticket bought AFTER the list was downloaded is judged `unknown` and
+     recorded `local-only` — correctly, the phone has never heard of it. But
+     `local-only` is not an admission, and matching it here meant the next
+     presentation of that same QR, even with signal back, short-circuited to
+     "Already checked in here" and was never posted to the server. The fan is
+     turned away, the ticket stays VALID in the database, and every copy of
+     that QR gets the same answer from that phone. `admittedHere` in the
+     component already counts only pending|synced, so the two disagreed about
+     what an admission is. */
+  const mine = localScans.find(
+    (scan) => scan.hash === hash && (scan.sync === 'pending' || scan.sync === 'synced' || scan.sync === 'duplicate'),
+  );
   if (mine) return { kind: 'duplicate', name: mine.name, at: mine.at };
   if (!manifest) return { kind: 'unknown' };
   if (manifest.scanned.includes(hash)) return { kind: 'already-scanned' };
