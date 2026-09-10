@@ -75,6 +75,9 @@ type ConfiguredEmailInput = {
   headers?: Record<string, string>;
   /** Provider-level deduplication for retried transactional sends. */
   idempotencyKey?: string;
+  /** The EmailDeliveryLog `type` this send is recorded under; 'generic' when
+   *  the caller does not say. Never the body. */
+  deliveryType?: string;
 };
 
 /**
@@ -153,8 +156,28 @@ export async function sendGenericEmail(input: ConfiguredEmailInput) {
     }
     throw new Error('Email delivery is not configured.');
   }
-  const provider = await sendConfiguredEmail(input);
-  return { mode: provider };
+  /* Every outcome is a row in EmailDeliveryLog, not only a ticket's. Until
+     this the log knew about ticket emails alone, so `failedEmails24h` on
+     /api/health read 0 through a total outage of every magic link, digest and
+     alert — and the 35-day silence of 2026 (row 254) would have measured as
+     nothing again. The row is written after the attempt and never blocks it;
+     recordEmailDelivery swallows its own failure. Recipient only, no body. */
+  const recipient = Array.isArray(input.to) ? input.to.join(', ') : String(input.to);
+  const type = input.deliveryType ?? 'generic';
+  try {
+    const provider = await sendConfiguredEmail(input);
+    await recordEmailDelivery({ type, recipient, status: 'SENT', provider });
+    return { mode: provider };
+  } catch (error) {
+    await recordEmailDelivery({
+      type,
+      recipient,
+      status: 'FAILED',
+      provider: emailSinkUrl() ? 'sink' : 'resend',
+      error: error instanceof Error ? error.message.slice(0, 500) : String(error).slice(0, 500),
+    });
+    throw error;
+  }
 }
 
 /**

@@ -139,6 +139,19 @@ describe('SCHEDULED_WORKFLOWS against .github/workflows', () => {
     }
   });
 
+  it('names a liveness key only for a workflow whose yml writes it, and lists each in checkCronHealth', () => {
+    /* A workflow's key is written by a `wrangler kv key put` step in its own
+       yml, not by pingCronAlive; and the health-check cron must know the key
+       or a workflow that never runs is never reported. Both directions. */
+    const cronHealth = readFileSync('src/lib/cron-health.ts', 'utf8');
+    for (const wf of SCHEDULED_WORKFLOWS) {
+      if (!wf.aliveKey) continue;
+      const yml = readFileSync(`.github/workflows/${wf.file}`, 'utf8');
+      expect(yml, `${wf.file} does not write cron-alive:${wf.aliveKey}`).toContain(`"cron-alive:${wf.aliveKey}"`);
+      expect(cronHealth, `checkCronHealth does not watch ${wf.aliveKey}`).toContain(`'${wf.aliveKey}'`);
+    }
+  });
+
   it('lists every workflow that has a schedule', () => {
     const { readdirSync } = require('node:fs') as typeof import('node:fs');
     const scheduled = readdirSync('.github/workflows')

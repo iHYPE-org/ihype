@@ -63,7 +63,7 @@ function relative(at: number, now: number): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
-function liveness(job: AutomatedJobRow, now: number): { word: string; tone: 'ok' | 'warn' | 'mute' } {
+function liveness(job: Pick<AutomatedJobRow, 'aliveKey' | 'liveness'>, now: number): { word: string; tone: 'ok' | 'warn' | 'mute' } {
   if (!job.aliveKey) return { word: 'not tracked', tone: 'mute' };
   if (!job.liveness || job.liveness.kind === 'unknown') return { word: '—', tone: 'mute' };
   if (job.liveness.kind === 'stale') return { word: 'no recent run', tone: 'warn' };
@@ -158,17 +158,24 @@ function AutomatedList({ board, now }: { board: RoutineBoard; now: number }) {
         These run themselves. Read the result; do not do the work by hand.
       </p>
       <ul className="routine-list">
-        {board.workflows.map((wf) => (
-          <li key={wf.file} className="routine-row" data-kind="workflow">
-            <a className="routine-row-link" href={wf.href} target="_blank" rel="noreferrer">
-              <span className="routine-row-text">
-                <span className="routine-row-label">{wf.label} <span className="routine-row-when">{describeSchedule(wf.schedule)}</span></span>
-                <span className="routine-row-note" title={wf.what}>{wf.what}</span>
-              </span>
-              <span className="routine-row-status" data-tone="mute">GitHub ›</span>
-            </a>
-          </li>
-        ))}
+        {board.workflows.map((wf) => {
+          /* A workflow that writes a liveness key reads like a cron job: when
+             it last PASSED, or "no recent run" — the state a red-only workflow
+             can never report about itself. One without a key still says only
+             where to look. */
+          const live = wf.aliveKey ? liveness(wf, now) : { word: 'GitHub ›', tone: 'mute' as const };
+          return (
+            <li key={wf.file} className="routine-row" data-kind="workflow">
+              <a className="routine-row-link" href={wf.href} target="_blank" rel="noreferrer">
+                <span className="routine-row-text">
+                  <span className="routine-row-label">{wf.label} <span className="routine-row-when">{describeSchedule(wf.schedule)}</span></span>
+                  <span className="routine-row-note" title={wf.what}>{wf.what}</span>
+                </span>
+                <span className="routine-row-status" data-tone={live.tone}>{live.word}</span>
+              </a>
+            </li>
+          );
+        })}
       </ul>
       {SCHEDULE_CADENCE_ORDER.map((cadence) => {
         const jobs = board.automated.filter((j) => j.cadence === cadence);

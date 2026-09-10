@@ -1,0 +1,184 @@
+# The restore drill, every night, by machine.
+#
+# `backup-database.yml` proves a dump was written and that it DECRYPTS. It has
+# never proven that the dump RESTORES: that a `pg_restore` of it into an empty
+# Postgres completes, carries the rows, carries the columns that make the rows
+# useful (a captured order's PaymentIntent, an onboarded profile's Connect
+# account), and carries a schema the code in `main` recognises. Until this
+# workflow that proof was a monthly hand drill (docs/runbooks/backup-restore-
+# drill.md), which is a drill that stops being run — and an unopenable backup
+# is found out during the incident.
+#
+# Sequence, all of it the runbook's own steps:
+#   1. `scripts/restore-backup.mjs --key=latest.dump.gpg` downloads the newest
+#      dump from R2, decrypts it, refuses a target that shares identity with
+#      production or already holds a `User` table, and restores into the
+#      service container with `--exit-on-error`.
+#   2. `npm run verify:restore` (scripts/verify-restored-backup.mjs) asserts the
+#      core rows, the completed migrations and the four integrity checks that
+#      catch a restore which kept its rows and lost their critical columns.
+#   3. `scripts/assert-restore-schema.mjs` compares the restored migration
+#      count with `prisma/migrations/` in this checkout: a dump can predate the
+#      newest merge by a little, never by a lot, and never run ahead of it.
+#   4. On success the workflow writes `cron-alive:restore-drill` into the
+#      runtime KV. The health-check cron (`checkCronHealth`) alerts when that
+#      key is absent for two days, and the admin routine board shows when the
+#      drill last passed — so the SILENCE of this workflow is loud, which a
+#      workflow that only turns red when it runs cannot be on its own.
+#
+# Self-arming, like the backup: with no BACKUP_PASSPHRASE it reports and exits
+# 0. The same secrets the backup job already holds are all it needs; nothing
+# here reads production — PRODUCTION_DATABASE_URL is passed ONLY so the restore
+# script's same-identity guard has something to compare against.
+#
+# Postgres 17 in the container, and the PG17 client on the runner: an archive
+# written by pg_dump 17 cannot be read by pg_restore 16.
+name: Restore drill
+
+on:
+  schedule:
+    # 03:37 UTC — off the hour for the same reason the backup is at :37, and
+    # after the 00:37 dump so `latest` is that night's. Once a day: this costs
+    # ~5 runner-minutes and restores the whole database each time.
+    - cron: '37 3 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: restore-drill
+  cancel-in-progress: false
+
+jobs:
+  drill:
+    name: Restore the latest dump into a scratch Postgres and verify it
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ihype
+          POSTGRES_PASSWORD: ihype
+          POSTGRES_DB: ihype_drill
+        ports:
+          - 55433:5432
+        options: >-
+          --health-cmd "pg_isready -U ihype"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      RESTORE_TARGET_URL: postgresql://ihype:ihype@localhost:55433/ihype_drill
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Decide whether the drill is armed
+        id: armed
+        # Secrets cannot be read in an `if:`; a step decides and later steps
+        # key on its output. Unarmed is a reported state, never a silent pass.
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$BACKUP_PASSPHRASE" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice title=Restore drill not armed::BACKUP_PASSPHRASE or CLOUDFLARE_ACCOUNT_ID is unset, so there is no backup to restore. The backup workflow is unarmed in the same state."
+            echo "armed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "armed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install PostgreSQL 17 client
+        if: steps.armed.outputs.armed == 'true'
+        # Same block as backup-database.yml, for the mirror-image reason: the
+        # runner's pg_restore 16 cannot read a pg_dump 17 archive, and
+        # /usr/bin/pg_restore is pg_wrapper, which picks by default cluster.
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc \
+            https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" \
+            | sudo tee /etc/apt/sources.list.d/pgdg.list > /dev/null
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+          version="$(/usr/lib/postgresql/17/bin/pg_restore --version)"
+          echo "$version"
+          case "$version" in
+            *"pg_restore (PostgreSQL) 17."*) ;;
+            *) echo "::error::Expected pg_restore 17, got: $version"; exit 1 ;;
+          esac
+
+      - name: Install dependencies
+        if: steps.armed.outputs.armed == 'true'
+        # The verifier opens the restored database through the Prisma client,
+        # so this needs the real dependency tree, not only wrangler.
+        run: npm ci
+
+      - name: Generate Prisma client
+        if: steps.armed.outputs.armed == 'true'
+        run: npx prisma generate
+
+      - name: Restore the latest dump into the scratch database
+        if: steps.armed.outputs.armed == 'true'
+        run: node scripts/restore-backup.mjs --key=latest.dump.gpg
+        env:
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+          BACKUP_R2_BUCKET: ${{ vars.BACKUP_R2_BUCKET || 'ihype-backups' }}
+          CONFIRM_RESTORE: restore into scratch
+          BACKUP_R2_API_TOKEN: ${{ secrets.BACKUP_R2_API_TOKEN }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Read ONLY by the same-identity guard, never connected to.
+          PRODUCTION_DATABASE_URL: ${{ secrets.DIRECT_URL }}
+
+      - name: Verify rows, migrations and the critical columns
+        if: steps.armed.outputs.armed == 'true'
+        run: |
+          set -o pipefail
+          npm run --silent verify:restore | tee restore-drill-report.json
+          {
+            echo '## Restore drill'
+            echo '```json'
+            tail -c 4000 restore-drill-report.json
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+        env:
+          RESTORE_DATABASE_URL: ${{ env.RESTORE_TARGET_URL }}
+          PRODUCTION_DATABASE_URL: ${{ secrets.DIRECT_URL }}
+          CONFIRM_RESTORE_DRILL: verify isolated restore
+
+      - name: Compare the restored schema with this checkout
+        if: steps.armed.outputs.armed == 'true'
+        run: node scripts/assert-restore-schema.mjs --report=restore-drill-report.json
+
+      - name: Record that the drill passed
+        if: steps.armed.outputs.armed == 'true'
+        # `cron-alive:restore-drill`, the same shape every cron job writes with
+        # pingCronAlive(). Two-day TTL: absent for two nights and the
+        # health-check cron alerts. Written last, so it is only ever written by
+        # a night on which everything above passed.
+        run: |
+          npx wrangler kv key put --remote \
+            --namespace-id b6330641874a4420b240d3a82760a9aa \
+            --ttl 172800 \
+            "cron-alive:restore-drill" "$(date +%s%3N)"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Keep the report of a failed drill
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: restore-drill-report
+          path: restore-drill-report.json
+          if-no-files-found: ignore
+          retention-days: 30

@@ -1,8 +1,8 @@
 import { kvGet } from '@/lib/kv';
 import { readRuntimeEnv } from '@/lib/runtime-env';
-import { evaluateRestoreDrill } from '@/lib/alpha-readiness';
+import { evaluateRestoreDrill, parseAutomatedDrillAt } from '@/lib/alpha-readiness';
 import type { WorkbenchQueue } from '@/lib/admin-workbench';
-import { AUTOMATED_JOBS, buildRoutineBoard, type LivenessRead, type RoutineBoard } from '@/lib/admin-routine';
+import { AUTOMATED_JOBS, SCHEDULED_WORKFLOWS, buildRoutineBoard, type LivenessRead, type RoutineBoard } from '@/lib/admin-routine';
 
 /**
  * The reads behind the routine board — split from `admin-routine.ts` for the
@@ -29,12 +29,22 @@ async function readLiveness(key: string): Promise<LivenessRead> {
 }
 
 export async function getRoutineBoard(queues: WorkbenchQueue[]): Promise<RoutineBoard> {
-  const keys = AUTOMATED_JOBS.map((job) => job.aliveKey).filter((k): k is string => Boolean(k));
+  /* Jobs AND the scheduled workflows that write a key of their own (the
+     nightly, the restore drill) — one read per key, the same reader. */
+  const keys = [
+    ...AUTOMATED_JOBS.map((job) => job.aliveKey),
+    ...SCHEDULED_WORKFLOWS.map((wf) => wf.aliveKey),
+  ].filter((k): k is string => Boolean(k));
   const reads = await Promise.all(keys.map(async (key) => [key, await readLiveness(key)] as const));
 
   let restoreDrill: ReturnType<typeof evaluateRestoreDrill> | null;
   try {
-    restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'));
+    /* The nightly drill's pass is restore evidence too: the duty reads clear
+       when the machine did it last night, and the operator's own stamp still
+       counts for the month it covers. */
+    const automated = reads.find(([key]) => key === 'restore-drill')?.[1];
+    const automatedAt = automated?.kind === 'ran' ? parseAutomatedDrillAt(automated.at) : null;
+    restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'), Date.now(), automatedAt);
   } catch {
     restoreDrill = null;
   }

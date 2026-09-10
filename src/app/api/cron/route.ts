@@ -5,6 +5,9 @@ import { pingCronAlive, WEEKLY_TTL } from '@/lib/cron-health';
 import { log } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
+
+/** Failed generic emails in 24 h that count as degraded even while some are delivered. */
+const EMAIL_FAILURE_ALERT_FLOOR = 10;
 export const maxDuration = 60;
 
 export async function GET(request: NextRequest) {
@@ -97,6 +100,34 @@ export async function GET(request: NextRequest) {
           log.error('[cron/health-check]', err instanceof Error ? err : { error: String(err) }, 'launch readiness alert failed');
         }
       }
+      /* Outbound mail failing is the one outage every other alert here is
+         blind to, because every other alert IS an email. The delivery log now
+         records every generic send, so this can measure the rate: any
+         failures with NO successes is an outage; ten or more in a day is a
+         provider or domain problem even when some get through. Reported
+         through the logger (Sentry), never only by email — the channel under
+         suspicion cannot carry its own alarm. Throttled to one a day. */
+      const failed24h = snapshot.operations?.failedEmails24h ?? 0;
+      const sent24h = snapshot.operations?.sentEmails24h ?? 0;
+      const mailOutage = failed24h > 0 && sent24h === 0;
+      const mailDegraded = failed24h >= EMAIL_FAILURE_ALERT_FLOOR;
+      if (mailOutage || mailDegraded) {
+        try {
+          const { kvGet, kvPut } = await import('@/lib/kv');
+          const lastMailAlert = await kvGet<number>('health-alert:email-failures');
+          if (!lastMailAlert || Date.now() - lastMailAlert > 24 * 60 * 60 * 1000) {
+            log.error(
+              '[cron/health-check]',
+              { failedEmails24h: failed24h, sentEmails24h: sent24h },
+              mailOutage
+                ? `outbound email is FAILING: ${failed24h} failed and none sent in 24h — magic links, tickets and alerts are not arriving`
+                : `outbound email is degraded: ${failed24h} failures in 24h against ${sent24h} sent`,
+            );
+            await kvPut('health-alert:email-failures', Date.now(), { ex: 24 * 60 * 60 });
+          }
+        } catch { /* KV unavailable */ }
+      }
+
       const cronHealth = await checkCronHealth();
       if (cronHealth.stale.length > 0) {
         try {
