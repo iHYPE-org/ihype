@@ -6,7 +6,7 @@ import {
   getAuthSessionCookieName,
   getAuthSessionCookieOptions,
 } from '@/lib/auth-cookie';
-import { readRuntimeEnv } from '@/lib/runtime-env';
+import { currentSigningSecret } from '@/lib/signing-secrets';
 import { IMPERSONATOR_CLAIM } from '@/lib/impersonation';
 
 export { AUTH_SESSION_MAX_AGE_SECONDS, getAuthSessionCookieName } from '@/lib/auth-cookie';
@@ -50,7 +50,8 @@ async function readUserSecurityVersion(user: AuthSessionUser) {
  * Omit it for every ordinary sign-in, which is all of them but one route.
  */
 export async function buildAuthSessionCookie(user: AuthSessionUser, impersonatorId?: string) {
-  const secret = readRuntimeEnv('AUTH_SECRET');
+  /* The newest key, the same one Auth.js signs with (signing-secrets.ts). */
+  const secret = currentSigningSecret();
   if (!secret) return null;
 
   const cookieName = getAuthSessionCookieName();
