@@ -124,28 +124,48 @@ self.addEventListener('message', (event) => {
      scanner with no signal. Same loop, same private cache, same asset warming;
      `isOfflinePrivatePage` is what admits either kind of path. */
   if ((data.type === 'WARM_TICKETS' || data.type === 'WARM_DOOR') && Array.isArray(data.paths)) {
+    /* The page may hand us a MessageChannel port. When it does, we answer with
+       what was ACTUALLY stored (2026-09-10). A fan-facing "Save my tickets"
+       control cannot report success from the fact that a postMessage was sent:
+       this worker may be an older version, the fetch may 404 a transferred
+       ticket, or storage may be full, and every one of those looks identical
+       from the page. A control that says "Saved" over an empty cache is worse
+       than no control, because the fan stops worrying and arrives at a door
+       with nothing. No port means a legacy caller: behave exactly as before. */
+    const port = event.ports && event.ports[0];
     event.waitUntil((async () => {
-      const cache = await caches.open(TICKETS_CACHE);
-      // Sequential and individually guarded: cache.addAll rejects the whole
-      // batch if any one request fails, and a single expired ticket must not
-      // cost the holder every other one.
-      const statics = await caches.open(STATIC_CACHE);
-      for (const path of data.paths.slice(0, 50)) {
-        if (typeof path !== 'string' || !isOfflinePrivatePage(path)) continue;
-        try {
-          const response = await fetch(path, { credentials: 'same-origin' });
-          if (!response.ok) continue;
-          await cache.put(path, response.clone());
-          /* The page's own scripts and styles, too. The HTML alone is not the
-             ticket: the shell's shared chunks are cached from earlier visits,
-             so offline React hydrates, cannot load this route's chunk, and
-             replaces the server-rendered ticket with the loading fallback —
-             measured 2026-09-05 with the HTML in cache and the code visible in
-             it. Hashed, immutable and same-origin, so cache-first is right. */
-          await warmPageAssets(await response.text(), statics);
-        } catch {
-          // Offline already, or the ticket is gone. Nothing to do.
+      let stored = 0;
+      let failed = 0;
+      try {
+        const cache = await caches.open(TICKETS_CACHE);
+        // Sequential and individually guarded: cache.addAll rejects the whole
+        // batch if any one request fails, and a single expired ticket must not
+        // cost the holder every other one.
+        const statics = await caches.open(STATIC_CACHE);
+        for (const path of data.paths.slice(0, 50)) {
+          if (typeof path !== 'string' || !isOfflinePrivatePage(path)) continue;
+          try {
+            const response = await fetch(path, { credentials: 'same-origin' });
+            if (!response.ok) { failed++; continue; }
+            await cache.put(path, response.clone());
+            /* The page's own scripts and styles, too. The HTML alone is not the
+               ticket: the shell's shared chunks are cached from earlier visits,
+               so offline React hydrates, cannot load this route's chunk, and
+               replaces the server-rendered ticket with the loading fallback —
+               measured 2026-09-05 with the HTML in cache and the code visible in
+               it. Hashed, immutable and same-origin, so cache-first is right. */
+            await warmPageAssets(await response.text(), statics);
+            stored++;
+          } catch {
+            // Offline already, or the ticket is gone.
+            failed++;
+          }
         }
+      } catch {
+        // Cache storage refused outright (private mode, quota). Report it.
+      }
+      if (port) {
+        try { port.postMessage({ type: 'WARM_RESULT', stored, failed }); } catch { /* page went away */ }
       }
     })());
     return;

@@ -2582,6 +2582,19 @@ input.mmm-row-title { min-height: 44px; }
    Every colour is a token and every size is rem, so this surface follows both
    the theme and the Text size accessibility control — the two rules the rest
    of the shell already keeps. */
+/* "Save tickets to this phone" — the wallet's offline control. Reads as a
+   utility beside the list rather than an action on any one ticket, because it
+   saves all of them. The button keeps the shared 44px floor from
+   `.mmm-btn-ghost`; only the wrapper is declared here. */
+.mmm-offline-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 0 2px 14px;
+}
+.mmm-offline-save .meta { margin: 0; flex: 1 1 200px; color: var(--ink-3); }
+
 .mmm-ticket-list { display: flex; flex-direction: column; }
 .mmm-ticket-row {
   display: flex;
