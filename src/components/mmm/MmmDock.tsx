@@ -293,7 +293,7 @@ export function MmmDock({
           </button>
           <div className="mmm-mini-transport">
             <button
-              aria-label="Previous"
+              aria-label={t('mmmDock.previous', 'Previous')}
               className="mmm-key"
               onClick={() => { press(); onPrev(); }}
               type="button"
@@ -311,7 +311,7 @@ export function MmmDock({
               <PlayGlyph playing={playing} />
             </button>
             <button
-              aria-label="Next"
+              aria-label={t('mmmDock.next', 'Next')}
               className="mmm-key"
               onClick={() => { press(); onNext(); }}
               type="button"
@@ -323,7 +323,7 @@ export function MmmDock({
       )}
 
       {/* ── The tab row ─────────────────────────────────────────────────── */}
-      <nav aria-label="Main" className="mmm-tabs">
+      <nav aria-label={t('mmmDock.mainNav', 'Main')} className="mmm-tabs">
         {MMM_NAV.map((module) => {
           const Glyph = GLYPHS[module.id];
           const on = module.id === activeModule;
