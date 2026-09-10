@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
 import { getServerT } from '@/lib/i18n/server';
-import { REFUND_WINDOW_BUSINESS_DAYS } from '@/lib/ad-settlement-plan';
+import { REFUND_WINDOW_BUSINESS_DAYS, sponsorshipRefundableCents } from '@/lib/ad-settlement-plan';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +25,14 @@ export default async function AdvertiserDashboard() {
       select: { companyName: true, website: true },
     }),
   ]);
+
+  /* The same sum settlement will pay, from the same function, so the figure
+     a sponsor reads before cancelling is the one they get after. */
+  const now = new Date();
+  const refundableNow = (c: { pricingModel: string; budgetCents: number; spentCents: number; runDays: number | null; endsAt: Date | null }) =>
+    c.pricingModel === 'METERED'
+      ? c.budgetCents - Math.min(c.spentCents, c.budgetCents)
+      : sponsorshipRefundableCents({ paidCents: c.budgetCents, runDays: c.runDays, endsAt: c.endsAt, now });
 
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
   const totalSpentCents = campaigns.reduce((s, c) => s + c.spentCents, 0);
@@ -180,10 +188,18 @@ export default async function AdvertiserDashboard() {
                 <div style={{ fontWeight: 700 }}>{dollars(campaign.budgetCents)}</div>
                 <div className="meta">{campaign.authorizedAt ? t('advertiseDashboardPage.paid', 'Paid') : t('advertiseDashboardPage.quoted', 'Quoted')}</div>
               </div>
-              <div>
-                <div style={{ fontWeight: 700 }}>{dollars(Math.min(campaign.spentCents, campaign.budgetCents))}</div>
-                <div className="meta">{t('advertiseDashboardPage.spent', 'Spent')}</div>
-              </div>
+              {/* "Spent" and "Budget remaining" are METERED words. A
+                  sponsorship has no meter — spentCents stays 0 — so those two
+                  tiles would read $0.00 spent and the whole budget remaining
+                  on a term that had run to its last day, and the cancel
+                  confirm beside them would promise a full refund. What a
+                  sponsor is owed is the unused part of the TERM. */}
+              {campaign.pricingModel === 'METERED' && (
+                <div>
+                  <div style={{ fontWeight: 700 }}>{dollars(Math.min(campaign.spentCents, campaign.budgetCents))}</div>
+                  <div className="meta">{t('advertiseDashboardPage.spent', 'Spent')}</div>
+                </div>
+              )}
               {campaign.settledAt ? (
                 <div>
                   <div style={{ fontWeight: 700 }}>{campaign.refundedCents === null ? '—' : dollars(campaign.refundedCents)}</div>
@@ -191,8 +207,8 @@ export default async function AdvertiserDashboard() {
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontWeight: 700 }}>${((campaign.budgetCents - Math.min(campaign.spentCents, campaign.budgetCents)) / 100).toFixed(2)}</div>
-                  <div className="meta">{t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining')}</div>
+                  <div style={{ fontWeight: 700 }}>{dollars(refundableNow(campaign))}</div>
+                  <div className="meta">{campaign.pricingModel === 'METERED' ? t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining') : t('advertiseDashboardPage.refundIfCancelled', 'Refund if cancelled')}</div>
                 </div>
               )}
             </div>
@@ -214,10 +230,10 @@ export default async function AdvertiserDashboard() {
                 )
               ) : campaign.authorizedAt ? (
                 <>
-                  {t('advertiseDashboardPage.chargedOn', 'Charged')} {dollars(campaign.budgetCents)} {t('advertiseDashboardPage.on', 'on')} {day(campaign.authorizedAt)} · {t('advertiseDashboardPage.unspentPromise', 'unspent budget is refunded to that card when the run ends or if you cancel')}
+                  {t('advertiseDashboardPage.chargedOn', 'Charged')} {dollars(campaign.budgetCents)} {t('advertiseDashboardPage.on', 'on')} {day(campaign.authorizedAt)} · {campaign.pricingModel === 'METERED' ? t('advertiseDashboardPage.unspentPromise', 'unspent budget is refunded to that card when the run ends or if you cancel') : t('advertiseDashboardPage.unusedPromise', 'cancel part-way and the days you have not used are refunded to that card')}
                 </>
               ) : campaign.status === 'AWAITING_PAYMENT' ? (
-                <>{t('advertiseDashboardPage.notChargedYet', 'Nothing charged yet — paying charges the full budget, and whatever is unspent at the end is refunded.')}</>
+                <>{t('advertiseDashboardPage.notChargedYet', 'Nothing charged yet — paying starts the term, and cancelling part-way refunds the days you have not used.')}</>
               ) : (
                 <>{t('advertiseDashboardPage.notCharged', 'Nothing has been charged for this campaign.')}</>
               )}
@@ -235,7 +251,7 @@ export default async function AdvertiserDashboard() {
                   campaignId={campaign.id}
                   status={campaign.status}
                   charged={Boolean(campaign.authorizedAt) && !campaign.settledAt}
-                  unspentCents={campaign.budgetCents - Math.min(campaign.spentCents, campaign.budgetCents)}
+                  unspentCents={refundableNow(campaign)}
                 />
               </div>
             )}

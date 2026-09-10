@@ -1502,7 +1502,19 @@ model Ad {
   // Coverage tier the campaign was purchased at — LOCAL | REGIONAL | NATIONAL | GLOBAL.
   // Drives per-spot pricing and reach; separate from slotId (the placement).
   scope                 String         @default("REGIONAL")
+  // How this campaign was SOLD, which decides how it settles (2026-09-10).
+  // SPONSORSHIP: a flat monthly term; impressions are the delivery report and
+  // nothing meters `spentCents`, so an early cancellation refunds the unused
+  // days pro rata. METERED: the retired per-impression model, refunded as
+  // budget minus spend. The default is METERED so every campaign sold before
+  // this column existed keeps settling the way it was sold — a metered
+  // campaign that delivered nothing is owed a FULL refund, where a
+  // sponsorship that ran its term is owed none, and the two are otherwise
+  // indistinguishable on the row.
+  pricingModel          String         @default("METERED")
   budgetCents           Int            @default(0)
+  // Retired for SPONSORSHIP campaigns: kept for the metered ones still
+  // settling, and never incremented again. See src/lib/ad-pricing.ts.
   spentCents            Int            @default(0)
   impressions           Int            @default(0)
   // Ad.clicks removed: an audio spot has no click-through surface, so nothing

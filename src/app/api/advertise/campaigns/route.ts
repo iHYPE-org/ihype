@@ -13,8 +13,8 @@ import { describeSettlement, settlementRecord } from '@/lib/ad-settlement';
 import { log } from '@/lib/logger';
 import { deferWork } from '@/lib/defer-work';
 import {
-  isAdScope, isAdRunLengthDays, quoteAdCampaign,
-  AD_SCOPE_LABELS, MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY,
+  isAdScope, isSponsorshipTerm, quoteSponsorship,
+  AD_SCOPE_LABELS, SPONSORSHIP_TERMS_MONTHS,
 } from '@/lib/ad-pricing';
 import { isAdvertisingEnabledRuntime } from '@/lib/runtime-flags';
 
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
   }
 
   let body: {
-    scope?: unknown; spotsPerDay?: unknown; runDays?: unknown;
+    scope?: unknown; months?: unknown;
     title?: unknown; audioUrl?: unknown; audioDurationSecs?: unknown; clickUrl?: unknown;
   };
   try { body = await request.json(); } catch { return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 }); }
@@ -98,12 +98,12 @@ export async function POST(request: NextRequest) {
   if (!isAdScope(body.scope)) {
     return NextResponse.json({ error: 'scope must be one of LOCAL, REGIONAL, NATIONAL, GLOBAL.' }, { status: 400 });
   }
-  const spotsPerDay = typeof body.spotsPerDay === 'number' ? body.spotsPerDay : NaN;
-  if (!Number.isFinite(spotsPerDay) || spotsPerDay < MIN_SPOTS_PER_DAY || spotsPerDay > MAX_SPOTS_PER_DAY) {
-    return NextResponse.json({ error: `spotsPerDay must be between ${MIN_SPOTS_PER_DAY} and ${MAX_SPOTS_PER_DAY}.` }, { status: 400 });
-  }
-  if (!isAdRunLengthDays(body.runDays)) {
-    return NextResponse.json({ error: 'runDays must be one of 7, 14, 30, 90.' }, { status: 400 });
+  /* A sponsorship is a TERM, not a number of spots (2026-09-10). `spotsPerDay`
+     is gone from the purchase: it never reached delivery anyway — the station
+     picks weighted clips and shares airtime equally among live sponsors — so
+     it was a unit the buyer chose and the server never honoured. */
+  if (!isSponsorshipTerm(body.months)) {
+    return NextResponse.json({ error: `months must be one of ${SPONSORSHIP_TERMS_MONTHS.join(', ')}.` }, { status: 400 });
   }
 
   // Slot is resolved from the coverage tier, not chosen directly by the
@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
   // the payment lands (see the AWAITING_PAYMENT handling below and the
   // webhook), so a campaign stuck in manual review or awaiting checkout
   // never loses run length to the wait.
-  const quote = quoteAdCampaign(body.scope, spotsPerDay, body.runDays);
+  const quote = quoteSponsorship(body.scope, body.months);
 
   // AI vetting (music-industry-only policy). Approvals go live without an
   // admin touch; only borderline submissions land in the manual queue.
@@ -199,8 +199,11 @@ export async function POST(request: NextRequest) {
         ? Math.max(0, Math.round(body.audioDurationSecs))
         : undefined,
       clickUrl: clickUrl || undefined,
-      budgetCents: quote.totalCostCents,
+      budgetCents: quote.totalCents,
       runDays: quote.runDays,
+      /* Marks how this was sold, so settlement refunds unused DAYS rather
+         than an unspent budget that nothing spends. */
+      pricingModel: 'SPONSORSHIP',
       status: storedStatus,
     },
     include: { slot: { select: { name: true } } },
@@ -211,7 +214,7 @@ export async function POST(request: NextRequest) {
     try {
       const checkout = await createAdCampaignCheckoutSession({
         adId: ad.id,
-        amountCents: quote.totalCostCents,
+        amountCents: quote.totalCents,
         title,
         advertiserEmail: session.user.email ?? null,
       });
@@ -299,6 +302,9 @@ export async function PATCH(request: NextRequest) {
     select: {
       advertiserId: true, status: true, endsAt: true, pausedAt: true, title: true,
       budgetCents: true, spentCents: true, stripePaymentIntentId: true, settledAt: true,
+      /* A sponsorship refunds its unused DAYS, so the planner needs how it was
+         sold and how long the term was. */
+      pricingModel: true, runDays: true,
     },
   });
   if (!ad || ad.advertiserId !== session.user.id) {
@@ -339,7 +345,7 @@ export async function PATCH(request: NextRequest) {
     // see ad-settlement-plan.ts).
     let settlement: string | undefined;
     if (ad.stripePaymentIntentId && !ad.settledAt) {
-      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId, ad.spentCents, ad.budgetCents);
+      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId, ad);
       settlement = describeSettlement(plan, false, refundId);
       updated = await db.ad.update({
         where: { id },
