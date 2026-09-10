@@ -215,6 +215,14 @@ export async function executeAccountErasure(
     db.badge.deleteMany({ where: { userId } }),
     db.bookingRequest.deleteMany({ where: { fromUserId: userId } }),
     db.venueConnectionRequest.deleteMany({ where: { requesterId: userId } }),
+    /* The advertiser's identity record. `AdvertiserAccount` cascades from
+       `User`, and this path deliberately NEVER calls `db.user.delete()` (the
+       row stays as an empty shell so financial records keep their reference),
+       so the cascade never fires and the company name, contact name, website
+       and pitch survived erasure joined to the same userId. Enumerated here
+       like every other row, because a cascade that cannot run is not a
+       deletion. */
+    db.advertiserAccount.deleteMany({ where: { userId } }),
   ]);
 
   // 3. Unlink from retained records without deleting them.
@@ -257,6 +265,14 @@ export async function executeAccountErasure(
       data: { recipient: 'redacted' },
     });
     await db.newsletterSubscription.deleteMany({
+      where: { email: { equals: user.email, mode: 'insensitive' } },
+    });
+    /* The alpha access request they arrived through. Keyed by address, not by
+       userId — it is written before an account exists — so it is invisible to
+       every other clause here, and it holds the raw email and a free-text
+       note that stays legible in the admin Access-requests tab long after the
+       account is gone. */
+    await db.accessRequest.deleteMany({
       where: { email: { equals: user.email, mode: 'insensitive' } },
     });
   }

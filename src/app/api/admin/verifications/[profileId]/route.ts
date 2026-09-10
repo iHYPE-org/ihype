@@ -5,6 +5,9 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { requireRecentAdminReauth } from '@/lib/admin-confirmation';
 import { log } from '@/lib/logger';
+import { notifyUser } from '@/lib/notify';
+import { sendGenericEmail } from '@/lib/mailer';
+import { escapeHtml } from '@/lib/html-escape';
 
 const schema = z.object({
   decision: z.enum(['VERIFIED', 'REJECTED']),
@@ -43,7 +46,14 @@ export async function PATCH(
 
   const profile = await db.profile.findUnique({
     where: { id: profileId },
-    select: { id: true, verificationStatus: true }
+    select: {
+      id: true,
+      verificationStatus: true,
+      verificationNotes: true,
+      slug: true,
+      ownerId: true,
+      owner: { select: { email: true } },
+    }
   });
 
   if (!profile) {
@@ -64,7 +74,18 @@ export async function PATCH(
         verificationStatus: body.decision,
         verified: body.decision === 'VERIFIED',
         verificationReviewedAt: new Date(),
-        ...(body.adminNote ? { verificationNotes: body.adminNote } : {})
+        /* APPENDED, never overwritten. `verificationNotes` holds what the
+           APPLICANT wrote when they submitted (api/verify/route.ts), and
+           replacing it with the reviewer's note destroyed the only record of
+           what was actually claimed — while the reviewer's note is the one
+           thing a rejected applicant most needs kept. */
+        ...(body.adminNote
+          ? {
+              verificationNotes: profile.verificationNotes
+                ? `${profile.verificationNotes}\n\n— Reviewer: ${body.adminNote}`
+                : `— Reviewer: ${body.adminNote}`,
+            }
+          : {})
       },
       select: {
         id: true,
@@ -85,6 +106,39 @@ export async function PATCH(
       }
     })
   ]);
+
+  /* THE DECISION HAS TO REACH THE APPLICANT, AND UNTIL NOW IT REACHED NOBODY.
+     `/verify` and the venue wizard both promise "we'll review your
+     application within 48 hours and email you", the workbench tracks that
+     48h against a queue, and this handler wrote a profile row and an audit
+     row and stopped. A rejected venue was never told, never learned why, and
+     went on waiting on a promise with no sender behind it.
+
+     Both halves are best-effort and neither can fail the decision: the review
+     is recorded above and a failed send must not roll it back or answer the
+     administrator an error for work that succeeded. */
+  const approved = body.decision === 'VERIFIED';
+  const title = approved ? 'Your profile is verified' : 'We could not verify your profile';
+  const reviewerNote = body.adminNote?.trim();
+  const bodyText = approved
+    ? `${updated.name} is verified on iHYPE.${reviewerNote ? ` ${reviewerNote}` : ''}`
+    : `We could not verify ${updated.name} from what was sent.${reviewerNote ? ` ${reviewerNote}` : ''} You can send new evidence from the verification page.`;
+  const link = approved ? `/app/me/profiles` : `/verify`;
+
+  if (profile.ownerId) {
+    await notifyUser(profile.ownerId, { type: `verification-${body.decision.toLowerCase()}`, title, body: bodyText, link })
+      .catch((err) => log.error('[admin/verifications]', err instanceof Error ? err : { error: String(err) }, 'decision recorded but the in-app notice failed'));
+  }
+
+  if (profile.owner?.email) {
+    await sendGenericEmail({
+      to: profile.owner.email,
+      subject: `[iHYPE] ${title}`,
+      text: `${bodyText}\n\nhttps://ihype.org${link}`,
+      html: `<p>${escapeHtml(bodyText)}</p><p><a href="https://ihype.org${link}">https://ihype.org${link}</a></p>`,
+      deliveryType: `verification-${body.decision.toLowerCase()}`,
+    }).catch((err) => log.error('[admin/verifications]', err instanceof Error ? err : { error: String(err) }, 'decision recorded but the email failed'));
+  }
 
   return NextResponse.json(updated);
 }
