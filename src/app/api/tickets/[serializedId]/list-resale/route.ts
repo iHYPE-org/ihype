@@ -69,7 +69,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     });
 
-    return NextResponse.json({ ok: true, message: 'Ticket listed for resale. Buyers will be notified.' });
+    /* THE MESSAGE USED TO READ "Ticket listed for resale. Buyers will be
+       notified." (corrected 2026-09-10). Nothing here lists anything and
+       nothing notifies anybody: this writes ONE AuditLog row, there is no
+       listing model, no resale marketplace and no buyer-side surface. A fan
+       who cannot attend pressed that button and believed their ticket was for
+       sale. Say what actually happens; the honest way to hand a ticket on
+       today is the transfer beside this control, which really does work. */
+    return NextResponse.json({
+      ok: true,
+      message: 'Asking price recorded for the organiser. Nothing is listed publicly and no buyer has been contacted — to hand this ticket to someone you know, use Transfer.',
+    });
   } catch (err) {
     log.error('[api/tickets/[serializedId]', err instanceof Error ? err : { error: String(err) }, '/list-resale] error');
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
