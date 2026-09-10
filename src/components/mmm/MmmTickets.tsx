@@ -56,10 +56,6 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
 
   return (
     <>
-      {/* "The wallet opens in airplane mode" — the design's promise, and until
-          now not true for a single ticket. See OfflineTicketWarmer: this list
-          is the one surface that knows every ticket the member holds. */}
-      <OfflineTicketWarmer paths={ticketPaths} />
       {/* Claiming sits on the LIST, not on a ticket page: the person redeeming a
           code does not have the ticket yet, so they cannot open its page. Above
           the list because on a first transfer the list below is empty or demo
@@ -112,6 +108,13 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
           );
         })}
       </div>
+
+      {/* "The wallet opens in airplane mode" — the design's promise, and until
+          2026-09-03 not true for a single ticket. This list is the one surface
+          that knows every ticket the member holds, so it is where the save
+          lives; BELOW them, because the tickets are what the member came for
+          and a utility above the content reads as a banner. */}
+      <OfflineTicketWarmer paths={ticketPaths} />
 
       {open && <TicketSheet demo={demo} onClose={() => setOpen(null)} ticket={open} />}
     </>

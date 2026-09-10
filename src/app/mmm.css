@@ -2591,7 +2591,7 @@ input.mmm-row-title { min-height: 44px; }
   flex-wrap: wrap;
   align-items: center;
   gap: 10px 14px;
-  padding: 0 2px 14px;
+  padding: 16px 2px 4px;
 }
 .mmm-offline-save .meta { margin: 0; flex: 1 1 200px; color: var(--ink-3); }
 
