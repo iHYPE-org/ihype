@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { notifyUser } from '@/lib/notify';
+import { bookingInboxPath } from '@/lib/booking-inbox-path';
+import { log } from '@/lib/logger';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
@@ -62,7 +65,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'toProfileId and message (up to 4000 characters) are required' }, { status: 400 });
   }
 
-  const profile = await db.profile.findUnique({ where: { id: toProfileId }, select: { id: true } });
+  const profile = await db.profile.findUnique({ where: { id: toProfileId }, select: { id: true, ownerId: true, name: true, slug: true, type: true } });
   if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
   const existing = await db.bookingRequest.findFirst({
@@ -75,6 +78,22 @@ export async function POST(request: Request) {
     data: { fromUserId: session.user.id, toProfileId, message: String(message).slice(0, 1000) },
     select: { id: true, status: true, createdAt: true },
   });
+
+  /* THE OFFER USED TO REACH NOBODY (2026-09-10). A venue sends this from the
+     demand radar and saw "Request sent"; the row was created and nothing was
+     notified, no email, no push, no in-app notice. The recipient's only clue
+     was an unlinked count on their dashboard, and seven days later
+     `close-stale-bookings` flipped it to `expired` telling neither party.
+     Best-effort: an offer that was accepted into the database must not fail
+     because a notification did. */
+  if (profile.ownerId && profile.ownerId !== session.user.id) {
+    await notifyUser(profile.ownerId, {
+      type: 'booking-request',
+      title: 'A booking request',
+      body: `${profile.name} has a new booking request waiting for a reply.`,
+      link: bookingInboxPath(profile.type, profile.slug),
+    }).catch((err) => log.error('[booking-requests]', err instanceof Error ? err : { error: String(err) }, 'request created but the recipient was not notified'));
+  }
 
   return NextResponse.json({ request: req }, { status: 201 });
 }
@@ -91,11 +110,24 @@ export async function PATCH(request: Request) {
 
   const br = await db.bookingRequest.findUnique({
     where: { id },
-    select: { toProfile: { select: { ownerId: true } } },
+    select: { fromUserId: true, toProfile: { select: { ownerId: true, name: true } } },
   });
   if (!br) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   if (br.toProfile.ownerId !== session.user.id) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
   const updated = await db.bookingRequest.update({ where: { id }, data: { status } });
+
+  /* And the answer has to travel back. The sender pressed a button in the
+     demand radar and, before this, learned the outcome only by returning to
+     a list they had no reason to revisit. */
+  if (br.fromUserId && br.fromUserId !== session.user.id) {
+    await notifyUser(br.fromUserId, {
+      type: `booking-${status}`,
+      title: status === 'accepted' ? 'Your booking request was accepted' : 'Your booking request was declined',
+      body: `${br.toProfile.name} ${status} your booking request.`,
+      link: '/app/me/booking',
+    }).catch((err) => log.error('[booking-requests]', err instanceof Error ? err : { error: String(err) }, 'reply recorded but the sender was not notified'));
+  }
+
   return NextResponse.json({ request: updated });
 }

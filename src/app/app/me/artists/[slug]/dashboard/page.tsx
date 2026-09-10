@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { bookingInboxPath } from '@/lib/booking-inbox-path';
 import { FanMailButton } from '@/components/FanMailButton';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -80,9 +81,16 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
     });
   }
   if (bookingPending > 0) {
+    /* "awaiting a reply" pointed nowhere: the only inbox was under
+       /app/me/venues/ and gated on VENUE, so an artist read a count they
+       could not act on until it silently expired. */
     activity.push({
       color: 'var(--role-fan)',
-      text: <><strong>{bookingPending.toLocaleString()}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}</>,
+      text: (
+        <Link href={bookingInboxPath('ARTIST', profile.slug)}>
+          <strong>{bookingPending.toLocaleString()}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}
+        </Link>
+      ),
     });
   }
 

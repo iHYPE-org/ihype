@@ -95,7 +95,7 @@ export async function sendEmailToUser(
   return sendGenericEmail(input);
 }
 
-function buildUnsubscribeUrl(userId: string): string {
+export function buildUnsubscribeUrl(userId: string): string {
   return `${getBaseUrl()}/api/email/unsubscribe?token=${encodeURIComponent(createUnsubscribeToken(userId))}`;
 }
 
