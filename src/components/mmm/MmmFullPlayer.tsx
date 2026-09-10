@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { MmmPlayerTrack } from '@/components/mmm/MmmShell';
+import { useI18n } from '@/components/I18nProvider';
 
 /** Everything the playlist-items endpoint needs to store a playable row. */
 export type PlaylistAddTarget = {
@@ -24,6 +25,7 @@ export type PlaylistAddTarget = {
  * is "already in", not an error.
  */
 function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [lists, setLists] = useState<Array<{ id: string; name: string }> | null>(null);
   const [note, setNote] = useState<string | null>(null);
@@ -40,9 +42,9 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
       setLists((payload.playlists ?? []).map((list) => ({ id: list.id, name: list.name })));
     } catch {
       setLists([]);
-      setNote('Playlists could not be loaded right now.');
+      setNote(t('mmmFullPlayer.playlistsUnavailable', 'Playlists could not be loaded right now.'));
     }
-  }, [lists]);
+  }, [lists, t]);
 
   const add = useCallback(async (playlistId: string, name: string) => {
     if (busy) return;
@@ -54,15 +56,15 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(target),
       });
-      if (response.status === 409) setNote(`Already in ${name}.`);
-      else if (!response.ok) setNote('Could not add the track. Try again.');
-      else setNote(`Added to ${name}.`);
+      if (response.status === 409) setNote(`${t('mmmFullPlayer.alreadyIn', 'Already in')} ${name}.`);
+      else if (!response.ok) setNote(t('mmmFullPlayer.couldNotAdd', 'Could not add the track. Try again.'));
+      else setNote(`${t('mmmFullPlayer.addedTo', 'Added to')} ${name}.`);
     } catch {
-      setNote('Could not add the track. Try again.');
+      setNote(t('mmmFullPlayer.couldNotAdd', 'Could not add the track. Try again.'));
     } finally {
       setBusy(false);
     }
-  }, [busy, target]);
+  }, [busy, target, t]);
 
   const create = useCallback(async (name: string) => {
     if (busy || !name) return;
@@ -81,16 +83,16 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
       await add(playlist.id, playlist.name);
       return;
     } catch {
-      setNote('Could not create the playlist.');
+      setNote(t('mmmFullPlayer.couldNotCreate', 'Could not create the playlist.'));
     }
     setBusy(false);
-  }, [add, busy]);
+  }, [add, busy, t]);
 
   return (
     <>
       <button
         aria-expanded={open}
-        aria-label={`Add ${target.title} to a playlist`}
+        aria-label={`${t('mmmFullPlayer.addToPlaylist', 'Add to playlist')}: ${target.title}`}
         className="mmm-full-fav"
         data-active={open || undefined}
         onClick={() => void load()}
@@ -100,9 +102,9 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
       </button>
       {open && (
         <div className="mmm-full-list" data-add-panel="" style={{ width: '100%' }}>
-          <p className="mmm-queue-eyebrow">Add to playlist</p>
+          <p className="mmm-queue-eyebrow">{t('mmmFullPlayer.addToPlaylist', 'Add to playlist')}</p>
           {note && <p className="mmm-queue-eyebrow" role="status" style={{ color: 'var(--accent-text)' }}>{note}</p>}
-          {lists === null && <p className="mmm-queue-eyebrow" role="status">Loading…</p>}
+          {lists === null && <p className="mmm-queue-eyebrow" role="status">{t('mmmFullPlayer.loading', 'Loading…')}</p>}
           {(lists ?? []).map((list) => (
             <button className="mmm-queue-row" disabled={busy} key={list.id} onClick={() => void add(list.id, list.name)} type="button">
               <span aria-hidden="true" className="mmm-queue-index">≡</span>
@@ -120,10 +122,10 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
             style={{ display: 'flex', gap: 8, padding: '8px 0 0' }}
           >
             <input
-              aria-label="New playlist name"
+              aria-label={t('mmmFullPlayer.newPlaylistName', 'New playlist name')}
               maxLength={60}
               name="name"
-              placeholder="New playlist"
+              placeholder={t('mmmFullPlayer.newPlaylist', 'New playlist')}
               style={{
                 flex: 1, minWidth: 0, padding: '10px 12px', borderRadius: 'var(--radius-card)',
                 border: '1.5px solid var(--line)', background: 'var(--bg-2)', color: 'var(--ink)',
@@ -134,7 +136,7 @@ function AddToPlaylist({ target }: { target: PlaylistAddTarget }) {
               type="text"
             />
             <button className="mmm-queue-row" disabled={busy} style={{ flex: '0 0 auto', width: 'auto' }} type="submit">
-              <span className="mmm-queue-title">Create</span>
+              <span className="mmm-queue-title">{t('mmmFullPlayer.create', 'Create')}</span>
             </button>
           </form>
         </div>
@@ -255,6 +257,7 @@ export function MmmFullPlayer({
   /** 0–100. */
   volume: number;
 }) {
+  const { t } = useI18n();
   const closeRef = useRef<HTMLButtonElement | null>(null);
 
   // Escape closes, the way it closes every other overlay in the app. The
@@ -288,9 +291,9 @@ export function MmmFullPlayer({
   if (!open || !track) return null;
 
   return (
-    <div aria-label="Now playing" aria-modal="true" className="mmm-full" role="dialog">
+    <div aria-label={t('mmmFullPlayer.nowPlaying', 'Now playing')} aria-modal="true" className="mmm-full" role="dialog">
       <div className="mmm-full-scroll">
-        <p className="mmm-full-state">{playing ? 'Now playing' : 'Paused'}</p>
+        <p className="mmm-full-state">{playing ? t('mmmFullPlayer.nowPlaying', 'Now playing') : t('mmmFullPlayer.paused', 'Paused')}</p>
 
         <div className="mmm-full-art">
           {track.artworkUrl ? (
@@ -347,7 +350,7 @@ export function MmmFullPlayer({
         <div className="mmm-full-seek">
           <span className="mmm-full-clock">{clock(progress, durationSeconds)}</span>
           <input
-            aria-label="Seek"
+            aria-label={t('mmmFullPlayer.seek', 'Seek')}
             className="mmm-player-range"
             data-accent=""
             max={100}
@@ -363,7 +366,7 @@ export function MmmFullPlayer({
 
         <div className="mmm-full-transport">
           <button
-            aria-label="Previous track"
+            aria-label={t('mmmFullPlayer.previousTrack', 'Previous track')}
             className="mmm-full-step"
             disabled={!canGoBack}
             onClick={onPrev}
@@ -408,7 +411,7 @@ export function MmmFullPlayer({
           )}
 
           <button
-            aria-label="Next track"
+            aria-label={t('mmmFullPlayer.nextTrack', 'Next track')}
             className="mmm-full-step"
             disabled={!canGoForward}
             onClick={onNext}
@@ -463,7 +466,7 @@ export function MmmFullPlayer({
         <div className="mmm-full-volume">
           <span aria-hidden="true" className="mmm-full-clock">♫</span>
           <input
-            aria-label="Volume"
+            aria-label={t('mmmFullPlayer.volume', 'Volume')}
             className="mmm-player-range"
             max={100}
             min={0}
@@ -495,10 +498,10 @@ export function MmmFullPlayer({
               <path d="M20 20l-3.5-3.5" />
             </svg>
             <input
-              aria-label="Search tracks and artists"
+              aria-label={t('mmmFullPlayer.searchTracks', 'Search tracks and artists')}
               enterKeyHint="search"
               name="q"
-              placeholder="Search tracks and artists"
+              placeholder={t('mmmFullPlayer.searchTracks', 'Search tracks and artists')}
               type="search"
             />
           </form>
@@ -506,7 +509,7 @@ export function MmmFullPlayer({
 
         {queue.length > 0 && (
           <div className="mmm-full-list">
-            <p className="mmm-queue-eyebrow">Up next</p>
+            <p className="mmm-queue-eyebrow">{t('mmmFullPlayer.upNext', 'Up next')}</p>
             {queue.map((item, index) => (
               <button
                 className="mmm-queue-row"
@@ -524,7 +527,7 @@ export function MmmFullPlayer({
 
         {history.length > 0 && (
           <div className="mmm-full-list" data-played="">
-            <p className="mmm-queue-eyebrow">Played</p>
+            <p className="mmm-queue-eyebrow">{t('mmmFullPlayer.played', 'Played')}</p>
             {history.map((item, index) => (
               <button
                 className="mmm-queue-row"
@@ -552,12 +555,12 @@ export function MmmFullPlayer({
             player and shrinks back down to it, so the control that closes it
             should be the inverse of the gesture that opened it. The mark read
             as "go to iHYPE" — a destination — which is not what this does. */}
-        <button aria-label="Shrink back to the mini player" className="mmm-full-back" onClick={onClose} ref={closeRef} type="button">
+        <button aria-label={t('mmmFullPlayer.shrink', 'Shrink back to the mini player')} className="mmm-full-back" onClick={onClose} ref={closeRef} type="button">
           <svg aria-hidden="true" fill="none" height="22" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" viewBox="0 0 24 24" width="22">
             <path d="M6 9l6 6 6-6" />
           </svg>
         </button>
-        <span className="mmm-full-exit-label">Close</span>
+        <span className="mmm-full-exit-label">{t('mmmFullPlayer.close', 'Close')}</span>
       </div>
     </div>
   );
