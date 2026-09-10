@@ -89,6 +89,7 @@
     "@simplewebauthn/browser": "^13.0.0",
     "@simplewebauthn/server": "^13.3.3",
     "bcryptjs": "^3.0.3",
+    "jsqr": "^1.4.0",
     "maplibre-gl": "^6.6.0",
     "next": "16.3.4",
     "next-auth": "5.0.0-beta.32",

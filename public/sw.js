@@ -119,7 +119,11 @@ let isUpdate = false;
 self.addEventListener('message', (event) => {
   const data = event.data || {};
 
-  if (data.type === 'WARM_TICKETS' && Array.isArray(data.paths)) {
+  /* WARM_DOOR is the organiser's counterpart: the door scanner page for one
+     show, cached so the phone that downloaded the guest list can open the
+     scanner with no signal. Same loop, same private cache, same asset warming;
+     `isOfflinePrivatePage` is what admits either kind of path. */
+  if ((data.type === 'WARM_TICKETS' || data.type === 'WARM_DOOR') && Array.isArray(data.paths)) {
     event.waitUntil((async () => {
       const cache = await caches.open(TICKETS_CACHE);
       // Sequential and individually guarded: cache.addAll rejects the whole
@@ -127,7 +131,7 @@ self.addEventListener('message', (event) => {
       // cost the holder every other one.
       const statics = await caches.open(STATIC_CACHE);
       for (const path of data.paths.slice(0, 50)) {
-        if (typeof path !== 'string' || !isTicketDetail(path)) continue;
+        if (typeof path !== 'string' || !isOfflinePrivatePage(path)) continue;
         try {
           const response = await fetch(path, { credentials: 'same-origin' });
           if (!response.ok) continue;
@@ -141,6 +145,36 @@ self.addEventListener('message', (event) => {
           await warmPageAssets(await response.text(), statics);
         } catch {
           // Offline already, or the ticket is gone. Nothing to do.
+        }
+      }
+    })());
+    return;
+  }
+
+  /* WARM_ASSETS: the page reports the static assets IT ALREADY LOADED and the
+     worker stores any it does not hold. This exists for the first visit of a
+     session: the worker claims a page on activate, AFTER that page's own
+     scripts were fetched, so nothing it loaded — including the chunks the
+     shell pulls in by dynamic import at runtime, which no HTML names — went
+     through the fetch handler or into the static cache. Measured 2026-09-10:
+     the door page, opened once online and then with the network cut,
+     hydrated into the error boundary because the map layer's chunks were
+     never stored. Same-origin `/_next/static/` only; the page cannot make the
+     worker cache anything else. */
+  if (data.type === 'WARM_ASSETS' && Array.isArray(data.urls)) {
+    event.waitUntil((async () => {
+      const statics = await caches.open(STATIC_CACHE);
+      for (const raw of data.urls.slice(0, 200)) {
+        if (typeof raw !== 'string') continue;
+        let url;
+        try { url = new URL(raw, location.origin); } catch { continue; }
+        if (url.origin !== location.origin || !url.pathname.startsWith('/_next/static/')) continue;
+        try {
+          if (await statics.match(url.pathname)) continue;
+          const asset = await fetch(url.pathname);
+          if (asset.ok) await statics.put(url.pathname, asset);
+        } catch {
+          // Offline already, or the asset is gone. The rest still help.
         }
       }
     })());
@@ -206,7 +240,7 @@ self.addEventListener('fetch', (event) => {
      below used to swallow the one page this whole cache exists for. The wallet
      did not "work for tickets you had already opened", as the comments here
      claimed: it did not work at all, at any door, for any ticket. */
-  if (request.destination === 'document' && isTicketDetail(url.pathname)) {
+  if (request.destination === 'document' && isOfflinePrivatePage(url.pathname)) {
     // The one place a private page is stored on purpose — see the note on
     // NETWORK_ONLY_PATHS. Sign-out clears this cache.
     event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
@@ -254,6 +288,27 @@ function isNetworkOnly(pathname) {
  */
 function isTicketDetail(pathname) {
   return /^\/app\/me\/tickets\/[^/]+$/.test(pathname) || /^\/tickets\/[^/]+$/.test(pathname);
+}
+
+/**
+ * The door scanner for one show — the organiser's side of the same basement.
+ *
+ * `/app/me/shows/<slug>/scan` is where a venue checks tickets, and it is
+ * behind the `/app` network-only gate like the ticket page. The scanner keeps
+ * the show's guest list (hashed — see src/lib/door-manifest.ts) in the page's
+ * own storage; what the worker has to provide is the page itself, with its
+ * scripts, so the list can be READ with no signal. Stored only when the
+ * organiser presses "Download for the door" (WARM_DOOR) or has opened the page
+ * online, and cleared with the tickets on sign-out.
+ */
+function isDoorPage(pathname) {
+  return /^\/app\/me\/shows\/[^/]+\/scan$/.test(pathname);
+}
+
+/** The two private pages this cache stores on purpose. Everything else under
+ *  `/app` stays network-only. */
+function isOfflinePrivatePage(pathname) {
+  return isTicketDetail(pathname) || isDoorPage(pathname);
 }
 
 async function cacheFirst(request, cacheName) {
@@ -358,6 +413,20 @@ self.addEventListener('notificationclick', (event) => {
 async function warmPageAssets(html, statics) {
   const urls = new Set();
   for (const match of html.matchAll(/(?:src|href)="(\/_next\/static\/[^"]+\.(?:js|css))"/g)) urls.add(match[1]);
+  /* The RSC flight payload names a route's OWN client chunks as bare
+     "static/chunks/…js" strings, never as script tags — measured 2026-09-10
+     on the door page: its page chunk, the /app layout chunk and one shared
+     chunk were loaded by the browser, referenced nowhere with src=, and so
+     never stored; offline, React hydrated from the shared chunks, could not
+     load the route's, and threw into the error boundary. The ticket page
+     escaped this only because the wallet's <Link>s prefetch its chunk while
+     online, which then lands in this cache by the ordinary cache-first rule;
+     a page nothing links to on the same visit gets no such luck. Brackets in
+     a dynamic segment are stored percent-encoded, because that is how the
+     browser requests them. */
+  for (const match of html.matchAll(/static\/chunks\/[^"'\\\s<>]+\.js/g)) {
+    urls.add(`/_next/${match[0]}`.replace(/\[/g, '%5B').replace(/\]/g, '%5D'));
+  }
   for (const url of urls) {
     try {
       if (await statics.match(url)) continue;

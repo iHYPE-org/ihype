@@ -69,4 +69,14 @@
          are given no working option at all. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- Declared in the same change as the scanner it is for (the door
+         scanner at /app/me/shows/<slug>/scan calls getUserMedia), never
+         ahead of it: Play shows declared permissions to members, and a camera
+         permission on an app with no camera feature reads as a reason not to
+         install. Capacitor's BridgeWebChromeClient.onPermissionRequest grants
+         the WebView's VIDEO_CAPTURE request only when this is declared AND
+         the runtime grant exists — without it the page's getUserMedia is
+         refused with no prompt, which reads as a broken scanner. Asked at the
+         moment of use behind the app's own primer, never at launch. -->
+    <uses-permission android:name="android.permission.CAMERA" />
 </manifest>
