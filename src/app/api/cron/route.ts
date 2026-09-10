@@ -380,6 +380,42 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, deleted: result.count });
     }
 
+    case 'stripe-reconcile': {
+      /* Stripe's ledger against ours, once a night. Every write path here is
+         guarded, but every guard handles an event that ARRIVED — a delivery
+         that never comes leaves an order RESERVED behind a paid intent, and
+         a webhook subscription missing an event type (row 320) leaves a paid
+         campaign AWAITING_PAYMENT, with nothing anywhere reporting an error.
+         `reconcileStripe()` is pure and never changes a row; this job
+         reports. A person decides what a disagreement means. */
+      const { runStripeReconciliation } = await import('@/lib/stripe-reconcile-data');
+      const { renderReconciliationText } = await import('@/lib/stripe-reconcile');
+      const { sendOperationalEmail } = await import('@/lib/mailer');
+      const result = await runStripeReconciliation();
+      await pingCronAlive('stripe-reconcile');
+      if ('skipped' in result) {
+        return NextResponse.json({ ok: true, skipped: result.skipped });
+      }
+      if (result.money > 0) {
+        const text = renderReconciliationText(result);
+        log.error(
+          '[cron/stripe-reconcile]',
+          { money: result.money, kinds: result.findings.map((f) => f.kind) },
+          `Stripe and the database disagree about money: ${result.money} finding(s)`,
+        );
+        await sendOperationalEmail(
+          {
+            to: getAdminAlertRecipients(),
+            subject: `[iHYPE] Stripe reconciliation: ${result.money} disagreement(s) about money`,
+            text,
+            html: `<pre style="font-family:monospace;font-size:13px;white-space:pre-wrap;">${text.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</pre>`,
+          },
+          'stripe-reconcile',
+        );
+      }
+      return NextResponse.json({ ok: result.money === 0, ...result });
+    }
+
     case 'stripe-connect-health': {
       /* RECONCILES, and used to only complain.
        *

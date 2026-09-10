@@ -38,7 +38,7 @@ crons = [
   "0 13 * * *",   # show-payouts, ad-settlement
   "0 14 * * *",   # onboarding
   "0 15 * * *",   # welcome-sequence
-  "0 5 * * *",    # backup-verify
+  "0 5 * * *",    # backup-verify, stripe-reconcile
   "0 7 * * *",    # daily-ops
   "0 * * * *",    # anomaly-check (every hour)
   "30 3 * * *",   # dmca-enforce

@@ -26,6 +26,7 @@ import {
   calculateTicketOrderFinancials,
 } from '@/lib/ticketing';
 import { readClientAddress } from '@/lib/request-meta';
+import { PAYMENTS_UNAVAILABLE_MESSAGE, isStripeUnavailable } from '@/lib/stripe-errors';
 import { voidReservedTicketOrder } from '@/lib/ticket-order-state';
 import { arePaymentsEnabledRuntime, isTicketingEnabledRuntime } from '@/lib/runtime-flags';
 
@@ -517,6 +518,18 @@ export async function POST(
     }
     if (error instanceof TicketAvailabilityError) {
       return NextResponse.json({ error: 'Not enough tickets remain, or ticket availability changed. Please retry.' }, { status: 409 });
+    }
+    if (isStripeUnavailable(error)) {
+      /* Stripe down, unreachable, rate-limiting us, or refusing our key: none
+         of that is this order's fault and none of it is a 500 to hide behind
+         "could not complete". The reservation above was already voided, so
+         the sentence about released seats is true. 503 with Retry-After is
+         what a client and a monitor both know how to read. */
+      log.error('[ticket-purchase]', error instanceof Error ? error : null, 'Stripe unavailable during checkout');
+      return NextResponse.json(
+        { error: PAYMENTS_UNAVAILABLE_MESSAGE, code: 'PAYMENTS_UNAVAILABLE' },
+        { status: 503, headers: { 'Retry-After': '120' } },
+      );
     }
     log.error('[ticket-purchase]', error instanceof Error ? error : null, 'Ticket order failed');
     return NextResponse.json({ error: 'Could not complete this ticket order' }, { status: 500 });

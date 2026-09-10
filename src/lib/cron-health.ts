@@ -16,6 +16,7 @@ export async function checkCronHealth(): Promise<{ stale: string[] }> {
     'notification-jobs',
     'onboarding', 'feature-shows', 'stripe-connect-health',
     'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
+    'stripe-reconcile',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',
     /* Not cron jobs: the two GitHub workflows that write their own key when a
        run PASSES (nightly.yml, restore-drill.yml). A workflow that only goes

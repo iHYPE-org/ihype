@@ -193,6 +193,24 @@ describe('POST /api/shows/[showId]/tickets', () => {
     expect(voidReservedTicketOrder).not.toHaveBeenCalled();
   });
 
+  it('answers 503 PAYMENTS_UNAVAILABLE, not 500, when Stripe cannot be reached — and the reservation is voided', async () => {
+    createTicketCheckoutSession.mockRejectedValue(Object.assign(new Error('An error occurred with our connection to Stripe.'), { type: 'StripeConnectionError' }));
+
+    const res = await POST(makeRequest({ quantity: 1 }), params);
+    const json = await res.json();
+
+    expect(res.status).toBe(503);
+    expect(json.code).toBe('PAYMENTS_UNAVAILABLE');
+    expect(res.headers.get('retry-after')).toBe('120');
+    expect(voidReservedTicketOrder).toHaveBeenCalledTimes(1);
+  });
+
+  it('still answers 500 for an error that is not Stripe being unavailable', async () => {
+    createTicketCheckoutSession.mockRejectedValue(Object.assign(new Error('No such customer'), { type: 'StripeInvalidRequestError' }));
+    const res = await POST(makeRequest({ quantity: 1 }), params);
+    expect(res.status).toBe(500);
+  });
+
   describe('who settles the charge', () => {
     beforeEach(() => {
       /* vi.clearAllMocks() clears CALLS, not implementations, so a
