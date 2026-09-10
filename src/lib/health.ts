@@ -15,6 +15,8 @@ import {
   shouldHideDemoContent,
 } from '@/lib/runtime-flags';
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { readSigningSecrets } from '@/lib/signing-secrets';
+import { orderSigningSecrets } from '@/lib/signing-secret-order';
 import { isNativePushConfigured } from '@/lib/native-push';
 import { buildAlphaBlockers, evaluateRestoreDrill, parseAutomatedDrillAt } from '@/lib/alpha-readiness';
 import { kvGet } from '@/lib/kv';
@@ -162,6 +164,16 @@ export async function getHealthSnapshot() {
         openSupportRequests: openSupportCount,
         failedEmails24h: failedEmailCount,
         sentEmails24h: sentEmailCount,
+        /* Both halves of a signing-secret rotation, because they read from
+           different places and only agreement is safe: the signer reaches the
+           Cloudflare binding, while NextAuth's verifier is built at module
+           scope from `process.env`. A rotation secret visible to one and not
+           the other signs cookies nobody can verify. Counts only — never a
+           key, and never which one. */
+        signingSecrets: {
+          signer: readSigningSecrets().length,
+          verifier: orderSigningSecrets(process.env as Record<string, string | undefined>).length,
+        },
         stripeReconciliation,
         pendingVerifications: pendingVerificationCount,
         reservedTicketOrders: reservedTicketCount,

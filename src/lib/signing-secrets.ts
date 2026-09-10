@@ -1,4 +1,10 @@
 import { readRuntimeEnv } from '@/lib/runtime-env';
+import { orderSigningSecrets } from '@/lib/signing-secret-order';
+
+/* Re-exported so every existing importer keeps one place to read, while the
+   ordering rule itself lives in a dependency-free module the edge bundle can
+   also import — see the note in `auth.config.ts` about why NextAuth needs it. */
+export { orderSigningSecrets };
 
 /**
  * The signing secret, with a rotation window — the ONE place it is read.
@@ -37,21 +43,6 @@ import { readRuntimeEnv } from '@/lib/runtime-env';
  * that, because one signer reading the env by hand is one signer that fails
  * to rotate.
  */
-
-const MIN_LENGTH = 16;
-
-/** Newest first, mirroring `@auth/core`'s `setEnvDefaults` exactly. Pure over an env map. */
-export function orderSigningSecrets(env: Record<string, string | undefined>): string[] {
-  const usable = (value: string | undefined) => (typeof value === 'string' && value.trim().length >= MIN_LENGTH ? value.trim() : null);
-  const secrets: string[] = [];
-  const base = usable(env.AUTH_SECRET);
-  if (base) secrets.push(base);
-  for (const i of [1, 2, 3]) {
-    const rotated = usable(env[`AUTH_SECRET_${i}`]);
-    if (rotated) secrets.unshift(rotated);
-  }
-  return secrets;
-}
 
 /** Every secret a token may have been signed with, newest first. */
 export function readSigningSecrets(): string[] {

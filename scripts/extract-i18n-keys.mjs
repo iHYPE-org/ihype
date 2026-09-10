@@ -27,6 +27,7 @@
 
 import { readdirSync, readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { maskComments } from './lib/mask-comments.mjs';
 
 const SRC = 'src';
 const EN_DICT = 'src/lib/i18n/dictionaries/en.json';
@@ -53,11 +54,23 @@ function walk(dir, out = []) {
 const keys = {};
 const noFallback = new Set();
 const conflicts = [];
+const inComments = [];
 
 for (const file of walk(SRC)) {
-  const text = readFileSync(file, 'utf8');
+  const source = readFileSync(file, 'utf8');
+  /* Comments are blanked before matching. Two components document the
+     `t('key', 'English')` shape in prose, and reading that example as a call
+     invented a key named `key` that nothing looks up — which the applier
+     would then have accepted, because its "is this key really called?" guard
+     asks this same script. Skipped matches are reported below rather than
+     dropped in silence, so a masker that ever over-reaches is visible. */
+  const text = maskComments(source);
 
-  for (const m of text.matchAll(CALL)) {
+  for (const m of source.matchAll(CALL)) {
+    if (text.slice(m.index, m.index + m[0].length) !== m[0]) {
+      inComments.push({ file, key: m[2], line: source.slice(0, m.index).split('\n').length });
+      continue;
+    }
     const [, , key, , raw] = m;
     // Un-escape what the source escaped, so the dictionary holds real text.
     const value = raw.replace(/\\(['"\\])/g, '$1').replace(/\\n/g, '\n');
@@ -98,6 +111,13 @@ if (outIdx !== -1 && args[outIdx + 1]) {
 
 // Diagnostics go to stderr so they never pollute piped JSON.
 console.error(`\nExtracted ${Object.keys(sorted).length} keys with fallbacks.`);
+
+if (inComments.length > 0) {
+  console.error(
+    `\n${inComments.length} t() call(s) sit inside a COMMENT and were not collected ` +
+    `(documentation, not code):\n  ${inComments.map((c) => `${c.file}:${c.line}  ${c.key}`).join('\n  ')}`,
+  );
+}
 
 if (noFallback.size > 0) {
   console.error(
