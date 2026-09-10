@@ -1,8 +1,41 @@
-// Coverage-tier pricing for the self-serve Ad campaign builder (/advertise).
-// Rates match the Advertise.dc.html design spec. Shared between the client
-// calculator (src/components/AdvertisePage.tsx) and the server route
-// (src/app/api/advertise/campaigns/route.ts), which recomputes the same
-// numbers server-side rather than trusting a client-submitted budget.
+/**
+ * Sponsorship pricing for the self-serve advertiser (`/advertise`).
+ *
+ * WHY THIS IS NOT PRICED PER IMPRESSION ANY MORE (2026-09-10, owner: "Let's
+ * move to your suggestion and we can always adjust if we go to scale").
+ *
+ * The old model sold "spots per day" at a per-spot rate and quoted an
+ * impression count beside it — LOCAL was $0.15 a spot a day against 800
+ * impressions, a $0.19 CPM — while delivery charged a flat 9c an impression,
+ * a $90 CPM. The two disagreed by 480x, and the buyer took the loss both
+ * ways: a $45 local campaign quoted 240,000 impressions, delivered 500,
+ * went dark for the rest of its run, and was refunded nothing.
+ *
+ * Neither number was reachable. A break airs every 15 minutes with two spots
+ * (`station-breaks.ts`), so the station makes EIGHT impressions per
+ * listener-hour. Filling one LOCAL buyer at the quoted rate needed 100
+ * listener-hours a day; GLOBAL needed 5,250. Impressions were being sold out
+ * of inventory that does not exist.
+ *
+ * So the unit is time, not impressions:
+ *
+ *   - A sponsor buys a TERM (months) at a flat monthly rate. What they are
+ *     buying is presence in the rotation, which is what the delivery engine
+ *     already gives: `resolveWeightedAdBreakClips` orders by `impressions:
+ *     asc`, so airtime is shared EQUALLY among live sponsors. The serving
+ *     side was always built for this and only the storefront thought in CPM.
+ *   - Impressions are the DELIVERY REPORT, never the meter. Nothing decrements
+ *     a budget, so a sponsor cannot go dark mid-term.
+ *   - The charter says iHYPE is "funded like radio", ads restricted to
+ *     music-related sources forever, as a 501(c)(3). That is underwriting,
+ *     and underwriting is sold by the month.
+ *
+ * WHEN TO REVISIT. Per-impression pricing becomes viable once the station
+ * can forecast inventory — roughly, once a month's listener-hours are large
+ * and steady enough that a CPM promise is one you can keep. Until then the
+ * failure mode of CPM is overselling the local businesses this platform most
+ * needs to keep.
+ */
 
 export type AdScope = 'LOCAL' | 'REGIONAL' | 'NATIONAL' | 'GLOBAL';
 
@@ -22,72 +55,65 @@ export const AD_SCOPE_DESCRIPTIONS: Record<AdScope, string> = {
   GLOBAL: 'Worldwide',
 };
 
-// Dollars per spot per day.
-export const AD_SCOPE_RATE_USD: Record<AdScope, number> = {
-  LOCAL: 0.15,
-  REGIONAL: 0.35,
-  NATIONAL: 0.80,
-  GLOBAL: 1.50,
+/**
+ * Dollars per month, per tier.
+ *
+ * LOCAL is the product. The advertiser base is music-related businesses by
+ * charter — venues, studios, instrument shops, labels, festivals — and those
+ * are overwhelmingly local: a Portland guitar shop does not want Berlin
+ * airtime and should not pay for it. The wider tiers exist for labels and
+ * festivals that really do work across cities, not as an upsell.
+ *
+ * $25 is also the practical floor: Stripe takes 2.9% + $0.30, which is 8.9%
+ * of a $5 sponsorship and 4.1% of a $25 one.
+ *
+ * Deliberately no prepay discount in this first version. A flat rate makes
+ * the pro-rata refund on early cancellation exactly `total x unused/term`,
+ * which is a sentence a sponsor can check. A term discount is an easy lever
+ * later if commitment needs encouraging.
+ */
+export const SPONSORSHIP_MONTHLY_USD: Record<AdScope, number> = {
+  LOCAL: 25,
+  REGIONAL: 60,
+  NATIONAL: 150,
+  GLOBAL: 300,
 };
 
-// Estimated impressions generated per spot per day, by tier.
-const AD_SCOPE_IMPRESSIONS_PER_SPOT: Record<AdScope, number> = {
-  LOCAL: 800,
-  REGIONAL: 3000,
-  NATIONAL: 14000,
-  GLOBAL: 42000,
-};
+export const SPONSORSHIP_TERMS_MONTHS = [1, 3, 6, 12] as const;
+export type SponsorshipTermMonths = (typeof SPONSORSHIP_TERMS_MONTHS)[number];
 
-export const AD_RUN_LENGTHS_DAYS = [7, 14, 30, 90] as const;
-export type AdRunLengthDays = (typeof AD_RUN_LENGTHS_DAYS)[number];
-
-export const MIN_SPOTS_PER_DAY = 1;
-export const MAX_SPOTS_PER_DAY = 50;
+/** A month of airtime, in days. Keeps `Ad.runDays` and the pause/resume shift honest. */
+export const DAYS_PER_SPONSORSHIP_MONTH = 30;
 
 export function isAdScope(value: unknown): value is AdScope {
   return typeof value === 'string' && (AD_SCOPES as string[]).includes(value);
 }
 
-export function isAdRunLengthDays(value: unknown): value is AdRunLengthDays {
-  return typeof value === 'number' && (AD_RUN_LENGTHS_DAYS as readonly number[]).includes(value);
+export function isSponsorshipTerm(value: unknown): value is SponsorshipTermMonths {
+  return typeof value === 'number' && (SPONSORSHIP_TERMS_MONTHS as readonly number[]).includes(value);
 }
 
-export type AdCampaignQuote = {
+export type SponsorshipQuote = {
   scope: AdScope;
-  spotsPerDay: number;
+  months: SponsorshipTermMonths;
+  monthlyCents: number;
+  totalCents: number;
+  /** The run length written to `Ad.runDays` once payment clears. */
   runDays: number;
-  ratePerSpotCents: number;
-  dailyCostCents: number;
-  totalCostCents: number;
-  dailyImpressions: number;
-  totalImpressions: number;
-  effectiveCpmCents: number;
 };
 
 /**
- * Single source of truth for campaign cost/reach math. Called client-side
- * for the live calculator display, and server-side to independently verify
- * the budget a client submits (never trust a client-supplied budgetCents).
+ * The one place a sponsorship price is computed. Called client-side for the
+ * live figure and server-side to verify it, because a client-submitted total
+ * is never trusted.
  */
-export function quoteAdCampaign(scope: AdScope, spotsPerDay: number, runDays: number): AdCampaignQuote {
-  const spots = Math.min(MAX_SPOTS_PER_DAY, Math.max(MIN_SPOTS_PER_DAY, Math.round(spotsPerDay)));
-  const days = Math.max(1, Math.round(runDays));
-  const ratePerSpotCents = Math.round(AD_SCOPE_RATE_USD[scope] * 100);
-  const dailyCostCents = ratePerSpotCents * spots;
-  const totalCostCents = dailyCostCents * days;
-  const dailyImpressions = AD_SCOPE_IMPRESSIONS_PER_SPOT[scope] * spots;
-  const totalImpressions = dailyImpressions * days;
-  const effectiveCpmCents = totalImpressions > 0 ? Math.round((totalCostCents / totalImpressions) * 1000) : 0;
-
+export function quoteSponsorship(scope: AdScope, months: SponsorshipTermMonths): SponsorshipQuote {
+  const monthlyCents = Math.round(SPONSORSHIP_MONTHLY_USD[scope] * 100);
   return {
     scope,
-    spotsPerDay: spots,
-    runDays: days,
-    ratePerSpotCents,
-    dailyCostCents,
-    totalCostCents,
-    dailyImpressions,
-    totalImpressions,
-    effectiveCpmCents,
+    months,
+    monthlyCents,
+    totalCents: monthlyCents * months,
+    runDays: months * DAYS_PER_SPONSORSHIP_MONTH,
   };
 }

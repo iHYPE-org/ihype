@@ -43,7 +43,9 @@ const mockRate = consumeRateLimit as unknown as ReturnType<typeof vi.fn>;
 
 const HOUR = 60 * 60 * 1000;
 function ad(overrides: Record<string, unknown> = {}) {
-  return { status: 'APPROVED', startsAt: null, endsAt: null, budgetCents: 10000, spentCents: 0, ...overrides };
+  /* Defaults to METERED so every case below still exercises the model it was
+     written against. Sponsorship cases pass it explicitly. */
+  return { status: 'APPROVED', startsAt: null, endsAt: null, budgetCents: 10000, spentCents: 0, pricingModel: 'METERED', ...overrides };
 }
 /* The route reads the campaign out of a signed play token, never off the
    body, so every test that expects a charge has to be served one first — which
@@ -154,6 +156,25 @@ describe('POST /api/ads/impression — only servable ads spend budget', () => {
     expect(mockDb.ad.updateMany).toHaveBeenCalledWith(
       expect.objectContaining({ where: expect.objectContaining({ spentCents: { lt: 5000 } }) }),
     );
+  });
+
+  it('does not meter a SPONSORSHIP, and cannot retire one for spend', async () => {
+    /* A sponsorship buys a term. Metering it is what let a $45 campaign go
+       dark after 500 of the 240,000 impressions it was quoted, so the update
+       must neither increment spentCents nor gate on it. */
+    mockDb.ad.findUnique.mockResolvedValue(ad({ pricingModel: 'SPONSORSHIP', budgetCents: 7500, spentCents: 0 }));
+    await post(play('a1'));
+    const call = mockDb.ad.updateMany.mock.calls[0][0];
+    expect(call.data).toEqual({ impressions: { increment: 1 } });
+    expect(call.where.spentCents).toBeUndefined();
+  });
+
+  it('still records the impression for a sponsorship, because that is the delivery report', async () => {
+    mockDb.ad.findUnique.mockResolvedValue(ad({ pricingModel: 'SPONSORSHIP', budgetCents: 7500, spentCents: 0 }));
+    mockDb.ad.updateMany.mockResolvedValue({ count: 1 });
+    const res = await post(play('a1'));
+    expect(res.status).toBe(200);
+    expect(mockDb.adImpression.create).toHaveBeenCalled();
   });
 
   it('rejects with 429 when rate limited (before any DB work)', async () => {

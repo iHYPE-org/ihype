@@ -32,6 +32,9 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
   const select = {
     id: true, title: true, status: true, spentCents: true, budgetCents: true, stripePaymentIntentId: true,
     pausedAt: true, advertiserId: true, advertiser: { select: { email: true } },
+    /* A sponsorship settles on the days of its term that were never served,
+       so the planner needs both. A metered campaign ignores them. */
+    pricingModel: true, runDays: true, endsAt: true,
   } as const;
 
   const [ended, paused] = await Promise.all([
@@ -57,7 +60,7 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
 
   for (const ad of [...ended, ...paused.filter((row) => pausedLongEnoughToSettle(row.pausedAt, now))]) {
     try {
-      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId!, ad.spentCents, ad.budgetCents);
+      const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId!, ad);
       const wasPaused = ad.status === 'PAUSED';
       await db.ad.update({
         where: { id: ad.id },

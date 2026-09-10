@@ -45,9 +45,15 @@ async function viableAdsForScope(scope: AdvertisingScope): Promise<ScopedAd[]> {
     },
     orderBy: { impressions: 'asc' },
     take: 20,
-    select: { id: true, title: true, audioUrl: true, audioDurationSecs: true, budgetCents: true, spentCents: true },
+    select: { id: true, title: true, audioUrl: true, audioDurationSecs: true, budgetCents: true, spentCents: true, pricingModel: true },
   });
-  return candidates.filter((ad) => ad.budgetCents === 0 || ad.spentCents < ad.budgetCents);
+  /* A SPONSORSHIP airs for its whole term: nothing meters it, so `spentCents`
+     stays 0 and this filter cannot retire it early — which is the point. The
+     clause is kept for the METERED campaigns still running out their old
+     budgets, and it is the date window above that decides everything else.
+     Do not reintroduce a spend check for sponsorships: going dark mid-term is
+     precisely the failure the flat model exists to remove. */
+  return candidates.filter((ad) => ad.pricingModel !== 'METERED' || ad.budgetCents === 0 || ad.spentCents < ad.budgetCents);
 }
 
 function toClip(ad: ScopedAd, scope: AdvertisingScope): ShowAdClip {

@@ -1,0 +1,12 @@
+-- Ad.pricingModel — how a campaign was SOLD, so it settles the way it was sold.
+--
+-- Additive and non-destructive: one nullable-free column with a default, no
+-- backfill, no data moved. Existing rows take "METERED", which is exactly what
+-- every campaign sold before 2026-09-10 was, so their settlement arithmetic is
+-- unchanged. New sponsorships write "SPONSORSHIP" at creation.
+--
+-- This exists because the two models cannot be told apart from the other
+-- columns: a metered campaign that delivered nothing has spentCents 0 and is
+-- owed a full refund, while a sponsorship that ran its whole term also has
+-- spentCents 0 and is owed nothing. Guessing would refund the wrong people.
+ALTER TABLE "Ad" ADD COLUMN "pricingModel" TEXT NOT NULL DEFAULT 'METERED';

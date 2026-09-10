@@ -4,9 +4,9 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link';
 import { postJson } from '@/lib/api-client';
 import {
-  AD_SCOPES, AD_SCOPE_LABELS, AD_SCOPE_DESCRIPTIONS, AD_RUN_LENGTHS_DAYS,
-  MIN_SPOTS_PER_DAY, MAX_SPOTS_PER_DAY, quoteAdCampaign,
-  type AdScope, type AdCampaignQuote,
+  AD_SCOPES, AD_SCOPE_LABELS, AD_SCOPE_DESCRIPTIONS,
+  SPONSORSHIP_TERMS_MONTHS, SPONSORSHIP_MONTHLY_USD, quoteSponsorship,
+  type AdScope, type SponsorshipQuote, type SponsorshipTermMonths,
 } from '@/lib/ad-pricing';
 import { useI18n } from '@/components/I18nProvider';
 import { useFormDraft } from '@/lib/use-form-draft';
@@ -147,21 +147,19 @@ type SubmitState =
 function CoverageBuilder() {
   const { t } = useI18n();
   const [scope, setScope] = useState<AdScope>('REGIONAL');
-  const [spots, setSpots] = useState(6);
-  const [days, setDays] = useState<(typeof AD_RUN_LENGTHS_DAYS)[number]>(14);
+  const [months, setMonths] = useState<SponsorshipTermMonths>(3);
   const [title, setTitle] = useState('');
   const [clickUrl, setClickUrl] = useState('');
   const [submit, setSubmit] = useState<SubmitState>({ phase: 'idle' });
   const [audio, setAudio] = useState<{ phase: 'idle' | 'uploading' | 'done' | 'error'; url?: string; durationSecs?: number | null; fileName?: string; error?: string }>({ phase: 'idle' });
-  const draft = useMemo(() => ({ scope, spots, days, title, clickUrl, audio }), [audio, clickUrl, days, scope, spots, title]);
-  const draftDirty = Boolean(title.trim() || clickUrl.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || spots !== 6 || days !== 14);
+  const draft = useMemo(() => ({ scope, months, title, clickUrl, audio }), [audio, clickUrl, months, scope, title]);
+  const draftDirty = Boolean(title.trim() || clickUrl.trim() || audio.phase === 'done' || scope !== 'REGIONAL' || months !== 3);
   const clearDraft = useFormDraft({
     dirty: draftDirty,
     key: 'ihype-draft-ad-campaign',
     onRestore: (saved: typeof draft) => {
       if (AD_SCOPES.includes(saved.scope)) setScope(saved.scope);
-      if (Number.isFinite(saved.spots)) setSpots(Math.max(MIN_SPOTS_PER_DAY, Math.min(MAX_SPOTS_PER_DAY, saved.spots)));
-      if (AD_RUN_LENGTHS_DAYS.includes(saved.days)) setDays(saved.days);
+      if ((SPONSORSHIP_TERMS_MONTHS as readonly number[]).includes(saved.months)) setMonths(saved.months);
       setTitle(saved.title ?? '');
       setClickUrl(saved.clickUrl ?? '');
       if (saved.audio?.phase === 'done' && saved.audio.url) setAudio(saved.audio);
@@ -189,14 +187,9 @@ function CoverageBuilder() {
     }
   }
 
-  const quote: AdCampaignQuote = quoteAdCampaign(scope, spots, days);
-  const perSpot = quote.ratePerSpotCents / 100;
-  const dailyCost = quote.dailyCostCents / 100;
-  const total = quote.totalCostCents / 100;
-  const cpm = quote.effectiveCpmCents / 100;
-  const everyH = 24 / spots;
-  const spotsNote = spots >= 24 ? t('advertisePage.spotsHourly', '≈ hourly placements, all day long')
-    : `${t('advertisePage.spotsEveryPrefix', '≈ one ad break every')} ${everyH >= 1 ? everyH.toFixed(everyH % 1 ? 1 : 0) : '<1'} ${t('advertisePage.spotsEverySuffix', 'hours across radio shows')}`;
+  const quote: SponsorshipQuote = quoteSponsorship(scope, months);
+  const monthly = quote.monthlyCents / 100;
+  const total = quote.totalCents / 100;
 
   // Dot grid
   const dots = Array.from({ length: 48 }, (_, i) => {
@@ -231,7 +224,7 @@ function CoverageBuilder() {
         checkoutUrl: string | null;
         vetting: { status: 'AWAITING_PAYMENT' | 'REJECTED' | 'PENDING'; reasoning: string; message: string };
       }>('/api/advertise/campaigns', {
-        scope, spotsPerDay: spots, runDays: days, title: title.trim(), clickUrl: clickUrl.trim(),
+        scope, months, title: title.trim(), clickUrl: clickUrl.trim(),
         audioUrl: audio.url, audioDurationSecs: audio.durationSecs ?? undefined,
       });
       if (result.vetting.status === 'AWAITING_PAYMENT' && result.checkoutUrl) {
@@ -276,42 +269,35 @@ function CoverageBuilder() {
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1rem', letterSpacing: '-.01em', color: s === scope ? 'var(--accent-text)' : 'inherit' }}>{money(quoteAdCampaign(s, 1, 1).ratePerSpotCents / 100)}</div>
-                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.06em', marginTop: 2 }}>{t('advertisePage.perSpotDay', '/ spot · day')}</div>
+                    <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1rem', letterSpacing: '-.01em', color: s === scope ? 'var(--accent-text)' : 'inherit' }}>{money(SPONSORSHIP_MONTHLY_USD[s])}</div>
+                    <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.06em', marginTop: 2 }}>{t('advertisePage.perMonth', '/ month')}</div>
                   </span>
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Spots per day */}
+          {/* Term. There is no "spots per day" any more: it never reached
+              delivery — the station shares airtime equally among live
+              sponsors — so it was a number the buyer chose and the server
+              ignored. What is bought is a stretch of time in the rotation. */}
           <div style={{ marginBottom: 26 }}>
             <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--accent-text)' }}>B.</span> {t('advertisePage.spotsPerDay', 'Spots per day')}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 0, border: '1px solid var(--line-2)', borderRadius: 10, overflow: 'hidden', width: 'fit-content' }}>
-              <button aria-label={t('advertisePage.decreaseSpots', 'Decrease spots per day')} onClick={() => setSpots(s => Math.max(MIN_SPOTS_PER_DAY, s - 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><MinusIcon /></button>
-              <div style={{ minWidth: 64, textAlign: 'center', fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', borderLeft: '1px solid var(--hair-70)', borderRight: '1px solid var(--hair-70)', height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{spots}</div>
-              <button aria-label={t('advertisePage.increaseSpots', 'Increase spots per day')} onClick={() => setSpots(s => Math.min(MAX_SPOTS_PER_DAY, s + 1))} style={{ width: 46, height: 46, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-2)', cursor: 'pointer', ...INPUT_S, transition: 'background .15s' }}><PlusIcon /></button>
-            </div>
-            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 10 }}>{spotsNote}</div>
-          </div>
-
-          {/* Run length */}
-          <div style={{ marginBottom: 26 }}>
-            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--accent-text)' }}>C.</span> {t('advertisePage.runLength', 'Run length')}
+              <span style={{ color: 'var(--accent-text)' }}>B.</span> {t('advertisePage.term', 'Term')}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
-              {AD_RUN_LENGTHS_DAYS.map(d => (
-                <button key={d} onClick={() => setDays(d)} style={{
+              {SPONSORSHIP_TERMS_MONTHS.map(m => (
+                <button key={m} onClick={() => setMonths(m)} style={{
                   flex: 1, padding: '11px 8px', borderRadius: 9,
-                  border: `1px solid ${days === d ? 'var(--accent)' : 'var(--hair-70)'}`,
-                  background: days === d ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-3)',
+                  border: `1px solid ${months === m ? 'var(--accent)' : 'var(--hair-70)'}`,
+                  background: months === m ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-3)',
                   fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.04em',
-                  color: days === d ? 'var(--accent-text)' : 'var(--ink-2)', cursor: 'pointer', transition: 'all .15s',
-                }}>{d} {t('advertisePage.days', 'days')}</button>
+                  color: months === m ? 'var(--accent-text)' : 'var(--ink-2)', cursor: 'pointer', transition: 'all .15s',
+                }}>{m} {m === 1 ? t('advertisePage.month', 'month') : t('advertisePage.months', 'months')}</button>
               ))}
+            </div>
+            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 10 }}>
+              {t('advertisePage.termNote', 'Cancel any time — the days you have not used are refunded.')}
             </div>
           </div>
 
@@ -371,7 +357,16 @@ function CoverageBuilder() {
 
           {/* Stats */}
           <div className="adv-quote-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginTop: 20 }}>
-            {[{ v: fmt(quote.dailyImpressions), l: t('advertisePage.dailyImpressions', 'Daily impressions') }, { v: fmt(quote.totalImpressions), l: t('advertisePage.totalOverRun', 'Total over run') }, { v: '$' + cpm.toFixed(2), l: t('advertisePage.effectiveCpm', 'Effective CPM') }].map(s => (
+            {/* NO IMPRESSION FORECAST HERE, deliberately. This block used to
+                read "Daily impressions 8,000 · Total over run 240,000 ·
+                Effective CPM $0.19" beside a receipt the buyer was charged in
+                full — numbers the station cannot produce (it makes eight
+                impressions per listener-hour) and delivery never honoured.
+                What a sponsor is buying is a share of the rotation for a
+                stretch of time, so that is what the panel states. Real
+                delivery is reported on their dashboard once spots have
+                actually aired. */}
+            {[{ v: money(monthly), l: t('advertisePage.perMonthLabel', 'Per month') }, { v: `${quote.months}`, l: quote.months === 1 ? t('advertisePage.monthLabel', 'Month') : t('advertisePage.monthsLabel', 'Months') }, { v: t('advertisePage.equalShareValue', 'Equal'), l: t('advertisePage.equalShareLabel', 'Share of breaks') }].map(s => (
               <div key={s.l} style={{ minWidth: 0, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
                 <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.3125rem', letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', color: 'var(--ink-2)', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
@@ -391,7 +386,7 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
-            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.base', 'base')}`, v: `${money(perSpot)} ${t('advertisePage.perSpot', '/ spot')}` }, { k: `${spots} ${t('advertisePage.spotsSlashDay', 'spots/day')} × ${days} ${t('advertisePage.days', 'days')}`, v: `${money(dailyCost)} ${t('advertisePage.perDay', '/ day')}` }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
+            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly)}`, v: money(total) }, { k: t('advertisePage.coopHandling', 'Co-op handling · 0%'), v: '$0.00', vc: 'var(--role-venue)' }].map(r => (
               <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem' }}>
                 <span style={{ color: 'var(--ink-2)', letterSpacing: '.06em' }}>{r.k}</span>
                 <span style={{ color: r.vc ?? 'inherit' }}>{r.v}</span>
@@ -400,7 +395,7 @@ function CoverageBuilder() {
             <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('advertisePage.total', 'Total')}</span>
               <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent-text)' }}>
-                {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(dailyCost)}{t('advertisePage.slashDay', '/day')}</small>
+                {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(monthly)}{t('advertisePage.slashMonth', '/month')}</small>
               </span>
             </div>
 
@@ -766,7 +761,7 @@ export function MmmCampaignBuilderPage() {
         <div className="adv-compact-rules">
           <div><b>{t('advertisePage.compactEligibleTitle', 'Who can advertise')}</b>{t('advertisePage.compactEligibleBody', 'Verified artists, venues, promoters and music-related businesses. Non-music campaigns are rejected.')}</div>
           <div><b>{t('advertisePage.compactScreenTitle', 'What gets screened')}</b>{t('advertisePage.compactScreenBody', 'Business eligibility, audio relevance, listener safety, copyright and misleading claims are checked before checkout.')}</div>
-          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'A campaign that passes vetting is paid in full at checkout. Whatever budget is unspent when the run ends — or when you cancel — is refunded to the card you paid with, usually within 5–10 business days, and your dashboard shows the amount and the Stripe refund reference. iHYPE absorbs the card-processing fee. Rejected spots never run and are never charged.')}</div>
+          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBodyTerm', 'A sponsorship that passes vetting is paid in full at checkout and runs for the term you chose. Cancel part-way and the days you have not used are refunded to the card you paid with, usually within 5–10 business days, with the amount and the Stripe reference on your dashboard. Your spot is never billed per play, so it cannot run out mid-term. iHYPE absorbs the card-processing fee. Rejected spots never run and are never charged.')}</div>
         </div>
       </details>
     </div>
@@ -822,7 +817,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
             </h1>
             <p style={{ fontSize: '1rem', color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
-              {t('advertisePage.heroBodyPrefix', 'Buy reach by the spot —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMid', ', by the day. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
+              {t('advertisePage.heroBodyPrefixTerm', 'Sponsor the station —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMidTerm', ', by the month. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
               <a href="#build" className="adv-btn-solid">{t('advertisePage.buildCampaign', 'Build a campaign →')}</a>
@@ -859,7 +854,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
             </h2>
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played on the always-on station — priced per day, billed per spot.')}
+              {t('advertisePage.buildSubTerm', 'Coverage scales from your block to the whole platform. Your spot is an audio ad break on the always-on station, and every live sponsor shares the breaks equally — priced by the month, never by the play.')}
             </p>
           </div>
           <div>

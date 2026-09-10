@@ -1034,8 +1034,10 @@ async function main() {
         title: `Alpha Campaign ${run}`,
         audioUrl: adAudioUrl,
         scope: 'LOCAL',
-        spotsPerDay: 4,
-        runDays: 7,
+        /* A sponsorship is a TERM (2026-09-10). `spotsPerDay`/`runDays` are
+           refused now, and this item is what would have caught the storefront
+           and the walk drifting apart. */
+        months: 1,
         city: 'Portland',
         region: 'ME',
       }),
@@ -1047,9 +1049,8 @@ async function main() {
     adId = ad.id;
     advertiserCookie = advertiser.cookie;
     /* AWAITING_PAYMENT is the correct resting state: vetting cleared it, and it
-       stays there until the advertiser's Stripe hold authorizes. It only
-       becomes APPROVED on the payment_intent.amount_capturable_updated
-       webhook. */
+       stays there until the sponsor pays. It only becomes APPROVED on the
+       payment_intent.succeeded webhook. */
     assert(
       ['AWAITING_PAYMENT', 'PENDING', 'APPROVED'].includes(ad.status),
       `unexpected campaign status ${ad.status}`,
@@ -1060,7 +1061,7 @@ async function main() {
 
   // ── 21. Listen to radio ──────────────────────────────────────────────────
   // ── The advertising MONEY path, which nothing had ever exercised ─────────
-  await item('20b. Advertising: the hold authorizes and the campaign goes live', async () => {
+  await item('20b. Advertising: the sponsorship is paid and the term goes live', async () => {
     if (!adId) blocked('no campaign was created');
     if (!stripe || !WEBHOOK_SECRET) blocked('Stripe is not configured');
 
@@ -1091,29 +1092,30 @@ async function main() {
        intent's `metadata.adId` and backfills the column. */
     assert(ok(retry, [200, 201])?.checkoutUrl ?? true, 'no checkout url');
 
-    /* Checkout builds its PaymentIntent lazily, so the hold is created
-       directly — a genuine manual-capture intent for the quoted budget,
-       confirmed with the standard test card, which is what an advertiser's
-       card authorization actually is. */
+    /* Checkout builds its PaymentIntent lazily, so the charge is created
+       directly — a genuine intent for the quoted total, confirmed with the
+       standard test card, which is what paying for a sponsorship is.
+       NOT `capture_method: 'manual'`: campaigns have been charged UP FRONT
+       since 2026-09-02 (a card hold lives ~7 days against runs of 30 to 360),
+       and a sponsorship settles by refunding unused DAYS, so a held intent is
+       a shape this product can no longer produce. This item drove the legacy
+       `amount_capturable_updated` branch until 2026-09-10. */
     const intent = await stripe.paymentIntents.create({
       amount: withIntent.budgetCents,
       currency: 'usd',
-      capture_method: 'manual',
       payment_method: 'pm_card_visa',
       confirm: true,
       automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
       metadata: { adId, alpha: 'true' },
-    }, { idempotencyKey: `alpha-ad-auth:${adId}` });
-    assert(intent.status === 'requires_capture', `hold is ${intent.status}, expected requires_capture`);
-
-    await prisma.ad.update({ where: { id: adId }, data: { stripePaymentIntentId: intent.id } });
+    }, { idempotencyKey: `alpha-ad-pay:${adId}` });
+    assert(intent.status === 'succeeded', `charge is ${intent.status}, expected succeeded`);
 
     const event = {
       id: `evt_alpha_ad_${adId}`,
       object: 'event',
       api_version: '2026-07-29.dahlia',
       created: Math.floor(Date.now() / 1000),
-      type: 'payment_intent.amount_capturable_updated',
+      type: 'payment_intent.succeeded',
       data: { object: intent },
       livemode: false,
       pending_webhooks: 1,
@@ -1126,19 +1128,23 @@ async function main() {
       headers: { 'content-type': 'application/json', 'stripe-signature': signature },
       body: payload,
     });
-    assert(delivered.ok, `authorization webhook answered ${delivered.status}`);
+    assert(delivered.ok, `payment webhook answered ${delivered.status}`);
 
     const live = await prisma.ad.findUnique({ where: { id: adId } });
-    assert(live?.status === 'APPROVED', `campaign is ${live?.status}, expected APPROVED after the hold authorized`);
+    assert(live?.status === 'APPROVED', `campaign is ${live?.status}, expected APPROVED after the payment cleared`);
     assert(live.startsAt && live.endsAt, 'campaign went live with no run window');
+    /* The route stores the intent id from this event; the walk must not write
+       it, or a regression that stops storing it passes here and then leaves
+       settlement with nothing to refund against. */
+    assert(live.stripePaymentIntentId === intent.id, `the campaign holds ${live.stripePaymentIntentId ?? 'no intent'}, expected ${intent.id}`);
     const days = Math.round((live.endsAt!.getTime() - live.startsAt!.getTime()) / 86_400_000);
-    /* The run length must be measured from authorization, not from submission:
-       a campaign must not lose paid-for days to a review queue. */
-    assert(days === (live.runDays ?? 7), `run window is ${days}d, expected ${live.runDays ?? 7}d measured from authorization`);
-    return `hold ${intent.id} authorized ${intent.amount}c; campaign APPROVED for ${days} days from authorization`;
+    /* The term must be measured from payment, not from submission: a sponsor
+       must not lose paid-for days to a review queue. */
+    assert(days === (live.runDays ?? 30), `run window is ${days}d, expected ${live.runDays ?? 30}d measured from payment`);
+    return `charge ${intent.id} took ${intent.amount}c; campaign APPROVED for ${days} days from payment`;
   });
 
-  await item('20c. Advertising: the spot reaches a listener and spends real budget', async () => {
+  await item('20c. Advertising: the spot reaches a listener and is reported, not metered', async () => {
     if (!adId) blocked('no campaign was created');
     const live = await prisma.ad.findUnique({ where: { id: adId } });
     if (live?.status !== 'APPROVED') blocked('the campaign never went live, so nothing can air');
@@ -1161,7 +1167,8 @@ async function main() {
     const served = await findServedAdPlayToken(adId, fan.cookie);
     assert(served !== null, 'no surface served a play token for this campaign, so nothing can bill it');
 
-    const before = live.spentCents;
+    const spendBefore = live.spentCents;
+    const countBefore = live.impressions;
     const impression = await api('/api/ads/impression', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1171,22 +1178,40 @@ async function main() {
     ok(impression, [200, 201]);
     assert((impression.body as any)?.skipped !== true, `the impression was skipped: ${(impression.body as any)?.reason}`);
     const after = await prisma.ad.findUnique({ where: { id: adId } });
-    assert((after?.spentCents ?? 0) > before, `an impression did not spend budget (${before}c -> ${after?.spentCents}c)`);
+    assert((after?.impressions ?? 0) > countBefore, `an impression was not counted (${countBefore} -> ${after?.impressions})`);
     const impressions = await prisma.adImpression.count({ where: { adId } });
-    assert(impressions > 0, 'budget moved but no AdImpression row was written');
+    assert(impressions > 0, 'the count moved but no AdImpression row was written');
+    /* THE INVARIANT THIS ITEM EXISTS FOR SINCE 2026-09-10: a SPONSORSHIP is
+       sold by the month and impressions are its delivery report, never its
+       meter. This used to assert the opposite — that an impression spends
+       budget — which is exactly the behaviour that took a paid campaign dark
+       partway through a run it had already been charged for. A regression
+       that re-meters a sponsorship fails here. */
+    assert(
+      after?.pricingModel === 'SPONSORSHIP',
+      `the campaign is ${after?.pricingModel}, so this item is measuring the retired metered path`,
+    );
+    assert(
+      (after?.spentCents ?? 0) === spendBefore,
+      `an impression metered a sponsorship (${spendBefore}c -> ${after?.spentCents}c); a term must never run out of budget`,
+    );
 
-    return `bare adId refused 400; ${served!.where} served a play token; spend ${before}c -> ${after?.spentCents}c across ${impressions} impression(s)`;
+    return `bare adId refused 400; ${served!.where} served a play token; ${countBefore} -> ${after?.impressions} impression(s) reported across ${impressions} row(s), spend unmoved at ${spendBefore}c`;
   });
 
-  await item('20d. Advertising: settlement captures the delivered spend, not the whole hold', async () => {
+  await item('20d. Advertising: a sponsorship that ran its term is owed no refund', async () => {
     if (!adId) blocked('no campaign was created');
     if (!stripe) blocked('Stripe is not configured');
     const live = await prisma.ad.findUnique({ where: { id: adId } });
-    if (live?.status !== 'APPROVED' || !live.stripePaymentIntentId) blocked('no authorized campaign to settle');
+    if (live?.status !== 'APPROVED' || !live.stripePaymentIntentId) blocked('no paid campaign to settle');
 
-    /* End the run so the settlement cron picks it up. Nothing else about the
-       campaign is touched — the spend it captures is whatever the impression
-       above actually delivered. */
+    /* Run the term out. A sponsorship is charged up front and owes back only
+       the days it did not serve (`sponsorshipRefundableCents`), so a term that
+       finished is owed NOTHING — and that is the assertion worth holding
+       here, because the failure to fear is the retired metered rule refunding
+       `budget - spent` and handing a sponsor their whole year back after they
+       got every day of it. The pro-rata case is covered by the unit tests,
+       which can move the clock without a real Stripe object. */
     await prisma.ad.update({ where: { id: adId }, data: { endsAt: new Date(Date.now() - 60_000) } });
 
     const settled = await api(`/api/cron?job=ad-settlement`, {
@@ -1196,33 +1221,32 @@ async function main() {
 
     const finalAd = await prisma.ad.findUnique({ where: { id: adId } });
     const intent = await stripe.paymentIntents.retrieve(live.stripePaymentIntentId);
-    const expected = Math.min(live.spentCents, live.budgetCents);
-    /* Stripe cannot capture under 50c, so a campaign that delivered less than
-       that is RELEASED rather than charged. Both are correct settlements; the
-       wrong outcome is a hold left open, which is what happened before the
-       floor was handled. */
-    const MINIMUM = 50;
 
-    assert(finalAd?.settledAt, `settlement left the hold open (settledAt null) on ${expected}c of delivered spend`);
-    if (expected >= MINIMUM) {
-      assert(intent.status === 'succeeded', `expected a capture, PaymentIntent is ${intent.status}`);
-      assert(
-        intent.amount_received === expected,
-        `captured ${intent.amount_received}c but delivered spend was ${expected}c — the advertiser was charged the wrong amount`,
-      );
-    } else {
-      assert(intent.status === 'canceled', `delivered ${expected}c, under Stripe's ${MINIMUM}c floor, so the hold must be released — it is ${intent.status}`);
-      assert(intent.amount_received === 0, `${intent.amount_received}c was captured on a sub-minimum delivery`);
-    }
-    /* A second pass must not capture again. */
+    assert(finalAd?.settledAt, 'settlement never ran (settledAt null) on a term that had ended');
+    assert(intent.status === 'succeeded', `the charge is ${intent.status}, expected it to stand`);
+    assert(
+      intent.amount_received === live.budgetCents,
+      `the sponsor paid ${live.budgetCents}c but Stripe received ${intent.amount_received}c`,
+    );
+    /* A PaymentIntent carries no `amount_refunded` — refunds live on the
+       charge — so the refund state is read from the refund list, which is
+       also what `reconcileStripe` learned the hard way. */
+    const refunds = await stripe.refunds.list({ payment_intent: live.stripePaymentIntentId, limit: 10 });
+    const refunded = refunds.data.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+    assert(refunded === 0, `${refunded}c was refunded on a term the sponsor received in full`);
+    assert(
+      (finalAd?.refundedCents ?? 0) === 0,
+      `the campaign records a ${finalAd?.refundedCents}c refund on a completed term`,
+    );
+
+    /* A second pass must not refund. */
     const again = await api(`/api/cron?job=ad-settlement`, { headers: { authorization: `Bearer ${CRON_SECRET}` } });
     ok(again, [200, 201]);
-    const afterSecond = await stripe.paymentIntents.retrieve(live.stripePaymentIntentId);
-    assert(afterSecond.amount_received === intent.amount_received, 'a second settlement pass captured again');
+    const afterSecond = await stripe.refunds.list({ payment_intent: live.stripePaymentIntentId, limit: 10 });
+    const refundedAgain = afterSecond.data.reduce((sum, r) => sum + (r.amount ?? 0), 0);
+    assert(refundedAgain === 0, `a second settlement pass refunded ${refundedAgain}c`);
 
-    return expected >= MINIMUM
-      ? `hold ${live.budgetCents}c -> captured ${intent.amount_received}c (delivered ${expected}c); second pass captured nothing further`
-      : `delivered ${expected}c is under Stripe's ${MINIMUM}c floor, so the ${live.budgetCents}c hold was released and nothing charged; second pass captured nothing further`;
+    return `${live.budgetCents}c sponsorship ran its ${live.runDays}-day term; nothing refunded, charge stands at ${intent.amount_received}c; second pass refunded nothing`;
   });
 
   await item('21. Listen to radio', async () => {
@@ -1279,7 +1303,7 @@ async function main() {
     const served = await findServedAdPlayToken(approved.id, fan.cookie);
     assert(served !== null, 'an APPROVED campaign exists but no surface served a play token for it');
 
-    const before = (await prisma.ad.findUnique({ where: { id: approved.id }, select: { spentCents: true } }))?.spentCents ?? approved.spentCents;
+    const before = (await prisma.ad.findUnique({ where: { id: approved.id }, select: { impressions: true } }))?.impressions ?? approved.impressions;
     const impression = await api('/api/ads/impression', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
@@ -1289,16 +1313,18 @@ async function main() {
     assert([200, 201].includes(impression.status), `impression answered ${impression.status}`);
     const after = await prisma.ad.findUnique({ where: { id: approved.id } });
 
-    /* This fan already heard this spot in item 20c, and one member is charged
-       once per ad per day — so a second charge here would be the bug. What
+    /* This fan already heard this spot in item 20c, and one member is counted
+       once per ad per day — so a second count here would be the bug. What
        must be true is that the report was ACCEPTED rather than refused for a
        token reason: a 400 means the receipt did not verify, and a `skipped`
        carrying a reason means the campaign was not servable. A bare `skipped`
        is the daily dedup doing its job. */
     const reported = impression.body as any;
     assert(reported?.reason === undefined, `the impression was refused: ${reported?.reason}`);
-    const charged = (after?.spentCents ?? 0) > before;
-    assert(charged || reported?.skipped === true, 'the impression neither spent budget nor deduplicated');
+    /* Counted, not charged: a sponsorship is sold by the month, so the
+       report a listener makes moves `impressions` and nothing else. */
+    const counted = (after?.impressions ?? 0) > before;
+    assert(counted || reported?.skipped === true, 'the impression was neither counted nor deduplicated');
 
     /* The surface a member actually listens on. `/api/radio/station` is the
        always-on station and nothing in the MMM shell calls it; MUSIC reads
@@ -1306,7 +1332,7 @@ async function main() {
        an APPROVED campaign was paid for and never aired. Assert the break is
        in the rotation the shell plays, and that it is a `mkt_` clip, since a
        placeholder carries no Ad row to bill. */
-    return `station served ${sequence.length} item(s), ${adItems.length} break(s); ${served!.where} served a play token and the report was ${charged ? `charged (${before}c -> ${after?.spentCents}c)` : 'deduplicated (this fan already heard it in 20c)'} (airing on the MUSIC station is item 33)`;
+    return `station served ${sequence.length} item(s), ${adItems.length} break(s); ${served!.where} served a play token and the report was ${counted ? `counted (${before} -> ${after?.impressions})` : 'deduplicated (this fan already heard it in 20c)'} (airing on the MUSIC station is item 33)`;
   });
 
   await item('22b. A closed ticket sale is refused rather than charged', async () => {

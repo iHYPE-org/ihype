@@ -67,3 +67,58 @@ describe('settlementFigures — what the advertiser is shown', () => {
     expect(settlementFigures({ action: 'release' })).toEqual({ chargedCents: 0, refundedCents: 0 });
   });
 });
+
+describe('a sponsorship settles on unused DAYS, not on unspent budget', () => {
+  /* Nothing meters a sponsorship, so `spentCents` is 0 for all of these. Under
+     the metered planner that would refund the whole thing on every campaign,
+     including one that ran its full term — which is why the model is carried
+     on the row rather than guessed. */
+  const term = { pricingModel: 'SPONSORSHIP' as const, runDays: 90, spentCents: 0, budgetCents: 7500 };
+  const now = new Date('2026-09-10T12:00:00.000Z');
+  const daysFromNow = (d: number) => new Date(now.getTime() + d * 24 * 60 * 60 * 1000);
+
+  it('keeps the whole charge when the term ran out', () => {
+    const plan = planAdSettlement({ ...term, intentStatus: 'succeeded', amountReceivedCents: 7500, endsAt: daysFromNow(-1), now });
+    expect(plan).toEqual({ action: 'none', chargedCents: 7500 });
+  });
+
+  it('refunds the unused third of a term cancelled with 30 of 90 days left', () => {
+    const plan = planAdSettlement({ ...term, intentStatus: 'succeeded', amountReceivedCents: 7500, endsAt: daysFromNow(30), now });
+    expect(plan).toEqual({ action: 'refund', amountCents: 2500, chargedCents: 5000 });
+  });
+
+  it('refunds everything when the term never started', () => {
+    /* No `endsAt` means it was never authorised into a window, so the sponsor
+       paid and got no airtime at all. */
+    const plan = planAdSettlement({ ...term, intentStatus: 'succeeded', amountReceivedCents: 7500, endsAt: null, now });
+    expect(plan).toEqual({ action: 'refund', amountCents: 7500, chargedCents: 0 });
+  });
+
+  it('keeps a remainder Stripe will not refund', () => {
+    const plan = planAdSettlement({
+      ...term, runDays: 30, intentStatus: 'succeeded', amountReceivedCents: 2500,
+      endsAt: new Date(now.getTime() + 60 * 60 * 1000), now,
+    });
+    // One day of a 30-day term is 83c... under the floor it would be kept; 83c is not.
+    expect(plan).toEqual({ action: 'refund', amountCents: 83, chargedCents: 2417 });
+  });
+
+  it('never refunds more than was paid', () => {
+    const plan = planAdSettlement({ ...term, intentStatus: 'succeeded', amountReceivedCents: 7500, endsAt: daysFromNow(500), now });
+    expect(plan.action).toBe('refund');
+    if (plan.action === 'refund') expect(plan.amountCents).toBeLessThanOrEqual(7500);
+  });
+
+  it('does nothing for an intent that is not a completed charge', () => {
+    expect(planAdSettlement({ ...term, intentStatus: 'canceled', amountReceivedCents: 0, endsAt: daysFromNow(10), now }))
+      .toEqual({ action: 'none', chargedCents: 0 });
+  });
+
+  it('leaves a metered campaign on the old arithmetic', () => {
+    /* The regression this column exists to prevent: a metered campaign that
+       delivered nothing is owed everything back, where the sponsorship above
+       that ran its term is owed none. */
+    const plan = planAdSettlement({ intentStatus: 'succeeded', amountReceivedCents: 7500, spentCents: 0, budgetCents: 7500 });
+    expect(plan).toEqual({ action: 'refund', amountCents: 7500, chargedCents: 0 });
+  });
+});

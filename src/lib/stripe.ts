@@ -1053,16 +1053,30 @@ export async function createAdCampaignCheckoutSession({
  */
 export async function settleAdCampaign(
   paymentIntentId: string,
-  spentCents: number,
-  budgetCents: number,
+  /* The whole campaign rather than two numbers: a SPONSORSHIP settles on its
+     unused DAYS, so the planner needs the term and the end of it, and a
+     positional pair could not carry them without every caller guessing an
+     order. */
+  campaign: {
+    spentCents: number;
+    budgetCents: number;
+    pricingModel?: string | null;
+    runDays?: number | null;
+    endsAt?: Date | null;
+  },
+  now: Date = new Date(),
 ): Promise<AdSettlementResult> {
   const stripe = getStripe();
   const intent = await stripe.paymentIntents.retrieve(paymentIntentId);
   const plan = planAdSettlement({
     intentStatus: intent.status,
     amountReceivedCents: intent.amount_received,
-    spentCents,
-    budgetCents,
+    spentCents: campaign.spentCents,
+    budgetCents: campaign.budgetCents,
+    pricingModel: campaign.pricingModel === 'SPONSORSHIP' ? 'SPONSORSHIP' : 'METERED',
+    runDays: campaign.runDays,
+    endsAt: campaign.endsAt,
+    now,
   });
   let refundId: string | null = null;
   switch (plan.action) {
@@ -1070,7 +1084,7 @@ export async function settleAdCampaign(
       // The refund id is what the advertiser can quote to their bank, so it
       // is returned for the caller to persist rather than left in Stripe.
       const refund = await stripe.refunds.create(
-        { payment_intent: paymentIntentId, amount: plan.amountCents, reason: 'requested_by_customer', metadata: { purpose: 'ad_campaign_unspent' } },
+        { payment_intent: paymentIntentId, amount: plan.amountCents, reason: 'requested_by_customer', metadata: { purpose: 'ad_campaign_refund' } },
         { idempotencyKey: `ad-settle-refund:${paymentIntentId}:${plan.amountCents}` },
       );
       refundId = refund.id;

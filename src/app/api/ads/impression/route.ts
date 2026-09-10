@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
   // db.ad.update, which would throw P2025 (record not found) and 500.
   const ad = await db.ad.findUnique({
     where: { id: adId },
-    select: { status: true, startsAt: true, endsAt: true, budgetCents: true, spentCents: true },
+    select: { status: true, startsAt: true, endsAt: true, budgetCents: true, spentCents: true, pricingModel: true },
   });
   if (!ad) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'unknown_ad' });
@@ -120,15 +120,28 @@ export async function POST(request: NextRequest) {
   // the last impression that fits is the last one charged. The pre-read above
   // stays: it answers "why was this skipped" for the response body, which a
   // conditional update alone cannot.
+  /* IMPRESSIONS ARE THE DELIVERY REPORT, NOT THE METER (2026-09-10).
+     A sponsorship buys a TERM, so nothing decrements a budget and a sponsor
+     cannot go dark mid-run. `spentCents` is deliberately NOT incremented for
+     one: the flat 9c step it used to take was a $90 CPM against a storefront
+     quoting $0.19, and it exhausted a $45 campaign after 500 of the 240,000
+     impressions it had promised. A METERED campaign from before the change
+     still meters, so the ones still settling keep the arithmetic they were
+     sold under (`Ad.pricingModel`, `ad-settlement-plan.ts`).
+     The update stays conditional and atomic: it is what keeps a paused or
+     expired campaign from recording an impression at all. */
+  const metered = ad.pricingModel === 'METERED';
   const charged = await db.ad.updateMany({
     where: {
       id: adId,
       status: 'APPROVED',
       OR: [{ startsAt: null }, { startsAt: { lte: now } }],
       AND: [{ OR: [{ endsAt: null }, { endsAt: { gte: now } }] }],
-      ...(ad.budgetCents > 0 ? { spentCents: { lt: ad.budgetCents } } : {}),
+      ...(metered && ad.budgetCents > 0 ? { spentCents: { lt: ad.budgetCents } } : {}),
     },
-    data: { impressions: { increment: 1 }, spentCents: { increment: 9 } },
+    data: metered
+      ? { impressions: { increment: 1 }, spentCents: { increment: 9 } }
+      : { impressions: { increment: 1 } },
   });
 
   if (charged.count === 0) {
