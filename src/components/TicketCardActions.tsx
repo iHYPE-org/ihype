@@ -163,19 +163,19 @@ export function TicketCardActions({
     <>
       <div className="ticket-actions">
         {showQrToggle && (
-          <button className="btn btn-primary" onClick={() => setShowQr((v) => !v)} type="button">
+          <button className="mmm-btn-primary" onClick={() => setShowQr((v) => !v)} type="button">
             {showQr ? t('ticketCardActions.hideQrButton', 'Hide QR Code') : t('ticketCardActions.showQrButton', 'Show QR Code')}
           </button>
         )}
         {showTransfer && (
-          <button className="btn" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
+          <button className="mmm-btn-ghost" onClick={() => setTransferOpen(true)} type="button">{t('ticketCardActions.transferButton', 'Transfer')}</button>
         )}
-        <button className="btn" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
+        <button className="mmm-btn-ghost" onClick={share} type="button">{t('ticketCardActions.shareButton', 'Share')}</button>
         {resaleTicket && (
-          <button className="btn" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.listForResaleButton', 'List for resale')}</button>
+          <button className="mmm-btn-ghost" onClick={() => setResaleOpen(true)} type="button">{t('ticketCardActions.listForResaleButton', 'List for resale')}</button>
         )}
         {(orderStatus === undefined || orderStatus === 'CAPTURED') && (
-          <button className="btn" disabled={resendSubmitting} onClick={resendConfirmation} type="button">
+          <button className="mmm-btn-ghost" disabled={resendSubmitting} onClick={resendConfirmation} type="button">
             {resendSubmitting ? t('ticketCardActions.sendingButton', 'Sending…') : t('ticketCardActions.resendConfirmationButton', 'Resend confirmation')}
           </button>
         )}
@@ -227,7 +227,7 @@ export function TicketCardActions({
             {done ? (
               <>
                 <p style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>{done}</p>
-                <button className="btn btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
+                <button className="mmm-btn-primary" onClick={closeTransfer} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
@@ -242,8 +242,8 @@ export function TicketCardActions({
                 />
                 {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{error}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
-                  <button className="btn btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
+                  <button className="mmm-btn-ghost" onClick={closeTransfer} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
+                  <button className="mmm-btn-primary" disabled={submitting || !email} onClick={transfer} style={{ flex: 1 }} type="button">
                     {submitting ? t('ticketCardActions.transferringButton', 'Transferring…') : t('ticketCardActions.transferButton', 'Transfer')}
                   </button>
                 </div>
@@ -265,7 +265,7 @@ export function TicketCardActions({
             {resaleDone ? (
               <>
                 <p style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 16 }}>{resaleDone}</p>
-                <button className="btn btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
+                <button className="mmm-btn-primary" onClick={closeResale} style={{ width: '100%' }} type="button">{t('ticketCardActions.closeButton', 'Close')}</button>
               </>
             ) : (
               <>
@@ -282,8 +282,8 @@ export function TicketCardActions({
                 />
                 {resaleError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', marginBottom: 12 }}>{resaleError}</p>}
                 <div style={{ display: 'flex', gap: 10 }}>
-                  <button className="btn" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
-                  <button className="btn btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
+                  <button className="mmm-btn-ghost" onClick={closeResale} style={{ flex: 1 }} type="button">{t('ticketCardActions.cancelButton', 'Cancel')}</button>
+                  <button className="mmm-btn-primary" disabled={resaleSubmitting || !resalePrice} onClick={listForResale} style={{ flex: 1 }} type="button">
                     {resaleSubmitting ? t('ticketCardActions.listingButton', 'Listing…') : t('ticketCardActions.listForResaleButton', 'List for resale')}
                   </button>
                 </div>

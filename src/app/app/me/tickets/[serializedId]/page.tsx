@@ -104,7 +104,12 @@ export default async function TicketPage({
       <div style={{ display: 'flex', flexDirection: 'column', gap: 20, maxWidth: 460, marginInline: 'auto' }}>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div className={`ticket-status-pill ticket-status-${ticket.status.toLowerCase()}`}>{status}</div>
+          {/* `mmm-profile-badge` is the shell's mono eyebrow pill (the profile
+              card's "ARTIST · VERIFIED"). `ticket-status-pill` had no rule in
+              any stylesheet, so the status rendered as bare body text beside
+              its own eyebrow — measured on the built worker, 2026-09-10. The
+              two ticket-* classes stay as hooks for a per-status colour. */}
+          <div className={`mmm-profile-badge ticket-status-pill ticket-status-${ticket.status.toLowerCase()}`}>{status}</div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
             {ticket.scannedAt
               ? t('ticketsSerializedIdPage.scanned', 'Scanned')

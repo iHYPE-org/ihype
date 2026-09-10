@@ -29,8 +29,11 @@ export function BelieverShareButton({ artistName, artistSlug, rank }: { artistNa
     }
   }
 
+  // `believer-share-btn` has no rule in any stylesheet, so this rendered as a
+  // browser-default button 25px tall (measured at 1280, 2026-09-10). The
+  // shell's ghost button carries the 44px floor; the hook class stays.
   return (
-    <button type="button" onClick={handleShare} className="believer-share-btn">
+    <button type="button" onClick={handleShare} className="mmm-btn-ghost believer-share-btn">
       {status === 'done' ? t('believerShareButton.shared', 'Shared ✓') : t('believerShareButton.shareYourRank', 'Share your rank')}
     </button>
   );

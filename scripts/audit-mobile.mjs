@@ -84,8 +84,16 @@ const BASE = arg('base', 'https://ihype.org');
 // Measured the same way as the figures they replace: a LOCAL production build
 // with an empty database. The slack on tinyBodyText is for /this-weekend and
 // /community, which render live rows.
+// RE-BASELINED 2026-09-10 after the visual audit (DESIGN_SYNC row 375). This
+// had read 45 against 39 — OVER — on every production deploy since the budget
+// was set, under `continue-on-error`, because the public pages' floors lived
+// only under `(pointer: coarse)` and several controls dipped under even there
+// (the header logo link at 17px, the landing's "Sign in" at 18, the trust
+// pages' link list at 19). The unconditional floor block at the end of
+// globals.css measures 25 on a local build with fixture content; 28 leaves
+// slack for production content, the same reason tinyBodyText carries some.
 const BUDGET = {
-  smallTaps: 39,
+  smallTaps: 28,
   tinyBodyText: 6,
   overflowingPages: 0,
 };

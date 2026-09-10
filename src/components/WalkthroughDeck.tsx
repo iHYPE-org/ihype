@@ -558,7 +558,7 @@ export function WalkthroughDeck() {
         #wt-wrap { position: fixed; inset: 0; display: grid; place-items: center; overflow: hidden; z-index: 9999; background: var(--bg); }
         #wt-stage { width: 1280px; height: 720px; transform-origin: center; flex-shrink: 0; position: absolute; top: 50%; left: 50%; }
         #wt-nav { position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 16px; z-index: 10000; }
-        #wt-nav button { width: 40px; height: 40px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 1rem; cursor: pointer; display: grid; place-items: center; }
+        #wt-nav button { width: 44px; height: 44px; border-radius: 999px; border: 1px solid var(--hair-160); background: var(--line); color: var(--ink); font-size: 1rem; cursor: pointer; display: grid; place-items: center; }
         #wt-nav button:hover { background: var(--hair-120); }
         #wt-count { font-family: var(--f-m); font-size: 0.8125rem; letter-spacing: .14em; color: var(--ink-3); min-width: 64px; text-align: center; }
         @media print {

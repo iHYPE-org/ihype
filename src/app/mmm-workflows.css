@@ -247,3 +247,14 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 .profile-release-play:hover { border-color: var(--key-edge-hover); }
 .profile-release-play:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .profile-release-play[data-playing] { padding-left: 0; background: var(--accent); border-color: var(--accent); color: var(--ink-on-accent); letter-spacing: -0.08em; }
+
+/* The ticket page's action row (`TicketCardActions`). The wrapper and its
+   buttons shipped with `ticket-actions` / `btn` classes that no stylesheet
+   defined — `.btn-primary` exists only inside the event creator's own <style>
+   block — so Share, List for resale and Resend rendered as browser-default
+   buttons measuring 25px tall on the built worker (2026-09-10). The buttons
+   now wear the shell's own `.mmm-btn-primary` / `.mmm-btn-ghost`; this is the
+   row they sit in. */
+.ticket-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.ticket-actions > .mmm-btn-ghost,
+.ticket-actions > .mmm-btn-primary { flex: 1 1 auto; }

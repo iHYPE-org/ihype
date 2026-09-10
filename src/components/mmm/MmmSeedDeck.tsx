@@ -136,13 +136,24 @@ export function MmmSeedDeck({
       const frame = node.closest('.mmm-frame') ?? document.documentElement;
       const styles = getComputedStyle(frame);
       const px = (name: string) => parseFloat(styles.getPropertyValue(name)) || 0;
-      /* `--mmm-chrome-top` is the dock's full height including its safe area
-         and whatever it is riding on (the cookie banner lifts it), which is
-         exactly "how much of the bottom of the screen is not mine". It replaced
-         `--mmm-bottom + --mmm-chrome-size`, which was the old floating chrome's
-         resting offset plus its height — two terms for one measurement, and
-         `--mmm-bottom` no longer exists. */
-      const reserved = px('--mmm-chrome-top') + 20;
+      /* "How much of the bottom of the screen is not mine" is the distance from
+         the dock's top edge to the bottom of the viewport — that already folds
+         in the bar's height, its safe area, and whatever it is riding on (the
+         cookie banner lifts it). Measure the ELEMENT, not the token.
+
+         The token read below it used to be the whole computation, and it
+         never worked: `--mmm-chrome-top` is a `calc()` of other custom
+         properties, and `getComputedStyle` hands a custom property back as
+         its substituted STRING — "calc(calc(50px + 3px * 2 + 3px + 0px) +
+         237px)", read on the built worker 2026-09-10 — which `parseFloat`
+         turns into NaN and the `|| 0` into nothing. So the reservation had
+         been 20px since this read moved onto `.mmm-frame`, the card sized to
+         its 480px ceiling on every phone, and its bottom third (artist, city,
+         the reason line) sat under the dock and the banner. The token stays
+         only as the fallback for a render with no dock in the document. */
+      const dock = document.querySelector('.mmm-dock');
+      const fromDock = dock ? Math.max(0, window.innerHeight - dock.getBoundingClientRect().top) : null;
+      const reserved = (fromDock ?? px('--mmm-chrome-top')) + 20;
       /* visualViewport follows the actually visible WebView when iOS browser
          chrome or the keyboard changes size; innerHeight can continue to
          report the larger layout viewport and put the actions behind it. */
@@ -156,7 +167,19 @@ export function MmmSeedDeck({
     window.addEventListener('resize', measure);
     window.visualViewport?.addEventListener('resize', measure);
     window.visualViewport?.addEventListener('scroll', measure);
+    /* `--mmm-chrome-top` folds in `--consent-inset`, which the cookie banner
+       writes onto `:root` from its OWN effect after this one has run — and it
+       changes again when the banner is dismissed. Neither is a resize, so this
+       measurement was taken once against a lift of 0 and never retaken: on a
+       first visit the card's bottom third (artist, city, the reason line) sat
+       under the lifted dock and the banner. Measured at 393 on 2026-09-10. The
+       token is a style attribute on the root, so watching that attribute is the
+       one signal that covers both the banner appearing and it going away. */
+    const root = document.documentElement;
+    const tokens = new MutationObserver(measure);
+    tokens.observe(root, { attributes: true, attributeFilter: ['style'] });
     return () => {
+      tokens.disconnect();
       window.removeEventListener('resize', measure);
       window.visualViewport?.removeEventListener('resize', measure);
       window.visualViewport?.removeEventListener('scroll', measure);

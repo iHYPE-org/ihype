@@ -1976,7 +1976,13 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   font-weight: 800;
   font-size: 0.9375rem;
   padding: 9px 18px;
-  min-height: 0;
+  /* Was `min-height: 0` to match the template's anchor exactly, which made
+     this pill 38px on every public page at 1280 (2026-09-10). MOBILE.md's
+     floor outranks a template's literal geometry, and the way it wins is the
+     rule row 338 wrote: the pill grows vertically, the type does not. This
+     two-class selector beats `.button.small` and the audit block alike, so
+     the floor has to live here. */
+  min-height: 44px;
   border-radius: 999px;
   box-shadow: 0 4px 18px rgba(var(--accent-rgb), 0.3);
 }
@@ -3050,6 +3056,17 @@ body:has(#wt-wrap) .site-shell > main {
   display: grid;
   gap: 0.9rem;
 }
+/* A grid item defaults to `min-width: auto`, so a file input's intrinsic
+   width (its own "No file chosen" control) widened the whole panel past the
+   pane — measured 15px of overflow at 393 on the owner's own artist page,
+   nine elements ending at x=408 in a 393px viewport (2026-09-10). The panel
+   and the form are the two grids; every item in each has to be allowed to
+   shrink, and every control has to stay inside its cell. */
+.artist-media-upload-panel > *,
+.artist-media-upload-form > * { min-width: 0; }
+.artist-media-upload-form input,
+.artist-media-upload-form select,
+.artist-media-upload-form textarea { max-width: 100%; }
 .track-scan-gate {
   display: grid;
   gap: 0.5rem;
@@ -3473,6 +3490,10 @@ body {
 .nav-logo-mark {
   display: inline-flex;
   align-items: center;
+  /* The header's only home link measured 73×17 on thirty public pages
+     (2026-09-10); the floor lives here rather than in the audit block below
+     because this rule already owns `display` and `align-items`. */
+  min-height: 44px;
   gap: 2px;
   /* Follows the ground, same reason as .nav above. */
   color: var(--ink);
@@ -4839,7 +4860,10 @@ h2 {
 .fan-entry-logo:hover { transform: translateY(-2px) rotate(-1deg); filter: brightness(1.08); }
 .fan-entry-nav { display: flex; align-items: center; gap: clamp(8px,1.4vw,18px); }
 .fan-entry-nav a {
-  min-height: 42px;
+  /* 44, not 42: this is the landing nav's own floor and it outranks the
+     per-link floors in the audit block by one class, so "Sign in" and
+     "Request access" measured 42px at 1280 until it moved (2026-09-10). */
+  min-height: 44px;
   box-sizing: border-box;
   display: inline-flex;
   align-items: center;
@@ -5563,3 +5587,48 @@ body:has(.fan-entry) #main-content { width: 100%; }
   padding: 12px 0;
 }
 .fan-entry-legal a:hover { color: var(--ink); }
+
+/* ── The 44px floor, unconditional, for the controls measured under it on the
+   built worker at 393 AND 1280 (2026-09-10; visual audit, DESIGN_SYNC row 375).
+
+   MOBILE.md: 44×44 on every control, desktop included — grow vertical padding,
+   never type. Row 338 made that unconditional for the SHELL's classes and left
+   `mobile-fit.css`'s coarse-pointer set as the second copy of the same number.
+   These are the public and migrated surfaces that set was the ONLY copy for,
+   so a mouse measured 17–42px controls on every one of them, and four dipped
+   under even on a phone: the analytics range tabs (34), "View ticket" (34), the
+   header logo link (17), the landing's "Sign in" (18). `audit:mobile` had read
+   45 against its budget of 39 for this reason, under `continue-on-error`, on
+   every deploy since the budget was set.
+
+   `min-height` on an inline anchor does nothing, so the link-list items are
+   made inline-flex first. Every rule here is a FLOOR (min-*), never a size, so
+   a control the design already sized keeps its geometry. Component `<style>`
+   blocks set padding and radius; a floor from here composes with them because
+   the properties are disjoint. */
+.rk-logo,                           /* 70×26 — the kit pages' logo link (.nav-logo, 73×17, is floored in its own rule above) */
+.fan-entry-secondary,               /* 58×18 — the landing's "Sign in" */
+.authcard-fine a,                   /* 138×18 — "Create an account" under the sign-in card */
+.trust-policy-links .text-link,     /* 19px tall — the eight links under every trust page */
+.rk-footer-inner a,                 /* 18px tall — Advertise · Info · Support on the kit pages */
+.charter-inline-link {              /* 21px tall — the charter's "See … →" rows */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+.authcard-tab,                      /* 165×40 — (.nav-join-button, 115×38, is floored in its own two-class rule near line 1972) */
+.legal-seg-btn,                     /* 36px — the /info segmented control, desktop */
+.legal-print-btn,                   /* 224×38 */
+.aa-tab,                            /* 34px — analytics range tabs, ON A PHONE */
+.booking-cta,                       /* 174×41 */
+.fan-entry-signin,                  /* 72×42 */
+.fan-entry-join,                    /* 173×42 */
+.rk-nav-cta,                        /* 36px — the kit pages' "Apply →" */
+.payouts-tablink,                   /* 40px — floored only under (pointer: coarse) until now */
+.support-ticketlink,                /* 156×42 — same: coarse-pointer floor only */
+.ihype-btn-primary,                 /* 146×40 — "Submit idea" */
+.skip-to-content {                  /* 212×38 */
+  min-height: 44px;
+}
+.notifications-tab { min-width: 44px; min-height: 44px; }   /* "All" measured 22×40 */
+.rk-footer-inner a { min-width: 44px; }                      /* "Info" measured 28 wide once it was 44 tall */

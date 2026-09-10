@@ -57,6 +57,8 @@ export default async function SupportTicketsPage() {
           display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
           fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)',
           textDecoration: 'none', marginBottom: 18,
+          // 148×20 measured at both widths (2026-09-10); a back link is a control.
+          minHeight: 44,
         }}
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

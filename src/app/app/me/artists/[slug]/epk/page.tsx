@@ -61,7 +61,8 @@ export default async function EpkPage({ params }: { params: Promise<{ slug: stri
             (this page rendered a hard error for every visitor). Wire the
             handler with the same inline-script pattern the sibling presskit
             page already uses. */}
-        <button id="epk-print-btn" type="button" style={{ padding: '8px 18px', cursor: 'pointer' }}>
+        {/* 148×38 measured at 1280 (2026-09-10): the 44px floor, desktop included. */}
+        <button id="epk-print-btn" type="button" style={{ padding: '8px 18px', cursor: 'pointer', minHeight: 44 }}>
           {t('artistsSlugEpkPage.printSavePdf', 'Print / Save PDF')}
         </button>
         <script dangerouslySetInnerHTML={{ __html: `document.getElementById('epk-print-btn').onclick=()=>window.print()` }} nonce={nonce} />

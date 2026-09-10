@@ -722,7 +722,12 @@ html:has(.mmm-frame) {
   /* 96px clears the player and the logo trigger, per the handoff; the insets
      clear the Dynamic Island at the top and the home indicator at the bottom,
      which the handoff's 430px rectangle has neither of. */
-  padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
+  /* `--mmm-chrome-top`, not `--mmm-chrome-size`: the dock rides up on the cookie
+     banner (`--mmm-dock-lift`) and this clearance has to ride with it. Read as
+     `chrome-size`, the last ~170px of every list sat under the dock and the
+     banner for as long as the banner was up — measured on CHARTS at 393, rows
+     06–10 rendering beneath both and continuing below them (2026-09-10). */
+  padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
 }
 /* The pane is the same sheet of paper as the chart (owner, 2026-08-24: "all
    frames should fit to this console and this map design"): the map's own film
@@ -1443,6 +1448,12 @@ html:has(.mmm-frame) {
      rule as mobile-fit.css. */
   font-size: max(16px, 1.0625rem);
 }
+/* The placeholder is longer than the field at 393 on both surfaces that use
+   this input — the map's read "Search shows, venues, citi" and MUSIC's
+   "Search artists, tracks, venues, cities, p", cut mid-word (2026-09-10).
+   An input's `text-overflow` applies to its placeholder in Chromium and
+   WebKit, so this is the whole fix; the copy itself is untouched. */
+.mmm-search-input { text-overflow: ellipsis; }
 .mmm-search-input::placeholder { color: var(--ink-3); }
 /* The search-type clear affordance is Safari's own and does not follow the
    theme; the field is cleared by selecting and deleting, as elsewhere here. */
@@ -1640,6 +1651,9 @@ html:has(.mmm-frame) {
   cursor: pointer;
 }
 .mmm-row-title { font-family: var(--font-body); font-weight: 600; font-size: 0.9375rem; color: var(--ink); }
+/* The wallet's rename field wears the title class on an INPUT; it measured
+   583×42 at 1280 (2026-09-10). A title is text, a field is a control. */
+input.mmm-row-title { min-height: 44px; }
 .mmm-row-sub { font-size: 0.9375rem; color: var(--ink-3); margin-top: 1px; }
 .mmm-row-meta { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--accent-text); white-space: nowrap; }
 
@@ -2397,7 +2411,7 @@ html:has(.mmm-frame) {
    nothing. The chrome stays bottom-left, which is where a thumb is on a phone
    and where the eye has learned to look on a desktop after one use. */
 @media (min-width: 900px) {
-  .mmm-pane { padding: 20px calc(50% - 340px) calc(var(--mmm-chrome-size) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px); }
+  .mmm-pane { padding: 20px calc(50% - 340px) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px); }
   /* `min(720px, 100%)`, never a bare 720: these wide-viewport rules were
      written when the pane spanned the whole desk, and the 430px frame cap
      (row 300) turned the flat 720 into a real defect — a 720px sheet centred
@@ -2630,7 +2644,9 @@ html:has(.mmm-frame) {
 .mmm-ticket-status[data-attended] { color: var(--ink-3); }
 .mmm-ticket-checkin { font-size: 0.9375rem; color: var(--ink-3); }
 .mmm-ticket-view {
-  min-height: 34px;
+  /* Was 34px — the one shell control row 338's sweep did not reach, measured
+     under the floor at 393 AND 1280 on the wallet (2026-09-10). */
+  min-height: 44px;
   padding: 7px 14px;
   border-radius: var(--radius-pill);
   border: 1px solid rgba(var(--accent-rgb), 0.45);
@@ -3455,6 +3471,16 @@ html:has(.mmm-frame) {
 .mmm-profile-actions > .cta-row > .button { width: 100%; min-height: 48px; }
 .mmm-profile-actions > button[aria-pressed] { flex: 1 1 0; min-width: 0; min-height: 48px; }
 .mmm-profile-actions > .mmm-like { flex: 0 0 auto; min-height: 48px; }
+/* The `nowrap` above was measured at 1280 and is wrong at 393: three tiles in
+   327px leaves Hype ~90px, so "✓ Hyped 159 · 3h 16m" wrapped FIVE lines deep
+   and "Following · 1" was clipped mid-glyph (2026-09-10, the built worker).
+   Below MOBILE.md's one breakpoint the same three controls take two lines —
+   Hype on its own row, since it carries the long label; Follow and Like share
+   the second, Follow growing and Like holding its width. */
+@media (max-width: 620px) {
+  .mmm-profile-card .mmm-profile-actions { flex-wrap: wrap; }
+  .mmm-profile-actions > .cta-row { flex: 1 1 100%; }
+}
 .mmm-profile-counters { display: flex; gap: 10px; }
 .mmm-profile-counter {
   flex: 1;
@@ -3720,6 +3746,9 @@ html:has(.mmm-frame) {
 .mmm-charter-back {
   display: inline-flex;
   align-items: center;
+  /* "‹ Me" measured 43×44 on every ME sub-page — one pixel under the floor
+     on the axis a thumb actually misses (2026-09-10). */
+  min-width: 44px;
   min-height: 44px;
   /* iOS: a chevron and a word in the tint, no pill (--back-pad 0). The
      console's outlined tracked-mono pill comes back through the tokens. */
@@ -3736,7 +3765,8 @@ html:has(.mmm-frame) {
   text-transform: var(--back-case);
   white-space: nowrap;
 }
-.mmm-me-route-back { margin-bottom: 12px; }
+/* 43px wide, measured on every ME sub-page at 393 — one pixel under the floor. */
+.mmm-me-route-back { margin-bottom: 12px; min-width: 44px; }
 .mmm-me-route-context { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .mmm-me-route-context .mmm-me-route-back { margin-bottom: 0; flex: 0 0 auto; }
 /* The trail takes the back link's own face: sentence-case body on iOS, tracked
