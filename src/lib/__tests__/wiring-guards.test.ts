@@ -1,3 +1,4 @@
+import { runInNewContext } from 'node:vm';
 import { readFileSync, existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { readdirSync } from 'node:fs';
@@ -112,6 +113,50 @@ describe('the service worker precache list', () => {
       return !existsSync(`src/app${page}/page.tsx`) && !existsSync(`src/app${page}/route.ts`);
     });
     expect(missing, 'cache.addAll rejects the whole batch on one bad entry').toEqual([]);
+  });
+});
+
+/**
+ * The private-page warmer must store a route's OWN client chunks, or the page
+ * it caches is a page that cannot hydrate offline.
+ *
+ * Next names those chunks only inside the RSC flight payload, as bare
+ * "static/chunks/…js" strings — never as <script src>. The first version of
+ * `warmPageAssets` read `src=`/`href=` attributes alone, so the ticket page's
+ * fix (2026-09-05) worked only because the wallet's links prefetch that chunk
+ * online, and the door page (2026-09-10), which nothing links to on the same
+ * visit, hydrated into the error boundary offline. Measured, then guarded:
+ * the function is lifted out of sw.js and run over a sample document.
+ */
+describe('the service worker warms a page\'s flight-referenced chunks', () => {
+  const sw = readFileSync('public/sw.js', 'utf8');
+  const source = /async function warmPageAssets\([\s\S]*?\n}\n/.exec(sw)?.[0];
+
+  it('still defines warmPageAssets', () => {
+    expect(source, 'sw.js has no warmPageAssets — the private caches store HTML that cannot hydrate').toBeTruthy();
+  });
+
+  it('fetches the src= assets AND the chunks the flight payload names, brackets percent-encoded', async () => {
+    const fetched: string[] = [];
+    const statics = { match: async () => undefined, put: async () => undefined };
+    const fetch = async (url: string) => { fetched.push(url); return { ok: true }; };
+    // `node:vm`, because the source lint forbids `new Function` — the worker
+    // is plain script, so a bare context with `fetch` is all it needs.
+    const warm = runInNewContext(`${source}; warmPageAssets`, { fetch }) as (html: string, statics: unknown) => Promise<void>;
+    const html = [
+      '<script src="/_next/static/chunks/main-app-abc.js" async=""></script>',
+      '<link rel="stylesheet" href="/_next/static/css/def.css">',
+      '<script>self.__next_f.push([1,"[\\"static/chunks/app/app/layout-111.js\\",\\"static/chunks/app/app/me/shows/[slug]/scan/page-222.js\\",\\"static/chunks/9149-333.js\\"]"])</script>',
+    ].join('');
+    await warm(html, statics);
+    expect(fetched).toEqual(expect.arrayContaining([
+      '/_next/static/chunks/main-app-abc.js',
+      '/_next/static/css/def.css',
+      '/_next/static/chunks/app/app/layout-111.js',
+      '/_next/static/chunks/app/app/me/shows/%5Bslug%5D/scan/page-222.js',
+      '/_next/static/chunks/9149-333.js',
+    ]));
+    expect(fetched.some((url) => url.includes('[slug]')), 'a bracketed key never matches the request the browser makes').toBe(false);
   });
 });
 

@@ -1,39 +1,59 @@
-'use client';
-import { useState, use } from 'react';
-import { useParams } from 'next/navigation';
-import { useI18n } from '@/components/I18nProvider';
+import type { Metadata } from 'next';
+import { notFound, redirect } from 'next/navigation';
+import { auth } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { canWorkTheDoor } from '@/lib/door-access';
+import { DoorScanner } from '@/components/door/DoorScanner';
 
-export default function ScanPage() {
-  const { t } = useI18n();
-  const params = useParams<{ slug: string }>();
-  const [ticketId, setTicketId] = useState('');
-  const [result, setResult] = useState<{ ok?: boolean; error?: string; ticket?: { holderName?: string; scannedAt?: string } } | null>(null);
-  const [loading, setLoading] = useState(false);
+export const dynamic = 'force-dynamic';
 
-  async function scan(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true); setResult(null);
-    const showRes = await fetch(`/api/shows/${params.slug}`);
-    if (!showRes.ok) { setResult({ error: t('showsSlugScanPage.showNotFound', 'Show not found.') }); setLoading(false); return; }
-    const { id } = await showRes.json();
-    const r = await fetch(`/api/shows/${id}/scan`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ ticketId }) });
-    const d = await r.json();
-    setResult(d); setLoading(false);
-    if (d.ok) setTicketId('');
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const show = await db.show.findUnique({ where: { slug }, select: { title: true } });
+  return {
+    title: show ? `Door · ${show.title} · iHYPE` : 'Door · iHYPE',
+    robots: { index: false, follow: false },
+  };
+}
+
+/**
+ * The door. A server component on purpose: the show's identity is rendered
+ * INTO the HTML, and the service worker stores that HTML (with its scripts)
+ * when the organiser downloads the guest list — so the page opens with no
+ * signal and already knows which show it is. The scanner itself is the client
+ * component below; the camera, the manifest and the sync queue all live there.
+ *
+ * Same gate as the scan and manifest routes, read from one module: the venue's
+ * owner, the headliner's owner, the creator, an admin. Anyone else sees a 404,
+ * not a 403 — the URL names a show, and a stranger learns nothing from it.
+ */
+export default async function DoorPage({ params }: { params: Promise<{ slug: string }> }) {
+  const session = await auth();
+  const { slug } = await params;
+  if (!session?.user?.id) {
+    redirect(`/login?callbackUrl=/app/me/shows/${slug}/scan`);
   }
 
+  const show = await db.show.findUnique({
+    where: { slug },
+    select: {
+      id: true, slug: true, title: true, startsAt: true, creatorId: true, status: true,
+      venueProfile: { select: { ownerId: true, name: true } },
+      headlinerProfile: { select: { ownerId: true, name: true } },
+    },
+  });
+  if (!show || !canWorkTheDoor(session, show)) return notFound();
+
   return (
-    <div className="container section" style={{ maxWidth: 480 }}>
-      <h1 className="title">{t('showsSlugScanPage.ticketScanner', 'Ticket Scanner')}</h1>
-      <form onSubmit={scan} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <input autoFocus className="input" placeholder={t('showsSlugScanPage.ticketIdPlaceholder', 'Ticket ID or scan QR')} value={ticketId} onChange={e => setTicketId(e.target.value)} required />
-        <button className="button" disabled={loading} type="submit">{loading ? t('showsSlugScanPage.checking', 'Checking…') : t('showsSlugScanPage.scan', 'Scan')}</button>
-      </form>
-      {result && (
-        <div className={`callout ${result.ok ? 'success' : 'error'}`} style={{ marginTop: 16 }}>
-          {result.ok ? `${t('showsSlugScanPage.validPrefix', '✓ Valid —')} ${result.ticket?.holderName ?? t('showsSlugScanPage.guest', 'Guest')}` : result.error}
-        </div>
-      )}
-    </div>
+    <DoorScanner
+      show={{
+        id: show.id,
+        slug: show.slug,
+        title: show.title,
+        startsAt: show.startsAt.toISOString(),
+        venueName: show.venueProfile?.name ?? null,
+        headlinerName: show.headlinerProfile?.name ?? null,
+      }}
+    />
   );
 }

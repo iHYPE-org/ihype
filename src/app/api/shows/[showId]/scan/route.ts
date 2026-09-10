@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { isAdminSession } from '@/lib/permissions';
+import { canWorkTheDoor, DOOR_SHOW_SELECT } from '@/lib/door-access';
+import { resolveScanTimestamp } from '@/lib/door-manifest';
 import { awardHype } from '@/lib/hype-ledger';
 import { log } from '@/lib/logger';
 
@@ -17,22 +18,30 @@ export async function POST(
   }
 
   const { showId } = await params;
-  const show = await db.show.findUnique({ where: { id: showId }, select: { id: true, creatorId: true } });
+  const show = await db.show.findUnique({ where: { id: showId }, select: DOOR_SHOW_SELECT });
   if (!show) {
     return NextResponse.json({ error: 'Show not found.' }, { status: 404 });
   }
-  if (show.creatorId !== session.user.id && !isAdminSession(session)) {
+  /* The venue's owner and the headliner's owner, not only the creator: the
+     venue dashboard has always linked its owner here, and a show created by a
+     promoter or by the act answered that owner 403 at their own door. Same
+     four people as the cancel route, read from one place (`door-access.ts`). */
+  if (!canWorkTheDoor(session, show)) {
     return NextResponse.json({ error: 'Forbidden.' }, { status: 403 });
   }
 
   const body = await request.json();
-  const { ticketId } = body as { ticketId?: string };
-  if (!ticketId) {
+  const { ticketId, scannedAt: claimedAt } = body as { ticketId?: string; scannedAt?: unknown };
+  if (!ticketId || typeof ticketId !== 'string') {
     return NextResponse.json({ error: 'ticketId is required.' }, { status: 400 });
   }
 
+  /* As typed, or lower-cased: minted ids are lower-case hex and a door types
+     `0X…` as easily as `0x…`, while other writers (the e2e fixture's `IHY-…`)
+     store upper case that a blanket lower-casing would never find. */
+  const typed = ticketId.trim();
   const ticket = await db.ticket.findFirst({
-    where: { showId, serializedId: ticketId }
+    where: { showId, serializedId: { in: [...new Set([typed, typed.toLowerCase()])] } }
   });
   if (!ticket) {
     return NextResponse.json({ error: 'Ticket not found for this show.', valid: false }, { status: 404 });
@@ -45,7 +54,12 @@ export async function POST(
   // messages above; the actual VALID→SCANNED transition is guarded here so
   // two concurrent scans of the same ticket can't both succeed (only one
   // updateMany can ever match status: 'VALID' and flip it first).
-  const scannedAt = new Date();
+  /* A door phone that lost signal posts its scans when the network returns,
+     each carrying the moment the fan actually walked in. That is the time the
+     record should hold — attendance analytics and a dispute both ask WHEN a
+     ticket was used, not when the phone reconnected. Honoured only when
+     plausible (past, within a week); otherwise the server clock stands. */
+  const scannedAt = resolveScanTimestamp(claimedAt);
   const result = await db.ticket.updateMany({
     where: { id: ticket.id, status: 'VALID' },
     data: { status: 'SCANNED', scannedAt, scannedByUserId: session.user.id }

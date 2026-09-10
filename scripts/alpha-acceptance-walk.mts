@@ -36,11 +36,12 @@ import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
 import { seedSessionCookie, sessionCookieName } from '../e2e/fixtures/session';
 import { buildTicketVerificationUrl } from '../src/lib/tickets';
+import { hashTicketCode } from '../src/lib/door-manifest';
 import { exitCodeFor, renderBoard, rollUp } from '../src/lib/feature-health';
 
 const BASE = (process.env.ALPHA_BASE_URL ?? 'http://localhost:8787').replace(/\/$/, '');
@@ -2400,6 +2401,56 @@ async function main() {
     );
 
     return `Accept-Ranges served, 0-3 and the suffix byte-compared against the whole ${size}-byte object, 416 past the end, and a -8.25 LUFS reading stored (stranger 403, +42 refused 400)`;
+  });
+
+  // ── 43. The door, with and without signal ────────────────────────────────
+  await item('43. The door list carries no ticket code, the venue can scan, and an offline scan syncs at the time it happened', async () => {
+    if (!serializedId) blocked('no ticket was sold');
+    /* A second, still-VALID ticket on the order item 16 paid for, so the
+       manifest has one row to admit beside the one item 19 already used.
+       Written directly: this item is about the door, not about selling. */
+    const paid = await prisma.ticket.findFirst({ where: { serializedId }, select: { ticketOrderId: true, holderEmail: true, venueProfileId: true } });
+    assert(paid, 'the sold ticket is gone');
+    const doorCode = `0x${randomBytes(12).toString('hex')}`;
+    await prisma.ticket.create({
+      data: { serializedId: doorCode, ticketOrderId: paid.ticketOrderId, showId, venueProfileId: paid.venueProfileId, holderName: `Door Guest ${run}`, holderEmail: paid.holderEmail },
+    });
+
+    const asFan = await api(`/api/shows/${showId}/door-manifest`, { cookie: fan.cookie });
+    assert(asFan.status === 403, `a fan downloading the door list answered ${asFan.status}`);
+
+    /* The creator here also owns the venue (the walk's seed gives one account
+       both profiles), so this proves the list and not the widened gate; the
+       venue-owner-who-is-not-the-creator case is the route's own unit test. */
+    const list = await api(`/api/shows/${showId}/door-manifest`, { cookie: creator.cookie });
+    assert(list.status === 200, `the organiser downloading the door list answered ${list.status}: ${list.text.slice(0, 160)}`);
+    assert(!list.text.includes(doorCode) && !list.text.includes(serializedId), 'THE DOOR LIST CARRIES A TICKET CODE — a stolen door phone would hold every ticket to the show');
+    assert(!list.text.includes(doorCode.slice(2)), 'the door list carries a ticket code without its prefix');
+    const expectValid = await hashTicketCode(showId, doorCode);
+    const expectUsed = await hashTicketCode(showId, serializedId);
+    assert(Array.isArray(list.body?.valid) && list.body.valid.some((row: { h: string; name: string }) => row.h === expectValid && row.name === `Door Guest ${run}`), 'the unscanned ticket is not on the list under its hash and name');
+    assert(Array.isArray(list.body?.scanned) && list.body.scanned.includes(expectUsed), 'the ticket item 19 scanned is not listed as already used');
+    assert(list.body.valid.every((row: { h: string }) => row.h !== expectUsed), 'a used ticket is still listed as admissible');
+
+    /* The phone was offline when the fan walked in and posts the scan later,
+       carrying the time it happened. The record must hold that time. */
+    const walkedInAt = new Date(Date.now() - 10 * 60_000);
+    walkedInAt.setMilliseconds(0);
+    const synced = await api(`/api/shows/${showId}/scan`, {
+      method: 'POST', cookie: creator.cookie, headers: json,
+      body: JSON.stringify({ ticketId: doorCode, scannedAt: walkedInAt.toISOString() }),
+    });
+    ok(synced);
+    const row = await prisma.ticket.findUnique({ where: { serializedId: doorCode }, select: { status: true, scannedAt: true } });
+    assert(row?.status === 'SCANNED', `the synced ticket reads ${row?.status}`);
+    assert(row.scannedAt?.getTime() === walkedInAt.getTime(), `the synced scan was recorded at ${row.scannedAt?.toISOString()}, not the ${walkedInAt.toISOString()} the door reported`);
+
+    const again = await api(`/api/shows/${showId}/scan`, {
+      method: 'POST', cookie: creator.cookie, headers: json,
+      body: JSON.stringify({ ticketId: doorCode, scannedAt: walkedInAt.toISOString() }),
+    });
+    assert(again.status === 409, `a second door syncing the same ticket answered ${again.status}, expected 409 so the operator is told`);
+    return `fan refused 403; list of ${list.body.valid.length} valid + ${list.body.scanned.length} used carries hashes only; offline scan recorded at the door's time; replay 409`;
   });
 
   const pass = rows.filter((r) => r.status === 'PASS').length;

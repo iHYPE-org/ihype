@@ -38,3 +38,41 @@ export function warmTicketCache(paths: readonly string[]): void {
 export function clearPrivateCaches(): void {
   controller()?.postMessage({ type: 'CLEAR_PRIVATE' });
 }
+
+/**
+ * Pre-caches the door scanner page for one show, so the phone that downloaded
+ * the guest list can open the scanner with no signal.
+ *
+ * Unlike `warmTicketCache` this waits for the registration rather than
+ * reading `controller`: the organiser presses "Download for the door" on the
+ * page's FIRST load, exactly when `controller` is still null (the worker
+ * claims the page on activate, after the first navigation has already been
+ * served), and a warm that silently did nothing here would leave the phone
+ * with a list and no page to read it on. Resolves false when there is no
+ * service worker at all, so the page can say so.
+ */
+export async function warmDoorCache(path: string): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker) return false;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    const worker = registration.active ?? navigator.serviceWorker.controller;
+    if (!worker) return false;
+    worker.postMessage({ type: 'WARM_DOOR', paths: [path] });
+    /* And everything this page has ALREADY loaded. On the first visit of a
+       session the worker was not yet controlling the page when its scripts
+       were fetched, so none of them — the shell's dynamically imported map
+       chunks above all, which no HTML names — reached the static cache, and
+       the cached document hydrated into the error boundary offline. The
+       performance timeline is the one complete list of what the page needed;
+       the worker keeps only same-origin `/_next/static/` entries from it. */
+    const loaded = typeof performance !== 'undefined'
+      ? performance.getEntriesByType('resource')
+        .map((entry) => entry.name)
+        .filter((name) => name.includes('/_next/static/'))
+      : [];
+    if (loaded.length) worker.postMessage({ type: 'WARM_ASSETS', urls: loaded });
+    return true;
+  } catch {
+    return false;
+  }
+}

@@ -142,7 +142,7 @@ export const JOURNEYS: Journey[] = [
     id: 'ticketing',
     name: 'A fan buys a ticket and gets through the door',
     tier: 'core',
-    keys: ['16 + 31', '19', 'Replay', '22b'],
+    keys: ['16 + 31', '19', 'Replay', '22b', '43'],
     toProve: 'set STRIPE_TEST_SECRET_KEY and STRIPE_TEST_WEBHOOK_SECRET on the repository',
   },
   {

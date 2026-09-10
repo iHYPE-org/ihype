@@ -486,6 +486,12 @@
   --success: #22e5d4;
   --warning: #ffb84a;
   --danger:  #ff5029;
+  /* Ink ON a status fill. The three fills above are one value in every theme
+     (like the brand triplets), so the ink that sits on them is one value too —
+     `--ink` flips light on the dark themes and would sit light on a bright
+     fill. Measured 2026-09-10: 6.07:1 on --danger, 11.0:1 on --warning,
+     13.4:1 on --success. Read by the door scanner's verdict panel. */
+  --ink-on-status: #0a0a0a;
   /* Informational blue. It existed as the literal #7fb3ff in two categorical
      palettes (/listen's seed cards and /api/charts) and nowhere else, which is
      how a six-hue palette ends up with one hue that a theme cannot reach. */
