@@ -45,18 +45,41 @@ sweep can tell "reviewed" from "nobody looked".
 
 ## Operator items (cannot be done from the repository)
 
-1. **Stripe webhook secret.** Production logged 109 signature failures and 10
-   "secret not configured" errors on 2026-08-26 to 08-30, every one from the
-   same source address — inside Cloudflare's published `2a06:98c0::/29` range
-   (WARP egress), not in Stripe's published webhook IP list, and the same
-   address that browsed `/welcome` on 08-09. That is a `stripe listen
-   --forward-to https://ihype.org/api/stripe/webhook` session on the owner's
-   machine: the CLI signs with its own secret, so the endpoint's configured
-   secret can never match it. Not an attack, and not a misconfiguration of the
-   dashboard endpoint. To confirm: Stripe Dashboard → Developers → Webhooks →
-   the endpoint's recent deliveries should show 2xx once real events flow. If a
-   second endpoint listens to connected accounts, put its secret in
-   `STRIPE_CONNECT_WEBHOOK_SECRET`.
+1. **Stripe webhook secret — the cause is UNKNOWN, and this item used to name
+   one (corrected 2026-09-10).** Production logged 109 signature failures and
+   10 "secret not configured" errors on 2026-08-26 to 08-30, and **64 more on
+   2026-09-06 to 09-09**, the last at 02:57 UTC on 09-09 with none since.
+
+   This item previously concluded: "every one from the same source address —
+   inside Cloudflare's published `2a06:98c0::/29` range (WARP egress), not in
+   Stripe's published webhook IP list, and the same address that browsed
+   `/welcome` on 08-09. That is a `stripe listen --forward-to` session on the
+   owner's machine … Not an attack, and not a misconfiguration of the dashboard
+   endpoint."
+
+   **The address carries no information and the inference is withdrawn.**
+   Measured through the Sentry connector on 2026-09-10: all **173** events in
+   `JAVASCRIPT-NEXTJS-D` report `user.ip` `2a06:98c0:3600::103` — and so do
+   **all 71 errors in the project unrelated to Stripe**, over the same 30 days.
+   Every event iHYPE records carries that one address, because it is the
+   Worker's own view from behind Cloudflare, not the caller's. "The same
+   address that browsed `/welcome`" is therefore true of every error in the
+   product and distinguishes nothing; it cannot tell a CLI session from
+   Stripe's own delivery. A `stripe listen` session remains the likeliest
+   explanation — it was never tested, and it is not what the evidence said.
+
+   **Rule:** do not attribute a caller from `user.ip` on this project. Any
+   claim about who sent a request needs a field that actually varies —
+   `CF-Connecting-IP` recorded deliberately at the route, or the sender's own
+   records.
+
+   **Where the question is actually answered:** Stripe Dashboard → Developers →
+   Webhooks, **with the test-mode toggle ON**. A TEST-mode endpoint pointing at
+   the live `https://ihype.org/api/stripe/webhook` signs with the test secret,
+   can never verify against the live one, and produces exactly this signature.
+   Delete it if it exists. The live endpoint's recent deliveries should show
+   2xx once real events flow; if a second endpoint listens to connected
+   accounts, its secret goes in `STRIPE_CONNECT_WEBHOOK_SECRET`.
 2. **Self-hosted CI runner** executes PR-head code on a persistent machine with
    caches that survive between runs. Run it `--ephemeral` in a fresh container
    or VM per job, and keep "Require approval for all outside collaborators" on.
