@@ -11,23 +11,81 @@ function controller(): ServiceWorker | null {
   return navigator.serviceWorker.controller;
 }
 
+/** What a warm actually achieved. `stored` counts pages now in the cache. */
+export type WarmOutcome =
+  | { ok: true; stored: number; failed: number }
+  | { ok: false; reason: 'no-worker' | 'no-answer' };
+
+/** A worker that has not been updated yet never answers; do not hang on it. */
+const WARM_REPLY_TIMEOUT_MS = 15_000;
+
 /**
- * Pre-caches the holder's own ticket pages.
+ * Pre-caches the holder's own ticket pages, and reports what was stored.
  *
  * The service worker already served a previously-viewed ticket offline. This
  * covers the case that actually strands someone: a ticket bought earlier and
  * opened for the first time at a door with no signal.
+ *
+ * TWO THINGS CHANGED ON 2026-09-10, both of which had the same effect — a fan
+ * who thought their tickets were saved and had nothing.
+ *
+ * (1) It read `navigator.serviceWorker.controller`, which is NULL on the first
+ * load of a session: the worker claims a page on activate, after that
+ * navigation has already been served. So the very first visit to the wallet
+ * warmed nothing at all, silently. `warmDoorCache` below has always waited for
+ * `serviceWorker.ready` for exactly this reason, and its comment says the
+ * wallet "gets a second load for free" — which is true only if the member
+ * comes back. Buy on the bus, open the wallet once, arrive at a basement
+ * venue: one load, nothing cached. This now waits the same way.
+ *
+ * (2) It was fire-and-forget, so nothing could tell a member whether it had
+ * worked. It asks the worker over a MessageChannel and reports the real count;
+ * a worker too old to answer resolves `no-answer` rather than a cheerful lie.
  */
-export function warmTicketCache(paths: readonly string[]): void {
-  if (!paths.length) return;
-  const worker = controller();
-  if (!worker) return;
-  worker.postMessage({ type: 'WARM_TICKETS', paths: [...paths] });
+export async function warmTicketCache(paths: readonly string[]): Promise<WarmOutcome> {
+  if (!paths.length) return { ok: true, stored: 0, failed: 0 };
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker) return { ok: false, reason: 'no-worker' };
+  let worker: ServiceWorker | null = null;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    worker = registration.active ?? navigator.serviceWorker.controller;
+  } catch {
+    return { ok: false, reason: 'no-worker' };
+  }
+  if (!worker) return { ok: false, reason: 'no-worker' };
+
   /* And the assets THIS page loaded — the wallet's own chunks, the shell's
      dynamically imported map chunks. The door page needed this first (see
      `warmDoorCache`); the wallet only escaped because its <Link>s prefetch the
      ticket page's chunk while online, which is luck, not a guarantee. */
   reportLoadedAssets(worker);
+
+  return new Promise<WarmOutcome>((resolve) => {
+    let settled = false;
+    const finish = (outcome: WarmOutcome) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      channel.port1.close();
+      resolve(outcome);
+    };
+    const channel = new MessageChannel();
+    channel.port1.onmessage = (event) => {
+      const data = (event.data ?? {}) as { type?: unknown; stored?: unknown; failed?: unknown };
+      if (data.type !== 'WARM_RESULT') return;
+      finish({
+        ok: true,
+        stored: typeof data.stored === 'number' ? data.stored : 0,
+        failed: typeof data.failed === 'number' ? data.failed : 0,
+      });
+    };
+    const timer: ReturnType<typeof setTimeout> = setTimeout(() => finish({ ok: false, reason: 'no-answer' }), WARM_REPLY_TIMEOUT_MS);
+    try {
+      worker.postMessage({ type: 'WARM_TICKETS', paths: [...paths] }, [channel.port2]);
+    } catch {
+      finish({ ok: false, reason: 'no-worker' });
+    }
+  });
 }
 
 /**
@@ -46,8 +104,11 @@ function reportLoadedAssets(worker: ServiceWorker): void {
   if (loaded.length) worker.postMessage({ type: 'WARM_ASSETS', urls: loaded });
 }
 
+/** Sign-out must never hang on a worker that is not answering. */
+const CLEAR_READY_TIMEOUT_MS = 1_500;
+
 /**
- * Drops the ticket and page caches. Called on sign-out.
+ * Drops the ticket and page caches. Called on sign-out and on account deletion.
  *
  * A ticket page is personalised and carries a QR that admits its holder to a
  * show, and the ticket cache is deliberately version-independent so a service
@@ -55,11 +116,43 @@ function reportLoadedAssets(worker: ServiceWorker): void {
  * shared device the next person to sign in could be served the previous
  * account's ticket.
  *
- * Fire-and-forget by design: `postMessage` reaches the service worker, which
- * outlives the page, so the navigation that follows does not need to wait.
+ * IT READ `controller` TOO, AND THAT IS THE SAME HOLE AS `warmTicketCache`
+ * (2026-09-10). `sw.js` calls `clients.claim()` on activate, so a page becomes
+ * controlled only AFTER the worker installs and activates — before that,
+ * `navigator.serviceWorker.controller` is null and this posted to nobody. The
+ * consequence is the one the paragraph above describes: the previous account's
+ * ticket QR pages stay on the device, in the one cache nothing else ever
+ * clears. Found by scanning for siblings of the warm bug rather than by
+ * anything failing.
+ *
+ * NOT fire-and-forget any more, and the ordering is the delicate part: both
+ * callers navigate immediately afterwards, so an `await` that resolves late
+ * would unload the page before the message went out — worse than the bug it
+ * fixes. It races `serviceWorker.ready` against a short timeout and resolves
+ * either way, and the callers navigate in a `finally`. **Sign-out must happen
+ * whatever this returns**; a member trying to leave a shared device must never
+ * be held by a cache.
+ *
+ * Resolves true when the message was handed to a worker.
  */
-export function clearPrivateCaches(): void {
-  controller()?.postMessage({ type: 'CLEAR_PRIVATE' });
+export async function clearPrivateCaches(): Promise<boolean> {
+  if (typeof navigator === 'undefined' || !navigator.serviceWorker) return false;
+  /* The fast path: on any page that is already controlled — which is every
+     page after the first load of a session — this sends synchronously and the
+     await below resolves on the microtask queue. */
+  const active = controller();
+  if (active) {
+    active.postMessage({ type: 'CLEAR_PRIVATE' });
+    return true;
+  }
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready.catch(() => null),
+    new Promise<null>((resolve) => setTimeout(() => resolve(null), CLEAR_READY_TIMEOUT_MS)),
+  ]);
+  const worker = registration?.active ?? navigator.serviceWorker.controller;
+  if (!worker) return false;
+  worker.postMessage({ type: 'CLEAR_PRIVATE' });
+  return true;
 }
 
 /**

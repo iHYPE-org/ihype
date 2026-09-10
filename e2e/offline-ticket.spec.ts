@@ -14,12 +14,14 @@ import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtur
  * and a network that can be cut, which is what this spec is.
  *
  * Sequence, and why each step is there:
- *   1. Open the wallet. The worker registers and claims the page on activate.
- *   2. Open it AGAIN once a controller exists — the warmer posts WARM_TICKETS
- *      to `navigator.serviceWorker.controller`, which is null on the very first
- *      load, so the first visit warms nothing (and must not be asserted on).
- *   3. Wait for the ticket page to be in the `ihype-tickets` cache.
- *   4. Cut the network and navigate to a ticket the browser has never rendered.
+ *   1. Open the wallet ONCE. This used to need two loads and the second one
+ *      was the bug, not the method: the warmer posted to
+ *      `navigator.serviceWorker.controller`, which is null on the first load
+ *      of a session, so a fan who opened the wallet once and left for the
+ *      venue had cached nothing. It waits for `serviceWorker.ready` now
+ *      (2026-09-10), and asserting on a single load is what proves that.
+ *   2. Wait for the ticket page to be in the `ihype-tickets` cache.
+ *   3. Cut the network and navigate to a ticket the browser has never rendered.
  */
 const EMAIL = 'e2e-offline-fan@ihype.org';
 const TICKETS_CACHE = 'ihype-tickets';
@@ -32,10 +34,10 @@ test.describe('the offline ticket wallet', () => {
     const seeded = await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });
     const ticketPath = `/app/me/tickets/${seeded.serializedId}`;
 
-    await page.goto('/app/tickets');
-    await page.waitForFunction(() => Boolean(navigator.serviceWorker?.controller), null, { timeout: 30_000 });
-
-    // Second load: now the warmer has a controller to post to.
+    /* ONE load. The worker registers and claims the page on activate, and the
+       warmer waits for `serviceWorker.ready` rather than reading `controller`,
+       so it no longer matters that the controller is null while this first
+       navigation is being served. */
     await page.goto('/app/tickets');
     await expect(page.getByText(seeded.serializedId).first()).toBeVisible();
     /* `expect.poll` over `page.evaluate`, NOT `waitForFunction` with an async
@@ -80,5 +82,38 @@ test.describe('the offline ticket wallet', () => {
       return keys.some((request) => new URL(request.url).pathname === '/app/tickets');
     }, TICKETS_CACHE);
     expect(listCached).toBe(false);
+  });
+
+  test('a fan can ask for the tickets again and is told what was saved', async ({ page, context }) => {
+    /* The automatic warm covers most members and covers none of the cases
+       that strand one: a browser that evicted the cache (Safari clears unused
+       site storage after seven days, and a ticket bought a month ahead is
+       exactly that), or a transfer, which REISSUES every serializedId in the
+       order so the page cached under the old id is a dead link. Before this
+       control there was no way to ask again, and no way to find out. */
+    const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+    const seeded = await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });
+    const ticketPath = `/app/me/tickets/${seeded.serializedId}`;
+
+    await page.goto('/app/tickets');
+    await page.waitForFunction(() => Boolean(navigator.serviceWorker?.controller), null, { timeout: 30_000 });
+
+    // Drop what the automatic warm stored, so the press is what refills it.
+    await page.evaluate(async (cacheName) => {
+      const cache = await caches.open(cacheName);
+      for (const request of await cache.keys()) await cache.delete(request);
+    }, TICKETS_CACHE);
+
+    await page.getByRole('button', { name: /save tickets to this phone/i }).click();
+
+    /* The count comes from the worker, not from the fact that a postMessage
+       was sent — a tick over an empty cache is the failure this asserts
+       against. */
+    await expect(page.getByText(/will open with no signal/i)).toBeVisible({ timeout: 30_000 });
+    const cachedAgain = await page.evaluate(async ({ path, cacheName }) => {
+      const cache = await caches.open(cacheName);
+      return Boolean(await cache.match(path));
+    }, { path: ticketPath, cacheName: TICKETS_CACHE });
+    expect(cachedAgain, 'pressing save did not put the ticket back in the cache').toBe(true);
   });
 });

@@ -471,9 +471,13 @@ export function MmmSettings() {
          deletion from a failed one. The key was renamed with the text, so no
          translation keeps saying "scheduled". */
       alert(t('settingsPage.deletionComplete', 'Your account has been deleted. Signing you out now.'));
-      // Same reasoning as the sign-out row, and more pressing: this account is
-      // being deleted, so nothing of it should survive in a cache on the device.
-      clearPrivateCaches();
+      /* Same reasoning as the sign-out row, and more pressing: this account is
+         being deleted, so nothing of it should survive in a cache on the
+         device. AWAITED as of 2026-09-10 — it used to be fire-and-forget on a
+         function that could silently reach no worker at all, and the
+         navigation on the next line would then unload the page before it
+         could. It resolves either way, so deletion is never held up. */
+      await clearPrivateCaches();
       window.location.href = '/api/auth/signout';
     } else {
       const d = await res.json().catch(() => ({}));
@@ -762,7 +766,19 @@ export function MmmSettings() {
                   person could be served the previous account's ticket. The
                   navigation does not wait: postMessage reaches the service
                   worker, which outlives this page. */}
-              <Row action={<a className="settings-btn settings-btn-danger" href="/api/auth/signout" onClick={() => clearPrivateCaches()}>{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
+              <Row action={<a
+                className="settings-btn settings-btn-danger"
+                href="/api/auth/signout"
+                onClick={(event) => {
+                  /* The clear has to be away before the page unloads, and it
+                     is no longer synchronous (it may wait for the worker to
+                     claim this page). So take the navigation over — and do it
+                     in `finally`, because signing out of a shared device must
+                     never depend on a cache operation succeeding. */
+                  event.preventDefault();
+                  void clearPrivateCaches().finally(() => { window.location.href = '/api/auth/signout'; });
+                }}
+              >{t('settingsPage.signOut', 'Sign out')}</a>} detail={t('settingsPage.signOutDetail', 'Sign out of iHYPE on this device')} label={t('settingsPage.signOutLabel', 'Sign out')} />
               <Row action={<button className="settings-btn settings-btn-danger" onClick={deleteAccount} type="button">{t('settingsPage.delete', 'Delete')}</button>} detail={t('settingsPage.deleteAccountDetail', 'Permanent. All data removed within 30 days.')} label={t('settingsPage.deleteAccountLabel', 'Delete account')} />
             </div>
           </div>
