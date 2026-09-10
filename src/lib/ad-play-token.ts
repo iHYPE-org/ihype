@@ -1,5 +1,5 @@
 import { createHmac } from 'crypto';
-import { readRuntimeEnv } from '@/lib/runtime-env';
+import { currentSigningSecret, readSigningSecrets } from '@/lib/signing-secrets';
 import { constantTimeEqual } from '@/lib/secret-compare';
 
 /**
@@ -38,7 +38,7 @@ import { constantTimeEqual } from '@/lib/secret-compare';
  *
  * The secret is `AUTH_SECRET`, domain-separated by the message prefix below so
  * a play token can never be replayed as a session, an unsubscribe link or any
- * other thing this secret signs. Read softly through `readRuntimeEnv` rather
+ * other thing this secret signs. Read softly through `signing-secrets.ts` rather
  * than through `env`, which throws: an ad path must degrade, not 500.
  */
 
@@ -66,8 +66,7 @@ export type AdPlayTokenResult =
 type Payload = { a: string; s: string; x: number };
 
 function secret(): string | null {
-  const value = readRuntimeEnv('AUTH_SECRET');
-  return typeof value === 'string' && value.length >= 16 ? value : null;
+  return currentSigningSecret();
 }
 
 function b64url(input: string): string {
@@ -118,8 +117,10 @@ export function verifyAdPlayToken(
   now = Date.now(),
 ): AdPlayTokenResult {
   if (typeof token !== 'string' || token.length === 0) return { ok: false, reason: 'missing' };
-  const key = secret();
-  if (!key) return { ok: false, reason: 'unconfigured' };
+  /* Every key in the rotation window, newest first: a token minted an hour
+     before the secret rotated is still the receipt for a spot that aired. */
+  const keys = readSigningSecrets();
+  if (keys.length === 0) return { ok: false, reason: 'unconfigured' };
 
   const parts = token.split('.');
   if (parts.length !== 3 || parts[0] !== VERSION) return { ok: false, reason: 'malformed' };
@@ -129,7 +130,7 @@ export function verifyAdPlayToken(
   /* Signature first, then read. Parsing attacker-controlled JSON before
      authenticating it is how a verifier ends up with its behaviour steered by
      the thing it is meant to be checking. */
-  if (!constantTimeEqual(signature, sign(encoded, key))) return { ok: false, reason: 'bad_signature' };
+  if (!keys.some((key) => constantTimeEqual(signature, sign(encoded, key)))) return { ok: false, reason: 'bad_signature' };
 
   let payload: Payload;
   try {

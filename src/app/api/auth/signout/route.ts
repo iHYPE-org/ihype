@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { decode } from 'next-auth/jwt';
 import { getAuthSessionCookieName, useSecureAuthCookies } from '@/lib/auth-cookie';
-import { readRuntimeEnv } from '@/lib/runtime-env';
+import { readSigningSecrets } from '@/lib/signing-secrets';
 import { revokeSessionJti } from '@/lib/session-revocation';
 import { log } from '@/lib/logger';
 
@@ -22,8 +22,10 @@ export const dynamic = 'force-dynamic';
  * clearing below covers.
  */
 async function readSessionClaims(request: NextRequest, name: string) {
-  const secret = readRuntimeEnv('AUTH_SECRET');
-  if (!secret) return null;
+  /* Every key a live session could have been signed with, newest first —
+     a sign-out during a rotation window must still find the jti to revoke. */
+  const secret = readSigningSecrets();
+  if (secret.length === 0) return null;
 
   const whole = request.cookies.get(name)?.value;
   const chunked = [0, 1, 2]

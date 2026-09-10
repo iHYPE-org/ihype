@@ -81,3 +81,24 @@ describe('ad play token — the server\'s receipt that it served this spot', () 
     expect(marketplaceAdIdFromClipId(null)).toBeNull();
   });
 });
+
+describe('rotation window', () => {
+  afterEach(() => {
+    delete process.env.AUTH_SECRET_1;
+  });
+
+  it('a token minted under the old secret still bills after AUTH_SECRET_1 is set, and new tokens sign with the new key', () => {
+    const before = createAdPlayToken('ad_rot', 'user_1');
+    expect(before).toBeTruthy();
+    process.env.AUTH_SECRET_1 = 'rotated-secret-that-is-long-enough-000';
+    expect(verifyAdPlayToken(before, 'user_1')).toMatchObject({ ok: true, adId: 'ad_rot' });
+    const after = createAdPlayToken('ad_rot', 'user_1');
+    expect(after).not.toBe(before);
+    expect(verifyAdPlayToken(after, 'user_1')).toMatchObject({ ok: true, adId: 'ad_rot' });
+    // Retire the old key entirely: the token minted under it is now a bad signature, the new one still works.
+    process.env.AUTH_SECRET = process.env.AUTH_SECRET_1;
+    delete process.env.AUTH_SECRET_1;
+    expect(verifyAdPlayToken(before, 'user_1')).toMatchObject({ ok: false, reason: 'bad_signature' });
+    expect(verifyAdPlayToken(after, 'user_1')).toMatchObject({ ok: true });
+  });
+});
