@@ -761,7 +761,7 @@ export function MmmCampaignBuilderPage() {
         <div className="adv-compact-rules">
           <div><b>{t('advertisePage.compactEligibleTitle', 'Who can advertise')}</b>{t('advertisePage.compactEligibleBody', 'Verified artists, venues, promoters and music-related businesses. Non-music campaigns are rejected.')}</div>
           <div><b>{t('advertisePage.compactScreenTitle', 'What gets screened')}</b>{t('advertisePage.compactScreenBody', 'Business eligibility, audio relevance, listener safety, copyright and misleading claims are checked before checkout.')}</div>
-          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBody', 'A sponsorship that passes vetting is paid in full at checkout and runs for the term you chose. Cancel part-way and the days you have not used are refunded to the card you paid with, usually within 5–10 business days, with the amount and the Stripe reference on your dashboard. Your spot is never billed per play, so it cannot run out mid-term. iHYPE absorbs the card-processing fee. Rejected spots never run and are never charged.')}</div>
+          <div><b>{t('advertisePage.compactBillingTitle', 'When you pay')}</b>{t('advertisePage.compactBillingBodyTerm', 'A sponsorship that passes vetting is paid in full at checkout and runs for the term you chose. Cancel part-way and the days you have not used are refunded to the card you paid with, usually within 5–10 business days, with the amount and the Stripe reference on your dashboard. Your spot is never billed per play, so it cannot run out mid-term. iHYPE absorbs the card-processing fee. Rejected spots never run and are never charged.')}</div>
         </div>
       </details>
     </div>
@@ -817,7 +817,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
             </h1>
             <p style={{ fontSize: '1rem', color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
-              {t('advertisePage.heroBodyPrefix', 'Buy reach by the spot —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMid', ', by the day. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
+              {t('advertisePage.heroBodyPrefixTerm', 'Sponsor the station —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMidTerm', ', by the month. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
             </p>
             <div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
               <a href="#build" className="adv-btn-solid">{t('advertisePage.buildCampaign', 'Build a campaign →')}</a>
@@ -854,7 +854,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
             </h2>
             <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.buildSub', 'Coverage scales from your block to the whole platform. Spots are audio ad breaks played on the always-on station — priced per day, billed per spot.')}
+              {t('advertisePage.buildSubTerm', 'Coverage scales from your block to the whole platform. Your spot is an audio ad break on the always-on station, and every live sponsor shares the breaks equally — priced by the month, never by the play.')}
             </p>
           </div>
           <div>

@@ -233,7 +233,7 @@ export default async function AdvertiserDashboard() {
                   {t('advertiseDashboardPage.chargedOn', 'Charged')} {dollars(campaign.budgetCents)} {t('advertiseDashboardPage.on', 'on')} {day(campaign.authorizedAt)} · {campaign.pricingModel === 'METERED' ? t('advertiseDashboardPage.unspentPromise', 'unspent budget is refunded to that card when the run ends or if you cancel') : t('advertiseDashboardPage.unusedPromise', 'cancel part-way and the days you have not used are refunded to that card')}
                 </>
               ) : campaign.status === 'AWAITING_PAYMENT' ? (
-                <>{t('advertiseDashboardPage.notChargedYet', 'Nothing charged yet — paying starts the term, and cancelling part-way refunds the days you have not used.')}</>
+                <>{t('advertiseDashboardPage.notChargedYetTerm', 'Nothing charged yet — paying starts the term, and cancelling part-way refunds the days you have not used.')}</>
               ) : (
                 <>{t('advertiseDashboardPage.notCharged', 'Nothing has been charged for this campaign.')}</>
               )}
