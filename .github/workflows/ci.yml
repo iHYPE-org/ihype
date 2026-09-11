@@ -152,6 +152,25 @@ jobs:
         # Never raise it: any new duplicate selector fails here.
         run: npm run audit:css -- --max=0
 
+      - name: Spacing ratchet
+        # The app runs TWO spacing scales and only one is written down: the
+        # design system publishes a 4px ramp, and `src/` reads not one rung of
+        # it. 90% of the literals land on a 2px step and only 57% on the
+        # published 4px one, so this is a coherent undocumented grid beside the
+        # documented one — not 1,008 typos.
+        #
+        # It was left advisory on purpose, because a gate at a number nobody
+        # has agreed to pay down gets switched off. The number is what changed:
+        # it was 941 when the script was written and read 1,008 on 2026-09-11,
+        # with nothing able to say so. That is the same way audit:mobile's
+        # ratchet slipped six under `continue-on-error` — an advisory number
+        # drifts in the direction nobody is watching.
+        #
+        # So this is a CEILING, not a target: it holds the count where it is
+        # while the inline-style work brings it down. THE NUMBER GOES DOWN,
+        # NEVER UP. Report 3 names the files to take first.
+        run: npm run audit:spacing -- --max=1008
+
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy
         # is a ratchet that must go DOWN. It reached ZERO on 2026-08-22 — the

@@ -78,6 +78,23 @@ const EMAIL = 'layout-baseline@example.com';
    thinnest real route in the set measures 91. */
 const MIN_BOXES = 20;
 
+/* A signed-in route that renders the SIGN-IN CARD is not a measurement of that
+   route, and the box floor cannot tell the two apart: the auth card measures
+   28 boxes, comfortably above 20. Measured on 2026-09-11, when
+   `PLAYWRIGHT_AUTH_COOKIE_SECURE` was set to `1` rather than the `'true'` the
+   fixture compares against — so the cookie was written without its
+   `__Secure-` prefix, the production build refused it, and every route in this
+   list would have captured the same auth card. Two such captures diff to ZERO
+   DIFFERENCES over a few hundred boxes, which is a perfect pass that proves
+   nothing, and is exactly the shape of failure this script exists to catch in
+   the CSS it measures.
+
+   This is the third time that one variable has done this (the nightly was
+   missing it entirely; the walk reported 22 failures that were all one
+   variable) — so the guard is on the OUTPUT rather than on the environment:
+   whatever the cause, a capture wearing the auth card is refused. */
+const SIGNIN_MARKER = 'authcard-page-signin';
+
 /* The widths that decide something in this codebase, not a sweep. 375 is
    MOBILE.md's design width (327px of content after the pane padding); 393 is
    the iPhone 15 class the dock is measured at; 860 is `--mmm-frame-max`, the
@@ -101,6 +118,10 @@ const ROUTES = [
   '/app/me',
   '/app/me/settings',
   '/app/me/accessibility',
+  /* The sponsorship builder: the file with the most inline spacing in the app
+     (`audit:spacing` report 3), so it is the surface this list exists to
+     protect while that debt is converted. */
+  '/app/me/advertising/new',
   '/pages',
   '/tickets',
   '/settings',
@@ -267,6 +288,17 @@ async function capture(browser: Browser, cookie: string): Promise<Capture> {
           if (attempt === 1) { await waitForHealth(); continue; }
           process.stdout.write(`  ${key} → UNMEASURED (only ${boxes.length} boxes; an error page, not a surface)\n`);
           break;
+        }
+        if (boxes.some((box) => box.cls.includes(SIGNIN_MARKER))) {
+          /* Not retried and not recorded: a session that did not take will not
+             take on a second attempt, and carrying on would write a baseline
+             of sign-in cards. Fail the whole run, loudly, naming the cause. */
+          console.error(`\n  ${key} rendered the SIGN-IN CARD, so the session did not take.`);
+          console.error('  Nothing measured here is this route. Check that PLAYWRIGHT_AUTH_COOKIE_SECURE is');
+          console.error("  exactly 'true' (the fixture compares the string, so '1' silently drops the");
+          console.error('  __Secure- cookie prefix a production build requires), that AUTH_SECRET matches the');
+          console.error('  served worker, and that PLAYWRIGHT_BASE_URL names the host the cookie is set on.');
+          process.exit(2);
         }
         result[key] = boxes;
         process.stdout.write(`  ${key} → ${boxes.length} boxes\n`);
