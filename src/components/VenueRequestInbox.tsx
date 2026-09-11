@@ -7,7 +7,7 @@ type VenueRequest = {
   id: string;
   artistName: string;
   note: string | null;
-  requesterType: 'LISTENER' | 'PROMOTER';
+  requesterType: 'LISTENER';
   createdAt: string;
   status: string;
   artistProfile: { slug: string } | null;
@@ -70,7 +70,7 @@ export function VenueRequestInbox() {
             <div>
               <div className="venue-request-artist">{r.artistName}</div>
               <div className="venue-request-meta">
-                {r.requesterType === 'PROMOTER' ? t('venueRequestInbox.suggestedByPromoter', 'Suggested by a promoter') : t('venueRequestInbox.suggestedByFan', 'Suggested by a fan')}
+                {t('venueRequestInbox.suggestedByFan', 'Suggested by a fan')}
                 {' · '}
                 {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>

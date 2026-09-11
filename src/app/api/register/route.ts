@@ -75,7 +75,7 @@ const schema = z.object({
   phone: z.string().trim().max(30).optional(),
   username: z.string().min(3).max(30).optional(),
   password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/).optional(),
-  // Every account starts as a fan. An artist, venue or promoter page is ADDED
+  // Every account starts as a fan. An artist or venue page is ADDED
   // afterwards from /pages (POST /api/profiles), which is where the role
   // actually gets decided now — so signup has no role to accept.
   //

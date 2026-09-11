@@ -90,10 +90,28 @@ const RETIRED = [
     instead: 'There is no go-live, no live chat and no listener count. Do not advertise one.',
   },
   {
-    pattern: /\bradio shows?\b|\bDJ'?s? (?:live|recorded|crate) (?:or recorded )?show/i,
+    /* Tightened 2026-09-11 (owner: "remove all references to radio shows —
+       this was the old feature that we've deleted"). The four label
+       exemptions this entry used to tolerate are gone with the labels:
+       `Show.isRadioShow`, `RadioShowTrack` and `NotificationPreference
+       .radioLive` are out of the schema, so there is nothing left to
+       exempt and `radio show` in member-facing copy is now always wrong. */
+    pattern: /\bradio shows?\b|\bradio episodes?\b|\bDJ'?s? (?:live|recorded|crate) (?:or recorded )?show/i,
     what: 'member-created radio shows',
-    retired: 'RadioShowCreator retired; isRadioShow is read in 8 places and written by nothing',
+    retired: '2026-09-11 — the columns are dropped, not merely unwritten',
     instead: 'The always-on station. Say "the station", never "radio shows" or "hosting".',
+  },
+  {
+    /* The 10% promoter POOL is the charter and must never be scrubbed — this
+       entry is about promoter as an ACCOUNT TYPE. `ProfileType` is
+       ARTIST | VENUE | LISTENER, so a "promoter profile", a promoter signup
+       or a promoter chip in a list of member roles all name something that
+       cannot exist. Anything matching here is a role claim; the pool, the
+       payout columns and `--role-promoter` on a split slice do not match. */
+    pattern: /promoter (?:account|role|signup|sign-up|profile type)|\bpromoter profiles?\b|\b(?:be|become) an? promoter\b|promoters? and DJs|DJs and promoters/i,
+    what: 'promoter as an account type',
+    retired: 'never a ProfileType; restated by the owner 2026-09-11',
+    instead: 'Anyone promotes with a HYPE Link. The 10% promoter POOL is charter and stays — only the ROLE is the error.',
   },
   {
     pattern: /\bspots? per day\b|\beffective CPM\b|\bcost per 1,?000\b/i,

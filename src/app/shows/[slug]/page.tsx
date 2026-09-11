@@ -45,7 +45,6 @@ const getShowMeta = cache((slug: string) =>
       title: true,
       description: true,
       status: true,
-      isRadioShow: true,
       startsAt: true,
       posterImage: true,
       hypeCount: true,
@@ -71,8 +70,7 @@ export async function generateMetadata(
   const headliner = show.headlinerProfile?.name ?? null;
 
   const descParts = [
-    // retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature.
-    show.isRadioShow ? 'Radio show' : (dateStr ?? null),
+    dateStr ?? null,
     venueName ?? null,
     venueCity ?? null,
     headliner ? `Featuring ${headliner}` : null,
@@ -134,10 +132,6 @@ export default async function ShowDetailPage({
         venueProfile: true,
         headlinerProfile: true,
         promoterProfile: true,
-        radioTracks: {
-          orderBy: { position: 'asc' },
-          select: { id: true, position: true, title: true, artistName: true, externalUrl: true, durationSecs: true, blockLabel: true }
-        }
       }
     })
   );
@@ -221,7 +215,6 @@ export default async function ShowDetailPage({
     startsAt: show.startsAt,
     endsAt: show.endsAt,
     posterImage: show.posterImage,
-    isRadioShow: show.isRadioShow,
     isTicketed: show.isTicketed,
     ticketPriceCents: show.ticketPriceCents,
     ticketCapacity: show.ticketCapacity,
@@ -834,61 +827,6 @@ export default async function ShowDetailPage({
                 <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/me/dashboard">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
               </div>
             )}
-
-
-            {show.isRadioShow && show.radioTracks.length > 0 && (() => {
-              const totalSecs = show.radioTracks.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);
-              const totalDuration = totalSecs > 0
-                ? `${Math.floor(totalSecs / 3600) > 0 ? `${Math.floor(totalSecs / 3600)}h ` : ''}${Math.floor((totalSecs % 3600) / 60)}m`
-                : null;
-              const blocks: { label: string | null; tracks: typeof show.radioTracks }[] = [];
-              for (const track of show.radioTracks) {
-                const last = blocks[blocks.length - 1];
-                if (last && last.label === (track.blockLabel ?? null)) last.tracks.push(track);
-                else blocks.push({ label: track.blockLabel ?? null, tracks: [track] });
-              }
-              return (
-                <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h2 style={{ margin: 0 }}>{t('showsSlugPage.tracklist', 'Tracklist')}</h2>
-                    {totalDuration && <span className="meta">{show.radioTracks.length} {t('showsSlugPage.tracksCount', 'tracks')} · {totalDuration}</span>}
-                  </div>
-                  <div style={{ display: 'grid', gap: '1rem' }}>
-                    {blocks.map((block, bi) => (
-                      <div key={bi}>
-                        {block.label && (
-                          <div style={{ fontSize: '0.9375rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--muted)', marginBottom: '0.4rem', paddingLeft: '0.75rem' }}>
-                            {block.label}
-                          </div>
-                        )}
-                        <ol style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '0.35rem' }}>
-                          {block.tracks.map((track) => (
-                            <li key={track.id} style={{ display: 'grid', gridTemplateColumns: '2rem 1fr auto', gap: '0.75rem', alignItems: 'center', padding: '0.6rem 0.75rem', borderRadius: '10px', background: 'var(--hair-30)' }}>
-                              <span className="meta" style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{String(track.position + 1).padStart(2, '0')}</span>
-                              <div>
-                                <strong style={{ display: 'block' }}>{track.title}</strong>
-                                {track.artistName && <span className="meta">{track.artistName}</span>}
-                              </div>
-                              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                                {track.durationSecs && (
-                                  <span className="meta" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                                    {Math.floor(track.durationSecs / 60)}:{String(track.durationSecs % 60).padStart(2, '0')}
-                                  </span>
-                                )}
-                                {track.externalUrl && (
-                                  <a className="button small secondary" href={track.externalUrl} rel="noreferrer" style={{ fontSize: '0.9375rem' }} target="_blank">{t('showsSlugPage.playTrack', 'Play ↗')}</a>
-                                )}
-                              </div>
-                            </li>
-                          ))}
-                        </ol>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })()}
-
             {setlistTracks.length ? (
               <div className="panel" style={{ padding: '1rem 1.25rem', marginTop: 24 }}>
                 <h2 style={{ marginTop: 0 }}>{t('showsSlugPage.setlist', 'Setlist')}</h2>

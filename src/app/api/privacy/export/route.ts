@@ -106,7 +106,6 @@ export async function GET() {
       },
       shows: {
         include: {
-          radioTracks: true,
           advertisingConfig: true,
           _count: {
             select: {

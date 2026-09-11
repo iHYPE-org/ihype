@@ -32,15 +32,10 @@ describe('bucketHypePositionIndex', () => {
 });
 
 describe('computeShowDurationSecs', () => {
-  it('sums radioTracks durations first', () => {
-    const secs = computeShowDurationSecs({
-      radioTracks: [{ durationSecs: 180 }, { durationSecs: 240 }],
-      productionPlan: null,
-    });
-    expect(secs).toBe(420);
-  });
-
-  it('falls back to productionPlan duration when there are no radio tracks', () => {
+  /* The `radioTracks` arm of this formula went with the radio-show feature
+     (2026-09-11) — it summed `RadioShowTrack` rows and won whenever the sum
+     was non-zero. The production plan is the only stored duration left. */
+  it('uses the production plan duration', () => {
     const plan = {
       mediaItems: [{
         mediaId: '0xabc123',
@@ -55,20 +50,14 @@ describe('computeShowDurationSecs', () => {
       sequence: [{ id: 's1', kind: 'MEDIA' as const, refId: '0xabc123', label: 'Track One' }],
       advertising: { enabled: false, scope: 'local' as const, frequency: 3, clips: [] },
     };
-    const secs = computeShowDurationSecs({ radioTracks: [], productionPlan: plan });
-    expect(secs).toBe(200);
+    expect(computeShowDurationSecs({ productionPlan: plan })).toBe(200);
   });
 
   it('falls back to the 3600s default when nothing else is known', () => {
-    const secs = computeShowDurationSecs({ radioTracks: [], productionPlan: null });
-    expect(secs).toBe(3600);
+    expect(computeShowDurationSecs({ productionPlan: null })).toBe(3600);
   });
 
-  it('ignores tracks with no known duration', () => {
-    const secs = computeShowDurationSecs({
-      radioTracks: [{ durationSecs: null }, { durationSecs: null }],
-      productionPlan: null,
-    });
-    expect(secs).toBe(3600);
+  it('falls back to the default rather than trusting an unparseable plan', () => {
+    expect(computeShowDurationSecs({ productionPlan: { nonsense: true } })).toBe(3600);
   });
 });

@@ -11,8 +11,6 @@ export type BetaMetrics = {
   activationRate: number;
   weeklyActiveUsers: number;
   weeklyActiveRate: number;
-  radioDjs30d: number;
-  recurringDjs30d: number;
   inviteChannels: BetaInviteChannel[];
 };
 
@@ -60,25 +58,17 @@ export async function getBetaMetrics(): Promise<BetaMetrics> {
   const demoIds = new Set(demoUsers.map((u) => u.id));
 
   const excludeDemoIds = [...demoIds];
-  const [totalUsers, signups7d, activatedUsers, weeklyActiveUsers, radioShowGroups, registrationAudits] = await Promise.all([
+  const [totalUsers, signups7d, activatedUsers, weeklyActiveUsers, registrationAudits] = await Promise.all([
     db.user.count({ where: { id: { notIn: excludeDemoIds } } }).catch(() => 0),
     db.user.count({ where: { createdAt: { gte: week }, id: { notIn: excludeDemoIds } } }).catch(() => 0),
     countDistinctActiveUsers(null, excludeDemoIds),
     countDistinctActiveUsers(week, excludeDemoIds),
-    db.show.groupBy({
-      by: ['creatorId'],
-      where: { isRadioShow: true, createdAt: { gte: month } },
-      _count: { id: true },
-    }).catch(() => [] as { creatorId: string; _count: { id: number } }[]),
     db.auditLog.findMany({
       where: { action: 'account_registered', createdAt: { gte: month } },
       select: { metadata: true, actorUserId: true },
       take: 2000,
     }).catch(() => []),
   ]);
-
-  const djGroups = radioShowGroups.filter((g) => !demoIds.has(g.creatorId));
-  const recurringDjs30d = djGroups.filter((g) => g._count.id >= 2).length;
 
   const channelMap = new Map<string, BetaInviteChannel>();
   for (const row of registrationAudits) {
@@ -101,8 +91,6 @@ export async function getBetaMetrics(): Promise<BetaMetrics> {
     activationRate: totalUsers > 0 ? activatedUsers / totalUsers : 0,
     weeklyActiveUsers,
     weeklyActiveRate: totalUsers > 0 ? weeklyActiveUsers / totalUsers : 0,
-    radioDjs30d: djGroups.length,
-    recurringDjs30d,
     inviteChannels,
   };
 }

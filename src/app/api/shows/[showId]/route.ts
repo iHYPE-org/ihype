@@ -33,7 +33,6 @@ export async function GET(
       status: true,
       startsAt: true,
       endsAt: true,
-      isRadioShow: true,
       isTicketed: true,
       ticketPriceCents: true,
       ticketCapacity: true,

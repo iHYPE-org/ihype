@@ -18,13 +18,16 @@ export function bucketHypePositionIndex(
   return Math.floor(pct * bucketCount);
 }
 
-/** Same trackDur > planDur > 3600-fallback formula the retired RadioHome used to render show length. */
+/**
+ * Show length: the production plan's own total, else a one-hour fallback.
+ *
+ * A `RadioShowTrack` sum used to come first and won whenever it was non-zero.
+ * That model went with the radio-show feature (2026-09-11); the plan is the
+ * only stored duration a show can still carry.
+ */
 export function computeShowDurationSecs(show: {
-  radioTracks: { durationSecs: number | null }[];
   productionPlan: unknown;
 }): number {
-  const trackDur = show.radioTracks.reduce((sum, t) => sum + (t.durationSecs ?? 0), 0);
-  if (trackDur > 0) return trackDur;
   const plan = parseShowProductionPlan(show.productionPlan);
   const planDur = plan ? sumProductionPlanDurationSecs(plan) : 0;
   if (planDur > 0) return planDur;

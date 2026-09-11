@@ -70,7 +70,7 @@ export async function getHealthSnapshot() {
         }),
         db.profile.count({ where: { type: 'ARTIST', discoverable: true } }),
         db.profile.count({ where: { type: 'VENUE', discoverable: true } }),
-        db.show.count({ where: { isRadioShow: false, status: 'SCHEDULED', startsAt: { gte: now } } }),
+        db.show.count({ where: { status: 'SCHEDULED', startsAt: { gte: now } } }),
       ]);
 
     const [

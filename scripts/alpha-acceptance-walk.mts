@@ -1265,7 +1265,7 @@ async function main() {
   // ── 22. Listen to an ad ──────────────────────────────────────────────────
   await item('22. Listen to an ad (clip served, impression spends budget)', async () => {
     /* NOT /api/radio/ad-clips — that route no longer exists (it fed the retired
-       RadioShowCreator; CLAUDE.md still lists it, which is a stale row). The
+       the retired show creator; CLAUDE.md still lists it, a stale row). The
        live path is getStationState() in src/lib/radioStation.ts, which calls
        resolveWeightedAdBreakClips() + interleaveStationAds() and serves the
        result through /api/radio/station. */

@@ -321,23 +321,28 @@ function Slide02Problem() {
 
 function Slide03Loop() {
   const { t } = useI18n();
-  const roles = [
+  /* Steps in the loop, not roles. The 10% pool is the charter's and is
+     really called the promoter pool, but the person earning from it is
+     whichever fan, artist or venue shared the HYPE Link — naming them a
+     "Promoter" here made a sequence of actions read as a list of account
+     types, which is the one thing the charter beside it denies. */
+  const steps = [
     { key: 'fanHypes', label: t('walkthroughDeck.slide03RoleFanHypes', 'Fan hypes'), color: 'var(--role-fan)' },
     { key: 'venueSeesDemand', label: t('walkthroughDeck.slide03RoleVenueSeesDemand', 'Venue sees demand'), color: 'var(--role-venue)' },
     { key: 'artistAccepts', label: t('walkthroughDeck.slide03RoleArtistAccepts', 'Artist accepts'), color: 'var(--accent-text)' },
     { key: 'fanBuys', label: t('walkthroughDeck.slide03RoleFanBuys', 'Fan buys'), color: 'var(--ink)' },
-    { key: 'promoterEarns', label: t('walkthroughDeck.slide03RolePromoterEarns', 'Promoter earns'), color: 'var(--role-promoter)' },
+    { key: 'sharerEarns', label: t('walkthroughDeck.slide03StepSharerEarns', 'Whoever shared earns'), color: 'var(--role-promoter)' },
     { key: 'everyonePaid', label: t('walkthroughDeck.slide03RoleEveryonePaid', 'Everyone paid'), color: 'var(--role-venue)' },
   ];
   return (
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: '80px 88px', flexDirection: 'column', justifyContent: 'center' }}>
       <Kick>{t('walkthroughDeck.slide03Kick', 'The iHYPE loop')}</Kick>
-      <H size={54} style={{ marginTop: 24, marginBottom: 44 }}>{t('walkthroughDeck.slide03Title', 'Every role feeds the next.')}</H>
+      <H size={54} style={{ marginTop: 24, marginBottom: 44 }}>{t('walkthroughDeck.slide03TitleStep', 'Every step feeds the next.')}</H>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
-        {roles.map((r, i) => (
+        {steps.map((r, i) => (
           <React.Fragment key={r.key}>
             <span style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '1.375rem', color: r.color }}>{r.label}</span>
-            {i < roles.length - 1 && <span style={{ color: 'var(--ink-3)', fontSize: '1.5rem' }}>→</span>}
+            {i < steps.length - 1 && <span style={{ color: 'var(--ink-3)', fontSize: '1.5rem' }}>→</span>}
           </React.Fragment>
         ))}
       </div>

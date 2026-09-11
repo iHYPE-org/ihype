@@ -72,7 +72,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const CELLS = [
     { label: t('payoutIdPage.artist', 'Artist'), pct: artistPct, cents: artistCents, color: 'var(--accent-text)', name: show.headlinerProfile?.name, href: show.headlinerProfile ? `/app/artists/${show.headlinerProfile.slug}` : null },
     { label: t('payoutIdPage.venue', 'Venue'), pct: venuePct, cents: venueCents, color: 'var(--role-venue)', name: show.venueProfile?.name, href: show.venueProfile ? `/app/venues/${show.venueProfile.slug}` : null },
-    { label: t('payoutIdPage.promoters', 'Promoters'), pct: promoterPct, cents: promoterCents, color: 'var(--role-fan)', name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPool', 'Referrers (shared pool)'), href: show.promoterProfile ? `/app/artists/${show.promoterProfile.slug}` : null },
+    { label: t('payoutIdPage.promoters', 'Promoters'), pct: promoterPct, cents: promoterCents, color: 'var(--role-promoter)', name: show.promoterProfile?.name ?? t('payoutIdPage.referrersSharedPool', 'Referrers (shared pool)'), href: show.promoterProfile ? `/app/artists/${show.promoterProfile.slug}` : null },
   ];
 
   return (
@@ -127,7 +127,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 20 }}>
           <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
           <div style={{ flex: 20, background: 'var(--role-venue)' }} />
-          <div style={{ flex: 10, background: 'var(--role-fan)', borderRadius: '0 999px 999px 0' }} />
+          <div style={{ flex: 10, background: 'var(--role-promoter)', borderRadius: '0 999px 999px 0' }} />
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
           {CELLS.map((c) => (

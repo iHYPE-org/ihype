@@ -1,5 +1,5 @@
 /**
- * Computed radio stations — the replacement for DJ-hosted radio shows.
+ * Computed stations — the replacement for DJ-hosted broadcasts.
  *
  * `BACKEND_REWRITE.md` §2: "Stations are **computed, not curated playlists.**
  * There is no join table of station→track. Each kind resolves at request

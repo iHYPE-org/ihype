@@ -342,7 +342,7 @@ export default function VenueOnboardingWizard({
         .von-split-bar { display: flex; height: 8px; border-radius: var(--radius-pill); overflow: hidden; gap: 2px; margin-bottom: 10px; }
         .von-split-artist { flex: 70; background: var(--accent); }
         .von-split-venue { flex: 20; background: var(--role-venue); }
-        .von-split-promoter { flex: 10; background: var(--role-fan); }
+        .von-split-promoter { flex: 10; background: var(--role-promoter); }
         .von-split-legend { font-family: var(--font-mono); font-size: 0.9375rem; color: var(--ink-a65); }
         .von-split-venue-text { color: var(--role-venue); }
         .von-proof-text { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.8; }

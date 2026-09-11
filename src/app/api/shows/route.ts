@@ -115,16 +115,14 @@ export async function POST(request: NextRequest) {
       body.productionPlan.advertising.clips = await resolveAdBreakClips(body.productionPlan.advertising.scope);
     }
 
-    // Radio show creation is OUT. Both paths that built one — the
-    // production-plan flow behind the Radio Show Creator, and the older flat
-    // radioTracks flow — went with the DJ role, and `isRadioShow` is no
+    // Broadcast creation is OUT. Both paths that built one — the
+    // production-plan authoring flow and the older flat tracklist flow —
+    // went with the DJ role, and the format flag they set is no
     // longer in the schema above, so nothing can set it.
     //
-    // Radio is COMPUTED now, not authored: `stations.ts` builds a rotation
-    // per listener and `radioStation.ts` runs the always-on station, with ad
-    // breaks interleaved every fifteen minutes of music. Production holds
-    // zero `isRadioShow` rows, so nothing is orphaned; the column and its
-    // read paths stay for anything that ever appears.
+    // Listening is COMPUTED now, not authored: `stations.ts` builds a
+    // rotation per listener and `radioStation.ts` runs the always-on
+    // station, with ad breaks interleaved every fifteen minutes of music.
 
     if (!body.startsAt) {
       return NextResponse.json({ error: 'A start date/time is required for live events.' }, { status: 400 });
@@ -161,8 +159,8 @@ export async function POST(request: NextRequest) {
        artist with no way to propose a date at all — the picker searches every
        venue and the publish then 403'd, so the whole creator flow dead-ended
        for the role the product is built around. An artist proposing themselves
-       (they own the headliner profile) is the same act as a promoter proposing
-       an act, under the same three restrictions: draft, unticketed, and the
+       (they own the headliner profile) is the same act as anyone else
+       proposing one, under the same three restrictions: draft, unticketed, and the
        venue owner decides. */
     const isRequestedVenueDraft = Boolean(
       body.venueProfileId &&
@@ -178,29 +176,35 @@ export async function POST(request: NextRequest) {
 
       if (!canManageVenueProfile && !isRequestedVenueDraft) {
         return NextResponse.json(
-          { error: 'Only the venue owner can schedule events for this venue. Promoters can save draft event requests for venue review.' },
+          { error: 'Only the venue owner can schedule events for this venue. Anyone else can save a draft event request for venue review.' },
           { status: 403 }
         );
       }
     }
 
     if (body.headlinerProfileId && (!headlinerProfile || !['ARTIST'].includes(headlinerProfile.type))) {
-      return NextResponse.json({ error: 'Headliner must be an artist or promoter profile' }, { status: 400 });
+      return NextResponse.json({ error: 'Headliner must be an artist profile' }, { status: 400 });
     }
 
+    /* The profile credited with the 10% promoter share. That share is the
+       charter's and is real; a PROMOTER profile TYPE is not and never was —
+       `ProfileType` is ARTIST | VENUE | LISTENER, so this used to refuse a
+       request by naming a type nothing could satisfy. Anyone can promote
+       with a HYPE Link, so any profile may be credited and the only
+       question is whether the caller is allowed to attach it. */
     if (body.promoterProfileId && !promoterProfile) {
-      return NextResponse.json({ error: 'Promoter must be a promoter profile' }, { status: 400 });
+      return NextResponse.json({ error: 'The profile to credit as promoter was not found' }, { status: 400 });
     }
 
     if (body.promoterProfileId && !canManagePromoterProfile && !canManageVenueProfile) {
       return NextResponse.json(
-        { error: 'Only the promoter owner or venue owner can attach this promoter profile to a show' },
+        { error: 'Only that profile\'s owner or the venue owner can credit it as promoter on a show' },
         { status: 403 }
       );
     }
 
     if (body.productionPlan && !body.promoterProfileId) {
-      return NextResponse.json({ error: 'A promoter profile is required when saving a production plan' }, { status: 400 });
+      return NextResponse.json({ error: 'A profile to credit as promoter is required when saving a production plan' }, { status: 400 });
     }
 
     if (body.isTicketed) {

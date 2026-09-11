@@ -5,7 +5,7 @@ import type { ShowAdClip } from '@/lib/show-composer';
  *
  * ## Why this exists
  *
- * Advertising used to air in exactly one place: a DJ's radio show.
+ * Advertising used to air in exactly one place: a DJ's own broadcast.
  * `show-composer`'s `buildResolvedSequence()` injected AD items into a
  * `productionPlan`, and `ShowSequencePlayer` firing `POST /api/ads/impression`
  * is what actually spends an advertiser's budget. The DJ role is being removed

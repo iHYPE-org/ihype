@@ -25,7 +25,7 @@ type PasskeyRegistrationOptions = Parameters<typeof startRegistration>[0]['optio
  *
  * Recruiting kits still link to /register?role=ARTIST, and those links live in
  * external places this codebase does not control. Every account now starts as
- * a fan regardless — an artist, venue or promoter page is added afterwards
+ * a fan regardless — an artist or venue page is added afterwards
  * from /pages — so honouring the parameter would create the exact
  * pick-your-identity-first step this removed. The prop stays in the signature
  * so those callers keep type-checking rather than being silently rewritten.
@@ -419,8 +419,8 @@ export function RegisterScreen({
               <span aria-hidden="true">✓</span> {t('authRegister.gateAccepted', 'HYPE code accepted — finish creating your account below.')}
             </div>
           ) : null}
-          {/* No role picker. Every account starts as a fan; an artist, venue
-              or promoter page is ADDED afterwards from /pages, which is a real
+          {/* No role picker. Every account starts as a fan; an artist or
+              venue page is ADDED afterwards from /pages, which is a real
               working path (POST /api/profiles). Asking at signup made people
               choose an identity before they had seen anything, and made the
               form longer for the one answer that is always the same. */}

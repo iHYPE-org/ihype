@@ -101,7 +101,6 @@ export async function GET(
         title: true,
         status: true,
         startsAt: true,
-        isRadioShow: true,
         isTicketed: true,
         ticketPriceCents: true,
         posterImage: true,

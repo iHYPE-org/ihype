@@ -9,7 +9,11 @@ import { notifyUser } from '@/lib/notify';
 
 const schema = z.object({
   venueProfileId: z.string().cuid(),
-  requesterType: z.enum(['LISTENER', 'PROMOTER']),
+  /* Both fan forms send LISTENER and always have. PROMOTER was the other
+     arm and nothing could produce it — promoter is not a role, anyone can
+     promote with a HYPE Link — so accepting it only let a hand-written
+     request label itself something the inbox then had to render. */
+  requesterType: z.literal('LISTENER'),
   artistProfileId: z.string().cuid().optional(),
   artistName: z.string().trim().max(120).optional(),
   note: z.string().trim().max(500).optional(),

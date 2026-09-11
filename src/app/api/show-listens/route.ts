@@ -34,15 +34,13 @@ export async function POST(request: Request) {
     const show = await db.show.findFirst({
       where: {
         id: payload.showId,
-        isRadioShow: true,
         moderationStatus: 'APPROVED',
         status: { in: ['SCHEDULED', 'LIVE', 'ENDED'] },
       },
       select: { id: true, title: true, slug: true },
     });
     if (!show) {
-      // retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature.
-      return NextResponse.json({ error: 'Published radio show not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Show not found' }, { status: 404 });
     }
 
     await db.showListen.upsert({
@@ -71,9 +69,13 @@ export async function POST(request: Request) {
     const reward = await awardHype({
       userId: session.user.id,
       amount: 3,
-      source: 'RADIO_SHOW_COMPLETED',
-      idempotencyKey: `radio-show-completed:${session.user.id}:${show.id}`,
-      targetType: 'radio_show',
+      /* Renamed from RADIO_SHOW_* with the radio-show feature (2026-09-11).
+         Safe to rename the idempotency key only because the route gated on
+         `isRadioShow: true`, which nothing has ever written — so no ledger
+         row carries the old key and none can be granted twice. */
+      source: 'SHOW_COMPLETED',
+      idempotencyKey: `show-completed:${session.user.id}:${show.id}`,
+      targetType: 'show',
       targetId: show.id,
       dailyLimit: 15,
     });

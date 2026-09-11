@@ -185,8 +185,8 @@ async function seedSecurityFixtures() {
       [FIXTURE.mediaHexId, Buffer.from('ID3SMOKE').toString('base64'), FIXTURE.profileId, now],
     );
     await client.query(
-      `INSERT INTO "Show" ("id", "slug", "title", "status", "startsAt", "creatorId", "isTicketed", "ticketPriceCents", "venuePayoutPercent", "artistPayoutPercent", "ticketsSoldCount", "hypeCount", "tags", "isRadioShow", "promoterPayoutPercent", "productionPlan", "createdAt", "updatedAt")
-       VALUES ($1, $2, 'Protected Workerd Smoke Show', 'SCHEDULED'::"ShowStatus", $3, $4, true, 1000, 50, 45, 0, 0, ARRAY['test']::TEXT[], false, 5, $5::jsonb, $6, $6)`,
+      `INSERT INTO "Show" ("id", "slug", "title", "status", "startsAt", "creatorId", "isTicketed", "ticketPriceCents", "venuePayoutPercent", "artistPayoutPercent", "ticketsSoldCount", "hypeCount", "tags", "promoterPayoutPercent", "productionPlan", "createdAt", "updatedAt")
+       VALUES ($1, $2, 'Protected Workerd Smoke Show', 'SCHEDULED'::"ShowStatus", $3, $4, true, 1000, 50, 45, 0, 0, ARRAY['test']::TEXT[], 5, $5::jsonb, $6, $6)`,
       [FIXTURE.showId, FIXTURE.showSlug, new Date(now.getTime() + 86_400_000), FIXTURE.creatorId, JSON.stringify(productionPlan), now],
     );
     await client.query(

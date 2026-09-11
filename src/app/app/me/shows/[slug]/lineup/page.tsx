@@ -99,7 +99,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
           <div key={s.id} className="lsp-splitbar-seg" style={{ flex: s.splitPercent, background: s.isHeadliner ? 'var(--accent)' : 'var(--accent-2)' }} />
         ))}
         <div className="lsp-splitbar-seg" style={{ flex: venuePercent, background: 'var(--role-venue)' }} />
-        <div className="lsp-splitbar-seg" style={{ flex: promoterPercent, background: 'var(--role-fan)' }} />
+        <div className="lsp-splitbar-seg" style={{ flex: promoterPercent, background: 'var(--role-promoter)' }} />
       </div>
       <div className="lsp-splitbar-legend">
         <span>{slots.map((s) => `${s.profile.name} ${s.splitPercent}%`).join(' · ')}</span>

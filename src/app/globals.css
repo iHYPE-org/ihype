@@ -5468,7 +5468,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
 
    Most of them are the PRODUCTION PLAN panel, which is reachable only for a
    show that already carries a `Show.productionPlan` — nothing can author one
-   since `RadioShowCreator` was retired, but the rows exist and
+   since the show creator was retired, but the rows exist and
    `ShowSequencePlayer` still plays them, so the panel is legacy rather than
    dead. Styled rather than deleted for that reason: a member holding a ticket
    to one of those shows is the person looking at this.

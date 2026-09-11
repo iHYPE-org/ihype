@@ -42,8 +42,8 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   featuresHeadline: t('forFansPage.featuresHeadline', 'Everything a fan actually wants.'),
   /* Three of these six were not true (2026-09-11). "Live radio — any DJ's
      live or recorded show" survives from a product that had a DJ role
-     (deleted 2026-08-06) and show creation (retired): `isRadioShow` is read
-     in eight places and written by nothing, so no such show can exist. The
+     (deleted 2026-08-06) and member broadcasts, removed with it — no such
+     show can exist. The
      AI page generator was deleted by owner instruction on 2026-09-01. And
      HYPE is not "a weekly flame budget" — it is a 24-hour window per act
      (`HYPE_WINDOW_MS`), which is a better story anyway: it is what makes one

@@ -36,7 +36,7 @@ type RawVetting = { cleared?: boolean; requiresManualReview?: boolean; reasoning
    uploads buys nothing. */
 export async function vetFreeUseSample(data: SampleUploadData): Promise<SampleVettingResult> {
   const result = await runAIJson<RawVetting>({
-    system: `You are the automated content-vetting officer for iHYPE.org's free-use radio crate — audio that DJs may rebroadcast in radio shows, so it must be the uploader's own cleared work.
+    system: `You are the automated content-vetting officer for iHYPE.org's free-use crate — audio that other members may play in their own playlists and that the station may air, so it must be the uploader's own cleared work.
 
 Judge ONLY the metadata provided (you cannot hear the audio). Flag as NOT cleared when the metadata suggests:
 - A well-known commercial recording by a famous artist that this uploader is unlikely to own (e.g. the title/filename names a charting song or superstar act other than the uploader)

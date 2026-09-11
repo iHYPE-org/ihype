@@ -35,8 +35,6 @@ export type StationTrack = {
 };
 
 export type StationState = {
-  live: boolean;                 // a real DJ show is broadcasting now
-  liveShow: { slug: string; title: string } | null;
   nowPlaying: StationTrack | null;
   positionSecs: number;          // how far into nowPlaying the station is
   upNext: StationTrack[];        // the next few tracks in rotation
@@ -48,47 +46,44 @@ const NOMINAL_DURATION = 210;
 const ROTATION_SIZE = 40;
 
 /**
- * The always-on auto-DJ station. The free-use crate plays on a continuous,
+ * The always-on station. The free-use crate plays on a continuous,
  * deterministic loop seeded by server time, so every listener hears the same
- * track at the same offset — the station is never silent, even with no live
- * DJ. If a DJ show is actually LIVE, that takes precedence (live === true).
+ * track at the same offset — the station is never silent.
+ *
+ * It used to yield to a LIVE radio show, and that branch is gone with the
+ * feature (2026-09-11). `live`/`liveShow` went with it rather than being
+ * pinned to false: a field that can only ever report one value is the same
+ * defect as a control nothing reads.
  */
 export async function getStationState(now: Date = new Date()): Promise<StationState> {
-  const [liveShow, rows] = await Promise.all([
-    db.show.findFirst({
-      where: { isRadioShow: true, status: 'LIVE' },
-      orderBy: { startsAt: 'desc' },
-      select: { slug: true, title: true },
-    }).catch(() => null),
-    db.artistMediaAsset.findMany({
-      where: {
-        // `freeUseEnabled` alone is not an eligibility rule, it is a consent
-        // flag. Uploads are vetted (`runTrackScanPipeline`) and a flagged one
-        // never reaches the crate — `/api/artist-media` sets
-        // `effectiveFreeUse = freeUseEnabled && vetting.cleared` — but consent
-        // and clearance say nothing about whether the artist has RELEASED the
-        // track.
-        //
-        // Without `releasedMediaWhere()` this station aired unpublished drafts
-        // and, worse, tracks scheduled for a future `publishAt` — putting a
-        // record on the radio before its release date. The computed stations
-        // (`src/lib/stations.ts`) have always applied this rule; the always-on
-        // station predates them and never did.
-        ...releasedMediaWhere(now),
-        freeUseEnabled: true,
-        profile: { ...getDemoOwnerExclusion(), type: 'ARTIST' },
-      },
-      orderBy: { profile: { hypeCount: 'desc' } },
-      take: ROTATION_SIZE,
-      select: {
-        hexId: true, title: true, durationSecs: true,
-        profile: { select: { name: true, slug: true, avatarImage: true } },
-      },
-    }).catch(() => [] as Array<{
-      hexId: string; title: string; durationSecs: number | null;
-      profile: { name: string; slug: string; avatarImage: string | null };
-    }>),
-  ]);
+  const rows = await db.artistMediaAsset.findMany({
+    where: {
+      // `freeUseEnabled` alone is not an eligibility rule, it is a consent
+      // flag. Uploads are vetted (`runTrackScanPipeline`) and a flagged one
+      // never reaches the crate — `/api/artist-media` sets
+      // `effectiveFreeUse = freeUseEnabled && vetting.cleared` — but consent
+      // and clearance say nothing about whether the artist has RELEASED the
+      // track.
+      //
+      // Without `releasedMediaWhere()` this station aired unpublished drafts
+      // and, worse, tracks scheduled for a future `publishAt` — putting a
+      // record on the radio before its release date. The computed stations
+      // (`src/lib/stations.ts`) have always applied this rule; the always-on
+      // station predates them and never did.
+      ...releasedMediaWhere(now),
+      freeUseEnabled: true,
+      profile: { ...getDemoOwnerExclusion(), type: 'ARTIST' },
+    },
+    orderBy: { profile: { hypeCount: 'desc' } },
+    take: ROTATION_SIZE,
+    select: {
+      hexId: true, title: true, durationSecs: true,
+      profile: { select: { name: true, slug: true, avatarImage: true } },
+    },
+  }).catch(() => [] as Array<{
+    hexId: string; title: string; durationSecs: number | null;
+    profile: { name: string; slug: string; avatarImage: string | null };
+  }>);
 
   const rotation: StationTrack[] = rows.map((t: {
     hexId: string; title: string; durationSecs: number | null;
@@ -105,8 +100,6 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
 
   if (rotation.length === 0) {
     return {
-      live: !!liveShow,
-      liveShow: liveShow ?? null,
       nowPlaying: null,
       positionSecs: 0,
       upNext: [],
@@ -147,8 +140,6 @@ export async function getStationState(now: Date = new Date()): Promise<StationSt
   const upNext = [1, 2, 3].map((n) => sequence[(index + n) % sequence.length]);
 
   return {
-    live: !!liveShow,
-    liveShow: liveShow ?? null,
     nowPlaying: sequence[index],
     positionSecs: offset,
     upNext,

@@ -142,15 +142,10 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <p>{t('legalPage.terms.ticketsBody', 'All tickets are sold at face value. iHYPE charges $0 in platform fees — this is locked in our charter and cannot be changed. Ticket purchases are final. Refunds are issued only if an event is cancelled by the organizer.')}</p>
         <h2>{t('legalPage.terms.splitTitle', 'The 70/20/10 split')}</h2>
         <p>{t('legalPage.terms.splitBody', 'Every ticket sold through iHYPE splits as follows: 70% to the artist, 20% to the venue, 10% to the promoter pool (distributed proportionally among referrers). iHYPE receives 0%. This is a founding constraint, not a policy — it cannot be altered by management, the board, or investors.')}</p>
-        <h2>{t('legalPage.terms.referralsTitle', 'Promoter referrals')}</h2>
-        <p>{t('legalPage.terms.referralsBody', 'Fans and DJs may share a HYPE Link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
+        <h2>{t('legalPage.terms.hypeLinkReferralsTitle', 'HYPE Link referrals')}</h2>
+        <p>{t('legalPage.terms.hypeLinkReferralsBody', 'Any member may share a HYPE Link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
         <h2>{t('legalPage.terms.contentTitle', 'Content')}</h2>
-        {/* retired-claim-exempt: Terms of Service. Naming a content type
-            the product no longer offers makes the licence grant over-broad,
-            not false, and the wording of the legal documents is a standing
-            owner decision — see MmmTerms/MmmCharter, skipped for the same
-            reason. */}
-        <p>{t('legalPage.terms.contentBody', 'You are responsible for content you post (artist pages, radio shows, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
+        <p>{t('legalPage.terms.contentOwnershipBody', 'You are responsible for content you post (artist pages, tracks, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
         <h2>{t('legalPage.terms.refundsTitle', 'Refunds')}</h2>
         <p>{t('legalPage.terms.refundsBody', 'Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.')}</p>
         <h2>{t('legalPage.terms.liabilityTitle', 'Limitation of liability')}</h2>
@@ -185,6 +180,10 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
           <p>{t('legalPage.charter.splitBody', 'This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around. Anyone can get paid to promote a show through their own referral link — real word-of-mouth income, not payola.')}</p>
         </div>
         <h2>{t('charterPage.promotersHead', 'Promoters and the 10%')}</h2>
+        {/* retired-claim-exempt: the charter DENYING the role, which is the
+            one place the phrase belongs — the scanner cannot tell a claim
+            from its refutation, and this sentence is why there is nothing
+            else to find. */}
         <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among everyone whose HYPE Links contributed to ticket sales for an event. There is no promoter role and no promoter account: promoting is something every account can do.")}</p>
         <p><Link href="/me/promote" className="charter-inline-link">{t('charterPage.promoteDashboardLink', 'See a promoting dashboard →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
