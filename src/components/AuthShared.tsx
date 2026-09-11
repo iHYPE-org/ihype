@@ -46,7 +46,7 @@ export function AuthCardShell({
   return (
     <section className={`authcard-page authcard-page-${mode}`}>
       <div className="authcard-wrap">
-        <Link aria-label="iHYPE home" className="authcard-mark" href="/">
+        <Link aria-label={t('fanFirstLanding.home', 'iHYPE home')} className="authcard-mark" href="/">
           <b>iHYPE</b>
           <small>{t('authShared.tagline', 'Local signal')}</small>
         </Link>
@@ -56,7 +56,7 @@ export function AuthCardShell({
           <h1 className="authcard-title">{title}</h1>
           <p className="authcard-sub">{subtitle}</p>
 
-          <div className="authcard-tabs" role="tablist" aria-label="Sign in or create an account">
+          <div className="authcard-tabs" role="tablist" aria-label={t('authShared.tabsLabel', 'Sign in or create an account')}>
             <Link
               aria-selected={mode === 'signin'}
               className={mode === 'signin' ? 'authcard-tab active' : 'authcard-tab'}

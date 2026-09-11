@@ -90,15 +90,15 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
           <div style={{ height: '100%', width: '50%', background: 'var(--accent)', borderRadius: 999, transition: 'width .4s ease' }} />
         </div>
         <label style={labelStyle} htmlFor="verify-name">{type === 'VENUE' ? t('verifyForm.venueNameLabel', 'Venue name') : t('verifyForm.stageArtistNameLabel', 'Stage / Artist name')}</label>
-        <input id="verify-name" style={fieldStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder="Midnight Echo" />
+        <input id="verify-name" style={fieldStyle} value={name} onChange={(e) => setName(e.target.value)} placeholder={t('verifyForm.namePlaceholder', 'Midnight Echo')} />
 
         <label style={labelStyle} htmlFor="verify-city">{t('verifyForm.cityLabel', 'City')}</label>
-        <input id="verify-city" style={fieldStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder="Los Angeles, CA" />
+        <input id="verify-city" style={fieldStyle} value={city} onChange={(e) => setCity(e.target.value)} placeholder={t('verifyForm.cityPlaceholder', 'Los Angeles, CA')} />
 
         {type !== 'VENUE' && (
           <>
             <label style={labelStyle} htmlFor="verify-genres">{t('verifyForm.genreLabel', 'Genre (3+ tags)')}</label>
-            <input id="verify-genres" list="ihype-genre-suggestions" style={fieldStyle} value={genres} onChange={(e) => setGenres(e.target.value)} placeholder="dream-pop, shoegaze, lo-fi" />
+            <input id="verify-genres" list="ihype-genre-suggestions" style={fieldStyle} value={genres} onChange={(e) => setGenres(e.target.value)} placeholder={t('verifyForm.genrePlaceholder', 'dream-pop, shoegaze, lo-fi')} />
             <datalist id="ihype-genre-suggestions">
               {MUSIC_GENRES.map((g) => <option key={g} value={g} />)}
             </datalist>

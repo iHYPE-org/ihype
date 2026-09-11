@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * `useLayoutEffect` measures before paint, which is what keeps the deck from
@@ -113,6 +114,7 @@ export function MmmSeedDeck({
   playing?: boolean;
   savedCount?: number;
 }) {
+  const { t } = useI18n();
   const [dx, setDx] = useState(0);
   const [dy, setDy] = useState(0);
   const [clip, setClip] = useState(0);
@@ -215,8 +217,8 @@ export function MmmSeedDeck({
   if (!item) {
     return (
       <div className="mmm-deck-empty">
-        <p className="mmm-deck-empty-title">Deck empty</p>
-        <p className="mmm-deck-empty-body">New seeds arrive as artists upload, and as you move.</p>
+        <p className="mmm-deck-empty-title">{t('mmmSeedDeck.empty', 'Deck empty')}</p>
+        <p className="mmm-deck-empty-body">{t('mmmSeedDeck.emptyBody', 'New seeds arrive as artists upload, and as you move.')}</p>
       </div>
     );
   }
@@ -337,8 +339,8 @@ export function MmmSeedDeck({
           </button>
 
           {/* The verdict the drag is about to commit, stated before release. */}
-          <span aria-hidden="true" className="mmm-deck-verdict" data-side="save" style={{ opacity: dx > 0 ? intent : 0 }}>Save</span>
-          <span aria-hidden="true" className="mmm-deck-verdict" data-side="skip" style={{ opacity: dx < 0 ? intent : 0 }}>Skip</span>
+          <span aria-hidden="true" className="mmm-deck-verdict" data-side="save" style={{ opacity: dx > 0 ? intent : 0 }}>{t('mmmSeedDeck.save', 'Save')}</span>
+          <span aria-hidden="true" className="mmm-deck-verdict" data-side="skip" style={{ opacity: dx < 0 ? intent : 0 }}>{t('mmmSeedDeck.skip', 'Skip')}</span>
 
           <div className="mmm-deck-body">
             <button

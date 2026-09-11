@@ -691,6 +691,8 @@ const flownHome = useRef(false);
           re-asserts that state whenever attributions update, so collapsing it
           once does not hold. */}
       {creditOpen && (
+        // i18n-exempt: a basemap attribution naming two organisations, required
+        // by their licence. Translating it would misstate who the data is from.
         <div aria-hidden="true" className="mmm-map-attrib">© OpenStreetMap · CARTO</div>
       )}
       {/* The torn deckled edge is GONE (owner, 2026-08-25: "Drop edge map

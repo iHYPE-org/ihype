@@ -59,6 +59,9 @@ export function ImpersonationBanner() {
     <div className="impersonation-banner" role="status">
       <span className="impersonation-banner-text">
         <strong>Viewing as {who}</strong>
+        {/* i18n-exempt: operator chrome. This banner only ever renders for an
+            administrator impersonating a member, and the admin console ships
+            in English by decision — see the `admin*` namespaces. */}
         <span>Actions you take here are recorded against your operator account.</span>
       </span>
       {error ? <span className="impersonation-banner-error">{error}</span> : null}

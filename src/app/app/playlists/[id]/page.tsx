@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +53,8 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
   // Returned, not thrown — see `MmmMissing`.
   if (!playlist) return <MmmMissing kind="playlist" />;
 
+  const t = await getServerT();
+
   return (
     <div className="mmm-show">
       {/* No back link and no "Playlist" eyebrow (owner, 2026-08-24: "Don't
@@ -68,7 +71,7 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
 
       <section className="mmm-profile-section">
         {playlist.items.length === 0 ? (
-          <p className="mmm-me-note">This playlist is empty.</p>
+          <p className="mmm-me-note">{t('mmmPlaylistPane.empty', 'This playlist is empty.')}</p>
         ) : (
           <ol className="mmm-playlist-items">
             {/* `mediaId`, `title` and `artistName` are all non-nullable on

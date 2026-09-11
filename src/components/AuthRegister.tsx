@@ -424,7 +424,7 @@ export function RegisterScreen({
               working path (POST /api/profiles). Asking at signup made people
               choose an identity before they had seen anything, and made the
               form longer for the one answer that is always the same. */}
-          <div className="authcard-method-grid" role="tablist" aria-label="Signup method">
+          <div className="authcard-method-grid" role="tablist" aria-label={t('authRegister.methodLabel', 'Signup method')}>
             <button
               aria-selected={authMethod === 'email'}
               role="tab"
@@ -517,6 +517,9 @@ export function RegisterScreen({
             <Link href="/community-rules">{t('authRegister.communityRulesLink', 'Community rules')}</Link>.
           </p>
           <label className="bot-field" aria-hidden="true">
+            {/* i18n-exempt: a honeypot. This label is never shown to a person
+                (aria-hidden, off-screen) and exists only for a bot to fill
+                in; translating it changes nothing a human reads. */}
             <span>Company</span>
             <input
               autoComplete="off"

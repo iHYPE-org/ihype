@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { detectRequestLocation } from '@/lib/request-location';
 import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
+import { getServerT } from '@/lib/i18n/server';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
@@ -167,9 +168,11 @@ export default async function MmmShowPage({
      LINEUP block lists the acts this query already holds — the headliner;
      multi-act slots (ShowLineupSlot) render on /shows/[slug]/lineup and are
      one link away, per this pane's own scope rule. */
+  const t = await getServerT();
+
   return (
     <div className="mmm-show">
-      <Link className="mmm-show-back" href="/app/map">← Map</Link>
+      <Link className="mmm-show-back" href="/app/map">← {t('mmmDock.tab.map', 'Map')}</Link>
 
       <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt)}</div>
       <h1 className="mmm-show-title">{show.title}</h1>
@@ -217,7 +220,7 @@ export default async function MmmShowPage({
       {splits && (
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, padding: '13px 0', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)' }}>
-            <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>Split locked at publish</span>
+            <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('mmmShowPane.splitLocked', 'Split locked at publish')}</span>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.14em' }}>
               {splits.artist} / {splits.venue} / {splits.promoter} · iHYPE $0
             </span>
@@ -266,8 +269,8 @@ export default async function MmmShowPage({
           asserts both pages consult this. */}
       {show.isTicketed && venue && show.headlinerProfile && splits && !paymentsReady ? (
         <div className="mmm-empty">
-          <strong style={{ display: 'block', marginBottom: 6 }}>Paid tickets · Coming soon</strong>
-          Ticket sales haven&apos;t opened on iHYPE yet. Face-value pricing with the locked 70/20/10 split starts the moment they do.
+          <strong style={{ display: 'block', marginBottom: 6 }}>{t('mmmShowPane.paidComingSoon', 'Paid tickets · Coming soon')}</strong>
+          {t('mmmShowPane.paidComingSoonBody', 'Ticket sales have not opened on iHYPE yet. Face-value pricing with the locked 70/20/10 split starts the moment they do.')}
         </div>
       ) : null}
 
