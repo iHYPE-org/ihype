@@ -98,3 +98,24 @@
 }
 
 .lp-footer-cta .lp-hero-actions { justify-content: center; }
+
+/* The organisation's own identity, at the top of the transparency report.
+   Public and signed-in render the same component, so this block is the only
+   place its rhythm is set. Rows stack on a phone: a definition list in two
+   columns puts a registered address in about eight characters at 375. */
+.org-facts { margin: 0 0 40px; }
+.org-facts-lede { color: var(--ink-2); max-width: 60ch; margin: 8px 0 20px; }
+.org-facts-list { margin: 0; display: grid; gap: 2px; }
+.org-facts-row {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 2px;
+  padding: 12px 0; border-top: 1px solid var(--ink-a10, rgba(0,0,0,.1));
+}
+.org-facts-row dt {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: .75rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3);
+}
+.org-facts-row dd { margin: 0; color: var(--ink); }
+@media (min-width: 620px) {
+  .org-facts-row { grid-template-columns: 14rem minmax(0, 1fr); gap: 16px; align-items: baseline; }
+}

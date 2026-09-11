@@ -207,6 +207,28 @@ const nextConfig = {
         destination: '/info?tab=terms',
         permanent: false
       },
+      // THE OTHER PUBLIC LEGAL ALIASES, MOVED OFF `redirect()` FOR THE REASON
+      // THE LIGHTHOUSE ROW ALREADY RECORDS: a `redirect()` under a
+      // `loading.tsx` boundary — and `src/app/loading.tsx` is one for every
+      // route in this app — cannot answer a 307. The shell is already
+      // streaming, so Next emits a **200 carrying `<meta http-equiv="refresh">`**
+      // instead. Measured against production on 2026-09-11:
+      //
+      //   /transparency -> 200, meta refresh to /info?tab=transparency
+      //
+      // A browser follows that after a second. A crawler, a link checker, a
+      // store reviewer and a Google for Nonprofits reviewer may not, and what
+      // they see instead is an all-but-empty document at a URL the site
+      // publishes as its transparency report. These are the URLs in signup
+      // consent copy, the cookie banner, sent email and both store listings,
+      // so they answer a real redirect now; a config redirect resolves in the
+      // router before any rendering, which is what makes it immune.
+      { source: '/transparency', destination: '/info?tab=transparency', permanent: false },
+      { source: '/privacy', destination: '/info?tab=privacy', permanent: false },
+      { source: '/terms', destination: '/info?tab=terms', permanent: false },
+      { source: '/audit', destination: '/info?tab=trust', permanent: false },
+      { source: '/charter', destination: '/info?tab=charter', permanent: false },
+      { source: '/about', destination: '/info?tab=charter', permanent: false },
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'www.ihype.org' }],

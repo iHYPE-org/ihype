@@ -6,6 +6,7 @@
 import '@/app/marketing.css';
 import Link from 'next/link';
 import { db } from '@/lib/db';
+import { OrganizationFacts } from './OrganizationFacts';
 import { getServerT } from '@/lib/i18n/server';
 
 export async function TransparencyPanel() {
@@ -57,6 +58,11 @@ export async function TransparencyPanel() {
           {t('transparencyPage.heroSub', "Every dollar of ticket revenue goes directly to artists and venues. Here's the proof.")}
         </p>
       </section>
+
+      {/* WHO RUNS THIS, before any number. A transparency report that opens on
+          figures answers "how much" and never "who", and "who" is the question
+          a funder, a regulator and Google for Nonprofits all ask first. */}
+      <OrganizationFacts />
 
       {/* Stats grid */}
       <section className="lp-stats" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: '20px', marginBottom: '40px' }}>
