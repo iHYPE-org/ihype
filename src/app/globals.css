@@ -2985,6 +2985,79 @@ body:has(#wt-wrap) .site-shell > main {
   border: 1px solid var(--line);
   background: var(--hair-20);
 }
+/* THE MOMENT AFTER A TICKET IS BOUGHT, which had no styles at all until
+   2026-09-11. `TicketSaleCard` writes `ticketing-context-grid`,
+   `ticket-issued-grid`, `-card`, `-qr` and `-copy`, and not one of them was
+   answered by any stylesheet — so "You're going!" drew a full-bleed QR with
+   unstyled text stacked under it, on the highest-emotion surface the product
+   has. `audit:unstyled` is what found it: a class the markup writes and no
+   stylesheet answers is invisible to the type system, to the tests and to
+   every other check here.
+   The QR is left without a background on purpose — uqr renders a white
+   `<rect>` inside the SVG, so the code carries its own quiet zone and stays
+   scannable on all six themes. Giving it one here would be a second ground
+   under the first. */
+.ticketing-context-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.ticket-issued-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.ticket-issued-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.9rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--hair-30);
+}
+.ticket-issued-qr {
+  display: block;
+  width: 104px;
+  height: 104px;
+  border-radius: 4px;
+}
+.ticket-issued-copy {
+  display: grid;
+  gap: 0.3rem;
+  /* A serialized id is long and unbreakable; without this the grid track
+     refuses to shrink and the card spills the viewport at 375. */
+  min-width: 0;
+}
+.ticket-issued-copy strong { font-size: 0.9375rem; }
+/* The id is content — somebody reads it aloud at a door — so it holds the
+   body floor rather than taking the eyebrow exemption. */
+.ticket-issued-copy span {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+/* The status behind it IS metadata, so it takes the tracked-mono eyebrow the
+   shell's own ticket page uses. */
+.ticket-issued-copy span + span {
+  /* The family is restated rather than inherited from the rule above: the
+     eyebrow exemption is monospace AND tracking >= .14em, and `lint-source`
+     reads the RULE, not the cascade — it refused this at 11px until the two
+     halves sat together, correctly, because a reader of this block alone
+     could not otherwise tell it qualifies. */
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ticket-issued-copy .button { justify-self: start; margin-top: 0.35rem; }
+@media (min-width: 620px) {
+  .ticketing-context-grid { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+}
 .signal-card {
   display: grid;
   gap: 0.35rem;

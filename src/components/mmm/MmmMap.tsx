@@ -1184,7 +1184,14 @@ function MapPin({ onOpen, pin }: { onOpen: () => void; pin: Placed }) {
     return (
       <button
         aria-label={`${venue.name}${venue.city ? `, ${venue.city}` : ''}. Open venue page.`}
-        className="mmm-pin mmm-pin-venue"
+        /* `mmm-pin-venue` was here and no stylesheet ever answered it. A
+           venue pin is already told apart by its CHILDREN — `.mmm-pin-tag`
+           draws the paper name box and `.mmm-pin-x` the hand-cut ✕, against
+           an event's `.mmm-pin-pill` price — so the modifier was a hook
+           nothing used rather than a missing treatment. Removed rather than
+           styled: inventing a parent-level look would have changed a pin
+           that reads correctly today. */
+        className="mmm-pin"
         data-offset={pin.offset}
         onClick={onOpen}
         style={anchored}
