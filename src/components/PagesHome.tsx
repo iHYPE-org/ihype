@@ -290,7 +290,9 @@ export function PagesHome({
   return (
     <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
       <PullToRefresh onRefresh={refreshAll}>
-      <div className="section-content">
+      {/* The `section-content` hook this carried was answered by nothing —
+          the page's own max-width and padding are on the div above. */}
+      <div>
       <div ref={contentTopRef} />
       <h1 className="sr-only">{t('pagesHome.pagesHeading', 'Dashboard')}</h1>
 

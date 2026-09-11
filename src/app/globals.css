@@ -2034,6 +2034,21 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   resize: vertical;
   transition: border-color .15s, box-shadow .15s;
 }
+/* A label that WRAPS its control, which is how /dmca, a show's comments and a
+   show recap all write one. With no rule it was `display: inline`, so the
+   100%-wide `.input` inside it forced a line break with no gap and the field's
+   name rendered at plain body weight — indistinguishable from the paragraph
+   above it. A field label is a control's NAME rather than metadata, so it
+   holds the 15px body floor and takes weight instead of the tracked-mono
+   eyebrow, exactly as the type-ramp work (row 287) concluded. */
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
 .input:focus {
   outline: none;
   border-color: rgba(var(--accent-rgb),.4);
@@ -5293,6 +5308,28 @@ body:has(.fan-entry) #main-content { width: 100%; }
    One compact, persistent landmark across Listen, Events, Pages and every
    creator surface. The logo is the menu; search owns the remaining space and
    folds away as soon as the user leaves the top of the page. */
+/* The only settings control in the adaptive header, and no stylesheet
+   answered it: a bare anchor around a 19px gear, measured 19x23 in Chromium
+   against this file, beside the 54x54 logo two elements away. MOBILE.md's
+   44x44 floor is unconditional and names desktop explicitly, and rows 338 and
+   375 made every other control in the product obey it. The glyph stays 19px;
+   the target grows around it, which is the same trade those two rows made. */
+.app-settings-link {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ink-2);
+  transition: color .15s ease, background-color .15s ease;
+}
+.app-settings-link:hover,
+.app-settings-link:focus-visible {
+  color: var(--ink);
+  background: rgba(var(--surface-tint-rgb), .07);
+}
+
 .app-menu-trigger-wrap {
   position: relative;
   z-index: 2;

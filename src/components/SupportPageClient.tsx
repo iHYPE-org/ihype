@@ -28,7 +28,9 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
 
   return (
     <>
-      <p className="eyebrow" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', margin: '0 0 14px' }}>
+      {/* Unclassed: the inline style below IS the eyebrow treatment, and the
+          `eyebrow` class beside it was answered by no stylesheet. */}
+      <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', margin: '0 0 14px' }}>
         {t('supportPageClient.commonTopics', 'Common Topics')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14, marginBottom: 40 }}>

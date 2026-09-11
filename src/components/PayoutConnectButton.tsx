@@ -56,7 +56,9 @@ export function PayoutConnectButton({ profileId, state }: { profileId: string; s
   }
 
   return (
-    <div className="pcb">
+    /* No class on the wrapper: `.pcb-btn` and `.pcb-error` below carry the
+       whole control, and the `pcb` hook they sat inside answered to nothing. */
+    <div>
       <button className="pcb-btn" disabled={busy} onClick={connect} type="button">
         {busy ? t('poConnecting', 'Connecting…') : label}
       </button>

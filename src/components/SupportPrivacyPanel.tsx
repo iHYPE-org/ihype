@@ -114,7 +114,6 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
               <div>
                 <button
                   onClick={() => { close(); onReportProblem(); }}
-                  className="priv-opt"
                   style={privOptStyle}
                 >
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⚑</span>
@@ -127,7 +126,6 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                 <button
                   onClick={() => submitKind('deletion')}
                   disabled={submitting}
-                  className="priv-opt"
                   style={{ ...privOptStyle, borderColor: 'rgba(var(--accent-rgb),.25)' }}
                 >
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⌫</span>
@@ -137,7 +135,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                <button onClick={() => submitKind('detach')} disabled={submitting} className="priv-opt" style={privOptStyle}>
+                <button onClick={() => submitKind('detach')} disabled={submitting} style={privOptStyle}>
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⊘</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.detachIdentity', 'Detach identity early')}</span>
@@ -145,7 +143,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                <button onClick={downloadExport} disabled={exporting} className="priv-opt" style={privOptStyle}>
+                <button onClick={downloadExport} disabled={exporting} style={privOptStyle}>
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
                   </span>
@@ -155,7 +153,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                <button onClick={() => submitKind('hype-wipe')} disabled={submitting} className="priv-opt" style={privOptStyle}>
+                <button onClick={() => submitKind('hype-wipe')} disabled={submitting} style={privOptStyle}>
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">⌦</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.wipeHypeHistory', 'Wipe hype history')}</span>
@@ -163,7 +161,7 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
                   </span>
                 </button>
 
-                <Link href="/info?tab=privacy" className="priv-opt" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+                <Link href="/info?tab=privacy" style={{ ...privOptStyle, textDecoration: 'none', color: 'inherit', display: 'flex' }}>
                   <span style={{ fontSize: '1.25rem', flexShrink: 0 }} aria-hidden="true">▤</span>
                   <span>
                     <span style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, marginBottom: 2 }}>{t('supportPrivacyPanel.readPrivacyPolicy', 'Read the privacy policy')}</span>
@@ -181,6 +179,12 @@ export function SupportPrivacyPanel({ onReportProblem }: { onReportProblem: () =
   );
 }
 
+/**
+ * The whole treatment of a privacy option row. Every one of the six rows sets
+ * this inline, so the `priv-opt` class they also carried answered to nothing
+ * and is gone. Moving this into a stylesheet class is worth doing and is its
+ * own piece of work (the inline-styles task), not a rename.
+ */
 const privOptStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 14, width: '100%', textAlign: 'left',
   padding: '14px 16px', border: '1px solid var(--hair-80)', borderRadius: 10,

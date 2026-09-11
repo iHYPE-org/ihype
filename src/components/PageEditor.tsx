@@ -571,7 +571,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
   return (
     <div>
-      <div className="page-editor-tabstrip" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
+      {/* The inline style is the whole strip; the `page-editor-tabstrip` hook
+          it carried was answered by no stylesheet. */}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 22 }}>
         {visibleSections.map((s) => (
           <button
             key={s.id}
@@ -675,7 +677,12 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               dates cannot be sorted, cannot expire, and cannot be read by
               anything but a human. */}
           {isArtistOrDj && (
-            <div id="tour-creator" className="page-editor-anchor-target">
+            /* The id is the anchor; the `page-editor-anchor-target` class
+               beside it was answered by nothing. Note that nothing in the
+               product links to `#tour-creator` either — the id stays because a
+               deep link to it may exist outside the repository, but nothing
+               here is wired to it. */
+            <div id="tour-creator">
               <Field
                 hint={t('pageEditor.tourCalendarHint', 'Dates you are playing, and dates you are open to be booked. Shows ticketed on iHYPE appear on your page automatically — add the ones that are not.')}
                 label={t('pageEditor.tourCalendarLabel', 'Tour calendar')}
