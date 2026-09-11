@@ -160,6 +160,26 @@
   color: var(--accent-text);
 }
 
+/* `.field` styles the field's NAME as `.field span` (globals.css), which is
+   what every form in the product writes — the label element usually wraps the
+   whole `.field` and the span sits inside it. The verification queue writes a
+   real `<label htmlFor>` instead, which is better for the control and is
+   exactly why it got no treatment at all: the admin note's name rendered as
+   plain body text where every other field name reads as a muted uppercase
+   eyebrow. It wore a `field-label` class that no stylesheet answered.
+
+   Scoped under `.ops-main` like every other rule in this file, because the one
+   other place a `<label>` sits inside a `.field` is the event creator, which
+   styles its own in a page-level <style> block and must not pick up a second
+   opinion from here. */
+.ops-main .field label {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ── Workbench ─────────────────────────────────────────────────────────
    The "what needs me today" board at the top of /admin. Its body is the
    ROUTINE board (`.routine-*` below) as of 2026-09-05; the eight-card grid it

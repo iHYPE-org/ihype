@@ -23,7 +23,9 @@ export async function AdminWorkbench() {
   const board = await getRoutineBoard(queues);
 
   return (
-    <section className="section admin-workbench">
+    /* `section` is the rule. `admin-workbench` had none — only
+       `.admin-workbench-head` inside it does. */
+    <section className="section">
       <div className="admin-workbench-head">
         <div>
           <h2 style={{ margin: 0 }}>{t('adminWorkbench.title', 'Today')}</h2>

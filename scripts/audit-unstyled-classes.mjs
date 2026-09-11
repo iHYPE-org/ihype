@@ -38,8 +38,14 @@
  */
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { exemptLines } from './lib/exempt-lines.mjs';
 
-const ROOT = path.join(process.cwd(), 'src');
+/* `--roots=` overrides the scanned directory. It exists so a test can point
+   this at a scratch fixture: a probe written into `src/` is picked up by every
+   other scanner in this repository, which is how one earlier test passed in
+   isolation and failed under parallel execution. */
+const rootsArg = process.argv.find((arg) => arg.startsWith('--roots='));
+const ROOT = rootsArg ? path.resolve(rootsArg.slice('--roots='.length)) : path.join(process.cwd(), 'src');
 const CLASS_IDENT = /^-?[_a-zA-Z][\w-]*$/;
 
 function walk(dir, out = []) {
@@ -57,7 +63,13 @@ if (!existsSync(ROOT)) {
 }
 const files = walk(ROOT);
 const sheets = files.filter((f) => f.endsWith('.css'));
-const sources = files.filter((f) => /\.tsx?$/.test(f));
+/* Tests are excluded: a `.test.ts` renders nothing, and the moment this check
+   became a gate its own guard test — which necessarily writes `className=` in
+   string fixtures — failed the build with three classes named after its own
+   probes. A test file is source, not markup. */
+const sources = files
+  .filter((f) => /\.tsx?$/.test(f))
+  .filter((f) => !/\.test\.tsx?$/.test(f) && !f.split(path.sep).includes('__tests__'));
 
 let styleText = sheets.map((f) => readFileSync(f, 'utf8')).join('\n');
 /* A component that injects a stylesheet usually does it as
@@ -83,14 +95,72 @@ for (const f of sources) {
 const defined = new Set();
 for (const m of styleText.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)) defined.add(m[1]);
 
+/* A template literal's `${...}` holds an EXPRESSION, and splitting the raw
+   text on whitespace cannot tell one from a class. `button small${entry.id ===
+   tab ? '' : ' secondary'}` yielded `tab` — a variable name — which this
+   script then reported as a class /admin renders and no stylesheet defines. A
+   false positive in a list people are asked to act on is the thing that gets
+   the whole list ignored, which is the lesson audit:untranslated already had
+   to learn twice.
+
+   Nothing inside an interpolation is collected. The obvious refinement — keep
+   the QUOTED strings, since `${on ? 'is-on' : ''}` really does render `is-on`
+   — was tried and is wrong in the mirror-image way: `${entry.id === 'reports'
+   ? '' : ' secondary'}` compares against a TAB ID, and it invented nine new
+   findings named after tab ids and route segments. A regex cannot tell a
+   ternary's branches from its condition, so this collects neither.
+
+   Each interpolation is masked to a single NUL and every token touching one is
+   dropped, because the fragment beside it is a partial: `mmm-${kind}-row` is a
+   runtime class this scan was never able to see, and `mmm-` is not a class at
+   all. The cost is a class written hard against an interpolation (`small`
+   above), dropped with its neighbour. Under-reporting is the safe direction,
+   and the same one this file's definition-collecting already errs in. */
+const SENTINEL = '\u0000';
+function classTokens(text) {
+  return text
+    .replace(/\$\{[^}]*\}/g, SENTINEL)
+    .split(/\s+/)
+    .filter((token) => !token.includes(SENTINEL));
+}
+
+/* `unstyled-exempt: <reason>` on the line above a className excuses it.
+   It exists because this check is now a GATE at zero, and the header above
+   names the one finding it cannot tell from a defect: a class read only by
+   JavaScript or by a test selector is intentional and will never have a rule.
+   Without an escape, the only way past a red build would be to delete a class
+   something depends on — so the escape is a marker that has to state why,
+   resolved by the shared helper rather than a fourth hand-written copy of a
+   rule this repository has already got wrong twice. */
+const EXEMPT = /unstyled-exempt:\s*(?!\*\/)\S/i;
+/* The `(?!\*\/)` is load-bearing: the shared helper's contract is that a
+   marker must state a reason, and the bare `\S` it documents is satisfied by
+   the `*` of a block comment's own terminator — so `/* unstyled-exempt: *\/`
+   would read as a justified exemption while saying nothing. Found by writing
+   the test for the negative case. */
+
 const used = new Map();
 for (const f of sources) {
   const src = readFileSync(f, 'utf8');
+  const isExempt = exemptLines(src, EXEMPT);
+  /* Line starts, computed once: the marker excuses a LINE, and every match
+     needs to know which one it is on. */
+  const lineStart = [0];
+  for (let i = 0; i < src.length; i += 1) if (src[i] === '\n') lineStart.push(i + 1);
+  const lineOf = (index) => {
+    let lo = 0;
+    let hi = lineStart.length - 1;
+    while (lo < hi) {
+      const mid = (lo + hi + 1) >> 1;
+      if (lineStart[mid] <= index) lo = mid;
+      else hi = mid - 1;
+    }
+    return lo;
+  };
+
   for (const m of src.matchAll(/className=(?:"([^"]*)"|\{`([^`]*)`\})/g)) {
-    for (const raw of (m[1] ?? m[2] ?? '').split(/\s+/)) {
-      /* A template literal's conditional lands in this capture as fragments —
-         `?`, `:`, `'secondary'}`, `===`. A real class is the CSS ident grammar
-         and nothing else. */
+    if (isExempt(lineOf(m.index))) continue;
+    for (const raw of classTokens(m[1] ?? m[2] ?? '')) {
       const cls = raw.trim();
       if (!CLASS_IDENT.test(cls)) continue;
       if (!used.has(cls)) used.set(cls, new Set());

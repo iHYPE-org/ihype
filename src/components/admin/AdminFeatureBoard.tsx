@@ -73,7 +73,11 @@ export async function AdminFeatureBoard() {
      render as "no features" either — an empty grid reads as good news. */
   if (!board) {
     return (
-      <section className="section admin-feature-board">
+      /* `section` is the rule; `admin-feature-board` answered to nothing.
+         The e2e locates this board by `.admin-feature-card` and
+         `.admin-feature-rest`, and the routine board beside it uses a
+         `data-testid` — which is the hook mechanism here, not a bare class. */
+      <section className="section">
         <h2 style={{ margin: 0 }}>Features</h2>
         <p className="meta" style={{ margin: '6px 0 0' }}>
           The feature board could not be built. That is a fault in the board, not a report about the product.
@@ -89,7 +93,7 @@ export async function AdminFeatureBoard() {
   const rest = rows.filter((row) => !needsDecision(row.state));
 
   return (
-    <section className="section admin-feature-board">
+    <section className="section">
       <div className="admin-workbench-head">
         <div>
           <h2 style={{ margin: 0 }}>Features</h2>

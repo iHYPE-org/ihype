@@ -194,7 +194,7 @@ jobs:
         # an exemption with a reason, or change the copy.
         run: npm run audit:retired-claims
 
-      - name: Unstyled-class ratchet
+      - name: Unstyled-class gate
         # The other side of the same coin as the gate below. That one asks
         # whether anything RENDERS a component; this asks whether anything
         # DEFINES the classes a component renders with.
@@ -206,11 +206,19 @@ jobs:
         # error in HTML, CSS, TypeScript or React; the element just renders
         # bare and the build stays green.
         #
-        # 52 is the debt that already existed, and it is a mix of real gaps and
-        # dead names left behind by renames — it needs triage, not a blanket
-        # fix, which is exactly why this is a ratchet rather than a gate at 0.
-        # THE NUMBER GOES DOWN, NEVER UP.
-        run: npm run --silent audit:unstyled -- --max=33
+        # It opened at 52 as a RATCHET rather than a gate, because that debt
+        # was a mix of real gaps and dead names left by renames and needed
+        # triage, not a blanket fix. The triage is done: every one was
+        # classified as a real defect (style it), a dead hook (delete it) or a
+        # scanner false positive (fix the scanner), and the count is 0. So it
+        # is a gate now — the same move audit:css made at its own zero.
+        #
+        # NEVER RAISE THIS. The escape for a class that legitimately has no
+        # rule — one read only by JavaScript or by a test selector — is an
+        # `unstyled-exempt: <reason>` marker above the className, which has to
+        # say why. An advisory zero drifts back up unnoticed; that is what
+        # happened to audit:mobile under continue-on-error.
+        run: npm run --silent audit:unstyled -- --max=0
 
       - name: Unmounted-component gate
         # Components that exist and no route can reach. TypeScript cannot see
