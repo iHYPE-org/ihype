@@ -377,10 +377,10 @@ function CoverageBuilder() {
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
             {/* "Live show intermissions" was a placement nobody could buy
-                (2026-09-11): no member can create a show for a spot to sit
-                inside — `isRadioShow` is written by nothing — so every spot
-                sold airs in a station break. Replaced with the placement
-                rule that is real and is the better promise anyway. */}
+                (2026-09-11): no member can host a broadcast for a spot to sit
+                inside, so every spot sold airs in a station break. Replaced
+                with the placement rule that is real and is the better
+                promise anyway. */}
             {[{ color: 'var(--role-fan)', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: 'var(--role-venue)', label: t('advertisePage.betweenSongs', 'Between songs, never mid-track') }].map(p => (
               <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', color: 'var(--ink-a65)', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
@@ -930,7 +930,7 @@ export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
               <h3 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.625rem', letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.artistsVenues', 'Artists, venues')}<br />{t('advertisePage.promotersLine', '& promoters')}</h3>
               <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.membersBody', 'Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.')}</p>
               <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
-                {[{ c: 'var(--role-fan)', l: t('advertisePage.roleArtist', 'Artist') }, { c: 'var(--role-venue)', l: t('advertisePage.roleVenue', 'Venue') }, { c: 'var(--accent-2)', l: t('advertisePage.rolePromoter', 'Promoter') }].map(r => (
+                {[{ c: 'var(--role-fan)', l: t('advertisePage.roleArtist', 'Artist') }, { c: 'var(--role-venue)', l: t('advertisePage.roleVenue', 'Venue') }].map(r => (
                   <span key={r.l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: `1px solid color-mix(in srgb, ${r.c} 40%, transparent)`, display: 'inline-flex', alignItems: 'center', gap: 7, color: r.c }}>
                     <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: r.c }} />{r.l}
                   </span>

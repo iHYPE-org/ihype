@@ -5,6 +5,7 @@ export function mmmMeBackTarget(pathname: string | null | undefined): string | n
     pathname === '/app/me/settings' ||
     pathname === '/app/me/accessibility' ||
     pathname === '/app/me/advertising' ||
+    pathname === '/app/me/notifications' ||
     pathname.startsWith('/app/me/info/') ||
     pathname.startsWith('/app/me/support/tickets') ||
     /^\/app\/me\/venues\/[^/]+\/(calendar|booking-inbox)$/.test(pathname) ||

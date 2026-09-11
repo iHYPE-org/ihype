@@ -8,6 +8,7 @@ import './mmm-console.css';
 import './mobile-fit.css';
 import type { Metadata, Viewport } from 'next';
 import { ReactNode } from 'react';
+import { headers } from 'next/headers';
 import localFont from 'next/font/local';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
@@ -20,6 +21,7 @@ import { ImpersonationBanner } from '@/components/ImpersonationBanner';
 import { CookieConsent } from '@/components/CookieConsent';
 import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { getCspNonce } from '@/lib/csp-nonce';
+import { ownsWholeScreen } from '@/lib/chrome-visibility';
 import { AppSplash } from '@/components/AppSplash';
 import { getServerT } from '@/lib/i18n/server';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
@@ -200,6 +202,9 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   // flag lives in KV. One extra KV read per render, alongside the nonce and
   // dictionary reads this layout already does.
   const inviteOnly = await isInviteCodeRequiredRuntime();
+  /* Middleware sets `x-pathname` on every request, so the root layout is
+     not path-blind — the premise the CSS approach was built on. */
+  const wholeScreen = ownsWholeScreen((await headers()).get('x-pathname'));
   // The signed-in app shell's chrome renders here, in the ROOT layout, because
   // the handoff's first chrome-contract rule is that the top bar and the player
   // never re-render on navigation — only the content region may be replaced.
@@ -259,11 +264,21 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
           </div>
           {/* Public-site navigation. The /app layout supplies MMM's own
               persistent chrome and locks this header while it is active. */}
-          <AdaptiveSiteHeader
-            inviteOnly={inviteOnly}
-            label={t('layout.primarySiteHeader', 'Primary site header')}
-          />
-          <SiteTabBar />
+          {/* The operator console owns its whole screen and must never carry
+              member chrome. This is decided from `x-pathname` HERE rather than
+              by the `body:has(.ops-shell)` rule in globals.css, because
+              /admin's layout is async — it awaits auth, cookies and a device
+              lookup — and for the length of that wait there is no `.ops-shell`
+              for the stylesheet to match. See `chrome-visibility.ts`. */}
+          {!wholeScreen && (
+            <>
+              <AdaptiveSiteHeader
+                inviteOnly={inviteOnly}
+                label={t('layout.primarySiteHeader', 'Primary site header')}
+              />
+              <SiteTabBar />
+            </>
+          )}
           {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
               Every route outside /app is now marketing, auth, admin, or a
               redirect-only compatibility route: none may render another
@@ -271,7 +286,7 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
           <div className="site-shell">
             <main id="main-content">{children}</main>
           </div>
-          <SitePlayerDock />
+          {!wholeScreen && <SitePlayerDock />}
           {/* Above every shell, on every route: an operator must never be
               able to forget whose account they are looking at. */}
           <ImpersonationBanner />

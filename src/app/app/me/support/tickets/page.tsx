@@ -50,36 +50,20 @@ export default async function SupportTicketsPage() {
   });
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '40px 24px 100px' }}>
-      <Link
-        href="/app/me/info"
-        style={{
-          display: 'inline-flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)',
-          fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)',
-          textDecoration: 'none', marginBottom: 18,
-          // 148×20 measured at both widths (2026-09-10); a back link is a control.
-          minHeight: 44,
-        }}
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="15 18 9 12 15 6" />
-        </svg>
-        {tr('supportTicketsPage.backToInfo', 'Back to Info')}
-      </Link>
-
-      <span style={{
-        display: 'inline-block', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase',
-        letterSpacing: '.14em', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.3)',
-        background: 'rgba(var(--role-venue-rgb),.07)', borderRadius: 999, padding: '5px 13px', marginBottom: 14,
-      }}>
-        {tr('supportTicketsPage.badge', 'Support')}
-      </span>
-      <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 800, letterSpacing: '-.02em', margin: '18px 0 8px', color: 'var(--ink)' }}>
-        {tr('supportTicketsPage.title', 'My tickets')}
-      </h1>
-      <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 32 }}>
-        {tr('supportTicketsPage.intro', "Every support request you've sent us, and where it stands.")}
-      </p>
+    /* The sub-page header is `.mmm-document` — a chevron-and-word back link,
+       a mono eyebrow, an h1 (2026-09-11, owner: the support bubble "doesn't
+       fit design scheme here … see #2 for standard"). This page had written
+       its own out of ~30 inline properties, ending in a teal pill that read
+       SUPPORT beside the back link: a status treatment used as a breadcrumb,
+       in the one role colour that means VENUE. The eyebrow is where a
+       breadcrumb goes, and it costs no new class. */
+    <article className="mmm-document">
+      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {tr('mmmLegal.backToInfo', 'Info')}</Link>
+      <header className="mmm-document-head">
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{tr('supportTicketsPage.crumb', 'Me · Info · Support')}</p>
+        <h1>{tr('supportTicketsPage.title', 'My tickets')}</h1>
+        <p>{tr('supportTicketsPage.intro', "Every support request you've sent us, and where it stands.")}</p>
+      </header>
 
       <SupportTicketComposer />
 
@@ -124,6 +108,6 @@ export default async function SupportTicketsPage() {
           ))}
         </div>
       )}
-    </div>
+    </article>
   );
 }

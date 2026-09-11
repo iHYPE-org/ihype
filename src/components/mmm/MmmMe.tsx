@@ -485,6 +485,29 @@ export function MmmMe({ data }: { data: MmmMeData }) {
             <span className="mmm-me-add-chip">{t('mmmMe.add.verificationRequired', 'Verification required')}</span>
           </Link>
         )}
+        {data.hasAdvertiser && (
+          /* The other half, and it was missing (2026-09-11, owner: "Make sure
+             advertiser role add is included on Me page
+             (artist/venue/advertiser)").
+
+             `hasAdvertiser` had exactly ONE reader — the `!` above — so the
+             moment an account HAD an advertiser account the type vanished
+             from ME entirely: an artist or venue profile keeps a card in the
+             switcher, an advertiser account got no card, no row and no link,
+             because it has no `Profile` row for the switcher to hold. So the
+             one surface that answers "what is this account" stopped listing a
+             type the account actually has.
+
+             An ADD button that hides on success is right; hiding the thing it
+             created is not. This is the same row and the same shape, saying
+             `Open` rather than `＋` — and no verification chip, because an
+             advertiser account is not in the verification queue that chip
+             promises a 48-hour turnaround on. */
+          <Link className="mmm-me-add" data-kind="advertiser" href="/app/me/advertising">
+            <span aria-hidden="true">›</span>
+            {t('mmmMe.open.advertiser', 'Advertiser account')}
+          </Link>
+        )}
       </div>
 
       <p className="mmm-me-note">

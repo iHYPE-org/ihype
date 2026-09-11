@@ -1,7 +1,11 @@
 import { Profile, Show } from '@prisma/client/edge';
 import { formatShowTime } from '@/lib/utils';
 
-export const FEED_HEURISTICS_VERSION = '1.2.0';
+/* 1.3.0 (2026-09-11): RADIO-001 removed with the radio-show feature. GOV-001
+   below is the reason this line moves at all — a ranking rule leaving the
+   ledger is a heuristic change, and the one thing this file forbids is one
+   that drifts without a version. */
+export const FEED_HEURISTICS_VERSION = '1.3.0';
 
 export const feedHeuristicsLedger = [
   {
@@ -39,23 +43,10 @@ export const feedHeuristicsLedger = [
     title: 'Versioned Changes',
     summary: 'Heuristic changes should be versioned and disclosed instead of silently drifting in production.',
     userImpact: 'Teams can compare behavior across versions and explain when ranking rules change.'
-  },
-  {
-    /* retired-claim-exempt-file: this ledger's job is to disclose the ranking code
-       that runs, and `radioBoost` below is real and applied. What died is the
-       INPUT — nothing writes `Show.isRadioShow`, so the rule cannot fire.
-       Deleting the disclosure while the branch still scores would make this
-       page less honest, not more; the branch itself is dead code and is
-       tracked separately. (The chip's 📻 breaks the no-emoji rule and is
-       unreachable for the same reason.) */
-    id: 'RADIO-001',
-    title: 'Radio Show Boost',
-    summary: 'Curated radio shows receive a small visibility lift when live to distinguish them from standard streams.',
-    userImpact: 'A live radio set surfaces slightly ahead of an on-demand upload with the same hype, reflecting the additional curation effort.'
   }
 ] as const;
 
-type ExplainableShow = Pick<Show, 'title' | 'status' | 'startsAt' | 'hypeCount' | 'tags' | 'isRadioShow'> & {
+type ExplainableShow = Pick<Show, 'title' | 'status' | 'startsAt' | 'hypeCount' | 'tags'> & {
   venueProfile?: Pick<Profile, 'name' | 'city'> | null;
   headlinerProfile?: Pick<Profile, 'name'> | null;
 };
@@ -107,7 +98,6 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
     freshnessScore = 0;
   }
 
-  const radioBoost = show.isRadioShow && show.status === 'LIVE' ? 8 : 0;
   const momentumScore = Math.min(28, Math.floor(show.hypeCount / 3));
   let momentumSignal = `${show.hypeCount} hype signal${show.hypeCount === 1 ? '' : 's'}`;
 
@@ -125,13 +115,12 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
       ? `Context includes ${contextParts.join(' / ')}.`
       : 'Basic show metadata is available, but there is no extra venue or headliner context yet.';
 
-  const totalScore = statusScore + freshnessScore + momentumScore + radioBoost;
+  const totalScore = statusScore + freshnessScore + momentumScore;
 
   const signals: VisibilitySignal[] = [
     { label: 'Status', value: statusSignal },
     { label: 'Freshness', value: freshnessSignal },
     { label: 'Momentum', value: momentumSignal },
-    ...(radioBoost > 0 ? [{ label: 'Format', value: 'Curated radio set — live boost applied (RADIO-001).' }] : [])
   ];
 
   // Compact chips for inline "why you're seeing this" display
@@ -155,9 +144,6 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
     chips.push({ icon: '✨', label: `${show.hypeCount} hype`, detail: 'Early momentum signal.' });
   }
 
-  if (show.isRadioShow) {
-    chips.push({ icon: '📻', label: 'Radio set', detail: show.status === 'LIVE' ? 'Curated radio show — live boost active (RADIO-001).' : 'Curated radio show.' });
-  }
 
   if (chips.length === 0) {
     chips.push({ icon: '📋', label: statusSignal, detail: freshnessSignal });

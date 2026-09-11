@@ -1,11 +1,11 @@
 /**
  * What the alpha cohort needs on the ground before the doors open.
  *
- * There is deliberately NO radio-show target. There used to be one — "schedule
- * at least 1 radio show" — and it could never be satisfied again: DJ-authored
- * radio shows were retired as a product decision, `RadioShowCreator` is gone,
- * and nothing in the app can author one. It counted `Show.isRadioShow` rows,
- * of which only pre-retirement rows can exist. A permanent blocker on a
+ * There is deliberately NO broadcast target. There used to be one — "schedule
+ * at least 1 radio show" — and it could never be satisfied again: member
+ * broadcasts were retired as a product decision and nothing in the app can
+ * author one, so it counted a row type that can no longer exist. A permanent
+ * blocker on a
  * readiness board teaches everyone to read past the board, which is how the
  * Lighthouse budget stopped being read.
  *

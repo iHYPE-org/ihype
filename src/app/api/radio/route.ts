@@ -36,10 +36,10 @@ export async function GET(request: Request) {
       hypedProfileIds = hyped.map((h) => h.profileId);
     }
 
-    // Playable tracks only. The DJ-authored radio-show query that used to sit
-    // alongside this is gone: shows are created by nobody now (the Show Creator
-    // was retired with the DJ role) and production holds zero isRadioShow rows,
-    // so it could only ever return []. Its `stations` output had no consumer --
+    // Playable tracks only. The DJ-authored broadcast query that used to sit
+    // alongside this is gone: nothing can author one (the Show Creator was
+    // retired with the DJ role), so it could only ever return [].
+    // Its `stations` output had no consumer --
     // /radio reads /api/radio/station and the Music shell reads /api/stations,
     // both of which compute a station per listener instead.
     const [hypedTracks, trendingTracks] = await Promise.all([

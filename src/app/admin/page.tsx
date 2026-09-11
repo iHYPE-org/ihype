@@ -1090,10 +1090,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                   {' '}({betaMetrics.weeklyActiveUsers}/{betaMetrics.totalUsers})
                 </strong>
               </div>
-              <div className="admin-health-card">
-                <span>{t('adminPage.djsOnRadio30d', 'DJs on radio (30d)')}</span>
-                <strong>{betaMetrics.recurringDjs30d}/{betaMetrics.radioDjs30d} {t('adminPage.recurring', 'recurring')}</strong>
-              </div>
             </div>
             <h3 style={{ margin: '1rem 0 .5rem' }}>{t('adminPage.inviteConversion30d', 'Invite conversion (30d)')}</h3>
             {betaMetrics.inviteChannels.length === 0 ? (

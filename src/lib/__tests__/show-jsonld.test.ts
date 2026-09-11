@@ -12,7 +12,6 @@ const show = (over: Partial<ShowJsonLdInput> = {}): ShowJsonLdInput => ({
   startsAt: new Date('2026-09-04T23:00:00.000Z'),
   endsAt: new Date('2026-09-05T03:00:00.000Z'),
   posterImage: 'https://cdn.ihype.org/poster.jpg',
-  isRadioShow: false,
   isTicketed: true,
   ticketPriceCents: 1800,
   ticketCapacity: 200,
@@ -126,11 +125,10 @@ describe('buildShowJsonLd — place and shape', () => {
     expect(buildShowJsonLd(show({ venue: null }), BASE).location).toBeUndefined();
   });
 
-  it('publishes a radio show as an episode, with no event fields at all', () => {
-    const ld = buildShowJsonLd(show({ isRadioShow: true }), BASE);
-    expect(ld['@type']).toBe('RadioEpisode');
-    for (const eventField of ['eventStatus', 'eventAttendanceMode', 'offers', 'location', 'startDate']) {
-      expect(ld[eventField], eventField).toBeUndefined();
-    }
+  it('publishes every show as a MusicEvent — there is no RadioEpisode branch left', () => {
+    /* Radio shows were removed as a product (2026-09-11, owner instruction),
+       so `Show.isRadioShow` no longer reaches this module and the second
+       `@type` it could emit is gone. A show is an event or it is nothing. */
+    expect(buildShowJsonLd(show(), BASE)['@type']).toBe('MusicEvent');
   });
 });

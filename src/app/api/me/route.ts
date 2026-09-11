@@ -17,7 +17,7 @@ export async function GET() {
       notificationPreference: {
         select: {
           newShows: true, journalPosts: true, milestones: true, weeklyDigest: true,
-          radioLive: true, crateUploads: true, bookingRequests: true,
+          crateUploads: true, bookingRequests: true,
         },
       },
     },
@@ -73,7 +73,7 @@ export async function PATCH(req: Request) {
     discoverable?: boolean;
     notificationPreference?: {
       newShows: boolean; journalPosts: boolean; milestones: boolean; weeklyDigest: boolean;
-      radioLive?: boolean; crateUploads?: boolean; bookingRequests?: boolean;
+      crateUploads?: boolean; bookingRequests?: boolean;
     };
   };
   try {
@@ -110,16 +110,15 @@ export async function PATCH(req: Request) {
   }
 
   if (body.notificationPreference) {
-    const { newShows, journalPosts, milestones, weeklyDigest, radioLive, crateUploads, bookingRequests } = body.notificationPreference;
+    const { newShows, journalPosts, milestones, weeklyDigest, crateUploads, bookingRequests } = body.notificationPreference;
     await db.notificationPreference.upsert({
       where: { userId: session.user.id },
       create: {
         userId: session.user.id, newShows, journalPosts, milestones, weeklyDigest,
-        radioLive: radioLive ?? true, crateUploads: crateUploads ?? true, bookingRequests: bookingRequests ?? true,
+        crateUploads: crateUploads ?? true, bookingRequests: bookingRequests ?? true,
       },
       update: {
         newShows, journalPosts, milestones, weeklyDigest,
-        ...(radioLive !== undefined && { radioLive }),
         ...(crateUploads !== undefined && { crateUploads }),
         ...(bookingRequests !== undefined && { bookingRequests }),
       },

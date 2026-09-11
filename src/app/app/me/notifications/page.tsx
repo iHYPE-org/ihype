@@ -57,6 +57,7 @@ export default async function MmmNotificationsPage() {
         <h1>{t('mmmNotificationsPage.title', 'Notifications')}</h1>
       </header>
       <NotificationsList
+        heading={false}
         initialNotifications={notifications.map((row) => ({
           ...row,
           // The component's own type takes a string: it renders through

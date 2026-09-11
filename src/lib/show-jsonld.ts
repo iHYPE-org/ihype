@@ -41,7 +41,6 @@ export type ShowJsonLdInput = {
   startsAt: Date;
   endsAt: Date | null;
   posterImage: string | null;
-  isRadioShow: boolean;
   isTicketed: boolean;
   ticketPriceCents: number;
   ticketCapacity: number | null;
@@ -103,22 +102,6 @@ function place(venue: NonNullable<ShowJsonLdInput['venue']>) {
 }
 
 export function buildShowJsonLd(show: ShowJsonLdInput, base: string): Record<string, unknown> {
-  /* A radio episode is not an event: it has no venue, no door time and no
-     tickets, so it publishes as a RadioEpisode and skips everything below. */
-  if (show.isRadioShow) {
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'RadioEpisode',
-      name: show.title,
-      url: `${base}/shows/${show.slug}`,
-      ...(show.description ? { description: show.description } : {}),
-      ...(show.posterImage ? { image: show.posterImage } : {}),
-      ...(show.headlinerName
-        ? { byArtist: { '@type': 'MusicGroup', name: show.headlinerName } }
-        : {}),
-    };
-  }
-
   const offer = offers(show, base);
 
   return {

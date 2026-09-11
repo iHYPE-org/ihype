@@ -13,7 +13,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      title: true, startsAt: true, status: true, isRadioShow: true,
+      title: true, startsAt: true, status: true,
       venueProfile: { select: { name: true, city: true, stateRegion: true } },
       headlinerProfile: { select: { name: true } },
     },
@@ -48,10 +48,9 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {(date || show?.isRadioShow) && (
+          {date && (
             <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              {/* retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature. */}
-              {show?.isRadioShow ? t('showsSlugOpengraphImage.radioShow', 'Radio Show') : date}
+              {date}
             </div>
           )}
           <div style={{ fontSize: 72, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>

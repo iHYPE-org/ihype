@@ -458,18 +458,18 @@ model Like {
 }
 
 model ArtistMediaAsset {
-  id               String           @id @default(cuid())
-  hexId            String           @unique
+  id               String    @id @default(cuid())
+  hexId            String    @unique
   title            String
   notes            String?
   originalFileName String
   mimeType         String
   fileSizeBytes    Int
   fileDataBase64   String?
-  storageProvider  String           @default("database")
+  storageProvider  String    @default("database")
   storageKey       String?
   storageUrl       String?
-  freeUseEnabled   Boolean          @default(false)
+  freeUseEnabled   Boolean   @default(false)
   durationSecs     Int?
   // What the uploaded file's own header said. Every one is nullable and a null
   // means "the header did not say", never a default — see src/lib/audio-duration.ts.
@@ -492,16 +492,15 @@ model ArtistMediaAsset {
   // divides its headroom by. A track without it is never boosted.
   truePeakDbtp     Float?
   artworkUrl       String?
-  sortOrder        Int              @default(0)
+  sortOrder        Int       @default(0)
   profileId        String
   publishAt        DateTime?
-  isPublished      Boolean          @default(true)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  profile          Profile          @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  radioTracks      RadioShowTrack[]
+  isPublished      Boolean   @default(true)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  profile          Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
   albumId          String?
-  album            Album?           @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  album            Album?    @relation(fields: [albumId], references: [id], onDelete: SetNull)
 
   @@index([profileId, createdAt])
   @@index([freeUseEnabled, createdAt])
@@ -622,7 +621,6 @@ model Show {
   description            String?
   recapText              String?
   productionPlan         Json?
-  isRadioShow            Boolean                @default(false)
   status                 ShowStatus             @default(DRAFT)
   startsAt               DateTime
   endsAt                 DateTime?
@@ -653,7 +651,6 @@ model Show {
   ticketOrders           TicketOrder[]
   tickets                Ticket[]
   accountsPayableEntries AccountsPayableEntry[]
-  radioTracks            RadioShowTrack[]
   advertisingConfig      ShowAdvertisingConfig?
   lineupSlots            ShowLineupSlot[]
   comments               ShowComment[]
@@ -678,7 +675,6 @@ model Show {
 
   @@index([startsAt, status])
   @@index([status])
-  @@index([isRadioShow, status])
   @@index([creatorId])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_title_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_description_trgm_idx")
@@ -1053,24 +1049,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model RadioShowTrack {
-  id           String            @id @default(cuid())
-  showId       String
-  position     Int
-  title        String
-  artistName   String?
-  mediaAssetId String?
-  externalUrl  String?
-  durationSecs Int?
-  blockLabel   String?
-  createdAt    DateTime          @default(now())
-  show         Show              @relation(fields: [showId], references: [id], onDelete: Cascade)
-  mediaAsset   ArtistMediaAsset? @relation(fields: [mediaAssetId], references: [id], onDelete: SetNull)
-
-  @@unique([showId, position])
-  @@index([showId])
-}
-
 model AdminAuditLog {
   id         String   @id @default(cuid())
   actorId    String
@@ -1163,12 +1141,6 @@ model NotificationPreference {
   // `crateUploads` now gates the publish-scheduled notice ("your track is
   // live") and `bookingRequests` gates the booking-request notice; both are
   // rendered in Settings again because pressing them now changes something.
-  // `radioLive` has NO SENDER AND CANNOT HAVE ONE — DJ show creation was
-  // retired and the always-on station is never announced — so its row is not
-  // rendered. The column is kept rather than dropped because live shows are
-  // still a stated product intention; restore the row with the feature, not
-  // before.
-  radioLive       Boolean  @default(true) // reserved: a followed show goes live (no sender today)
   crateUploads    Boolean  @default(true) // a release you scheduled goes live
   bookingRequests Boolean  @default(true) // someone asks to book you
   updatedAt       DateTime @updatedAt

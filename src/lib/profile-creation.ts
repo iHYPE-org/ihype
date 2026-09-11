@@ -26,7 +26,7 @@ export function getProfileCopy(type: ProfileType, name: string) {
     return {
       headline: `${name} is opening its doors to the next wave.`,
       bio: 'Describe the room, the neighborhood, and the kind of nights you want to host.',
-      aboutContent: 'Tell artists and promoters what the venue feels like, what it supports, and who it is for.',
+      aboutContent: 'Tell artists what the venue feels like, what it supports, and who it is for.',
       requestContent: 'Set expectations for artist recommendations, booking notes, and how fans should use this request tab.'
     };
   }

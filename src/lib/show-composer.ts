@@ -55,7 +55,7 @@ export const showAdClipSchema = z.object({
   // a real, purchased marketplace ad (Ad.id, prefixed by resolveAdBreakClips()
   // / resolveWeightedAdBreakClips() in src/lib/ad-clip-selection.ts). This
   // used to name `GET /api/radio/ad-clips`, a route deleted along with
-  // RadioShowCreator — the prefix is real, that route is not.
+  // the retired show creator — the prefix is real, that route is not.
   clipId: z.string().regex(/^(0x[a-f0-9]+|mkt_[a-zA-Z0-9]+)$/i),
   title: z.string().min(1),
   url: z.string().min(1),

@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic';
  *
  * Unified search across:
  *   - Profiles (artists and venues)
- *   - Shows (live events and radio shows)
+ *   - Shows (live events)
  *   - Artist media assets (songs with freeUseEnabled)
  *   - Cities, derived from the profiles that matched
  *   - The signed-in viewer's own playlists
@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
           take: limit,
           select: {
             id: true, slug: true, title: true, status: true, startsAt: true,
-            isRadioShow: true, tags: true, isTicketed: true,
+            tags: true, isTicketed: true,
             venueProfile:     { select: { name: true, slug: true, city: true } },
             headlinerProfile: { select: { name: true, slug: true } },
           }
@@ -219,14 +219,13 @@ export async function GET(request: NextRequest) {
 
   // Build unified result list
   type ResultItem = {
-    type: 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre' | 'city' | 'playlist';
+    type: 'artist' | 'venue' | 'song' | 'show' | 'genre' | 'city' | 'playlist';
     id: string;
     name: string;
     subtitle: string;
     slug?: string;
     hypeCount?: number;
     status?: string;
-    isRadioShow?: boolean;
     genres?: string[];
   };
 
@@ -260,13 +259,12 @@ export async function GET(request: NextRequest) {
       ? new Date(s.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : 'TBD';
     const sub = [
-      // retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature.
-      s.isRadioShow ? 'Radio show' : (venueName || null),
+      venueName || null,
       date,
       s.isTicketed ? 'Ticketed' : null
     ].filter(Boolean).join(' · ');
     results.push({ type: 'show', id: s.id, name: s.title, subtitle: sub,
-                   slug: s.slug, status: s.status, isRadioShow: s.isRadioShow ?? false });
+                   slug: s.slug, status: s.status });
   });
 
   genreMatches.forEach(g => {

@@ -80,7 +80,7 @@ type ShowWhere =
 
 async function getShowBasedStats(showWhere: ShowWhere) {
   // Hype-timeline bucketing needs each show's own computed duration (from
-  // productionPlan/radioTracks — not a stored column) to place a hype's raw
+  // its productionPlan — not a stored column) to place a hype's raw
   // positionSeconds into a bucket, so that part stays row-level. Ticket and
   // show-listen totals don't depend on per-show duration, so those are
   // pushed down to DB aggregates instead of materializing every order/listen.
@@ -89,7 +89,6 @@ async function getShowBasedStats(showWhere: ShowWhere) {
     select: {
       id: true,
       productionPlan: true,
-      radioTracks: { select: { durationSecs: true } },
       hypes: { select: { positionSeconds: true } },
     },
   });

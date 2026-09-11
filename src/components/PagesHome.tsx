@@ -40,7 +40,7 @@ const TABS = [
 type TabId = (typeof TABS)[number]['id'];
 
 type SearchResult = {
-  type: 'artist' | 'venue' | 'promoter' | 'song' | 'show' | 'genre';
+  type: 'artist' | 'venue' | 'song' | 'show' | 'genre';
   id: string;
   name: string;
   subtitle: string;
@@ -320,9 +320,9 @@ export function PagesHome({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
-                const color = r.type === 'venue' ? 'var(--role-venue)' : r.type === 'promoter' ? 'var(--accent-2)' : 'var(--accent)';
-                const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : r.type === 'promoter' ? t('pagesHome.resultTypePromoter', 'Promoter / DJ') : t('pagesHome.resultTypeArtist', 'Artist');
-                const route = r.type === 'venue' ? `/venues/${r.slug}` : r.type === 'promoter' ? `/artists/${r.slug}` : `/artists/${r.slug}`;
+                const color = r.type === 'venue' ? 'var(--role-venue)' : 'var(--accent)';
+                const label = r.type === 'venue' ? t('pagesHome.resultTypeVenue', 'Venue') : t('pagesHome.resultTypeArtist', 'Artist');
+                const route = r.type === 'venue' ? `/venues/${r.slug}` : `/artists/${r.slug}`;
                 const initials = r.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
                   <Link key={r.id} href={route} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)', textDecoration: 'none', color: 'inherit' }}>

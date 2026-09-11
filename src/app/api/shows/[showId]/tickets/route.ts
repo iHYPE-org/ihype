@@ -221,7 +221,7 @@ export async function POST(
         select: { id: true, type: true, name: true, ownerId: true },
       });
       if (!affiliatePromoterProfile) {
-        return NextResponse.json({ error: 'Affiliate promoter profile not found' }, { status: 400 });
+        return NextResponse.json({ error: 'The profile credited for this referral was not found' }, { status: 400 });
       }
 
       const showOwnerIds = [show.headlinerProfile?.ownerId, show.venueProfile?.ownerId].filter(Boolean);

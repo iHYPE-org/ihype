@@ -82,7 +82,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
             {/* This line used to read "No ads between songs", which was false
                 and is the one claim on this page the product contradicts
                 directly: show-composer.ts injects `kind: 'AD'` breaks into a
-                radio show's sequence every `advertising.frequency` tracks, and
+                a show's sequence every `advertising.frequency` tracks, and
                 ShowSequencePlayer plays them. Ads are how the platform is
                 funded — the charter takes 0% of a ticket — so denying them on
                 the front page misstated the business model, not a detail.
