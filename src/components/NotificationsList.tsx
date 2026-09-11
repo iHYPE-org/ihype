@@ -50,7 +50,15 @@ function colorForType(type: string) {
   return 'var(--ink-a65)';
 }
 
-export function NotificationsList({ initialNotifications }: { initialNotifications: Notification[] }) {
+export function NotificationsList({
+  initialNotifications,
+  /* The page that mounts this already renders the document's `h1`, so the
+     list stops announcing the same word a second line below it — two `h1`s
+     reading "Notifications" is what the owner saw. Same shape as the show
+     pane passing `TicketSaleCard` a `heading` for the same reason (row 338):
+     the SURFACE owns the heading, the component takes what is left. */
+  heading = true,
+}: { initialNotifications: Notification[]; heading?: boolean }) {
   const { t } = useI18n();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
@@ -95,7 +103,7 @@ export function NotificationsList({ initialNotifications }: { initialNotificatio
     <div className="notifications-page">
       <div className="notifications-header">
         <div>
-          <h1>{t('notificationsList.title', 'Notifications')}</h1>
+          {heading && <h1>{t('notificationsList.title', 'Notifications')}</h1>}
           {unreadCount > 0 && <div className="notifications-unread-sub">{unreadCount} {t('notificationsList.unreadSuffix', 'unread')}</div>}
         </div>
         {unreadCount > 0 && (

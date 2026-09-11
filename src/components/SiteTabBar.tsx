@@ -40,7 +40,10 @@ const TABS = [
   {
     id: 'pages',
     label: 'Dashboard',
-    href: '/pages',
+    /* `/pages` was deleted 2026-09-01 and is a compatibility redirect in
+       next.config.mjs. Pointing a live tab at it spent a round trip on every
+       press to reach a destination this file can name directly. */
+    href: '/app/me/profiles',
     icon: (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="8" r="4"/>
@@ -53,7 +56,7 @@ const TABS = [
 function matchTab(pathname: string): string {
   if (pathname.startsWith('/app/music') || pathname.startsWith('/radio')) return 'listen';
   if (pathname.startsWith('/shows') || pathname.startsWith('/events') || pathname.startsWith('/app/map')) return 'events';
-  if (pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
+  if (pathname.startsWith('/app/me/profiles') || pathname.startsWith('/pages') || pathname.startsWith('/artists') || pathname.startsWith('/venues') || pathname.startsWith('/fans')) return 'pages';
   return '';
 }
 
