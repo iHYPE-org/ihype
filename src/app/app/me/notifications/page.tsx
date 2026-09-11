@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { NotificationsList } from '@/components/NotificationsList';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +47,14 @@ export default async function MmmNotificationsPage() {
     select: { id: true, type: true, body: true, read: true, link: true, createdAt: true },
   }).catch(() => []);
 
+  const t = await getServerT();
+
   return (
     <article className="mmm-info-report">
-      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ Settings</Link>
+      <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ {t('mmmStrip.settings', 'Settings')}</Link>
       <header className="mmm-info-report-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">Me · Settings</p>
-        <h1>Notifications</h1>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmDock.tab.me', 'Me')} · {t('mmmStrip.settings', 'Settings')}</p>
+        <h1>{t('mmmNotificationsPage.title', 'Notifications')}</h1>
       </header>
       <NotificationsList
         initialNotifications={notifications.map((row) => ({

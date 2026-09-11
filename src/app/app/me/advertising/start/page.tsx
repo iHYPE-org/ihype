@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MmmAdvertiserSignup } from '@/components/mmm/MmmAdvertiserSignup';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,13 +28,15 @@ export default async function AdvertiserStartPage() {
   });
   if (existing) redirect('/app/me/advertising');
 
+  const t = await getServerT();
+
   return (
     <div className="mmm-advertiser">
-      <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ Profiles</Link>
+      <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ {t('mmmStrip.profiles', 'Profiles')}</Link>
       <div className="mmm-advertiser-head">
         <div>
-          <p className="mmm-eyebrow mmm-eyebrow-accent">Advertiser profile</p>
-          <h1>Advertise on iHYPE</h1>
+          <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertiseDashboardPage.eyebrow', 'Advertiser profile')}</p>
+          <h1>{t('mmmAdvertiseStartPage.title', 'Advertise on iHYPE')}</h1>
           <p className="meta" style={{ marginTop: 4, maxWidth: '58ch' }}>
             Radio-style audio spots between tracks on the station. Adding this keeps everything
             else about your account exactly as it is — it is a profile alongside the ones you

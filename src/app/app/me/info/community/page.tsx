@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { CommunityVoteBoard } from '@/components/CommunityVoteBoard';
+import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,14 +24,15 @@ export const metadata: Metadata = {
  * the product is going to do, which is the same kind of thing as the charter
  * and the transparency report beside it — not a preference.
  */
-export default function MmmCommunityPage() {
+export default async function MmmCommunityPage() {
+  const t = await getServerT();
   return (
     <article className="mmm-info-report">
-      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ Info</Link>
+      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmStrip.info', 'Info')}</Link>
       <header className="mmm-info-report-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">Me · Info</p>
-        <h1>Community roadmap</h1>
-        <p>What members have asked for, and what they have voted up. Anyone signed in can add one.</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmDock.tab.me', 'Me')} · {t('mmmStrip.info', 'Info')}</p>
+        <h1>{t('mmmCommunityPage.title', 'Community roadmap')}</h1>
+        <p>{t('mmmCommunityPage.lede', 'What members have asked for, and what they have voted up. Anyone signed in can add one.')}</p>
       </header>
       <CommunityVoteBoard />
     </article>

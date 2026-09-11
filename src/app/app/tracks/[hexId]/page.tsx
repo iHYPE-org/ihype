@@ -59,7 +59,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
   });
 
   // Returned, not thrown — see `MmmMissing`.
-  if (!asset) return <MmmMissing title="No such track" body="It may have been unpublished, or the link may be older than it is. The music module still knows what is playing." />;
+  if (!asset) return <MmmMissing kind="track" />;
 
   const [playCount, latestReport, hypedByMe] = await Promise.all([
     db.mediaListen.count({ where: { mediaId: hexId } }).catch(() => null),

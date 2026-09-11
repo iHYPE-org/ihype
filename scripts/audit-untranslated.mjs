@@ -50,6 +50,22 @@
  * judgement about what the sentence is for — a field label is a control's
  * name, an eyebrow is metadata — and this script has no opinion about that.
  *
+ * ## The figure is a FLOOR, not a count
+ *
+ * The TEXT rule requires the capture to sit on ONE line, so JSX text broken
+ * across lines is invisible to it:
+ *
+ *     <Link …>
+ *       Back to the map
+ *     </Link>
+ *
+ * That string is real, member-facing, and was untranslated in `MmmMissing`
+ * for as long as the component existed — found by reading the file, not by
+ * running this. Anyone quoting the number should say "at least". Teaching the
+ * scanner to span lines is worth doing and will RAISE the count, which is why
+ * it has not been folded into a pass that is also paying the count down: two
+ * moving numbers in one change make both unreadable.
+ *
  * ## The ratchet
  *
  * `--max=N` is the number of hardcoded member-facing strings tolerated. It
@@ -62,7 +78,15 @@ import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { maskComments } from './lib/mask-comments.mjs';
 
-const ROOTS = ['src/app/app', 'src/components'];
+/* `--roots=` overrides the scanned directories. It exists so a test can point
+   the script at a scratch directory instead of writing a probe file into
+   `src/` — which is a tree other suites walk, and a probe that lives there
+   even briefly fails them under parallel test execution. Measured: it broke
+   `wiring-guards.test.ts`. */
+const rootsArg = process.argv.find((arg) => arg.startsWith('--roots='));
+const ROOTS = rootsArg
+  ? rootsArg.slice('--roots='.length).split(',').filter(Boolean)
+  : ['src/app/app', 'src/components'];
 const SKIP_DIRS = new Set(['admin', '__tests__', 'ds']);
 /* Tests, and the admin console wherever it lives. `AdminAdsClient` sits in
    `src/components/` rather than `src/components/admin/`, and the console is
@@ -110,6 +134,10 @@ function isProse(raw) {
   if (/^[a-z0-9]+(-[a-z0-9]+)+$/.test(text)) return false; // kebab-case token
   if (/^[a-z0-9]+(_[a-z0-9]+)+$/.test(text)) return false; // snake_case token
   if (/^(https?:)?\/\//.test(text) || text.startsWith('/')) return false;  // URL or path
+  /* A bare domain is a brand constant, not prose. `ihype.org` is the ONLY
+     domain this product may name (CLAUDE.md), so flagging it would invite
+     exactly the change that rule forbids. */
+  if (/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(text)) return false;
   if (/^[\w.-]+@[\w.-]+$/.test(text)) return false;   // an address
   if (/^\d/.test(text) && !/\s/.test(text)) return false;  // 12px, 2026-09-10
   if (text.includes('${')) return false;              // a template, reported at its parts
@@ -129,6 +157,28 @@ function isProse(raw) {
  * it would have found.
  */
 const CODE_FRAGMENT = /^[=:?]|&&|\|\||===|!==|=>|;\s*$/;
+
+/**
+ * The `>` that opened this capture was part of an operator, so what follows is
+ * source, not JSX text.
+ *
+ * `() => Promise<void>` reads as ">Promise<" to a bracket-only scan: the arrow
+ * supplies the opening `>` and the generic supplies the closing `<`. That put
+ * the word **"Promise"** in the list three times, and `"void; selected:
+ * ReadonlySet"` and `"r._count._all"` beside it — findings that teach a reader
+ * the list is noise, which is the failure this script's own header warns about.
+ *
+ * `CODE_FRAGMENT` could not catch these: it inspects the captured text, and
+ * these captures are innocent-looking words. The operator is in the character
+ * BEFORE the match, so that is where the test belongs.
+ */
+function openedByOperator(line, index) {
+  /* Only `=`. `>=` puts the `=` INSIDE the capture, where `CODE_FRAGMENT`
+     already catches it, and no other operator ends in `>`. Widening this set
+     is a trap: including `<` would suppress every `<>fragment</>` in the
+     codebase, silently, and the script would report a triumphant drop. */
+  return index > 0 && line[index - 1] === '=';
+}
 
 /** True when the match sits inside a `t(...)` call on the same line. */
 function insideTranslation(line, index) {
@@ -172,6 +222,7 @@ for (const root of ROOTS) {
            that only knows angle brackets, and a scanner whose list contains
            "= 0 && index" is one people stop reading. A captured run starting
            with `=` is the tail of `>=`; a boolean operator inside it is code. */
+        if (openedByOperator(line, m.index)) continue;
         if (CODE_FRAGMENT.test(text)) continue;
         if (!isProse(text)) continue;
         if (insideTranslation(line, m.index)) continue;

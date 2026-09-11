@@ -77,10 +77,10 @@ export default async function AdvertiserDashboard() {
 
   return (
     <div className="mmm-advertiser ad-dash">
-      <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ Profiles</Link>
+      <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ {t('mmmStrip.profiles', 'Profiles')}</Link>
       <div className="mmm-advertiser-head">
         <div>
-          <p className="mmm-eyebrow mmm-eyebrow-accent">Advertiser profile</p>
+          <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertiseDashboardPage.eyebrow', 'Advertiser profile')}</p>
           <h1>{t('advertiseDashboardPage.title', 'My Ad Campaigns')}</h1>
           {advertiserAccount && (
             <p className="meta" style={{ marginTop: 4 }}>
@@ -141,7 +141,7 @@ export default async function AdvertiserDashboard() {
       {campaigns.length === 0 && (
         <div className="mmm-empty-state">
           <strong>{t('advertiseDashboardPage.noCampaigns', 'No campaigns yet.')}</strong>
-          <p>Choose an audience, upload a radio-style spot and see the full price before checkout.</p>
+          <p>{t('advertiseDashboardPage.noCampaignsLede', 'Choose an audience, upload a radio-style spot and see the full price before checkout.')}</p>
           <div className="mmm-empty-actions">
             <Link className="mmm-btn-primary" href="/app/me/advertising/new">{t('advertiseDashboardPage.submitFirstAd', 'Build your first campaign')}</Link>
           </div>
