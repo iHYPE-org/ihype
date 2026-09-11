@@ -127,10 +127,18 @@ const SKIP_DIRS = new Set(['admin', '__tests__', 'ds', 'node_modules']);
 const SKIP_FILES = /\.(test|spec)\.tsx?$|(^|\/)Admin[A-Z][^/]*\.tsx?$/;
 
 /**
- * The legal documents are out of scope, not forgotten. Their wording is a
- * standing owner decision (professional translation, or English with a note),
- * and a licence grant naming a content type the product no longer offers is
- * over-broad rather than a false promise to a member.
+ * The legal documents are out of scope, and the reason is narrower than it
+ * looks. A licence grant naming a content type the product no longer offers
+ * is OVER-BROAD, not a false promise to a member: it claims a right nobody is
+ * exercising rather than advertising a capability nobody can use. Narrowing
+ * it changes the substance of a binding document, which is an owner decision
+ * with a lawyer in it, not a copy fix — and this scanner's whole premise is
+ * that a claim can be corrected by rewording it.
+ *
+ * These three files are English on purpose (DESIGN_SYNC row 395); their
+ * furniture is translated and `LegalLanguageNotice` says so in the reader's
+ * own language. That decision is made and is not what this skip is waiting
+ * on.
  */
 const SKIP_PATHS = [/MmmTerms\.tsx$/, /MmmCharter\.tsx$/, /MmmInfoDocument\.tsx$/];
 

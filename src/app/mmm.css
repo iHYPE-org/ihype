@@ -3882,6 +3882,13 @@ input.mmm-row-title { min-height: 44px; }
 
 /* ── ME · Info reports and legal documents ───────────────────────────── */
 .mmm-info-report, .mmm-document { max-width: 920px; margin-inline: auto; padding-bottom: 24px; }
+/* The governing-language notice on the four legal surfaces. Painted from
+   tokens, and deliberately NOT a warning colour: it states which text is
+   authoritative, it is not an error. `--bg-2` with the standard card radius
+   so it reads as part of the document rather than an interruption. */
+.mmm-legal-language { margin: 0 0 22px; padding: 14px 16px; background: var(--bg-2); border-radius: var(--radius-card); border-left: 3px solid var(--ink-3); }
+.mmm-legal-language p { margin: 0; color: var(--ink-2); font-size: 0.9375rem; line-height: 1.6; }
+.mmm-legal-language p + p { margin-top: 6px; }
 .mmm-info-report-head, .mmm-document-head { padding: 28px 0 22px; }
 .mmm-info-report-head h1, .mmm-document-head h1 { margin: 8px 0; font-size: clamp(2.2rem, 7vw, 4.6rem); line-height: 0.94; }
 .mmm-info-report-head > p:last-child, .mmm-document-head > p:last-child, .mmm-info-report-divider > p:last-child { margin: 0; color: var(--ink-2); line-height: 1.6; }

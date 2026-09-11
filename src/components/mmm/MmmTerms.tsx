@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { getServerT } from '@/lib/i18n/server';
+import { LegalLanguageNotice } from './LegalLanguageNotice';
 
 const TERMS = [
   ['Who can use iHYPE', 'You must be 13 or older to use iHYPE. To purchase tickets, you must be 18 or the age of majority in your jurisdiction. By creating an account you agree to these terms.'],
@@ -12,15 +14,27 @@ const TERMS = [
   ['Termination', 'We may suspend or delete your account if you violate these terms. You can delete your account at any time from Settings.'],
 ] as const;
 
-export function MmmTerms() {
+/**
+ * THE TERMS ARE ENGLISH ON PURPOSE; THE WAY IN IS NOT.
+ *
+ * `TERMS` above is binding text and is deliberately not translated — see
+ * `LegalLanguageNotice` for the whole reasoning. What IS translated is the
+ * furniture: how you got here, what this document is called, when it changed
+ * and who to write to. Refusing to translate a heading that reads "Terms of
+ * service" protects nobody and leaves a reader unable to tell what they are
+ * looking at.
+ */
+export async function MmmTerms() {
+  const t = await getServerT();
   return (
     <article className="mmm-document">
-      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ Info</Link>
+      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmLegal.backToInfo', 'Info')}</Link>
       <header className="mmm-document-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">Me · Info · Legal</p>
-        <h1>Terms of service</h1>
-        <p>Last updated June 20, 2026</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmLegal.crumbLegal', 'Me · Info · Legal')}</p>
+        <h1>{t('mmmLegal.termsTitle', 'Terms of service')}</h1>
+        <p>{t('mmmLegal.lastUpdatedJune2026', 'Last updated June 20, 2026')}</p>
       </header>
+      <LegalLanguageNotice />
       <div className="mmm-document-sections">
         {TERMS.map(([title, body], index) => (
           <section className="mmm-document-section" key={title}>
@@ -30,7 +44,7 @@ export function MmmTerms() {
         ))}
         <section className="mmm-document-section">
           <span>10</span>
-          <div><h2>Contact</h2><p>Legal questions: <a href="mailto:admin@ihype.org">admin@ihype.org</a></p></div>
+          <div><h2>{t('mmmLegal.contact', 'Contact')}</h2><p>{t('mmmLegal.legalQuestions', 'Legal questions:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p></div>
         </section>
       </div>
     </article>
