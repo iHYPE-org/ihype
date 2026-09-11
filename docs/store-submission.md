@@ -328,6 +328,76 @@ a word of marketing copy.
 
 ---
 
+## Play API access — the service account
+
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is the only thing between a signed `.aab` and
+a one-click release; without it the workflow builds the bundle, keeps it as an
+artifact and refuses the upload by name. It is optional in the sense that a hand
+upload needs no secret at all.
+
+**The service account is created in Google Cloud Console. Play Console is only
+where it is granted access.** It was once created on Play's own API access page,
+and both this document and the workflow said so long after that stopped being
+true — the page now links out to Cloud instead. Six steps, and the two that get
+skipped are 4 and 5, because skipping either fails exactly like a bad key:
+
+1. **Play Console → Setup → API access.** Link the Google Cloud project (or let
+   the page create one). This is the only step that happens in Play Console.
+2. Follow that page's link into **Google Cloud Console → IAM & Admin → Service
+   accounts → Create service account**. It needs no Cloud IAM role — every
+   permission that matters is granted in step 5, on the Play side.
+3. On that service account: **Keys → Add key → Create new key → JSON**, and
+   download the file. Google issues the private key once and stores no copy.
+4. **Enable the Google Play Android Developer API** on that same Cloud project
+   (APIs & Services → Library). Linking usually enables it; when it does not,
+   every upload answers 403 with a key that is perfectly valid.
+5. **Play Console → Users and permissions → Invite new users.** Paste the
+   service account's `…@….iam.gserviceaccount.com` address and give it
+   **Release manager** on iHYPE (account-level Admin also works and is more than
+   this needs). A service account with no invitation is not an error anywhere in
+   Cloud — it simply cannot see the app.
+6. Paste the **whole JSON file, verbatim**, as the repository secret
+   `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` (Settings → Secrets and variables →
+   Actions → **repository** secret, not an environment one). The workflow hands
+   it to the upload action as plain text, so its newlines and braces are
+   expected; do not flatten, re-indent or base64 it.
+
+**None of this costs anything, and it is worth being sure before paying for
+something.** The Play registration fee is one-time ($25) and was paid when the
+developer account was created. A Cloud project, a service account and a JSON key
+are free, and the Google Play Android Developer API is free to enable and call —
+it is quota-limited, not metered. If Cloud Console asks for a payment method at
+any point here, that is its generic account-activation prompt rather than a
+charge for this API, and **nothing in this section is worth paying to unlock**:
+the hand upload below reaches exactly the same Internal testing track with no
+Cloud project, no service account and no billing account at all. Google for
+Nonprofits is a different programme entirely (free Workspace and Ad Grants) and
+gates none of this — do not let its approval hold up a release.
+
+**That JSON file is a credential.** It goes into the GitHub secret and nowhere
+else — never into this repository, a commit, a log or a chat. If it leaks,
+delete the key in Cloud Console (the service account survives; only the key
+dies) and make a new one.
+
+**Give it time before believing a failure.** A freshly invited service account
+commonly answers 401 or 403 for a few minutes, and Google documents up to 24
+hours. A first failure right after setup is the likeliest thing to send someone
+re-doing steps that were already correct.
+
+**How to know whether the secret is set**, since nothing in this repository can
+read it: dispatch the workflow with `publish=true`. The Android job's first step
+names the missing secret and stops before building. That is how run 308
+(2026-09-09) reported it unset — the whole run failed on that one line, with
+every other Android signing secret present.
+
+The first upload of a brand-new app has to go through the Play Console UI before
+the API will accept one. **That is already behind us**: a bundle reached Internal
+testing on 2026-09-08, which is where `assetlinks.json`'s three fingerprints came
+from. `versionCode` is `run_number × 100 + run_attempt`, so every dispatch — a
+re-run of a failed one included — outranks the code Play already holds.
+
+---
+
 ## Order of operations
 
 0. **Push should work before you submit, and it is the only remaining item that
@@ -376,5 +446,7 @@ build run 307 (2026-09-09, off `main`) produced a signed `.ipa` and a signed
 `publish=false`. `npm run check:app-links` passes against production for both
 platforms. A build has been on TestFlight since 2026-09-05. To publish, dispatch
 the workflow with `publish=true` — iOS goes to TestFlight and Android to Play
-from the one run. `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` is still unset and only
-automates the Play half; a hand upload needs no secret at all.
+from the one run. The Play half additionally needs
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` (see "Play API access" above, and note that
+it reports its own absence rather than failing obscurely); a hand upload of the
+`.aab` needs no secret at all.
