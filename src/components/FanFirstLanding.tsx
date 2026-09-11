@@ -147,13 +147,16 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
             door, so they live here now. A signed-in member reaches the same
             destinations through ME. */}
         <footer aria-label={t('fanFirstLanding.footerLabel', 'Site information')} className="fan-entry-legal">
-          <Link href="/info">{t('fanFirstLanding.infoLegal', 'Info & legal')}</Link>
-          {/* TRANSPARENCY GETS ITS OWN LINK, not just a tab inside "Info &
-              legal". Who runs iHYPE — legal name, tax status, EIN, registered
-              address — is published there, and a funder or a reviewer asked to
-              find it should not have to guess which of six tabs behind a
-              general word holds it. `/info` opens on Trust & Safety. */}
-          <Link href="/info?tab=transparency">{t('fanFirstLanding.transparency', 'Transparency')}</Link>
+          {/* ONE LINK INTO /info, AND IT IS THE 501(c)(3) CLAIM (owner, with a
+              screenshot: "Remove transparency and info & legal now that A
+              501c3 link has all that"). A separate "Info & legal" and
+              "Transparency" pair sat above it pointing at the same hub, so the
+              row read as three doors into one room.
+              Nothing became unreachable: the claim lands on the transparency
+              tab, and `/info`'s own tab strip carries Trust & Safety, Privacy,
+              Terms, the Charter and DMCA from there. Consent does not depend on
+              this row either — signup links Terms and Privacy directly, and so
+              does the cookie banner. */}
           <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
           <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
           {/* "501(c)(3)" is a US tax designation and `ihype.org` is the one
