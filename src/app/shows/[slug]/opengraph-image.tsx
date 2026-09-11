@@ -50,6 +50,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {(date || show?.isRadioShow) && (
             <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+              {/* retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature. */}
               {show?.isRadioShow ? t('showsSlugOpengraphImage.radioShow', 'Radio Show') : date}
             </div>
           )}

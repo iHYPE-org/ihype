@@ -90,7 +90,16 @@ export async function TransparencyPanel() {
               icon: '◉',
               c: 'var(--role-venue)',
               head: t('transparencyPage.reasonRadioHead', 'Radio'),
-              body: t('transparencyPage.reasonRadioBody', 'Live and recorded radio shows are free for all hosts on the platform. There is no tier that unlocks hosting; every DJ and promoter gets the same tools.'),
+              /* This said "Live and recorded radio shows are free for all
+                 hosts … every DJ and promoter gets the same tools", on the
+                 page whose whole subject is telling the truth about the
+                 money (2026-09-11). It named the DJ role, deleted from the
+                 product on 2026-08-06, and hosting, which no member can do:
+                 `isRadioShow` is read in eight places and written by
+                 nothing. The claim underneath — no tier, no paid placement —
+                 is true of the station that does exist, so it is made about
+                 that. */
+              body: t('transparencyPage.reasonStationBody', 'The station is free to listen to and free to be played on. There is no tier that buys an artist more airtime, and no placement for sale — the rotation is drawn from what members have uploaded.'),
             },
             {
               icon: '♡',

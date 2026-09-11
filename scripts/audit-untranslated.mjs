@@ -94,6 +94,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { maskComments } from './lib/mask-comments.mjs';
+import { exemptLines } from './lib/exempt-lines.mjs';
 
 /* `--roots=` overrides the scanned directories. It exists so a test can point
    the script at a scratch directory instead of writing a probe file into
@@ -231,27 +232,10 @@ for (const root of ROOTS) {
        the marker has no such edge: a block comment ends where its closing
        delimiter says it does. */
     const rawLines = source.split('\n');
-    const exemptLines = new Set();
-    rawLines.forEach((line, i) => {
-      if (!EXEMPT.test(line)) return;
-      exemptLines.add(i);
-      /* Find where this comment ends. A run of line comments ends at the
-         first line that is not one — a two-line `//` reason is ordinary, and
-         treating only the marker's own line as the comment made the SECOND
-         line of the reason look like the code being excused. A block comment
-         ends at its closing delimiter. */
-      let end = i;
-      if (/^\s*\/\//.test(line)) {
-        while (end + 1 < rawLines.length && /^\s*\/\//.test(rawLines[end + 1])) end += 1;
-      } else {
-        while (end < rawLines.length && !rawLines[end].includes('*/')) end += 1;
-      }
-      // …then the next line carrying anything at all is what it excuses.
-      let next = end + 1;
-      while (next < rawLines.length && rawLines[next].trim() === '') next += 1;
-      exemptLines.add(next);
-    });
-    const exempt = (index) => exemptLines.has(index);
+    /* This rule was wrong twice on the way in and now lives in
+       `scripts/lib/exempt-lines.mjs`, because a second scanner rewrote it by
+       hand and reproduced the first bug immediately. */
+    const exempt = exemptLines(source, EXEMPT);
     const rel = relative(process.cwd(), file);
 
     lines.forEach((line, i) => {

@@ -43,10 +43,19 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   features: [
     { title: t('forVenuesPage.feature1Title', 'Demand radar'), body: t('forVenuesPage.feature1Body', 'See which artists your city is hyping before you commit a date.') },
     { title: t('forVenuesPage.feature2Title', 'Booking inbox'), body: t('forVenuesPage.feature2Body', 'Every artist and promoter request lands in one Pending/Accepted/Declined view.') },
-    { title: t('forVenuesPage.feature3Title', 'QR door check-in'), body: t('forVenuesPage.feature3Body', 'Scan tickets straight from a phone — no extra hardware or app.') },
-    { title: t('forVenuesPage.feature4Title', 'Fill-rate analytics'), body: t('forVenuesPage.feature4Body', 'Track sellout pace, average fill, and settlement history per show.') },
+    /* The door line undersold a capability that had since been built, and the
+       last two overstated ones that had not (2026-09-11). "AI page, built for
+       you — the AI Page Creator drafts your venue page in one pass" names a
+       generator deleted on 2026-08-11 and finished off on 2026-09-01 by owner
+       instruction; only `/api/page-builder/ad-recs` survives, so a venue
+       following that sentence finds a plain form. "Sellout pace" and
+       "settlement history per show" overstate a dashboard that reports
+       tickets sold against capacity, this month's earnings and the next
+       payout — so the claim is trimmed to what it really shows. */
+    { title: t('forVenuesPage.featureDoorTitle', 'A door that works with no signal'), body: t('forVenuesPage.featureDoorBody', "Scan tickets with the camera on a phone — no hardware, no app. Download the night's guest list first and it keeps admitting people when the basement has no bars, then syncs when it comes back.") },
+    { title: t('forVenuesPage.featureFillTitle', 'Fill and takings per show'), body: t('forVenuesPage.featureFillBody', 'Tickets sold against capacity on every date, what you have earned this month, and when the next payout lands.') },
     { title: t('forVenuesPage.feature5Title', 'Event creator'), body: t('forVenuesPage.feature5Body', 'Publish a show with price, capacity, and lineup split in minutes.') },
-    { title: t('forVenuesPage.feature6Title', 'AI page, built for you'), body: t('forVenuesPage.feature6Body', "Paste your room's details and a few photos — the AI Page Creator drafts your venue page in one pass.") },
+    { title: t('forVenuesPage.featureAsksTitle', 'Fans asking for acts by name'), body: t('forVenuesPage.featureAsksBody', 'Fans request the artists they want in your room. Each ask is weighed by how recent it is, how many separate people made it and how close they live — including acts you have never heard of.') },
   ],
   fanFitBody: (
     <>{t('forVenuesPage.fanFitLead', 'None of this works without fans walking through the door. iHYPE’s whole job is getting the ones who already hype your shows to actually show up and buy —')} <a href="/for-fans">{t('forVenuesPage.fanFitLink', 'see how fans fit in →')}</a></>

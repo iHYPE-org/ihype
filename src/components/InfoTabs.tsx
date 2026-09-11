@@ -145,6 +145,11 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
         <h2>{t('legalPage.terms.referralsTitle', 'Promoter referrals')}</h2>
         <p>{t('legalPage.terms.referralsBody', 'Fans and DJs may share a HYPE Link to any event. If a ticket is purchased through your link, you receive your proportional share of the 10% promoter pool. Manipulating referral tracking (e.g. purchasing through your own link) is prohibited and will result in account termination.')}</p>
         <h2>{t('legalPage.terms.contentTitle', 'Content')}</h2>
+        {/* retired-claim-exempt: Terms of Service. Naming a content type
+            the product no longer offers makes the licence grant over-broad,
+            not false, and the wording of the legal documents is a standing
+            owner decision — see MmmTerms/MmmCharter, skipped for the same
+            reason. */}
         <p>{t('legalPage.terms.contentBody', 'You are responsible for content you post (artist pages, radio shows, event listings). You grant iHYPE a non-exclusive license to display this content within the platform. iHYPE does not claim ownership of your music, images, or likeness.')}</p>
         <h2>{t('legalPage.terms.refundsTitle', 'Refunds')}</h2>
         <p>{t('legalPage.terms.refundsBody', 'Ticket prices are final. Refunds are issued only if a show is cancelled by the organizer; refund requests for cancelled shows must be made within 14 days. There are no refunds for personal reasons.')}</p>

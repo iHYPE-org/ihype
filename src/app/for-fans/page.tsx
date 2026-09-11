@@ -35,18 +35,26 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
     t('forFansPage.checklist1', 'Every hype is a real demand signal artists and venues see'),
     t('forFansPage.checklist2', 'Buy tickets direct — face value, no service fees'),
     t('forFansPage.checklist3', 'Share a HYPE Link and earn from the 10% promoter pool'),
-    t('forFansPage.checklist4', "Free radio — every DJ's show, no subscription"),
+    t('forFansPage.checklistStation', 'A free station that plays the artists on here, no subscription'),
     t('forFansPage.checklist5', 'One member, one vote — spend never buys more influence'),
   ],
   featuresEyebrow: t('forFansPage.featuresEyebrow', 'What you get'),
   featuresHeadline: t('forFansPage.featuresHeadline', 'Everything a fan actually wants.'),
+  /* Three of these six were not true (2026-09-11). "Live radio — any DJ's
+     live or recorded show" survives from a product that had a DJ role
+     (deleted 2026-08-06) and show creation (retired): `isRadioShow` is read
+     in eight places and written by nothing, so no such show can exist. The
+     AI page generator was deleted by owner instruction on 2026-09-01. And
+     HYPE is not "a weekly flame budget" — it is a 24-hour window per act
+     (`HYPE_WINDOW_MS`), which is a better story anyway: it is what makes one
+     member one vote. Keys renamed where the meaning changed. */
   features: [
-    { title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.feature1Body', 'A weekly flame budget — back the artists you believe in before anyone else does.') },
+    { title: t('forFansPage.feature1Title', 'HYPE mechanic'), body: t('forFansPage.featureHypeBodyWindow', 'Back an act and it counts as a real demand signal. One hype per act per day, so the loudest wallet never outvotes the room.') },
     { title: t('forFansPage.feature2Title', 'Direct ticketing'), body: t('forFansPage.feature2Body', 'Face value, QR wallet, zero scalper markup — buy straight from the artist.') },
     { title: t('forFansPage.feature3Title', 'Promoter earnings'), body: t('forFansPage.feature3Body', 'Share any show. Earn your proportional cut of the 10% promoter pool.') },
-    { title: t('forFansPage.feature4Title', 'Live radio'), body: t('forFansPage.feature4Body', "Tune into any DJ's live or recorded show, free — no paywall, ever.") },
+    { title: t('forFansPage.featureStationTitle', 'A station that never stops'), body: t('forFansPage.featureStationBody', 'Always-on audio drawn from the artists on here, free and with no paywall — ad breaks between songs, never cutting one short.') },
     { title: t('forFansPage.feature5Title', 'Seeds discovery'), body: t('forFansPage.feature5Body', 'A taste-matched swipe deck that surfaces artists before they blow up.') },
-    { title: t('forFansPage.feature6Title', 'Your own page'), body: t('forFansPage.feature6Body', 'Fan-promoters get an AI-built page too — show off what you’ve discovered.') },
+    { title: t('forFansPage.featureAskTitle', 'Ask a venue to book them'), body: t('forFansPage.featureAskBody', 'Name an act and a room near you. Enough asks and the venue sees it on their booking radar — and you get told if they book the show.') },
   ],
   };
 }

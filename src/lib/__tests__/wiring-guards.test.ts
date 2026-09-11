@@ -996,7 +996,14 @@ describe('every ad impression carries the server\'s own receipt', () => {
         if (entry.isDirectory()) { walk(rel); continue; }
         if (!/\.(ts|tsx)$/.test(entry.name)) continue;
         if (rel.includes('__tests__')) continue;
-        if (readFileSync(rel, 'utf8').includes(IMPRESSION)) found.push(rel);
+        /* Collected from STRIPPED source, like everything downstream reads.
+           Collecting from raw meant a file that merely MENTIONS the route in
+           a comment joined the list, and then `indexOf` below returned -1 —
+           at which point `slice(-1)` is the file's last character and the
+           guard reported "posts an impression without a playToken" about a
+           newline. Found when a comment explaining sponsorship billing named
+           the route; the fourth time a scanner here has read prose as code. */
+        if (code(rel).includes(IMPRESSION)) found.push(rel);
       }
     };
     roots.forEach(walk);
@@ -1009,7 +1016,11 @@ describe('every ad impression carries the server\'s own receipt', () => {
 
     for (const file of files) {
       const source = code(file);
-      const body = source.slice(source.indexOf(IMPRESSION));
+      const at = source.indexOf(IMPRESSION);
+      /* Belt and braces on the same trap: a -1 here must fail loudly rather
+         than slice the last character and assert about it. */
+      expect(at, `${file} was collected but does not call ${IMPRESSION}`).toBeGreaterThanOrEqual(0);
+      const body = source.slice(at);
       expect(body, `${file} posts an impression without a playToken`).toContain('playToken');
       /* `adId:` in the body is the old shape. The route refuses it outright,
          so a caller still writing it is delivering nothing. */

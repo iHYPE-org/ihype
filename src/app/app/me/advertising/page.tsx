@@ -36,10 +36,26 @@ export default async function AdvertiserDashboard() {
 
   const totalImpressions = campaigns.reduce((s, c) => s + c.impressions, 0);
   const totalSpentCents = campaigns.reduce((s, c) => s + c.spentCents, 0);
-  const totalBudgetCents = campaigns.reduce((s, c) => s + c.budgetCents, 0);
+  /* THE SUMMARY TILES ARE METERED TOO, AND THAT WAS MISSED (2026-09-11).
+     The per-campaign rows below were gated on `pricingModel` when advertising
+     moved to monthly sponsorship; these four, on the same page and a hundred
+     lines above them, were not. `spentCents` is never incremented for a
+     SPONSORSHIP (`/api/ads/impression`), so a sponsor who had paid $300 and
+     was on air read "Spend $0.00", "Effective CPM $0.00" — a rate in the one
+     unit this product stopped selling in — and "$300.00 budget remaining" on
+     the last day of a twelve-month term.
+
+     So every metered tile is shown only when a metered campaign exists.
+     Nothing is invented for a sponsor: what they paid is what they paid, and
+     what they would get back is the same `sponsorshipRefundableCents` the
+     settlement will actually pay. */
+  const hasMetered = campaigns.some((c) => c.pricingModel === 'METERED');
+  const totalPaidCents = campaigns.reduce((s, c) => s + (c.authorizedAt ? c.budgetCents : 0), 0);
+  const totalRefundableCents = campaigns.reduce((s, c) => s + (c.settledAt ? 0 : refundableNow(c)), 0);
   // Effective CPM — real cost-per-1000-impressions derived from actual spend,
   // not a fabricated rate. Undefined (rendered as "—") until there's at least
-  // one impression to divide by.
+  // one impression to divide by. Metered only: a sponsorship spends nothing,
+  // so its "CPM" is always $0.00, which is a fabricated rate by any other name.
   const effectiveCpmCents = totalImpressions > 0 ? (totalSpentCents / totalImpressions) * 1000 : null;
   const activeCampaigns = campaigns.filter((c) => c.status === 'APPROVED').length;
   // Money the advertiser has actually been sent back, from the settlement
@@ -100,8 +116,8 @@ export default async function AdvertiserDashboard() {
       {campaigns.length > 0 && (
         <div className="ad-dash-stats">
           <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.spend', 'Spend')}</div>
-            <div className="ad-dash-stat-val" style={{ color: 'var(--accent-text)' }}>${(totalSpentCents / 100).toFixed(2)}</div>
+            <div className="ad-dash-stat-label">{hasMetered ? t('advertiseDashboardPage.spend', 'Spend') : t('advertiseDashboardPage.paidTotal', 'Paid')}</div>
+            <div className="ad-dash-stat-val" style={{ color: 'var(--accent-text)' }}>${((hasMetered ? totalSpentCents : totalPaidCents) / 100).toFixed(2)}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.acrossCampaigns', 'Across')} {campaigns.length} {campaigns.length === 1 ? t('advertiseDashboardPage.campaignSingular', 'campaign') : t('advertiseDashboardPage.campaignPlural', 'campaigns')}</div>
           </div>
           <div className="ad-dash-stat-card">
@@ -109,32 +125,48 @@ export default async function AdvertiserDashboard() {
             <div className="ad-dash-stat-val">{totalImpressions.toLocaleString()}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.lifetime', 'Lifetime')}</div>
           </div>
-          <div className="ad-dash-stat-card">
-            <div className="ad-dash-stat-label">{t('advertiseDashboardPage.effectiveCpm', 'Effective CPM')}</div>
-            <div className="ad-dash-stat-val">{effectiveCpmCents !== null ? `$${(effectiveCpmCents / 100).toFixed(2)}` : '—'}</div>
-            <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.effectiveCpmSub', 'Real spend ÷ impressions')}</div>
-          </div>
+          {hasMetered && (
+            <div className="ad-dash-stat-card">
+              {/* retired-claim-exempt: CPM is retired as a SALES unit, not as a
+                  fact about campaigns sold before 2026-09-10. This whole card
+                  is behind `hasMetered`, so only an advertiser who really has
+                  a metered campaign ever sees it. */}
+              <div className="ad-dash-stat-label">{t('advertiseDashboardPage.effectiveCpm', 'Effective CPM')}</div>
+              <div className="ad-dash-stat-val">{effectiveCpmCents !== null ? `$${(effectiveCpmCents / 100).toFixed(2)}` : '—'}</div>
+              <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.effectiveCpmSub', 'Real spend ÷ impressions')}</div>
+            </div>
+          )}
           <div className="ad-dash-stat-card">
             <div className="ad-dash-stat-label">{t('advertiseDashboardPage.activeCampaigns', 'Active Campaigns')}</div>
             <div className="ad-dash-stat-val">{activeCampaigns}</div>
-            <div className="ad-dash-stat-sub">${(totalBudgetCents / 100 - totalSpentCents / 100).toFixed(2)} {t('advertiseDashboardPage.budgetRemaining', 'budget remaining')}</div>
+            <div className="ad-dash-stat-sub">${(totalRefundableCents / 100).toFixed(2)} {hasMetered ? t('advertiseDashboardPage.budgetRemaining', 'budget remaining') : t('advertiseDashboardPage.refundableNow', 'refunded if you cancel now')}</div>
           </div>
           {totalRefundedCents > 0 && (
             <div className="ad-dash-stat-card">
               <div className="ad-dash-stat-label">{t('advertiseDashboardPage.refunded', 'Refunded')}</div>
               <div className="ad-dash-stat-val">{dollars(totalRefundedCents)}</div>
-              <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.refundedSub', 'Unspent budget sent back to your card')}</div>
+              <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.refundedSubAny', 'Sent back to the card you paid with')}</div>
             </div>
           )}
         </div>
       )}
 
+      {/* The standing billing paragraph was metered too: "whatever was not
+          spent is refunded" is not how a sponsorship settles, and a sponsor
+          reading it would expect their whole $300 back on the last day of the
+          term, since nothing is ever spent. A new key, not a reworded one —
+          eleven dictionaries hold the metered sentence. */}
       {campaigns.length > 0 && (
         <p className="meta ad-dash-refund-policy">
-          {t(
-            'advertiseDashboardPage.refundPolicy',
-            `How billing works: a campaign is charged in full when you pay at checkout. When its run ends, or you cancel it, whatever was not spent is refunded to the card you paid with — usually on your statement within ${REFUND_WINDOW_BUSINESS_DAYS} business days — and the amount and Stripe refund reference appear on the campaign below. iHYPE absorbs the card-processing fee; nothing is deducted from the refund.`,
-          )}
+          {hasMetered
+            ? t(
+                'advertiseDashboardPage.refundPolicy',
+                `How billing works: a campaign is charged in full when you pay at checkout. When its run ends, or you cancel it, whatever was not spent is refunded to the card you paid with — usually on your statement within ${REFUND_WINDOW_BUSINESS_DAYS} business days — and the amount and Stripe refund reference appear on the campaign below. iHYPE absorbs the card-processing fee; nothing is deducted from the refund.`,
+              )
+            : t(
+                'advertiseDashboardPage.refundPolicySponsorship',
+                `How billing works: a sponsorship is charged in full when you pay at checkout, and it buys a term rather than a number of plays — it never goes dark part-way for running out. Cancel early and the days you have not used are refunded to the card you paid with, usually on your statement within ${REFUND_WINDOW_BUSINESS_DAYS} business days, with the amount and Stripe refund reference shown on the campaign below. iHYPE absorbs the card-processing fee; nothing is deducted from the refund.`,
+              )}
         </p>
       )}
 
@@ -251,7 +283,8 @@ export default async function AdvertiserDashboard() {
                   campaignId={campaign.id}
                   status={campaign.status}
                   charged={Boolean(campaign.authorizedAt) && !campaign.settledAt}
-                  unspentCents={refundableNow(campaign)}
+                  refundableCents={refundableNow(campaign)}
+                  pricingModel={campaign.pricingModel}
                 />
               </div>
             )}

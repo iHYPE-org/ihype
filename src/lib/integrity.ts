@@ -41,6 +41,13 @@ export const feedHeuristicsLedger = [
     userImpact: 'Teams can compare behavior across versions and explain when ranking rules change.'
   },
   {
+    /* retired-claim-exempt-file: this ledger's job is to disclose the ranking code
+       that runs, and `radioBoost` below is real and applied. What died is the
+       INPUT — nothing writes `Show.isRadioShow`, so the rule cannot fire.
+       Deleting the disclosure while the branch still scores would make this
+       page less honest, not more; the branch itself is dead code and is
+       tracked separately. (The chip's 📻 breaks the no-emoji rule and is
+       unreachable for the same reason.) */
     id: 'RADIO-001',
     title: 'Radio Show Boost',
     summary: 'Curated radio shows receive a small visibility lift when live to distinguish them from standard streams.',

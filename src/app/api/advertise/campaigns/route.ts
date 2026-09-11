@@ -346,7 +346,7 @@ export async function PATCH(request: NextRequest) {
     let settlement: string | undefined;
     if (ad.stripePaymentIntentId && !ad.settledAt) {
       const { plan, refundId } = await settleAdCampaign(ad.stripePaymentIntentId, ad);
-      settlement = describeSettlement(plan, false, refundId);
+      settlement = describeSettlement(plan, false, refundId, ad.pricingModel);
       updated = await db.ad.update({
         where: { id },
         data: { status: 'CANCELLED', pausedAt: null, settledAt: new Date(), ...settlementRecord(plan, refundId) },

@@ -29,6 +29,11 @@ type RawVetting = { cleared?: boolean; requiresManualReview?: boolean; reasoning
  * upload behaves exactly as before. A flagged track is still uploaded for the
  * artist's own use — only the free-use flag is withheld.
  */
+/* retired-claim-exempt-file: the system prompt below is context for a model,
+   not copy shown to anyone. What it is really asking — is this the
+   uploader's own cleared work — does not change with the product's
+   vocabulary, and rewording a prompt that has been calibrated against real
+   uploads buys nothing. */
 export async function vetFreeUseSample(data: SampleUploadData): Promise<SampleVettingResult> {
   const result = await runAIJson<RawVetting>({
     system: `You are the automated content-vetting officer for iHYPE.org's free-use radio crate — audio that DJs may rebroadcast in radio shows, so it must be the uploader's own cleared work.
