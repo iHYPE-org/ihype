@@ -69,6 +69,16 @@ export async function OrganizationFacts() {
             <a href={`mailto:${org.contactEmail}`}>{org.contactEmail}</a>
           </dd>
         </div>
+        {org.phone ? (
+          <div className="org-facts-row">
+            <dt>{t('orgFacts.phone', 'Phone')}</dt>
+            <dd>
+              {/* tel: needs the digits with no punctuation; the label keeps the
+                  form a reader expects. */}
+              <a href={`tel:${org.phone.replace(/[^\d+]/g, '')}`}>{org.phone}</a>
+            </dd>
+          </div>
+        ) : null}
         <div className="org-facts-row">
           <dt>{t('orgFacts.website', 'Website')}</dt>
           <dd>
