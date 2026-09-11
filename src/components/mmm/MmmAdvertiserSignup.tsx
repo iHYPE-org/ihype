@@ -2,6 +2,8 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
+import type { Translate } from '@/lib/mmm-shell-labels';
 
 /**
  * Turns an existing member into an advertiser.
@@ -17,6 +19,9 @@ import { useState } from 'react';
  * who this is.
  */
 
+/* The six `AdvertiserCategory` values, paired with their English label once.
+   Translated at the draw rather than by a key on the entry, because
+   `extract-i18n-keys.mjs` only sees a literal `t('key', 'English')`. */
 const CATEGORIES = [
   { value: 'LABEL', label: 'Label' },
   { value: 'VENUE_PROMOTER', label: 'Venue or promoter' },
@@ -26,7 +31,20 @@ const CATEGORIES = [
   { value: 'TOUR', label: 'Touring' },
 ] as const;
 
+function categoryLabel(t: Translate, label: string): string {
+  switch (label) {
+    case 'Label': return t('mmmAdvertiserSignup.catLabel', 'Label');
+    case 'Venue or promoter': return t('mmmAdvertiserSignup.catVenue', 'Venue or promoter');
+    case 'Gear': return t('mmmAdvertiserSignup.catGear', 'Gear');
+    case 'Ticketing': return t('mmmAdvertiserSignup.catTicketing', 'Ticketing');
+    case 'Merch': return t('mmmAdvertiserSignup.catMerch', 'Merch');
+    case 'Touring': return t('mmmAdvertiserSignup.catTouring', 'Touring');
+    default: return label;
+  }
+}
+
 export function MmmAdvertiserSignup() {
+  const { t } = useI18n();
   const router = useRouter();
   const [companyName, setCompanyName] = useState('');
   const [contactName, setContactName] = useState('');
@@ -57,7 +75,7 @@ export function MmmAdvertiserSignup() {
         /* The server's own sentence where it sent one — "already has an
            advertiser profile" and "temporarily paused" are both things a member
            can act on, and a generic failure would hide them. */
-        setError(payload.error ?? 'That could not be saved right now.');
+        setError(payload.error ?? t('mmmAdvertiserSignup.saveFailed', 'That could not be saved right now.'));
         return;
       }
       /* A hard navigation, not router.push: the dashboard is a server component
@@ -66,7 +84,7 @@ export function MmmAdvertiserSignup() {
       window.location.assign('/app/me/advertising');
       router.refresh();
     } catch {
-      setError('That could not be saved right now.');
+      setError(t('mmmAdvertiserSignup.saveFailed', 'That could not be saved right now.'));
     } finally {
       setBusy(false);
     }
@@ -75,7 +93,7 @@ export function MmmAdvertiserSignup() {
   return (
     <form className="adv-signup" onSubmit={submit}>
       <label className="adv-field">
-        <span className="adv-label">Company or brand name</span>
+        <span className="adv-label">{t('mmmAdvertiserSignup.company', 'Company or brand name')}</span>
         <input
           autoComplete="organization"
           className="adv-input"
@@ -86,7 +104,7 @@ export function MmmAdvertiserSignup() {
         />
       </label>
       <label className="adv-field">
-        <span className="adv-label">Contact name <span className="adv-optional">optional</span></span>
+        <span className="adv-label">{t('mmmAdvertiserSignup.contactName', 'Contact name')} <span className="adv-optional">{t('mmmAdvertiserSignup.optional', 'optional')}</span></span>
         <input
           autoComplete="name"
           className="adv-input"
@@ -96,7 +114,7 @@ export function MmmAdvertiserSignup() {
         />
       </label>
       <label className="adv-field">
-        <span className="adv-label">Website <span className="adv-optional">optional</span></span>
+        <span className="adv-label">{t('mmmAdvertiserSignup.website', 'Website')} <span className="adv-optional">{t('mmmAdvertiserSignup.optional', 'optional')}</span></span>
         <input
           autoComplete="url"
           className="adv-input"
@@ -107,16 +125,16 @@ export function MmmAdvertiserSignup() {
         />
       </label>
       <label className="adv-field">
-        <span className="adv-label">Category <span className="adv-optional">optional</span></span>
+        <span className="adv-label">{t('mmmAdvertiserSignup.category', 'Category')} <span className="adv-optional">{t('mmmAdvertiserSignup.optional', 'optional')}</span></span>
         <select className="adv-input" onChange={(event) => setCategory(event.target.value)} value={category}>
-          <option value="">Not sure yet</option>
+          <option value="">{t('mmmAdvertiserSignup.notSure', 'Not sure yet')}</option>
           {CATEGORIES.map((entry) => (
-            <option key={entry.value} value={entry.value}>{entry.label}</option>
+            <option key={entry.value} value={entry.value}>{categoryLabel(t, entry.label)}</option>
           ))}
         </select>
       </label>
       <label className="adv-field">
-        <span className="adv-label">What you want to reach listeners with <span className="adv-optional">optional</span></span>
+        <span className="adv-label">{t('mmmAdvertiserSignup.pitch', 'What you want to reach listeners with')} <span className="adv-optional">{t('mmmAdvertiserSignup.optional', 'optional')}</span></span>
         <textarea
           className="adv-input adv-textarea"
           maxLength={1000}
@@ -130,7 +148,7 @@ export function MmmAdvertiserSignup() {
 
       <div className="adv-actions">
         <button className="mmm-btn-primary" disabled={busy || companyName.trim().length < 2} type="submit">
-          {busy ? 'Creating…' : 'Create advertiser profile'}
+          {busy ? t('mmmAdvertiserSignup.creating', 'Creating…') : t('mmmAdvertiserSignup.create', 'Create advertiser profile')}
         </button>
       </div>
 
