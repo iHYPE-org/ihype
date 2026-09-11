@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -100,7 +100,7 @@ describe('the retired-claims audit', () => {
   it('every table entry says when and what instead, not just what is banned', () => {
     /* An entry that only forbids a phrase teaches the next reader nothing
        and is the first thing deleted when it becomes inconvenient. */
-    const source = execFileSync('cat', ['scripts/audit-retired-claims.mjs'], { encoding: 'utf8' });
+    const source = readFileSync('scripts/audit-retired-claims.mjs', 'utf8');
     const entries = source.split('pattern:').slice(1);
     expect(entries.length).toBeGreaterThanOrEqual(6);
     for (const entry of entries) {
