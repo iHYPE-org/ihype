@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { postJson } from '@/lib/api-client';
 import {
@@ -12,129 +12,29 @@ import { useI18n } from '@/components/I18nProvider';
 import { useFormDraft } from '@/lib/use-form-draft';
 import { openExternalUrl } from '@/lib/open-external';
 
-/* ── Types ───────────────────────────────────────────────── */
-type ScanSub = { n: string; k: string; tag: string; copy: string; body: string; gates: [string, string, 'pass' | 'fail'][]; ok: boolean };
+/**
+ * The campaign builder, and nothing else.
+ *
+ * WHAT WAS DELETED AND WHY. This file used to carry a second exported
+ * component, `AdvertisePage`, plus the marketing furniture only it rendered —
+ * a live ticker, an AI-scanner animation, a scan demo, a count-up, four icons
+ * and a queue fixture. **Nothing imported it.** `/advertise` renders
+ * `MmmAdvertiseLanding`, and `/app/me/advertising/new` renders
+ * `MmmCampaignBuilderPage` below; an exhaustive search of `src/`, `e2e/`,
+ * `scripts/` and the JSON turned up no other reference. It was 645 of the
+ * file's 1,034 lines.
+ *
+ * `audit:mounts` could not see it, and that is worth knowing rather than
+ * fixing here: that walk asks whether anything renders a FILE, and this file
+ * is reached — by its other export. A dead export inside a live module is
+ * invisible to it, to TypeScript, and to every other check in this repository.
+ * It was found while looking for the inline-style debt `audit:spacing` points
+ * at, because this was the file at the top of that list — most of which turned
+ * out to be spacing on markup nobody has ever seen.
+ */
 
-export type AdvertisePageStats = {
-  activeCampaigns: number;
-  clearedPct: number | null;
-};
-
-const QUEUE = [
-  { name: 'Velvet Room — Fri all-ages show', kind: 'Venue', color: 'var(--role-venue)', ok: true },
-  { name: 'Maya Reyes — "Sundown" single', kind: 'Artist', color: 'var(--role-fan)', ok: true },
-  { name: 'NorthBeat Pedals — summer sale', kind: '3rd-party · Gear', color: 'var(--color-info)', ok: true },
-  { name: 'Crypto "music NFT" airdrop', kind: 'Flagged · off-topic', color: 'var(--danger-text)', ok: false },
-  { name: 'Loft Sessions — tour dates', kind: 'Promoter', color: 'var(--accent-2)', ok: true },
-  { name: 'Ad samples a charting pop hook', kind: 'Flagged · copyright', color: 'var(--danger-text)', ok: false },
-  { name: 'Press & Fold — merch printing', kind: '3rd-party · Merch', color: 'var(--color-info)', ok: true },
-  { name: 'Energy drink, "as heard on radio"', kind: 'Flagged · non-music', color: 'var(--danger-text)', ok: false },
-  { name: 'Cobalt Hour — EP release', kind: 'Artist', color: 'var(--role-fan)', ok: true },
-  { name: 'Eastside Rehearsal Rooms', kind: '3rd-party · Studio', color: 'var(--color-info)', ok: true },
-];
-
-const SUBS: ScanSub[] = [
-  { n: 'Velvet Room — Fri show', k: 'Venue · Local', tag: 'VENUE EVENT', copy: 'All-ages Friday: three local bands, doors 7pm',
-    body: 'The Velvet Room · 21 Mercer St · $12 at the door · presented by the venue.',
-    gates: [['Verified buyer','Verified venue account','pass'],['Audio relevance','Live event, original copy','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','No songs or name-drops','pass'],['Reputation risk','No misleading claims','pass']], ok: true },
-  { n: 'NorthBeat Pedals', k: '3rd-party · Gear', tag: 'GEAR · 3RD-PARTY', copy: 'Summer pedal sale — 20% off all overdrive',
-    body: 'NorthBeat Pedals · handmade effects for guitarists · ships worldwide.',
-    gates: [['Verified buyer','Verified gear retailer','pass'],['Audio relevance','Instruments & gear','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','Own product, no names','pass'],['Reputation risk','No misleading claims','pass']], ok: true },
-  { n: 'GlowSkin Supplements', k: 'Unverified · retail', tag: 'GENERAL RETAIL', copy: 'Glow from within — 30% off vitamins',
-    body: 'GlowSkin · beauty & wellness gummies · use code GLOW30.',
-    gates: [['Verified buyer','No music link found','fail'],['Audio relevance','General retail product','fail'],['Listener safety','— not evaluated','pass'],['Copyright firewall','— not evaluated','pass'],['Reputation risk','— not evaluated','pass']], ok: false },
-  { n: '"Anthem" promo cut', k: 'Artist · Regional', tag: 'SINGLE PROMO', copy: 'New single — hook from a #1 chart record',
-    body: 'Uses a sampled chorus and drops two major-label artist names for clout.',
-    gates: [['Verified buyer','Verified artist','pass'],['Audio relevance','Music release','pass'],['Listener safety','No flags — clean for all audiences','pass'],['Copyright firewall','Sampled hook + name-drops','fail'],['Reputation risk','— not evaluated','pass']], ok: false },
-];
-
-/* ── Helpers ─────────────────────────────────────────────── */
-function fmt(n: number): string {
-  if (n >= 1e6) return (n / 1e6).toFixed(n >= 1e7 ? 0 : 1) + 'M';
-  if (n >= 1e3) return (n / 1e3).toFixed(n >= 1e4 ? 0 : 1) + 'K';
-  return '' + n;
-}
+/* Money is the one helper the builder needs. `fmt` went with the ticker. */
 function money(n: number): string { return '$' + Math.round(n).toLocaleString('en-US'); }
-
-/* ── Sub-components ──────────────────────────────────────── */
-function CheckIcon() {
-  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
-}
-function CrossIcon() {
-  return <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M8 8l8 8M16 8l-8 8" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/></svg>;
-}
-function PlusIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
-}
-function MinusIcon() {
-  return <svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>;
-}
-
-/* ── Ticker ──────────────────────────────────────────────── */
-function LiveTicker() {
-  const { t } = useI18n();
-  const [rows, setRows] = useState(QUEUE.slice(0, 5).map((q, i) => ({ ...q, id: i })));
-  const [count, setCount] = useState(347);
-  const [clock, setClock] = useState('');
-  const idRef = useRef(5);
-  const qiRef = useRef(5);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const item = QUEUE[qiRef.current % QUEUE.length];
-      qiRef.current++;
-      const id = idRef.current++;
-      setRows(prev => [{ ...item, id }, ...prev].slice(0, 5));
-      setCount(c => c + 1);
-    }, 2600);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    const tick = () => setClock(new Date().toLocaleTimeString('en-US', { hour12: false }));
-    tick();
-    const t = setInterval(tick, 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  return (
-    <aside style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 30px 70px -20px rgba(0,0,0,.7)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '14px 18px', borderBottom: '1px solid var(--hair-70)' }}>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid rgba(var(--role-venue-rgb),.4)', color: 'var(--role-venue)' }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'currentColor', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
-          {t('advertisePage.live', 'Live')}
-        </span>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>{t('advertisePage.vettingQueue', 'Vetting queue')}</span>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.08em' }}>{clock}</span>
-      </div>
-      <div style={{ padding: '8px 8px 12px', display: 'flex', flexDirection: 'column' }}>
-        {rows.map((item) => (
-          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '10px 11px', borderRadius: 9, animation: 'adv-rowIn .5s cubic-bezier(.2,.7,.2,1)' }}>
-            <span style={{
-              width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-              border: `1px solid color-mix(in srgb, ${item.color} 40%, transparent)`,
-              color: item.color,
-            }}>
-              {item.ok ? <CheckIcon /> : <CrossIcon />}
-            </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontSize: '0.9375rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.name}</div>
-              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.08em', color: 'var(--ink-2)', textTransform: 'uppercase', marginTop: 2 }}>{item.kind}</div>
-            </span>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 600, color: item.ok ? 'var(--role-venue)' : 'var(--danger-text)', display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-              {item.ok ? <CheckIcon /> : <CrossIcon />}
-              {item.ok ? t('advertisePage.cleared', 'Cleared') : t('advertisePage.rejected', 'Rejected')}
-            </span>
-          </div>
-        ))}
-      </div>
-      <div style={{ padding: '11px 18px', borderTop: '1px solid var(--hair-70)', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.06em', display: 'flex', justifyContent: 'space-between' }}>
-        <span>{t('advertisePage.reviewedByPrefix', 'Reviewed by')} <b style={{ color: 'var(--ink-2)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</b> · {t('advertisePage.automated', 'automated')}</span>
-        <span><b style={{ color: 'var(--ink-2)' }}>{count.toLocaleString()}</b> {t('advertisePage.today', 'today')}</span>
-      </div>
-    </aside>
-  );
-}
 
 /* ── Coverage Builder ────────────────────────────────────── */
 type SubmitState =
@@ -447,273 +347,6 @@ function CoverageBuilder() {
   );
 }
 
-/* ── Scanner ─────────────────────────────────────────────── */
-function AIScanner() {
-  const { t } = useI18n();
-  const [active, setActive] = useState(0);
-  const [gateState, setGateState] = useState<('idle' | 'pass' | 'fail')[]>([]);
-  const [verdict, setVerdict] = useState<'none' | 'pass' | 'fail'>('none');
-  const [scanning, setScanning] = useState(false);
-  const tokenRef = useRef(0);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const didScan = useRef(false);
-
-  const runScan = useCallback((idx: number) => {
-    const token = ++tokenRef.current;
-    setActive(idx);
-    setGateState([]);
-    setVerdict('none');
-    setScanning(true);
-
-    const sub = SUBS[idx];
-    sub.gates.forEach((g, i) => {
-      setTimeout(() => {
-        if (token !== tokenRef.current) return;
-        setGateState(prev => {
-          const next = [...prev];
-          next[i] = g[2] === 'pass' ? 'pass' : 'fail';
-          return next;
-        });
-        if (i === sub.gates.length - 1) {
-          setTimeout(() => {
-            if (token !== tokenRef.current) return;
-            setVerdict(sub.ok ? 'pass' : 'fail');
-            setScanning(false);
-          }, 380);
-        }
-      }, 650 + i * 620);
-    });
-  }, []);
-
-  useEffect(() => {
-    const el = wrapperRef.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(entries => {
-      entries.forEach(e => {
-        if (e.isIntersecting && !didScan.current) { didScan.current = true; runScan(0); }
-      });
-    }, { threshold: .12 });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [runScan]);
-
-  const sub = SUBS[active];
-
-  return (
-    <div className="adv-guard" style={{ display: 'grid', gridTemplateColumns: '.86fr 1.14fr', gap: 18, alignItems: 'start' }} ref={wrapperRef}>
-      {/* Three checks */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-        {[
-          { n: '01', title: t('advertisePage.gate1Title', 'Verified buyers only'), desc: t('advertisePage.gate1Desc', 'Only verified artists, venues, and music-related organizations reach checkout. No verified badge, no buy button.') },
-          { n: '02', title: t('advertisePage.gate2Title', 'Audio relevance scan'), desc: t('advertisePage.gate2Desc', "The submission is scored against your advertiser profile. If it isn't about live music, releases, gear, or merch, it doesn't run.") },
-          { n: '03', title: t('advertisePage.gate3Title', 'Listener safety'), desc: t('advertisePage.gate3Desc', 'Hate speech, harassment, explicit content outside rating, scams, and unsafe claims are flagged before a listener ever hears it.') },
-          { n: '04', title: t('advertisePage.gate4Title', 'Copyright firewall'), desc: t('advertisePage.gate4Desc', "Ad copy is AI-screened, and your audio spot is transcribed and screened too, for protected song titles, lyrics, and artist name-drops you don't have rights to. Flagged for manual review on any match.") },
-          { n: '05', title: t('advertisePage.gate5Title', 'Reputation risk'), desc: t('advertisePage.gate5Desc', 'A final pass for misleading pricing, fake scarcity, impersonation, or off-platform resale — anything that would tarnish the scene.') },
-        ].map(c => (
-          <div key={c.n} style={{ display: 'flex', gap: 14, padding: '18px', border: '1px solid var(--hair-70)', borderRadius: 14, background: 'var(--bg-2)' }}>
-            <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--accent-text)', letterSpacing: '.1em', flexShrink: 0, paddingTop: 3 }}>{c.n}</span>
-            <div>
-              <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem', letterSpacing: '-.01em' }}>{c.title}</div>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', lineHeight: 1.5, marginTop: 6 }}>{c.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Interactive scanner */}
-      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden' }}>
-        <div style={{ padding: '15px 18px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 99, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-2)', color: 'var(--ink-a65)' }}>
-            <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent)', animation: 'adv-pulse 2.4s ease-out infinite', flexShrink: 0 }} />
-            {t('advertisePage.hypeScreen', 'HYPE Screen')}
-          </span>
-          <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem' }}>{t('advertisePage.submissionReview', 'Submission review')}</span>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.1em', textTransform: 'uppercase' }}>
-            {scanning ? t('advertisePage.scanning', 'Scanning…') : verdict === 'none' ? t('advertisePage.idle', 'Idle') : verdict === 'pass' ? t('advertisePage.cleared', 'Cleared') : t('advertisePage.rejected', 'Rejected')}
-          </span>
-        </div>
-        {/* The 188px submission list is a sidebar on a desktop and most of a
-            phone: at 375px it takes 188 of the 327px content box and leaves the
-            scan panel ~139px. It stacks below 640px — through the class, because
-            a media query cannot override the inline style this grid used to
-            carry, which is why the three breakpoints in this file's own <style>
-            block had never touched it. */}
-        <div className="adv-scan-grid" style={{ display: 'grid', gridTemplateColumns: '188px 1fr', minHeight: 330 }}>
-          {/* Submission list */}
-          <div style={{ borderRight: '1px solid var(--hair-70)', padding: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {SUBS.map((s, i) => (
-              <button key={i} onClick={() => runScan(i)} style={{
-                padding: '11px 12px', borderRadius: 9, textAlign: 'left',
-                border: `1px solid ${i === active ? 'var(--ink-a35)' : 'var(--hair-70)'}`,
-                background: i === active ? 'var(--bg-4)' : 'var(--bg-3)',
-                cursor: 'pointer', transition: 'border-color .15s',
-              }}>
-                <div style={{ fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontSize: '0.9375rem', fontWeight: 600, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{s.n}</div>
-                <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', color: 'var(--ink-2)', textTransform: 'uppercase', marginTop: 3 }}>{s.k}</div>
-              </button>
-            ))}
-          </div>
-
-          {/* Scan stage */}
-          <div style={{ padding: '18px 20px', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-            {/* Ad preview */}
-            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 11, padding: '14px 16px', background: 'var(--bg-3)', position: 'relative', overflow: 'hidden' }}>
-              {scanning && (
-                <div style={{ position: 'absolute', left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, var(--accent), transparent)', boxShadow: '0 0 14px var(--accent)', animation: 'adv-scan 1.25s ease-in-out' }} />
-              )}
-              <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-2)' }}>{sub.tag}</div>
-              <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1.0625rem', letterSpacing: '-.01em', marginTop: 8, lineHeight: 1.15 }}>{sub.copy}</div>
-              <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 7, lineHeight: 1.45 }}>{sub.body}</div>
-            </div>
-
-            {/* Gate rows */}
-            <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 9, flex: 1 }}>
-              {sub.gates.map((g, i) => {
-                const state = gateState[i] ?? 'idle';
-                return (
-                  <div key={i} style={{
-                    display: 'flex', alignItems: 'center', gap: 12, padding: '11px 13px', borderRadius: 10,
-                    border: `1px solid ${state === 'pass' ? 'rgba(var(--role-venue-rgb),.25)' : state === 'fail' ? 'rgba(255,90,90,.25)' : 'var(--hair-70)'}`,
-                    background: 'var(--bg-3)', opacity: state === 'idle' ? .4 : 1, transition: 'opacity .3s, border-color .3s',
-                  }}>
-                    <span style={{
-                      width: 24, height: 24, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-                      border: `1px solid ${state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? 'var(--danger-text)' : 'var(--line-2)'}`,
-                      color: state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? 'var(--danger-text)' : 'var(--ink-2)',
-                    }}>
-                      {state === 'pass' ? <CheckIcon /> : state === 'fail' ? <CrossIcon /> : null}
-                    </span>
-                    <span style={{ flex: 1 }}>
-                      <div style={{ fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontSize: '0.9375rem', fontWeight: 600 }}>{g[0]}</div>
-                      <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.02em', marginTop: 3, lineHeight: 1.4 }}>{g[1]}</div>
-                    </span>
-                    <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', flexShrink: 0, color: state === 'pass' ? 'var(--role-venue)' : state === 'fail' ? 'var(--danger-text)' : 'transparent' }}>
-                      {state === 'pass' ? t('advertisePage.pass', 'Pass') : state === 'fail' ? t('advertisePage.blocked', 'Blocked') : '—'}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Final verdict */}
-            {verdict !== 'none' && (
-              <div style={{
-                marginTop: 14, padding: '13px 16px', borderRadius: 11, display: 'flex', alignItems: 'center', gap: 11,
-                fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, border: '1px solid',
-                borderColor: verdict === 'pass' ? 'rgba(var(--role-venue-rgb),.4)' : 'rgba(255,90,90,.4)',
-                background: verdict === 'pass' ? 'rgba(var(--role-venue-rgb),.07)' : 'rgba(255,90,90,.07)',
-                color: verdict === 'pass' ? 'var(--role-venue)' : 'var(--danger-text)',
-              }}>
-                {verdict === 'pass' ? <CheckIcon /> : <CrossIcon />}
-                <span>{verdict === 'pass' ? t('advertisePage.approvedNote', 'Approved — ad is eligible to run') : t('advertisePage.rejectedNote', 'Rejected — ad will not run')}</span>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ── HYPE Screen upload demo (Step 03) ──────────────────────
-   Explicitly an illustrative simulation — matches Advertise.dc.html's own
-   framing ("Simulate a scan"). Not tied to any real submission; the actual
-   AI vetting call happens when a campaign is submitted in CoverageBuilder. */
-const SCAN_GATES = ['Verified buyer', 'Audio relevance', 'Listener safety', 'Copyright', 'Reputation risk'];
-
-function ScanDemo() {
-  const { t } = useI18n();
-  const [phase, setPhase] = useState<'idle' | 'scanning' | 'done'>('idle');
-  const [passed, setPassed] = useState<number>(-1);
-  const tokenRef = useRef(0);
-
-  function runDemo() {
-    if (phase === 'scanning') return;
-    const token = ++tokenRef.current;
-    setPhase('scanning');
-    setPassed(-1);
-    SCAN_GATES.forEach((_, i) => {
-      setTimeout(() => { if (token === tokenRef.current) setPassed(i); }, 700 + i * 650);
-    });
-    setTimeout(() => { if (token === tokenRef.current) setPhase('done'); }, 700 + SCAN_GATES.length * 650 + 300);
-  }
-
-  function reset() {
-    tokenRef.current++;
-    setPhase('idle');
-    setPassed(-1);
-  }
-
-  return (
-    <div style={{ maxWidth: 640, margin: '0 auto', background: 'var(--bg-2)', border: '1px solid var(--hair-100)', borderRadius: 14, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 18px', borderBottom: '1px solid var(--hair-70)' }}>
-        <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem', flex: 1 }}>{t('advertisePage.hypeScreenAutomated', 'HYPE Screen · automated ad review')}</span>
-        <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: phase === 'done' ? 'var(--role-venue)' : phase === 'scanning' ? 'var(--accent-text)' : 'var(--ink-2)' }}>
-          {phase === 'done' ? t('advertisePage.cleared55', 'Cleared · 5/5') : phase === 'scanning' ? t('advertisePage.scanning', 'Scanning…') : t('advertisePage.awaitingAudio', 'Awaiting audio')}
-        </span>
-      </div>
-
-      {phase === 'idle' && (
-        <div onClick={runDemo} style={{ margin: 18, border: '2px dashed var(--line-2)', borderRadius: 12, padding: '34px 20px', textAlign: 'center', cursor: 'pointer' }}>
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--ink-2)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" style={{ marginBottom: 10 }}><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
-          <div style={{ fontWeight: 600, fontSize: '0.9375rem', marginBottom: 5 }}>{t('advertisePage.dropAudioHere', 'Drop your ad audio here')}</div>
-          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('advertisePage.audioFormats', 'MP3 / WAV / AAC · 15–60s · audio only, no video')}</div>
-          <div className="adv-btn-solid" style={{ display: 'inline-flex', marginTop: 14 }}>{t('advertisePage.simulateScan', 'Simulate a scan')}</div>
-        </div>
-      )}
-
-      {phase !== 'idle' && (
-        <div style={{ padding: '0 18px 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {SCAN_GATES.map((g, i) => {
-            const state = passed >= i ? 'pass' : 'wait';
-            const gateLabel = t(`advertisePage.scanGate${i}`, g);
-            return (
-              <div key={g} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 10px', borderRadius: 8, background: state === 'pass' ? 'rgba(var(--role-venue-rgb),.1)' : 'var(--hair-30)', border: `1px solid ${state === 'pass' ? 'rgba(var(--role-venue-rgb),.25)' : 'var(--hair-80)'}`, transition: 'all .3s' }}>
-                <span style={{ width: 12, height: 12, borderRadius: '50%', flexShrink: 0, background: state === 'pass' ? 'var(--role-venue)' : 'transparent', border: state === 'pass' ? 'none' : '2px solid var(--hair-180)' }} />
-                <span style={{ flex: 1, fontSize: '0.9375rem', color: state === 'pass' ? 'var(--ink)' : 'var(--ink-2)' }}>{t('advertisePage.gateN', 'Gate')} {i + 1} — {gateLabel}</span>
-                <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: state === 'pass' ? 'var(--role-venue)' : 'var(--ink-2)' }}>{state === 'pass' ? t('advertisePage.passUpper', 'PASS') : '…'}</span>
-              </div>
-            );
-          })}
-
-          {phase === 'done' && (
-            <div style={{ marginTop: 6, padding: '13px 16px', borderRadius: 10, background: 'rgba(var(--role-venue-rgb),.1)', border: '1px solid rgba(var(--role-venue-rgb),.3)', textAlign: 'center' }}>
-              <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '0.9375rem', color: 'var(--role-venue)', marginBottom: 3 }}>{t('advertisePage.clearedCheckout', '✓ CLEARED — checkout unlocked')}</div>
-              <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('advertisePage.verifiedBuyersNote', 'Verified buyers go straight to payment. Your spot starts running the moment the charge clears.')}</div>
-              <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginTop: 12 }}>
-                <a href="#build" className="adv-btn-solid">{t('advertisePage.buyThisCampaign', 'Buy this campaign →')}</a>
-                <button onClick={reset} className="adv-btn-ghost" style={{ border: 'none', background: 'none', cursor: 'pointer', fontSize: '0.9375rem', color: 'var(--ink-2)', textDecoration: 'underline' }}>{t('advertisePage.runAnotherScan', 'Run another scan')}</button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 18px', borderTop: '1px solid var(--line)', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.06em' }}>
-        <span>{t('advertisePage.medianScanTime', 'Median scan time · 41 seconds')}</span>
-        <span>{t('advertisePage.failsRefunded', 'Fails are refunded automatically')}</span>
-      </div>
-    </div>
-  );
-}
-
-/* ── Hero meta counter ───────────────────────────────────── */
-function CountUp({ target, suffix = '' }: { target: number; suffix?: string }) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    let v = 0;
-    const step = target / 40;
-    const t = setInterval(() => {
-      v += step;
-      if (v >= target) { v = target; clearInterval(t); }
-      setVal(Math.round(v));
-    }, 28);
-    return () => clearInterval(t);
-  }, [target]);
-  return <>{suffix === '%' ? val + suffix : fmt(val)}</>;
-}
-
-/* ── Main page ───────────────────────────────────────────── */
 export function MmmCampaignBuilderPage() {
   const { t } = useI18n();
 
@@ -722,6 +355,31 @@ export function MmmCampaignBuilderPage() {
       <style>{`
         .adv-btn-solid { background:var(--accent); color:var(--bg); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size: 0.9375rem; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
         .adv-btn-solid:hover { filter:brightness(1.08) }
+        /* NOT a restoration -- a FIX. These four classes are worn by markup the
+           BUILDER renders (the audio-file label is adv-btn-ghost adv-btn-sm,
+           the root is adv-shell, the coverage dots are adv-dot-grid) and their
+           only declarations lived in the style block of the component nothing
+           ever rendered. A style element only reaches the document when its
+           component does, so none of these rules has EVER applied: the baseline
+           capture measures the file picker at 215x19, a bare line of text where
+           a bordered button was intended -- on the control an advertiser uses
+           to upload the spot they are paying for.
+
+           audit:unstyled could not see it either, and its header says why: any
+           style block in a file counts as a definition source, because
+           over-collecting definitions can only hide a finding, never invent
+           one. Deleting the dead half is what exposed these.
+
+           min-height is the one addition. MOBILE.md's 44x44 floor is
+           unconditional, the padding here computes to about 37px, and a
+           control being drawn for the first time should meet the floor rather
+           than inherit a miss. No backticks in this comment: the block is a
+           template literal. */
+        .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size: 0.9375rem; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
+        .adv-btn-ghost:hover { background:var(--hair-50); border-color:var(--ink-2) }
+        .adv-btn-sm { padding:9px 15px !important; font-size: 0.9375rem !important; min-height:44px }
+        @media (max-width:480px) { .adv-dot-grid { grid-template-columns:repeat(8, 1fr) !important } }
+        @media (max-width:640px) { .adv-shell { padding-left:16px !important; padding-right:16px !important } }
         .adv-compact { width:100%; max-width:1180px; margin:0 auto; padding:20px 40px 72px }
         .adv-compact-head { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:22px }
         .adv-compact h1 { margin:6px 0 0; font-family:var(--f-d,'Bricolage Grotesque',sans-serif); font-size:clamp(2rem,5vw,3.4rem); line-height:.95; letter-spacing:-.04em }
@@ -773,262 +431,3 @@ export function MmmCampaignBuilderPage() {
   );
 }
 
-export function AdvertisePage({ stats }: { stats: AdvertisePageStats }) {
-  const { t } = useI18n();
-  const eyebrow = (text: string, accent = true): React.CSSProperties => ({
-    fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.2em', color: accent ? 'var(--accent-text)' : 'var(--ink-2)',
-    textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 9,
-  });
-
-  return (
-    <>
-      <style>{`
-        @keyframes adv-pulse { 0%{ box-shadow:0 0 0 0 currentColor } 70%{ box-shadow:0 0 0 6px transparent } 100%{ box-shadow:0 0 0 0 transparent } }
-        @keyframes adv-rowIn { from{ opacity:0; transform:translateY(-10px) } to{ opacity:1; transform:none } }
-        @keyframes adv-scan { 0%{ opacity:1; top:0 } 100%{ opacity:1; top:100% } }
-        .adv-btn-solid { background:var(--accent); color:var(--bg); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size: 0.9375rem; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:filter .15s; text-decoration:none; border:none; white-space:nowrap }
-        .adv-btn-solid:hover { filter:brightness(1.08) }
-        .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size: 0.9375rem; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
-        .adv-btn-ghost:hover { background:var(--hair-50); border-color:var(--ink-2) }
-        .adv-btn-sm { padding:9px 15px !important; font-size: 0.9375rem !important }
-        @media (max-width:1040px) {
-          .adv-hero-grid, .adv-builder, .adv-guard, .adv-paths, .adv-trans { grid-template-columns:1fr !important }
-          .adv-hero-title { font-size: 3.25rem !important }
-        }
-        @media (max-width:480px) {
-          .adv-dot-grid { grid-template-columns:repeat(8, 1fr) !important }
-        }
-        @media (max-width:640px) {
-          .adv-shell { padding-left:16px !important; padding-right:16px !important }
-          /* !important throughout: these two elements carry inline styles, and
-             inline beats any selector without it. Stacked, the list's divider
-             is the edge between the two rows rather than between two columns,
-             so the border moves with the layout. */
-          .adv-scan-grid { grid-template-columns:1fr !important }
-          .adv-scan-grid > :first-child { border-right:0 !important; border-bottom:1px solid var(--hair-70) !important }
-        }
-      `}</style>
-
-      {/* Hero */}
-      <header id="top" style={{ position: 'relative', padding: '40px 0 84px', overflow: 'hidden' }}>
-        <div style={{ content: '', position: 'absolute', top: '-30%', left: '50%', transform: 'translateX(-50%)', width: 1100, height: 680, background: 'radial-gradient(ellipse at center, rgba(var(--accent-rgb),.10), transparent 62%)', pointerEvents: 'none' }} />
-        <div className="adv-hero-grid adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px', display: 'grid', gridTemplateColumns: '1.18fr .92fr', gap: 54, alignItems: 'center', position: 'relative' }}>
-          <div>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)' }} />
-              {t('advertisePage.heroEyebrow', 'Advertise on iHYPE')}
-            </span>
-            <h1 className="adv-hero-title" style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '4.25rem', lineHeight: .96, letterSpacing: '-.035em', margin: '20px 0 0' }}>
-              {t('advertisePage.heroTitleLine1', 'Put your music')}<br />{t('advertisePage.heroTitleLine2', 'in front of the')}<br />{t('advertisePage.heroTitleLine3Prefix', 'people who')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--ink-2)', letterSpacing: '-.01em' }}>{t('advertisePage.heroTitleLine3Em', 'dig deepest.')}</em>
-            </h1>
-            <p style={{ fontSize: '1rem', color: 'var(--ink-2)', lineHeight: 1.6, maxWidth: '46ch', marginTop: 22 }}>
-              {t('advertisePage.heroBodyPrefixTerm', 'Sponsor the station —')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyLocalGlobal', 'local to global')}</b>{t('advertisePage.heroBodyMidTerm', ', by the month. Every ad is screened by AI before it runs:')} <b style={{ color: 'var(--ink)', fontWeight: 600 }}>{t('advertisePage.heroBodyMusicOnly', 'music only, no copyrighted material, no name-drops.')}</b> {t('advertisePage.heroBodySuffix', 'One operator, one rulebook, zero junk in the feed.')}
-            </p>
-            <div style={{ display: 'flex', gap: 12, marginTop: 30, flexWrap: 'wrap' }}>
-              <a href="#build" className="adv-btn-solid">{t('advertisePage.buildCampaign', 'Build a campaign →')}</a>
-              <a href="#guard" className="adv-btn-ghost">{t('advertisePage.seeVetting', 'See how vetting works')}</a>
-            </div>
-            <div style={{ marginTop: 16, fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em' }}>
-              {t('advertisePage.alreadyAdvertising', 'Already advertising?')} <Link href="/advertise/dashboard" style={{ color: 'var(--ink-2)', textDecoration: 'underline' }}>{t('advertisePage.goToDashboard', 'Go to your dashboard →')}</Link>
-            </div>
-            <div style={{ display: 'flex', gap: 26, marginTop: 34, paddingTop: 24, borderTop: '1px solid var(--hair-70)' }}>
-              {[
-                { v: <CountUp target={stats.activeCampaigns} />, l: t('advertisePage.campaignsLiveNow', 'Campaigns live now') },
-                { v: stats.clearedPct !== null ? <CountUp target={stats.clearedPct} suffix="%" /> : '—', l: t('advertisePage.autoClearedNoReview', 'Auto-cleared, no review') },
-                { v: '100%', l: t('advertisePage.musicRelated', 'Music-related') },
-              ].map(m => (
-                <div key={m.l}>
-                  <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-.02em' }}>{m.v}</div>
-                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.12em', color: 'var(--ink-2)', textTransform: 'uppercase', marginTop: 5 }}>{m.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          <LiveTicker />
-        </div>
-      </header>
-
-      {/* Coverage Builder */}
-      <section id="build" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
-        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
-          <div style={{ maxWidth: 680, marginBottom: 40 }}>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step01Build', 'Step 01 · Build')}
-            </span>
-            <h2 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.375rem', letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.buildHeadingPrefix', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.reachDot', 'reach.')}</em> {t('advertisePage.buildHeadingMid', 'Pick your')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.volumeDot', 'volume.')}</em>
-            </h2>
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.buildSubTerm', 'Coverage scales from your block to the whole platform. Your spot is an audio ad break on the always-on station, and every live sponsor shares the breaks equally — priced by the month, never by the play.')}
-            </p>
-          </div>
-          <div>
-            <CoverageBuilder />
-          </div>
-        </div>
-      </section>
-
-      {/* AI Guardrails */}
-      <section id="guard" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
-        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
-          <div style={{ maxWidth: 680, marginBottom: 40 }}>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step02Screen', 'Step 02 · The screen')}
-            </span>
-            <h2 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.375rem', letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.guardHeadingPrefix', 'Every ad clears')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.fiveGates', 'five gates')}</em> {t('advertisePage.guardHeadingSuffix', 'before a single listener sees it.')}
-            </h2>
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.guardSub', 'No human review queue. iHYPE runs on one operator — HYPE Screen scans the buyer, the copy, and the submission itself. Approval is instant when every gate passes.')}
-            </p>
-          </div>
-          <AIScanner />
-        </div>
-      </section>
-
-      {/* HYPE Screen — upload & scan demo */}
-      <section id="scan" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
-        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
-          <div style={{ maxWidth: 680, margin: '0 auto 40px', textAlign: 'center' }}>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9, justifyContent: 'center' }}>
-              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step03Upload', 'Step 03 · Upload & go live')}
-            </span>
-            <h2 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.375rem', letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.scanHeadingPrefix', 'Drop your audio.')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.hypeScreen', 'HYPE Screen')}</em> {t('advertisePage.scanHeadingSuffix', 'does the rest.')}
-            </h2>
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch', marginLeft: 'auto', marginRight: 'auto' }}>
-              {t('advertisePage.scanSub', 'Try the scanner below. When every gate passes, checkout unlocks instantly — no sales call, no review queue.')}
-            </p>
-          </div>
-          <ScanDemo />
-          <p style={{ maxWidth: 640, margin: '22px auto 0', textAlign: 'center', fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.7 }}>
-            {t('advertisePage.purchasingNote', 'Purchasing is available exclusively to verified artists, venues, and music-related organizations. Rejected spots are never heard by listeners and are refunded in full.')}
-          </p>
-        </div>
-      </section>
-
-      {/* Two paths */}
-      <section id="paths" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
-        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
-          <div style={{ maxWidth: 680, marginBottom: 40 }}>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.step04Buying', "Step 04 · Who's buying")}
-            </span>
-            <h2 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.375rem', letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.pathsHeadingPrefix', 'Two ways in.')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.sameScreen', 'Same screen')}</em> {t('advertisePage.pathsHeadingSuffix', 'for both.')}
-            </h2>
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.1875rem', color: 'var(--ink-2)', lineHeight: 1.4, marginTop: 14, maxWidth: '58ch' }}>
-              {t('advertisePage.pathsSub', "Whether you're on the platform already or coming from the outside, you buy the same coverage and pass the same gates.")}
-            </p>
-          </div>
-          <div className="adv-paths" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
-            {/* Members */}
-            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: 'var(--bg-2)', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--accent-text)' }}>
-                <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)' }} />{t('advertisePage.members', 'Members')}
-              </span>
-              <h3 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.625rem', letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.artistsVenues', 'Artists, venues')}<br />{t('advertisePage.promotersLine', '& promoters')}</h3>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.membersBody', 'Already part of iHYPE? Buy coverage straight from your dashboard. Your role is pre-verified, so the buyer-vetting gate clears instantly — you go right to creative review.')}</p>
-              <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
-                {[{ c: 'var(--role-fan)', l: t('advertisePage.roleArtist', 'Artist') }, { c: 'var(--role-venue)', l: t('advertisePage.roleVenue', 'Venue') }].map(r => (
-                  <span key={r.l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: `1px solid color-mix(in srgb, ${r.c} 40%, transparent)`, display: 'inline-flex', alignItems: 'center', gap: 7, color: r.c }}>
-                    <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: r.c }} />{r.l}
-                  </span>
-                ))}
-              </div>
-              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
-                {[
-                  [t('advertisePage.memberBenefit1Title', 'Instant eligibility.'), t('advertisePage.memberBenefit1Body', 'Role verification carries over — no separate application.')],
-                  [t('advertisePage.memberBenefit2Title', 'Promote your own catalog.'), t('advertisePage.memberBenefit2Body', 'Your releases and shows are pre-cleared for copyright.')],
-                ].map(([b, body]) => (
-                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
-                    <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--accent)', marginTop: 6, flexShrink: 0 }} />
-                    <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {body}</span>
-                  </div>
-                ))}
-              </div>
-              {/* NO CO-FUNDING CLAIMS (2026-09-10). This card offered
-                  "Referral reach — fans with a referral link can co-fund
-                  coverage for artists they back" and "Referral-funded spots
-                  split billing across backers automatically", and the receipt
-                  above carried a "Co-op handling · 0%" line at $0.00. There is
-                  no co-funding, no backer, and no split billing anywhere in
-                  the advertise API or the ad libraries — one advertiser pays
-                  one sponsorship on one card. Two true benefits beat three
-                  with an invented one. */}
-              <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-                <a href="#build" className="adv-btn-solid">{t('advertisePage.buyFromDashboard', 'Buy from dashboard →')}</a>
-              </div>
-            </div>
-
-            {/* 3rd party */}
-            <div style={{ border: '1px solid var(--hair-70)', borderRadius: 16, background: 'var(--bg-2)', padding: '28px 28px 26px', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: 8, color: 'var(--color-info)' }}>
-                <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: 'var(--color-info)' }} />{t('advertisePage.thirdPartyAccounts', '3rd-Party Accounts')}
-              </span>
-              <h3 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.625rem', letterSpacing: '-.02em', marginTop: 16, lineHeight: 1.05 }}>{t('advertisePage.musicBusinesses', 'Music businesses')}<br />{t('advertisePage.suppliersLine', '& suppliers')}</h3>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.55, marginTop: 12 }}>{t('advertisePage.thirdPartyBody', 'Not an artist, but you serve them? Music stores, live-production companies, and merch providers open a 3rd-party account to control their own placements — fully self-serve.')}</p>
-              <div style={{ display: 'flex', gap: 8, marginTop: 18, flexWrap: 'wrap' }}>
-                {[t('advertisePage.musicStores', 'Music stores'), t('advertisePage.liveProduction', 'Live production'), t('advertisePage.merchAndPrint', 'Merch & print'), t('advertisePage.instrumentsGear', 'Instruments & gear')].map(l => (
-                  <span key={l} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', padding: '7px 12px', borderRadius: 99, border: '1px solid var(--line-2)', color: 'var(--ink-2)' }}>{l}</span>
-                ))}
-              </div>
-              <div style={{ marginTop: 20, display: 'flex', flexDirection: 'column', gap: 11 }}>
-                {[
-                  [t('advertisePage.thirdPartyBenefit1Title', 'Self-serve console.'), t('advertisePage.thirdPartyBenefit1Body', 'Manage budgets, creatives, and schedules from one account.'), 'var(--color-info)'],
-                  [t('advertisePage.thirdPartyBenefit2Title', 'Business verification.'), t('advertisePage.thirdPartyBenefit2Body', "A one-time check confirms you're genuinely music-adjacent."), 'var(--color-info)'],
-                  [t('advertisePage.thirdPartyBenefit3Title', 'Same firewall applies.'), t('advertisePage.thirdPartyBenefit3Body', 'No borrowed songs, no unlicensed artist names — ever.'), 'var(--color-info)'],
-                ].map(([b, body, c]) => (
-                  <div key={b} style={{ display: 'flex', gap: 11, fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
-                    <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: c, marginTop: 6, flexShrink: 0 }} />
-                    <span><span style={{ color: 'var(--ink)', fontWeight: 600 }}>{b}</span> {body}</span>
-                  </div>
-                ))}
-              </div>
-              <div style={{ marginTop: 18, display: 'flex', alignItems: 'flex-start', gap: 11, padding: '14px 16px', border: '1px solid rgba(255,90,90,.25)', borderRadius: 12, background: 'rgba(255,90,90,.05)' }}>
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}><circle cx="12" cy="12" r="9" stroke='var(--danger-text)' strokeWidth="1.6"/><path d="M9 9l6 6M15 9l-6 6" stroke='var(--danger-text)' strokeWidth="1.6" strokeLinecap="round"/></svg>
-                <div>
-                  <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--danger-text)' }}>{t('advertisePage.autoRejected', 'Auto-rejected')}</div>
-                  <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5, marginTop: 5 }}>{t('advertisePage.autoRejectedBody', 'Non-musical goods, dropshipping, financial products, and anything unrelated to music never reach a listener.')}</div>
-                </div>
-              </div>
-              <div style={{ marginTop: 'auto', paddingTop: 22 }}>
-                <Link className="adv-btn-ghost" href="/advertise/register">{t('advertisePage.openThirdPartyAccount', 'Open a 3rd-party account →')}</Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Transparency */}
-      <section id="trust" style={{ position: 'relative', padding: '88px 0', borderTop: '1px solid var(--hair-70)' }}>
-        <div className="adv-shell" style={{ width: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 40px' }}>
-          <div style={{ maxWidth: 680, marginBottom: 8 }}>
-            <span style={{ ...eyebrow(''), display: 'inline-flex', alignItems: 'center', gap: 9 }}>
-              <span style={{ width: 22, height: 1, background: 'var(--accent)', opacity: .6 }} />{t('advertisePage.coopPromise', 'The co-op promise')}
-            </span>
-            <h2 style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.375rem', letterSpacing: '-.03em', lineHeight: 1.02, margin: '14px 0 0' }}>
-              {t('advertisePage.transHeadingPrefix', 'Ad money feeds the')} <em style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-text)' }}>{t('advertisePage.artistsEm', 'artists')}</em>{t('advertisePage.transHeadingSuffix', ', not a feed.')}
-            </h2>
-          </div>
-          <div className="adv-trans" style={{ display: 'grid', gridTemplateColumns: '1.1fr 1fr', gap: 40, alignItems: 'center', marginTop: 8 }}>
-            <p style={{ fontFamily: 'var(--font-serif-accent)', fontStyle: 'italic', fontSize: '1.625rem', lineHeight: 1.35, color: 'var(--ink-2)', maxWidth: '22ch' }}>
-              {t('advertisePage.transBodyPrefix', 'iHYPE is run by one director and a lot of automation — so almost every dollar of ad spend')} <b style={{ fontFamily: "var(--f-b,'Work Sans',sans-serif)", fontStyle: 'normal', fontWeight: 600, color: 'var(--accent-text)' }}>{t('advertisePage.transBodyBold', 'goes back into the music')}</b>{t('advertisePage.transBodySuffix', ', not overhead.')}
-            </p>
-            <div style={{ borderTop: '1px solid var(--hair-70)' }}>
-              {[{ lb: t('advertisePage.toArtistsPayouts', 'To artists & payouts'), w: '72%', color: 'var(--accent-text)', pct: '72%' }, { lb: t('advertisePage.platformHosting', 'Platform & hosting'), w: '18%', color: 'var(--ink)', pct: '18%' }, { lb: t('advertisePage.moderationAi', 'Moderation & AI'), w: '10%', color: 'var(--ink-2)', pct: '10%' }].map(r => (
-                <div key={r.lb} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '16px 0', borderBottom: '1px solid var(--hair-70)' }}>
-                  <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-2)', width: 150 }}>{r.lb}</span>
-                  <span style={{ flex: 1, height: 9, borderRadius: 99, background: 'var(--hair-70)', overflow: 'hidden' }}>
-                    <i style={{ display: 'block', height: '100%', width: r.w, background: r.color, borderRadius: 99 }} />
-                  </span>
-                  <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.1875rem', letterSpacing: '-.02em', width: 54, textAlign: 'right', color: r.color }}>{r.pct}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-}
