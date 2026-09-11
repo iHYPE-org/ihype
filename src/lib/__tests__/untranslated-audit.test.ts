@@ -130,12 +130,31 @@ describe('the untranslated-string audit reports prose, not source', () => {
   });
 
   it('fails when the count exceeds the budget, so the ratchet can bite', () => {
+    /* This used to run `--max=0` against the REAL tree and expect a failure,
+       which was true only while debt remained. The debt reached zero on
+       2026-09-11 and the assertion inverted — a test whose premise expires
+       is worse than no test, because it fails on the day the work succeeds.
+       It measures the MECHANISM now: one hardcoded string in a scratch
+       directory, budget zero, exit 1. That stays true at any count. */
+    const dir = mkdtempSync(join(tmpdir(), 'untranslated-ratchet-'));
+    writeFileSync(join(dir, 'Probe.tsx'), 'export const P = () => <p>Save your ticket</p>;\n');
     let exitCode = 0;
     try {
-      run(['--max=0']);
+      run([`--roots=${dir}`, '--max=0']);
     } catch (error) {
       exitCode = (error as { status?: number }).status ?? 0;
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
     }
-    expect(exitCode, 'a budget of 0 must fail while any hardcoded string remains').toBe(1);
+    expect(exitCode, 'a budget of 0 must fail on a hardcoded string').toBe(1);
+  });
+
+  it('is a GATE now, not a ratchet — the real tree passes at zero', () => {
+    /* And the thing that number does NOT mean, said here because it is the
+       sentence most likely to be over-read: the four legal documents are
+       still English. Their binding text lives in string constants, which this
+       audit structurally cannot see — it reads JSX text. Zero means no
+       hardcoded JSX string remains, never that the terms are translated. */
+    expect(() => run(['--max=0'])).not.toThrow();
   });
 });

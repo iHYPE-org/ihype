@@ -168,6 +168,18 @@ jobs:
         # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
+      - name: Untranslated member-facing strings
+        # Advisory at 181 since 2026-09-10; a GATE at 0 since 2026-09-11, the
+        # same contract as audit:css and audit:retro — the number goes down,
+        # never up.
+        #
+        # WHAT ZERO DOES NOT MEAN. The charter, terms, privacy policy and DMCA
+        # process are still English by decision (a translated governing-language
+        # notice tells the reader so). Their binding text lives in string
+        # constants, and this audit reads JSX text, so it has never been able to
+        # see it. Zero means no hardcoded JSX string remains.
+        run: npm run audit:untranslated
+
       - name: Retired-capability claims
         # Copy that still sells something the product has removed. Nothing
         # else in CI can see this: the sentence is valid, the code is

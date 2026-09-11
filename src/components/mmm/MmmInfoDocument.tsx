@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { getServerT } from '@/lib/i18n/server';
+import { LegalLanguageNotice } from './LegalLanguageNotice';
 
 const PRIVACY = [
   ['What we collect', 'iHYPE collects the minimum data necessary to operate: your email address, display name, account role, city, genre preferences and ticket purchase history. We do not sell this data, share it with advertisers or use it to train AI models.'],
@@ -18,18 +20,33 @@ const DMCA = [
   ['Repeat infringers', 'Accounts that repeatedly upload unauthorized content lose upload privileges and may be terminated. Knowingly false claims may carry legal liability.'],
 ] as const;
 
-export function MmmInfoDocument({ kind }: { kind: 'privacy' | 'dmca' }) {
+/**
+ * `PRIVACY` and `DMCA` above are binding text and stay English; the page
+ * around them is translated. See `LegalLanguageNotice` for why the notice is
+ * the translated part rather than the document.
+ *
+ * Worth knowing while reading this file: the privacy policy OFFERS GDPR and
+ * CCPA rights, which is the product addressing readers in jurisdictions whose
+ * consumer law may require the terms themselves in the local language. That
+ * is a question for a lawyer before marketing there, not a thing a wrapping
+ * pass can settle.
+ */
+export async function MmmInfoDocument({ kind }: { kind: 'privacy' | 'dmca' }) {
+  const t = await getServerT();
   const privacy = kind === 'privacy';
-  const title = privacy ? 'Privacy policy' : 'DMCA';
+  const title = privacy ? t('mmmLegal.privacyTitle', 'Privacy policy') : t('mmmLegal.dmcaTitle', 'DMCA');
   const sections = privacy ? PRIVACY : DMCA;
   return (
     <article className="mmm-document">
-      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ Info</Link>
+      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmLegal.backToInfo', 'Info')}</Link>
       <header className="mmm-document-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">Me · Info · Legal</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmLegal.crumbLegal', 'Me · Info · Legal')}</p>
         <h1>{title}</h1>
-        <p>{privacy ? 'Your data is never the product.' : 'Copyright reporting and counter-notice process.'}</p>
+        <p>{privacy
+          ? t('mmmLegal.privacyLede', 'Your data is never the product.')
+          : t('mmmLegal.dmcaLede', 'Copyright reporting and counter-notice process.')}</p>
       </header>
+      <LegalLanguageNotice />
       <div className="mmm-document-sections">
         {sections.map(([heading, body], index) => (
           <section className="mmm-document-section" key={heading}>
@@ -40,10 +57,17 @@ export function MmmInfoDocument({ kind }: { kind: 'privacy' | 'dmca' }) {
         <section className="mmm-document-section">
           <span>{String(sections.length + 1).padStart(2, '0')}</span>
           <div>
-            <h2>{privacy ? 'Contact and requests' : 'DMCA agent'}</h2>
+            <h2>{privacy ? t('mmmLegal.contactAndRequests', 'Contact and requests') : t('mmmLegal.dmcaAgent', 'DMCA agent')}</h2>
             <p>
               <a href="mailto:admin@ihype.org">admin@ihype.org</a>
-              {privacy ? <> · You can also manage exports and deletion in <Link href="/app/me/settings#privacy">Account and privacy</Link>.</> : ' · iHYPE Inc., Portland, ME'}
+              {/* i18n-exempt: `iHYPE Inc.` is the registered entity name and
+                  Portland, ME is a place — neither is translated, in any
+                  locale, because a translated corporate name identifies
+                  nobody. */}
+              {privacy ? (
+                <> · {t('mmmLegal.exportsAlsoIn', 'You can also manage exports and deletion in')}{' '}
+                  <Link href="/app/me/settings#privacy">{t('mmmLegal.accountAndPrivacy', 'Account and privacy')}</Link>.</>
+              ) : ' · iHYPE Inc., Portland, ME'}
             </p>
           </div>
         </section>

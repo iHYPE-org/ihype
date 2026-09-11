@@ -1,4 +1,36 @@
 import Link from 'next/link';
+import { getServerT } from '@/lib/i18n/server';
+import { LegalLanguageNotice } from './LegalLanguageNotice';
+
+/**
+ * The fourteenth charter section, held as DATA like the thirteen in
+ * `SECTIONS` below rather than written inline as markup — which is what it
+ * was, and the only section that was.
+ *
+ * These are undertakings: a spending order, a compensation ceiling, a
+ * board-approval rule, and the promise that none of it reaches the ticket
+ * split. They stay in English and `LegalLanguageNotice` tells the reader so,
+ * in their own language.
+ *
+ * BE HONEST ABOUT WHAT MOVING THEM HERE DOES TO THE COUNT. `audit:untranslated`
+ * reads JSX text and cannot see a string constant, so it never saw `SECTIONS`,
+ * `TERMS`, `PRIVACY` or `DMCA` either — the binding text on all four legal
+ * surfaces has always been invisible to it. This makes the file consistent
+ * with its own siblings; it does not make the documents translated, and a
+ * reading of zero from that audit must never be quoted as if it did.
+ */
+const REVENUE = {
+  heading: 'Where advertising revenue goes',
+  order: [
+    'First: infrastructure and necessary operating vendors — hosting, storage, email, payments, security, monitoring, and the tools required to keep iHYPE reliable.',
+    'Second, only when sustainably affordable: fair, fully disclosed compensation for the two employees who operate the platform. The intended all-in ceiling is $100,000 per employee per year, including benefits, and actual compensation must remain reasonable for the work and the organization\u2019s circumstances.',
+    'Then: remaining resources stay with the mission — improving the platform and strengthening local scenes. They are not distributed to founders, investors, or private owners.',
+  ],
+  notes: [
+    'Founder compensation is not self-approved. It must be approved in advance by conflict-free members of the independent board using comparable compensation data, documented, reviewed annually, and published through transparency reporting.',
+    'None of it touches the ticket split. Stripe\u2019s card-processing fee is the only charge above face value, passed through at cost.',
+  ],
+} as const;
 
 const SECTIONS = [
   {
@@ -55,28 +87,50 @@ const SECTIONS = [
   },
 ] as const;
 
-export function MmmCharter() {
+/**
+ * THE CHARTER IS THE ONE PAGE HERE WHERE THE SPLIT IS NOT CLEAN, so the rule
+ * this file follows is worth stating.
+ *
+ * TRANSLATED: how you got here, what the document is called, when it changed,
+ * who to write to, and the ROLE LABELS on the split bar. A member who cannot
+ * read "Artist · Venue · Promoters" cannot read the single most important
+ * fact iHYPE publishes about itself, and translating a label does not move a
+ * number — 70/20/10/0 is the promise and it is identical in every language.
+ *
+ * NOT TRANSLATED: the commitments themselves — the constraint paragraph, where
+ * advertising revenue goes, the compensation ceiling, the board-approval rule.
+ * Those are undertakings, and `LegalLanguageNotice` carries the reasoning.
+ * Each is marked below with the reason rather than left to look forgotten.
+ */
+export async function MmmCharter() {
+  const t = await getServerT();
   return (
     <article className="mmm-charter">
-      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ Info</Link>
+      <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmLegal.backToInfo', 'Info')}</Link>
       <header className="mmm-charter-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">Me · Info</p>
-        <h1>The Charter</h1>
-        <p className="mmm-charter-lead">The promises iHYPE cannot quietly rewrite.</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmLegal.crumbInfo', 'Me · Info')}</p>
+        <h1>{t('mmmLegal.charterTitle', 'The Charter')}</h1>
+        <p className="mmm-charter-lead">{t('mmmLegal.charterLede', 'The promises iHYPE cannot quietly rewrite.')}</p>
+        {/* i18n-exempt: the date is the charter's own version stamp and
+            Portland, Maine is a place name; both read the same everywhere. */}
         <p className="mmm-charter-updated">Last updated June 20, 2026 · Portland, Maine</p>
       </header>
 
+      <LegalLanguageNotice />
+
       <section aria-labelledby="charter-split" className="mmm-charter-split">
-        <p className="mmm-eyebrow" id="charter-split">Every ticket. Every time.</p>
+        <p className="mmm-eyebrow" id="charter-split">{t('mmmLegal.everyTicket', 'Every ticket. Every time.')}</p>
         <div aria-hidden="true" className="mmm-charter-split-bar">
           <span data-share="artist" /><span data-share="venue" /><span data-share="promoter" />
         </div>
         <div className="mmm-charter-shares">
-          <div><strong>70%</strong><span>Artist</span></div>
-          <div><strong>20%</strong><span>Venue</span></div>
-          <div><strong>10%</strong><span>Promoters</span></div>
+          <div><strong>70%</strong><span>{t('mmmLegal.shareArtist', 'Artist')}</span></div>
+          <div><strong>20%</strong><span>{t('mmmLegal.shareVenue', 'Venue')}</span></div>
+          <div><strong>10%</strong><span>{t('mmmLegal.sharePromoters', 'Promoters')}</span></div>
           <div><strong>0%</strong><span>iHYPE</span></div>
         </div>
+        {/* i18n-exempt: a charter undertaking, not a label. English governs —
+            see LegalLanguageNotice. */}
         <p className="mmm-charter-callout">This is not a pricing strategy. It is a constraint. We built the business model around it, not the other way around.</p>
       </section>
 
@@ -92,18 +146,15 @@ export function MmmCharter() {
 
       <section className="mmm-charter-card mmm-charter-revenue">
         <span className="mmm-charter-index">14</span>
-        <h2>Where advertising revenue goes</h2>
-        <ol>
-          <li>First: infrastructure and necessary operating vendors — hosting, storage, email, payments, security, monitoring, and the tools required to keep iHYPE reliable.</li>
-          <li>Second, only when sustainably affordable: fair, fully disclosed compensation for the two employees who operate the platform. The intended all-in ceiling is $100,000 per employee per year, including benefits, and actual compensation must remain reasonable for the work and the organization’s circumstances.</li>
-          <li>Then: remaining resources stay with the mission — improving the platform and strengthening local scenes. They are not distributed to founders, investors, or private owners.</li>
-        </ol>
-        <p>Founder compensation is not self-approved. It must be approved in advance by conflict-free members of the independent board using comparable compensation data, documented, reviewed annually, and published through transparency reporting.</p>
-        <p>None of it touches the ticket split. Stripe’s card-processing fee is the only charge above face value, passed through at cost.</p>
+        <h2>{REVENUE.heading}</h2>
+        <ol>{REVENUE.order.map((item) => <li key={item}>{item}</li>)}</ol>
+        {REVENUE.notes.map((note) => <p key={note}>{note}</p>)}
       </section>
 
       <footer className="mmm-charter-footer">
-        <p>Questions about the charter: <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
+        <p>{t('mmmLegal.charterQuestions', 'Questions about the charter:')} <a href="mailto:admin@ihype.org">admin@ihype.org</a></p>
+        {/* i18n-exempt: the registered entity name and where it was founded. A
+            translated corporate name identifies nobody. */}
         <p>iHYPE Inc. · Founded Portland, ME · 2026</p>
       </footer>
     </article>
