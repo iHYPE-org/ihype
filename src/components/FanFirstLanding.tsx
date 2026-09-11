@@ -3,6 +3,7 @@ import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
 import Image from 'next/image';
 import Link from 'next/link';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
+import { getServerT } from '@/lib/i18n/server';
 
 /**
  * The public front door at `/`.
@@ -39,44 +40,43 @@ import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
  * `stats` is a slot, not data: the caller passes a Suspense boundary so the
  * hero can paint before the counters' query resolves. See LandingStats.tsx.
  */
-export function FanFirstLanding({ stats }: { stats: ReactNode }) {
+export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
+  const t = await getServerT();
   return (
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
-        <Link aria-label="iHYPE home" className="fan-entry-logo" href="/">
+        <Link aria-label={t('fanFirstLanding.home', 'iHYPE home')} className="fan-entry-logo" href="/">
           <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
         </Link>
-        <nav aria-label="Account" className="fan-entry-nav">
-          <Link className="fan-entry-signin" href="/login">Sign in</Link>
+        <nav aria-label={t('fanFirstLanding.accountNav', 'Account')} className="fan-entry-nav">
+          <Link className="fan-entry-signin" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
           {/* An in-page anchor, not /register: the header must not offer a door
               that is currently closed. */}
-          <a className="fan-entry-join" href="#request-access">Request access</a>
+          <a className="fan-entry-join" href="#request-access">{t('fanFirstLanding.requestAccess', 'Request access')}</a>
         </nav>
       </header>
 
       <main className="fan-entry-main">
         <section className="fan-entry-hero">
           <div className="fan-entry-copy">
-            <p className="fan-entry-kicker">Private alpha · Portland, ME</p>
-            <h1>The free app for<br /><span>local music.</span></h1>
+            {/* The city stays in English: it is a place, not a word. */}
+            <p className="fan-entry-kicker">{t('fanFirstLanding.kicker', 'Private alpha')} · Portland, ME</p>
+            <h1>{t('fanFirstLanding.headlineOne', 'The free app for')}<br /><span>{t('fanFirstLanding.headlineTwo', 'local music.')}</span></h1>
             <p className="fan-entry-lead">
-              Stream music from artists in your own city — all of it free, none of it
-              behind a subscription. Find the shows they are playing this week, and
-              HYPE the ones you want more people to hear.
+              {t('fanFirstLanding.lead', 'Stream music from artists in your own city — all of it free, none of it behind a subscription. Find the shows they are playing this week, and HYPE the ones you want more people to hear.')}
             </p>
 
             <div className="fan-entry-actions" id="request-access">
               <div className="fan-entry-request">
                 <p className="fan-entry-request-lead">
-                  We are opening the app city by city. Leave your email and we will send
-                  you an invite when we reach yours.
+                  {t('fanFirstLanding.requestLead', 'We are opening the app city by city. Leave your email and we will send you an invite when we reach yours.')}
                 </p>
                 <RequestBetaAccessForm defaultOpen />
               </div>
             </div>
 
             <p className="fan-entry-secondary-line">
-              Already invited? <Link className="fan-entry-secondary" href="/login">Sign in</Link>
+              {t('fanFirstLanding.alreadyInvited', 'Already invited?')} <Link className="fan-entry-secondary" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
             </p>
 
             {/* This line used to read "No ads between songs", which was false
@@ -99,14 +99,14 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
                 If that ever needs to be a promise rather than a practice, make
                 the field required before strengthening this line. */}
             <p className="fan-entry-assurance">
-              Free forever <i aria-hidden="true">·</i> Funded like radio, with music-only ads <i aria-hidden="true">·</i> We never sell your data
+              {t('fanFirstLanding.assuranceFree', 'Free forever')} <i aria-hidden="true">·</i> {t('fanFirstLanding.assuranceAds', 'Funded like radio, with music-only ads')} <i aria-hidden="true">·</i> {t('fanFirstLanding.assuranceData', 'We never sell your data')}
             </p>
           </div>
 
           <div className="fan-entry-visual">
             <div aria-hidden="true" className="fan-entry-stage-light" />
             <Image
-              alt="iHYPE.org — local music"
+              alt={t('fanFirstLanding.artAlt', 'iHYPE.org — local music')}
               className="fan-entry-art"
               height={1024}
               priority
@@ -114,17 +114,17 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
               src="/brand/ihype-icon-master-2026.png"
               width={1024}
             />
-            <p className="fan-entry-signal"><span /> Support the scene. Be the signal.</p>
+            <p className="fan-entry-signal"><span /> {t('fanFirstLanding.signal', 'Support the scene. Be the signal.')}</p>
           </div>
         </section>
 
         {/* What the app does, in the order you would do it. Named as concrete
             capabilities rather than the old one-word verbs, which read as a
             brand slogan rather than a description of software. */}
-        <section aria-label="What iHYPE does" className="fan-entry-steps">
-          <article><span>01</span><div><strong>Listen free</strong><p>Full tracks from artists near you. No subscription, no paywall.</p></div></article>
-          <article><span>02</span><div><strong>Find the show</strong><p>Who is playing this week, at which room, for how much.</p></div></article>
-          <article><span>03</span><div><strong>HYPE it</strong><p>Your HYPE moves an artist up your city&rsquo;s chart. That is the whole ranking.</p></div></article>
+        <section aria-label={t('fanFirstLanding.stepsLabel', 'What iHYPE does')} className="fan-entry-steps">
+          <article><span>01</span><div><strong>{t('fanFirstLanding.step1Title', 'Listen free')}</strong><p>{t('fanFirstLanding.step1Body', 'Full tracks from artists near you. No subscription, no paywall.')}</p></div></article>
+          <article><span>02</span><div><strong>{t('fanFirstLanding.step2Title', 'Find the show')}</strong><p>{t('fanFirstLanding.step2Body', 'Who is playing this week, at which room, for how much.')}</p></div></article>
+          <article><span>03</span><div><strong>{t('fanFirstLanding.step3Title', 'HYPE it')}</strong><p>{t('fanFirstLanding.step3Body', 'Your HYPE moves an artist up your city’s chart. That is the whole ranking.')}</p></div></article>
         </section>
 
         {/* What is actually on, near whoever is reading. The signed-in answer
@@ -135,7 +135,7 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
             rather than an error. */}
         <NearbyShowsWidget />
 
-        <section aria-label="Live iHYPE platform statistics" className="fan-entry-stats">
+        <section aria-label={t('fanFirstLanding.statsLabel', 'Live iHYPE platform statistics')} className="fan-entry-stats">
           {stats}
         </section>
 
@@ -146,11 +146,13 @@ export function FanFirstLanding({ stats }: { stats: ReactNode }) {
             was old-design chrome on every page; this is the logged-out front
             door, so they live here now. A signed-in member reaches the same
             destinations through ME. */}
-        <footer aria-label="Site information" className="fan-entry-legal">
-          <Link href="/info">Info &amp; legal</Link>
-          <Link href="/support">Support</Link>
-          <Link href="/advertise">Advertise</Link>
-          <span>A 501(c)(3) nonprofit &middot; &copy; 2026 ihype.org</span>
+        <footer aria-label={t('fanFirstLanding.footerLabel', 'Site information')} className="fan-entry-legal">
+          <Link href="/info">{t('fanFirstLanding.infoLegal', 'Info & legal')}</Link>
+          <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
+          <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
+          {/* "501(c)(3)" is a US tax designation and `ihype.org` is the one
+              domain this product may name; both stay verbatim in every locale. */}
+          <span>{t('fanFirstLanding.nonprofit', 'A 501(c)(3) nonprofit')} · © 2026 ihype.org</span>
         </footer>
       </main>
     </div>
