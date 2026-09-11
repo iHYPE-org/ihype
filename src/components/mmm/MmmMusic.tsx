@@ -11,6 +11,8 @@ import { MmmShelf } from '@/components/mmm/MmmShelf';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
 import type { StationSummary } from '@/app/api/stations/route';
 import { MmmFreeUseCrate } from '@/components/mmm/MmmFreeUseCrate';
+import { useI18n } from '@/components/I18nProvider';
+import type { Translate } from '@/lib/mmm-shell-labels';
 
 export type MusicTabId = 'discover' | 'radio' | 'charts' | 'recommended' | 'playlists';
 
@@ -75,6 +77,39 @@ type StationTrackRow = {
  * `/api/stations` already computes, so the chip is a filter over the real
  * station list rather than a second taxonomy.
  */
+/**
+ * The chip labels below are declared once, in English, because the filter's
+ * KINDS and its label belong together. Translation happens at the draw, keyed
+ * on that English — the same rule `mmm-shell-labels.ts` follows, and for the
+ * same reason: every call has to be a literal `t('key', 'English')` or
+ * `extract-i18n-keys.mjs` cannot see it and no translation could ever be
+ * applied to it. `t(entry.labelKey, entry.label)` would be invisible to both
+ * the extractor and the applier.
+ */
+function radioFilterLabel(t: Translate, label: string): string {
+  switch (label) {
+    case 'Genre': return t('mmmMusic.filterGenre', 'Genre');
+    case 'New': return t('mmmMusic.filterNew', 'New');
+    case 'Local': return t('mmmMusic.filterLocal', 'Local');
+    case 'From others': return t('mmmMusic.filterFromOthers', 'From others');
+    case 'Your history': return t('mmmMusic.filterYourHistory', 'Your history');
+    default: return label;
+  }
+}
+
+function chartLabel(t: Translate, label: string): string {
+  switch (label) {
+    case 'Area': return t('mmmMusic.chartArea', 'Area');
+    case 'Genre': return t('mmmMusic.filterGenre', 'Genre');
+    case 'Friends': return t('mmmMusic.chartFriends', 'Friends');
+    case 'Local': return t('mmmMusic.filterLocal', 'Local');
+    case 'Regional': return t('mmmMusic.chartRegional', 'Regional');
+    case 'National': return t('mmmMusic.chartNational', 'National');
+    case 'Global': return t('mmmMusic.chartGlobal', 'Global');
+    default: return label;
+  }
+}
+
 const RADIO_FILTERS: Array<{ id: string; label: string; kinds: string[] }> = [
   { id: 'genre', label: 'Genre', kinds: ['genre'] },
   { id: 'new', label: 'New', kinds: ['new'] },
@@ -156,17 +191,19 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 function Loading() {
+  const { t } = useI18n();
   /* The same plate the empty state uses, so a tab has ONE shape while it
      waits and when it has nothing — a fetching list and an empty list used to
      look like two different screens. `aria-busy` tells assistive tech the
      region is still filling. */
-  return <p aria-busy="true" className="mmm-empty mmm-loading" role="status">Loading…</p>;
+  return <p aria-busy="true" className="mmm-empty mmm-loading" role="status">{t('mmmMusic.loading', 'Loading…')}</p>;
 }
 
 function DemoHeader({ description }: { description: string }) {
+  const { t } = useI18n();
   return (
     <div className="mmm-demo-head">
-      <span className="mmm-demo-badge">Demo content</span>
+      <span className="mmm-demo-badge">{t('mmmMusic.demoContent', 'Demo content')}</span>
       <p>{description}</p>
     </div>
   );
@@ -243,6 +280,7 @@ function RecentsRail() {
 }
 
 function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
+  const { t } = useI18n();
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -381,18 +419,18 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   // quietly narrowed looks identical to a deck that has run out — which is the
   // shape of the bug this parameter exists to fix, just one step later.
   const activeFilterLabel = [
-    trimmedGenre ? `Genre · ${trimmedGenre}` : null,
-    trimmedCity ? `City · ${trimmedCity}` : null,
+    trimmedGenre ? `${t('mmmMusic.filterGenre', 'Genre')} · ${trimmedGenre}` : null,
+    trimmedCity ? `${t('mmmMusic.filterCity', 'City')} · ${trimmedCity}` : null,
   ].filter(Boolean).join('  ·  ');
   const filterChip = activeFilterLabel ? (
     <div className="mmm-filter-chip">
       <span>{activeFilterLabel}</span>
-      <Link href="/app/music/discover">Clear</Link>
+      <Link href="/app/music/discover">{t('mmmMusic.clear', 'Clear')}</Link>
     </div>
   ) : null;
 
   if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Discovery is unavailable right now. Radio and Charts still work.</Empty>;
+  if (status === 'error') return <Empty>{t('mmmMusic.discoverUnavailable', 'Discovery is unavailable right now. Radio and Charts still work.')}</Empty>;
   const seeds = data ?? [];
   const seed = seeds[index];
   if (!seed) {
@@ -403,9 +441,9 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
         <Empty>
           {seeds.length === 0
             ? activeFilterLabel
-              ? `Nothing matches that filter right now. Clear it, or try Radio.`
-              : 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.'
-            : 'That is every seed for now. Come back tomorrow, or open Radio.'}
+              ? t('mmmMusic.noSeedsForFilter', 'Nothing matches that filter right now. Clear it, or try Radio.')
+              : t('mmmMusic.noSeeds', 'No seeds waiting — that usually means no new tracks near you yet. Try Radio, or a genre station.')
+            : t('mmmMusic.seedsDone', 'That is every seed for now. Come back tomorrow, or open Radio.')}
         </Empty>
       </>
     );
@@ -458,9 +496,15 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
  * MUSIC to listen to music.
  */
 function RadioTab() {
+  const { t } = useI18n();
   const [filter, setFilter] = useState<string>('genre');
   const [pendingStation, setPendingStation] = useState<string | null>(null);
-  const [stationError, setStationError] = useState<string | null>(null);
+  /* The FACT, not the sentence. `openStation` is registered as the surface's
+     play intent, so it has to keep a stable identity across renders — and `t`
+     is redeclared on every render of the provider, which is exactly the loop
+     `PagesHome` documents. Holding the station and the reason here lets the
+     render do the wording without putting `t` in the callback's deps. */
+  const [stationError, setStationError] = useState<{ title: string; reason: 'empty' | 'failed' } | null>(null);
   const { playTrack } = useMediaPlayer();
   const { status, data } = useJson<StationSummary[]>(
     '/api/stations',
@@ -483,12 +527,12 @@ function RadioTab() {
            audio rather than stalling the player on a dead entry. */
         const queue = toQueue(payload.tracks ?? []);
         if (queue.length === 0) {
-          setStationError(`${title} has no playable tracks yet.`);
+          setStationError({ title, reason: 'empty' });
           return;
         }
         playTrack(queue[0], queue);
       } catch {
-        setStationError(`${title} could not be loaded. Try another station.`);
+        setStationError({ title, reason: 'failed' });
       } finally {
         setPendingStation(null);
       }
@@ -511,9 +555,9 @@ function RadioTab() {
   ));
 
   if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Radio is paused right now. Charts and Discover still work.</Empty>;
+  if (status === 'error') return <Empty>{t('mmmMusic.radioUnavailable', 'Radio is paused right now. Charts and Discover still work.')}</Empty>;
   const all = data ?? [];
-  if (!all.length) return <Empty>No stations are active yet.</Empty>;
+  if (!all.length) return <Empty>{t('mmmMusic.noStations', 'No stations are active yet.')}</Empty>;
 
   const active = RADIO_FILTERS.find((entry) => entry.id === filter) ?? RADIO_FILTERS[0];
   const stations = all.filter((station) => active.kinds.includes(station.kind));
@@ -530,12 +574,21 @@ function RadioTab() {
             style={{ backdropFilter: 'none' }}
             type="button"
           >
-            {entry.label}
+            {radioFilterLabel(t, entry.label)}
           </button>
         ))}
       </div>
-      {stationError && <p className="mmm-me-note">{stationError}</p>}
-      {stations.length === 0 && <Empty>No {active.label.toLowerCase()} station is active yet.</Empty>}
+      {stationError && (
+        <p className="mmm-me-note">
+          {stationError.reason === 'empty'
+            ? `${stationError.title} — ${t('mmmMusic.stationEmpty', 'no playable tracks yet.')}`
+            : `${stationError.title} — ${t('mmmMusic.stationFailed', 'could not be loaded. Try another station.')}`}
+        </p>
+      )}
+      {/* The filter is named by the pressed chip directly above, so the
+          sentence does not interpolate a lowercased English label into itself
+          — a construction no translator can follow. */}
+      {stations.length === 0 && <Empty>{t('mmmMusic.noStationForFilter', 'No station is active yet for this filter.')}</Empty>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
       {stations.map((station) => (
         <button
@@ -560,7 +613,9 @@ function RadioTab() {
               station that may be full is worse than rendering nothing. */}
           {station.trackCount !== null && (
             <span className="mmm-row-meta mmm-station-count">
-              {station.trackCount === 0 ? 'No tracks yet' : `${station.trackCount} track${station.trackCount === 1 ? '' : 's'}`}
+              {station.trackCount === 0
+                ? t('mmmMusic.noTracksYet', 'No tracks yet')
+                : `${station.trackCount} ${station.trackCount === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}`}
             </span>
           )}
         </button>
@@ -586,6 +641,7 @@ function RadioTab() {
 type RecommendPayload = { ready: boolean; tracks: StationTrackRow[] };
 
 function RecommendedTab() {
+  const { t } = useI18n();
   const { status, data } = useJson<RecommendPayload>(
     '/api/recommend',
     (payload) => {
@@ -604,18 +660,17 @@ function RecommendedTab() {
   useRegisterQueue(data?.tracks ?? []);
 
   if (status === 'loading') return <Loading />;
-  if (status === 'error') return <Empty>Recommendations are unavailable right now.</Empty>;
+  if (status === 'error') return <Empty>{t('mmmMusic.recommendUnavailable', 'Recommendations are unavailable right now.')}</Empty>;
   if (!data?.ready) {
     return (
       <Empty>
-        Recommendations start once you hype an artist, follow one, save something from the deck, or ask a venue to book
-        someone. Nothing here is guessed.
+        {t('mmmMusic.recommendNotReady', 'Recommendations start once you hype an artist, follow one, save something from the deck, or ask a venue to book someone. Nothing here is guessed.')}
       </Empty>
     );
   }
   const tracks = data.tracks;
   if (tracks.length === 0) {
-    return <Empty>Nothing to recommend yet beyond what you already know. Check back as more artists release music.</Empty>;
+    return <Empty>{t('mmmMusic.recommendNothingNew', 'Nothing to recommend yet beyond what you already know. Check back as more artists release music.')}</Empty>;
   }
 
   return (
@@ -680,20 +735,21 @@ type ChartPayload = {
 /** What an empty chart MEANS. Every one of these is a different situation and
  *  three of them are actionable, so a single "nothing here" would be the least
  *  useful sentence available. */
-function emptyChartMessage(reason: string | null, dataset: ChartDatasetId, scope: ChartScopeId): string {
-  if (reason === 'no-follows') return 'You are not following anyone yet. Follow an artist or a venue and their music charts here.';
+function emptyChartMessage(t: Translate, reason: string | null, dataset: ChartDatasetId, scope: ChartScopeId): string {
+  if (reason === 'no-follows') return t('mmmMusic.chartNoFollows', 'You are not following anyone yet. Follow an artist or a venue and their music charts here.');
   if (reason === 'no-location') {
     return scope === 'local'
-      ? 'Add a city to your profile and the local chart will follow it.'
-      : 'Add a location to your profile and this chart will follow it.';
+      ? t('mmmMusic.chartNoCity', 'Add a city to your profile and the local chart will follow it.')
+      : t('mmmMusic.chartNoLocation', 'Add a location to your profile and this chart will follow it.');
   }
-  if (reason === 'no-genre') return 'Pick a genre.';
-  if (reason === 'no-tracks') return 'No released music here yet.';
-  if (dataset === 'friends') return 'Nothing you follow has been hyped this week.';
-  return 'Nothing here has been hyped this week.';
+  if (reason === 'no-genre') return t('mmmMusic.chartPickGenre', 'Pick a genre.');
+  if (reason === 'no-tracks') return t('mmmMusic.chartNoReleases', 'No released music here yet.');
+  if (dataset === 'friends') return t('mmmMusic.chartNoFriendHypes', 'Nothing you follow has been hyped this week.');
+  return t('mmmMusic.chartNoHypes', 'Nothing here has been hyped this week.');
 }
 
 function ChartsTab() {
+  const { t } = useI18n();
   const [dataset, setDataset] = useState<ChartDatasetId>('area');
   const [scope, setScope] = useState<ChartScopeId>('local');
   const [genre, setGenre] = useState('');
@@ -761,7 +817,7 @@ function ChartsTab() {
             style={{ backdropFilter: 'none' }}
             type="button"
           >
-            {entry.label}
+            {chartLabel(t, entry.label)}
           </button>
         ))}
       </div>
@@ -776,7 +832,7 @@ function ChartsTab() {
               style={{ backdropFilter: 'none' }}
               type="button"
             >
-              {entry.label}
+              {chartLabel(t, entry.label)}
             </button>
           ))}
         </div>
@@ -797,7 +853,7 @@ function ChartsTab() {
           ))}
         </div>
       )}
-      {scopeDetail && <p className="mmm-chart-place">Ranking {scopeDetail}</p>}
+      {scopeDetail && <p className="mmm-chart-place">{t('mmmMusic.ranking', 'Ranking')} {scopeDetail}</p>}
     </>
   );
 
@@ -805,7 +861,7 @@ function ChartsTab() {
     return (
       <div className="mmm-music-list">
         {chips}
-        <Empty>Charts are unavailable right now.</Empty>
+        <Empty>{t('mmmMusic.chartsUnavailable', 'Charts are unavailable right now.')}</Empty>
       </div>
     );
   }
@@ -822,9 +878,9 @@ function ChartsTab() {
       {chips}
       {status === 'loading' && <Loading />}
       {status === 'ready' && rows.length === 0 && !demo && (
-        <Empty>{emptyChartMessage(data?.reason ?? null, dataset, scope)}</Empty>
+        <Empty>{emptyChartMessage(t, data?.reason ?? null, dataset, scope)}</Empty>
       )}
-      {demo && <DemoHeader description="A preview of the weekly chart once HYPE activity can be ranked." />}
+      {demo && <DemoHeader description={t('mmmMusic.chartDemoNote', 'A preview of the weekly chart once HYPE activity can be ranked.')} />}
       {shown.length > 0 && (
       <ol style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {shown.map((row, index) => (
@@ -873,9 +929,12 @@ type StationRow = { slug: string; title: string; subtitle: string; trackCount: n
 function TrackRow({ row, active, playing, onPlay }: {
   row: FavoriteRow; active: boolean; playing: boolean; onPlay: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <button
-      aria-label={active && playing ? `Pause ${row.title}` : `Play ${row.title} by ${row.artistName}`}
+      aria-label={active && playing
+        ? `${t('mmmMusic.pause', 'Pause')} ${row.title}`
+        : `${t('mmmMusic.play', 'Play')} ${row.title} — ${row.artistName}`}
       className="mmm-row"
       data-playing={active && playing ? 'true' : undefined}
       onClick={onPlay}
@@ -898,6 +957,7 @@ function TrackRow({ row, active, playing, onPlay }: {
 function LikedProfileRows({ rows, heading, hrefFor }: {
   rows: LikeRow[]; heading: string; hrefFor: (row: LikeRow) => string;
 }) {
+  const { t } = useI18n();
   /* A shelf, not rows (MIDDLE ROAD, 2026-09-04). An artist and a venue are
      COLLECTIONS — one object with an identity — which is the half of the
      library that shelves; the liked TRACKS above stay a vertical list, because
@@ -910,7 +970,7 @@ function LikedProfileRows({ rows, heading, hrefFor }: {
       heading={heading}
       tiles={rows.map((row) => ({
         id: row.targetId,
-        title: row.name ?? 'Unnamed',
+        title: row.name ?? t('mmmMusic.unnamed', 'Unnamed'),
         sub: row.meta,
         href: hrefFor(row),
       }))}
@@ -932,6 +992,7 @@ function LikedProfileRows({ rows, heading, hrefFor }: {
 function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
   list: PlaylistRow; onRenamed: (name: string) => void; onDeleted: () => void;
 }) {
+  const { t } = useI18n();
   const [mode, setMode] = useState<'idle' | 'rename' | 'confirm'>('idle');
   const [draft, setDraft] = useState(list.name);
   const [busy, setBusy] = useState(false);
@@ -951,7 +1012,7 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
       onRenamed(name);
       setMode('idle');
     } catch {
-      setError('That name could not be saved.');
+      setError(t('mmmMusic.renameFailed', 'That name could not be saved.'));
     } finally {
       setBusy(false);
     }
@@ -964,7 +1025,7 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
       if (!response.ok) throw new Error(String(response.status));
       onDeleted();
     } catch {
-      setError('That playlist could not be deleted.');
+      setError(t('mmmMusic.deleteFailed', 'That playlist could not be deleted.'));
       setBusy(false);
       setMode('idle');
     }
@@ -974,7 +1035,7 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
     return (
       <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <input
-          aria-label={`Rename ${list.name}`}
+          aria-label={`${t('mmmMusic.rename', 'Rename')} ${list.name}`}
           autoFocus
           className="mmm-row-title"
           disabled={busy}
@@ -983,8 +1044,8 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
           style={{ flex: 1, minWidth: 0, background: 'transparent', border: 'none', color: 'var(--ink)' }}
           value={draft}
         />
-        <button className="mmm-btn-ghost" disabled={busy} onClick={() => void rename()} type="button">Save</button>
-        <button className="mmm-btn-ghost" disabled={busy} onClick={() => { setDraft(list.name); setMode('idle'); }} type="button">Cancel</button>
+        <button className="mmm-btn-ghost" disabled={busy} onClick={() => void rename()} type="button">{t('mmmMusic.save', 'Save')}</button>
+        <button className="mmm-btn-ghost" disabled={busy} onClick={() => { setDraft(list.name); setMode('idle'); }} type="button">{t('mmmMusic.cancel', 'Cancel')}</button>
       </div>
     );
   }
@@ -994,17 +1055,17 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
       <div className="mmm-row" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <Link className="mmm-row-link" href={`/app/playlists/${list.id}`}>
           <span className="mmm-row-title">{list.name}</span>
-          <span className="mmm-row-sub">{list.count} track{list.count === 1 ? '' : 's'}</span>
+          <span className="mmm-row-sub">{list.count} {list.count === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}</span>
         </Link>
         {mode === 'confirm' ? (
           <>
-            <button className="mmm-btn-ghost" disabled={busy} onClick={() => void remove()} type="button">Delete</button>
-            <button className="mmm-btn-ghost" disabled={busy} onClick={() => setMode('idle')} type="button">Keep</button>
+            <button className="mmm-btn-ghost" disabled={busy} onClick={() => void remove()} type="button">{t('mmmMusic.delete', 'Delete')}</button>
+            <button className="mmm-btn-ghost" disabled={busy} onClick={() => setMode('idle')} type="button">{t('mmmMusic.keep', 'Keep')}</button>
           </>
         ) : (
           <>
-            <button aria-label={`Rename ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('rename')} type="button">Rename</button>
-            <button aria-label={`Delete ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('confirm')} type="button">Delete</button>
+            <button aria-label={`${t('mmmMusic.rename', 'Rename')} ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('rename')} type="button">{t('mmmMusic.rename', 'Rename')}</button>
+            <button aria-label={`${t('mmmMusic.delete', 'Delete')} ${list.name}`} className="mmm-btn-ghost" onClick={() => setMode('confirm')} type="button">{t('mmmMusic.delete', 'Delete')}</button>
           </>
         )}
       </div>
@@ -1030,6 +1091,7 @@ function OwnPlaylistRow({ list, onRenamed, onDeleted }: {
  *   Liked artists / venues  — links to their pages
  */
 function PlaylistsTab() {
+  const { t } = useI18n();
   const { playTrack, currentTrack, isPlaying, togglePlayback } = useMediaPlayer();
   const favorites = useJson<FavoriteRow[]>('/api/fan-favorites', (payload) =>
     ((payload as { favorites?: FavoriteRow[] }).favorites ?? []));
@@ -1113,8 +1175,7 @@ function PlaylistsTab() {
     return (
       <div className="mmm-music-list">
         <Empty>
-          Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue
-          pages save them here too — everything stays until you unlike it.
+          {t('mmmMusic.nothingSaved', 'Nothing saved yet. The heart on the player saves a track here; the hearts on artist and venue pages save them here too — everything stays until you unlike it.')}
         </Empty>
         <MmmFreeUseCrate playlists={[]} />
       </div>
@@ -1125,7 +1186,7 @@ function PlaylistsTab() {
     <div className="mmm-music-list">
       {tracks.length > 0 && (
         <>
-          <p className="mmm-eyebrow" style={{ padding: '2px 2px 8px' }}>Liked tracks · {tracks.length}</p>
+          <p className="mmm-eyebrow" style={{ padding: '2px 2px 8px' }}>{t('mmmMusic.likedTracks', 'Liked tracks')} · {tracks.length}</p>
           {tracks.map((row, index) => (
             <TrackRow
               active={currentTrack?.mediaId === row.mediaId || currentTrack?.id === row.mediaId}
@@ -1140,7 +1201,7 @@ function PlaylistsTab() {
 
       {ownLists.length > 0 && (
         <>
-          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>Your playlists · {ownLists.length}</p>
+          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>{t('mmmMusic.yourPlaylists', 'Your playlists')} · {ownLists.length}</p>
           {ownLists.map((list) => (
             <OwnPlaylistRow
               key={list.id}
@@ -1169,25 +1230,25 @@ function PlaylistsTab() {
           read", never zero. */}
       <MmmShelf
         count={stationRows.length}
-        heading="Automatically assembled"
+        heading={t('mmmMusic.automaticallyAssembled', 'Automatically assembled')}
         seeAll="/app/music/radio"
-        seeAllLabel="Radio"
+        seeAllLabel={t('mmmMusic.radio', 'Radio')}
         tiles={stationRows.map((station) => ({
           id: station.slug,
           title: station.title,
           sub: station.subtitle,
-          label: `Play ${station.title}`,
+          label: `${t('mmmMusic.play', 'Play')} ${station.title}`,
           onSelect: () => void playStation(station.slug),
         }))}
       />
 
       <LikedProfileRows
-        heading="Liked artists"
+        heading={t('mmmMusic.likedArtists', 'Liked artists')}
         hrefFor={(row) => (row.slug ? `/app/artists/${row.slug}` : '/app/music/discover')}
         rows={likedArtists}
       />
       <LikedProfileRows
-        heading="Liked venues"
+        heading={t('mmmMusic.likedVenues', 'Liked venues')}
         hrefFor={(row) => (row.slug ? `/app/venues/${row.slug}` : '/app/map?layer=venues')}
         rows={likedVenues}
       />
