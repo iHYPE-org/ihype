@@ -460,10 +460,16 @@ jobs:
       #   ANDROID_KEY_ALIAS                - key alias within the keystore
       #   ANDROID_KEY_PASSWORD             - that key's password (often the
       #                                       same as the keystore password)
-      #   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON - a Play Console service-account
-      #                                       JSON key with Release Manager
-      #                                       access (Play Console → Users and
-      #                                       permissions → API access)
+      #   GOOGLE_PLAY_SERVICE_ACCOUNT_JSON - the whole JSON key file of a
+      #                                       service account holding Release
+      #                                       manager on this app.
+      #
+      # THE SERVICE ACCOUNT IS CREATED IN GOOGLE CLOUD CONSOLE, NOT IN PLAY.
+      # This comment used to say "Play Console → Users and permissions → API
+      # access", which is where it USED to be created and is now only where it
+      # is granted. The full sequence — and the two steps whose absence looks
+      # identical to a wrong key — is in docs/store-submission.md under "Play
+      # API access". Read it there rather than guessing from this line.
       - name: Check for signing secrets
         id: check
         env:
