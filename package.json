@@ -89,7 +89,7 @@
     "@sentry/cloudflare": "10.73.0",
     "@sentry/nextjs": "^10.72.0",
     "@simplewebauthn/browser": "^13.0.0",
-    "@simplewebauthn/server": "^13.3.3",
+    "@simplewebauthn/server": "^14.0.1",
     "bcryptjs": "^3.0.3",
     "jsqr": "^1.4.0",
     "maplibre-gl": "^6.6.0",
