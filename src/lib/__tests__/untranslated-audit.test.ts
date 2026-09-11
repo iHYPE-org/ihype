@@ -83,6 +83,52 @@ describe('the untranslated-string audit reports prose, not source', () => {
     expect(listing).not.toMatch(/TEXT\s+"ihype\.org"/);
   });
 
+  describe('i18n-exempt marks a string as deliberately English', () => {
+    /* Some strings must NOT be translated and translating them would be the
+       bug — a basemap attribution naming two organisations, a honeypot label
+       no person ever reads, operator-only chrome. Without a marker the
+       ratchet can never reach zero, and a floor nobody can clear is a floor
+       people stop lowering.
+
+       Every case below is a bug this took on the way in. Scanning UPWARD
+       from the string was wrong twice (a one-line lookback misses a two-line
+       reason; a "contiguous comment" walk misses it too, because only the
+       first line of a JSX comment block starts with a comment token), so the
+       rule scans FORWARD from the marker to the end of its comment and
+       exempts the next line carrying anything. */
+    function measure(body: string): string {
+      const dir = mkdtempSync(join(tmpdir(), 'untranslated-exempt-'));
+      writeFileSync(join(dir, 'Probe.tsx'), body);
+      try {
+        return run(['--list', `--roots=${dir}`]);
+      } finally {
+        rmSync(dir, { recursive: true, force: true });
+      }
+    }
+
+    it('exempts the line after a one-line reason', () => {
+      expect(measure('export function P() {\n  // i18n-exempt: a brand name.\n  return <p>Save your ticket</p>;\n}\n'))
+        .not.toContain('Save your ticket');
+    });
+
+    it('exempts the line after a reason that runs over two lines', () => {
+      expect(measure('export function P() {\n  // i18n-exempt: a licence condition, and the reason\n  // is long enough that it does not fit on one line.\n  return <p>Save your ticket</p>;\n}\n'))
+        .not.toContain('Save your ticket');
+    });
+
+    it('exempts the line after a JSX comment block', () => {
+      expect(measure('export function P() {\n  return (\n    <div>\n      {/* i18n-exempt: operator chrome, and this reason\n          continues onto a second line. */}\n      <p>Save your ticket</p>\n    </div>\n  );\n}\n'))
+        .not.toContain('Save your ticket');
+    });
+
+    it('ignores a marker with no reason', () => {
+      /* "Exempt" with no "why" is indistinguishable from a string somebody
+         could not be bothered to wrap, so the reason is required. */
+      expect(measure('export function P() {\n  // i18n-exempt\n  return <p>Save your ticket</p>;\n}\n'))
+        .toContain('Save your ticket');
+    });
+  });
+
   it('fails when the count exceeds the budget, so the ratchet can bite', () => {
     let exitCode = 0;
     try {

@@ -102,9 +102,9 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
 
   return (
     <div className="mmm-show">
-      <Link className="mmm-show-back" href="/app/music/discover">← Music</Link>
+      <Link className="mmm-show-back" href="/app/music/discover">← {t('mmmDock.tab.listen', 'Listen')}</Link>
 
-      <div className="mmm-show-eyebrow">Track</div>
+      <div className="mmm-show-eyebrow">{t('mmmTrackPage.eyebrow', 'Track')}</div>
       {/* Renders nothing; hands this track to the dock's transport. */}
       <MmmPlayHere rows={[{
         hexId: asset.hexId,
@@ -130,7 +130,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
           <span className="mmm-profile-badge">{playCount.toLocaleString()} plays</span>
         )}
         {asset.freeUseEnabled && (
-          <span className="mmm-profile-badge" data-kind="verified">Free-use</span>
+          <span className="mmm-profile-badge" data-kind="verified">{t('mmmTrackPage.freeUse', 'Free-use')}</span>
         )}
       </div>
 

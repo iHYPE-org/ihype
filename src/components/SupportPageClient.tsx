@@ -58,7 +58,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
         style={{ border: '1px solid var(--line)', borderRadius: 12, padding: 32, background: 'var(--bg-2)' }}
       >
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 800, marginBottom: 24 }}>{t('supportPageClient.sendMessage', 'Send a Message')}</h2>
-        {alphaModule && <p style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', margin: '-12px 0 18px' }}>This report will include the current module, screen size, and online status. It never includes your location or listening history.</p>}
+        {alphaModule && <p style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', margin: '-12px 0 18px' }}>{t('supportPageClient.reportNotice', 'This report will include the current module, screen size, and online status. It never includes your location or listening history.')}</p>}
         <SupportForm alphaModule={alphaModule} key={formKey} initialType={initialType} initialSubject={initialSubject} />
       </div>
     </>

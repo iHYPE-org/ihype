@@ -46,6 +46,23 @@
  *     list, an identifier in camelCase or kebab-case, a template expression;
  *   - `aria-hidden` decorations and `data-*`.
  *
+ * ## Saying "this one is deliberately English"
+ *
+ * Some strings must NOT be translated and translating them would be the bug:
+ * the `© OpenStreetMap · CARTO` basemap attribution names two organisations
+ * and is a licence condition, not copy. Write `i18n-exempt: <why>` in a
+ * comment on the line or the line above and the finding is dropped, with the
+ * reason in the source where the next reader is. Without this the ratchet can
+ * never reach zero, and a floor nobody can clear is a floor people stop
+ * lowering.
+ *
+ * The reason is REQUIRED: a bare marker is ignored, because "exempt" with no
+ * "why" is indistinguishable from a string somebody could not be bothered to
+ * wrap. Exemptions are read from the ORIGINAL source rather than the masked
+ * copy — they live in comments, which masking removes — and that ordering is
+ * the same trap `audit:retro` sprang in row 290, where a marker written above
+ * its line was deleted before it could be read.
+ *
  * It reports FILES and LINES, not a translation. Wrapping a string is a
  * judgement about what the sentence is for — a field label is a control's
  * name, an eyebrow is metadata — and this script has no opinion about that.
@@ -95,6 +112,9 @@ const SKIP_DIRS = new Set(['admin', '__tests__', 'ds']);
    because one file in the wrong folder would otherwise put admin strings in a
    member-facing count. */
 const SKIP_FILES = /\.(test|spec)\.tsx?$|(^|\/)Admin[A-Z][^/]*\.tsx$/;
+
+/** `i18n-exempt: <reason>` — the reason is required, see the header. */
+const EXEMPT = /i18n-exempt:\s*\S/i;
 
 const maxArg = process.argv.find((arg) => arg.startsWith('--max='));
 const max = maxArg ? Number.parseInt(maxArg.slice('--max='.length), 10) : Number.POSITIVE_INFINITY;
@@ -198,9 +218,44 @@ for (const root of ROOTS) {
     const source = readFileSync(file, 'utf8');
     const masked = maskComments(source);
     const lines = masked.split('\n');
+    /* Read from the UNMASKED source: the marker lives in a comment, and
+       masking is what removes comments.
+
+       A marker exempts its own line and THE FIRST LINE OF CODE AFTER THE
+       COMMENT IT SITS IN. Walking upward from the string instead does not
+       work, and both wrong versions of that were written before this one: a
+       one-line lookback misses a two-line reason, and a "contiguous comment
+       block" walk misses it too, because only the FIRST line of a JSX
+       comment block starts with a comment token — its continuation lines
+       start with whatever word the sentence reached. Scanning forward from
+       the marker has no such edge: a block comment ends where its closing
+       delimiter says it does. */
+    const rawLines = source.split('\n');
+    const exemptLines = new Set();
+    rawLines.forEach((line, i) => {
+      if (!EXEMPT.test(line)) return;
+      exemptLines.add(i);
+      /* Find where this comment ends. A run of line comments ends at the
+         first line that is not one — a two-line `//` reason is ordinary, and
+         treating only the marker's own line as the comment made the SECOND
+         line of the reason look like the code being excused. A block comment
+         ends at its closing delimiter. */
+      let end = i;
+      if (/^\s*\/\//.test(line)) {
+        while (end + 1 < rawLines.length && /^\s*\/\//.test(rawLines[end + 1])) end += 1;
+      } else {
+        while (end < rawLines.length && !rawLines[end].includes('*/')) end += 1;
+      }
+      // …then the next line carrying anything at all is what it excuses.
+      let next = end + 1;
+      while (next < rawLines.length && rawLines[next].trim() === '') next += 1;
+      exemptLines.add(next);
+    });
+    const exempt = (index) => exemptLines.has(index);
     const rel = relative(process.cwd(), file);
 
     lines.forEach((line, i) => {
+      if (exempt(i)) return;
       // ── ATTR ──────────────────────────────────────────────────────────
       for (const attr of VISIBLE_ATTRS) {
         const re = new RegExp(`\\b${attr}=(["'])([^"'{}]+)\\1`, 'g');

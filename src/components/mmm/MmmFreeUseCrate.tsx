@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * The free-use crate — tracks their own artists have cleared for other people's
@@ -34,6 +35,7 @@ type CrateTrack = {
 type PlaylistTarget = { id: string; name: string };
 
 export function MmmFreeUseCrate({ playlists }: { playlists: readonly PlaylistTarget[] }) {
+  const { t } = useI18n();
   const { playTrack } = useMediaPlayer();
   const [tracks, setTracks] = useState<CrateTrack[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export function MmmFreeUseCrate({ playlists }: { playlists: readonly PlaylistTar
               style={{ maxWidth: 150 }}
               value=""
             >
-              <option value="">Add to…</option>
+              <option value="">{t('mmmFreeUseCrate.addTo', 'Add to…')}</option>
               {playlists.map((playlist) => (
                 <option key={playlist.id} value={playlist.id}>{playlist.name}</option>
               ))}

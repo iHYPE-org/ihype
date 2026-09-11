@@ -91,7 +91,7 @@ export function SiteTabBar() {
 
   return (
       <nav
-        aria-label="Mobile navigation"
+        aria-label={t('siteTabBar.navLabel', 'Mobile navigation')}
         className="site-tabbar"
         style={{
           display: 'none',

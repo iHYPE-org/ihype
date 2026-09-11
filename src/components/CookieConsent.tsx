@@ -87,7 +87,7 @@ export function CookieConsent() {
     <div
       ref={boxRef}
       role="dialog"
-      aria-label="Cookie preferences"
+      aria-label={t('cookieConsent.dialogLabel', 'Cookie preferences')}
       className="ihype-cookie-consent"
       style={{
         position: 'fixed',
