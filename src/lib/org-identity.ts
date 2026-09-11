@@ -51,6 +51,8 @@ export type OrgIdentity = {
   address: PostalAddress | null;
   /** The one address this product uses for contact (see CLAUDE.md). */
   contactEmail: string;
+  /** Published so a funder or a registry has a second way to reach a human. */
+  phone: string | null;
   /** The one domain this product may name. */
   website: string;
   /** Where and when, as the charter states it. */
@@ -59,16 +61,33 @@ export type OrgIdentity = {
 };
 
 export const ORG_IDENTITY: OrgIdentity = {
-  // TO PUBLISH: the three nulls below are the whole of what Google for
-  // Nonprofits is missing, and they are the only values here I cannot derive
-  // from the codebase. They come from the determination letter.
-  legalName: null,
-  ein: null,
-  address: null,
+  // Supplied by the owner 2026-09-11. The registered address is in SOUTH
+  // Portland; `foundedIn` stays Portland, Maine, because that is where the
+  // charter says the organisation was founded and the two are different
+  // municipalities — not a typo in either direction.
+  //
+  // The owner gave the identifier under the label "Charity ID", and when asked
+  // whether it was the federal EIN or a state charity registration answered
+  // "same for Maine" — one number serving both. It is published as the EIN and
+  // ONLY as the EIN: that is the federal term, it is the shape of one (`42` is
+  // a valid prefix), and it is what Google for Nonprofits and TechSoup ask a US
+  // organisation for. A second row claiming a Maine registration would be its
+  // own assertion about a state filing, and nothing here can check that one.
+  legalName: 'iHYPE',
+  ein: '42-2162562',
+  address: {
+    line1: '443 Western Ave.',
+    line2: '#1176',
+    city: 'South Portland',
+    region: 'ME',
+    postalCode: '04106',
+    country: 'US',
+  },
 
   displayName: 'iHYPE',
   taxStatus: '501(c)(3) nonprofit',
   contactEmail: 'admin@ihype.org',
+  phone: '(207) 400-7782',
   website: 'https://ihype.org',
   foundedIn: 'Portland, Maine',
   foundedYear: 2026,

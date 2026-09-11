@@ -40,6 +40,25 @@ describe('organisation identity', () => {
     expect('123456789').not.toMatch(EIN_PATTERN);
   });
 
+  it('publishes the identity a reviewer checks, exactly as filed', () => {
+    // PINNED ON PURPOSE. These are the values Google for Nonprofits, a funder
+    // and a state registry read off the public page, and the cost of a silent
+    // typo in a later refactor is a wrong federal identifier published under
+    // our own name. A change here should be a deliberate edit to this test.
+    expect(isPublicIdentityComplete()).toBe(true);
+    expect(ORG_IDENTITY.legalName).toBe('iHYPE');
+    expect(ORG_IDENTITY.ein).toBe('42-2162562');
+    expect(ORG_IDENTITY.phone).toBe('(207) 400-7782');
+    expect(formatAddress(ORG_IDENTITY.address)).toBe(
+      '443 Western Ave., #1176, South Portland, ME 04106, US',
+    );
+    // The registered address is South Portland; the charter's founding city is
+    // Portland. Two different municipalities, both correct — asserted together
+    // so a future reader does not "fix" one into the other.
+    expect(ORG_IDENTITY.address?.city).toBe('South Portland');
+    expect(ORG_IDENTITY.foundedIn).toBe('Portland, Maine');
+  });
+
   it('formats an address on one line, and says nothing when there is none', () => {
     expect(formatAddress(null)).toBeNull();
     expect(
