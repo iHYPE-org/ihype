@@ -42,7 +42,11 @@ export function TicketVerificationCard({
   }
 
   return (
-    <div className="ticket-verification-actions">
+    /* Unclassed: `.button` carries the control and `.meta` the message under
+       it, so the `ticket-verification-actions` hook this wore had nothing left
+       to do and no stylesheet answered it. A plain block comment rather than a
+       JSX one, which here would be a second expression after `return (`. */
+    <div>
       {canScan ? (
         <button className="button" disabled={pending || status !== 'Valid'} onClick={handleScan} type="button">
           {pending

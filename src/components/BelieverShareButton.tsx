@@ -29,11 +29,14 @@ export function BelieverShareButton({ artistName, artistSlug, rank }: { artistNa
     }
   }
 
-  // `believer-share-btn` has no rule in any stylesheet, so this rendered as a
-  // browser-default button 25px tall (measured at 1280, 2026-09-10). The
-  // shell's ghost button carries the 44px floor; the hook class stays.
+  // `mmm-btn-ghost` is the whole control: the shell's secondary button, with
+  // the 44px floor. It replaced a bare `believer-share-btn`, which no
+  // stylesheet answered and which therefore rendered as a browser-default
+  // button 25px tall (measured at 1280, 2026-09-10). That class is GONE rather
+  // than kept as a hook — a class with no rule and no reader is a promise of a
+  // rule nobody is going to write, and `audit:unstyled` is right to count it.
   return (
-    <button type="button" onClick={handleShare} className="mmm-btn-ghost believer-share-btn">
+    <button type="button" onClick={handleShare} className="mmm-btn-ghost">
       {status === 'done' ? t('believerShareButton.shared', 'Shared ✓') : t('believerShareButton.shareYourRank', 'Share your rank')}
     </button>
   );

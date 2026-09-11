@@ -209,6 +209,11 @@ export default async function WelcomePage() {
         .welcome-step { display: flex; gap: 14px; align-items: flex-start; padding: 11px 0; width: 100%; background: none; border: none; cursor: pointer; text-align: left; font: inherit; }
         .welcome-step-num { flex-shrink: 0; width: 24px; height: 24px; border-radius: 7px; background: rgba(var(--accent-rgb),.12); color: var(--accent-text); font-family: var(--f-d, 'Bricolage Grotesque', sans-serif); font-weight: 800; font-size: 0.9375rem; display: flex; align-items: center; justify-content: center; }
         .welcome-step.done .welcome-step-num { background: rgba(var(--role-venue-rgb),.15); color: var(--role-venue); }
+        /* The text column of a flex row whose number does not shrink. Without
+           this it takes the default min-width of auto, and a long unbroken word
+           in a step's description widens the row past the card at 375px.
+           (No backticks in this comment: the block is a template literal.) */
+        .welcome-step-text { min-width: 0; }
         .welcome-step-title { font-weight: 700; font-size: 0.9375rem; color: var(--ink); }
         .welcome-step.done .welcome-step-title { color: var(--ink-a70); text-decoration: line-through; }
         .welcome-step-desc { font-size: 0.9375rem; color: var(--ink-a70); line-height: 1.55; margin-top: 2px; }

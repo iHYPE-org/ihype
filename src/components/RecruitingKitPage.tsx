@@ -58,7 +58,10 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
       <header className="rk-hero">
         <div className="rk-hero-glow" aria-hidden="true" />
         <div className="rk-hero-inner">
-          <div className="rk-hero-copy">
+          {/* Unclassed: this is the `minmax(0, 1fr)` cell of `.rk-hero-inner`,
+              and the eyebrow, h1 and body inside it carry their own spacing.
+              It used to wear `rk-hero-copy`, which no rule answered. */}
+          <div>
             <div className="rk-eyebrow">{config.eyebrow}</div>
             <h1 className="rk-h1">{config.headline}</h1>
             <p className="rk-hero-body">{config.heroBody}</p>

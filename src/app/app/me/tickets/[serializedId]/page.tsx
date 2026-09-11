@@ -105,11 +105,14 @@ export default async function TicketPage({
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* `mmm-profile-badge` is the shell's mono eyebrow pill (the profile
-              card's "ARTIST · VERIFIED"). `ticket-status-pill` had no rule in
-              any stylesheet, so the status rendered as bare body text beside
-              its own eyebrow — measured on the built worker, 2026-09-10. The
-              two ticket-* classes stay as hooks for a per-status colour. */}
-          <div className={`mmm-profile-badge ticket-status-pill ticket-status-${ticket.status.toLowerCase()}`}>{status}</div>
+              card's "ARTIST · VERIFIED"), and `data-status` picks the per-state
+              colour beside it in mmm.css — the same attribute shape the badge
+              already used for `data-kind`. It replaced two hook classes,
+              `ticket-status-pill` and `ticket-status-<state>`, which no
+              stylesheet answered: the first left the status as bare body text
+              (measured on the built worker, 2026-09-10) and the second meant a
+              VOID ticket looked exactly like a VALID one. */}
+          <div className="mmm-profile-badge" data-status={ticket.status.toLowerCase()}>{status}</div>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
             {ticket.scannedAt
               ? t('ticketsSerializedIdPage.scanned', 'Scanned')

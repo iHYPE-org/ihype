@@ -107,7 +107,7 @@ export function NotificationsList({
           {unreadCount > 0 && <div className="notifications-unread-sub">{unreadCount} {t('notificationsList.unreadSuffix', 'unread')}</div>}
         </div>
         {unreadCount > 0 && (
-          <button className="button ghost small" onClick={markAllRead} type="button">{t('notificationsList.markAllRead', 'Mark all read')}</button>
+          <button className="button secondary small" onClick={markAllRead} type="button">{t('notificationsList.markAllRead', 'Mark all read')}</button>
         )}
       </div>
 

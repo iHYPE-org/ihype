@@ -92,7 +92,10 @@ export default async function AdvertiserDashboard() {
   const maxDaily = Math.max(1, ...dailyRows.map(([, n]) => n));
 
   return (
-    <div className="mmm-advertiser ad-dash">
+    /* `mmm-advertiser` is the scope every rule under it keys on — including
+       `.mmm-advertiser .ad-dash-stats`. The `ad-dash` class beside it was
+       answered by nothing and scoped nothing. */
+    <div className="mmm-advertiser">
       <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ {t('mmmStrip.profiles', 'Profiles')}</Link>
       <div className="mmm-advertiser-head">
         <div>

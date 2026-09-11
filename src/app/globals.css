@@ -2034,6 +2034,21 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   resize: vertical;
   transition: border-color .15s, box-shadow .15s;
 }
+/* A label that WRAPS its control, which is how /dmca, a show's comments and a
+   show recap all write one. With no rule it was `display: inline`, so the
+   100%-wide `.input` inside it forced a line break with no gap and the field's
+   name rendered at plain body weight — indistinguishable from the paragraph
+   above it. A field label is a control's NAME rather than metadata, so it
+   holds the 15px body floor and takes weight instead of the tracked-mono
+   eyebrow, exactly as the type-ramp work (row 287) concluded. */
+.form-label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--ink);
+}
 .input:focus {
   outline: none;
   border-color: rgba(var(--accent-rgb),.4);
@@ -2984,6 +2999,79 @@ body:has(#wt-wrap) .site-shell > main {
   border-radius: 18px;
   border: 1px solid var(--line);
   background: var(--hair-20);
+}
+/* THE MOMENT AFTER A TICKET IS BOUGHT, which had no styles at all until
+   2026-09-11. `TicketSaleCard` writes `ticketing-context-grid`,
+   `ticket-issued-grid`, `-card`, `-qr` and `-copy`, and not one of them was
+   answered by any stylesheet — so "You're going!" drew a full-bleed QR with
+   unstyled text stacked under it, on the highest-emotion surface the product
+   has. `audit:unstyled` is what found it: a class the markup writes and no
+   stylesheet answers is invisible to the type system, to the tests and to
+   every other check here.
+   The QR is left without a background on purpose — uqr renders a white
+   `<rect>` inside the SVG, so the code carries its own quiet zone and stays
+   scannable on all six themes. Giving it one here would be a second ground
+   under the first. */
+.ticketing-context-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+.ticket-issued-grid {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+.ticket-issued-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.9rem;
+  align-items: center;
+  padding: 0.9rem;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--hair-30);
+}
+.ticket-issued-qr {
+  display: block;
+  width: 104px;
+  height: 104px;
+  border-radius: 4px;
+}
+.ticket-issued-copy {
+  display: grid;
+  gap: 0.3rem;
+  /* A serialized id is long and unbreakable; without this the grid track
+     refuses to shrink and the card spills the viewport at 375. */
+  min-width: 0;
+}
+.ticket-issued-copy strong { font-size: 0.9375rem; }
+/* The id is content — somebody reads it aloud at a door — so it holds the
+   body floor rather than taking the eyebrow exemption. */
+.ticket-issued-copy span {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+/* The status behind it IS metadata, so it takes the tracked-mono eyebrow the
+   shell's own ticket page uses. */
+.ticket-issued-copy span + span {
+  /* The family is restated rather than inherited from the rule above: the
+     eyebrow exemption is monospace AND tracking >= .14em, and `lint-source`
+     reads the RULE, not the cascade — it refused this at 11px until the two
+     halves sat together, correctly, because a reader of this block alone
+     could not otherwise tell it qualifies. */
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.ticket-issued-copy .button { justify-self: start; margin-top: 0.35rem; }
+@media (min-width: 620px) {
+  .ticketing-context-grid { grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
 }
 .signal-card {
   display: grid;
@@ -4137,6 +4225,51 @@ html.high-contrast p {
   flex-shrink: 0;
   opacity: 0.5;
 }
+/* THE PROGRESS HAIRLINE, which the markup has rendered and no stylesheet has
+   ever answered. `GlobalMediaPlayer` writes `.site-dock-hairline` with a fill
+   and a thumb, and publishes `--dock-progress` on the dock for them on every
+   timeupdate — a custom property read by NOTHING until this rule, so the
+   component has been paying for a style write per tick to feed a line that
+   was never drawn.
+   It matters on a PHONE, which is where it was always aimed: at <= 768px the
+   collapsed dock sets `.site-dock-c { display: none }`, the waveform scrubber
+   lives inside it, and a member therefore had no position cue of any kind
+   until they expanded the dock. That is the gap this fills.
+   So it is shown exactly where the scrubber is not, which is what the
+   component's own comment asks for ("hidden ... where it would double that
+   scrubber"): off by default, on for the collapsed phone dock, off again the
+   moment expanding brings the real slider back. `inset 3px` clears the brass
+   lip `.walnut-lip-top` draws on the same edge rather than fighting it. */
+.site-dock-hairline {
+  display: none;
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  background: var(--rule-on-walnut);
+}
+.site-dock-hairline-fill {
+  display: block;
+  height: 100%;
+  width: var(--dock-progress, 0%);
+  background: var(--accent);
+}
+.site-dock-hairline-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--dock-progress, 0%);
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 768px) {
+  .site-dock-hairline { display: block; }
+  .site-dock-expanded .site-dock-hairline { display: none; }
+}
 .site-dock-expanded .site-dock-expand-chevron { transform: rotate(180deg); }
 .site-dock-mobile-play {
   display: none;
@@ -5175,6 +5308,28 @@ body:has(.fan-entry) #main-content { width: 100%; }
    One compact, persistent landmark across Listen, Events, Pages and every
    creator surface. The logo is the menu; search owns the remaining space and
    folds away as soon as the user leaves the top of the page. */
+/* The only settings control in the adaptive header, and no stylesheet
+   answered it: a bare anchor around a 19px gear, measured 19x23 in Chromium
+   against this file, beside the 54x54 logo two elements away. MOBILE.md's
+   44x44 floor is unconditional and names desktop explicitly, and rows 338 and
+   375 made every other control in the product obey it. The glyph stays 19px;
+   the target grows around it, which is the same trade those two rows made. */
+.app-settings-link {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--ink-2);
+  transition: color .15s ease, background-color .15s ease;
+}
+.app-settings-link:hover,
+.app-settings-link:focus-visible {
+  color: var(--ink);
+  background: rgba(var(--surface-tint-rgb), .07);
+}
+
 .app-menu-trigger-wrap {
   position: relative;
   z-index: 2;

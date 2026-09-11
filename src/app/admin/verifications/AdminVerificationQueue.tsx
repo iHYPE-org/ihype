@@ -131,18 +131,19 @@ function VerificationCard({ profile }: { profile: VerificationProfile }) {
       {!decided && (
         <>
           <div className="field" style={{ marginBottom: '0.75rem' }}>
-            <label className="field-label" htmlFor={`note-${profile.id}`}>{t('adminVerificationsAdminVerificationQueue.adminNoteLabel', 'Admin note (optional)')}</label>
-            <div className="field-input">
-              <textarea
-                id={`note-${profile.id}`}
-                rows={2}
-                placeholder={t('adminVerificationsAdminVerificationQueue.adminNotePlaceholder', 'Reason for decision, instructions for resubmission, etc.')}
-                value={adminNote}
-                onChange={(e) => setAdminNote(e.target.value)}
-                disabled={pending}
-                style={{ width: '100%', resize: 'vertical' }}
-              />
-            </div>
+            <label htmlFor={`note-${profile.id}`}>{t('adminVerificationsAdminVerificationQueue.adminNoteLabel', 'Admin note (optional)')}</label>
+            {/* The `field-input` wrapper is gone with its class: `.field` is a
+                grid and `.field textarea` matches a descendant either way, so
+                the div laid out nothing. */}
+            <textarea
+              id={`note-${profile.id}`}
+              rows={2}
+              placeholder={t('adminVerificationsAdminVerificationQueue.adminNotePlaceholder', 'Reason for decision, instructions for resubmission, etc.')}
+              value={adminNote}
+              onChange={(e) => setAdminNote(e.target.value)}
+              disabled={pending}
+              style={{ width: '100%', resize: 'vertical' }}
+            />
           </div>
 
           <div className="cta-row">
