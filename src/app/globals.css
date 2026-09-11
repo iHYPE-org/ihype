@@ -4210,6 +4210,51 @@ html.high-contrast p {
   flex-shrink: 0;
   opacity: 0.5;
 }
+/* THE PROGRESS HAIRLINE, which the markup has rendered and no stylesheet has
+   ever answered. `GlobalMediaPlayer` writes `.site-dock-hairline` with a fill
+   and a thumb, and publishes `--dock-progress` on the dock for them on every
+   timeupdate — a custom property read by NOTHING until this rule, so the
+   component has been paying for a style write per tick to feed a line that
+   was never drawn.
+   It matters on a PHONE, which is where it was always aimed: at <= 768px the
+   collapsed dock sets `.site-dock-c { display: none }`, the waveform scrubber
+   lives inside it, and a member therefore had no position cue of any kind
+   until they expanded the dock. That is the gap this fills.
+   So it is shown exactly where the scrubber is not, which is what the
+   component's own comment asks for ("hidden ... where it would double that
+   scrubber"): off by default, on for the collapsed phone dock, off again the
+   moment expanding brings the real slider back. `inset 3px` clears the brass
+   lip `.walnut-lip-top` draws on the same edge rather than fighting it. */
+.site-dock-hairline {
+  display: none;
+  position: absolute;
+  top: 3px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  pointer-events: none;
+  background: var(--rule-on-walnut);
+}
+.site-dock-hairline-fill {
+  display: block;
+  height: 100%;
+  width: var(--dock-progress, 0%);
+  background: var(--accent);
+}
+.site-dock-hairline-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--dock-progress, 0%);
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+@media (max-width: 768px) {
+  .site-dock-hairline { display: block; }
+  .site-dock-expanded .site-dock-hairline { display: none; }
+}
 .site-dock-expanded .site-dock-expand-chevron { transform: rotate(180deg); }
 .site-dock-mobile-play {
   display: none;
