@@ -7,7 +7,13 @@ import {
 import type {
   RegistrationResponseJSON,
   AuthenticationResponseJSON,
-  AuthenticatorTransportFuture,
+  /* Was `AuthenticatorTransportFuture` until @simplewebauthn 14, which merged
+     it into `AuthenticatorTransport`. A pure rename: both are
+     "ble" | "hybrid" | "internal" | "nfc" | "usb". The "Future" suffix existed
+     only because the DOM lib's own union lacked "hybrid"; the package ships
+     its own DOM types now. The v14 release notes document ONLY a Node 22
+     floor, so this was found by compiling rather than by reading. */
+  AuthenticatorTransport,
 } from '@simplewebauthn/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
@@ -90,7 +96,7 @@ export async function getPasskeyAuthenticationOptions(userId?: string) {
   const { rpID } = getRpInfo();
 
   let allowCredentials:
-    | { id: string; type: 'public-key'; transports?: AuthenticatorTransportFuture[] }[]
+    | { id: string; type: 'public-key'; transports?: AuthenticatorTransport[] }[]
     | undefined;
   if (userId) {
     const passkeys = await db.passkey.findMany({
@@ -101,7 +107,7 @@ export async function getPasskeyAuthenticationOptions(userId?: string) {
       id: passkey.credentialId,
       type: 'public-key' as const,
       transports: passkey.transports
-        ? (passkey.transports.split(',') as AuthenticatorTransportFuture[])
+        ? (passkey.transports.split(',') as AuthenticatorTransport[])
         : undefined,
     }));
   }
@@ -146,7 +152,7 @@ export async function verifyPasskeyAuthentication(
       ),
       counter: Number(passkey.counter),
       transports: passkey.transports
-        ? (passkey.transports.split(',') as AuthenticatorTransportFuture[])
+        ? (passkey.transports.split(',') as AuthenticatorTransport[])
         : undefined,
     },
   });
