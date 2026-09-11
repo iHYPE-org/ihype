@@ -591,7 +591,11 @@ export function DoorScanner({ show }: { show: Show }) {
         )}
       </div>
 
-      <form className="mmm-door-manual" onSubmit={onManualSubmit}>
+      {/* No class on the form: `.mmm-door-label` carries the gap under the
+          label and `.mmm-door-manual-row` lays the field and key out, so the
+          wrapper has nothing left to say. It used to carry `mmm-door-manual`,
+          which no stylesheet ever answered. */}
+      <form onSubmit={onManualSubmit}>
         <label className="mmm-door-label" htmlFor="door-code">{t('doorScanner.ticketCode', 'Ticket code')}</label>
         <div className="mmm-door-manual-row">
           <input

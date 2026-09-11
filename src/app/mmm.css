@@ -2875,6 +2875,22 @@ input.mmm-row-title { min-height: 44px; }
   background: rgba(var(--role-venue-rgb), 0.15);
   color: var(--role-venue);
 }
+/* A TICKET's own state, on its detail page. The three TicketStatus values used
+   to render identically — the markup carried `ticket-status-pill` and
+   `ticket-status-<state>`, which no stylesheet answered — so a VOID ticket was
+   indistinguishable from a VALID one at a door, which is the one place that
+   distinction is the whole point. SCANNED deliberately keeps the default muted
+   badge: a spent ticket is history, and the eyebrow beside it already says
+   when it was scanned. Variants are attributes here because that is what
+   `[data-kind]` above already established for this badge. */
+.mmm-profile-badge[data-status='valid'] {
+  background: rgba(var(--role-venue-rgb), 0.15);
+  color: var(--role-venue);
+}
+.mmm-profile-badge[data-status='void'] {
+  background: rgba(var(--danger-rgb), 0.15);
+  color: var(--danger-text);
+}
 
 .mmm-profile-actions {
   display: flex;
