@@ -148,11 +148,23 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
             destinations through ME. */}
         <footer aria-label={t('fanFirstLanding.footerLabel', 'Site information')} className="fan-entry-legal">
           <Link href="/info">{t('fanFirstLanding.infoLegal', 'Info & legal')}</Link>
+          {/* TRANSPARENCY GETS ITS OWN LINK, not just a tab inside "Info &
+              legal". Who runs iHYPE — legal name, tax status, EIN, registered
+              address — is published there, and a funder or a reviewer asked to
+              find it should not have to guess which of six tabs behind a
+              general word holds it. `/info` opens on Trust & Safety. */}
+          <Link href="/info?tab=transparency">{t('fanFirstLanding.transparency', 'Transparency')}</Link>
           <Link href="/support">{t('fanFirstLanding.support', 'Support')}</Link>
           <Link href="/advertise">{t('fanFirstLanding.advertise', 'Advertise')}</Link>
           {/* "501(c)(3)" is a US tax designation and `ihype.org` is the one
-              domain this product may name; both stay verbatim in every locale. */}
-          <span>{t('fanFirstLanding.nonprofit', 'A 501(c)(3) nonprofit')} · © 2026 ihype.org</span>
+              domain this product may name; both stay verbatim in every locale.
+              The claim LINKS to where it is backed: a tax status asserted in a
+              footer with nothing behind it is the same defect as a control
+              nothing reads. */}
+          <span>
+            <Link href="/info?tab=transparency">{t('fanFirstLanding.nonprofit', 'A 501(c)(3) nonprofit')}</Link>
+            {' · © 2026 ihype.org'}
+          </span>
         </footer>
       </main>
     </div>

@@ -31,7 +31,12 @@ const checks = [
   { path: '/legal?tab=privacy', expect: [200] },
   { path: '/privacy', expect: [200] },
   { path: '/terms', expect: [200] },
-  { path: '/charter', expect: [200] }
+  { path: '/charter', expect: [200] },
+  // The URL a funder or a Google for Nonprofits reviewer is given. It carries
+  // the organisation's legal name, tax status, EIN and registered address, and
+  // it answered a 200 with a <meta refresh> until 2026-09-11 — which a browser
+  // follows and a reviewer's link checker may not.
+  { path: '/transparency', expect: [200] }
 ];
 
 async function curl(url, json = false) {
