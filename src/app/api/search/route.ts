@@ -260,6 +260,7 @@ export async function GET(request: NextRequest) {
       ? new Date(s.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
       : 'TBD';
     const sub = [
+      // retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature.
       s.isRadioShow ? 'Radio show' : (venueName || null),
       date,
       s.isTicketed ? 'Ticketed' : null

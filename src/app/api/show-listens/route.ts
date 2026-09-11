@@ -41,6 +41,7 @@ export async function POST(request: Request) {
       select: { id: true, title: true, slug: true },
     });
     if (!show) {
+      // retired-claim-exempt: a label for `Show.isRadioShow`, which no route writes, so this branch cannot render today. Kept rather than deleted for the reason row 385 kept the `radioLive` column: live shows are a stated product intention, and deleting the scaffolding costs more than an unreachable branch. Delete it with the column, or restore the feature.
       return NextResponse.json({ error: 'Published radio show not found' }, { status: 404 });
     }
 

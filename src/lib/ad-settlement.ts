@@ -75,7 +75,7 @@ export async function settleEndedAdCampaigns(): Promise<{ settled: number; skipp
         ad.advertiser.email,
         ad.title,
         'SETTLED',
-        describeSettlement(plan, wasPaused, refundId),
+        describeSettlement(plan, wasPaused, refundId, ad.pricingModel),
       ), 'ad-settlement-notification');
       settled += 1;
     } catch (error) {
@@ -109,26 +109,52 @@ function refundTrail(refundId: string | null): string {
 }
 
 /**
- * The sentence the advertiser reads has to match what Stripe did. Four plans,
- * four sentences — "refunded" and "charged" are not interchangeable, and the
- * old copy said "the rest of your authorized budget was released" for a model
- * that no longer exists. A refund also says WHEN and carries its Stripe
- * reference, because "refunded" with no date and no number is a claim the
- * advertiser cannot check against their statement.
+ * The sentence the advertiser reads has to match what Stripe did. "refunded"
+ * and "charged" are not interchangeable, and a refund says WHEN and carries
+ * its Stripe reference, because "refunded" with no date and no number is a
+ * claim the advertiser cannot check against their statement.
+ *
+ * IT ALSO HAS TO MATCH WHAT THEY BOUGHT (2026-09-11). Every sentence here was
+ * written for the metered model and was sent unchanged to sponsors, who are
+ * the only people buying now: a sponsor who cancelled three months into a
+ * twelve-month term was told they had been "charged for the spend actually
+ * delivered", and one who cancelled on the first day — refunded in full,
+ * correctly — was told their campaign "delivered less than the $0.50 minimum
+ * a card can be charged", which is not why the money came back. A sponsorship
+ * buys TIME: nothing is spent, and what is refunded is the part of the term
+ * that never ran.
+ *
+ * `capture` and `release` stay metered-worded on purpose — they are the
+ * legacy manual-capture shapes, and `planSponsorshipSettlement` can only
+ * ever return `refund` or `none`.
  */
-export function describeSettlement(plan: AdSettlementPlan, wasPaused: boolean, refundId: string | null = null): string {
+export function describeSettlement(
+  plan: AdSettlementPlan,
+  wasPaused: boolean,
+  refundId: string | null = null,
+  pricingModel: string = 'METERED',
+): string {
   const lead = wasPaused
     ? `This campaign had been paused for ${PAUSED_CAMPAIGN_SETTLE_AFTER_DAYS} days, so it has been closed. `
     : '';
+  const sponsorship = pricingModel === 'SPONSORSHIP';
   switch (plan.action) {
     case 'refund':
-      return plan.chargedCents > 0
-        ? `${lead}You were charged ${dollars(plan.chargedCents)} for the spend actually delivered; the unspent ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`
+      if (plan.chargedCents > 0) {
+        return sponsorship
+          ? `${lead}You were charged ${dollars(plan.chargedCents)} for the part of your sponsorship term that ran; ${dollars(plan.amountCents)}, covering the days you did not use, has been refunded.${refundTrail(refundId)}`
+          : `${lead}You were charged ${dollars(plan.chargedCents)} for the spend actually delivered; the unspent ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`;
+      }
+      return sponsorship
+        ? `${lead}None of your sponsorship term had run, so the full ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`
         : `${lead}This campaign delivered less than the ${dollars(50)} minimum a card can be charged, so the full ${dollars(plan.amountCents)} has been refunded.${refundTrail(refundId)}`;
     case 'none':
-      return plan.chargedCents > 0
-        ? `${lead}Your full budget of ${dollars(plan.chargedCents)} was delivered, so there is nothing to refund.`
-        : `${lead}No charge was outstanding on this campaign.`;
+      if (plan.chargedCents > 0) {
+        return sponsorship
+          ? `${lead}Your sponsorship ran its full term, so there is nothing to refund.`
+          : `${lead}Your full budget of ${dollars(plan.chargedCents)} was delivered, so there is nothing to refund.`;
+      }
+      return `${lead}No charge was outstanding on this campaign.`;
     case 'capture':
       return `${lead}Charged ${dollars(plan.amountCents)} for actual delivered spend — the rest of your authorized budget was released.`;
     case 'release':

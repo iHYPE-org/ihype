@@ -9,28 +9,44 @@ import { openExternalUrl } from '@/lib/open-external';
 type Action = 'cancel' | 'pause' | 'resume' | 'retry-checkout';
 
 /**
- * `charged` + `unspentCents` let the cancel confirm say what the advertiser is
- * about to get back, in dollars, before they agree — "can't be resumed" on
+ * `charged` + `refundableCents` let the cancel confirm say what the advertiser
+ * is about to get back, in dollars, before they agree — "can't be resumed" on
  * its own reads as "you lose the money", which is the opposite of what
  * happens. After the PATCH the row re-renders from the settlement record
  * (amount, date, Stripe refund reference), so the promise made here is
  * checkable against what was actually done.
+ *
+ * `pricingModel` is here because the figure was right and the NOUN was wrong
+ * (2026-09-11). A sponsorship has no meter: "the unspent $X of your budget"
+ * and "your whole budget has been delivered" describe the retired
+ * per-impression model, and this is the last sentence a sponsor reads before
+ * committing. What they get back is the part of the TERM they will not use.
  */
 export function CampaignCancelButton({
   campaignId,
   status,
   charged = false,
-  unspentCents = 0,
-}: { campaignId: string; status: string; charged?: boolean; unspentCents?: number }) {
+  refundableCents = 0,
+  pricingModel = 'METERED',
+}: { campaignId: string; status: string; charged?: boolean; refundableCents?: number; pricingModel?: string }) {
   const { t } = useI18n();
   const router = useRouter();
   const [pending, setPending] = useState<Action | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
+  const sponsorship = pricingModel !== 'METERED';
+  const amount = `$${(refundableCents / 100).toFixed(2)}`;
   const refundLine = charged
-    ? unspentCents > 0
-      ? ` ${t('campaignCancelButton.refundUnspent', 'The unspent')} $${(unspentCents / 100).toFixed(2)} ${t('campaignCancelButton.refundUnspentTail', `of your budget is refunded to the card you paid with, usually within ${REFUND_WINDOW_BUSINESS_DAYS} business days.`)}`
-      : ` ${t('campaignCancelButton.refundNoneDelivered', 'Your whole budget has been delivered, so there is nothing to refund.')}`
+    ? refundableCents > 0
+      ? sponsorship
+        /* New keys, not reworded old ones: eleven dictionaries hold
+           translations of the metered sentence, and reusing the key would
+           have a Spanish sponsor reading about an unspent budget. */
+        ? ` ${amount}${t('campaignCancelButton.refundUnusedTermTail', `, covering the days of your term you have not used, is refunded to the card you paid with, usually within ${REFUND_WINDOW_BUSINESS_DAYS} business days.`)}`
+        : ` ${t('campaignCancelButton.refundUnspent', 'The unspent')} ${amount} ${t('campaignCancelButton.refundUnspentTail', `of your budget is refunded to the card you paid with, usually within ${REFUND_WINDOW_BUSINESS_DAYS} business days.`)}`
+      : sponsorship
+        ? ` ${t('campaignCancelButton.refundTermRan', 'Your sponsorship has run its full term, so there is nothing to refund.')}`
+        : ` ${t('campaignCancelButton.refundNoneDelivered', 'Your whole budget has been delivered, so there is nothing to refund.')}`
     : ` ${t('campaignCancelButton.refundNotCharged', 'Nothing has been charged, so there is nothing to refund.')}`;
 
   const CONFIRM_COPY: Partial<Record<Action, string>> = {

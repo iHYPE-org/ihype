@@ -201,7 +201,7 @@ export function ArtistOnboardingWizard({
                   creator itself (CLAUDE.md: the generator is not coming back),
                   so this first-run link answered a redirect to nothing for nine
                   days. The profile editor is the thing it meant. */}
-              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/app/me/profiles">{t('artistOnboardingWizard.aiPageCreator', 'edit your profile →')}</Link>
+              {t('artistOnboardingWizard.orPrefix', 'or')} <Link href="/app/me/profiles">{t('artistOnboardingWizard.editProfileLink', 'edit your profile →')}</Link>
             </div>
           </div>
         )}

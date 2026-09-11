@@ -168,6 +168,20 @@ jobs:
         # countdown. Same contract as the others: the number goes down, never up.
         run: npm run audit:retro
 
+      - name: Retired-capability claims
+        # Copy that still sells something the product has removed. Nothing
+        # else in CI can see this: the sentence is valid, the code is
+        # correct, only the PAIRING is wrong. Twelve instances shipped before
+        # anything measured it — including an "AI Page Creator" deleted weeks
+        # earlier, "live chat" that never existed, and a settlement email
+        # telling sponsors they had been charged for "spend actually
+        # delivered" under a model that spends nothing.
+        #
+        # A gate at zero from day one, which is only fair because the pass
+        # that added it cleared the list first. Do not raise the budget; add
+        # an exemption with a reason, or change the copy.
+        run: npm run audit:retired-claims
+
       - name: Unstyled-class ratchet
         # The other side of the same coin as the gate below. That one asks
         # whether anything RENDERS a component; this asks whether anything

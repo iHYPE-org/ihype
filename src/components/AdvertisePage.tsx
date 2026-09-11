@@ -376,7 +376,12 @@ function CoverageBuilder() {
 
           {/* Placement chips */}
           <div style={{ display: 'flex', gap: 8, marginTop: 16, flexWrap: 'wrap' }}>
-            {[{ color: 'var(--role-fan)', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: 'var(--role-venue)', label: t('advertisePage.liveShowIntermissions', 'Live show intermissions') }].map(p => (
+            {/* "Live show intermissions" was a placement nobody could buy
+                (2026-09-11): no member can create a show for a spot to sit
+                inside — `isRadioShow` is written by nothing — so every spot
+                sold airs in a station break. Replaced with the placement
+                rule that is real and is the better promise anyway. */}
+            {[{ color: 'var(--role-fan)', label: t('advertisePage.stationAdBreaks', 'Station ad breaks') }, { color: 'var(--role-venue)', label: t('advertisePage.betweenSongs', 'Between songs, never mid-track') }].map(p => (
               <span key={p.label} style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.06em', color: 'var(--ink-a65)', padding: '6px 11px', borderRadius: 99, border: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 7 }}>
                 <span style={{ display: 'inline-block', width: '.55em', height: '.55em', borderRadius: '50%', background: p.color }} />
                 {p.label}
