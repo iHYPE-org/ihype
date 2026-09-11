@@ -41,7 +41,7 @@ export default async function TicketPage({
 
   // Returned, not thrown: this route's async layout has already flushed, so a
   // thrown notFound() renders the shell twice. Same rule as every MMM pane.
-  if (!ticket) return <MmmMissing body="That ticket may have been transferred or refunded — a passed-on ticket is reissued under a new code and the old one stops existing on purpose." title="No such ticket" />;
+  if (!ticket) return <MmmMissing kind="ticket" />;
 
   const status = formatTicketStatus(ticket.status);
   const canScan =
@@ -59,7 +59,7 @@ export default async function TicketPage({
      rather than guessing: a forwarded URL showed any signed-in member the
      holder's name, the order code and totals, and a live QR. */
   if (!isHolder && !canScan && !canManageOwnedResource(session, ticket.ticketOrder.buyerUserId ?? '')) {
-    return <MmmMissing body="This ticket belongs to another account." title="Not your ticket" />;
+    return <MmmMissing kind="ticket-other" />;
   }
   const qrCodeDataUrl = await buildTicketQrCodeDataUrl(ticket.serializedId);
 

@@ -50,7 +50,7 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
   });
 
   // Returned, not thrown — see `MmmMissing`.
-  if (!playlist) return <MmmMissing title="No such playlist" body="It may have been deleted, or the link may be older than it is." />;
+  if (!playlist) return <MmmMissing kind="playlist" />;
 
   return (
     <div className="mmm-show">

@@ -91,8 +91,8 @@ export default async function MmmArtistPage({
 
   // Returned, not thrown — `notFound()` renders the shell twice here, because
   // this route's layout is async and has already flushed. See `MmmMissing`.
-  if (!profile || profile.type !== 'ARTIST') return <MmmMissing title="No such artist" body="That profile may have been removed, or the link may be older than it is. The map still knows who is playing." />;
-  if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing title="No such artist" body="That profile may have been removed, or the link may be older than it is. The map still knows who is playing." />;
+  if (!profile || profile.type !== 'ARTIST') return <MmmMissing kind="artist" />;
+  if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing kind="artist" />;
   const t = await getServerT();
 
   const activeTab = resolveTab(ARTIST_TABS, requestedTab);

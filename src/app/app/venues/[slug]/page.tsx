@@ -76,12 +76,7 @@ export default async function MmmVenuePage({
     },
   });
 
-  const missing = (
-    <MmmMissing
-      body="It may have been removed, or the link may be older than it is. The map still knows what is open tonight."
-      title="No such venue"
-    />
-  );
+  const missing = <MmmMissing kind="venue" />;
   // Returned, not thrown — see `MmmMissing`.
   if (!profile || profile.type !== 'VENUE') return missing;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
