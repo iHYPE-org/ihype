@@ -33,7 +33,12 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { filterUnavailableExtensions } from './lib/toc-extensions.mjs';
+import {
+  extensionEntryLines,
+  filterUnavailableExtensions,
+  parseExtensionSchemas,
+  schemasInToc,
+} from './lib/toc-extensions.mjs';
 
 /* Same binary resolution as backup-database.mjs, and needed here for the
    mirror-image reason: an archive written by pg_dump 17 cannot be read by
@@ -193,37 +198,47 @@ const toc = run(PG_RESTORE, ['--list', dumpPath]);
 if (!toc.ok) fail('The decrypted file is not a Postgres archive.');
 console.log(`Archive parses: ${toc.output.split('\n').filter((l) => l && !l.startsWith(';')).length} entries`);
 
-/* PLATFORM EXTENSIONS THE TARGET CANNOT HOST.
+/* THE EXTENSIONS THE TARGET CANNOT HOST, AND THE TWO WAYS THAT HAPPENS.
    Production is Supabase, so the dump carries `CREATE EXTENSION` for things
-   the platform installs and a stock `postgres:17` has never heard of — pg_cron
-   in pg_catalog, pg_net, pgmq, supabase_vault. `pg_restore --exit-on-error`
-   stops dead at the first one, which is why the nightly drill FAILED on both
-   of the only two nights it had ever run (2026-09-11 and 2026-09-12), on
-   `extension "pg_cron" is not available`. The dumps were fine; nothing had
-   ever restored one.
+   that are none of this product's business, and `pg_restore --exit-on-error`
+   stops dead at the first one it cannot execute. That is why the nightly
+   drill FAILED on every one of the first three times it ran — twice on
+   `extension "pg_cron" is not available` (2026-09-11 and 2026-09-12), and
+   then, with those skipped, on `schema "stripe" does not exist` from
+   `CREATE EXTENSION IF NOT EXISTS btree_gist WITH SCHEMA stripe`. The dumps
+   were fine throughout; nothing had ever restored one.
 
-   The reasoning is the runbook's own, applied to extensions instead of a
-   schema: the `stripe` schema is deliberately absent from the restore and its
-   absence "is correct, not a finding", because it is installed outside this
-   repo, read by no application code and re-derivable. pg_cron, pg_net, pgmq
-   and supabase_vault are the same kind of object — the platform's, not the
-   product's. iHYPE's own jobs run on Cloudflare (`workers/cron.ts`), not
-   pg_cron. A recovery target provides them or does not need them.
+   So "cannot host" has two halves and both are the same judgement:
+     - the target does not PROVIDE the extension (pg_cron, pg_net, pgmq,
+       supabase_vault — a stock postgres:17 has never heard of them); or
+     - the extension lives in a SCHEMA this archive does not restore.
+       btree_gist is available everywhere; what is missing is `stripe`, which
+       `backup-database.mjs` excludes by name because it belongs to the
+       Supabase Stripe Sync Engine. An extension installed inside an excluded
+       schema is part of that schema.
 
-   So the unavailable ones are dropped from the archive's table of contents and
-   NAMED in the output. What is never dropped silently is an extension the
-   APPLICATION declares: `prisma/migrations/` creates pg_trgm, and a target
-   without it is a failed restore, not a tidy one. That distinction is the
-   whole safety property here — skipping the platform's furniture keeps the
-   drill honest; skipping the product's would make it a lie.
+   The reasoning is the runbook's own: the `stripe` schema is deliberately
+   absent from the restore and its absence "is correct, not a finding",
+   because it is installed outside this repo, read by no application code and
+   re-derivable. All of the above are the same kind of object — the
+   platform's furniture, not the product's. iHYPE's own jobs run on
+   Cloudflare (`workers/cron.ts`), not pg_cron. A recovery target provides
+   them or does not need them.
 
-   WHAT THIS DOES NOT PROMISE. It removes the `CREATE EXTENSION` and
-   `COMMENT ON EXTENSION` entries, which is what the two failed runs died on.
-   If the archive also carries an object that BELONGS to one of those
-   extensions' schemas and pg_dump emitted separately, the restore will stop
-   there instead — and it should: that is a different object needing a
-   different decision, and `--exit-on-error` will name it. Do not widen this
-   filter to swallow whatever the next run reports. */
+   Each skip is NAMED in the output with its reason. What is never dropped
+   silently is an extension the APPLICATION declares: `prisma/migrations/`
+   creates pg_trgm, and a target without it is a failed restore, not a tidy
+   one. That distinction is the whole safety property here — skipping the
+   platform's furniture keeps the drill honest; skipping the product's would
+   make it a lie.
+
+   WHAT THIS STILL DOES NOT PROMISE. It decides about EXTENSIONS. If the
+   archive carries some other object the target cannot take, the restore will
+   stop there and `--exit-on-error` will name it — as it should: that is a
+   different object needing a different decision. Do not widen this filter to
+   swallow whatever the next run reports; the last time this comment said so,
+   the next run reported something that belonged here, and this paragraph is
+   the record of how to tell the difference. */
 const REQUIRED_EXTENSIONS = new Set(['pg_trgm']);
 
 const available = run(PSQL, [targetUrl, '-tAc', 'SELECT name FROM pg_available_extensions']);
@@ -232,11 +247,37 @@ const availableExtensions = new Set(
   available.output.split('\n').map((line) => line.trim()).filter(Boolean),
 );
 
-const { keptLines, skipped, missingRequired } = filterUnavailableExtensions(
-  toc.output, availableExtensions, REQUIRED_EXTENSIONS,
-);
+/* An extension's TOC entry says `-` where a schema would go, so the archive's
+   own SQL is the only place its schema is written down. Asking pg_restore for
+   just those entries prints those statements and nothing else. */
+let extensionSchemas = new Map();
+const extensionEntries = extensionEntryLines(toc.output);
+if (extensionEntries.length) {
+  const extListPath = `${dumpPath}.ext.toc`;
+  writeFileSync(extListPath, `${extensionEntries.join('\n')}\n`);
+  const extSql = run(PG_RESTORE, ['--use-list', extListPath, '-f', '-', dumpPath]);
+  if (extSql.ok) extensionSchemas = parseExtensionSchemas(extSql.output);
+  /* Not fatal: with no schema map the filter simply judges on availability
+     alone, which is where it started and is never the WRONG answer — only a
+     less complete one. */
+}
+
+/* `public` is not in the archive's own SCHEMA entries (every database has it)
+   and the two guards above have already proved the target answers, so it is
+   hostable by construction. */
+const hostableSchemas = schemasInToc(toc.output);
+hostableSchemas.add('public');
+hostableSchemas.add('pg_catalog');
+
+const { keptLines, skipped, missingRequired } = filterUnavailableExtensions(toc.output, {
+  availableExtensions,
+  extensionSchemas,
+  hostableSchemas,
+  required: REQUIRED_EXTENSIONS,
+});
 if (missingRequired.length) {
-  fail(`The target does not provide ${missingRequired.map((n) => `"${n}"`).join(', ')}, which this application's own migrations create. A database without it cannot run the product, so this is a failed restore rather than something to skip.`);
+  const named = missingRequired.map((entry) => `"${entry.name}" (${entry.reason})`).join(', ');
+  fail(`Cannot restore ${named}. This application's own migrations create it, so a database without it cannot run the product: that is a failed restore rather than something to skip.`);
 }
 
 let restoreArgs = ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error'];
@@ -244,10 +285,11 @@ if (skipped.length) {
   const listPath = `${dumpPath}.toc`;
   writeFileSync(listPath, `${keptLines.join('\n')}\n`);
   restoreArgs = [...restoreArgs, '--use-list', listPath];
-  console.log(`Skipping ${skipped.length} platform extension(s) the target cannot host: ${skipped.join(', ')}`);
+  console.log(`Skipping ${skipped.length} platform extension(s) the target cannot host:`);
+  for (const entry of skipped) console.log(`  ${entry.name} — ${entry.reason}`);
   console.log('  (Supabase installs these; no application code reads them. Everything else must restore cleanly.)');
 } else {
-  console.log('No platform extensions to skip — the target provides every extension the dump names.');
+  console.log('No platform extensions to skip — the target can host every extension the dump names.');
 }
 
 /* --exit-on-error, which is only usable because the dump excludes the `stripe`

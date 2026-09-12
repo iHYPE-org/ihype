@@ -844,6 +844,8 @@ test.describe('Music · Map · Me shell', () => {
       await page.goto('/app/tickets');
 
       const row = page.locator('.mmm-ticket-row', { hasText: seeded.title });
+      /* Same streaming anchor as the buy pane: count settles, then assert. */
+      await expect(row).toHaveCount(1);
       await expect(row).toBeVisible();
       await expect(row).toContainText(seeded.serializedId);
 
@@ -898,7 +900,18 @@ test.describe('Music · Map · Me shell', () => {
          environment rather than the rule. */
       const saleReady = await page.locator('.mmm-show-sale').count() > 0;
       if (!saleReady) {
-        await expect(page.getByText('Paid tickets · Coming soon')).toBeVisible();
+        /* SETTLE FIRST, for the reason the other branch spells out below and
+           this one was written without: the route streams, so mid-flight Next
+           holds a copy of the content in a staging node and a locator resolves
+           to two nodes that are really one. `toBeVisible` does not poll on
+           COUNT, so it fails strict mode outright in that window — which is
+           what it did on 2026-09-12, three retries deep, while two other
+           specs went flaky with the identical signature. `toHaveCount` polls,
+           so it is the anchor; the visibility assertion then runs against a
+           finished document, and a GENUINE double render still fails here. */
+        const notice = page.getByText('Paid tickets · Coming soon');
+        await expect(notice).toHaveCount(1);
+        await expect(notice).toBeVisible();
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveCount(1);
         await expect(page.locator('h1.mmm-show-title:visible')).toHaveText(seeded.title);
         await expect(page.getByText('Split locked at publish')).toBeVisible();
@@ -1017,6 +1030,9 @@ test.describe('ME with a real profile', () => {
   test('the HYPE link card renders and states that promoting needs no role', async ({ page }) => {
     await page.goto('/app/me');
     await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
+    /* Same streaming anchor. The count assertion is also the genuine-double
+       -render guard this test's own preamble asks for, so it replaces nothing. */
+    await expect(page.locator('.mmm-hype-link')).toHaveCount(1);
     await expect(page.locator('.mmm-hype-link')).toBeVisible();
     /* The claim moved behind a disclosure when the card was made compact
        (2026-09-03) — it sits above every ME panel, so its resting height is a
