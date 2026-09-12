@@ -36,6 +36,7 @@ import { join } from 'node:path';
 import {
   extensionEntryLines,
   filterUnavailableExtensions,
+  filterUnhostableSchemas,
   parseExtensionSchemas,
   schemasInToc,
 } from './lib/toc-extensions.mjs';
@@ -262,12 +263,17 @@ if (extensionEntries.length) {
      less complete one. */
 }
 
-/* `public` is not in the archive's own SCHEMA entries (every database has it)
-   and the two guards above have already proved the target answers, so it is
-   hostable by construction. */
+/* The schemas the restore will actually have: the ones this archive creates,
+   plus the ones the target already carries. The target's list is READ rather
+   than assumed — `public` and `pg_catalog` are on every database, but so are
+   `information_schema` and whatever a platform put there, and a hardcoded list
+   is the kind of second copy of a fact this file exists to avoid. */
 const hostableSchemas = schemasInToc(toc.output);
-hostableSchemas.add('public');
-hostableSchemas.add('pg_catalog');
+const targetSchemas = run(PSQL, [targetUrl, '-tAc', 'SELECT nspname FROM pg_namespace']);
+if (!targetSchemas.ok) fail(`Could not read the target's schemas: ${redact(targetSchemas.output).trim().slice(0, 300)}`);
+for (const name of targetSchemas.output.split('\n').map((line) => line.trim()).filter(Boolean)) {
+  hostableSchemas.add(name);
+}
 
 const { keptLines, skipped, missingRequired } = filterUnavailableExtensions(toc.output, {
   availableExtensions,
@@ -280,16 +286,38 @@ if (missingRequired.length) {
   fail(`Cannot restore ${named}. This application's own migrations create it, so a database without it cannot run the product: that is a failed restore rather than something to skip.`);
 }
 
-let restoreArgs = ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error'];
 if (skipped.length) {
-  const listPath = `${dumpPath}.toc`;
-  writeFileSync(listPath, `${keptLines.join('\n')}\n`);
-  restoreArgs = [...restoreArgs, '--use-list', listPath];
   console.log(`Skipping ${skipped.length} platform extension(s) the target cannot host:`);
   for (const entry of skipped) console.log(`  ${entry.name} — ${entry.reason}`);
   console.log('  (Supabase installs these; no application code reads them. Everything else must restore cleanly.)');
 } else {
   console.log('No platform extensions to skip — the target can host every extension the dump names.');
+}
+
+/* AND THE ENTRIES THAT BELONG TO THOSE EXTENSIONS' SCHEMAS. Skipping
+   `CREATE EXTENSION pg_cron` leaves its own configuration table behind:
+   pg_cron registers `cron.job` with `pg_extension_config_dump`, so pg_dump
+   emits its rows as ordinary table data, and the fourth drill run died on
+   `ERROR: schema "cron" does not exist`. Same judgement as the extension that
+   owns it — the platform's bookkeeping for a scheduler this product does not
+   use — and the mechanism is arithmetic rather than opinion: an entry whose
+   schema neither the archive creates nor the target already has cannot be
+   restored at all. `public` is REQUIRED, so a run that would drop application
+   data fails by name instead of tidying it away. */
+const bySchema = filterUnhostableSchemas(keptLines.join('\n'), { hostableSchemas });
+if (bySchema.missingRequired.length) {
+  fail(`This archive carries entries in ${bySchema.missingRequired.map((n) => `"${n}"`).join(', ')}, which the restore would not create. That is application data, not platform furniture: refusing rather than skipping it.`);
+}
+if (bySchema.skipped.length) {
+  console.log('Skipping entries in schema(s) this restore does not create:');
+  for (const entry of bySchema.skipped) console.log(`  ${entry.schema} — ${entry.entries} entr${entry.entries === 1 ? 'y' : 'ies'}`);
+}
+
+let restoreArgs = ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error'];
+if (skipped.length || bySchema.skipped.length) {
+  const listPath = `${dumpPath}.toc`;
+  writeFileSync(listPath, `${bySchema.keptLines.join('\n')}\n`);
+  restoreArgs = [...restoreArgs, '--use-list', listPath];
 }
 
 /* --exit-on-error, which is only usable because the dump excludes the `stripe`

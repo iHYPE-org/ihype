@@ -16,3 +16,14 @@ export declare function filterUnavailableExtensions(
   skipped: { name: string; reason: string }[];
   missingRequired: { name: string; reason: string }[];
 };
+
+export declare function schemaOfTocLine(line: string): string | null;
+
+export declare function filterUnhostableSchemas(
+  tocText: string,
+  options?: { hostableSchemas?: Set<string>; required?: Set<string> },
+): {
+  keptLines: string[];
+  skipped: { schema: string; entries: number }[];
+  missingRequired: string[];
+};

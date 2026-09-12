@@ -42,6 +42,10 @@
 const EXTENSION_ENTRY = /^\s*\d+;\s+\d+\s+\d+\s+EXTENSION\s+\S+\s+(\S+)/;
 const EXTENSION_COMMENT = /^\s*\d+;\s+\d+\s+\d+\s+COMMENT\s+\S+\s+EXTENSION\s+(\S+)/;
 const SCHEMA_ENTRY = /^\s*\d+;\s+\d+\s+\d+\s+SCHEMA\s+\S+\s+(\S+)/;
+/* `id; oid oid TYPE schema name owner` — the schema is the field after the
+   type, and it is a literal `-` for objects that have none (an extension, a
+   comment on the database). */
+const ANY_ENTRY = /^\s*\d+;\s+\d+\s+\d+\s+[A-Z][A-Z ]*\s+(\S+)\s/;
 const CREATE_EXTENSION = /CREATE EXTENSION (?:IF NOT EXISTS )?"?([^\s";]+)"?\s+WITH SCHEMA "?([^\s";]+)"?/gi;
 
 /**
@@ -147,4 +151,70 @@ export function filterUnavailableExtensions(tocText, options = {}) {
 
   const entries = (map) => [...map.entries()].map(([name, reason]) => ({ name, reason }));
   return { keptLines, skipped: entries(skipped), missingRequired: entries(missingRequired) };
+}
+
+/**
+ * The schema an entry belongs to, or null when it has none.
+ * @param {string} line
+ * @returns {string | null}
+ */
+export function schemaOfTocLine(line) {
+  const schema = ANY_ENTRY.exec(line)?.[1];
+  return !schema || schema === '-' ? null : schema;
+}
+
+/**
+ * Drop the entries whose SCHEMA the restore will not have.
+ *
+ * WHY THIS EXISTS, AND WHY IT IS NOT THE SAME AS WIDENING THE FILTER ABOVE.
+ * Skipping `CREATE EXTENSION pg_cron` leaves the extension's own configuration
+ * table behind: pg_dump emits `COPY cron.job … FROM stdin` as ordinary table
+ * data, because pg_cron registers that table with `pg_extension_config_dump`.
+ * The fourth drill run died on it — `ERROR: schema "cron" does not exist` —
+ * and the comment in `restore-backup.mjs` had said in advance that a different
+ * object would need a different decision rather than a wider filter.
+ *
+ * This is that decision, and it is the same judgement rather than a new one:
+ * `cron.job` is pg_cron's own bookkeeping, in a schema created by an extension
+ * this restore deliberately does not install, for a scheduler this product
+ * does not use — iHYPE's jobs run on Cloudflare. It is the platform's
+ * furniture, exactly like the extension that owns it.
+ *
+ * The MECHANISM is not a judgement at all, which is what makes it safe: an
+ * entry whose schema neither the archive creates nor the target already has
+ * cannot be restored under any circumstances. The only judgement is whether to
+ * skip or fail, and `required` is how that is answered — `public` is in it, so
+ * a run that would drop application data fails by name instead.
+ *
+ * @param {string} tocText
+ * @param {object} options
+ * @param {Set<string>} options.hostableSchemas
+ * @param {Set<string>} [options.required]  schemas whose absence is a failure
+ * @returns {{ keptLines: string[], skipped: {schema: string, entries: number}[], missingRequired: string[] }}
+ */
+export function filterUnhostableSchemas(tocText, options = {}) {
+  const { hostableSchemas = new Set(), required = new Set(['public']) } = options;
+  const keptLines = [];
+  const skipped = new Map();
+  const missingRequired = new Set();
+
+  for (const line of String(tocText).split('\n')) {
+    const schema = schemaOfTocLine(line);
+    if (schema && !hostableSchemas.has(schema)) {
+      if (required.has(schema)) {
+        missingRequired.add(schema);
+        keptLines.push(line);   // kept so the caller's failure is about the schema, not a thinned archive
+        continue;
+      }
+      skipped.set(schema, (skipped.get(schema) ?? 0) + 1);
+      continue;
+    }
+    keptLines.push(line);
+  }
+
+  return {
+    keptLines,
+    skipped: [...skipped.entries()].map(([schema, entries]) => ({ schema, entries })),
+    missingRequired: [...missingRequired],
+  };
 }
