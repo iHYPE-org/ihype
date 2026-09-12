@@ -27,3 +27,7 @@ export declare function filterUnhostableSchemas(
   skipped: { schema: string; entries: number }[];
   missingRequired: string[];
 };
+
+export declare function filterOrphanedTableData(
+  tocText: string,
+): { keptLines: string[]; skipped: string[] };

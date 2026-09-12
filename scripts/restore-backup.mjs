@@ -35,6 +35,7 @@ import { join } from 'node:path';
 
 import {
   extensionEntryLines,
+  filterOrphanedTableData,
   filterUnavailableExtensions,
   filterUnhostableSchemas,
   parseExtensionSchemas,
@@ -313,10 +314,24 @@ if (bySchema.skipped.length) {
   for (const entry of bySchema.skipped) console.log(`  ${entry.schema} — ${entry.entries} entr${entry.entries === 1 ? 'y' : 'ies'}`);
 }
 
+/* AND THE DATA FOR A TABLE THE ARCHIVE NEVER CREATES. supabase_vault
+   registers `vault.secrets` the same way pg_cron registers `cron.job`, but its
+   SCHEMA is dumped while the table is an extension member — so the schema
+   filter above sees nothing wrong and the fifth drill run died on
+   `relation "vault.secrets" does not exist`. `backup-database.mjs` now
+   excludes those extensions outright, which is the real fix; this is for every
+   archive written before that, the `latest` this drill restores included. */
+const orphaned = filterOrphanedTableData(bySchema.keptLines.join('\n'));
+if (orphaned.skipped.length) {
+  console.log('Skipping data for table(s) this archive does not create:');
+  for (const name of orphaned.skipped) console.log(`  ${name}`);
+  console.log('  (extension configuration tables — their extension is not installed here.)');
+}
+
 let restoreArgs = ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error'];
-if (skipped.length || bySchema.skipped.length) {
+if (skipped.length || bySchema.skipped.length || orphaned.skipped.length) {
   const listPath = `${dumpPath}.toc`;
-  writeFileSync(listPath, `${bySchema.keptLines.join('\n')}\n`);
+  writeFileSync(listPath, `${orphaned.keptLines.join('\n')}\n`);
   restoreArgs = [...restoreArgs, '--use-list', listPath];
 }
 
