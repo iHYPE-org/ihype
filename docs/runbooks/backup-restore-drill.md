@@ -80,6 +80,10 @@ Do this once; it is the only part that needs the Cloudflare dashboard.
 
    A clean restore reports **zero** errors. It can, because the dump excludes the `stripe` schema by name rather than selecting `public` — selecting emits a `CREATE SCHEMA public` that always fails and drops the `CREATE EXTENSION` lines, and one expected error is one too many for `--exit-on-error` to mean anything. Any error here is a real one.
 
+   It prints a line naming the **platform extensions it skipped**, and that line is expected: production is Supabase, so the dump carries `CREATE EXTENSION` for `pg_cron`, `pg_net`, `pgmq` and `supabase_vault`, which a stock Postgres has never heard of. The script reads the target's own `pg_available_extensions`, drops both table-of-contents entries each missing one occupies (the `CREATE` and the `COMMENT ON` — dropping only the first moves the failure one line down), and restores the rest. This is the same judgement as the `stripe` schema in step 4: the platform's furniture, not the product's. **`pg_trgm` is the exception and is never skipped** — this repository's own migrations create it, so a target that cannot host it fails the drill by name. That distinction is the whole safety property; a filter that skipped an application extension would turn a broken restore into a green one.
+
+   This is why the drill FAILED on both of the only two nights it had run before 2026-09-12, on `extension "pg_cron" is not available`. The dumps were fine; nothing had ever restored one.
+
 3. **Verify the restore with the read-only checker:**
    ```bash
    RESTORE_DATABASE_URL='postgresql://localhost:5432/ihype_drill' \
