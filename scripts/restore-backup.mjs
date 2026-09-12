@@ -33,6 +33,8 @@ import { existsSync, mkdtempSync, readdirSync, rmSync, statSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { filterUnavailableExtensions } from './lib/toc-extensions.mjs';
+
 /* Same binary resolution as backup-database.mjs, and needed here for the
    mirror-image reason: an archive written by pg_dump 17 cannot be read by
    pg_restore 16, so a drill run on a box whose PATH points at an older client
@@ -191,12 +193,71 @@ const toc = run(PG_RESTORE, ['--list', dumpPath]);
 if (!toc.ok) fail('The decrypted file is not a Postgres archive.');
 console.log(`Archive parses: ${toc.output.split('\n').filter((l) => l && !l.startsWith(';')).length} entries`);
 
+/* PLATFORM EXTENSIONS THE TARGET CANNOT HOST.
+   Production is Supabase, so the dump carries `CREATE EXTENSION` for things
+   the platform installs and a stock `postgres:17` has never heard of — pg_cron
+   in pg_catalog, pg_net, pgmq, supabase_vault. `pg_restore --exit-on-error`
+   stops dead at the first one, which is why the nightly drill FAILED on both
+   of the only two nights it had ever run (2026-09-11 and 2026-09-12), on
+   `extension "pg_cron" is not available`. The dumps were fine; nothing had
+   ever restored one.
+
+   The reasoning is the runbook's own, applied to extensions instead of a
+   schema: the `stripe` schema is deliberately absent from the restore and its
+   absence "is correct, not a finding", because it is installed outside this
+   repo, read by no application code and re-derivable. pg_cron, pg_net, pgmq
+   and supabase_vault are the same kind of object — the platform's, not the
+   product's. iHYPE's own jobs run on Cloudflare (`workers/cron.ts`), not
+   pg_cron. A recovery target provides them or does not need them.
+
+   So the unavailable ones are dropped from the archive's table of contents and
+   NAMED in the output. What is never dropped silently is an extension the
+   APPLICATION declares: `prisma/migrations/` creates pg_trgm, and a target
+   without it is a failed restore, not a tidy one. That distinction is the
+   whole safety property here — skipping the platform's furniture keeps the
+   drill honest; skipping the product's would make it a lie.
+
+   WHAT THIS DOES NOT PROMISE. It removes the `CREATE EXTENSION` and
+   `COMMENT ON EXTENSION` entries, which is what the two failed runs died on.
+   If the archive also carries an object that BELONGS to one of those
+   extensions' schemas and pg_dump emitted separately, the restore will stop
+   there instead — and it should: that is a different object needing a
+   different decision, and `--exit-on-error` will name it. Do not widen this
+   filter to swallow whatever the next run reports. */
+const REQUIRED_EXTENSIONS = new Set(['pg_trgm']);
+
+const available = run(PSQL, [targetUrl, '-tAc', 'SELECT name FROM pg_available_extensions']);
+if (!available.ok) fail(`Could not read the target's available extensions: ${redact(available.output).trim().slice(0, 300)}`);
+const availableExtensions = new Set(
+  available.output.split('\n').map((line) => line.trim()).filter(Boolean),
+);
+
+const { keptLines, skipped, missingRequired } = filterUnavailableExtensions(
+  toc.output, availableExtensions, REQUIRED_EXTENSIONS,
+);
+if (missingRequired.length) {
+  fail(`The target does not provide ${missingRequired.map((n) => `"${n}"`).join(', ')}, which this application's own migrations create. A database without it cannot run the product, so this is a failed restore rather than something to skip.`);
+}
+
+let restoreArgs = ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error'];
+if (skipped.length) {
+  const listPath = `${dumpPath}.toc`;
+  writeFileSync(listPath, `${keptLines.join('\n')}\n`);
+  restoreArgs = [...restoreArgs, '--use-list', listPath];
+  console.log(`Skipping ${skipped.length} platform extension(s) the target cannot host: ${skipped.join(', ')}`);
+  console.log('  (Supabase installs these; no application code reads them. Everything else must restore cleanly.)');
+} else {
+  console.log('No platform extensions to skip — the target provides every extension the dump names.');
+}
+
 /* --exit-on-error, which is only usable because the dump excludes the `stripe`
    schema by NAME rather than selecting public (see backup-database.mjs): the
    selecting form emits a `CREATE SCHEMA public` that always fails, and one
-   expected error means nobody can tell an unexpected one from the noise. */
+   expected error means nobody can tell an unexpected one from the noise. The
+   extension filter above is held to the same standard: it removes entries
+   BEFORE the restore so that every error which does surface is a real one. */
 console.log('Restoring …');
-const restore = run(PG_RESTORE, ['--dbname', targetUrl, '--no-owner', '--no-acl', '--exit-on-error', dumpPath]);
+const restore = run(PG_RESTORE, [...restoreArgs, dumpPath]);
 if (!restore.ok) {
   fail(`pg_restore failed: ${redact(restore.output).trim().slice(0, 1200)}`);
 }
