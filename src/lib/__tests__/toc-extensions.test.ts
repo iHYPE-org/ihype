@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import {
   extensionEntryLines,
   extensionOfTocLine,
+  filterOrphanedTableData,
   filterUnavailableExtensions,
   filterUnhostableSchemas,
   parseExtensionSchemas,
@@ -329,5 +330,106 @@ describe('the restore script composes both filters', () => {
 
   it('fails on a required schema instead of thinning the archive', () => {
     expect(script).toMatch(/if \(bySchema\.missingRequired\.length\) \{/);
+  });
+});
+
+/**
+ * The fifth blocker: an extension config table whose SCHEMA is dumped.
+ *
+ * supabase_vault registers `vault.secrets` with `pg_extension_config_dump`
+ * exactly as pg_cron registers `cron.job`, with one difference that defeats
+ * the schema filter: `vault` IS dumped as a schema, so it looks hostable and
+ * the COPY is kept — while the TABLE is an extension member, so no
+ * `CREATE TABLE` is emitted. The fifth drill run died on
+ * `relation "vault.secrets" does not exist`.
+ *
+ * Copied from `pg_restore --list` of an archive built to that shape.
+ */
+const VAULT_TOC = [
+  '13; 2615 20560 SCHEMA - vault postgres',
+  '6; 3079 20561 EXTENSION - supabase_vault ',
+  '3584; 0 20562 TABLE DATA vault secrets postgres',
+  '215; 1259 16600 TABLE public User postgres',
+  '3579; 0 16600 TABLE DATA public User postgres',
+].join('\n');
+
+describe('filterOrphanedTableData', () => {
+  it('drops data for a table the archive never creates', () => {
+    const { keptLines, skipped } = filterOrphanedTableData(VAULT_TOC);
+    expect(skipped).toEqual(['vault.secrets']);
+    expect(keptLines.some((line) => line.includes('TABLE DATA vault secrets'))).toBe(false);
+  });
+
+  it('keeps data for a table the archive DOES create', () => {
+    const { keptLines } = filterOrphanedTableData(VAULT_TOC);
+    expect(keptLines).toContain('215; 1259 16600 TABLE public User postgres');
+    expect(keptLines).toContain('3579; 0 16600 TABLE DATA public User postgres');
+  });
+
+  it('leaves the schema and extension entries to the other filters', () => {
+    const { keptLines } = filterOrphanedTableData(VAULT_TOC);
+    expect(keptLines).toContain('13; 2615 20560 SCHEMA - vault postgres');
+    expect(keptLines).toContain('6; 3079 20561 EXTENSION - supabase_vault ');
+  });
+
+  it('does not mistake a TABLE DATA entry for a table creation', () => {
+    /* "TABLE DATA" starts with "TABLE". Reading it as a creation would make
+       every orphan look created and the filter would do nothing at all —
+       silently, which is the failure mode that matters. */
+    const dataOnly = '3584; 0 20562 TABLE DATA vault secrets postgres';
+    expect(filterOrphanedTableData(dataOnly).skipped).toEqual(['vault.secrets']);
+  });
+
+  it('names a table once however many entries mention it', () => {
+    const toc = [
+      '1; 0 1 TABLE DATA ghost a postgres',
+      '2; 0 2 TABLE DATA ghost a postgres',
+    ].join('\n');
+    expect(filterOrphanedTableData(toc).skipped).toEqual(['ghost.a']);
+  });
+
+  it('skips nothing in an archive that creates everything it carries', () => {
+    const toc = [
+      '215; 1259 16600 TABLE public User postgres',
+      '3579; 0 16600 TABLE DATA public User postgres',
+    ].join('\n');
+    const { keptLines, skipped } = filterOrphanedTableData(toc);
+    expect(skipped).toEqual([]);
+    expect(keptLines).toHaveLength(2);
+  });
+});
+
+describe('the backup excludes the platform extensions at the source', () => {
+  const backup = readFileSync('scripts/backup-database.mjs', 'utf8');
+
+  it('names all four of Supabase\'s own', () => {
+    for (const name of ['pg_cron', 'pg_net', 'pgmq', 'supabase_vault']) {
+      expect(backup).toContain(`--exclude-extension=${name}`);
+    }
+  });
+
+  it('keeps excluding the vendor-managed stripe schema', () => {
+    expect(backup).toContain('--exclude-schema=stripe');
+  });
+
+  it('does NOT use the allowlist form, which would drop what migrations do not create', () => {
+    /* `--extension=pg_trgm` is the more usual advice and would silently decide
+       a question nobody asked about production: `citext` is created by every
+       CI harness here and by no migration. */
+    expect(backup).not.toMatch(/'--extension=/);
+  });
+});
+
+describe('the restore composes all three filters', () => {
+  const script = readFileSync('scripts/restore-backup.mjs', 'utf8');
+
+  it('runs the orphaned-data filter over what the schema filter kept', () => {
+    expect(script).toContain('filterOrphanedTableData(bySchema.keptLines.join(');
+  });
+
+  it('restores from the last filter\'s output, not an earlier one', () => {
+    /* Each filter narrows the one before it; writing an earlier stage's lines
+       would silently undo the last. */
+    expect(script).toContain('`${orphaned.keptLines.join(');
   });
 });

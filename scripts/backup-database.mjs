@@ -282,12 +282,43 @@ note(`- pg_dump: ${PG_DUMP}${dumpVersion.ok ? ` (${dumpVersion.output.trim()})` 
    instead restores clean, extensions included, exit code 0.
 
    --no-owner/--no-acl so the dump restores into a scratch database owned by
-   whatever local role the operator happens to have. */
+   whatever local role the operator happens to have.
+
+   AND --exclude-extension FOR THE PLATFORM'S FOUR, WHICH IS THE ROOT FIX FOR
+   SOMETHING THE RESTORE SIDE HAD BEEN PATCHING ONE OBJECT AT A TIME. The
+   nightly drill failed five times running, each on a different piece of the
+   same problem: `pg_cron` unavailable, then `btree_gist WITH SCHEMA stripe`,
+   then `COPY cron.job`, then `COPY vault.secrets`. Those last two are
+   extension CONFIGURATION TABLES — pg_cron and supabase_vault register them
+   with `pg_extension_config_dump`, so pg_dump emits their rows as ordinary
+   table data even though the tables themselves are extension members it does
+   not create. Filtering that out at restore time works and is kept for the
+   archives already written, but it is a filter chasing a dump that should
+   never have carried the rows.
+
+   `--exclude-extension` (pg_dump 17) removes the extension AND its
+   configuration data in one move — measured against a stand-in of each shape:
+   an extension that creates its own schema, and one whose schema is dumped
+   while its table is a member. Both disappear entirely; only a bare
+   `CREATE SCHEMA` survives, which is harmless.
+
+   A DENYLIST RATHER THAN `--extension=pg_trgm`, deliberately. The allowlist is
+   tempting and is the more usual advice, but it would silently drop anything
+   production carries that this repository's migrations do not create —
+   `citext` is created by every CI harness here and by no migration, and
+   nothing in `schema.prisma` uses it, so an allowlist would quietly decide a
+   question nobody has actually asked about production. The four below are
+   named in CLAUDE.md as Supabase's own, and a fifth arriving later is caught
+   by the restore filter, which names what it skips. */
 const dump = run(PG_DUMP, [
   databaseUrl,
   '--format=custom',
   '--compress=9',
   '--exclude-schema=stripe',
+  '--exclude-extension=pg_cron',
+  '--exclude-extension=pg_net',
+  '--exclude-extension=pgmq',
+  '--exclude-extension=supabase_vault',
   '--no-owner',
   '--no-acl',
   '--file',

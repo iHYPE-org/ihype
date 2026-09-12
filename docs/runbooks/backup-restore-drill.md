@@ -84,7 +84,11 @@ Do this once; it is the only part that needs the Cloudflare dashboard.
 
    It may also print a line naming **entries in a schema the restore does not create**, and that is the same judgement one level further down. Skipping `CREATE EXTENSION pg_cron` leaves the extension's own configuration table behind: pg_cron registers `cron.job` with `pg_extension_config_dump`, so `pg_dump` emits its rows as ordinary table data while emitting no `CREATE SCHEMA cron` — the schema is an extension member. The entries are dropped and counted. The mechanism is arithmetic rather than opinion: an entry whose schema neither the archive creates nor the target already has cannot be restored at all. **`public` is the exception and the restore REFUSES rather than skips it** — application data lives there, and a restore that quietly thinned it would be the worst possible thing to then sign off.
 
-   This is why the drill FAILED on each of the first four times it ran — twice on `extension "pg_cron" is not available`, then on `schema "stripe" does not exist` from a schema-qualified extension, then on `COPY cron.job` for the schema that extension would have created. The dumps were fine throughout; nothing had ever restored one.
+   A third line may name **data for a table the archive does not create**. supabase_vault registers `vault.secrets` the way pg_cron registers `cron.job`, but its SCHEMA *is* dumped while the table is an extension member — so the schema looks hostable and only the missing `CREATE TABLE` gives it away.
+
+   **All three filters are now belt-and-braces for archives written before 2026-09-12.** The root fix is at the source: `backup-database.mjs` passes `--exclude-extension` for `pg_cron`, `pg_net`, `pgmq` and `supabase_vault`, which removes the extensions AND their configuration data in one move. An archive taken after that change needs no filtering at all — measured. The filters stay because `latest` and every rotation slot older than that change still carry the rows.
+
+   This is why the drill FAILED on each of the first five times it ran — twice on `extension "pg_cron" is not available`, then on `schema "stripe" does not exist` from a schema-qualified extension, then on `COPY cron.job` for the schema that extension would have created, then on `COPY vault.secrets` for a table it would have created. The dumps were fine throughout; nothing had ever restored one.
 
 3. **Verify the restore with the read-only checker:**
    ```bash

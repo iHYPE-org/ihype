@@ -218,3 +218,56 @@ export function filterUnhostableSchemas(tocText, options = {}) {
     missingRequired: [...missingRequired],
   };
 }
+
+/** `TABLE DATA schema name owner` and `TABLE schema name owner`. */
+const TABLE_DATA_ENTRY = /^\s*\d+;\s+\d+\s+\d+\s+TABLE DATA\s+(\S+)\s+(\S+)/;
+const TABLE_ENTRY = /^\s*\d+;\s+\d+\s+\d+\s+TABLE\s+(\S+)\s+(\S+)/;
+
+/**
+ * Drop table DATA for a table the archive never creates.
+ *
+ * THE THIRD SHAPE, AND THE ONE THE SCHEMA FILTER CANNOT SEE. supabase_vault
+ * registers `vault.secrets` with `pg_extension_config_dump`, so pg_dump emits
+ * its rows — but the TABLE is an extension member, so no `CREATE TABLE` is
+ * emitted, while the `vault` SCHEMA *is* dumped. The schema therefore looks
+ * hostable and the COPY is kept, and the fifth drill run died on
+ * `relation "vault.secrets" does not exist`. `cron.job` differed only in that
+ * its schema was a member too.
+ *
+ * `backup-database.mjs` now excludes those extensions outright, which is the
+ * real fix; this stays for every archive written before that, including the
+ * `latest` the drill restores today.
+ *
+ * WHAT IT COULD COST, stated because it is not nothing: an extension that this
+ * restore DOES install could own a config table, and its data would be skipped
+ * here even though it would have loaded. No extension this product installs
+ * has one, and every skip is NAMED in the output rather than silent — a
+ * reportable loss, never an invisible one.
+ *
+ * @param {string} tocText
+ * @returns {{ keptLines: string[], skipped: string[] }}
+ */
+export function filterOrphanedTableData(tocText) {
+  const lines = String(tocText).split('\n');
+  const created = new Set();
+  for (const line of lines) {
+    const match = TABLE_ENTRY.exec(line);
+    /* TABLE DATA also starts with "TABLE", so the data pattern is tested
+       first and its matches are not creations. */
+    if (match && !TABLE_DATA_ENTRY.test(line)) created.add(`${match[1]}.${match[2]}`);
+  }
+
+  const keptLines = [];
+  const skipped = new Set();
+  for (const line of lines) {
+    const match = TABLE_DATA_ENTRY.exec(line);
+    const qualified = match && `${match[1]}.${match[2]}`;
+    if (qualified && !created.has(qualified)) {
+      skipped.add(qualified);
+      continue;
+    }
+    keptLines.push(line);
+  }
+
+  return { keptLines, skipped: [...skipped] };
+}
