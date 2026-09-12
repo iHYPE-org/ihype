@@ -4124,10 +4124,22 @@ html.high-contrast p {
   align-items: center;
   gap: 12px;
 }
-/* The transport itself clears the floor in BOTH dimensions: five keys at 44
-   plus four 12px gaps is 268px inside a 500px column, so it fits with room to
-   spare — measured, not assumed. */
-.site-dock-c .site-dock-btn { min-width: 44px; }
+/* NO WIDTH FLOOR HERE, and the arithmetic that suggested one was wrong.
+   "Five 44px keys and four 12px gaps is 268px inside a 500px column" is true
+   and irrelevant: the column is `flex: 1` with no `min-width: 0`, so its
+   content width becomes the row's floor, and at 860px the row is what runs
+   out — not the column. Measured on the built worker, four variants at 860:
+
+     no floors (what shipped)      906px of row in 860   1 control spilling
+     height-only floor             860px of row in 860   nothing spilling
+     + a 44px width on the centre  920px of row in 860   1 control spilling
+     + tighter gaps as well        904px of row in 860   1 control spilling
+
+   So the bar ALREADY overflowed itself at 860 before any of this, which
+   nothing had ever measured, and the height floor incidentally fixes it. A
+   width floor re-breaks it. Nine of the twelve are still narrower than 44 and
+   `measure:taps` counts them; closing that means deciding what the bar carries
+   at 860, which is a design change with a .dc.html attached. */
 .site-dock-btn {
   background: none;
   border: none;
@@ -4144,15 +4156,13 @@ html.high-contrast p {
      `measure:taps` drove the signed-in surfaces at 860 and 1280.
 
      HEIGHT ONLY HERE, AND THE WIDTH IS MEASURED DEBT RATHER THAN AN OVERSIGHT.
-     Flooring both dimensions on all twelve was tried and MEASURED: the dock
-     needed 980px of row inside an 860px window, one control spilling out of
-     its own bar — so a blanket floor trades a small target for a broken
-     layout at the width where the bar is tightest. Vertical room costs
-     nothing and is the half that helps most (28px → 44px on every one of
-     them). The five secondary keys in the right-hand group are still narrower
-     than 44 and `measure:taps` still counts them; closing that needs a
-     decision about what the bar carries at 860, which is a design change and
-     not a floor. */
+     Flooring both dimensions was tried and MEASURED: the dock needed 980px of
+     row inside an 860px window with a control spilling out of its own bar, so
+     a blanket floor buys a compliant number with a broken layout at the width
+     where the bar is tightest. Vertical room costs nothing and is the half
+     that helps most — 16-34px becomes 44px on every one of the twelve, and
+     the row stops overflowing (see the note above `.site-dock-c
+     .site-dock-btn` for the four variants and their numbers). */
   min-height: 44px;
   display: flex;
   align-items: center;
