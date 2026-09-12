@@ -4,3 +4,4 @@ export function assessRestoreSchema(input: {
   latestRestored: string | null;
   expected: string[];
 }): { ok: boolean; behind: number; message: string };
+export function migrationDirectories(root?: string): string[];

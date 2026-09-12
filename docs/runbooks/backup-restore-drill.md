@@ -10,6 +10,40 @@ The daily `backup-verify` cron proves the *live* database is up, populated, and 
 
 **The hand drill below is still worth knowing**, for three reasons: it is what to do when the automated one fails and its report artifact says why; it is the only version that restores a `week/` or `month/` slot rather than `latest`; and it is the only one that reads counts against the live database, which the workflow deliberately never connects to (`PRODUCTION_DATABASE_URL` is passed to it only so the same-identity guard has something to refuse). Set `RESTORE_DRILL_VERIFIED_AT` after a hand drill as before; the newer of the two sources is the evidence.
 
+### The first restore that worked (2026-09-12)
+
+The drill had failed all five times it had ever run, each further in — `pg_cron`
+unavailable, then `btree_gist WITH SCHEMA stripe`, then `COPY cron.job`, then
+`COPY vault.secrets`. Run six restored:
+
+    Skipping 6 platform extension(s) the target cannot host: … (with reasons)
+    Skipping entries in schema(s) this restore does not create: cron — 4 entries
+    Skipping data for table(s) this archive does not create: vault.secrets
+    Restored: 17 users, 18 profiles, 131 migrations
+
+    verify:restore → PASS — 17 users · 18 profiles · 8 shows · 841 audit logs
+    integrity checked: captured orders keep their PaymentIntent, onboarded
+    profiles keep their Connect account, tickets keep their serialized id,
+    the audit trail survived
+
+**So the encrypted dumps in R2 — the only copy of this database outside the live
+cluster — are now known to open, restore and carry their rows.** Note WHICH
+archive proved it: `latest.dump.gpg` was written at 15:46 UTC that day, hours
+before `--exclude-extension` reached `backup-database.mjs`, so what carried it
+was the three restore-side filters. That matters, because every archive already
+in R2 (`latest` plus 28 `week/` and 28 `month/` slots) was taken the old way and
+those filters are what a restore from any of them depends on.
+
+The run still reported failure, on the third check and not on the backup:
+`assert-restore-schema.mjs` counted 127 migrations in the checkout against 131
+restored and called the dump AHEAD of the code. It was counting only directories
+whose name matches a 14-digit timestamp, a shape this repository invented; Prisma
+counts a directory holding a `migration.sql`, and four real, long-applied
+migrations do not match the regex (`0001_init` and three `20260612`/`20260613_*`
+names with an 8-digit date). 131 restored against 131 expected is exactly
+current. The rule — trail `main` by at most three merges, never lead it — is
+unchanged; only the count now reads the directory the way Prisma writes it.
+
 ## What backs this platform up, and what it does not
 
 **There is no Supabase point-in-time recovery, on purpose.** PITR is a paid add-on and this project has no starting capital. The free plan does not include downloadable daily backups either, so the encrypted dumps written by `.github/workflows/backup-database.yml` are the **only** copy of the database that exists outside the live cluster. That workflow is not a convenience; it is the backup.
