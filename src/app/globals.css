@@ -4124,6 +4124,10 @@ html.high-contrast p {
   align-items: center;
   gap: 12px;
 }
+/* The transport itself clears the floor in BOTH dimensions: five keys at 44
+   plus four 12px gaps is 268px inside a 500px column, so it fits with room to
+   spare — measured, not assumed. */
+.site-dock-c .site-dock-btn { min-width: 44px; }
 .site-dock-btn {
   background: none;
   border: none;
@@ -4137,8 +4141,18 @@ html.high-contrast p {
      The whole centre and right of this dock is hidden below 768px, so the
      coarse-pointer copy could never apply to it: every one of these controls
      was 16.5-34px for every desktop member, and nothing measured it until
-     `measure:taps` drove the signed-in surfaces at 860 and 1280. */
-  min-width: 44px;
+     `measure:taps` drove the signed-in surfaces at 860 and 1280.
+
+     HEIGHT ONLY HERE, AND THE WIDTH IS MEASURED DEBT RATHER THAN AN OVERSIGHT.
+     Flooring both dimensions on all twelve was tried and MEASURED: the dock
+     needed 980px of row inside an 860px window, one control spilling out of
+     its own bar — so a blanket floor trades a small target for a broken
+     layout at the width where the bar is tightest. Vertical room costs
+     nothing and is the half that helps most (28px → 44px on every one of
+     them). The five secondary keys in the right-hand group are still narrower
+     than 44 and `measure:taps` still counts them; closing that needs a
+     decision about what the bar carries at 860, which is a design change and
+     not a floor. */
   min-height: 44px;
   display: flex;
   align-items: center;
