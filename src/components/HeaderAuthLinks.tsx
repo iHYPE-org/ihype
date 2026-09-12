@@ -35,6 +35,10 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
           alignItems: 'center',
           gap: 8,
           padding: '5px 12px 5px 5px',
+          /* Measured 41.9px by `measure:taps` — two pixels under the floor,
+             which is the kind of miss only a measurement finds. */
+          minHeight: 44,
+          boxSizing: 'border-box',
           borderRadius: 999,
           border: '1px solid rgba(var(--role-venue-rgb),.32)',
           background: 'rgba(var(--role-venue-rgb),.08)',

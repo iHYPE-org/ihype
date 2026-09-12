@@ -1044,7 +1044,12 @@ export function SitePlayerDock() {
           type="range" min={0} max={1} step={0.05}
           value={isMuted ? 0 : volume}
           onChange={e => setVolume(Number(e.target.value))}
-          style={{ width: 48, accentColor: 'var(--accent)', opacity: 0.6 }}
+          /* 44 tall, not the 16 a bare range input paints: MOBILE.md's floor is
+             every control, and this one is only ever offered to a mouse (the
+             dock's whole right group is hidden below 768px), so the
+             coarse-pointer floors never reached it. The track stays thin; the
+             BOX is what a pointer has to hit. */
+          style={{ width: 48, height: 44, accentColor: 'var(--accent)', opacity: 0.6 }}
         />
 
         {/* Speed */}

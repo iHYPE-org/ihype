@@ -1487,6 +1487,14 @@ html:has(.mmm-frame) {
   background: transparent;
   border: 1px solid var(--line-2);
   border-radius: var(--radius-pill);
+  /* Vertical padding grows, type never does (MOBILE.md). Row 338 floored
+     `.mmm-chip` and its siblings unconditionally; this is the same shape of
+     control under its own class, so it was missed and measured 32px for a
+     mouse on every width. The row already wraps, so a taller pill costs
+     nothing. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   padding: 5px 11px;
   cursor: pointer;
 }

@@ -3323,6 +3323,12 @@ body:has(#wt-wrap) .site-shell > main {
   cursor: pointer;
   font-size: 0.9375rem;
   font-weight: 700;
+  /* Measured 29px tall by `measure:taps` on the dock's playlists toggle.
+     Vertical room, never type. */
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .media-player-button:disabled {
   cursor: not-allowed;
@@ -4124,6 +4130,16 @@ html.high-contrast p {
   color: var(--ink-on-walnut-2);
   cursor: pointer;
   padding: 4px;
+  /* THE FLOOR IS UNCONDITIONAL, and it was not. `.site-dock-play` carried
+     `min-width/min-height: 44px` inside the `(pointer: coarse)` block at the
+     end of this file and nothing carried it for a mouse — the exact shape
+     DESIGN_SYNC row 375 records ("a floor in a shared block is a proposal").
+     The whole centre and right of this dock is hidden below 768px, so the
+     coarse-pointer copy could never apply to it: every one of these controls
+     was 16.5-34px for every desktop member, and nothing measured it until
+     `measure:taps` drove the signed-in surfaces at 860 and 1280. */
+  min-width: 44px;
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -4132,8 +4148,10 @@ html.high-contrast p {
 }
 .site-dock-btn:hover { color: var(--ink-on-walnut); }
 .site-dock-play {
-  width: 30px;
-  height: 30px;
+  /* Was 30x30 for a mouse and 44 only under `(pointer: coarse)`; the floor is
+     the floor. The brass disc grows with it. */
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   /* Brass, not the page's ink: this is the one control on the panel and the
      material already has a vocabulary for one. 7.92:1 for the glyph. */
@@ -4906,7 +4924,11 @@ h2 {
 }
 .search-bar-desktop input {
   width: 100%;
-  height: 42px;
+  /* 44, not 42: MOBILE.md's floor is every control, desktop included, and this
+     field is only ever rendered to a mouse (the coarse-pointer breakpoint
+     swaps it for the icon trigger below), so the coarse-pointer floors in
+     mobile-fit.css never reach it. Measured at 42 by `measure:taps`. */
+  height: 44px;
   padding: 0 16px 0 42px;
   color: var(--ink);
   background:
