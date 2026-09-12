@@ -70,6 +70,7 @@
     "audit:retro": "node scripts/audit-retro-coverage.mjs --max=0",
     "design:handoff": "node scripts/build-console-handoff.mjs",
     "measure:layout": "tsx scripts/measure-layout.mts",
+    "measure:taps": "tsx scripts/measure-layout.mts --taps",
     "rehearse:money": "tsx scripts/rehearse-money-path.mts",
     "alpha:walk": "tsx scripts/alpha-acceptance-walk.mts",
     "feature:health": "tsx scripts/feature-health.mts",

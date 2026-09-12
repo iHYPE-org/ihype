@@ -69,6 +69,17 @@ const WRITE = arg('write');
 const COMPARE = arg('compare');
 const ONLY = arg('only');
 const STRICT = process.argv.includes('--strict');
+/* The CENSUS mode. `--compare` answers "did this edit move anything"; this
+   answers "how many controls are smaller than a thumb", which is a different
+   question and the one CLAUDE.md's visual-audit row records as the instrument
+   this repository still lacks: `audit:mobile` measures the SIGNED-OUT pages,
+   and the 44px floors this app added (rows 338 and 375) live almost entirely
+   inside the shell, where nothing had ever counted them. It reuses this
+   harness because everything expensive here — the seeded session, the built
+   worker, the consent script, the sign-in guard, the four widths — is what
+   such a census needs and what `audit:mobile` cannot do. */
+const TAPS = process.argv.includes('--taps');
+const MAX = arg('max');
 /* Subpixel jitter is not a layout change. Half a pixel is below anything a
    person can see and above the noise a different font-hinting pass produces. */
 const TOLERANCE = Number(arg('tolerance', '0.5'));
@@ -92,7 +103,10 @@ const MIN_BOXES = 20;
    This is the third time that one variable has done this (the nightly was
    missing it entirely; the walk reported 22 failures that were all one
    variable) — so the guard is on the OUTPUT rather than on the environment:
-   whatever the cause, a capture wearing the auth card is refused. */
+   whatever the cause, a capture wearing the auth card is refused. Both probes
+   interpolate this constant rather than restating it, because a guard the
+   census silently lost would make the census the thing that reads a perfect
+   score off a wall of sign-in cards. */
 const SIGNIN_MARKER = 'authcard-page-signin';
 
 /* The widths that decide something in this codebase, not a sweep. 375 is
@@ -180,6 +194,7 @@ const PROBE = `(() => {
 
   const round = (n) => Math.round(n * 10) / 10;
   const out = [];
+  let signin = false;
   for (const el of document.querySelectorAll('body *')) {
     if (/^(SCRIPT|STYLE|LINK|META|TEMPLATE|NOSCRIPT)$/.test(el.tagName)) continue;
     const r = el.getBoundingClientRect();
@@ -187,6 +202,7 @@ const PROBE = `(() => {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
 
+    if (String(el.className || '').includes('${SIGNIN_MARKER}')) signin = true;
     out.push({
       path: pathOf(el),
       tag: el.tagName.toLowerCase(),
@@ -202,7 +218,158 @@ const PROBE = `(() => {
       background: cs.backgroundColor,
     });
   }
-  return out;
+  return { boxCount: out.length, signin, items: out };
+})()`;
+
+type Tap = {
+  path: string;
+  sel: string;
+  w: number; h: number;
+  text: string;
+  /** A link inside a sentence. Counted, never listed as a defect — see below. */
+  prose: boolean;
+  /** Set when the measured box is a <label>'s rather than the control's own. */
+  via: string;
+};
+
+/* THE CENSUS PROBE. Same string-not-function rule as PROBE above, same reason.
+   MOBILE.md: "44x44 minimum on every control, desktop included". What counts
+   as a control is the whole of the judgement here, and getting it wrong in
+   either direction makes the number worthless:
+
+   (1) A LINK INSIDE A SENTENCE IS NOT A CONTROL. `audit:mobile` matches every
+       `a`, so a paragraph with three inline links reports three defects that
+       cannot be fixed without breaking the paragraph — an inline anchor is as
+       tall as its line box by definition. A list dominated by unfixable
+       entries is one nobody reads, which is the failure mode this codebase
+       keeps recording. Identified structurally rather than by class: an
+       anchor whose computed display is inline AND whose parent holds text of
+       its own is in running copy. They are COUNTED and reported as a separate
+       figure, so the exclusion is visible rather than silent.
+
+   (2) A CHECKBOX'S TAP TARGET IS ITS LABEL. A native checkbox paints about
+       13px and cannot be made bigger without `appearance: none`; what a
+       finger actually hits is the <label>, and clicking the label really does
+       toggle the control. So when a checkbox or radio has a label — wrapping
+       it, or pointing at its id — the LABEL's box is measured and the entry
+       says so. Row 338's remaining four included a checkbox for this reason.
+
+   (3) VISUALLY HIDDEN IS NOT SMALL. The sr-only pattern (1x1, clipped) is a
+       control for a screen reader, which has no thumb. An offscreen honeypot
+       input is not offered to anyone at all. Both read as tiny boxes and both
+       are excluded — the visual audit recorded each as a false positive of
+       the probe that found the real defects.
+
+   Everything else that matches the interactive set is measured as itself.
+
+   NO BACKSLASHES IN HERE. This is a TEMPLATE LITERAL, so JavaScript resolves
+   every escape before the browser ever sees the source: `/inset\(\s*50%/`
+   written naturally arrives as `/inset(s*50%/`, which is a syntax error, and
+   `/\s+/` arrives as `/s+/`, which is NOT — it silently splits class names on
+   the letter s. The first shape fails loudly and was caught in one run; the
+   second would have produced a plausible census forever. PROBE above happens
+   to contain no escapes at all, which is why this trap was unmarked. Written
+   without regular expressions rather than with doubled backslashes, because a
+   doubled backslash is one careless edit away from being halved again. */
+const TAP_PROBE = `(() => {
+  const round = (n) => Math.round(n * 10) / 10;
+  const vw = document.documentElement.clientWidth;
+  const FLOOR = 44;
+  const out = [];
+  let boxCount = 0;
+  let controlCount = 0;
+  let tightest = null;
+  let signin = false;
+
+  /* Regex-free AND escape-free, for the reason in the comment above this
+     probe: an escape here is resolved by the template literal, so even a
+     newline written as an escape inside a string arrives as a real newline
+     and terminates it. The whitespace characters are built from char codes. */
+  const WS = [10, 13, 9].map((code) => String.fromCharCode(code)).concat(' ');
+  const words = (text) => {
+    let out = [String(text || '')];
+    for (const ch of WS) out = out.flatMap((part) => part.split(ch));
+    return out.filter(Boolean);
+  };
+  const squeeze = (text) => words(text).join(' ').slice(0, 34);
+  const classSuffix = (el) => {
+    const raw = el.className && el.className.toString ? el.className.toString() : '';
+    const parts = words(raw).slice(0, 2);
+    return parts.length ? '.' + parts.join('.') : '';
+  };
+
+  const labelFor = (el) => {
+    if (el.type !== 'checkbox' && el.type !== 'radio') return null;
+    const wrapping = el.closest('label');
+    if (wrapping) return wrapping;
+    if (el.id) {
+      const escaped = (window.CSS && CSS.escape) ? CSS.escape(el.id) : el.id;
+      try { return document.querySelector('label[for="' + escaped + '"]'); } catch (e) { return null; }
+    }
+    return null;
+  };
+
+  const hidden = (el, cs, r) => {
+    // sr-only: clipped to nothing, or a 1px box with its overflow cut away.
+    const clipped = (cs.clipPath || '').replace(' ', '');
+    if (clipped.indexOf('inset(50%') === 0 || cs.clip === 'rect(0px, 0px, 0px, 0px)') return true;
+    if (r.width <= 1 && r.height <= 1) return true;
+    /* A honeypot, or anything PARKED far off-screen — the left: -9999px
+       trick. Deliberately not "outside the viewport": the section strip and
+       the shelves scroll sideways, so their later items sit beyond the right
+       edge and are perfectly reachable, and excluding those would hide real
+       defects on exactly the rows that carry the most controls. */
+    if (r.right <= -1000 || r.left >= vw + 1000) return true;
+    return el.getAttribute('aria-hidden') === 'true';
+  };
+
+  for (const el of document.querySelectorAll('body *')) {
+    const r = el.getBoundingClientRect();
+    if (!r.width && !r.height) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0') continue;
+    boxCount += 1;
+    if (String(el.className || '').includes('${SIGNIN_MARKER}')) signin = true;
+
+    if (!el.matches('a,button,[role="button"],input,select,summary,[role="tab"],[role="switch"]')) continue;
+    if (el.matches('input[type="hidden"]')) continue;
+    if (hidden(el, cs, r)) continue;
+    controlCount += 1;
+
+    let box = r;
+    let via = '';
+    const label = labelFor(el);
+    if (label) {
+      const lr = label.getBoundingClientRect();
+      if (lr.width && lr.height) { box = lr; via = 'label'; }
+    }
+    /* The tightest control that CLEARS the floor. Reported, because a census
+       that finds nothing must still show it was looking: if the smallest
+       control on the whole shell measures 44, the probe is reading real
+       geometry right at the boundary, and a zero means zero. */
+    const side = Math.min(box.width, box.height);
+    if (box.height >= FLOOR && box.width >= FLOOR) {
+      if (!tightest || side < tightest.side) {
+        tightest = { side: round(side), sel: el.tagName.toLowerCase() + classSuffix(el) };
+      }
+      continue;
+    }
+
+    const prose = el.tagName === 'A'
+      && cs.display === 'inline'
+      && !!el.parentElement
+      && [...el.parentElement.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+
+    out.push({
+      path: '',
+      sel: el.tagName.toLowerCase() + classSuffix(el),
+      w: round(box.width), h: round(box.height),
+      text: squeeze(el.getAttribute('aria-label') || el.textContent || el.getAttribute('placeholder') || el.value || ''),
+      prose,
+      via,
+    });
+  }
+  return { boxCount, controlCount, tightest, signin, items: out };
 })()`;
 
 /** Waits for the server to answer, so a retry rides out a restart. */
@@ -216,12 +383,56 @@ async function waitForHealth() {
   }
 }
 
-async function capture(browser: Browser, cookie: string): Promise<Capture> {
-  const result: Capture = {};
+type ProbeResult<T> = {
+  boxCount: number;
+  signin: boolean;
+  items: T[];
+  controlCount?: number;
+  tightest?: { side: number; sel: string } | null;
+};
+
+/* A POSITIVE CONTROL for the census, and the reason this file exists twice
+   over: "a tool that reports nothing is indistinguishable from a broken one
+   until you make it report something". A census whose selector stopped
+   matching reports ZERO controls under the floor, which reads as a perfect
+   score. So the probe counts every control it CONSIDERED, and a run that
+   considered almost none is refused rather than celebrated. */
+let controlsConsidered = 0;
+let tightestClearing: { side: number; sel: string } | null = null;
+
+// Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
+// HTTPS_PROXY from the environment, and `bypass` is required rather than
+// belt-and-braces, because Chromium does NOT bypass loopback for a proxy
+// handed to it explicitly — without it every localhost navigation is routed to
+// the proxy, which answers 405.
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
+const launchBrowser = () => chromium.launch({
+  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
+  ...(PROXY ? { proxy: { server: PROXY, bypass: 'localhost,127.0.0.1,::1' } } : {}),
+});
+
+/* ONE BROWSER PER WIDTH, not one for the run. A census drives 72 route/width
+   pairs and takes the best part of an hour beside a workerd instance and a
+   Postgres; the first full run lost its Chromium two thirds of the way in
+   ("Target page, context or browser has been closed"), and every remaining
+   route then failed with the same message before the script died on an
+   uncaught exception. A dead browser is not a measurement of anything, and
+   the run before it was thrown away. Bounding the browser's life to one width
+   costs a few seconds of relaunch and turns "the run is lost" into "one width
+   is retried". */
+async function capture<T>(cookie: string, probe = PROBE): Promise<Record<string, T[]>> {
+  const result: Record<string, T[]> = {};
   const routes = ONLY ? ROUTES.filter((r) => r.includes(ONLY)) : ROUTES;
   if (!routes.length) throw new Error(`--only=${ONLY} matched no route`);
 
   for (const width of WIDTHS) {
+    let browser: Browser;
+    try {
+      browser = await launchBrowser();
+    } catch (error) {
+      process.stdout.write(`  @${width} → UNMEASURED (browser would not launch: ${(error as Error).message.split('\n')[0]})\n`);
+      continue;
+    }
     const ctx: BrowserContext = await browser.newContext({
       viewport: { width, height: 900 },
       // A real, supported user state that zeroes the token-level duration and
@@ -253,7 +464,9 @@ async function capture(browser: Browser, cookie: string): Promise<Capture> {
     });
     const page = await ctx.newPage();
 
+    let browserGone = false;
     for (const route of routes) {
+      if (browserGone) break;
       const key = `${route}@${width}`;
       /* Two attempts, because the server can die under us and a lost route is
          not a neutral outcome — it silently shrinks the set being compared. The
@@ -277,19 +490,19 @@ async function capture(browser: Browser, cookie: string): Promise<Capture> {
            measured late rather than dropped. */
         await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
         await page.waitForTimeout(300);
-        const boxes = await page.evaluate<Box[]>(PROBE);
+        const measured = await page.evaluate<ProbeResult<T>>(probe);
         /* An error page is a SUCCESSFUL response that measures almost nothing:
            when the worker lost its database mid-run, five routes answered 200
            with a single <pre> and were recorded as five perfectly good
            captures. Comparing against those would have reported the entire app
            as deleted — or, with the baseline taken in that state, would have
            passed any edit at all. Every real surface here measures 90+ boxes. */
-        if (boxes.length < MIN_BOXES) {
+        if (measured.boxCount < MIN_BOXES) {
           if (attempt === 1) { await waitForHealth(); continue; }
-          process.stdout.write(`  ${key} → UNMEASURED (only ${boxes.length} boxes; an error page, not a surface)\n`);
+          process.stdout.write(`  ${key} → UNMEASURED (only ${measured.boxCount} boxes; an error page, not a surface)\n`);
           break;
         }
-        if (boxes.some((box) => box.cls.includes(SIGNIN_MARKER))) {
+        if (measured.signin) {
           /* Not retried and not recorded: a session that did not take will not
              take on a second attempt, and carrying on would write a baseline
              of sign-in cards. Fail the whole run, loudly, naming the cause. */
@@ -300,18 +513,34 @@ async function capture(browser: Browser, cookie: string): Promise<Capture> {
           console.error('  served worker, and that PLAYWRIGHT_BASE_URL names the host the cookie is set on.');
           process.exit(2);
         }
-        result[key] = boxes;
-        process.stdout.write(`  ${key} → ${boxes.length} boxes\n`);
+        controlsConsidered += measured.controlCount ?? 0;
+        if (measured.tightest && (!tightestClearing || measured.tightest.side < tightestClearing.side)) {
+          tightestClearing = measured.tightest;
+        }
+        result[key] = measured.items;
+        process.stdout.write(`  ${key} → ${measured.boxCount} boxes${probe === PROBE ? '' : `, ${measured.items.length} under the floor`}\n`);
         break;
       } catch (error) {
+        const message = (error as Error).message.split('\n')[0];
+        /* A closed browser or context will not recover on a second attempt,
+           and grinding the remaining routes through it prints a wall of
+           identical failures that reads as the app being broken. Stop this
+           width, keep what it measured, and let the next width get a fresh
+           browser. */
+        if (message.includes('has been closed')) {
+          process.stdout.write(`  ${key} → UNMEASURED (${message}) — abandoning ${width}px\n`);
+          browserGone = true;
+          break;
+        }
         if (attempt === 1) { await waitForHealth(); continue; }
         // A route that cannot be measured must not silently become "nothing
         // moved here". Recorded as absent, and the diff calls it out.
-        process.stdout.write(`  ${key} → UNMEASURED (${(error as Error).message.split('\n')[0]})\n`);
+        process.stdout.write(`  ${key} → UNMEASURED (${message})\n`);
       }
       }
     }
-    await ctx.close();
+    await ctx.close().catch(() => {});
+    await browser.close().catch(() => {});
   }
   return result;
 }
@@ -390,8 +619,58 @@ function report(before: Capture, after: Capture) {
   return 1;
 }
 
-if (!WRITE && !COMPARE) {
-  console.error('Nothing to do: pass --write=<file> to record a baseline, or --compare=<file> to check against one.');
+function census(found: Record<string, Tap[]>) {
+  const controls: { key: string; tap: Tap }[] = [];
+  let prose = 0;
+  for (const [key, taps] of Object.entries(found)) {
+    for (const tap of taps) {
+      if (tap.prose) { prose += 1; continue; }
+      controls.push({ key, tap });
+    }
+  }
+
+  /* One control counted once per width is one defect, not four. The figure
+     people will quote is the number of CONTROLS, so that is the headline; the
+     widths it fails at are detail, and a control that is only small at 375 is
+     a different fix from one small everywhere. */
+  const byControl = new Map<string, { tap: Tap; widths: Set<string>; routes: Set<string> }>();
+  for (const { key, tap } of controls) {
+    const id = `${tap.sel}|${tap.text}`;
+    if (!byControl.has(id)) byControl.set(id, { tap, widths: new Set(), routes: new Set() });
+    const entry = byControl.get(id)!;
+    const [route, width] = key.split('@');
+    entry.widths.add(width);
+    entry.routes.add(route);
+  }
+
+  console.log(`\n${byControl.size} distinct control(s) under 44x44, ${controls.length} sighting(s) across route/width pairs.`);
+  console.log(`${prose} inline link(s) in running copy were counted and excluded — an anchor inside a sentence is as tall as its line box and is not a control.`);
+
+  if (byControl.size) {
+    console.log('\nWorst first, by how many surfaces carry it:\n');
+    const rows = [...byControl.values()].sort((a, b) => (b.routes.size - a.routes.size) || (a.tap.h - b.tap.h));
+    for (const row of rows) {
+      const where = [...row.routes].sort();
+      console.log(`  ${row.tap.w}x${row.tap.h}${row.tap.via ? ` (its ${row.tap.via})` : ''}  ${row.tap.sel}`);
+      if (row.tap.text) console.log(`     "${row.tap.text}"`);
+      console.log(`     ${where.length} route(s) at ${[...row.widths].sort((a, b) => Number(a) - Number(b)).join('/')}px: ${where.slice(0, 4).join(' ')}${where.length > 4 ? ` … +${where.length - 4}` : ''}`);
+    }
+  }
+
+  if (MAX === undefined) return 0;
+  const budget = Number(MAX);
+  if (byControl.size > budget) {
+    console.error(`\nFAIL — ${byControl.size} controls under the floor, budget ${budget}.`);
+    console.error('MOBILE.md: 44x44 on every control, desktop included. Grow vertical padding, never font size.');
+    return 1;
+  }
+  console.log(`\nPASS — ${byControl.size} against a budget of ${budget}.`);
+  return 0;
+}
+
+if (!TAPS && !WRITE && !COMPARE) {
+  console.error('Nothing to do: pass --write=<file> to record a baseline, --compare=<file> to check');
+  console.error('against one, or --taps to census every control smaller than a thumb.');
   process.exit(2);
 }
 if (!canSeedSession()) {
@@ -423,15 +702,29 @@ for (const profile of profiles) {
 // belt-and-braces, because Chromium does NOT bypass loopback for a proxy
 // handed to it explicitly — without it every localhost navigation is routed to
 // the proxy, which answers 405.
-const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy || '';
-const browser = await chromium.launch({
-  ...(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {}),
-  ...(PROXY ? { proxy: { server: PROXY, bypass: 'localhost,127.0.0.1,::1' } } : {}),
-});
-
 console.log(`Measuring ${ONLY ? `routes matching "${ONLY}"` : `${ROUTES.length} routes`} at ${WIDTHS.join('/')}px against ${BASE}\n`);
-const now = await capture(browser, cookie);
-await browser.close();
+
+if (TAPS) {
+  const found = await capture<Tap>(cookie, TAP_PROBE);
+  if (!Object.keys(found).length) {
+    console.error('\nMeasured no route at all. A census of nothing is not a clean bill of health.');
+    process.exit(2);
+  }
+  /* The shell carries hundreds of controls across four widths. A figure this
+     low means the matcher stopped matching, not that the app grew quiet. */
+  if (controlsConsidered < 100) {
+    console.error(`\nOnly ${controlsConsidered} control(s) were considered across every route and width.`);
+    console.error('That is the probe failing to match, not a clean app. Refusing to report a score.');
+    process.exit(2);
+  }
+  console.log(`\n${controlsConsidered} control sighting(s) considered.`);
+  if (tightestClearing) {
+    console.log(`Tightest control that CLEARS the floor: ${tightestClearing.side}px on ${tightestClearing.sel} — the probe is reading geometry at the boundary.`);
+  }
+  process.exit(census(found));
+}
+
+const now = await capture<Box>(cookie);
 
 const total = Object.values(now).reduce((sum, boxes) => sum + boxes.length, 0);
 console.log(`\n${total} boxes across ${Object.keys(now).length} route/width pairs.`);
