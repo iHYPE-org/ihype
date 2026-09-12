@@ -21,7 +21,8 @@
   nothing else. Exported as a function so the unit suite can pin the rule.
 */
 
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 export const MAX_BEHIND = 3;
@@ -55,9 +56,28 @@ export function assessRestoreSchema({ restored, latestRestored, expected }) {
   };
 }
 
-function migrationDirectories() {
-  return readdirSync('prisma/migrations', { withFileTypes: true })
-    .filter((entry) => entry.isDirectory() && /^\d{14}_/.test(entry.name))
+/*
+  PRISMA'S RULE, NOT OURS, AND THE DIFFERENCE FAILED THE DRILL.
+
+  This used to keep only directories matching /^\d{14}_/ — a shape invented
+  here, never asserted by Prisma. Prisma Migrate counts a directory as a
+  migration when it holds a `migration.sql`, whatever the directory is called,
+  and this repository has four that a 14-digit rule throws away: `0001_init`
+  and three `20260612`/`20260613_*` names carrying an 8-digit date. All four
+  are real, all four are long applied, all four are rows in production's
+  `_prisma_migrations`.
+
+  So the count read 127 against a restore of 131 and the drill reported the
+  dump as AHEAD of the code — the one direction this check treats as fatal,
+  on the first run where the restore had actually worked. A second copy of
+  "what counts as a migration" drifted from the authority, and the failure
+  pointed at the backup rather than at the copy.
+
+  Read the directory the way the tool that writes it does.
+*/
+export function migrationDirectories(root = 'prisma/migrations') {
+  return readdirSync(root, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && existsSync(join(root, entry.name, 'migration.sql')))
     .map((entry) => entry.name)
     .sort();
 }
