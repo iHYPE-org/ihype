@@ -6,7 +6,9 @@ import {
   extensionEntryLines,
   extensionOfTocLine,
   filterUnavailableExtensions,
+  filterUnhostableSchemas,
   parseExtensionSchemas,
+  schemaOfTocLine,
   schemasInToc,
 } from '../../../scripts/lib/toc-extensions.mjs';
 
@@ -206,7 +208,13 @@ describe('the restore script still uses the filter the way these tests describe'
   it("reads each extension's schema out of the archive rather than guessing", () => {
     expect(script).toContain('extensionEntryLines(toc.output)');
     expect(script).toContain('parseExtensionSchemas(');
-    expect(script).toContain("hostableSchemas.add('public')");
+    /* The hostable set was `schemasInToc` plus a hardcoded `public` and
+       `pg_catalog`; it reads the target's own `pg_namespace` now, because a
+       hardcoded list is the second copy of a fact this module exists to
+       avoid — `information_schema` and whatever a platform added are on every
+       database too. Pinned here so the assertion moves with the mechanism. */
+    expect(script).toContain('schemasInToc(toc.output)');
+    expect(script).toContain('SELECT nspname FROM pg_namespace');
   });
 
   it('keeps --exit-on-error, which is the whole point of filtering beforehand', () => {
@@ -215,5 +223,111 @@ describe('the restore script still uses the filter the way these tests describe'
 
   it('passes the surviving entries through --use-list', () => {
     expect(script).toContain("'--use-list'");
+  });
+});
+
+/**
+ * The fourth blocker, and the one the code predicted in writing.
+ *
+ * Skipping `CREATE EXTENSION pg_cron` leaves the extension's own configuration
+ * table behind: pg_cron registers `cron.job` with `pg_extension_config_dump`,
+ * so pg_dump emits its rows as ordinary table data while emitting no
+ * `CREATE SCHEMA cron` — the schema is an extension member. The fourth drill
+ * run died on `ERROR: schema "cron" does not exist`.
+ *
+ * These lines are copied from a `pg_restore --list` of an archive built to
+ * that exact shape: an extension that creates its own schema, registers a
+ * config table, and is then made unavailable to the target.
+ */
+const ORPHANED_TOC = [
+  '5; 3079 19139 EXTENSION - fakecron ',
+  '3738; 0 0 COMMENT - EXTENSION fakecron ',
+  '3578; 0 19141 TABLE DATA fakecron job postgres',
+  '215; 1259 16600 TABLE public User postgres',
+  '3579; 0 16600 TABLE DATA public User postgres',
+  '9; 2615 16800 SCHEMA - app postgres',
+  '222; 1259 19122 TABLE app widget postgres',
+].join('\n');
+
+describe('schemaOfTocLine', () => {
+  it('reads the schema an entry belongs to', () => {
+    expect(schemaOfTocLine('3578; 0 19141 TABLE DATA fakecron job postgres')).toBe('fakecron');
+    expect(schemaOfTocLine('215; 1259 16600 TABLE public User postgres')).toBe('public');
+  });
+
+  it('is null for an entry with no schema', () => {
+    /* An extension's entry carries a literal `-` where a schema would go,
+       which is why the schema had to be read out of the archive's SQL. */
+    expect(schemaOfTocLine('5; 3079 19139 EXTENSION - fakecron ')).toBeNull();
+    expect(schemaOfTocLine('3738; 0 0 COMMENT - EXTENSION fakecron ')).toBeNull();
+    expect(schemaOfTocLine(';')).toBeNull();
+  });
+});
+
+describe('filterUnhostableSchemas', () => {
+  const hostableSchemas = new Set(['public', 'pg_catalog', 'app']);
+
+  it('drops an entry whose schema the restore will not create', () => {
+    const { keptLines, skipped } = filterUnhostableSchemas(ORPHANED_TOC, { hostableSchemas });
+    expect(skipped).toEqual([{ schema: 'fakecron', entries: 1 }]);
+    expect(keptLines.some((line) => line.includes('TABLE DATA fakecron'))).toBe(false);
+  });
+
+  it('leaves the extension entries alone — they are the other filter\'s business', () => {
+    const { keptLines } = filterUnhostableSchemas(ORPHANED_TOC, { hostableSchemas });
+    expect(keptLines).toContain('5; 3079 19139 EXTENSION - fakecron ');
+    expect(keptLines).toContain('3738; 0 0 COMMENT - EXTENSION fakecron ');
+  });
+
+  it('keeps every entry in a schema the restore WILL have', () => {
+    const { keptLines } = filterUnhostableSchemas(ORPHANED_TOC, { hostableSchemas });
+    expect(keptLines).toContain('215; 1259 16600 TABLE public User postgres');
+    expect(keptLines).toContain('3579; 0 16600 TABLE DATA public User postgres');
+    expect(keptLines).toContain('222; 1259 19122 TABLE app widget postgres');
+  });
+
+  it('REFUSES rather than skips when the dropped schema would be public', () => {
+    /* The whole safety property: this filter exists to drop the platform's
+       bookkeeping, and application data lives in `public`. A restore that
+       would quietly thin it must fail by name instead. */
+    const { skipped, missingRequired } = filterUnhostableSchemas(ORPHANED_TOC, {
+      hostableSchemas: new Set(['pg_catalog', 'app']),
+    });
+    expect(missingRequired).toEqual(['public']);
+    expect(skipped.map((entry) => entry.schema)).not.toContain('public');
+  });
+
+  it('counts a schema once, with its number of entries', () => {
+    const toc = [
+      '1; 0 1 TABLE DATA ghost a postgres',
+      '2; 0 2 TABLE DATA ghost b postgres',
+      '3; 0 3 SEQUENCE SET ghost c postgres',
+    ].join('\n');
+    const { skipped } = filterUnhostableSchemas(toc, { hostableSchemas });
+    expect(skipped).toEqual([{ schema: 'ghost', entries: 3 }]);
+  });
+
+  it('skips nothing when every schema is hostable', () => {
+    const { keptLines, skipped } = filterUnhostableSchemas(ORPHANED_TOC, {
+      hostableSchemas: new Set(['public', 'pg_catalog', 'app', 'fakecron']),
+    });
+    expect(skipped).toEqual([]);
+    expect(keptLines).toHaveLength(ORPHANED_TOC.split('\n').length);
+  });
+});
+
+describe('the restore script composes both filters', () => {
+  const script = readFileSync('scripts/restore-backup.mjs', 'utf8');
+
+  it('reads the target\'s real schema list rather than hardcoding one', () => {
+    expect(script).toContain('SELECT nspname FROM pg_namespace');
+  });
+
+  it('runs the schema filter over what the extension filter kept', () => {
+    expect(script).toContain('filterUnhostableSchemas(keptLines.join(');
+  });
+
+  it('fails on a required schema instead of thinning the archive', () => {
+    expect(script).toMatch(/if \(bySchema\.missingRequired\.length\) \{/);
   });
 });
