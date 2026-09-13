@@ -44,6 +44,50 @@ names with an 8-digit date). 131 restored against 131 expected is exactly
 current. The rule — trail `main` by at most three merges, never lead it — is
 unchanged; only the count now reads the directory the way Prisma writes it.
 
+### And the dump itself is 10x smaller (run eight, 2026-09-13)
+
+Run six proved the restore against an archive taken the OLD way, so the
+backup-side half of the fix — `pg_dump --exclude-extension` — had only ever
+been driven against hand-built stand-ins. Backup run 52 (05:18 UTC) was the
+first real dump taken with it, and run eight restored that one:
+
+    Archive parses: 917 entries           (run six: 930)
+    Skipping 2 platform extension(s) the target cannot host:
+      btree_gist — it lives in schema "stripe", which this archive does not restore
+      "uuid-ossp" — the target does not provide it
+    Restored: 17 users, 18 profiles, 131 migrations
+    verify:restore -> PASS  ·  schema current: 131 migrations
+
+Six skipped extensions became two, and **neither of the other two filters had
+anything to do** — no `cron` schema line, no `vault.secrets` orphan line,
+because the rows are no longer in the dump. The two that remain are the ones
+`--exclude-extension` was deliberately not given: `btree_gist` is excluded by
+SCHEMA rather than by extension, and `uuid-ossp` is simply absent from a stock
+Postgres.
+
+**Do not read the size drop as a broken backup.** The archive went from 1.4 MB
+to 134 KB, which is exactly what a truncated dump looks like, so the evidence
+that it is not one is worth keeping:
+
+- the entry count fell by exactly **13** = 8 (four excluded extensions, each
+  an EXTENSION and a COMMENT entry) + 4 (`cron`) + 1 (`vault.secrets`);
+  nothing else left the archive;
+- `verify:restore` passed with the same rows and all four integrity checks;
+- the migration count is unchanged at 131.
+
+So the missing ~1.27 MB was inside those 13 entries — pg_cron's and the
+vault's own tables, `cron.job_run_details` above all, which logs every cron
+execution on Supabase and grows without bound for a scheduler iHYPE does not
+use. **That attribution is inferred from the entry arithmetic rather than read
+out of the dump**, since nothing here can open production; what is measured is
+that no application data left.
+
+One consequence to know about: the 64 KB floor in `backup-database.mjs` was
+calibrated when a healthy dump was 1.4 MB and now sits 2x under one rather
+than 22x. It still does its job (an empty database dumps to 1,268 bytes) and
+the margin widens as real content arrives — but do not raise it, because a
+floor that fails a good backup stops the deploy.
+
 ## What backs this platform up, and what it does not
 
 **There is no Supabase point-in-time recovery, on purpose.** PITR is a paid add-on and this project has no starting capital. The free plan does not include downloadable daily backups either, so the encrypted dumps written by `.github/workflows/backup-database.yml` are the **only** copy of the database that exists outside the live cluster. That workflow is not a convenience; it is the backup.

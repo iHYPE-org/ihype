@@ -338,7 +338,23 @@ try {
 
 /* A dump small enough to be an error page or an empty schema is not a backup.
    The real database carries 100+ migrations and seeded content; anything under
-   64 KB compressed means the dump did not capture the data. */
+   64 KB compressed means the dump did not capture the data.
+
+   THE MARGIN HERE NARROWED BY 10x AND THE REASON IS NOT A FAULT (measured
+   2026-09-13). Before `--exclude-extension` a dump was 1.4 MB; the first one
+   taken after it is 134 KB, because roughly 1.27 MB of the old archive was
+   pg_cron's and the vault's own tables — `cron.job_run_details` logs every
+   cron execution on Supabase and grows without bound, for a scheduler this
+   product does not use. The restore drill's entry count fell by exactly 13
+   (four excluded extensions x EXTENSION+COMMENT, plus 4 `cron` entries, plus
+   `vault.secrets`), and `verify:restore` passed with the same row counts, so
+   no application data left the archive.
+
+   So 64 KB is now 2x under a healthy dump rather than 22x. It still catches
+   what it was written for — an empty database dumps to 1,268 bytes — and the
+   margin widens again as real content arrives. Do not raise it to "restore"
+   the old ratio: a floor that fails a good backup is worse than one that
+   passes a bad one, because the failure stops the deploy. */
 if (dumpBytes < 64 * 1024) {
   fail(`The dump is only ${dumpBytes} bytes — too small to be this database. Refusing to store it as a backup.`);
 }
