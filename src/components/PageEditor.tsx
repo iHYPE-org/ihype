@@ -731,7 +731,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 </div>
                 {availError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{availError}</p>}
                 {availDates.length === 0 ? (
-                  <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
+                  <p className="mmm-editor-hint">{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {availDates.map((d) => (
@@ -838,11 +838,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               </div>
               {albumError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{albumError}</p>}
               {albums === null ? (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.loading', 'Loading…')}</p>
+                <p className="mmm-editor-hint">{t('pageEditor.loading', 'Loading…')}</p>
               ) : albums.length === 0 ? (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noAlbumsYet', 'No albums yet. Tracks without one list as singles.')}</p>
+                <p className="mmm-editor-hint">{t('pageEditor.noAlbumsYet', 'No albums yet. Tracks without one list as singles.')}</p>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div className="mmm-editor-stack">
                   {albums.map((album) => (
                     <div
                       key={album.id}
@@ -1139,7 +1139,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
       {activeSection === 'presskit' && isArtistOrDj && (
         <div className="sub-panel">
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
+          <p className="mmm-editor-lede">
             {t('pageEditor.pressKitIntro', 'Your press kit is a shareable one-pager for bookers, venues, and press — it pulls your name, bio, photos, and upcoming shows automatically, plus everything you add here.')}
           </p>
           <Field hint={t('pageEditor.taglineHint', 'One punchy line describing your act, shown at the top of your press kit')} label={t('pageEditor.taglineLabel', 'Tagline')}>
@@ -1163,7 +1163,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
           >
             {t('pageEditor.viewPressKit', 'View press kit ↗')}
           </a>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '10px 0 0' }}>
+          <p className="mmm-editor-note">
             {t('pageEditor.pressKitSaveNote', 'Save your changes first — the press kit page prints cleanly to PDF for sharing.')}
           </p>
         </div>
@@ -1178,10 +1178,10 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               rendered pinned tiles, so the picker there chose for nobody. */}
           {isFan ? (
             <>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
+              <p className="mmm-editor-lede">
                 {t('pageEditor.statsIntro', 'Pick up to 4 real stats to show on your public page. These are the same numbers already shown in your Insights tab — nothing here is estimated or made up.')}
               </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="mmm-editor-stack">
                 {statOptionsForRole(data.type).map((opt) => {
                   const checked = data.pinnedStats.includes(opt.key);
                   const atLimit = data.pinnedStats.length >= 4;
@@ -1215,20 +1215,20 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 })}
               </div>
               {data.pinnedStats.length >= 4 && (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '10px 0 0' }}>
+                <p className="mmm-editor-note">
                   {t('pageEditor.statsLimitReached', '4 selected — uncheck one to swap it for another.')}
                 </p>
               )}
             </>
           ) : (
             <>
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '0 0 16px', lineHeight: 1.55 }}>
+              <p className="mmm-editor-lede">
                 {t('pageEditor.statBoardIntro', 'Real counts from your profile. Nothing here is estimated — a dash means a number could not be read just now.')}
               </p>
               {statBoard === null ? (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.loading', 'Loading…')}</p>
+                <p className="mmm-editor-hint">{t('pageEditor.loading', 'Loading…')}</p>
               ) : statBoard === 'unavailable' ? (
-                <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.statBoardUnavailable', 'Stats could not be loaded. Reload to try again.')}</p>
+                <p className="mmm-editor-hint">{t('pageEditor.statBoardUnavailable', 'Stats could not be loaded. Reload to try again.')}</p>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
                   {statBoard.map((stat) => (
@@ -1266,11 +1266,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
               {t('pageEditor.recentActivityLabel', 'RECENT ACTIVITY')}
             </div>
             {hypers === null ? (
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.loading', 'Loading…')}</p>
+              <p className="mmm-editor-hint">{t('pageEditor.loading', 'Loading…')}</p>
             ) : hypers.length === 0 ? (
-              <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{t('pageEditor.noHypesYet', "No hypes yet — once fans hype your page, they'll show up here.")}</p>
+              <p className="mmm-editor-hint">{t('pageEditor.noHypesYet', "No hypes yet — once fans hype your page, they'll show up here.")}</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div className="mmm-editor-stack">
                 {hypers.map((h) => (
                   <div key={h.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <div style={{

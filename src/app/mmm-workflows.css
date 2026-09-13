@@ -452,3 +452,24 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 }
 .mmm-profiles-grow { flex: 1; min-width: 0; text-decoration: none; color: inherit; }
 .mmm-profiles-fixed100 { width: 100px; flex-shrink: 0; }
+
+
+/* THE PROFILE EDITOR'S FORM COPY (PageEditor.tsx, same route). The same hint
+   line was written inline SEVEN times. Converted verbatim, like the block
+   above.
+
+   `.mmm-editor-stack` is `gap: 8px` and `.mmm-settings-stack` at the top of
+   this file is `gap: 14px`. They are deliberately NOT merged: this pass proves
+   a conversion inert, and harmonising two gaps is a design-visible change that
+   `measure:layout` would correctly report as a difference. That decision
+   belongs to whoever pays down `audit:spacing` report 2 — one visual role
+   spaced many ways — not to a transcription. */
+.mmm-editor-hint { font-size: 0.9375rem; color: var(--ink-a65); margin: 0; }
+.mmm-editor-lede {
+  font-size: 0.9375rem;
+  color: var(--ink-a65);
+  margin: 0 0 16px;
+  line-height: 1.55;
+}
+.mmm-editor-stack { display: flex; flex-direction: column; gap: 8px; }
+.mmm-editor-note { font-size: 0.9375rem; color: var(--ink-a65); margin: 10px 0 0; }
