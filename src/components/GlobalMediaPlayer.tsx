@@ -1053,15 +1053,17 @@ export function SitePlayerDock() {
         />
 
         {/* Speed */}
-        <button className="site-dock-btn" onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button"
-          style={{ fontSize: '0.9375rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5, minWidth: 26 }}>
+        <button onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button"
+          className="site-dock-btn site-dock-speed"
+          style={{ fontSize: '0.9375rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5 }}>
           {playbackRate}×
         </button>
 
         {/* Sleep timer */}
-        <button className="site-dock-btn" onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
+        <button onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
           aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
-          style={{ fontSize: '0.9375rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', minWidth: 28, fontWeight: sleepMinutes !== null ? 700 : 400 }}>
+          className="site-dock-btn site-dock-sleep"
+          style={{ fontSize: '0.9375rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', fontWeight: sleepMinutes !== null ? 700 : 400 }}>
           {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
         </button>
 

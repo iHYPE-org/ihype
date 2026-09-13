@@ -312,13 +312,13 @@ export function PagesHome({
             />
           </div>
           {!q.trim() ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a65)' }}>
+            <div className="mmm-profiles-empty">
               <p>{t('pagesHome.searchEmptyState', 'Find an artist or venue page.')}</p>
             </div>
           ) : searchResults === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a65)' }}><p>{t('pagesHome.loading', 'Loading…')}</p></div>
+            <div className="mmm-profiles-empty"><p>{t('pagesHome.loading', 'Loading…')}</p></div>
           ) : searchResults.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a65)' }}><p>{t('pagesHome.noResultsFor', 'No results for')} &ldquo;{q}&rdquo;.</p></div>
+            <div className="mmm-profiles-empty"><p>{t('pagesHome.noResultsFor', 'No results for')} &ldquo;{q}&rdquo;.</p></div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {searchResults.map((r) => {
@@ -337,13 +337,13 @@ export function PagesHome({
                       {initials}
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
-                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.name}</span>
+                      <div className="mmm-profiles-name">
+                        <span className="mmm-profiles-nametext">{r.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {label}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="mmm-profiles-sub">
                         {r.subtitle}
                       </div>
                     </div>
@@ -357,12 +357,12 @@ export function PagesHome({
 
       {tab === 'mypage' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div className="mmm-profiles-eyebrow">
             {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
           </div>
 
           {data === null ? (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--ink-a65)' }}><p>{t('pagesHome.loadingPages', 'Loading your pages…')}</p></div>
+            <div className="mmm-profiles-empty"><p>{t('pagesHome.loadingPages', 'Loading your pages…')}</p></div>
           ) : myProfiles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
               <p style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.25rem', marginBottom: 8, color: 'var(--ink)' }}>
@@ -479,27 +479,27 @@ export function PagesHome({
 
       {tab === 'network' && (
         <div className="sub-panel">
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div className="mmm-profiles-eyebrow">
             {t('pagesHome.yourNetworkLabel', 'YOUR NETWORK')}
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginBottom: 18 }}>
-            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
+            <div className="mmm-profiles-tile">
+              <div className="mmm-profiles-h2">
                 {String(following.length).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followingStat', 'Following')}</div>
+              <div className="mmm-profiles-meta">{t('pagesHome.followingStat', 'Following')}</div>
             </div>
-            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
+            <div className="mmm-profiles-tile">
+              <div className="mmm-profiles-h2">
                 {String(followersCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.followersStat', 'Followers')}</div>
+              <div className="mmm-profiles-meta">{t('pagesHome.followersStat', 'Followers')}</div>
             </div>
-            <div style={{ background: 'var(--hair-30)', border: '1px solid var(--line)', borderRadius: 14, padding: 16, textAlign: 'center' }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.375rem', letterSpacing: '-.02em', marginBottom: 5 }}>
+            <div className="mmm-profiles-tile">
+              <div className="mmm-profiles-h2">
                 {String(mutualCount).padStart(2, '0')}
               </div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('pagesHome.mutualsStat', 'Mutuals')}</div>
+              <div className="mmm-profiles-meta">{t('pagesHome.mutualsStat', 'Mutuals')}</div>
             </div>
           </div>
 
@@ -537,18 +537,18 @@ export function PagesHome({
                     }}>
                       {initials}
                     </Link>
-                    <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
-                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                    <Link href={profileRoute(p.type, p.slug)} className="mmm-profiles-grow">
+                      <div className="mmm-profiles-name">
+                        <span className="mmm-profiles-nametext">{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="mmm-profiles-sub">
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
-                    <div style={{ width: 100, flexShrink: 0 }}>
+                    <div className="mmm-profiles-fixed100">
                       <FollowButton profileId={p.id} />
                     </div>
                   </div>
@@ -579,18 +579,18 @@ export function PagesHome({
                     }}>
                       {initials}
                     </Link>
-                    <Link href={profileRoute(p.type, p.slug)} style={{ flex: 1, minWidth: 0, textDecoration: 'none', color: 'inherit' }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.9375rem', fontWeight: 800, letterSpacing: '-.01em', display: 'flex', alignItems: 'center', gap: 7, minWidth: 0, flexWrap: 'wrap', rowGap: 4 }}>
-                        <span style={{ flex: '1 1 auto', minWidth: '7ch', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name}</span>
+                    <Link href={profileRoute(p.type, p.slug)} className="mmm-profiles-grow">
+                      <div className="mmm-profiles-name">
+                        <span className="mmm-profiles-nametext">{p.name}</span>
                         <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', padding: '2px 6px', borderRadius: 4, color, background: hexA(color, 0.14), flexShrink: 0 }}>
                           {typeLabel(p.type)}
                         </span>
                       </div>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginTop: 3, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <div className="mmm-profiles-sub">
                         {p.genres[0] ? `${p.genres[0]} · ` : ''}{p.city ?? ''}
                       </div>
                     </Link>
-                    <div style={{ width: 100, flexShrink: 0 }}>
+                    <div className="mmm-profiles-fixed100">
                       <FollowButton profileId={p.id} />
                     </div>
                   </div>
@@ -614,7 +614,7 @@ export function PagesHome({
           )}
           {selectedProfile && (
             <>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+              <div className="mmm-profiles-eyebrow">
                 {t('pagesHome.editingLabel', 'EDITING')} · {typeLabel(selectedProfile.type).toUpperCase()}
               </div>
               <PageEditor initialSection={initialEditorSection} key={selectedProfile.id} profileId={selectedProfile.id} />
@@ -622,7 +622,7 @@ export function PagesHome({
             </>
           )}
 
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
+          <div className="mmm-profiles-eyebrow">
             {selectedProfile ? t('pagesHome.addAnotherPageLabel', 'ADD ANOTHER PAGE') : t('pagesHome.pageCreatorLabel', 'PAGE CREATOR')}
           </div>
           <div className="pages-create-grid">

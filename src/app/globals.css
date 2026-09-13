@@ -4171,6 +4171,19 @@ html.high-contrast p {
   transition: color .15s;
 }
 .site-dock-btn:hover { color: var(--ink-on-walnut); }
+/* The two dock keys whose LABEL is their content — a speed multiplier and a
+   sleep countdown — need a little more room than a glyph so the row does not
+   reflow as the text changes. These numbers were `minWidth: 26` and
+   `minWidth: 28` written inline in GlobalMediaPlayer.tsx, and an inline width
+   outranks every rule in this file: the 44px floor above could never have
+   reached these two whatever it said, and nothing here or in `audit:css` can
+   see an inline style to tell you so. Same values, same geometry, now in the
+   one place the cascade is readable.
+
+   They stay under 44 for the reason the comment above gives — the bar has no
+   horizontal room at 860 — so `measure:taps` still counts them. */
+.site-dock-speed { min-width: 26px; }
+.site-dock-sleep { min-width: 28px; }
 .site-dock-play {
   /* Was 30x30 for a mouse and 44 only under `(pointer: coarse)`; the floor is
      the floor. The brass disc grows with it. */
