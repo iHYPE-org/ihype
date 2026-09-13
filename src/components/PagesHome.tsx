@@ -280,7 +280,7 @@ export function PagesHome({
 
   if (signedOut) {
     return (
-      <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px', textAlign: 'center' }}>
+      <div className="mmm-profiles-page mmm-profiles-centre">
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800, marginBottom: 10 }}>{t('pagesHome.signedOutHeading', 'Sign in to see your pages')}</h1>
         <Link href="/login?callbackUrl=/pages" style={bSolid}>{t('pagesHome.logIn', 'Log in')}</Link>
       </div>
@@ -288,7 +288,7 @@ export function PagesHome({
   }
 
   return (
-    <div style={{ maxWidth: 960, margin: '0 auto', padding: '32px 24px 100px' }}>
+    <div className="mmm-profiles-page">
       <PullToRefresh onRefresh={refreshAll}>
       {/* The `section-content` hook this carried was answered by nothing —
           the page's own max-width and padding are on the div above. */}
@@ -298,15 +298,15 @@ export function PagesHome({
 
       {tab === 'search' && (
         <div className="sub-panel">
-          <div style={{ position: 'relative', marginBottom: 22 }}>
-            <svg fill="none" height="16" stroke="var(--ink-a50)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" style={{ position: 'absolute', left: 16, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} viewBox="0 0 24 24" width="16">
+          <div className="mmm-profiles-searchwrap">
+            <svg fill="none" height="16" stroke="var(--ink-a50)" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" className="mmm-profiles-searchicon" viewBox="0 0 24 24" width="16">
               <circle cx="11" cy="11" r="8" /><line x1="21" x2="16.65" y1="21" y2="16.65" />
             </svg>
             <input
               autoFocus
               onChange={(e) => setQ(e.target.value)}
               placeholder={t('pagesHome.searchPlaceholder', 'Search artists, venues, shows…')}
-              style={{ width: '100%', boxSizing: 'border-box', background: 'var(--hair-30)', border: '1px solid var(--hair-80)', borderRadius: 12, padding: '14px 16px 14px 46px', color: 'var(--ink)', fontFamily: 'var(--font-body)', fontSize: '1rem' }}
+              className="mmm-profiles-search"
               type="text"
               value={q}
             />
@@ -520,15 +520,15 @@ export function PagesHome({
             ))}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
+          <div className="mmm-profiles-list">
             {netListShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', padding: '10px 2px' }}>{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
+              <div className="mmm-profiles-rowhint">{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
+                  <div key={p.id} className="mmm-profiles-row">
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -562,15 +562,15 @@ export function PagesHome({
               {t('pagesHome.suggestedForYou', 'SUGGESTED FOR YOU')}
             </div>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 32 }}>
+          <div className="mmm-profiles-list">
             {netSuggestShown.length === 0 ? (
-              <div style={{ color: 'var(--ink-a65)', fontSize: '0.9375rem', padding: '10px 2px' }}>{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
+              <div className="mmm-profiles-rowhint">{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {
                 const color = TYPE_COLOR[p.type] ?? 'var(--accent)';
                 const initials = p.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase();
                 return (
-                  <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', border: '1px solid var(--line)', borderRadius: 14, background: 'var(--hair-30)' }}>
+                  <div key={p.id} className="mmm-profiles-row">
                     <Link href={profileRoute(p.type, p.slug)} style={{
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -677,7 +677,7 @@ export function PagesHome({
                       <button
                         disabled={creating}
                         onClick={() => { setCreatingType(null); setCreatingName(''); setCreateError(null); setAcceptedUploadPolicy(false); }}
-                        style={{ padding: '10px 14px', borderRadius: 8, border: '1px solid var(--hair-100)', background: 'transparent', color: 'var(--ink-a70)', fontSize: '0.9375rem', cursor: 'pointer' }}
+                        className="mmm-profiles-ghost"
                         type="button"
                       >
                         {t('pagesHome.cancel', 'Cancel')}

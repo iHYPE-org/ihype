@@ -237,6 +237,7 @@ export async function seedShowWithTicket({
   buyerEmail,
   key = 'default',
   startsAt,
+  orderCreatedAt,
 }: {
   buyerUserId: string;
   buyerEmail: string;
@@ -244,6 +245,18 @@ export async function seedShowWithTicket({
   key?: string;
   /** Defaults to a week out, i.e. upcoming. Pass a past date for an attended one. */
   startsAt?: Date;
+  /**
+   * When the order was placed. Defaults to the moment of seeding.
+   *
+   * `/shows/[slug]` draws a demand sparkline: ticket orders from the last 12
+   * hours, bucketed into 8 windows measured back from `Date.now()`. So an order
+   * seeded once MIGRATES from bar to bar as real time passes — every 90 minutes
+   * it crosses a boundary and two of the eight bars swap height and colour.
+   * That is correct for the product and poison for anything comparing two
+   * captures of the page, which is why `measure-layout.mts` pins this outside
+   * the window.
+   */
+  orderCreatedAt?: Date;
 }): Promise<SeededShow> {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
   try {
@@ -366,6 +379,9 @@ export async function seedShowWithTicket({
         status: 'CAPTURED',
         transferredAt: null,
         transferredToEmail: null,
+        /* Restored on update for the same reason `startsAt` is: a caller that
+           asks for a pinned instant must get one on the second run too. */
+        ...(orderCreatedAt ? { createdAt: orderCreatedAt } : {}),
       },
       create: {
         confirmationCode,
@@ -373,6 +389,7 @@ export async function seedShowWithTicket({
         buyerUserId,
         buyerName: 'E2E Buyer',
         buyerEmail,
+        ...(orderCreatedAt ? { createdAt: orderCreatedAt } : {}),
         quantity: 1,
         subtotalCents: 1800,
         // The buyer pays Stripe's fee; iHYPE absorbs none of it. Seeded so the

@@ -169,7 +169,19 @@ jobs:
         # So this is a CEILING, not a target: it holds the count where it is
         # while the inline-style work brings it down. THE NUMBER GOES DOWN,
         # NEVER UP. Report 3 names the files to take first.
-        run: npm run audit:spacing -- --max=1008
+        #
+        # 1008 -> 900 (2026-09-13). The ceiling had 108 of slack: it was set at
+        # 1008, a deletion took the real count to 916, the inline-style pass
+        # took it to 900, and nobody moved the ceiling down after either. That
+        # is the same drift the paragraph above describes, arriving from the
+        # other direction -- not a number creeping up past a gate, but a gate
+        # left behind by a number that fell. Slack in a ratchet is where the
+        # next regression hides, and it hides silently, because the build stays
+        # green the whole way back up.
+        #
+        # LOWER THIS EVERY TIME THE COUNT FALLS. A ceiling nobody tightens is
+        # an advisory with extra steps.
+        run: npm run audit:spacing -- --max=900
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy

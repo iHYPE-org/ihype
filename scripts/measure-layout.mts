@@ -151,10 +151,28 @@ const ROUTES = [
      rather than boxes that moved. It is in PUBLIC_EXACT and is not one of the
      two public routes that bounce a signed-in visitor, so it renders here. */
   '/walkthrough',
-  '/tickets',
-  '/settings',
-  '/payouts',
-  '/search',
+  /* THESE FOUR WERE REDIRECT ALIASES UNTIL 2026-09-13, and one of them was
+     measuring a surface this list already had.
+       /tickets  -> /app/tickets
+       /settings -> /app/me/settings   (ALREADY four lines above — the list
+                                        was paying twice for one pane, 218
+                                        boxes at every width, both times)
+       /payouts  -> /app/me/payouts
+       /search   -> /app/music/discover?focus=search
+     `src/app/tickets`, `/settings`, `/payouts` and `/search` do not exist:
+     each is a line in `next.config.mjs`'s `redirects()`. The list's own note
+     about `/` and `/login` says why that is not a harmless indirection, and a
+     null run measured the cost: `/tickets@1280` came back with the marketing
+     ground and its two orbs in one capture and a ticket canvas in the next —
+     33 changes and 68 elements "present now and not before", on a comparison
+     where nothing had changed, because the two runs recorded opposite sides
+     of a navigation. Name the destination; a redirect is not a surface. */
+  '/app/tickets',
+  '/app/me/payouts',
+  /* The search STATE of a pane already in the list, which is what `/search`
+     really pointed at — kept, because the field and its results are what the
+     alias existed to reach. */
+  '/app/music/discover?focus=search',
   /* `/info` is the one public surface kept, because it renders the same signed
      in or out and carries six panels of the legacy shell's styling. `/` and
      `/login` are deliberately NOT here: both resolve to WORKBENCH_PATH under a
@@ -501,9 +519,58 @@ async function capture<T>(cookie: string, probe = PROBE): Promise<Record<string,
            and the loaded state in the next, so 153 "changes" on 7 of 60 pairs
            were one surface measured at two different moments. Guarded, because
            a page that never goes idle — a poll, an open socket — must be
-           measured late rather than dropped. */
+           measured late rather than dropped.
+
+           A BASELINE IS A READING, NOT A PROPERTY, AND A DEGRADED ONE IS THE
+           WORST INPUT THIS SCRIPT CAN BE GIVEN. A baseline taken on 2026-09-13
+           captured /app/music/playlists@393 with its stations shelf ABSENT and
+           an empty plate in its place — `/api/stations` answers in ~130ms and
+           carried rows on every subsequent run, so one fetch had failed or was
+           still in flight. Every later comparison then reported 38 elements
+           "present now and not before" on a surface the edit had never
+           touched, which reads exactly like a regression the edit caused. The
+           tell is a whole SECTION appearing or disappearing rather than boxes
+           moving: when that is the shape, re-capture the baseline and compare
+           again before believing anything about the change. */
         await page.waitForLoadState('networkidle', { timeout: 15_000 }).catch(() => {});
-        await page.waitForTimeout(300);
+        /* NETWORKIDLE PLUS A FLAT 300ms IS NOT A SETTLED PAGE, and a null run
+           on 2026-09-13 is the proof: the same build measured twice reported
+           277 changes across two pairs and 132 elements present in one run and
+           not the other, on a comparison where nothing had changed at all.
+           `/app/me@1280` carried `.site-shell` at HEIGHT 0 in one capture —
+           the document had not laid out yet — and `/app/me/settings@375` grew
+           2926.5 → 3699.8 because a whole section rendered in one run and not
+           the other. So the page is still moving when 300ms is up, and which
+           side of the line a run lands on is chance.
+           Wait for stillness instead of for a duration: sample the element
+           count and the document height together and require three identical
+           readings 350ms apart, which is 700ms of proven quiet rather than
+           300ms of hope. Capped, because a page that never stops changing must
+           be measured late rather than dropped — the same rule the idle wait
+           above already follows. */
+        let sample = '';
+        let quiet = 0;
+        for (let round = 0; round < 14 && quiet < 2; round += 1) {
+          await page.waitForTimeout(350);
+          const reading = await page.evaluate(
+            () => [
+              document.querySelectorAll('*').length,
+              Math.round(document.documentElement.scrollHeight),
+              /* TEXT LENGTH IS THE THIRD SIGNAL AND IT IS NOT REDUNDANT. The
+                 first run of this settle left one difference standing:
+                 `/app/music/charts@375` measured its plate at 113px in one
+                 capture and 87.5px in the next — one line of copy, because a
+                 MUSIC tab draws the SAME `.mmm-empty` element for "still
+                 loading" and for "nothing here", with different words in it.
+                 Same element count, and the frame's minimum height absorbs the
+                 25.5px, so neither of the other two signals moves while the
+                 sentence swaps under them. */
+              document.body.textContent?.length ?? 0,
+            ].join(':'),
+          );
+          quiet = reading === sample ? quiet + 1 : 0;
+          sample = reading;
+        }
         const measured = await page.evaluate<ProbeResult<T>>(probe);
         /* An error page is a SUCCESSFUL response that measures almost nothing:
            when the worker lost its database mid-run, five routes answered 200
@@ -716,7 +783,35 @@ for (const profile of profiles) {
    carrier of inline spacing; like the two panes above it, nothing measured it.
    Seeded ticketed and on sale, so the buy pane and the split bar both draw —
    an element that never rendered cannot be proved unmoved. */
-const seededShow = await seedShowWithTicket({ buyerUserId: user.id, buyerEmail: EMAIL, key: 'layout' });
+/* THE START TIME IS PINNED TO A UTC HOUR, NOT TO `Date.now()`, AND THAT IS
+   WHAT MAKES THIS ROUTE MEASURABLE AT ALL. The fixture's default is
+   `now + 7 days`, and the page renders `{date} · {time}` — so a baseline
+   written at 13:08 and a comparison run at 13:30 measure two different
+   strings, the span holding them changes width, and every sibling after it
+   shifts. That reports as a real difference on a run where nothing changed:
+   the same class of false positive as the cookie banner and the fetched
+   tab rows this script already had to answer for, and the worst kind,
+   because it is reported against an edit and looks like its fault.
+   Midnight + 20:00 UTC is stable for a whole UTC day, which covers the
+   documented workflow (write, change, rebuild, compare) many times over. */
+const showDay = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+showDay.setUTCHours(20, 0, 0, 0);
+/* THE ORDER IS PINNED OUTSIDE THE DEMAND WINDOW FOR THE SAME REASON, and it
+   is the subtler of the two. The page buckets ticket orders from the last 12
+   hours into 8 bars measured back from `Date.now()`, so an order seeded once
+   does not sit still: every 90 minutes it crosses a bucket boundary and two
+   bars trade height and colour. A null run on 2026-09-13 reported exactly
+   that — `div:4` and `div:5` swapping 26px of `--heat-fire` for 6.5px of
+   `--ink-a35`, on three widths of four, because the boundary fell mid-run.
+   Thirteen hours back puts it outside the window permanently: eight cold bars,
+   the same geometry to measure, and no clock in the answer. */
+const seededShow = await seedShowWithTicket({
+  buyerUserId: user.id,
+  buyerEmail: EMAIL,
+  key: 'layout',
+  startsAt: showDay,
+  orderCreatedAt: new Date(Date.now() - 13 * 60 * 60 * 1000),
+});
 ROUTES.push(`/shows/${seededShow.slug}`);
 
 // Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
