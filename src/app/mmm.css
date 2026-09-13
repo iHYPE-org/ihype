@@ -3942,7 +3942,27 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-document-sections { border-top: 1px solid var(--line-2); }
 .mmm-document-section { display: grid; grid-template-columns: 42px minmax(0, 1fr); gap: 14px; padding: 22px 0; border-bottom: 1px solid var(--line-2); }
 .mmm-document-section > span { color: var(--accent-text); font: 0.9375rem var(--font-mono); letter-spacing: 0.12em; }
-.mmm-document-section h2 { margin: 0 0 8px; font-size: 1.25rem; }
+/* The part heading of a document that has parts — terms, then privacy. It is
+   a level above the clause headings below it, so those are h3, and the clause
+   numbering runs straight through both parts, which is what says one
+   agreement. It carries SPACING ONLY on purpose: `.mmm-frame
+   .mmm-migrated-surface h2` is (0,2,1) and this class is (0,1,0), so every
+   font, colour and tracking declaration written here loses to it silently —
+   measured, 26px/800/display face against a mono eyebrow that never applied.
+   The surface's own h2 treatment is the right one for a part title anyway (it
+   is a heading, not metadata), so the fix is to stop declaring what cannot
+   win rather than to out-specify it. */
+.mmm-document-part { margin: 0; padding: 26px 0 12px; border-bottom: 1px solid var(--line-2); }
+/* `DocumentPartAnchor` moves focus here when the privacy URL forwards to this
+   part, so a reader who cannot see the screen lands where a sighted one does.
+   The ring is suppressed because the scroll IS the feedback and nothing is
+   lost: the heading is `tabIndex={-1}`, so this programmatic call is the only
+   way it can ever hold focus. `:not(:focus-visible)` would be inert here —
+   measured, Chromium reports `:focus-visible` as TRUE for this focus — and
+   what it painted was the accent input ring around a heading, which reads as
+   a form field rather than a destination. */
+.mmm-document-part:focus, .mmm-document-part:focus-visible { outline: none; box-shadow: none; }
+.mmm-document-section h2, .mmm-document-section h3 { margin: 0 0 8px; font-size: 1.25rem; }
 .mmm-document-section p { margin: 0; color: var(--ink-2); font-size: 0.9375rem; line-height: 1.7; }
 .mmm-document-section a { color: var(--accent-text); }
 @media (max-width: 620px) {

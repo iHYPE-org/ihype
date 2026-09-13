@@ -115,9 +115,7 @@ export function translateMeRow(t: Translate, row: { href: string; label: string;
     case '/app/me/info/transparency':
       return { label: t('mmmMe.row.transparency', 'Transparency report'), detail: t('mmmMe.row.transparencyDetail', 'Financial, moderation and safety stats') };
     case '/app/me/info/terms':
-      return { label: t('mmmMe.row.terms', 'Terms of service'), detail: t('mmmMe.row.termsDetail', 'The agreement you signed up under') };
-    case '/app/me/info/privacy':
-      return { label: t('mmmMe.row.privacy', 'Privacy policy'), detail: t('mmmMe.row.privacyDetail', 'What is collected, and what never is') };
+      return { label: t('mmmMe.row.termsPrivacy', 'Terms and privacy'), detail: t('mmmMe.row.termsPrivacyDetail', 'The agreement you signed up under, and what we do with your data') };
     case '/app/me/info/dmca':
       return { label: t('mmmMe.row.dmca', 'DMCA'), detail: t('mmmMe.row.dmcaDetail', 'Takedown and counter-notice process') };
     default:

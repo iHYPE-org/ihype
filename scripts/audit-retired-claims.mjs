@@ -158,7 +158,7 @@ const SKIP_FILES = /\.(test|spec)\.tsx?$|(^|\/)Admin[A-Z][^/]*\.tsx?$/;
  * own language. That decision is made and is not what this skip is waiting
  * on.
  */
-const SKIP_PATHS = [/MmmTerms\.tsx$/, /MmmCharter\.tsx$/, /MmmInfoDocument\.tsx$/];
+const SKIP_PATHS = [/MmmLegal\.tsx$/, /MmmCharter\.tsx$/, /MmmDmca\.tsx$/];
 
 /** `retired-claim-exempt: <reason>` — the reason is required. */
 const EXEMPT = /retired-claim-exempt:\s*\S/i;
