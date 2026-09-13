@@ -70,8 +70,11 @@ export const ME_PANEL_ROWS: Record<MePanelId, readonly MePanelRow[]> = {
        one row here a member might act on rather than read. */
     { label: 'Community roadmap', detail: 'See what members have asked for, add one, vote', href: '/app/me/info/community' },
     { label: 'Transparency report', detail: 'Financial, moderation and safety stats', href: '/app/me/info/transparency' },
-    { label: 'Terms of service', detail: 'The agreement you signed up under', href: '/app/me/info/terms' },
-    { label: 'Privacy policy', detail: 'What is collected, and what never is', href: '/app/me/info/privacy' },
+    /* ONE row, because there is one legal document. Terms and privacy were two
+       rows leading to two articles with identical furniture, which is why they
+       read as the same document — see `MmmLegal`. `/app/me/info/privacy` still
+       resolves, to the privacy part's anchor. */
+    { label: 'Terms and privacy', detail: 'The agreement you signed up under, and what we do with your data', href: '/app/me/info/terms' },
     { label: 'DMCA', detail: 'Takedown and counter-notice process', href: '/app/me/info/dmca' },
   ],
 };

@@ -28,8 +28,7 @@ describe('ME account panels', () => {
     expect(ME_PANEL_ROWS.settings.map((row) => row.label)).toContain('Accessibility');
     expect(ME_PANEL_ROWS.info.map((row) => row.label)).toEqual(expect.arrayContaining([
       'The charter',
-      'Terms of service',
-      'Privacy policy',
+      'Terms and privacy',
       'DMCA',
     ]));
     expect(Object.values(ME_PANEL_ROWS).flat().filter((row) => row.label === 'The charter')).toHaveLength(1);
@@ -39,8 +38,12 @@ describe('ME account panels', () => {
     expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('Trust and safety');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Transparency report')?.href)
       .toBe('/app/me/info/transparency');
-    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Terms of service')?.href)
+    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Terms and privacy')?.href)
       .toBe('/app/me/info/terms');
+    /* One legal row, not two. The privacy policy is a part of that document
+       and `/app/me/info/privacy` forwards to its anchor; a second row would
+       re-create the pair that read as one document said twice. */
+    expect(ME_PANEL_ROWS.info.map((row) => row.label)).not.toContain('Privacy policy');
     expect(ME_PANEL_ROWS.settings.map((row) => row.label)).not.toEqual(
       expect.arrayContaining(['Payouts', 'Tickets and wallet']),
     );
@@ -55,8 +58,6 @@ describe('ME account panels', () => {
        rule the next test in this file enforces for every row here. */
     expect(ME_PANEL_ROWS.settings.find((row) => row.label === 'Notifications')?.href)
       .toBe('/app/me/notifications');
-    expect(ME_PANEL_ROWS.info.find((row) => row.label === 'Privacy policy')?.href)
-      .toBe('/app/me/info/privacy');
     expect(ME_PANEL_ROWS.info.find((row) => row.label === 'DMCA')?.href)
       .toBe('/app/me/info/dmca');
   });

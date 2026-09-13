@@ -1,5 +1,5 @@
-import { MmmInfoDocument } from '@/components/mmm/MmmInfoDocument';
+import { MmmDmca } from '@/components/mmm/MmmDmca';
 
 export default function MmmDmcaPage() {
-  return <MmmInfoDocument kind="dmca" />;
+  return <MmmDmca />;
 }

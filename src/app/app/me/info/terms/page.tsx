@@ -1,5 +1,5 @@
-import { MmmTerms } from '@/components/mmm/MmmTerms';
+import { MmmLegal } from '@/components/mmm/MmmLegal';
 
-export default function MmmTermsPage() {
-  return <MmmTerms />;
+export default function MmmLegalPage() {
+  return <MmmLegal />;
 }

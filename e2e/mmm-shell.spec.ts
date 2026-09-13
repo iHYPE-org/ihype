@@ -1085,6 +1085,48 @@ test.describe('ME with a real profile', () => {
     }
   });
 
+  /* ONE legal document, reachable by the URL that names its second part.
+
+     The terms and the privacy policy used to be two rows leading to two
+     articles with identical furniture, which is why they read as one document
+     said twice (DESIGN_SYNC row 407). The fold is a presentation change and
+     the privacy TEXT is untouched, so what this guards is the shape: one row,
+     one back link, one "last updated", and clause numbers that run straight
+     through both parts.
+
+     The anchor assertion is the load-bearing one. `/app/me/info/privacy`
+     forwards to `#privacy`, and the browser's own fragment scroll cannot
+     reach it — the heading is inside a streamed segment, so the fragment is
+     spent before the element exists. `DocumentPartAnchor` does the scroll
+     after mount, and without it a member who asked for the privacy policy
+     lands on the terms with no sign that anything is missing. Note the
+     scroller is `.mmm-pane`, not the document: `window.scrollY` stays 0 here
+     whether or not the anchor worked, which is exactly the reading that made
+     this look broken when it was not. */
+  test('terms and privacy are one document, and the privacy URL lands on its part', async ({ page }) => {
+    await page.goto('/app/me?panel=info');
+    await expect(page.getByRole('link', { name: /Terms and privacy/ })).toHaveCount(1);
+    await expect(page.getByRole('link', { name: /^Privacy policy/ })).toHaveCount(0);
+
+    await page.goto('/app/me/info/privacy');
+    await expect(page).toHaveURL(/\/app\/me\/info\/terms#privacy$/);
+    await expect(page.locator('h1')).toHaveText('Terms and privacy');
+    await expect(page.locator('.mmm-charter-back')).toHaveCount(1);
+    await expect(page.locator('.mmm-document-part')).toHaveText(['Terms of service', 'Privacy policy']);
+    // 9 terms clauses + 8 privacy clauses + contact, numbered as one sequence.
+    await expect(page.locator('.mmm-document-section')).toHaveCount(18);
+    await expect(page.locator('.mmm-document-section > span').last()).toHaveText('18');
+    // Data rights and the named subprocessors are the two clauses the terms
+    // do not carry; they are why the privacy policy was kept rather than
+    // dropped, so they are asserted by name.
+    await expect(page.getByRole('heading', { name: 'Data rights' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Subprocessors' })).toBeVisible();
+
+    await expect
+      .poll(async () => Math.round(await page.locator('#privacy').evaluate((el) => el.getBoundingClientRect().top)))
+      .toBeLessThan(120);
+  });
+
   /* A profile's own tab set renders in the pane's strip, and there is exactly
      ONE section control on screen.
 
