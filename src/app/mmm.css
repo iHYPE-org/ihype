@@ -3445,6 +3445,14 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-public-profile[data-profile-type='venue'] .mmm-profile-band {
   background: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
 }
+/* The third profile type, scoped on its own page rather than on
+   `[data-profile-type]`, because `.mmm-public-profile` also sets a 760px column
+   and this dashboard is 920. `--role-advertiser` has existed since Design
+   System 6 and coloured nothing until 2026-09-13. */
+.mmm-advertiser .mmm-profile-band {
+  background: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+}
+.mmm-advertiser .mmm-profile-card { margin-bottom: 24px; }
 .mmm-profile-band img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .mmm-profile-band-glare {
   position: absolute;

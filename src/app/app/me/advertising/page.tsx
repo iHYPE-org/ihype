@@ -22,7 +22,11 @@ export default async function AdvertiserDashboard() {
     }),
     db.advertiserAccount.findUnique({
       where: { userId: session.user.id },
-      select: { companyName: true, website: true },
+      /* `pitch` is what the advertiser wrote about themselves at signup and
+         nothing has ever rendered it. The artist and venue panes lead with the
+         owner's own words for the same reason (row 337); this is the only
+         sentence this account type has. */
+      select: { companyName: true, website: true, pitch: true },
     }),
   ]);
 
@@ -97,23 +101,61 @@ export default async function AdvertiserDashboard() {
        answered by nothing and scoped nothing. */
     <div className="mmm-advertiser">
       <Link className="mmm-charter-back" href="/app/me?section=profiles">‹ {t('mmmStrip.profiles', 'Profiles')}</Link>
-      <div className="mmm-advertiser-head">
-        <div>
-          <p className="mmm-eyebrow mmm-eyebrow-accent">{t('advertiseDashboardPage.eyebrow', 'Advertiser profile')}</p>
-          <h1>{t('advertiseDashboardPage.title', 'My Ad Campaigns')}</h1>
-          {advertiserAccount && (
-            <p className="meta" style={{ marginTop: 4 }}>
-              {advertiserAccount.companyName}
-              {advertiserAccount.website && (
-                <>
-                  {' · '}
-                  <a href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
-                </>
-              )}
-            </p>
-          )}
+
+      {/* THE THIRD PROFILE TYPE WEARS THE SAME CARD AS THE OTHER TWO (2026-09-13).
+          Artist and venue are one console card — band, art, badge, name, lede,
+          actions, counters (row 337) — and the advertiser was a bare `<h1>`
+          with the company name set as grey `.meta` underneath it, so the one
+          account type that PAYS iHYPE was the one with no identity on screen.
+          Nothing here is invented: the classes are `.mmm-profile-*`, the hue is
+          `--role-advertiser` (a token that existed and coloured nothing), and
+          every figure was already computed a few lines above.
+
+          The counters are deliberately COUNTS and never money. Money on this
+          page is gated on `pricingModel` in the stat cards below, because
+          `spentCents` never moves for a sponsorship (row 394) — a third place
+          quoting a figure derived from it is exactly how that defect spread the
+          first time. */}
+      <div className="mmm-profile-card">
+        <div className="mmm-profile-band">
+          <span aria-hidden="true" className="mmm-profile-band-glare" />
         </div>
-        <Link href="/app/me/advertising/new" className="mmm-btn-primary mmm-advertiser-new">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
+
+        <div className="mmm-profile-body">
+          <div className="mmm-profile-head">
+            <div className="mmm-profile-art">
+              <span>{(advertiserAccount?.companyName ?? 'A').charAt(0)}</span>
+            </div>
+            <div className="mmm-profile-head-label">
+              <span className="mmm-show-eyebrow">{t('advertiseDashboardPage.roleBadge', 'Advertiser')}</span>
+            </div>
+          </div>
+
+          <div>
+            <h1 className="mmm-show-title">
+              {advertiserAccount?.companyName ?? t('advertiseDashboardPage.title', 'My Ad Campaigns')}
+            </h1>
+            {advertiserAccount?.website && (
+              <div className="mmm-profile-sub">
+                <a href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
+              </div>
+            )}
+          </div>
+
+          {advertiserAccount?.pitch && <p className="mmm-profile-lede">{advertiserAccount.pitch}</p>}
+
+          <div className="mmm-profile-actions">
+            <Link href="/app/me/advertising/new" className="mmm-btn-primary mmm-advertiser-new">{t('advertiseDashboardPage.newCampaign', '+ New Campaign')}</Link>
+          </div>
+
+          {/* NO COUNTERS HERE, and that is the difference between this card and
+              the artist's. The other two panes carry counters because nothing
+              else on them reports a figure; this page already has five stat
+              cards with sub-lines and the `pricingModel` gating row 394 put
+              there. A second, poorer copy of "Impressions" and "Active
+              Campaigns" an inch above the real ones is the same defect as two
+              primary keys. */}
+        </div>
       </div>
 
       {campaigns.length > 0 && (
@@ -177,9 +219,11 @@ export default async function AdvertiserDashboard() {
         <div className="mmm-empty-state">
           <strong>{t('advertiseDashboardPage.noCampaigns', 'No campaigns yet.')}</strong>
           <p>{t('advertiseDashboardPage.noCampaignsLede', 'Choose an audience, upload a radio-style spot and see the full price before checkout.')}</p>
-          <div className="mmm-empty-actions">
-            <Link className="mmm-btn-primary" href="/app/me/advertising/new">{t('advertiseDashboardPage.submitFirstAd', 'Build your first campaign')}</Link>
-          </div>
+          {/* NO SECOND PRIMARY KEY HERE. "+ New Campaign" now sits in the card
+              above, where the other two profile types put their actions, and it
+              is on screen at both widths in this same state — so the plate's own
+              key was two identical red buttons a hundred pixels apart, both
+              going to the same place. One control, one promise. */}
         </div>
       )}
 
