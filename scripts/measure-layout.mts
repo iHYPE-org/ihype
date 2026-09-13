@@ -58,7 +58,7 @@ import { chromium, type Browser, type BrowserContext } from 'playwright';
 // Set before the fixture is imported for its own sake; it is read at call time.
 process.env.PLAYWRIGHT_AUTH_COOKIE_SECURE ??= 'true';
 
-const { seedSessionCookie, canSeedSession, sessionCookieName } = await import('../e2e/fixtures/session');
+const { seedSessionCookie, seedShowWithTicket, canSeedSession, sessionCookieName } = await import('../e2e/fixtures/session');
 
 const arg = (name: string, dflt?: string) => {
   const hit = process.argv.find((a) => a.startsWith(`--${name}=`));
@@ -136,7 +136,21 @@ const ROUTES = [
      (`audit:spacing` report 3), so it is the surface this list exists to
      protect while that debt is converted. */
   '/app/me/advertising/new',
-  '/pages',
+  /* The profile editor. This entry read `/pages` until 2026-09-13, a path
+     deleted on 2026-09-01 and surviving only as a `redirects()` alias — so the
+     list that exists to catch moved layout was itself naming a moved route,
+     and measuring it under a label no file answers to. It still measured the
+     right surface, because Playwright follows the 307 and the destination is a
+     real distinct pane; that is luck rather than design, and the two routes
+     this list already refuses (`/` and `/login`) are refused for being
+     redirects. Name the live path. */
+  '/app/me/profiles',
+  /* `/walkthrough` carries the most inline style of any file in the app after
+     the three above it, and nothing measured it: it is public, so the shells'
+     instruments skip it, and `audit:mobile` measures boxes that are too small
+     rather than boxes that moved. It is in PUBLIC_EXACT and is not one of the
+     two public routes that bounce a signed-in visitor, so it renders here. */
+  '/walkthrough',
   '/tickets',
   '/settings',
   '/payouts',
@@ -682,7 +696,7 @@ if (!canSeedSession()) {
 // An ARTIST profile so the role-gated surfaces render their fullest state:
 // a profile-less account hides the page card and the HYPE link card, and an
 // element that never rendered cannot be proved unmoved.
-const { cookie, profiles } = await seedSessionCookie(EMAIL, {
+const { cookie, user, profiles } = await seedSessionCookie(EMAIL, {
   profiles: [
     { type: 'ARTIST', name: 'Layout Baseline' },
     { type: 'VENUE', name: 'Layout Baseline Room' },
@@ -696,6 +710,14 @@ const { cookie, profiles } = await seedSessionCookie(EMAIL, {
 for (const profile of profiles) {
   ROUTES.push(profile.type === 'VENUE' ? `/app/venues/${profile.slug}` : `/app/artists/${profile.slug}`);
 }
+
+/* The public show page, at a seeded slug, for the same reason and by the same
+   mechanism. It is the URL this product exists to share and the third-largest
+   carrier of inline spacing; like the two panes above it, nothing measured it.
+   Seeded ticketed and on sale, so the buy pane and the split bar both draw —
+   an element that never rendered cannot be proved unmoved. */
+const seededShow = await seedShowWithTicket({ buyerUserId: user.id, buyerEmail: EMAIL, key: 'layout' });
+ROUTES.push(`/shows/${seededShow.slug}`);
 
 // Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
 // HTTPS_PROXY from the environment, and `bypass` is required rather than

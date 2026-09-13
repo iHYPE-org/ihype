@@ -412,13 +412,13 @@ export default async function ShowDetailPage({
             {show.venueProfile && <span className="badge" style={{ color: 'var(--role-venue)' }}>{t('showsSlugPage.venueBadge', 'Venue')}</span>}
             {show.headlinerProfile && <span className="badge" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.artistBadge', 'Artist')}</span>}
             {date && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span className="showpage-inline">
                 <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="14"><rect height="18" rx="2" width="18" x="3" y="4" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg>
                 {date} · {time}
               </span>
             )}
             {show.venueProfile?.city && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span className="showpage-inline">
                 <svg fill="none" height="14" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.7" viewBox="0 0 24 24" width="14"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
                 {show.venueProfile.city}
               </span>
@@ -553,7 +553,7 @@ export default async function ShowDetailPage({
           <ShowTabs
             venueTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
+                <p className="showpage-eyebrow">{t('showsSlugPage.venueTabLabel', 'Venue')}</p>
                 <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 8 }}>{show.venueProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
                 {show.venueProfile && (
                   <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a70)' }}>
@@ -586,9 +586,9 @@ export default async function ShowDetailPage({
             }
             lineupTab={
               <div>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
+                <p className="showpage-eyebrow">{t('showsSlugPage.headlinerLabel', 'Headliner')}</p>
                 <p style={{ fontSize: '1.375rem', fontFamily: 'var(--font-display)', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 16 }}>{show.headlinerProfile?.name ?? t('showsSlugPage.tba', 'TBA')}</p>
-                <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 8 }}>{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
+                <p className="showpage-eyebrow">{t('showsSlugPage.promoterLabel', 'Promoter')}</p>
                 <p style={{ fontSize: '0.9375rem' }}>{show.promoterProfile?.name ?? t('showsSlugPage.promoterPoolUnassigned', 'Promoter pool unassigned')}</p>
               </div>
             }
@@ -606,7 +606,7 @@ export default async function ShowDetailPage({
               {show.description || t('showsSlugPage.defaultDescription', 'Presented through iHYPE — face value pricing, zero fees, and every split locked by charter before a single ticket is sold.')}
             </p>
 
-            <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
+            <div className="panel showpage-panel" >
               <h2>{t('showsSlugPage.showDetails', 'Show details')}</h2>
               <div className="tag-row">
                 {show.tags.map((tag) => <span className="tag" key={tag}>{tag}</span>)}
@@ -747,7 +747,7 @@ export default async function ShowDetailPage({
             ) : null}
 
             {isShowOwner || isAdminSession(session) ? (
-              <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
+              <div className="panel showpage-panel" >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h2 style={{ margin: 0 }}>{t('showsSlugPage.recentTicketOrderTotals', 'Recent ticket order totals')}</h2>
                   <div style={{ display: 'flex', gap: 16 }}>
@@ -821,7 +821,7 @@ export default async function ShowDetailPage({
             <ShowComments canComment={Boolean(session?.user?.id)} showId={show.id} />
 
             {show.isTicketed && canWatch && currentFan?.role === 'FAN' && (
-              <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
+              <div className="panel showpage-panel" >
                 <h2>{t('showsSlugPage.transferYourTicket', 'Transfer your ticket')}</h2>
                 <p className="subtitle" style={{ marginBottom: '1rem' }}>{t('showsSlugPage.transferTicketDesc', "Can't make it? You can transfer your ticket to a friend without a fee.")}</p>
                 <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/me/dashboard">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
@@ -842,13 +842,13 @@ export default async function ShowDetailPage({
             ) : null}
 
             {show.recapText && (
-              <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
+              <div className="panel showpage-panel" >
                 <h2>{t('showsSlugPage.showRecap', 'Show recap')}</h2>
                 <p style={{ whiteSpace: 'pre-wrap' }}>{show.recapText}</p>
               </div>
             )}
             {isShowOwner && show.status === 'ENDED' && (
-              <div className="panel" style={{ padding: '1.25rem', marginTop: 24 }}>
+              <div className="panel showpage-panel" >
                 <h2 style={{ marginTop: 0 }}>{t('showsSlugPage.writeARecap', 'Write a recap')}</h2>
                 <ShowRecapForm initialRecap={show.recapText} showId={show.id} />
               </div>
@@ -947,8 +947,8 @@ export default async function ShowDetailPage({
               <div style={{ background: 'var(--hair-40)', borderRadius: 8, padding: 14, marginTop: 16 }}>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', textTransform: 'uppercase', letterSpacing: '.1em', color: 'var(--ink-a65)', marginBottom: 10 }}>{t('showsSlugPage.vsTicketmaster', 'vs. Ticketmaster')}</p>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', marginBottom: 6 }}><span>{t('showsSlugPage.faceValue', 'Face value')}</span><span>${price.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', marginBottom: 6, color: 'var(--ink-a65)' }}><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', marginBottom: 6, color: 'var(--ink-a65)' }}><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
+                <div className="showpage-splitrow"><span>{t('showsSlugPage.serviceFees27', 'Service fees (27%)')}</span><span>+${tmFees.toFixed(2)}</span></div>
+                <div className="showpage-splitrow"><span>{t('showsSlugPage.tmTotal', 'TM total')}</span><span>${tmTotal.toFixed(2)}</span></div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9375rem', fontWeight: 700, color: 'var(--role-venue)' }}><span>{t('showsSlugPage.ihypeTotal', 'iHYPE total')}</span><span>${price.toFixed(2)}</span></div>
               </div>
 

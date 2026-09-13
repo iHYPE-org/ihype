@@ -375,3 +375,101 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   .mmm-door-manual-row { flex-wrap: wrap; }
   .mmm-door-check { flex: 1 1 100%; }
 }
+
+
+/* THE PROFILE EDITOR'S REPEATED ROLES (`/app/me/profiles`, PagesHome.tsx).
+   Ten shapes written inline thirty times: the same empty state four times over,
+   the same eyebrow four times, the same card three times. `audit:spacing`
+   report 3 ranks this file first in the app for inline spacing, and its own
+   headline is why that matters — 2,196 rhythm literals with only 53% on the
+   design system's scale, because a value copied at the call site is a value
+   nobody can correct centrally.
+
+   Converted verbatim: every declaration below is the literal that was inline,
+   so `measure:layout` should report zero differences. Anything that MOVED here
+   would be a mistake in the transcription, not an improvement. The blocks left
+   inline are the ones carrying a computed value (a role colour, a card's own
+   background), which is what inline style is actually for. */
+.mmm-profiles-empty { text-align: center; padding: 80px 0; color: var(--ink-a65); }
+.mmm-profiles-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--ink-a65);
+  margin-bottom: 14px;
+}
+.mmm-profiles-meta {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--ink-a65);
+}
+.mmm-profiles-sub {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-a65);
+  margin-top: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mmm-profiles-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.375rem;
+  letter-spacing: -.02em;
+  margin-bottom: 5px;
+}
+.mmm-profiles-name {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -.01em;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+.mmm-profiles-nametext {
+  flex: 1 1 auto;
+  min-width: 7ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mmm-profiles-tile {
+  background: var(--hair-30);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+}
+.mmm-profiles-grow { flex: 1; min-width: 0; text-decoration: none; color: inherit; }
+.mmm-profiles-fixed100 { width: 100px; flex-shrink: 0; }
+
+
+/* THE PROFILE EDITOR'S FORM COPY (PageEditor.tsx, same route). The same hint
+   line was written inline SEVEN times. Converted verbatim, like the block
+   above.
+
+   `.mmm-editor-stack` is `gap: 8px` and `.mmm-settings-stack` at the top of
+   this file is `gap: 14px`. They are deliberately NOT merged: this pass proves
+   a conversion inert, and harmonising two gaps is a design-visible change that
+   `measure:layout` would correctly report as a difference. That decision
+   belongs to whoever pays down `audit:spacing` report 2 — one visual role
+   spaced many ways — not to a transcription. */
+.mmm-editor-hint { font-size: 0.9375rem; color: var(--ink-a65); margin: 0; }
+.mmm-editor-lede {
+  font-size: 0.9375rem;
+  color: var(--ink-a65);
+  margin: 0 0 16px;
+  line-height: 1.55;
+}
+.mmm-editor-stack { display: flex; flex-direction: column; gap: 8px; }
+.mmm-editor-note { font-size: 0.9375rem; color: var(--ink-a65); margin: 10px 0 0; }
