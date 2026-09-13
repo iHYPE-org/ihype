@@ -229,7 +229,7 @@ export default async function AdvertiserDashboard() {
 
       {campaigns.length > 0 && (
         <div className="panel ad-dash-chart">
-          <div className="ad-dash-chart-title">{t('advertiseDashboardPage.impressionsLastDays', 'Impressions, last')} {DAYS} {t('advertiseDashboardPage.days', 'days')}</div>
+          <div className="ad-dash-chart-caption">{t('advertiseDashboardPage.impressionsLastDays', 'Impressions, last')} {DAYS} {t('advertiseDashboardPage.days', 'days')}</div>
           <div className="ad-dash-bars">
             {dailyRows.map(([day, count]) => (
               <div key={day} className="ad-dash-bar-col" title={`${day}: ${count} impressions`}>
@@ -249,13 +249,13 @@ export default async function AdvertiserDashboard() {
 
       <div className="ad-dash-list">
         {campaigns.map(campaign => (
-          <div key={campaign.id} className="panel ad-dash-card">
-            <div className="ad-dash-card-head">
+          <div key={campaign.id} className="panel ad-dash-campaign">
+            <div className="ad-dash-campaign-top">
               <div>
-                <div className="ad-dash-card-title">{campaign.title}</div>
+                <div className="ad-dash-campaign-name">{campaign.title}</div>
                 <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
                 {campaign.clickUrl && (
-                  <div className="meta ad-dash-card-link">
+                  <div className="meta ad-dash-campaign-link">
                     <a href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
                   </div>
                 )}

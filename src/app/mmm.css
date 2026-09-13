@@ -1020,18 +1020,32 @@ html:has(.mmm-frame) {
    reads stylesheets; `audit:spacing` counts the literals and says so).
    The ONE value that stays inline is the bar's height, because it is a live
    value computed per render, which is the same rule the console dock's
-   rotation followed. */
+   rotation followed.
+
+   NAMED FOR THE CONTENT, NOT THE SHAPE, because `audit:shell` was right to
+   refuse the first draft. It called `.ad-dash-card`, `-card-head` and the two
+   `-title`s primitive-shaped and asked for them in `mmm-primitives.css`'s
+   alias groups — and a class named like a primitive must BE the primitive, or
+   the shell grows a fortieth private card treatment. These are not primitives:
+   the campaign panel already carries `panel`, which `.mmm-advertiser .panel`
+   paints deliberately (row 348), and these rules add nothing but spacing.
+   Registering them in the alias layer would have applied the plate on top of
+   that panel at equal specificity — a cascade fight — and turned the campaign
+   title into 800-weight display type, which is a design change nobody asked
+   for and which would have broken the measurement this pass exists to make.
+   So they say what they hold (a campaign, its top row, its name, the chart's
+   caption) rather than what shape it is. */
 .mmm-advertiser .ad-dash-chart { padding: 16px 20px; margin-bottom: 24px; }
-.mmm-advertiser .ad-dash-chart-title { margin-bottom: 12px; font-weight: 600; }
+.mmm-advertiser .ad-dash-chart-caption { margin-bottom: 12px; font-weight: 600; }
 .mmm-advertiser .ad-dash-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
 .mmm-advertiser .ad-dash-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .mmm-advertiser .ad-dash-bar { width: 100%; min-height: 2px; border-radius: 2px; background: var(--accent); }
 .mmm-advertiser .ad-dash-axis { display: flex; justify-content: space-between; margin-top: 6px; }
 .mmm-advertiser .ad-dash-list { display: flex; flex-direction: column; gap: 12px; }
-.mmm-advertiser .ad-dash-card { padding: 16px; }
-.mmm-advertiser .ad-dash-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-.mmm-advertiser .ad-dash-card-title { font-size: 1rem; font-weight: 600; }
-.mmm-advertiser .ad-dash-card-link { margin-top: 4px; }
+.mmm-advertiser .ad-dash-campaign { padding: 16px; }
+.mmm-advertiser .ad-dash-campaign-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.mmm-advertiser .ad-dash-campaign-name { font-size: 1rem; font-weight: 600; }
+.mmm-advertiser .ad-dash-campaign-link { margin-top: 4px; }
 .mmm-advertiser .ad-dash-figures { display: flex; flex-wrap: wrap; gap: 24px; }
 .mmm-advertiser .ad-dash-figure-val { font-weight: 700; }
 .mmm-advertiser .ad-dash-dates { margin-top: 8px; }
