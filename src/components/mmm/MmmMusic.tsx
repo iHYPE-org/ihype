@@ -1163,8 +1163,36 @@ function PlaylistsTab() {
   const likedVenues = (likes.data ?? []).filter((row) => row.targetType === 'VENUE' && row.name);
   const ownLists = lists ?? [];
   const stationRows = stations.data ?? [];
+  /* A FAILED READ IS NOT AN EMPTY LIBRARY.
+
+     Every section here reads `?? []`, so a 500 from any of the four endpoints
+     rendered pixel-for-pixel as a member who has saved nothing. That is the
+     residual `measure:layout` kept reporting as a whole shelf present in one
+     capture of a build and absent in the next (DESIGN_SYNC row 403) — and to a
+     member it reads as iHYPE having lost their playlists, which is the one
+     thing a library must never say by accident.
+ 
+     Same rule `admin-workbench.ts`, `analytics-engine.ts` and the profile stat
+     board already follow: null is never zero, and a read that failed says so
+     rather than rendering a claim. It is stated once here rather than four
+     times because the member's question is "is this all of it", not "which
+     endpoint answered". */
+  const unreadable = [favorites, likes, stations, owned].some((section) => section.status === 'error');
   const nothing = tracks.length === 0 && ownLists.length === 0
     && likedArtists.length === 0 && likedVenues.length === 0 && stationRows.length === 0;
+
+  /* Empty and unreadable look identical from here, so the unreadable branch is
+     tested FIRST: an empty plate is a claim about what the member saved, and
+     that claim must never be made on top of a read that did not land. */
+  if (nothing && unreadable) {
+    return (
+      <div className="mmm-music-list">
+        <Empty>
+          {t('mmmMusic.libraryUnreadable', 'Your library could not be read just now. Nothing has been lost — try again in a moment.')}
+        </Empty>
+      </div>
+    );
+  }
 
   if (nothing) {
     /* The crate rides along under the empty plate rather than behind it. A
@@ -1184,6 +1212,14 @@ function PlaylistsTab() {
 
   return (
     <div className="mmm-music-list">
+      {/* Above the list, not below it: a member scanning for a playlist that is
+          missing needs to know the list may be short BEFORE they conclude it is
+          gone. */}
+      {unreadable && (
+        <Empty>
+          {t('mmmMusic.libraryPartlyUnreadable', 'Part of your library could not be read just now, so something may be missing below. Nothing has been lost — try again in a moment.')}
+        </Empty>
+      )}
       {tracks.length > 0 && (
         <>
           <p className="mmm-eyebrow" style={{ padding: '2px 2px 8px' }}>{t('mmmMusic.likedTracks', 'Liked tracks')} · {tracks.length}</p>
@@ -1228,6 +1264,14 @@ function PlaylistsTab() {
           not fit a 104px tile and is dropped rather than truncated — the Radio
           tab still shows it, and a null there has always meant "could not be
           read", never zero. */}
+      {/* `MmmShelf` renders nothing on zero tiles, which is right for a shelf
+          with no collections and wrong for one that could not be read — the
+          shelf would simply not be there, with no way to tell the two apart.
+          The stations are the one section here the member did not build, so
+          "you have none" is never the honest reading of their absence. */}
+      {stations.status === 'error' ? (
+        <Empty>{t('mmmMusic.stationsUnreadable', 'The automatic stations could not be read just now.')}</Empty>
+      ) : (
       <MmmShelf
         count={stationRows.length}
         heading={t('mmmMusic.automaticallyAssembled', 'Automatically assembled')}
@@ -1241,6 +1285,7 @@ function PlaylistsTab() {
           onSelect: () => void playStation(station.slug),
         }))}
       />
+      )}
 
       <LikedProfileRows
         heading={t('mmmMusic.likedArtists', 'Liked artists')}

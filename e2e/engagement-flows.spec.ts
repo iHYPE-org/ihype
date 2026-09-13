@@ -118,6 +118,49 @@ test.describe('liking', () => {
     await expect(shelf).toBeVisible({ timeout: 15_000 });
     await expect(shelf.getByText('E2E Listed Artist').first()).toBeVisible();
   });
+
+  /* A FAILED READ MUST NOT RENDER AS AN EMPTY LIBRARY.
+
+     Every section of the Playlists tab reads `?? []`, so a 500 from any of its
+     four endpoints used to render pixel-for-pixel as a member who had saved
+     nothing — and the stations shelf, which `MmmShelf` drops entirely on zero
+     tiles, simply was not there. That is the residual `measure:layout` kept
+     reporting as a whole shelf present in one capture of a build and absent in
+     the next (DESIGN_SYNC row 403); to a member it reads as iHYPE having lost
+     their library.
+
+     This is the one defect on this tab that cannot be reached by using the
+     product — the endpoint has to fail — so the network is faulted here
+     instead. Both halves are asserted in the negative as well as the
+     positive: the point is not that a notice appears, it is that the false
+     claim does not. */
+  test('a library that could not be read says so instead of reading as empty', async ({ context, page }) => {
+    test.skip(!canSeedSession(), 'AUTH_SECRET and a scratch DATABASE_URL are required.');
+    await signIn(context, `e2e-library-unreadable-${RUN}@ihype.org`);
+    await page.route('**/api/fan-favorites', (route) => route.fulfill({ status: 500, body: '{}' }));
+    await page.goto('/app/music/playlists');
+    await expect(page.getByText(/could not be read just now/i).first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/Nothing saved yet/i)).toHaveCount(0);
+  });
+
+  test('the stations shelf says it could not be read rather than vanishing', async ({ context, page }) => {
+    test.skip(!canSeedSession(), 'AUTH_SECRET and a scratch DATABASE_URL are required.');
+    await signIn(context, `e2e-stations-unreadable-${RUN}@ihype.org`, {
+      profiles: [{ type: 'ARTIST', name: 'E2E Shelf Artist' }],
+    });
+    /* The member needs SOMETHING in the library, or the whole tab falls to the
+       empty plate and the shelf is not on screen to be missing. A like is the
+       cheapest content this fixture can make. */
+    await ownArtistPage(page);
+    await page.getByRole('button', { name: /^Like E2E Shelf Artist$/ }).click();
+    await expect(page.getByRole('button', { name: /^Unlike E2E Shelf Artist$/ })).toBeVisible();
+
+    // Only the collection list, never `/api/stations/<slug>/tracks`.
+    await page.route('**/api/stations', (route) => route.fulfill({ status: 500, body: '{}' }));
+    await page.goto('/app/music/playlists');
+    await expect(page.getByText(/automatic stations could not be read/i)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole('region', { name: /Automatically assembled/i })).toHaveCount(0);
+  });
 });
 
 test.describe('hyping', () => {
