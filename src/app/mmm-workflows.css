@@ -473,3 +473,98 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 }
 .mmm-editor-stack { display: flex; flex-direction: column; gap: 8px; }
 .mmm-editor-note { font-size: 0.9375rem; color: var(--ink-a65); margin: 10px 0 0; }
+
+
+/* The profile editor's remaining shapes: the page frame, the list and its rows,
+   the search field and its icon, the ghost button. Converted verbatim like the
+   two blocks above.
+
+   `.mmm-profiles-search` IS THE RISKY ONE and it is called out here rather
+   than discovered later. It is an INPUT on a migrated shell surface, and
+   CLAUDE.md records that `mmm-primitives.css`'s migrated-surface input rule is
+   (0,2,1) and once drew a second box inside the map's search field. An inline
+   style outranks that rule; a class does not necessarily. So this conversion
+   is the one in the set that could genuinely repaint, and measure:layout is
+   what decides -- if it reports a difference here, the right answer is to
+   revert this selector, not to escalate its specificity. */
+.mmm-profiles-page { max-width: 960px; margin: 0 auto; padding: 32px 24px 100px; }
+.mmm-profiles-centre { text-align: center; }
+.mmm-profiles-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 32px; }
+.mmm-profiles-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--hair-30);
+}
+.mmm-profiles-rowhint { color: var(--ink-a65); font-size: 0.9375rem; padding: 10px 2px; }
+.mmm-profiles-searchwrap { position: relative; margin-bottom: 22px; }
+.mmm-profiles-searchicon {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.mmm-profiles-search {
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--hair-30);
+  border: 1px solid var(--hair-80);
+  border-radius: 12px;
+  padding: 14px 16px 14px 46px;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1rem;
+}
+.mmm-profiles-ghost {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--hair-100);
+  background: transparent;
+  color: var(--ink-a70);
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+/* THE SPONSORSHIP BUILDER (`/app/me/advertising/new`, AdvertisePage.tsx's live
+   export). measure:layout's route list names this surface explicitly as "the
+   file with the most inline spacing in the app … the surface this list exists
+   to protect while that debt is converted"; this is that conversion, verbatim
+   as above. */
+.adbuild-card {
+  background: var(--bg-2);
+  border: 1px solid var(--hair-70);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.adbuild-cardhead {
+  padding: 15px 20px;
+  border-bottom: 1px solid var(--hair-70);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.adbuild-cardbody { padding: 22px 20px; flex: 1; }
+.adbuild-cardtitle {
+  font-family: var(--f-d, 'Bricolage Grotesque', sans-serif);
+  font-weight: 700;
+  font-size: 0.9375rem;
+  letter-spacing: -.01em;
+}
+.adbuild-eyebrow {
+  font-family: var(--f-m, monospace);
+  font-size: 0.6875rem;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.adbuild-accent { color: var(--accent-text); }

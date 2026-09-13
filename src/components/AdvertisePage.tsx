@@ -142,16 +142,16 @@ function CoverageBuilder() {
   return (
     <div className="adv-builder" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'stretch' }}>
       {/* Controls */}
-      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
-          <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem', letterSpacing: '-.01em' }}>{t('advertisePage.campaign', 'Campaign')}</span>
+      <div className="adbuild-card">
+        <div className="adbuild-cardhead">
+          <span className="adbuild-cardtitle">{t('advertisePage.campaign', 'Campaign')}</span>
           <span style={{ marginLeft: 'auto', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.1em', textTransform: 'uppercase' }}>{t('advertisePage.noContract', 'No contract · cancel anytime')}</span>
         </div>
-        <div style={{ padding: '22px 20px', flex: 1 }}>
+        <div className="adbuild-cardbody">
           {/* Coverage area */}
           <div style={{ marginBottom: 26 }}>
-            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--accent-text)' }}>A.</span> {t('advertisePage.coverageArea', 'Coverage area')}
+            <div className="adbuild-eyebrow">
+              <span className="adbuild-accent">A.</span> {t('advertisePage.coverageArea', 'Coverage area')}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
               {AD_SCOPES.map(s => (
@@ -165,7 +165,7 @@ function CoverageBuilder() {
                     {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? 'var(--accent)' : 'var(--ink-4)'}` }} />)}
                   </span>
                   <span>
-                    <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem', letterSpacing: '-.01em' }}>{AD_SCOPE_LABELS[s]}</div>
+                    <div className="adbuild-cardtitle">{AD_SCOPE_LABELS[s]}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
@@ -182,8 +182,8 @@ function CoverageBuilder() {
               sponsors — so it was a number the buyer chose and the server
               ignored. What is bought is a stretch of time in the rotation. */}
           <div style={{ marginBottom: 26 }}>
-            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--accent-text)' }}>B.</span> {t('advertisePage.term', 'Term')}
+            <div className="adbuild-eyebrow">
+              <span className="adbuild-accent">B.</span> {t('advertisePage.term', 'Term')}
             </div>
             <div style={{ display: 'flex', gap: 6 }}>
               {SPONSORSHIP_TERMS_MONTHS.map(m => (
@@ -203,8 +203,8 @@ function CoverageBuilder() {
 
           {/* Campaign details (required for the AI screen) */}
           <div>
-            <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--ink-2)', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ color: 'var(--accent-text)' }}>D.</span> {t('advertisePage.whatsTheAd', "What's the ad")}
+            <div className="adbuild-eyebrow">
+              <span className="adbuild-accent">D.</span> {t('advertisePage.whatsTheAd', "What's the ad")}
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <input
@@ -243,11 +243,11 @@ function CoverageBuilder() {
       </div>
 
       {/* Reach + Receipt */}
-      <div style={{ background: 'var(--bg-2)', border: '1px solid var(--hair-70)', borderRadius: 16, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ padding: '15px 20px', borderBottom: '1px solid var(--hair-70)', display: 'flex', alignItems: 'center', gap: 10 }}>
+      <div className="adbuild-card">
+        <div className="adbuild-cardhead">
           <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '0.9375rem' }}>{AD_SCOPE_LABELS[scope]} {t('advertisePage.reach', 'reach')}</span>
         </div>
-        <div style={{ padding: '22px 20px', flex: 1 }}>
+        <div className="adbuild-cardbody">
           {/* Dot grid */}
           <div className="adv-dot-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(16, 1fr)', gap: 7, padding: '4px 2px 0' }}>
             {dots.map((lit, i) => (
