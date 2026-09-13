@@ -225,6 +225,20 @@ jobs:
         # an exemption with a reason, or change the copy.
         run: npm run audit:retired-claims
 
+      - name: Memory paths resolve
+        # CLAUDE.md is what a cold session reads to find a surface, and a row
+        # naming a file that is not there sends it to rebuild one that moved.
+        # The file records that costing it the auth screens for months, and
+        # says it was verified once by hand — which then went stale: the page
+        # map named 37 missing files by 2026-09-13, four of them describing a
+        # role deleted in August.
+        #
+        # A row may name a dead path when the row SAYS it is gone; those are
+        # counted and the count is printed. `--list-exempt` shows what the
+        # exemption is hiding, which is how the two payouts rows that had
+        # quietly self-exempted were found.
+        run: npm run audit:doc-paths
+
       - name: Unstyled-class gate
         # The other side of the same coin as the gate below. That one asks
         # whether anything RENDERS a component; this asks whether anything
