@@ -1011,6 +1011,41 @@ html:has(.mmm-frame) {
 .mmm-advertiser .badge { padding: 6px 9px; border: 1px solid var(--line-2); border-radius: var(--radius-pill); background: transparent; color: var(--ink-2); font: 0.9375rem var(--font-mono); letter-spacing: 0.08em; }
 .mmm-advertiser .badge.success { border-color: rgba(var(--role-venue-rgb), 0.45); color: var(--role-venue); }
 .mmm-advertiser .badge.warning { border-color: rgba(var(--accent-rgb), 0.4); color: var(--accent-text); }
+
+/* The dashboard's own layout. It was 20 inline `style={{ … }}` objects, which
+   is the same defect row 400 found on the dock's keys and row 406 on the show
+   page's report control: an inline style outranks every rule in every
+   stylesheet, so a theme, a floor or a media query written for these boxes
+   could never reach them — and no instrument here can see one (`audit:css`
+   reads stylesheets; `audit:spacing` counts the literals and says so).
+   The ONE value that stays inline is the bar's height, because it is a live
+   value computed per render, which is the same rule the console dock's
+   rotation followed. */
+.mmm-advertiser .ad-dash-chart { padding: 16px 20px; margin-bottom: 24px; }
+.mmm-advertiser .ad-dash-chart-title { margin-bottom: 12px; font-weight: 600; }
+.mmm-advertiser .ad-dash-bars { display: flex; align-items: flex-end; gap: 4px; height: 80px; }
+.mmm-advertiser .ad-dash-bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.mmm-advertiser .ad-dash-bar { width: 100%; min-height: 2px; border-radius: 2px; background: var(--accent); }
+.mmm-advertiser .ad-dash-axis { display: flex; justify-content: space-between; margin-top: 6px; }
+.mmm-advertiser .ad-dash-list { display: flex; flex-direction: column; gap: 12px; }
+.mmm-advertiser .ad-dash-card { padding: 16px; }
+.mmm-advertiser .ad-dash-card-head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.mmm-advertiser .ad-dash-card-title { font-size: 1rem; font-weight: 600; }
+.mmm-advertiser .ad-dash-card-link { margin-top: 4px; }
+.mmm-advertiser .ad-dash-figures { display: flex; flex-wrap: wrap; gap: 24px; }
+.mmm-advertiser .ad-dash-figure-val { font-weight: 700; }
+.mmm-advertiser .ad-dash-dates { margin-top: 8px; }
+.mmm-advertiser .ad-dash-actions { margin-top: 12px; }
+/* The headline figure only. `--accent-text` is the accent used AS COPY; the
+   fill token would be 2.70:1 here. */
+.mmm-advertiser .ad-dash-stat-val.accent { color: var(--accent-text); }
+/* `CampaignCancelButton`'s own row. Unscoped rather than nested under
+   `.mmm-advertiser`, because a component's layout should not depend on which
+   page mounted it — the dashboard is its only call site today and that is a
+   fact about the product, not a rule the stylesheet should encode. */
+.ad-campaign-actions { display: flex; gap: 8px; }
+.ad-campaign-actions.wrap { flex-wrap: wrap; align-items: center; }
+.ad-campaign-notice { flex-basis: 100%; margin: 0; }
 @media (max-width: 620px) {
   .mmm-advertiser-head { align-items: flex-start; flex-direction: column; }
 }

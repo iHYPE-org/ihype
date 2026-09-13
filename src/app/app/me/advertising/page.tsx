@@ -162,7 +162,7 @@ export default async function AdvertiserDashboard() {
         <div className="ad-dash-stats">
           <div className="ad-dash-stat-card">
             <div className="ad-dash-stat-label">{hasMetered ? t('advertiseDashboardPage.spend', 'Spend') : t('advertiseDashboardPage.paidTotal', 'Paid')}</div>
-            <div className="ad-dash-stat-val" style={{ color: 'var(--accent-text)' }}>${((hasMetered ? totalSpentCents : totalPaidCents) / 100).toFixed(2)}</div>
+            <div className="ad-dash-stat-val accent">${((hasMetered ? totalSpentCents : totalPaidCents) / 100).toFixed(2)}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.acrossCampaigns', 'Across')} {campaigns.length} {campaigns.length === 1 ? t('advertiseDashboardPage.campaignSingular', 'campaign') : t('advertiseDashboardPage.campaignPlural', 'campaigns')}</div>
           </div>
           <div className="ad-dash-stat-card">
@@ -228,31 +228,34 @@ export default async function AdvertiserDashboard() {
       )}
 
       {campaigns.length > 0 && (
-        <div className="panel" style={{ padding: '16px 20px', marginBottom: 24 }}>
-          <div style={{ fontWeight: 600, marginBottom: 12 }}>{t('advertiseDashboardPage.impressionsLastDays', 'Impressions, last')} {DAYS} {t('advertiseDashboardPage.days', 'days')}</div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 80 }}>
+        <div className="panel ad-dash-chart">
+          <div className="ad-dash-chart-title">{t('advertiseDashboardPage.impressionsLastDays', 'Impressions, last')} {DAYS} {t('advertiseDashboardPage.days', 'days')}</div>
+          <div className="ad-dash-bars">
             {dailyRows.map(([day, count]) => (
-              <div key={day} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }} title={`${day}: ${count} impressions`}>
-                <div style={{ width: '100%', minHeight: 2, height: `${Math.max(2, (count / maxDaily) * 64)}px`, background: 'var(--accent)', borderRadius: 2 }} />
+              <div key={day} className="ad-dash-bar-col" title={`${day}: ${count} impressions`}>
+                {/* The one live value on this page: a bar's height is computed per
+                    render, so it stays inline. Everything static around it is
+                    `.ad-dash-bar` in the stylesheet. */}
+                <div className="ad-dash-bar" style={{ height: `${Math.max(2, (count / maxDaily) * 64)}px` }} />
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+          <div className="ad-dash-axis">
             <span className="meta">{dailyRows[0]?.[0]}</span>
             <span className="meta">{dailyRows[dailyRows.length - 1]?.[0]}</span>
           </div>
         </div>
       )}
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="ad-dash-list">
         {campaigns.map(campaign => (
-          <div key={campaign.id} className="panel" style={{ padding: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+          <div key={campaign.id} className="panel ad-dash-card">
+            <div className="ad-dash-card-head">
               <div>
-                <div style={{ fontWeight: 600, fontSize: '1rem' }}>{campaign.title}</div>
+                <div className="ad-dash-card-title">{campaign.title}</div>
                 <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
                 {campaign.clickUrl && (
-                  <div className="meta" style={{ marginTop: 4 }}>
+                  <div className="meta ad-dash-card-link">
                     <a href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
                   </div>
                 )}
@@ -261,10 +264,10 @@ export default async function AdvertiserDashboard() {
                 {campaign.status === 'AWAITING_PAYMENT' ? t('advertiseDashboardPage.awaitingPayment', 'AWAITING PAYMENT') : campaign.status}
               </span>
             </div>
-            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
-              <div><div style={{ fontWeight: 700 }}>{campaign.impressions.toLocaleString()}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
+            <div className="ad-dash-figures">
+              <div><div className="ad-dash-figure-val">{campaign.impressions.toLocaleString()}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
               <div>
-                <div style={{ fontWeight: 700 }}>{dollars(campaign.budgetCents)}</div>
+                <div className="ad-dash-figure-val">{dollars(campaign.budgetCents)}</div>
                 <div className="meta">{campaign.authorizedAt ? t('advertiseDashboardPage.paid', 'Paid') : t('advertiseDashboardPage.quoted', 'Quoted')}</div>
               </div>
               {/* "Spent" and "Budget remaining" are METERED words. A
@@ -275,18 +278,18 @@ export default async function AdvertiserDashboard() {
                   sponsor is owed is the unused part of the TERM. */}
               {campaign.pricingModel === 'METERED' && (
                 <div>
-                  <div style={{ fontWeight: 700 }}>{dollars(Math.min(campaign.spentCents, campaign.budgetCents))}</div>
+                  <div className="ad-dash-figure-val">{dollars(Math.min(campaign.spentCents, campaign.budgetCents))}</div>
                   <div className="meta">{t('advertiseDashboardPage.spent', 'Spent')}</div>
                 </div>
               )}
               {campaign.settledAt ? (
                 <div>
-                  <div style={{ fontWeight: 700 }}>{campaign.refundedCents === null ? '—' : dollars(campaign.refundedCents)}</div>
+                  <div className="ad-dash-figure-val">{campaign.refundedCents === null ? '—' : dollars(campaign.refundedCents)}</div>
                   <div className="meta">{t('advertiseDashboardPage.refunded', 'Refunded')}</div>
                 </div>
               ) : (
                 <div>
-                  <div style={{ fontWeight: 700 }}>{dollars(refundableNow(campaign))}</div>
+                  <div className="ad-dash-figure-val">{dollars(refundableNow(campaign))}</div>
                   <div className="meta">{campaign.pricingModel === 'METERED' ? t('advertiseDashboardPage.budgetRemainingLabel', 'Budget remaining') : t('advertiseDashboardPage.refundIfCancelled', 'Refund if cancelled')}</div>
                 </div>
               )}
@@ -318,14 +321,14 @@ export default async function AdvertiserDashboard() {
               )}
             </div>
             {(campaign.startsAt || campaign.endsAt) && (
-              <div className="meta" style={{ marginTop: 8 }}>
+              <div className="meta ad-dash-dates">
                 {campaign.startsAt && `${t('advertiseDashboardPage.starts', 'Starts')}: ${new Date(campaign.startsAt).toLocaleDateString()}`}
                 {campaign.startsAt && campaign.endsAt && ' · '}
                 {campaign.endsAt && `${t('advertiseDashboardPage.ends', 'Ends')}: ${new Date(campaign.endsAt).toLocaleDateString()}`}
               </div>
             )}
             {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT') && (
-              <div style={{ marginTop: 12 }}>
+              <div className="ad-dash-actions">
                 <CampaignCancelButton
                   campaignId={campaign.id}
                   status={campaign.status}

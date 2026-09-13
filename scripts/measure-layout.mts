@@ -136,6 +136,13 @@ const ROUTES = [
      (`audit:spacing` report 3), so it is the surface this list exists to
      protect while that debt is converted. */
   '/app/me/advertising/new',
+  /* The advertiser's OWN dashboard, populated. Nothing in this repository
+     seeded an `AdvertiserAccount` until 2026-09-13, so the surface a paying
+     customer reads their charges on had never been rendered by any
+     instrument — this list reached the route and measured its "no account
+     yet" state, which is four sentences and no dashboard at all. The fixture
+     below gives this session one account and two campaigns, pinned. */
+  '/app/me/advertising',
   /* The profile editor. This entry read `/pages` until 2026-09-13, a path
      deleted on 2026-09-01 and surviving only as a `redirects()` alias — so the
      list that exists to catch moved layout was itself naming a moved route,
@@ -763,11 +770,67 @@ if (!canSeedSession()) {
 // An ARTIST profile so the role-gated surfaces render their fullest state:
 // a profile-less account hides the page card and the HYPE link card, and an
 // element that never rendered cannot be proved unmoved.
+/* EVERY DATE ON THE CAMPAIGNS IS AN ABSOLUTE INSTANT, for the same reason the
+   show's start time below is pinned: the dashboard renders four of them
+   through `toLocaleDateString` and `day()`, so a campaign seeded relative to
+   `Date.now()` measures one string in the baseline and another in the
+   comparison. The two campaigns are chosen to draw the branches, not to be
+   plausible: a live SPONSORSHIP (the model actually on sale — charged, with a
+   term and a "refund if cancelled" figure, and the cancel key under it) and a
+   SETTLED METERED one (the legacy model — "Spent", "Refunded", and the
+   settlement line with its Stripe reference). Between them every conditional
+   in the campaign row renders.
+
+   Impressions are deliberately left at their column value and NO
+   `AdImpression` rows are seeded: the 14-day chart buckets against
+   `Date.now()`, and with no rows every bar sits at its 2px floor — the one
+   height that does not depend on when the capture ran. The bars' geometry is
+   still measured; only their data is made constant. What remains
+   time-dependent is the two axis labels, which name the first and last day of
+   the window and therefore turn over at UTC midnight; that is the page's own
+   behaviour rather than the fixture's, and it moves a capture only across a
+   midnight boundary rather than every 90 minutes. */
+const PINNED = (iso: string) => new Date(iso);
 const { cookie, user, profiles } = await seedSessionCookie(EMAIL, {
   profiles: [
     { type: 'ARTIST', name: 'Layout Baseline' },
     { type: 'VENUE', name: 'Layout Baseline Room' },
   ],
+  advertiser: {
+    companyName: 'Layout Baseline Sponsors',
+    pitch: 'A pinned advertiser account, so the dashboard renders its populated state.',
+    website: 'https://ihype.org',
+    campaigns: [
+      {
+        title: 'Layout Baseline sponsorship',
+        status: 'APPROVED',
+        pricingModel: 'SPONSORSHIP',
+        budgetCents: 7_500,
+        impressions: 1_284,
+        clickUrl: 'https://ihype.org/advertise',
+        createdAt: PINNED('2026-08-01T12:00:00.000Z'),
+        startsAt: PINNED('2026-08-02T12:00:00.000Z'),
+        endsAt: PINNED('2026-11-02T12:00:00.000Z'),
+        authorizedAt: PINNED('2026-08-01T12:30:00.000Z'),
+      },
+      {
+        title: 'Layout Baseline metered run',
+        status: 'COMPLETED',
+        pricingModel: 'METERED',
+        budgetCents: 4_500,
+        spentCents: 1_275,
+        impressions: 142,
+        createdAt: PINNED('2026-07-01T12:00:00.000Z'),
+        startsAt: PINNED('2026-07-02T12:00:00.000Z'),
+        endsAt: PINNED('2026-07-30T12:00:00.000Z'),
+        authorizedAt: PINNED('2026-07-01T12:30:00.000Z'),
+        settledAt: PINNED('2026-07-31T12:00:00.000Z'),
+        settledChargedCents: 1_275,
+        refundedCents: 3_225,
+        stripeRefundId: 're_layoutbaseline000000',
+      },
+    ],
+  },
 });
 /* The two public profile panes, at the seeded slugs. They were the two
    surfaces nothing measured — `audit:mobile` covers signed-out pages only and
