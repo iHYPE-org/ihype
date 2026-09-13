@@ -1059,6 +1059,32 @@ test.describe('ME with a real profile', () => {
     await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
   });
 
+  /* THE SWITCHER IS PROFILES-ONLY, and nothing measured that until an owner
+     screenshot showed it sitting over SETTINGS (2026-09-13). It rendered above
+     every ME section, so Settings and Info opened under two rows of pills — the
+     section strip, then Fan · Artist · Venue — where the second row changed
+     nothing either surface reads. Both directions are asserted, because a gate
+     that hides a control everywhere is as wrong as one that hides it nowhere. */
+  test('the role switcher is on Profiles and on no other ME section', async ({ page }) => {
+    await page.goto('/app/me?role=artist&section=profiles');
+    await expect(page.locator('.mmm-me-section:visible')).toHaveCount(1);
+    await expect(page.getByRole('button', { name: 'Artist', exact: true })).toBeVisible();
+
+    for (const panel of ['settings', 'info']) {
+      await page.goto(`/app/me?role=artist&panel=${panel}`);
+      /* Anchored on the HYPE-link card, which this file already asserts sits
+         above EVERY ME panel exactly once. Not on a section, because a panel is
+         not a `.mmm-me-section` and waiting for one times out rather than
+         failing; and not on `.mmm-strip`, which was the first draft and failed
+         strict mode against 2 elements — under `loading.tsx` the strip is in
+         the document twice for a frame while React swaps the streamed segment
+         in, the same trap `e2e/admin-console.spec.ts` records. */
+      await expect(page.locator('.mmm-hype-link')).toHaveCount(1);
+      await expect(page.getByRole('button', { name: 'Artist', exact: true })).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Fan', exact: true })).toHaveCount(0);
+    }
+  });
+
   /* A profile's own tab set renders in the pane's strip, and there is exactly
      ONE section control on screen.
 

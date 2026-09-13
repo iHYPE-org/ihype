@@ -320,7 +320,21 @@ export function MmmMe({ data }: { data: MmmMeData }) {
 
   return (
     <>
-      {data.availableRoles.length > 1 && (
+      {/* THE ROLE SWITCHER BELONGS TO PROFILES AND NOTHING ELSE (2026-09-13,
+          owner, with a screenshot of it sitting over Settings: "Remove
+          Fan/Artist/Venue for all but Profiles").
+
+          It used to render above every section, so SETTINGS and INFO opened
+          under two rows of pills — the section strip, then Fan · Artist ·
+          Venue — and the second row changed nothing a member could see on
+          either screen. `data.role` has exactly two readers: the role stats
+          and cards inside the Profiles section, and one sentence in the
+          HYPE-link card above it. So on Settings the control was a live
+          toggle for a value that surface does not use, sitting one row under
+          a strip that looks identical to it.
+
+          A control appears where it changes something. */}
+      {activeId === 'profiles' && data.availableRoles.length > 1 && (
         <div style={{ display: 'flex', gap: 6, paddingBottom: 16, overflowX: 'auto' }}>
           {data.availableRoles.map((role) => (
             <button
