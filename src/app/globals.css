@@ -5852,3 +5852,32 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .notifications-tab { min-width: 44px; min-height: 44px; }   /* "All" measured 22×40 */
 .rk-footer-inner a { min-width: 44px; }                      /* "Info" measured 28 wide once it was 44 tall */
+
+
+/* THE PUBLIC SHOW PAGE'S REPEATED ROLES (`/shows/[slug]`, the URL this product
+   exists to share). Four shapes written inline twelve times, the panel five
+   times over. Converted verbatim like the editor blocks in mmm-workflows.css:
+   every declaration is the literal that was inline, so `measure:layout` should
+   report nothing moved.
+
+   The prefix is `showpage-` and not `show-`: `.mmm-show-eyebrow` and
+   `.mmm-show-title` already exist as e2e hooks on the PROFILE cards, and a
+   near-name on a different surface is how two unrelated things end up sharing
+   a rule. */
+.showpage-panel { padding: 1.25rem; margin-top: 24px; }
+.showpage-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--ink-a65);
+  margin-bottom: 8px;
+}
+.showpage-splitrow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9375rem;
+  margin-bottom: 6px;
+  color: var(--ink-a65);
+}
+.showpage-inline { display: inline-flex; align-items: center; gap: 6px; }
