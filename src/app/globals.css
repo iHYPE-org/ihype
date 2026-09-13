@@ -5865,6 +5865,45 @@ body:has(.fan-entry) #main-content { width: 100%; }
    near-name on a different surface is how two unrelated things end up sharing
    a rule. */
 .showpage-panel { padding: 1.25rem; margin-top: 24px; }
+
+/* THE SHOW PAGE'S FOUR CONTROLS UNDER THE 44px FLOOR (2026-09-13, found by
+   `measure:taps` once `/shows/[slug]` entered its route list — the page had
+   never been in the signed-in census, so nothing had ever measured it).
+
+   `.report-pill` was ~16 INLINE properties inside `ReportButton`, and an
+   inline style outranks every rule here, so the floor could not have reached
+   it whatever this file said: the same cascade bug row 400 found on the dock's
+   speed and sleep keys. It measured 33x23.
+
+   The three organiser links were bare `.meta` at 36px high, and `.meta` is a
+   TEXT class used all over the app — flooring it would grow every caption in
+   the product. They get their own class instead. Three of the four were under
+   the floor at 393 as well as at 860, i.e. on a phone: "Scan tickets at the
+   door" and "Cancel event" are the controls a venue reaches for on the night.
+
+   MOBILE.md: grow vertical padding, never font size. */
+.report-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--hair-100);
+  background: var(--hair-40);
+  color: var(--ink-a65);
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.showpage-ownerlink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
 .showpage-eyebrow {
   font-family: var(--font-mono);
   font-size: 0.9375rem;
