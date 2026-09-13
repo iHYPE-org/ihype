@@ -92,28 +92,17 @@ export function ReportButton({ targetType, targetId, entityLabel, className }: R
     <>
       <button
         aria-label={t('reportButton.reportAriaLabel', 'Report this {noun}').replace('{noun}', noun)}
-        className={className}
+        /* `.report-pill` is the default look, in the stylesheet rather than
+           inline. It was ~16 inline properties, and an inline style outranks
+           every rule in globals.css — so this control measured 33x23 and the
+           44px floor could never have reached it whatever the stylesheet
+           said, which is the same cascade bug row 400 found on the dock's
+           speed and sleep keys. Measured on /shows/[slug], the one page that
+           renders it. */
+        className={className ?? 'report-pill'}
         onClick={() => setOpen(true)}
         title={t('reportButton.reportTitle', 'Report this {noun}').replace('{noun}', noun)}
         type="button"
-        style={
-          className
-            ? undefined
-            : {
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 5,
-                padding: '4px 9px',
-                borderRadius: 20,
-                border: '1px solid var(--hair-100)',
-                background: 'var(--hair-40)',
-                color: 'var(--ink-a65)',
-                fontFamily: 'var(--font-mono)',
-                fontSize: '0.9375rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }
-        }
       >
         <svg aria-hidden="true" fill="none" height="13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" viewBox="0 0 24 24" width="13">
           <path d="M4 3v18" />

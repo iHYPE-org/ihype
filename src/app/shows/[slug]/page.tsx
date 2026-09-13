@@ -751,10 +751,10 @@ export default async function ShowDetailPage({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h2 style={{ margin: 0 }}>{t('showsSlugPage.recentTicketOrderTotals', 'Recent ticket order totals')}</h2>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <Link href={`/payout/${show.slug}`} className="meta">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
-                    <Link href={`/shows/${show.slug}/scan`} className="meta">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
+                    <Link href={`/payout/${show.slug}`} className="meta showpage-ownerlink">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
+                    <Link href={`/shows/${show.slug}/scan`} className="meta showpage-ownerlink">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/shows/${show.slug}/cancel`} className="meta" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      <Link href={`/shows/${show.slug}/cancel`} className="meta showpage-ownerlink" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
                     )}
                   </div>
                 </div>
