@@ -85,7 +85,7 @@ export function CampaignCancelButton({
 
   if (status === 'AWAITING_PAYMENT') {
     return (
-      <div style={{ display: 'flex', gap: 8 }}>
+      <div className="ad-campaign-actions">
         <button className="button small" disabled={pending !== null} onClick={() => act('retry-checkout')} type="button">
           {pending === 'retry-checkout' ? t('campaignCancelButton.redirecting', 'Redirecting…') : t('campaignCancelButton.payNow', 'Pay now →')}
         </button>
@@ -97,8 +97,8 @@ export function CampaignCancelButton({
   }
 
   return (
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      {notice && <p className="meta" role="status" style={{ flexBasis: '100%', margin: 0 }}>{notice}</p>}
+    <div className="ad-campaign-actions wrap">
+      {notice && <p className="meta ad-campaign-notice" role="status">{notice}</p>}
       {status === 'APPROVED' && (
         <button className="button small secondary" disabled={pending !== null} onClick={() => act('pause')} type="button">
           {pending === 'pause' ? t('campaignCancelButton.pausing', 'Pausing…') : t('campaignCancelButton.pause', 'Pause')}

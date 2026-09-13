@@ -51,6 +51,46 @@ export type ShellFixtureOptions = {
    * say so, and a spec that wants the refusal path gets it by saying nothing.
    * Both are real states and both are worth testing. */
   hypeBalance?: number;
+  /** An advertiser account, and campaigns on it.
+   *
+   * NOTHING in this repository seeded one until 2026-09-13, so the advertiser
+   * dashboard's POPULATED state — five stat cards, the 14-day chart and the
+   * campaign rows, the surface where a paying customer reads what they were
+   * charged — had never been rendered by any instrument. `audit:mounts` cannot
+   * see it (the page is mounted), and `measure:layout` reached the route and
+   * measured the empty state.
+   *
+   * Every date here is PINNED by the CALLER for the reason row 403 records:
+   * the page renders them through `toLocaleDateString`, so a campaign seeded
+   * at `now - 7 days` measures two different strings in two runs an hour
+   * apart. Impressions are deliberately NOT seeded — the chart buckets the
+   * last 14 days against `Date.now()`, and with no rows every bar is the
+   * 2px floor, which is the only bar height that does not depend on when the
+   * capture ran. */
+  advertiser?: {
+    companyName: string;
+    pitch?: string;
+    website?: string;
+    campaigns?: SeedAdCampaign[];
+  };
+};
+
+export type SeedAdCampaign = {
+  title: string;
+  status: string;
+  pricingModel: 'SPONSORSHIP' | 'METERED';
+  budgetCents: number;
+  spentCents?: number;
+  impressions?: number;
+  clickUrl?: string;
+  createdAt: Date;
+  startsAt?: Date;
+  endsAt?: Date;
+  authorizedAt?: Date;
+  settledAt?: Date;
+  settledChargedCents?: number;
+  refundedCents?: number;
+  stripeRefundId?: string;
 };
 
 function databaseUrl() {
@@ -116,6 +156,60 @@ export async function seedSessionCookie(
         select: { id: true, slug: true, name: true, type: true },
       });
       seededProfiles.push({ id: row.id, slug: row.slug, name: row.name, type: profile.type });
+    }
+
+    if (options.advertiser) {
+      /* One shared slot rather than one per run: `AdSlot` is platform
+         inventory, not per-advertiser, and a row per seeded user would grow
+         the scratch database without measuring anything new. Upserted by a
+         fixed id so a rerun reuses it. */
+      const slot = await prisma.adSlot.upsert({
+        where: { id: 'e2e-ad-slot' },
+        update: {},
+        create: { id: 'e2e-ad-slot', name: 'E2E Station Break', active: true },
+        select: { id: true },
+      });
+      await prisma.advertiserAccount.upsert({
+        where: { userId: user.id },
+        update: {
+          companyName: options.advertiser.companyName,
+          pitch: options.advertiser.pitch ?? null,
+          website: options.advertiser.website ?? null,
+        },
+        create: {
+          userId: user.id,
+          companyName: options.advertiser.companyName,
+          contactName: user.name,
+          pitch: options.advertiser.pitch ?? null,
+          website: options.advertiser.website ?? null,
+        },
+      });
+      for (const [index, campaign] of (options.advertiser.campaigns ?? []).entries()) {
+        // Deterministic id, same reason as the profile slug above: a rerun
+        // updates its own row instead of adding a second campaign, which
+        // would make every capture of this page a different length.
+        const id = `e2e-ad-${user.id.slice(0, 8)}-${index}`;
+        const data = {
+          slotId: slot.id,
+          advertiserId: user.id,
+          title: campaign.title,
+          status: campaign.status,
+          pricingModel: campaign.pricingModel,
+          budgetCents: campaign.budgetCents,
+          spentCents: campaign.spentCents ?? 0,
+          impressions: campaign.impressions ?? 0,
+          clickUrl: campaign.clickUrl ?? null,
+          createdAt: campaign.createdAt,
+          startsAt: campaign.startsAt ?? null,
+          endsAt: campaign.endsAt ?? null,
+          authorizedAt: campaign.authorizedAt ?? null,
+          settledAt: campaign.settledAt ?? null,
+          settledChargedCents: campaign.settledChargedCents ?? null,
+          refundedCents: campaign.refundedCents ?? null,
+          stripeRefundId: campaign.stripeRefundId ?? null,
+        };
+        await prisma.ad.upsert({ where: { id }, update: data, create: { id, ...data } });
+      }
     }
 
     const now = Math.floor(Date.now() / 1000);
