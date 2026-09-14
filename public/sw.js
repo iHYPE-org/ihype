@@ -263,7 +263,11 @@ self.addEventListener('fetch', (event) => {
   if (request.destination === 'document' && isOfflinePrivatePage(url.pathname)) {
     // The one place a private page is stored on purpose — see the note on
     // NETWORK_ONLY_PATHS. Sign-out clears this cache.
-    event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
+    const aliasKey = canonicalTicketPath(url.pathname);
+    event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, {
+      storePrivate: true,
+      aliasKey: aliasKey === url.pathname ? null : aliasKey,
+    }));
     return;
   }
 
@@ -308,6 +312,32 @@ function isNetworkOnly(pathname) {
  */
 function isTicketDetail(pathname) {
   return /^\/app\/me\/tickets\/[^/]+$/.test(pathname) || /^\/tickets\/[^/]+$/.test(pathname);
+}
+
+/**
+ * The ONE key a ticket page is stored under, for either of the two URLs that
+ * reach it.
+ *
+ * `/tickets/<id>` is not a legacy address. `buildTicketVerificationUrl()`
+ * returns it, so it is the link in every confirmation email AND the string
+ * every QR encodes (see src/lib/door-manifest.ts) — while the route itself is
+ * a 307 to `/app/me/tickets/<id>` in next.config.mjs.
+ *
+ * ONLINE that costs nothing: the browser follows the redirect and the second
+ * navigation is served, and stored, under the canonical path. OFFLINE IT
+ * CANNOT — following a redirect needs the network — so a member opening their
+ * own emailed link at a door with no signal asked the cache for a key nothing
+ * had ever been stored under, and got the offline page, while a clean copy of
+ * their ticket sat in the same cache one key away. That is precisely the
+ * journey this cache exists for: bought on the bus, opened at the door.
+ *
+ * The wallet warms the canonical path only (MmmTickets.tsx), and that is
+ * right — one ticket, one copy. So the translation belongs HERE, on the
+ * lookup, rather than in a second warm that would store the same page twice.
+ */
+function canonicalTicketPath(pathname) {
+  const legacy = /^\/tickets\/([^/]+)$/.exec(pathname);
+  return legacy ? `/app/me/tickets/${legacy[1]}` : pathname;
 }
 
 /**
@@ -368,7 +398,16 @@ async function networkWithCacheFallback(request, cacheName, options = {}) {
     return response;
   } catch {
     const cached = await caches.match(request);
-    return cached || (await offlineFallback());
+    if (cached) return cached;
+    /* Only the ticket branch passes `aliasKey`, and only when the request came
+       in on the emailed/QR URL. It is consulted AFTER the request's own key so
+       nothing about any other page changes, and it can only ever find a page
+       this worker stored itself. */
+    if (options.aliasKey) {
+      const alias = await caches.match(options.aliasKey);
+      if (alias) return alias;
+    }
+    return await offlineFallback();
   }
 }
 
