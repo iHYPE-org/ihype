@@ -21,6 +21,7 @@ import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { getShowVisibilitySignals } from '@/lib/integrity';
 import { toSafeJsonLdString } from '@/lib/safe-json-ld';
 import { isAdminSession } from '@/lib/permissions';
+import { isShowOrganizer } from '@/lib/show-organizer';
 import { detectRequestLocation } from '@/lib/request-location';
 import { parseShowProductionPlan } from '@/lib/show-composer';
 import { canViewerAccessShowMedia, protectShowProductionPlan } from '@/lib/show-media-access';
@@ -256,7 +257,11 @@ export default async function ShowDetailPage({
   const viewerGoing = rsvp.viewerGoing;
   const viewerReminded = Boolean(viewerReminder);
 
-  const isShowOwner = Boolean(session?.user?.id) && session?.user?.id === show.creatorId;
+  /* The organiser set, not the creator alone: the cancel route, the door and
+     the edit route admit the venue's owner and the headliner's owner too, and
+     this block is where those links live — a venue could cancel its own show
+     but never saw the link (DESIGN_SYNC row 446). */
+  const isShowOwner = isShowOrganizer(session, show);
 
   const recentTicketOrders = isShowOwner || isAdminSession(session)
     ? await db.ticketOrder.findMany({
@@ -756,7 +761,10 @@ export default async function ShowDetailPage({
                     <Link href={`/app/me/payouts/${show.slug}`} className="meta showpage-ownerlink">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
                     <Link href={`/app/me/shows/${show.slug}/scan`} className="meta showpage-ownerlink">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/app/me/shows/${show.slug}/cancel`} className="meta showpage-ownerlink" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      <>
+                        <Link href={`/app/me/shows/${show.slug}/edit`} className="meta showpage-ownerlink">{t('showsSlugPage.editEvent', 'Edit event →')}</Link>
+                        <Link href={`/app/me/shows/${show.slug}/cancel`} className="meta showpage-ownerlink" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      </>
                     )}
                   </div>
                 </div>

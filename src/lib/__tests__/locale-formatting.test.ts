@@ -41,6 +41,7 @@ const ALLOWED: { prefix: string; reason: string }[] = [
   { prefix: 'src/lib/integrity.ts', reason: 'the feed-integrity ledger is an English document' },
   { prefix: 'src/app/api/cron/', reason: 'cron-sent email — User carries no locale' },
   { prefix: 'src/app/api/tickets/[serializedId]/reassign/route.ts', reason: 'email to the new holder — no locale on file' },
+  { prefix: 'src/app/api/shows/[showId]/route.ts', reason: 'the reschedule notice to ticket holders — User carries no locale' },
   { prefix: 'src/app/api/profile/[slug]/fan-mail/route.ts', reason: 'an English error sentence carries an English date' },
   { prefix: 'src/app/shows/[slug]/opengraph-image.tsx', reason: 'a shared image has no reader locale' },
   { prefix: 'src/app/shows/[slug]/poster/route.tsx', reason: 'a shared image has no reader locale' },

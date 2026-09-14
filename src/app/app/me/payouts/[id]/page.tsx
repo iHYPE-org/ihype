@@ -9,6 +9,7 @@ import type { Metadata } from 'next';
 import { PayoutFanView } from '@/components/PayoutFanView';
 import { PayoutActions } from '@/components/PayoutActions';
 import { getServerI18n } from '@/lib/i18n/server';
+import { isShowOrganizer } from '@/lib/show-organizer';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,22 +40,22 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
 
   const show = await db.show.findFirst({
-    where: {
-      OR: [{ id }, { slug: id }],
-      creatorId: session.user.id,
-    },
+    where: { OR: [{ id }, { slug: id }] },
     select: {
-      id: true, slug: true, title: true, status: true,
+      id: true, slug: true, title: true, status: true, creatorId: true,
       startsAt: true, endsAt: true, isTicketed: true,
       ticketPriceCents: true, ticketCapacity: true, ticketsSoldCount: true,
       artistPayoutPercent: true, venuePayoutPercent: true, promoterPayoutPercent: true,
-      headlinerProfile: { select: { name: true, slug: true, type: true } },
-      venueProfile: { select: { name: true, slug: true, city: true } },
+      headlinerProfile: { select: { name: true, slug: true, type: true, ownerId: true } },
+      venueProfile: { select: { name: true, slug: true, city: true, ownerId: true } },
       promoterProfile: { select: { name: true, slug: true } },
     },
   });
 
-  if (!show) notFound();
+  /* The organiser set, not the creator alone: the public show page links here
+     for the venue's and the headliner's owner too, and both are parties to the
+     split this page explains (DESIGN_SYNC row 446). A stranger still reads 404. */
+  if (!show || !isShowOrganizer(session, show)) notFound();
 
   const priceCents = show.ticketPriceCents ?? 0;
   const sold = show.ticketsSoldCount ?? 0;

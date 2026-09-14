@@ -6,6 +6,8 @@ import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
 import { z } from 'zod';
 import { checkContent } from '@/lib/auto-mod';
+import { isShowOrganizer, ORGANIZER_SHOW_SELECT } from '@/lib/show-organizer';
+import { notifyUser } from '@/lib/notify';
 
 export const dynamic = 'force-dynamic';
 
@@ -98,15 +100,21 @@ export async function PATCH(
     ? (checkContent(`${body.title ?? ''} ${body.description ?? ''}`).flagged ? 'FLAGGED' : undefined)
     : undefined;
 
+  /* The organiser set the cancel route and the door already admit — venue
+     owner, headliner owner, creator, administrator. Until 2026-09-14 this
+     route admitted the creator alone (and nothing called it at all: the edit
+     page is the first caller, DESIGN_SYNC row 446), so a venue that could
+     cancel a show could not move it. A non-organiser reads 404, not 403, the
+     way the cancel page does: the show's existence is not theirs to learn. */
   const show = await db.show.findFirst({
-    where: { OR: [{ id: showId }, { slug: showId }], creatorId: session.user.id },
-    select: { id: true, status: true },
+    where: { OR: [{ id: showId }, { slug: showId }] },
+    select: { id: true, slug: true, title: true, status: true, startsAt: true, isTicketed: true, ticketingOpensAt: true, ...ORGANIZER_SHOW_SELECT },
   });
-  if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
+  if (!show || !isShowOrganizer(session, show)) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
-  // Draft/schedule edits (title, description, productionPlan, startsAt) — lets
-  // a DJ save and re-open a show across sessions before it airs. Only allowed
-  // while the show hasn't gone live yet.
+  // Edits to title, description, productionPlan and startsAt are allowed
+  // while the show has not started — DRAFT or SCHEDULED, the same window the
+  // cancel flow uses. Once it is LIVE the ticket is for what was announced.
   const hasEditFields = body.title !== undefined || body.description !== undefined || body.productionPlan !== undefined || body.startsAt !== undefined;
   if (hasEditFields) {
     if (!['DRAFT', 'SCHEDULED'].includes(show.status)) {
@@ -143,6 +151,17 @@ export async function PATCH(
       select: { id: true, slug: true, status: true },
     });
 
+    /* A moved start time is the one edit a ticket holder has to hear about:
+       they bought a night, not a title. Every captured order's buyer gets the
+       in-app notice (and push, where registered) with the new time; the show
+       page they land on carries the rest. Best-effort AFTER the write, never
+       inside it, and a failed notice never undoes or errors a recorded change
+       (rows 381-382). Drafts have no buyers, so this is a SCHEDULED-only path
+       in practice, and the query says so rather than relying on it. */
+    if (body.startsAt !== undefined && show.isTicketed && new Date(body.startsAt).getTime() !== show.startsAt.getTime()) {
+      await notifyRescheduled(show.id, updated.slug, body.title ?? show.title, new Date(body.startsAt)).catch(() => {});
+    }
+
     if (body.status === undefined) {
       return NextResponse.json({ show: updated });
     }
@@ -156,11 +175,39 @@ export async function PATCH(
     return NextResponse.json({ error: `Cannot transition from ${show.status} to ${newStatus}` }, { status: 400 });
   }
 
+  /* Publishing a ticketed show opens its sales in the same write, the way
+     the event creator and the lineup lock do (CLAUDE.md, the TicketSaleCard
+     row): `ticketingOpensAt` null means NOT on sale, and this transition was
+     the one publish path that left it null — a ticketed show flipped
+     DRAFT → SCHEDULED here would have been permanently unbuyable. */
+  const opensSales = newStatus === 'SCHEDULED' && show.isTicketed && !show.ticketingOpensAt;
   const updated = await db.show.update({
     where: { id: show.id },
-    data: { status: newStatus as 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED' },
+    data: {
+      status: newStatus as 'DRAFT' | 'SCHEDULED' | 'LIVE' | 'ENDED',
+      ...(opensSales ? { ticketingOpensAt: new Date() } : {}),
+    },
     select: { id: true, slug: true, status: true },
   });
 
   return NextResponse.json({ show: updated });
+}
+
+/** One notice per buyer with a captured order, whatever the order's quantity. */
+async function notifyRescheduled(showId: string, slug: string, title: string, startsAt: Date): Promise<void> {
+  const orders = await db.ticketOrder.findMany({
+    where: { showId, status: 'CAPTURED', buyerUserId: { not: null } },
+    select: { buyerUserId: true },
+    distinct: ['buyerUserId'],
+  });
+  const when = startsAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+  for (const order of orders) {
+    if (!order.buyerUserId) continue;
+    await notifyUser(order.buyerUserId, {
+      type: 'show_rescheduled',
+      title: `"${title}" has a new time`,
+      body: `The organizer moved "${title}" to ${when} UTC. Your ticket is still valid — open it for the details.`,
+      link: `/shows/${slug}`,
+    });
+  }
 }
