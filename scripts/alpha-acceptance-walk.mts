@@ -660,8 +660,44 @@ async function main() {
       cookie: fan.cookie,
     }), [200, 201]);
 
-    const listens = await prisma.mediaListen.count({ where: { mediaId, userId: fan.user.id } });
-    assert(listens > 0, 'play answered ok but no MediaListen row was written');
+    /* Counted by HEXID, because that is the name every reader of this table
+       uses (profile-insights, profile-stat-board, the artist analytics page,
+       the track page) — the route stored the row id until 2026-09-14, so a
+       count by row id here passed while every one of those read 0 (row 436). */
+    const listens = await prisma.mediaListen.count({ where: { mediaId: mediaHexId, userId: fan.user.id } });
+    assert(listens > 0, 'play answered ok but no MediaListen row was written under the track\'s hexId');
+    const byRowId = await prisma.mediaListen.count({ where: { mediaId, userId: fan.user.id } });
+    assert(byRowId === 0, `${byRowId} listen row(s) stored under the ROW id — nothing that counts listens reads that name`);
+
+    /* The PLAYER's shape. `toQueue` addresses a track by hexId and the
+       completion POST carries that, not the row id this item sends above —
+       and the route looked the row up by id, so every completion a real
+       browser ever sent answered 404 while this item passed (row 436). Same
+       listen, second name: it must answer ok and land on the SAME row. */
+    ok(await api('/api/media-listens', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        mediaId: mediaHexId,
+        title: asset.title ?? 'Live A Lie',
+        mediaUrl: asset.storageUrl,
+        artistName: `Test Artist ${run}`,
+        artistProfileSlug: artistProfile.slug,
+      }),
+      cookie: fan.cookie,
+    }), [200, 201]);
+    const listensByEitherName = await prisma.mediaListen.count({ where: { userId: fan.user.id, mediaId: { in: [mediaId, mediaHexId] } } });
+    assert(listensByEitherName === 1, `the hexId-shaped completion made ${listensByEitherName} row(s) for one track — the route must resolve both names to one listen`);
+
+    /* And a READER sees it: the artist's own stats board, which is what the
+       owner opens to learn whether anyone listened. A raw count proves a row
+       exists; only a reader proves the row is under the name the product
+       looks for. `GET /api/profile/stats` is owner-gated, so the creator asks. */
+    const board = ok(await api(`/api/profile/stats?profileId=${encodeURIComponent(artistProfile.id)}`, { cookie: creator.cookie }));
+    const tiles: any[] = Array.isArray(board?.stats) ? board.stats : [];
+    const listensTile = tiles.find((tile) => tile?.key === 'listens');
+    assert(listensTile, `the stats board answered without a Listens tile: ${JSON.stringify(board).slice(0, 200)}`);
+    assert(Number(listensTile.value) >= 1, `the artist's Listens tile reads ${listensTile.value} after a fan finished the track — the count and the write disagree about the track's name`);
 
     /* The row is what the MUSIC tab's "Recently played" rail reads back, through
        GET /api/media-listens -> { recents } — hexId and cover hydrated from the
@@ -671,13 +707,13 @@ async function main() {
        every run without asserting on it: a number reported and not measured. */
     const history = ok(await api('/api/media-listens', { cookie: fan.cookie }));
     const recents: any[] = Array.isArray(history?.recents) ? history.recents : [];
-    const mine = recents.find((row) => row.id === mediaId);
+    const mine = recents.find((row) => row.hexId === mediaHexId);
     assert(mine, `the fan just finished the track and GET /api/media-listens lists ${recents.length} recent(s), none of them this one`);
-    assert(recents[0]?.id === mediaId, 'the track just finished is not the FIRST recent — the rail orders by completedAt desc');
+    assert(recents[0]?.hexId === mediaHexId, 'the track just finished is not the FIRST recent — the rail orders by completedAt desc');
     assert(mine.hexId === mediaHexId, `the recent carries hexId ${mine.hexId}, the asset's is ${mediaHexId}`);
     assert(mine.artworkUrl, 'the recent carries no artworkUrl, though item 7 stored a cover on the asset');
     assert(mine.mediaUrl, 'the recent carries no mediaUrl, so the rail could list it and not play it');
-    return `MediaListen written (${listens}); the Recently played rail lists it first, with its hexId, cover and audio`;
+    return `MediaListen written under the hexId (${listens}), by row id and again by hexId onto the same row; the artist's Listens tile reads ${listensTile.value}; the Recently played rail lists it first, with its hexId, cover and audio`;
   });
 
   // ── 13. Hype seed and track ──────────────────────────────────────────────

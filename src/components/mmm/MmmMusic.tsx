@@ -390,6 +390,11 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
     }
     playTrack({
       id: card.id,
+      /* The track's hexId, which is what gates the completion write in the
+         player and what the listen route stores. Without it a clip that
+         played to the end — a short track under the 22s cap — was heard and
+         never counted (row 436). */
+      mediaId: card.hexId,
       title: card.title,
       artistName: card.artistName,
       url: card.url,

@@ -20,7 +20,9 @@ export function ReleasePlayButton({ track, rows, label }: { track: PlayableRow; 
   const { playTrack, togglePlayback, currentTrack, isPlaying } = useMediaPlayer();
   const { t } = useI18n();
   const queue = toQueue(rows);
-  const id = track.hexId || track.id;
+  // The same derivation as `toQueue`, or a playlist row — whose `id` is the
+  // ITEM and whose track is `mediaId` — never finds itself in its own queue.
+  const id = track.hexId || track.mediaId || track.id;
   const index = queue.findIndex((entry) => entry.id === id);
   if (index === -1) return null;
   const isCurrent = currentTrack?.id === id;

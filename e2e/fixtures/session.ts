@@ -555,8 +555,12 @@ export type SeededMedia = {
  * must not share a fan with one that warmed it.
  */
 /** A real, small, static audio file the worker serves: the deck, the station
- *  row and the recommend list all hand `storageUrl` straight to <audio>. */
-const STATION_TRACK_URL = '/audio/samples/signal-chime.wav';
+ *  row and the recommend list all hand `storageUrl` straight to <audio>.
+ *  ABSOLUTE, as every stored `storageUrl` is (`https://ihype.org/cdn/…`), so
+ *  the fixture carries the shape production does. The listen route no longer
+ *  refuses a relative `mediaUrl` — its old `.url()` check was one of the 400s
+ *  row 436 found — but a fixture should not depend on that leniency. */
+const STATION_TRACK_URL = new URL('/audio/samples/signal-chime.wav', process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:8787').toString();
 const STATION_CITY = 'Portland';
 const STATION_REGION = 'ME';
 const STATION_COUNTRY = 'US';
@@ -567,7 +571,7 @@ export async function seedPlayableStation({
 }: {
   fanUserId: string;
   key?: string;
-}): Promise<{ trackHexId: string; title: string; artistName: string; artistSlug: string; playlistId: string }> {
+}): Promise<{ trackHexId: string; title: string; artistName: string; artistSlug: string; playlistId: string; neighbourTitle: string }> {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
   try {
     const stamp = `station-${key}`;
@@ -648,7 +652,8 @@ export async function seedPlayableStation({
        (userId, name), as `seedTrackAndPlaylist` does: FanPlaylist has no
        compound unique for an upsert to target. */
     const playlistName = `E2E Station Playlist ${stamp}`;
-    const playlist = await prisma.fanPlaylist.findFirst({ where: { userId: fanUserId, name: playlistName }, select: { id: true } })
+    const existing = await prisma.fanPlaylist.findFirst({ where: { userId: fanUserId, name: playlistName }, select: { id: true } });
+    const playlist = existing
       ?? await prisma.fanPlaylist.create({
         data: {
           userId: fanUserId,
@@ -657,7 +662,61 @@ export async function seedPlayableStation({
         },
         select: { id: true },
       });
-    return { trackHexId: track.hexId, title: track.title, artistName: profile.name, artistSlug: profile.slug, playlistId: playlist.id };
+    /* Re-stamped on a re-run: the item is a denormalised COPY of the track
+       (its own url and name), and a scratch database that outlives a fixture
+       change would otherwise keep serving the old shape — which is how a
+       relative url from an earlier draft went on being asserted here. */
+    if (existing) {
+      await prisma.fanPlaylistItem.updateMany({
+        where: { playlistId: existing.id },
+        data: { mediaId: track.hexId, title: track.title, artistName: profile.name, url: STATION_TRACK_URL },
+      });
+    }
+    /* A NEIGHBOUR the listener has NOT hyped: the Recommended tab is
+       `getRecommendations`, which excludes every act the viewer already knows
+       and offers acts in the viewer's genres — so the hyped station artist can
+       never appear there, and without this the tab's rows are whatever other
+       fixtures left in the database, whose audio the harness cannot serve.
+       Same genre and city so it ranks first; the same static file so a
+       completion can actually be heard and posted. */
+    const neighbourSlug = `e2e-${stamp}-neighbour`;
+    const neighbourEmail = `${neighbourSlug}@ihype.test`;
+    const neighbourOwner = await prisma.user.upsert({
+      where: { email: neighbourEmail },
+      update: {},
+      create: { email: neighbourEmail, name: 'E2E Station Neighbour', username: neighbourSlug, role: 'ARTIST', emailVerified: new Date() },
+      select: { id: true },
+    });
+    const neighbour = await prisma.profile.upsert({
+      where: { slug: neighbourSlug },
+      create: {
+        slug: neighbourSlug, hexId: hex(neighbourSlug), name: 'E2E Station Neighbour', type: 'ARTIST', ownerId: neighbourOwner.id, discoverable: true,
+        genres: ['Dream-pop'], city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY,
+      },
+      update: { discoverable: true, genres: ['Dream-pop'], city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY },
+      select: { id: true, name: true },
+    });
+    const neighbourTrackHex = hex(`${neighbourSlug}-track`);
+    const neighbourTrack = await prisma.artistMediaAsset.upsert({
+      where: { hexId: neighbourTrackHex },
+      update: { isPublished: true, publishAt: null, storageUrl: STATION_TRACK_URL },
+      create: {
+        hexId: neighbourTrackHex,
+        title: 'E2E Neighbour Track',
+        isPublished: true,
+        originalFileName: 'e2e-neighbour-track.wav',
+        mimeType: 'audio/wav',
+        fileSizeBytes: 1024,
+        durationSecs: 123,
+        storageUrl: STATION_TRACK_URL,
+        profileId: neighbour.id,
+      },
+      select: { title: true },
+    });
+    return {
+      trackHexId: track.hexId, title: track.title, artistName: profile.name, artistSlug: profile.slug, playlistId: playlist.id,
+      neighbourTitle: neighbourTrack.title,
+    };
   } finally {
     await prisma.$disconnect();
   }
