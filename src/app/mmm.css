@@ -3855,6 +3855,15 @@ input.mmm-row-title { min-height: 44px; }
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* A verdict the route refused, named under the count so the member knows what
+   to press again. Body face, not the count's tracked mono: this is a sentence
+   about a failure, not metadata. */
+.mmm-deck-note {
+  margin: 8px 0 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--ink-2);
+}
 .mmm-deck-empty { text-align: center; padding: 80px 20px; }
 .mmm-deck-empty-title {
   margin: 0;

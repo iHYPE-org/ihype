@@ -83,15 +83,22 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emoji })
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setErrorMsg(t('showComments.reactionFailed', 'That reaction did not go through. Try again.'));
+        return;
+      }
       const data = (await res.json()) as { reactions?: Reaction[] };
       if (data.reactions) {
+        setErrorMsg('');
         setComments((prev) =>
           prev.map((c) => (c.id === commentId ? { ...c, reactions: data.reactions! } : c))
         );
       }
     } catch {
-      // ignore
+      // A reaction is a press that promises a count moved. Until 2026-09-14
+      // a refused or dropped one returned here silently, so the press looked
+      // like it did nothing rather than like it failed.
+      setErrorMsg(t('showComments.networkError', 'Network error. Please try again.'));
     }
   }
 
