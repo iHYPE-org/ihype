@@ -53,20 +53,3 @@ export async function POST(
 
   return NextResponse.json({ reminded: true });
 }
-
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ showId: string }> }
-) {
-  const session = await auth();
-  if (!session?.user?.id) {
-    return NextResponse.json({ reminded: false });
-  }
-
-  const { showId: id } = await params;
-  const existing = await db.notification.findFirst({
-    where: { userId: session.user.id, type: 'show_reminder_pending', link: `/shows/${id}` }
-  });
-
-  return NextResponse.json({ reminded: Boolean(existing) });
-}

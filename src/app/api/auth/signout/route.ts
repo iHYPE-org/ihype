@@ -88,7 +88,3 @@ export async function GET(request: NextRequest) {
   }
   return signOut(request);
 }
-
-export async function POST(request: NextRequest) {
-  return signOut(request);
-}

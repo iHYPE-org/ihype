@@ -46,17 +46,3 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   return NextResponse.json({ ok: true, tracks });
 }
-
-export async function GET(_request: NextRequest, { params }: { params: Promise<{ showId: string }> }) {
-  const { showId } = await params;
-  const last = await db.auditLog.findFirst({
-    where: { action: 'show_setlist', entityType: 'show', entityId: showId },
-    orderBy: { createdAt: 'desc' },
-    select: { metadata: true, createdAt: true }
-  });
-  const meta = (last?.metadata ?? {}) as { tracks?: unknown };
-  const tracks = Array.isArray(meta.tracks)
-    ? (meta.tracks.filter((t) => typeof t === 'string') as string[])
-    : [];
-  return NextResponse.json({ tracks, updatedAt: last?.createdAt?.toISOString() ?? null });
-}

@@ -23,46 +23,6 @@ const schema = z.object({
 });
 
 /**
- * GET the current lineup proposal for a show — any of the show's own
- * lineup members, the venue owner, or the show's creator can view it (the
- * accept/decline UI needs to render for the specific artist viewing it, but
- * everyone involved should be able to see where things stand).
- */
-export async function GET(request: Request, { params }: { params: Promise<{ showId: string }> }) {
-  const session = await auth();
-  if (!session?.user?.id) return NextResponse.json({ error: 'Login required' }, { status: 401 });
-
-  const { showId } = await params;
-  const show = await db.show.findUnique({
-    where: { id: showId },
-    select: {
-      id: true, slug: true, title: true, startsAt: true, status: true,
-      artistPayoutPercent: true, venuePayoutPercent: true, promoterPayoutPercent: true,
-      venueProfile: { select: { id: true, ownerId: true, name: true } },
-    },
-  });
-  if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
-
-  const slots = await db.showLineupSlot.findMany({
-    where: { showId },
-    orderBy: [{ isHeadliner: 'desc' }, { splitPercent: 'desc' }],
-    select: {
-      id: true, profileId: true, isHeadliner: true, splitPercent: true, status: true, proposedAt: true, respondedAt: true,
-      profile: { select: { id: true, slug: true, name: true, type: true, ownerId: true, avatarImage: true } },
-    },
-  });
-
-  const isVenueOwner = canManageOwnedResource(session, show.venueProfile?.ownerId);
-  const myLineupSlot = slots.find((s) => s.profile.ownerId === session.user.id) ?? null;
-
-  if (!isVenueOwner && !myLineupSlot) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  return NextResponse.json({ show, slots, isVenueOwner, myLineupSlotId: myLineupSlot?.id ?? null });
-}
-
-/**
  * POST — the venue proposes (or revises) a show's lineup and per-act split
  * of the artist share. Any call here — first proposal or a revision after a
  * decline — resets every named act's slot back to PENDING, since a change
