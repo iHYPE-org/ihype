@@ -340,6 +340,38 @@ describe('the basemap is keyed', () => {
 describe('the native shell paints the app\'s ground', () => {
   const bgOf = (css: string) => /^\s*--bg:\s*(#[0-9a-fA-F]{3,8})\s*;/m.exec(css)?.[1]?.toLowerCase();
 
+  /**
+   * The service worker's hand-written offline page is the FOURTH copy of the
+   * ground, and it was two conversions behind on 2026-09-14 (DESIGN_SYNC row
+   * 416): DS8 navy gradient, cool off-white ink, a `#ff4635 → #ff3d87 →
+   * #39d8df` pill — the retired design, shown to a member at the one moment
+   * the real stylesheet cannot reach them. A worker cannot read globals.css,
+   * so the values are literals; each carries a `/* --token *\/` label and this
+   * test holds every labelled value to :root. An unlabelled hex is refused
+   * too, so a colour cannot be added there without saying which token it is.
+   */
+  it('the service worker offline fallback mirrors :root, token by token', () => {
+    const css = readFileSync('src/app/globals.css', 'utf8');
+    const root = /:root\s*\{([\s\S]*?)\n\}/.exec(css)?.[1];
+    expect(root, 'globals.css has no :root block').toBeTruthy();
+    const tokenValue = (name: string) => new RegExp(`^\\s*${name}:\\s*([^;]+?)\\s*;`, 'm').exec(root!)?.[1]?.replace(/\s*\/\*.*$/, '').trim().toLowerCase();
+
+    const sw = readFileSync('public/sw.js', 'utf8');
+    const fallback = /async function offlineFallback\(\)[\s\S]*?<style>([\s\S]*?)<\/style>/.exec(sw)?.[1];
+    expect(fallback, 'sw.js has no offlineFallback <style> block').toBeTruthy();
+    const rules = fallback!.replace(/^\s*\/\*[\s\S]*?\*\/\s*/, '');
+
+    const labelled = [...rules.matchAll(/([#\w.]+)\s*\/\*\s*(--[\w-]+)\s*\*\//g)];
+    expect(labelled.length, 'the fallback names no tokens').toBeGreaterThanOrEqual(5);
+    for (const [, value, token] of labelled) {
+      expect(tokenValue(token), `${token} is not declared in :root`).toBeTruthy();
+      expect(value.toLowerCase(), `offline fallback paints ${value} for ${token}, but :root says ${tokenValue(token)}`).toBe(tokenValue(token));
+    }
+    const unlabelled = [...rules.matchAll(/#[0-9a-fA-F]{3,8}\b(?!\s*\/\*)/g)].map((m) => m[0]);
+    expect(unlabelled, 'every colour in the offline fallback must say which token it mirrors').toEqual([]);
+    expect(rules, 'MOBILE.md: dvh, never vh').not.toMatch(/\d+vh\b/);
+  });
+
   it('capacitor backgroundColor matches --bg, on both platforms', () => {
     const ground = bgOf(readFileSync('src/app/globals.css', 'utf8'));
     expect(ground, '--bg is not the first declaration in :root any more — this guard is reading the wrong token').toBeTruthy();

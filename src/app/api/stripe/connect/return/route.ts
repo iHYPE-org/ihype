@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
        is where the status pill reads the truth and where PayoutConnectButton
        already renders its "Finish setup" state for exactly this case — an
        account that exists and is not onboarded. */
-    if (!ready) redirect('/payouts?tab=settings&payout=incomplete');
+    if (!ready) redirect('/app/me/payouts?tab=settings&payout=incomplete');
     redirect(`${fallback}?payout=connected`);
   } catch (err) {
     // Re-throw redirect errors (Next.js redirect() throws internally)

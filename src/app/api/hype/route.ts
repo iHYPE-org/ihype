@@ -358,7 +358,7 @@ export async function POST(request: NextRequest) {
               type: 'EARLY_BELIEVER',
               title: 'You called it early',
               body: `You're early believer #${rank} in ${p.name}.`,
-              link: `/artists/${p.slug}/believers`,
+              link: `/app/me/artists/${p.slug}/believers`,
             }).catch(() => {});
           }
         })

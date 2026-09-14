@@ -201,7 +201,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
               : `The organizer cancelled this event — ${refunded} has been refunded to your original payment method.`;
             return organizerMessage ? `${opening} From the organizer: “${organizerMessage}”` : opening;
           })(),
-          link: '/tickets',
+          link: '/app/tickets',
         });
       }
     } catch (error) {

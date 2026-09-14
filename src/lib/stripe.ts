@@ -1012,8 +1012,8 @@ export async function createAdCampaignCheckoutSession({
         metadata: { adId },
       },
       metadata: { adId, purpose: 'ad_campaign' },
-      success_url: `${baseUrl}/advertise/dashboard?checkout=success`,
-      cancel_url: `${baseUrl}/advertise/dashboard?checkout=cancelled`,
+      success_url: `${baseUrl}/app/me/advertising?checkout=success`,
+      cancel_url: `${baseUrl}/app/me/advertising?checkout=cancelled`,
     },
     { idempotencyKey: idempotencyKey ?? `ad-checkout:${adId}` },
   );

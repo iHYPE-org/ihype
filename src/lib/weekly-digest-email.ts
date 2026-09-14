@@ -16,7 +16,7 @@ export async function sendWeeklyDigestEmail(user: {
   return sendMarketingEmail(user.id, {
     to: user.email,
     subject: `Your iHYPE week — ${user.hyped} hypes, ${user.saved} saves`,
-    text: `Hey ${name}, here's your iHYPE week:\n\n• ${user.hyped} hypes\n• ${user.saved} saves\n\n${streakLine}\n\nOpen iHYPE: https://ihype.org/home`,
-    html: `<p>Hey ${escapeHtml(name)}, here's your iHYPE week:</p><ul><li><strong>${user.hyped}</strong> hypes</li><li><strong>${user.saved}</strong> saves</li></ul><p>${streakLine}</p><p><a href="https://ihype.org/home">Open iHYPE →</a></p>`,
+    text: `Hey ${name}, here's your iHYPE week:\n\n• ${user.hyped} hypes\n• ${user.saved} saves\n\n${streakLine}\n\nOpen iHYPE: https://ihype.org/app/map`,
+    html: `<p>Hey ${escapeHtml(name)}, here's your iHYPE week:</p><ul><li><strong>${user.hyped}</strong> hypes</li><li><strong>${user.saved}</strong> saves</li></ul><p>${streakLine}</p><p><a href="https://ihype.org/app/map">Open iHYPE →</a></p>`,
   });
 }

@@ -30,7 +30,7 @@ export async function notifyAdvertiser(
 ) {
   if (!email) return;
   const copy = STATUS_EMAIL_COPY[status];
-  const ctaUrl = status === 'AWAITING_PAYMENT' && checkoutUrl ? checkoutUrl : `${getBaseUrl()}/advertise/dashboard`;
+  const ctaUrl = status === 'AWAITING_PAYMENT' && checkoutUrl ? checkoutUrl : `${getBaseUrl()}/app/me/advertising`;
   const ctaLabel = status === 'AWAITING_PAYMENT' && checkoutUrl ? 'Pay for your campaign' : 'View your campaigns';
   // A settlement sentence is a statement of money moved, not a vetting verdict.
   const detailLabel = status === 'SETTLED' ? 'Settlement' : 'Reasoning';

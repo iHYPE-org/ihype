@@ -155,7 +155,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         type: 'lineup_split_proposed',
         title: 'New lineup split proposal',
         body: `${show.venueProfile?.name ?? 'A venue'} proposed a split for "${show.title}" — review and accept or decline.`,
-        link: `/shows/${show.slug}/lineup`,
+        link: `/app/me/shows/${show.slug}/lineup`,
       }),
     ),
   );
