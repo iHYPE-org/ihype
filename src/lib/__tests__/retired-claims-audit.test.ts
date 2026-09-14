@@ -59,6 +59,18 @@ describe('the retired-claims audit', () => {
     expect(out, 'the report has to say what is true instead').toContain('There is no go-live');
   });
 
+  it('catches a promoter PAGE as well as a promoter profile — the vocabulary the editor slipped past it', () => {
+    // The profile editor's empty state read "Create an artist, venue, or
+    // promoter page to get started" while the entry matched account, role,
+    // signup and profile but not page (DESIGN_SYNC row 454). The 10% pool
+    // in the same sentence family must still pass.
+    const { out, status } = probe('export const C = () => <p>Create an artist, venue, or promoter page to get started.</p>;\n');
+    expect(status).toBe(1);
+    expect(out).toContain('promoter as an account type');
+    const pool = probe('export const D = () => <p>10% goes to the promoter pool — anyone with a HYPE Link.</p>;\n');
+    expect(pool.status).toBe(0);
+  });
+
   it('never fires on a comment, including this scanner documenting itself', () => {
     /* The third time this repository has been bitten by a scanner reading
        its own prose — hence the shared masker. This file's own header names

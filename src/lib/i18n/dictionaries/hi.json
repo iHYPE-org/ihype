@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ नया पेज",
   "pagesHome.noConnectionsMatch": "कोई कनेक्शन मेल नहीं खाता।",
   "pagesHome.noPagesYet": "अभी कोई पेज नहीं",
-  "pagesHome.noPagesYetSub": "शुरू करने के लिए कलाकार, स्थल या प्रमोटर पेज बनाएँ।",
+  "pagesHome.noPagesYetHint": "शुरू करने के लिए एक आर्टिस्ट या वेन्यू पेज बनाएँ।",
   "pagesHome.noResultsFor": "के लिए कोई परिणाम नहीं",
   "pagesHome.noSuggestionsMatch": "कोई सुझाव मेल नहीं खाता।",
   "pagesHome.pageCreatedSuffix": "पेज बन गया — आपके खाते में सहेजा गया। नीचे इसे संपादित करें।",

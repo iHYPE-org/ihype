@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ Nova página",
   "pagesHome.noConnectionsMatch": "Nenhuma conexão corresponde.",
   "pagesHome.noPagesYet": "Ainda não há páginas",
-  "pagesHome.noPagesYetSub": "Crie uma página de artista, local ou promotor para começar.",
+  "pagesHome.noPagesYetHint": "Crie uma página de artista ou de casa de shows para começar.",
   "pagesHome.noResultsFor": "Nenhum resultado para",
   "pagesHome.noSuggestionsMatch": "Nenhuma sugestão corresponde.",
   "pagesHome.pageCreatedSuffix": "página criada — salva na sua conta. Edite-a abaixo.",

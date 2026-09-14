@@ -388,7 +388,7 @@ export function PagesHome({
                 {t('pagesHome.noPagesYet', 'No pages yet')}
               </p>
               <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
-                {t('pagesHome.noPagesYetSub', 'Create an artist, venue, or promoter page to get started.')}
+                {t('pagesHome.noPagesYetHint', 'Create an artist or venue page to get started.')}
               </p>
               <button onClick={() => setTab('creator')} style={{ display: 'inline-block', padding: '12px 24px', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, fontWeight: 700, fontSize: '0.9375rem', border: 'none', cursor: 'pointer' }} type="button">
                 {t('pagesHome.createFirstPage', 'Create your first page →')}

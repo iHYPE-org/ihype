@@ -106,9 +106,10 @@ const RETIRED = [
        entry is about promoter as an ACCOUNT TYPE. `ProfileType` is
        ARTIST | VENUE | LISTENER, so a "promoter profile", a promoter signup
        or a promoter chip in a list of member roles all name something that
-       cannot exist. Anything matching here is a role claim; the pool, the
+       cannot exist — and so does a "promoter page", which the profile
+       editor's empty state offered to create until 2026-09-14 (row 454). Anything matching here is a role claim; the pool, the
        payout columns and `--role-promoter` on a split slice do not match. */
-    pattern: /promoter (?:account|role|signup|sign-up|profile type)|\bpromoter profiles?\b|\b(?:be|become) an? promoter\b|promoters? and DJs|DJs and promoters/i,
+    pattern: /promoter (?:account|role|signup|sign-up|profile type)|\bpromoter (?:profiles?|pages?)\b|\b(?:be|become) an? promoter\b|promoters? and DJs|DJs and promoters/i,
     what: 'promoter as an account type',
     retired: 'never a ProfileType; restated by the owner 2026-09-11',
     instead: 'Anyone promotes with a HYPE Link. The 10% promoter POOL is charter and stays — only the ROLE is the error.',

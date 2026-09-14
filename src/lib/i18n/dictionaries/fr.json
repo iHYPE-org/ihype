@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ Nouvelle page",
   "pagesHome.noConnectionsMatch": "Aucune relation ne correspond.",
   "pagesHome.noPagesYet": "Aucune page pour l'instant",
-  "pagesHome.noPagesYetSub": "Créez une page d'artiste, de salle ou de promoteur pour commencer.",
+  "pagesHome.noPagesYetHint": "Créez une page d’artiste ou de salle pour commencer.",
   "pagesHome.noResultsFor": "Aucun résultat pour",
   "pagesHome.noSuggestionsMatch": "Aucune suggestion ne correspond.",
   "pagesHome.pageCreatedSuffix": "page créée — enregistrée sur votre compte. Modifiez-la ci-dessous.",

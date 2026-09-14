@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ 새 페이지",
   "pagesHome.noConnectionsMatch": "일치하는 연결이 없습니다.",
   "pagesHome.noPagesYet": "아직 페이지가 없습니다",
-  "pagesHome.noPagesYetSub": "시작하려면 아티스트, 공연장 또는 프로모터 페이지를 만드세요.",
+  "pagesHome.noPagesYetHint": "시작하려면 아티스트 또는 공연장 페이지를 만들어 주세요.",
   "pagesHome.noResultsFor": "에 대한 결과 없음",
   "pagesHome.noSuggestionsMatch": "일치하는 추천이 없습니다.",
   "pagesHome.pageCreatedSuffix": "페이지가 생성되어 계정에 저장되었습니다. 아래에서 편집하세요.",

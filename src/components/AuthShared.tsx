@@ -24,7 +24,7 @@ export type SignupFunnelMetadata = {
 
 /**
  * There is no role picker any more. Every account starts as a fan and adds an
- * artist, venue or promoter page afterwards from /pages (POST /api/profiles),
+ * artist or venue page afterwards from /app/me/profiles (POST /api/profiles),
  * so `roleOptions` — which existed only to populate the signup radios — is
  * gone. `RoleOption` stays: it still types the role a Profile can have.
  */

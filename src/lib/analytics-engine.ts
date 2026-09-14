@@ -4,7 +4,7 @@
  * ## Why this exists
  *
  * Every analytics surface on the site computed its own numbers inline: the fan
- * page, the artist page, the venue page, the promoter page and `/admin/growth`
+ * page, the artist page, the venue page, the since-retired promoter dashboard and `/admin/growth`
  * each opened their own Prisma queries, defined their own idea of "the last 30
  * days", and named the same quantity differently. Five implementations of one
  * question is five chances for two screens to disagree about the same figure,

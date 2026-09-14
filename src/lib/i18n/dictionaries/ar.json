@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ صفحة جديدة",
   "pagesHome.noConnectionsMatch": "لا توجد جهات اتصال مطابقة.",
   "pagesHome.noPagesYet": "لا توجد صفحات بعد",
-  "pagesHome.noPagesYetSub": "أنشئ صفحة فنان أو مكان أو منظّم حفلات للبدء.",
+  "pagesHome.noPagesYetHint": "أنشئ صفحة فنان أو مكان للبدء.",
   "pagesHome.noResultsFor": "لا توجد نتائج لـ",
   "pagesHome.noSuggestionsMatch": "لا توجد اقتراحات مطابقة.",
   "pagesHome.pageCreatedSuffix": "تم إنشاء الصفحة — وحُفظت في حسابك. حرّرها أدناه.",
