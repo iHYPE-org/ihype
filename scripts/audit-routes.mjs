@@ -147,8 +147,18 @@ function main() {
     return new RegExp(`["'\`]${stat.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[/"'\`?]`).test(corpus);
   };
 
+  const all = routes();
+  /* This script used to refuse a zero parse of SHELL_ROUTES; that list is a
+     constant now, so the only collection left to refuse is the route tree
+     itself. Over an empty src/app it reported 0 routes and passed
+     (2026-09-14). */
+  if (all.length === 0) {
+    console.error('audit:routes collected 0 page(s) under src/app — it is inventorying nothing. Check the glob and the cwd.');
+    process.exit(2);
+  }
+
   const groups = { mmm: [], legacyShell: [], legacyRedirect: [], outside: [] };
-  for (const { file, path } of routes()) {
+  for (const { file, path } of all) {
     const row = { path, linked: linked(path) };
     if (path === '/app' || path.startsWith('/app/')) groups.mmm.push(row);
     else if (inShell(path) && isRedirectOnly(file)) groups.legacyRedirect.push(row);

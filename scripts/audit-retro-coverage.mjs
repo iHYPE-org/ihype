@@ -182,6 +182,13 @@ const pages = allFiles
   .map((f) => f.split(path.sep).join('/'))
   .filter((f) => /^src\/app\/.*\/page\.tsx$/.test(f) || f === 'src/app/page.tsx');
 
+/* "Coverage: 0/0 routes paint only from tokens" is what this printed, and
+   passed, over an empty tree (2026-09-14). A zero is earned, never assumed. */
+if (pages.length === 0) {
+  console.error('audit:retro collected 0 page(s) under src/app — it is measuring nothing. Check the walk and the cwd.');
+  process.exit(2);
+}
+
 const rows = [];
 for (const page of pages) {
   const route = '/' + page.replace(/^src\/app\//, '').replace(/\/?page\.tsx$/, '');
@@ -224,4 +231,4 @@ if (dirty.length > MAX) {
   console.error('  This number goes DOWN. Convert the route, or fix the component it renders.\n');
   process.exit(1);
 }
-console.log(`\n  Coverage: ${member.length - dirty.length}/${member.length} member-facing routes paint only from tokens.\n`);
+console.log(`\n  Coverage: ${member.length - dirty.length}/${member.length} member-facing routes paint only from tokens (${pages.length} page(s) read).\n`);

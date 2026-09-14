@@ -183,7 +183,11 @@ jobs:
         #
         # LOWER THIS EVERY TIME THE COUNT FALLS. A ceiling nobody tightens is
         # an advisory with extra steps.
-        run: npm run audit:spacing -- --max=900
+        #
+        # 900 -> 896 (2026-09-14), on the same rule. The script also refuses a
+        # scan that read zero files now (exit 2); a ceiling over nothing was
+        # passing.
+        run: npm run audit:spacing -- --max=896
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy

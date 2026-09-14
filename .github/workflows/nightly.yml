@@ -11,9 +11,11 @@
 #     owner's broadcast to their own followers. `audit:mounts` and walk items
 #     34-36 exist because of it, and a nightly run is what notices the next one
 #     on a quiet week rather than at the next release.
-#   * The advisory audits nobody has to clear to merge (`audit:spacing`,
-#     `audit:design`, `audit:shell --strict`) drift upward invisibly when they
-#     are only ever run by hand.
+#   * The advisory audit nobody has to clear to merge (`audit:design`, whose
+#     fixes live in another repository) drifts upward invisibly when it is only
+#     ever run by hand. `audit:spacing` and `audit:shell --strict` are CI
+#     gates — a ceiling since 2026-09-11 and strict since 2026-07-31 — and this
+#     line named all three as advisory until 2026-09-14.
 #   * A dependency advisory lands against code nobody is touching.
 #
 # **Cost.** Nothing. This runs on our own machine, where minutes are free (see
@@ -196,12 +198,13 @@ jobs:
 
       # ── The advisory audits, which nothing else runs on a schedule ───────
       - name: Advisory audits (reported, never fatal)
-        # These are advisory ON PURPOSE and must stay that way: `audit:design`
-        # tests the DESIGN SYSTEM, whose fixes live in another repository, and
-        # `audit:spacing` sits at a number nobody has agreed to pay down. A red
-        # build here could not be cleared by anyone working in this one. What a
-        # nightly adds is that the numbers are written down every day, so a
-        # drift upward is visible before it is a project.
+        # `audit:design` is advisory ON PURPOSE and must stay that way: it
+        # tests the DESIGN SYSTEM, whose fixes live in another repository, so a
+        # red build here could not be cleared by anyone working in this one.
+        # `audit:spacing` is a CI CEILING (ci.yml, --max, since 2026-09-11) and
+        # `audit:shell --strict` a CI gate since 2026-07-31; both are re-run
+        # here only so the full report, not the one-line verdict, is written
+        # down every day and a drift is visible before it is a project.
         continue-on-error: true
         run: |
           {
