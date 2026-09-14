@@ -16,6 +16,7 @@ import { getPromoterDashboard } from '@/lib/promoterDashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
 import { getServerT } from '@/lib/i18n/server';
+import { askStatusLabel } from '@/lib/i18n-enum-labels';
 
 export const revalidate = 60;
 
@@ -260,7 +261,7 @@ export default async function FanProfilePage({
                         ? { background: 'var(--hair-50)', color: 'var(--ink-a65)' }
                         : { background: 'rgba(var(--role-fan-rgb),.15)', color: 'var(--profile-accent, var(--role-fan))' }}
                   >
-                    {t(`fansSlugPage.askStatus.${ask.status}`, ASK_STATUS_LABEL[ask.status] ?? ask.status)}
+                    {askStatusLabel(t, ASK_STATUS_LABEL[ask.status] ?? ask.status)}
                   </span>
                 </div>
               ))}

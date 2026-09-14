@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { cancellationReasonLabel } from '@/lib/i18n-enum-labels';
 
 const REASONS = [
   { value: 'artist', label: 'Artist can no longer perform' },
@@ -133,7 +134,7 @@ export function EventCancellationFlow({
         {REASONS.map((r) => (
           <label className="ecf-reason-row" key={r.value}>
             <input checked={reason === r.value} name="reason" onChange={() => setReason(r.value)} type="radio" />
-            {t(`eventCancellationFlow.reason.${r.value}`, r.label)}
+            {cancellationReasonLabel(t, r.label)}
           </label>
         ))}
       </div>

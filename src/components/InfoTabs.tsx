@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
 
 import type { KeyboardEvent as ReactKeyboardEvent, ReactNode } from 'react';
+import { infoTabLabel } from '@/lib/i18n-enum-labels';
 
 type TabId = 'trust' | 'transparency' | 'privacy' | 'terms' | 'charter' | 'dmca';
 
@@ -43,7 +44,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
   }, [paramTab]);
 
   const activeIndex = TABS.findIndex((tb) => tb.id === tab);
-  const tabLabel = (i: number) => t(`legalPage.tabLabel${i}`, TABS[i].label);
+  const tabLabel = (i: number) => infoTabLabel(t, TABS[i].label);
 
   // Roving focus, per the design system's ARIA-patterns card: a tablist is one
   // tab stop and the arrow keys move within it. Home/End jump to the ends.

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { MUSIC_GENRES } from '@/lib/genres';
 import { useI18n } from '@/components/I18nProvider';
+import { verifyProofLine } from '@/lib/i18n-enum-labels';
 
 const PROOF: Record<string, string[]> = {
   ARTIST: [
@@ -129,8 +130,8 @@ export function VerifyForm({ profileId, type, initialName, initialCity, initialG
       </p>
       <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: 16 }}>
         <div style={{ ...labelStyle, color: 'var(--role-venue)', marginBottom: 10 }}>{t('verifyForm.whatCountsAsProof', 'What counts as proof')}</div>
-        {PROOF[type].map((line, i) => (
-          <div key={line} style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.8 }}>· {t(`verifyForm.proof${type}${i}`, line)}</div>
+        {PROOF[type].map((line) => (
+          <div key={line} style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.8 }}>· {verifyProofLine(t, line)}</div>
         ))}
       </div>
 

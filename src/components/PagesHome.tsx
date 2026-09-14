@@ -8,6 +8,7 @@ import { PageRoleModules } from '@/components/PageRoleModules';
 import { PullToRefresh } from '@/components/PullToRefresh';
 import { useI18n } from '@/components/I18nProvider';
 import { useRegisterStations } from '@/components/mmm/MmmStations';
+import { createCardDesc, createCardName, netFilterLabel, pagesTabLabel, profileTypeLabel } from '@/lib/i18n-enum-labels';
 
 const TYPE_COLOR: Record<string, string> = {
   ARTIST: 'var(--role-artist)',
@@ -146,13 +147,13 @@ export function PagesHome({
      MmmMe.tsx documents. `t` is redeclared on every I18nProvider render, so
      memoising on it would be no memo at all; the labels are digested into a
      string instead, the same technique useRegisterQueue uses for its rows. */
-  const stationDigest = visibleTabs.map((item) => `${item.id}\u0001${t(`pagesHome.tabLabel.${item.id}`, item.label)}`).join('\u0002');
+  const stationDigest = visibleTabs.map((item) => `${item.id}\u0001${pagesTabLabel(t, item.label)}`).join('\u0002');
   const stations = useMemo(
     // Built from visibleTabs, not parsed back out of the digest: a label like
     // "My Page" contains a space, so any separator-and-split scheme is one
     // translation away from breaking. The digest is only the cache key.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    () => visibleTabs.map((item) => ({ id: item.id, label: t(`pagesHome.tabLabel.${item.id}`, item.label) })),
+    () => visibleTabs.map((item) => ({ id: item.id, label: pagesTabLabel(t, item.label) })),
     [stationDigest],
   );
   const selectStation = useRef<(id: string) => void>(() => {});
@@ -276,7 +277,7 @@ export function PagesHome({
 
   const selectedProfile = myProfiles.find((p) => p.id === selectedPageId) ?? myProfiles[0] ?? null;
 
-  const typeLabel = (type: string) => t(`pagesHome.typeLabel.${type}`, TYPE_LABEL[type] ?? type);
+  const typeLabel = (type: string) => profileTypeLabel(t, TYPE_LABEL[type] ?? type);
 
   if (signedOut) {
     return (
@@ -515,7 +516,7 @@ export function PagesHome({
                   color: netFilter === f.id ? 'var(--ink)' : 'var(--ink-a65)',
                 }}
               >
-                {t(`pagesHome.netFilterLabel.${f.id}`, f.label)}
+                {netFilterLabel(t, f.label)}
               </div>
             ))}
           </div>
@@ -628,8 +629,8 @@ export function PagesHome({
           <div className="pages-create-grid">
             {CREATE_CARDS.map((card) => {
               const isCreating = creatingType === card.type;
-              const cardName = t(`pagesHome.createCardName.${card.type}`, card.name);
-              const cardDesc = t(`pagesHome.createCardDesc.${card.type}`, card.desc);
+              const cardName = createCardName(t, card.name);
+              const cardDesc = createCardDesc(t, card.desc);
               if (isCreating) {
                 return (
                   <div key={card.type} style={{

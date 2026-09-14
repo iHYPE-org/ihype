@@ -16,6 +16,7 @@ import { MUSIC_GENRES } from '@/lib/genres';
 import { useI18n } from '@/components/I18nProvider';
 import { LoudnessMeasureButton } from '@/components/LoudnessMeasureButton';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
+import { editorSectionLabel, statBoardHint, statBoardLabel, statOptionLabel } from '@/lib/i18n-enum-labels';
 
 type AvailabilityEntry = { id: string; date: string; note: string | null; kind?: 'TOUR' | 'AVAILABLE' };
 type RecentHyper = { id: string; name: string; image: string | null; at: string };
@@ -581,7 +582,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             onClick={() => setSection(s.id)}
             type="button"
           >
-            {t(`pageEditor.sectionLabel.${s.id}`, s.label)}
+            {editorSectionLabel(t, s.label)}
           </button>
         ))}
       </div>
@@ -1209,7 +1210,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                         }}
                         type="checkbox"
                       />
-                      <span style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{t(`pageEditor.statOption.${opt.key}`, opt.label)}</span>
+                      <span style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{statOptionLabel(t, opt.label)}</span>
                     </label>
                   );
                 })}
@@ -1246,10 +1247,10 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                         fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em',
                         textTransform: 'uppercase', color: 'var(--ink-a65)',
                       }}>
-                        {t(`pageEditor.statBoard.${stat.key}`, stat.label)}
+                        {statBoardLabel(t, stat.label)}
                       </span>
                       <span style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
-                        {t(`pageEditor.statBoardHint.${stat.key}`, stat.hint)}
+                        {statBoardHint(t, stat.hint)}
                       </span>
                     </div>
                   ))}
