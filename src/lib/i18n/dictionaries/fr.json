@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "Votre compte a été supprimé. Déconnexion en cours.",
   "settingsPage.demandRadarDetail": "Les artistes peuvent voir votre salle dans le radar de demande et demander un créneau",
   "settingsPage.demandRadarLabel": "M'afficher dans le radar de demande",
+  "settingsPage.detachFailed": "Impossible de détacher votre identité pour le moment. Rien n’a été modifié ; réessayez dans un instant.",
   "settingsPage.detachNow": "Détacher maintenant",
   "settingsPage.detaching": "Détachement…",
   "settingsPage.discoveryDetail": "Les fans peuvent trouver votre profil dans Découvrir et la recherche",

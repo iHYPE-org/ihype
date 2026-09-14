@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "Il tuo account è stato eliminato. Disconnessione in corso.",
   "settingsPage.demandRadarDetail": "Gli artisti possono vedere il tuo locale nel radar della domanda e chiedere uno slot",
   "settingsPage.demandRadarLabel": "Mostrami nel radar della domanda",
+  "settingsPage.detachFailed": "Non è stato possibile scollegare la tua identità in questo momento. Non è cambiato nulla; riprova tra poco.",
   "settingsPage.detachNow": "Scollega ora",
   "settingsPage.detaching": "Scollegamento…",
   "settingsPage.discoveryDetail": "I fan possono trovare il tuo profilo in Scopri e nella ricerca",

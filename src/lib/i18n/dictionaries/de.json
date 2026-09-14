@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "Dein Konto wurde gelöscht. Du wirst jetzt abgemeldet.",
   "settingsPage.demandRadarDetail": "Künstler sehen deinen Raum im Nachfrage-Radar und können einen Slot anfragen",
   "settingsPage.demandRadarLabel": "Mich im Nachfrage-Radar anzeigen",
+  "settingsPage.detachFailed": "Deine Identität konnte gerade nicht getrennt werden. Es wurde nichts geändert – versuche es gleich noch einmal.",
   "settingsPage.detachNow": "Jetzt lösen",
   "settingsPage.detaching": "Wird gelöst…",
   "settingsPage.discoveryDetail": "Fans finden dein Profil in Entdecken und in der Suche",

@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "आपका खाता मिटा दिया गया है। अभी आपको साइन आउट किया जा रहा है।",
   "settingsPage.demandRadarDetail": "कलाकार डिमांड रडार में आपका स्थल देख सकते हैं और स्लॉट का अनुरोध कर सकते हैं",
   "settingsPage.demandRadarLabel": "मुझे डिमांड रडार में दिखाएँ",
+  "settingsPage.detachFailed": "अभी आपकी पहचान अलग नहीं की जा सकी। कुछ भी नहीं बदला — थोड़ी देर बाद फिर कोशिश करें।",
   "settingsPage.detachNow": "अभी अलग करें",
   "settingsPage.detaching": "अलग किया जा रहा है…",
   "settingsPage.discoveryDetail": "फ़ैन आपकी प्रोफ़ाइल को खोज और डिस्कवर में पा सकते हैं",
