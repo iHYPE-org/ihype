@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { detectRequestLocation } from '@/lib/request-location';
 import { bboxWhere } from '@/lib/map-query';
 import { haversineKm } from '@/lib/fan-demand';
+import { readList } from '@/lib/read-list';
+import { readUnavailableResponse } from '@/lib/read-unavailable';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,29 +58,37 @@ export async function GET(request: Request) {
         ? { city: { equals: city, mode: 'insensitive' as const } }
         : null;
 
-  const [loved, nearbyRows, matches] = await Promise.all([
-    db.follow.findMany({
+  const [lovedRead, nearbyRead, matchesRead] = await Promise.all([
+    /* All three lists go through `readList()`: caught to `[]` the route
+       answered 200 with three empty groups and the request form read "No
+       venues found yet" over a database that did not answer (DESIGN_SYNC
+       row 451). One failed group is a failed picker. */
+    readList(db.follow.findMany({
       where: { followerId: session.user.id, followeeProfile: { type: 'VENUE' } },
       orderBy: { createdAt: 'desc' },
       take: 12,
       select: { followeeProfile: { select: VENUE_SELECT } },
-    }).then((rows) => rows.map((row) => row.followeeProfile)).catch(() => []),
+    }).then((rows) => rows.map((row) => row.followeeProfile))),
     nearbyWhere
-      ? db.profile.findMany({
+      ? readList(db.profile.findMany({
           where: { type: 'VENUE', discoverable: true, ...nearbyWhere },
           take: 40,
           select: { ...VENUE_SELECT, latitude: true, longitude: true },
-        }).catch(() => [])
+        }))
       : Promise.resolve([]),
     q.length >= 2
-      ? db.profile.findMany({
+      ? readList(db.profile.findMany({
           where: { type: 'VENUE', discoverable: true, name: { contains: q, mode: 'insensitive' } },
           orderBy: { hypeCount: 'desc' },
           take: 8,
           select: VENUE_SELECT,
-        }).catch(() => [])
+        }))
       : Promise.resolve([]),
   ]);
+  if (lovedRead === null || nearbyRead === null || matchesRead === null) return readUnavailableResponse('Venues');
+  const loved = lovedRead;
+  const nearbyRows = nearbyRead;
+  const matches = matchesRead;
 
   const nearby = nearbyRows
     .map((venue) => ({

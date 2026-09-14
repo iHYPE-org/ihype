@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { releasedMediaWhere } from '@/lib/media-release';
+import { readList } from '@/lib/read-list';
+import { readUnavailableResponse } from '@/lib/read-unavailable';
 import type { Prisma } from '@prisma/client/edge';
 
 export const dynamic = 'force-dynamic';
@@ -178,7 +180,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const candidates = await db.artistMediaAsset.findMany({
+  /* The read the chart IS. Caught to `[]` it answered 200 `{ rows: [], reason:
+     'no-tracks' }` and the Charts tab drew its no-tracks sentence over a
+     database that did not answer (DESIGN_SYNC row 451). */
+  const candidates = await readList(db.artistMediaAsset.findMany({
     where,
     orderBy: { createdAt: 'desc' },
     take: CANDIDATE_LIMIT,
@@ -192,7 +197,8 @@ export async function GET(request: NextRequest) {
       artworkUrl: true,
       profile: { select: { name: true, slug: true, city: true, genres: true } },
     },
-  }).catch(() => []);
+  }));
+  if (candidates === null) return readUnavailableResponse('The chart');
 
   if (!candidates.length) {
     return NextResponse.json(
