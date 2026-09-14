@@ -5,7 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { NotificationsList } from '@/components/NotificationsList';
 import { getServerT } from '@/lib/i18n/server';
-import { readList } from '@/lib/read-list';
+import { readList, readValue } from '@/lib/read-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,6 +54,15 @@ export default async function MmmNotificationsPage() {
     }),
   );
 
+  /* The list is the newest 50 and the counts are of EVERYTHING (DESIGN_SYNC
+     row 459): the unread badge used to be `rows.filter(unread).length` over
+     that page, so a member with seventy unread read fifty. `null` keeps its
+     meaning — a failed count renders no figure rather than a smaller one. */
+  const [unreadCount, totalCount] = await Promise.all([
+    readValue(db.notification.count({ where: { userId: session.user.id, read: false } })),
+    readValue(db.notification.count({ where: { userId: session.user.id } })),
+  ]);
+
   const t = await getServerT();
 
   return (
@@ -66,6 +75,8 @@ export default async function MmmNotificationsPage() {
       <NotificationsList
         heading={false}
         loadFailed={notifications === null}
+        serverTotal={totalCount}
+        serverUnread={unreadCount}
         initialNotifications={(notifications ?? []).map((row) => ({
           ...row,
           // The component's own type takes a string: it renders through

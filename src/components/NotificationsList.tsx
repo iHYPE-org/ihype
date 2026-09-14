@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatRelativeAge } from '@/lib/format-locale';
+import { formatNumber, formatRelativeAge } from '@/lib/format-locale';
+import { isTruncatedList, visibleUnreadCount } from '@/lib/list-counts';
 import { useI18n } from '@/components/I18nProvider';
 
 type Notification = {
@@ -63,16 +64,34 @@ export function NotificationsList({
      "You're all caught up" over a query that never landed is a claim about
      the member (DESIGN_SYNC row 408's rule, applied to this surface). */
   loadFailed = false,
-}: { initialNotifications: Notification[]; heading?: boolean; loadFailed?: boolean }) {
+  serverUnread = null,
+  serverTotal = null,
+}: {
+  initialNotifications: Notification[];
+  heading?: boolean;
+  loadFailed?: boolean;
+  /* Counts over EVERY row, not the page below (DESIGN_SYNC row 459). `null`
+     is a failed or absent count and renders no figure, never a smaller one. */
+  serverUnread?: number | null;
+  serverTotal?: number | null;
+}) {
   const { locale, t } = useI18n();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const router = useRouter();
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+  /* What the member has marked read HERE, so the server's count stays true
+     as they work down the list without re-reading it. */
+  const [readHere, setReadHere] = useState(0);
+  const pageUnread = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+  /* The server counted every row; this page holds at most fifty of them. Fall
+     back to the page only when no count came (an older caller, or a failed
+     one) — and then it is the page's own figure, which is all it can claim. */
+  const unreadCount = visibleUnreadCount(serverUnread, pageUnread, readHere);
   const filtered = tab === 'unread' ? notifications.filter((n) => !n.read) : notifications;
 
   async function markRead(ids: string[]) {
+    setReadHere((n) => n + notifications.filter((row) => ids.includes(row.id) && !row.read).length);
     setNotifications((ns) => ns.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)));
     try {
       await fetch('/api/me/notifications', {
@@ -87,6 +106,9 @@ export function NotificationsList({
   }
 
   async function markAllRead() {
+    // The route marks every unread row, not just this page's — so the count
+    // goes to zero rather than down by what is on screen.
+    setReadHere(serverUnread ?? notifications.length);
     setNotifications((ns) => ns.map((n) => ({ ...n, read: true })));
     try {
       await fetch('/api/me/notifications', {
@@ -169,6 +191,16 @@ export function NotificationsList({
           );
         })
       )}
+
+      {/* A capped list that reads as the whole history is the same claim as an
+          empty one over a failed read (DESIGN_SYNC row 459). */}
+      {serverTotal !== null && isTruncatedList(notifications.length, serverTotal) ? (
+        <p className="notifications-time" style={{ marginTop: 16 }}>
+          {t('notificationsList.showingRecent', 'Showing the {shown} most recent of {total}.')
+            .replace('{shown}', formatNumber(locale, notifications.length))
+            .replace('{total}', formatNumber(locale, serverTotal))}
+        </p>
+      ) : null}
 
       <style>{`
         .notifications-page { max-width: 720px; margin: 0 auto; padding: 32px 24px 100px; }

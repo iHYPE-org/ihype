@@ -57,7 +57,13 @@ export default async function PayoutsHubPage({
   });
   const profileIds = profiles.map((p) => p.id);
 
-  const [released, pending, shows] = await Promise.all([
+  /* THE TILES COUNT EVERYTHING; THE LISTS SHOW THE NEWEST PAGE (DESIGN_SYNC
+     row 459). "Total received" used to be a sum over the 100 rows below it,
+     so a profile past 100 released payables read a lifetime total that
+     silently omitted the rest — a figure derived from a capped page is a
+     claim about the whole set. Neither read is caught: a failed aggregate
+     must reach the error boundary, never render a smaller number. */
+  const [released, pending, shows, releasedTotals, pendingCount] = await Promise.all([
     tab === 'history' && profileIds.length
       ? db.accountsPayableEntry.findMany({
           where: { profileId: { in: profileIds }, status: 'RELEASED' },
@@ -82,6 +88,16 @@ export default async function PayoutsHubPage({
           take: 50,
         })
       : Promise.resolve([]),
+    tab === 'history' && profileIds.length
+      ? db.accountsPayableEntry.aggregate({
+          where: { profileId: { in: profileIds }, status: 'RELEASED' },
+          _sum: { amountCents: true },
+          _count: { _all: true },
+        })
+      : Promise.resolve(null),
+    tab === 'history' && profileIds.length
+      ? db.accountsPayableEntry.count({ where: { profileId: { in: profileIds }, status: 'PENDING' } })
+      : Promise.resolve(0),
   ]);
 
   const stripeReady = isStripeConfigured();
@@ -107,7 +123,15 @@ export default async function PayoutsHubPage({
         ))}
       </div>
 
-      {tab === 'history' && <PayoutsHistoryPanel pending={pending} released={released} />}
+      {tab === 'history' && <PayoutsHistoryPanel
+              pending={pending}
+              /* A sum of no rows is null and that IS zero here: the aggregate
+                 landed. A failed one throws above and never reaches this. */
+              pendingTotal={pendingCount}
+              released={released}
+              releasedTotal={releasedTotals?._count._all ?? 0}
+              releasedTotalCents={releasedTotals?._sum.amountCents ?? 0}
+            />}
       {tab === 'settings' && <PayoutSettingsPanel profiles={settingsProfiles} stripeReady={stripeReady} />}
       {tab === 'show' && <PayoutShowsPanel shows={shows} />}
     </div>
