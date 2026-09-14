@@ -136,6 +136,11 @@ const ROUTES = [
      (`audit:spacing` report 3), so it is the surface this list exists to
      protect while that debt is converted. */
   '/app/me/advertising/new',
+  /* THE EVENT CREATOR. 62 inline styles in 571 lines — the densest carrier of
+     inline spacing on any shell route, and never measured, because it needed
+     no fixture and so nobody thought to add it. Both clock reads in the file
+     sit inside the submit handler, so the rendered form is stable to measure. */
+  '/app/me/events/new',
   /* The advertiser's OWN dashboard, populated. Nothing in this repository
      seeded an `AdvertiserAccount` until 2026-09-13, so the surface a paying
      customer reads their charges on had never been rendered by any
@@ -876,6 +881,19 @@ const seededShow = await seedShowWithTicket({
   orderCreatedAt: new Date(Date.now() - 13 * 60 * 60 * 1000),
 });
 ROUTES.push(`/shows/${seededShow.slug}`);
+/* THE TWO SURFACES WHERE MONEY AND ADMISSION ARE READ, both from the same
+   seeded show and neither ever measured before 2026-09-14 (DESIGN_SYNC row
+   411). `/app/me/payouts/<slug>` is the 70/20/10 breakdown — 37 inline styles
+   in 181 lines, the densest by ratio in the shell — and it renders here because
+   the fixture sets `creatorId` to the session user, which is the page's gate.
+   `/app/me/tickets/<serializedId>` is the QR at the door and the page the
+   offline wallet caches. Neither reads the clock at render: the payout page
+   formats the pinned `startsAt` only, the ticket page formats nothing live.
+   Row 409's argument applies to both — inline style is invisible to every
+   other instrument here, so a surface nothing measures can move without
+   anything noticing. */
+ROUTES.push(`/app/me/payouts/${seededShow.slug}`);
+ROUTES.push(`/app/me/tickets/${seededShow.serializedId}`);
 
 // Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
 // HTTPS_PROXY from the environment, and `bypass` is required rather than
