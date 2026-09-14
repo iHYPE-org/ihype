@@ -442,6 +442,11 @@ type ProbeResult<T> = {
    score. So the probe counts every control it CONSIDERED, and a run that
    considered almost none is refused rather than celebrated. */
 let controlsConsidered = 0;
+/* THE DENOMINATOR. `controlsConsidered` is an absolute floor and cannot tell a
+   census of the whole app from a census of the third of it that happened to
+   load. Set inside capture() from the --only-FILTERED route list, so a scoped
+   run is judged against its own plan rather than against the full table. */
+let pairsPlanned = 0;
 // `null as ...`: assigned inside capture()'s callback, which TypeScript's
 // narrowing cannot see, so `: T | null = null` read as `never` at the report.
 let tightestClearing = null as { side: number; sel: string } | null;
@@ -470,6 +475,11 @@ async function capture<T>(cookie: string, probe = PROBE): Promise<Record<string,
   const result: Record<string, T[]> = {};
   const routes = ONLY ? ROUTES.filter((r) => r.includes(ONLY)) : ROUTES;
   if (!routes.length) throw new Error(`--only=${ONLY} matched no route`);
+  /* PLANNED, not attempted: a browser that dies two thirds of the way through
+     `break`s the rest of its width without trying them, and that is exactly
+     the run this figure exists to refuse. Counting attempts would let such a
+     run pass by shrinking the denominator to match what it managed. */
+  pairsPlanned = routes.length * WIDTHS.length;
 
   for (const width of WIDTHS) {
     let browser: Browser;
@@ -906,8 +916,32 @@ console.log(`Measuring ${ONLY ? `routes matching "${ONLY}"` : `${ROUTES.length} 
 
 if (TAPS) {
   const found = await capture<Tap>(cookie, TAP_PROBE);
-  if (!Object.keys(found).length) {
+  const pairsMeasured = Object.keys(found).length;
+  if (!pairsMeasured) {
     console.error('\nMeasured no route at all. A census of nothing is not a clean bill of health.');
+    process.exit(2);
+  }
+  /* A CENSUS OVER HALF THE APP IS NOT A READING ABOUT THE APP, AND UNTIL THIS
+     GUARD NOTHING SAID SO. An UNMEASURED pair adds no key to `found`, so the
+     refusal above and the one below see a partial run exactly as they see a
+     whole one — both are ABSOLUTE, and a gate that cannot name its denominator
+     is not a gate (the same defect row 433 found in four CI gates reading PASS
+     over an empty source tree). Measured on 2026-09-14: a run came back with 41
+     of 92 pairs refused by the connection and still printed a score, because
+     the 51 that loaded carried far more than 100 controls between them.
+
+     The 90% line is a judgement and worth stating as one. It has to be loose
+     enough that one flaked pair does not discard an hour — each pair is already
+     retried twice with a /api/health wait between, so a pair that fails both is
+     not a light flake — and tight enough to catch the failures that actually
+     happen here: a dead worker takes everything, and a lost browser takes a
+     whole width (~25%). It does NOT catch three or four quietly missing
+     surfaces, which is why the figure is printed on every run rather than only
+     on refusal: read the denominator, do not just read the verdict. */
+  if (pairsMeasured < Math.ceil(pairsPlanned * 0.9)) {
+    console.error(`\nOnly ${pairsMeasured} of ${pairsPlanned} route/width pair(s) were measured.`);
+    console.error('That is a reading about the surfaces that loaded, not about the app. Refusing to report a score.');
+    console.error('Check that the worker is up and the database behind it is reachable, then re-run.');
     process.exit(2);
   }
   /* The shell carries hundreds of controls across four widths. A figure this
@@ -917,7 +951,7 @@ if (TAPS) {
     console.error('That is the probe failing to match, not a clean app. Refusing to report a score.');
     process.exit(2);
   }
-  console.log(`\n${controlsConsidered} control sighting(s) considered.`);
+  console.log(`\n${pairsMeasured} of ${pairsPlanned} route/width pair(s) measured; ${controlsConsidered} control sighting(s) considered.`);
   if (tightestClearing) {
     console.log(`Tightest control that CLEARS the floor: ${tightestClearing.side}px on ${tightestClearing.sel} — the probe is reading geometry at the boundary.`);
   }
