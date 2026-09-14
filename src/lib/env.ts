@@ -8,22 +8,20 @@ const optStr = z.string().optional().transform(blank);
 const optEmail = z.string().optional().transform(v => {
   const s = blank(v); return s && z.string().email().safeParse(s).success ? s : undefined;
 });
-const optUrl = z.string().optional().transform(v => {
-  const s = blank(v); return s && z.string().url().safeParse(s).success ? s : undefined;
-});
 
+/* Only the mailer reads through this proxy (`env.EMAIL_FROM`,
+   `env.RESEND_API_KEY`, `env.EMAIL_SINK_URL`); everything else in the app
+   reads `readRuntimeEnv()` directly. So a key here is either one of those
+   three or a VALIDATION that fails the first mail send loudly when the two
+   secrets nothing can run without are missing. Until 2026-09-14 the schema
+   also declared an OpenAI key, six SMTP settings, a Stripe publishable key and
+   Google OAuth credentials — none read by anything, and every one of them a
+   claim in `.env.example` about a mailer, an AI vendor and a login method this
+   product does not have. `env-example.test.ts` refuses a key here that nothing
+   reads. */
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   AUTH_SECRET: z.string().min(16),
-  AUTH_URL: optUrl,
-  NEXT_PUBLIC_APP_URL: optUrl,
-  OPENAI_API_KEY: optStr,
-  SMTP_HOST: optStr,
-  SMTP_PORT: z.coerce.number().int().positive().optional(),
-  SMTP_SECURE: optStr,
-  SMTP_USER: optStr,
-  SMTP_PASSWORD: optStr,
-  SMTP_FROM: optEmail,
   EMAIL_FROM: optEmail,
   RESEND_API_KEY: optStr,
   /* Test-only mail sink. When set to a LOOPBACK URL the mailer posts every
@@ -32,12 +30,6 @@ const envSchema = z.object({
      `emailSinkUrl()` in mailer.ts. */
   EMAIL_SINK_URL: optStr,
   // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
-  STRIPE_SECRET_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('sk_') ? s : undefined; }),
-  STRIPE_WEBHOOK_SECRET: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('whsec_') ? s : undefined; }),
-  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().optional().transform(v => { const s = blank(v); return s?.startsWith('pk_') ? s : undefined; }),
-  AUTH_GOOGLE_ID: optStr,
-  AUTH_GOOGLE_SECRET: optStr,
-  ADMIN_ALERT_EMAIL: optEmail
 });
 
 /**

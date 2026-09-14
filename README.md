@@ -9,7 +9,7 @@ iHYPE is a Next.js application for artist, venue, and fan profiles, event discov
 - Auth.js with Prisma
 - PostgreSQL and Prisma ORM
 - Cloudflare Workers, Durable Objects, and object storage
-- Resend/SMTP for transactional email
+- Resend for transactional email (there is no SMTP path)
 - Stripe for optional paid ticketing and payouts
 - Playwright and Vitest for automated checks
 

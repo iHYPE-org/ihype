@@ -33,7 +33,10 @@ const REQUIRED = [
 
 const OPTIONAL = [
   { key: 'NEXT_PUBLIC_SENTRY_DSN', hint: 'Sentry error monitoring' },
-  { key: 'OPENAI_API_KEY', hint: 'AI discovery features' },
+  /* OPENAI_API_KEY was listed here as "AI discovery features" until
+     2026-09-14. iHYPE's AI runs on Workers AI through the Worker's `AI`
+     binding; nothing in src/ has ever read an OpenAI key, so the line told an
+     operator to configure a vendor the product does not use. */
   /* MUX_TOKEN_ID/MUX_TOKEN_SECRET were listed here as "Video streaming" and
      are gone (2026-08-14). iHYPE hosts no video, no live streams and no
      recorded video — it is a brand constant, not a missing feature — and
