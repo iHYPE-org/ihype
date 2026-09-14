@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
 import { useI18n } from '@/components/I18nProvider';
 
-type ReportStatus = 'OPEN' | 'REVIEWED' | 'RESOLVED' | 'DISMISSED' | 'HIDDEN';
+type ReportAction = 'approve' | 'dismiss';
 type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED' | 'UNVERIFIED';
 
 class ReauthRequiredError extends Error {
@@ -32,52 +32,56 @@ async function patchJson(url: string, body: unknown) {
   return payload;
 }
 
+/**
+ * The Overview's report row decides a report the same way /admin/moderation
+ * and /admin/review do: through PATCH /api/admin/moderation/[id], which
+ * removes the content on `approve` and marks the report ACTIONED, or marks it
+ * DISMISSED. Until 2026-09-14 this row offered REVIEWED / RESOLVED / DISMISSED
+ * / HIDDEN against a second route with its own enforcement table, so an
+ * operator could clear the queue here without the content going anywhere
+ * (DESIGN_SYNC row 458).
+ */
 export function AdminReportActions({ reportId }: { reportId: string }) {
   const { t } = useI18n();
   const router = useRouter();
-  const [pendingStatus, setPendingStatus] = useState<ReportStatus | null>(null);
-  const [reauthStatus, setReauthStatus] = useState<ReportStatus | null>(null);
+  const [pendingAction, setPendingAction] = useState<ReportAction | null>(null);
+  const [reauthAction, setReauthAction] = useState<ReportAction | null>(null);
   const [error, setError] = useState('');
 
-  async function run(status: ReportStatus) {
-    setPendingStatus(status);
-    setReauthStatus(null);
+  async function run(action: ReportAction) {
+    setPendingAction(action);
+    setReauthAction(null);
     setError('');
 
     try {
-      await patchJson(`/api/admin/content-reports/${reportId}`, { status });
+      await patchJson(`/api/admin/moderation/${reportId}`, { action });
       router.refresh();
     } catch (err) {
       if (err instanceof ReauthRequiredError) {
-        setReauthStatus(status);
+        setReauthAction(action);
       } else {
         setError(err instanceof Error ? err.message : t('adminModerationActions.actionFailed', 'Action failed.'));
       }
     } finally {
-      setPendingStatus(null);
+      setPendingAction(null);
     }
   }
 
   return (
     <div className="admin-action-row">
-      {(['REVIEWED', 'RESOLVED', 'DISMISSED', 'HIDDEN'] as const).map((status) => (
-        <button
-          className={status === 'HIDDEN' ? 'button small danger' : 'button small secondary'}
-          disabled={Boolean(pendingStatus)}
-          key={status}
-          onClick={() => run(status)}
-          type="button"
-        >
-          {pendingStatus === status ? t('adminModerationActions.saving', 'Saving...') : status}
-        </button>
-      ))}
-      {reauthStatus ? (
+      <button className="button small danger" disabled={Boolean(pendingAction)} onClick={() => run('approve')} type="button">
+        {pendingAction === 'approve' ? t('adminModerationActions.saving', 'Saving...') : t('adminModerationActions.removeContent', 'Remove content')}
+      </button>
+      <button className="button small secondary" disabled={Boolean(pendingAction)} onClick={() => run('dismiss')} type="button">
+        {pendingAction === 'dismiss' ? t('adminModerationActions.saving', 'Saving...') : t('adminModerationActions.dismiss', 'Dismiss')}
+      </button>
+      {reauthAction ? (
         <AdminReauthPrompt
-          onCancel={() => setReauthStatus(null)}
+          onCancel={() => setReauthAction(null)}
           onSuccess={() => {
-            const status = reauthStatus;
-            setReauthStatus(null);
-            void run(status);
+            const action = reauthAction;
+            setReauthAction(null);
+            void run(action);
           }}
         />
       ) : null}
