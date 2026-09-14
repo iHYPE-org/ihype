@@ -239,6 +239,25 @@ jobs:
         # quietly self-exempted were found.
         run: npm run audit:doc-paths
 
+      - name: Published URLs resolve
+        # The other half of the gate above. A documented path is a claim about
+        # a file; a PUBLISHED URL is a claim about a route, and nothing
+        # compared those either. On the run that produced this the DAILY digest
+        # linked twice to `/shows` (HTTP 404 signed in) and the Monday mail to
+        # `/discover` (deleted outright, not even aliased).
+        #
+        # It also reads `robots.ts` — but ONLY against what `sitemap.ts`
+        # submits. The same URL is right in an email, because the member is
+        # signed in, and wrong in a sitemap, because robots forbids `/app`.
+        # Conflating the two would make the check useless.
+        #
+        # Budget 2, and the two are named on every run: the artist and venue
+        # entries, which are uncrawlable because those panes sit behind auth at
+        # invite-only alpha. Whether that should change is a product decision
+        # put to the owner, so they are carried visibly rather than marked
+        # exempt — an exemption would say they are fine, and they are not.
+        run: npm run audit:published-urls
+
       - name: Unstyled-class gate
         # The other side of the same coin as the gate below. That one asks
         # whether anything RENDERS a component; this asks whether anything

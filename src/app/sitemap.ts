@@ -18,15 +18,36 @@ export const revalidate = 3600; // rebuild hourly
 
 const base = getBaseUrl();
 
+/* WHAT A CRAWLER CAN ACTUALLY READ, AND NOTHING ELSE.
+ *
+ * Six entries were removed on 2026-09-14 because `robots.txt` forbids where
+ * they land, which is the same contradiction the note below records fixing for
+ * `/register` and `/login` — that fix went to the two URLs named at the time
+ * rather than to the rule, so it came back. Measured against production:
+ *
+ *   /shows         404 signed in, 307 to /login signed out — the route is gone,
+ *   /discover      404 — deleted 2026-08-18 and not even aliased,
+ *   /radio         307 -> /app/music/radio      \
+ *   /this-weekend  307 -> /app/map              |  all four land under /app,
+ *   /for-you       307 -> /app/music/recommended|  which robots disallows.
+ *   /community     307 -> /app/me/info/community/
+ *
+ * `npm run audit:published-urls` is the gate that keeps them out; it reads this
+ * file, the route tree, `next.config.mjs` and `robots.ts` rather than restating
+ * any of them.
+ *
+ * STILL SUBMITTED AND STILL BLOCKED: every artist and venue, below, as
+ * `/artists|venues/<slug>` — both 307 into `/app`. Those are NOT removed here,
+ * because the reason they are uncrawlable is a product decision rather than a
+ * mistake: the `/app/*` panes sit behind auth at invite-only alpha (CLAUDE.md
+ * records that as deliberate). Either those pages should be public, in which
+ * case the sitemap is right and the auth gate is what should change, or they
+ * should not, in which case these entries go too. That is the owner's call and
+ * it has been put to them; until it is answered the audit carries them as two
+ * known findings rather than pretending they are fine. */
 const STATIC: MetadataRoute.Sitemap = [
   { url: `${base}/`,               changeFrequency: 'weekly',  priority: 1.0 },
-  { url: `${base}/shows`,          changeFrequency: 'hourly',  priority: 0.9 },
-  { url: `${base}/discover`,       changeFrequency: 'hourly',  priority: 0.8 },
-  { url: `${base}/radio`,          changeFrequency: 'daily',   priority: 0.7 },
-  { url: `${base}/this-weekend`,   changeFrequency: 'daily',   priority: 0.7 },
-  { url: `${base}/for-you`,        changeFrequency: 'daily',   priority: 0.6 },
   { url: `${base}/journal`,        changeFrequency: 'weekly',  priority: 0.6 },
-  { url: `${base}/community`,      changeFrequency: 'weekly',  priority: 0.5 },
   { url: `${base}/community-rules`, changeFrequency: 'monthly', priority: 0.3 },
   { url: `${base}/info`,           changeFrequency: 'monthly', priority: 0.5 },
   { url: `${base}/walkthrough`,    changeFrequency: 'monthly', priority: 0.4 },
