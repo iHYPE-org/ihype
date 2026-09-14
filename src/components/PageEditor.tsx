@@ -217,6 +217,10 @@ function ImageField({ label, value, onUpload, uploading, onRemove }: { label: st
 export function PageEditor({ profileId, initialSection }: { profileId: string; initialSection?: string }) {
   const { locale, t } = useI18n();
   const [data, setData] = useState<EditorProfile | null>(null);
+  /* The editor's own profile read FAILED. `data === null` used to be the only
+     other state, so a failed read left the whole editor on "Loading your
+     page…" for ever (DESIGN_SYNC row 450). */
+  const [editorLoadFailed, setEditorLoadFailed] = useState(false);
   /* 'about' is the new front door — 'basics' is gone, and a deep link naming a
      retired section (?editor=theme from a bookmark or an old email) must land
      somewhere real rather than on a blank pane. Whether the named section is
@@ -253,6 +257,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const [availKindInput, setAvailKindInput] = useState<'TOUR' | 'AVAILABLE'>('TOUR');
   const [availSaving, setAvailSaving] = useState(false);
   const [availError, setAvailError] = useState<string | null>(null);
+  /* The dates read FAILED — distinct from "No dates added yet", which is a
+     claim about the calendar the artist keeps (DESIGN_SYNC row 450). */
+  const [availLoadFailed, setAvailLoadFailed] = useState(false);
   // Recent activity — read-only feed from /api/profile/activity (who hyped
   // this profile recently); there's nothing to edit, just to show.
   const [hypers, setHypers] = useState<RecentHyper[] | null>(null);
@@ -264,6 +271,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   // owner-gated, both refreshed after an upload or a folder change.
   const [albums, setAlbums] = useState<AlbumRow[] | null>(null);
   const [tracks, setTracks] = useState<TrackRow[] | null>(null);
+  /* Either media read FAILED. `albums === null` used to be the only other
+     state, so a failed read sat on "Loading…" for ever; a failure says so. */
+  const [mediaLoadFailed, setMediaLoadFailed] = useState(false);
   const [fileMb, setFileMb] = useState<number>(60);
   const [albumTitleInput, setAlbumTitleInput] = useState('');
   const [albumDateInput, setAlbumDateInput] = useState('');
@@ -273,14 +283,15 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
   const trackArtInputs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const loadMedia = useCallback(() => {
+    setMediaLoadFailed(false);
     fetch(`/api/albums?profileId=${profileId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.albums) setAlbums(d.albums); })
-      .catch(() => {});
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`albums ${r.status}`))))
+      .then((d) => { setAlbums(d?.albums ?? []); })
+      .catch(() => setMediaLoadFailed(true));
     fetch(`/api/artist-media?profileId=${profileId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.tracks) setTracks(d.tracks); if (typeof d?.limits?.fileMb === 'number') setFileMb(d.limits.fileMb); })
-      .catch(() => {});
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`artist-media ${r.status}`))))
+      .then((d) => { setTracks(d?.tracks ?? []); if (typeof d?.limits?.fileMb === 'number') setFileMb(d.limits.fileMb); })
+      .catch(() => setMediaLoadFailed(true));
   }, [profileId]);
 
   useEffect(() => {
@@ -289,10 +300,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
 
   useEffect(() => {
     setData(null);
+    setEditorLoadFailed(false);
     fetch(`/api/profile-editor?profileId=${profileId}`)
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`profile-editor ${r.status}`))))
       .then((d) => {
-        if (!d) return;
+        if (!d?.profile) throw new Error('profile-editor: no profile');
         setData(d.profile);
         const kit = parsePressKit(d.profile?.pressKitContent);
         setKitTagline(kit.tagline);
@@ -311,14 +323,15 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
             .catch(() => {});
         }
       })
-      .catch(() => {});
+      .catch(() => setEditorLoadFailed(true));
   }, [profileId]);
 
   useEffect(() => {
+    setAvailLoadFailed(false);
     fetch(`/api/profile/availability?profileId=${profileId}`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((d) => { if (d?.dates) setAvailDates(d.dates); })
-      .catch(() => {});
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`availability ${r.status}`))))
+      .then((d) => { setAvailDates(d?.dates ?? []); })
+      .catch(() => setAvailLoadFailed(true));
   }, [profileId]);
 
   useEffect(() => {
@@ -552,7 +565,13 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
      a fixed per-type schema filled in by hand. */
 
   if (!data) {
-    return <div style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-a65)' }}>{t('pageEditor.loadingPage', 'Loading your page…')}</div>;
+    return (
+      <div role={editorLoadFailed ? 'status' : undefined} style={{ textAlign: 'center', padding: '48px 0', color: 'var(--ink-a65)' }}>
+        {editorLoadFailed
+          ? t('pageEditor.pageUnavailable', 'Your page could not be loaded just now. Refresh to try again.')
+          : t('pageEditor.loadingPage', 'Loading your page…')}
+      </div>
+    );
   }
 
   const isVenue = data.type === 'VENUE';
@@ -733,7 +752,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                   </button>
                 </div>
                 {availError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{availError}</p>}
-                {availDates.length === 0 ? (
+                {availLoadFailed ? (
+                  <p className="mmm-editor-hint" role="status">{t('pageEditor.datesUnavailable', 'Your dates could not be loaded just now. Refresh to try again.')}</p>
+                ) : availDates.length === 0 ? (
                   <p className="mmm-editor-hint">{t('pageEditor.noDatesYet', 'No dates added yet.')}</p>
                 ) : (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -840,7 +861,9 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                 </button>
               </div>
               {albumError && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem', margin: '0 0 10px' }}>{albumError}</p>}
-              {albums === null ? (
+              {mediaLoadFailed ? (
+                <p className="mmm-editor-hint" role="status">{t('pageEditor.mediaUnavailable', 'Your albums and tracks could not be loaded just now. Refresh to try again.')}</p>
+              ) : albums === null ? (
                 <p className="mmm-editor-hint">{t('pageEditor.loading', 'Loading…')}</p>
               ) : albums.length === 0 ? (
                 <p className="mmm-editor-hint">{t('pageEditor.noAlbumsYet', 'No albums yet. Tracks without one list as singles.')}</p>

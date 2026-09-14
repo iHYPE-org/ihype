@@ -26,16 +26,24 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  /* The venue read FAILED. It used to leave `lists` null, so the form sat on
+     "Finding venues near you…" for as long as the member waited (DESIGN_SYNC
+     row 450). An abort — the member typed again — is not a failure. */
+  const [venuesFailed, setVenuesFailed] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
     const handle = setTimeout(() => {
       const params = new URLSearchParams({ artistProfileId });
       if (query.trim().length >= 2) params.set('q', query.trim());
+      setVenuesFailed(false);
       fetch(`/api/venue-requests/venues?${params}`, { signal: controller.signal })
-        .then((r) => (r.ok ? r.json() : null))
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`venues ${r.status}`))))
         .then((d) => { if (d) setLists(d); })
-        .catch(() => {});
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+          setVenuesFailed(true);
+        });
     }, 250);
     return () => { clearTimeout(handle); controller.abort(); };
   }, [artistProfileId, query]);
@@ -83,7 +91,9 @@ export function ArtistRequestForm({ artistProfileId, artistName }: { artistProfi
         type="search"
         value={query}
       />
-      {lists === null ? (
+      {lists === null && venuesFailed ? (
+        <p className="arf-hint" role="status">{t('artistRequestForm.venuesUnavailable', 'Venues could not be loaded just now. You can still search for one by name, or refresh to try again.')}</p>
+      ) : lists === null ? (
         <p className="arf-hint">{t('artistRequestForm.loading', 'Finding venues near you…')}</p>
       ) : nothing ? (
         <p className="arf-hint">{t('artistRequestForm.noVenues', 'No venues found yet. Follow a venue, or search for one by name.')}</p>

@@ -68,6 +68,9 @@ export function FanPlaylistManager({
         return;
       }
 
+      // A 5xx carrying `{ error }` used to fall through here and read as an
+      // empty library (DESIGN_SYNC row 450); it is the failure the catch names.
+      if (!response.ok) throw new Error(`fan-playlists ${response.status}`);
       const data = await response.json();
       setAuthorized(true);
       setPlaylists(data.playlists ?? []);

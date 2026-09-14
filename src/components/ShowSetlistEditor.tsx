@@ -20,6 +20,9 @@ export function ShowSetlistEditor({
   const [msg, setMsg] = useState<string | null>(null);
   const [templates, setTemplates] = useState<SetlistTemplate[] | null>(null);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
+  /* The templates read FAILED. It used to be swallowed, so pressing "Load
+     template" appeared to do nothing at all (DESIGN_SYNC row 450). */
+  const [templatesLoadFailed, setTemplatesLoadFailed] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [newTemplateName, setNewTemplateName] = useState('');
   const [savingTemplate, setSavingTemplate] = useState(false);
@@ -46,15 +49,18 @@ export function ShowSetlistEditor({
   async function loadTemplates() {
     if (!profileId) return;
     setLoadingTemplates(true);
+    setTemplatesLoadFailed(false);
     try {
       const res = await fetch(`/api/setlist-templates?profileId=${profileId}`);
       if (res.ok) {
         const data = await res.json();
         setTemplates(data.templates ?? []);
         setShowTemplates(true);
+      } else {
+        setTemplatesLoadFailed(true);
       }
     } catch {
-      // ignore
+      setTemplatesLoadFailed(true);
     } finally {
       setLoadingTemplates(false);
     }
@@ -183,6 +189,9 @@ export function ShowSetlistEditor({
               ? t('showSetlistEditor.hideTemplates', 'Hide templates')
               : t('showSetlistEditor.loadTemplate', 'Load template')}
           </button>
+          {templatesLoadFailed && (
+            <p role="status" style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', margin: '8px 0 0' }}>{t('showSetlistEditor.templatesUnavailable', 'Your templates could not be loaded just now. Try again.')}</p>
+          )}
           {showTemplates && templates !== null ? (
             <div style={{ marginTop: 8, background: 'var(--bg-3)', border: '1px solid var(--line)', borderRadius: 8, padding: 8 }}>
               <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>

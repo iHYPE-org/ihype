@@ -53,17 +53,25 @@ export function CommunityVoteBoard() {
   const [description, setDescription] = useState('');
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(true);
+  /* A failed board read is not an empty board. "No feature requests yet — be
+     the first to suggest one" is a claim about the community, and it is not
+     made over a fetch that never landed (DESIGN_SYNC row 450). */
+  const [loadFailed, setLoadFailed] = useState(false);
   const [eligible, setEligible] = useState(false);
   const [pendingVote, setPendingVote] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/feedback')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`feedback ${r.status}`);
+        return r.json();
+      })
       .then((d) => {
         setRequests(d.requests ?? []);
         setEligible(Boolean(d.eligible));
+        setLoadFailed(false);
       })
-      .catch(() => {})
+      .catch(() => setLoadFailed(true))
       .finally(() => setLoading(false));
   }, []);
 
@@ -150,6 +158,8 @@ export function CommunityVoteBoard() {
 
       {loading ? (
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('communityVoteBoard.loading', 'Loading…')}</p>
+      ) : loadFailed ? (
+        <p role="status" style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('communityVoteBoard.unavailable', 'The board could not be loaded just now. Refresh to try again.')}</p>
       ) : requests.length === 0 ? (
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('communityVoteBoard.emptyState', 'No feature requests yet — be the first to suggest one.')}</p>
       ) : (

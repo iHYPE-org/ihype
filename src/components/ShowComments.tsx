@@ -22,15 +22,25 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
   const [text, setText] = useState('');
   const [posting, setPosting] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+  /* A failed read is not an empty thread — "No comments yet — be the first"
+     is a claim about the show (DESIGN_SYNC row 450). */
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/shows/${showId}/comments`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json: { comments?: Comment[] } | null) => {
-        if (!cancelled && json?.comments) setComments(json.comments);
+      .then((res) => {
+        if (!res.ok) throw new Error(`comments ${res.status}`);
+        return res.json();
       })
-      .catch(() => {})
+      .then((json: { comments?: Comment[] } | null) => {
+        if (cancelled) return;
+        setComments(json?.comments ?? []);
+        setLoadFailed(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -114,6 +124,8 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
 
       {loading ? (
         <p className="meta">{t('showComments.loading', 'Loading comments…')}</p>
+      ) : loadFailed ? (
+        <p className="meta" role="status">{t('showComments.unavailable', 'Comments could not be loaded just now. Refresh to try again.')}</p>
       ) : comments.length === 0 ? (
         <p className="meta">{t('showComments.emptyState', 'No comments yet — be the first to say something.')}</p>
       ) : (
