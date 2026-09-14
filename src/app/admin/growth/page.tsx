@@ -36,7 +36,7 @@ export default async function AdminGrowthPage() {
       orderBy: { hypeCount: 'desc' },
       take: 10,
       select: { name: true, slug: true, type: true, hypeCount: true },
-    }).catch(() => []),
+    }).catch(() => null),
     db.profile.count({ where: { type: 'ARTIST', mediaUploads: { none: {} } } }).catch(() => null),
     db.profile.count({ where: { type: 'ARTIST', mediaUploads: { some: {} }, hostedShows: { none: {} }, headlinerShows: { none: {} } } }).catch(() => null),
     db.show.count({ where: { hypeCount: 0, status: { not: 'DRAFT' } } }).catch(() => null),
@@ -45,10 +45,12 @@ export default async function AdminGrowthPage() {
       orderBy: { createdAt: 'desc' },
       take: 10,
       select: { name: true, slug: true, createdAt: true, hypeCount: true },
-    }).catch(() => []),
+    }).catch(() => null),
   ]);
 
-  // `null` means the query failed and is rendered as an em dash. It must never
+  // `null` means the query failed and is rendered as an em dash — and, for the
+  // two lists, as a sentence saying so rather than "No profiles with hypes yet",
+  // which is a claim about the platform (DESIGN_SYNC row 449). It must never
   // collapse to 0: on a funnel, a 0 is a finding ("nobody converted") and an
   // operator cannot tell it apart from a database that did not answer. This is
   // the same rule src/lib/analytics-engine.ts and admin-workbench.ts follow,
@@ -92,11 +94,13 @@ export default async function AdminGrowthPage() {
         </div>
 
         <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.topHypedProfilesHeading', 'Top Hyped Profiles')}</h2>
-        {!topHypedProfiles || topHypedProfiles.length === 0 ? (
+        {topHypedProfiles === null ? (
+          <div className="empty" role="status">{t('adminGrowthPage.unreadable', 'Could not be read just now — the database query failed, so this is not an empty list. Reload to try again.')}</div>
+        ) : topHypedProfiles.length === 0 ? (
           <div className="empty">{t('adminGrowthPage.noProfilesWithHypes', 'No profiles with hypes yet.')}</div>
         ) : (
           <div className="admin-list" style={{ marginBottom: 24 }}>
-            {(topHypedProfiles ?? []).map(p => (
+            {topHypedProfiles.map(p => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
                 <strong>{p.hypeCount} {t('adminGrowthPage.hypes', 'hypes')}</strong>
@@ -107,11 +111,13 @@ export default async function AdminGrowthPage() {
         )}
 
         <h2 style={{ fontSize: '0.9375rem', marginBottom: 10 }}>{t('adminGrowthPage.recentArtistsHeading', 'Recent Artists')}</h2>
-        {!recentArtists || recentArtists.length === 0 ? (
+        {recentArtists === null ? (
+          <div className="empty" role="status">{t('adminGrowthPage.unreadable', 'Could not be read just now — the database query failed, so this is not an empty list. Reload to try again.')}</div>
+        ) : recentArtists.length === 0 ? (
           <div className="empty">{t('adminGrowthPage.noArtistsYet', 'No artists yet.')}</div>
         ) : (
           <div className="admin-list">
-            {(recentArtists ?? []).map(p => (
+            {recentArtists.map(p => (
               <div className="admin-list-row" key={p.slug}>
                 <span>{p.name}</span>
                 <small>/{p.slug}</small>

@@ -37,6 +37,7 @@ import {
   isOutboundEmailEnabledRuntime,
 } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
+import { readList, readValue } from '@/lib/read-list';
 
 
 export const metadata: Metadata = {
@@ -162,50 +163,50 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ] = await Promise.all([
     /* userCount */
     needs('activity')
-      ? db.user.count().catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.user.count())
+      : Promise.resolve(null),
     /* profileCount */
     needs('activity')
-      ? db.profile.count().catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.profile.count())
+      : Promise.resolve(null),
     /* pendingVerificationCount */
     needs('activity')
-      ? db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }).catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.profile.count({ where: { verificationStatus: 'PENDING', verificationRequested: true } }))
+      : Promise.resolve(null),
     /* openReportCount */
     needs('activity')
-      ? db.contentReport.count({ where: { status: 'OPEN' } }).catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.contentReport.count({ where: { status: 'OPEN' } }))
+      : Promise.resolve(null),
     /* openSupportCount */
     needs('activity')
-      ? db.supportRequest.count({ where: { status: 'OPEN' } }).catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.supportRequest.count({ where: { status: 'OPEN' } }))
+      : Promise.resolve(null),
     /* mediaCount */
     needs('activity')
-      ? db.artistMediaAsset.count().catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.artistMediaAsset.count())
+      : Promise.resolve(null),
     /* ticketOrderCount */
     needs('activity')
-      ? db.ticketOrder.count().catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.ticketOrder.count())
+      : Promise.resolve(null),
     /* recentReports */
     needs('support')
-      ? db.contentReport.findMany({
+      ? readList(db.contentReport.findMany({
         orderBy: { createdAt: 'desc' },
         take: 6,
         include: { reporter: { select: { email: true, username: true } } }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentSupport */
     needs('support')
-      ? db.supportRequest.findMany({
+      ? readList(db.supportRequest.findMany({
         orderBy: { createdAt: 'desc' },
         take: 6
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* pendingVerifications */
     needs('overview', 'support')
-      ? db.profile.findMany({
+      ? readList(db.profile.findMany({
         where: { verificationStatus: 'PENDING', verificationRequested: true },
         orderBy: { verificationSubmittedAt: 'desc' },
         take: 6,
@@ -217,139 +218,139 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           verificationNotes: true,
           verificationSubmittedAt: true
         }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentEmails */
     needs('system')
-      ? db.emailDeliveryLog.findMany({
+      ? readList(db.emailDeliveryLog.findMany({
         orderBy: { createdAt: 'desc' },
         take: 6
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentAudits */
     needs('system')
-      ? db.auditLog.findMany({
+      ? readList(db.auditLog.findMany({
         orderBy: { createdAt: 'desc' },
         take: 8,
         include: { actor: { select: { email: true, username: true } } }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentUsers */
     needs('activity')
-      ? db.user.findMany({
+      ? readList(db.user.findMany({
         orderBy: { createdAt: 'desc' },
         take: 6,
         select: { email: true, username: true, role: true, createdAt: true }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* signupFunnelAudits */
     needs('activity')
-      ? db.auditLog.findMany({
+      ? readList(db.auditLog.findMany({
         where: { action: { startsWith: 'signup_funnel:' }, createdAt: { gte: funnelSince } },
         orderBy: { createdAt: 'desc' },
         take: 250,
         select: { action: true, metadata: true }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     getHealthSnapshot(),
     /* recentTicketOrders */
     needs('finance')
-      ? db.ticketOrder.findMany({
+      ? readList(db.ticketOrder.findMany({
         take: 10,
         orderBy: { createdAt: 'desc' },
         include: { show: { select: { title: true } } }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* Activity's metric grid renders this too, through `revenueLabel`.
        Gating it on finance alone painted a confident $0.00 there — the
        null-is-not-zero rule, broken by the change that was meant to be
        invisible, and caught by driving the page rather than by reading it. */
     /* revenueAgg */
     needs('finance', 'activity')
-      ? db.ticketOrder.aggregate({
+      ? readValue(db.ticketOrder.aggregate({
         where: { status: 'CAPTURED' },
         _sum: { totalChargeCents: true }
-      }).catch(() => ({ _sum: { totalChargeCents: null } }))
-      : Promise.resolve(({ _sum: { totalChargeCents: null } })),
+      }))
+      : Promise.resolve(null),
     /* recentShows */
     needs('activity')
-      ? db.show.findMany({
+      ? readList(db.show.findMany({
         take: 8,
         orderBy: { createdAt: 'desc' },
         include: {
           venueProfile: { select: { name: true } },
           _count: { select: { tickets: true } }
         }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentSpamFlags */
     needs('system')
-      ? db.notification.findMany({
+      ? readList(db.notification.findMany({
         where: { type: 'SPAM_FLAG', createdAt: { gte: new Date(Date.now() - 86400000) } },
         orderBy: { createdAt: 'desc' },
         take: 20,
         include: { user: { select: { email: true, username: true } } }
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentLoginsCount */
     needs('system')
-      ? db.user.count({ where: { lastLoginAt: { gte: new Date(Date.now() - 86400000) } } }).catch(() => 0)
-      : Promise.resolve(0),
+      ? readValue(db.user.count({ where: { lastLoginAt: { gte: new Date(Date.now() - 86400000) } } }))
+      : Promise.resolve(null),
     /* Already conditional on a query being typed, so the tab gate folds into
        that condition rather than nesting a ternary. */
     /* userSearchResults */
     needs('overview') && userSearch
-      ? db.user.findMany({
+      ? readList(db.user.findMany({
         where: { OR: [
           { email: { contains: userSearch, mode: 'insensitive' } },
           { username: { contains: userSearch, mode: 'insensitive' } }
         ]},
         select: { id: true, email: true, username: true, role: true, createdAt: true, profiles: { select: { type: true, slug: true } } },
         take: 10,
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* recentInviteCodes */
     needs('system')
-      ? db.inviteCode.findMany({
+      ? readList(db.inviteCode.findMany({
         orderBy: { createdAt: 'desc' },
         take: 10,
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* funnelStage1 */
     needs('activity')
       ? // Artist funnel — stage 1
-      db.profile.count({ where: { type: 'ARTIST', mediaUploads: { none: {} } } }).catch(() => 0)
-      : Promise.resolve(0),
+      readValue(db.profile.count({ where: { type: 'ARTIST', mediaUploads: { none: {} } } }))
+      : Promise.resolve(null),
     /* funnelStage2 */
     needs('activity')
       ? // Artist funnel — stage 2
-      db.profile.count({ where: { type: 'ARTIST', mediaUploads: { some: {} }, hostedShows: { none: {} }, headlinerShows: { none: {} } } }).catch(() => 0)
-      : Promise.resolve(0),
+      readValue(db.profile.count({ where: { type: 'ARTIST', mediaUploads: { some: {} }, hostedShows: { none: {} }, headlinerShows: { none: {} } } }))
+      : Promise.resolve(null),
     /* funnelStage3 */
     needs('activity')
       ? // Artist funnel — stage 3
-      db.show.count({ where: { hypeCount: 0, status: { not: 'DRAFT' } } }).catch(() => 0)
-      : Promise.resolve(0),
+      readValue(db.show.count({ where: { hypeCount: 0, status: { not: 'DRAFT' } } }))
+      : Promise.resolve(null),
     /* funnelStage1Recent */
     needs('activity')
       ? // Recent stage-1 artists
-      db.profile.findMany({ where: { type: 'ARTIST', mediaUploads: { none: {} } }, select: { name: true, slug: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5 }).catch(() => [])
-      : Promise.resolve([]),
+      readList(db.profile.findMany({ where: { type: 'ARTIST', mediaUploads: { none: {} } }, select: { name: true, slug: true, createdAt: true }, orderBy: { createdAt: 'desc' }, take: 5 }))
+      : Promise.resolve(null),
     /* recentSocialPosts */
     needs('activity')
       ? // Recent social posts
-      db.socialPost.findMany({ orderBy: { generatedAt: 'desc' }, take: 5 }).catch(() => [])
-      : Promise.resolve([]),
+      readList(db.socialPost.findMany({ orderBy: { generatedAt: 'desc' }, take: 5 }))
+      : Promise.resolve(null),
     /* calendarShows */
     needs('activity')
       ? // Upcoming calendar (next 30 days)
-      db.show.findMany({
+      readList(db.show.findMany({
         where: { status: 'SCHEDULED', startsAt: { gte: new Date(), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
         select: { id: true, title: true, startsAt: true, featured: true, venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } }, ticketsSoldCount: true, ticketCapacity: true },
         orderBy: { startsAt: 'asc' },
         take: 100,
-      }).catch(() => [] as Array<{ id: string; title: string; startsAt: Date; featured: boolean; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null; ticketsSoldCount: number; ticketCapacity: number | null }>)
-      : Promise.resolve([] as Array<{ id: string; title: string; startsAt: Date; featured: boolean; venueProfile: { name: string } | null; headlinerProfile: { name: string } | null; ticketsSoldCount: number; ticketCapacity: number | null }>)]);
+      }))
+      : Promise.resolve(null)]);
 
   const [
     monthlyRevenue,
@@ -367,38 +368,38 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ] = await Promise.all([
     /* monthlyRevenue */
     needs('finance')
-      ? db.ticketOrder.findMany({
+      ? readList(db.ticketOrder.findMany({
         where: { status: 'CAPTURED', chargedAt: { gte: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000) } },
         select: { chargedAt: true, totalChargeCents: true },
-      }).catch(() => [] as { chargedAt: Date | null; totalChargeCents: number }[])
-      : Promise.resolve([] as { chargedAt: Date | null; totalChargeCents: number }[]),
+      }))
+      : Promise.resolve(null),
     /* topEarners */
     needs('finance')
-      ? db.accountsPayableEntry.groupBy({
+      ? readList(db.accountsPayableEntry.groupBy({
         by: ['profileId'],
         where: { profileId: { not: null } },
         _sum: { amountCents: true },
         orderBy: { _sum: { amountCents: 'desc' } },
         take: 10,
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* payoutTotals */
     needs('finance')
-      ? db.accountsPayableEntry.groupBy({
+      ? readList(db.accountsPayableEntry.groupBy({
         by: ['status'],
         _sum: { amountCents: true },
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
     /* Support lists them; the overview reads the same count through the workbench queues. */
     /* pendingAds */
     needs('support')
-      ? db.ad.findMany({
+      ? readList(db.ad.findMany({
         where: { status: 'PENDING' },
         include: { advertiser: { select: { email: true, username: true } }, slot: { select: { name: true } } },
         orderBy: { createdAt: 'desc' },
         take: 20,
-      }).catch(() => [])
-      : Promise.resolve([]),
+      }))
+      : Promise.resolve(null),
   ]);
 
   const [
@@ -456,11 +457,20 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ];
   const rateLimitMetrics = needs('system') ? await getRateLimitMetrics(10) : [];
   const betaMetrics = needs('system') ? await getBetaMetrics().catch(() => null) : null;
-  const revenueCents = revenueAgg._sum.totalChargeCents ?? 0;
-  const revenueLabel = `$${(revenueCents / 100).toFixed(2)}`;
+  /* `null` from `readValue()`/`readList()` is a FAILED read, and it stays null
+     through every figure derived from it: a dash on the card, never a
+     confident 0 or "$0.00", and the unavailable sentence where a list would
+     otherwise claim "No … yet". The rule every other admin page already
+     follows (growth, users, tickets, holds); the overview was the one that
+     still caught to zero and to an empty array (DESIGN_SYNC row 449). */
+  const unreadable = t('adminPage.unreadable', 'Could not be read just now — the database query failed, so this is not an empty list or a zero. Reload to try again.');
+  const num = (value: number | null) => (value === null ? '—' : String(value));
+  const money = (cents: number | null) => (cents === null ? '—' : `$${(cents / 100).toFixed(2)}`);
+  const revenueCents = revenueAgg === null ? null : (revenueAgg._sum.totalChargeCents ?? 0);
+  const revenueLabel = money(revenueCents);
   const healthOperations = health.status === 'ok' ? health.operations : null;
   const healthIntegrations = health.status === 'ok' ? health.integrations : null;
-  const funnelCounts = signupFunnelAudits.reduce<Record<string, number>>((counts, event) => {
+  const funnelCounts = (signupFunnelAudits ?? []).reduce<Record<string, number>>((counts, event) => {
     const key = event.action.replace('signup_funnel:', '');
     counts[key] = (counts[key] ?? 0) + 1;
     return counts;
@@ -480,7 +490,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     emailFailureCount > 0 ? `${emailFailureCount} email-code issue${emailFailureCount === 1 ? '' : 's'} in 7d` : null,
     abandonedAfterView > 5 ? `${abandonedAfterView} visitors viewed signup without creating an account` : null
   ].filter((alert): alert is string => Boolean(alert));
-  const variantCounts = signupFunnelAudits.reduce<Record<string, { views: number; accounts: number }>>((counts, event) => {
+  const variantCounts = (signupFunnelAudits ?? []).reduce<Record<string, { views: number; accounts: number }>>((counts, event) => {
     const meta = auditMeta(event.metadata);
     const variant = metaText(meta, 'variant');
     if (variant === 'n/a') return counts;
@@ -489,14 +499,14 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
     if (event.action.endsWith(':account_created')) counts[variant].accounts += 1;
     return counts;
   }, {});
-  const passkeyDiagnostics = signupFunnelAudits
+  const passkeyDiagnostics = (signupFunnelAudits ?? [])
     .filter((event) => event.action.includes('passkey') && event.action.includes('failed'))
     .slice(0, 5)
     .map((event) => ({ action: event.action.replace('signup_funnel:', ''), meta: auditMeta(event.metadata) }));
 
   // Monthly revenue computation
   const monthlyMap: Record<string, number> = {};
-  for (const order of monthlyRevenue) {
+  for (const order of monthlyRevenue ?? []) {
     if (!order.chargedAt) continue;
     const key = `${order.chargedAt.getFullYear()}-${String(order.chargedAt.getMonth() + 1).padStart(2, '0')}`;
     monthlyMap[key] = (monthlyMap[key] ?? 0) + order.totalChargeCents;
@@ -504,9 +514,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const monthlyRows = Object.entries(monthlyMap).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 12);
 
   // Payout totals
-  const payoutPaid = payoutTotals.find(p => p.status === 'RELEASED')?._sum.amountCents ?? 0;
-  const payoutPending = payoutTotals.find(p => p.status === 'PENDING')?._sum.amountCents ?? 0;
-  const platformFeeTotal = Math.round((revenueCents * 0.1)); // rough 10% estimate
+  const payoutPaid = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'RELEASED')?._sum.amountCents ?? 0);
+  const payoutPending = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'PENDING')?._sum.amountCents ?? 0);
+  const platformFeeTotal = revenueCents === null ? null : Math.round((revenueCents * 0.1)); // rough 10% estimate
 
   return (
     <div className="container section admin-console">
@@ -606,7 +616,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               <p className="meta">{t('adminPage.userSearchDesc', 'Search by email or username.')}</p>
             </div>
           </div>
-          <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults.length ? 16 : 0 }}>
+          <form method="GET" style={{ display: 'flex', gap: 8, marginBottom: userSearchResults?.length ? 16 : 0 }}>
             <input
               name="userSearch"
               defaultValue={userSearch ?? ''}
@@ -616,7 +626,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             <button type="submit" className="button small secondary">{t('adminPage.search', 'Search')}</button>
             {userSearch && <Link className="button small secondary" href="/admin">{t('adminPage.clear', 'Clear')}</Link>}
           </form>
-          {userSearchResults.length > 0 && (
+          {userSearchResults !== null && userSearchResults.length > 0 && (
             <div className="admin-list">
               {userSearchResults.map(u => (
                 <div className="admin-list-row" key={u.id}>
@@ -629,7 +639,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               ))}
             </div>
           )}
-          {userSearch && userSearchResults.length === 0 && (
+          {userSearch && userSearchResults === null && (
+            <div className="empty" role="status">{unreadable}</div>
+          )}
+          {userSearch && userSearchResults !== null && userSearchResults.length === 0 && (
             <div className="empty">{t('adminPage.noUsersFound', 'No users found for')} &ldquo;{userSearch}&rdquo;.</div>
           )}
         </section>
@@ -647,7 +660,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         </section>
 
         <section className="admin-metric-grid">
-          {[
+          {([
             [t('adminPage.metricUsers', 'Users'), userCount],
             [t('adminPage.metricProfiles', 'Profiles'), profileCount],
             [t('adminPage.metricPendingVerification', 'Pending verification'), pendingVerificationCount],
@@ -655,10 +668,10 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             [t('adminPage.metricSupportRequests', 'Support requests'), openSupportCount],
             [t('adminPage.metricMediaAssets', 'Media assets'), mediaCount],
             [t('adminPage.metricTicketOrders', 'Ticket orders'), ticketOrderCount]
-          ].map(([label, value]) => (
+          ] as Array<[string, number | null]>).map(([label, value]) => (
             <article className="card admin-metric-card" key={label}>
               <span>{label}</span>
-              <strong>{value}</strong>
+              <strong>{num(value)}</strong>
             </article>
           ))}
         </section>
@@ -676,7 +689,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               </Link>
             </div>
           </div>
-          {funnelAlerts.length ? (
+          {signupFunnelAudits === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : funnelAlerts.length ? (
             <div className="admin-alert-row">
               {funnelAlerts.map((alert) => <span key={alert}>{alert}</span>)}
             </div>
@@ -687,7 +702,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             {funnelDropoff.map(([label, value]) => (
               <div className="admin-health-card" key={label}>
                 <span>{label}</span>
-                <strong>{value}</strong>
+                <strong>{signupFunnelAudits === null ? '—' : value}</strong>
               </div>
             ))}
           </div>
@@ -703,7 +718,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           ) : null}
           <div className="admin-diagnostic-list">
             <strong>{t('adminPage.passkeyDiagnostics', 'Passkey diagnostics')}</strong>
-            {passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
+            {signupFunnelAudits === null ? <p className="meta" role="status">{unreadable}</p> : passkeyDiagnostics.length ? passkeyDiagnostics.map(({ action, meta }, index) => (
               <div className="admin-diagnostic-row" key={`${action}-${index}`}>
                 <span>{action}</span>
                 <small>{metaText(meta, 'browser')} / {metaText(meta, 'platform')} / {metaText(meta, 'webauthn')} / {metaText(meta, 'errorName')}</small>
@@ -717,7 +732,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.recentShows', 'Recent shows')}</h2>
             <div className="admin-list">
-              {recentShows.length ? (
+              {recentShows === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentShows.length ? (
                 recentShows.map((show) => (
                   <div className="admin-list-row" key={show.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                     <span style={{ flex: 1 }}>{show.title}</span>
@@ -736,7 +753,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.recentUsers', 'Recent users')}</h2>
             <div className="admin-list">
-              {recentUsers.map((user) => (
+              {recentUsers === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentUsers.map((user) => (
                 <div className="admin-list-row" key={user.email}>
                   <span>{user.username || user.email}</span>
                   <strong>{user.role}</strong>
@@ -757,18 +776,20 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <div className="admin-health-grid">
             <div className="admin-health-card">
               <span>{t('adminPage.noUploadsYet', 'No uploads yet')}</span>
-              <strong style={{ color: funnelStage1 > 0 ? 'var(--danger)' : 'inherit' }}>{funnelStage1}</strong>
+              <strong style={{ color: funnelStage1 !== null && funnelStage1 > 0 ? 'var(--danger)' : 'inherit' }}>{num(funnelStage1)}</strong>
             </div>
             <div className="admin-health-card">
               <span>{t('adminPage.uploadsNoShows', 'Uploads, no shows')}</span>
-              <strong style={{ color: funnelStage2 > 0 ? 'var(--warning-text)' : 'inherit' }}>{funnelStage2}</strong>
+              <strong style={{ color: funnelStage2 !== null && funnelStage2 > 0 ? 'var(--warning-text)' : 'inherit' }}>{num(funnelStage2)}</strong>
             </div>
             <div className="admin-health-card">
               <span>{t('adminPage.showsWithZeroHypes', 'Shows with 0 hypes')}</span>
-              <strong>{funnelStage3}</strong>
+              <strong>{num(funnelStage3)}</strong>
             </div>
           </div>
-          {funnelStage1Recent.length > 0 && (
+          {funnelStage1Recent === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : funnelStage1Recent.length > 0 && (
             <div className="admin-list" style={{ marginTop: 12 }}>
               <strong style={{ fontSize: '0.9375rem', marginBottom: 6, display: 'block' }}>{t('adminPage.recentStage1Artists', 'Recent stage-1 artists (no uploads)')}</strong>
               {funnelStage1Recent.map((p) => (
@@ -780,7 +801,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             </div>
           )}
           <BulkActions
-            items={funnelStage1Recent.map((p) => ({ id: p.slug, label: p.name }))}
+            items={(funnelStage1Recent ?? []).map((p) => ({ id: p.slug, label: p.name }))}
             type="profiles"
           />
         </section>
@@ -793,7 +814,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               <p className="meta">{t('adminPage.socialPostsDesc', 'Recent auto-generated social digest posts.')}</p>
             </div>
           </div>
-          {recentSocialPosts.length === 0 ? (
+          {recentSocialPosts === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : recentSocialPosts.length === 0 ? (
             <div className="empty">{t('adminPage.noSocialPostsYet', 'No social posts yet. Monday digest will generate them.')}</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -818,12 +841,14 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               <p className="meta">{t('adminPage.upcomingCalendarDesc', 'Scheduled shows in the next 30 days.')}</p>
             </div>
           </div>
-          {calendarShows.length === 0 ? (
+          {calendarShows === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : calendarShows.length === 0 ? (
             <div className="empty">{t('adminPage.noScheduledShows30d', 'No scheduled shows in the next 30 days.')}</div>
           ) : (
             <div>
               {Object.entries(
-                calendarShows.reduce((acc: Record<string, typeof calendarShows>, show) => {
+                calendarShows.reduce((acc: Record<string, NonNullable<typeof calendarShows>>, show) => {
                   const date = show.startsAt.toLocaleDateString();
                   acc[date] ??= [];
                   acc[date].push(show);
@@ -856,7 +881,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.contentReports', 'Content reports')}</h2>
             <div className="admin-list">
-              {recentReports.length ? (
+              {recentReports === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentReports.length ? (
                 recentReports.map((report) => (
                   <div className="admin-list-row" key={report.id}>
                     <span>{report.reason}</span>
@@ -876,7 +903,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel" id="support-requests">
             <h2>{t('adminPage.supportRequests', 'Support requests')}</h2>
             <div className="admin-list">
-              {recentSupport.length ? (
+              {recentSupport === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentSupport.length ? (
                 recentSupport.map((request) => (
                   <div className="admin-list-row" key={request.id}>
                     <span>{request.subject}</span>
@@ -898,7 +927,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.verificationQueue', 'Verification queue')}</h2>
             <div className="admin-list">
-              {pendingVerifications.length ? (
+              {pendingVerifications === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : pendingVerifications.length ? (
                 pendingVerifications.map((profile) => (
                   <div className="admin-list-row" key={profile.id}>
                     <span>{profile.name}</span>
@@ -917,7 +948,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         {/* ── Ads ───────────────────────────────────────────────── */}
         <section className="section">
           <h2>{t('adminPage.adsPendingReview', 'Ads — Pending Review')}</h2>
-          {pendingAds.length === 0 ? (
+          {pendingAds === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : pendingAds.length === 0 ? (
             <p className="meta">{t('adminPage.noPendingAds', 'No pending ads.')}</p>
           ) : (
             <div className="admin-list">
@@ -958,7 +991,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.ticketOrders', 'Ticket orders')}</h2>
             <div className="admin-list">
-              {recentTicketOrders.length ? (
+              {recentTicketOrders === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentTicketOrders.length ? (
                 recentTicketOrders.map((order) => (
                   <div className="admin-list-row" key={order.id}>
                     <span>{order.show?.title ?? t('adminPage.unknownShow', 'Unknown show')}</span>
@@ -977,12 +1012,14 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         <section className="section">
           <h2>{t('adminPage.revenue', 'Revenue')}</h2>
           <div className="admin-list" style={{ marginBottom: 16 }}>
-            <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{`$${(revenueCents / 100).toFixed(2)}`}</span></div>
-            <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{`$${(platformFeeTotal / 100).toFixed(2)}`}</span></div>
-            <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{`$${(payoutPaid / 100).toFixed(2)}`}</span></div>
-            <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{`$${(payoutPending / 100).toFixed(2)}`}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{money(revenueCents)}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{money(platformFeeTotal)}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{money(payoutPaid)}</span></div>
+            <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{money(payoutPending)}</span></div>
           </div>
-          {monthlyRows.length > 0 && (
+          {monthlyRevenue === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : monthlyRows.length > 0 && (
             <>
               <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminPage.monthlyRevenue12mo', 'Monthly revenue (last 12 months)')}</h3>
               <div className="admin-list">
@@ -995,7 +1032,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               </div>
             </>
           )}
-          {topEarners.length > 0 && (
+          {topEarners === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : topEarners.length > 0 && (
             <>
               <h3 style={{ fontSize: '0.9375rem', marginBottom: 8, marginTop: 16 }}>{t('adminPage.topEarnersByProfile', 'Top earners (by profile)')}</h3>
               <div className="admin-list">
@@ -1148,7 +1187,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel">
             <h2>{t('adminPage.emailDelivery', 'Email delivery')}</h2>
             <div className="admin-list">
-              {recentEmails.length ? (
+              {recentEmails === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentEmails.length ? (
                 recentEmails.map((email) => (
                   <div className="admin-list-row" key={email.id}>
                     <span>{email.type}</span>
@@ -1165,7 +1206,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <article className="panel admin-console-panel admin-console-panel-wide">
             <h2>{t('adminPage.auditLog', 'Audit log')}</h2>
             <div className="admin-list">
-              {recentAudits.length ? (
+              {recentAudits === null ? (
+                <div className="empty" role="status">{unreadable}</div>
+              ) : recentAudits.length ? (
                 recentAudits.map((audit) => (
                   <div className="admin-list-row" key={audit.id}>
                     <span>{audit.action}</span>
@@ -1189,14 +1232,14 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <div className="admin-metric-grid" style={{ marginBottom: '1rem' }}>
             <article className="card admin-metric-card">
               <span>{t('adminPage.spamFlags24h', 'Spam flags (24h)')}</span>
-              <strong>{recentSpamFlags.length}</strong>
+              <strong>{recentSpamFlags === null ? '—' : recentSpamFlags.length}</strong>
             </article>
             <article className="card admin-metric-card">
               <span>{t('adminPage.logins24h', 'Logins (24h)')}</span>
-              <strong>{recentLoginsCount}</strong>
+              <strong>{num(recentLoginsCount)}</strong>
             </article>
           </div>
-          {recentSpamFlags.length > 0 && (
+          {recentSpamFlags !== null && recentSpamFlags.length > 0 && (
             <div className="admin-list">
               {recentSpamFlags.map((flag) => (
                 <div className="admin-list-row" key={flag.id}>
@@ -1222,7 +1265,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               {t('adminPage.sendTestEmail', 'Send test email')}
             </a>
           </div>
-          {recentInviteCodes.length === 0 ? (
+          {recentInviteCodes === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : recentInviteCodes.length === 0 ? (
             <p className="meta">{t('adminPage.noInviteCodesYet', 'No invite codes yet — mint one above to admit someone from the access-request queue.')}</p>
           ) : (
             <div className="admin-list">
@@ -1274,7 +1319,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
         {/* ── Rate Limits ───────────────────────────────────────── */}
         <section className="section">
           <h2>{t('adminPage.rateLimitsLast24h', 'Rate Limits (last 24h)')}</h2>
-          {recentSpamFlags.length === 0 ? (
+          {recentSpamFlags === null ? (
+            <div className="empty" role="status">{unreadable}</div>
+          ) : recentSpamFlags.length === 0 ? (
             <p className="meta">{t('adminPage.noSpamFlagNotifications', 'No SPAM_FLAG notifications in the last 24 hours.')}</p>
           ) : (
             <div className="admin-list">
