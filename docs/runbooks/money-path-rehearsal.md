@@ -495,6 +495,28 @@ both of which Stripe's own support notes people get wrong:
 Subscribe to the `configuration.recipient` **and** `configuration.merchant`
 variants — a venue needs both, and only the merchant one has any v1 equivalent.
 
+### The nightly has never run any of this — set two repository secrets (2026-09-14)
+
+`.github/workflows/nightly.yml` runs the acceptance walk every night and passes
+`STRIPE_TEST_SECRET_KEY` / `STRIPE_TEST_WEBHOOK_SECRET` through as the worker's
+Stripe key and webhook secret. **Neither has ever been set on the repository**,
+so every nightly board to date has read `14 healthy · 0 broken · 2 partial ·
+4 unproven`: the ticket sale, the scan, the webhook replay, the refund, the
+70/20/10 split and the payment-method items all report BLOCKED, and the walk
+says so honestly rather than failing. The `19 healthy` figure recorded
+elsewhere was a LOCAL run with an operator's key.
+
+To arm it: Stripe Dashboard → Developers → API keys, **test mode**, create a
+restricted key (the walk needs PaymentIntents, Checkout Sessions, Refunds,
+Transfers, Accounts and Webhook Endpoints), and set it as the repository secret
+`STRIPE_TEST_SECRET_KEY`; set `STRIPE_TEST_WEBHOOK_SECRET` to the signing
+secret of a test-mode endpoint (the walk synthesises the envelope and signs it
+with this value, so any test endpoint's secret works). Use a fresh key — never
+one that has been pasted into a chat or a ticket — and `scripts/e2e-workerd.mjs`
+refuses an `sk_live_` key outright, so the wrong mode cannot reach real money.
+The next night's board should read the money journeys as OK or BROKEN, and
+either answer is more useful than UNPROVEN.
+
 ### What is left, corrected 2026-09-09
 
 **This section used to read "the remaining steps still need a human — step 2
