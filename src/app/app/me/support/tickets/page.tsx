@@ -1,10 +1,12 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { SupportTicketComposer } from '@/components/SupportTicketComposer';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,8 +26,8 @@ function statusColor(status: string) {
   return STATUS_COLORS[status] ?? 'var(--ink-a50)';
 }
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function fmtDate(d: Date, locale: Locale) {
+  return formatDate(locale, d, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /**
@@ -37,7 +39,7 @@ function fmtDate(d: Date) {
  * submitted ticket and its status).
  */
 export default async function SupportTicketsPage() {
-  const tr = await getServerT();
+  const { locale, t: tr } = await getServerI18n();
   const session = await auth();
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/app/me/support/tickets');
@@ -102,7 +104,7 @@ export default async function SupportTicketsPage() {
                 </span>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>
-                {t.type} · {t.priority} {tr('supportTicketsPage.priorityLabel', 'priority')} · {tr('supportTicketsPage.openedLabel', 'Opened')} {fmtDate(t.createdAt)}
+                {t.type} · {t.priority} {tr('supportTicketsPage.priorityLabel', 'priority')} · {tr('supportTicketsPage.openedLabel', 'Opened')} {fmtDate(t.createdAt, locale)}
               </div>
             </Link>
           ))}

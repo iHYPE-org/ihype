@@ -1,6 +1,8 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useState } from 'react';
+import { useI18n } from '@/components/I18nProvider';
 
 /**
  * Hands a ticket to another account by showing a code to read out.
@@ -20,6 +22,7 @@ import { useState } from 'react';
  * transfer stays in the sender's account forever. Claiming a code moves it.
  */
 export function TicketTransferPanel({ orderId }: { orderId: string }) {
+  const { locale } = useI18n();
   const [code, setCode] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -82,7 +85,7 @@ export function TicketTransferPanel({ orderId }: { orderId: string }) {
         </p>
         {expiresAt && (
           <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', margin: '0 0 12px' }}>
-            Expires {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(expiresAt))}.
+            Expires {formatDate(locale, expiresAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
           </p>
         )}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>

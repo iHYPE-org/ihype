@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import { startRegistration } from '@simplewebauthn/browser';
 import { postJson } from '@/lib/api-client';
@@ -14,7 +15,7 @@ type PasskeyEntry = {
 };
 
 export function PasskeyManager() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -106,7 +107,7 @@ export function PasskeyManager() {
                   <span style={{ textTransform: 'capitalize' }}>{pk.deviceType.replace(/-/g, ' ')}</span>
                   {pk.backedUp ? ` · ${t('authPasskeyManager.synced', 'synced')}` : ` · ${t('authPasskeyManager.singleDevice', 'single device')}`}
                   {' · '}
-                  {new Date(pk.createdAt).toLocaleDateString()}
+                  {formatDate(locale, new Date(pk.createdAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}
                 </span>
                 <button
                   disabled={removingId === pk.id}

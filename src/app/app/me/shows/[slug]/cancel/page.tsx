@@ -1,3 +1,5 @@
+import { getLocale } from '@/lib/i18n/server';
+import { formatDate } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -19,6 +21,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CancelEventPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
   const { slug } = await params;
+  const locale = await getLocale();
 
   if (!session?.user?.id) {
     redirect(`/login?callbackUrl=/app/me/shows/${slug}/cancel`);
@@ -55,7 +58,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
       showId={show.id}
       showSlug={show.slug}
       showTitle={show.title}
-      startsAtLabel={show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+      startsAtLabel={formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })}
       ticketsSoldCount={show.ticketsSoldCount}
       venueName={show.venueProfile?.name ?? null}
     />

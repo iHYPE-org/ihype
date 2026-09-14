@@ -1,3 +1,5 @@
+import { formatNumber } from '@/lib/format-locale';
+import { getLocale } from '@/lib/i18n/server';
 import { getTransparencySnapshot } from '@/lib/transparency';
 
 /**
@@ -38,7 +40,8 @@ export function LandingStatsFallback() {
 
 export async function LandingStats() {
   const { counters } = await getTransparencySnapshot();
-  const format = (value: number) => value.toLocaleString('en-US');
+  const locale = await getLocale();
+  const format = (value: number) => formatNumber(locale, value);
 
   // A counter that is genuinely zero is still a claim, and "0 local artists"
   // on the front door of a request-access alpha argues against the page it is

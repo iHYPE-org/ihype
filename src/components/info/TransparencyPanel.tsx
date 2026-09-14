@@ -3,14 +3,15 @@
 // query, the k-anonymity floor and the copy are unchanged — only the
 // route wrapper and page metadata were stripped so this can render as
 // a panel. The old route is now a redirect.
+import { formatNumber, formatUsd } from '@/lib/format-locale';
 import '@/app/marketing.css';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { OrganizationFacts } from './OrganizationFacts';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export async function TransparencyPanel() {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const [artistCount, showCount, mediaCount, ticketCount, totalTicketCents] = await Promise.all([
     db.profile.count({ where: { type: 'ARTIST' } }),
     db.show.count({ where: { status: { not: 'CANCELED' } } }),
@@ -24,11 +25,11 @@ export async function TransparencyPanel() {
   const totalPaidOut = totalTicketCents; // 0% fee means 100% goes to artists
 
   const STATS = [
-    { label: t('transparencyPage.statArtistsOnPlatform', 'Artists on platform'), val: artistCount.toLocaleString(), c: 'var(--accent)' },
-    { label: t('transparencyPage.statShowsListed', 'Shows listed'), val: showCount.toLocaleString(), c: 'var(--role-venue)' },
-    { label: t('transparencyPage.statTracksUploaded', 'Tracks uploaded'), val: mediaCount.toLocaleString(), c: 'var(--role-fan)' },
-    { label: t('transparencyPage.statTicketsSold', 'Tickets sold'), val: ticketCount.toLocaleString(), c: 'var(--accent-2)' },
-    { label: t('transparencyPage.statPaidOut', 'Paid out to artists/venues'), val: `$${(totalPaidOut / 100).toLocaleString()}`, c: 'var(--role-venue)' },
+    { label: t('transparencyPage.statArtistsOnPlatform', 'Artists on platform'), val: formatNumber(locale, artistCount), c: 'var(--accent)' },
+    { label: t('transparencyPage.statShowsListed', 'Shows listed'), val: formatNumber(locale, showCount), c: 'var(--role-venue)' },
+    { label: t('transparencyPage.statTracksUploaded', 'Tracks uploaded'), val: formatNumber(locale, mediaCount), c: 'var(--role-fan)' },
+    { label: t('transparencyPage.statTicketsSold', 'Tickets sold'), val: formatNumber(locale, ticketCount), c: 'var(--accent-2)' },
+    { label: t('transparencyPage.statPaidOut', 'Paid out to artists/venues'), val: formatUsd(locale, totalPaidOut, 'auto'), c: 'var(--role-venue)' },
     { label: t('transparencyPage.statPlatformFee', 'Platform fee taken'), val: '$0', c: 'var(--accent)' },
   ];
 

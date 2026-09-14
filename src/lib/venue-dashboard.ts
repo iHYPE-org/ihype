@@ -1,3 +1,5 @@
+import { formatDate } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { getProfileInsights } from '@/lib/profile-insights';
 
@@ -53,7 +55,7 @@ function nextCronRun(from: Date): Date {
  * "the venue's share" would misrepresent the number. getProfileInsights is
  * still reused here for pendingBookingRequestCount and all-time ticketsSold.
  */
-export async function getVenueDashboardData(profileId: string): Promise<VenueDashboardData> {
+export async function getVenueDashboardData(profileId: string, locale: Locale): Promise<VenueDashboardData> {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const promoterWindowStart = new Date(now.getTime() - PROMOTER_WINDOW_DAYS * 24 * 60 * 60 * 1000);
@@ -122,7 +124,7 @@ export async function getVenueDashboardData(profileId: string): Promise<VenueDas
   if (endedPending.length > 0) {
     const amountCents = endedPending.reduce((sum, e) => sum + e.amountCents, 0);
     nextPayout = {
-      label: nextCronRun(now).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      label: formatDate(locale, nextCronRun(now), { month: 'short', day: 'numeric' }),
       amountCents,
       estimated: false,
     };
@@ -133,7 +135,7 @@ export async function getVenueDashboardData(profileId: string): Promise<VenueDas
     }, null);
     if (soonest) {
       nextPayout = {
-        label: `After ${soonest.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} show ends`,
+        label: `After ${formatDate(locale, soonest, { month: 'short', day: 'numeric' })} show ends`,
         estimated: true,
       };
     }

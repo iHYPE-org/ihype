@@ -1017,12 +1017,12 @@ function MapDatePicker({
   onChange: (next: ReadonlySet<string>) => void;
   selected: ReadonlySet<string>;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [open, setOpen] = useState(false);
   const [anchor, setAnchor] = useState(() => new Date());
   const popRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
-  const month = monthGrid(anchor);
+  const month = monthGrid(anchor, locale);
 
   /* Click-out and Escape both close, and the pointerdown is captured for the
      same reason the search results use it: a drag that begins on the map should
@@ -1060,7 +1060,7 @@ function MapDatePicker({
         <span aria-hidden="true" className="mmm-datepick-glyph">▤</span>
         {/* The readout is the button's accessible name as well as its label, so
             a screen reader hears the current filter rather than "button". */}
-        <span className="mmm-datepick-value">{describeDayKeys(selected)}</span>
+        <span className="mmm-datepick-value">{describeDayKeys(selected, locale)}</span>
       </button>
 
       {open && (

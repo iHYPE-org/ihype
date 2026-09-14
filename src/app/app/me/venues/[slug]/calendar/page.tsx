@@ -1,10 +1,11 @@
+import { formatDate } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -26,7 +27,7 @@ function getFirstDayOfMonth(year: number, month: number) {
 }
 
 export default async function VenueCalendarPage({ params }: Props) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
 
   const profile = await db.profile.findUnique({
@@ -72,7 +73,7 @@ export default async function VenueCalendarPage({ params }: Props) {
 
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
-  const monthName = startOfMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const monthName = formatDate(locale, startOfMonth, { month: 'long', year: 'numeric' });
 
   const cells: Array<number | null> = [];
   for (let i = 0; i < firstDay; i++) cells.push(null);
@@ -160,7 +161,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                       }}
                       title={s.title}
                     >
-                      {s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })} {s.title}
+                      {formatDate(locale, s.startsAt, { hour: 'numeric', minute: '2-digit', hour12: true })} {s.title}
                     </Link>
                   ))}
                 </>
@@ -183,7 +184,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                   {s.title}
                 </Link>
                 <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
-                  {s.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {s.startsAt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })}
+                  {formatDate(locale, s.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatDate(locale, s.startsAt, { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
               </div>
             </div>

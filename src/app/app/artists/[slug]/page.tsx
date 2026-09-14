@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { getSimilarArtists, type SimilarArtist } from '@/lib/sounds-like';
 import { SimilarArtistsRow } from '@/components/SimilarArtistsRow';
@@ -14,7 +15,7 @@ import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/li
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
@@ -93,7 +94,7 @@ export default async function MmmArtistPage({
   // this route's layout is async and has already flushed. See `MmmMissing`.
   if (!profile || profile.type !== 'ARTIST') return <MmmMissing kind="artist" />;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing kind="artist" />;
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
 
   const activeTab = resolveTab(ARTIST_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
@@ -325,7 +326,7 @@ export default async function MmmArtistPage({
               about this one — while the follower count was fetched and never
               shown. Listeners is distinct accounts that have played a track;
               a figure that could not be read is a dash, not a zero. */}
-          <ProfileCounters
+          <ProfileCounters locale={locale}
             counters={[
               { label: t('profilePane.counterHypes', 'Hypes'), value: profile.hypeCount },
               { label: t('profilePane.counterFollowers', 'Followers'), value: profile._count.followers },
@@ -460,11 +461,11 @@ export default async function MmmArtistPage({
           {upcoming.length > 0 && (
             <ul className="mmm-profile-rows">
               {upcoming.map((show) => (
-                <ProfileRow
+                <ProfileRow locale={locale}
                   key={show.id}
                   date={show.startsAt}
                   href={`/app/shows/${show.slug}`}
-                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt), formatTicketPrice(show)]
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale), formatTicketPrice(show, locale)]
                     .filter(Boolean)
                     .join(' · ')}
                   title={show.title}
@@ -479,12 +480,12 @@ export default async function MmmArtistPage({
                 /* UTC on purpose: the row IS a UTC-midnight day, and a local-time
                    read shifts it to the evening before for everyone west of
                    Greenwich. */
-                <ProfileRow
+                <ProfileRow locale={locale}
                   key={entry.id}
                   date={entry.date}
                   meta={[
                     entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'),
-                    entry.date.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' }),
+                    formatDate(locale, entry.date, { weekday: 'long', timeZone: 'UTC' }),
                   ].join(' · ')}
                   title={entry.note || (entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'))}
                   utc

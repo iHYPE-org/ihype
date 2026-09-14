@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -14,7 +15,7 @@ type VenueRequest = {
 };
 
 export function VenueRequestInbox() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [requests, setRequests] = useState<VenueRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -72,7 +73,7 @@ export function VenueRequestInbox() {
               <div className="venue-request-meta">
                 {t('venueRequestInbox.suggestedByFan', 'Suggested by a fan')}
                 {' · '}
-                {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                {formatDate(locale, new Date(r.createdAt), { month: 'short', day: 'numeric', year: 'numeric' })}
               </div>
             </div>
           </div>

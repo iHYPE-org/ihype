@@ -3,11 +3,14 @@
 // query, the k-anonymity floor and the copy are unchanged — only the
 // route wrapper and page metadata were stripped so this can render as
 // a panel. The old route is now a redirect.
+import { formatNumber } from '@/lib/format-locale';
 import '@/app/marketing.css';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
 import { trustCategoryLabel } from '@/lib/i18n-enum-labels';
+
+import { getServerI18n } from '@/lib/i18n/server';
 
 // Small categories are folded into "Other" rather than shown with an exact
 // count, so a bucket of e.g. 1-2 reports can never be used to infer which
@@ -25,7 +28,7 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 export async function TrustSafetyPanel() {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const [
     reportsTotal,
     reportsOpen,
@@ -63,17 +66,17 @@ export async function TrustSafetyPanel() {
     .reduce((sum, r) => sum + r._count._all, 0);
 
   const ENFORCEMENT_STATS = [
-    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: reportsTotal.toLocaleString(), c: 'var(--accent)' },
-    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: reportsOpen.toLocaleString(), c: 'var(--role-fan)' },
-    { label: t('auditPage.statReportsActioned', 'Actioned'), val: reportsActioned.toLocaleString(), c: 'var(--role-venue)' },
-    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: reportsDismissed.toLocaleString(), c: 'var(--accent-2)' },
+    { label: t('auditPage.statReportsTotal', 'Reports received (all time)'), val: formatNumber(locale, reportsTotal), c: 'var(--accent)' },
+    { label: t('auditPage.statReportsOpen', 'Open, awaiting review'), val: formatNumber(locale, reportsOpen), c: 'var(--role-fan)' },
+    { label: t('auditPage.statReportsActioned', 'Actioned'), val: formatNumber(locale, reportsActioned), c: 'var(--role-venue)' },
+    { label: t('auditPage.statReportsDismissed', 'Dismissed'), val: formatNumber(locale, reportsDismissed), c: 'var(--accent-2)' },
   ];
 
   const AD_STATS = [
-    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: adTotal.toLocaleString(), c: 'var(--accent)' },
-    { label: t('auditPage.statAdApproved', 'Approved'), val: adApproved.toLocaleString(), c: 'var(--role-venue)' },
-    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: adManualReview.toLocaleString(), c: 'var(--role-fan)' },
-    { label: t('auditPage.statAdRejected', 'Rejected'), val: adRejected.toLocaleString(), c: 'var(--accent-2)' },
+    { label: t('auditPage.statAdTotal', 'Radio ad campaigns vetted'), val: formatNumber(locale, adTotal), c: 'var(--accent)' },
+    { label: t('auditPage.statAdApproved', 'Approved'), val: formatNumber(locale, adApproved), c: 'var(--role-venue)' },
+    { label: t('auditPage.statAdManualReview', 'Sent to manual review'), val: formatNumber(locale, adManualReview), c: 'var(--role-fan)' },
+    { label: t('auditPage.statAdRejected', 'Rejected'), val: formatNumber(locale, adRejected), c: 'var(--accent-2)' },
   ];
 
   return (
@@ -114,13 +117,13 @@ export async function TrustSafetyPanel() {
           <div className="lp-reason-grid" style={{ marginTop: '20px', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
             {categoryRows.map((r) => (
               <div key={r.label} className="lp-reason-card">
-                <h3 className="lp-reason-head">{r.count.toLocaleString()}</h3>
+                <h3 className="lp-reason-head">{formatNumber(locale, r.count)}</h3>
                 <p className="lp-reason-body">{r.label}</p>
               </div>
             ))}
             {foldedCount > 0 && (
               <div className="lp-reason-card">
-                <h3 className="lp-reason-head">{foldedCount.toLocaleString()}</h3>
+                <h3 className="lp-reason-head">{formatNumber(locale, foldedCount)}</h3>
                 <p className="lp-reason-body">{t('auditPage.otherCategory', 'Other (categories too small to break out individually)')}</p>
               </div>
             )}
@@ -152,11 +155,11 @@ export async function TrustSafetyPanel() {
         <h2 className="lp-section-head">{t('auditPage.verifiedProfilesTitle', 'Verified profiles')}</h2>
         <div className="lp-reason-grid" style={{ marginTop: '20px' }}>
           <div className="lp-reason-card">
-            <h3 className="lp-reason-head">{verifiedCount.toLocaleString()}</h3>
+            <h3 className="lp-reason-head">{formatNumber(locale, verifiedCount)}</h3>
             <p className="lp-reason-body">{t('auditPage.verifiedProfilesBody', 'Profiles verified as the real artist, DJ, or venue')}</p>
           </div>
           <div className="lp-reason-card">
-            <h3 className="lp-reason-head">{verificationReviewed.toLocaleString()}</h3>
+            <h3 className="lp-reason-head">{formatNumber(locale, verificationReviewed)}</h3>
             <p className="lp-reason-body">{t('auditPage.verificationReviewedBody', 'Verification requests reviewed by a human')}</p>
           </div>
         </div>

@@ -1,9 +1,11 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,8 +27,8 @@ function statusColor(status: string) {
   return STATUS_COLORS[status] ?? 'var(--ink-a50)';
 }
 
-function fmtDateTime(d: Date) {
-  return d.toLocaleString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
+function fmtDateTime(d: Date, locale: Locale) {
+  return formatDate(locale, d, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 }
 
 /**
@@ -39,7 +41,7 @@ function fmtDateTime(d: Date) {
  * (back link, subject + status pill, mono meta line, message card).
  */
 export default async function SupportTicketDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const session = await auth();
   const { id } = await params;
 
@@ -92,7 +94,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase',
         color: 'var(--ink-a65)', marginBottom: 28,
       }}>
-        {ticket.type} · {ticket.priority} {t('supportTicketsIdPage.priorityLabel', 'priority')} · {t('supportTicketsIdPage.openedLabel', 'Opened')} {fmtDateTime(ticket.createdAt)}
+        {ticket.type} · {ticket.priority} {t('supportTicketsIdPage.priorityLabel', 'priority')} · {t('supportTicketsIdPage.openedLabel', 'Opened')} {fmtDateTime(ticket.createdAt, locale)}
       </div>
 
       <div style={{
@@ -109,7 +111,7 @@ export default async function SupportTicketDetailPage({ params }: { params: Prom
         border: '1px solid var(--line)',
       }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
-          {t('supportTicketsIdPage.lastUpdated', 'Last updated')} {fmtDateTime(ticket.updatedAt)}. {t('supportTicketsIdPage.replyWithin24h', 'We reply within 24h.')}
+          {t('supportTicketsIdPage.lastUpdated', 'Last updated')} {fmtDateTime(ticket.updatedAt, locale)}. {t('supportTicketsIdPage.replyWithin24h', 'We reply within 24h.')}
         </div>
       </div>
     </div>

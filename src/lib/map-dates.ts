@@ -31,6 +31,8 @@
  * the show is. `toISOString()` would be wrong — it converts to UTC first, so
  * anyone west of Greenwich after 5pm asks for tomorrow.
  */
+import { formatDate } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 
 /** `YYYY-MM-DD` in the LOCAL zone. Never `toISOString()` — see the header. */
 export function toDayKey(date: Date): string {
@@ -86,7 +88,7 @@ export type CalendarMonth = {
  * cell is a control that returns nothing by construction. It is rendered
  * (a calendar with holes is not a calendar) and disabled.
  */
-export function monthGrid(anchor: Date, today: Date = new Date()): CalendarMonth {
+export function monthGrid(anchor: Date, locale: Locale, today: Date = new Date()): CalendarMonth {
   const year = anchor.getFullYear();
   const month = anchor.getMonth();
   const first = new Date(year, month, 1);
@@ -114,7 +116,7 @@ export function monthGrid(anchor: Date, today: Date = new Date()): CalendarMonth
   }
 
   return {
-    title: first.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+    title: formatDate(locale, first, { month: 'long', year: 'numeric' }),
     weeks,
   };
 }
@@ -136,19 +138,19 @@ export function shiftMonth(anchor: Date, delta: number): Date {
  * range would claim the days between, which the set semantics explicitly do not
  * include (a Friday and a Sunday with nothing between them is legal).
  */
-export function describeDayKeys(selected: ReadonlySet<string>): string {
+export function describeDayKeys(selected: ReadonlySet<string>, locale: Locale): string {
   const keys = [...selected].sort();
   if (keys.length === 0) return 'Any day';
-  if (keys.length === 1) return formatDayKey(keys[0]);
+  if (keys.length === 1) return formatDayKey(keys[0], locale);
   return `${keys.length} days`;
 }
 
 /** `Sat, Aug 22` from `2026-08-22`, parsed as a LOCAL date rather than UTC. */
-export function formatDayKey(key: string): string {
+export function formatDayKey(key: string, locale: Locale): string {
   const [year, month, day] = key.split('-').map(Number);
   // `new Date('2026-08-22')` parses as UTC midnight and formats as the 21st
   // west of Greenwich. The numeric constructor is local, which is what a
   // calendar day means here.
   const date = new Date(year, month - 1, day);
-  return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatDate(locale, date, { weekday: 'short', month: 'short', day: 'numeric' });
 }

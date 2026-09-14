@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -6,7 +8,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { LineupSplitResponder } from '@/components/LineupSplitResponder';
 import { VenueLineupComposer } from '@/components/VenueLineupComposer';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,13 +21,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+function fmtDate(d: Date, locale: Locale) {
+  return formatDate(locale, d, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export default async function LineupSplitPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
 
   if (!session?.user?.id) {
@@ -63,7 +65,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
           show.artistPayoutPercent != null ? (
             <>
               <div className="lsp-eyebrow">{t('showsSlugLineupPage.lineupProposal', 'Lineup Proposal')}</div>
-              <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
+              <h1 className="lsp-title">{fmtDate(show.startsAt, locale)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
               <p className="lsp-sub">{t('showsSlugLineupPage.noLineupProposedYet', 'No lineup has been proposed yet — add every billed act and their split below.')}</p>
               <VenueLineupComposer artistPayoutPercent={show.artistPayoutPercent} existingSlots={[]} showId={show.id} />
             </>
@@ -89,7 +91,7 @@ export default async function LineupSplitPage({ params }: { params: Promise<{ sl
   return (
     <div className="lsp-page">
       <div className="lsp-eyebrow">{t('showsSlugLineupPage.lineupProposal', 'Lineup Proposal')}</div>
-      <h1 className="lsp-title">{fmtDate(show.startsAt)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
+      <h1 className="lsp-title">{fmtDate(show.startsAt, locale)} @ {show.venueProfile?.name ?? t('showsSlugLineupPage.tbd', 'TBD')}</h1>
       <p className="lsp-sub">
         {t('showsSlugLineupPage.proposedByPrefix', 'Proposed by')} {show.venueProfile?.name ?? t('showsSlugLineupPage.theVenue', 'the venue')} · {t('showsSlugLineupPage.everyArtistMustAccept', 'every artist below must accept before this booking locks.')}
       </p>

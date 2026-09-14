@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
@@ -12,14 +13,14 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { buildTicketQrCodeDataUrl, formatTicketStatus } from '@/lib/tickets';
 import { formatShowTime } from '@/lib/utils';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export default async function TicketPage({
   params
 }: {
   params: Promise<{ serializedId: string }>;
 }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const session = await auth();
   const { serializedId } = await params;
   // The layout gates this too; every destination keeps its own check (WIRING.md).
@@ -78,12 +79,12 @@ export default async function TicketPage({
     { label: t('ticketsSerializedIdPage.holder', 'Holder'), value: ticket.holderName, mono: false },
     { label: t('ticketsSerializedIdPage.orderCode', 'Order code'), value: ticket.ticketOrder.confirmationCode },
     { label: t('ticketsSerializedIdPage.artist', 'Artist'), value: ticket.show.headlinerProfile?.name ?? t('ticketsSerializedIdPage.tba', 'TBA'), mono: false },
-    { label: t('ticketsSerializedIdPage.perTicketValue', 'Per-ticket value'), value: formatCurrencyFromCents(ticket.ticketOrder.subtotalCents / ticket.ticketOrder.quantity) },
+    { label: t('ticketsSerializedIdPage.perTicketValue', 'Per-ticket value'), value: formatCurrencyFromCents(ticket.ticketOrder.subtotalCents / ticket.ticketOrder.quantity, locale) },
     { label: t('ticketsSerializedIdPage.orderStatus', 'Order status'), value: ticket.ticketOrder.status },
-    { label: t('ticketsSerializedIdPage.scanTime', 'Scan time'), value: ticket.scannedAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(ticket.scannedAt) : t('ticketsSerializedIdPage.notYet', 'Not yet') },
+    { label: t('ticketsSerializedIdPage.scanTime', 'Scan time'), value: ticket.scannedAt ? formatDate(locale, ticket.scannedAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : t('ticketsSerializedIdPage.notYet', 'Not yet') },
     { label: t('ticketsSerializedIdPage.passedOn', 'Passed on'), value: ticket.reassignCount === 0 ? t('ticketsSerializedIdPage.never', 'Never') : `${ticket.reassignCount}×`, accent: ticket.reassignCount > 0 },
     { label: t('ticketsSerializedIdPage.venueZip', 'Venue ZIP'), value: ticket.show.venueProfile?.postalCode ?? t('ticketsSerializedIdPage.open', 'Open') },
-    { label: t('ticketsSerializedIdPage.totalTax', 'Total tax'), value: formatCurrencyFromCents(ticket.ticketOrder.totalTaxCents) },
+    { label: t('ticketsSerializedIdPage.totalTax', 'Total tax'), value: formatCurrencyFromCents(ticket.ticketOrder.totalTaxCents, locale) },
     /* Stripe's cut, on its own line, for the same reason the sale card states
        it before payment: without it the rail's own arithmetic does not close —
        per-ticket value plus tax does not reach the total charge, and the gap
@@ -91,8 +92,8 @@ export default async function TicketPage({
        is charged per transaction, not per ticket, so dividing it by the
        quantity would invent a per-ticket figure Stripe never charged. iHYPE's
        own fee is $0 and is not a line. */
-    { label: t('ticketsSerializedIdPage.processingFee', 'Processing (Stripe, this order)'), value: formatCurrencyFromCents(ticket.ticketOrder.processingFeeCents) },
-    { label: t('ticketsSerializedIdPage.totalCharge', 'Total charge'), value: formatCurrencyFromCents(ticket.ticketOrder.totalChargeCents || ticket.ticketOrder.subtotalCents) },
+    { label: t('ticketsSerializedIdPage.processingFee', 'Processing (Stripe, this order)'), value: formatCurrencyFromCents(ticket.ticketOrder.processingFeeCents, locale) },
+    { label: t('ticketsSerializedIdPage.totalCharge', 'Total charge'), value: formatCurrencyFromCents(ticket.ticketOrder.totalChargeCents || ticket.ticketOrder.subtotalCents, locale) },
   ];
 
   return (
@@ -135,7 +136,7 @@ export default async function TicketPage({
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-on-walnut-3)' }}>
-              {formatShowTime(ticket.show.startsAt)}
+              {formatShowTime(ticket.show.startsAt, locale)}
             </div>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6875rem', lineHeight: 1.14, fontWeight: 500, margin: 0, color: 'var(--ink-on-walnut)' }}>
               {ticket.show.title}
@@ -257,7 +258,7 @@ export default async function TicketPage({
               <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', margin: '0 0 12px' }}>
                 {t('ticketsSerializedIdPage.passedOnTimesPrefix', 'This ticket has been passed on')} <strong>{ticket.reassignCount}</strong> {ticket.reassignCount !== 1 ? t('ticketsSerializedIdPage.timesPlural', 'times') : t('ticketsSerializedIdPage.timeSingular', 'time')}.
                 {' '}{t('ticketsSerializedIdPage.lastReassigned', 'Last reassigned')}{' '}
-                {new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(ticket.reassignedAt)}.
+                {formatDate(locale, ticket.reassignedAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
               </p>
             ) : null}
             <TicketReassignmentForm

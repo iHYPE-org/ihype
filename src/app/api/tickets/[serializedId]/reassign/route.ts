@@ -54,7 +54,7 @@ export async function POST(
     const perTicketValueCents = Math.round(ticket.ticketOrder.subtotalCents / ticket.ticketOrder.quantity);
     if (body.resalePriceCents !== perTicketValueCents) {
       return NextResponse.json(
-        { error: `Tickets can only be reassigned at face value of ${formatCurrencyFromCents(perTicketValueCents)}.` },
+        { error: `Tickets can only be reassigned at face value of ${formatCurrencyFromCents(perTicketValueCents, 'en')}.` },
         { status: 400 }
       );
     }
@@ -79,7 +79,7 @@ export async function POST(
       showTitle: ticket.show.title,
       venueName: ticket.show.venueProfile?.name,
       eventOpensAtLabel: ticket.show.startsAt.toLocaleString('en-US'),
-      totalChargeLabel: formatCurrencyFromCents(perTicketValueCents),
+      totalChargeLabel: formatCurrencyFromCents(perTicketValueCents, 'en'),
       tickets: [
         {
           label: 'Reassigned ticket',

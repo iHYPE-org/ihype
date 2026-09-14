@@ -1,3 +1,4 @@
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { FanMailButton } from '@/components/FanMailButton';
 import Link from 'next/link';
@@ -7,7 +8,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueDashboardData } from '@/lib/venue-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 export default async function VenueDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
   const session = await auth();
   if (!session?.user?.id) {
@@ -37,7 +38,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   if (!isOwner) return notFound();
 
-  const data = await getVenueDashboardData(profile.id);
+  const data = await getVenueDashboardData(profile.id, locale);
 
   return (
     <div className="vdash">
@@ -55,7 +56,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
       <div className="vdash-stats">
         <div className="vdash-card">
           <div className="vdash-card-label">{t('venuesSlugDashboardPage.thisMonth', 'This Month')}</div>
-          <div className="vdash-card-val">{formatCurrencyFromCents(data.thisMonthEarningsCents)}</div>
+          <div className="vdash-card-val">{formatCurrencyFromCents(data.thisMonthEarningsCents, locale)}</div>
           <div className="vdash-card-sub">{t('venuesSlugDashboardPage.thisMonthSub', 'Your split share this calendar month · $0 iHYPE fee')}</div>
         </div>
         <div className="vdash-card">
@@ -75,7 +76,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
           <div className="vdash-card-val">{data.nextPayout?.label ?? '—'}</div>
           <div className="vdash-card-sub">
             {data.nextPayout?.amountCents != null
-              ? `${formatCurrencyFromCents(data.nextPayout.amountCents)} ${t('venuesSlugDashboardPage.pendingRelease', 'pending release')}`
+              ? `${formatCurrencyFromCents(data.nextPayout.amountCents, locale)} ${t('venuesSlugDashboardPage.pendingRelease', 'pending release')}`
               : data.nextPayout?.estimated
                 ? t('venuesSlugDashboardPage.estimatedNote', 'Estimated — depends on ticket sales before then')
                 : t('venuesSlugDashboardPage.noPendingPayouts', 'No pending payouts right now')}
@@ -94,10 +95,10 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
           ) : (
             <div className="vdash-shows">
               {data.upcomingShows.map((show) => {
-                const date = show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const date = formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' });
                 const soldLabel = show.ticketCapacity
-                  ? `${show.ticketsSoldCount.toLocaleString()} / ${show.ticketCapacity.toLocaleString()} ${t('venuesSlugDashboardPage.sold', 'sold')}`
-                  : `${show.ticketsSoldCount.toLocaleString()} ${t('venuesSlugDashboardPage.sold', 'sold')}`;
+                  ? `${formatNumber(locale, show.ticketsSoldCount)} / ${formatNumber(locale, show.ticketCapacity)} ${t('venuesSlugDashboardPage.sold', 'sold')}`
+                  : `${formatNumber(locale, show.ticketsSoldCount)} ${t('venuesSlugDashboardPage.sold', 'sold')}`;
                 return (
                   <Link className="vdash-show-row" href={show.status === 'DRAFT' ? `/app/me/shows/${show.slug}/lineup` : `/app/shows/${show.slug}`} key={show.id}>
                     <div>

@@ -1,3 +1,5 @@
+import { formatDate } from '@/lib/format-locale';
+import { isSupportedLocale, type Locale } from '@/lib/i18n/locales';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -56,6 +58,13 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const q = searchParams.get('q')?.trim() ?? '';
+  // The show rows carry a formatted date. This response is PUBLIC and
+  // CDN-cached for everyone (see the Cache-Control note at the bottom), and a
+  // shared cache cannot vary on the member's locale cookie — so the locale
+  // rides in the QUERY, where it is part of the cache key, and never comes
+  // from the cookie. Absent or unknown, English.
+  const requestedLocale = searchParams.get('locale');
+  const locale: Locale = isSupportedLocale(requestedLocale) ? requestedLocale : 'en';
   const typeFilter = searchParams.get('type') ?? 'all';
   const limitParam = parseInt(searchParams.get('limit') ?? '20', 10);
   const limit = Math.min(Math.max(1, isNaN(limitParam) ? 20 : limitParam), 60);
@@ -256,7 +265,7 @@ export async function GET(request: NextRequest) {
   shows.forEach(s => {
     const venueName = s.venueProfile?.name ?? '';
     const date = s.startsAt
-      ? new Date(s.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+      ? formatDate(locale, s.startsAt, { month: 'short', day: 'numeric' })
       : 'TBD';
     const sub = [
       venueName || null,

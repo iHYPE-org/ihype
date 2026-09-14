@@ -6,11 +6,12 @@ export function slugify(input: string) {
     .replace(/(^-|-$)/g, '');
 }
 
-export function formatShowTime(date: Date) {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date);
+import { formatDate } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
+
+/** Date and clock together, in the member's language. */
+export function formatShowTime(date: Date, locale: Locale) {
+  return formatDate(locale, date, { dateStyle: 'medium', timeStyle: 'short' });
 }
 
 export function getBaseUrl(): string {

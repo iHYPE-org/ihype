@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { warmTicketCache } from '@/lib/private-cache';
 import { useI18n } from '@/components/I18nProvider';
@@ -63,7 +64,7 @@ function writeLastSaved(at: number): void {
 }
 
 export function OfflineTicketWarmer({ paths }: { paths: readonly string[] }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [state, setState] = useState<State>({ phase: 'idle' });
   const [lastSaved, setLastSaved] = useState<number | null>(null);
   /* The automatic warm runs once per mount. Without this an interactive save
@@ -136,7 +137,7 @@ export function OfflineTicketWarmer({ paths }: { paths: readonly string[] }) {
         {state.phase === 'unavailable' && t('offlineTickets.unavailable', 'This browser cannot keep tickets for offline use. Take a screenshot of each QR before you travel.')}
         {state.phase !== 'saved' && state.phase !== 'unavailable' && (
           lastSaved
-            ? `${t('offlineTickets.lastSaved', 'Saved to this phone')} ${new Date(lastSaved).toLocaleDateString()}`
+            ? `${t('offlineTickets.lastSaved', 'Saved to this phone')} ${formatDate(locale, new Date(lastSaved), { year: 'numeric', month: 'numeric', day: 'numeric' })}`
             : t('offlineTickets.explain', 'Keeps your QR codes on this phone so they open at the door with no signal.')
         )}
       </p>

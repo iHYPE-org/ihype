@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -48,7 +49,7 @@ export function EventCancellationFlow({
   ticketsSoldCount: number;
   dashboardHref: string;
 }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [reason, setReason] = useState<string | null>(null);
   const [message, setMessage] = useState('');
@@ -96,15 +97,15 @@ export function EventCancellationFlow({
             {(result.ordersRefunded === 1
               ? t('eventCancellationFlow.refundedSummaryOne', "{count} order refunded in full — face value plus Stripe's processing fee.")
               : t('eventCancellationFlow.refundedSummaryOther', "{count} orders refunded in full — face value plus Stripe's processing fee.")
-            ).replace('{count}', result.ordersRefunded.toLocaleString())}
+            ).replace('{count}', formatNumber(locale, result.ordersRefunded))}
             {result.ordersSkippedAlreadyScanned > 0 && ` ${(result.ordersSkippedAlreadyScanned === 1
               ? t('eventCancellationFlow.skippedSummaryOne', '{count} order was already scanned in and was left untouched.')
               : t('eventCancellationFlow.skippedSummaryOther', '{count} orders were already scanned in and were left untouched.')
-            ).replace('{count}', result.ordersSkippedAlreadyScanned.toLocaleString())}`}
+            ).replace('{count}', formatNumber(locale, result.ordersSkippedAlreadyScanned))}`}
             {result.ordersFailed > 0 && ` ${(result.ordersFailed === 1
               ? t('eventCancellationFlow.failedSummaryOne', '{count} refund failed and will need manual follow-up — check Stripe.')
               : t('eventCancellationFlow.failedSummaryOther', '{count} refunds failed and will need manual follow-up — check Stripe.')
-            ).replace('{count}', result.ordersFailed.toLocaleString())}`}
+            ).replace('{count}', formatNumber(locale, result.ordersFailed))}`}
           </p>
           {result.message && (
             <div className="ecf-done-message">
@@ -125,7 +126,7 @@ export function EventCancellationFlow({
 
       <div className="ecf-card">
         <div className="ecf-card-title">{showTitle}{venueName ? ` @ ${venueName}` : ''}</div>
-        <div className="ecf-card-meta">{startsAtLabel} · {ticketsSoldCount.toLocaleString()} {ticketsSoldCount === 1
+        <div className="ecf-card-meta">{startsAtLabel} · {formatNumber(locale, ticketsSoldCount)} {ticketsSoldCount === 1
           ? t('eventCancellationFlow.ticketsSoldLabelOne', 'ticket sold')
           : t('eventCancellationFlow.ticketsSoldLabelOther', 'tickets sold')}</div>
       </div>
@@ -169,7 +170,7 @@ export function EventCancellationFlow({
           {(ticketsSoldCount === 1
             ? t('eventCancellationFlow.warningBodyOne', 'All {count} ticket is refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
             : t('eventCancellationFlow.warningBodyOther', 'All {count} tickets are refunded in full automatically — face value and Stripe\'s processing fee both. Fans are notified immediately.')
-          ).replace('{count}', ticketsSoldCount.toLocaleString())}
+          ).replace('{count}', formatNumber(locale, ticketsSoldCount))}
         </p>
       </div>
 

@@ -1,3 +1,5 @@
+import { formatDate } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 
 export type VenueAnalyticsRange = '7d' | '30d' | 'ytd';
@@ -58,14 +60,14 @@ function previousPeriodFor(range: VenueAnalyticsRange, rangeStart: Date): { star
   return null;
 }
 
-function bucketDefsFor(range: VenueAnalyticsRange, rangeStart: Date, now: Date): { start: Date; end: Date; label: string }[] {
+function bucketDefsFor(range: VenueAnalyticsRange, rangeStart: Date, now: Date, locale: Locale): { start: Date; end: Date; label: string }[] {
   if (range === 'ytd') {
     const buckets: { start: Date; end: Date; label: string }[] = [];
     const monthCount = now.getMonth() + 1;
     for (let m = 0; m < monthCount; m += 1) {
       const start = new Date(now.getFullYear(), m, 1);
       const end = m === monthCount - 1 ? now : new Date(now.getFullYear(), m + 1, 1);
-      buckets.push({ start, end, label: start.toLocaleDateString('en-US', { month: 'short' }) });
+      buckets.push({ start, end, label: formatDate(locale, start, { month: 'short' }) });
     }
     return buckets;
   }
@@ -78,8 +80,8 @@ function bucketDefsFor(range: VenueAnalyticsRange, rangeStart: Date, now: Date):
     const start = new Date(rangeStart.getTime() + offset * dayMs);
     const end = new Date(Math.min(rangeStart.getTime() + (offset + bucketSizeDays) * dayMs, now.getTime()));
     const label = range === '7d'
-      ? start.toLocaleDateString('en-US', { weekday: 'short' })
-      : start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      ? formatDate(locale, start, { weekday: 'short' })
+      : formatDate(locale, start, { month: 'short', day: 'numeric' });
     buckets.push({ start, end, label });
   }
   return buckets;
@@ -103,7 +105,7 @@ function bucketDefsFor(range: VenueAnalyticsRange, rangeStart: Date, now: Date):
  * all-time "shows with startsAt >= now or status LIVE" definition already
  * used by src/lib/venue-dashboard.ts.
  */
-export async function getVenueAnalyticsData(profileId: string, range: VenueAnalyticsRange): Promise<VenueAnalyticsData> {
+export async function getVenueAnalyticsData(profileId: string, range: VenueAnalyticsRange, locale: Locale): Promise<VenueAnalyticsData> {
   const now = new Date();
   const rangeStart = rangeStartFor(range, now);
   const previousPeriod = previousPeriodFor(range, rangeStart);
@@ -163,7 +165,7 @@ export async function getVenueAnalyticsData(profileId: string, range: VenueAnaly
     }
   }
 
-  const bucketDefs = bucketDefsFor(range, rangeStart, now);
+  const bucketDefs = bucketDefsFor(range, rangeStart, now, locale);
   const buckets: VenueAnalyticsBucket[] = bucketDefs.map((b) => ({
     label: b.label,
     attendance: shows

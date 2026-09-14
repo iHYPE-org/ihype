@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatUsd } from '@/lib/format-locale';
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { postJson } from '@/lib/api-client';
@@ -34,7 +36,7 @@ import { openExternalUrl } from '@/lib/open-external';
  */
 
 /* Money is the one helper the builder needs. `fmt` went with the ticker. */
-function money(n: number): string { return '$' + Math.round(n).toLocaleString('en-US'); }
+function money(n: number, locale: Locale): string { return formatUsd(locale, Math.round(n) * 100, 0); }
 
 /* ── Coverage Builder ────────────────────────────────────── */
 type SubmitState =
@@ -45,7 +47,7 @@ type SubmitState =
   | { phase: 'error'; error: string };
 
 function CoverageBuilder() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [scope, setScope] = useState<AdScope>('REGIONAL');
   const [months, setMonths] = useState<SponsorshipTermMonths>(3);
   const [title, setTitle] = useState('');
@@ -169,7 +171,7 @@ function CoverageBuilder() {
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
                   <span style={{ marginLeft: 'auto', textAlign: 'right', flexShrink: 0 }}>
-                    <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1rem', letterSpacing: '-.01em', color: s === scope ? 'var(--accent-text)' : 'inherit' }}>{money(SPONSORSHIP_MONTHLY_USD[s])}</div>
+                    <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 700, fontSize: '1rem', letterSpacing: '-.01em', color: s === scope ? 'var(--accent-text)' : 'inherit' }}>{money(SPONSORSHIP_MONTHLY_USD[s], locale)}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.06em', marginTop: 2 }}>{t('advertisePage.perMonth', '/ month')}</div>
                   </span>
                 </button>
@@ -266,7 +268,7 @@ function CoverageBuilder() {
                 stretch of time, so that is what the panel states. Real
                 delivery is reported on their dashboard once spots have
                 actually aired. */}
-            {[{ v: money(monthly), l: t('advertisePage.perMonthLabel', 'Per month') }, { v: `${quote.months}`, l: quote.months === 1 ? t('advertisePage.monthLabel', 'Month') : t('advertisePage.monthsLabel', 'Months') }, { v: t('advertisePage.equalShareValue', 'Equal'), l: t('advertisePage.equalShareLabel', 'Share of breaks') }].map(s => (
+            {[{ v: money(monthly, locale), l: t('advertisePage.perMonthLabel', 'Per month') }, { v: `${quote.months}`, l: quote.months === 1 ? t('advertisePage.monthLabel', 'Month') : t('advertisePage.monthsLabel', 'Months') }, { v: t('advertisePage.equalShareValue', 'Equal'), l: t('advertisePage.equalShareLabel', 'Share of breaks') }].map(s => (
               <div key={s.l} style={{ minWidth: 0, padding: '13px 14px', border: '1px solid var(--hair-70)', borderRadius: 11, background: 'var(--bg-3)' }}>
                 <div style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '1.3125rem', letterSpacing: '-.02em' }}>{s.v}</div>
                 <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.1em', color: 'var(--ink-2)', textTransform: 'uppercase', marginTop: 6 }}>{s.l}</div>
@@ -291,7 +293,7 @@ function CoverageBuilder() {
 
           {/* Receipt */}
           <div style={{ marginTop: 20, borderTop: '1px dashed var(--line-2)', paddingTop: 18 }}>
-            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly)}`, v: money(total) }].map(r => (
+            {[{ k: `${AD_SCOPE_LABELS[scope]} ${t('advertisePage.sponsorship', 'sponsorship')}`, v: `${money(monthly, locale)} ${t('advertisePage.perMonth', '/ month')}` }, { k: `${quote.months} × ${money(monthly, locale)}`, v: money(total, locale) }].map(r => (
               <div className="adv-receipt-row" key={r.k} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, padding: '7px 0', fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem' }}>
                 <span style={{ color: 'var(--ink-2)', letterSpacing: '.06em' }}>{r.k}</span>
                 <span>{r.v}</span>
@@ -300,7 +302,7 @@ function CoverageBuilder() {
             <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('advertisePage.total', 'Total')}</span>
               <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent-text)' }}>
-                {money(total)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(monthly)}{t('advertisePage.slashMonth', '/month')}</small>
+                {money(total, locale)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(monthly, locale)}{t('advertisePage.slashMonth', '/month')}</small>
               </span>
             </div>
 

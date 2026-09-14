@@ -1,3 +1,4 @@
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -17,6 +18,8 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getBaseUrl } from '@/lib/utils';
 import { getServerT } from '@/lib/i18n/server';
 import { askStatusLabel } from '@/lib/i18n-enum-labels';
+
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const revalidate = 60;
 
@@ -72,7 +75,7 @@ export default async function FanProfilePage({
   params: Promise<{ slug: string }>;
   searchParams?: Promise<{ section?: string | string[] }>;
 }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const session = await auth();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
@@ -167,10 +170,10 @@ export default async function FanProfilePage({
         <div className="fan-stats">
           <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
           <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
-          <div><div className="fan-stat-val">{profile._count.followers.toLocaleString()}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
-          <div><div className="fan-stat-val">{asks.length.toLocaleString()}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
+          <div><div className="fan-stat-val">{formatNumber(locale, profile._count.followers)}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
+          <div><div className="fan-stat-val">{formatNumber(locale, asks.length)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
         </div>
-        <PinnedStatTiles accent="var(--profile-accent, var(--role-fan))" stats={pinnedStats} />
+        <PinnedStatTiles accent="var(--profile-accent, var(--role-fan))" stats={pinnedStats} locale={locale} />
       </div>
 
       <div className="fan-content">
@@ -216,7 +219,7 @@ export default async function FanProfilePage({
                 <Link className="fan-show-row" href={`/shows/${show.slug}`} key={show.id}>
                   <div>
                     <h4>{show.title}</h4>
-                    <p>{show.startsAt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
+                    <p>{formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
                   <span style={{ fontSize: '0.9375rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>
@@ -249,7 +252,7 @@ export default async function FanProfilePage({
                     <p>
                       {[
                         ask.venueProfile.city,
-                        ask.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+                        formatDate(locale, ask.createdAt, { month: 'short', day: 'numeric', year: 'numeric' }),
                       ].filter(Boolean).join(' · ')}
                     </p>
                   </div>
@@ -287,7 +290,7 @@ export default async function FanProfilePage({
               <div className="fan-payout-list">
                 <div className="fan-payout-row">
                   <span>{t('fansSlugPage.totalEarnedLabel', 'Total earned (pending settlement)')}</span>
-                  <span style={{ fontWeight: 700, color: 'var(--profile-accent, var(--role-fan))' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--profile-accent, var(--role-fan))' }}>{formatCurrencyFromCents(promoterDashboard.earnedCents, locale)}</span>
                 </div>
               </div>
             )}

@@ -1,8 +1,9 @@
+import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { db } from '@/lib/db';
 import type { Metadata } from 'next';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,7 +65,7 @@ export default async function JournalPost({
   const { slug } = await params;
   const found = await findEditorialPost(slug);
   if (!found) return notFound();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const meta = (found.metadata ?? {}) as EditorialMeta;
   const paragraphs = meta.body ? meta.body.split(/\n{2,}/).filter(Boolean) : [];
 
@@ -96,7 +97,7 @@ export default async function JournalPost({
         {meta.title}
       </h1>
       <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', margin: '14px 0 30px' }}>
-        {meta.author ?? 'iHYPE'} · {found.createdAt.toLocaleDateString()}
+        {meta.author ?? 'iHYPE'} · {formatDate(locale, found.createdAt, { year: 'numeric', month: 'numeric', day: 'numeric' })}
       </p>
       {meta.excerpt ? (
         <div

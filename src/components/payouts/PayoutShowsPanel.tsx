@@ -1,5 +1,6 @@
+import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 type ShowRow = { id: string; slug: string; title: string; status: string; startsAt: Date; isTicketed: boolean };
 
@@ -11,7 +12,7 @@ type ShowRow = { id: string; slug: string; title: string; status: string; starts
  * existing, unchanged `/payout/[id]` page for the full breakdown.
  */
 export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
 
   if (shows.length === 0) {
     return <p className="meta">{t('payoutShowsPanel.noShowsYet', "You haven't created any shows yet.")}</p>;
@@ -29,7 +30,7 @@ export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
         >
           <div>
             <div style={{ fontWeight: 600 }}>{s.title}</div>
-            <div className="meta">{new Date(s.startsAt).toLocaleDateString()} · {s.status}{!s.isTicketed ? ` · ${t('payoutShowsPanel.notTicketed', 'not ticketed')}` : ''}</div>
+            <div className="meta">{formatDate(locale, new Date(s.startsAt), { year: 'numeric', month: 'numeric', day: 'numeric' })} · {s.status}{!s.isTicketed ? ` · ${t('payoutShowsPanel.notTicketed', 'not ticketed')}` : ''}</div>
           </div>
           <div className="meta">{t('payoutShowsPanel.view', 'View →')}</div>
         </Link>

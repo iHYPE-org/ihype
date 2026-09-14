@@ -45,7 +45,8 @@ async function deliverTicketOrder(orderId: string) {
     showTitle: order.show.title,
     venueName: order.show.venueProfile?.name,
     eventOpensAtLabel: order.show.ticketingOpensAt?.toLocaleString('en-US') ?? null,
-    totalChargeLabel: formatCurrencyFromCents(order.totalChargeCents),
+    // An email has no reader locale on file (User carries none), so it is English.
+    totalChargeLabel: formatCurrencyFromCents(order.totalChargeCents, 'en'),
     tickets,
   });
 }

@@ -1,3 +1,4 @@
+import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { NewsletterSignup } from '@/components/NewsletterSignup';
 import { redirect } from 'next/navigation';
@@ -10,7 +11,7 @@ import { getDemoCreatorExclusion, isDemoUser, shouldHideDemoContent } from '@/li
 import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
@@ -81,7 +82,7 @@ export default async function MmmVenuePage({
   if (!profile || profile.type !== 'VENUE') return missing;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
 
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const activeTab = resolveTab(VENUE_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
 
@@ -193,7 +194,7 @@ export default async function MmmVenuePage({
 
           {/* The public stat catalogue's three venue figures. Capacity moved to
               Venue Info, where a coordinator looks for it. */}
-          <ProfileCounters
+          <ProfileCounters locale={locale}
             counters={[
               { label: t('profilePane.counterHypes', 'Hypes'), value: profile.hypeCount },
               { label: t('profilePane.counterFollowers', 'Followers'), value: profile._count.followers },
@@ -214,11 +215,11 @@ export default async function MmmVenuePage({
         >
           <ul className="mmm-profile-rows">
             {upcoming.map((show) => (
-              <ProfileRow
+              <ProfileRow locale={locale}
                 key={show.id}
                 date={show.startsAt}
                 href={`/app/shows/${show.slug}`}
-                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt), formatTicketPrice(show)].filter(Boolean).join(' · ')}
+                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt, locale), formatTicketPrice(show, locale)].filter(Boolean).join(' · ')}
                 title={show.title}
                 trail={showRowTrail(show, now)}
               />
@@ -244,7 +245,7 @@ export default async function MmmVenuePage({
           {profile.headline && <p className="profile-standfirst">{profile.headline}</p>}
           <dl className="profile-facts">
             {profile.capacity && (
-              <div><dt>{t('venuePane.factCapacity', 'Capacity')}</dt><dd>{profile.capacity.toLocaleString()}</dd></div>
+              <div><dt>{t('venuePane.factCapacity', 'Capacity')}</dt><dd>{formatNumber(locale, profile.capacity)}</dd></div>
             )}
             {profile.roomType && <div><dt>{t('venuePane.factRoom', 'Room')}</dt><dd>{profile.roomType}</dd></div>}
             {address && (

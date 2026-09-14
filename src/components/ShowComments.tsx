@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -15,7 +16,7 @@ type Comment = {
 const REACTION_EMOJIS = ['👍', '❤️', '🔥'];
 
 export function ShowComments({ showId, canComment }: { showId: string; canComment: boolean }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [text, setText] = useState('');
@@ -125,7 +126,7 @@ export function ShowComments({ showId, canComment }: { showId: string; canCommen
               <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 4 }}>
                 <strong>{comment.author}</strong>
                 <span className="meta" style={{ fontSize: '0.9375rem' }}>
-                  {new Date(comment.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                  {formatDate(locale, new Date(comment.createdAt), { month: 'short', day: 'numeric' })}
                 </span>
               </div>
               <p style={{ margin: '0 0 8px', whiteSpace: 'pre-wrap', fontSize: '0.9375rem', lineHeight: 1.6 }}>

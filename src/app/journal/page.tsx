@@ -1,6 +1,7 @@
+import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { db } from '@/lib/db';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const metadata = { title: 'Journal · iHYPE' };
 export const dynamic = 'force-dynamic';
@@ -15,7 +16,7 @@ type EditorialMeta = {
 };
 
 export default async function JournalIndex() {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const rows = await db.auditLog.findMany({
     where: { action: 'editorial_post' },
     orderBy: { createdAt: 'desc' },
@@ -71,7 +72,7 @@ export default async function JournalIndex() {
                 </p>
               ) : null}
               <p className="meta" style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem' }}>
-                {p.meta.author ?? 'iHYPE'} · {p.createdAt.toLocaleDateString()}
+                {p.meta.author ?? 'iHYPE'} · {formatDate(locale, p.createdAt, { year: 'numeric', month: 'numeric', day: 'numeric' })}
               </p>
             </li>
           ))}

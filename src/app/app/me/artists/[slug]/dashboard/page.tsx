@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { bookingInboxPath } from '@/lib/booking-inbox-path';
 import { FanMailButton } from '@/components/FanMailButton';
@@ -10,7 +12,7 @@ import { getProfileInsights } from '@/lib/profile-insights';
 import { getArtistDashboardStats } from '@/lib/artist-dashboard';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,13 +25,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-function fmtDate(d: Date) {
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+function fmtDate(d: Date, locale: Locale) {
+  return formatDate(locale, d, { weekday: 'short', month: 'short', day: 'numeric' });
 }
 
 export default async function ArtistDashboardPage({ params }: { params: Promise<{ slug: string }> }) {
   const session = await auth();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
 
   if (!session?.user?.id) {
@@ -71,13 +73,13 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
   if (dashStats.hypesThisWeek > 0) {
     activity.push({
       color: 'var(--accent-text)',
-      text: <><strong>{dashStats.hypesThisWeek.toLocaleString()}</strong> {dashStats.hypesThisWeek === 1 ? t('artistsSlugDashboardPage.fanHypedSingular', 'fan hyped your profile this week') : t('artistsSlugDashboardPage.fanHypedPlural', 'fans hyped your profile this week')}</>,
+      text: <><strong>{formatNumber(locale, dashStats.hypesThisWeek)}</strong> {dashStats.hypesThisWeek === 1 ? t('artistsSlugDashboardPage.fanHypedSingular', 'fan hyped your profile this week') : t('artistsSlugDashboardPage.fanHypedPlural', 'fans hyped your profile this week')}</>,
     });
   }
   if (dashStats.ticketsSoldThisWeek > 0) {
     activity.push({
       color: 'var(--role-venue)',
-      text: <><strong>{dashStats.ticketsSoldThisWeek.toLocaleString()}</strong> {dashStats.ticketsSoldThisWeek === 1 ? t('artistsSlugDashboardPage.ticketSoldSingular', 'ticket sold this week') : t('artistsSlugDashboardPage.ticketSoldPlural', 'tickets sold this week')}</>,
+      text: <><strong>{formatNumber(locale, dashStats.ticketsSoldThisWeek)}</strong> {dashStats.ticketsSoldThisWeek === 1 ? t('artistsSlugDashboardPage.ticketSoldSingular', 'ticket sold this week') : t('artistsSlugDashboardPage.ticketSoldPlural', 'tickets sold this week')}</>,
     });
   }
   if (bookingPending > 0) {
@@ -88,7 +90,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       color: 'var(--role-fan)',
       text: (
         <Link href={bookingInboxPath('ARTIST', profile.slug)}>
-          <strong>{bookingPending.toLocaleString()}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}
+          <strong>{formatNumber(locale, bookingPending)}</strong> {bookingPending === 1 ? t('artistsSlugDashboardPage.pendingBookingSingular', 'pending booking request awaiting a reply') : t('artistsSlugDashboardPage.pendingBookingPlural', 'pending booking requests awaiting a reply')}
         </Link>
       ),
     });
@@ -109,22 +111,22 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
       <div className="ad-stats-grid">
         <Link className="ad-stat-card" href={`/app/me/artists/${profile.slug}/analytics`}>
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.thisMonthLabel', 'This Month')}</div>
-          <div className="ad-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents)}</div>
+          <div className="ad-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents, locale)}</div>
           <div className="ad-stat-sub">{t('artistsSlugDashboardPage.yourShare', 'Your 70% share · $0 iHYPE fee')}</div>
         </Link>
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.ticketsSoldLabel', 'Tickets Sold')}</div>
-          <div className="ad-stat-val">{dashStats.ticketsSoldThisMonth.toLocaleString()}</div>
+          <div className="ad-stat-val">{formatNumber(locale, dashStats.ticketsSoldThisMonth)}</div>
           <div className="ad-stat-sub">{t('artistsSlugDashboardPage.thisMonth', 'This month')}</div>
         </div>
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.hypeCastLabel', 'Hype Cast')}</div>
-          <div className="ad-stat-val">{insights.hypeTotal.toLocaleString()}</div>
+          <div className="ad-stat-val">{formatNumber(locale, insights.hypeTotal)}</div>
           <div className="ad-stat-sub">{t('artistsSlugDashboardPage.totalHypes', 'Total hypes')}</div>
         </div>
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.nextPayoutLabel', 'Next Payout')}</div>
-          <div className="ad-stat-val">{dashStats.nextPayoutAt ? fmtDate(dashStats.nextPayoutAt) : '—'}</div>
+          <div className="ad-stat-val">{dashStats.nextPayoutAt ? fmtDate(dashStats.nextPayoutAt, locale) : '—'}</div>
           <div className="ad-stat-sub">{dashStats.nextPayoutAt ? t('artistsSlugDashboardPage.releasedAfterShow', 'Released after show ends') : t('artistsSlugDashboardPage.noPendingPayout', 'No pending payout')}</div>
         </div>
       </div>
@@ -143,12 +145,12 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
                   <div style={{ minWidth: 0 }}>
                     <div className="ad-event-title">{show.title}</div>
                     <div className="ad-event-meta">
-                      {fmtDate(show.startsAt)}
+                      {fmtDate(show.startsAt, locale)}
                       {show.venueProfile?.name ? ` · ${show.venueProfile.name}` : ''}
                       {show.status === 'DRAFT'
                         ? ` · ${t('artistsSlugDashboardPage.draftReviewSplit', 'Draft — review lineup split')}`
                         : show.isTicketed && show.ticketCapacity
-                          ? ` · ${(show.ticketsSoldCount ?? 0).toLocaleString()} / ${show.ticketCapacity.toLocaleString()} ${t('artistsSlugDashboardPage.sold', 'sold')}`
+                          ? ` · ${formatNumber(locale, (show.ticketsSoldCount ?? 0))} / ${formatNumber(locale, show.ticketCapacity)} ${t('artistsSlugDashboardPage.sold', 'sold')}`
                           : ''}
                     </div>
                   </div>

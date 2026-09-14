@@ -1,3 +1,5 @@
+import { formatUsd } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 import { calculateProcessingFee } from '@/lib/stripe-fees';
 export const PLATFORM_COMMISSION_PERCENT = 0;
 export const DEFAULT_PROMOTER_AFFILIATE_PERCENT = 10;
@@ -338,11 +340,8 @@ export function calculateTicketOrderFinancials(
   };
 }
 
-export function formatCurrencyFromCents(amountCents: number) {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
-  }).format(amountCents / 100);
+export function formatCurrencyFromCents(amountCents: number, locale: Locale) {
+  return formatUsd(locale, amountCents, 2);
 }
 
 export function formatPercent(value: number) {

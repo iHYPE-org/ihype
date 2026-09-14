@@ -1,3 +1,4 @@
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -6,7 +7,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-analytics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { describeDemand, proximityWeight, scoreFanDemand, type DemandVenue } from '@/lib/fan-demand';
 
 export const dynamic = 'force-dynamic';
@@ -41,7 +42,7 @@ export default async function VenueAnalyticsPage({
   params: Promise<{ slug: string }>;
   searchParams: Promise<{ range?: string }>;
 }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const RANGE_TABS = getRangeTabs(t);
   const { slug } = await params;
   const { range: rangeParam } = await searchParams;
@@ -61,7 +62,7 @@ export default async function VenueAnalyticsPage({
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   if (!isOwner) return notFound();
 
-  const data = await getVenueAnalyticsData(profile.id, range);
+  const data = await getVenueAnalyticsData(profile.id, range, locale);
 
   /* Acts fans NEAR THIS VENUE are asking other rooms for — the mirror of the
      artist's "Where fans want you" (2026-09-01). The venue's own radar already
@@ -117,7 +118,7 @@ export default async function VenueAnalyticsPage({
       <div className="vaa-stats">
         <div className="vaa-card">
           <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.totalAttendance', 'Total Attendance')}</div>
-          <div className="vaa-card-val">{data.totalAttendance.toLocaleString()}</div>
+          <div className="vaa-card-val">{formatNumber(locale, data.totalAttendance)}</div>
           <div className="vaa-card-sub vaa-card-sub-accent">
             {data.totalAttendanceDeltaPct !== null
               ? `${data.totalAttendanceDeltaPct >= 0 ? '+' : ''}${data.totalAttendanceDeltaPct}% ${t('venuesSlugAnalyticsPage.thisPeriodSuffix', 'this period')}`
@@ -142,7 +143,7 @@ export default async function VenueAnalyticsPage({
         </div>
         <div className="vaa-card">
           <div className="vaa-card-label">{t('venuesSlugAnalyticsPage.grossShare', 'Gross (20% share)')}</div>
-          <div className="vaa-card-val vaa-card-val-accent">{formatCurrencyFromCents(data.grossCents)}</div>
+          <div className="vaa-card-val vaa-card-val-accent">{formatCurrencyFromCents(data.grossCents, locale)}</div>
           <div className="vaa-card-sub">{t('venuesSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>
       </div>
@@ -153,7 +154,7 @@ export default async function VenueAnalyticsPage({
       ) : (
         <div className="vaa-chart">
           {data.buckets.map((b, i) => (
-            <div className="vaa-chart-col" key={i} title={`${b.label}: ${b.attendance.toLocaleString()}`}>
+            <div className="vaa-chart-col" key={i} title={`${b.label}: ${formatNumber(locale, b.attendance)}`}>
               <div className="vaa-chart-bar" style={{ height: `${Math.max(4, Math.round((b.attendance / maxAttendance) * 100))}%` }} />
               <div className="vaa-chart-label">{b.label}</div>
             </div>
@@ -169,10 +170,10 @@ export default async function VenueAnalyticsPage({
       ) : (
         <div className="vaa-events">
           {data.topEvents.map((event) => {
-            const date = event.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const date = formatDate(locale, event.startsAt, { month: 'short', day: 'numeric' });
             const soldLabel = event.ticketCapacity
-              ? `${event.ticketsSoldCount.toLocaleString()} / ${event.ticketCapacity.toLocaleString()} ${t('venuesSlugAnalyticsPage.capSold', 'cap sold')}${event.soldOut ? ` · ${t('venuesSlugAnalyticsPage.soldOut', 'Sold out')}` : ''}`
-              : `${event.ticketsSoldCount.toLocaleString()} ${t('venuesSlugAnalyticsPage.sold', 'sold')}`;
+              ? `${formatNumber(locale, event.ticketsSoldCount)} / ${formatNumber(locale, event.ticketCapacity)} ${t('venuesSlugAnalyticsPage.capSold', 'cap sold')}${event.soldOut ? ` · ${t('venuesSlugAnalyticsPage.soldOut', 'Sold out')}` : ''}`
+              : `${formatNumber(locale, event.ticketsSoldCount)} ${t('venuesSlugAnalyticsPage.sold', 'sold')}`;
             return (
               <Link className="vaa-event-row" href={`/app/shows/${event.slug}`} key={event.id}>
                 <div>
@@ -182,7 +183,7 @@ export default async function VenueAnalyticsPage({
                   </div>
                   <div className="vaa-event-meta">{soldLabel}</div>
                 </div>
-                <span className="vaa-event-gross">{formatCurrencyFromCents(event.grossCents)}</span>
+                <span className="vaa-event-gross">{formatCurrencyFromCents(event.grossCents, locale)}</span>
               </Link>
             );
           })}
@@ -209,7 +210,7 @@ export default async function VenueAnalyticsPage({
                   <div className="vaa-event-title">{artist.name}</div>
                   <div className="vaa-event-meta">{describeDemand(entry)} · {t('venuesSlugAnalyticsPage.askedElsewhere', 'asked of other venues')}</div>
                 </div>
-                <span className="vaa-event-gross">{entry.nearby.toLocaleString()} {entry.nearby === 1 ? t('venuesSlugAnalyticsPage.nearbyFan', 'nearby fan') : t('venuesSlugAnalyticsPage.nearbyFans', 'nearby fans')}</span>
+                <span className="vaa-event-gross">{formatNumber(locale, entry.nearby)} {entry.nearby === 1 ? t('venuesSlugAnalyticsPage.nearbyFan', 'nearby fan') : t('venuesSlugAnalyticsPage.nearbyFans', 'nearby fans')}</span>
               </Link>
             );
           })}

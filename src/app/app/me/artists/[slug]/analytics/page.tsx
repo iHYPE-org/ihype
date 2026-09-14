@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -6,7 +8,7 @@ import { db } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { describeDemand, scoreVenueDemand } from '@/lib/fan-demand';
 import { analyticsRangeLabel } from '@/lib/i18n-enum-labels';
 
@@ -59,12 +61,12 @@ function bucketKey(date: Date, unit: BucketUnit): string {
   return d.toISOString().slice(0, 10);
 }
 
-function bucketLabel(key: string, unit: BucketUnit): string {
+function bucketLabel(key: string, unit: BucketUnit, locale: Locale): string {
   if (unit === 'month') {
     const [y, m] = key.split('-').map(Number);
-    return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short' });
+    return formatDate(locale, new Date(y, m - 1, 1), { month: 'short' });
   }
-  return new Date(key).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  return formatDate(locale, new Date(key), { month: 'short', day: 'numeric' });
 }
 
 function buildBuckets(start: Date, end: Date, unit: BucketUnit): string[] {
@@ -113,7 +115,7 @@ export default async function ArtistAnalyticsPage({
   searchParams: Promise<{ range?: string }>;
 }) {
   const session = await auth();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
 
@@ -194,7 +196,7 @@ export default async function ArtistAnalyticsPage({
     const key = bucketKey(listen.createdAt, bucketUnit);
     if (bucketCounts.has(key)) bucketCounts.set(key, (bucketCounts.get(key) ?? 0) + 1);
   }
-  const chartBars = bucketKeys.map((k) => ({ label: bucketLabel(k, bucketUnit), count: bucketCounts.get(k) ?? 0 }));
+  const chartBars = bucketKeys.map((k) => ({ label: bucketLabel(k, bucketUnit, locale), count: bucketCounts.get(k) ?? 0 }));
   const maxBar = Math.max(1, ...chartBars.map((b) => b.count));
   const hasChartActivity = chartBars.some((b) => b.count > 0);
 
@@ -259,28 +261,28 @@ export default async function ArtistAnalyticsPage({
       <div className="aa-stats-grid">
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.listenersLabel', 'Listeners')}</div>
-          <div className="aa-stat-val">{distinctCurrentListeners.toLocaleString()}</div>
+          <div className="aa-stat-val">{formatNumber(locale, distinctCurrentListeners)}</div>
           <div className="aa-stat-sub" style={listenersDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {listenersDelta != null ? `${listenersDelta >= 0 ? '+' : ''}${listenersDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.distinctListeners', 'Distinct listeners')}
           </div>
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.ticketsSoldLabel', 'Tickets Sold')}</div>
-          <div className="aa-stat-val">{currentTicketsSold.toLocaleString()}</div>
+          <div className="aa-stat-val">{formatNumber(locale, currentTicketsSold)}</div>
           <div className="aa-stat-sub" style={ticketsDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {ticketsDelta != null ? `${ticketsDelta >= 0 ? '+' : ''}${ticketsDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.capturedOrders', 'CAPTURED orders')}
           </div>
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.hypeCastLabel', 'Hype Cast')}</div>
-          <div className="aa-stat-val">{currentHypeCount.toLocaleString()}</div>
+          <div className="aa-stat-val">{formatNumber(locale, currentHypeCount)}</div>
           <div className="aa-stat-sub" style={hypeDelta != null ? { color: 'var(--role-venue)' } : undefined}>
             {hypeDelta != null ? `${hypeDelta >= 0 ? '+' : ''}${hypeDelta}% ${t('artistsSlugAnalyticsPage.thisPeriod', 'this period')}` : t('artistsSlugAnalyticsPage.totalHypes', 'Total hypes')}
           </div>
         </div>
         <div className="aa-stat-card">
           <div className="aa-stat-label">{t('artistsSlugAnalyticsPage.grossLabel', 'Gross (70% share)')}</div>
-          <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(grossArtistShareCents)}</div>
+          <div className="aa-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(grossArtistShareCents, locale)}</div>
           <div className="aa-stat-sub">{t('artistsSlugAnalyticsPage.zeroFee', '$0 iHYPE fee')}</div>
         </div>
       </div>
@@ -306,16 +308,16 @@ export default async function ArtistAnalyticsPage({
       ) : (
         <div className="aa-events-list">
           {topEvents.map((event) => {
-            const date = event.startsAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const date = formatDate(locale, event.startsAt, { month: 'short', day: 'numeric' });
             return (
               <Link className="aa-event-row" href={`/app/shows/${event.slug}`} key={event.slug}>
                 <div style={{ minWidth: 0 }}>
                   <div className="aa-event-title">{event.title} · {date}</div>
                   <div className="aa-event-meta">
-                    {event.ticketsSold.toLocaleString()} {t('artistsSlugAnalyticsPage.ticketsLabel', 'tickets')}{event.ticketCapacity ? ` · ${event.ticketCapacity.toLocaleString()} ${t('artistsSlugAnalyticsPage.capLabel', 'cap')}` : ''}
+                    {formatNumber(locale, event.ticketsSold)} {t('artistsSlugAnalyticsPage.ticketsLabel', 'tickets')}{event.ticketCapacity ? ` · ${formatNumber(locale, event.ticketCapacity)} ${t('artistsSlugAnalyticsPage.capLabel', 'cap')}` : ''}
                   </div>
                 </div>
-                <span className="aa-event-gross">{formatCurrencyFromCents(event.grossCents)}</span>
+                <span className="aa-event-gross">{formatCurrencyFromCents(event.grossCents, locale)}</span>
               </Link>
             );
           })}
@@ -339,7 +341,7 @@ export default async function ArtistAnalyticsPage({
                   <div className="aa-event-meta">{describeDemand(entry, end)}</div>
                 </div>
                 <span className="aa-event-gross" style={{ color: 'var(--role-fan)' }}>
-                  {entry.fans.toLocaleString()} {entry.fans === 1 ? t('artistsSlugAnalyticsPage.fanUnit', 'fan') : t('artistsSlugAnalyticsPage.fansUnit', 'fans')}
+                  {formatNumber(locale, entry.fans)} {entry.fans === 1 ? t('artistsSlugAnalyticsPage.fanUnit', 'fan') : t('artistsSlugAnalyticsPage.fansUnit', 'fans')}
                 </span>
               </Link>
             );
