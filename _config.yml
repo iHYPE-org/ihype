@@ -90,6 +90,7 @@ exclude:
   - sentry.server.config.ts
   - src/
   - tsconfig.json
+  - tsconfig.scripts.json
   - vitest.config.ts
   - worker.js
   - workers/

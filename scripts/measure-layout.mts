@@ -442,7 +442,9 @@ type ProbeResult<T> = {
    score. So the probe counts every control it CONSIDERED, and a run that
    considered almost none is refused rather than celebrated. */
 let controlsConsidered = 0;
-let tightestClearing: { side: number; sel: string } | null = null;
+// `null as ...`: assigned inside capture()'s callback, which TypeScript's
+// narrowing cannot see, so `: T | null = null` read as `never` at the report.
+let tightestClearing = null as { side: number; sel: string } | null;
 
 // Same rationale, verbatim, as audit-mobile.mjs: Chromium does not read
 // HTTPS_PROXY from the environment, and `bypass` is required rather than

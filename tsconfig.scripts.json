@@ -1,0 +1,15 @@
+{
+  // The instruments — the acceptance walk, the layout and tap census, the
+  // health-board renderer — are .mts files, and tsconfig.json's include is
+  // `**/*.ts`, which does not match them. tsx strips types without checking
+  // them, so until 2026-09-14 nothing typechecked these scripts at all and
+  // four errors sat in them (a payable's `role`, which the model has never
+  // had; two `null`-narrowed readouts typed `never`). `npm run typecheck:scripts`
+  // runs in CI and in the nightly beside `typecheck`.
+  "extends": "./tsconfig.json",
+  // `incremental` is inherited from the base config and would write a
+  // tsconfig.scripts.tsbuildinfo beside this file on every run; off, so the
+  // check leaves nothing behind for `git status` to carry into a commit.
+  "compilerOptions": { "noEmit": true, "incremental": false },
+  "include": ["scripts/**/*.mts", "next-env.d.ts", "src/**/*.d.ts"]
+}
