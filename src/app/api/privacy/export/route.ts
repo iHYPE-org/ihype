@@ -81,7 +81,6 @@ export async function GET() {
         include: {
           mediaUploads: true,
           accountsPayableEntries: true,
-          journalPosts: true,
           setlistTemplates: true,
           availabilityDates: true,
           _count: {
@@ -175,7 +174,6 @@ export async function GET() {
       passkeys: true,
       showComments: true,
       showRsvps: true,
-      premiumInterests: true,
       notificationPreference: true,
       follows: true,
       notifications: true,
