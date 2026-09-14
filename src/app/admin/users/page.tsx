@@ -74,13 +74,17 @@ export default async function AdminUsersPage({ searchParams }: { searchParams?: 
     select: { id: true, email: true, role: true, note: true, status: true, inviteCode: true, createdAt: true, decidedAt: true },
   }).catch(() => null);
 
+  /* The join that decides "Signed up". If IT fails, every waiting applicant
+     would read as having no account and the queue would offer to mint a code
+     for people who already got in by another door — so a failed join makes
+     the whole queue unreadable rather than quietly wrong (DESIGN_SYNC row 449). */
   const requestAccounts = !requestRows?.length ? [] : await db.user.findMany({
     where: { email: { in: requestRows.map((r) => r.email), mode: 'insensitive' } },
     select: { email: true },
-  }).catch(() => []);
+  }).catch(() => null);
 
-  const accountEmails = new Set(requestAccounts.map((u) => (u.email ?? '').toLowerCase()));
-  const requests = requestRows === null ? null : orderAccessRequests(
+  const accountEmails = new Set((requestAccounts ?? []).map((u) => (u.email ?? '').toLowerCase()));
+  const requests = requestRows === null || requestAccounts === null ? null : orderAccessRequests(
     requestRows.map((row) => ({
       ...row,
       state: describeAccessRequestState(row.status, accountEmails.has(row.email.toLowerCase())),

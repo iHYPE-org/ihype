@@ -5,6 +5,7 @@ import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { getServerT } from '@/lib/i18n/server';
+import { readList, readValue } from '@/lib/read-list';
 
 export const metadata = {
   title: 'Finance | Admin | iHYPE',
@@ -42,23 +43,23 @@ export default async function AdminFinancePage({
   if (ticketStatus) ticketWhere.status = ticketStatus;
 
   const [monthlyOrders, payoutEntries, payoutTotal, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
-    db.ticketOrder.findMany({
+    readList(db.ticketOrder.findMany({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       select: { chargedAt: true, totalChargeCents: true },
-    }).catch(() => [] as { chargedAt: Date | null; totalChargeCents: number }[]),
-    db.accountsPayableEntry.findMany({
+    })),
+    readList(db.accountsPayableEntry.findMany({
       where: payoutWhere,
       orderBy: { createdAt: 'desc' },
       take: PAGE_SIZE,
       skip: (page - 1) * PAGE_SIZE,
       include: { profile: { select: { name: true, slug: true } } },
-    }).catch(() => []),
-    db.accountsPayableEntry.count({ where: payoutWhere }).catch(() => 0),
-    db.ticketOrder.aggregate({
+    })),
+    readValue(db.accountsPayableEntry.count({ where: payoutWhere })),
+    readValue(db.ticketOrder.aggregate({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       _sum: { totalChargeCents: true },
-    }).catch(() => ({ _sum: { totalChargeCents: null } })),
-    db.ticketOrder.findMany({
+    })),
+    readList(db.ticketOrder.findMany({
       where: ticketWhere,
       orderBy: { createdAt: 'desc' },
       take: PAGE_SIZE,
@@ -68,25 +69,31 @@ export default async function AdminFinancePage({
         status: true, totalChargeCents: true, createdAt: true, chargedAt: true,
         show: { select: { title: true, slug: true } },
       },
-    }).catch(() => []),
-    db.ticketOrder.count({ where: ticketWhere }).catch(() => 0),
+    })),
+    readValue(db.ticketOrder.count({ where: ticketWhere })),
   ]);
 
   const monthlyMap: Record<string, number> = {};
-  for (const order of monthlyOrders) {
+  for (const order of monthlyOrders ?? []) {
     if (!order.chargedAt) continue;
     const key = `${order.chargedAt.getFullYear()}-${String(order.chargedAt.getMonth() + 1).padStart(2, '0')}`;
     monthlyMap[key] = (monthlyMap[key] ?? 0) + order.totalChargeCents;
   }
   const monthlyRows = Object.entries(monthlyMap).sort((a, b) => b[0].localeCompare(a[0]));
 
-  const revenueCents = revenueAgg._sum.totalChargeCents ?? 0;
-  const platformFee = Math.round(revenueCents * 0.1);
-  const payoutPaid = payoutEntries.filter(e => e.status === 'RELEASED').reduce((s, e) => s + e.amountCents, 0);
-  const payoutPending = payoutEntries.filter(e => e.status === 'PENDING').reduce((s, e) => s + e.amountCents, 0);
+  /* `null` is a FAILED read (`readValue()`/`readList()`), kept as null through
+     every derived figure: a dash, never "$0.00" or "(0)" over a query that did
+     not land — DESIGN_SYNC row 449, the rule the growth and users pages
+     already follow. */
+  const unreadable = t('adminFinancePage.unreadable', 'Could not be read just now — the database query failed, so this is not an empty list or a zero. Reload to try again.');
+  const money = (cents: number | null) => (cents === null ? '—' : `$${(cents / 100).toFixed(2)}`);
+  const revenueCents = revenueAgg === null ? null : (revenueAgg._sum.totalChargeCents ?? 0);
+  const platformFee = revenueCents === null ? null : Math.round(revenueCents * 0.1);
+  const payoutPaid = payoutEntries === null ? null : payoutEntries.filter(e => e.status === 'RELEASED').reduce((s, e) => s + e.amountCents, 0);
+  const payoutPending = payoutEntries === null ? null : payoutEntries.filter(e => e.status === 'PENDING').reduce((s, e) => s + e.amountCents, 0);
 
-  const payoutPages = Math.ceil(payoutTotal / PAGE_SIZE);
-  const ticketPages = Math.ceil(ticketOrderTotal / PAGE_SIZE);
+  const payoutPages = payoutTotal === null ? 0 : Math.ceil(payoutTotal / PAGE_SIZE);
+  const ticketPages = ticketOrderTotal === null ? 0 : Math.ceil(ticketOrderTotal / PAGE_SIZE);
 
   const tabHref = (t: string) => `/admin/finance?tab=${t}`;
   const pageHref = (p: number) => {
@@ -127,16 +134,18 @@ export default async function AdminFinancePage({
             </form>
             <div className="admin-metric-grid" style={{ marginBottom: 20 }}>
               {[
-                [t('adminFinancePage.metricTotalRevenue', 'Total revenue (CAPTURED)'), `$${(revenueCents / 100).toFixed(2)}`],
-                [t('adminFinancePage.metricPlatformFee', 'Platform fee est. (10%)'), `$${(platformFee / 100).toFixed(2)}`],
-                [t('adminFinancePage.metricPayoutsPaid', 'Payouts paid'), `$${(payoutPaid / 100).toFixed(2)}`],
-                [t('adminFinancePage.metricPayoutsPending', 'Payouts pending'), `$${(payoutPending / 100).toFixed(2)}`],
+                [t('adminFinancePage.metricTotalRevenue', 'Total revenue (CAPTURED)'), money(revenueCents)],
+                [t('adminFinancePage.metricPlatformFee', 'Platform fee est. (10%)'), money(platformFee)],
+                [t('adminFinancePage.metricPayoutsPaid', 'Payouts paid'), money(payoutPaid)],
+                [t('adminFinancePage.metricPayoutsPending', 'Payouts pending'), money(payoutPending)],
               ].map(([label, value]) => (
                 <article className="card admin-metric-card" key={label}><span>{label}</span><strong>{value}</strong></article>
               ))}
             </div>
             <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.monthlyRevenueHeading', 'Monthly revenue')} ({monthlyRows.length} {t('adminFinancePage.monthsInRange', 'months in range')})</h3>
-            {monthlyRows.length === 0 ? (
+            {monthlyOrders === null ? (
+              <div className="empty" role="status">{unreadable}</div>
+            ) : monthlyRows.length === 0 ? (
               <div className="empty">{t('adminFinancePage.noCapturedOrders', 'No captured orders in this range.')}</div>
             ) : (
               <div className="admin-list">
@@ -163,8 +172,8 @@ export default async function AdminFinancePage({
               <input type="hidden" name="page" value="1" />
               <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.accountsPayableHeading', 'Accounts Payable')} ({payoutTotal})</h3>
-            {payoutEntries.length === 0 ? <div className="empty">{t('adminFinancePage.noPayoutEntries', 'No payout entries.')}</div> : (
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.accountsPayableHeading', 'Accounts Payable')} ({payoutTotal ?? '—'})</h3>
+            {payoutEntries === null ? <div className="empty" role="status">{unreadable}</div> : payoutEntries.length === 0 ? <div className="empty">{t('adminFinancePage.noPayoutEntries', 'No payout entries.')}</div> : (
               <div className="admin-list">
                 {payoutEntries.map(e => (
                   <div className="admin-list-row" key={e.id}>
@@ -199,8 +208,8 @@ export default async function AdminFinancePage({
               <input type="hidden" name="page" value="1" />
               <button className="button small" type="submit">{t('adminFinancePage.filter', 'Filter')}</button>
             </form>
-            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.ticketOrdersHeading', 'Ticket Orders')} ({ticketOrderTotal})</h3>
-            {ticketOrders.length === 0 ? <div className="empty">{t('adminFinancePage.noTicketOrders', 'No ticket orders match this filter.')}</div> : (
+            <h3 style={{ fontSize: '0.9375rem', marginBottom: 8 }}>{t('adminFinancePage.ticketOrdersHeading', 'Ticket Orders')} ({ticketOrderTotal ?? '—'})</h3>
+            {ticketOrders === null ? <div className="empty" role="status">{unreadable}</div> : ticketOrders.length === 0 ? <div className="empty">{t('adminFinancePage.noTicketOrders', 'No ticket orders match this filter.')}</div> : (
               <div className="admin-list">
                 {ticketOrders.map(o => (
                   <div className="admin-list-row" key={o.id}>
