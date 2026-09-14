@@ -6,7 +6,10 @@ import { AdminReauthPrompt } from '@/components/AdminReauthPrompt';
 import { useI18n } from '@/components/I18nProvider';
 
 /**
- * "Resolve all on page" / "Dismiss all on page" for the admin reports queue.
+ * "Dismiss all on page" for the admin reports queue. "Resolve all on page"
+ * went on 2026-09-14 (DESIGN_SYNC row 458): it marked a page of reports
+ * RESOLVED and removed nothing, so the queue could be cleared without any
+ * content going anywhere. Removal is per report, through ModerationActions.
  *
  * Replaces a plain <form method="post"> in the (server-rendered) review page
  * that was doubly broken: it attached an onClick to a submit button, which a
@@ -21,7 +24,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
   const [error, setError] = useState<string | null>(null);
   const [pendingReauth, setPendingReauth] = useState<string | null>(null);
 
-  async function run(action: 'resolve_reports' | 'dismiss_reports') {
+  async function run(action: 'dismiss_reports') {
     setLoading(action);
     setError(null);
     try {
@@ -49,14 +52,6 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
       <button
         disabled={loading !== null}
-        onClick={() => void run('resolve_reports')}
-        type="button"
-        style={{ background: 'rgba(var(--role-venue-rgb),.1)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.25)', borderRadius: 6, padding: '5px 14px', fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
-      >
-        {loading === 'resolve_reports' ? t('reportPageBulkButtons.resolving', 'Resolving…') : `${t('reportPageBulkButtons.resolveAllOnPage', 'Resolve all on page')} (${ids.length})`}
-      </button>
-      <button
-        disabled={loading !== null}
         onClick={() => void run('dismiss_reports')}
         type="button"
         style={{ background: 'var(--line)', color: 'var(--ink-2)', border: '1px solid var(--line)', borderRadius: 6, padding: '5px 14px', fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'var(--f-m)' }}
@@ -68,7 +63,7 @@ export function ReportPageBulkButtons({ ids }: { ids: string[] }) {
         <AdminReauthPrompt
           onCancel={() => setPendingReauth(null)}
           onSuccess={() => {
-            const action = pendingReauth as 'resolve_reports' | 'dismiss_reports';
+            const action = pendingReauth as 'dismiss_reports';
             setPendingReauth(null);
             void run(action);
           }}

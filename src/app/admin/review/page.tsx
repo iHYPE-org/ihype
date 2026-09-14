@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { isAdminSession } from '@/lib/permissions';
 import { AdminVerificationQueue } from '@/app/admin/verifications/AdminVerificationQueue';
 import { ReportPageBulkButtons } from '@/components/admin/ReportPageBulkButtons';
+import { ModerationActions } from '@/components/ModerationActions';
 import type { VerificationProfile } from '@/lib/types/admin';
 import React from 'react';
 import { getServerT } from '@/lib/i18n/server';
@@ -22,23 +23,6 @@ type Tab = 'reports' | 'verifications' | 'duplicates';
 
 const thStyle: React.CSSProperties = { textAlign: 'left', padding: '8px 12px', fontWeight: 600, fontSize: '0.9375rem' };
 const tdStyle: React.CSSProperties = { padding: '10px 12px', color: 'var(--ink)', verticalAlign: 'middle' };
-
-async function resolveReport(reportId: string) {
-  'use server';
-  const session = await auth();
-  if (!isAdminSession(session)) throw new Error('Forbidden');
-  await db.contentReport.update({ where: { id: reportId }, data: { status: 'RESOLVED' } });
-}
-
-function ResolveButton({ reportId, label }: { reportId: string; label: string }) {
-  return (
-    <form action={resolveReport.bind(null, reportId)}>
-      <button type="submit" style={{ background: 'rgba(var(--role-venue-rgb),.12)', color: 'var(--role-venue)', border: '1px solid rgba(var(--role-venue-rgb),.2)', borderRadius: 6, padding: '4px 12px', fontSize: '0.9375rem', cursor: 'pointer', fontFamily: 'var(--f-m)', letterSpacing: '.04em' }}>
-        {label}
-      </button>
-    </form>
-  );
-}
 
 type Report = {
   id: string;
@@ -187,8 +171,11 @@ export default async function AdminReviewPage({
             <input type="hidden" name="tab" value="reports" />
             <select name="status" defaultValue={rStatus} className="input" style={{ width: 130 }}>
               <option value="OPEN">{t('adminReviewPage.statusOpen', 'Open')}</option>
-              <option value="RESOLVED">{t('adminReviewPage.statusResolved', 'Resolved')}</option>
+              <option value="ACTIONED">{t('adminReviewPage.statusActioned', 'Content removed')}</option>
               <option value="DISMISSED">{t('adminReviewPage.statusDismissed', 'Dismissed')}</option>
+              {/* Rows closed before 2026-09-14 carry the retired statuses;
+                  nothing writes them any more (DESIGN_SYNC row 458). */}
+              <option value="RESOLVED">{t('adminReviewPage.statusResolvedLegacy', 'Resolved (before 2026-09-14)')}</option>
             </select>
             <select name="type" defaultValue={rType} className="input" style={{ width: 130 }}>
               <option value="">{t('adminReviewPage.typeAll', 'All types')}</option>
@@ -258,7 +245,7 @@ export default async function AdminReviewPage({
                         </td>
                         <td style={tdStyle}>
                           {entityHref && <Link href={entityHref} target="_blank" style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-2)', textDecoration: 'none', marginRight: 8 }}>{t('adminReviewPage.viewLink', 'View ↗')}</Link>}
-                          {r.status === 'OPEN' && <ResolveButton reportId={r.id} label={t('adminReviewPage.resolve', 'Resolve')} />}
+                          {r.status === 'OPEN' && <ModerationActions reportId={r.id} />}
                         </td>
                       </tr>
                     );

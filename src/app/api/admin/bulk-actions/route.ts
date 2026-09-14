@@ -58,14 +58,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ ok: true, updated: result.count });
     }
 
-    case 'resolve_reports': {
-      const result = await db.contentReport.updateMany({
-        where: { id: { in: ids }, status: 'OPEN' },
-        data: { status: 'RESOLVED' },
-      });
-      return NextResponse.json({ ok: true, updated: result.count });
-    }
-
+    /* `resolve_reports` is GONE (2026-09-14, DESIGN_SYNC row 458): it flipped a
+       page of reports to RESOLVED and removed nothing, so a queue could be
+       cleared without a single piece of content going anywhere. Removing
+       content is a per-report decision through PATCH /api/admin/moderation/[id];
+       dismissing a page of spam is the bulk case and stays. */
     case 'dismiss_reports': {
       const result = await db.contentReport.updateMany({
         where: { id: { in: ids }, status: 'OPEN' },
