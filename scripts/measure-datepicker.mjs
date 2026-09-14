@@ -87,7 +87,10 @@ function Picker() {
   const [selected, setSelected] = React.useState(new Set());
   const [open, setOpen] = React.useState(false);
   const [anchor, setAnchor] = React.useState(() => new Date(2026, 7, 22));
-  const month = monthGrid(anchor, new Date(2026, 7, 22));
+  // monthGrid(anchor, locale, today) — the harness renders English, and the
+  // fixed "today" keeps the 22nd's cells enabled whatever day the run is; passing
+  // the Date where the locale goes silently made every cell past and disabled.
+  const month = monthGrid(anchor, 'en', new Date(2026, 7, 22));
   return (
     <div className="mmm-map-controls">
       <div className="mmm-map-search">
@@ -97,7 +100,7 @@ function Picker() {
           <div className="mmm-datepick">
             <button className="mmm-datepick-trigger" aria-expanded={open} onClick={() => setOpen(!open)} type="button">
               <span className="mmm-datepick-glyph">{'\\u25a4'}</span>
-              <span className="mmm-datepick-value">{describeDayKeys(selected)}</span>
+              <span className="mmm-datepick-value">{describeDayKeys(selected, 'en')}</span>
             </button>
             {open && (
               <div className="mmm-datepick-pop" role="dialog" aria-label="Filter by date">
