@@ -39,9 +39,11 @@ export async function GET(request: Request) {
     // Playable tracks only. The DJ-authored broadcast query that used to sit
     // alongside this is gone: nothing can author one (the Show Creator was
     // retired with the DJ role), so it could only ever return [].
-    // Its `stations` output had no consumer --
-    // /radio reads /api/radio/station and the Music shell reads /api/stations,
-    // both of which compute a station per listener instead.
+    // Its `stations` output had no consumer. The Music shell reads
+    // /api/stations, which computes a station per listener; /radio is a
+    // DELETED page (a redirects() alias to /app/music/radio), and as of
+    // 2026-09-14 /api/radio/station -- getStationState()'s always-on station
+    // -- is read by nothing in the product but the acceptance walk (row 430).
     const [hypedTracks, trendingTracks] = await Promise.all([
     hypedProfileIds.length > 0
       ? db.artistMediaAsset.findMany({
