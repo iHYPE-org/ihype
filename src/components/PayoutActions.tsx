@@ -16,18 +16,16 @@ export function PayoutActions({ title }: { title: string }) {
 
   return (
     <div style={{ display: 'flex', gap: 10 }}>
-      <button
-        onClick={() => window.print()}
-        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: '1px solid var(--line, var(--hair-100))', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', background: 'transparent', color: 'var(--ink)', padding: '9px 18px' }}
-        type="button"
-      >
+      {/* THE SHELL'S OWN KEYS, NOT A THIRD BUTTON VOCABULARY. Both were written
+          as ~14 inline properties each, so no stylesheet floor could reach them
+          and the widened census read them at 38px on desktop (DESIGN_SYNC row
+          414). `.mmm-btn-ghost`/`.mmm-btn-primary` carry the unconditional
+          44px floor and paint from the key tokens — row 375's rule for a surface
+          that needs a button. */}
+      <button className="mmm-btn-ghost" onClick={() => window.print()} type="button">
         {t('payoutActions.downloadPdf', 'Download PDF')}
       </button>
-      <button
-        onClick={share}
-        style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8, border: 'none', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '0.9375rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', padding: '9px 18px', boxShadow: '0 4px 20px rgba(var(--accent-rgb),.3)' }}
-        type="button"
-      >
+      <button className="mmm-btn-primary" onClick={share} type="button">
         {t('payoutActions.shareReceipt', 'Share receipt')}
       </button>
     </div>

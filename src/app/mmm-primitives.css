@@ -95,6 +95,14 @@
   box-shadow: var(--plate-ring);
 }
 
+/* THE DISCLOSURE TOGGLE ON THE PAYOUT BREAKDOWN IS A CONTROL AND WAS 18px TALL.
+   `padding: 0` on a full-width button leaves it exactly one line box high —
+   538x18 on desktop, measured by the widened tap census (DESIGN_SYNC row 414),
+   on the page that shows an organiser where the 70/20/10 goes. The floor lives
+   here rather than inline because an inline floor is one more thing no
+   instrument can see; the button keeps its own layout. */
+.mmm-migrated-surface .payout-fanview-toggle { min-height: 44px; }
+
 
 /* ── Primitive: Row ──────────────────────────────────────────────────────
    Same surface as a card, tighter padding — the shape Charts, the radio

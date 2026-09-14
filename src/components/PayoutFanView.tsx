@@ -25,6 +25,7 @@ export function PayoutFanView({
   return (
     <div className="payout-card" style={{ background: 'var(--bg-2)', border: '1px solid var(--line, var(--hair-80))', borderRadius: 18, padding: '1.5rem', marginBottom: '1.25rem' }}>
       <button
+        className="payout-fanview-toggle"
         onClick={() => setExpanded((v) => !v)}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--ink)' }}
         type="button"
