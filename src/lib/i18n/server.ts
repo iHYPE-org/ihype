@@ -66,6 +66,19 @@ async function fetchDictionary(locale: Locale): Promise<Dictionary> {
   return {};
 }
 
+/**
+ * The locale's whole dictionary, for the ROOT LAYOUT to hand the client
+ * provider as its initial state (DESIGN_SYNC row 426). Until it did, the
+ * client started every render at English with no dictionary and the server
+ * rendered the cookie locale, so a Spanish member's every `t()` text node
+ * differed between the HTML and the first client render — a hydration
+ * mismatch on every page. English is `{}` (inline fallbacks), so an English
+ * member pays nothing for this.
+ */
+export async function getServerDictionary(locale: Locale): Promise<Dictionary> {
+  return loadDictionary(locale);
+}
+
 async function loadDictionary(locale: Locale): Promise<Dictionary> {
   // English resolves entirely from the inline t() fallbacks — see getServerT.
   if (locale === 'en') return {};
