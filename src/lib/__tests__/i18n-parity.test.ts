@@ -124,6 +124,35 @@ describe('i18n invariants', () => {
     expect(defects).toEqual([]);
   });
 
+  /**
+   * A dictionary key no source file calls is dead weight the client downloads
+   * — 172 per locale, 1,931 entries across twelve files, on 2026-09-14
+   * (DESIGN_SYNC row 419), led by a page editor section list that had been
+   * cut to four, the advertise page's retired co-funding copy, and a signup
+   * phone field removed in August. The extractor sees `t('key', …)` only, so a
+   * key reached through a template (`t(\`pagesHome.tabLabel.${id}\`)`) or a
+   * `labelKey` constant looks orphaned to it and must be SPARED: every
+   * template prefix and every dotted string literal in `src/` counts as a
+   * live reference. That is the difference between this and a name-based
+   * prune, which row 396 records deleting keys the shell still read.
+   */
+  it('carries no key that no source file calls', () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entry) =>
+        entry.isDirectory() ? walk(join(dir, entry.name)) : /\.(ts|tsx)$/.test(entry.name) && !/\.test\.|__tests__/.test(join(dir, entry.name)) ? [join(dir, entry.name)] : []
+      );
+    const source = walk('src').map((file) => readFileSync(file, 'utf8')).join('\n');
+    const dynamicPrefixes = [...source.matchAll(/\bt\(\s*`([a-zA-Z0-9_.]*)\$\{/g)].map((m) => m[1]);
+    expect(dynamicPrefixes.length, 'the template-key families vanished — the spare rule is reading nothing').toBeGreaterThan(5);
+    const literalKeys = new Set([...source.matchAll(/['"`]([a-zA-Z][a-zA-Z0-9]*(?:\.[a-zA-Z0-9_]+)+)['"`]/g)].map((m) => m[1]));
+    const live = (key: string) => key in called || literalKeys.has(key) || dynamicPrefixes.some((prefix) => key.startsWith(prefix));
+    const orphans: string[] = [];
+    for (const locale of locales) {
+      for (const key of Object.keys(dict(locale))) if (!live(key)) orphans.push(`${locale}: ${key}`);
+    }
+    expect(orphans, `\n${orphans.slice(0, 40).join('\n')}\n`).toEqual([]);
+  });
+
   it('leaves admin surfaces untranslated — they are English-only by decision', () => {
     // Product decision (2026-07-28): the admin/ops console serves staff, not
     // users, and ships in English only. Its t() calls stay put and resolve to
