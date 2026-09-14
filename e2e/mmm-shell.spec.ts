@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type BrowserContext, type Page } from '@playwright/test';
-import { applySessionCookie, canSeedSession, seedShowWithTicket } from './fixtures/session';
+import { applySessionCookie, canSeedSession, seedPlayableStation, seedShowWithTicket } from './fixtures/session';
 import { MMM_MUSIC_TABS } from '../src/lib/mmm-nav';
 
 /**
@@ -355,32 +355,84 @@ test.describe('Music · Map · Me shell', () => {
      is not** — it is the thing most easily lost in a chrome rewrite, which is
      why the same surfaces are still checked as a set.
 
-     Asserted on the bar's own state change: over silence there is a radio key
-     and no mini player, and after the tap there is a mini player naming a real
-     track. Nothing in the dock computes that — the mini player appears only
+     Asserted on the bar's own state change: over silence there is no mini
+     player (and, since row 341, no radio key either), and after the tap there
+     is a mini player naming a real track. Nothing in the dock computes that — the mini player appears only
      once the audio element actually holds something.
 
      The surfaces are checked as a SET rather than one at a time, because the
-     claim is about the transport being universal. MAP and ME have nothing of
-     their own to play and must fall through to the radio; the music tabs each
-     register something. Any of them leaving the transport dead is the bug. */
-  for (const surface of [
-    // Nothing of their own — these must fall through to the radio.
-    '/app/map', '/app/me',
-    // Each of these registers something: the card on screen, the first station
-    // in the current filter, the chart from number one, the recommended list,
-    // the first playlist.
-    '/app/music/discover', '/app/music/radio', '/app/music/charts',
-    '/app/music/recommended', '/app/music/playlists',
-    // Library registers the liked tracks; an account with none falls through
-    // to the radio, which is still "the transport is never inert".
-  ] as const) {
-    test(`a surface's own play control loads the mini player on ${surface}`, async ({ page, request }) => {
+     claim is about the transport being universal wherever a surface offers a
+     play control. MAP and ME offer none over silence — the cold-start radio
+     key left the bar with the MIDDLE ROAD (row 341) and that cost is recorded
+     there — so they are asserted as silent; the music tabs each register
+     something, and any of them leaving the transport dead is the bug. */
+  /* A fan of its own, WARMED: `seedPlayableStation` hypes an artist with a
+     released, playable track for this fan, so `for-you` — the first station
+     `/api/stations` lists and therefore `defaultStationSlug()`'s pick — has
+     something to start. The rest of this file signs in EMAIL, a COLD fan, and
+     several tests read that coldness (empty plates, a cold Recommended tab);
+     warming EMAIL would move them, so the listener is a separate account.
+
+     Until 2026-09-14 these tests skipped instead: a fresh fan's `for_you` is
+     `profileId in hypedProfileIds` over an empty list, the precondition below
+     read false, and every surface skipped on every CI run since the tests were
+     written — the harness could not see a skip (row 432), and this is the first
+     thing it saw. DESIGN_SYNC row 434. */
+  const LISTENER_EMAIL = 'e2e-mmm-listener@ihype.org';
+  const warmListener = async (context: BrowserContext) => {
+    const session = await applySessionCookie(context, LISTENER_EMAIL, { profiles: [] });
+    await seedPlayableStation({ fanUserId: session.user.id });
+  };
+
+  /* Since the MIDDLE ROAD (row 341) the bar carries no cold-start transport:
+     a surface with nothing of its own to play offers NO play control until
+     something is loaded from LISTEN. That is a recorded product cost, not a
+     gap in the fixture, so MAP and ME are asserted as exactly that rather
+     than skipped as "offers no play control for this account" — a skip there
+     was the test declining to say what the surface does. */
+  for (const surface of ['/app/map', '/app/me'] as const) {
+    test(`${surface} offers no transport over silence, and no mini player`, async ({ page, context }) => {
+      await warmListener(context);
+      /* `page.request`, never the `request` fixture: that fixture is an ISOLATED
+         APIRequestContext with no cookies, so the old precondition asked
+         `/api/stations` as a stranger — whose `for-you` is empty by definition.
+         That anonymous read was a second reason it was false on every run. */
+      expect(await radioHasAudio(page.request), 'the fixture seeded a playable track into the default station').toBe(true);
+
+      await page.setViewportSize({ width: 393, height: 852 });
+      await page.goto(surface);
+      const dock = page.locator('.mmm-dock:visible');
+      await expect(dock).toHaveCount(1);
+      await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+      await expect(dock.locator('.mmm-mini')).toHaveCount(0);
+      await expect(page.getByRole('button', { name: /^Play / })).toHaveCount(0);
+    });
+  }
+
+  /* Each surface names its OWN play control, because they are not one
+     control: the deck's key is labelled "Play the clip", a chart row and a
+     recommended row "Play <title>…", the Playlists stations shelf
+     "Play <station>", and on Radio the station ROW is the control — its name
+     is the station's title and subtitle, with no "Play" in it. One regex over
+     all five was the first draft, and it found no control on Radio while a
+     member had one under their thumb. */
+  const PLAY_CONTROLS = [
+    ['/app/music/discover', (page: Page) => page.getByRole('button', { name: 'Play the clip' }).first()],
+    ['/app/music/radio', (page: Page) => page.locator('.mmm-station:not([disabled])').first()],
+    ['/app/music/charts', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
+    ['/app/music/recommended', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
+    ['/app/music/playlists', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
+  ] as const;
+
+  for (const [surface, control] of PLAY_CONTROLS) {
+    test(`a surface's own play control loads the mini player on ${surface}`, async ({ page, context }) => {
+      await warmListener(context);
       /* Asked before the page loads, and cached across the file — see
-         `radioHasAudio`. A fixture with no playable audio cannot start
-         anything, and the honest result there is a skip rather than accepting
-         either outcome. */
-      const playable = await radioHasAudio(request);
+         `radioHasAudio`. The fixture just made this true; a false here is a
+         broken fixture or a broken station, and both are failures. Read with
+         `page.request` (the page's own cookie jar), never the isolated
+         `request` fixture — see the MAP/ME block above. */
+      expect(await radioHasAudio(page.request), 'the fixture seeded a playable track into the default station').toBe(true);
 
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);
@@ -400,18 +452,15 @@ test.describe('Music · Map · Me shell', () => {
          never ends up with two. */
       await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
 
-      if (!playable) {
-        test.skip(true, 'the default station has no playable track — nothing to start');
-      }
-
-      /* Any control whose accessible name starts "Play " — track rows label
-         themselves `Play <title> by <artist>` and shelf tiles carry their own.
-         A regex rather than a fixed string because the label names the CONTENT,
-         which is fixture data and must not be hardcoded here. */
-      const play = page.getByRole('button', { name: /^Play / }).first();
-      if (await play.count() === 0) {
-        test.skip(true, `${surface} offers no play control for this account`);
-      }
+      /* The surface was seeded content, so a missing control is the surface
+         failing to offer one — not a reason to skip. The first run of this
+         test found exactly that on Recommended AND Charts (rows were links
+         only; the transport they relied on left the bar with row 341), and on
+         Discover found the deck's invisible Skip stamp sitting over the play
+         key and taking the tap. All three are fixed; all three are what this
+         test is for. */
+      const play = control(page);
+      await expect(play, `${surface} offers no play control for a fan whose default station has a track`).toBeVisible();
       await play.click();
 
       // The mini player only exists once a track is loaded, so its arrival is

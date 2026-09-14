@@ -7,6 +7,7 @@ import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
 import { useRouter } from 'next/navigation';
 import { MmmSearch } from './MmmSearch';
 import { useRegisterPlayIntent, useRegisterQueue } from '@/components/mmm/MmmPlayIntent';
+import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
 import { toQueue, type PlayableRow } from '@/lib/mmm-play';
 import { MmmShelf } from '@/components/mmm/MmmShelf';
 import { MmmSeedDeck, type MmmSeedItem } from './MmmSeedDeck';
@@ -651,13 +652,20 @@ function RecommendedTab() {
     },
   );
 
-  /* The whole list as one queue, started from the top by the joystick. These
-     rows have always carried `mediaUrl` and this surface only ever linked to the
-     track page with it, so a list of recommendations could be read and not
-     heard.
+  /* The whole list as one queue. These rows have always carried `mediaUrl`
+     and this surface only ever linked to the track page with it, so a list of
+     recommendations could be read and not heard; the registration below was
+     the fix, consumed by the dock's transport.
 
-     The ROWS stay links. Turning them into play buttons is a design change
-     nothing has asked for, and the transport is the control this is about. */
+     The ROWS stay links. But the cold-start transport left the bar with the
+     MIDDLE ROAD (row 341), so with nothing loaded this registration has no
+     consumer and a member had NO way to start a recommended track from here —
+     found on 2026-09-14 by the shell spec's transport test the first time it
+     ran (row 434). Each row now carries the same play key the artist page's
+     release rows carry (`ReleasePlayButton`, row 352): outside the link, so a
+     button never sits inside an anchor, and it plays the row inside the whole
+     list so the mini player's next/previous mean something. The registration
+     stays for the mini player's key once something is loaded. */
   useRegisterQueue(data?.tracks ?? []);
 
   if (status === 'loading') return <Loading />;
@@ -677,17 +685,20 @@ function RecommendedTab() {
   return (
     <div className="mmm-music-list">
       {tracks.map((track) => (
-        <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} key={track.id} style={{ display: 'flex' }}>
-          <span style={{ flex: 1, minWidth: 0 }}>
-            <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
-            <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
-            {/* The WHY. A recommendation a listener cannot account for reads as
-                an advert; this is the endpoint's own derivation, not a guess
-                made here, so it cannot disagree with why the row qualified. */}
-            {track.reason && <span className="mmm-row-sub" style={{ display: 'block', color: 'var(--accent-text)' }}>{track.reason}</span>}
-          </span>
-          <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
-        </Link>
+        <div className="profile-release-entry" key={track.id}>
+          <Link className="mmm-row" href={`/app/tracks/${track.hexId}`} style={{ display: 'flex' }}>
+            <span style={{ flex: 1, minWidth: 0 }}>
+              <span className="mmm-row-title" style={{ display: 'block' }}>{track.title}</span>
+              <span className="mmm-row-sub" style={{ display: 'block' }}>{track.artistName}</span>
+              {/* The WHY. A recommendation a listener cannot account for reads as
+                  an advert; this is the endpoint's own derivation, not a guess
+                  made here, so it cannot disagree with why the row qualified. */}
+              {track.reason && <span className="mmm-row-sub" style={{ display: 'block', color: 'var(--accent-text)' }}>{track.reason}</span>}
+            </span>
+            <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
+          </Link>
+          <ReleasePlayButton label={track.title} rows={tracks} track={track} />
+        </div>
       ))}
     </div>
   );
@@ -895,16 +906,25 @@ function ChartsTab() {
               <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
             </span>
             <span className="mmm-row-meta">{formatNumber(locale, row.hypeCount)} HYPE</span>
-          </div> : <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
-            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
-              {String(index + 1).padStart(2, '0')}
-            </span>
-            <span style={{ flex: 1, minWidth: 0 }}>
-              <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
-              <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
-            </span>
-            <span className="mmm-row-meta">{formatNumber(locale, row.hypeCount)}</span>
-          </Link>}
+          </div> : <div className="profile-release-entry">
+            {/* The row links to the ACT (a chart ranks artists' tracks by hype);
+                the key beside it plays the track inside the whole chart, so
+                next/previous walk the ranking. Until 2026-09-14 the rows were
+                the only control and the chart was startable solely through the
+                dock's registered queue — a consumer the MIDDLE ROAD (row 341)
+                left with nothing to press over silence. Row 434. */}
+            <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
+              <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
+                <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
+              </span>
+              <span className="mmm-row-meta">{formatNumber(locale, row.hypeCount)}</span>
+            </Link>
+            <ReleasePlayButton label={row.title} rows={shown} track={row} />
+          </div>}
         </li>
       ))}
       </ol>

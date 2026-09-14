@@ -227,6 +227,9 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
    flat tinted disc on iOS and a brass-edged key on the console themes. */
 .profile-release-entry { display: flex; align-items: center; gap: 10px; }
 .profile-release-entry .profile-release { flex: 1 1 auto; min-width: 0; }
+/* The Recommended and Charts tabs' rows are `.mmm-row` links and carry the
+   same key beside them (2026-09-14, DESIGN_SYNC row 434). */
+.profile-release-entry > .mmm-row { flex: 1 1 auto; min-width: 0; }
 .profile-release-play {
   flex: none;
   width: 44px;
