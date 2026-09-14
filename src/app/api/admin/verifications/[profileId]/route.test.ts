@@ -11,10 +11,11 @@ vi.mock('@/lib/mailer', () => ({ sendGenericEmail: (...a: unknown[]) => sendGene
 
 const profileFindUnique = vi.fn();
 const transaction = vi.fn();
+const auditLogCreate = vi.fn();
 vi.mock('@/lib/db', () => ({
   db: {
     profile: { findUnique: (...a: unknown[]) => profileFindUnique(...a), update: vi.fn() },
-    adminAuditLog: { create: vi.fn() },
+    auditLog: { create: (...a: unknown[]) => auditLogCreate(...a) },
     $transaction: (...a: unknown[]) => transaction(...a),
   },
 }));
@@ -82,5 +83,24 @@ describe('a verification decision reaches the applicant', () => {
     notifyUser.mockRejectedValueOnce(new Error('push is down'));
     const res = await PATCH(patch({ decision: 'VERIFIED' }), params);
     expect(res.status).toBe(200);
+  });
+});
+
+describe('a verification decision is in the audit log the console reads', () => {
+  /* It used to go into `AdminAuditLog`, a table with this one writer and no
+     reader; `/admin/audit` reads `AuditLog`, so filtering the console for
+     "verification" found nothing (DESIGN_SYNC row 438). */
+  it('writes AuditLog with the decision, the profile and the reviewer note', async () => {
+    const res = await PATCH(patch({ decision: 'REJECTED', adminNote: 'Lease is not in this name.' }), params);
+    expect(res.status).toBe(200);
+    expect(auditLogCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        actorUserId: 'admin1',
+        action: 'verification.rejected',
+        entityType: 'Profile',
+        entityId: 'p1',
+        metadata: { adminNote: 'Lease is not in this name.' },
+      }),
+    });
   });
 });

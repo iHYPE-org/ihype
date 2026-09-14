@@ -1049,19 +1049,6 @@ model Session {
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-model AdminAuditLog {
-  id         String   @id @default(cuid())
-  actorId    String
-  action     String
-  targetType String
-  targetId   String
-  meta       Json?
-  createdAt  DateTime @default(now())
-
-  @@index([actorId])
-  @@index([targetId])
-  @@index([createdAt])
-}
 
 model Seed {
   id        String   @id @default(cuid())
