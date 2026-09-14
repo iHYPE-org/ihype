@@ -37,7 +37,7 @@ export default async function DoorPage({ params }: { params: Promise<{ slug: str
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      id: true, slug: true, title: true, startsAt: true, creatorId: true, status: true,
+      id: true, slug: true, title: true, startsAt: true, timeZone: true, creatorId: true, status: true,
       venueProfile: { select: { ownerId: true, name: true } },
       headlinerProfile: { select: { ownerId: true, name: true } },
     },
@@ -51,6 +51,7 @@ export default async function DoorPage({ params }: { params: Promise<{ slug: str
         slug: show.slug,
         title: show.title,
         startsAt: show.startsAt.toISOString(),
+        timeZone: show.timeZone,
         venueName: show.venueProfile?.name ?? null,
         headlinerName: show.headlinerProfile?.name ?? null,
       }}

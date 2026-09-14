@@ -2153,6 +2153,7 @@
   "showEdit.saving": "저장 중…",
   "showEdit.startsLabel": "시작",
   "showEdit.titleLabel": "이벤트 제목",
+  "showEdit.zoneNote": "시간은 공연장 현지 시각 기준입니다:",
   "showEngagement.addAttendeeAria": "참석자 목록에 나를 추가",
   "showEngagement.attendanceErrorGeneric": "참석 정보를 업데이트하지 못했습니다",
   "showEngagement.attendanceErrorNetwork": "참석 정보를 업데이트하지 못했습니다 (네트워크 오류)",

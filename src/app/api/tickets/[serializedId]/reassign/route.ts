@@ -7,6 +7,7 @@ import { db } from '@/lib/db';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 import { buildTicketQrCodeDataUrl, buildTicketVerificationUrl, formatTicketStatus } from '@/lib/tickets';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
+import { formatDoorTime } from '@/lib/format-locale';
 
 const schema = z.object({
   newHolderName: z.string().min(2),
@@ -78,7 +79,7 @@ export async function POST(
       name: updatedTicket.holderName,
       showTitle: ticket.show.title,
       venueName: ticket.show.venueProfile?.name,
-      eventOpensAtLabel: ticket.show.startsAt.toLocaleString('en-US'),
+      eventOpensAtLabel: formatDoorTime('en', ticket.show.startsAt, ticket.show.timeZone),
       totalChargeLabel: formatCurrencyFromCents(perTicketValueCents, 'en'),
       tickets: [
         {

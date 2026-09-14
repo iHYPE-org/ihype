@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Salvataggio…",
   "showEdit.startsLabel": "Inizio",
   "showEdit.titleLabel": "Titolo dell’evento",
+  "showEdit.zoneNote": "Gli orari seguono l'ora del locale:",
   "showEngagement.addAttendeeAria": "Aggiungerti all'elenco dei presenti",
   "showEngagement.attendanceErrorGeneric": "Impossibile aggiornare la presenza",
   "showEngagement.attendanceErrorNetwork": "Impossibile aggiornare la presenza (errore di rete)",

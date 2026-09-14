@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { formatDoorTime } from '@/lib/format-locale';
 import { AdminSignupTestPanel } from '@/components/AdminSignupTestPanel';
 import { redirect } from 'next/navigation';
 import { AdminReportActions, AdminVerificationActions } from '@/components/AdminModerationActions';
@@ -346,7 +347,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
       ? // Upcoming calendar (next 30 days)
       readList(db.show.findMany({
         where: { status: 'SCHEDULED', startsAt: { gte: new Date(), lte: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) } },
-        select: { id: true, title: true, startsAt: true, featured: true, venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } }, ticketsSoldCount: true, ticketCapacity: true },
+        select: { id: true, title: true, startsAt: true, timeZone: true, featured: true, venueProfile: { select: { name: true } }, headlinerProfile: { select: { name: true } }, ticketsSoldCount: true, ticketCapacity: true },
         orderBy: { startsAt: 'asc' },
         take: 100,
       }))
@@ -849,7 +850,9 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
             <div>
               {Object.entries(
                 calendarShows.reduce((acc: Record<string, NonNullable<typeof calendarShows>>, show) => {
-                  const date = show.startsAt.toLocaleDateString();
+                  /* The venue's clock, so the console groups a show under the
+                     night it happens rather than under the Worker's UTC day. */
+                  const date = formatDoorTime('en', show.startsAt, show.timeZone, { year: 'numeric', month: 'numeric', day: 'numeric' });
                   acc[date] ??= [];
                   acc[date].push(show);
                   return acc;

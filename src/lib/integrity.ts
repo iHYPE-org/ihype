@@ -47,6 +47,8 @@ export const feedHeuristicsLedger = [
 ] as const;
 
 type ExplainableShow = Pick<Show, 'title' | 'status' | 'startsAt' | 'hypeCount' | 'tags'> & {
+  /** Optional: a caller that did not select it gets the runtime's clock, named. */
+  timeZone?: string | null;
   venueProfile?: Pick<Profile, 'name' | 'city'> | null;
   headlinerProfile?: Pick<Profile, 'name'> | null;
 };
@@ -67,7 +69,7 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
   const hoursUntil = (startsAt.getTime() - now.getTime()) / (60 * 60 * 1000);
 
   let statusSignal = 'Upcoming';
-  let freshnessSignal = `Starts ${formatShowTime(startsAt, 'en')}`;
+  let freshnessSignal = `Starts ${formatShowTime(startsAt, 'en', show.timeZone ?? null)}`;
   let statusScore = 40;
   let freshnessScore = 18;
 

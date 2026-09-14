@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { sendPushToAllDevices } from '@/lib/notify';
 import { sendOperationalEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
+import { formatDoorTime } from '@/lib/format-locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,7 +93,7 @@ export async function GET(request: NextRequest) {
     // 24h reminders: push + email
     const tasks24h: ReminderTask[] = shows24h.flatMap((show) => {
       const venueName = show.venueProfile?.name ?? 'Unknown venue';
-      const dateStr = new Date(show.startsAt).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      const dateStr = formatDoorTime('en', show.startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
       return show.rsvps.map((rsvp): ReminderTask => ({
         userId: rsvp.userId,

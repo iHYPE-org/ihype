@@ -8,6 +8,7 @@ import { showProductionPlanSchema } from '@/lib/show-composer';
 import { resolveAdBreakClips } from '@/lib/ad-clip-selection';
 import { DEFAULT_PROMOTER_AFFILIATE_PERCENT, validateTicketSplit } from '@/lib/ticketing';
 import { slugify } from '@/lib/utils';
+import { isValidTimeZone } from '@/lib/format-locale';
 import { consumeRateLimit, rateLimitHeaders, rateLimitKey } from '@/lib/rate-limit';
 import { sanitizeShowInput } from '@/lib/sanitize';
 import { checkContent } from '@/lib/auto-mod';
@@ -35,6 +36,11 @@ const schema = z.object({
   status: z.enum(['DRAFT', 'SCHEDULED', 'LIVE']).default('SCHEDULED'),
   startsAt: z.string().datetime().optional(),
   endsAt: z.string().datetime().optional(),
+  /* The IANA zone the organiser's browser reported when they picked the door
+     time. Refused rather than coerced: a zone Intl cannot resolve would be
+     stored and then silently ignored by every reader, which is worse than not
+     having one, because the show would look like it knew its clock. */
+  timeZone: z.string().refine(isValidTimeZone, 'Unknown time zone').optional(),
   venueProfileId: z.string().cuid().optional(),
   headlinerProfileId: z.string().cuid().optional(),
   promoterProfileId: z.string().cuid().optional(),
@@ -245,6 +251,7 @@ export async function POST(request: NextRequest) {
         title: body.title,
         description: body.description,
         startsAt: new Date(body.startsAt!),
+        timeZone: body.timeZone ?? null,
         endsAt: body.endsAt ? new Date(body.endsAt) : undefined,
         creatorId: session.user.id,
         venueProfileId: body.venueProfileId,

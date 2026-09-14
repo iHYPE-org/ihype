@@ -4,7 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { getServerI18n } from '@/lib/i18n/server';
-import { formatDate } from '@/lib/format-locale';
+import { formatDoorTime } from '@/lib/format-locale';
 import { isShowOrganizer, ORGANIZER_SHOW_SELECT } from '@/lib/show-organizer';
 import { ShowEditForm } from '@/components/ShowEditForm';
 
@@ -37,7 +37,7 @@ export default async function EditShowPage({ params }: { params: Promise<{ slug:
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      id: true, slug: true, title: true, description: true, startsAt: true, status: true, ticketsSoldCount: true,
+      id: true, slug: true, title: true, description: true, startsAt: true, timeZone: true, status: true, ticketsSoldCount: true,
       ...ORGANIZER_SHOW_SELECT,
     },
   });
@@ -52,7 +52,7 @@ export default async function EditShowPage({ params }: { params: Promise<{ slug:
         <h1>{t('showEdit.heading', 'Edit event')}</h1>
         <p>
           {t('showEdit.intro', 'Correct the title, the description or the start time. Tickets already sold stay valid.')}{' '}
-          {t('showEdit.currentlyPrefix', 'Currently')} {formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
+          {t('showEdit.currentlyPrefix', 'Currently')} {formatDoorTime(locale, show.startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}.
         </p>
       </header>
       <ShowEditForm
@@ -62,6 +62,7 @@ export default async function EditShowPage({ params }: { params: Promise<{ slug:
           title: show.title,
           description: show.description ?? '',
           startsAt: show.startsAt.toISOString(),
+          timeZone: show.timeZone,
           ticketsSoldCount: show.ticketsSoldCount,
         }}
       />

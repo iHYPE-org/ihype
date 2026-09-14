@@ -1,5 +1,5 @@
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate, formatNumber, formatUsd } from '@/lib/format-locale';
+import { formatDoorTime, formatNumber, formatUsd } from '@/lib/format-locale';
 import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -43,7 +43,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
     where: { OR: [{ id }, { slug: id }] },
     select: {
       id: true, slug: true, title: true, status: true, creatorId: true,
-      startsAt: true, endsAt: true, isTicketed: true,
+      startsAt: true, timeZone: true, endsAt: true, isTicketed: true,
       ticketPriceCents: true, ticketCapacity: true, ticketsSoldCount: true,
       artistPayoutPercent: true, venuePayoutPercent: true, promoterPayoutPercent: true,
       headlinerProfile: { select: { name: true, slug: true, type: true, ownerId: true } },
@@ -68,7 +68,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const promoterCents = Math.round(grossCents * promoterPct / 100);
   const capacity = show.ticketCapacity ?? 0;
 
-  const dateStr = formatDate(locale, new Date(show.startsAt), {
+  const dateStr = formatDoorTime(locale, new Date(show.startsAt), show.timeZone, {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
   });
 

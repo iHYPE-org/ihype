@@ -81,6 +81,7 @@ export default async function MmmShowPage({
         // which is exactly why it was not.
         creatorId: true,
         startsAt: true,
+        timeZone: true,
         isTicketed: true,
         ticketPriceCents: true,
         ticketCapacity: true,
@@ -175,7 +176,7 @@ export default async function MmmShowPage({
     <div className="mmm-show">
       <Link className="mmm-show-back" href="/app/map">← {t('mmmDock.tab.map', 'Map')}</Link>
 
-      <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt, locale)}</div>
+      <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt, locale, show.timeZone)}</div>
       <h1 className="mmm-show-title">{show.title}</h1>
       {where && <div className="mmm-show-where">{where}</div>}
 
@@ -301,7 +302,7 @@ export default async function MmmShowPage({
             ticketCapacity={show.ticketCapacity}
             ticketPriceCents={show.ticketPriceCents}
             ticketingOpen={ticketingOpen}
-            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : null}
+            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
             ticketsSoldCount={show.ticketsSoldCount}
             title={show.title}
             venueLocation={{

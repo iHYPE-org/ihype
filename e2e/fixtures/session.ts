@@ -435,13 +435,19 @@ export async function seedShowWithTicket({
     const ticketingOpensAt = new Date(
       Math.min(Date.now(), showStartsAt.getTime() - 14 * 24 * 60 * 60 * 1000),
     );
+    /* A venue clock, so a spec can prove the door time renders on the VENUE'S
+       zone rather than the Worker's. The seeded venue is in Portland, Maine;
+       with this unset every reading would be UTC and a zone test would be
+       measuring the fallback (DESIGN_SYNC row 464). */
+    const showTimeZone = 'America/New_York';
     const show = await prisma.show.upsert({
       where: { slug: showSlug },
-      update: { title: showTitle, startsAt: showStartsAt, ticketingOpensAt },
+      update: { title: showTitle, startsAt: showStartsAt, ticketingOpensAt, timeZone: showTimeZone },
       create: {
         slug: showSlug,
         title: showTitle,
         startsAt: showStartsAt,
+        timeZone: showTimeZone,
         ticketingOpensAt,
         creatorId: buyerUserId,
         venueProfileId: venue.id,

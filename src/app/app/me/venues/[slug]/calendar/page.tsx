@@ -1,4 +1,4 @@
-import { formatDate } from '@/lib/format-locale';
+import { formatDate, formatDoorTime } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -60,7 +60,7 @@ export default async function VenueCalendarPage({ params }: Props) {
       status: { not: 'CANCELED' },
       startsAt: { gte: startOfMonth, lte: endOfMonth }
     },
-    select: { id: true, title: true, slug: true, startsAt: true, status: true },
+    select: { id: true, title: true, slug: true, startsAt: true, timeZone: true, status: true },
     orderBy: { startsAt: 'asc' }
   });
 
@@ -161,7 +161,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                       }}
                       title={s.title}
                     >
-                      {formatDate(locale, s.startsAt, { hour: 'numeric', minute: '2-digit', hour12: true })} {s.title}
+                      {formatDoorTime(locale, s.startsAt, s.timeZone, { hour: 'numeric', minute: '2-digit', hour12: true })} {s.title}
                     </Link>
                   ))}
                 </>
@@ -184,7 +184,7 @@ export default async function VenueCalendarPage({ params }: Props) {
                   {s.title}
                 </Link>
                 <p style={{ fontFamily: 'var(--f-m)', fontSize: '0.9375rem', color: 'var(--ink-2)', margin: '2px 0 0' }}>
-                  {formatDate(locale, s.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatDate(locale, s.startsAt, { hour: 'numeric', minute: '2-digit', hour12: true })}
+                  {formatDoorTime(locale, s.startsAt, s.timeZone, { weekday: 'short', month: 'short', day: 'numeric' })} · {formatDoorTime(locale, s.startsAt, s.timeZone, { hour: 'numeric', minute: '2-digit', hour12: true })}
                 </p>
               </div>
             </div>

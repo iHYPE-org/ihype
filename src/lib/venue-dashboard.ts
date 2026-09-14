@@ -15,6 +15,8 @@ export type VenueDashboardShow = {
   slug: string;
   title: string;
   startsAt: Date;
+  /** The venue's clock — see `formatDoorTime()`. */
+  timeZone: string | null;
   ticketsSoldCount: number;
   ticketCapacity: number | null;
   status: string;
@@ -70,6 +72,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
         slug: true,
         title: true,
         startsAt: true,
+        timeZone: true,
         status: true,
         isTicketed: true,
         ticketsSoldCount: true,
@@ -187,6 +190,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
       slug: s.slug,
       title: s.headlinerProfile?.name ?? s.title,
       startsAt: s.startsAt,
+      timeZone: s.timeZone,
       ticketsSoldCount: s.ticketsSoldCount,
       ticketCapacity: s.ticketCapacity,
       status: s.status,

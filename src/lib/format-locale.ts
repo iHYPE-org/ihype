@@ -77,6 +77,76 @@ export function formatCalendarDay(
   return formatDate(locale, date, { ...options, timeZone: 'UTC' });
 }
 
+/**
+ * Is this a zone `Intl` actually knows? The only definitive test is to build a
+ * formatter with it — an unknown name throws `RangeError`. Used where a zone
+ * arrives from a client (`POST /api/shows`) so an unusable string is refused at
+ * the door rather than stored and thrown on by every reader afterwards.
+ */
+export function isValidTimeZone(zone: unknown): zone is string {
+  if (typeof zone !== 'string' || zone.length === 0 || zone.length > 64) return false;
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: zone });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * A SHOW'S DOOR TIME — an instant rendered on the VENUE's wall clock.
+ *
+ * `Show.startsAt` is an instant and nothing else. Every reader formatted it
+ * with no zone at all, which means the zone of whatever ran the formatter: UTC
+ * on a Cloudflare Worker, so a 9pm Saturday show in Portland was sold on a page
+ * reading "Sunday, March 15 - 1:00 AM". A fan four hours out is told the wrong
+ * night; a fan in the same city as the venue is told the wrong hour.
+ *
+ * The zone is the one the ORGANISER'S OWN BROWSER reported when they picked the
+ * time (`Show.timeZone`, captured by the event creator), because that is the
+ * only place in this product that has ever known which clock the door time was
+ * on. A show created before the column has `null`, and then this renders in the
+ * runtime's own zone — which is the old behaviour, except that it SAYS SO.
+ *
+ * Two rules, and both are the point:
+ *
+ * 1. **A clock time always names its zone.** When `options` asks for an hour,
+ *    `timeZoneName: 'short'` is added and cannot be turned off — "9:00 PM EDT".
+ *    A bare "9:00 PM" is the ambiguity this function exists to remove, and a
+ *    caller who could opt out is a caller who will. A date with no hour names
+ *    no zone, because "Saturday, March 14" carries no clock to be wrong about.
+ * 2. **An unknown zone never throws.** `Intl` rejects a name it does not know
+ *    with a `RangeError`, and a formatter must not take a page down; a bad
+ *    stored zone degrades to the runtime's.
+ *
+ * `dateStyle` and `timeStyle` are refused by the signature, and that is not
+ * tidiness: `Intl` throws outright when either is combined with a component
+ * option, `timeZoneName` included, so a caller reaching for `timeStyle: 'short'`
+ * here would take the page down at the moment the zone was added. Name the
+ * components.
+ */
+export function formatDoorTime(
+  locale: Locale | string | null | undefined,
+  instant: Date | string | number,
+  timeZone: string | null | undefined,
+  options: Omit<Intl.DateTimeFormatOptions, 'dateStyle' | 'timeStyle' | 'timeZone'> = { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' },
+): string {
+  const wantsClock = options.hour !== undefined;
+  const withZone: Intl.DateTimeFormatOptions = {
+    ...options,
+    ...(wantsClock ? { timeZoneName: options.timeZoneName ?? 'short' } : {}),
+  };
+  if (timeZone) {
+    try {
+      return formatDate(locale, instant, { ...withZone, timeZone });
+    } catch {
+      /* A stored zone Intl cannot resolve — fall through to the runtime's,
+         which is still a real clock and is still named. */
+    }
+  }
+  return formatDate(locale, instant, withZone);
+}
+
 export function formatNumber(locale: Locale | string | null | undefined, value: number, options?: Intl.NumberFormatOptions): string {
   return new Intl.NumberFormat(intlTag(locale), options).format(value);
 }

@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { checkContent } from '@/lib/auto-mod';
 import { isShowOrganizer, ORGANIZER_SHOW_SELECT } from '@/lib/show-organizer';
 import { notifyUser } from '@/lib/notify';
+import { formatDoorTime, isValidTimeZone } from '@/lib/format-locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -67,6 +68,9 @@ const patchSchema = z.object({
   description: z.string().trim().max(2000).optional(),
   productionPlan: z.unknown().optional(),
   startsAt: z.string().datetime({ offset: true }).optional(),
+  /* Only ever ESTABLISHES a clock, never reassigns one — a show that already
+     names its zone keeps it, whoever is editing and wherever they are. */
+  timeZone: z.string().refine(isValidTimeZone, 'Unknown time zone').optional(),
 });
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -108,7 +112,7 @@ export async function PATCH(
      way the cancel page does: the show's existence is not theirs to learn. */
   const show = await db.show.findFirst({
     where: { OR: [{ id: showId }, { slug: showId }] },
-    select: { id: true, slug: true, title: true, status: true, startsAt: true, isTicketed: true, ticketingOpensAt: true, ...ORGANIZER_SHOW_SELECT },
+    select: { id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true, isTicketed: true, ticketingOpensAt: true, ...ORGANIZER_SHOW_SELECT },
   });
   if (!show || !isShowOrganizer(session, show)) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
@@ -147,6 +151,7 @@ export async function PATCH(
         ...(moderationStatus ? { moderationStatus } : {}),
         ...(productionPlan !== undefined && { productionPlan: productionPlan as object }),
         ...(body.startsAt !== undefined && { startsAt: new Date(body.startsAt) }),
+        ...(body.timeZone !== undefined && show.timeZone === null && { timeZone: body.timeZone }),
       },
       select: { id: true, slug: true, status: true },
     });
@@ -159,7 +164,7 @@ export async function PATCH(
        (rows 381-382). Drafts have no buyers, so this is a SCHEDULED-only path
        in practice, and the query says so rather than relying on it. */
     if (body.startsAt !== undefined && show.isTicketed && new Date(body.startsAt).getTime() !== show.startsAt.getTime()) {
-      await notifyRescheduled(show.id, updated.slug, body.title ?? show.title, new Date(body.startsAt)).catch(() => {});
+      await notifyRescheduled(show.id, updated.slug, body.title ?? show.title, new Date(body.startsAt), show.timeZone ?? body.timeZone ?? null).catch(() => {});
     }
 
     if (body.status === undefined) {
@@ -194,13 +199,17 @@ export async function PATCH(
 }
 
 /** One notice per buyer with a captured order, whatever the order's quantity. */
-async function notifyRescheduled(showId: string, slug: string, title: string, startsAt: Date): Promise<void> {
+async function notifyRescheduled(showId: string, slug: string, title: string, startsAt: Date, timeZone: string | null): Promise<void> {
   const orders = await db.ticketOrder.findMany({
     where: { showId, status: 'CAPTURED', buyerUserId: { not: null } },
     select: { buyerUserId: true },
     distinct: ['buyerUserId'],
   });
-  const when = startsAt.toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'UTC' });
+  /* A notice about a moved door time is the one message that MUST name its
+     clock: it is read hours later, in a push payload, by someone deciding
+     whether they can still make it. English here like every other notification
+     — the recipient has no stored locale (row 424). */
+  const when = formatDoorTime('en', startsAt, timeZone, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
   for (const order of orders) {
     if (!order.buyerUserId) continue;
     await notifyUser(order.buyerUserId, {

@@ -1,4 +1,4 @@
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -174,7 +174,7 @@ export default async function VenueAnalyticsPage({
       ) : (
         <div className="vaa-events">
           {data.topEvents.map((event) => {
-            const date = formatDate(locale, event.startsAt, { month: 'short', day: 'numeric' });
+            const date = formatDoorTime(locale, event.startsAt, event.timeZone, { month: 'short', day: 'numeric' });
             const soldLabel = event.ticketCapacity
               ? `${formatNumber(locale, event.ticketsSoldCount)} / ${formatNumber(locale, event.ticketCapacity)} ${t('venuesSlugAnalyticsPage.capSold', 'cap sold')}${event.soldOut ? ` · ${t('venuesSlugAnalyticsPage.soldOut', 'Sold out')}` : ''}`
               : `${formatNumber(locale, event.ticketsSoldCount)} ${t('venuesSlugAnalyticsPage.sold', 'sold')}`;

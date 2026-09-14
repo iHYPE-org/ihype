@@ -1,8 +1,8 @@
-import { formatDate } from '@/lib/format-locale';
+import { formatDoorTime } from '@/lib/format-locale';
 import Link from 'next/link';
 import { getServerI18n } from '@/lib/i18n/server';
 
-type ShowRow = { id: string; slug: string; title: string; status: string; startsAt: Date; isTicketed: boolean };
+type ShowRow = { id: string; slug: string; title: string; status: string; startsAt: Date; timeZone: string | null; isTicketed: boolean };
 
 /**
  * "This show" tab — DESIGN_SYNC row 245's real translation choice: rather
@@ -30,7 +30,7 @@ export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
         >
           <div>
             <div style={{ fontWeight: 600 }}>{s.title}</div>
-            <div className="meta">{formatDate(locale, new Date(s.startsAt), { year: 'numeric', month: 'numeric', day: 'numeric' })} · {s.status}{!s.isTicketed ? ` · ${t('payoutShowsPanel.notTicketed', 'not ticketed')}` : ''}</div>
+            <div className="meta">{formatDoorTime(locale, new Date(s.startsAt), s.timeZone, { year: 'numeric', month: 'numeric', day: 'numeric' })} · {s.status}{!s.isTicketed ? ` · ${t('payoutShowsPanel.notTicketed', 'not ticketed')}` : ''}</div>
           </div>
           <div className="meta">{t('payoutShowsPanel.view', 'View →')}</div>
         </Link>

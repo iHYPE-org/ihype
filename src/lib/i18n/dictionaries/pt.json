@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Salvando…",
   "showEdit.startsLabel": "Começa",
   "showEdit.titleLabel": "Título do evento",
+  "showEdit.zoneNote": "Os horários seguem o relógio do local:",
   "showEngagement.addAttendeeAria": "Adicionar você à lista de presença",
   "showEngagement.attendanceErrorGeneric": "Não foi possível atualizar a presença",
   "showEngagement.attendanceErrorNetwork": "Não foi possível atualizar a presença (erro de rede)",

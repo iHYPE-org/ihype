@@ -17,7 +17,7 @@
  *     HYPE link. So promoter earnings are a *fan* stat, not a separate role.
  */
 
-import { formatDate, formatNumber, formatUsd } from '@/lib/format-locale';
+import { formatDate, formatDoorTime, formatNumber, formatUsd } from '@/lib/format-locale';
 import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { buildTicketQrCodeDataUrl } from '@/lib/tickets';
@@ -300,7 +300,7 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
       where: { buyerUserId: userId, status: { not: 'VOID' } },
       orderBy: { createdAt: 'desc' },
       take: 4,
-      select: { id: true, totalChargeCents: true, createdAt: true, show: { select: { title: true, startsAt: true } } },
+      select: { id: true, totalChargeCents: true, createdAt: true, show: { select: { title: true, startsAt: true, timeZone: true } } },
     }).catch(() => []),
     hypeLinkFor(linkProfile, now),
   ]);
@@ -320,8 +320,11 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
     activity: orders.map((order) => ({
       title: order.show?.title ?? null,
       fallbackTitle: 'Ticket order' as const,
+      /* The venue's clock. This forced UTC, which put a late-evening show on
+         the following day in every zone west of Greenwich — the fan's own
+         ticket row and the show page disagreeing about the night. */
       when: order.show?.startsAt
-        ? formatDate(locale, order.show.startsAt, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+        ? formatDoorTime(locale, order.show.startsAt, order.show.timeZone, { weekday: 'short', month: 'short', day: 'numeric' })
         : null,
       count: null,
       amount: `-${money(locale, order.totalChargeCents)}`,
