@@ -86,8 +86,6 @@ exclude:
   - prisma.config.ts
   - public/
   - scripts/
-  - sentry.client.config.ts
-  - sentry.server.config.ts
   - src/
   - tsconfig.json
   - tsconfig.scripts.json
