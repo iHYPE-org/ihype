@@ -42,27 +42,36 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ al
     const { title, releasedOn, sortOrder, artworkUrl } = parsed.data;
     const now = new Date();
     const releaseDate = releasedOn === undefined ? undefined : releasedOn === null ? null : releasedOn === 'now' ? now : parseReleaseInput(releasedOn);
-    const album = await db.album.update({
-      where: { id: albumId },
-      data: {
-        ...(title !== undefined ? { title } : {}),
-        ...(releaseDate !== undefined ? { releasedOn: releaseDate } : {}),
-        ...(sortOrder !== undefined ? { sortOrder } : {}),
-        ...(artworkUrl === null ? { artworkUrl: null } : {}),
-      },
-      select: { id: true, title: true, artworkUrl: true, releasedOn: true, sortOrder: true, _count: { select: { tracks: true } } },
-    });
     /* The album's date IS its tracks' release moment. A future date schedules
        every track in the folder; "now" or a past date releases them. A HELD
        track (unpublished with no date — the scan or a moderator withheld it)
-       is skipped: an artist cannot lift a hold by dating the album. */
+       is skipped: an artist cannot lift a hold by dating the album.
+
+       One transaction, because until 2026-09-14 the cascade was caught to
+       null after the album row had been written: a folder could carry a
+       launch date its tracks never received and the route still answered
+       200 with the dated album (DESIGN_SYNC row 456). A cascade that fails
+       now fails the request, and the date is not written either. */
     const cascade = releaseDate === undefined ? null : albumRelease(releaseDate, now);
-    if (cascade) {
-      await db.artistMediaAsset.updateMany({
-        where: { albumId, NOT: { isPublished: false, publishAt: null } },
-        data: cascade,
-      }).catch(() => null);
-    }
+    const album = await db.$transaction(async (tx) => {
+      const updated = await tx.album.update({
+        where: { id: albumId },
+        data: {
+          ...(title !== undefined ? { title } : {}),
+          ...(releaseDate !== undefined ? { releasedOn: releaseDate } : {}),
+          ...(sortOrder !== undefined ? { sortOrder } : {}),
+          ...(artworkUrl === null ? { artworkUrl: null } : {}),
+        },
+        select: { id: true, title: true, artworkUrl: true, releasedOn: true, sortOrder: true, _count: { select: { tracks: true } } },
+      });
+      if (cascade) {
+        await tx.artistMediaAsset.updateMany({
+          where: { albumId, NOT: { isPublished: false, publishAt: null } },
+          data: cascade,
+        });
+      }
+      return updated;
+    });
     if (artworkUrl === null && existing.artworkUrl && isStoredMediaUrl(existing.artworkUrl)) {
       await deleteMediaFile(new URL(existing.artworkUrl).pathname.replace(/^\/cdn\//, '')).catch(() => undefined);
     }
