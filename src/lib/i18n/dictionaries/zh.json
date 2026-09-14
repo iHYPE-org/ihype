@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "立即从活动日志中移除 IP 和位置（30 天后自动执行）",
   "settingsPage.identityDetachmentLabel": "提前分离身份信息",
   "settingsPage.imEighteen": "我已年满 18 岁",
-  "settingsPage.journalPosts": "专栏文章",
-  "settingsPage.journalPostsDetail": "你关注的创作者发布的新文章",
   "settingsPage.loadFailed": "你的设置暂时无法加载，这里显示的内容可能不是你的。请刷新页面重试——在加载成功前，保存功能已关闭。",
   "settingsPage.loading": "加载中…",
   "settingsPage.manage": "管理",

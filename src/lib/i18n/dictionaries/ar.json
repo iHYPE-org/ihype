@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "أزل IP والموقع من سجل نشاطك الآن (تلقائيًا بعد 30 يومًا)",
   "settingsPage.identityDetachmentLabel": "فصل الهوية المبكر",
   "settingsPage.imEighteen": "عمري 18 عامًا أو أكثر",
-  "settingsPage.journalPosts": "منشورات المدوّنة",
-  "settingsPage.journalPostsDetail": "منشورات جديدة من صنّاع تتابعهم",
   "settingsPage.loadFailed": "تعذّر تحميل إعداداتك الآن، لذا قد لا يكون ما يظهر هنا خاصًا بك. حدّث الصفحة للمحاولة مجددًا — الحفظ متوقف حتى يعمل.",
   "settingsPage.loading": "جارٍ التحميل…",
   "settingsPage.manage": "إدارة",

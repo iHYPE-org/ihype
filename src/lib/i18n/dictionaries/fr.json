@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "Retirer l'IP et la localisation de votre journal d'activité maintenant (automatique après 30 jours)",
   "settingsPage.identityDetachmentLabel": "Détachement anticipé de l'identité",
   "settingsPage.imEighteen": "J'ai 18 ans ou plus",
-  "settingsPage.journalPosts": "Articles du journal",
-  "settingsPage.journalPostsDetail": "Nouveaux articles des créateurs que vous suivez",
   "settingsPage.loadFailed": "Vos paramètres n’ont pas pu être chargés pour le moment ; ce qui s’affiche ici n’est peut-être pas le vôtre. Actualisez la page pour réessayer — l’enregistrement est désactivé jusqu’à ce que cela fonctionne.",
   "settingsPage.loading": "Chargement…",
   "settingsPage.manage": "Gérer",

@@ -5,7 +5,10 @@ import { escapeHtml } from '@/lib/html-escape';
 
 export const dynamic = 'force-dynamic';
 
-// One-click unsubscribe turns every email toggle off.
+/* One-click unsubscribe turns every email column off — `journalPosts`
+   included, even though its Settings row is gone and nothing reads it. The
+   member said no to all of it; the column should already agree on the day a
+   journal exists again, rather than defaulting them back in. */
 const OPT_OUT = {
   newShows: false,
   journalPosts: false,

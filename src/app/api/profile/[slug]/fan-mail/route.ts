@@ -55,7 +55,7 @@ export async function POST(
   const [follows, subscribers] = await Promise.all([
     db.follow.findMany({
       where: { followeeProfileId: slug, notifyShows: true },
-      include: { follower: { select: { id: true, email: true, emailBounced: true, notificationPreference: { select: { newShows: true, journalPosts: true, milestones: true, weeklyDigest: true } } } } },
+      include: { follower: { select: { id: true, email: true, emailBounced: true, notificationPreference: { select: { newShows: true, milestones: true, weeklyDigest: true } } } } },
     }),
     db.newsletterSubscription.findMany({
       where: { profileId: slug, confirmedAt: { not: null } },
@@ -77,7 +77,9 @@ export async function POST(
        iHYPE" — kept receiving artist broadcasts. The same rule as
        `sendMarketingEmail`: all four off means out. */
     const prefs = follow.follower.notificationPreference;
-    if (prefs && !prefs.newShows && !prefs.journalPosts && !prefs.milestones && !prefs.weeklyDigest) continue;
+    // The same quorum `sendMarketingEmail` applies, over the same three
+    // visible switches; see the comment there for why `journalPosts` left it.
+    if (prefs && !prefs.newShows && !prefs.milestones && !prefs.weeklyDigest) continue;
     byAddress.set(email.toLowerCase(), { email, because: 'follow', unsubscribeUrl: buildUnsubscribeUrl(follow.follower.id) });
   }
   for (const subscriber of subscribers) {

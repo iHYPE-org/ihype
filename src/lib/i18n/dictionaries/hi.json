@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "अभी अपने गतिविधि लॉग से IP और स्थान हटाएँ (30 दिनों बाद स्वतः)",
   "settingsPage.identityDetachmentLabel": "पहचान की जल्दी अलगाव",
   "settingsPage.imEighteen": "मैं 18 वर्ष या उससे अधिक का हूँ",
-  "settingsPage.journalPosts": "जर्नल पोस्ट",
-  "settingsPage.journalPostsDetail": "आपके फ़ॉलो किए गए क्रिएटर्स की नई पोस्ट",
   "settingsPage.loadFailed": "आपकी सेटिंग्स अभी लोड नहीं हो सकीं, इसलिए यहाँ दिख रहा डेटा आपका नहीं भी हो सकता है। फिर से कोशिश करने के लिए पेज रीफ़्रेश करें — जब तक यह काम न करे, सेव करना बंद है।",
   "settingsPage.loading": "लोड हो रहा है…",
   "settingsPage.manage": "प्रबंधित करें",

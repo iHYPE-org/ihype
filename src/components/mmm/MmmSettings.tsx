@@ -10,7 +10,6 @@ import { openExternalUrl } from '@/lib/open-external';
 
 interface Prefs {
   newShows: boolean;
-  journalPosts: boolean;
   milestones: boolean;
   weeklyDigest: boolean;
   crateUploads: boolean;
@@ -172,7 +171,7 @@ export function MmmSettings() {
   const [isAdult, setIsAdult] = useState(false);
   const [attesting, setAttesting] = useState(false);
   const [prefs, setPrefs] = useState<Prefs>({
-    newShows: true, journalPosts: true, milestones: true, weeklyDigest: true,
+    newShows: true, milestones: true, weeklyDigest: true,
     crateUploads: true, bookingRequests: true,
   });
   const [discoverable, setDiscoverable] = useState(true);
@@ -718,7 +717,6 @@ export function MmmSettings() {
             <div className="settings-group">
               <Row action={<Toggle checked={prefs.newShows} label={t('settingsPage.ticketDrops', 'Ticket drops')} onChange={(v) => setPrefs((p) => ({ ...p, newShows: v }))} />} detail={t('settingsPage.ticketDropsDetail', 'When artists you follow announce shows')} label={t('settingsPage.ticketDrops', 'Ticket drops')} />
               <Row action={<Toggle checked={prefs.milestones} label={t('settingsPage.hypeMilestones', 'Hype milestones')} onChange={(v) => setPrefs((p) => ({ ...p, milestones: v }))} />} detail={t('settingsPage.hypeMilestonesDetail', 'When your tracks hit hype thresholds')} label={t('settingsPage.hypeMilestones', 'Hype milestones')} />
-              <Row action={<Toggle checked={prefs.journalPosts} label={t('settingsPage.journalPosts', 'Journal posts')} onChange={(v) => setPrefs((p) => ({ ...p, journalPosts: v }))} />} detail={t('settingsPage.journalPostsDetail', 'New posts from creators you follow')} label={t('settingsPage.journalPosts', 'Journal posts')} />
               <Row action={<Toggle checked={prefs.weeklyDigest} label={t('settingsPage.weeklyDigest', 'Weekly digest')} onChange={(v) => setPrefs((p) => ({ ...p, weeklyDigest: v }))} />} detail={t('settingsPage.weeklyDigestDetail', 'A weekly summary of upcoming shows and activity')} label={t('settingsPage.weeklyDigest', 'Weekly digest')} />
               {role === 'ARTIST' && (
                 <Row action={<Toggle checked={prefs.crateUploads} label={t('settingsPage.trackUploads', 'Track uploads')} onChange={(v) => setPrefs((p) => ({ ...p, crateUploads: v }))} />} detail={t('settingsPage.crateUploadsDetailRelease', 'When a release you scheduled goes live')} label={t('settingsPage.trackUploads', 'Track uploads')} />
