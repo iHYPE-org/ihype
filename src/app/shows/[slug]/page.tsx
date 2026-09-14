@@ -1,4 +1,4 @@
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { cache } from 'react';
 import { getLocale, getServerI18n } from '@/lib/i18n/server';
@@ -49,6 +49,7 @@ const getShowMeta = cache((slug: string) =>
       description: true,
       status: true,
       startsAt: true,
+      timeZone: true,
       posterImage: true,
       hypeCount: true,
       venueProfile:     { select: { name: true, city: true, stateRegion: true } },
@@ -67,7 +68,7 @@ export async function generateMetadata(
 
   const locale = await getLocale();
   const dateStr = show.startsAt
-    ? formatDate(locale, show.startsAt, { month: 'short', day: 'numeric', year: 'numeric' })
+    ? formatDoorTime(locale, show.startsAt, show.timeZone, { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
   const venueName = show.venueProfile?.name ?? null;
   const venueCity = [show.venueProfile?.city, show.venueProfile?.stateRegion].filter(Boolean).join(', ') || null;
@@ -362,8 +363,12 @@ export default async function ShowDetailPage({
       })()
     : [];
 
-  const date = show.startsAt ? formatDate(locale, new Date(show.startsAt), { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
-  const time = show.startsAt ? formatDate(locale, new Date(show.startsAt), { hour: 'numeric', minute: '2-digit' }) : null;
+  /* The door time is the VENUE'S clock, and the clock is NAMED — this is the
+     page that sells the ticket, and before `Show.timeZone` it rendered the
+     instant in the Worker's zone, so a 9pm Saturday show in Portland read as
+     "Sunday, March 15 - 1:00 AM" (DESIGN_SYNC row 464). */
+  const date = show.startsAt ? formatDoorTime(locale, new Date(show.startsAt), show.timeZone, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
+  const time = show.startsAt ? formatDoorTime(locale, new Date(show.startsAt), show.timeZone, { hour: 'numeric', minute: '2-digit' }) : null;
   const price = show.isTicketed ? show.ticketPriceCents / 100 : 0;
   /* Resolved once, from the same module the shell copy reads, so the two pages
      cannot report different money for one show. */
@@ -639,7 +644,7 @@ export default async function ShowDetailPage({
                       <tr><th>{t('showsSlugPage.artistSplitLabel2', 'Artist split')}</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
                       <tr><th>{t('showsSlugPage.venueSplitLabel2', 'Venue split')}</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
                       <tr><th>{t('showsSlugPage.promoterPoolLabel', 'Promoter pool')}</th><td>{show.promoterPayoutPercent}%</td></tr>
-                      <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
+                      <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
                     </>
                   ) : null}
                   <tr><th>{t('showsSlugPage.hypeLabel', 'Hype')}</th><td>{show.hypeCount}</td></tr>
@@ -940,7 +945,7 @@ export default async function ShowDetailPage({
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
                 ticketingOpen={isTicketingOpen(show)}
-                ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : null}
+                ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale, show.timeZone) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}
                 venueName={show.venueProfile.name}

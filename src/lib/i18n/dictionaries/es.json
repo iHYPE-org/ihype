@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Guardando…",
   "showEdit.startsLabel": "Empieza",
   "showEdit.titleLabel": "Título del evento",
+  "showEdit.zoneNote": "Los horarios están en el reloj del recinto:",
   "showEngagement.addAttendeeAria": "Añadirte a la lista de asistentes",
   "showEngagement.attendanceErrorGeneric": "No se pudo actualizar la asistencia",
   "showEngagement.attendanceErrorNetwork": "No se pudo actualizar la asistencia (error de red)",

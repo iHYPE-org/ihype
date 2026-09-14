@@ -83,7 +83,7 @@ export default async function PayoutsHubPage({
     tab === 'show'
       ? db.show.findMany({
           where: { creatorId: session.user.id },
-          select: { id: true, slug: true, title: true, status: true, startsAt: true, isTicketed: true },
+          select: { id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true, isTicketed: true },
           orderBy: { startsAt: 'desc' },
           take: 50,
         })

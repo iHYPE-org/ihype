@@ -136,7 +136,7 @@ export default async function TicketPage({
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-on-walnut-3)' }}>
-              {formatShowTime(ticket.show.startsAt, locale)}
+              {formatShowTime(ticket.show.startsAt, locale, ticket.show.timeZone)}
             </div>
             <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '1.6875rem', lineHeight: 1.14, fontWeight: 500, margin: 0, color: 'var(--ink-on-walnut)' }}>
               {ticket.show.title}

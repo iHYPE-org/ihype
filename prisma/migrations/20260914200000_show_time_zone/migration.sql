@@ -1,0 +1,11 @@
+-- A show's door time is the VENUE's wall clock, and until this column the
+-- product stored only the instant. `startsAt` was rendered with no zone, so a
+-- server in UTC (which is every Cloudflare Worker) showed a 9pm Saturday show
+-- in Portland as "Sunday, March 15 - 1:00 AM" on the page that sells its
+-- ticket. The organiser's own browser knows the zone at the moment they pick
+-- the time; this is where it is kept.
+--
+-- Additive and nullable on purpose: every show created before this column keeps
+-- its instant, and readers fall back to naming the zone they rendered in rather
+-- than inventing one.
+ALTER TABLE "Show" ADD COLUMN "timeZone" TEXT;

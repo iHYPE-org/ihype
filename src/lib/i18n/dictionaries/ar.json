@@ -2153,6 +2153,7 @@
   "showEdit.saving": "جارٍ الحفظ…",
   "showEdit.startsLabel": "يبدأ",
   "showEdit.titleLabel": "عنوان الفعالية",
+  "showEdit.zoneNote": "المواعيد بتوقيت المكان:",
   "showEngagement.addAttendeeAria": "أضف نفسك إلى قائمة الحضور",
   "showEngagement.attendanceErrorGeneric": "تعذّر تحديث الحضور",
   "showEngagement.attendanceErrorNetwork": "تعذّر تحديث الحضور (خطأ في الشبكة)",

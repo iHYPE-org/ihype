@@ -8,6 +8,7 @@ import {
   formatTicketStatus,
 } from '@/lib/tickets';
 import { log } from '@/lib/logger';
+import { formatDoorTime } from '@/lib/format-locale';
 
 const LOCK_TIMEOUT_MS = 10 * 60 * 1000;
 const MAX_ATTEMPTS = 8;
@@ -20,7 +21,8 @@ async function deliverTicketOrder(orderId: string) {
       show: {
         select: {
           title: true,
-          ticketingOpensAt: true,
+          startsAt: true,
+          timeZone: true,
           venueProfile: { select: { name: true } },
         },
       },
@@ -44,7 +46,11 @@ async function deliverTicketOrder(orderId: string) {
     name: order.buyerName,
     showTitle: order.show.title,
     venueName: order.show.venueProfile?.name,
-    eventOpensAtLabel: order.show.ticketingOpensAt?.toLocaleString('en-US') ?? null,
+    /* The DOOR time, on the venue's clock, named. This read `ticketingOpensAt`
+       — when SALES opened — under a label that says "Event time", so the one
+       email a buyer keeps told them the wrong thing twice over: the wrong
+       moment, in the Worker's zone (DESIGN_SYNC row 464). */
+    eventOpensAtLabel: formatDoorTime('en', order.show.startsAt, order.show.timeZone),
     // An email has no reader locale on file (User carries none), so it is English.
     totalChargeLabel: formatCurrencyFromCents(order.totalChargeCents, 'en'),
     tickets,

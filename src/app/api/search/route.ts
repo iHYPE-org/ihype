@@ -1,4 +1,4 @@
-import { formatDate } from '@/lib/format-locale';
+import { formatDoorTime } from '@/lib/format-locale';
 import { isSupportedLocale, type Locale } from '@/lib/i18n/locales';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
           orderBy: [{ startsAt: 'asc' }],
           take: limit,
           select: {
-            id: true, slug: true, title: true, status: true, startsAt: true,
+            id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true,
             tags: true, isTicketed: true,
             venueProfile:     { select: { name: true, slug: true, city: true } },
             headlinerProfile: { select: { name: true, slug: true } },
@@ -265,7 +265,7 @@ export async function GET(request: NextRequest) {
   shows.forEach(s => {
     const venueName = s.venueProfile?.name ?? '';
     const date = s.startsAt
-      ? formatDate(locale, s.startsAt, { month: 'short', day: 'numeric' })
+      ? formatDoorTime(locale, s.startsAt, s.timeZone, { month: 'short', day: 'numeric' })
       : 'TBD';
     const sub = [
       venueName || null,

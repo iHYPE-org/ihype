@@ -16,6 +16,8 @@ export type MapEventPin = {
   venueSlug: string | null;
   venueCity: string | null;
   startsAt: string;
+  /** The venue's clock — see `formatDoorTime()`. */
+  timeZone: string | null;
   latitude: number;
   longitude: number;
   /** Face value in whole dollars — the pin IS the price pill. A show that is
@@ -111,6 +113,7 @@ export async function GET(request: Request) {
         slug: true,
         title: true,
         startsAt: true,
+        timeZone: true,
         isTicketed: true,
         ticketPriceCents: true,
         ticketCapacity: true,
@@ -139,6 +142,7 @@ export async function GET(request: Request) {
         venueSlug: venue.slug,
         venueCity: venue.city,
         startsAt: show.startsAt.toISOString(),
+        timeZone: show.timeZone,
         latitude: venue.latitude!,
         longitude: venue.longitude!,
         price: show.isTicketed && show.ticketPriceCents > 0 ? Math.round(show.ticketPriceCents / 100) : null,

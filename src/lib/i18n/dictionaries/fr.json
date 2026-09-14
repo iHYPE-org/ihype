@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Enregistrement…",
   "showEdit.startsLabel": "Début",
   "showEdit.titleLabel": "Titre de l’événement",
+  "showEdit.zoneNote": "Les horaires sont à l'heure de la salle :",
   "showEngagement.addAttendeeAria": "Vous ajouter à la liste des participants",
   "showEngagement.attendanceErrorGeneric": "Impossible de mettre à jour la participation",
   "showEngagement.attendanceErrorNetwork": "Impossible de mettre à jour la participation (erreur réseau)",

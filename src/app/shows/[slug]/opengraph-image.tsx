@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
+import { formatDoorTime } from '@/lib/format-locale';
 
 export const runtime = 'nodejs';
 export const alt = 'Show on iHYPE';
@@ -13,7 +14,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      title: true, startsAt: true, status: true,
+      title: true, startsAt: true, timeZone: true, status: true,
       venueProfile: { select: { name: true, city: true, stateRegion: true } },
       headlinerProfile: { select: { name: true } },
     },
@@ -21,7 +22,7 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
   const title = show?.title ?? t('showsSlugOpengraphImage.show', 'Show');
   const date = show?.startsAt
-    ? new Date(show.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? formatDoorTime('en', show.startsAt, show.timeZone, { month: 'short', day: 'numeric', year: 'numeric' })
     : '';
   const venue = show?.venueProfile?.name ?? '';
   const city = [show?.venueProfile?.city, show?.venueProfile?.stateRegion].filter(Boolean).join(', ');

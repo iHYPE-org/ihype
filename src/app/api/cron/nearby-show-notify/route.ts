@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendPushToAllDevices } from '@/lib/notify';
+import { formatDoorTime } from '@/lib/format-locale';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
       title: true,
       slug: true,
       startsAt: true,
+      timeZone: true,
       venueProfile: { select: { name: true, latitude: true, longitude: true } },
     },
   });
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest) {
     if (!vLat || !vLon) continue;
 
     const venueName = show.venueProfile?.name ?? 'Unknown venue';
-    const dateStr = new Date(show.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    const dateStr = formatDoorTime('en', show.startsAt, show.timeZone, { month: 'short', day: 'numeric' });
 
     for (const user of users) {
       if (!user.latitude || !user.longitude) continue;

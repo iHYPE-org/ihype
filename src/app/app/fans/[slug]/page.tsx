@@ -1,4 +1,4 @@
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDate, formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -230,7 +230,7 @@ export default async function FanProfilePage({
                 <Link className="fan-show-row" href={`/shows/${show.slug}`} key={show.id}>
                   <div>
                     <h4>{show.title}</h4>
-                    <p>{formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
+                    <p>{formatDoorTime(locale, show.startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric' })}{show.venueProfile?.city ? ` · ${show.venueProfile.city}` : ''}</p>
                   </div>
                   <span style={{ fontSize: '0.9375rem', color: 'var(--profile-accent, var(--role-fan))', fontWeight: 600 }}>{t('fansSlugPage.hypedBadge', 'Hyped ✓')}</span>
                 </Link>

@@ -237,6 +237,12 @@ export default function EventsNewPage() {
           description: description.trim() || undefined,
           status: publishing ? 'SCHEDULED' : 'DRAFT',
           startsAt: datetime ? new Date(datetime).toISOString() : new Date(Date.now() + 7 * 86400000).toISOString(),
+          /* The organiser typed a wall-clock time, and this browser is the only
+             place in the product that knows which clock it was. Without it the
+             instant above renders in whatever zone the reader's runtime is set
+             to — UTC on the Worker — so the page that sells the ticket named
+             the wrong night. See `formatDoorTime()`. */
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
           isTicketed: ticketed,
           ticketPriceCents: Math.round(priceDollars * 100),
           ticketCapacity: cap || undefined,

@@ -613,6 +613,12 @@ model Show {
   status                 ShowStatus             @default(DRAFT)
   startsAt               DateTime
   endsAt                 DateTime?
+  /* The IANA zone the door time was entered in — the VENUE's wall clock, not
+     the reader's. `startsAt` is an instant, so every reader needs this to say
+     what time the doors open; null means the show predates the column (or was
+     created by a writer with no browser) and readers fall back to naming the
+     zone they rendered in. See `formatDoorTime()` in `src/lib/format-locale.ts`. */
+  timeZone               String?
   createdAt              DateTime               @default(now())
   updatedAt              DateTime               @updatedAt
   creatorId              String

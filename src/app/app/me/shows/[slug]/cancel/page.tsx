@@ -1,5 +1,5 @@
 import { getLocale } from '@/lib/i18n/server';
-import { formatDate } from '@/lib/format-locale';
+import { formatDoorTime } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -30,7 +30,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
   const show = await db.show.findUnique({
     where: { slug },
     select: {
-      id: true, slug: true, title: true, status: true, startsAt: true, ticketsSoldCount: true, creatorId: true,
+      id: true, slug: true, title: true, status: true, startsAt: true, timeZone: true, ticketsSoldCount: true, creatorId: true,
       venueProfile: { select: { slug: true, name: true, ownerId: true } },
       headlinerProfile: { select: { slug: true, ownerId: true, type: true } },
     },
@@ -58,7 +58,7 @@ export default async function CancelEventPage({ params }: { params: Promise<{ sl
       showId={show.id}
       showSlug={show.slug}
       showTitle={show.title}
-      startsAtLabel={formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })}
+      startsAtLabel={formatDoorTime(locale, show.startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric' })}
       ticketsSoldCount={show.ticketsSoldCount}
       venueName={show.venueProfile?.name ?? null}
     />

@@ -2153,6 +2153,7 @@
   "showEdit.saving": "सेव हो रहा है…",
   "showEdit.startsLabel": "शुरू",
   "showEdit.titleLabel": "इवेंट का नाम",
+  "showEdit.zoneNote": "समय स्थल की घड़ी के अनुसार है:",
   "showEngagement.addAttendeeAria": "खुद को उपस्थित लोगों की सूची में जोड़ें",
   "showEngagement.attendanceErrorGeneric": "उपस्थिति अपडेट नहीं हो सकी",
   "showEngagement.attendanceErrorNetwork": "उपस्थिति अपडेट नहीं हो सकी (नेटवर्क त्रुटि)",

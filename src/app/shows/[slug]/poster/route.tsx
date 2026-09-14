@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
+import { formatDoorTime } from '@/lib/format-locale';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -21,12 +22,12 @@ export async function GET(
   if (!show) return new Response('Not found', { status: 404 });
 
   const dateLabel = show.startsAt
-    ? new Date(show.startsAt).toLocaleString('en-US', {
+    ? formatDoorTime('en', show.startsAt, show.timeZone, {
         month: 'long',
         day: 'numeric',
         year: 'numeric',
         hour: 'numeric',
-        minute: '2-digit'
+        minute: '2-digit',
       })
     : t('showsSlugPosterRoute.tba', 'TBA');
 

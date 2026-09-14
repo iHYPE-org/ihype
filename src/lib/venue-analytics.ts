@@ -14,6 +14,8 @@ export type VenueAnalyticsTopEvent = {
   slug: string;
   title: string;
   startsAt: Date;
+  /** The venue's clock — see `formatDoorTime()`. */
+  timeZone: string | null;
   status: string;
   ticketsSoldCount: number;
   ticketCapacity: number | null;
@@ -118,6 +120,7 @@ export async function getVenueAnalyticsData(profileId: string, range: VenueAnaly
         slug: true,
         title: true,
         startsAt: true,
+        timeZone: true,
         status: true,
         ticketsSoldCount: true,
         ticketCapacity: true,
@@ -179,6 +182,7 @@ export async function getVenueAnalyticsData(profileId: string, range: VenueAnaly
       slug: s.slug,
       title: s.headlinerProfile?.name ?? s.title,
       startsAt: s.startsAt,
+      timeZone: s.timeZone,
       status: s.status,
       ticketsSoldCount: s.ticketsSoldCount,
       ticketCapacity: s.ticketCapacity,

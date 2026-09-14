@@ -2153,6 +2153,7 @@
   "showEdit.saving": "保存中…",
   "showEdit.startsLabel": "開始",
   "showEdit.titleLabel": "イベント名",
+  "showEdit.zoneNote": "時刻は会場の時間です:",
   "showEngagement.addAttendeeAria": "参加者リストに自分を追加する",
   "showEngagement.attendanceErrorGeneric": "参加状況を更新できませんでした",
   "showEngagement.attendanceErrorNetwork": "参加状況を更新できませんでした（通信エラー）",

@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { recordAuditEvent } from '@/lib/audit';
 import { getBaseUrl } from '@/lib/utils';
+import { formatDoorTime } from '@/lib/format-locale';
 
 export async function sendShowReminders(): Promise<{ sent: number }> {
   const now = new Date();
@@ -18,6 +19,7 @@ export async function sendShowReminders(): Promise<{ sent: number }> {
       slug: true,
       title: true,
       startsAt: true,
+      timeZone: true,
       headlinerProfile: {
         select: {
           id: true,
@@ -59,7 +61,10 @@ export async function sendShowReminders(): Promise<{ sent: number }> {
           `Hey ${name},`,
           '',
           `${show.headlinerProfile.name} is performing in "${show.title}" tomorrow.`,
-          `Show starts: ${show.startsAt.toUTCString()}`,
+          /* The venue's clock, named. This sent `toUTCString()` — "Sun, 15 Mar
+             2026 01:00:00 GMT" for a 9pm Saturday show in Portland: the wrong
+             hour, the wrong day and a zone no reader lives in. */
+          `Show starts: ${formatDoorTime('en', show.startsAt, show.timeZone)}`,
           '',
           `View the show: ${getBaseUrl()}/shows/${show.slug}`,
           '',

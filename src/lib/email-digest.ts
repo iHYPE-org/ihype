@@ -2,6 +2,7 @@ import { db } from '@/lib/db';
 import { sendMarketingEmail } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/utils';
 import { escapeHtml } from '@/lib/html-escape';
+import { formatDoorTime } from '@/lib/format-locale';
 
 type DigestResult = { sent: boolean; reason?: string; showCount?: number };
 
@@ -56,10 +57,10 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
 
   const name = user.name?.trim() || 'there';
   const lines = shows.map((show) => {
-    const dateLabel = show.startsAt.toLocaleDateString('en-US', {
+    const dateLabel = formatDoorTime('en', show.startsAt, show.timeZone, {
       weekday: 'short',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
     const venueLabel = show.venueProfile?.name
       ? ` @ ${show.venueProfile.name}${show.venueProfile.city ? `, ${show.venueProfile.city}` : ''}`
@@ -87,10 +88,10 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
       <ul style="padding-left:18px;line-height:1.6;">
         ${shows
           .map((show) => {
-            const dateLabel = show.startsAt.toLocaleDateString('en-US', {
+            const dateLabel = formatDoorTime('en', show.startsAt, show.timeZone, {
               weekday: 'short',
               month: 'short',
-              day: 'numeric'
+              day: 'numeric',
             });
             // Show titles and profile names are member text: a title written
             // as markup rendered as a live link under the iHYPE sender.

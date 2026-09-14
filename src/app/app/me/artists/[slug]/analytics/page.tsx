@@ -1,5 +1,5 @@
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDate, formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
@@ -170,7 +170,7 @@ export default async function ArtistAnalyticsPage({
     db.show.findMany({
       where: { headlinerProfileId: profile.id, ...getDemoCreatorExclusion() },
       select: {
-        id: true, slug: true, title: true, startsAt: true, ticketCapacity: true,
+        id: true, slug: true, title: true, startsAt: true, timeZone: true, ticketCapacity: true,
         ticketOrders: { where: { status: 'CAPTURED', createdAt: { gte: start, lte: end } }, select: { quantity: true, totalChargeCents: true } },
       },
     }),
@@ -206,7 +206,7 @@ export default async function ArtistAnalyticsPage({
     .map((show) => {
       const ticketsSold = show.ticketOrders.reduce((sum, o) => sum + o.quantity, 0);
       const grossCents = show.ticketOrders.reduce((sum, o) => sum + o.totalChargeCents, 0);
-      return { slug: show.slug, title: show.title, startsAt: show.startsAt, ticketCapacity: show.ticketCapacity, ticketsSold, grossCents };
+      return { slug: show.slug, title: show.title, startsAt: show.startsAt, timeZone: show.timeZone, ticketCapacity: show.ticketCapacity, ticketsSold, grossCents };
     })
     .filter((e) => e.ticketsSold > 0)
     .sort((a, b) => b.grossCents - a.grossCents)
@@ -312,7 +312,7 @@ export default async function ArtistAnalyticsPage({
       ) : (
         <div className="aa-events-list">
           {topEvents.map((event) => {
-            const date = formatDate(locale, event.startsAt, { month: 'short', day: 'numeric' });
+            const date = formatDoorTime(locale, event.startsAt, event.timeZone, { month: 'short', day: 'numeric' });
             return (
               <Link className="aa-event-row" href={`/app/shows/${event.slug}`} key={event.slug}>
                 <div style={{ minWidth: 0 }}>

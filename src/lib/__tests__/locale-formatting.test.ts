@@ -30,6 +30,7 @@ const SCAN_ROOTS = ['src/app', 'src/components', 'src/lib'];
 /** Path prefixes that have no member locale to format in, and why. */
 const ALLOWED: { prefix: string; reason: string }[] = [
   { prefix: 'src/lib/format-locale.ts', reason: 'the locale → BCP-47 map itself' },
+  { prefix: 'src/lib/zoned-time.ts', reason: 'formatToParts, read structurally — the tag never reaches a reader' },
   { prefix: 'src/app/admin/', reason: 'the operator console ships in English by decision' },
   { prefix: 'src/components/admin/', reason: 'the operator console ships in English by decision' },
   { prefix: 'src/components/AdminAdsClient.tsx', reason: 'the console in the wrong folder (row 388) — /admin/ads is its only mount' },
@@ -38,6 +39,7 @@ const ALLOWED: { prefix: string; reason: string }[] = [
   { prefix: 'src/lib/growth-util.ts', reason: 'weekendWindow labels are read by no page (tests only)' },
   { prefix: 'src/lib/email-digest.ts', reason: 'email — User carries no locale' },
   { prefix: 'src/lib/notification-jobs.ts', reason: 'email — User carries no locale' },
+  { prefix: 'src/lib/show-reminders.ts', reason: 'the follower reminder email — User carries no locale' },
   { prefix: 'src/lib/integrity.ts', reason: 'the feed-integrity ledger is an English document' },
   { prefix: 'src/app/api/cron/', reason: 'cron-sent email — User carries no locale' },
   { prefix: 'src/app/api/tickets/[serializedId]/reassign/route.ts', reason: 'email to the new holder — no locale on file' },
@@ -47,7 +49,12 @@ const ALLOWED: { prefix: string; reason: string }[] = [
   { prefix: 'src/app/shows/[slug]/poster/route.tsx', reason: 'a shared image has no reader locale' },
 ];
 
-const HARDCODED_TAG = /toLocale(?:Date|Time|)String\(\s*['"]en(?:-US)?['"]|Intl\.(?:DateTimeFormat|NumberFormat|RelativeTimeFormat)\(\s*['"]en(?:-US)?['"]|\bformat(?:Date|Number|Usd)\(\s*'en'|,\s*'en'\)/;
+/* `formatDoorTime` and `formatShowTime` are counted too: they take the
+   locale like every other formatter here, so pinning one to English is the
+   same decision the rest of this rule is about. Without them the row-464
+   conversion would have silently emptied six allowlist entries and the
+   gate would have shrunk while reading green. */
+const HARDCODED_TAG = /toLocale(?:Date|Time|)String\(\s*['"]en(?:-US)?['"]|Intl\.(?:DateTimeFormat|NumberFormat|RelativeTimeFormat)\(\s*['"]en(?:-US)?['"]|\bformat(?:Date|Number|Usd|DoorTime)\(\s*'en'|\bformatShowTime\([^,)]+,\s*'en'|,\s*'en'\)/;
 const NO_TAG = /toLocale(?:Date|Time|)String\(\s*(?:\)|undefined\b)/;
 
 function walk(dir: string, out: string[] = []): string[] {

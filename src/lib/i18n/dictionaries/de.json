@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Wird gespeichert…",
   "showEdit.startsLabel": "Beginn",
   "showEdit.titleLabel": "Titel der Veranstaltung",
+  "showEdit.zoneNote": "Zeiten gelten in der Zeitzone des Veranstaltungsorts:",
   "showEngagement.addAttendeeAria": "Dich zur Gästeliste hinzufügen",
   "showEngagement.attendanceErrorGeneric": "Teilnahme konnte nicht aktualisiert werden",
   "showEngagement.attendanceErrorNetwork": "Teilnahme konnte nicht aktualisiert werden (Netzwerkfehler)",

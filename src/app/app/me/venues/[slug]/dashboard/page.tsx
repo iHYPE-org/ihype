@@ -1,4 +1,4 @@
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDoorTime, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { FanMailButton } from '@/components/FanMailButton';
 import Link from 'next/link';
@@ -101,7 +101,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
           ) : (
             <div className="vdash-shows">
               {data.upcomingShows.map((show) => {
-                const date = formatDate(locale, show.startsAt, { weekday: 'short', month: 'short', day: 'numeric' });
+                const date = formatDoorTime(locale, show.startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric' });
                 const soldLabel = show.ticketCapacity
                   ? `${formatNumber(locale, show.ticketsSoldCount)} / ${formatNumber(locale, show.ticketCapacity)} ${t('venuesSlugDashboardPage.sold', 'sold')}`
                   : `${formatNumber(locale, show.ticketsSoldCount)} ${t('venuesSlugDashboardPage.sold', 'sold')}`;

@@ -1,7 +1,7 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate } from '@/lib/format-locale';
+import { formatDate, formatDoorTime } from '@/lib/format-locale';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { PermissionPrimerSheet, usePermissionPrimer } from '@/components/PermissionPrimerSheet';
@@ -51,6 +51,8 @@ type Show = {
   slug: string;
   title: string;
   startsAt: string;
+  /** The venue's clock — see `formatDoorTime()`. Null for a show that predates the column. */
+  timeZone: string | null;
   venueName: string | null;
   headlinerName: string | null;
 };
@@ -530,7 +532,7 @@ export function DoorScanner({ show }: { show: Show }) {
   const startsAt = new Date(show.startsAt);
   const when = Number.isNaN(startsAt.getTime())
     ? ''
-    : formatDate(locale, startsAt, { weekday: 'short', month: 'short', day: 'numeric' });
+    : formatDoorTime(locale, startsAt, show.timeZone, { weekday: 'short', month: 'short', day: 'numeric' });
   const where = [show.headlinerName, show.venueName].filter(Boolean).join(' · ');
 
   return (

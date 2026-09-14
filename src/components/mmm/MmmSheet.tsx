@@ -1,7 +1,7 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDoorTime, formatNumber } from '@/lib/format-locale';
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
@@ -152,8 +152,12 @@ function describe(target: MapSheetTarget, locale: Locale): SheetContent {
   if (target.kind === 'event') {
     const event = target.data;
     const fill = event.capacity > 0 ? `${Math.round((event.sold / event.capacity) * 100)}%` : '—';
-    const when = formatDate(locale, event.startsAt, {
-      weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC',
+    /* The venue's clock, not the reader's and not the Worker's. This used to
+       force UTC, which put a late-evening show on the following day for every
+       venue west of Greenwich — the map pin and the show page disagreeing about
+       which night it is (DESIGN_SYNC row 464). */
+    const when = formatDoorTime(locale, event.startsAt, event.timeZone, {
+      weekday: 'short', month: 'short', day: 'numeric',
     });
     return {
       eyebrow: `Event page${event.genre ? ` · ${event.genre}` : ''}`,

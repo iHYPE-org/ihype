@@ -2153,6 +2153,7 @@
   "showEdit.saving": "Сохранение…",
   "showEdit.startsLabel": "Начало",
   "showEdit.titleLabel": "Название события",
+  "showEdit.zoneNote": "Время указано по часам площадки:",
   "showEngagement.addAttendeeAria": "Добавить себя в список гостей",
   "showEngagement.attendanceErrorGeneric": "Не удалось обновить посещение",
   "showEngagement.attendanceErrorNetwork": "Не удалось обновить посещение (ошибка сети)",
