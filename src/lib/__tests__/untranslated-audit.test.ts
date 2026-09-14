@@ -149,6 +149,24 @@ describe('the untranslated-string audit reports prose, not source', () => {
     expect(exitCode, 'a budget of 0 must fail on a hardcoded string').toBe(1);
   });
 
+  it('refuses to report a pass over a scan that read nothing', () => {
+    /* A gate at 0 prints `0 across 0 file(s)` for a finished paydown and for
+       a walker that matched nothing — a renamed directory, a changed
+       extension — and the second must never read as the first. An empty
+       root is the cheapest way to produce it. */
+    const dir = mkdtempSync(join(tmpdir(), 'untranslated-empty-'));
+    let exitCode = 0;
+    let stderr = '';
+    try {
+      run([`--roots=${dir}`, '--max=0']);
+    } catch (error) {
+      exitCode = (error as { status?: number }).status ?? 0;
+      stderr = String((error as { stderr?: Buffer | string }).stderr ?? '');
+    }
+    expect(exitCode, 'an empty scan must be refused, not passed').toBe(2);
+    expect(stderr).toContain('scanned 0 file(s)');
+  });
+
   it('is a GATE now, not a ratchet — the real tree passes at zero', () => {
     /* And the thing that number does NOT mean, said here because it is the
        sentence most likely to be over-read: the four legal documents are

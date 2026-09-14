@@ -213,9 +213,11 @@ function insideTranslation(line, index) {
 }
 
 const findings = [];
+let scanned = 0;
 
 for (const root of ROOTS) {
   for (const file of walk(root)) {
+    scanned += 1;
     const source = readFileSync(file, 'utf8');
     const masked = maskComments(source);
     const lines = masked.split('\n');
@@ -275,11 +277,21 @@ for (const root of ROOTS) {
   }
 }
 
+/* A zero is earned, never assumed — the same rule `audit:doc-paths` and
+   `audit:mounts` follow. `0 across 0 file(s)` is what a finished paydown prints
+   and ALSO what a renamed directory, a changed extension or a broken walker
+   prints, and a gate at 0 cannot tell them apart from the count alone. */
+if (scanned === 0) {
+  console.error(`\naudit:untranslated — scanned 0 file(s) under ${ROOTS.join(', ')}.`);
+  console.error('That is the scan finding nothing to READ, not nothing wrong. Refusing to report a pass.');
+  process.exit(2);
+}
+
 const byFile = new Map();
 for (const f of findings) byFile.set(f.file, (byFile.get(f.file) ?? 0) + 1);
 const ranked = [...byFile.entries()].sort((a, b) => b[1] - a[1]);
 
-console.log(`\nHardcoded member-facing strings: ${findings.length} across ${byFile.size} file(s)\n`);
+console.log(`\nHardcoded member-facing strings: ${findings.length} across ${byFile.size} file(s), ${scanned} scanned\n`);
 for (const [file, count] of ranked.slice(0, verbose ? ranked.length : 25)) {
   console.log(`  ${String(count).padStart(4)}  ${file}`);
 }
