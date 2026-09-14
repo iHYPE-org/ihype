@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getBaseUrl } from '@/lib/utils';
 import { db } from '@/lib/db';
-import { getDemoCreatorExclusion, getDemoOwnerExclusion } from '@/lib/runtime-flags';
+import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import type { ShowStatus } from '@prisma/client';
 
 /**
@@ -36,15 +36,24 @@ const base = getBaseUrl();
  * file, the route tree, `next.config.mjs` and `robots.ts` rather than restating
  * any of them.
  *
- * STILL SUBMITTED AND STILL BLOCKED: every artist and venue, below, as
- * `/artists|venues/<slug>` — both 307 into `/app`. Those are NOT removed here,
- * because the reason they are uncrawlable is a product decision rather than a
- * mistake: the `/app/*` panes sit behind auth at invite-only alpha (CLAUDE.md
- * records that as deliberate). Either those pages should be public, in which
- * case the sitemap is right and the auth gate is what should change, or they
- * should not, in which case these entries go too. That is the owner's call and
- * it has been put to them; until it is answered the audit carries them as two
- * known findings rather than pretending they are fine. */
+ * ANSWERED 2026-09-14, and that is why there are no artist or venue entries
+ * below. Every artist and every venue used to be submitted as
+ * `/artists|venues/<slug>`, both of which 307 into `/app` — the same
+ * contradiction as the six above, left in place only because the reason was a
+ * product decision rather than a mistake and the decision had not been made.
+ * The owner made it: "no access to anything without an account post sign in
+ * (we want to prevent any unauthorized bullshit)". So the panes stay behind
+ * auth, the entries are wrong, and they are gone; `audit:published-urls` is a
+ * gate at 0 rather than a budget of 2.
+ *
+ * WHAT THIS COSTS, stated because it is a real cost and not an oversight: no
+ * artist or venue page is indexable, so search engines cannot send anyone to
+ * one. That is the accepted price of the closed alpha. The shows below are the
+ * exception and must stay — `/shows/[slug]` renders logged out on purpose,
+ * because it is the URL that sells tickets, and removing it would leave the
+ * product with no crawlable page about anything happening. Reopen this only
+ * with a decision to make the panes public, and change the auth gate in the
+ * same breath; a sitemap entry cannot make a page readable. */
 const STATIC: MetadataRoute.Sitemap = [
   { url: `${base}/`,               changeFrequency: 'weekly',  priority: 1.0 },
   { url: `${base}/journal`,        changeFrequency: 'weekly',  priority: 0.6 },
@@ -85,43 +94,26 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
    *    alone, with no `getDemoCreatorExclusion()` and no demo-owner check,
    *    while both profile pages 404 a demo profile whenever
    *    `shouldHideDemoContent()` is on. The launch seed created those accounts,
-   *    so this is not hypothetical.
+   *    so this is not hypothetical. Profiles are no longer listed at all (see
+   *    the block above), so only the show query carries an exclusion now — but
+   *    the rule is the reason, not the query: anything added here needs one.
    */
-  const [artists, venues, shows] = await Promise.all([
-    db.profile.findMany({
-      where: { type: 'ARTIST', ...getDemoOwnerExclusion() },
-      select: { slug: true, updatedAt: true },
-      orderBy: { hypeCount: 'desc' },
-      take: 5000,
-    }),
-    db.profile.findMany({
-      where: { type: 'VENUE', ...getDemoOwnerExclusion() },
-      select: { slug: true, updatedAt: true },
-      orderBy: { hypeCount: 'desc' },
-      take: 2000,
-    }),
-    db.show.findMany({
-      where: {
-        status: { in: INDEXABLE_SHOW_STATUSES },
-        ...getDemoCreatorExclusion(),
-      },
-      select: { slug: true, updatedAt: true },
-      orderBy: { startsAt: 'desc' },
-      take: 5000,
-    }),
-  ]).catch(() => [[], [], []]);
-
-  const artistEntries: MetadataRoute.Sitemap = artists
-    .filter(p => p.slug)
-    .map(p => ({ url: `${base}/artists/${p.slug}`, lastModified: p.updatedAt, changeFrequency: 'weekly', priority: 0.8 }));
-
-  const venueEntries: MetadataRoute.Sitemap = venues
-    .filter(p => p.slug)
-    .map(p => ({ url: `${base}/venues/${p.slug}`, lastModified: p.updatedAt, changeFrequency: 'weekly', priority: 0.7 }));
+  /* One query, so no `Promise.all`: it held three until the artist and venue
+     lists came out, and a one-element all() with a `[[]]` catch is a shape
+     that invites a wrong index the next time something is added back. */
+  const shows = await db.show.findMany({
+    where: {
+      status: { in: INDEXABLE_SHOW_STATUSES },
+      ...getDemoCreatorExclusion(),
+    },
+    select: { slug: true, updatedAt: true },
+    orderBy: { startsAt: 'desc' },
+    take: 5000,
+  }).catch(() => []);
 
   const showEntries: MetadataRoute.Sitemap = shows
     .filter(s => s.slug)
     .map(s => ({ url: `${base}/shows/${s.slug}`, lastModified: s.updatedAt, changeFrequency: 'daily', priority: 0.8 }));
 
-  return [...STATIC, ...artistEntries, ...venueEntries, ...showEntries];
+  return [...STATIC, ...showEntries];
 }
