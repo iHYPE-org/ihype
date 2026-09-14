@@ -135,7 +135,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: c.color, lineHeight: 1 }}>{fmtCents(c.cents)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 5 }}>{c.pct}% · {c.label}</div>
               <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4 }}>
-                {c.href ? <Link href={c.href} style={{ color: 'inherit', textDecoration: 'none' }}>{c.name}</Link> : c.name}
+                {c.href ? <Link className="mmm-standalone-link" href={c.href} style={{ color: 'inherit', textDecoration: 'none' }}>{c.name}</Link> : c.name}
               </div>
             </div>
           ))}
@@ -157,7 +157,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
           {t('payoutIdPage.ihypeTakesNothing', 'iHYPE takes nothing · locked in the charter')}
         </p>
         <div className="payout-print-actions" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <Link href="/app/me/payouts?tab=history" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
+          <Link className="mmm-standalone-link" href="/app/me/payouts?tab=history" style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-2)' }}>
             {t('payoutIdPage.viewAllPayouts', 'View all payouts →')}
           </Link>
           <PayoutActions title={show.title} />
