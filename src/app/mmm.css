@@ -3583,6 +3583,10 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-profile-actions > .cta-row > .button { width: 100%; min-height: 48px; }
 .mmm-profile-actions > button[aria-pressed] { flex: 1 1 0; min-width: 0; min-height: 48px; }
 .mmm-profile-actions > .mmm-like { flex: 0 0 auto; min-height: 48px; }
+/* The track page's play key sits in this row (row 435). It is a 44px disc,
+   not a bar: the `button[aria-pressed]` rule above is for Hype, and it would
+   otherwise stretch the key to a full-width 48px oval. */
+.mmm-profile-actions > button.profile-release-play { flex: 0 0 auto; min-height: 44px; }
 /* The `nowrap` above was measured at 1280 and is wrong at 393: three tiles in
    327px leaves Hype ~90px, so "✓ Hyped 159 · 3h 16m" wrapped FIVE lines deep
    and "Following · 1" was clipped mid-glyph (2026-09-10, the built worker).

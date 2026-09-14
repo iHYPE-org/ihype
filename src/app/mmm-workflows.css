@@ -230,6 +230,8 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 /* The Recommended and Charts tabs' rows are `.mmm-row` links and carry the
    same key beside them (2026-09-14, DESIGN_SYNC row 434). */
 .profile-release-entry > .mmm-row { flex: 1 1 auto; min-width: 0; }
+/* The public playlist pane's rows (row 435). */
+.profile-release-entry > .mmm-profile-show { flex: 1 1 auto; min-width: 0; }
 .profile-release-play {
   flex: none;
   width: 44px;

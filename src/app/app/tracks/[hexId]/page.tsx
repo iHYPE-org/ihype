@@ -6,6 +6,7 @@ import { db } from '@/lib/db';
 import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
+import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
 import { copyrightTone, resolveCopyrightState } from '@/lib/track-detail';
 import { getServerI18n, getServerT } from '@/lib/i18n/server';
 
@@ -100,23 +101,29 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
 
   const duration = fmtDuration(asset.durationSecs);
   const genre = asset.profile.genre || asset.profile.genres[0] || null;
+  /* One row, shared by the registrar and the key, so they can never name
+     two different tracks. */
+  const playable = {
+    hexId: asset.hexId,
+    title: asset.title,
+    artistName: asset.profile.name,
+    artistSlug: asset.profile.slug,
+    mediaUrl: asset.storageUrl,
+    loudnessLufs: asset.loudnessLufs,
+    truePeakDbtp: asset.truePeakDbtp,
+    artworkUrl: asset.artworkUrl,
+  };
 
   return (
     <div className="mmm-show">
       <Link className="mmm-show-back" href="/app/music/discover">← {t('mmmDock.tab.listen', 'Listen')}</Link>
 
       <div className="mmm-show-eyebrow">{t('mmmTrackPage.eyebrow', 'Track')}</div>
-      {/* Renders nothing; hands this track to the dock's transport. */}
-      <MmmPlayHere rows={[{
-        hexId: asset.hexId,
-        title: asset.title,
-        artistName: asset.profile.name,
-        artistSlug: asset.profile.slug,
-        mediaUrl: asset.storageUrl,
-        loudnessLufs: asset.loudnessLufs,
-        truePeakDbtp: asset.truePeakDbtp,
-        artworkUrl: asset.artworkUrl,
-      }]} />
+      {/* Renders nothing; hands this track to the dock's transport — which,
+          since the cold-start key left the bar (row 341), only exists once
+          something is loaded. The play key in the actions row below is how a
+          member on a track's own page starts it (row 435). */}
+      <MmmPlayHere rows={[playable]} />
       <h1 className="mmm-show-title">{asset.title}</h1>
       <div className="mmm-show-by">
         <Link href={`/app/artists/${asset.profile.slug}`}>{asset.profile.name}</Link>
@@ -138,6 +145,11 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
       {asset.notes && <p className="mmm-me-note">{asset.notes}</p>}
 
       <div className="mmm-profile-actions">
+        {/* The track's own play key. Until 2026-09-14 this page had none: it
+            registered the track with the dock and the dock had nothing to
+            press over silence (row 435). A track with no stored audio gets no
+            key rather than a dead one. */}
+        <ReleasePlayButton label={asset.title} rows={[playable]} track={playable} />
         {/* Hype is profile-level in the schema — there is no per-track hype
             anywhere — so this hypes the artist, and the label says artist. The
             legacy page reached the same conclusion; inventing a track-level
