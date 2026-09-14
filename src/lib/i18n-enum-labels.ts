@@ -362,3 +362,34 @@ export function supportCategoryLabel(t: Translate, english: string): string {
     default: return english;
   }
 }
+
+/**
+ * `showRowTrail()` returns its label as the English the row test pins;
+ * `ProfileRow` draws whatever it is handed, so the pane translates here.
+ */
+export function showTrailLabel(t: Translate, english: string): string {
+  switch (english) {
+    case 'On stage now': return t('showRow.trail.onStageNow', 'On stage now');
+    case 'On sale': return t('showRow.trail.onSale', 'On sale');
+    case 'Tickets soon': return t('showRow.trail.ticketsSoon', 'Tickets soon');
+    default: return english;
+  }
+}
+
+/** `formatTicketPrice()` answers a formatted amount or the word `Free`; only the word needs a dictionary. */
+export function ticketPriceLabel(t: Translate, english: string): string {
+  switch (english) {
+    case 'Free': return t('showRow.price.free', 'Free');
+    default: return english;
+  }
+}
+
+/** The ME activity row's title when the show it belongs to is gone (`mmm-me.ts` names the fallback, `MmmMe` draws it). */
+export function meActivityFallbackTitle(t: Translate, english: string): string {
+  switch (english) {
+    case 'Ticket order': return t('mmmMe.activity.ticketOrder', 'Ticket order');
+    case 'Show payout': return t('mmmMe.activity.showPayout', 'Show payout');
+    case 'Show settlement': return t('mmmMe.activity.showSettlement', 'Show settlement');
+    default: return english;
+  }
+}

@@ -26,14 +26,28 @@ export const MMM_ME_ROLES = ['fan', 'artist', 'venue'] as const;
 export type MmmMeRole = (typeof MMM_ME_ROLES)[number];
 
 export type MmmStat = { value: string; label: string };
-export type MmmActivityRow = { title: string; sub: string; amount: string; tone: 'positive' | 'hot' | 'neutral' };
+/**
+ * One row of the ME pane's recent activity. Everything here is DATA — the
+ * component translates. `title` is the show's own name and `fallbackTitle`
+ * the English key `MmmMe` translates when the show is gone (a lib string
+ * drawn raw is English in every locale, DESIGN_SYNC row 425); `when` is
+ * already formatted in the member's locale; `count` is a number and its
+ * unit, never the sentence.
+ */
+export type MmmActivityRow = {
+  title: string | null;
+  fallbackTitle: 'Ticket order' | 'Show payout' | 'Show settlement';
+  when: string | null;
+  count: { unit: 'tickets' | 'sold'; n: number } | null;
+  amount: string;
+  tone: 'positive' | 'hot' | 'neutral';
+};
 
 export type MmmMeData = {
   role: MmmMeRole;
   /** Roles this account actually holds — the switcher renders only these. */
   availableRoles: MmmMeRole[];
   stats: MmmStat[];
-  activityLabel: string;
   activity: MmmActivityRow[];
   /** Artist and Venue only. Fans have no page creator — removed deliberately. */
   page: { name: string; status: string; slug: string; kind: 'artists' | 'venues' } | null;
@@ -303,12 +317,13 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
     role: 'fan',
     // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activityLabel: 'Recent tickets',
     activity: orders.map((order) => ({
-      title: order.show?.title ?? 'Ticket order',
-      sub: order.show?.startsAt
+      title: order.show?.title ?? null,
+      fallbackTitle: 'Ticket order' as const,
+      when: order.show?.startsAt
         ? formatDate(locale, order.show.startsAt, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
-        : '',
+        : null,
+      count: null,
       amount: `-${money(locale, order.totalChargeCents)}`,
       tone: 'neutral' as const,
     })),
@@ -351,13 +366,11 @@ async function loadArtist(
   return {
     role: 'artist',  // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activityLabel: 'Recent payouts',
     activity: releases.map((entry) => ({
-      title: entry.show?.title ?? 'Show payout',
-      sub: [
-        entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
-        entry.show ? `${entry.show.ticketsSoldCount} tickets` : null,
-      ].filter(Boolean).join(' · '),
+      title: entry.show?.title ?? null,
+      fallbackTitle: 'Show payout' as const,
+      when: entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
+      count: entry.show ? { unit: 'tickets' as const, n: entry.show.ticketsSoldCount } : null,
       amount: `+${money(locale, entry.amountCents)}`,
       tone: 'positive' as const,
     })),
@@ -416,13 +429,11 @@ async function loadVenue(
   return {
     role: 'venue',  // Overwritten by loadMmmMe — see withRoles().
     stats,
-    activityLabel: 'Recent settlements',
     activity: settlements.map((entry) => ({
-      title: entry.show?.title ?? 'Show settlement',
-      sub: [
-        entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
-        entry.show ? `${entry.show.ticketsSoldCount} sold` : null,
-      ].filter(Boolean).join(' · '),
+      title: entry.show?.title ?? null,
+      fallbackTitle: 'Show settlement' as const,
+      when: entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
+      count: entry.show ? { unit: 'sold' as const, n: entry.show.ticketsSoldCount } : null,
       amount: `+${money(locale, entry.amountCents)}`,
       tone: 'positive' as const,
     })),

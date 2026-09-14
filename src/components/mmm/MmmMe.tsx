@@ -1,5 +1,6 @@
 'use client';
 
+import { meActivityFallbackTitle } from '@/lib/i18n-enum-labels';
 import { formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -176,7 +177,7 @@ const ME_STATIONS: readonly { id: string; label: string }[] = [
 ];
 
 function AboutMeActivity({ data }: { data: MmmMeData }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   return (
     <div className="mmm-me-about-in-profiles">
       <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{t('mmmMe.activity.eyebrow', 'About me · visible activity')}</div>
@@ -191,20 +192,29 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
         </div>
       ) : (
         <div>
-          {data.activity.map((row) => (
+          {data.activity.map((row) => {
+            const title = row.title ?? meActivityFallbackTitle(t, row.fallbackTitle);
+            const countLabel = row.count
+              ? (row.count.unit === 'tickets'
+                ? t('mmmMe.activity.ticketsCount', '{n} tickets')
+                : t('mmmMe.activity.soldCount', '{n} sold')).replace('{n}', formatNumber(locale, row.count.n))
+              : null;
+            const sub = [row.when, countLabel].filter(Boolean).join(' · ');
+            return (
             <div
-              key={`${row.title}-${row.sub}`}
+              key={`${title}-${row.when}-${row.amount}`}
               style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '11px 2px', borderBottom: '1px solid var(--hair-70)' }}
             >
               <div>
-                <div style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{row.title}</div>
-                <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 1 }}>{row.sub}</div>
+                <div style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{title}</div>
+                <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 1 }}>{sub}</div>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: row.tone === 'positive' ? 'var(--success)' : row.tone === 'hot' ? 'var(--accent-text)' : 'var(--ink-3)' }}>
                 {row.amount}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

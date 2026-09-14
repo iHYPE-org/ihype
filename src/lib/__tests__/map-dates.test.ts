@@ -109,18 +109,18 @@ describe('shiftMonth', () => {
 
 describe('describeDayKeys', () => {
   it('says "Any day" when nothing is picked — an unset filter is not empty', () => {
-    expect(describeDayKeys(new Set(), 'en')).toBe('Any day');
+    expect(describeDayKeys(new Set(), 'en')).toEqual({ kind: 'any' });
   });
 
   it('names the single day in full', () => {
-    expect(describeDayKeys(new Set(['2026-08-07']), 'en')).toBe('Fri, Aug 7');
+    expect(describeDayKeys(new Set(['2026-08-07']), 'en')).toEqual({ kind: 'day', label: 'Fri, Aug 7' });
   });
 
   it('counts rather than spanning, so it cannot claim a day in a gap', () => {
     // Fri + Sun must never read as "Aug 7 - Aug 9", which asserts a Saturday
     // nobody selected. The set semantics allow the gap; the label must not
     // paper over it.
-    expect(describeDayKeys(new Set(['2026-08-07', '2026-08-09']), 'en')).toBe('2 days');
+    expect(describeDayKeys(new Set(['2026-08-07', '2026-08-09']), 'en')).toEqual({ kind: 'many', count: 2 });
   });
 });
 

@@ -1,3 +1,4 @@
+import { showTrailLabel, ticketPriceLabel } from '@/lib/i18n-enum-labels';
 import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { NewsletterSignup } from '@/components/NewsletterSignup';
@@ -15,7 +16,7 @@ import { getServerI18n } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
-import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
+import { formatShowClock, formatTicketPrice, showRowTrail, type RowTrail } from '@/lib/show-row';
 import { VenueRequestForm } from '@/components/VenueRequestForm';
 
 export const dynamic = 'force-dynamic';
@@ -83,6 +84,10 @@ export default async function MmmVenuePage({
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return missing;
 
   const { locale, t } = await getServerI18n();
+  // `show-row.ts` answers English keys (its tests pin the words); the pane
+  // translates at the draw, the row-352 rule.
+  const localiseTrail = (trail: RowTrail | null) => (trail ? { ...trail, label: showTrailLabel(t, trail.label) } : null);
+  const priceLabel = (value: string | null) => (value ? ticketPriceLabel(t, value) : null);
   const activeTab = resolveTab(VENUE_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
 
@@ -219,9 +224,9 @@ export default async function MmmVenuePage({
                 key={show.id}
                 date={show.startsAt}
                 href={`/app/shows/${show.slug}`}
-                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt, locale), formatTicketPrice(show, locale)].filter(Boolean).join(' · ')}
+                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt, locale), priceLabel(formatTicketPrice(show, locale))].filter(Boolean).join(' · ')}
                 title={show.title}
-                trail={showRowTrail(show, now)}
+                trail={localiseTrail(showRowTrail(show, now))}
               />
             ))}
           </ul>

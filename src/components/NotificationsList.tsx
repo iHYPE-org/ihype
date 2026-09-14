@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { timeAgo } from '@/lib/utils';
+import { formatRelativeAge } from '@/lib/format-locale';
 import { useI18n } from '@/components/I18nProvider';
 
 type Notification = {
@@ -59,7 +59,7 @@ export function NotificationsList({
      the SURFACE owns the heading, the component takes what is left. */
   heading = true,
 }: { initialNotifications: Notification[]; heading?: boolean }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
   const router = useRouter();
@@ -151,7 +151,7 @@ export function NotificationsList({
               <div className="notifications-icon" style={{ background: `${color}26` }}>{iconForType(n.type, color)}</div>
               <div className="notifications-body">
                 <div className="notifications-text">{n.body}</div>
-                <div className="notifications-time">{timeAgo(n.createdAt)}</div>
+                <div className="notifications-time">{formatRelativeAge(locale, n.createdAt)}</div>
               </div>
               {!n.read && <div className="notifications-unread-dot" />}
             </div>

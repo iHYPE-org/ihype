@@ -26,7 +26,8 @@ export type VenueDashboardData = {
   pendingBookingRequestCount: number;
   ticketsSoldAllTime: number;
   thisMonthEarningsCents: number;
-  nextPayout: { label: string; amountCents?: number; estimated: boolean } | null;
+  /** `dateLabel` is the formatted date alone; the page writes the sentence around it ("After … show ends"), so the words come from the dictionary. */
+  nextPayout: { dateLabel: string; amountCents?: number; estimated: boolean } | null;
   upcomingShows: VenueDashboardShow[];
   activity: VenueDashboardActivity[];
   nextScannableShowSlug: string | null;
@@ -124,7 +125,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
   if (endedPending.length > 0) {
     const amountCents = endedPending.reduce((sum, e) => sum + e.amountCents, 0);
     nextPayout = {
-      label: formatDate(locale, nextCronRun(now), { month: 'short', day: 'numeric' }),
+      dateLabel: formatDate(locale, nextCronRun(now), { month: 'short', day: 'numeric' }),
       amountCents,
       estimated: false,
     };
@@ -135,7 +136,7 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
     }, null);
     if (soonest) {
       nextPayout = {
-        label: `After ${formatDate(locale, soonest, { month: 'short', day: 'numeric' })} show ends`,
+        dateLabel: formatDate(locale, soonest, { month: 'short', day: 'numeric' }),
         estimated: true,
       };
     }
