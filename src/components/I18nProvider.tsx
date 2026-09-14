@@ -44,6 +44,11 @@ async function loadDictionary(locale: Locale): Promise<Dictionary> {
   return dict;
 }
 
+/** Whether the locale cookie the server reads was on this request — if it was, the server already rendered in it and nothing here may second-guess it. */
+function hasLocaleCookie(): boolean {
+  return typeof document !== 'undefined' && document.cookie.split(';').some((part) => part.trim().startsWith(`${LOCALE_COOKIE}=`));
+}
+
 function detectInitialLocale(): Locale {
   if (typeof window === 'undefined') return 'en';
   const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -69,18 +74,51 @@ const I18nContext = createContext<I18nContextValue | null>(null);
  * translated string swapped in via useI18n()'s t() re-renders live when the
  * locale changes, without a full page reload.
  */
-export function I18nProvider({ children }: { children: ReactNode }) {
+export function I18nProvider({
+  children,
+  initialLocale,
+  initialDictionary,
+}: {
+  children: ReactNode;
+  /**
+   * What the SERVER rendered this request with (root layout → `getServerI18n()`
+   * + `getServerDictionary()`). The first client render must match the HTML,
+   * so state starts HERE and never at 'en' (DESIGN_SYNC row 426): starting at
+   * English while the server rendered Spanish made every `t()` text node a
+   * hydration mismatch for every non-English member on every page.
+   */
+  initialLocale: Locale;
+  initialDictionary: Dictionary;
+}) {
   const router = useRouter();
-  const [locale, setLocaleState] = useState<Locale>('en');
-  const [dict, setDict] = useState<Dictionary>({});
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [dict, setDict] = useState<Dictionary>(initialDictionary);
+  // The server's copy IS this locale's dictionary — never re-download it.
+  if (initialLocale !== 'en' && Object.keys(initialDictionary).length > 0 && !dictionaryCache.has(initialLocale)) {
+    dictionaryCache.set(initialLocale, initialDictionary);
+  }
 
   useEffect(() => {
+    // A cookie means the server already honoured the member's choice, and the
+    // state above matches the HTML; only refresh the cookie's expiry. With NO
+    // cookie (a first visit) the server rendered English, and the saved or
+    // browser language is applied AFTER hydration — a state change, not a
+    // mismatch — and written down so the next request renders in it.
+    if (hasLocaleCookie()) {
+      writeLocaleCookie(initialLocale);
+      return;
+    }
     const initial = detectInitialLocale();
-    setLocaleState(initial);
     writeLocaleCookie(initial);
+    if (initial === initialLocale) return;
+    setLocaleState(initial);
     if (initial !== 'en') {
       loadDictionary(initial).then(setDict).catch(() => {});
+    } else {
+      setDict({});
     }
+  // Mount only: `initialLocale` is the request's, and a later change comes through setLocale().
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {

@@ -23,7 +23,8 @@ import { AnalyticsBeacon } from '@/components/AnalyticsBeacon';
 import { getCspNonce } from '@/lib/csp-nonce';
 import { ownsWholeScreen } from '@/lib/chrome-visibility';
 import { AppSplash } from '@/components/AppSplash';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerDictionary, getServerI18n } from '@/lib/i18n/server';
+import { RTL_LOCALES } from '@/lib/i18n/locales';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 
 /**
@@ -196,7 +197,10 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   const nonce = await getCspNonce();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
+  // The client provider is seeded with the same locale and dictionary this
+  // request rendered with, so its first render matches the HTML byte for byte.
+  const dictionary = await getServerDictionary(locale);
   // Drives the header join CTA's "Join Beta" vs "Join free" copy. Read here
   // rather than in HeaderAuthLinks because that is a client component and this
   // flag lives in KV. One extra KV read per render, alongside the nonce and
@@ -243,7 +247,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const accessibilityBootstrap = `(function(){var d=document.documentElement;try{var s=JSON.parse(localStorage.getItem('ihype-accessibility-settings')||'{}');var n=Number(s.textScale);if(isFinite(n))d.style.setProperty('--ihype-text-scale',String(Math.min(1.4,Math.max(0.85,n))));if(['dark','flowery','street','metal','classical'].indexOf(s.theme)>-1)d.setAttribute('data-theme',s.theme);if(s.highContrast)d.classList.add('high-contrast');if(s.largeText)d.classList.add('a11y-large-text');if(s.reduceMotion)d.classList.add('a11y-reduce-motion');if(s.underlineLinks)d.classList.add('a11y-underline-links');if(s.readableFont)d.classList.add('a11y-readable-font')}catch(e){}
 try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.createElement('div');p.style.cssText='font:-apple-system-body;position:absolute;top:-9999px;visibility:hidden';d.appendChild(p);var px=parseFloat(getComputedStyle(p).fontSize);p.remove();if(px>0)d.style.setProperty('--ihype-os-text-scale',String(Math.max(1,px/17)))}}catch(e){}})();`;
   return (
-    <html lang="en" suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${anton.variable} ${chakraPetch.variable} ${playfair.variable} ${spaceGrotesk.variable}`}>
+    <html lang={locale} dir={RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr'} suppressHydrationWarning className={`${bricolage.variable} ${workSans.variable} ${jetbrainsMono.variable} ${instrumentSerif.variable} ${anton.variable} ${chakraPetch.variable} ${playfair.variable} ${spaceGrotesk.variable}`}>
       <head>
         <script
           nonce={nonce}
@@ -252,7 +256,7 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
         />
       </head>
       <body>
-        <AppProviders>
+        <AppProviders initialLocale={locale} initialDictionary={dictionary}>
           <AppSplash />
           <a href="#main-content" className="skip-to-content">{t('layout.skipToContent', 'Skip to main content')}</a>
           <WebVitals />
