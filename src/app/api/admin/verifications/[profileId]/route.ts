@@ -96,13 +96,18 @@ export async function PATCH(
         verificationReviewedAt: true
       }
     }),
-    db.adminAuditLog.create({
+    /* Into `AuditLog` — the table `/admin/audit` reads. This wrote a second
+       table, `AdminAuditLog`, that nothing ever read, so the one identity
+       decision the console makes was invisible in the console's own audit
+       log (DESIGN_SYNC row 438). In the transaction on purpose: a decision
+       and its record land together or not at all. */
+    db.auditLog.create({
       data: {
-        actorId: session!.user!.id!,
+        actorUserId: session!.user!.id!,
         action: `verification.${body.decision.toLowerCase()}`,
-        targetType: 'Profile',
-        targetId: profileId,
-        meta: body.adminNote ? { adminNote: body.adminNote } : undefined
+        entityType: 'Profile',
+        entityId: profileId,
+        metadata: body.adminNote ? { adminNote: body.adminNote } : undefined
       }
     })
   ]);
