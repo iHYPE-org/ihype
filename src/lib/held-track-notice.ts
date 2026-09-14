@@ -85,7 +85,7 @@ Our automated scan flagged it, so it is stored but not showing on your page yet.
 
 We are looking at it. If you think it was flagged in error, reply to this email or write to admin@ihype.org and say so.
 
-${getBaseUrl()}/artists/${asset.profile?.slug ?? ''}`,
+${getBaseUrl()}/app/artists/${asset.profile?.slug ?? ''}`,
         html: `<p>Your upload <strong>${escapeHtml(asset.title)}</strong> has been waiting on a human review for ${days} days, which is longer than it should be.</p>
 <p>Our automated scan flagged it, so it is stored but not showing on your page yet. That is our backlog, not a decision about your track — nothing has been rejected and nothing has been deleted.</p>
 <p>We are looking at it. If you think it was flagged in error, reply to this email or write to <a href="mailto:admin@ihype.org">admin@ihype.org</a> and say so.</p>`,

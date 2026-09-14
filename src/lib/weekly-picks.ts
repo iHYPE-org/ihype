@@ -22,7 +22,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
 
   const baseUrl = getBaseUrl();
   const picksHtml = topProfiles.map((p, i) =>
-    `<p><strong>${i + 1}. <a href="${baseUrl}/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[] | null ?? []).join(', ')}</p>`
+    `<p><strong>${i + 1}. <a href="${baseUrl}/app/artists/${p.slug}">${p.name}</a></strong> — ${(p.genres as string[] | null ?? []).join(', ')}</p>`
   ).join('');
 
   const users = await db.user.findMany({
@@ -38,7 +38,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
         to: user.email,
         subject: '🎵 iHYPE Weekly Picks',
         html: `<p>${aiBlurb}</p><h2>This week's top picks</h2>${picksHtml}<p><a href="${baseUrl}/app/music/discover">Discover more on iHYPE</a></p>`,
-        text: `${aiBlurb}\n\nThis week's top picks:\n${topProfiles.map((p, i) => `${i + 1}. ${p.name} — ${baseUrl}/artists/${p.slug}`).join('\n')}`
+        text: `${aiBlurb}\n\nThis week's top picks:\n${topProfiles.map((p, i) => `${i + 1}. ${p.name} — ${baseUrl}/app/artists/${p.slug}`).join('\n')}`
       });
       sent++;
     } catch { skipped++; }

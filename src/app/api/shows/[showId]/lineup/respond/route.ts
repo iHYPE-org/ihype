@@ -73,7 +73,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sh
         type: 'lineup_split_declined',
         title: 'Lineup split declined',
         body: `${respondedProfile?.name ?? 'An act'} declined their split for "${show.title}" — revise and re-propose to keep the booking moving.`,
-        link: `/shows/${show.slug}/lineup`,
+        link: `/app/me/shows/${show.slug}/lineup`,
       });
     }
     return NextResponse.json({ ok: true, status: 'DECLINED' });

@@ -74,6 +74,37 @@ function memberFacingFiles(): string[] {
   return MEMBER_FACING.flatMap(walk).filter((file) => !OUT_OF_SCOPE.test(file));
 }
 
+/**
+ * The server half: notification `link`s (which `NotificationsList` hands to
+ * `router.push`, so an alias there is a hop and a flash inside the shell),
+ * email links built on the base URL, Stripe return URLs and server-side
+ * `redirect()` calls. 23 were found the same day the component scan cleared
+ * (DESIGN_SYNC row 417), one of them on a route nothing called.
+ */
+const SERVER_SIDE = ['src/lib', 'src/app/api', 'workers'];
+
+function serverFiles(): string[] {
+  return SERVER_SIDE.flatMap((dir) => walkAll(dir, /\.(ts|tsx)$/)).filter((file) => !/__tests__|\.test\./.test(file));
+}
+
+function walkAll(dir: string, match: RegExp): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const path = join(dir, name);
+    return statSync(path).isDirectory() ? walkAll(path, match) : match.test(name) ? [path] : [];
+  });
+}
+
+/** Paths a server file hands to a notification, an email, Stripe, or a redirect. */
+function serverLinkedPaths(line: string): Array<{ path: string; text: string }> {
+  const out: Array<{ path: string; text: string }> = [];
+  const pattern = /(?:href|url|link|callbackUrl|success_url|cancel_url|return_url|refresh_url|destination|actionUrl)\s*[:=]\s*[`'"](\/[^`'"?#\s]*)|redirect\(\s*[`'"](\/[^`'"?#]*)|\$\{(?:getBaseUrl\(\)|baseUrl|BASE_URL|base|appUrl|origin)\}(\/[^`'"?#\s<]*)|https?:\/\/ihype\.org(\/[^`'"?#\s<]*)/g;
+  for (const m of line.matchAll(pattern)) {
+    const raw = m[1] ?? m[2] ?? m[3] ?? m[4];
+    out.push({ path: raw.replace(/\$\{[^}]*\}/g, SEGMENT), text: m[0].trim() });
+  }
+  return out;
+}
+
 /** Every literal path a line hands to an href, a form action or a router push. */
 /**
  * Every literal path a line hands to an href, a form action, a router push or
@@ -133,6 +164,25 @@ describe('redirect aliases', () => {
     expect(hits, `\n${hits.join('\n')}\n`).toEqual([]);
   });
 
+  it('is linked to by nothing the server sends — notifications, email, Stripe returns, redirects', () => {
+    const files = serverFiles();
+    expect(files.length, 'too few server files collected').toBeGreaterThan(200);
+    const hits: string[] = [];
+    for (const file of files) {
+      const lines = stripComments(readFileSync(file, 'utf8')).split('\n');
+      lines.forEach((line, index) => {
+        for (const { path, text } of serverLinkedPaths(line)) {
+          for (const { source, destination } of sources) {
+            if (matchesAlias(path, source)) {
+              hits.push(`${file}:${index + 1}  ${text}  — ${source} redirects to ${destination}; link there directly`);
+            }
+          }
+        }
+      });
+    }
+    expect(hits, `\n${hits.join('\n')}\n`).toEqual([]);
+  });
+
   it('is never a page file whose whole body is a redirect()', () => {
     const offenders: string[] = [];
     for (const file of walk('src/app')) {
@@ -164,5 +214,11 @@ describe('redirect aliases', () => {
     expect(linkedPaths('router.push(`/search?q=${encodeURIComponent(q)}`)')[0]).toMatchObject({ path: '/search' });
     expect(linkedPaths('<form action="/search" method="get">')[0]).toMatchObject({ path: '/search' });
     expect(linkedPaths('const x = "/pages";')).toEqual([]);
+    expect(serverLinkedPaths('link: `/shows/${show.slug}/lineup`,')[0]).toMatchObject({ path: `/shows/${SEGMENT}/lineup` });
+    expect(serverLinkedPaths('success_url: `${baseUrl}/advertise/dashboard?checkout=success`,')[0]).toMatchObject({ path: '/advertise/dashboard' });
+    expect(serverLinkedPaths('<a href="${baseUrl}/artists/${p.slug}">')[0]).toMatchObject({ path: `/artists/${SEGMENT}` });
+    expect(serverLinkedPaths("redirect('/payouts?tab=settings');")[0]).toMatchObject({ path: '/payouts' });
+    // A hardcoded origin is the same link with the base URL written out.
+    expect(serverLinkedPaths('<a href="https://ihype.org/home">')[0]).toMatchObject({ path: '/home' });
   });
 });
