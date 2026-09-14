@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "你的账号已被删除。正在为你退出登录。",
   "settingsPage.demandRadarDetail": "艺人可以在需求雷达中看到你的场地并申请档期",
   "settingsPage.demandRadarLabel": "在需求雷达中显示我",
+  "settingsPage.detachFailed": "暂时无法分离您的身份信息。没有任何更改，请稍后重试。",
   "settingsPage.detachNow": "立即分离",
   "settingsPage.detaching": "分离中…",
   "settingsPage.discoveryDetail": "粉丝可以在“发现”和搜索中找到你的主页",

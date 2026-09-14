@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "アカウントを削除しました。サインアウトしています…",
   "settingsPage.demandRadarDetail": "アーティストが需要レーダーであなたの会場を見つけ、枠をリクエストできます",
   "settingsPage.demandRadarLabel": "需要レーダーに表示する",
+  "settingsPage.detachFailed": "現在、アイデンティティの切り離しができませんでした。何も変更されていません。しばらくしてからもう一度お試しください。",
   "settingsPage.detachNow": "今すぐ切り離す",
   "settingsPage.detaching": "切り離し中…",
   "settingsPage.discoveryDetail": "ファンがディスカバーや検索であなたのプロフィールを見つけられます",

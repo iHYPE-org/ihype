@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "حُذف حسابك. جارٍ تسجيل خروجك الآن.",
   "settingsPage.demandRadarDetail": "يمكن للفنانين رؤية مكانك في رادار الطلب وطلب موعد",
   "settingsPage.demandRadarLabel": "أظهرني في رادار الطلب",
+  "settingsPage.detachFailed": "تعذّر فصل هويتك في الوقت الحالي. لم يتغيّر شيء، حاول مرة أخرى بعد قليل.",
   "settingsPage.detachNow": "افصل الآن",
   "settingsPage.detaching": "جارٍ الفصل…",
   "settingsPage.discoveryDetail": "يمكن للمعجبين العثور على ملفك في الاستكشاف والبحث",

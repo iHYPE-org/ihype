@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "Ваш аккаунт удалён. Выполняется выход.",
   "settingsPage.demandRadarDetail": "Артисты видят вашу площадку в радаре спроса и могут запросить слот",
   "settingsPage.demandRadarLabel": "Показывать меня в радаре спроса",
+  "settingsPage.detachFailed": "Сейчас не удалось отделить вашу личность от истории. Ничего не изменилось — попробуйте ещё раз через минуту.",
   "settingsPage.detachNow": "Отвязать сейчас",
   "settingsPage.detaching": "Отвязка…",
   "settingsPage.discoveryDetail": "Фанаты смогут найти ваш профиль в разделе «Открытия» и поиске",

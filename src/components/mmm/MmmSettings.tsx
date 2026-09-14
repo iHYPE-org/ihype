@@ -350,13 +350,26 @@ export function MmmSettings() {
   async function detachIdentity() {
     if (!confirm(t('settingsPage.confirmDetach', 'Detach your identity from activity history now?'))) return;
     setDetaching(true);
+    setError(null);
     try {
-      await fetch('/api/privacy/request', {
+      /* The route executes the detach and answers 201 with `executed: true`;
+         a 401 (session gone), a 429 or a 500 executes nothing. Until
+         2026-09-14 this control alerted "removed" whatever came back — a
+         privacy action reported done that had not happened (DESIGN_SYNC row
+         447). The success sentence is shown only for a response that says so. */
+      const res = await fetch('/api/privacy/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ kind: 'detach' }),
       });
+      const data = await res.json().catch(() => ({})) as { executed?: boolean; error?: string };
+      if (!res.ok || !data.executed) {
+        setError(data.error ?? t('settingsPage.detachFailed', 'Your identity could not be detached just now. Nothing was changed — try again in a moment.'));
+        return;
+      }
       alert(t('settingsPage.identityDetached', 'Identity detached — IP and location data have been removed from your activity log.'));
+    } catch {
+      setError(t('settingsPage.networkError', 'Network error'));
     } finally {
       setDetaching(false);
     }

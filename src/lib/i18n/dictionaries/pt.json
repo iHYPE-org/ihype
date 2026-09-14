@@ -2012,6 +2012,7 @@
   "settingsPage.deletionComplete": "Sua conta foi excluída. Encerrando sua sessão agora.",
   "settingsPage.demandRadarDetail": "Artistas podem ver seu espaço no radar de demanda e pedir um horário",
   "settingsPage.demandRadarLabel": "Mostrar-me no radar de demanda",
+  "settingsPage.detachFailed": "Não foi possível desvincular sua identidade agora. Nada foi alterado; tente novamente em instantes.",
   "settingsPage.detachNow": "Desvincular agora",
   "settingsPage.detaching": "Desvinculando…",
   "settingsPage.discoveryDetail": "Fãs podem encontrar seu perfil em Descobrir e na busca",
