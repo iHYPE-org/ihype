@@ -79,6 +79,48 @@ describe('the census cannot report a silent zero', () => {
   });
 });
 
+/**
+ * THE SILENT ZERO'S SIBLING: A SILENT PARTIAL.
+ *
+ * An UNMEASURED route/width pair adds no key to the capture, so both refusals
+ * above — "measured no route at all" and "considered implausibly few controls"
+ * — are ABSOLUTE and see a census of a third of the app exactly as they see a
+ * census of all of it. Measured on 2026-09-14: a run came back with 41 of 92
+ * pairs refused by the connection and still printed a score, because the 51
+ * that loaded carried far more than 100 controls between them.
+ *
+ * So the census names its denominator. These pin the three parts that make
+ * that true, because each has a natural-looking edit that would undo it.
+ */
+describe('the census cannot report a silent partial', () => {
+  it('plans its denominator from the --only-filtered route list', () => {
+    /* Recomputing `ROUTES.length * WIDTHS.length` at the report instead would
+       judge a scoped run against the full table and refuse every one of them. */
+    expect(source).toMatch(/pairsPlanned = routes\.length \* WIDTHS\.length;/);
+  });
+
+  it('counts pairs PLANNED, never pairs attempted', () => {
+    /* A browser that dies mid-width `break`s the rest without trying them, so
+       counting attempts would shrink the denominator to match whatever the run
+       managed — which is precisely the run this has to refuse. */
+    const capture = source.slice(source.indexOf('async function capture'));
+    expect(capture).not.toMatch(/pairsPlanned \+=/);
+  });
+
+  it('refuses a run where a material fraction of the pairs never loaded', () => {
+    expect(source).toMatch(/pairsMeasured < Math\.ceil\(pairsPlanned \* 0?\.\d+\)/);
+    expect(source).toContain('route/width pair(s) were measured');
+  });
+
+  it('prints the denominator on a passing run, not only on a refusal', () => {
+    /* The threshold cannot see three or four quietly missing surfaces. The
+       printed figure is how a reader sees them, so it must survive on the
+       success path — deleting it would leave the guard true and the run
+       unreadable. */
+    expect(source).toMatch(/route\/width pair\(s\) measured; \$\{controlsConsidered\}/);
+  });
+});
+
 describe('the census measures what MOBILE.md calls a control', () => {
   it('keeps the floor at 44', () => {
     expect(tapProbe()).toMatch(/const FLOOR = 44;/);
