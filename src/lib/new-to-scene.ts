@@ -27,7 +27,7 @@ export async function sendNewToSceneEmail(): Promise<{ sent: number }> {
   for (const user of users) {
     if (!user.email) continue;
     try {
-      await sendMarketingEmail(user.id, { to: user.email, subject: 'New to the iHYPE scene this week', html: `<h2>Fresh artists on iHYPE</h2>${items}<p><a href="${baseUrl}/discover">Discover more</a></p>`, text: newProfiles.map(p => `${p.name} — ${baseUrl}/artists/${p.slug}`).join('\n') });
+      await sendMarketingEmail(user.id, { to: user.email, subject: 'New to the iHYPE scene this week', html: `<h2>Fresh artists on iHYPE</h2>${items}<p><a href="${baseUrl}/app/music/discover">Discover more</a></p>`, text: newProfiles.map(p => `${p.name} — ${baseUrl}/artists/${p.slug}`).join('\n') });
       sent++;
     } catch { /* continue */ }
   }

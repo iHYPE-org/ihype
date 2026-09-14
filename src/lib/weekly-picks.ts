@@ -37,7 +37,7 @@ export async function sendWeeklyPicksEmails(): Promise<{ sent: number; skipped: 
       await sendMarketingEmail(user.id, {
         to: user.email,
         subject: '🎵 iHYPE Weekly Picks',
-        html: `<p>${aiBlurb}</p><h2>This week's top picks</h2>${picksHtml}<p><a href="${baseUrl}/discover">Discover more on iHYPE</a></p>`,
+        html: `<p>${aiBlurb}</p><h2>This week's top picks</h2>${picksHtml}<p><a href="${baseUrl}/app/music/discover">Discover more on iHYPE</a></p>`,
         text: `${aiBlurb}\n\nThis week's top picks:\n${topProfiles.map((p, i) => `${i + 1}. ${p.name} — ${baseUrl}/artists/${p.slug}`).join('\n')}`
       });
       sent++;
