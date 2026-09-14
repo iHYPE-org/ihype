@@ -92,7 +92,7 @@
     {
       "name": "My tickets",
       "short_name": "Tickets",
-      "url": "/tickets",
+      "url": "/app/tickets",
       "description": "Your codes for tonight",
       "icons": [
         {

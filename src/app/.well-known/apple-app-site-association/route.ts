@@ -93,7 +93,7 @@ export async function GET() {
             '/shows/*',      // the URL that sells tickets, and the one people share
             '/artists/*', '/venues/*', '/fans/*', // redirect into the matching /app pane
             '/playlist/*',
-            '/tickets',      // Stripe Checkout's success_url lands here
+            '/tickets',      // the wallet alias in sent email (a redirects() entry onto /app/tickets; Checkout returns to /shows/<slug>)
             '/h/*',          // HYPE short links
             '/app/*',        // every in-app destination, once signed in
             '/api/auth/magic', // sign-in must be able to FINISH in the app

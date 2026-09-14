@@ -7,7 +7,7 @@ import { arePaymentsEnabledRuntime } from '@/lib/runtime-flags';
 import { createPaymentMethodSetupSession, getOrCreateStripeCustomer } from '@/lib/stripe';
 
 const schema = z.object({
-  returnPath: z.string().regex(/^\/(?!\/)[^\r\n]*$/).default('/app/me?panel=tickets'),
+  returnPath: z.string().regex(/^\/(?!\/)[^\r\n]*$/).default('/app/me/settings'),
 });
 
 export async function POST(request: Request) {
