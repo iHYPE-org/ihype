@@ -129,7 +129,9 @@ sweep can tell "reviewed" from "nobody looked".
   speaker: the token proves the spot was SERVED to this listener, not heard.
 - **Any signed-in member can park public audio under `ads/audio/`** without a
   campaign row. Bounded by 10 MB × 10/hour; a sweep of unreferenced keys is
-  the fix. Follow-up.
+  the fix. **CLOSED 2026-09-14** — `ad-audio-sweep` (`src/lib/ad-audio-sweep.ts`,
+  03:00 UTC daily) deletes anything under the prefix that no `Ad.audioUrl`
+  points at once it is a day old; see DESIGN_SYNC row 420.
 - `/app/me/artists/[slug]/believers` and `/epk` render for any member; both are
   plausibly public by design (hypes are public; a press kit is for the press).
   Confirm intent.
@@ -243,6 +245,9 @@ Still open from the list above, unchanged and deliberately not bundled here:
   at, which means an R2 listing and a DELETE path, and mixing a destructive
   storage job into a change to the auth paths would make both harder to
   review. Needs a grace period too: the upload legitimately precedes the
-  campaign row by minutes.
+  campaign row by minutes. **Built 2026-09-14 as `ad-audio-sweep`** with a
+  24-hour grace window, suffix matching so a legacy-host `audioUrl` still
+  counts as a reference, a 500-delete bound per run, and a refusal to delete
+  anything when the campaign table cannot be read.
 - **`/believers` and `/epk` render for any member.** Still a question about
   intent, not a defect anyone can fix without the answer.

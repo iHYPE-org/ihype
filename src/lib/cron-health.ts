@@ -16,6 +16,7 @@ export async function checkCronHealth(): Promise<{ stale: string[]; unknown: str
     'notification-jobs',
     'onboarding', 'feature-shows', 'stripe-connect-health',
     'artist-onboarding', 'show-payouts', 'ad-settlement', 'close-stale-bookings',
+    'ad-audio-sweep',
     'stripe-reconcile',
     'weekly-picks', 'follow-digest', 'audit-log-rotate',
     /* Not cron jobs: the two GitHub workflows that write their own key when a

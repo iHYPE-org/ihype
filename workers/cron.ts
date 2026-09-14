@@ -58,6 +58,7 @@ const JOBS: CronJob[] = [
   { path: '/api/cron?job=session-cleanup',  schedule: '0 3 * * *'    },
   { path: '/api/cron?job=push-cleanup',     schedule: '0 3 * * *'    },
   { path: '/api/cron?job=identity-detach',  schedule: '0 3 * * *'    },
+  { path: '/api/cron?job=ad-audio-sweep',   schedule: '0 3 * * *'    },  // parked advertiser audio no campaign points at
   { path: '/api/cron?job=feature-shows',    schedule: '0 6 * * *'    },
 
   // Weekly jobs — Monday morning

@@ -172,6 +172,7 @@ export const AUTOMATED_JOBS: readonly AutomatedJob[] = [
   { path: '/api/cron?job=session-cleanup', schedule: '0 3 * * *', label: 'Session cleanup', what: 'Deletes expired sessions', aliveKey: 'session-cleanup' },
   { path: '/api/cron?job=push-cleanup', schedule: '0 3 * * *', label: 'Push cleanup', what: 'Drops push subscriptions the platform rejected', aliveKey: 'push-cleanup' },
   { path: '/api/cron?job=identity-detach', schedule: '0 3 * * *', label: 'Identity detach', what: 'Scrubs IP addresses older than 30 days from the audit log', aliveKey: 'identity-detach' },
+  { path: '/api/cron?job=ad-audio-sweep', schedule: '0 3 * * *', label: 'Ad audio sweep', what: 'Deletes uploaded ad spots that no campaign ever pointed at, once they are a day old', aliveKey: 'ad-audio-sweep' },
   { path: '/api/cron/dmca-enforce', schedule: '30 3 * * *', label: 'DMCA enforcement', what: 'Acts on CONFIRMED notices only — a notice is confirmed by a person, never automatically' },
   { path: '/api/cron?job=audit-log-rotate', schedule: '0 4 * * 1', label: 'Audit log rotation', what: 'Archives audit rows past retention', aliveKey: 'audit-log-rotate' },
   { path: '/api/cron/backup-verify', schedule: '0 5 * * *', label: 'Backup verification', what: 'Confirms the live database and migration state; warns when the restore drill is due' },

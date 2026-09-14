@@ -27,7 +27,7 @@ crons = [
   "*/5 * * * *",  # show-lifecycle, expire-reservations
   "0 */6 * * *",  # health-check, db-health, stripe-connect-health
   "0 1 * * *",    # close-stale-bookings
-  "0 3 * * *",    # session-cleanup, push-cleanup, identity-detach (30-day IP scrub)
+  "0 3 * * *",    # session-cleanup, push-cleanup, identity-detach (30-day IP scrub), ad-audio-sweep
   "0 4 * * 1",    # audit-log-rotate (Monday)
   "0 6 * * *",    # feature-shows
   "0 8 * * *",    # digest

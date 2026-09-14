@@ -313,6 +313,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ ok: true, ...result });
     }
 
+    case 'ad-audio-sweep': {
+      /* Deletes advertiser audio under `ads/audio/` that no campaign points at
+         and that is older than the grace window — the security sweep's open
+         item about parked public audio (DESIGN_SYNC row 420). `dry=1` plans
+         and deletes nothing; the schedule runs it for real. */
+      const { runAdAudioSweep } = await import('@/lib/ad-audio-sweep');
+      const summary = await runAdAudioSweep({ apply: searchParams.get('dry') !== '1' });
+      if (summary.ok) await pingCronAlive('ad-audio-sweep');
+      return NextResponse.json(summary, { status: summary.ok ? 200 : 503 });
+    }
+
     case 'ad-settlement': {
       const { settleEndedAdCampaigns } = await import('@/lib/ad-settlement');
       const result = await settleEndedAdCampaigns();
