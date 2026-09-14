@@ -532,6 +532,123 @@ export type SeededMedia = {
 };
 
 /**
+ * A playable track the signed-in FAN will actually hear on their default
+ * station — and nothing else in this file seeded one until 2026-09-14.
+ *
+ * The dock's last-resort transport and the Radio tab both start
+ * `defaultStationSlug()`, the FIRST station `/api/stations` lists, which is
+ * `for-you`; and `for_you` is `profileId in hypedProfileIds` (src/lib/stations.ts),
+ * so a freshly seeded fan with no hypes gets an EMPTY default station by
+ * construction. `e2e/mmm-shell.spec.ts`'s "a surface's own play control loads
+ * the mini player" tests read that emptiness and skipped — on every surface,
+ * on every CI run since they were written (DESIGN_SYNC row 434). The transport
+ * wire CLAUDE.md calls "the one most easily lost in a chrome rewrite" had
+ * therefore never been proven by the mandatory suite.
+ *
+ * So this seeds the three rows that make `for-you` non-empty for ONE fan: an
+ * artist (its own owner, so the fan is not hyping their own profile — which
+ * `/api/hype` refuses and which `discover/seeds` excludes), a released track
+ * with a `storageUrl` (the recommend route and the station row both require
+ * one), and the fan's `ProfileHypeEvent` on that artist. Deterministic keys, so
+ * a rerun reuses the rows. Give each spec that needs it its OWN fan email:
+ * the hype is a taste signal, and a spec asserting a cold fan's empty state
+ * must not share a fan with one that warmed it.
+ */
+/** A real, small, static audio file the worker serves: the deck, the station
+ *  row and the recommend list all hand `storageUrl` straight to <audio>. */
+const STATION_TRACK_URL = '/audio/samples/signal-chime.wav';
+const STATION_CITY = 'Portland';
+const STATION_REGION = 'ME';
+const STATION_COUNTRY = 'US';
+
+export async function seedPlayableStation({
+  fanUserId,
+  key = 'default',
+}: {
+  fanUserId: string;
+  key?: string;
+}): Promise<{ trackHexId: string; title: string; artistName: string; artistSlug: string }> {
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
+  try {
+    const stamp = `station-${key}`;
+    const hex = (seed: string) => `0x${createHash('sha256').update(seed).digest('hex').slice(0, 32)}`;
+    const ownerEmail = `e2e-${stamp}-artist@ihype.test`;
+    const owner = await prisma.user.upsert({
+      where: { email: ownerEmail },
+      update: {},
+      create: { email: ownerEmail, name: 'E2E Station Artist', username: `e2e-${stamp}-artist`, role: 'ARTIST', emailVerified: new Date() },
+      select: { id: true },
+    });
+    const slug = `e2e-${stamp}-artist`;
+    const profile = await prisma.profile.upsert({
+      where: { slug },
+      create: {
+        slug, hexId: hex(slug), name: 'E2E Station Artist', type: 'ARTIST', ownerId: owner.id, discoverable: true,
+        // A genre with a GENRE STATION (src/lib/stations.ts): the Radio tab opens
+        // on its Genre filter, so this is what puts an enabled station under the
+        // member's thumb on arrival.
+        genres: ['Dream-pop'],
+        // Placed, so the AREA chart's `local` scope — the Charts tab's default —
+        // has a candidate when the listener is placed in the same city.
+        city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY,
+      },
+      update: { discoverable: true, genres: ['Dream-pop'], city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY },
+      select: { id: true, name: true, slug: true },
+    });
+    const trackHex = hex(`${slug}-track`);
+    const track = await prisma.artistMediaAsset.upsert({
+      where: { hexId: trackHex },
+      // Released, and playable: the station row's `mediaUrl` IS `storageUrl`,
+      // and the player hands it to an <audio> element as-is — so it has to be
+      // a URL the worker really serves bytes from. A first draft pointed it at
+      // `/api/public-media/<hex>`, which resolves the SAME row's storageUrl and
+      // fetches it upstream: a route pointing at itself.
+      update: { isPublished: true, publishAt: null, storageUrl: STATION_TRACK_URL },
+      create: {
+        hexId: trackHex,
+        title: 'E2E Station Track',
+        isPublished: true,
+        originalFileName: 'e2e-station-track.wav',
+        mimeType: 'audio/wav',
+        fileSizeBytes: 1024,
+        durationSecs: 123,
+        storageUrl: STATION_TRACK_URL,
+        profileId: profile.id,
+      },
+      select: { id: true, hexId: true, title: true },
+    });
+    await prisma.profileHypeEvent.upsert({
+      where: { userId_profileId: { userId: fanUserId, profileId: profile.id } },
+      update: {},
+      create: { userId: fanUserId, profileId: profile.id },
+    });
+    /* The Charts tab ranks by Seed hypes inside its window and, on its default
+       `local` scope, only for a viewer whose FIRST profile carries a city — so
+       the listener gets a placed LISTENER profile and one deck hype on the
+       track. Both are ordinary member state, not chart fixtures: a fan who has
+       hyped a card from the deck and set a hometown is the fan the tab is for. */
+    const listenerSlug = `e2e-${stamp}-listener`;
+    await prisma.profile.upsert({
+      where: { slug: listenerSlug },
+      update: { city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY },
+      create: {
+        slug: listenerSlug, hexId: hex(listenerSlug), name: 'E2E Station Listener', type: 'LISTENER', ownerId: fanUserId,
+        city: STATION_CITY, stateRegion: STATION_REGION, country: STATION_COUNTRY,
+      },
+    });
+    await prisma.seed.upsert({
+      where: { userId_mediaId: { userId: fanUserId, mediaId: track.id } },
+      // Re-stamped on every seed: the chart's window is measured back from now.
+      update: { action: 'hype', createdAt: new Date() },
+      create: { userId: fanUserId, mediaId: track.id, action: 'hype' },
+    });
+    return { trackHexId: track.hexId, title: track.title, artistName: profile.name, artistSlug: profile.slug };
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+/**
  * Seeds a published track and a playlist containing it.
  *
  * Exists because the track and playlist panes could not be covered without it:

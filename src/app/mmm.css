@@ -3752,6 +3752,15 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-deck-verdict {
   position: absolute;
   top: 22px;
+  /* Decorative, aria-hidden, and drawn OVER the card's top corners at opacity
+     0 until a drag commits — which put the invisible Skip stamp on top of the
+     play key at top/right 15px. A tap on Play landed on the stamp, which has no
+     handler, so the pointer fell through to the card's drag and the clip never
+     started. Measured 2026-09-14 by the shell spec's transport test, the first
+     time it ran (DESIGN_SYNC row 434): Playwright reported the stamp
+     "intercepts pointer events" on every attempt. A verdict is a readout, not
+     a control; it must never take the pointer. */
+  pointer-events: none;
   padding: 8px 14px;
   border-radius: var(--radius-pill);
   font-family: var(--font-mono);
