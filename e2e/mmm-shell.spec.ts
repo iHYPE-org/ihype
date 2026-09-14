@@ -1021,6 +1021,40 @@ test.describe('Music · Map · Me shell', () => {
   });
 
   /**
+   * A ME sub-page draws no strip at all.
+   *
+   * ME's root registers three sections; a panel route resolves to one. Every
+   * other route under `/app/me` is a destination reached FROM ME, and until
+   * this was measured all of them fell back to the panel list with **Info**
+   * lit — a two-pill strip stating the member was in a section they were not
+   * in, on eighteen of the twenty-one ME routes, a single ticket at a door
+   * among them. The unit test holds every route; this holds the one thing a
+   * pure function cannot say, which is that nothing is painted.
+   */
+  test('a ME sub-page draws no section strip, and a panel route still does', async ({ page }) => {
+    await page.goto('/app/me/notifications');
+    await expect(page.locator('.mmm-strip')).toHaveCount(0);
+
+    await page.goto('/app/me/payouts');
+    await expect(page.locator('.mmm-strip')).toHaveCount(0);
+
+    /* A sub-page that has real sections of its own registers them and draws
+       them, which is the mechanism working rather than an exception to it: the
+       profile editor's strip is the EDITOR's, never ME's panel list. Measured
+       — the first draft of this test asserted no strip here and failed. */
+    await page.goto('/app/me/profiles');
+    const own = page.locator('.mmm-strip');
+    await expect(own).toBeVisible();
+    await expect(own.getByRole('tab', { name: 'Settings', exact: true })).toHaveCount(0);
+
+    // The panel routes are sections, and keep theirs.
+    await page.goto('/app/me/settings');
+    const strip = page.locator('.mmm-strip');
+    await expect(strip).toBeVisible();
+    await expect(strip.locator('[role="tab"][aria-selected="true"]')).toHaveText('Settings');
+  });
+
+  /**
    * The assertions that were impossible without rows.
    *
    * Every ticket test here used to run against an account with no tickets, so
