@@ -8,7 +8,6 @@ import {
   ShowStatus
 } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import bcrypt from 'bcryptjs';
 import { buildArtistMediaCollection } from '../src/lib/media';
 import { isProductionSeedingAllowed } from '../src/lib/runtime-flags';
 import { createSerializedTicketId } from '../src/lib/tickets';
@@ -99,7 +98,6 @@ async function upsertDemoUser({
   legacyEmail,
   username,
   name,
-  passwordHash,
   role,
   isThirteenOrOlder = true
 }: {
@@ -107,7 +105,6 @@ async function upsertDemoUser({
   legacyEmail: string;
   username: string;
   name: string;
-  passwordHash: string;
   role: Role;
   isThirteenOrOlder?: boolean;
 }) {
@@ -124,11 +121,8 @@ async function upsertDemoUser({
         email,
         username,
         name,
-        passwordHash,
         isThirteenOrOlder,
-        role,
-        mfaSecret: null,
-        mfaEnabledAt: null
+        role
       }
     });
   }
@@ -138,11 +132,8 @@ async function upsertDemoUser({
       email,
       username,
       name,
-      passwordHash,
       isThirteenOrOlder,
-      role,
-      mfaSecret: null,
-      mfaEnabledAt: null
+      role
     }
   });
 }
@@ -154,7 +145,6 @@ async function main() {
     );
   }
 
-  const passwordHash = await bcrypt.hash('demo12345', 10);
   const demoEmails = [
     'admin@ihype.org',
     'fan@ihype.org',
@@ -168,7 +158,6 @@ async function main() {
     legacyEmail: 'admin@ihype.org',
     username: 'admin',
     name: 'iHYPE Admin',
-    passwordHash,
     role: Role.ADMIN
   });
 
@@ -177,7 +166,6 @@ async function main() {
     legacyEmail: 'venue@ihype.org',
     username: 'venue',
     name: 'Venue Owner',
-    passwordHash,
     role: Role.VENUE
   });
 
@@ -186,7 +174,6 @@ async function main() {
     legacyEmail: 'dj@ihype.org',
     username: 'promoter',
     name: 'DJ Echo',
-    passwordHash,
     role: Role.ARTIST
   });
 
@@ -195,7 +182,6 @@ async function main() {
     legacyEmail: 'artist@ihype.org',
     username: 'artist',
     name: 'Nova Pulse',
-    passwordHash,
     role: Role.ARTIST
   });
 
@@ -204,7 +190,6 @@ async function main() {
     legacyEmail: 'fan@ihype.org',
     username: 'fan',
     name: 'Night Owl',
-    passwordHash,
     isThirteenOrOlder: true,
     role: Role.FAN
   });

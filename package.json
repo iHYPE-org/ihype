@@ -60,7 +60,6 @@
     "smoke:production": "node scripts/smoke-production.mjs",
     "stripe:rehearsal": "node scripts/stripe-payout-rehearsal.mjs",
     "stripe:disputes": "node scripts/stripe-dispute-walk.mjs",
-    "admin:reset-test-logins": "node scripts/reset-test-logins.mjs",
     "analyze": "ANALYZE=true npm run build",
     "cf:build": "node scripts/build-i18n-assets.mjs && node scripts/vendor-maplibre-worker.mjs && node scripts/bump-sw-version.mjs && opennextjs-cloudflare build && node scripts/patch-worker-bundle.mjs",
     "cf:preview": "opennextjs-cloudflare preview",
