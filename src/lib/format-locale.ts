@@ -72,3 +72,25 @@ export function formatUsd(locale: Locale | string | null | undefined, cents: num
     maximumFractionDigits: fraction,
   }).format(dollars);
 }
+
+/**
+ * "5m ago" / "hace 5 min" / "5分前" — the age of a notification, in the
+ * member's language, through `Intl.RelativeTimeFormat`. Replaces a hand-written
+ * `timeAgo()` whose five English strings were the same in every locale. The
+ * unit ladder is the old one's: under a minute is "now", then minutes, hours,
+ * days, weeks. `narrow` keeps English at "5m ago", which is what the list
+ * rendered before.
+ */
+export function formatRelativeAge(locale: Locale | string | null | undefined, iso: string | Date, now: number = Date.now()): string {
+  const at = iso instanceof Date ? iso.getTime() : new Date(iso).getTime();
+  if (Number.isNaN(at)) return '';
+  const rtf = new Intl.RelativeTimeFormat(intlTag(locale), { numeric: 'auto', style: 'narrow' });
+  const mins = Math.floor((now - at) / 60000);
+  if (mins < 1) return rtf.format(0, 'second');
+  if (mins < 60) return rtf.format(-mins, 'minute');
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return rtf.format(-hours, 'hour');
+  const days = Math.floor(hours / 24);
+  if (days < 7) return rtf.format(-days, 'day');
+  return rtf.format(-Math.floor(days / 7), 'week');
+}

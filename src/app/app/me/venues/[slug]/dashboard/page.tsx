@@ -73,7 +73,13 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         </div>
         <div className="vdash-card">
           <div className="vdash-card-label">{t('venuesSlugDashboardPage.nextPayout', 'Next Payout')}</div>
-          <div className="vdash-card-val">{data.nextPayout?.label ?? '—'}</div>
+          <div className="vdash-card-val">
+            {data.nextPayout
+              ? data.nextPayout.estimated
+                ? t('venuesSlugDashboardPage.afterShowEnds', 'After {date} show ends').replace('{date}', data.nextPayout.dateLabel)
+                : data.nextPayout.dateLabel
+              : '—'}
+          </div>
           <div className="vdash-card-sub">
             {data.nextPayout?.amountCents != null
               ? `${formatCurrencyFromCents(data.nextPayout.amountCents, locale)} ${t('venuesSlugDashboardPage.pendingRelease', 'pending release')}`

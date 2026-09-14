@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { Map as MapLibreMap } from 'maplibre-gl';
@@ -1023,6 +1024,12 @@ function MapDatePicker({
   const popRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const month = monthGrid(anchor, locale);
+  const summary = describeDayKeys(selected, locale);
+  const daySummaryLabel = summary.kind === 'any'
+    ? t('mmmMap.datepick.anyDay', 'Any day')
+    : summary.kind === 'day'
+      ? summary.label
+      : t('mmmMap.datepick.days', '{n} days').replace('{n}', formatNumber(locale, summary.count));
 
   /* Click-out and Escape both close, and the pointerdown is captured for the
      same reason the search results use it: a drag that begins on the map should
@@ -1060,7 +1067,7 @@ function MapDatePicker({
         <span aria-hidden="true" className="mmm-datepick-glyph">▤</span>
         {/* The readout is the button's accessible name as well as its label, so
             a screen reader hears the current filter rather than "button". */}
-        <span className="mmm-datepick-value">{describeDayKeys(selected, locale)}</span>
+        <span className="mmm-datepick-value">{daySummaryLabel}</span>
       </button>
 
       {open && (

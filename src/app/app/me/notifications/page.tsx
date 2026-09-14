@@ -61,7 +61,7 @@ export default async function MmmNotificationsPage() {
         initialNotifications={notifications.map((row) => ({
           ...row,
           // The component's own type takes a string: it renders through
-          // `timeAgo`, and a Date does not survive the server/client boundary
+          // `formatRelativeAge`, and a Date does not survive the server/client boundary
           // as one.
           createdAt: row.createdAt.toISOString(),
         }))}

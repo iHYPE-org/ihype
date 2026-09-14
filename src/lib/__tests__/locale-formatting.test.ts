@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatNumber, formatUsd, intlTag } from '@/lib/format-locale';
+import { formatDate, formatNumber, formatRelativeAge, formatUsd, intlTag } from '@/lib/format-locale';
 import { maskComments } from '../../../scripts/lib/mask-comments.mjs';
 
 /**
@@ -83,6 +83,18 @@ describe('format-locale', () => {
     expect(formatUsd('en', 1800, 'auto')).toBe('$18');
     expect(formatUsd('en', 1850, 'auto')).toBe('$18.50');
     expect(formatUsd('en', 0)).toBe('$0.00');
+  });
+
+  it('ages a notification the way the old timeAgo() did in English, and in the member language otherwise', () => {
+    const now = Date.UTC(2026, 8, 14, 20, 0, 0);
+    const ago = (ms: number) => new Date(now - ms).toISOString();
+    expect(formatRelativeAge('en', ago(10_000), now)).toBe('now');
+    expect(formatRelativeAge('en', ago(5 * 60_000), now)).toBe('5m ago');
+    expect(formatRelativeAge('en', ago(3 * 3_600_000), now)).toBe('3h ago');
+    expect(formatRelativeAge('en', ago(2 * 86_400_000), now)).toBe('2d ago');
+    expect(formatRelativeAge('en', ago(21 * 86_400_000), now)).toBe('3w ago');
+    expect(formatRelativeAge('es', ago(5 * 60_000), now)).not.toBe('5m ago');
+    expect(formatRelativeAge('en', 'not a date', now)).toBe('');
   });
 
   it('renders another locale differently, so the tag really reaches Intl', () => {

@@ -1,3 +1,4 @@
+import { showTrailLabel, ticketPriceLabel } from '@/lib/i18n-enum-labels';
 import { formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { getSimilarArtists, type SimilarArtist } from '@/lib/sounds-like';
@@ -18,7 +19,7 @@ import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { getServerI18n } from '@/lib/i18n/server';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
-import { formatShowClock, formatTicketPrice, showRowTrail } from '@/lib/show-row';
+import { formatShowClock, formatTicketPrice, showRowTrail, type RowTrail } from '@/lib/show-row';
 import { TrackUploadPanel } from '@/components/TrackUploadPanel';
 import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
 import { ArtistRequestForm } from '@/components/ArtistRequestForm';
@@ -95,6 +96,10 @@ export default async function MmmArtistPage({
   if (!profile || profile.type !== 'ARTIST') return <MmmMissing kind="artist" />;
   if (shouldHideDemoContent() && isDemoUser(profile.owner)) return <MmmMissing kind="artist" />;
   const { locale, t } = await getServerI18n();
+  // `show-row.ts` answers English keys (its tests pin the words); the pane
+  // translates at the draw, the row-352 rule.
+  const localiseTrail = (trail: RowTrail | null) => (trail ? { ...trail, label: showTrailLabel(t, trail.label) } : null);
+  const priceLabel = (value: string | null) => (value ? ticketPriceLabel(t, value) : null);
 
   const activeTab = resolveTab(ARTIST_TABS, requestedTab);
   const isOwner = profile.ownerId === session.user.id;
@@ -465,11 +470,11 @@ export default async function MmmArtistPage({
                   key={show.id}
                   date={show.startsAt}
                   href={`/app/shows/${show.slug}`}
-                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale), formatTicketPrice(show, locale)]
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale), priceLabel(formatTicketPrice(show, locale))]
                     .filter(Boolean)
                     .join(' · ')}
                   title={show.title}
-                  trail={showRowTrail(show, now)}
+                  trail={localiseTrail(showRowTrail(show, now))}
                 />
               ))}
             </ul>

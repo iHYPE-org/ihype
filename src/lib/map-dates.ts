@@ -130,19 +130,27 @@ export function shiftMonth(anchor: Date, delta: number): Date {
  * The readout on the picker's own button.
  *
  * Reads the KEYS, not a strip: a calendar can reach any date, so there is no
- * known list to filter. The empty case still matters and still says "Any day" —
- * the picker is a filter, and an unset filter is not an empty result.
+ * known list to filter. The empty case still matters and still reads "Any day" —
+ * the picker is a filter, and an unset filter is not an empty result. The
+ * WORDS are the component's (`MapDatePicker` translates the three shapes);
+ * this returns the shape, because a sentence built here is English in every
+ * locale.
  *
  * One day is named in full because that is the useful thing to see. More than
  * one is counted rather than listed: three dates do not fit the button, and a
  * range would claim the days between, which the set semantics explicitly do not
  * include (a Friday and a Sunday with nothing between them is legal).
  */
-export function describeDayKeys(selected: ReadonlySet<string>, locale: Locale): string {
+export type DaySelectionSummary =
+  | { kind: 'any' }
+  | { kind: 'day'; label: string }
+  | { kind: 'many'; count: number };
+
+export function describeDayKeys(selected: ReadonlySet<string>, locale: Locale): DaySelectionSummary {
   const keys = [...selected].sort();
-  if (keys.length === 0) return 'Any day';
-  if (keys.length === 1) return formatDayKey(keys[0], locale);
-  return `${keys.length} days`;
+  if (keys.length === 0) return { kind: 'any' };
+  if (keys.length === 1) return { kind: 'day', label: formatDayKey(keys[0], locale) };
+  return { kind: 'many', count: keys.length };
 }
 
 /** `Sat, Aug 22` from `2026-08-22`, parsed as a LOCAL date rather than UTC. */
