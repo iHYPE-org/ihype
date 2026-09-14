@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendPushToAllDevices } from '@/lib/notify';
+import { log } from '@/lib/logger';
+import { readList } from '@/lib/read-list';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -11,8 +13,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Shows that just crossed 80% capacity and haven't been alerted yet
-  const shows = await db.show.findMany({
+  // Shows that just crossed 80% capacity and haven't been alerted yet.
+  // The work list goes through `readList()`: caught to `[]` it answered
+  // `{ ok: true, notified: 0 }`, the dispatcher counted the job ok, wrote its
+  // liveness key and sent the heartbeat — a failed read reading as a quiet
+  // night (DESIGN_SYNC row 452). A job that could not read its work failed.
+  const shows = await readList(db.show.findMany({
     where: {
       status: { in: ['SCHEDULED', 'LIVE'] },
       isTicketed: true,
@@ -27,7 +33,11 @@ export async function GET(request: NextRequest) {
       headlinerProfile: { select: { name: true } },
       venueProfile: { select: { city: true } },
     },
-  }).catch(() => []);
+  }));
+  if (shows === null) {
+    log.error('cron/capacity-alerts: could not read the near-capacity shows');
+    return NextResponse.json({ ok: false, error: 'READ_FAILED' }, { status: 500 });
+  }
 
   let notified = 0;
   for (const show of shows) {
