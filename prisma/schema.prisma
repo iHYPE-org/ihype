@@ -130,7 +130,6 @@ model User {
   auditLogs               AuditLog[]
   contentReports          ContentReport[]
   seeds                   Seed[]
-  pageLayout              String[]                 @default([])
   passkeys                Passkey[]
   passkeyBootstrapTokens  PasskeyBootstrapToken[]
   showComments            ShowComment[]
@@ -234,7 +233,6 @@ model Profile {
   tourContent                   String?
   merchContent                  String?
   requestContent                String?
-  recommendContent              String?
   // Artist press kit (JSON: tagline, quotes, achievements, contactEmail)
   // rendered on /artists/[slug]/epk.
   pressKitContent               String?
@@ -244,8 +242,6 @@ model Profile {
   // "Finish setup" prompt should still show. See
   // src/app/api/profile/onboarding-complete/route.ts.
   onboardedAt                   DateTime?
-  pageDraft                     String?
-  pagePublished                 String?
   addressLine1                  String?
   contactInfo                   String?
   hoursText                     String?
@@ -264,7 +260,6 @@ model Profile {
   avatarImage                   String?
   logoImage                     String?
   galleryImage                  String?
-  companionSpriteSheet          String?
   themePreset                   String                      @default("midnight-neon")
   themeFontPreset               String?
   themeAccentTone               String?
@@ -650,7 +645,6 @@ model Show {
   comments               ShowComment[]
   rsvps                  ShowRsvp[]
   attendees              ShowAttendee[]
-  setlistProgress        Json?
   setlistVotes           SetlistVote[]
   moderationStatus       String                 @default("APPROVED")
   featured               Boolean                @default(false)
@@ -718,7 +712,6 @@ model TicketOrder {
   buyerEmail                 String
   quantity                   Int
   status                     TicketOrderStatus      @default(RESERVED)
-  paymentTokenRef            String?
   stripePaymentIntentId      String?                @unique
   affiliatePromoterProfileId String?
   subtotalCents              Int
@@ -1392,7 +1385,6 @@ model SocialPost {
   id          String    @id @default(cuid())
   text        String
   generatedAt DateTime  @default(now())
-  postedAt    DateTime?
   platform    String?
 }
 
