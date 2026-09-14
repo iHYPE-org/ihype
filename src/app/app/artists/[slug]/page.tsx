@@ -1,5 +1,5 @@
 import { showTrailLabel, ticketPriceLabel } from '@/lib/i18n-enum-labels';
-import { formatDate } from '@/lib/format-locale';
+import { formatCalendarDay, formatDate } from '@/lib/format-locale';
 import Link from 'next/link';
 import { getSimilarArtists, type SimilarArtist } from '@/lib/sounds-like';
 import { SimilarArtistsRow } from '@/components/SimilarArtistsRow';
@@ -508,7 +508,7 @@ export default async function MmmArtistPage({
                   date={entry.date}
                   meta={[
                     entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'),
-                    formatDate(locale, entry.date, { weekday: 'long', timeZone: 'UTC' }),
+                    formatCalendarDay(locale, entry.date, { weekday: 'long' }),
                   ].join(' · ')}
                   title={entry.note || (entry.kind === 'TOUR' ? t('artistPane.calendarPlaying', 'Playing') : t('artistPane.calendarOpen', 'Open to book'))}
                   utc

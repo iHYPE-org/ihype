@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatNumber, formatRelativeAge, formatUsd, intlTag } from '@/lib/format-locale';
+import { formatCalendarDay, formatDate, formatNumber, formatRelativeAge, formatUsd, intlTag } from '@/lib/format-locale';
 import { maskComments } from '../../../scripts/lib/mask-comments.mjs';
 
 /**
@@ -110,6 +110,34 @@ describe('format-locale', () => {
     expect(intlTag('xx')).toBe('en-US');
     expect(formatNumber(null, 1000)).toBe('1,000');
     expect(formatDate('', '2026-09-14T20:00:00Z', { month: 'short', ...UTC })).toBe('Sep');
+  });
+});
+
+describe('formatCalendarDay — a day with no time of day', () => {
+  /* `AvailabilityDate.date` is stored at UTC midnight: the artist picks
+     15 March and the row holds 2026-03-15T00:00:00Z. Read in any zone west
+     of Greenwich that instant falls on the 14th (DESIGN_SYNC row 460). */
+  const stored = new Date('2026-03-15T00:00:00.000Z');
+
+  it('reads as the day the artist picked, where a plain format reads the day before', () => {
+    // The defect, stated: one instant, one locale, one option apart.
+    expect(
+      new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', month: 'short', day: 'numeric' }).format(stored),
+    ).toBe('Mar 14');
+    expect(formatCalendarDay('en', stored, { month: 'short', day: 'numeric' })).toBe('Mar 15');
+  });
+
+  it('holds the day whatever options it is given, because the zone is not one of them', () => {
+    expect(formatCalendarDay('en', stored)).toBe('Mar 15, 2026');
+    expect(formatCalendarDay('en', stored, { weekday: 'long' })).toBe('Sunday');
+  });
+
+  it("takes the string the row's JSON carries, like formatDate", () => {
+    expect(formatCalendarDay('en', '2026-03-15T00:00:00.000Z', { month: 'short', day: 'numeric' })).toBe('Mar 15');
+  });
+
+  it('formats in the member locale, like every other figure here', () => {
+    expect(formatCalendarDay('es', stored, { month: 'long', day: 'numeric' })).toBe('15 de marzo');
   });
 });
 

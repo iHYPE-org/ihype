@@ -1,7 +1,7 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatCalendarDay, formatDate, formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   profileDesignPresets,
@@ -770,7 +770,11 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: '0.9375rem', color: 'var(--ink)', fontWeight: 600 }}>
-                              {formatDate(locale, d.date, { year: 'numeric', month: 'short', day: 'numeric' })}
+                              {/* A calendar DAY, stored at UTC midnight — read in the
+                                  viewer's zone this listed the day before the one the
+                                  artist picked, while the public pane read it as UTC
+                                  (DESIGN_SYNC row 460). */}
+                              {formatCalendarDay(locale, d.date)}
                             </span>
                             {/* A row whose kind is missing is a pre-`kind` row, and
                                 the column defaults to AVAILABLE, so that is what it

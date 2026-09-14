@@ -53,6 +53,30 @@ export function formatDate(locale: Locale | string | null | undefined, date: Dat
   return new Intl.DateTimeFormat(intlTag(locale), options).format(value);
 }
 
+/**
+ * A CALENDAR DAY — a date with no time of day, stored at UTC midnight.
+ *
+ * `AvailabilityDate.date` is the one this product holds: the artist picks
+ * 15 March and `new Date('2026-03-15')` stores 2026-03-15T00:00:00Z. Read
+ * back in any zone west of Greenwich that instant falls on the 14th, so a
+ * plain `formatDate` shows the day BEFORE the day the artist chose — which
+ * is exactly what the artist's own editor did while the public pane, three
+ * files away, passed `timeZone: 'UTC'` under a comment explaining why
+ * (DESIGN_SYNC row 460).
+ *
+ * The zone is forced and cannot be passed in: a caller who could override it
+ * is a caller who will, and this is the whole of the rule. An instant — a
+ * scheduled release, a show's start, a payout's moment — is NOT a calendar
+ * day and belongs in `formatDate`, where the member's own zone is right.
+ */
+export function formatCalendarDay(
+  locale: Locale | string | null | undefined,
+  date: Date | string | number,
+  options: Omit<Intl.DateTimeFormatOptions, 'timeZone'> = { year: 'numeric', month: 'short', day: 'numeric' },
+): string {
+  return formatDate(locale, date, { ...options, timeZone: 'UTC' });
+}
+
 export function formatNumber(locale: Locale | string | null | undefined, value: number, options?: Intl.NumberFormatOptions): string {
   return new Intl.NumberFormat(intlTag(locale), options).format(value);
 }
