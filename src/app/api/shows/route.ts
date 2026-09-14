@@ -24,7 +24,6 @@ const PRIVATE_SHOW_COLUMNS = {
   moderationStatus: true,
   cancellationMessage: true,
   productionPlan: true,
-  setlistProgress: true,
   dmcaStatus: true,
   dmcaDeadline: true,
   capacityAlertSentAt: true,

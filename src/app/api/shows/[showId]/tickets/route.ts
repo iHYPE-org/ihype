@@ -428,7 +428,6 @@ export async function POST(
           buyerEmail: user.email?.trim().toLowerCase() ?? '',
           quantity: body.quantity,
           status: TicketOrderStatus.RESERVED,
-          paymentTokenRef: null,
           affiliatePromoterProfileId: affiliatePromoterProfile?.id,
           // What Stripe routed with the charge. buildPayableEntries reads this
           // at capture so it does not write a payable for a share the act has

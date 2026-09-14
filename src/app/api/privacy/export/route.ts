@@ -12,7 +12,6 @@ const OMITTED_EXPORT_KEYS = new Set([
   'stripeCustomerId',
   'stripeConnectAccountId',
   'stripePaymentIntentId',
-  'paymentTokenRef',
   'sessionToken',
   'refresh_token',
   'access_token',
