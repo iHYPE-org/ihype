@@ -75,7 +75,7 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
     '',
     ...lines,
     '',
-    `See more at ${getBaseUrl()}/shows`,
+    `See more at ${getBaseUrl()}/app/map?layer=events`,
     '',
     '— iHYPE'
   ].join('\n');
@@ -102,7 +102,7 @@ async function sendWeeklyDigest(userId: string): Promise<DigestResult> {
           })
           .join('')}
       </ul>
-      <p><a href="${getBaseUrl()}/shows">See more shows →</a></p>
+      <p><a href="${getBaseUrl()}/app/map?layer=events">See more shows →</a></p>
       <p style="color:#5b657a;font-size:12px;">— iHYPE</p>
     </div>
   `;

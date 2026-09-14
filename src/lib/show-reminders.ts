@@ -1,5 +1,5 @@
 import { db } from '@/lib/db';
-import { sendGenericEmail } from '@/lib/mailer';
+import { sendMarketingEmail } from '@/lib/mailer';
 import { recordAuditEvent } from '@/lib/audit';
 import { getBaseUrl } from '@/lib/utils';
 
@@ -65,7 +65,15 @@ export async function sendShowReminders(): Promise<{ sent: number }> {
           '',
           'The iHYPE team'
         ].join('\n');
-        await sendGenericEmail({
+        /* MARKETING, NOT TRANSACTIONAL — this goes to the headliner's
+           FOLLOWERS, not to anyone holding a ticket, so it is exactly the mass
+           path DESIGN_SYNC row 383 means: `sendMarketingEmail` is where the
+           unsubscribe state, `emailBounced`, the footer and the
+           `List-Unsubscribe` header live. Called through `sendGenericEmail`
+           this reminder carried none of them, so a member who used the
+           one-click link kept receiving it and a bounced address was retried
+           every night. */
+        await sendMarketingEmail(user.id, {
           to: user.email,
           subject: `${show.headlinerProfile.name} is playing tomorrow — don't miss it`,
           text,
