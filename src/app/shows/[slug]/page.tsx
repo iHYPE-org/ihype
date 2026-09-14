@@ -767,7 +767,12 @@ export default async function ShowDetailPage({
               <div className="panel showpage-panel" >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h2 style={{ margin: 0 }}>{t('showsSlugPage.recentTicketOrderTotals', 'Recent ticket order totals')}</h2>
-                  <div style={{ display: 'flex', gap: 16 }}>
+                  {/* Wraps, like the row that contains it one line above. Four
+                      organiser links do not fit one 375px line, and a flex row
+                      that cannot wrap squeezes every item to min-content
+                      instead — which is how a 44px-floored link measured 43.3
+                      wide (DESIGN_SYNC row 465). */}
+                  <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                     <Link href={`/app/me/payouts/${show.slug}`} className="meta showpage-ownerlink">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
                     <Link href={`/app/me/shows/${show.slug}/scan`} className="meta showpage-ownerlink">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (

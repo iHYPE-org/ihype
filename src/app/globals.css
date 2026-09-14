@@ -5902,7 +5902,16 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .showpage-ownerlink {
   display: inline-flex;
   align-items: center;
+  /* BOTH dimensions, because a flex item that wraps is narrow, not short.
+     These four links sit in one flex row; at 375px it cannot hold them, so each
+     shrinks to its own min-content width and wraps internally. The shortest
+     label ("Edit event") then measured 43.3x72 — the height floor satisfied and
+     the width missed by 0.7px, which `min-height` alone can never catch.
+     Row 400's reason for flooring only the DOCK's height was that flooring its
+     width gave 980px of row in an 860px window; there is no such conflict in a
+     wrapping column, so the floor is square here (DESIGN_SYNC row 465). */
   min-height: 44px;
+  min-width: 44px;
 }
 .showpage-eyebrow {
   font-family: var(--font-mono);
