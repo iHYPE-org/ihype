@@ -5,6 +5,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { NotificationsList } from '@/components/NotificationsList';
 import { getServerT } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,12 +41,18 @@ export default async function MmmNotificationsPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me/notifications');
 
-  const notifications = await db.notification.findMany({
-    where: { userId: session.user.id },
-    orderBy: { createdAt: 'desc' },
-    take: 50,
-    select: { id: true, type: true, body: true, read: true, link: true, createdAt: true },
-  }).catch(() => []);
+  /* `null` is a FAILED read. A member reaches this page by tapping a
+     notification; the list must never answer "You're all caught up" or "No
+     notifications yet" because the query did not land — those are claims
+     about the member, and the list renders its unavailable sentence instead. */
+  const notifications = await readList(
+    db.notification.findMany({
+      where: { userId: session.user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      select: { id: true, type: true, body: true, read: true, link: true, createdAt: true },
+    }),
+  );
 
   const t = await getServerT();
 
@@ -58,7 +65,8 @@ export default async function MmmNotificationsPage() {
       </header>
       <NotificationsList
         heading={false}
-        initialNotifications={notifications.map((row) => ({
+        loadFailed={notifications === null}
+        initialNotifications={(notifications ?? []).map((row) => ({
           ...row,
           // The component's own type takes a string: it renders through
           // `formatRelativeAge`, and a Date does not survive the server/client boundary

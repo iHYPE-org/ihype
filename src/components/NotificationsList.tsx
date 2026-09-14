@@ -58,7 +58,12 @@ export function NotificationsList({
      pane passing `TicketSaleCard` a `heading` for the same reason (row 338):
      the SURFACE owns the heading, the component takes what is left. */
   heading = true,
-}: { initialNotifications: Notification[]; heading?: boolean }) {
+  /* True when the page's first-page read FAILED. The list then has no rows
+     for a reason that is not "there are none", and the empty state says so —
+     "You're all caught up" over a query that never landed is a claim about
+     the member (DESIGN_SYNC row 408's rule, applied to this surface). */
+  loadFailed = false,
+}: { initialNotifications: Notification[]; heading?: boolean; loadFailed?: boolean }) {
   const { locale, t } = useI18n();
   const [notifications, setNotifications] = useState(initialNotifications);
   const [tab, setTab] = useState<'all' | 'unread'>('all');
@@ -134,7 +139,13 @@ export function NotificationsList({
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <p>{tab === 'unread' ? t('notificationsList.caughtUp', "You're all caught up.") : t('notificationsList.emptyState', 'No notifications yet.')}</p>
+          <p role={loadFailed ? 'status' : undefined}>
+            {loadFailed
+              ? t('notificationsList.unavailable', 'Your notifications could not be loaded just now. Refresh to try again.')
+              : tab === 'unread'
+                ? t('notificationsList.caughtUp', "You're all caught up.")
+                : t('notificationsList.emptyState', 'No notifications yet.')}
+          </p>
         </div>
       ) : (
         filtered.map((n) => {
