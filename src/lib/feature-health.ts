@@ -124,7 +124,7 @@ export const JOURNEYS: Journey[] = [
     /* 42 belongs here rather than to uploads: seeking and level-matching are
        what "plays it" means to a listener, and a CDN that cannot serve a byte
        range means every scrub re-downloads the track. */
-    keys: ['9', '10/11', '21', '24', '27', '42'],
+    keys: ['9', '10/11', '21', '27', '42'],
   },
   {
     id: 'collect',

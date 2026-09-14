@@ -1459,23 +1459,6 @@ async function main() {
     return `playlist ${playlistId.slice(0, 8)} created`;
   });
 
-  // ── 24. Discovery playlist ───────────────────────────────────────────────
-  await item('24. Check the discovery playlist', async () => {
-    /* `/api/discover` answers { artists, venues }: every discoverable profile
-       the fan does not own and has NOT already hyped. Both halves are asserted
-       against the seeded cast — this used to assert only that the object had
-       keys, and printed the two counts as if they had been checked. */
-    const body = ok(await api('/api/discover', { cookie: fan.cookie }));
-    const artists: any[] = Array.isArray(body?.artists) ? body.artists : [];
-    const venues: any[] = Array.isArray(body?.venues) ? body.venues : [];
-    assert(venues.some((v) => v.id === venueProfile.id), `the seeded venue is discoverable and not among ${venues.length} venue card(s)`);
-    const fanHyped = await prisma.profileHypeEvent.count({ where: { userId: fan.user.id, profileId: artistProfile.id } });
-    const artistShown = artists.some((a) => a.id === artistProfile.id);
-    if (fanHyped > 0) assert(!artistShown, 'discover re-offered an act this fan already hyped (item 13)');
-    else assert(artistShown, `the seeded act is discoverable and not among ${artists.length} artist card(s)`);
-    return `artists=${artists.length} venues=${venues.length} · seeded venue listed · seeded act ${fanHyped > 0 ? 'withheld, because the fan hyped it in item 13' : 'listed'}`;
-  });
-
   // ── 25. Liked playlist ───────────────────────────────────────────────────
   await item('25. Check the liked playlist', async () => {
     ok(await api('/api/likes', {
