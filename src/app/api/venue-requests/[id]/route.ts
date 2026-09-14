@@ -43,33 +43,38 @@ export async function PATCH(
       return NextResponse.json({ error: 'Only the venue owner can update this request' }, { status: 403 });
     }
 
-    const updatedRequest = await db.venueConnectionRequest.update({
-      where: { id },
-      data: {
-        status: body.status,
-        respondedAt: new Date()
+    /* The venue booked the ACT, not one fan's row. Every other pending ask
+       for the same act at this venue is answered by the same decision, so it
+       leaves the radar too, and every fan who ticked "tell me if they book
+       them" hears about it. `notifyOnBooking` had been collected since the
+       column existed and read by nothing until 2026-09-01.
+
+       The decision and its cascade are ONE write. Until 2026-09-14 the
+       sibling update was caught to null after this row had flipped, so a
+       failed cascade left the other fans' asks PENDING on the radar of a
+       venue that had already booked the act, told nobody, and answered 200
+       (DESIGN_SYNC row 456). */
+    const sameAct = connectionRequest.artistProfileId
+      ? { artistProfileId: connectionRequest.artistProfileId }
+      : { artistProfileId: null, artistName: { equals: connectionRequest.artistName.trim(), mode: 'insensitive' as const } };
+    const respondedAt = new Date();
+    const updatedRequest = await db.$transaction(async (tx) => {
+      const updated = await tx.venueConnectionRequest.update({
+        where: { id },
+        data: { status: body.status, respondedAt },
+      });
+      if (body.status === 'BOOKED') {
+        await tx.venueConnectionRequest.updateMany({
+          where: { venueProfileId: connectionRequest.venueProfileId, status: 'PENDING', id: { not: id }, ...sameAct },
+          data: { status: 'BOOKED', respondedAt },
+        });
       }
+      return updated;
     });
 
     if (body.status === 'BOOKED') {
-      /* The venue booked the ACT, not one fan's row. Every other pending ask
-         for the same act at this venue is answered by the same decision, so it
-         leaves the radar too, and every fan who ticked "tell me if they book
-         them" hears about it. `notifyOnBooking` had been collected since the
-         column existed and read by nothing until 2026-09-01. */
-      const sameAct = connectionRequest.artistProfileId
-        ? { artistProfileId: connectionRequest.artistProfileId }
-        : { artistProfileId: null, artistName: { equals: connectionRequest.artistName.trim(), mode: 'insensitive' as const } };
-      const siblings = await db.venueConnectionRequest.findMany({
-        where: { venueProfileId: connectionRequest.venueProfileId, status: 'PENDING', id: { not: id }, ...sameAct },
-        select: { id: true },
-      }).catch(() => []);
-      if (siblings.length > 0) {
-        await db.venueConnectionRequest.updateMany({
-          where: { id: { in: siblings.map((row) => row.id) } },
-          data: { status: 'BOOKED', respondedAt: new Date() },
-        }).catch(() => null);
-      }
+      /* Who to tell is a read that only shapes a side effect: a failure here
+         costs notifications, never the booking. */
       const toTell = await db.venueConnectionRequest.findMany({
         where: { venueProfileId: connectionRequest.venueProfileId, status: 'BOOKED', notifyOnBooking: true, ...sameAct },
         select: { requesterId: true },
