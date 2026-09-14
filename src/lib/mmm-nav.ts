@@ -219,6 +219,24 @@ export const MMM_MAP_LAYERS: readonly MmmNavItem[] = [
  * branch for it because there was no such module; without one it would have
  * handed the ticket list ME's panels, and a strip reading "Info · Settings"
  * above a wallet is the kind of wrong that looks deliberate.
+ *
+ * **And that is exactly what every ME SUB-PAGE got, for the same reason one
+ * level down.** ME's own root registers its three sections through
+ * `MmmStations`, and `/app/me/settings`, `/app/me/accessibility` and
+ * `/app/me/info/*` each resolve to a panel — but Payouts, Notifications,
+ * Booking, Profiles, Advertising, the analytics and dashboard pages, the
+ * lineup, the door scanner and a SINGLE TICKET are none of those, so
+ * `panelForPath` answered null and the fallback lit `stations[0]`: Info. 18 of
+ * the 21 ME routes drew a two-pill strip claiming the member was in a section
+ * they were not in, measured. A sub-page is not a section of ME — it is a
+ * destination reached FROM one, which is why it carries `MmmMeRouteBack`
+ * instead. It gets no strip, the same answer TICKETS gets and for the same
+ * reason: there is nothing honest to put in one.
+ *
+ * Do not "fix" this by lighting nothing instead — a strip with two pills and
+ * none lit reads as a control that failed, which is the objection the `active`
+ * resolution above exists to answer. The set is empty, so `MmmSectionStrip`'s
+ * fewer-than-two refusal draws nothing at all.
  */
 export function stationsForPath(
   pathname: string,
@@ -233,6 +251,14 @@ export function stationsForPath(
   }
 
   if (module === 'tickets') return { stations: [], active: '' };
+
+  /* A ME sub-page has no sections of its own and is not one of ME's. The root
+     is excluded because `MmmMe` registers its real set there, and for the
+     frame before that registration lands the panels are a better readout than
+     nothing. */
+  if (module === 'me' && pathname !== `${MMM_BASE}/me` && panelForPath(pathname) === null) {
+    return { stations: [], active: '' };
+  }
 
   const stations: readonly MmmNavItem[] = module === 'music' ? MMM_MUSIC_TABS : MMM_ME_PANELS;
   const found = itemForPath(pathname) ?? panelForPath(pathname);

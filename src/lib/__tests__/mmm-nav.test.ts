@@ -257,7 +257,13 @@ describe('stationsForPath', () => {
     expect(stationsForPath(`${MMM_BASE}/me`).active).toBe(MMM_ME_PANELS[0].id);
   });
 
-  it('always names a station that is in the set it returns', () => {
+  /* A drawn set always names one of its own, and an empty set names nothing.
+     Both halves matter: a strip handed an `active` naming no station lights
+     none of them, which reads as a control that failed, and an empty set
+     carrying an `active` would be a section with no pill to sit on.
+     `/app/me/nonsense` is in the empty half now — a ME route resolving to no
+     panel is a sub-page, and a sub-page draws no strip. */
+  it('names a station in the set it returns, or returns no set and no station', () => {
     for (const path of [
       `${MMM_BASE}`,
       `${MMM_BASE}/map`,
@@ -265,10 +271,12 @@ describe('stationsForPath', () => {
       `${MMM_BASE}/music/nonsense`,
       `${MMM_BASE}/me`,
       `${MMM_BASE}/me/nonsense`,
+      `${MMM_BASE}/tickets`,
       `${MMM_BASE}/shows/a-show`,
     ]) {
       const { stations, active } = stationsForPath(path);
-      expect(stations.some((station) => station.id === active)).toBe(true);
+      if (stations.length === 0) expect(active).toBe('');
+      else expect(stations.some((station) => station.id === active)).toBe(true);
     }
   });
 
@@ -288,5 +296,82 @@ describe('stationsForPath', () => {
      that looks deliberate. */
   it('gives TICKETS no sections at all', () => {
     expect(stationsForPath(`${MMM_BASE}/tickets`)).toEqual({ stations: [], active: '' });
+  });
+});
+
+/**
+ * No ME route may draw a strip that lights a section the member is not in.
+ *
+ * ME is the one module whose sub-pages outnumber its sections. Its root
+ * registers three through `MmmStations`; `/app/me/settings`,
+ * `/app/me/accessibility` and `/app/me/info/*` resolve to a panel. Everything
+ * else under `/app/me` — Payouts, Notifications, Booking, Profiles,
+ * Advertising, the analytics and dashboard pages, the lineup, the door
+ * scanner, a single ticket — is a destination reached FROM ME, and
+ * `panelForPath` rightly answers null for all of them. The fallback then lit
+ * `stations[0]`, so eighteen of the twenty-one routes drew "Info · Settings"
+ * with **Info** lit over a page that was neither.
+ *
+ * Derived from the route directories rather than hand-listed, for the reason
+ * the detail-prefix test above is: the hand-listed version is what goes stale,
+ * and a new sub-page under `/app/me` is exactly the change that would
+ * reintroduce this one route at a time.
+ */
+describe('a ME route never lights a section the member is not in', () => {
+  /** Every `page.tsx` under `src/app/app/me`, as a concrete pathname. */
+  function meRoutes(dir: string, prefix: string): string[] {
+    const found: string[] = [];
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'page.tsx') found.push(prefix);
+      if (!entry.isDirectory()) continue;
+      // A dynamic segment stands for a real one; any value resolves the same.
+      const segment = entry.name.startsWith('[') ? 'x' : entry.name;
+      found.push(...meRoutes(`${dir}/${entry.name}`, `${prefix}/${segment}`));
+    }
+    return found;
+  }
+
+  const routes = meRoutes('src/app/app/me', `${MMM_BASE}/me`);
+
+  it('finds the ME routes, so a move cannot empty this into a pass', () => {
+    expect(routes.length).toBeGreaterThan(10);
+  });
+
+  it.each(routes)('%s draws its own panel or no strip at all', (route) => {
+    const { stations, active } = stationsForPath(route);
+    if (stations.length === 0) {
+      expect(active).toBe('');
+      return;
+    }
+    /* A drawn strip must name where the member actually is. The root is the
+       one route whose answer comes from the registration instead, and its
+       fallback is the panel list — so it is allowed to light the first. */
+    if (route === `${MMM_BASE}/me`) return;
+    expect(active).toBe(panelForPath(route));
+  });
+
+  it('draws no strip on the pages that are destinations rather than sections', () => {
+    for (const route of [
+      `${MMM_BASE}/me/payouts`,
+      `${MMM_BASE}/me/notifications`,
+      `${MMM_BASE}/me/profiles`,
+      `${MMM_BASE}/me/booking`,
+      `${MMM_BASE}/me/tickets/T-1`,
+      `${MMM_BASE}/me/shows/a-show/scan`,
+    ]) {
+      expect(stationsForPath(route).stations).toEqual([]);
+    }
+  });
+
+  it('still draws the panels where a panel is what the member is in', () => {
+    for (const [route, panel] of [
+      [`${MMM_BASE}/me/settings`, 'settings'],
+      [`${MMM_BASE}/me/accessibility`, 'settings'],
+      [`${MMM_BASE}/me/info/charter`, 'info'],
+    ] as const) {
+      const { stations, active } = stationsForPath(route);
+      expect(stations).toEqual(MMM_ME_PANELS);
+      expect(active).toBe(panel);
+    }
   });
 });
