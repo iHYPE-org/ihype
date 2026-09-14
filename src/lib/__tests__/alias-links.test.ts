@@ -183,6 +183,55 @@ describe('redirect aliases', () => {
     expect(hits, `\n${hits.join('\n')}\n`).toEqual([]);
   });
 
+  /**
+   * The complement: every literal link resolves to SOMETHING — a page, a route
+   * handler, a file in public/, or (for the wild-URL cases the tests above
+   * govern) a redirect. Row 412 found three emails linking to routes with no
+   * page; nothing in the repository asked the question of the components. The
+   * first run read 0 unresolved across 251 files and 296 routes (row 418), so
+   * this is a gate from day one.
+   */
+  it('links only to a route that exists', () => {
+    const routes = walkAll('src/app', /^(page|route)\.tsx?$/).map((file) =>
+      file.replace(/^src\/app/, '').replace(/\/(page|route)\.tsx?$/, '').split('/').filter((seg) => !/^\(.*\)$/.test(seg) && !seg.startsWith('@')).join('/') || '/'
+    );
+    expect(routes.length, 'too few routes collected').toBeGreaterThan(100);
+    /* Segment by segment: a literal must match a literal, and a `[param]` on
+       the route or a `${…}` on the link matches anything, because a link like
+       `/app/${kind}/${slug}` is a link to whichever of `/app/artists/[slug]`
+       and `/app/venues/[slug]` the code picks at runtime. A `[...rest]` on
+       the route swallows the remainder. */
+    const routeSegments = routes.map((route) => route.split('/').filter(Boolean));
+    const compatible = (link: string[], route: string[]): boolean => {
+      for (let i = 0; i < Math.max(link.length, route.length); i += 1) {
+        const r = route[i];
+        if (r !== undefined && /^\[\.\.\./.test(r)) return link.length > i;
+        const l = link[i];
+        if (l === undefined || r === undefined) return false;
+        if (l === SEGMENT || /^\[.*\]$/.test(r) || l === r) continue;
+        return false;
+      }
+      return true;
+    };
+    const publicFiles = new Set(walkAll('public', /./).map((file) => file.replace(/^public/, '')));
+    const resolves = (path: string) => {
+      const clean = path.replace(/\/$/, '') || '/';
+      const link = clean.split('/').filter(Boolean);
+      return routeSegments.some((route) => compatible(link, route)) || sources.some((s) => matchesAlias(path, s.source)) || publicFiles.has(clean.replaceAll(SEGMENT, 'x')) || clean.startsWith('/_next/') || clean.startsWith('/cdn/');
+    };
+    const dead: string[] = [];
+    for (const file of files) {
+      const lines = stripComments(readFileSync(file, 'utf8')).split('\n');
+      lines.forEach((line, index) => {
+        for (const { path, text } of linkedPaths(line)) {
+          if (path.startsWith('//')) continue;
+          if (!resolves(path)) dead.push(`${file}:${index + 1}  ${text}  — no page, route handler, public file or redirect answers it`);
+        }
+      });
+    }
+    expect(dead, `\n${dead.join('\n')}\n`).toEqual([]);
+  });
+
   it('is never a page file whose whole body is a redirect()', () => {
     const offenders: string[] = [];
     for (const file of walk('src/app')) {

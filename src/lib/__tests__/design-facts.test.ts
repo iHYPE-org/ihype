@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 
 /**
  * Facts that used to live in prose, asserted here instead.
@@ -102,6 +102,27 @@ describe('design facts', () => {
    * at `/listen`, which is both a redirect and the single destination the route
    * registry forbids.
    */
+  const isRedirectSource = (path: string): boolean => {
+    const config = readFileSync('next.config.mjs', 'utf8');
+    const start = config.indexOf('redirects()');
+    const rest = config.slice(start);
+    const end = rest.search(/\n\s*(async\s+)?(headers|rewrites)\s*\(\)/);
+    return [...rest.slice(0, end).matchAll(/source:\s*'([^']+)'/g)].some(([, source]) => source === path);
+  };
+  const isPageRoute = (path: string): boolean => {
+    const walkPages = (dir: string): string[] =>
+      readdirSync(dir).flatMap((name) => {
+        const full = `${dir}/${name}`;
+        return statSync(full).isDirectory() ? walkPages(full) : name === 'page.tsx' ? [full] : [];
+      });
+    const pages = walkPages('src/app');
+    return pages.some((file) => {
+      const route = file.replace(/^src\/app/, '').replace(/\/page\.tsx$/, '') || '/';
+      const pattern = new RegExp(`^${route.split('/').map((seg) => (/^\[\.\.\./.test(seg) ? '.+' : /^\[.*\]$/.test(seg) ? '[^/]+' : seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('/')}$`);
+      return pattern.test(path);
+    });
+  };
+
   it('never points a manifest shortcut at a retired route', () => {
     const manifest = JSON.parse(readFileSync('public/manifest.json', 'utf8')) as {
       shortcuts?: Array<{ url: string }>;
@@ -112,6 +133,13 @@ describe('design facts', () => {
       for (const dead of retired) {
         expect(shortcut.url.startsWith(dead), `shortcut points at ${shortcut.url}`).toBe(false);
       }
+      /* A shortcut is a link the product ships, not one in the wild, so the
+         row-415 rule applies: it names a PAGE, never a redirects() alias. The
+         "My tickets" shortcut pointed at `/tickets` — a hop into `/app/tickets`
+         on every long-press of the icon — until 2026-09-14 (row 418). */
+      const path = shortcut.url.replace(/[?#].*$/, '');
+      expect(isRedirectSource(path), `shortcut ${shortcut.url} is a redirects() alias; name the page it lands on`).toBe(false);
+      expect(isPageRoute(path), `shortcut ${shortcut.url} resolves to no page.tsx`).toBe(true);
     }
     expect(manifest.start_url.startsWith('/')).toBe(true);
   });
