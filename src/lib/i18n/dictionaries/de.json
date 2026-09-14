@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ Neue Seite",
   "pagesHome.noConnectionsMatch": "Keine Kontakte gefunden.",
   "pagesHome.noPagesYet": "Noch keine Seiten",
-  "pagesHome.noPagesYetSub": "Erstelle eine Künstler-, Location- oder Promoter-Seite, um loszulegen.",
+  "pagesHome.noPagesYetHint": "Erstelle eine Künstler- oder Location-Seite, um loszulegen.",
   "pagesHome.noResultsFor": "Keine Ergebnisse für",
   "pagesHome.noSuggestionsMatch": "Keine Vorschläge gefunden.",
   "pagesHome.pageCreatedSuffix": "Seite erstellt — in deinem Konto gespeichert. Bearbeite sie unten.",

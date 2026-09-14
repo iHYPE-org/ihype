@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ Новая страница",
   "pagesHome.noConnectionsMatch": "Нет подходящих контактов.",
   "pagesHome.noPagesYet": "Страниц пока нет",
-  "pagesHome.noPagesYetSub": "Создайте страницу артиста, площадки или промоутера, чтобы начать.",
+  "pagesHome.noPagesYetHint": "Создайте страницу артиста или площадки, чтобы начать.",
   "pagesHome.noResultsFor": "Нет результатов по запросу",
   "pagesHome.noSuggestionsMatch": "Нет подходящих рекомендаций.",
   "pagesHome.pageCreatedSuffix": "страница создана — сохранена в вашем аккаунте. Отредактируйте её ниже.",

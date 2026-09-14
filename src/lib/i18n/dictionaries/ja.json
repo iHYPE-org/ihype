@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ 新しいページ",
   "pagesHome.noConnectionsMatch": "一致するつながりはありません。",
   "pagesHome.noPagesYet": "ページはまだありません",
-  "pagesHome.noPagesYetSub": "アーティスト、会場、プロモーターのページを作成して始めましょう。",
+  "pagesHome.noPagesYetHint": "まずアーティストまたは会場のページを作成してください。",
   "pagesHome.noResultsFor": "の結果はありません",
   "pagesHome.noSuggestionsMatch": "一致する候補はありません。",
   "pagesHome.pageCreatedSuffix": "ページを作成しました — アカウントに保存済みです。下で編集できます。",

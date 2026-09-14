@@ -1799,7 +1799,7 @@
   "pagesHome.newPage": "+ 新建主页",
   "pagesHome.noConnectionsMatch": "没有匹配的联系人。",
   "pagesHome.noPagesYet": "还没有主页",
-  "pagesHome.noPagesYetSub": "创建一个艺人、场地或主办方主页即可开始。",
+  "pagesHome.noPagesYetHint": "创建一个艺人或场地页面即可开始。",
   "pagesHome.noResultsFor": "未找到相关结果：",
   "pagesHome.noSuggestionsMatch": "没有匹配的推荐。",
   "pagesHome.pageCreatedSuffix": "主页已创建 — 已保存到你的账户。可在下方编辑。",
