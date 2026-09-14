@@ -1082,6 +1082,12 @@ model NotificationPreference {
   id              String   @id @default(cuid())
   userId          String   @unique
   newShows        Boolean  @default(true)
+  /// No journal exists and nothing sends against this. Its Settings row was
+  /// removed 2026-09-14 (DESIGN_SYNC row 462) and it left the mute quorum with
+  /// it — a `true` default on a switch the member cannot see would otherwise
+  /// keep marketing mail flowing after they turned off everything they CAN
+  /// see. One-click unsubscribe still writes it false. Kept, unread, so the
+  /// row can come back with a journal; restore both together or neither.
   journalPosts    Boolean  @default(true)
   milestones      Boolean  @default(true)
   weeklyDigest    Boolean  @default(true)

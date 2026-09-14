@@ -16,7 +16,7 @@ export async function GET() {
       isEighteenOrOlder: true, emailVerified: true, stripeCustomerId: true,
       notificationPreference: {
         select: {
-          newShows: true, journalPosts: true, milestones: true, weeklyDigest: true,
+          newShows: true, milestones: true, weeklyDigest: true,
           crateUploads: true, bookingRequests: true,
         },
       },
@@ -72,7 +72,7 @@ export async function PATCH(req: Request) {
     attestEighteenOrOlder?: boolean;
     discoverable?: boolean;
     notificationPreference?: {
-      newShows: boolean; journalPosts: boolean; milestones: boolean; weeklyDigest: boolean;
+      newShows: boolean; milestones: boolean; weeklyDigest: boolean;
       crateUploads?: boolean; bookingRequests?: boolean;
     };
   };
@@ -110,15 +110,18 @@ export async function PATCH(req: Request) {
   }
 
   if (body.notificationPreference) {
-    const { newShows, journalPosts, milestones, weeklyDigest, crateUploads, bookingRequests } = body.notificationPreference;
+    const { newShows, milestones, weeklyDigest, crateUploads, bookingRequests } = body.notificationPreference;
+    /* `journalPosts` is deliberately neither read nor written: its row is gone
+       and nothing sends against it, so a stored value stays exactly as the
+       member last left it and a new row takes the column's default. */
     await db.notificationPreference.upsert({
       where: { userId: session.user.id },
       create: {
-        userId: session.user.id, newShows, journalPosts, milestones, weeklyDigest,
+        userId: session.user.id, newShows, milestones, weeklyDigest,
         crateUploads: crateUploads ?? true, bookingRequests: bookingRequests ?? true,
       },
       update: {
-        newShows, journalPosts, milestones, weeklyDigest,
+        newShows, milestones, weeklyDigest,
         ...(crateUploads !== undefined && { crateUploads }),
         ...(bookingRequests !== undefined && { bookingRequests }),
       },

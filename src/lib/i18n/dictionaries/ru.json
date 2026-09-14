@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "Удалить IP и местоположение из журнала активности сейчас (автоматически через 30 дней)",
   "settingsPage.identityDetachmentLabel": "Досрочная отвязка личности",
   "settingsPage.imEighteen": "Мне 18 лет или больше",
-  "settingsPage.journalPosts": "Записи журнала",
-  "settingsPage.journalPostsDetail": "Новые записи авторов, на которых вы подписаны",
   "settingsPage.loadFailed": "Ваши настройки сейчас не удалось загрузить, поэтому показанное здесь может быть не вашим. Обновите страницу, чтобы попробовать ещё раз — сохранение отключено, пока загрузка не сработает.",
   "settingsPage.loading": "Загрузка…",
   "settingsPage.manage": "Управлять",

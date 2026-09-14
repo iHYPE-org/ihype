@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "Remover IP e localização do seu registro de atividades agora (automático após 30 dias)",
   "settingsPage.identityDetachmentLabel": "Desvinculação antecipada de identidade",
   "settingsPage.imEighteen": "Tenho 18 anos ou mais",
-  "settingsPage.journalPosts": "Posts do diário",
-  "settingsPage.journalPostsDetail": "Novos posts de criadores que você segue",
   "settingsPage.loadFailed": "Suas configurações não puderam ser carregadas agora, então o que aparece aqui pode não ser seu. Atualize a página para tentar novamente — salvar fica desativado até funcionar.",
   "settingsPage.loading": "Carregando…",
   "settingsPage.manage": "Gerenciar",

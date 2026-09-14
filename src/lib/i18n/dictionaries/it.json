@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "Rimuovi ora IP e posizione dal tuo registro attività (automatico dopo 30 giorni)",
   "settingsPage.identityDetachmentLabel": "Scollegamento anticipato dell'identità",
   "settingsPage.imEighteen": "Ho 18 anni o più",
-  "settingsPage.journalPosts": "Post del journal",
-  "settingsPage.journalPostsDetail": "Nuovi post dai creator che segui",
   "settingsPage.loadFailed": "Le tue impostazioni non sono state caricate in questo momento, quindi quanto mostrato qui potrebbe non essere tuo. Aggiorna la pagina per riprovare: il salvataggio è disattivato finché non funziona.",
   "settingsPage.loading": "Caricamento…",
   "settingsPage.manage": "Gestisci",

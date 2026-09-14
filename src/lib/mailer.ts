@@ -119,7 +119,7 @@ export async function sendMarketingEmail(
     select: {
       emailBounced: true,
       notificationPreference: {
-        select: { newShows: true, journalPosts: true, milestones: true, weeklyDigest: true }
+        select: { newShows: true, milestones: true, weeklyDigest: true }
       }
     }
   });
@@ -127,7 +127,14 @@ export async function sendMarketingEmail(
     return { mode: 'skipped', skipped: true };
   }
   const prefs = user.notificationPreference;
-  if (prefs && !prefs.newShows && !prefs.journalPosts && !prefs.milestones && !prefs.weeklyDigest) {
+  /* Every switch in this quorum must be one the member can SEE, or turning off
+     everything on the Settings screen still does not mute them. `journalPosts`
+     was in it and its row is gone (there is no journal and no sender for one,
+     DESIGN_SYNC row 462) — with a `true` default, leaving it here would have
+     made "mute everything" unreachable for every member who had not already
+     found the switch before it was removed. The column is kept, unread, for
+     the day a journal exists again. */
+  if (prefs && !prefs.newShows && !prefs.milestones && !prefs.weeklyDigest) {
     return { mode: 'skipped', skipped: true };
   }
 

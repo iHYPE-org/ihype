@@ -2047,8 +2047,6 @@
   "settingsPage.identityDetachmentDetail": "IP und Standort jetzt aus deinem Aktivitätsprotokoll entfernen (automatisch nach 30 Tagen)",
   "settingsPage.identityDetachmentLabel": "Frühzeitige Identitätslösung",
   "settingsPage.imEighteen": "Ich bin 18 oder älter",
-  "settingsPage.journalPosts": "Journal-Beiträge",
-  "settingsPage.journalPostsDetail": "Neue Beiträge von Creators, denen du folgst",
   "settingsPage.loadFailed": "Deine Einstellungen konnten gerade nicht geladen werden, daher ist das hier Gezeigte möglicherweise nicht deins. Lade die Seite neu, um es erneut zu versuchen — Speichern ist ausgeschaltet, bis es funktioniert.",
   "settingsPage.loading": "Wird geladen…",
   "settingsPage.manage": "Verwalten",
