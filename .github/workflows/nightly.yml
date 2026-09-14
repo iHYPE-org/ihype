@@ -190,6 +190,7 @@ jobs:
       - name: Typecheck, lint and unit tests
         run: |
           npx tsc --noEmit
+          npm run typecheck:scripts
           node scripts/lint-source.mjs
           npm test
 

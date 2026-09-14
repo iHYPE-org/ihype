@@ -105,6 +105,8 @@ jobs:
         run: |
           set -o pipefail
           npm run typecheck 2>&1 | tee typecheck.log
+          # The .mts instruments: tsconfig.json's `**/*.ts` never matched them.
+          npm run typecheck:scripts 2>&1 | tee -a typecheck.log
 
       - name: Upload typecheck diagnostics
         if: always()

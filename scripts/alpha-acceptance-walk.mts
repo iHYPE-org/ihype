@@ -847,7 +847,7 @@ async function main() {
 
     const payables = await prisma.accountsPayableEntry.findMany({ where: { ticketOrderId: order.id } });
     const promoterEntry = payables.find((p) => p.profileId === promoterProfile.id);
-    assert(promoterEntry, `no promoter payable — the HYPE-link 10% was dropped (payables: ${payables.map((p) => `${p.role ?? '?'}:${p.amountCents}`).join(', ')})`);
+    assert(promoterEntry, `no promoter payable — the HYPE-link 10% was dropped (payables: ${payables.map((p) => `${p.category}:${p.amountCents}`).join(', ')})`);
 
     return {
       confirmationCode: code,
@@ -2002,7 +2002,10 @@ async function main() {
     const slugs: string[] = (stations?.stations ?? []).map((entry: any) => entry?.slug).filter(Boolean);
     assert(slugs.length > 0, 'no stations to check');
 
-    let best: { slug: string; rows: any[] } | null = null;
+    /* `null as ...`, not `: ... | null = null` — TypeScript narrows a `null`
+       initialiser to `null` and never widens it for an assignment it cannot
+       see in the same flow, so a later `best?.slug` read as `never`. */
+    let best = null as { slug: string; rows: any[] } | null;
     for (const slug of slugs) {
       const page = ok(await api(`/api/stations/${slug}/tracks?limit=40`, { cookie: fan.cookie }));
       const pageRows: any[] = page?.tracks ?? [];

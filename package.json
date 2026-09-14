@@ -10,6 +10,7 @@
     "guard:design": "node scripts/guard-claude-design.mjs",
     "start": "next start",
     "typecheck": "tsc --noEmit",
+    "typecheck:scripts": "tsc -p tsconfig.scripts.json",
     "lint": "node scripts/lint-source.mjs",
     "guard:migrations": "node scripts/check-gated-migrations.mjs",
     "vendor:ds": "node scripts/vendor-ds-components.mjs",
