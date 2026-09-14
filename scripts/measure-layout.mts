@@ -883,7 +883,7 @@ const seededShow = await seedShowWithTicket({
 ROUTES.push(`/shows/${seededShow.slug}`);
 /* THE TWO SURFACES WHERE MONEY AND ADMISSION ARE READ, both from the same
    seeded show and neither ever measured before 2026-09-14 (DESIGN_SYNC row
-   411). `/app/me/payouts/<slug>` is the 70/20/10 breakdown — 37 inline styles
+   414). `/app/me/payouts/<slug>` is the 70/20/10 breakdown — 37 inline styles
    in 181 lines, the densest by ratio in the shell — and it renders here because
    the fixture sets `creatorId` to the session user, which is the page's gate.
    `/app/me/tickets/<serializedId>` is the QR at the door and the page the
