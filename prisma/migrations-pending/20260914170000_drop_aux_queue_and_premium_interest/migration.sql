@@ -1,0 +1,55 @@
+-- @gated
+--
+-- Drops four tables no code path can put a row into: "AuxQueue", "AuxItem",
+-- "PremiumInterest" and "ArtistJournalPost".
+--
+-- "AuxQueue"/"AuxItem" were the "Passed the Aux" shared crowd queue. The one
+-- writer, `POST /api/aux`, was deleted in the 2026-07-03 dead-code sweep
+-- (DESIGN_SYNC row 108); the public page that READ the queue was kept, and the
+-- tables with it, on the reasoning that a reader made them live (row 109). A
+-- reader cannot fill a table, so from that day the page could only ever
+-- answer 404 for a queue created after it, and the models described a feature
+-- nothing in the product could create. The page, its `/aux/:slug` rewrite and
+-- its dictionary keys are gone in the same change as this file.
+--
+-- "PremiumInterest" lost its only writer, `POST /api/premium/interest`, in the
+-- 2026-07-29 route deletion (commit 49f2ecff). Since then the only statements
+-- naming it were the erasure DELETE and the privacy export, both of which are
+-- also gone in this change.
+--
+-- "ArtistJournalPost" lost its only writer, `/api/journal`, in the 2026-09-05
+-- dead-code audit (#835) — a route nothing had ever called, so no post was
+-- ever written through the product. The follow digest went on SELECTing new
+-- posts every day into a section that was empty by construction; that read,
+-- the export include and the erasure DELETE are gone in this change.
+--
+-- The CODE half is deployed: all four models are out of schema.prisma and
+-- nothing in src/ names them. This file is only the table drop.
+--
+-- Before applying, run against production and RECORD THE NUMBERS HERE, not a
+-- verdict (a verdict cannot be re-checked a week later; the counts can):
+--
+--   SELECT
+--     (SELECT count(*) FROM "AuxQueue")        AS aux_queues,
+--     (SELECT count(*) FROM "AuxItem")         AS aux_items,
+--     (SELECT count(*) FROM "PremiumInterest") AS premium_interest_rows,
+--     (SELECT count(*) FROM "ArtistJournalPost") AS journal_posts;
+--
+-- Rows in any of the four predate the writer's deletion. A non-zero
+-- `premium_interest_rows` is an address somebody typed into a form that no
+-- longer exists and nothing has ever read back: drop it. A non-zero
+-- `aux_queues` is a queue whose share link stopped resolving on merge of the
+-- code half; the page it fed rendered raw media ids as the track list, so
+-- there is nothing to migrate it onto. A non-zero `journal_posts` would be a
+-- row written by hand or by a seed — no product surface has ever listed one.
+-- Record the counts, then `git mv` this
+-- directory into prisma/migrations/ in its own commit.
+--
+-- Rehearsed against a scratch Postgres in a rolled-back transaction: all
+-- four tables present, the drop applied, and re-running it a no-op (IF
+-- EXISTS) with the four relations gone.
+
+DROP TABLE IF EXISTS "AuxItem";
+DROP TABLE IF EXISTS "AuxQueue";
+DROP TABLE IF EXISTS "PremiumInterest";
+DROP TABLE IF EXISTS "ArtistJournalPost";

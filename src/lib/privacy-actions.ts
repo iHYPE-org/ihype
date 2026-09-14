@@ -208,7 +208,6 @@ export async function executeAccountErasure(
     db.showRsvp.deleteMany({ where: { userId } }),
     db.showAttendee.deleteMany({ where: { userId } }),
     db.setlistVote.deleteMany({ where: { userId } }),
-    db.premiumInterest.deleteMany({ where: { userId } }),
     db.showComment.deleteMany({ where: { userId } }),
     db.mediaListen.deleteMany({ where: { userId } }),
     db.showListen.deleteMany({ where: { userId } }),
@@ -318,7 +317,6 @@ export async function executeAccountErasure(
     mediaAssetsDeleted += deletedAssets.count;
 
     await Promise.all([
-      db.artistJournalPost.deleteMany({ where: { profileId: profile.id } }),
       db.setlistTemplate.deleteMany({ where: { profileId: profile.id } }),
       db.availabilityDate.deleteMany({ where: { profileId: profile.id } }),
     ]);

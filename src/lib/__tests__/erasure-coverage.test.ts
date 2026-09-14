@@ -24,7 +24,7 @@ import { readFileSync } from 'node:fs';
 const ERASED = new Set([
   'Session', 'Account', 'Passkey', 'PasskeyBootstrapToken', 'MagicLinkToken', 'PasswordResetCode',
   'PushSubscription', 'NativeDeviceToken', 'Notification', 'NotificationPreference', 'Seed',
-  'FanFavoriteMedia', 'FanPlaylist', 'ShowRsvp', 'ShowAttendee', 'SetlistVote', 'PremiumInterest',
+  'FanFavoriteMedia', 'FanPlaylist', 'ShowRsvp', 'ShowAttendee', 'SetlistVote',
   'ShowComment', 'MediaListen', 'ShowListen', 'Badge', 'BookingRequest',
   'AdvertiserAccount',
 ]);
@@ -53,7 +53,6 @@ const RECORDED_GAPS = new Map<string, string>([
   ['CommentReaction', 'the comments themselves ARE deleted, so these are already orphans'],
   ['FeatureVote', 'the roadmap board counts votes; erasing one changes a public tally'],
   ['FeatureRequest', 'the request text may be the only record of an idea others voted on'],
-  ['AuxQueue', 'a crowd queue entry, personal and short-lived — probably erase'],
   ['AdImpression', 'the once-per-listener-per-day dedup key; deleting it lets an advertiser be charged twice for the same person'],
   ['InviteCode', 'usedByUserId records who claimed an invite; unlink rather than delete, or the code reads unused'],
   ['AdminDevice', 'a registered admin device; only ever exists for an administrator'],

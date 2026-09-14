@@ -135,7 +135,6 @@ model User {
   passkeyBootstrapTokens  PasskeyBootstrapToken[]
   showComments            ShowComment[]
   showRsvps               ShowRsvp[]
-  premiumInterests        PremiumInterest[]
   notificationPreference  NotificationPreference?
   follows                 Follow[]                 @relation("FollowerUser")
   notifications           Notification[]
@@ -317,7 +316,6 @@ model Profile {
   issuedTickets                 Ticket[]                    @relation("VenueIssuedTickets")
   affiliateTicketOrders         TicketOrder[]               @relation("AffiliatePromoterTicketOrders")
   accountsPayableEntries        AccountsPayableEntry[]
-  journalPosts                  ArtistJournalPost[]
   followers                     Follow[]                    @relation("FollowedProfile")
   setlistTemplates              SetlistTemplate[]
   nowPlaying                    String?
@@ -1087,29 +1085,6 @@ model ShowRsvp {
   @@unique([showId, userId])
 }
 
-model ArtistJournalPost {
-  id        String    @id @default(cuid())
-  profileId String
-  title     String
-  content   String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
-  profile   Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
-
-  @@index([profileId, createdAt])
-}
-
-model PremiumInterest {
-  id        String   @id @default(cuid())
-  userId    String?
-  email     String
-  createdAt DateTime @default(now())
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-
-  @@index([createdAt])
-}
-
 model NotificationPreference {
   id              String   @id @default(cuid())
   userId          String   @unique
@@ -1359,28 +1334,6 @@ model FeatureVote {
   @@unique([featureRequestId, userId])
   @@index([userId, createdAt])
   @@index([featureRequestId, createdAt])
-}
-
-model AuxQueue {
-  id        String    @id @default(cuid())
-  userId    String
-  name      String
-  slug      String    @unique
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  items     AuxItem[]
-
-  @@index([userId])
-}
-
-model AuxItem {
-  id       String   @id @default(cuid())
-  queueId  String
-  mediaId  String
-  position Int
-  queue    AuxQueue @relation(fields: [queueId], references: [id], onDelete: Cascade)
-
-  @@index([queueId])
 }
 
 /// An alpha/beta access request from the landing page's request form.

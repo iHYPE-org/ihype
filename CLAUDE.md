@@ -522,7 +522,7 @@ item, not an oversight — do not treat a marketing page's spacing as drift.
 | /copyright | src/app/copyright/page.tsx | Copyright policy |
 | /dmca | src/app/dmca/page.tsx | DMCA takedown process |
 | /ticket-policy | src/app/ticket-policy/page.tsx | Ticket refund/transfer policy |
-| /aux-queue/[slug] | src/app/aux-queue/[slug]/page.tsx | Shared crowd-queue for a show/venue |
+| /aux/[slug] · /aux-queue/[slug] | **retired 2026-09-14 — no file, no rewrite** | The "Passed the Aux" shared-queue page. Its only writer (`/api/aux`) went in the 2026-07-03 dead-code sweep (DESIGN_SYNC row 108) and row 109 then KEPT the two tables because this page read them — so for ten weeks a public route could only ever 404, and the correction protected the reader of a table nothing could fill. `AuxQueue`/`AuxItem`/`PremiumInterest`/`ArtistJournalPost` (the last read daily by the follow digest into a section empty by construction, its writer deleted in #835) are out of the schema with a parked drop; `model-writers.test.ts` refuses a model no code path creates rows in (row 444). |
 | /app/me/shows/[slug]/lineup | `src/app/app/me/shows/[slug]/lineup/page.tsx` | Lineup & Split Agreement (LineupSplit.dc.html) — venue proposes a multi-act split of the artist share, each act accepts/declines; booking locks (DRAFT→SCHEDULED) once everyone accepts |
 | /h/[code] | `src/app/h/[code]/route.ts` — a ROUTE HANDLER, not a page | Short HYPE Link redirect — records the click, hands off to `/register?ref=` |
 | /invite/[code] | src/app/invite/[code]/page.tsx | Invite-code landing page |
