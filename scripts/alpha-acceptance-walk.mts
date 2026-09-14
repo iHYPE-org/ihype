@@ -1282,9 +1282,21 @@ async function main() {
     const slug = stations?.defaultStationSlug ?? list[0]?.slug;
     assert(slug, 'no default station slug');
     const tracks = ok(await api(`/api/stations/${slug}/tracks`, { cookie: fan.cookie }));
-    const trackList: any[] = tracks?.tracks ?? tracks?.items ?? [];
-    const playable = trackList.filter((t) => t.mediaUrl || t.url || t.storageUrl);
-    return `${list.length} station(s); "${slug}" served ${trackList.length} item(s), ${playable.length} with audio`;
+    /* The route answers { tracks } of StationTrack — hexId, mediaUrl, and an
+       adClipId on a break. This item used to print the two counts below and
+       assert neither, so "Listen to radio" passed on a station that served
+       nothing to listen to. The fan hyped the seeded act in item 13 and the
+       default station is the fan's own, so the seeded track has to be in it;
+       every music row has to carry audio, or the player lists a track it
+       cannot start. */
+    const trackList: any[] = Array.isArray(tracks?.tracks) ? tracks.tracks : [];
+    assert(trackList.length > 0, `the default station "${slug}" served nothing`);
+    const music = trackList.filter((t) => !t.adClipId);
+    const playable = music.filter((t) => typeof t.mediaUrl === 'string' && t.mediaUrl.length > 0);
+    assert(playable.length === music.length, `${music.length - playable.length} of ${music.length} track(s) on "${slug}" carry no audio`);
+    assert(trackList.some((t) => t.hexId === mediaHexId || t.id === mediaId),
+      `the fan hyped the seeded act in item 13 and "${slug}" does not play its track (${trackList.length} row(s))`);
+    return `${list.length} station(s); "${slug}" served ${trackList.length} row(s), every track with audio, the seeded track among them`;
   });
 
   // ── 22. Listen to an ad ──────────────────────────────────────────────────
