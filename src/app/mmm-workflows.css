@@ -573,3 +573,34 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   gap: 8px;
 }
 .adbuild-accent { color: var(--accent-text); }
+
+/* ── Edit event (/app/me/shows/[slug]/edit, DESIGN_SYNC row 446) ──────────
+   Three fields in the event creator's own `.field` dress, the shell's two
+   button classes for the actions. No design covers an edit form; the creator
+   is the design for these inputs, so nothing here restates a control. */
+.show-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  max-width: 560px;
+}
+.show-edit-form textarea {
+  min-height: 132px;
+  resize: vertical;
+}
+.show-edit-note {
+  margin: 8px 0 0;
+  font-size: 0.9375rem;
+  color: var(--ink-2);
+}
+.show-edit-error {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--accent-text);
+}
+.show-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
+}

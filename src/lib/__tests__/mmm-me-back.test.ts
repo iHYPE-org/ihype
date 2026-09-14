@@ -35,6 +35,7 @@ describe('MMM Me subpage backstop', () => {
       '/app/me/venues/example/calendar',
       '/app/me/venues/example/booking-inbox',
       '/app/me/shows/example/lineup',
+      '/app/me/shows/example/edit',
     ]) expect(mmmMeBackTarget(path), path).toBeNull();
   });
 
