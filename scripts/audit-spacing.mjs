@@ -73,6 +73,9 @@ function stripComments(source) {
 const CSS_PROP = /(?:margin|padding|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block|inline-start|inline-end|block-start|block-end))?/;
 const JSX_PROP = /(?:margin|padding|gap|rowGap|columnGap)(?:Top|Right|Bottom|Left|Inline|Block)?/;
 
+/** How many files the scan actually opened — printed beside the verdict. */
+let filesScanned = 0;
+
 /** Every rhythm literal in the repo, with where it came from. */
 function collect() {
   const hits = [];
@@ -80,6 +83,14 @@ function collect() {
     ...globSync('src/**/*.css'),
     ...globSync('src/**/*.tsx'),
   ].map((f) => f.split(path.sep).join('/')).sort();
+  filesScanned = files.length;
+
+  /* Over an empty tree this reported "Near-miss total 0, within the baseline"
+     and passed (2026-09-14). A ratchet that read nothing has measured nothing. */
+  if (files.length === 0) {
+    console.error('audit:spacing read 0 file(s) under src/ — it is scanning nothing. Check the glob and the cwd.');
+    process.exit(2);
+  }
 
   for (const file of files) {
     if (EXEMPT_PATH.some((x) => file.includes(x))) continue;
@@ -224,7 +235,7 @@ if (MAX !== null && nearMiss > MAX) {
   process.exit(1);
 }
 if (MAX !== null) {
-  console.log(`Near-miss total ${nearMiss}, within the baseline of ${MAX}. Pre-existing debt, not a clean bill of health.`);
+  console.log(`Near-miss total ${nearMiss} across ${filesScanned} file(s), within the baseline of ${MAX}. Pre-existing debt, not a clean bill of health.`);
 } else {
   console.log('Advisory run — pass --max=N to ratchet the near-miss total.');
 }

@@ -50,6 +50,14 @@ const CSS_FILES = globSync('src/**/*.css')
   .map((file) => file.replaceAll('\\', '/'))
   .sort();
 
+/* A gate at zero has to say what it measured, or its pass is indistinguishable
+   from its absence: with the stylesheets renamed or the glob broken this script
+   printed "No selector is silently overridden" over nothing (2026-09-14). */
+if (CSS_FILES.length === 0) {
+  console.error('audit:css read 0 stylesheet(s) under src/ — it is scanning nothing. Check the glob and the cwd.');
+  process.exit(2);
+}
+
 /**
  * `mmm-primitives.css` is exempt from the OVERRIDE check by design: its entire
  * purpose is to alias many legacy class names onto one primitive, so the same
@@ -239,7 +247,7 @@ for (const file of CSS_FILES) {
 }
 
 console.log('\n' + '─'.repeat(64));
-console.log(`overriding redefinitions: ${overrideCount}   comments inside selectors: ${splitSelectorCount}   dead classes: ${deadCount} (advisory)`);
+console.log(`overriding redefinitions: ${overrideCount}   comments inside selectors: ${splitSelectorCount}   dead classes: ${deadCount} (advisory)   — ${CSS_FILES.length} stylesheet(s) read`);
 
 /* Unconditional, and not part of the --max ratchet: this is never pre-existing
    debt to be paid down, it is a rule that does not do what it says. */
