@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { createAlphaDiagnostics } from '@/lib/alpha-diagnostics';
+import { supportCategoryLabel } from '@/lib/i18n-enum-labels';
 
 async function postSupportRequest(body: unknown) {
   const response = await fetch('/api/support', {
@@ -21,14 +22,14 @@ async function postSupportRequest(body: unknown) {
 
 // Design's category labels, mapped to the backend's fixed `type` enum
 // (src/app/api/support/route.ts) since there's no per-category schema change here.
-const CATEGORIES: { label: string; labelKey: string; type: string }[] = [
-  { label: 'Ticket issue', labelKey: 'supportForm.categoryTicketIssue', type: 'ticketing' },
-  { label: 'Payment / Payout', labelKey: 'supportForm.categoryPaymentPayout', type: 'general' },
-  { label: 'Account / Login', labelKey: 'supportForm.categoryAccountLogin', type: 'login' },
-  { label: 'Verification', labelKey: 'supportForm.categoryVerification', type: 'verification' },
-  { label: 'Privacy / Data', labelKey: 'supportForm.categoryPrivacyData', type: 'privacy' },
-  { label: 'Bug report', labelKey: 'supportForm.categoryBugReport', type: 'general' },
-  { label: 'Other', labelKey: 'supportForm.categoryOther', type: 'general' },
+const CATEGORIES: { label: string; type: string }[] = [
+  { label: 'Ticket issue', type: 'ticketing' },
+  { label: 'Payment / Payout', type: 'general' },
+  { label: 'Account / Login', type: 'login' },
+  { label: 'Verification', type: 'verification' },
+  { label: 'Privacy / Data', type: 'privacy' },
+  { label: 'Bug report', type: 'general' },
+  { label: 'Other', type: 'general' },
 ];
 
 const CATEGORY_FOR_TYPE: Record<string, string> = {
@@ -94,7 +95,7 @@ export function SupportForm({ alphaModule, initialType = 'general', initialSubje
         <select onChange={(event) => setCategory(event.target.value)} value={category}>
           <option value="">{t('supportForm.selectTopicPlaceholder', 'Select a topic…')}</option>
           {CATEGORIES.map((c) => (
-            <option key={c.label} value={c.label}>{t(c.labelKey, c.label)}</option>
+            <option key={c.label} value={c.label}>{supportCategoryLabel(t, c.label)}</option>
           ))}
         </select>
       </label>

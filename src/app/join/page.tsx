@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
+import { joinRoleHelp, joinRoleLabel } from '@/lib/i18n-enum-labels';
 
 export const metadata: Metadata = {
   title: 'Join iHYPE',
@@ -34,11 +35,11 @@ export default async function JoinChooserPage() {
         {t('joinPage.subheading', "Fans, Artists, and Venues build the scene. Music-only Advertisers use a private campaign account. Pick the role that fits you.")}
       </p>
       <div className="join-grid">
-        {ROLES.map((r, i) => (
+        {ROLES.map((r) => (
           <Link className="join-card" href={r.href} key={r.label} style={{ ['--jc-color' as string]: r.color }}>
             <span aria-hidden="true" className="join-card-icon">{r.icon}</span>
-            <span className="join-card-label">{t(`joinPage.roleLabel${i}`, r.label)}</span>
-            <span className="join-card-help">{t(`joinPage.roleHelp${i}`, r.help)}</span>
+            <span className="join-card-label">{joinRoleLabel(t, r.label)}</span>
+            <span className="join-card-help">{joinRoleHelp(t, r.help)}</span>
           </Link>
         ))}
       </div>

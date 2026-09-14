@@ -9,6 +9,7 @@ import {
 import { useI18n } from '@/components/I18nProvider';
 import { MmmSegmentedTabs } from '@/components/mmm/MmmSegmentedTabs';
 import { LOCALE_NAMES, SUPPORTED_LOCALES } from '@/lib/i18n/locales';
+import { themeLabel } from '@/lib/i18n-enum-labels';
 
 /**
  * The Accessibility route from the app-shell handoff — four cards, each of
@@ -83,7 +84,7 @@ export function MmmAccessibilitySettings() {
               /* 'console' is the stored id of the DEFAULT theme and stays so saved
                  preferences keep resolving; since 2026-09-05 the default is the
                  Apple Music light look, so its label says what it is. */
-              label: t(`appShell.a11y.theme_${name}`, name === 'console' ? 'Light' : name[0].toUpperCase() + name.slice(1)),
+              label: themeLabel(t, name),
               active: settings.theme === name,
               onSelect: () => updateSetting('theme', name),
             }))}

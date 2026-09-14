@@ -2,11 +2,12 @@
 
 import { useState, type ReactNode } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { showTabLabel } from '@/lib/i18n-enum-labels';
 
 const TABS = [
-  { id: 'about', labelKey: 'showTabs.about', label: 'About' },
-  { id: 'lineup', labelKey: 'showTabs.lineup', label: 'Lineup' },
-  { id: 'venue', labelKey: 'showTabs.venue', label: 'Venue' },
+  { id: 'about', label: 'About' },
+  { id: 'lineup', label: 'Lineup' },
+  { id: 'venue', label: 'Venue' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
@@ -33,7 +34,7 @@ export function ShowTabs({
             onClick={() => setTab(tabDef.id)}
             type="button"
           >
-            {t(tabDef.labelKey, tabDef.label)}
+            {showTabLabel(t, tabDef.label)}
           </button>
         ))}
       </div>

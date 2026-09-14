@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { useI18n } from '@/components/I18nProvider';
+import { siteTabLabel } from '@/lib/i18n-enum-labels';
 
 const TABS = [
   {
@@ -118,7 +119,7 @@ export function SiteTabBar() {
             style={{ ...tabButtonStyle, color: active === tabDef.id ? 'var(--accent-text)' : 'rgba(240,240,240,0.45)' }}
           >
             {tabDef.icon}
-            <span>{t(`mobileBottomNav.tab.${tabDef.id}`, tabDef.label)}</span>
+            <span>{siteTabLabel(t, tabDef.label)}</span>
           </Link>
         ))}
       </nav>

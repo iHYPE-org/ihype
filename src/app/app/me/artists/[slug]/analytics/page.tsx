@@ -8,6 +8,7 @@ import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import { getServerT } from '@/lib/i18n/server';
 import { describeDemand, scoreVenueDemand } from '@/lib/fan-demand';
+import { analyticsRangeLabel } from '@/lib/i18n-enum-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -250,7 +251,7 @@ export default async function ArtistAnalyticsPage({
       <div className="aa-tabs">
         {RANGES.map((r) => (
           <Link className={r === range ? 'aa-tab active' : 'aa-tab'} href={`/app/me/artists/${profile.slug}/analytics?range=${r}`} key={r}>
-            {t(`artistsSlugAnalyticsPage.range.${r}`, RANGE_LABEL[r])}
+            {analyticsRangeLabel(t, RANGE_LABEL[r])}
           </Link>
         ))}
       </div>

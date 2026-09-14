@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getServerT } from '@/lib/i18n/server';
+import { launchCohortCopy, launchCohortCta, launchCohortTarget, launchCohortTitle, launchSprintCopy, launchSprintDay, launchSprintTitle } from '@/lib/i18n-enum-labels';
 
 export const metadata = {
   title: 'Founding Scene Launch | iHYPE',
@@ -143,7 +144,7 @@ export default async function LaunchPage() {
                     margin: '0 0 0.55rem',
                   }}
                 >
-                  {t(`launchPage.cohortTarget${i}`, cohort.target)}
+                  {launchCohortTarget(t, cohort.target)}
                 </p>
                 <h2
                   style={{
@@ -153,7 +154,7 @@ export default async function LaunchPage() {
                     margin: '0 0 0.65rem',
                   }}
                 >
-                  {t(`launchPage.cohortTitle${i}`, cohort.title)}
+                  {launchCohortTitle(t, cohort.title)}
                 </h2>
                 <p
                   style={{
@@ -163,10 +164,10 @@ export default async function LaunchPage() {
                     margin: '0 0 1rem',
                   }}
                 >
-                  {t(`launchPage.cohortCopy${i}`, cohort.copy)}
+                  {launchCohortCopy(t, cohort.copy)}
                 </p>
                 <Link href={cohort.href} style={{ color: 'var(--accent-text)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>
-                  {t(`launchPage.cohortCta${i}`, cohort.cta)} →
+                  {launchCohortCta(t, cohort.cta)} →
                 </Link>
               </article>
             ))}
@@ -214,11 +215,11 @@ export default async function LaunchPage() {
                   background: 'var(--hair-25)',
                 }}
               >
-                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{t(`launchPage.sprintDay${i}`, day)}</strong>
+                <strong style={{ fontFamily: 'var(--f-m)', color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{launchSprintDay(t, day)}</strong>
                 <div>
-                  <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{t(`launchPage.sprintStepTitle${i}`, title)}</strong>
+                  <strong style={{ fontFamily: 'var(--f-d)', color: 'var(--ink)' }}>{launchSprintTitle(t, title)}</strong>
                   <p style={{ fontFamily: 'var(--f-b)', color: 'var(--ink-2)', margin: '0.25rem 0 0', lineHeight: 1.5 }}>
-                    {t(`launchPage.sprintStepCopy${i}`, copy)}
+                    {launchSprintCopy(t, copy)}
                   </p>
                 </div>
               </div>

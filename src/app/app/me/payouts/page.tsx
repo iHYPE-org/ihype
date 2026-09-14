@@ -8,6 +8,7 @@ import { PayoutsHistoryPanel } from '@/components/payouts/PayoutsHistoryPanel';
 import { PayoutSettingsPanel } from '@/components/payouts/PayoutSettingsPanel';
 import { PayoutShowsPanel } from '@/components/payouts/PayoutShowsPanel';
 import { getServerT } from '@/lib/i18n/server';
+import { payoutTabLabel } from '@/lib/i18n-enum-labels';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,7 +102,7 @@ export default async function PayoutsHubPage({
               borderBottom: tab === tabDef.id ? '2px solid var(--accent)' : '2px solid transparent',
             }}
           >
-            {t(`payoutsPage.tab.${tabDef.id}`, tabDef.label)}
+            {payoutTabLabel(t, tabDef.label)}
           </Link>
         ))}
       </div>

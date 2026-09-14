@@ -7,6 +7,7 @@ import '@/app/marketing.css';
 import Link from 'next/link';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
+import { trustCategoryLabel } from '@/lib/i18n-enum-labels';
 
 // Small categories are folded into "Other" rather than shown with an exact
 // count, so a bucket of e.g. 1-2 reports can never be used to infer which
@@ -51,7 +52,7 @@ export async function TrustSafetyPanel() {
     db.ad.count({ where: { status: 'PENDING' } }),
   ]);
 
-  const categoryLabel = (key: string) => t(`auditPage.category.${key}`, CATEGORY_LABELS[key] ?? key);
+  const categoryLabel = (key: string) => trustCategoryLabel(t, CATEGORY_LABELS[key] ?? key);
 
   const categoryRows = reportsByCategory
     .map((r) => ({ label: categoryLabel(r.targetType), count: r._count._all }))
