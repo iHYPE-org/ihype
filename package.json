@@ -21,6 +21,7 @@
     "audit:unstyled": "node scripts/audit-unstyled-classes.mjs",
     "audit:untranslated": "node scripts/audit-untranslated.mjs --max=0",
     "audit:retired-claims": "node scripts/audit-retired-claims.mjs",
+    "audit:doc-paths": "node scripts/audit-doc-paths.mjs",
     "audit:contrast": "node scripts/audit-theme-contrast.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
     "audit:mounts": "node scripts/audit-mounts.mjs --max=0",
