@@ -573,6 +573,55 @@ test.describe('Music · Map · Me shell', () => {
     expect(removed.ok()).toBe(true);
   });
 
+  /* The deck's own SAVE and HYPE are optimistic too, and until 2026-09-14
+     `act()` never read the response and swallowed the failure — so a save the
+     route refused (404, 429, 500) still read "1 saved" and the card advanced
+     away with nothing in the Discover playlist, and a refused HYPE lit the
+     heart for the rest of the session. The route is forced to 500 here, which
+     is the only way to measure the failure branch on a fixture whose real
+     route answers 200. The RESPONSE is awaited before the DOM is read, because
+     an optimistic control lights first and reverts afterwards. */
+  test('a save the seed route refuses is put back, named, and keeps the card', async ({ page, context }, testInfo) => {
+    /* Its OWN listener, per attempt: the landed save at the end of this test
+       judges the fixture's one card, and a deck shows a member only cards
+       they have not judged — so a retry under the shared listener finds no
+       card and measures the last attempt, not the deck (seen locally). */
+    const session = await applySessionCookie(context, `e2e-mmm-deck-listener-${testInfo.retry}@ihype.org`, { profiles: [] });
+    await seedPlayableStation({ fanUserId: session.user.id });
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.route(/\/api\/discover\/seeds\/[^/]+\/save$/, (route) =>
+      route.fulfill({ status: 500, contentType: 'application/json', body: JSON.stringify({ ok: false }) }),
+    );
+    await page.goto('/app/music/discover');
+
+    const save = page.getByRole('button', { name: /^Save .+ to your Discover playlist$/ });
+    await expect(save).toBeVisible();
+    const before = await save.getAttribute('aria-label');
+    const answered = page.waitForResponse((r) => /\/api\/discover\/seeds\/[^/]+\/save$/.test(r.url()) && r.request().method() === 'POST');
+    await save.click();
+    expect((await answered).status()).toBe(500);
+
+    const note = page.locator('.mmm-deck-note');
+    await expect(note).toHaveText(/did not go through/);
+    await expect(page.locator('.mmm-deck-count')).not.toContainText('saved');
+    /* The same card: a save that did not land must not move on, because
+       moving on loses exactly the track the member asked to keep. */
+    await expect(page.getByRole('button', { name: /^Save .+ to your Discover playlist$/ })).toHaveAttribute('aria-label', before ?? '');
+
+    /* And the control still works once the route does: the note clears and
+       the card moves on. NOT asserted: "1 saved" in the count — the fixture
+       deck holds one card, so a landed save ends the deck and the count line
+       goes with it; the card leaving is the claim a landed save may make.
+       (Measured: the first run of this test asserted the count and failed
+       only there, with every failure-branch assertion above it passing.) */
+    await page.unroute(/\/api\/discover\/seeds\/[^/]+\/save$/);
+    const landed = page.waitForResponse((r) => /\/api\/discover\/seeds\/[^/]+\/save$/.test(r.url()) && r.request().method() === 'POST');
+    await save.click();
+    expect((await landed).status()).toBe(200);
+    await expect(note).toHaveCount(0);
+    await expect(page.getByRole('button', { name: before ?? '' })).toHaveCount(0);
+  });
+
   // The module tab is a route, not state: it must survive a reload and a
   // back-button press, which the prototype's local state did not.
   test('the MUSIC destination is a real route', async ({ page }) => {

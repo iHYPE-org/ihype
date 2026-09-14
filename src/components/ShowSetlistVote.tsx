@@ -25,6 +25,11 @@ export function ShowSetlistVote({
   /* A failed read is not an empty setlist — "No tracks are available to vote
      on yet" is a claim about the show (DESIGN_SYNC row 450). */
   const [loadFailed, setLoadFailed] = useState(false);
+  /* A vote the route refused. The count is moved optimistically and moved
+     back when the answer is not ok; until 2026-09-14 the response was never
+     read, so a refused vote (signed out, rate-limited, 500) stayed counted on
+     the member's screen and on nobody else's (DESIGN_SYNC row 455). */
+  const [voteFailed, setVoteFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -49,9 +54,7 @@ export function ShowSetlistVote({
     };
   }, [showId]);
 
-  async function toggleVote(mediaId: string) {
-    if (!canVote) return;
-    // Optimistic update
+  function flip(mediaId: string) {
     setTracks((prev) =>
       prev.map((t) =>
         t.mediaId === mediaId
@@ -59,11 +62,25 @@ export function ShowSetlistVote({
           : t
       )
     );
-    await fetch(`/api/shows/${showId}/setlist-vote`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mediaId })
-    }).catch(() => {});
+  }
+
+  async function toggleVote(mediaId: string) {
+    if (!canVote) return;
+    // Optimistic update, put back below if the route refuses it.
+    flip(mediaId);
+    let landed = false;
+    try {
+      const res = await fetch(`/api/shows/${showId}/setlist-vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaId })
+      });
+      landed = res.ok;
+    } catch {
+      landed = false;
+    }
+    if (!landed) flip(mediaId);
+    setVoteFailed(!landed);
   }
 
   return (
@@ -126,6 +143,9 @@ export function ShowSetlistVote({
             ))}
           </ul>
         )}
+        {voteFailed ? (
+          <p className="meta" role="status">{t('showSetlistVote.voteDidNotLand', 'That vote did not go through. Try again.')}</p>
+        ) : null}
         {!canVote ? <p className="meta" style={{ marginBottom: 0 }}>{t('showSetlistVote.signInToCastVote', 'Sign in to cast your vote.')}</p> : null}
       </div>
     </section>

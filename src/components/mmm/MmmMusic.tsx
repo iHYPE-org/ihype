@@ -288,6 +288,10 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
   const [busy, setBusy] = useState(false);
   const [savedCount, setSavedCount] = useState(0);
   const [hypedIds, setHypedIds] = useState<Set<string>>(() => new Set());
+  // Which verdict did not land, if any. A save or a HYPE is applied to the
+  // deck optimistically; when the route refuses it the state is put back and
+  // this names what to press again. Cleared by the next verdict that lands.
+  const [failed, setFailed] = useState<'hype' | 'save' | null>(null);
   const { currentTrack, currentTime, isPlaying, playTrack, togglePlayback } = useMediaPlayer();
   const trimmedGenre = genre?.trim() ?? '';
   const trimmedCity = city?.trim() ?? '';
@@ -334,23 +338,45 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
    * playlist. The deck previously offered only hype and skip, so the design's
    * right-hand verdict had no implementation at all.
    *
-   * The deck advances whatever the network does: a dropped gesture must not
-   * strand the member on a card they have already judged.
+   * Save and HYPE are applied optimistically and PUT BACK when the route
+   * refuses them. Until 2026-09-14 the response was never read and the catch
+   * was empty, so a save answered 404, 429 or 500 still counted "1 saved" and
+   * the card advanced away with nothing in the Discover playlist, and a
+   * refused HYPE lit the heart for the rest of the session — a control is a
+   * promise that pressing it changed something (DESIGN_SYNC row 385).
+   *
+   * What still advances whatever the network does is SKIP: a skip has no
+   * result to lose, and a dropped gesture must not strand the member on a
+   * card they have already judged. A failed SAVE keeps the card, because
+   * moving on would lose exactly the track the member asked to keep.
    */
   const act = useCallback(async (seed: SeedCard, action: 'hype' | 'skip' | 'save') => {
     setBusy(true);
     if (action === 'hype') setHypedIds((ids) => new Set(ids).add(seed.id));
     if (action === 'save') setSavedCount((value) => value + 1);
+    let landed = false;
     try {
-      await fetch(`/api/discover/seeds/${seed.id}/${action}`, { method: 'POST' });
+      const res = await fetch(`/api/discover/seeds/${seed.id}/${action}`, { method: 'POST' });
+      landed = res.ok;
     } catch {
-      // Intentionally swallowed — see above.
-    } finally {
-      setBusy(false);
-      // HYPE is a verdict on the artist, not on the card: it stays put so the
-      // member can still save or skip the track they just hyped.
-      if (action !== 'hype') setIndex((value) => value + 1);
+      landed = false;
     }
+    if (!landed) {
+      if (action === 'hype') {
+        setHypedIds((ids) => {
+          const next = new Set(ids);
+          next.delete(seed.id);
+          return next;
+        });
+      }
+      if (action === 'save') setSavedCount((value) => Math.max(0, value - 1));
+    }
+    setFailed(landed ? null : action === 'skip' ? null : action);
+    setBusy(false);
+    // HYPE is a verdict on the artist, not on the card: it stays put so the
+    // member can still save or skip the track they just hyped. A save that
+    // did not land stays put too, so it can be pressed again.
+    if (action === 'skip' || (action === 'save' && landed)) setIndex((value) => value + 1);
   }, []);
 
   /**
@@ -478,6 +504,13 @@ function DiscoverTab({ genre, city }: { genre?: string; city?: string }) {
         playing={clipPlaying}
         savedCount={savedCount}
       />
+      {failed ? (
+        <p className="mmm-deck-note" role="status">
+          {failed === 'save'
+            ? t('mmmMusic.saveDidNotLand', 'That save did not go through. The track is still here — try again.')
+            : t('mmmMusic.hypeDidNotLand', 'That HYPE did not go through. Try again.')}
+        </p>
+      ) : null}
     </>
   );
 }
