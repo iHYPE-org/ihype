@@ -36,6 +36,7 @@ import { spawn, spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { collectSkips, envShapedSkips } from './lib/playwright-skips.mjs';
 
 const PORT = Number(process.env.E2E_WORKERD_PORT || 8787);
 // Must be 'localhost', not '127.0.0.1': WebAuthn RP IDs (derived from this
@@ -275,10 +276,16 @@ async function stopProcessTree(child) {
 }
 
 function runPlaywright(tests) {
+  /* The JSON report is how the harness learns what the run SKIPPED. Playwright
+     exits 0 over a skipped test, and nearly every authenticated spec skips
+     itself when `canSeedSession()` is false — a predicate on the two variables
+     this harness supplies. A skip carrying that reason here is therefore a
+     harness fault reading as green; see scripts/lib/playwright-skips.mjs. */
+  const reportFile = join(tmpdir(), `e2e-workerd-report-${process.pid}-${Date.now()}.json`);
   return new Promise((resolve) => {
     const child = spawn(
       process.execPath,
-      [PLAYWRIGHT_CLI, 'test', '--project=chromium', '--workers=1', ...tests],
+      [PLAYWRIGHT_CLI, 'test', '--project=chromium', '--workers=1', '--reporter=list,json', ...tests],
       {
         stdio: 'inherit',
         env: {
@@ -295,11 +302,44 @@ function runPlaywright(tests) {
           // reads/writes is __Secure-authjs.session-token here, unlike the
           // plain authjs.session-token that `next dev` uses.
           PLAYWRIGHT_AUTH_COOKIE_SECURE: 'true',
+          PLAYWRIGHT_JSON_OUTPUT_NAME: reportFile,
         },
       },
     );
-    child.on('exit', (code) => resolve(code ?? 1));
+    child.on('exit', (code) => resolve(judgeSkips(code ?? 1, reportFile)));
   });
+}
+
+/**
+ * A shard that skipped an authenticated spec for want of the environment this
+ * harness provides has not tested what it says it tested, whatever Playwright's
+ * exit code says. Refuse it. Other skips are named so the log shows what the
+ * run did NOT prove, and an unreadable report is reported rather than trusted.
+ */
+function judgeSkips(code, reportFile) {
+  let report;
+  try {
+    report = JSON.parse(readFileSync(reportFile, 'utf8'));
+  } catch (error) {
+    console.error(`[e2e-workerd] could not read the Playwright JSON report (${error.message}); skips were not judged`);
+    return code;
+  } finally {
+    try { rmSync(reportFile, { force: true }); } catch { /* best effort */ }
+  }
+  const skips = collectSkips(report);
+  const envShaped = envShapedSkips(report);
+  const stats = report.stats ?? {};
+  console.error(`[e2e-workerd] report judged: ${stats.expected ?? '?'} passed, ${stats.unexpected ?? '?'} failed, ${skips.length} skipped`);
+  if (envShaped.length > 0) {
+    console.error(`[e2e-workerd] ${envShaped.length} test(s) skipped for want of the environment this harness supplies — that is a harness fault, not a pass:`);
+    for (const skip of envShaped) console.error(`  ${skip.file} › ${skip.title}: ${skip.reason}`);
+    return code === 0 ? 1 : code;
+  }
+  if (skips.length > 0) {
+    console.error(`[e2e-workerd] note: ${skips.length} test(s) skipped for data reasons — the run did not prove them:`);
+    for (const skip of skips) console.error(`  ${skip.file} › ${skip.title}: ${skip.reason || '(no reason given)'}`);
+  }
+  return code;
 }
 
 function spawnDevServer(index) {
