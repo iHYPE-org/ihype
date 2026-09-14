@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { MmmTickets } from '@/components/mmm/MmmTickets';
 import { loadMmmMe } from '@/lib/mmm-me';
 
@@ -29,8 +29,8 @@ export default async function MmmTicketsPage() {
   // The layout already gated this, but every destination keeps its own
   // server-side check — the same rule every other MMM route follows.
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/tickets');
-  const data = await loadMmmMe(session.user.id, undefined, isAdminSession(session));
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
+  const data = await loadMmmMe(session.user.id, undefined, locale, isAdminSession(session));
   return (
     <>
       <h1 className="sr-only">{t('mmmDock.tab.tickets', 'Tickets')}</h1>

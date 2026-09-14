@@ -1,3 +1,4 @@
+import { getLocale } from '@/lib/i18n/server';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { isAdminSession } from '@/lib/permissions';
@@ -21,7 +22,8 @@ export default async function MmmMePage({
      with an unknown section and no card open. */
   if (query?.section === 'tickets') redirect('/app/tickets');
   const role = query?.role;
-  const data = await loadMmmMe(session.user.id, role, isAdminSession(session));
+  const locale = await getLocale();
+  const data = await loadMmmMe(session.user.id, role, locale, isAdminSession(session));
   return (
     <>
       <h1 className="sr-only">Me</h1>

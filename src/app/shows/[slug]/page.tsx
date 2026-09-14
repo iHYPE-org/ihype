@@ -1,6 +1,7 @@
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import type { Metadata } from 'next';
 import { cache } from 'react';
-import { getServerT } from '@/lib/i18n/server';
+import { getLocale, getServerI18n } from '@/lib/i18n/server';
 
 export const revalidate = 30;
 import Image from 'next/image';
@@ -62,8 +63,9 @@ export async function generateMetadata(
 
   if (!show) return { title: 'Show · iHYPE' };
 
+  const locale = await getLocale();
   const dateStr = show.startsAt
-    ? new Date(show.startsAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    ? formatDate(locale, show.startsAt, { month: 'short', day: 'numeric', year: 'numeric' })
     : null;
   const venueName = show.venueProfile?.name ?? null;
   const venueCity = [show.venueProfile?.city, show.venueProfile?.stateRegion].filter(Boolean).join(', ') || null;
@@ -118,7 +120,7 @@ export default async function ShowDetailPage({
   searchParams?: Promise<{ affiliate?: string | string[]; ref?: string | string[] }>;
 }) {
   const session = await auth();
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const affiliateId =
@@ -350,8 +352,8 @@ export default async function ShowDetailPage({
       })()
     : [];
 
-  const date = show.startsAt ? new Date(show.startsAt).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
-  const time = show.startsAt ? new Date(show.startsAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : null;
+  const date = show.startsAt ? formatDate(locale, new Date(show.startsAt), { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) : null;
+  const time = show.startsAt ? formatDate(locale, new Date(show.startsAt), { hour: 'numeric', minute: '2-digit' }) : null;
   const price = show.isTicketed ? show.ticketPriceCents / 100 : 0;
   /* Resolved once, from the same module the shell copy reads, so the two pages
      cannot report different money for one show. */
@@ -423,7 +425,7 @@ export default async function ShowDetailPage({
                 {show.venueProfile.city}
               </span>
             )}
-            {show.isTicketed && <span>{sold.toLocaleString()} {t('showsSlugPage.ticketsSold', 'tickets sold')}</span>}
+            {show.isTicketed && <span>{formatNumber(locale, sold)} {t('showsSlugPage.ticketsSold', 'tickets sold')}</span>}
           </div>
 
           {/* A cancelled show used to render as a bare CANCELED badge: both the
@@ -484,16 +486,16 @@ export default async function ShowDetailPage({
           {ticketSplits && faceSplit && (
             <div style={{ display: 'flex', gap: 0, borderRadius: 10, overflow: 'hidden', marginTop: 24 }}>
               <div style={{ flex: Math.max(ticketSplits.artist, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>{formatCurrencyFromCents(faceSplit.artist)}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-text)' }}>{formatCurrencyFromCents(faceSplit.artist, locale)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-text)' }}>{t('showsSlugPage.artistSplitLabel', 'Artist')} · {show.artistPayoutPercent}%</div>
               </div>
               <div style={{ flex: Math.max(ticketSplits.venue, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--role-venue-rgb),.15)' }}>
-                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>{formatCurrencyFromCents(faceSplit.venue)}</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--role-venue)' }}>{formatCurrencyFromCents(faceSplit.venue, locale)}</div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--role-venue)' }}>{t('showsSlugPage.venueSplitLabel', 'Venue')} · {show.venuePayoutPercent}%</div>
               </div>
               {ticketSplits.promoter > 0 && (
                 <div style={{ flex: Math.max(ticketSplits.promoter, 1), padding: 16, textAlign: 'center', background: 'rgba(var(--accent-2-rgb),.15)' }}>
-                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>{formatCurrencyFromCents(faceSplit.promoter)}</div>
+                  <div style={{ fontSize: '1.25rem', fontWeight: 700, color: 'var(--accent-2)' }}>{formatCurrencyFromCents(faceSplit.promoter, locale)}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', marginTop: 4, color: 'var(--accent-2)' }}>{t('showsSlugPage.promotersSplitLabel', 'Promoters')} · {show.promoterPayoutPercent}%</div>
                 </div>
               )}
@@ -620,14 +622,14 @@ export default async function ShowDetailPage({
                   <tr><th>{t('showsSlugPage.ticketingLabel', 'Ticketing')}</th><td>{show.isTicketed ? t('showsSlugPage.enabled', 'Enabled') : t('showsSlugPage.notEnabled', 'Not enabled')}</td></tr>
                   {show.isTicketed ? (
                     <>
-                      <tr><th>{t('showsSlugPage.ticketPriceLabel', 'Ticket price')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents)}</td></tr>
+                      <tr><th>{t('showsSlugPage.ticketPriceLabel', 'Ticket price')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents, locale)}</td></tr>
                       <tr><th>{t('showsSlugPage.ticketsSoldLabel', 'Tickets sold')}</th><td>{show.ticketsSoldCount}</td></tr>
                       <tr><th>{t('showsSlugPage.capacityTableLabel', 'Capacity')}</th><td>{show.ticketCapacity ?? t('showsSlugPage.openCapacity', 'Open')}</td></tr>
-                      <tr><th>{t('showsSlugPage.grossSalesLabel', 'Gross sales')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount)}</td></tr>
+                      <tr><th>{t('showsSlugPage.grossSalesLabel', 'Gross sales')}</th><td>{formatCurrencyFromCents(show.ticketPriceCents * show.ticketsSoldCount, locale)}</td></tr>
                       <tr><th>{t('showsSlugPage.artistSplitLabel2', 'Artist split')}</th><td>{show.artistPayoutPercent ?? 0}%</td></tr>
                       <tr><th>{t('showsSlugPage.venueSplitLabel2', 'Venue split')}</th><td>{show.venuePayoutPercent ?? 0}%</td></tr>
                       <tr><th>{t('showsSlugPage.promoterPoolLabel', 'Promoter pool')}</th><td>{show.promoterPayoutPercent}%</td></tr>
-                      <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
+                      <tr><th>{t('showsSlugPage.eventOpensLabel', 'Event officially opens')}</th><td>{show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : t('showsSlugPage.venueControlled', 'Venue-controlled')}</td></tr>
                     </>
                   ) : null}
                   <tr><th>{t('showsSlugPage.hypeLabel', 'Hype')}</th><td>{show.hypeCount}</td></tr>
@@ -776,12 +778,12 @@ export default async function ShowDetailPage({
                         return (
                           <tr key={order.id}>
                             <td>{order.status}</td>
-                            <td>{formatCurrencyFromCents(order.totalTaxCents)}</td>
+                            <td>{formatCurrencyFromCents(order.totalTaxCents, locale)}</td>
                             <td>{order.quantity}</td>
-                            <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents)}</td>
-                            <td>{formatCurrencyFromCents(order.venuePayoutCents)}</td>
-                            <td>{formatCurrencyFromCents(order.artistPayoutCents)}</td>
-                            <td>{formatCurrencyFromCents(order.promoterPayoutCents)}</td>
+                            <td>{formatCurrencyFromCents(order.totalChargeCents || order.subtotalCents, locale)}</td>
+                            <td>{formatCurrencyFromCents(order.venuePayoutCents, locale)}</td>
+                            <td>{formatCurrencyFromCents(order.artistPayoutCents, locale)}</td>
+                            <td>{formatCurrencyFromCents(order.promoterPayoutCents, locale)}</td>
                             <td style={totalPassed > 0 ? { color: 'var(--accent-text)', fontWeight: 600 } : { color: 'var(--muted)' }}>
                               {totalPassed > 0 ? `${totalPassed}×` : '—'}
                             </td>
@@ -925,7 +927,7 @@ export default async function ShowDetailPage({
                 ticketCapacity={show.ticketCapacity}
                 ticketPriceCents={show.ticketPriceCents}
                 ticketingOpen={isTicketingOpen(show)}
-                ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
+                ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : null}
                 ticketsSoldCount={show.ticketsSoldCount}
                 title={show.title}
                 venueName={show.venueProfile.name}

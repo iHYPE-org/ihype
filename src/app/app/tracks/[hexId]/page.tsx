@@ -1,3 +1,4 @@
+import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -6,7 +7,7 @@ import { HypeButton } from '@/components/HypeButton';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
 import { copyrightTone, resolveCopyrightState } from '@/lib/track-detail';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n, getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,7 +86,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
      The labels run through `getServerT()` in all 12 locales as of 2026-08-24 —
      this used to be the recorded "hardcoded English" gap, kept open by a
      comment that pointed at a public copy of the page which no longer exists. */
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const copyrightState = resolveCopyrightState(latestReport?.status);
   const copyrightLabel = {
     flagged: t('trackPage.copyright.flagged', 'Flagged · pending manual review'),
@@ -127,7 +128,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
         {/* `null` is not zero: a count that could not be read renders nothing
             rather than claiming the track has never been played. */}
         {playCount !== null && (
-          <span className="mmm-profile-badge">{playCount.toLocaleString()} plays</span>
+          <span className="mmm-profile-badge">{formatNumber(locale, playCount)} plays</span>
         )}
         {asset.freeUseEnabled && (
           <span className="mmm-profile-badge" data-kind="verified">{t('mmmTrackPage.freeUse', 'Free-use')}</span>

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useMediaPlayer } from '@/components/GlobalMediaPlayer';
@@ -749,7 +750,7 @@ function emptyChartMessage(t: Translate, reason: string | null, dataset: ChartDa
 }
 
 function ChartsTab() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [dataset, setDataset] = useState<ChartDatasetId>('area');
   const [scope, setScope] = useState<ChartScopeId>('local');
   const [genre, setGenre] = useState('');
@@ -893,7 +894,7 @@ function ChartsTab() {
               <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
               <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
             </span>
-            <span className="mmm-row-meta">{row.hypeCount.toLocaleString()} HYPE</span>
+            <span className="mmm-row-meta">{formatNumber(locale, row.hypeCount)} HYPE</span>
           </div> : <Link className="mmm-row" href={`/app/artists/${row.artistSlug}`} style={{ display: 'flex' }}>
             <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
               {String(index + 1).padStart(2, '0')}
@@ -902,7 +903,7 @@ function ChartsTab() {
               <span className="mmm-row-title" style={{ display: 'block' }}>{row.title}</span>
               <span className="mmm-row-sub" style={{ display: 'block' }}>{row.artistName}</span>
             </span>
-            <span className="mmm-row-meta">{row.hypeCount.toLocaleString()}</span>
+            <span className="mmm-row-meta">{formatNumber(locale, row.hypeCount)}</span>
           </Link>}
         </li>
       ))}

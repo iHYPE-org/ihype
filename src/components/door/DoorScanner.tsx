@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import { PermissionPrimerSheet, usePermissionPrimer } from '@/components/PermissionPrimerSheet';
@@ -103,10 +105,10 @@ function isScanList(value: unknown): value is LocalDoorScan[] {
   return Array.isArray(value) && value.every((row) => row && typeof row === 'object' && typeof (row as LocalDoorScan).hash === 'string');
 }
 
-function formatClock(iso: string) {
+function formatClock(iso: string, locale: Locale) {
   const at = new Date(iso);
   if (Number.isNaN(at.getTime())) return '';
-  return at.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+  return formatDate(locale, at, { hour: 'numeric', minute: '2-digit' });
 }
 
 function describeAge(iso: string, now: number, t: (key: string, fallback: string) => string) {
@@ -120,7 +122,7 @@ function describeAge(iso: string, now: number, t: (key: string, fallback: string
 }
 
 export function DoorScanner({ show }: { show: Show }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const primer = usePermissionPrimer('camera');
   const pagePath = `/app/me/shows/${show.slug}/scan`;
 
@@ -235,7 +237,7 @@ export function DoorScanner({ show }: { show: Show }) {
               ...row,
               sync: 'duplicate' as const,
               note: result.body.scannedAt
-                ? `${t('doorScanner.alsoScannedAt', 'also scanned elsewhere at')} ${formatClock(result.body.scannedAt)}`
+                ? `${t('doorScanner.alsoScannedAt', 'also scanned elsewhere at')} ${formatClock(result.body.scannedAt, locale)}`
                 : t('doorScanner.alsoScannedElsewhere', 'also scanned elsewhere'),
             };
           }
@@ -287,7 +289,7 @@ export function DoorScanner({ show }: { show: Show }) {
         setVerdict({
           tone: 'warn',
           title: t('doorScanner.alreadyInHere', 'Already checked in here'),
-          detail: `${local.name ?? t('doorScanner.guest', 'Guest')} · ${local.at ? formatClock(local.at) : ''}`.trim(),
+          detail: `${local.name ?? t('doorScanner.guest', 'Guest')} · ${local.at ? formatClock(local.at, locale) : ''}`.trim(),
         });
         return;
       }
@@ -307,7 +309,7 @@ export function DoorScanner({ show }: { show: Show }) {
               tone: 'refuse',
               title: t('doorScanner.alreadyScanned', 'Already scanned'),
               detail: result.body.scannedAt
-                ? `${t('doorScanner.usedAt', 'This ticket was used at')} ${formatClock(result.body.scannedAt)}`
+                ? `${t('doorScanner.usedAt', 'This ticket was used at')} ${formatClock(result.body.scannedAt, locale)}`
                 : t('doorScanner.usedAlready', 'This ticket has already been used.'),
             });
             return;
@@ -528,7 +530,7 @@ export function DoorScanner({ show }: { show: Show }) {
   const startsAt = new Date(show.startsAt);
   const when = Number.isNaN(startsAt.getTime())
     ? ''
-    : startsAt.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+    : formatDate(locale, startsAt, { weekday: 'short', month: 'short', day: 'numeric' });
   const where = [show.headlinerName, show.venueName].filter(Boolean).join(' · ');
 
   return (
@@ -655,7 +657,7 @@ export function DoorScanner({ show }: { show: Show }) {
               <li key={`${row.hash}-${row.at}`} className="mmm-door-log-row" data-sync={row.sync}>
                 <span className="mmm-door-log-name">{row.name ?? `${row.code.slice(0, 8)}…`}</span>
                 <span className="mmm-door-log-meta">
-                  {formatClock(row.at)}
+                  {formatClock(row.at, locale)}
                   {' · '}
                   {row.sync === 'synced' ? t('doorScanner.synced', 'synced')
                     : row.sync === 'pending' ? t('doorScanner.pending', 'waiting to sync')

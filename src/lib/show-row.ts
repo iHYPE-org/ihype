@@ -1,3 +1,5 @@
+import { formatDate, formatUsd } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 import { isTicketingOpen, type ShowTicketing } from '@/lib/show-detail';
 
 /**
@@ -33,17 +35,16 @@ export function showRowTrail(show: ShowRowSource, now: Date = new Date()): RowTr
  * The face value as a fan reads it, or null when the show sells no tickets.
  * A ticketed show at zero cents is a free ticket, which is still a ticket.
  */
-export function formatTicketPrice(show: Pick<ShowRowSource, 'isTicketed' | 'ticketPriceCents'>): string | null {
+export function formatTicketPrice(show: Pick<ShowRowSource, 'isTicketed' | 'ticketPriceCents'>, locale: Locale): string | null {
   if (!show.isTicketed) return null;
   if (show.ticketPriceCents <= 0) return 'Free';
-  const dollars = show.ticketPriceCents / 100;
-  return Number.isInteger(dollars) ? `$${dollars}` : `$${dollars.toFixed(2)}`;
+  return formatUsd(locale, show.ticketPriceCents, 'auto');
 }
 
 /**
  * The clock alone. A row already carries the date in its date block, so the
  * meta line repeating "Sep 9, 2026" beside it said the same thing twice.
  */
-export function formatShowClock(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', { timeStyle: 'short' }).format(date);
+export function formatShowClock(date: Date, locale: Locale): string {
+  return formatDate(locale, date, { timeStyle: 'short' });
 }

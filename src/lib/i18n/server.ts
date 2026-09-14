@@ -108,3 +108,15 @@ export async function getServerT(): Promise<(key: string, fallback?: string) => 
   const dict = await loadDictionary(await getLocale());
   return (key: string, fallback?: string): string => dict[key] ?? fallback ?? key;
 }
+
+/**
+ * `t` and the locale it was bound to, in one cookie read — for a server page
+ * that also formats a date or a figure (`src/lib/format-locale.ts`). The locale
+ * a formatter receives and the locale `t` resolves against must be the SAME
+ * value, or a page can read "lun, 14 sept" under an English heading.
+ */
+export async function getServerI18n(): Promise<{ locale: Locale; t: (key: string, fallback?: string) => string }> {
+  const locale = await getLocale();
+  const dict = await loadDictionary(locale);
+  return { locale, t: (key: string, fallback?: string): string => dict[key] ?? fallback ?? key };
+}

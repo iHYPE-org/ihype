@@ -85,7 +85,7 @@ export function TicketSaleCard({
   viewerLocation,
   venueLocation
 }: TicketSaleCardProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [quantity, setQuantity] = useState('1');
   const [pending, setPending] = useState(false);
@@ -214,7 +214,7 @@ export function TicketSaleCard({
           </p>
         </div>
         <div className="ticket-price-badge">
-          <strong>{formatCurrencyFromCents(ticketPriceCents)}</strong>
+          <strong>{formatCurrencyFromCents(ticketPriceCents, locale)}</strong>
           <span>{t('ticketSaleCard.perTicket', 'per ticket')}</span>
         </div>
       </div>
@@ -262,7 +262,7 @@ export function TicketSaleCard({
             <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 2, background: row.key, flex: '0 0 auto' }} />
               <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{row.name} · {formatPercent(row.percent)}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{formatCurrencyFromCents(row.cents)}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{formatCurrencyFromCents(row.cents, locale)}</span>
             </div>
           ))}
         </div>
@@ -436,14 +436,14 @@ export function TicketSaleCard({
                   <div key={line.label} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{line.label}</span>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', fontWeight: line.zero ? 600 : 400, color: line.zero ? 'var(--accent-text)' : 'var(--ink)' }}>
-                      {formatCurrencyFromCents(line.cents)}
+                      {formatCurrencyFromCents(line.cents, locale)}
                     </span>
                   </div>
                 ))}
                 <div style={{ height: 1, background: 'var(--line-2)' }} />
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
                   <span style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: '1.3125rem' }}>{t('ticketSaleCard.totalChargeLabel', 'Total charge')}</span>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{formatCurrencyFromCents(preview.totalChargeCents)}</span>
+                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{formatCurrencyFromCents(preview.totalChargeCents, locale)}</span>
                 </div>
                 {/* Plain language, under the number it explains, because a
                     ledger line without a sentence is only half a disclosure.
@@ -502,7 +502,7 @@ export function TicketSaleCard({
             >
               {pending
                 ? t('ticketSaleCard.chargingButton', 'Charging...')
-                : `${t('ticketSaleCard.payButton', 'Pay')} ${formatCurrencyFromCents(preview.totalChargeCents)}`}
+                : `${t('ticketSaleCard.payButton', 'Pay')} ${formatCurrencyFromCents(preview.totalChargeCents, locale)}`}
             </button>
             <div style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
               {t('ticketSaleCard.stripeCaption', 'Stripe · split frozen at publish')}

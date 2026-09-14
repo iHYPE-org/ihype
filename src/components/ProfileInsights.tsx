@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatNumber, formatUsd } from '@/lib/format-locale';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -38,10 +40,10 @@ function EmptyNote({ text }: { text: string }) {
   return <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: 0 }}>{text}</p>;
 }
 
-function Stat({ label, value, color }: { label: string; value: number; color: string }) {
+function Stat({ label, value, color, locale }: { label: string; value: number; color: string; locale: Locale }) {
   return (
     <div>
-      <div style={{ fontSize: '1.375rem', fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{value.toLocaleString()}</div>
+      <div style={{ fontSize: '1.375rem', fontWeight: 700, color, fontFamily: 'var(--font-display)' }}>{formatNumber(locale, value)}</div>
       <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', textTransform: 'uppercase', letterSpacing: '.14em', color: 'var(--ink-a65)', marginTop: 2 }}>{label}</div>
     </div>
   );
@@ -63,7 +65,7 @@ function PercentStat({ label, value, color }: { label: string; value: number; co
  * page's own section-tab mechanism, gated behind that page's isOwner check.
  */
 export function ProfileInsights({ profileId, profileType }: { profileId: string; profileType: string }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [data, setData] = useState<InsightsData | null>(null);
   const [chart, setChart] = useState<ChartDay[]>([]);
   const [error, setError] = useState(false);
@@ -95,17 +97,17 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
       <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-        <Stat label={t('profileInsights.statHypes', 'Hypes')} value={data.hypeTotal} color="var(--accent)" />
-        <Stat label={t('profileInsights.statFollowers', 'Followers')} value={data.followerCount} color="var(--role-fan)" />
-        {data.listeners && <Stat label={t('profileInsights.statListeners', 'Listeners')} value={data.listeners.distinctListeners} color="var(--role-venue)" />}
-        {typeof data.ticketsSold === 'number' && <Stat label={t('profileInsights.statTicketsSold', 'Tickets sold')} value={data.ticketsSold} color="var(--role-venue)" />}
+        <Stat locale={locale} label={t('profileInsights.statHypes', 'Hypes')} value={data.hypeTotal} color="var(--accent)" />
+        <Stat locale={locale} label={t('profileInsights.statFollowers', 'Followers')} value={data.followerCount} color="var(--role-fan)" />
+        {data.listeners && <Stat locale={locale} label={t('profileInsights.statListeners', 'Listeners')} value={data.listeners.distinctListeners} color="var(--role-venue)" />}
+        {typeof data.ticketsSold === 'number' && <Stat locale={locale} label={t('profileInsights.statTicketsSold', 'Tickets sold')} value={data.ticketsSold} color="var(--role-venue)" />}
         {typeof data.trackCompletionRate === 'number' && <PercentStat label={t('profileInsights.statTrackCompletion', 'Track completion')} value={data.trackCompletionRate} color="var(--accent-2)" />}
       </div>
 
       {typeof data.ticketRevenueCents === 'number' && (
         <Section title={t('profileInsights.sectionTicketRevenue', 'Ticket revenue')}>
           <div style={{ fontSize: '1.625rem', fontWeight: 800, fontFamily: 'var(--font-display)', color: 'var(--ink)' }}>
-            ${(data.ticketRevenueCents / 100).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            {formatUsd(locale, data.ticketRevenueCents, 0)}
           </div>
         </Section>
       )}
@@ -203,9 +205,9 @@ export function ProfileInsights({ profileId, profileType }: { profileId: string;
 
       <Section title={t('profileInsights.sectionBookingRequests', 'Booking requests')}>
         <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
-          <Stat label={t('profileInsights.statPending', 'Pending')} value={data.bookingRequests.pending} color="var(--accent)" />
-          <Stat label={t('profileInsights.statAccepted', 'Accepted')} value={data.bookingRequests.accepted} color="var(--role-venue)" />
-          <Stat label={t('profileInsights.statDeclined', 'Declined')} value={data.bookingRequests.declined} color="var(--ink-a50)" />
+          <Stat locale={locale} label={t('profileInsights.statPending', 'Pending')} value={data.bookingRequests.pending} color="var(--accent)" />
+          <Stat locale={locale} label={t('profileInsights.statAccepted', 'Accepted')} value={data.bookingRequests.accepted} color="var(--role-venue)" />
+          <Stat locale={locale} label={t('profileInsights.statDeclined', 'Declined')} value={data.bookingRequests.declined} color="var(--ink-a50)" />
         </div>
       </Section>
     </div>

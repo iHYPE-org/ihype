@@ -1,15 +1,16 @@
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { db } from '@/lib/db';
 import Link from 'next/link';
 import { CampaignCancelButton } from '@/components/CampaignCancelButton';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { REFUND_WINDOW_BUSINESS_DAYS, sponsorshipRefundableCents } from '@/lib/ad-settlement-plan';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdvertiserDashboard() {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const session = await auth();
   if (!session?.user?.id) redirect('/login?callbackUrl=/app/me/advertising');
 
@@ -66,7 +67,7 @@ export default async function AdvertiserDashboard() {
   // record — never inferred from budget − spent, which is a projection.
   const totalRefundedCents = campaigns.reduce((s, c) => s + (c.refundedCents ?? 0), 0);
   const dollars = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-  const day = (d: Date) => new Date(d).toLocaleDateString();
+  const day = (d: Date) => formatDate(locale, d, { year: 'numeric', month: 'numeric', day: 'numeric' });
 
   // Day-by-day breakdown, last 14 days, aggregated across all the
   // advertiser's campaigns. AdImpression rows have no per-day rollup
@@ -167,7 +168,7 @@ export default async function AdvertiserDashboard() {
           </div>
           <div className="ad-dash-stat-card">
             <div className="ad-dash-stat-label">{t('advertiseDashboardPage.impressions', 'Impressions')}</div>
-            <div className="ad-dash-stat-val">{totalImpressions.toLocaleString()}</div>
+            <div className="ad-dash-stat-val">{formatNumber(locale, totalImpressions)}</div>
             <div className="ad-dash-stat-sub">{t('advertiseDashboardPage.lifetime', 'Lifetime')}</div>
           </div>
           {hasMetered && (
@@ -253,7 +254,7 @@ export default async function AdvertiserDashboard() {
             <div className="ad-dash-campaign-top">
               <div>
                 <div className="ad-dash-campaign-name">{campaign.title}</div>
-                <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
+                <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {formatDate(locale, new Date(campaign.createdAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}</div>
                 {campaign.clickUrl && (
                   <div className="meta ad-dash-campaign-link">
                     <a className="mmm-standalone-link" href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
@@ -265,7 +266,7 @@ export default async function AdvertiserDashboard() {
               </span>
             </div>
             <div className="ad-dash-figures">
-              <div><div className="ad-dash-figure-val">{campaign.impressions.toLocaleString()}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
+              <div><div className="ad-dash-figure-val">{formatNumber(locale, campaign.impressions)}</div><div className="meta">{t('advertiseDashboardPage.impressions', 'Impressions')}</div></div>
               <div>
                 <div className="ad-dash-figure-val">{dollars(campaign.budgetCents)}</div>
                 <div className="meta">{campaign.authorizedAt ? t('advertiseDashboardPage.paid', 'Paid') : t('advertiseDashboardPage.quoted', 'Quoted')}</div>
@@ -322,9 +323,9 @@ export default async function AdvertiserDashboard() {
             </div>
             {(campaign.startsAt || campaign.endsAt) && (
               <div className="meta ad-dash-dates">
-                {campaign.startsAt && `${t('advertiseDashboardPage.starts', 'Starts')}: ${new Date(campaign.startsAt).toLocaleDateString()}`}
+                {campaign.startsAt && `${t('advertiseDashboardPage.starts', 'Starts')}: ${formatDate(locale, new Date(campaign.startsAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}`}
                 {campaign.startsAt && campaign.endsAt && ' · '}
-                {campaign.endsAt && `${t('advertiseDashboardPage.ends', 'Ends')}: ${new Date(campaign.endsAt).toLocaleDateString()}`}
+                {campaign.endsAt && `${t('advertiseDashboardPage.ends', 'Ends')}: ${formatDate(locale, new Date(campaign.endsAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}`}
               </div>
             )}
             {(campaign.status === 'APPROVED' || campaign.status === 'PENDING' || campaign.status === 'PAUSED' || campaign.status === 'AWAITING_PAYMENT') && (

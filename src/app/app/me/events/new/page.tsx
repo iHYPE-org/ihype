@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatUsd } from '@/lib/format-locale';
 import type { CSSProperties } from 'react';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -10,8 +12,8 @@ import { useFormDraft } from '@/lib/use-form-draft';
 type Step = 0 | 1 | 2 | 3 | 4;
 type TicketType = 'ga' | 'vip';
 
-function fmt$(dollars: number) {
-  return `$${Math.round(dollars).toLocaleString()}`;
+function fmt$(dollars: number, locale: Locale) {
+  return formatUsd(locale, Math.round(dollars) * 100, 0);
 }
 
 function fmtCents(dollars: number) {
@@ -118,7 +120,7 @@ function ProfilePicker({
 const wrapStyle: CSSProperties = { width: '100%', maxWidth: 520, margin: '0 auto' };
 
 export default function EventsNewPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const router = useRouter();
   const [step, setStep] = useState<Step>(0);
 
@@ -341,13 +343,13 @@ export default function EventsNewPage() {
               <div className="label" style={{ marginBottom: 14 }}>{t('eventsNewPage.ifSellsOut', 'If you sell out')}</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 12 }}>
                 <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('eventsNewPage.gateLabel', 'Gate')}</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{fmt$(gross)}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', fontWeight: 600 }}>{fmt$(gross, locale)}</span>
               </div>
               <div style={{ height: 1, background: 'var(--line)', marginBottom: 12 }} />
               {[
-                { key: 'var(--accent)', label: t('eventsNewPage.splitArtist', 'Artist · 70%'), value: fmt$(gross * .7), strong: true },
-                { key: 'var(--role-venue)', label: t('eventsNewPage.splitVenue', 'Venue · 20%'), value: fmt$(gross * .2) },
-                { key: 'var(--role-promoter)', label: t('eventsNewPage.splitPromoters', 'Promoter pool · 10%'), value: fmt$(gross * .1) },
+                { key: 'var(--accent)', label: t('eventsNewPage.splitArtist', 'Artist · 70%'), value: fmt$(gross * .7, locale), strong: true },
+                { key: 'var(--role-venue)', label: t('eventsNewPage.splitVenue', 'Venue · 20%'), value: fmt$(gross * .2, locale) },
+                { key: 'var(--role-promoter)', label: t('eventsNewPage.splitPromoters', 'Promoter pool · 10%'), value: fmt$(gross * .1, locale) },
                 { key: 'var(--line-2)', label: 'iHYPE', value: '$0', zero: true },
               ].map((row) => (
                 <div key={row.label} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
@@ -372,7 +374,7 @@ export default function EventsNewPage() {
                 <span style={{ color: 'var(--ink-3)' }}>{t('eventsNewPage.payoutIhype', 'iHYPE · 0%')}</span><b style={{ color: 'var(--ink-3)' }}>$0.00</b>
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', marginTop: 10, lineHeight: 1.6 }}>
-                {t('eventsNewPage.payoutFinePrint', 'Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross:')} {fmt$(gross)}.
+                {t('eventsNewPage.payoutFinePrint', 'Buyer pays face value + card processing at cost (2.9% + $0.30; AMEX 3.5% + $0.30). Tax estimate shown at checkout. Sell-out gross:')} {fmt$(gross, locale)}.
               </div>
             </div>
             <div className="field"><label>{t('eventsNewPage.ticketTypesLabel', 'Ticket types')}</label></div>
@@ -451,7 +453,7 @@ export default function EventsNewPage() {
                 <div style={{ flex: 10, background: 'var(--role-promoter)', borderRadius: '0 var(--radius-pill) var(--radius-pill) 0' }} />
               </div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)' }}>
-                {fmt$(gross * .7)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
+                {fmt$(gross * .7, locale)} {t('eventsNewPage.artistWord', 'artist')} · {fmt$(gross * .2, locale)} {t('eventsNewPage.venueWord', 'venue')} · {fmt$(gross * .1, locale)} {t('eventsNewPage.promotersWord', 'promoters')} · $0 iHYPE
               </div>
             </div>
             <div style={{ padding: '12px 14px', borderRadius: 12, border: '1px solid rgba(var(--warning-rgb),.25)', background: 'rgba(var(--warning-rgb),.06)', marginBottom: 14 }}>

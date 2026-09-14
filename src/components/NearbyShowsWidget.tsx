@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
@@ -16,8 +18,8 @@ type NearbyShow = {
 
 type Status = 'idle' | 'loading' | 'denied' | 'error' | 'done';
 
-function fmtWhen(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+function fmtWhen(iso: string, locale: Locale): string {
+  return formatDate(locale, new Date(iso), { weekday: 'short', hour: 'numeric', minute: '2-digit' });
 }
 
 /**
@@ -41,7 +43,7 @@ function fmtWhen(iso: string): string {
  * IP-based list already covers the no-permission case.
  */
 export function NearbyShowsWidget() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [status, setStatus] = useState<Status>('idle');
   const [shows, setShows] = useState<NearbyShow[]>([]);
 
@@ -102,7 +104,7 @@ export function NearbyShowsWidget() {
         {shows.map((s) => (
           <li key={s.id} className="nearby-shows-item">
             <Link href={`/shows/${s.slug}`} className="nearby-shows-link">
-              <div className="nearby-shows-when">{fmtWhen(s.startsAt)}</div>
+              <div className="nearby-shows-when">{fmtWhen(s.startsAt, locale)}</div>
               <div className="nearby-shows-body">
                 <div className="nearby-shows-title">{s.title}</div>
                 <div className="nearby-shows-meta">

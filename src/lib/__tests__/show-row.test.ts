@@ -23,15 +23,15 @@ describe('showRowTrail', () => {
 
 describe('formatTicketPrice', () => {
   it('formats whole dollars, cents, free tickets, and no ticket at all', () => {
-    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 1800 })).toBe('$18');
-    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 1850 })).toBe('$18.50');
-    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 0 })).toBe('Free');
-    expect(formatTicketPrice({ isTicketed: false, ticketPriceCents: 1800 })).toBeNull();
+    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 1800 }, 'en')).toBe('$18');
+    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 1850 }, 'en')).toBe('$18.50');
+    expect(formatTicketPrice({ isTicketed: true, ticketPriceCents: 0 }, 'en')).toBe('Free');
+    expect(formatTicketPrice({ isTicketed: false, ticketPriceCents: 1800 }, 'en')).toBeNull();
   });
 });
 
 describe('formatShowClock', () => {
   it('gives the time alone, since the row already shows the date', () => {
-    expect(formatShowClock(new Date('2026-09-09T19:05:00'))).toMatch(/^7:05\sPM$/);
+    expect(formatShowClock(new Date('2026-09-09T19:05:00'), 'en')).toMatch(/^7:05\sPM$/);
   });
 });

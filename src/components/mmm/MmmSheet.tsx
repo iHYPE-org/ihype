@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
@@ -39,7 +41,7 @@ type SheetContent = {
  * same rule the shell's badge counts follow.
  */
 export function MmmSheet({ onClose, target }: { onClose: () => void; target: MapSheetTarget }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
 
@@ -56,7 +58,7 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
     };
   }, [onClose]);
 
-  const content = describe(target);
+  const content = describe(target, locale);
 
   return (
     <>
@@ -146,13 +148,13 @@ export function MmmSheet({ onClose, target }: { onClose: () => void; target: Map
   );
 }
 
-function describe(target: MapSheetTarget): SheetContent {
+function describe(target: MapSheetTarget, locale: Locale): SheetContent {
   if (target.kind === 'event') {
     const event = target.data;
     const fill = event.capacity > 0 ? `${Math.round((event.sold / event.capacity) * 100)}%` : '—';
-    const when = new Intl.DateTimeFormat('en-US', {
+    const when = formatDate(locale, event.startsAt, {
       weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC',
-    }).format(new Date(event.startsAt));
+    });
     return {
       eyebrow: `Event page${event.genre ? ` · ${event.genre}` : ''}`,
       title: event.title,
@@ -221,7 +223,7 @@ function describe(target: MapSheetTarget): SheetContent {
       list: city.artists.map((artist) => ({
         a: artist.name,
         b: artist.genres.join(' · '),
-        c: artist.hypeCount.toLocaleString(),
+        c: formatNumber(locale, artist.hypeCount),
       })),
       primary: city.artists[0] ? { label: `Open ${city.artists[0].name}`, href: `/app/artists/${city.artists[0].slug}` } : null,
       secondary: { label: 'Discover →', href: '/app/music/discover' },

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import { useEffect, useRef, useState } from 'react';
 import { haptic } from '@/lib/haptics';
 import { useI18n } from '@/components/I18nProvider';
@@ -18,7 +19,7 @@ type HypeButtonProps = {
 };
 
 export function HypeButton({ targetType, targetId, initialCount, lastHypedAt, entityLabel }: HypeButtonProps) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const storageKey = `hyped-at:${targetType}:${targetId}`;
   const [count, setCount] = useState(initialCount);
   const [hypedAt, setHypedAt] = useState<string | null>(lastHypedAt ?? null);
@@ -130,8 +131,8 @@ export function HypeButton({ targetType, targetId, initialCount, lastHypedAt, en
         {pending
           ? t('hypeButton.updating', 'Updating…')
           : waiting
-            ? `${t('hypeButton.hypedCount', '✓ Hyped')} ${count.toLocaleString()} · ${waitLabel}`
-            : `${t('hypeButton.hypeCount', 'Hype')} ${count.toLocaleString()}`}
+            ? `${t('hypeButton.hypedCount', '✓ Hyped')} ${formatNumber(locale, count)} · ${waitLabel}`
+            : `${t('hypeButton.hypeCount', 'Hype')} ${formatNumber(locale, count)}`}
         {bursting && (
           <span ref={burstRef} aria-hidden="true" style={{
             position: 'absolute', inset: 0, borderRadius: 'inherit',

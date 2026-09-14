@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import type { RowTrail } from '@/lib/show-row';
 
@@ -22,15 +24,17 @@ export function ProfileRow({
   title,
   meta,
   trail,
+  locale,
 }: {
   href?: string;
   date: Date;
+  locale: Locale;
   utc?: boolean;
   title: string;
   meta?: string | null;
   trail?: RowTrail | null;
 }) {
-  const month = date.toLocaleDateString('en-US', utc ? { month: 'short', timeZone: 'UTC' } : { month: 'short' }).toUpperCase();
+  const month = formatDate(locale, date, utc ? { month: 'short', timeZone: 'UTC' } : { month: 'short' }).toUpperCase();
   const day = utc ? date.getUTCDate() : date.getDate();
   const body = (
     <>
@@ -59,12 +63,12 @@ export function ProfileRow({
  * figures, three of them, in the template's order. A value that could not be
  * read renders as a dash, never as 0: a zero is a claim about the artist.
  */
-export function ProfileCounters({ counters }: { counters: { label: string; value: number | null }[] }) {
+export function ProfileCounters({ counters, locale }: { counters: { label: string; value: number | null }[]; locale: Locale }) {
   return (
     <div className="mmm-profile-counters">
       {counters.map((counter) => (
         <div className="mmm-profile-counter" key={counter.label}>
-          <span className="mmm-profile-counter-value">{counter.value === null ? '—' : counter.value.toLocaleString()}</span>
+          <span className="mmm-profile-counter-value">{counter.value === null ? '—' : formatNumber(locale, counter.value)}</span>
           <span className="mmm-profile-counter-label">{counter.label}</span>
         </div>
       ))}

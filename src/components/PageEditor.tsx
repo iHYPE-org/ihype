@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   profileDesignPresets,
@@ -25,10 +27,10 @@ type AlbumRow = { id: string; title: string; artworkUrl: string | null; released
 type TrackRow = { hexId: string; title: string; artworkUrl: string | null; albumId: string | null; isPublished: boolean; publishAt: string | null; freeUseEnabled: boolean; createdAt: string; storageUrl: string | null; loudnessLufs: number | null; truePeakDbtp: number | null };
 
 /** Live · Scheduled · Held, from the two release columns (release-schedule.ts). */
-function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string): string {
+function trackReleaseLabel(track: TrackRow, t: (key: string, fallback: string) => string, locale: Locale): string {
   if (!track.isPublished && !track.publishAt) return t('pageEditor.releaseHeld', 'Held for review');
   if (track.isPublished && (!track.publishAt || new Date(track.publishAt).getTime() <= Date.now())) return t('pageEditor.releaseLive', 'Live');
-  return `${t('pageEditor.releaseScheduled', 'Scheduled')} · ${new Date(track.publishAt as string).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
+  return `${t('pageEditor.releaseScheduled', 'Scheduled')} · ${formatDate(locale, track.publishAt as string, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`;
 }
 /** A `datetime-local` value for an ISO instant, in the viewer's zone. */
 function toLocalInput(iso: string | null): string {
@@ -213,7 +215,7 @@ function ImageField({ label, value, onUpload, uploading, onRemove }: { label: st
  * (tour dates vs. venue hours) only show for the relevant profile type.
  */
 export function PageEditor({ profileId, initialSection }: { profileId: string; initialSection?: string }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [data, setData] = useState<EditorProfile | null>(null);
   /* 'about' is the new front door — 'basics' is gone, and a deep link naming a
      retired section (?editor=theme from a bookmark or an old email) must land
@@ -747,7 +749,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                         <div>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                             <span style={{ fontSize: '0.9375rem', color: 'var(--ink)', fontWeight: 600 }}>
-                              {new Date(d.date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                              {formatDate(locale, d.date, { year: 'numeric', month: 'short', day: 'numeric' })}
                             </span>
                             {/* A row whose kind is missing is a pre-`kind` row, and
                                 the column defaults to AVAILABLE, so that is what it
@@ -986,7 +988,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                           type="text"
                         />
                         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
-                          <span>{trackReleaseLabel(track, t)}</span>
+                          <span>{trackReleaseLabel(track, t, locale)}</span>
                           {/* Release controls. A held track shows none: the hold is
                               lifted in review, not by the artist's date picker. */}
                           {(track.isPublished || track.publishAt) && (
@@ -1241,7 +1243,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                       }}
                     >
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '1.3125rem', color: 'var(--ink)' }}>
-                        {stat.value === null ? '—' : stat.value.toLocaleString()}
+                        {stat.value === null ? '—' : formatNumber(locale, stat.value)}
                       </span>
                       <span style={{
                         fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em',
@@ -1281,7 +1283,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
                     }} />
                     <span style={{ fontSize: '0.9375rem', color: 'var(--ink)' }}>{h.name}</span>
                     <span style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginLeft: 'auto' }}>
-                      {new Date(h.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                      {formatDate(locale, h.at, { month: 'short', day: 'numeric' })}
                     </span>
                   </div>
                 ))}

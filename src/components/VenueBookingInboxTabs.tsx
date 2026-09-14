@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useI18n } from '@/components/I18nProvider';
@@ -27,7 +28,7 @@ type Tab = 'pending' | 'accepted' | 'declined';
  * PATCH used everywhere else in the app.
  */
 export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [requests, setRequests] = useState<ReceivedRequest[] | null>(null);
   const [error, setError] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -120,7 +121,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
                 </div>
                 <p className="vbi-message">{r.message}</p>
                 <div className="vbi-meta" style={{ marginBottom: r.status === 'pending' ? 12 : 0 }}>
-                  {new Date(r.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {formatDate(locale, new Date(r.createdAt), { month: 'short', day: 'numeric', year: 'numeric' })}
                 </div>
                 {r.status === 'pending' && (
                   <div className="vbi-actions">

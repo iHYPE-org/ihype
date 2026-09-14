@@ -1,3 +1,4 @@
+import { formatDate } from '@/lib/format-locale';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
@@ -28,7 +29,8 @@ export async function POST(
     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
     if (profile.fanMailLastSentAt > sevenDaysAgo) {
       const nextAllowed = new Date(profile.fanMailLastSentAt.getTime() + 7 * 24 * 60 * 60 * 1000);
-      return NextResponse.json({ error: `You can send fan mail again after ${nextAllowed.toLocaleDateString()}.` }, { status: 429 });
+      // The sentence is English, so the date is too.
+      return NextResponse.json({ error: `You can send fan mail again after ${formatDate('en', nextAllowed, { year: 'numeric', month: 'numeric', day: 'numeric' })}.` }, { status: 429 });
     }
   }
 

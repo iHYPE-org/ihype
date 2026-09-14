@@ -43,14 +43,14 @@ describe('monthGrid', () => {
     // month most likely to render short. A popover that changes height as you
     // page loses the day the thumb was reaching for.
     for (const month of [1, 7, 10]) {
-      const grid = monthGrid(new Date(2026, month, 1), today);
+      const grid = monthGrid(new Date(2026, month, 1), 'en', today);
       expect(grid.weeks).toHaveLength(6);
       for (const week of grid.weeks) expect(week).toHaveLength(7);
     }
   });
 
   it('starts each row on a Sunday and pads with the neighbouring months', () => {
-    const grid = monthGrid(new Date(2026, 7, 1), today);
+    const grid = monthGrid(new Date(2026, 7, 1), 'en', today);
     // 1 Aug 2026 is a Saturday, so the first row is 26–31 July then 1 August.
     expect(grid.weeks[0].map((cell) => cell.key)).toEqual([
       '2026-07-26', '2026-07-27', '2026-07-28', '2026-07-29', '2026-07-30', '2026-07-31', '2026-08-01',
@@ -60,11 +60,11 @@ describe('monthGrid', () => {
   });
 
   it('names the month it was anchored in, not the padding', () => {
-    expect(monthGrid(new Date(2026, 7, 1), today).title).toBe('August 2026');
+    expect(monthGrid(new Date(2026, 7, 1), 'en', today).title).toBe('August 2026');
   });
 
   it('marks today, and marks every earlier day past', () => {
-    const cells = monthGrid(new Date(2026, 7, 1), today).weeks.flat();
+    const cells = monthGrid(new Date(2026, 7, 1), 'en', today).weeks.flat();
     const byKey = new Map(cells.map((cell) => [cell.key, cell]));
     expect(byKey.get('2026-08-22')?.isToday).toBe(true);
     expect(byKey.get('2026-08-22')?.isPast).toBe(false);
@@ -76,14 +76,14 @@ describe('monthGrid', () => {
   });
 
   it('crosses a leap day without skipping or repeating one', () => {
-    const keys = monthGrid(new Date(2028, 1, 1), new Date(2028, 1, 1)).weeks.flat().map((c) => c.key);
+    const keys = monthGrid(new Date(2028, 1, 1), 'en', new Date(2028, 1, 1)).weeks.flat().map((c) => c.key);
     expect(keys).toContain('2028-02-29');
     expect(keys.filter((key) => key === '2028-02-29')).toHaveLength(1);
     expect(new Set(keys).size).toBe(keys.length);
   });
 
   it('runs a continuous day sequence with no gaps at a month boundary', () => {
-    const keys = monthGrid(new Date(2026, 7, 1), today).weeks.flat().map((c) => c.key);
+    const keys = monthGrid(new Date(2026, 7, 1), 'en', today).weeks.flat().map((c) => c.key);
     for (let index = 1; index < keys.length; index += 1) {
       const [ay, am, ad] = keys[index - 1].split('-').map(Number);
       const [by, bm, bd] = keys[index].split('-').map(Number);
@@ -109,18 +109,18 @@ describe('shiftMonth', () => {
 
 describe('describeDayKeys', () => {
   it('says "Any day" when nothing is picked — an unset filter is not empty', () => {
-    expect(describeDayKeys(new Set())).toBe('Any day');
+    expect(describeDayKeys(new Set(), 'en')).toBe('Any day');
   });
 
   it('names the single day in full', () => {
-    expect(describeDayKeys(new Set(['2026-08-07']))).toBe('Fri, Aug 7');
+    expect(describeDayKeys(new Set(['2026-08-07']), 'en')).toBe('Fri, Aug 7');
   });
 
   it('counts rather than spanning, so it cannot claim a day in a gap', () => {
     // Fri + Sun must never read as "Aug 7 - Aug 9", which asserts a Saturday
     // nobody selected. The set semantics allow the gap; the label must not
     // paper over it.
-    expect(describeDayKeys(new Set(['2026-08-07', '2026-08-09']))).toBe('2 days');
+    expect(describeDayKeys(new Set(['2026-08-07', '2026-08-09']), 'en')).toBe('2 days');
   });
 });
 
@@ -128,7 +128,7 @@ describe('formatDayKey', () => {
   it('parses the key as a LOCAL day, not UTC midnight', () => {
     // `new Date('2026-08-22')` is UTC midnight and formats as the 21st anywhere
     // west of Greenwich — the same trap toDayKey exists to avoid.
-    expect(formatDayKey('2026-08-22')).toBe('Sat, Aug 22');
+    expect(formatDayKey('2026-08-22', 'en')).toBe('Sat, Aug 22');
   });
 });
 

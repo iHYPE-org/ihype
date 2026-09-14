@@ -172,15 +172,15 @@ describe('ticket scan: split validation at check-in', () => {
 
 describe('ticket scan: display formatting', () => {
   it('formats $0 correctly', () => {
-    expect(formatCurrencyFromCents(0)).toBe('$0.00');
+    expect(formatCurrencyFromCents(0, 'en')).toBe('$0.00');
   });
 
   it('formats a typical ticket price of $35.00', () => {
-    expect(formatCurrencyFromCents(3500)).toBe('$35.00');
+    expect(formatCurrencyFromCents(3500, 'en')).toBe('$35.00');
   });
 
   it('formats a large ticket price', () => {
-    expect(formatCurrencyFromCents(100000)).toBe('$1,000.00');
+    expect(formatCurrencyFromCents(100000, 'en')).toBe('$1,000.00');
   });
 
   it('formats percent values', () => {

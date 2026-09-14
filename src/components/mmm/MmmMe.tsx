@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -27,7 +28,7 @@ type ListeningSummary = {
  * never finished a track: a scoreboard of dashes on day one is noise.
  */
 function ListeningCard() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [summary, setSummary] = useState<ListeningSummary | null>(null);
   useEffect(() => {
     let stale = false;
@@ -39,7 +40,7 @@ function ListeningCard() {
   }, []);
 
   if (!summary || !summary.tracksTotal) return null;
-  const figure = (value: number | null) => (value === null ? '—' : value.toLocaleString());
+  const figure = (value: number | null) => (value === null ? '—' : formatNumber(locale, value));
 
   return (
     <>

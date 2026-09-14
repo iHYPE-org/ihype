@@ -54,14 +54,14 @@ describe('show purchase: full order financials', () => {
 
 describe('formatCurrencyFromCents', () => {
   it('formats zero', () => {
-    expect(formatCurrencyFromCents(0)).toBe('$0.00');
+    expect(formatCurrencyFromCents(0, 'en')).toBe('$0.00');
   });
 
   it('formats $25.50', () => {
-    expect(formatCurrencyFromCents(2550)).toBe('$25.50');
+    expect(formatCurrencyFromCents(2550, 'en')).toBe('$25.50');
   });
 
   it('formats negative as credit', () => {
-    expect(formatCurrencyFromCents(-100)).toMatch(/-?\$1\.00|-1\.00/);
+    expect(formatCurrencyFromCents(-100, 'en')).toMatch(/-?\$1\.00|-1\.00/);
   });
 });

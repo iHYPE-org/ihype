@@ -1,5 +1,7 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatUsd } from '@/lib/format-locale';
 import Link from 'next/link';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 type PayableEntry = {
   id: string;
@@ -9,13 +11,13 @@ type PayableEntry = {
   show: { title: string; slug: string; status?: string } | null;
 };
 
-function fmtCents(cents: number) {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+function fmtCents(cents: number, locale: Locale) {
+  return formatUsd(locale, cents, 2);
 }
 
 /** Extracted verbatim from the former standalone `/me/payouts` page (DESIGN_SYNC row 245) — same real data, same markup, now reusable from the `/payouts` tabbed hub. */
 export async function PayoutsHistoryPanel({ released, pending }: { released: PayableEntry[]; pending: PayableEntry[] }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const totalReleasedCents = released.reduce((sum, e) => sum + e.amountCents, 0);
 
   return (
@@ -26,7 +28,7 @@ export async function PayoutsHistoryPanel({ released, pending }: { released: Pay
 
       <div className="panel" style={{ padding: '14px 20px', marginBottom: 24, display: 'flex', gap: 24 }}>
         <div>
-          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{fmtCents(totalReleasedCents)}</div>
+          <div style={{ fontWeight: 700, fontSize: '1.5rem' }}>{fmtCents(totalReleasedCents, locale)}</div>
           <div className="meta">{t('payoutsHistoryPanel.totalReceived', 'Total received')}</div>
         </div>
         <div>
@@ -49,9 +51,9 @@ export async function PayoutsHistoryPanel({ released, pending }: { released: Pay
                   <div style={{ fontWeight: 600 }}>
                     {entry.show ? <Link href={`/shows/${entry.show.slug}`}>{entry.show.title}</Link> : entry.payeeLabel}
                   </div>
-                  <div className="meta">{entry.payeeLabel} · {entry.paidAt ? new Date(entry.paidAt).toLocaleDateString() : ''}</div>
+                  <div className="meta">{entry.payeeLabel} · {entry.paidAt ? formatDate(locale, new Date(entry.paidAt), { year: 'numeric', month: 'numeric', day: 'numeric' }) : ''}</div>
                 </div>
-                <div style={{ fontWeight: 700, color: 'var(--role-venue)' }}>{fmtCents(entry.amountCents)}</div>
+                <div style={{ fontWeight: 700, color: 'var(--role-venue)' }}>{fmtCents(entry.amountCents, locale)}</div>
               </div>
             ))}
           </div>
@@ -73,7 +75,7 @@ export async function PayoutsHistoryPanel({ released, pending }: { released: Pay
                   </div>
                   <div className="meta">{entry.payeeLabel} · {entry.show?.status ?? ''}</div>
                 </div>
-                <div style={{ fontWeight: 700 }}>{fmtCents(entry.amountCents)}</div>
+                <div style={{ fontWeight: 700 }}>{fmtCents(entry.amountCents, locale)}</div>
               </div>
             ))}
           </div>

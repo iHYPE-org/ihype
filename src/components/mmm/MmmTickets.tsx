@@ -1,5 +1,7 @@
 'use client';
 
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate } from '@/lib/format-locale';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
 import { TicketClaimForm } from '@/components/TicketTransferPanel';
@@ -28,18 +30,18 @@ const DEMO_TICKETS: MmmMeTicket[] = [
  * and omitted entirely on orders placed before the fee existed.
  */
 
-function dayParts(iso: string) {
+function dayParts(iso: string, locale: Locale) {
   const date = new Date(iso);
   return {
-    day: date.toLocaleDateString('en-US', { day: '2-digit' }),
-    month: date.toLocaleDateString('en-US', { month: 'short' }).toUpperCase(),
-    time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-    full: date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' }).toUpperCase(),
+    day: formatDate(locale, date, { day: '2-digit' }),
+    month: formatDate(locale, date, { month: 'short' }).toUpperCase(),
+    time: formatDate(locale, date, { hour: '2-digit', minute: '2-digit', hour12: false }),
+    full: formatDate(locale, date, { day: 'numeric', month: 'short' }).toUpperCase(),
   };
 }
 
 export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [open, setOpen] = useState<MmmMeTicket | null>(null);
   const demo = tickets.length === 0;
   const visibleTickets = demo ? DEMO_TICKETS : tickets;
@@ -71,7 +73,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
       )}
       <div className="mmm-ticket-list">
         {visibleTickets.map((ticket) => {
-          const when = dayParts(ticket.startsAt);
+          const when = dayParts(ticket.startsAt, locale);
           const attended = Boolean(ticket.scannedAt);
           return (
             <div className="mmm-ticket-row" key={ticket.serializedId}>
@@ -93,7 +95,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
                 </span>
                 {attended ? (
                   <span className="mmm-ticket-checkin">
-                    {t('mmmTickets.checkedIn', 'Checked in {time}').replace('{time}', dayParts(ticket.scannedAt!).time)}
+                    {t('mmmTickets.checkedIn', 'Checked in {time}').replace('{time}', dayParts(ticket.scannedAt!, locale).time)}
                   </span>
                 ) : (
                   <>
@@ -122,8 +124,8 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
 }
 
 function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () => void; ticket: MmmMeTicket }) {
-  const { t } = useI18n();
-  const when = dayParts(ticket.startsAt);
+  const { locale, t } = useI18n();
+  const when = dayParts(ticket.startsAt, locale);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
 

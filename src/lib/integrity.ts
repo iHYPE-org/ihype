@@ -67,7 +67,7 @@ export function getShowVisibilitySignals(show: ExplainableShow, now = new Date()
   const hoursUntil = (startsAt.getTime() - now.getTime()) / (60 * 60 * 1000);
 
   let statusSignal = 'Upcoming';
-  let freshnessSignal = `Starts ${formatShowTime(startsAt)}`;
+  let freshnessSignal = `Starts ${formatShowTime(startsAt, 'en')}`;
   let statusScore = 40;
   let freshnessScore = 18;
 

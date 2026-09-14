@@ -1,3 +1,5 @@
+import type { Locale } from '@/lib/i18n/locales';
+import { formatDate, formatNumber, formatUsd } from '@/lib/format-locale';
 import { redirect } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -6,7 +8,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { PayoutFanView } from '@/components/PayoutFanView';
 import { PayoutActions } from '@/components/PayoutActions';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,12 +24,12 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   };
 }
 
-function fmtCents(cents: number) {
-  return `$${(cents / 100).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+function fmtCents(cents: number, locale: Locale) {
+  return formatUsd(locale, cents, 0);
 }
 
 export default async function PayoutPage({ params }: { params: Promise<{ id: string }> }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const session = await auth();
   if (!session?.user?.id) {
     const { id } = await params;
@@ -65,7 +67,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
   const promoterCents = Math.round(grossCents * promoterPct / 100);
   const capacity = show.ticketCapacity ?? 0;
 
-  const dateStr = new Date(show.startsAt).toLocaleDateString('en-US', {
+  const dateStr = formatDate(locale, new Date(show.startsAt), {
     weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
   });
 
@@ -96,12 +98,12 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap' }}>
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1 }}>
-              {sold.toLocaleString()}{capacity > 0 ? ` / ${capacity.toLocaleString()}` : ''}
+              {formatNumber(locale, sold)}{capacity > 0 ? ` / ${formatNumber(locale, capacity)}` : ''}
             </div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 4 }}>{t('payoutIdPage.ticketsSold', 'Tickets sold')}</div>
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1 }}>{fmtCents(priceCents)}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1 }}>{fmtCents(priceCents, locale)}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 4 }}>{t('payoutIdPage.faceValue', 'Face value')}</div>
           </div>
           <div>
@@ -109,7 +111,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 4 }}>{t('payoutIdPage.ihypeFees', 'iHYPE fees')}</div>
           </div>
           <div>
-            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1 }}>{fmtCents(grossCents)}</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', lineHeight: 1 }}>{fmtCents(grossCents, locale)}</div>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 4 }}>{t('payoutIdPage.gross', 'Gross')}</div>
           </div>
         </div>
@@ -122,7 +124,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
           <h2 style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink)' }}>{t('payoutIdPage.whereMoneyWent', 'Where the money went.')}</h2>
         </div>
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5, marginBottom: 16 }}>
-          {sold.toLocaleString()} {t('payoutIdPage.tickets', 'tickets')} × {fmtCents(priceCents)} = <strong style={{ color: 'var(--ink)' }}>{fmtCents(grossCents)} {t('payoutIdPage.grossLower', 'gross.')}</strong> {t('payoutIdPage.everyDollarAccounted', "Here's every dollar, accounted for.")}
+          {formatNumber(locale, sold)} {t('payoutIdPage.tickets', 'tickets')} × {fmtCents(priceCents, locale)} = <strong style={{ color: 'var(--ink)' }}>{fmtCents(grossCents, locale)} {t('payoutIdPage.grossLower', 'gross.')}</strong> {t('payoutIdPage.everyDollarAccounted', "Here's every dollar, accounted for.")}
         </p>
         <div style={{ display: 'flex', height: 10, borderRadius: 999, overflow: 'hidden', gap: 2, marginBottom: 20 }}>
           <div style={{ flex: 70, background: 'var(--accent)', borderRadius: '999px 0 0 999px' }} />
@@ -132,7 +134,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
           {CELLS.map((c) => (
             <div key={c.label} style={{ padding: '1rem', borderRadius: 14, border: `1px solid ${c.color}33`, background: `linear-gradient(135deg, ${c.color}14, transparent)` }}>
-              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: c.color, lineHeight: 1 }}>{fmtCents(c.cents)}</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: c.color, lineHeight: 1 }}>{fmtCents(c.cents, locale)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 5 }}>{c.pct}% · {c.label}</div>
               <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4 }}>
                 {c.href ? <Link className="mmm-standalone-link" href={c.href} style={{ color: 'inherit', textDecoration: 'none' }}>{c.name}</Link> : c.name}

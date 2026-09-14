@@ -1,5 +1,6 @@
 'use client';
 
+import { formatDate } from '@/lib/format-locale';
 import { useEffect, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 import Link from 'next/link';
@@ -46,7 +47,7 @@ const STATUS_COLOR: Record<string, string> = {
  * model) that page always used.
  */
 export function CommunityVoteBoard() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [requests, setRequests] = useState<FeatureRequest[]>([]);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -178,7 +179,7 @@ export function CommunityVoteBoard() {
                 <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '4px 0 0', lineHeight: 1.5 }}>{fr.description}</p>
                 <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-a65)', margin: '7px 0 0' }}>
                   {fr.quorumMet ? 'Quorum met' : `${fr.quorumRequired - fr.votes} more vote${fr.quorumRequired - fr.votes === 1 ? '' : 's'} for quorum`}
-                  {fr.votingClosesAt ? ` · voting closes ${new Date(fr.votingClosesAt).toLocaleDateString()}` : ''}
+                  {fr.votingClosesAt ? ` · voting closes ${formatDate(locale, new Date(fr.votingClosesAt), { year: 'numeric', month: 'numeric', day: 'numeric' })}` : ''}
                 </p>
                 {fr.securityException && (
                   <p style={{ fontSize: '0.9375rem', color: 'var(--warning)', margin: '7px 0 0' }}>

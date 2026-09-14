@@ -1,3 +1,4 @@
+import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
@@ -5,7 +6,7 @@ import { db } from '@/lib/db';
 import { detectRequestLocation } from '@/lib/request-location';
 import { resolveAffiliatePromoter } from '@/lib/referral-attribution';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { formatShowTime } from '@/lib/utils';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
@@ -168,13 +169,13 @@ export default async function MmmShowPage({
      LINEUP block lists the acts this query already holds — the headliner;
      multi-act slots (ShowLineupSlot) render on /shows/[slug]/lineup and are
      one link away, per this pane's own scope rule. */
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
 
   return (
     <div className="mmm-show">
       <Link className="mmm-show-back" href="/app/map">← {t('mmmDock.tab.map', 'Map')}</Link>
 
-      <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt)}</div>
+      <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt, locale)}</div>
       <h1 className="mmm-show-title">{show.title}</h1>
       {where && <div className="mmm-show-where">{where}</div>}
 
@@ -183,12 +184,12 @@ export default async function MmmShowPage({
           an empty cell is dropped rather than faked. */}
       <div style={{ display: 'flex', borderTop: '1px solid var(--line)', borderBottom: '1px solid var(--line)', margin: '14px 0' }}>
         {[
-          { value: show.hypeCount.toLocaleString(), label: 'HYPES' },
+          { value: formatNumber(locale, show.hypeCount), label: 'HYPES' },
           show.ticketCapacity
             ? { value: `${show.ticketsSoldCount} / ${show.ticketCapacity}`, label: 'SOLD' }
             : null,
           show.isTicketed && show.ticketPriceCents > 0
-            ? { value: formatCurrencyFromCents(show.ticketPriceCents), label: 'GA' }
+            ? { value: formatCurrencyFromCents(show.ticketPriceCents, locale), label: 'GA' }
             : null,
         ].filter((cell): cell is { value: string; label: string } => cell !== null).map((cell, index) => (
           <div key={cell.label} style={{ flex: 1, padding: '13px 0', textAlign: 'center', borderLeft: index === 0 ? 'none' : '1px solid var(--line)' }}>
@@ -232,8 +233,8 @@ export default async function MmmShowPage({
               below this ends in a total carrying tax and Stripe's processing. */}
           <div className="mmm-show-fee">
             {faceShares
-              ? `${formatCurrencyFromCents(show.ticketPriceCents)} face value · ${formatCurrencyFromCents(faceShares.artist)} artist · ${formatCurrencyFromCents(faceShares.venue)} venue · ${formatCurrencyFromCents(faceShares.promoter)} promoters`
-              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents) : 'Free'}
+              ? `${formatCurrencyFromCents(show.ticketPriceCents, locale)} face value · ${formatCurrencyFromCents(faceShares.artist, locale)} artist · ${formatCurrencyFromCents(faceShares.venue, locale)} venue · ${formatCurrencyFromCents(faceShares.promoter, locale)} promoters`
+              : show.ticketPriceCents > 0 ? formatCurrencyFromCents(show.ticketPriceCents, locale) : 'Free'}
           </div>
           <div className="mmm-show-fee">
             $0 iHYPE fee · Stripe&rsquo;s processing is charged separately and shown before you pay
@@ -300,7 +301,7 @@ export default async function MmmShowPage({
             ticketCapacity={show.ticketCapacity}
             ticketPriceCents={show.ticketPriceCents}
             ticketingOpen={ticketingOpen}
-            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt) : null}
+            ticketingOpensAtLabel={show.ticketingOpensAt ? formatShowTime(show.ticketingOpensAt, locale) : null}
             ticketsSoldCount={show.ticketsSoldCount}
             title={show.title}
             venueLocation={{

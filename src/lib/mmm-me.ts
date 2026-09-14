@@ -17,6 +17,8 @@
  *     HYPE link. So promoter earnings are a *fan* stat, not a separate role.
  */
 
+import { formatDate, formatNumber, formatUsd } from '@/lib/format-locale';
+import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { buildTicketQrCodeDataUrl } from '@/lib/tickets';
 
@@ -102,8 +104,8 @@ export type MmmMeTicket = {
  */
 type MmmMeRoleData = Omit<MmmMeData, 'availableRoles' | 'hasAdvertiser' | 'ticketCount' | 'tickets' | 'isAdmin'>;
 
-const money = (cents: number) => `$${(cents / 100).toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
-const count = (value: number) => value.toLocaleString('en-US');
+const money = (locale: Locale, cents: number) => formatUsd(locale, cents, 0);
+const count = (locale: Locale, value: number) => formatNumber(locale, value);
 
 function thirtyDaysAgo(now: Date) {
   return new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -121,7 +123,7 @@ export function resolveAvailableRoles(profileTypes: readonly string[]): MmmMeRol
   return roles;
 }
 
-export async function loadMmmMe(userId: string, requestedRole: string | undefined, isAdmin = false, now = new Date()): Promise<MmmMeData> {
+export async function loadMmmMe(userId: string, requestedRole: string | undefined, locale: Locale, isAdmin = false, now = new Date()): Promise<MmmMeData> {
   const profiles = await db.profile.findMany({
     where: { ownerId: userId },
     orderBy: { createdAt: 'asc' },
@@ -208,14 +210,14 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
       startsAt: row.show.startsAt.toISOString(),
       // Free shows say Free rather than $0 — the same distinction the map pins
       // already make. A price that could not be read is omitted, not zeroed.
-      faceValue: row.show.ticketPriceCents > 0 ? money(row.show.ticketPriceCents) : 'Free',
+      faceValue: row.show.ticketPriceCents > 0 ? money(locale, row.show.ticketPriceCents) : 'Free',
       // Per TICKET, not per order: an order of three carries one fee, and
       // showing the whole thing on each ticket would treble it on screen.
       // Orders placed before the fee existed carry 0 and show no line at all,
       // rather than a $0.00 that reads as a fee that was waived.
       processingFee:
         row.ticketOrder.processingFeeCents > 0
-          ? money(Math.round(row.ticketOrder.processingFeeCents / Math.max(1, row.ticketOrder.quantity)))
+          ? money(locale, Math.round(row.ticketOrder.processingFeeCents / Math.max(1, row.ticketOrder.quantity)))
           : null,
       scannedAt: row.scannedAt?.toISOString() ?? null,
       qrDataUrl: await buildTicketQrCodeDataUrl(row.serializedId),
@@ -236,12 +238,12 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
     tickets,
   });
 
-  if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now));
+  if (role === 'fan') return withRoles(await loadFan(userId, linkProfile, now, locale));
   const profile = profiles.find((entry) => entry.type === (role === 'artist' ? 'ARTIST' : 'VENUE'));
-  if (!profile) return withRoles(await loadFan(userId, linkProfile, now));
+  if (!profile) return withRoles(await loadFan(userId, linkProfile, now, locale));
   return withRoles(role === 'artist'
-    ? await loadArtist(profile, linkProfile, now)
-    : await loadVenue(profile, linkProfile, now));
+    ? await loadArtist(profile, linkProfile, now, locale)
+    : await loadVenue(profile, linkProfile, now, locale));
 }
 
 async function hypeLinkFor(
@@ -275,7 +277,7 @@ async function hypeLinkFor(
   };
 }
 
-async function loadFan(userId: string, linkProfile: { id: string; hexId: string } | null, now: Date): Promise<MmmMeRoleData> {
+async function loadFan(userId: string, linkProfile: { id: string; hexId: string } | null, now: Date, locale: Locale): Promise<MmmMeRoleData> {
   const [hypesCast, showsAttended, following, orders, hypeLink] = await Promise.all([
     db.profileHypeEvent.count({ where: { userId } }).catch(() => null),
     db.showAttendee.count({ where: { userId } }).catch(() => null),
@@ -290,12 +292,12 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
   ]);
 
   const stats: MmmStat[] = [];
-  if (hypesCast !== null) stats.push({ value: count(hypesCast), label: 'Hypes cast' });
-  if (showsAttended !== null) stats.push({ value: count(showsAttended), label: 'Shows attended' });
+  if (hypesCast !== null) stats.push({ value: count(locale, hypesCast), label: 'Hypes cast' });
+  if (showsAttended !== null) stats.push({ value: count(locale, showsAttended), label: 'Shows attended' });
   if (hypeLink?.earnedCents !== null && hypeLink?.earnedCents !== undefined) {
-    stats.push({ value: money(hypeLink.earnedCents), label: 'Promoter earnings' });
+    stats.push({ value: money(locale, hypeLink.earnedCents), label: 'Promoter earnings' });
   }
-  if (following !== null) stats.push({ value: count(following), label: 'Following' });
+  if (following !== null) stats.push({ value: count(locale, following), label: 'Following' });
 
   return {
     role: 'fan',
@@ -305,9 +307,9 @@ async function loadFan(userId: string, linkProfile: { id: string; hexId: string 
     activity: orders.map((order) => ({
       title: order.show?.title ?? 'Ticket order',
       sub: order.show?.startsAt
-        ? new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(order.show.startsAt)
+        ? formatDate(locale, order.show.startsAt, { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
         : '',
-      amount: `-${money(order.totalChargeCents)}`,
+      amount: `-${money(locale, order.totalChargeCents)}`,
       tone: 'neutral' as const,
     })),
     // Deliberately null: the fan page creator was removed in this handoff.
@@ -321,6 +323,7 @@ async function loadArtist(
   profile: { id: string; name: string; slug: string; hexId: string; hypeCount: number; isVerified: boolean; verified: boolean; city: string | null; stateRegion: string | null },
   linkProfile: { id: string; hexId: string } | null,
   now: Date,
+  locale: Locale,
 ): Promise<MmmMeRoleData> {
   const [paidOut, upcoming, followers, releases, hypeLink] = await Promise.all([
     db.accountsPayableEntry.aggregate({
@@ -340,10 +343,10 @@ async function loadArtist(
     hypeLinkFor(linkProfile, now),
   ]);
 
-  const stats: MmmStat[] = [{ value: count(profile.hypeCount), label: 'Total hypes' }];
-  if (paidOut !== null) stats.push({ value: money(paidOut), label: 'Paid out 30d' });
-  if (upcoming !== null) stats.push({ value: count(upcoming), label: 'Upcoming shows' });
-  if (followers !== null) stats.push({ value: count(followers), label: 'Followers' });
+  const stats: MmmStat[] = [{ value: count(locale, profile.hypeCount), label: 'Total hypes' }];
+  if (paidOut !== null) stats.push({ value: money(locale, paidOut), label: 'Paid out 30d' });
+  if (upcoming !== null) stats.push({ value: count(locale, upcoming), label: 'Upcoming shows' });
+  if (followers !== null) stats.push({ value: count(locale, followers), label: 'Followers' });
 
   return {
     role: 'artist',  // Overwritten by loadMmmMe — see withRoles().
@@ -352,10 +355,10 @@ async function loadArtist(
     activity: releases.map((entry) => ({
       title: entry.show?.title ?? 'Show payout',
       sub: [
-        entry.paidAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(entry.paidAt) : null,
+        entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
         entry.show ? `${entry.show.ticketsSoldCount} tickets` : null,
       ].filter(Boolean).join(' · '),
-      amount: `+${money(entry.amountCents)}`,
+      amount: `+${money(locale, entry.amountCents)}`,
       tone: 'positive' as const,
     })),
     page: {
@@ -375,6 +378,7 @@ async function loadVenue(
   profile: { id: string; name: string; slug: string; hexId: string; isVerified: boolean; verified: boolean; city: string | null; stateRegion: string | null; capacity: number | null },
   linkProfile: { id: string; hexId: string } | null,
   now: Date,
+  locale: Locale,
 ): Promise<MmmMeRoleData> {
   const [gate, booked, recentShows, settlements, hypeLink] = await Promise.all([
     db.accountsPayableEntry.aggregate({
@@ -405,9 +409,9 @@ async function loadVenue(
     const totalSold = recentShows.reduce((sum, show) => sum + show.ticketsSoldCount, 0);
     if (totalCapacity > 0) stats.push({ value: `${Math.round((totalSold / totalCapacity) * 100)}%`, label: 'Avg fill rate' });
   }
-  if (gate !== null) stats.push({ value: money(gate), label: 'Gate 30d' });
-  if (booked !== null) stats.push({ value: count(booked), label: 'Shows booked' });
-  if (profile.capacity) stats.push({ value: count(profile.capacity), label: 'Capacity' });
+  if (gate !== null) stats.push({ value: money(locale, gate), label: 'Gate 30d' });
+  if (booked !== null) stats.push({ value: count(locale, booked), label: 'Shows booked' });
+  if (profile.capacity) stats.push({ value: count(locale, profile.capacity), label: 'Capacity' });
 
   return {
     role: 'venue',  // Overwritten by loadMmmMe — see withRoles().
@@ -416,10 +420,10 @@ async function loadVenue(
     activity: settlements.map((entry) => ({
       title: entry.show?.title ?? 'Show settlement',
       sub: [
-        entry.paidAt ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(entry.paidAt) : null,
+        entry.paidAt ? formatDate(locale, entry.paidAt, { month: 'short', day: 'numeric', timeZone: 'UTC' }) : null,
         entry.show ? `${entry.show.ticketsSoldCount} sold` : null,
       ].filter(Boolean).join(' · '),
-      amount: `+${money(entry.amountCents)}`,
+      amount: `+${money(locale, entry.amountCents)}`,
       tone: 'positive' as const,
     })),
     page: {

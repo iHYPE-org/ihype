@@ -1,5 +1,6 @@
+import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
-import { getServerT } from '@/lib/i18n/server';
+import { getServerI18n } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
 type Feature = { title: string; body: string };
@@ -41,7 +42,7 @@ const HEAT_COLOR = ['var(--heat-fire)', 'var(--heat-hot)', 'var(--heat-warm)', '
  * already collect it for real.
  */
 export async function RecruitingKitPage({ config, cityHeat }: { config: RecruitingKitConfig; cityHeat: CityHeat[] }) {
-  const t = await getServerT();
+  const { locale, t } = await getServerI18n();
   const maxScore = Math.max(...cityHeat.map((c) => c.score), 1);
 
   return (
@@ -90,7 +91,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
                 {cityHeat.map((c, i) => (
                   <div className="rk-heat-row" key={c.label}>
                     <span className="rk-heat-city">{c.label}</span>
-                    <div className="rk-heat-track" role="img" aria-label={`${c.label}: ${c.score.toLocaleString()} ${t('recruitingKitPage.hypes', 'hypes')}`}>
+                    <div className="rk-heat-track" role="img" aria-label={`${c.label}: ${formatNumber(locale, c.score)} ${t('recruitingKitPage.hypes', 'hypes')}`}>
                       <div
                         className="rk-heat-bar"
                         style={{ width: `${Math.max(20, Math.round((c.score / maxScore) * 100))}%`, background: HEAT_COLOR[Math.min(i, HEAT_COLOR.length - 1)] }}

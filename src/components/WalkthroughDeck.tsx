@@ -1,5 +1,6 @@
 'use client';
 
+import { formatNumber } from '@/lib/format-locale';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
@@ -57,7 +58,7 @@ function Logo({ gradient = false, size = 'md' }: { gradient?: boolean; size?: 's
 // ─── HypeButton ──────────────────────────────────────────────────────────────
 
 function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount?: number; initiallyHyped?: boolean }) {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const [count, setCount] = useState(initialCount);
   const [hyped, setHyped] = useState(initiallyHyped);
   const [pop, setPop] = useState(false);
@@ -84,7 +85,7 @@ function HypeButton({ initialCount = 0, initiallyHyped = false }: { initialCount
       }}
     >
       <Icon name={hyped ? 'check' : 'flame'} size={17} color={hyped ? 'var(--ink-on-accent)' : 'var(--accent)'} strokeWidth={hyped ? 3 : 1.75} />
-      {hyped ? t('walkthroughDeck.hyped', 'Hyped') : t('walkthroughDeck.hype', 'Hype')} {count.toLocaleString()}
+      {hyped ? t('walkthroughDeck.hyped', 'Hyped') : t('walkthroughDeck.hype', 'Hype')} {formatNumber(locale, count)}
     </button>
   );
 }
