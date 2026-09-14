@@ -1260,7 +1260,13 @@ test.describe('ME with a real profile', () => {
 
     await page.goto('/app/me/info/privacy');
     await expect(page).toHaveURL(/\/app\/me\/info\/terms#privacy$/);
-    await expect(page.locator('h1')).toHaveText('Terms and privacy');
+    /* By ROLE, not `locator('h1')`: while the route streams, Next holds a
+       copy of the segment in a hidden staging node, so a bare `h1` locator
+       resolves to two elements for a frame and strict mode fails on it —
+       measured once on 2026-09-14, passed on retry. `getByRole` excludes the
+       hidden copy. Same class as the `.mmm-dock:visible` count and the
+       `.admin-tabstrip` `.first()` fixes. */
+    await expect(page.getByRole('heading', { level: 1 })).toHaveText('Terms and privacy');
     await expect(page.locator('.mmm-charter-back')).toHaveCount(1);
     await expect(page.locator('.mmm-document-part')).toHaveText(['Terms of service', 'Privacy policy']);
     // 9 terms clauses + 8 privacy clauses + contact, numbered as one sequence.
