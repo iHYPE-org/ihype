@@ -6,19 +6,6 @@ import { isAdminSession } from '@/lib/permissions';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(_request: NextRequest) {
-  const session = await auth();
-  if (!isAdminSession(session)) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-  }
-
-  const playlists = await db.curatedPlaylist.findMany({
-    orderBy: { createdAt: 'desc' }
-  });
-
-  return NextResponse.json({ playlists });
-}
-
 export async function POST(request: NextRequest) {
   const session = await auth();
   if (!isAdminSession(session)) {
