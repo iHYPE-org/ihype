@@ -530,10 +530,17 @@ async function offlineFallback() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>iHYPE offline</title>
 <style>
-body{background:linear-gradient(115deg,#0d0610,#060813 48%,#051014);color:#f7f4ff;font-family:system-ui,sans-serif;min-height:100vh;display:grid;place-items:center;padding:2rem;text-align:center}
-h1{font-size:2rem;margin:0 0 .75rem}
-p{color:#aeb8d3;line-height:1.65;max-width:400px;margin:0 auto 1.5rem}
-a{display:inline-block;padding:.8rem 1.5rem;background:linear-gradient(135deg,#ff4635,#ff3d87 44%,#39d8df);color:#fff;border-radius:99px;text-decoration:none;font-weight:800}
+/* A service worker cannot read globals.css, so these are the :root tokens
+   written out by hand, each labelled with the token it mirrors. A guard in
+   wiring-guards.test.ts compares every labelled value against :root, so a
+   ground move that leaves this screen behind fails the suite — the way the
+   capacitor and themeColor copies already do. This screen is only ever seen
+   with no network and no cached /offline, which is exactly when it cannot
+   fetch the stylesheet that would otherwise paint it. */
+body{margin:0;box-sizing:border-box;background:#ffffff /* --bg */;color:#0a0a0a /* --ink */;font-family:-apple-system,BlinkMacSystemFont,system-ui,sans-serif;min-height:100dvh;display:grid;place-items:center;padding:2rem;text-align:center}
+h1{font-size:1.75rem;font-weight:700;letter-spacing:-.01em;margin:0 0 .75rem}
+p{color:#545458 /* --ink-3 */;line-height:1.55;max-width:400px;margin:0 auto 1.5rem}
+a{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:0 1.5rem;background:#e0263e /* --accent */;color:#ffffff /* --ink-on-accent */;border-radius:999px /* --radius-pill */;text-decoration:none;font-weight:600}
 </style>
 </head>
 <body>
