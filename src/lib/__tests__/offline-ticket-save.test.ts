@@ -152,6 +152,19 @@ describe('the service worker answers the page', () => {
     expect(sw, 'the worker must read the MessageChannel port the page transfers').toContain('event.ports');
   });
 
+  /* THE TWO URLS THAT REACH A TICKET RESOLVE TO ONE STORED COPY.
+     `buildTicketVerificationUrl()` returns `/tickets/<id>` — the link in every
+     confirmation email and the string every QR encodes — and the route is a
+     307 to `/app/me/tickets/<id>`. A redirect cannot be followed with no
+     network, so the offline lookup has to translate; the wallet deliberately
+     warms the canonical path only. `e2e/offline-ticket.spec.ts` drives it in a
+     browser, which is the only place it can be proved; this is the source-level
+     guard that the mechanism has not been deleted. */
+  it('translates the emailed ticket URL to the key the wallet actually warms', () => {
+    expect(sw).toContain('canonicalTicketPath');
+    expect(sw, 'the ticket branch must pass the alias to the fallback').toMatch(/aliasKey/);
+  });
+
   it('still works for a caller that supplies no port', () => {
     // The port is optional on purpose: a page served by an older bundle keeps
     // warming exactly as before rather than throwing inside the worker.

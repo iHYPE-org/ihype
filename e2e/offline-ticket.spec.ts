@@ -66,6 +66,52 @@ test.describe('the offline ticket wallet', () => {
     }
   });
 
+  test('the emailed link and the QR open with no signal, not just the in-app path', async ({ page, context }) => {
+    /* `buildTicketVerificationUrl()` returns `/tickets/<id>`, so that string is
+       the link in every confirmation email AND what every QR encodes — while
+       the route is a 307 to `/app/me/tickets/<id>`. Online the browser follows
+       it. OFFLINE IT CANNOT: following a redirect needs the network, so this
+       navigation asked the cache for a key the warmer never writes and fell
+       through to the offline page, with the member's own ticket sitting in the
+       same cache one key away. The two ways a ticket is actually reached at a
+       door were the two that did not work.
+
+       The spec navigates to the legacy URL and nothing else: the warm is the
+       ordinary automatic one, exactly as a member would have it. */
+    const session = await applySessionCookie(context, EMAIL, { profiles: [] });
+    const seeded = await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });
+    const canonical = `/app/me/tickets/${seeded.serializedId}`;
+    const emailed = `/tickets/${seeded.serializedId}`;
+
+    await page.goto('/app/tickets');
+    await expect.poll(
+      () => page.evaluate(async ({ path, cacheName }) => {
+        const cache = await caches.open(cacheName);
+        return Boolean(await cache.match(path));
+      }, { path: canonical, cacheName: TICKETS_CACHE }),
+      { timeout: 30_000, message: 'the ticket page never reached the ihype-tickets cache' },
+    ).toBe(true);
+
+    /* The emailed URL is deliberately NOT warmed — one ticket, one stored copy.
+       Asserting that here is what keeps the fix an alias on the LOOKUP rather
+       than a second warm that stores the same page twice. */
+    const emailedCached = await page.evaluate(async ({ path, cacheName }) => {
+      const cache = await caches.open(cacheName);
+      return Boolean(await cache.match(path));
+    }, { path: emailed, cacheName: TICKETS_CACHE });
+    expect(emailedCached, 'the legacy URL should not be stored under its own key').toBe(false);
+
+    await context.setOffline(true);
+    try {
+      await page.goto(emailed);
+      await expect(page.getByText(seeded.serializedId).first()).toBeVisible();
+      await expect(page.getByRole('img', { name: new RegExp(seeded.serializedId) })).toBeVisible();
+      await expect(page.getByText(/you.re offline/i)).toHaveCount(0);
+    } finally {
+      await context.setOffline(false);
+    }
+  });
+
   test('the wallet itself is never cached — it lists live rows only', async ({ page, context }) => {
     const session = await applySessionCookie(context, EMAIL, { profiles: [] });
     await seedShowWithTicket({ buyerUserId: session.user.id, buyerEmail: session.user.email });

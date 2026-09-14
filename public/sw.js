@@ -263,7 +263,11 @@ self.addEventListener('fetch', (event) => {
   if (request.destination === 'document' && isOfflinePrivatePage(url.pathname)) {
     // The one place a private page is stored on purpose — see the note on
     // NETWORK_ONLY_PATHS. Sign-out clears this cache.
-    event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, { storePrivate: true }));
+    const aliasKey = canonicalTicketPath(url.pathname);
+    event.respondWith(networkWithCacheFallback(request, TICKETS_CACHE, {
+      storePrivate: true,
+      aliasKey: aliasKey === url.pathname ? null : aliasKey,
+    }));
     return;
   }
 
@@ -308,6 +312,32 @@ function isNetworkOnly(pathname) {
  */
 function isTicketDetail(pathname) {
   return /^\/app\/me\/tickets\/[^/]+$/.test(pathname) || /^\/tickets\/[^/]+$/.test(pathname);
+}
+
+/**
+ * The ONE key a ticket page is stored under, for either of the two URLs that
+ * reach it.
+ *
+ * `/tickets/<id>` is not a legacy address. `buildTicketVerificationUrl()`
+ * returns it, so it is the link in every confirmation email AND the string
+ * every QR encodes (see src/lib/door-manifest.ts) — while the route itself is
+ * a 307 to `/app/me/tickets/<id>` in next.config.mjs.
+ *
+ * ONLINE that costs nothing: the browser follows the redirect and the second
+ * navigation is served, and stored, under the canonical path. OFFLINE IT
+ * CANNOT — following a redirect needs the network — so a member opening their
+ * own emailed link at a door with no signal asked the cache for a key nothing
+ * had ever been stored under, and got the offline page, while a clean copy of
+ * their ticket sat in the same cache one key away. That is precisely the
+ * journey this cache exists for: bought on the bus, opened at the door.
+ *
+ * The wallet warms the canonical path only (MmmTickets.tsx), and that is
+ * right — one ticket, one copy. So the translation belongs HERE, on the
+ * lookup, rather than in a second warm that would store the same page twice.
+ */
+function canonicalTicketPath(pathname) {
+  const legacy = /^\/tickets\/([^/]+)$/.exec(pathname);
+  return legacy ? `/app/me/tickets/${legacy[1]}` : pathname;
 }
 
 /**
@@ -368,7 +398,34 @@ async function networkWithCacheFallback(request, cacheName, options = {}) {
     return response;
   } catch {
     const cached = await caches.match(request);
-    return cached || (await offlineFallback());
+    if (cached) return cached;
+    /* THE OFFLINE ANSWER IS A REDIRECT, NOT THE OTHER PAGE'S DOCUMENT, and the
+       difference is the whole fix.
+
+       Only the ticket branch passes `aliasKey`, and only when the request came
+       in on the emailed/QR URL. The obvious move is to return the canonical
+       page's cached document here — and it was written that way first, and
+       `e2e/offline-ticket.spec.ts` failed on it three times. The document is
+       for `/app/me/tickets/<id>` while the address bar says `/tickets/<id>`,
+       so Next's client router reconciles by fetching the payload for the URL
+       it can see, which offline cannot land: the server-rendered ticket is
+       hydrated away, exactly as in the 2026-09-05 chunk failure. A cached page
+       is not the ticket unless the URL agrees with it.
+
+       So answer the way the network would have: a redirect. `Response.redirect`
+       is a 302 we synthesize — its `redirected` flag is false, so
+       `respondWith` accepts it for a navigation (unlike a response that was
+       itself fetched through a redirect, which is why `/hype` left
+       CORE_PAGES) — the browser follows it, and that second navigation reaches
+       this worker under the canonical key with the address bar matching. No
+       loop is possible: the canonical path is not the legacy one, so it
+       carries no alias and falls through to `offlineFallback()` if it really
+       was never stored. */
+    if (options.aliasKey) {
+      const alias = await caches.match(options.aliasKey);
+      if (alias) return Response.redirect(new URL(options.aliasKey, self.location.origin).href, 302);
+    }
+    return await offlineFallback();
   }
 }
 
