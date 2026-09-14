@@ -48,7 +48,7 @@ export default async function VerifyPage() {
         <p style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginBottom: 24 }}>
           {t('verifyPage.noProfilesBody', "Fan accounts don't need verification. Create an Artist or Venue page to get started.")}
         </p>
-        <Link href="/pages?tab=creator" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
+        <Link href="/app/me/profiles" className="ihype-btn-primary" style={{ display: 'inline-block', textDecoration: 'none' }}>
           {t('verifyPage.createPage', 'Create a page →')}
         </Link>
       </div>

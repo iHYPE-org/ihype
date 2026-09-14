@@ -133,7 +133,7 @@ export function VenueBookingInboxTabs({ profileId }: { profileId: string }) {
                     {requesterProfile && (
                       <Link
                         className="vbi-btn vbi-btn-outline"
-                        href={`/artists/${requesterProfile.slug}`}
+                        href={`/app/artists/${requesterProfile.slug}`}
                       >
                         {t('venueBookingInboxTabs.viewProfileLink', 'View profile')}
                       </Link>

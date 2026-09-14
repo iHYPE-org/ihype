@@ -1156,7 +1156,7 @@ export function PageEditor({ profileId, initialSection }: { profileId: string; i
           </Field>
           <a
             className="settings-btn settings-btn-ghost"
-            href={`/artists/${data.slug}/epk`}
+            href={`/app/me/artists/${data.slug}/epk`}
             rel="noreferrer"
             style={{ display: 'inline-block' }}
             target="_blank"

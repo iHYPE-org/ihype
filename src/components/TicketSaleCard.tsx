@@ -513,7 +513,7 @@ export function TicketSaleCard({
                 {ageGated ? (
                   <>
                     {' '}
-                    <Link href="/me/settings">{t('ticketSaleCard.confirmAgeLink', 'Confirm your age in Settings →')}</Link>
+                    <Link href="/app/me/settings">{t('ticketSaleCard.confirmAgeLink', 'Confirm your age in Settings →')}</Link>
                   </>
                 ) : null}
                 {emailUnverified ? (

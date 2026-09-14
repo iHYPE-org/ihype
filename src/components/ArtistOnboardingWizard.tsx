@@ -219,7 +219,7 @@ export function ArtistOnboardingWizard({
               </div>
             </div>
 
-            <Link className="aow-btn aow-btn-solid" href="/events/new">
+            <Link className="aow-btn aow-btn-solid" href="/app/me/events/new">
               {t('artistOnboardingWizard.createEvent', 'Create an event →')}
             </Link>
             <button className="aow-btn aow-btn-ghost" onClick={goVerify} type="button">
@@ -333,7 +333,7 @@ export function ArtistOnboardingWizard({
             <p className="aow-sub" style={{ textAlign: 'center', maxWidth: '34ch', margin: '8px auto 24px' }}>
               {t('artistOnboardingWizard.doneSub', 'Your page is live. Fans can find you, hype your tracks, and buy tickets to your shows.')}
             </p>
-            <Link className="aow-btn aow-btn-solid" href={`/artists/${slug}/dashboard`}>
+            <Link className="aow-btn aow-btn-solid" href={`/app/me/artists/${slug}/dashboard`}>
               {t('artistOnboardingWizard.goToMyPage', 'Go to my page →')}
             </Link>
           </div>

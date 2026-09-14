@@ -152,7 +152,7 @@ export default async function FanProfilePage({
               {isOwner ? (
                 <>
                   <Link className="fan-hero-btn" href="/app/me/profiles">{t('fansSlugPage.editProfile', 'Edit Profile')}</Link>
-                  <Link className="fan-hero-btn" href="/settings">{t('fansSlugPage.settings', 'Settings')}</Link>
+                  <Link className="fan-hero-btn" href="/app/me/settings">{t('fansSlugPage.settings', 'Settings')}</Link>
                 </>
               ) : (
                 <>
@@ -175,7 +175,7 @@ export default async function FanProfilePage({
       <div className="fan-content">
         <div className="fan-tabs">
           {fanSections.filter((s) => s !== 'referrals' || isOwner).map((section) => (
-            <Link className={section === activeSection ? 'fan-tab active' : 'fan-tab'} href={`/fans/${profile.slug}?section=${section}`} key={section}>
+            <Link className={section === activeSection ? 'fan-tab active' : 'fan-tab'} href={`/app/fans/${profile.slug}?section=${section}`} key={section}>
               {t(SECTION_LABEL_KEY[section], SECTION_LABEL[section])}
             </Link>
           ))}

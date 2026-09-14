@@ -19,7 +19,7 @@ export function SearchBar({ compact = false }: { compact?: boolean }) {
     e.preventDefault();
     const q = inputRef.current?.value.trim();
     if (q) {
-      router.push(`/search?q=${encodeURIComponent(q)}`);
+      router.push(`/app/music/discover?focus=search&q=${encodeURIComponent(q)}`);
       setExpanded(false);
     }
   }
@@ -32,10 +32,11 @@ export function SearchBar({ compact = false }: { compact?: boolean }) {
     <>
       {/* Desktop: always visible inline form */}
       <form
-        action="/search"
+        action="/app/music/discover"
         method="get"
         className={`search-bar-desktop${compact ? ' is-compact' : ''}`}
       >
+        <input name="focus" type="hidden" value="search" />
         <input
           name="q"
           placeholder={t('searchBar.placeholder', 'Search artists, shows…')}

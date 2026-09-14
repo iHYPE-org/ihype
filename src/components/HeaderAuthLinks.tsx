@@ -28,7 +28,7 @@ export function HeaderAuthLinks({ inviteOnly = false }: { inviteOnly?: boolean }
     return (
       <Link
         aria-label={`${t('headerAuthLinks.signedInAs', 'Signed in as')} ${display} — ${t('headerAuthLinks.openSettings', 'open settings')}`}
-        href="/me/settings"
+        href="/app/me/settings"
         title={`${t('headerAuthLinks.signedInAs', 'Signed in as')} ${display}`}
         style={{
           display: 'flex',

@@ -185,14 +185,14 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
             from its refutation, and this sentence is why there is nothing
             else to find. */}
         <p>{t('charterPage.promotersBody', "The 10% promoter pool is distributed among everyone whose HYPE Links contributed to ticket sales for an event. There is no promoter role and no promoter account: promoting is something every account can do.")}</p>
-        <p><Link href="/me/promote" className="charter-inline-link">{t('charterPage.promoteDashboardLink', 'See a promoting dashboard →')}</Link></p>
+        <p><Link href="/app/me/settings" className="charter-inline-link">{t('charterPage.hypeLinkSettingsLink', 'See your HYPE link and what it has earned →')}</Link></p>
         <h2>{t('legalPage.charter.openTitle', 'Open by design')}</h2>
         <p>{t('legalPage.charter.openBody', 'Our code and our moderation heuristics are published for public audit. Nothing about how the split is calculated, how uploads are screened, or how the platform ranks anything is a secret — anyone can check that it does exactly what we say.')}</p>
         <h2>{t('legalPage.charter.dataTitle', 'Your data is never for sale')}</h2>
         <p>{t('legalPage.charter.dataBodyIntro', 'iHYPE does not aggregate user data for resale and never sells it to advertisers or anyone else — not now, not after an acquisition. This is a charter commitment, not a policy that can be quietly reversed. See our')} <Link href="/info?tab=privacy">{t('legalPage.charter.privacyPolicyLink', 'Privacy Policy')}</Link> {t('legalPage.charter.dataBodyOutro', 'for exactly what we collect and why.')}</p>
         <h2>{t('legalPage.charter.voteTitle', 'You get a vote')}</h2>
         <p>{t('legalPage.charter.voteBody', 'Fan users are treated as stakeholders, not just customers. Every proposed product feature change is put through a vote on the Community page, where every fan account gets a voice. The result becomes part of the public product record so platform direction cannot be quietly rewritten behind closed doors.')}</p>
-        <p><Link href="/community" className="charter-inline-link">{t('legalPage.charter.communityVoteLink', 'See Community proposals and votes →')}</Link></p>
+        <p><Link href="/app/me/info/community" className="charter-inline-link">{t('legalPage.charter.communityVoteLink', 'See Community proposals and votes →')}</Link></p>
         <h2>{t('legalPage.charter.boardTitle', 'Independent annual oversight')}</h2>
         <p>{t('legalPage.charter.boardBody', 'A three-person corporate board, whose members are unrelated to the two founders, performs annual checks and balances over the organization. The board reviews governance, finances, compensation, compliance, and mission alignment. It retains the fiduciary responsibilities required of a nonprofit board; community feature votes govern product direction without replacing those legal duties.')}</p>
         <h2>{t('legalPage.charter.fundedTitle', 'Funded like radio, not like Big Tech')}</h2>

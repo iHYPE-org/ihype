@@ -310,7 +310,7 @@ export default function VenueOnboardingWizard({
               : `${t('venueOnboardingWizard.doneSubPending', 'Submit')} ${nameOrVenue} ${t('venueOnboardingWizard.doneSubPendingSuffix', 'for review to finish setup.')}`}
           </p>
           {submitted && <div className="von-badge">{t('venueOnboardingWizard.badgeVerifiedPending', 'Verified Venue · Pending')}</div>}
-          <Link className="von-btn von-btn-solid von-btn-link" href={`/venues/${slug}/dashboard`}>
+          <Link className="von-btn von-btn-solid von-btn-link" href={`/app/me/venues/${slug}/dashboard`}>
             {t('venueOnboardingWizard.exploreDemandRadar', 'Explore demand radar →')}
           </Link>
         </div>
