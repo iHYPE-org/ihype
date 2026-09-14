@@ -399,13 +399,31 @@ async function networkWithCacheFallback(request, cacheName, options = {}) {
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    /* Only the ticket branch passes `aliasKey`, and only when the request came
-       in on the emailed/QR URL. It is consulted AFTER the request's own key so
-       nothing about any other page changes, and it can only ever find a page
-       this worker stored itself. */
+    /* THE OFFLINE ANSWER IS A REDIRECT, NOT THE OTHER PAGE'S DOCUMENT, and the
+       difference is the whole fix.
+
+       Only the ticket branch passes `aliasKey`, and only when the request came
+       in on the emailed/QR URL. The obvious move is to return the canonical
+       page's cached document here — and it was written that way first, and
+       `e2e/offline-ticket.spec.ts` failed on it three times. The document is
+       for `/app/me/tickets/<id>` while the address bar says `/tickets/<id>`,
+       so Next's client router reconciles by fetching the payload for the URL
+       it can see, which offline cannot land: the server-rendered ticket is
+       hydrated away, exactly as in the 2026-09-05 chunk failure. A cached page
+       is not the ticket unless the URL agrees with it.
+
+       So answer the way the network would have: a redirect. `Response.redirect`
+       is a 302 we synthesize — its `redirected` flag is false, so
+       `respondWith` accepts it for a navigation (unlike a response that was
+       itself fetched through a redirect, which is why `/hype` left
+       CORE_PAGES) — the browser follows it, and that second navigation reaches
+       this worker under the canonical key with the address bar matching. No
+       loop is possible: the canonical path is not the legacy one, so it
+       carries no alias and falls through to `offlineFallback()` if it really
+       was never stored. */
     if (options.aliasKey) {
       const alias = await caches.match(options.aliasKey);
-      if (alias) return alias;
+      if (alias) return Response.redirect(new URL(options.aliasKey, self.location.origin).href, 302);
     }
     return await offlineFallback();
   }
