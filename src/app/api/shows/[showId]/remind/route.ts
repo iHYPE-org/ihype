@@ -3,6 +3,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { recordAuditEvent } from '@/lib/audit';
 import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
+import { showReminderLink, showReminderLinkKeys } from '@/lib/show-reminder';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +21,16 @@ export async function POST(
   const rl = await consumeRateLimit(rateLimitKey('show-remind', session.user.id, null), { limit: 60, windowMs: 60 * 60 * 1000 });
   if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
 
-  const show = await db.show.findUnique({ where: { id }, select: { id: true, title: true } });
+  const show = await db.show.findUnique({ where: { id }, select: { id: true, slug: true, title: true } });
   if (!show) return NextResponse.json({ error: 'Show not found' }, { status: 404 });
 
   // Toggle: check if reminder notification already exists
   const existing = await db.notification.findFirst({
-    where: { userId: session.user.id, type: 'show_reminder_pending', link: `/shows/${id}` }
+    where: {
+      userId: session.user.id,
+      type: 'show_reminder_pending',
+      link: { in: showReminderLinkKeys(show.slug, show.id) },
+    }
   });
 
   if (existing) {
@@ -38,7 +43,7 @@ export async function POST(
       userId: session.user.id,
       type: 'show_reminder_pending',
       body: `Reminder set for "${show.title}"`,
-      link: `/shows/${id}`,
+      link: showReminderLink(show.slug),
       read: false
     }
   });

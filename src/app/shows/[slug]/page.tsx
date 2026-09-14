@@ -39,6 +39,7 @@ import { ShowComments } from '@/components/ShowComments';
    already drifted between the two. */
 import { canViewShow, isTicketingOpen, resolveShowSplits, splitFaceValueCents } from '@/lib/show-detail';
 import { buildShowJsonLd } from '@/lib/show-jsonld';
+import { showReminderLinkKeys } from '@/lib/show-reminder';
 
 const getShowMeta = cache((slug: string) =>
   db.show.findUnique({
@@ -248,7 +249,11 @@ export default async function ShowDetailPage({
     loadShowSetlist(show.id),
     session?.user?.id
       ? db.notification.findFirst({
-          where: { userId: session.user.id, type: 'show_reminder_pending', link: `/shows/${show.id}` },
+          where: {
+            userId: session.user.id,
+            type: 'show_reminder_pending',
+            link: { in: showReminderLinkKeys(show.slug, show.id) },
+          },
           select: { id: true },
         }).catch(() => null)
       : Promise.resolve(null),
