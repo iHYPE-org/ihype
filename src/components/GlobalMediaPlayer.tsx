@@ -408,7 +408,11 @@ export function MediaPlayerProvider({ children }: { children: ReactNode }) {
           hexId: string; title: string; notes: string | null;
           url: string; artistName: string; artistSlug: string; artworkUrl: string | null;
         }) => ({
-          id: `radio-${t.hexId}`,
+          /* The hexId, as every other surface names a queue entry — a `radio-`
+             prefix here made the same track a different entry from its station
+             row (never "current" there) and, through the heart, a different
+             favourite (row 437). */
+          id: t.hexId,
           title: t.title,
           artistName: t.artistName,
           url: t.url,

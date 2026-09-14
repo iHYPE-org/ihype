@@ -147,12 +147,16 @@ export async function runMediaBackfill(
           },
         });
         // Playlist and favourite rows carry their own copy of the audio URL.
+        // Matched under EITHER name: the deck's save path stored the asset's
+        // ROW id until row 437 and every other writer the hexId, so a cascade
+        // keyed on one name repointed half the copies and reported the rest
+        // as not there.
         const repointed = await db.fanPlaylistItem.updateMany({
-          where: { mediaId: asset.id, url: { startsWith: 'data:' } },
+          where: { mediaId: { in: [asset.id, asset.hexId] }, url: { startsWith: 'data:' } },
           data: { url: stored.url },
         });
         const favourited = await db.fanFavoriteMedia.updateMany({
-          where: { mediaId: asset.id, url: { startsWith: 'data:' } },
+          where: { mediaId: { in: [asset.id, asset.hexId] }, url: { startsWith: 'data:' } },
           data: { url: stored.url },
         });
         summary.cascaded += repointed.count + favourited.count;
@@ -183,11 +187,11 @@ export async function runMediaBackfill(
         if (stored.storageType !== 'r2') throw new Error(`upload did not reach R2 for artwork ${asset.id}`);
         await db.artistMediaAsset.update({ where: { id: asset.id }, data: { artworkUrl: stored.url } });
         const repointed = await db.fanPlaylistItem.updateMany({
-          where: { mediaId: asset.id, artworkUrl: { startsWith: 'data:' } },
+          where: { mediaId: { in: [asset.id, asset.hexId] }, artworkUrl: { startsWith: 'data:' } },
           data: { artworkUrl: stored.url },
         });
         const favourited = await db.fanFavoriteMedia.updateMany({
-          where: { mediaId: asset.id, artworkUrl: { startsWith: 'data:' } },
+          where: { mediaId: { in: [asset.id, asset.hexId] }, artworkUrl: { startsWith: 'data:' } },
           data: { artworkUrl: stored.url },
         });
         summary.cascaded += repointed.count + favourited.count;

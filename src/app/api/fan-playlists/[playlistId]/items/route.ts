@@ -2,15 +2,20 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { playableHref } from '@/lib/playable-href';
 
 const addItemSchema = z.object({
   mediaId: z.string().trim().min(1),
   title: z.string().trim().min(1).max(160),
   artistName: z.string().trim().min(1).max(160),
-  url: z.string().trim().url().max(2000).refine((u) => !u.startsWith('javascript:'), 'Invalid URL'),
+  /* Absolute OR root-relative — the deck plays `/api/media/<hexId>`, so
+     "Add to playlist" on a deck card was a 400 under `.url()` (row 437).
+     `playableHref` keeps the javascript: refusal and adds the scheme-relative
+     one. */
+  url: playableHref,
   artistProfileSlug: z.string().trim().optional().nullable(),
   notes: z.string().trim().max(240).optional().nullable(),
-  artworkUrl: z.string().trim().url().max(2000).refine((u) => !u.startsWith('javascript:'), 'Invalid URL').optional().nullable()
+  artworkUrl: playableHref.optional().nullable()
 });
 
 const reorderSchema = z.object({

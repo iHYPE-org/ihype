@@ -54,7 +54,7 @@ export async function GET() {
   const media = mediaIds.length
     ? await db.artistMediaAsset.findMany({
         where: { id: { in: mediaIds } },
-        select: { id: true, title: true, profile: { select: { name: true, slug: true, type: true } } }
+        select: { id: true, hexId: true, title: true, profile: { select: { name: true, slug: true, type: true } } }
       })
     : [];
   const mediaById = new Map(media.map((m) => [m.id, m]));
@@ -64,7 +64,9 @@ export async function GET() {
       if (!asset || !asset.profile) return null;
       return {
         id: seed.id,
-        mediaId: seed.mediaId,
+        // A Seed is keyed on the asset's ROW id; what a client adds to a
+        // playlist from here is the TRACK, named as everything else names it.
+        mediaId: asset.hexId,
         title: asset.title,
         artistName: asset.profile.name,
         artistProfileSlug: asset.profile.slug,

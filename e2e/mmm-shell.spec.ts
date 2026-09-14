@@ -514,6 +514,65 @@ test.describe('Music · Map · Me shell', () => {
     });
   }
 
+  /* A heart pressed while a DECK card plays is stored under the track's hexId.
+     The deck's queue entry is named by the asset's ROW id (its `id` is what
+     `/api/discover/seeds/[id]/[action]` is addressed by), and the shell's
+     heart used to post `currentTrack.id` — so a like from the deck went into
+     `FanFavoriteMedia` under a cuid, never lit when the same track came round
+     on a station (named by hexId), and was stored a second time there
+     (DESIGN_SYNC row 437). Before the fix this test read a cuid; the same
+     fixture card, the same press. The deck is used on purpose: it is the one
+     surface whose queue `id` is NOT the hexId, so it is the one that proves
+     the heart reads `mediaId`. Audio need not play for this — a card is
+     loaded on the press, whatever the proxy answers (see `completion: false`
+     above). Before the fix this test read `[]`: the like was refused outright,
+     because the deck's url is a relative path and the favourite route
+     demanded an absolute one — the heart lit, then quietly went dark. */
+  test('a heart pressed on a deck card is stored under the track\'s hexId, not the deck\'s row id', async ({ page, context }) => {
+    await warmListener(context);
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto('/app/music/discover');
+    await page.getByRole('button', { name: 'Play the clip' }).first().click();
+
+    const dock = page.locator('.mmm-dock:visible');
+    const open = dock.getByRole('button', { name: /^Now playing: / });
+    await expect(open).toBeVisible();
+    const label = (await open.getAttribute('aria-label')) ?? '';
+    const title = /^Now playing: (.+) by .+\. Open the player\.$/.exec(label)?.[1];
+    expect(title, `the mini player names the loaded card: ${label}`).toBeTruthy();
+    await open.click();
+
+    /* The RESPONSE, not the heart: the control is optimistic and lights before
+       the route answers, then reverts on a failure — which is how a like from
+       the deck was a 400 for as long as the deck has existed (its url is the
+       relative `/api/media/<hexId>` and the route required `.url()`) while
+       every press looked like it worked. */
+    const saved = page.waitForResponse((r) => r.url().includes('/api/fan-favorites') && r.request().method() === 'POST');
+    await page.getByRole('button', { name: `Save ${title} to your library` }).click();
+    const answered = await saved;
+    expect(answered.status(), `the like answered ${answered.status()}: ${await answered.text()}`).toBe(201);
+    /* Deliberately NOT asserted: that the heart now reads "Remove …". In this
+       harness the card's audio cannot play (the proxy answers 410), the
+       player then advances, and the heart re-reads for whatever is current —
+       so the DOM here measures the harness, not the like. The account is the
+       record, and it is read back below. */
+
+    const favourites = ((await (await page.request.get('/api/fan-favorites')).json()) as { favorites: Array<{ mediaId: string; title: string }> }).favorites;
+    const mine = favourites.find((row) => row.title === title);
+    expect(mine, `the like reached the account: ${JSON.stringify(favourites).slice(0, 200)}`).toBeTruthy();
+    // A hexId, the name every other writer and the shared playlist page use —
+    // never the asset's cuid, which is what the deck's queue entry is named by.
+    expect(mine!.mediaId).toMatch(/^0x[0-9a-f]+$/);
+    expect(mine!.mediaId).not.toMatch(/^c[a-z0-9]{20,}$/);
+    // And the heart reads back under that same name.
+    const liked = await (await page.request.get(`/api/fan-favorites?mediaId=${encodeURIComponent(mine!.mediaId)}`)).json();
+    expect(liked).toMatchObject({ liked: true });
+
+    // Unlike, so a re-run against the same database starts with the heart dark.
+    const removed = await page.request.delete('/api/fan-favorites', { data: { mediaId: mine!.mediaId } });
+    expect(removed.ok()).toBe(true);
+  });
+
   // The module tab is a route, not state: it must survive a reload and a
   // back-button press, which the prototype's local state did not.
   test('the MUSIC destination is a real route', async ({ page }) => {
@@ -1475,4 +1534,5 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     // member with no way to navigate at all.
     expect(lifted).toBeGreaterThan(resting + 80);
   });
+
 });

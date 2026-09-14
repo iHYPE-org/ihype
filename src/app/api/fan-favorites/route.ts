@@ -3,15 +3,19 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
+import { playableHref } from '@/lib/playable-href';
 
 const favoriteSchema = z.object({
   mediaId: z.string().trim().min(1),
   title: z.string().trim().min(1).max(160),
   artistName: z.string().trim().min(1).max(160),
-  url: z.string().trim().url(),
+  /* Absolute OR root-relative: the deck plays `/api/media/<hexId>`, and
+     `.url()` here made a heart pressed on a deck card a 400 the optimistic
+     control hid (row 437). */
+  url: playableHref,
   artistProfileSlug: z.string().trim().optional().nullable(),
   notes: z.string().trim().max(240).optional().nullable(),
-  artworkUrl: z.string().trim().url().optional().nullable()
+  artworkUrl: playableHref.optional().nullable()
 });
 
 /* Playlists stay a fan surface, but LIKING is account-wide (owner,
