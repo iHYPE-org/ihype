@@ -173,8 +173,17 @@ export function PagesHome({
   const [selectedPageId, setSelectedPageId] = useState<string | null>(initialProfileId ?? null);
   const [data, setData] = useState<PagesData | null>(null);
   const [signedOut, setSignedOut] = useState(false);
+  /* The pages read FAILED. It used to be caught by manufacturing an empty
+     dataset, so an artist whose `/api/pages/home` did not land read "No pages
+     yet — create an artist or venue page to get started" about profiles they
+     already have. A failed read is a sentence about the read, never about
+     the member (DESIGN_SYNC row 450). */
+  const [loadFailed, setLoadFailed] = useState(false);
   const [q, setQ] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[] | null>(null);
+  /* The search FAILED — distinct from "No results for X", which is a claim
+     about the catalogue (DESIGN_SYNC row 450). */
+  const [searchFailed, setSearchFailed] = useState(false);
   const [creatingType, setCreatingType] = useState<string | null>(null);
   // The artist upload-policy attestation, collected here because this is where
   // upload rights are granted. It must be a real tick: sending `true` because
@@ -206,10 +215,11 @@ export function PagesHome({
     return fetch('/api/pages/home')
       .then((r) => {
         if (r.status === 401) { setSignedOut(true); return null; }
+        if (!r.ok) throw new Error(`pages/home ${r.status}`);
         return r.json();
       })
-      .then((d) => { if (d) setData(d); })
-      .catch(() => setData({ myProfiles: [], following: [], followersCount: 0, suggested: [], mutualCount: 0 }));
+      .then((d) => { if (d) { setData(d); setLoadFailed(false); } })
+      .catch(() => setLoadFailed(true));
   }, []);
 
   useEffect(() => {
@@ -258,9 +268,13 @@ export function PagesHome({
 
   useEffect(() => {
     const ql = q.trim();
-    if (!ql) { setSearchResults(null); return; }
+    if (!ql) { setSearchResults(null); setSearchFailed(false); return; }
     const handle = setTimeout(() => {
-      fetch(`/api/search?q=${encodeURIComponent(ql)}&type=artist`).then((r) => r.json()).then((d) => setSearchResults(d.results ?? [])).catch(() => setSearchResults([]));
+      setSearchFailed(false);
+      fetch(`/api/search?q=${encodeURIComponent(ql)}&type=artist`)
+        .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`search ${r.status}`))))
+        .then((d) => setSearchResults(d.results ?? []))
+        .catch(() => { setSearchResults(null); setSearchFailed(true); });
     }, 250);
     return () => clearTimeout(handle);
   }, [q]);
@@ -316,6 +330,8 @@ export function PagesHome({
             <div className="mmm-profiles-empty">
               <p>{t('pagesHome.searchEmptyState', 'Find an artist or venue page.')}</p>
             </div>
+          ) : searchFailed ? (
+            <div className="mmm-profiles-empty"><p role="status">{t('pagesHome.searchUnavailable', 'Search could not run just now. Try again in a moment.')}</p></div>
           ) : searchResults === null ? (
             <div className="mmm-profiles-empty"><p>{t('pagesHome.loading', 'Loading…')}</p></div>
           ) : searchResults.length === 0 ? (
@@ -362,7 +378,9 @@ export function PagesHome({
             {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
           </div>
 
-          {data === null ? (
+          {loadFailed && data === null ? (
+            <div className="mmm-profiles-empty"><p role="status">{t('pagesHome.unavailable', 'Your pages could not be loaded just now. Refresh to try again.')}</p></div>
+          ) : data === null ? (
             <div className="mmm-profiles-empty"><p>{t('pagesHome.loadingPages', 'Loading your pages…')}</p></div>
           ) : myProfiles.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '80px 0' }}>
@@ -522,7 +540,9 @@ export function PagesHome({
           </div>
 
           <div className="mmm-profiles-list">
-            {netListShown.length === 0 ? (
+            {loadFailed && data === null ? (
+              <div className="mmm-profiles-rowhint" role="status">{t('pagesHome.unavailable', 'Your pages could not be loaded just now. Refresh to try again.')}</div>
+            ) : netListShown.length === 0 ? (
               <div className="mmm-profiles-rowhint">{t('pagesHome.noConnectionsMatch', 'No connections match.')}</div>
             ) : (
               netListShown.map((p) => {
@@ -564,7 +584,9 @@ export function PagesHome({
             </div>
           </div>
           <div className="mmm-profiles-list">
-            {netSuggestShown.length === 0 ? (
+            {loadFailed && data === null ? (
+              <div className="mmm-profiles-rowhint" role="status">{t('pagesHome.unavailable', 'Your pages could not be loaded just now. Refresh to try again.')}</div>
+            ) : netSuggestShown.length === 0 ? (
               <div className="mmm-profiles-rowhint">{t('pagesHome.noSuggestionsMatch', 'No suggestions match.')}</div>
             ) : (
               netSuggestShown.map((p) => {

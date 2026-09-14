@@ -184,6 +184,13 @@ export function MmmSettings() {
   const [moneyBusy, setMoneyBusy] = useState<'payment' | 'payout' | null>(null);
   const [hypeStats, setHypeStats] = useState<Record<string, number | null> | null>(null);
   const [loading, setLoading] = useState(true);
+  /* `/api/me` FAILED. Every field below would otherwise render its default —
+     "No payment method on file", "No payout destination connected yet", every
+     notification toggle at its initial value — and Save would write those
+     defaults over the member's real preferences. So the page says the read
+     failed, the money rows say "could not be read", and Save is disabled
+     until a load lands (DESIGN_SYNC row 450). */
+  const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -197,8 +204,12 @@ export function MmmSettings() {
 
   useEffect(() => {
     fetch('/api/me')
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`me ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
+        setLoadFailed(false);
         setName(data.name ?? '');
         setEmail(data.email ?? '');
         setEmailVerified(Boolean(data.emailVerified));
@@ -211,7 +222,10 @@ export function MmmSettings() {
         if (data.payout) setPayout(data.payout);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
+      .catch(() => {
+        setLoadFailed(true);
+        setLoading(false);
+      });
   }, []);
 
   // The HYPE link's scoreboard. Nulls render as em dashes — a figure that
@@ -509,6 +523,11 @@ export function MmmSettings() {
         <p style={{ color: 'var(--ink-a65)', fontFamily: 'var(--font-mono)', fontSize: '0.9375rem' }}>{t('settingsPage.loading', 'Loading…')}</p>
       ) : (
         <>
+          {loadFailed && (
+            <p className="settings-load-failed" role="status">
+              {t('settingsPage.loadFailed', 'Your settings could not be loaded just now, so what is shown here may not be yours. Refresh to try again — saving is off until it works.')}
+            </p>
+          )}
           {/* The HYPE link, first (owner, 2026-08-24: "put HYPE link at top —
               it does a lot"). One link, four jobs: shares liked playlists,
               shares events, invites new members past the alpha gate, and earns
@@ -593,9 +612,11 @@ export function MmmSettings() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div className="settings-row-label">
-                    {paymentSaved
-                      ? t('settingsPage.paymentMethodSaved', 'Payment method saved with Stripe')
-                      : t('settingsPage.noPaymentMethod', 'No payment method on file')}
+                    {loadFailed
+                      ? t('settingsPage.moneyUnavailable', 'Could not be read just now')
+                      : paymentSaved
+                        ? t('settingsPage.paymentMethodSaved', 'Payment method saved with Stripe')
+                        : t('settingsPage.noPaymentMethod', 'No payment method on file')}
                   </div>
                   <div className="settings-row-detail">{t('settingsPage.paymentMethodDetail', 'Used for ticket purchases — face value + $0 fees')}</div>
                 </div>
@@ -610,9 +631,11 @@ export function MmmSettings() {
                 </div>
                 <div style={{ flex: 1 }}>
                   <div className="settings-row-label">
-                    {payout?.connected
-                      ? t('settingsPage.payoutConnected', 'Payout method connected')
-                      : t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}
+                    {loadFailed
+                      ? t('settingsPage.moneyUnavailable', 'Could not be read just now')
+                      : payout?.connected
+                        ? t('settingsPage.payoutConnected', 'Payout method connected')
+                        : t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}
                   </div>
                   <div className="settings-row-detail">
                     {isCreator
@@ -789,7 +812,7 @@ export function MmmSettings() {
           {error && <p style={{ color: 'var(--accent-text)', fontSize: '0.9375rem' }}>{error}</p>}
           {saved && <p style={{ color: 'var(--role-venue)', fontSize: '0.9375rem', fontFamily: 'var(--font-mono)' }}>{t('settingsPage.savedConfirm', '✓ Saved')}</p>}
 
-          <button className="settings-btn settings-btn-accent" disabled={saving} onClick={save} style={{ width: '100%' }} type="button">
+          <button className="settings-btn settings-btn-accent" disabled={saving || loadFailed} onClick={save} style={{ width: '100%' }} type="button">
             {saving ? t('settingsPage.saving', 'Saving…') : t('settingsPage.saveSettings', 'Save settings')}
           </button>
         </>
@@ -878,6 +901,7 @@ export function MmmSettings() {
         .settings-row > :first-child { min-width: 0; overflow-wrap: anywhere; }
         .settings-row-label { font-size: 0.9375rem; font-weight: 500; color: var(--ink); }
         .settings-row-detail { font-size: 0.9375rem; color: var(--ink-2); margin-top: 2px; }
+        .settings-load-failed { margin: 0 0 16px; padding: 12px 14px; border: 1px solid var(--line-2); border-radius: var(--radius-panel); font-size: 0.9375rem; color: var(--ink-2); }
         .settings-invite-note { font-size: 0.9375rem; color: var(--ink-a65); line-height: 1.5; margin: 10px 2px 0; }
         /* Wraps rather than scrolls: three short labels, and a row that
            overflows on a 375px screen is the one thing MOBILE.md rules out. */

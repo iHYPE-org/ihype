@@ -22,15 +22,25 @@ export function ShowSetlistVote({
   const { t } = useI18n();
   const [tracks, setTracks] = useState<VoteTrack[]>([]);
   const [loading, setLoading] = useState(true);
+  /* A failed read is not an empty setlist — "No tracks are available to vote
+     on yet" is a claim about the show (DESIGN_SYNC row 450). */
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     fetch(`/api/shows/${showId}/setlist-vote`)
-      .then((res) => (res.ok ? res.json() : null))
-      .then((json: { tracks?: VoteTrack[] } | null) => {
-        if (!cancelled && json?.tracks) setTracks(json.tracks);
+      .then((res) => {
+        if (!res.ok) throw new Error(`setlist-vote ${res.status}`);
+        return res.json();
       })
-      .catch(() => {})
+      .then((json: { tracks?: VoteTrack[] } | null) => {
+        if (cancelled) return;
+        setTracks(json?.tracks ?? []);
+        setLoadFailed(false);
+      })
+      .catch(() => {
+        if (!cancelled) setLoadFailed(true);
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -78,6 +88,8 @@ export function ShowSetlistVote({
         </p>
         {loading ? (
           <p className="meta">{t('showSetlistVote.loadingTracks', 'Loading tracks…')}</p>
+        ) : loadFailed ? (
+          <p className="meta" role="status">{t('showSetlistVote.unavailable', 'The setlist could not be loaded just now. Refresh to try again.')}</p>
         ) : tracks.length === 0 ? (
           <p className="meta">{t('showSetlistVote.noTracks', 'No tracks are available to vote on yet.')}</p>
         ) : (
