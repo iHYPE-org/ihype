@@ -25,6 +25,14 @@ describe('toQueue', () => {
     expect(track.id).toBe('row-1');
   });
 
+  it('reads a playlist item by the TRACK it names, never by its own row id', () => {
+    // FanPlaylistItem / FanFavoriteMedia: `id` is the row, `mediaId` the track.
+    // Addressing the row is a listen against nothing (row 436).
+    const [entry] = toQueue([{ id: 'item_cuid', mediaId: '0xabc', title: 'T', artistName: 'A', url: 'https://x/t.mp3' }]);
+    expect(entry.id).toBe('0xabc');
+    expect(entry.mediaId).toBe('0xabc');
+  });
+
   it('drops a row with a url but no identity — it could not be addressed later', () => {
     expect(toQueue([{ title: 'T', artistName: 'A', mediaUrl: 'u' }])).toEqual([]);
   });

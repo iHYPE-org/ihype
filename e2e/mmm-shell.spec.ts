@@ -417,20 +417,32 @@ test.describe('Music · Map · Me shell', () => {
      is the station's title and subtitle, with no "Play" in it. One regex over
      all five was the first draft, and it found no control on Radio while a
      member had one under their thumb. */
-  const PLAY_CONTROLS: ReadonlyArray<{ surface: string; path: (warmed: Warmed) => string; control: (page: Page) => Locator }> = [
-    { surface: '/app/music/discover', path: () => '/app/music/discover', control: (page) => page.getByRole('button', { name: 'Play the clip' }).first() },
-    { surface: '/app/music/radio', path: () => '/app/music/radio', control: (page) => page.locator('.mmm-station:not([disabled])').first() },
-    { surface: '/app/music/charts', path: () => '/app/music/charts', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
-    { surface: '/app/music/recommended', path: () => '/app/music/recommended', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
-    { surface: '/app/music/playlists', path: () => '/app/music/playlists', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+  const PLAY_CONTROLS: ReadonlyArray<{ surface: string; path: (warmed: Warmed) => string; control: (page: Page, warmed: Warmed) => Locator; completion: boolean }> = [
+    /* `completion: false` on the deck ONLY, and it is a recorded harness limit,
+       not a product one: every other surface hands `storageUrl` straight to
+       <audio>, while the deck streams through `/api/media/<hexId>`, whose
+       proxy fetches only from R2 or the configured `/cdn/` origin over https —
+       so the fixture's loopback file answers 410 there and the clip never
+       plays to its end. The deck's completion carries the same `mediaId` as
+       the others (MmmMusic `playCard`, row 436) and the route test proves the
+       write; what is unproven here is that ONE surface's tap reaches it. */
+    { surface: '/app/music/discover', path: () => '/app/music/discover', control: (page) => page.getByRole('button', { name: 'Play the clip' }).first(), completion: false },
+    { surface: '/app/music/radio', path: () => '/app/music/radio', control: (page) => page.locator('.mmm-station:not([disabled])').first(), completion: true },
+    { surface: '/app/music/charts', path: () => '/app/music/charts', control: (page) => page.getByRole('button', { name: /^Play / }).first(), completion: true },
+    /* By NAME, not `.first()`: the engine excludes every act the fan knows, so
+       its rows are other artists — the fixture's neighbour among whatever else
+       the database holds — and only the neighbour's audio is a file the
+       harness serves, which the completion assertion below needs. */
+    { surface: '/app/music/recommended', path: () => '/app/music/recommended', control: (page, w) => page.getByRole('button', { name: `Play ${w.neighbourTitle}` }).first(), completion: true },
+    { surface: '/app/music/playlists', path: () => '/app/music/playlists', control: (page) => page.getByRole('button', { name: /^Play / }).first(), completion: true },
     /* The two panes that hand their subject to the dock through `MmmPlayHere`
        and, until row 435, offered no key of their own — a track's own page
        and a shared playlist. Their URLs carry the fixture's ids. */
-    { surface: '/app/tracks/[hexId]', path: (w) => `/app/tracks/${w.trackHexId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first() },
-    { surface: '/app/playlists/[id]', path: (w) => `/app/playlists/${w.playlistId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+    { surface: '/app/tracks/[hexId]', path: (w) => `/app/tracks/${w.trackHexId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first(), completion: true },
+    { surface: '/app/playlists/[id]', path: (w) => `/app/playlists/${w.playlistId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first(), completion: true },
   ];
 
-  for (const { surface, path, control } of PLAY_CONTROLS) {
+  for (const { surface, path, control, completion } of PLAY_CONTROLS) {
     test(`a surface's own play control loads the mini player on ${surface}`, async ({ page, context }) => {
       const warmed = await warmListener(context);
       /* Asked before the page loads, and cached across the file — see
@@ -465,8 +477,16 @@ test.describe('Music · Map · Me shell', () => {
          Discover found the deck's invisible Skip stamp sitting over the play
          key and taking the tap. All three are fixed; all three are what this
          test is for. */
-      const play = control(page);
+      const play = control(page, warmed);
       await expect(play, `${surface} offers no play control for a fan whose default station has a track`).toBeVisible();
+      /* Armed BEFORE the tap: the fixture's track is a one-second chime, so
+         the completion can land before an afterwards-registered waiter. */
+      const completionPost = completion
+        ? page.waitForResponse(
+            (response) => response.url().includes('/api/media-listens') && response.request().method() === 'POST',
+            { timeout: 15_000 },
+          )
+        : null;
       await play.click();
 
       // The mini player only exists once a track is loaded, so its arrival is
@@ -475,6 +495,22 @@ test.describe('Music · Map · Me shell', () => {
       await expect(dock.getByRole('button', { name: 'Pause' })).toBeVisible();
       // And still exactly one transport, in the mini player.
       await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+
+      /* And the play is HEARD by the product: when the chime ends the player
+         posts the completion, and the route must record it. Until 2026-09-14
+         the player posted the track's hexId and the route looked the row up by
+         id, so every real completion answered 404 while the walk's items,
+         which post the row id, passed — and the first run of THIS assertion
+         found three more refusals in the same call (row 436): a relative
+         `mediaUrl` was a 400, a playlist row was posted under its ITEM id, and
+         a deck card carried no `mediaId` at all. The assertion is on the
+         response, whatever was started, so a surface that plays something
+         other than the fixture's own track is still measured. */
+      if (completionPost) {
+        const recorded = await completionPost;
+        expect(recorded.status(), `the completion POST answered ${recorded.status()}: ${await recorded.text()}`).toBe(200);
+        expect(await recorded.json()).toMatchObject({ recorded: true });
+      }
     });
   }
 

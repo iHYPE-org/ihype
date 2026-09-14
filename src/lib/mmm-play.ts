@@ -20,6 +20,11 @@ import type { MediaTrack } from '@/components/GlobalMediaPlayer';
 export type PlayableRow = {
   id?: string | null;
   hexId?: string | null;
+  /* `FanPlaylistItem` and `FanFavoriteMedia` name the TRACK here and carry
+     their own row id in `id`; without reading it the player addressed the
+     playlist ROW, and every completion from a shared playlist was a listen
+     against nothing (row 436). */
+  mediaId?: string | null;
   title?: string | null;
   artistName?: string | null;
   artistSlug?: string | null;
@@ -66,14 +71,14 @@ export function toQueue(rows: readonly PlayableRow[]): MediaTrack[] {
   for (const row of rows) {
     const url = row.mediaUrl || row.url;
     if (!url) continue;
-    const id = row.hexId || row.id;
+    const id = row.hexId || row.mediaId || row.id;
     if (!id) continue;
     const adClipId = row.adClipId ?? null;
     queue.push({
       id,
       /* An ad is not media anyone listened to, so it carries no `mediaId` —
          that field is what gates the listen write in the player. */
-      mediaId: adClipId ? null : row.hexId || row.id || null,
+      mediaId: adClipId ? null : id,
       adClipId,
       adPlayToken: adClipId ? row.adPlayToken ?? null : null,
       title: row.title || 'Untitled',
