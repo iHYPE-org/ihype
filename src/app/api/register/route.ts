@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
 import { z } from 'zod';
 import { Prisma } from '@prisma/client/edge';
 import { getDiscoverPathForType, getProfilePathForType } from '@/lib/account-routing';
@@ -74,7 +73,6 @@ const schema = z.object({
   email: z.string().email().optional(),
   phone: z.string().trim().max(30).optional(),
   username: z.string().min(3).max(30).optional(),
-  password: z.string().min(8).regex(/[A-Za-z]/).regex(/[0-9]/).optional(),
   // Every account starts as a fan. An artist or venue page is ADDED
   // afterwards from /pages (POST /api/profiles), which is where the role
   // actually gets decided now — so signup has no role to accept.
@@ -321,7 +319,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const passwordHash = body.password ? await bcrypt.hash(body.password, 10) : null;
     const profileType = getProfileType(body.role);
     const hexId = await generateUniqueProfileHexId();
     const slug = await generateUniqueNonwordSlug(db);
@@ -336,7 +333,6 @@ export async function POST(request: Request) {
           email: normalizedEmail ?? undefined,
           phone: normalizedPhone ?? undefined,
           username: normalizedUsername,
-          passwordHash,
           isThirteenOrOlder: body.isThirteenOrOlder,
           isEighteenOrOlder: body.isEighteenOrOlder,
           // The Terms are what the account is created under, so the moment of

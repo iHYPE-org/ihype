@@ -1,7 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import { PrismaClient, ProfileType, Role, ShowStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
-import bcrypt from 'bcryptjs';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -18,13 +16,11 @@ if (process.env.NODE_ENV === 'production' && confirm !== 'seed ihype launch') {
 }
 
 async function main() {
-  const passwordHash = await bcrypt.hash(randomUUID(), 10);
-
   async function user(email: string, username: string, name: string, role: Role) {
     return prisma.user.upsert({
       where: { username },
-      update: { email, name, role, passwordHash },
-      create: { email, username, name, role, passwordHash, isThirteenOrOlder: true }
+      update: { email, name, role },
+      create: { email, username, name, role, isThirteenOrOlder: true }
     });
   }
 

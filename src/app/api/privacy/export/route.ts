@@ -7,9 +7,6 @@ import { consumeRateLimit, rateLimitKey } from '@/lib/rate-limit';
 export const dynamic = 'force-dynamic';
 
 const OMITTED_EXPORT_KEYS = new Set([
-  'passwordHash',
-  'mfaSecret',
-  'mfaBackupCodes',
   'adminDeviceTokenHash',
   'storedPaymentTokenRef',
   'stripeCustomerId',

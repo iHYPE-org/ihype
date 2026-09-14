@@ -94,15 +94,11 @@ model User {
   email                   String?                  @unique
   phone                   String?                  @unique
   username                String                   @unique
-  passwordHash            String?
   isThirteenOrOlder       Boolean                  @default(true)
   // 18+ attestation — required to buy tickets or share referral links.
   // One-way: settable to true via self-attestation, never back to false.
   isEighteenOrOlder       Boolean                  @default(false)
   emailVerified           DateTime?
-  mfaSecret               String?
-  mfaEnabledAt            DateTime?
-  mfaBackupCodes          String?
   image                   String?
   storedPaymentTokenRef   String?
   storedPaymentTokenBrand String?

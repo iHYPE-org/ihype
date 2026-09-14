@@ -9,8 +9,8 @@
  *     CONFIRM_CLEAR_ALL_USERS="clear all users" node scripts/clear-all-users.mjs
  *
  * DRY RUN BY DEFAULT. Without the confirmation phrase it counts and prints and
- * changes nothing. The phrase matches the house pattern in
- * `reset-test-logins.mjs`, which refuses a production run without one.
+ * changes nothing. The phrase is the house pattern for a destructive script
+ * (`launch-seed.ts` refuses a production run without one).
  *
  * ## What "clear all users" actually destroys
  *

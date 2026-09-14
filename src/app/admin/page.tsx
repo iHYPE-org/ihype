@@ -515,7 +515,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <div className="badge">{t('adminPage.betaBadge', 'Admin beta console')}</div>
           <h1>{t('adminPage.title', 'Admin Console')}</h1>
           <p className="subtitle">
-            {t('adminPage.subtitle', 'Platform management · iH/OPS — account growth, verification, email/MFA delivery, reports, tickets, media, and audit events during beta.')}
+            {t('adminPage.subtitle', 'Platform management · iH/OPS — account growth, verification, email delivery, reports, tickets, media, and audit events during beta.')}
           </p>
         </div>
       </section>
@@ -1146,7 +1146,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           </article>
 
           <article className="panel admin-console-panel">
-            <h2>{t('adminPage.emailMfaDelivery', 'Email/MFA delivery')}</h2>
+            <h2>{t('adminPage.emailDelivery', 'Email delivery')}</h2>
             <div className="admin-list">
               {recentEmails.length ? (
                 recentEmails.map((email) => (
