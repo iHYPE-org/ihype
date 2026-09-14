@@ -121,6 +121,24 @@ export function I18nProvider({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* The server's dictionary arrives again on every `router.refresh()` — the
+     one `setLocale()` issues, above all. Take it whenever it is for the locale
+     this provider is showing: until 2026-09-14 the client-side chunk load in
+     `setLocale()` was the ONLY way a switched dictionary reached the shell,
+     and its failure was swallowed, so a member whose chunk did not load saw
+     the Español pill lit, the document say `lang="es"`, every server string
+     in Spanish after the refresh, and every client string still in English
+     until a full reload — "some languages don't actually change anything"
+     (row 352) in a shape no instrument here reads (DESIGN_SYNC row 457). The
+     server-rendered copy is authoritative, so it also wins over a stale
+     cached one. */
+  useEffect(() => {
+    if (initialLocale !== locale) return;
+    if (initialLocale !== 'en' && Object.keys(initialDictionary).length === 0) return;
+    dictionaryCache.set(initialLocale, initialDictionary);
+    setDict(initialDictionary);
+  }, [initialLocale, initialDictionary, locale]);
+
   useEffect(() => {
     document.documentElement.lang = locale;
     document.documentElement.dir = RTL_LOCALES.includes(locale) ? 'rtl' : 'ltr';
@@ -130,6 +148,9 @@ export function I18nProvider({
     setLocaleState(next);
     window.localStorage.setItem(STORAGE_KEY, next);
     writeLocaleCookie(next);
+    // A failed chunk load is not swallowed into silence any more: the refresh
+    // below re-delivers the server's dictionary, and the effect above takes
+    // it (DESIGN_SYNC row 457).
     loadDictionary(next).then(setDict).catch(() => {});
     // Server components read the locale cookie at render time, so they need
     // a fresh server render to pick up the change — a client-side re-render

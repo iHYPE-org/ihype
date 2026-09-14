@@ -9,8 +9,14 @@ export function PayoutActions({ title }: { title: string }) {
     if (navigator.share) {
       await navigator.share({ title: `${title} · ${t('payoutActions.shareTitleSuffix', 'Payout receipt')}`, url }).catch(() => {});
     } else {
-      await navigator.clipboard.writeText(url).catch(() => {});
-      alert(t('payoutActions.copiedAlert', 'Receipt link copied to clipboard.'));
+      /* "Copied" only once the clipboard took it: the write is refused in an
+         insecure context, without a user gesture, or by a permission the
+         browser never asked for, and until 2026-09-14 the alert claimed the
+         copy whatever happened (DESIGN_SYNC row 457). */
+      const copied = await navigator.clipboard.writeText(url).then(() => true, () => false);
+      alert(copied
+        ? t('payoutActions.copiedAlert', 'Receipt link copied to clipboard.')
+        : t('payoutActions.copyFailedAlert', 'The link could not be copied. Copy it from the address bar instead.'));
     }
   }
 

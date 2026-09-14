@@ -96,8 +96,12 @@ export function TicketCardActions({
     if (navigator.share) {
       await navigator.share({ title: t('ticketCardActions.shareTitle', 'My iHYPE ticket'), url }).catch(() => {});
     } else {
-      await navigator.clipboard.writeText(url).catch(() => {});
-      alert(t('ticketCardActions.shareCopiedAlert', 'Ticket link copied to clipboard.'));
+      // "Copied" only once the clipboard took it (DESIGN_SYNC row 457); a
+      // refused write shows the link itself, which is what the member wanted.
+      const copied = await navigator.clipboard.writeText(url).then(() => true, () => false);
+      alert(copied
+        ? t('ticketCardActions.shareCopiedAlert', 'Ticket link copied to clipboard.')
+        : t('ticketCardActions.shareCopyFailedAlert', 'The link could not be copied. Here it is: {url}').replace('{url}', url));
     }
   }
 
