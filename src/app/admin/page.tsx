@@ -21,14 +21,12 @@ import { getBetaMetrics } from '@/lib/beta-metrics';
 import { getHealthSnapshot } from '@/lib/health';
 import { getAdminPulse } from '@/lib/admin-pulse-data';
 import { getRateLimitMetrics } from '@/lib/rate-limit';
-import { isBlobMediaStorageConfigured } from '@/lib/media-storage';
-import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isAdminSession } from '@/lib/permissions';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import {
   areRegistrationsEnabledRuntime,
   areUploadsEnabledRuntime,
-  getRuntimeFlag,
+  areDatabaseMediaUploadsEnabledRuntime,
   isAdvertisingEnabledRuntime,
   arePaymentsEnabledRuntime,
   isTicketingEnabledRuntime,
@@ -406,8 +404,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const [
     inviteOnlySignupEnabled,
     inviteCodeSharingEnabled,
-    blobMediaStorageEnabled,
-    ticketPaymentCaptureEnabled,
+    databaseMediaFallbackEnabled,
     registrationsEnabled,
     uploadsEnabled,
     outboundEmailEnabled,
@@ -428,8 +425,13 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   ] = await Promise.all([
     needs('system') ? isInviteCodeRequiredRuntime() : Promise.resolve(false),
     needs('system') ? isInviteCodeSharingEnabledRuntime() : Promise.resolve(false),
-    needs('system') ? getRuntimeFlag('blob_media_storage', isBlobMediaStorageConfigured()) : Promise.resolve(false),
-    needs('system') ? getRuntimeFlag('ticket_payment_capture', isPaymentProcessingConfigured()) : Promise.resolve(false),
+    /* Read through the SAME helper the upload route enforces with. The board
+       used to call `getRuntimeFlag` here with its own fallback ("is R2
+       configured"), so with no override stored it showed Enabled while the
+       route's value was Off — a switch reporting a different fact than the
+       one it flips. `runtime-flag-readers.test.ts` keeps inline
+       `getRuntimeFlag` calls out of this file for that reason. */
+    needs('system') ? areDatabaseMediaUploadsEnabledRuntime() : Promise.resolve(false),
     needs('system') ? areRegistrationsEnabledRuntime() : Promise.resolve(false),
     needs('system') ? areUploadsEnabledRuntime() : Promise.resolve(false),
     needs('system') ? isOutboundEmailEnabledRuntime() : Promise.resolve(false),
@@ -442,15 +444,14 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   const featureFlags = [
     { key: 'invite_only_signup', label: 'Invite-only signup', enabled: inviteOnlySignupEnabled },
     { key: 'invite_code_sharing', label: 'Invite code sharing (shared beta codes + member HYPE links)', enabled: inviteCodeSharingEnabled },
-    { key: 'blob_media_storage', label: 'Blob media storage', enabled: blobMediaStorageEnabled },
-    { key: 'ticket_payment_capture', label: 'Ticket payment capture', enabled: ticketPaymentCaptureEnabled },
+    { key: 'blob_media_storage', label: 'Database media fallback (store uploads in Postgres when R2 is unavailable)', enabled: databaseMediaFallbackEnabled },
     { key: 'registrations_enabled', label: 'New registrations', enabled: registrationsEnabled },
     { key: 'uploads_enabled', label: 'Media uploads', enabled: uploadsEnabled },
     { key: 'outbound_email_enabled', label: 'Outbound email', enabled: outboundEmailEnabled },
     { key: 'advertising_enabled', label: 'Advertising', enabled: advertisingEnabled },
     { key: 'payments_enabled', label: 'New payment operations', enabled: paymentsEnabled },
     { key: 'tickets_enabled', label: 'New ticket sales and ticketing setup', enabled: ticketsEnabled },
-    { key: 'radio_enabled', label: 'Radio delivery and creation', enabled: radioEnabled },
+    { key: 'radio_enabled', label: 'Radio delivery (stations and the always-on station)', enabled: radioEnabled },
     { key: 'maps_enabled', label: 'Location map lookups', enabled: mapsEnabled },
   ];
   const rateLimitMetrics = needs('system') ? await getRateLimitMetrics(10) : [];

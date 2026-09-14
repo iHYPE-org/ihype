@@ -10,7 +10,6 @@ const ALLOWED_FLAGS = new Set([
   'invite_only_signup',
   'invite_code_sharing',
   'blob_media_storage',
-  'ticket_payment_capture',
   'registrations_enabled',
   'uploads_enabled',
   'outbound_email_enabled',
