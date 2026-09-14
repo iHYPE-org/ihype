@@ -4,6 +4,8 @@ import { db } from '@/lib/db';
 import { log } from '@/lib/logger';
 import { getRecommendations } from '@/lib/recommendations';
 import { releasedMediaWhere } from '@/lib/media-release';
+import { readList } from '@/lib/read-list';
+import { readUnavailableResponse } from '@/lib/read-unavailable';
 import { detectRequestLocation } from '@/lib/request-location';
 import type { RequestLocation } from '@/lib/request-location';
 
@@ -69,13 +71,16 @@ export async function GET() {
     }
 
     const artistIds = result.profiles.map((profile) => profile.id);
+    /* The read the response IS: `ready: true, tracks: []` over a failed read
+       told the Recommended tab it had nothing to say (DESIGN_SYNC row 451). */
     const rows = artistIds.length
-      ? await db.artistMediaAsset.findMany({
+      ? await readList(db.artistMediaAsset.findMany({
           where: { profileId: { in: artistIds }, storageUrl: { not: null }, ...releasedMediaWhere(), profile: { discoverable: true } },
           orderBy: [{ createdAt: 'desc' }],
           select: { id: true, hexId: true, title: true, storageUrl: true, artworkUrl: true, loudnessLufs: true, truePeakDbtp: true, profileId: true, album: { select: { artworkUrl: true } } },
-        }).catch(() => [])
+        }))
       : [];
+    if (rows === null) return readUnavailableResponse('Recommendations');
     const newestByArtist = new Map<string, (typeof rows)[number]>();
     for (const row of rows) if (!newestByArtist.has(row.profileId)) newestByArtist.set(row.profileId, row);
 

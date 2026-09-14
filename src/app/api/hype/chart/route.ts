@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { readList } from '@/lib/read-list';
+import { readUnavailableResponse } from '@/lib/read-unavailable';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,12 +14,15 @@ export async function GET(request: NextRequest) {
 
   // Bucketed by day in Postgres instead of pulling every hype event row
   // just to group by date in JS.
-  const rows = await db.$queryRaw<{ day: string; count: bigint }[]>`
+  // Caught to `[]` this drew thirty days of zeros over a query that did not
+  // run — a sparkline is a claim too (DESIGN_SYNC row 451).
+  const rows = await readList(db.$queryRaw<{ day: string; count: bigint }[]>`
     SELECT to_char("createdAt" AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS day, COUNT(*)::bigint AS count
     FROM "ProfileHypeEvent"
     WHERE "profileId" = ${profileId} AND "createdAt" >= ${since}
     GROUP BY day
-  `.catch(() => []);
+  `);
+  if (rows === null) return readUnavailableResponse('The hype chart');
 
   const counts: Record<string, number> = {};
   for (const row of rows) {
