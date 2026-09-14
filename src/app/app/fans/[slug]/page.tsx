@@ -20,7 +20,7 @@ import { getServerT } from '@/lib/i18n/server';
 import { askStatusLabel } from '@/lib/i18n-enum-labels';
 
 import { getServerI18n } from '@/lib/i18n/server';
-import { readList } from '@/lib/read-list';
+import { readList, readValue } from '@/lib/read-list';
 
 export const revalidate = 60;
 
@@ -95,7 +95,7 @@ export default async function FanProfilePage({
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const themeVars = resolveProfileThemeVars(profile);
 
-  const [hypedShows, userHype, promoterDashboard, asksRead] = await Promise.all([
+  const [hypedShows, userHype, promoterDashboard, asksCount, asksRead] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId, ...getDemoShowRelationExclusion() },
       include: { show: { include: { venueProfile: true } } },
@@ -112,6 +112,12 @@ export default async function FanProfilePage({
        selected here). Read through `readList()` so a failure reaches the
        Asks tab as `null` and it says so, rather than claiming the fan has
        asked nobody. */
+    /* The COUNTER is a count, never the length of the list below it. That
+       list is capped at 24 for the tab; reading its length under the word
+       "Asks" reports 24 to a fan who has made 30, and disagrees with the
+       pinned `asksMade` tile a few lines down, which has always been a real
+       count — two figures for one quantity, on one page, under one word. */
+    readValue(db.venueConnectionRequest.count({ where: { requesterId: profile.ownerId } })),
     readList(
       db.venueConnectionRequest
       .findMany({
@@ -176,7 +182,7 @@ export default async function FanProfilePage({
           <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
           <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
           <div><div className="fan-stat-val">{formatNumber(locale, profile._count.followers)}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
-          <div><div className="fan-stat-val">{asksRead === null ? '—' : formatNumber(locale, asks.length)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
+          <div><div className="fan-stat-val">{asksCount === null ? '—' : formatNumber(locale, asksCount)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
         </div>
         <PinnedStatTiles accent="var(--profile-accent, var(--role-fan))" stats={pinnedStats} locale={locale} />
       </div>
