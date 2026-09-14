@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
 import { sendArtistEarningsSummaryEmail } from '@/lib/artist-earnings-email';
+import { log } from '@/lib/logger';
+import { readList } from '@/lib/read-list';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -17,8 +19,11 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Artist/DJ profiles with pending payouts whose owner hasn't received a summary this month
-  const profiles = await db.profile.findMany({
+  // Artist profiles with pending payouts whose owner hasn't received a
+  // summary this month. Through `readList()` for the reason capacity-alerts
+  // gives: caught to `[]` this answered `{ ok: true, sent: 0 }` over a read
+  // that never ran, and the dispatcher counted a quiet week (row 452).
+  const profiles = await readList(db.profile.findMany({
     where: {
       type: 'ARTIST',
       owner: {
@@ -42,7 +47,11 @@ export async function GET(request: NextRequest) {
       },
     },
     take: BATCH,
-  }).catch(() => []);
+  }));
+  if (profiles === null) {
+    log.error('cron/artist-earnings: could not read the profiles owed a summary');
+    return NextResponse.json({ ok: false, error: 'READ_FAILED' }, { status: 500 });
+  }
 
   let sent = 0;
   for (let i = 0; i < profiles.length; i += CHUNK) {
