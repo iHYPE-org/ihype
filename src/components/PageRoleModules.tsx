@@ -329,7 +329,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
         {(isArtist || isVenue) && (
           <LinkModule
             color={color}
-            href="/events/new"
+            href="/app/me/events/new"
             icon={icons.event(color)}
             sub={isVenue ? t('pageRoleModules.eventCreatorSubVenue', 'Book your room — keep 20%') : t('pageRoleModules.eventCreatorSubArtist', 'Sell tickets direct — keep 70%')}
             title={t('pageRoleModules.eventCreatorTitle', 'Event creator')}
@@ -339,7 +339,7 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
         {isVenue && (
           <LinkModule
             color={color}
-            href={`/venues/${profile.slug}/booking-inbox`}
+            href={`/app/me/venues/${profile.slug}/booking-inbox`}
             icon={icons.event(color)}
             sub={t('pageRoleModules.bookingInboxSub', 'Accept or decline artist booking requests')}
             title={t('pageRoleModules.bookingInboxTitle', 'Booking inbox')}

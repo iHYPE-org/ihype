@@ -562,7 +562,7 @@ export default async function ShowDetailPage({
                 )}
                 {show.venueProfile?.slug && (
                   <div style={{ marginTop: 16 }}>
-                    <Link className="button small secondary" href={`/venues/${show.venueProfile.slug}`}>{t('showsSlugPage.viewVenuePage', 'View Venue Page →')}</Link>
+                    <Link className="button small secondary" href={`/app/venues/${show.venueProfile.slug}`}>{t('showsSlugPage.viewVenuePage', 'View Venue Page →')}</Link>
                   </div>
                 )}
                 {venueComps.length > 0 && (
@@ -751,10 +751,10 @@ export default async function ShowDetailPage({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
                   <h2 style={{ margin: 0 }}>{t('showsSlugPage.recentTicketOrderTotals', 'Recent ticket order totals')}</h2>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <Link href={`/payout/${show.slug}`} className="meta showpage-ownerlink">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
-                    <Link href={`/shows/${show.slug}/scan`} className="meta showpage-ownerlink">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
+                    <Link href={`/app/me/payouts/${show.slug}`} className="meta showpage-ownerlink">{t('showsSlugPage.fullPayoutBreakdown', 'Full payout breakdown →')}</Link>
+                    <Link href={`/app/me/shows/${show.slug}/scan`} className="meta showpage-ownerlink">{t('showsSlugPage.scanTicketsAtDoor', 'Scan tickets at the door →')}</Link>
                     {(show.status === 'DRAFT' || show.status === 'SCHEDULED') && (
-                      <Link href={`/shows/${show.slug}/cancel`} className="meta showpage-ownerlink" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
+                      <Link href={`/app/me/shows/${show.slug}/cancel`} className="meta showpage-ownerlink" style={{ color: 'var(--accent-text)' }}>{t('showsSlugPage.cancelEvent', 'Cancel event →')}</Link>
                     )}
                   </div>
                 </div>
@@ -824,7 +824,7 @@ export default async function ShowDetailPage({
               <div className="panel showpage-panel" >
                 <h2>{t('showsSlugPage.transferYourTicket', 'Transfer your ticket')}</h2>
                 <p className="subtitle" style={{ marginBottom: '1rem' }}>{t('showsSlugPage.transferTicketDesc', "Can't make it? You can transfer your ticket to a friend without a fee.")}</p>
-                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/me/dashboard">{t('showsSlugPage.yourDashboard', 'your dashboard')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
+                <p className="meta">{t('showsSlugPage.useSecureLinkPrefix', 'Use the secure link in your ticket email, or go to')} <Link href="/app/tickets">{t('showsSlugPage.yourTickets', 'your tickets')}</Link> {t('showsSlugPage.toManageOrders', 'to manage your orders.')}</p>
               </div>
             )}
             {setlistTracks.length ? (

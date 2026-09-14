@@ -23,7 +23,7 @@ export async function PayoutShowsPanel({ shows }: { shows: ShowRow[] }) {
       {shows.map((s) => (
         <Link
           className="panel"
-          href={`/payout/${s.slug}`}
+          href={`/app/me/payouts/${s.slug}`}
           key={s.id}
           style={{ padding: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
         >

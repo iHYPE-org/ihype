@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function AdvertiserRegisterPage() {
   const session = await auth();
   if (session?.user?.id) {
-    redirect('/advertise/dashboard');
+    redirect('/app/me/advertising');
   }
 
   return <AdvertiserRegisterForm />;

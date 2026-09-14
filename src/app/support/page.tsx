@@ -36,7 +36,7 @@ export default async function SupportPage({
 
       <Link
         className="support-ticketlink"
-        href="/support/tickets"
+        href="/app/me/support/tickets"
         style={{
           display: 'inline-flex', alignItems: 'center', gap: 8, fontFamily: 'var(--font-mono)',
           fontSize: '0.9375rem', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--ink)',

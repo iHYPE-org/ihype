@@ -172,6 +172,31 @@ const nextConfig = {
       { source: '/me/dashboard', destination: '/app/me', permanent: false },
       { source: '/me/promote/analytics', destination: '/app/me', permanent: false },
       { source: '/me/promote', destination: '/app/me', permanent: false },
+      /* THE TWELVE ALIASES THAT USED TO BE PAGE FILES (2026-09-14, DESIGN_SYNC row
+         415). Each was a `page.tsx` whose body was one `redirect()` call. Under
+         the root `loading.tsx` boundary that cannot answer a 307: the shell is
+         already streaming, so Next emits a 200 carrying the whole document and
+         `<meta http-equiv="refresh" content="1;url=…">` — measured on
+         production, `/beta` answered 200 with 22,766 bytes and a one-second
+         refresh to `/register`. Every alias behind the auth gate did the same
+         for a signed-in member, and for a signed-out one sent the ALIAS as the
+         login `callbackUrl`, so the hop ran again after sign-in. A config
+         redirect resolves in the router before middleware or any rendering:
+         one 307, canonical `callbackUrl`, no document. `/me/notifications` is
+         the one that matters most — it is the link inside every notification
+         email and push payload already delivered. */
+      { source: '/me/notifications', destination: '/app/me/notifications', permanent: false },
+      { source: '/me/settings', destination: '/app/me/settings', permanent: false },
+      { source: '/me/tickets', destination: '/app/tickets', permanent: false },
+      { source: '/me/payouts', destination: '/app/me/payouts?tab=history', permanent: false },
+      { source: '/me/payout-settings', destination: '/app/me/payouts?tab=settings', permanent: false },
+      { source: '/support/tickets', destination: '/app/me/support/tickets', permanent: false },
+      { source: '/support/tickets/:id', destination: '/app/me/support/tickets/:id', permanent: false },
+      { source: '/advertise/dashboard', destination: '/app/me/advertising', permanent: false },
+      { source: '/beta', destination: '/register', permanent: false },
+      { source: '/home', destination: '/app/map', permanent: false },
+      { source: '/studio', destination: '/app/map', permanent: false },
+      { source: '/listen', destination: '/app/music/discover', permanent: false },
       {
         // A real `?tab=` is carried across explicitly. It has to be captured
         // and re-emitted rather than left to Next's query pass-through,

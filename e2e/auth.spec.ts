@@ -61,18 +61,13 @@ test.describe('Authentication', () => {
   });
 
   test('Unauthenticated /listen redirects to /login', async ({ page }) => {
-    // /listen is WORKBENCH_PATH (src/lib/auth-redirects.ts) — the actual
-    // route middleware gates on. Verified directly: unauthenticated /listen
-    // returns a 307 to /login?callbackUrl=%2Flisten.
-    //
-    // /home (the previous target of this test) is NOT equivalent: it's just
-    // a legacy alias page that unconditionally calls redirect('/listen')
-    // regardless of auth state, so it isn't useful as an auth-gate check —
-    // that redirect fires from inside a Suspense boundary (loading.tsx),
-    // so it's encoded as a NEXT_REDIRECT marker for client-side hydration to
-    // process rather than a raw HTTP 307 (visible directly with curl, which
-    // has no JS and so never follows it) — confirmed working correctly and
-    // consistently in a real browser across repeated runs, not a bug.
+    // /listen is a next.config.mjs redirect onto /app/music/discover, which
+    // middleware gates: signed out, the router answers 307 to the canonical
+    // destination and middleware then sends it to /login with THAT as the
+    // callbackUrl. It used to be a page file calling redirect() under the
+    // root loading.tsx boundary, which answered a 200 and a meta refresh — a
+    // comment here once recorded that shape as "not a bug"; DESIGN_SYNC row
+    // 415 records why it was one.
     await page.goto('/listen');
     await expect(page).toHaveURL(/\/login/, { timeout: 8000 });
   });

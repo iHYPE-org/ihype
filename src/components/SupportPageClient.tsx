@@ -34,7 +34,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
         {t('supportPageClient.commonTopics', 'Common Topics')}
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px,1fr))', gap: 14, marginBottom: 40 }}>
-        <Link href="/tickets" style={quickCardStyle}>
+        <Link href="/app/tickets" style={quickCardStyle}>
           <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a2 2 0 0 1 2-2 2 2 0 0 0 2-2V6a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2 2 2 0 0 1 0 4 2 2 0 0 0-2 2v2a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2v-2a2 2 0 0 0-2-2 2 2 0 0 1-2-2Z" /><path d="M13 6v12" strokeDasharray="2 2" /></svg>
           </div>
@@ -47,7 +47,7 @@ export function SupportPageClient({ alphaModule }: { alphaModule?: string }) {
           <div style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.verification', 'Verification')}</div>
           <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('supportPageClient.verificationDescription', 'Artist/venue/DJ verification status')}</div>
         </Link>
-        <Link href="/me/promote" style={quickCardStyle}>
+        <Link href="/app/me/payouts" style={quickCardStyle}>
           <div style={{ fontSize: '1.5rem', marginBottom: 8 }} aria-hidden="true">◈</div>
           <div style={{ fontSize: '0.9375rem', fontFamily: 'var(--font-display)', fontWeight: 800, marginBottom: 4 }}>{t('supportPageClient.payouts', 'Payouts')}</div>
           <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>{t('supportPageClient.payoutsDescription', 'Settlement, earnings, referrals')}</div>

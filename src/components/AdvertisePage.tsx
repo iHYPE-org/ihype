@@ -324,7 +324,7 @@ function CoverageBuilder() {
                   {submit.message}
                 </div>
                 <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)', marginTop: 4, lineHeight: 1.5 }}>{submit.reasoning}</div>
-                <Link href="/advertise/dashboard" style={{ display: 'inline-block', marginTop: 8, fontSize: '0.9375rem', color: 'var(--ink)', textDecoration: 'underline' }}>
+                <Link href="/app/me/advertising" style={{ display: 'inline-block', marginTop: 8, fontSize: '0.9375rem', color: 'var(--ink)', textDecoration: 'underline' }}>
                   {t('advertisePage.viewMyCampaigns', 'View my campaigns →')}
                 </Link>
               </div>

@@ -31,7 +31,7 @@ export async function PayoutSettingsPanel({ profiles, stripeReady }: { profiles:
       {profiles.length === 0 ? (
         <div className="pset-empty">
           <p>{t('payoutSettingsPanel.noProfileYet', "You don't have an artist, DJ, or venue profile yet — payout accounts connect to those profile types.")}</p>
-          <Link href="/pages">{t('payoutSettingsPanel.createProfile', 'Create a profile →')}</Link>
+          <Link href="/app/me/profiles">{t('payoutSettingsPanel.createProfile', 'Create a profile →')}</Link>
         </div>
       ) : (
         <div className="pset-list">

@@ -34,20 +34,27 @@ function assertMissing(relativePath, reason) {
 // legacy links. /home once pointed at /listen's module deck; /listen itself is
 // now a forward into the Music · Map · Me shell, which is the only signed-in
 // app surface Design System 8 describes.
-assertIncludes(
+// Both forward from next.config.mjs `redirects()` since 2026-09-14 (DESIGN_SYNC
+// row 415): a `page.tsx` that only calls `redirect()` sits under the root
+// `loading.tsx` boundary and answers a 200 carrying a one-second meta refresh,
+// not a 307. The files must stay gone, and the router must carry the forward.
+assertMissing(
   'src/app/home/page.tsx',
-  "redirect('/app/map')",
-  '/home is a legacy alias only and must forward onward rather than render.'
+  '/home is a legacy alias and forwards from next.config.mjs redirects(); a redirect page cannot answer a 307.'
+);
+assertMissing(
+  'src/app/listen/page.tsx',
+  '/listen is a legacy alias and forwards from next.config.mjs redirects(); the module deck it rendered is retired.'
 );
 assertIncludes(
-  'src/app/listen/page.tsx',
-  "redirect('/app/music/discover')",
-  '/listen is a legacy alias only; the module deck it rendered is retired.'
+  'next.config.mjs',
+  "{ source: '/home', destination: '/app/map', permanent: false }",
+  '/home must still forward onward — from the router, not a page.'
 );
-assertNotIncludes(
-  'src/app/listen/page.tsx',
-  'ModuleDeckMockup',
-  'The six-module deck is retired — /listen must not render a second app surface.'
+assertIncludes(
+  'next.config.mjs',
+  "{ source: '/listen', destination: '/app/music/discover', permanent: false }",
+  '/listen must still forward onward — from the router, not a page.'
 );
 assertMissing(
   'src/app/ui-preview/page.tsx',
