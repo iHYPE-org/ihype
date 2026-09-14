@@ -243,7 +243,12 @@ export function MmmShell({
   // while the fetch is in flight.
   useEffect(() => {
     setFaved(false);
-    const mediaId = currentTrack?.id;
+    /* The TRACK's name, never the queue entry's: `id` is the hexId on a station
+       row but the asset's ROW id on a deck card, and was `radio-<hexId>` on an
+       autoplay row — so one track was liked under three names and a heart lit
+       under one never showed under another (row 437). `mediaId` is the hexId
+       on every surface; `id` is the fallback for an entry with none (an ad). */
+    const mediaId = currentTrack?.mediaId ?? currentTrack?.id;
     if (!mediaId) return undefined;
     let stale = false;
     void fetch(`/api/fan-favorites?mediaId=${encodeURIComponent(mediaId)}`)
@@ -252,7 +257,7 @@ export function MmmShell({
       .catch(() => { /* the heart just stays unlit */ });
     return () => { stale = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the track's identity alone
-  }, [currentTrack?.id]);
+  }, [currentTrack?.mediaId, currentTrack?.id]);
 
   const toggleFav = useCallback(async () => {
     if (!currentTrack || favPending) return;
@@ -267,13 +272,13 @@ export function MmmShell({
         ? await fetch('/api/fan-favorites', {
             method: 'DELETE',
             headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ mediaId: currentTrack.id }),
+            body: JSON.stringify({ mediaId: currentTrack.mediaId ?? currentTrack.id }),
           })
         : await fetch('/api/fan-favorites', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
             body: JSON.stringify({
-              mediaId: currentTrack.id,
+              mediaId: currentTrack.mediaId ?? currentTrack.id,
               title: currentTrack.title,
               artistName: currentTrack.artistName,
               url: currentTrack.url,
@@ -432,7 +437,7 @@ export function MmmShell({
             was previously the only place it could be reached. */}
         <MmmFullPlayer
           addTarget={currentTrack ? {
-            mediaId: currentTrack.id,
+            mediaId: currentTrack.mediaId ?? currentTrack.id,
             title: currentTrack.title,
             artistName: currentTrack.artistName,
             url: currentTrack.url,

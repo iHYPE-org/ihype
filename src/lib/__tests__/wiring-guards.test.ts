@@ -1067,3 +1067,34 @@ describe('every ad impression carries the server\'s own receipt', () => {
     expect(/const adId = [^;]*body\.adId/.test(route), 'the route is reading the campaign off the request body again').toBe(false);
   });
 });
+
+/**
+ * A stored `mediaId` is the track's hexId, on every writer.
+ *
+ * `FanFavoriteMedia.mediaId` and `FanPlaylistItem.mediaId` had five writers
+ * and three names for one track (DESIGN_SYNC row 437): the free-use crate
+ * wrote the hexId, the shell's heart posted `currentTrack.id` — the hexId on
+ * a station row, the asset's ROW id on a deck card, `radio-<hexId>` on an
+ * autoplay row — and the deck's save action stored the row id. A heart lit
+ * under one name never showed under another, and the backfill cascade keyed
+ * on one name missed the copies written under the others. The convention is
+ * written where the columns are read (`toQueue`: id is hexId, then mediaId,
+ * then row id); this holds the two shapes that broke it out of `src/`.
+ */
+describe('a stored mediaId is the track\'s hexId', () => {
+  const files = listFiles('src');
+
+  it('scans a non-empty tree', () => {
+    expect(files.length).toBeGreaterThan(100);
+  });
+
+  it('no surface posts a queue entry\'s `id` as a mediaId — `mediaId`, then `id`', () => {
+    const offenders = files.filter((file) => /mediaId:\s*currentTrack\??\.id\b/.test(code(file)));
+    expect(offenders).toEqual([]);
+  });
+
+  it('no queue entry is named with a `radio-` prefix', () => {
+    const offenders = files.filter((file) => /`radio-\$\{/.test(code(file)));
+    expect(offenders).toEqual([]);
+  });
+});

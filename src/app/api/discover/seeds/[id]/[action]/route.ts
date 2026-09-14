@@ -73,8 +73,9 @@ export async function POST(
       // FanPlaylistItem has no unique constraint on (playlistId, mediaId)
       // either, so re-saving the same seed would otherwise stack duplicates.
       // The Seed row above is upserted, so a repeat save is entirely possible.
+      // Either name: rows written before row 437 carry the asset's ROW id.
       const already = await db.fanPlaylistItem.findFirst({
-        where: { playlistId: playlist.id, mediaId: media.id },
+        where: { playlistId: playlist.id, mediaId: { in: [media.id, media.hexId] } },
         select: { id: true },
       });
 
@@ -84,7 +85,10 @@ export async function POST(
         await db.fanPlaylistItem.create({
           data: {
             playlistId: playlist.id,
-            mediaId: media.id,
+            /* The hexId — the name every other playlist writer, the player's
+               heart, the track page's URL and the listen route use. This was
+               the one writer storing the asset's ROW id (row 437). */
+            mediaId: media.hexId,
             title: media.title,
             artistName: media.profile?.name ?? 'Unknown artist',
             url: getArtistMediaApiPath(media.hexId),
