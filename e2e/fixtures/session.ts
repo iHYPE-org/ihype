@@ -567,7 +567,7 @@ export async function seedPlayableStation({
 }: {
   fanUserId: string;
   key?: string;
-}): Promise<{ trackHexId: string; title: string; artistName: string; artistSlug: string }> {
+}): Promise<{ trackHexId: string; title: string; artistName: string; artistSlug: string; playlistId: string }> {
   const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
   try {
     const stamp = `station-${key}`;
@@ -642,7 +642,22 @@ export async function seedPlayableStation({
       update: { action: 'hype', createdAt: new Date() },
       create: { userId: fanUserId, mediaId: track.id, action: 'hype' },
     });
-    return { trackHexId: track.hexId, title: track.title, artistName: profile.name, artistSlug: profile.slug };
+    /* And the fan's own playlist holding the track, so `/app/playlists/[id]`
+       — a page that registers its items with the dock and, since row 435,
+       gives each row a key — has something to press. Find-or-create by
+       (userId, name), as `seedTrackAndPlaylist` does: FanPlaylist has no
+       compound unique for an upsert to target. */
+    const playlistName = `E2E Station Playlist ${stamp}`;
+    const playlist = await prisma.fanPlaylist.findFirst({ where: { userId: fanUserId, name: playlistName }, select: { id: true } })
+      ?? await prisma.fanPlaylist.create({
+        data: {
+          userId: fanUserId,
+          name: playlistName,
+          items: { create: [{ mediaId: track.hexId, title: track.title, artistName: profile.name, url: STATION_TRACK_URL, position: 0 }] },
+        },
+        select: { id: true },
+      });
+    return { trackHexId: track.hexId, title: track.title, artistName: profile.name, artistSlug: profile.slug, playlistId: playlist.id };
   } finally {
     await prisma.$disconnect();
   }

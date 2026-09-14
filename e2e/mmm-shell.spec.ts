@@ -1,4 +1,4 @@
-import { test, expect, type APIRequestContext, type BrowserContext, type Page } from '@playwright/test';
+import { test, expect, type APIRequestContext, type BrowserContext, type Locator, type Page } from '@playwright/test';
 import { applySessionCookie, canSeedSession, seedPlayableStation, seedShowWithTicket } from './fixtures/session';
 import { MMM_MUSIC_TABS } from '../src/lib/mmm-nav';
 
@@ -381,8 +381,9 @@ test.describe('Music · Map · Me shell', () => {
   const LISTENER_EMAIL = 'e2e-mmm-listener@ihype.org';
   const warmListener = async (context: BrowserContext) => {
     const session = await applySessionCookie(context, LISTENER_EMAIL, { profiles: [] });
-    await seedPlayableStation({ fanUserId: session.user.id });
+    return seedPlayableStation({ fanUserId: session.user.id });
   };
+  type Warmed = Awaited<ReturnType<typeof warmListener>>;
 
   /* Since the MIDDLE ROAD (row 341) the bar carries no cold-start transport:
      a surface with nothing of its own to play offers NO play control until
@@ -416,17 +417,22 @@ test.describe('Music · Map · Me shell', () => {
      is the station's title and subtitle, with no "Play" in it. One regex over
      all five was the first draft, and it found no control on Radio while a
      member had one under their thumb. */
-  const PLAY_CONTROLS = [
-    ['/app/music/discover', (page: Page) => page.getByRole('button', { name: 'Play the clip' }).first()],
-    ['/app/music/radio', (page: Page) => page.locator('.mmm-station:not([disabled])').first()],
-    ['/app/music/charts', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
-    ['/app/music/recommended', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
-    ['/app/music/playlists', (page: Page) => page.getByRole('button', { name: /^Play / }).first()],
-  ] as const;
+  const PLAY_CONTROLS: ReadonlyArray<{ surface: string; path: (warmed: Warmed) => string; control: (page: Page) => Locator }> = [
+    { surface: '/app/music/discover', path: () => '/app/music/discover', control: (page) => page.getByRole('button', { name: 'Play the clip' }).first() },
+    { surface: '/app/music/radio', path: () => '/app/music/radio', control: (page) => page.locator('.mmm-station:not([disabled])').first() },
+    { surface: '/app/music/charts', path: () => '/app/music/charts', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+    { surface: '/app/music/recommended', path: () => '/app/music/recommended', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+    { surface: '/app/music/playlists', path: () => '/app/music/playlists', control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+    /* The two panes that hand their subject to the dock through `MmmPlayHere`
+       and, until row 435, offered no key of their own — a track's own page
+       and a shared playlist. Their URLs carry the fixture's ids. */
+    { surface: '/app/tracks/[hexId]', path: (w) => `/app/tracks/${w.trackHexId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+    { surface: '/app/playlists/[id]', path: (w) => `/app/playlists/${w.playlistId}`, control: (page) => page.getByRole('button', { name: /^Play / }).first() },
+  ];
 
-  for (const [surface, control] of PLAY_CONTROLS) {
+  for (const { surface, path, control } of PLAY_CONTROLS) {
     test(`a surface's own play control loads the mini player on ${surface}`, async ({ page, context }) => {
-      await warmListener(context);
+      const warmed = await warmListener(context);
       /* Asked before the page loads, and cached across the file — see
          `radioHasAudio`. The fixture just made this true; a false here is a
          broken fixture or a broken station, and both are failures. Read with
@@ -435,7 +441,7 @@ test.describe('Music · Map · Me shell', () => {
       expect(await radioHasAudio(page.request), 'the fixture seeded a playable track into the default station').toBe(true);
 
       await page.setViewportSize({ width: 393, height: 852 });
-      await page.goto(surface);
+      await page.goto(path(warmed));
       /* Count-settled, not just visibility: while the route streams there are
          briefly TWO docks — the live one and Next's staging copy — and a bare
          `.mmm-dock` visibility check fails strict mode on the duplicate. Same

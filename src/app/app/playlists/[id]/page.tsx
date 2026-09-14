@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { MmmMissing } from '@/components/mmm/MmmMissing';
 import { MmmPlayHere } from '@/components/mmm/MmmPlayHere';
+import { ReleasePlayButton } from '@/components/profile/ReleasePlayButton';
 import { getServerT } from '@/lib/i18n/server';
 
 export const dynamic = 'force-dynamic';
@@ -78,7 +79,7 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
                 FanPlaylistItem, so every row links and none of them needs a
                 fallback. */}
             {playlist.items.map((item, index) => (
-              <li key={item.id}>
+              <li className="profile-release-entry" key={item.id}>
                 <Link className="mmm-profile-show" href={`/app/tracks/${item.mediaId}`}>
                   <span className="mmm-playlist-index">{index + 1}</span>
                   <span className="mmm-profile-show-main">
@@ -86,6 +87,11 @@ export default async function MmmPlaylistPage({ params }: { params: Promise<{ id
                     <span className="mmm-profile-show-where">{item.artistName}</span>
                   </span>
                 </Link>
+                {/* The row's own play key, playing it inside the whole list.
+                    Until 2026-09-14 a shared playlist could be read and not
+                    heard over silence: the page registered its items with the
+                    dock and the dock had nothing to press (row 435). */}
+                <ReleasePlayButton label={item.title} rows={playlist.items} track={item} />
               </li>
             ))}
           </ol>
