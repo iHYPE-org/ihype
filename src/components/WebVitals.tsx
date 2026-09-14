@@ -12,8 +12,8 @@ import { telemetryModule, telemetryViewport } from '@/lib/telemetry';
 // @sentry/nextjs is imported dynamically inside the callback (browser-only)
 // rather than at module scope — a top-level import here gets evaluated
 // during static prerendering of every page (this component is mounted in
-// the root layout), and Sentry's package resolves incorrectly outside its
-// dedicated sentry.client.config.ts entry point, breaking the static build.
+// the root layout), and Sentry's package resolves incorrectly outside the
+// client entry point (src/instrumentation-client.ts), breaking the static build.
 export function WebVitals() {
   useReportWebVitals((metric) => {
     void import('@sentry/nextjs').then((Sentry) => {

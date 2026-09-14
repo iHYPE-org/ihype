@@ -95,6 +95,10 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+          # The browser SDK's DSN, inlined at build (src/instrumentation-client.ts)
+          # and read by src/middleware.ts for connect-src. Public — the same value
+          # wrangler.toml carries as SENTRY_DSN for the Worker.
+          NEXT_PUBLIC_SENTRY_DSN: "https://6fcca4160df1fe7b0d5e3aa4b7a73f44@o4511334761103360.ingest.us.sentry.io/4511334762741760"
           FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
       # Safety net for the 2026-07-21 incident (see scripts/worker-size-budget.mjs):
@@ -277,6 +281,10 @@ jobs:
           NEXT_PUBLIC_BASE_URL: https://ihype.org
           NEXT_PUBLIC_APP_URL: https://ihype.org
           NEXT_PUBLIC_TURNSTILE_SITE_KEY: "0x4AAAAAADSF8WNxaeBIRmR7"
+          # The browser SDK's DSN, inlined at build (src/instrumentation-client.ts)
+          # and read by src/middleware.ts for connect-src. Public — the same value
+          # wrangler.toml carries as SENTRY_DSN for the Worker.
+          NEXT_PUBLIC_SENTRY_DSN: "https://6fcca4160df1fe7b0d5e3aa4b7a73f44@o4511334761103360.ingest.us.sentry.io/4511334762741760"
           FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
 
       - name: Verify cron Worker secrets
