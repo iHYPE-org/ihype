@@ -23,12 +23,19 @@ function parseBooleanFlag(value: unknown, defaultValue: boolean) {
    synchronous `shouldHideDemoContent()`, which reads the environment only. The
    admin panel offered two toggles that changed the dashboard's own display and
    nothing else. Demo visibility is `NODE_ENV` + `FEATURE_ENABLE_DEMO_LOGINS`,
-   one switch, and the panel no longer pretends otherwise. */
+   one switch, and the panel no longer pretends otherwise.
+
+   `ticket_payment_capture` went the same way on 2026-09-14. The console drew
+   it as "Ticket payment capture", the flags route wrote it to KV and recorded
+   the override in the audit log, and the only reader was the console itself —
+   nothing on the purchase or capture path ever consulted it. An operator who
+   pressed Off in an incident saw Off, and tickets kept selling. The brakes that
+   exist are `payments_enabled` and `tickets_enabled`; `runtime-flag-readers.test.ts`
+   now refuses a flag the console offers that nothing outside the console reads. */
 export type RuntimeFlagKey =
   | 'invite_only_signup'
   | 'invite_code_sharing'
   | 'blob_media_storage'
-  | 'ticket_payment_capture'
   | 'registrations_enabled'
   | 'uploads_enabled'
   | 'outbound_email_enabled'
@@ -203,6 +210,17 @@ function areDatabaseMediaUploadsEnabled() {
   );
 }
 
+/**
+ * Whether an upload may be stored INLINE IN POSTGRES when the R2 binding is
+ * absent — the temporary fallback row 322 of DESIGN_SYNC retired from
+ * production use. The KV key is `blob_media_storage`, a name that reads as the
+ * opposite of what it decides; it is kept because an override may already be
+ * stored under it, and the console now labels the switch by what it does and
+ * reads it through THIS helper, so the board and the upload route cannot
+ * disagree about the default (they did: the board fell back to "is R2
+ * configured", which is true in production, and showed Enabled over an
+ * enforcing value of Off).
+ */
 export async function areDatabaseMediaUploadsEnabledRuntime() {
   return getRuntimeFlag('blob_media_storage', areDatabaseMediaUploadsEnabled());
 }
