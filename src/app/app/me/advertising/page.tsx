@@ -137,7 +137,7 @@ export default async function AdvertiserDashboard() {
             </h1>
             {advertiserAccount?.website && (
               <div className="mmm-profile-sub">
-                <a href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
+                <a className="mmm-standalone-link" href={advertiserAccount.website} rel="noreferrer noopener" target="_blank">{advertiserAccount.website}</a>
               </div>
             )}
           </div>
@@ -256,7 +256,7 @@ export default async function AdvertiserDashboard() {
                 <div className="meta">{campaign.slot?.name ?? t('advertiseDashboardPage.unknownSlot', 'Unknown slot')} · {t('advertiseDashboardPage.submitted', 'Submitted')} {new Date(campaign.createdAt).toLocaleDateString()}</div>
                 {campaign.clickUrl && (
                   <div className="meta ad-dash-campaign-link">
-                    <a href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
+                    <a className="mmm-standalone-link" href={campaign.clickUrl} target="_blank" rel="noreferrer noopener">{campaign.clickUrl}</a>
                   </div>
                 )}
               </div>

@@ -1060,6 +1060,24 @@ html:has(.mmm-frame) {
 .ad-campaign-actions { display: flex; gap: 8px; }
 .ad-campaign-actions.wrap { flex-wrap: wrap; align-items: center; }
 .ad-campaign-notice { flex-basis: 100%; margin: 0; }
+
+/* A LINK THAT IS A CONTROL IN ITS OWN RIGHT, not a word inside a sentence.
+   MOBILE.md's floor is 44x44 on every control, and a bare anchor on its own
+   line is as tall as its line box — 18px, measured, for the advertiser's own
+   website and for a campaign's destination URL. Both are things a member taps
+   and both sat at less than half the floor on a phone, on the surface nothing
+   had ever measured until this week.
+
+   A class rather than a rule on the containers, because the containers are
+   shared: `.mmm-profile-sub` is the artist and venue panes' subtitle and
+   `.meta` is a text class used across the product — flooring either would
+   grow captions that are not controls, which is the mistake row 406 avoided
+   by giving the show page's organiser links their own class.
+
+   An inline link inside running copy deliberately does NOT take this: the tap
+   census counts such a link separately and never as a defect, because it is
+   as tall as the line it sits in and growing it would break the paragraph. */
+.mmm-standalone-link { display: inline-flex; align-items: center; min-height: 44px; }
 @media (max-width: 620px) {
   .mmm-advertiser-head { align-items: flex-start; flex-direction: column; }
 }
