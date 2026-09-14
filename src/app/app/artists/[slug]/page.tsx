@@ -17,6 +17,7 @@ import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { ARTIST_TABS, resolveTab } from '@/lib/profile-tabs';
 import { getServerI18n } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { formatShowClock, formatTicketPrice, showRowTrail, type RowTrail } from '@/lib/show-row';
@@ -111,14 +112,19 @@ export default async function MmmArtistPage({
      artist's "tonight" is still today at 3am UTC and dropping the gig while
      the band is on stage would be the wrong kind of precise. */
   const calendarFloor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 12 * 3_600_000);
-  const [userHype, upcoming, releases, calendar, albums, listeners, similarArtists] = await Promise.all([
+  const [userHype, upcomingRead, releasesRead, calendarRead, albumsRead, listeners, similarArtists] = await Promise.all([
+    /* The four list reads go through `readList()` so a FAILED read reaches
+       the render as `null` rather than as an empty array — the panels below
+       must not tell a fan the artist has published nothing when the query
+       never landed. */
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
         select: { createdAt: true },
       })
       .catch(() => null),
-    db.show
+    readList(
+      db.show
       .findMany({
         where: {
           headlinerProfileId: profile.id,
@@ -146,12 +152,13 @@ export default async function MmmArtistPage({
           venueProfile: { select: { name: true, city: true } },
         },
       })
-      .catch(() => []),
+    ),
     /* Albums. Published assets only — an unpublished upload is one the artist
        or a moderator has pulled, and the public profile is exactly where that
        must be honoured. Independently `.catch()`'d like its siblings, so a
        failure here empties one tab rather than 500-ing the profile. */
-    db.artistMediaAsset
+    readList(
+      db.artistMediaAsset
       .findMany({
         where: {
           profileId: profile.id,
@@ -182,7 +189,7 @@ export default async function MmmArtistPage({
           truePeakDbtp: true,
         },
       })
-      .catch(() => []),
+    ),
     /* The tour calendar — `AvailabilityDate` rows the artist entered in the
        editor. Two kinds on one calendar: TOUR is a date they are playing that
        is not ticketed here (a ticketed one is a Show and is already in
@@ -190,24 +197,26 @@ export default async function MmmArtistPage({
        schema has always said venues see on the public page and which, until
        this query, nothing rendered. Both are what the editor's hint promises
        will appear here. */
-    db.availabilityDate
+    readList(
+      db.availabilityDate
       .findMany({
         where: { profileId: profile.id, date: { gte: calendarFloor } },
         orderBy: { date: 'asc' },
         take: 24,
         select: { id: true, date: true, note: true, kind: true },
       })
-      .catch(() => []),
+    ),
     /* The artist's album folders (2026-09-02). Tracks are grouped under them
        on the Albums tab; tracks in no folder list as singles below. A track's
        own cover wins; the album's fills in where a track has none. */
-    db.album
+    readList(
+      db.album
       .findMany({
         where: { profileId: profile.id },
         orderBy: [{ sortOrder: 'asc' }, { releasedOn: 'desc' }, { createdAt: 'desc' }],
         select: { id: true, title: true, artworkUrl: true, releasedOn: true },
       })
-      .catch(() => []),
+    ),
     /* Distinct accounts that have played any of this artist's tracks — the
        public stat catalogue's listener figure, computed the way the owner's
        insights compute it (MediaListen is one row per listener per track).
@@ -225,6 +234,13 @@ export default async function MmmArtistPage({
        never the whole profile. */
     getSimilarArtists(profile.slug, 6).catch((): SimilarArtist[] => []),
   ]);
+  const upcoming = upcomingRead ?? [];
+  const releases = releasesRead ?? [];
+  const calendar = calendarRead ?? [];
+  const albums = albumsRead ?? [];
+  /* One sentence per panel when a read it draws from failed; null otherwise. */
+  const albumsUnavailable = releasesRead === null || albumsRead === null ? t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.') : null;
+  const tourUnavailable = upcomingRead === null || calendarRead === null ? t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.') : null;
   const albumById = new Map(albums.map((album) => [album.id, album]));
   const coverFor = (release: { artworkUrl: string | null; albumId: string | null }) =>
     release.artworkUrl ?? (release.albumId ? albumById.get(release.albumId)?.artworkUrl ?? null : null);
@@ -374,6 +390,7 @@ export default async function MmmArtistPage({
           empty={t('artistPane.albumsEmpty', '{name} has not published any releases yet.').replace('{name}', profile.name)}
           isEmpty={releases.length === 0}
           title={t('mmmStrip.albums', 'Albums')}
+          unavailable={albumsUnavailable}
         >
           {albumGroups.map(({ album, tracks }) => (
             <section className="profile-album" key={album.id}>
@@ -459,6 +476,7 @@ export default async function MmmArtistPage({
           empty={t('artistPane.tourEmpty', 'No dates announced yet.')}
           isEmpty={upcoming.length === 0 && calendar.length === 0 && !unwrap(profile.tourContent)}
           title={t('mmmStrip.tour', 'Tour')}
+          unavailable={tourUnavailable}
         >
           {/* Legacy free text. The editor no longer writes it; a profile that
               set it before the calendar existed keeps its paragraph. */}

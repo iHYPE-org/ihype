@@ -9,6 +9,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getDemoCreatorExclusion } from '@/lib/runtime-flags';
 import { getServerI18n } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 import { describeDemand, scoreVenueDemand } from '@/lib/fan-demand';
 import { analyticsRangeLabel } from '@/lib/i18n-enum-labels';
 
@@ -217,7 +218,9 @@ export default async function ArtistAnalyticsPage({
      THAT venue. Not windowed by the range tabs: a request is a standing ask
      until the venue books or dismisses it. Legacy rows without a stored fan
      location fall back to the requester's profile, as the radar does. */
-  const demandRows = await db.venueConnectionRequest.findMany({
+  /* `null` is a FAILED read; the demand section says so rather than telling
+     the artist no fan has asked for them. */
+  const demandRead = await readList(db.venueConnectionRequest.findMany({
     where: { artistProfileId: profile.id, status: 'PENDING' },
     orderBy: { createdAt: 'desc' },
     take: 500,
@@ -227,7 +230,8 @@ export default async function ArtistAnalyticsPage({
       venueProfile: { select: { slug: true, name: true, city: true, stateRegion: true, latitude: true, longitude: true } },
       requester: { select: { profiles: { select: { city: true, stateRegion: true, latitude: true, longitude: true }, take: 1 } } },
     },
-  }).catch(() => []);
+  }));
+  const demandRows = demandRead ?? [];
   const venueBySlugId = new Map(demandRows.map((row) => [row.venueProfileId, row.venueProfile]));
   const venueDemand = scoreVenueDemand(
     demandRows.map((row) => {
@@ -327,7 +331,9 @@ export default async function ArtistAnalyticsPage({
       <div className="aa-eyebrow-row" style={{ marginTop: 32 }}>
         <span className="aa-eyebrow-sm" style={{ color: 'var(--role-fan)' }}>{t('artistsSlugAnalyticsPage.whereFansWantYou', 'Where fans want you')}</span>
       </div>
-      {venueDemand.length === 0 ? (
+      {demandRead === null ? (
+        <div className="aa-empty"><p role="status">{t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.')}</p></div>
+      ) : venueDemand.length === 0 ? (
         <div className="aa-empty"><p>{t('artistsSlugAnalyticsPage.noFanRequests', 'No fan requests yet. When a fan asks a venue to book you, that venue ranks here.')}</p></div>
       ) : (
         <div className="aa-events-list">

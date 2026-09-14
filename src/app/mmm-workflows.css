@@ -116,6 +116,16 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   line-height: 1.45;
   color: var(--ink-2);
 }
+.profile-panel-unavailable {
+  /* A read that FAILED, not a section the owner left empty. Same plate so it
+     sits where the member expects the sentence, solid rather than dashed so
+     the two states do not read as one. Body face: this is a status, not a
+     part of the profile's voice. */
+  border-style: solid;
+  font-family: var(--f-b, inherit);
+  font-size: 1rem;
+  color: var(--ink-2, var(--ink));
+}
 .profile-standfirst {
   margin: 0 0 12px;
   font-family: var(--f-s, Georgia, serif);

@@ -13,6 +13,7 @@ import { upcomingShowWhere } from '@/lib/profile-detail';
 import { ProfileTabs } from '@/components/profile/ProfileTabs';
 import { VENUE_TABS, resolveTab } from '@/lib/profile-tabs';
 import { getServerI18n } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 import { ProfilePanel, RichContent, unwrap } from '@/components/profile/ProfilePanel';
 import { ProfileCounters, ProfileRow } from '@/components/profile/ProfileRow';
 import { MmmLikeButton } from '@/components/mmm/MmmLikeButton';
@@ -92,14 +93,15 @@ export default async function MmmVenuePage({
   const isOwner = profile.ownerId === session.user.id;
 
   const now = new Date();
-  const [userHype, upcoming, ticketsSold] = await Promise.all([
+  const [userHype, upcomingRead, ticketsSold] = await Promise.all([
     db.profileHypeEvent
       .findUnique({
         where: { userId_profileId: { userId: session.user.id, profileId: profile.id } },
         select: { createdAt: true },
       })
       .catch(() => null),
-    db.show
+    readList(
+      db.show
       .findMany({
         where: {
           venueProfileId: profile.id,
@@ -126,7 +128,7 @@ export default async function MmmVenuePage({
           headlinerProfile: { select: { name: true } },
         },
       })
-      .catch(() => []),
+    ),
     /* Paid tickets across every show hosted here — the public stat
        catalogue's venue figure, the same CAPTURED-only count the owner's
        insights use. Null, not 0, when the read fails. */
@@ -135,6 +137,9 @@ export default async function MmmVenuePage({
       .then((totals) => totals._sum.quantity ?? 0)
       .catch((): number | null => null),
   ]);
+  /* `null` from `readList()` is a FAILED read; the calendar panel says so
+     rather than claiming the venue has nothing booked. */
+  const upcoming = upcomingRead ?? [];
 
   const where = [profile.city, profile.stateRegion].filter(Boolean).join(', ');
   const sub = [profile.roomType || null, where || null].filter(Boolean).join(' · ');
@@ -217,6 +222,7 @@ export default async function MmmVenuePage({
           empty={t('venuePane.calendarEmpty', 'Nothing on the calendar yet.')}
           isEmpty={upcoming.length === 0}
           title={t('mmmStrip.eventCalendar', 'Event Calendar')}
+          unavailable={upcomingRead === null ? t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.') : null}
         >
           <ul className="mmm-profile-rows">
             {upcoming.map((show) => (

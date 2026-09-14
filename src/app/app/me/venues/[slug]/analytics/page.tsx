@@ -8,6 +8,7 @@ import { canManageOwnedResource } from '@/lib/permissions';
 import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-analytics';
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerI18n } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 import { describeDemand, proximityWeight, scoreFanDemand, type DemandVenue } from '@/lib/fan-demand';
 
 export const dynamic = 'force-dynamic';
@@ -73,7 +74,9 @@ export default async function VenueAnalyticsPage({
      calls nearby. Pending only; not windowed by the range tabs. Legacy rows
      without a stored fan location fall back to the requester's profile. */
   const here: DemandVenue = { city: profile.city, stateRegion: profile.stateRegion, latitude: profile.latitude, longitude: profile.longitude };
-  const nearbyRows = await db.venueConnectionRequest.findMany({
+  /* `null` is a FAILED read; the section says so rather than telling the
+     venue no fan nearby has asked for anyone. */
+  const nearbyRead = await readList(db.venueConnectionRequest.findMany({
     where: { status: 'PENDING', artistProfileId: { not: null }, venueProfileId: { not: profile.id } },
     orderBy: { createdAt: 'desc' },
     take: 500,
@@ -83,7 +86,8 @@ export default async function VenueAnalyticsPage({
       artistProfile: { select: { slug: true, name: true } },
       requester: { select: { profiles: { select: { city: true, stateRegion: true, latitude: true, longitude: true }, take: 1 } } },
     },
-  }).catch(() => []);
+  }));
+  const nearbyRows = nearbyRead ?? [];
   const artistById = new Map(nearbyRows.map((row) => [row.artistProfileId as string, row.artistProfile]));
   const located = nearbyRows.map((row) => {
     const fallback = row.requester.profiles[0];
@@ -193,7 +197,9 @@ export default async function VenueAnalyticsPage({
       <div className="vaa-section-head">
         <span className="vaa-eyebrow-sm">{t('venuesSlugAnalyticsPage.nearbyDemand', 'Acts fans near you want')}</span>
       </div>
-      {nearbyDemand.length === 0 ? (
+      {nearbyRead === null ? (
+        <div className="vaa-empty" role="status">{t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.')}</div>
+      ) : nearbyDemand.length === 0 ? (
         <div className="vaa-empty">
           {profile.city || profile.latitude !== null
             ? t('venuesSlugAnalyticsPage.noNearbyDemand', 'No fan near you has asked another venue for an act yet. Asks addressed to you are on your demand radar.')

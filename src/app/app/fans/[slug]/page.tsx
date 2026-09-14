@@ -20,6 +20,7 @@ import { getServerT } from '@/lib/i18n/server';
 import { askStatusLabel } from '@/lib/i18n-enum-labels';
 
 import { getServerI18n } from '@/lib/i18n/server';
+import { readList } from '@/lib/read-list';
 
 export const revalidate = 60;
 
@@ -94,7 +95,7 @@ export default async function FanProfilePage({
   const isOwner = canManageOwnedResource(session, profile.ownerId);
   const themeVars = resolveProfileThemeVars(profile);
 
-  const [hypedShows, userHype, promoterDashboard, asks] = await Promise.all([
+  const [hypedShows, userHype, promoterDashboard, asksRead] = await Promise.all([
     db.hypeEvent.findMany({
       where: { userId: profile.ownerId, ...getDemoShowRelationExclusion() },
       include: { show: { include: { venueProfile: true } } },
@@ -108,8 +109,11 @@ export default async function FanProfilePage({
        `fan-demand.ts`). Public like a hype is public: the act, the room, the
        date and what the venue did. NOT the note (written for the venue) and
        NOT where the fan was when they asked (`requester*` columns are never
-       selected here). Independently caught so a failure empties one tab. */
-    db.venueConnectionRequest
+       selected here). Read through `readList()` so a failure reaches the
+       Asks tab as `null` and it says so, rather than claiming the fan has
+       asked nobody. */
+    readList(
+      db.venueConnectionRequest
       .findMany({
         where: { requesterId: profile.ownerId },
         orderBy: { createdAt: 'desc' },
@@ -123,8 +127,9 @@ export default async function FanProfilePage({
           venueProfile: { select: { slug: true, name: true, city: true } },
         },
       })
-      .catch(() => []),
+    ),
   ]);
+  const asks = asksRead ?? [];
 
   const now = new Date();
   const shows = hypedShows.map((entry) => entry.show);
@@ -171,7 +176,7 @@ export default async function FanProfilePage({
           <div><div className="fan-stat-val">{shows.length}</div><div className="fan-stat-label">{t('fansSlugPage.hypesCastLabel', 'Hypes Cast')}</div></div>
           <div><div className="fan-stat-val">{upcomingShows.length}</div><div className="fan-stat-label">{t('fansSlugPage.showsAttendingLabel', 'Shows Attending')}</div></div>
           <div><div className="fan-stat-val">{formatNumber(locale, profile._count.followers)}</div><div className="fan-stat-label">{t('fansSlugPage.followersLabel', 'Followers')}</div></div>
-          <div><div className="fan-stat-val">{formatNumber(locale, asks.length)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
+          <div><div className="fan-stat-val">{asksRead === null ? '—' : formatNumber(locale, asks.length)}</div><div className="fan-stat-label">{t('fansSlugPage.asksLabel', 'Asks')}</div></div>
         </div>
         <PinnedStatTiles accent="var(--profile-accent, var(--role-fan))" stats={pinnedStats} locale={locale} />
       </div>
@@ -229,7 +234,12 @@ export default async function FanProfilePage({
         )}
 
         {activeSection === 'asks' && (
-          asks.length === 0 ? (
+          asksRead === null ? (
+            /* The read failed. "{name} has not asked a venue to book anyone yet"
+               is a claim about the fan, and it is not made over a query that
+               never landed. */
+            <div className="fan-empty"><p role="status">{t('profilePane.unavailable', 'This section could not be loaded just now. Refresh to try again.')}</p></div>
+          ) : asks.length === 0 ? (
             <div className="fan-empty">
               <p>
                 {isOwner

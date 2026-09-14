@@ -14,12 +14,19 @@ export function ProfilePanel({
   title,
   empty,
   isEmpty,
+  unavailable = null,
   children,
 }: {
   tabId: string;
   title: string;
   empty: string;
   isEmpty: boolean;
+  /* Set when a read this panel renders from FAILED (`readList()` returned
+     null). The empty sentence is a claim about the artist or venue — "has
+     not published any releases yet" — and it must never be made over a read
+     that did not land, so this sentence is rendered in its place, and above
+     whatever did load when the panel is not otherwise empty. */
+  unavailable?: string | null;
   children?: ReactNode;
 }) {
   return (
@@ -35,7 +42,12 @@ export function ProfilePanel({
       tabIndex={0}
     >
       <h2 className="profile-panel-title">{title}</h2>
-      {isEmpty ? <p className="profile-panel-empty">{empty}</p> : children}
+      {unavailable ? (
+        <p className="profile-panel-empty profile-panel-unavailable" role="status">
+          {unavailable}
+        </p>
+      ) : null}
+      {isEmpty ? (unavailable ? null : <p className="profile-panel-empty">{empty}</p>) : children}
     </section>
   );
 }
