@@ -36,6 +36,7 @@ import Stripe from 'stripe';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { extname } from 'node:path';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -53,6 +54,9 @@ const CRON_SECRET = process.env.CRON_SECRET ?? '';
    without driving the product again — the nightly reads it for its summary. */
 const REPORT_PATH = (process.argv.find((a) => a.startsWith('--report=')) ?? '').slice('--report='.length);
 const SONG_PATH = process.env.ALPHA_SONG ?? '';
+const AUDIO_MIME_BY_EXT: Record<string, string> = {
+  m4a: 'audio/mp4', mp4: 'audio/mp4', aac: 'audio/aac', mp3: 'audio/mpeg', wav: 'audio/wav', flac: 'audio/flac',
+};
 const GRAPHIC_PATH = process.env.ALPHA_GRAPHIC ?? '';
 /* A ≤30s spot. Deliberately NOT the song: an ad is a different artefact, and
    /api/advertise/campaigns rightly refuses a 146-second track. */
@@ -318,6 +322,15 @@ async function main() {
   const sink = await startEmailSink(sinkInbox);
 
   const song = readFileSync(SONG_PATH);
+  /* The song is whatever ALPHA_SONG points at — the real m4a on an operator's
+     machine, a generated WAV in the nightly — so the upload describes the file
+     it has rather than the one this script was written against. Item 7's label
+     used to say "real 4.7 MB m4a" over a 3.9 MB WAV every night. The route
+     sniffs magic bytes and ignores both name and type, so neither ever changed
+     the result; they changed what a reader of the log believed was uploaded. */
+  const songExt = (extname(SONG_PATH).slice(1) || 'bin').toLowerCase();
+  const songMime = AUDIO_MIME_BY_EXT[songExt] ?? 'application/octet-stream';
+  const songLabel = `${(song.length / 1024 / 1024).toFixed(1)} MB ${songExt.toUpperCase()}`;
   const graphic = readFileSync(GRAPHIC_PATH);
   const adSpot = AD_AUDIO_PATH ? readFileSync(AD_AUDIO_PATH) : null;
 
@@ -378,7 +391,7 @@ async function main() {
     second.set('title', 'Live A Lie (Reprise)');
     second.set('notes', 'TEST ARTIST SONG 2 — gives the station a rotation');
     second.set('freeUseEnabled', 'false');
-    second.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song-2.m4a');
+    second.set('file', new Blob([song], { type: songMime }), `test-artist-song-2.${songExt}`);
     const upload = await api('/api/artist-media', { method: 'POST', body: second, cookie: creator.cookie });
     /* Flagged only once the track really landed, so a transient upload failure
        is retried by the next caller rather than leaving every later item
@@ -572,14 +585,14 @@ async function main() {
     return `/api/me resolved ${fan.user.email}`;
   });
 
-  // ── 7. Upload song — the REAL m4a ────────────────────────────────────────
-  await item('7. Upload song (real 4.7 MB m4a)', async () => {
+  // ── 7. Upload song — the REAL file ALPHA_SONG names ──────────────────────
+  await item('7. Upload song (the real file ALPHA_SONG names)', async () => {
     const form = new FormData();
     form.set('profileId', artistProfile.id);
     form.set('title', 'Live A Lie');
     form.set('notes', 'TEST ARTIST SONG — alpha acceptance walk');
     form.set('freeUseEnabled', 'false');
-    form.set('file', new Blob([song], { type: 'audio/mp4' }), 'test-artist-song.m4a');
+    form.set('file', new Blob([song], { type: songMime }), `test-artist-song.${songExt}`);
     form.set('artwork', new Blob([graphic], { type: 'image/png' }), 'test-artist-graphic.png');
 
     const result = await api('/api/artist-media', { method: 'POST', body: form, cookie: creator.cookie });
@@ -595,7 +608,7 @@ async function main() {
 
     const layers = Array.isArray(body?.scan) ? body.scan.length : 0;
     const artwork = asset.artworkUrl ? 'artwork stored' : 'NO artwork stored';
-    return `asset ${asset.id.slice(0, 8)} · ${asset.fileSizeBytes ?? '?'} bytes · ${layers} scan layers · ${artwork}`;
+    return `${songLabel} as asset ${asset.id.slice(0, 8)} · ${asset.fileSizeBytes ?? '?'} bytes · ${layers} scan layers · ${artwork}`;
   });
 
   // ── 8. Upload graphic — the REAL png ─────────────────────────────────────
@@ -650,9 +663,21 @@ async function main() {
     const listens = await prisma.mediaListen.count({ where: { mediaId, userId: fan.user.id } });
     assert(listens > 0, 'play answered ok but no MediaListen row was written');
 
+    /* The row is what the MUSIC tab's "Recently played" rail reads back, through
+       GET /api/media-listens -> { recents } — hexId and cover hydrated from the
+       asset, because the row itself stores neither and the rail addresses a
+       track by hexId. This used to read `history.listens`, a key the route has
+       never answered, and printed "history endpoint returned 0 row(s)" on
+       every run without asserting on it: a number reported and not measured. */
     const history = ok(await api('/api/media-listens', { cookie: fan.cookie }));
-    const rowCount = Array.isArray(history?.listens) ? history.listens.length : Array.isArray(history) ? history.length : 0;
-    return `MediaListen written (${listens}); history endpoint returned ${rowCount} row(s)`;
+    const recents: any[] = Array.isArray(history?.recents) ? history.recents : [];
+    const mine = recents.find((row) => row.id === mediaId);
+    assert(mine, `the fan just finished the track and GET /api/media-listens lists ${recents.length} recent(s), none of them this one`);
+    assert(recents[0]?.id === mediaId, 'the track just finished is not the FIRST recent — the rail orders by completedAt desc');
+    assert(mine.hexId === mediaHexId, `the recent carries hexId ${mine.hexId}, the asset's is ${mediaHexId}`);
+    assert(mine.artworkUrl, 'the recent carries no artworkUrl, though item 7 stored a cover on the asset');
+    assert(mine.mediaUrl, 'the recent carries no mediaUrl, so the rail could list it and not play it');
+    return `MediaListen written (${listens}); the Recently played rail lists it first, with its hexId, cover and audio`;
   });
 
   // ── 13. Hype seed and track ──────────────────────────────────────────────
@@ -1279,9 +1304,16 @@ async function main() {
     const sequence: any[] = [body?.nowPlaying, ...(body?.upNext ?? [])].filter(Boolean);
     const adItems = sequence.filter((s) => s?.adClipId);
 
-    const approved = await prisma.ad.findFirst({ where: { status: 'APPROVED' }, orderBy: { createdAt: 'desc' } });
+    /* The campaign THIS run bought (item 20b) when it went live, else the
+       newest APPROVED campaign that HAS a spot — item 33's predicate. An
+       APPROVED row with no audio cannot air, and the scratch database keeps
+       them across runs, so judging on `status` alone failed this item against
+       a campaign no station could ever have served (measured 2026-09-14). */
+    const airable = { status: 'APPROVED' as const, audioUrl: { not: null } };
+    const approved = (adId ? await prisma.ad.findFirst({ where: { id: adId, ...airable } }) : null)
+      ?? await prisma.ad.findFirst({ where: airable, orderBy: { createdAt: 'desc' } });
     if (!approved) {
-      return `station served ${sequence.length} item(s), ${adItems.length} ad break(s); no APPROVED campaign exists, so impression spend is not exercised here (20b-20d cover it)`;
+      return `station served ${sequence.length} item(s), ${adItems.length} ad break(s); no APPROVED campaign with audio exists, so impression spend is not exercised here (20b-20d cover it)`;
     }
 
     await ensureStationRotation();
@@ -1417,14 +1449,19 @@ async function main() {
 
   // ── 24. Discovery playlist ───────────────────────────────────────────────
   await item('24. Check the discovery playlist', async () => {
+    /* `/api/discover` answers { artists, venues }: every discoverable profile
+       the fan does not own and has NOT already hyped. Both halves are asserted
+       against the seeded cast — this used to assert only that the object had
+       keys, and printed the two counts as if they had been checked. */
     const body = ok(await api('/api/discover', { cookie: fan.cookie }));
-    const keys = Object.keys(body ?? {});
-    const counts = keys
-      .filter((k) => Array.isArray(body[k]))
-      .map((k) => `${k}=${body[k].length}`)
-      .join(' ');
-    assert(keys.length > 0, 'discover returned an empty object');
-    return counts || `returned keys: ${keys.join(', ')}`;
+    const artists: any[] = Array.isArray(body?.artists) ? body.artists : [];
+    const venues: any[] = Array.isArray(body?.venues) ? body.venues : [];
+    assert(venues.some((v) => v.id === venueProfile.id), `the seeded venue is discoverable and not among ${venues.length} venue card(s)`);
+    const fanHyped = await prisma.profileHypeEvent.count({ where: { userId: fan.user.id, profileId: artistProfile.id } });
+    const artistShown = artists.some((a) => a.id === artistProfile.id);
+    if (fanHyped > 0) assert(!artistShown, 'discover re-offered an act this fan already hyped (item 13)');
+    else assert(artistShown, `the seeded act is discoverable and not among ${artists.length} artist card(s)`);
+    return `artists=${artists.length} venues=${venues.length} · seeded venue listed · seeded act ${fanHyped > 0 ? 'withheld, because the fan hyped it in item 13' : 'listed'}`;
   });
 
   // ── 25. Liked playlist ───────────────────────────────────────────────────
@@ -1436,11 +1473,16 @@ async function main() {
       cookie: fan.cookie,
     }), [200, 201]);
 
+    /* `/api/likes` answers { likes } with name and slug resolved for the
+       Library tab. The old check passed on ANY like (`found || liked.length > 0`)
+       while printing `artist present=false` — a report of a failure under a
+       PASS. The like just written has to be there, and rendered. */
     const list = ok(await api('/api/likes', { cookie: fan.cookie }));
-    const liked: any[] = list?.likes ?? list?.liked ?? [];
-    const found = liked.some((l) => (l.targetId ?? l.id) === artistProfile.id);
-    assert(found || liked.length > 0, `liked list did not contain the artist: ${JSON.stringify(list).slice(0, 160)}`);
-    return `liked list returned ${liked.length} entry(ies), artist present=${found}`;
+    const liked: any[] = Array.isArray(list?.likes) ? list.likes : [];
+    const mine = liked.find((l) => l.targetType === 'ARTIST' && l.targetId === artistProfile.id);
+    assert(mine, `the like just written is not among ${liked.length} liked entry(ies): ${JSON.stringify(list).slice(0, 160)}`);
+    assert(mine.slug === artistProfile.slug && mine.name, 'the liked row is not resolved to a name and slug the Library tab can render');
+    return `liked list has ${liked.length} entry(ies); the artist is there, resolved as ${mine.name} (/${mine.slug})`;
   });
 
   // ── 26. Edit / delete the playlist ───────────────────────────────────────
