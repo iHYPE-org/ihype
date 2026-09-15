@@ -13,6 +13,7 @@ import {
   routineHeadline,
 } from '@/lib/admin-routine';
 import type { WorkbenchQueue } from '@/lib/admin-workbench';
+import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 function q(over: Partial<WorkbenchQueue> & { id: string }): WorkbenchQueue {
   return {
@@ -241,5 +242,39 @@ describe('routineHeadline', () => {
   it('says so when nothing needs anyone', () => {
     const board = buildRoutineBoard({ queues: [q({ id: 'payouts', slaHours: 24 })], liveness: {}, restoreDrill: null });
     expect(routineHeadline(board)).toBe('Nothing is waiting on you, and every tracked job has run.');
+  });
+});
+
+describe('the two money duties do not overclaim what their cron does', () => {
+  /* THE BOARD IS WHERE AN OPERATOR DECIDES NOT TO DO SOMETHING BY HAND, so a
+     duty that overclaims is worse than one that is vague. "Transfers every
+     PENDING payable on an ENDED show … do not pay anyone by hand" named two of
+     the five conditions in `payout-release.ts` and then told the operator to
+     stand down — for precisely the cases the run will never cover: a TAX_*
+     entry, which requires a human by design, and a payee with no Connect
+     account, who requires one to chase them. */
+  const duty = (path: string) => {
+    const found = AUTOMATED_JOBS.find((j) => j.path === path);
+    expect(found, `${path} is no longer an automated duty`).toBeDefined();
+    return (found as { what: string }).what;
+  };
+
+  it('the payout duty names the hold and what it never pays', () => {
+    const what = duty('/api/cron?job=show-payouts');
+    expect(what).toContain(String(PAYOUT_HOLD_DAYS));
+    expect(what.toLowerCase()).toContain('tax');
+    expect(what.toLowerCase()).toContain('connect account');
+    // "every PENDING payable" is the claim that made the stand-down harmful.
+    expect(what.toLowerCase()).not.toContain('every pending');
+    expect(what.toLowerCase()).not.toContain('do not pay anyone by hand');
+  });
+
+  it('the settlement duty does not promise a refund for every campaign', () => {
+    /* A sponsorship that ran its full term is owed nothing, and a metered
+       remainder under Stripe's 50c minimum is kept because Stripe cannot
+       refund it. */
+    const what = duty('/api/cron?job=ad-settlement');
+    expect(what.toLowerCase()).not.toContain('every finished campaign');
+    expect(what.toLowerCase()).toContain('sponsorship');
   });
 });
