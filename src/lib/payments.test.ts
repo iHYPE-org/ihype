@@ -1,11 +1,32 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getPaymentProcessingReadiness } from '@/lib/payments';
 
+/* EVERY INPUT TO THE DECISION IS PINNED HERE, INCLUDING THE ONE THAT TURNS IT
+   OFF. `getPaymentProcessingReadiness()` reads five environment values and
+   this map named four of them until 2026-09-15, so
+   STRIPE_ALLOW_TEST_MODE_REHEARSAL — the hatch that makes a production build
+   accept an `sk_test_` key — came from the ambient shell. #991 put it in the
+   nightly's JOB env, which is every step's environment, and it inverted the
+   assertion in "rejects Stripe test credentials when production ticketing is
+   enabled": the guard for the exact rule the hatch bends was switched off by
+   the hatch, and two nightlies died before reaching the walk.
+
+   #992 scoped the variable to the walk step, which is right and is where it
+   belongs. It is not sufficient: that fix lives in a YAML comment one repo
+   convention away from being undone, and a developer with the hatch exported
+   in their own shell reproduces the same red suite. Reproduced with
+
+     STRIPE_ALLOW_TEST_MODE_REHEARSAL=true npx vitest run src/lib/payments.test.ts
+
+   A TEST OF A SAFETY CHECK MUST PIN THE VARIABLE THAT DISABLES IT. Anything
+   read from the ambient environment is an input the test does not control,
+   and the one that can only ever weaken the check is the one that matters. */
 const original = {
   NODE_ENV: process.env.NODE_ENV,
   FEATURE_ENABLE_TICKET_PAYMENTS: process.env.FEATURE_ENABLE_TICKET_PAYMENTS,
   STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+  STRIPE_ALLOW_TEST_MODE_REHEARSAL: process.env.STRIPE_ALLOW_TEST_MODE_REHEARSAL,
 };
 
 function setEnvironment(key: keyof typeof original, value: string | undefined) {
@@ -13,6 +34,11 @@ function setEnvironment(key: keyof typeof original, value: string | undefined) {
   if (value === undefined) delete environment[key];
   else environment[key] = value;
 }
+
+beforeEach(() => {
+  /* The rehearsal hatch is absent unless a case deliberately sets it. */
+  setEnvironment('STRIPE_ALLOW_TEST_MODE_REHEARSAL', undefined);
+});
 
 afterEach(() => {
   for (const [key, value] of Object.entries(original)) {
@@ -39,6 +65,37 @@ describe('payment processing readiness', () => {
     const readiness = getPaymentProcessingReadiness();
     expect(readiness.ready).toBe(false);
     expect(readiness.blockers).toHaveLength(2);
+  });
+
+  it('lets the rehearsal hatch — and ONLY the hatch — accept a test key in a production build', () => {
+    /* The hatch had no test of its own until 2026-09-15, which is how it came
+       to be the thing that broke the suite: the nightly depends on it (a
+       production build bakes in NODE_ENV=production, so without it every money
+       item answers 503 and the walk's ticket journeys read BROKEN over a
+       product that works — DESIGN_SYNC row 469), and nothing here said what it
+       does. An escape hatch the nightly leans on is load-bearing code. */
+    setEnvironment('NODE_ENV', 'production');
+    setEnvironment('STRIPE_ALLOW_TEST_MODE_REHEARSAL', 'true');
+    process.env.FEATURE_ENABLE_TICKET_PAYMENTS = 'true';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_example';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_example';
+
+    expect(getPaymentProcessingReadiness().ready).toBe(true);
+  });
+
+  it('opens nothing else: the hatch cannot stand in for the launch flag', () => {
+    /* It permits a TEST key and nothing more. If it ever also waved the
+       launch switch through, a leaked variable would turn paid ticketing on
+       rather than merely loosening which key is accepted. */
+    setEnvironment('NODE_ENV', 'production');
+    setEnvironment('STRIPE_ALLOW_TEST_MODE_REHEARSAL', 'true');
+    process.env.FEATURE_ENABLE_TICKET_PAYMENTS = 'false';
+    process.env.STRIPE_SECRET_KEY = 'sk_test_example';
+    process.env.STRIPE_WEBHOOK_SECRET = 'whsec_example';
+
+    const readiness = getPaymentProcessingReadiness();
+    expect(readiness.ready).toBe(false);
+    expect(readiness.blockers.join(' ')).toContain('FEATURE_ENABLE_TICKET_PAYMENTS=true');
   });
 
   it('rejects Stripe test credentials when production ticketing is enabled', () => {
