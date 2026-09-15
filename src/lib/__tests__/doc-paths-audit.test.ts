@@ -57,6 +57,46 @@ describe('audit:doc-paths', () => {
     expect(out).toContain('src/lib/deleted-thing-removed.ts');
   });
 
+  it('reads PROSE, not only table rows — where all three never-existed paths were', () => {
+    /* Until 2026-09-15 the unit of judgement was `| … |` alone, so the sync
+       workflow's "run `scripts/export-tokens.js`", the API-client note's
+       "`lib/api.js` — use this as the API route reference" and the navigation
+       note's "copy `lib/NavShell.js`" were all unscanned. None of the four has
+       ever existed in any commit on any branch. A numbered instruction naming
+       a file is a stronger claim than a table row, not a weaker one. */
+    const { code, out } = run(docWith(['', '4. Run `node scripts/not-a-real-script.mjs` when tokens change', '']));
+    expect(code, out).toBe(1);
+    expect(out).toContain('scripts/not-a-real-script.mjs');
+    expect(out).toContain('in the prose at line');
+  });
+
+  it('judges a prose BLOCK, so a "this is gone" line one line away still excuses it', () => {
+    /* The block rather than the line, for the reason `exempt-lines.mjs`
+       exists: a reason routinely sits a line away from what it excuses. */
+    const { code, out } = run(docWith([
+      '',
+      'The old token exporter lived at `scripts/not-a-real-script.mjs`.',
+      'It was deleted in the console conversion; tokens are read from globals.css now.',
+      '',
+    ]));
+    expect(code, out).toBe(0);
+  });
+
+  it('looks outside src/ — a path there is just as much an instruction', () => {
+    const { code, out } = run(docWith(['| `lib/not-a-real-api.js` | the API route reference |']));
+    expect(code, out).toBe(1);
+    expect(out).toContain('lib/not-a-real-api.js');
+  });
+
+  it('does not match a prefix inside a longer word', () => {
+    /* Unanchored, `lib` matches inside `mylib/api.js` and `public` inside
+       `republic/x.ts`. A scanner wrong about its own inputs invents findings,
+       and an invented finding is worse than a missed one — the first list
+       containing one is the last anyone reads carefully. */
+    const { code, out } = run(docWith(['| `mylib/api.js` and `republic/nope.ts` | the live wiring |']));
+    expect(code, out).toBe(0);
+  });
+
   it('refuses a suspiciously empty scan rather than reporting a pass', () => {
     /* A zero has to be earned. If the document stops being a table, or the
        path shape changes, finding nothing to check must not read as finding

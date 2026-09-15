@@ -187,7 +187,13 @@ jobs:
         # 900 -> 896 (2026-09-14), on the same rule. The script also refuses a
         # scan that read zero files now (exit 2); a ceiling over nothing was
         # passing.
-        run: npm run audit:spacing -- --max=896
+        #
+        # 896 -> 894 (2026-09-15), same rule again, found by a full audit pass
+        # rather than by the change that moved the count. Two of slack is not
+        # much; the point is that slack is never the number it looks like,
+        # because nothing measures it between passes. Tighten it in the change
+        # that lowers the count, and this line stops being necessary.
+        run: npm run audit:spacing -- --max=894
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy
