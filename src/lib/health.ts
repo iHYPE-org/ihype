@@ -20,6 +20,7 @@ import { orderSigningSecrets } from '@/lib/signing-secret-order';
 import { isNativePushConfigured } from '@/lib/native-push';
 import { buildAlphaBlockers, evaluateRestoreDrill, parseAutomatedDrillAt } from '@/lib/alpha-readiness';
 import { getUnpayableBalance } from '@/lib/unpayable-balance';
+import { SHOW_PAYOUTS_LAST_KEY } from '@/lib/show-payouts';
 import { kvGet } from '@/lib/kv';
 
 export async function getHealthSnapshot() {
@@ -161,6 +162,25 @@ export async function getHealthSnapshot() {
       unpayablePayees: null,
       manualRemittanceCents: null,
     }));
+    /* WHAT LAST NIGHT'S PAYOUT RUN ACTUALLY DID, as the cron stored it. Its
+       return value goes into a JSON body the scheduled invocation discards,
+       so until this key the only trace of a run was `cron-alive:show-payouts`
+       — proof it ran, silence about whether it paid anybody. `released: 0` is
+       a real answer here and is not the same as an absent key, which means
+       the job has not run in three days (the stale-cron alert also says so). */
+    const lastPayoutRun = await kvGet<string | { at?: string; released?: number; skipped?: number; unpayable?: number }>(SHOW_PAYOUTS_LAST_KEY)
+      .then((raw) => {
+        const parsed = typeof raw === 'string' ? (JSON.parse(raw) as { at?: string; released?: number; skipped?: number; unpayable?: number }) : raw;
+        return parsed && typeof parsed === 'object' && typeof parsed.at === 'string'
+          ? {
+              at: parsed.at,
+              released: Number(parsed.released ?? 0),
+              skipped: Number(parsed.skipped ?? 0),
+              unpayable: Number(parsed.unpayable ?? 0),
+            }
+          : null;
+      })
+      .catch(() => null);
     const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'), Date.now(), automatedDrillAt);
     const alphaBlockers = buildAlphaBlockers({
       administrators: administratorCount,
@@ -196,6 +216,7 @@ export async function getHealthSnapshot() {
           verifier: orderSigningSecrets(process.env as Record<string, string | undefined>).length,
         },
         stripeReconciliation,
+        lastPayoutRun,
         pendingVerifications: pendingVerificationCount,
         reservedTicketOrders: reservedTicketCount,
         notificationJobs: {
