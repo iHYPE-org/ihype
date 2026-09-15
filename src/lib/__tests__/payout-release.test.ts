@@ -7,6 +7,7 @@ import {
   describePayableRelease,
   isConnectPayoutCategory,
   payoutHoldEndsAt,
+  stalledPayoutWhere,
 } from '../payout-release';
 import { payoutReleaseLabel } from '../i18n-enum-labels';
 
@@ -109,5 +110,65 @@ describe('the promise and the payout cron read the same conditions', () => {
       .toEqual(['ARTIST_PAYOUT', 'PROMOTER_AFFILIATE', 'VENUE_PAYOUT']);
     expect(isConnectPayoutCategory('TAX_LOCAL')).toBe(false);
     expect(isConnectPayoutCategory('ARTIST_PAYOUT')).toBe(true);
+  });
+});
+
+describe('stalledPayoutWhere — what the operator is shown as overdue', () => {
+  it('excludes a payable still inside the dispute hold', () => {
+    // The defect: the queue counted every PENDING entry on an ENDED show
+    // against a 24h promise, so it was overdue from the moment the show
+    // ended, for ten days, by design — on a board sorted worst-first.
+    const w = stalledPayoutWhere(NOW);
+    const cutoff = w.show.startsAt.lte;
+    expect(cutoff.getTime()).toBe(NOW.getTime() - PAYOUT_HOLD_DAYS * 24 * 60 * 60 * 1000);
+    // A show that ended yesterday started after the cutoff, so it is excluded.
+    expect(day(-1).getTime()).toBeGreaterThan(cutoff.getTime());
+    // One that started before the hold window is included.
+    expect(day(-PAYOUT_HOLD_DAYS - 1).getTime()).toBeLessThan(cutoff.getTime());
+  });
+
+  it('never counts a tax entry, which nothing automated ever releases', () => {
+    const cats = stalledPayoutWhere(NOW).category.in;
+    expect([...cats].sort()).toEqual(['ARTIST_PAYOUT', 'PROMOTER_AFFILIATE', 'VENUE_PAYOUT']);
+    for (const tax of ['TAX_LOCAL', 'TAX_STATE', 'TAX_COUNTRY', 'TAX_INTERNATIONAL']) {
+      expect(cats).not.toContain(tax);
+    }
+  });
+
+  it('DOES include a payable with no payout destination — that is the point', () => {
+    // The cron skips those silently; this where-clause is the complement of
+    // the cron, not a copy of it, so it must NOT filter on a Connect account.
+    // Filtering here would hide the one case that never resolves by itself.
+    expect(JSON.stringify(stalledPayoutWhere(NOW))).not.toContain('stripeConnect');
+    expect(JSON.stringify(stalledPayoutWhere(NOW))).not.toContain('profile');
+  });
+
+  it('only ever selects PENDING and ENDED', () => {
+    const w = stalledPayoutWhere(NOW);
+    expect(w.status).toBe('PENDING');
+    expect(w.show.status).toBe('ENDED');
+  });
+});
+
+describe('a payable nobody can be paid is not silent', () => {
+  const cron = fs.readFileSync(path.join(process.cwd(), 'src/lib/show-payouts.ts'), 'utf8');
+
+  it('the no-destination branch reaches Sentry through log.error', () => {
+    // `skipped` used to go only into a JSON body the scheduled invocation
+    // discards, while the transfer-failure branch twenty lines above logged
+    // AND emailed. A failed transfer was loud; a payee who can never be paid
+    // was silent, and the second is the one that persists.
+    expect(cron).toContain('noDestination');
+    const tail = cron.slice(cron.indexOf('noDestination.length > 0'));
+    expect(tail).toContain('log.error');
+    // Named payees, so an operator knows who to chase.
+    expect(tail).toContain('payees');
+  });
+
+  it('reports once per run, not once per entry', () => {
+    // A hundred payables owed to three profiles is three problems.
+    const loop = cron.slice(cron.indexOf('for (const entry of entries)'), cron.indexOf('noDestination.length > 0'));
+    expect(loop).not.toContain('log.error(\n      \'[show-payouts]\', null, `no Stripe');
+    expect(cron.match(/noDestination\.length > 0/g)).toHaveLength(1);
   });
 });

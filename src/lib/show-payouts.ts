@@ -48,11 +48,19 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
 
   let released = 0;
   let skipped = 0;
+  /* WHO was skipped, so the log names them. See the block after the loop. */
+  const noDestination: { entryId: string; profileId: string | null; payeeLabel: string; amountCents: number }[] = [];
 
   for (const entry of entries) {
     const connectAccountId = entry.profile?.stripeConnectAccountId;
     if (!connectAccountId) {
       skipped++;
+      noDestination.push({
+        entryId: entry.id,
+        profileId: entry.profileId,
+        payeeLabel: entry.payeeLabel,
+        amountCents: entry.amountCents,
+      });
       continue;
     }
 
@@ -98,6 +106,37 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
       }).catch(() => {});
       skipped++;
     }
+  }
+
+  /* A SKIPPED PAYABLE WAS SILENT — NO LOG, NO SENTRY, NO EMAIL — AND THE
+   * COUNT WENT INTO AN HTTP RESPONSE NOBODY READS (2026-09-15).
+   *
+   * `triggerShowPayouts()` returns `{ released, skipped }` to the cron route,
+   * which puts it in a JSON body that the scheduled invocation discards. So an
+   * entry owed to a profile with no Connect account was passed over on every
+   * run, for ever, and nothing anywhere said so — while the transfer-failure
+   * branch twenty lines above logs AND emails. That asymmetry is the bug: a
+   * failed transfer is loud and a payee who can never be paid is silent, and
+   * the second is the one that persists.
+   *
+   * It is not hypothetical on this product: with no artist or venue having
+   * finished Connect onboarding, this branch takes EVERY payable, every day.
+   *
+   * `log.error` because that is the only thing that reaches Sentry (see
+   * `src/lib/logger.ts`) — `console.error` lands in Worker logs nobody tails.
+   * One line per RUN rather than per entry: a hundred payables owed to three
+   * profiles is three problems, and a hundred-line log is one nobody reads.
+   * No email: the operator's surface for this is the workbench queue, and a
+   * daily mail saying the same thing is what `workbench-digest.ts` exists to
+   * avoid. */
+  if (noDestination.length > 0) {
+    const payees = [...new Set(noDestination.map((e) => e.profileId ?? e.payeeLabel))];
+    const owedCents = noDestination.reduce((sum, e) => sum + e.amountCents, 0);
+    log.error(
+      '[show-payouts]',
+      null,
+      `${noDestination.length} payable(s) worth ${owedCents}c could not be paid: no Stripe Connect account on ${payees.length} payee(s) — ${payees.slice(0, 10).join(', ')}`,
+    );
   }
 
   return { released, skipped };
