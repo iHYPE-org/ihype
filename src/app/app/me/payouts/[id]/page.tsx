@@ -298,7 +298,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
               </>
             ) : null}
           </p>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 6 }}>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.6, marginTop: 8 }}>
             {t('payoutIdPage.releaseTax', 'Tax collected on these orders is remitted by hand and is not part of the figures above.')}
           </p>
         </div>

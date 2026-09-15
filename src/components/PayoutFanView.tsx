@@ -47,7 +47,7 @@ export function PayoutFanView({
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
               <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
-            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }} />
               {/* The promoter tenth is the charter's "(if applicable)": with no
                   HYPE link on the order it is zero and redistributes to the
