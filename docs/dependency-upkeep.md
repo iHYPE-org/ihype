@@ -103,9 +103,25 @@ at the worst moment.
 **Reconnecting is the user's to do, in claude.ai → Settings → Connectors.** A
 session cannot run the OAuth flow. Report which need it and stop there.
 
-**A connector reporting `connected` at org level can still be unusable in a
-given session** — the session's own token is separate. Report both states rather
-than collapsing them.
+**JUDGE A CONNECTOR BY ONE REAL CALL, NEVER BY A STATUS.** `ListConnectors`
+reports org-level state, and a session-start reminder reports the session's own
+— they are different readings, either can be stale, and neither is evidence
+that a tool works. On 2026-09-15 the Supabase connector was reported to the
+owner as needing re-authorisation, twice, off such a notice; one
+`list_projects` call returned the iHYPE project immediately. So make the
+cheapest read-only call each connector has and report what came back:
+
+| Connector | The call that settles it |
+|---|---|
+| Stripe | `list_available_accounts_or_orgs` |
+| Sentry | `find_organizations` |
+| Supabase | `list_projects` |
+| Cloudflare Developer Platform | `workers_list` |
+| Resend | `list_domains` |
+| Anthropic Economic Index | not used here; skip it |
+
+A call that fails names the connector the owner has to reconnect. A status that
+says `connected` names nothing.
 
 ## 3. Plugins and skills
 
