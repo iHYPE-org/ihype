@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { payoutHoldEndsAt } from '@/lib/payout-release';
 
 export type ArtistDashboardStats = {
   /** Sum of RELEASED ARTIST_PAYOUT AccountsPayableEntry rows paid this calendar month — real money already transferred, not a projection. */
@@ -14,6 +15,8 @@ export type ArtistDashboardStats = {
    * answer to "next payout date," not a guarantee.
    */
   nextPayoutAt: Date | null;
+  /** The show has not ENDED yet, so the date above is the earliest possible. */
+  nextPayoutAwaitingShow: boolean;
   /** Fans who hyped this profile in the last 7 days — ProfileHypeEvent is profile-level, not per-track. */
   hypesThisWeek: number;
   /** Tickets sold (quantity, CAPTURED orders) on this artist's shows in the last 7 days. */
@@ -63,7 +66,7 @@ export async function getArtistDashboardStats(profileId: string): Promise<Artist
     }),
     db.accountsPayableEntry.findFirst({
       where: { profileId, category: 'ARTIST_PAYOUT', status: 'PENDING' },
-      select: { show: { select: { startsAt: true, endsAt: true } } },
+      select: { show: { select: { startsAt: true, endsAt: true, status: true } } },
       orderBy: { show: { startsAt: 'asc' } },
     }),
   ]);
@@ -71,7 +74,13 @@ export async function getArtistDashboardStats(profileId: string): Promise<Artist
   return {
     monthEarningsCents: monthReleased._sum.amountCents ?? 0,
     ticketsSoldThisMonth: monthOrders._sum.quantity ?? 0,
-    nextPayoutAt: nextPendingEntry?.show ? (nextPendingEntry.show.endsAt ?? nextPendingEntry.show.startsAt) : null,
+    /* THE SHOW'S OWN DATE IS NOT THE PAYOUT DATE. This read the show's
+       `endsAt ?? startsAt`, so the dashboard printed "Next Payout" with a
+       date in the PAST for any show that had already happened — the cron
+       holds a payable PAYOUT_HOLD_DAYS past the start, and only releases it
+       once the show is ENDED and the payee has a Connect account. */
+    nextPayoutAt: nextPendingEntry?.show ? payoutHoldEndsAt(nextPendingEntry.show.startsAt) : null,
+    nextPayoutAwaitingShow: nextPendingEntry?.show ? nextPendingEntry.show.status !== 'ENDED' : false,
     hypesThisWeek: weekHypes,
     ticketsSoldThisWeek: weekOrders._sum.quantity ?? 0,
   };

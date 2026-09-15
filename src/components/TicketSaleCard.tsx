@@ -115,10 +115,22 @@ export function TicketSaleCard({
         venuePayoutPercent,
         artistPayoutPercent,
         promoterPayoutPercent,
+        /* THE PURCHASE ROUTE PASSES THIS AND THIS PREVIEW DID NOT.
+         *
+         * `hasAffiliatePromoter` defaults to TRUE (ticketing.ts), so without
+         * it the card showed the fan a 70/20/10 breakdown of their own money
+         * while the order about to be written records 77.78/22.22/0 — the
+         * charter's "(if applicable)": with no HYPE link there is no promoter
+         * share and the tenth redistributes to the artist and venue in the
+         * same 7:2 ratio. The route has always read
+         * `Boolean(affiliatePromoterProfile)`; this card already held the same
+         * fact as a prop and never handed it over. */
+        hasAffiliatePromoter: Boolean(affiliatePromoterProfileId),
         buyerLocation: viewerLocation,
         venueLocation
       }),
     [
+      affiliatePromoterProfileId,
       artistPayoutPercent,
       promoterPayoutPercent,
       quantityForPreview,
@@ -128,6 +140,24 @@ export function TicketSaleCard({
       viewerLocation
     ]
   );
+
+  /* One share per row, each percentage read back off the amount the SAME
+     helper the purchase route calls produced for this order. The show's own
+     percentages are the input to that helper, never the label. */
+  const splitRows = useMemo(() => {
+    const base = preview.subtotalCents;
+    const pct = (cents: number) => (base > 0 ? Math.round((cents / base) * 1000) / 10 : 0);
+    return [
+      { key: 'var(--accent)', name: artistName, cents: preview.artistPayoutCents, percent: pct(preview.artistPayoutCents) },
+      { key: 'var(--role-venue)', name: venueName, cents: preview.venuePayoutCents, percent: pct(preview.venuePayoutCents) },
+      {
+        key: 'var(--role-promoter)',
+        name: affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool'),
+        cents: preview.promoterPayoutCents,
+        percent: pct(preview.promoterPayoutCents),
+      },
+    ];
+  }, [affiliatePromoterName, artistName, preview, promoterName, t, venueName]);
 
   const fanPaymentLabel =
     currentFan?.storedPaymentTokenBrand && currentFan?.storedPaymentTokenLast4
@@ -240,25 +270,27 @@ export function TicketSaleCard({
         </div>
       </div>
 
-      {/* S4's split card (reference/s4-checkout.html): the keyed bar over one
+{/* S4's split card (reference/s4-checkout.html): the keyed bar over one
           row per share, real names and this order's real amounts — replacing
-          three separate stat cards saying the same thing without the bar. The
-          percentages are the show's own, never the constant. */}
+          three separate stat cards saying the same thing without the bar.
+          The percentages used to be read off the show's configured split;
+          they are DERIVED from this order's own amounts now — see below. */}
       <div style={{ border: '1px solid var(--line)', borderRadius: 'var(--radius-panel)', padding: 18, display: 'flex', flexDirection: 'column', gap: 14 }}>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-3)' }}>
           {t('ticketSaleCard.whereItGoes', 'Where the face value goes')}
         </div>
+        {/* Every share is DERIVED from the amount beside it, never from the
+            configured percentage — or a redistributed promoter tenth reads as
+            a payment nobody receives while the artist's real 77.78% is
+            labelled 70%. A zero share draws no segment rather than a hairline
+            claiming one. */}
         <div style={{ display: 'flex', height: 12, borderRadius: 2, overflow: 'hidden', gap: 2 }}>
-          <div style={{ flex: Math.max(artistPayoutPercent, 1), background: 'var(--accent)' }} />
-          <div style={{ flex: Math.max(venuePayoutPercent, 1), background: 'var(--role-venue)' }} />
-          <div style={{ flex: Math.max(promoterPayoutPercent, 1), background: 'var(--role-promoter)' }} />
+          {splitRows.filter((row) => row.cents > 0).map((row) => (
+            <div key={row.key} style={{ flex: Math.max(row.percent, 1), background: row.key }} />
+          ))}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-          {[
-            { key: 'var(--accent)', name: artistName, percent: artistPayoutPercent, cents: preview.artistPayoutCents },
-            { key: 'var(--role-venue)', name: venueName, percent: venuePayoutPercent, cents: preview.venuePayoutCents },
-            { key: 'var(--role-promoter)', name: affiliatePromoterName ?? promoterName ?? t('ticketSaleCard.promoterAffiliatePoolFallback', 'Promoter affiliate pool'), percent: promoterPayoutPercent, cents: preview.promoterPayoutCents },
-          ].map((row) => (
+          {splitRows.map((row) => (
             <div key={row.key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               <span aria-hidden="true" style={{ width: 9, height: 9, borderRadius: 2, background: row.key, flex: '0 0 auto' }} />
               <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{row.name} · {formatPercent(row.percent)}</span>
@@ -266,6 +298,11 @@ export function TicketSaleCard({
             </div>
           ))}
         </div>
+        {preview.promoterPayoutCents === 0 ? (
+          <div style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.4 }}>
+            {t('ticketSaleCard.noPromoterShare', 'No HYPE link was used, so the promoter share goes to the artist and venue instead.')}
+          </div>
+        ) : null}
         {affiliatePromoterName ? (
           <div style={{ borderTop: '1px solid var(--line)', paddingTop: 12, display: 'flex', alignItems: 'center', gap: 10 }}>
             <span style={{ flex: 1, fontSize: '0.9375rem', color: 'var(--ink-2)' }}>{t('ticketSaleCard.creditedTo', 'Credited to')}</span>

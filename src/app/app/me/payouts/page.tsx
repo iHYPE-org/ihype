@@ -72,10 +72,20 @@ export default async function PayoutsHubPage({
           take: 100,
         })
       : Promise.resolve([]),
+    /* A pending row has to say what it is actually waiting for, so it carries
+       its category (a TAX_* entry is never released automatically) and its
+       show's start (the hold runs from the date, not from the status flip).
+       The payee's Connect account is joined below off `profiles`, which this
+       page already loads — the panel used to promise a release date over a
+       payee with no account to release to. */
     tab === 'history' && profileIds.length
       ? db.accountsPayableEntry.findMany({
           where: { profileId: { in: profileIds }, status: 'PENDING' },
-          include: { show: { select: { title: true, slug: true, status: true } } },
+          select: {
+            id: true, amountCents: true, payeeLabel: true, paidAt: true,
+            category: true, profileId: true,
+            show: { select: { title: true, slug: true, status: true, startsAt: true } },
+          },
           orderBy: { createdAt: 'desc' },
           take: 100,
         })
@@ -99,6 +109,16 @@ export default async function PayoutsHubPage({
       ? db.accountsPayableEntry.count({ where: { profileId: { in: profileIds }, status: 'PENDING' } })
       : Promise.resolve(0),
   ]);
+
+  /* Which of the member's own profiles can actually receive a transfer. The
+     payout cron skips an entry whose profile has no Connect account, silently,
+     on every run — so a pending row for one of those is not "released once the
+     show ends", it is waiting on the member. */
+  const payoutReady = new Set(profiles.filter((p) => p.stripeConnectAccountId).map((p) => p.id));
+  const pendingRows = pending.map((entry) => ({
+    ...entry,
+    hasPayoutDestination: entry.profileId ? payoutReady.has(entry.profileId) : false,
+  }));
 
   const stripeReady = isStripeConfigured();
   const settingsProfiles = profiles.filter((p) => p.type === 'ARTIST' || p.type === 'VENUE');
@@ -124,7 +144,7 @@ export default async function PayoutsHubPage({
       </div>
 
       {tab === 'history' && <PayoutsHistoryPanel
-              pending={pending}
+              pending={pendingRows}
               /* A sum of no rows is null and that IS zero here: the aggregate
                  landed. A failed one throws above and never reaches this. */
               pendingTotal={pendingCount}

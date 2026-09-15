@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
+import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 export function PayoutFanView({
   priceCents,
@@ -46,13 +47,29 @@ export function PayoutFanView({
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.yourLabel', 'Your')} {fmt(priceCents)}</span>
               <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{fmt(artistShare)} {t('payoutFanView.artistLabel', 'artist')} · {fmt(venueShare)} {t('payoutFanView.venueLabel', 'venue')} · {fmt(promoterShare)} {t('payoutFanView.promoterLabel', 'promoter')} · $0 {t('payoutFanView.ihypeLabel', 'iHYPE')}</span>
             </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }} />
+              {/* The promoter tenth is the charter's "(if applicable)": with no
+                  HYPE link on the order it is zero and redistributes to the
+                  artist and venue in the same 7:2 ratio. The line above states
+                  a split that only holds when one was used. */}
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-3)', lineHeight: 1.5 }}>{t('payoutFanView.promoterConditional', 'The promoter share applies only when the fan arrived on a HYPE link; otherwise it goes to the artist and venue.')}</span>
+            </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.ihypeFeeLabel', 'iHYPE fee')}</span>
               <span style={{ fontSize: '0.9375rem', color: 'var(--role-venue)', lineHeight: 1.5 }}>{t('payoutFanView.ihypeFeeValue', '$0.00 — locked in our charter. Forever.')}</span>
             </div>
             <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', color: 'var(--ink-3)', flexShrink: 0, minWidth: 90 }}>{t('payoutFanView.paidOutLabel', 'Paid out')}</span>
-              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>{t('payoutFanView.paidOutValue', 'Automatically. Same night.')}</span>
+              <span style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.5 }}>
+                {/* "Same night" was the behaviour until 2026-08-27, when
+                    PAYOUT_HOLD_DAYS was introduced so a card dispute arriving
+                    the morning after has something left to reverse. The sentence
+                    outlived the behaviour by three weeks on the one page whose
+                    job is explaining the money. */}
+                {t('payoutFanView.paidOutValue2', 'Automatically, about {days} days after the show.')
+                  .replace('{days}', String(PAYOUT_HOLD_DAYS))}
+              </span>
             </div>
           </div>
         </div>

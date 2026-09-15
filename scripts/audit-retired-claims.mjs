@@ -78,6 +78,19 @@ import { exemptLines } from './lib/exempt-lines.mjs';
  */
 const RETIRED = [
   {
+    /* Five surfaces stated a payout timing the code stopped producing on
+       2026-08-27, and three of them survived the pass that fixed the other
+       two — the payouts page, the fan receipt, Settings, and both dashboards.
+       Every one read well and none of them was true. The arithmetic is
+       `PAYOUT_HOLD_DAYS` in src/lib/payout-release.ts; a surface that wants
+       to name a date asks `payoutHoldEndsAt()` or `describePayableRelease()`
+       rather than writing one down. */
+    pattern: /\b(?:2|two) business days\b|released? (?:automatically )?(?:once|after|when) (?:the|a) show (?:ends|closes|closing)|\bsame night\b/i,
+    what: 'the pre-hold payout timing',
+    retired: '2026-08-27 — PAYOUT_HOLD_DAYS became 10 so a card dispute has something left to reverse',
+    instead: 'A payable is released about PAYOUT_HOLD_DAYS after the show STARTS, only once it has ENDED and the payee has a Connect account. Read the number from payout-release.ts; never write a duration into copy.',
+  },
+  {
     pattern: /AI[- ]?(Page[- ]?Creator|built page|page builder)|AI[- ]?built\b/i,
     what: 'the AI page generator',
     retired: '2026-08-11, finished 2026-09-01 by owner instruction',
