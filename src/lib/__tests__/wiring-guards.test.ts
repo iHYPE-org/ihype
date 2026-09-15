@@ -1224,3 +1224,88 @@ describe('a stored mediaId is the track\'s hexId', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+/* A LINK'S QUERY PARAMETER MUST HAVE A READER.
+ *
+ * ME's "Add artist page" / "Add venue page" rows have linked to
+ * `/app/me/profiles?create=…` since 2026-08-10, and nothing on the other end
+ * ever read it: the page's searchParams type did not list it, so the member
+ * landed on My Page — which, for anyone who already has a page, is that
+ * page's editor. The link was indistinguishable from a bare link, reported as
+ * "add artist/venue not working", and no type error, test or audit could see
+ * it, because a query parameter is a string handshake between two files.
+ *
+ * Advertiser worked for one reason: `/app/me/advertising/start` is a route
+ * whose page IS the form, so it has no handshake to drop.
+ *
+ * This is the same shape as the component/route censuses — `audit:mounts` asks
+ * whether a component has a page, `api-method-callers` whether a handler has a
+ * caller. A parameter is the third case.
+ */
+describe('every query parameter a link writes has a reader', () => {
+  const SRC = listFiles('src');
+  /** Internal links carrying a query, as `path?key=value`. */
+  const LINKED = new Map();
+  for (const file of SRC) {
+    const text = code(file);
+    for (const m of text.matchAll(/href=["'`](\/[\w\-/[\]]*)\?([\w-]+)=/g)) {
+      const key = `${m[1]}?${m[2]}`;
+      if (!LINKED.has(key)) LINKED.set(key, { route: m[1], param: m[2], from: file });
+    }
+  }
+
+  it('collects some links, so a rename fails here rather than passing vacuously', () => {
+    expect(LINKED.size).toBeGreaterThan(3);
+  });
+
+  it('names the create parameter and its reader', () => {
+    const create = [...LINKED.values()].filter((l) => l.param === 'create');
+    expect(create.length).toBeGreaterThan(0);
+    const page = readFileSync('src/app/app/me/profiles/page.tsx', 'utf8');
+    // Declared in the searchParams type AND forwarded — the first alone is
+    // what a reviewer sees; the second is what makes the link work.
+    expect(page).toContain('create?: string');
+    expect(page).toMatch(/initialCreate=\{resolvedSearchParams\.create\}/);
+    const home = readFileSync('src/components/PagesHome.tsx', 'utf8');
+    expect(home).toContain('initialCreate');
+    // Resolved against the real cards rather than a literal list, so removing
+    // a card cannot leave a deep link pointing at nothing.
+    expect(home).toMatch(/CREATE_CARDS\.find\(/);
+  });
+
+  it('forwards every parameter its own page declares', () => {
+    const page = readFileSync('src/app/app/me/profiles/page.tsx', 'utf8');
+    const declared = [...page.matchAll(/(\w+)\?: string/g)].map((m) => m[1]);
+    expect(declared.length).toBeGreaterThan(3);
+    for (const key of declared) {
+      expect(page, `searchParams.${key} is declared and never forwarded`)
+        .toContain(`resolvedSearchParams.${key}`);
+    }
+  });
+});
+
+/* A FAN'S PAGE IS NOT TITLED WITH A HEX ID.
+ *
+ * `POST /api/register` read `profileType === 'LISTENER' ? hexId : trimmedName`
+ * and wrote a 34-character `0x…` string into Profile.name — the title every
+ * fan page, Pages card and avatar monogram renders, because no display-name
+ * resolver exists and every consumer renders Profile.name raw. The admin QA
+ * route did the same with a second hex. Both are the handle now.
+ */
+describe('Profile.name is never a hex id', () => {
+  const WRITERS = ['src/app/api/register/route.ts', 'src/app/api/admin/signup-test/route.ts'];
+
+  it('reads both writers', () => {
+    for (const file of WRITERS) expect(existsSync(file), file).toBe(true);
+  });
+
+  it('assigns no hexId or createHexId() to a profile name', () => {
+    for (const file of WRITERS) {
+      const text = code(file);
+      expect(text, `${file} names a profile with a hex id`)
+        .not.toMatch(/name:\s*(createHexId\(|hexId\b)/);
+      expect(text, `${file} resolves a profile name to a hex id`)
+        .not.toMatch(/profileName\s*=[^;]*\bhexId\b/);
+    }
+  });
+});

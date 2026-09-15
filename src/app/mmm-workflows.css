@@ -544,6 +544,118 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   cursor: pointer;
 }
 
+/* THE SELECTED-PAGE CARD, and the one line in it that was load-bearing.
+   Its middle column carried `flex: 1` -- flex-basis 0% -- plus `min-width: 0`,
+   so it contributed NOTHING to the line-breaking decision and the row could
+   never wrap however narrow the card got. The title then spilled right, under
+   the View and Edit controls, which are later in-flow siblings and therefore
+   paint over it: measured overlapping at 500, 600, 700, 860 and 1280px. It was
+   most visible on a fan page because every fan's title was a 34-character hex
+   id, but the mechanism is the name's length, not its content.
+
+   `1 1 200px` is what fixes it. The 200px flex BASE is what the wrap
+   calculation reads, so the button group drops to its own line once avatar +
+   title + buttons no longer fit, instead of the title being squeezed to a few
+   pixels and overflowing. `min-width: 0` stays so `overflow-wrap` can act on a
+   name with no break opportunity in it -- which is safe ONLY because the
+   column now has a real width; on the old 0%-basis column `anywhere` would
+   have laid the title out one glyph per line. */
+.mmm-profiles-card-body { flex: 1 1 200px; min-width: 0; }
+.mmm-profiles-card-name {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  margin-bottom: 3px;
+  overflow-wrap: anywhere;
+}
+.mmm-profiles-card-handle {
+  font-size: 0.9375rem;
+  color: var(--ink-a65);
+  overflow-wrap: anywhere;
+}
+
+/* THE BUILDER'S OWN LAYOUT, AND WHY IT IS A CONTAINER QUERY.
+   Every breakpoint in this component was keyed to the VIEWPORT while the
+   component lives inside a shell frame capped at `--mmm-frame-max` (712px).
+   On a 1280px desktop those two numbers sit on opposite sides of every
+   threshold, so `@media (max-width: 1180px)` never fired and an inline
+   `1fr 1fr` ran in a 600px container: 291px columns, 249px of usable card.
+   Two commits turned a latent mis-keying into a visible one -- 65d91bf3 moved
+   every mono label from 12.5px to 15px (+20% advance width) and 0c34ac1d
+   narrowed the frame from 860px to 712px, neither re-deriving anything
+   downstream.
+
+   ONE COLUMN IS THE DEFAULT, not the fallback. The builder has exactly one
+   mount (`/app/me/advertising/new`) and always renders inside the frame, so
+   the container can never reach 720px today; a browser without container
+   queries therefore gets the correct layout rather than a degraded one. The
+   query exists so that if the frame ever widens again the layout follows it,
+   instead of breaking silently for a third time.
+
+   The rules live HERE rather than in the component's own <style> block
+   because audit:css only ever reads .css files -- a rule inside a template
+   literal in a .tsx is invisible to every instrument in this repository,
+   which is part of why none of this was caught.
+
+   AND THE GLOB THAT SENTENCE ORIGINALLY SPELLED OUT BROKE THIS RULE. Writing
+   the pattern for "every css file under src" puts a star-slash inside a CSS
+   comment, which TERMINATES it -- the parser then read the rest of the prose
+   as a selector and consumed the declaration block below, so
+   `.adv-compact { container-type: inline-size }` silently never existed and
+   every container query in this file was dead. Caught by measuring
+   `getComputedStyle(...).containerType` and finding `normal`, not by reading.
+   Do not write a glob, a regex or any star-slash in a CSS comment. */
+.adv-compact { container-type: inline-size; }
+.adv-builder {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+@container (min-width: 720px) {
+  .adv-builder { grid-template-columns: 1fr 1fr; }
+}
+
+/* The four overflows the single column does not by itself fix. Each is a
+   flex or grid item with no room to shrink inside `.adbuild-card`'s
+   `overflow: hidden`, so the excess was sheared rather than wrapped. */
+
+/* A. The coverage row: ring and price are both `flex-shrink: 0`, so the
+   middle column carried the whole shortfall at `min-width: auto` -- floored
+   at the min-content width of its longest description ("State/metro", which
+   has no break opportunity). */
+.adv-scope-label { min-width: 0; }
+
+/* B. The term row: four items, `flex: 1`, no wrap. `flex-basis: 0` does not
+   help because `min-width: auto` floors each at min-content, so the line
+   overflowed and "12 months" was sheared mid-word. They wrap now. */
+.adv-term-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.adv-term-row > button { flex: 1 1 88px; }
+
+/* C. The quote tiles: `repeat(3, minmax(0, 1fr))` is what PERMITS a track
+   below min-content, and 249px / 3 leaves 48px of content for a 15px
+   uppercase label tracked at .1em ("BREAKS" alone is ~63px). The label misses
+   lint-source's mono-eyebrow exemption by 0.04em of letter-spacing, so it
+   cannot go back under the 15px floor -- the grid gives way instead. */
+.adv-quote-stats { grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr)); }
+
+/* D. The receipt total: a 34px display figure and a 15px mono one separated
+   by 4px of margin. There is no space between them in the markup, so there
+   was no break opportunity either -- at phone width the pair simply ran past
+   the card. `inline-flex` + `flex-wrap` makes the figure and the rate two flex
+   items, so the rate drops to its own line when it does not fit and keeps an
+   8px gap when it does. `nowrap` on the rate keeps "$60.00/month" whole; it is
+   NOT what creates the break, and on its own it made things worse. */
+.adv-receipt-figure {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: flex-end;
+  column-gap: 8px;
+}
+.adv-receipt-figure small { white-space: nowrap; }
+
 /* THE SPONSORSHIP BUILDER (`/app/me/advertising/new`, AdvertisePage.tsx's live
    export). measure:layout's route list names this surface explicitly as "the
    file with the most inline spacing in the app … the surface this list exists

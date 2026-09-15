@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function PagesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ tab?: string; profile?: string; editor?: string; tool?: string }>;
+  searchParams?: Promise<{ tab?: string; profile?: string; editor?: string; tool?: string; create?: string }>;
 }) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -24,6 +24,7 @@ export default async function PagesPage({
   const resolvedSearchParams = searchParams ? await searchParams : {};
   return (
     <PagesHome
+      initialCreate={resolvedSearchParams.create}
       initialEditorSection={resolvedSearchParams.editor}
       initialProfileId={resolvedSearchParams.profile}
       initialTab={resolvedSearchParams.tab}

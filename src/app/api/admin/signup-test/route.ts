@@ -45,7 +45,11 @@ export async function POST(request: Request) {
           type: 'LISTENER',
           slug: username,
           hexId: createHexId(),
-          name: createHexId(),
+          // The handle, not a second hex id. Profile.name is the title every
+          // surface renders; naming it with a hex was the same defect the
+          // register route carried, and a QA account that reproduces the bug
+          // is a QA account that hides it.
+          name: username,
           headline: 'QA signup test profile',
           bio: 'Disposable account created by the admin signup test.',
           aboutContent: 'Disposable signup QA account.'

@@ -2234,13 +2234,19 @@ async function main() {
      emptyToNull reads an omitted field as "unchanged" but a null one as
      "cleared" — so an item that sent only the field it changed would be
      exercising a request the product never makes. Mirror the client: read,
-     change, write everything back. The three optional non-text fields cannot
-     be null on the way in (the schema types them as absent-or-value). */
+     change, write everything back.
+
+     NOTHING IS STRIPPED HERE, AND THAT IS THE POINT. This used to delete
+     `capacity`, `fanShareEnabled`, `discoverable` and `pinnedStats` when they
+     came back null, under a sentence claiming the schema typed them as
+     absent-or-value. Three of the four are non-nullable columns and can never
+     arrive null; the fourth, `capacity`, is null on every profile that is not
+     a venue with a stated room size — so the one line of the harness that
+     could have caught the defect was the line that removed it. Every ARTIST
+     and LISTENER save was refused in production while item 37 passed here.
+     Send what the browser sends. */
   const editorPayload = (current: Record<string, unknown>, changes: Record<string, unknown>) => {
     const { id: _id, slug: _slug, type: _type, ownerId: _ownerId, ...fields } = current;
-    for (const key of ['capacity', 'fanShareEnabled', 'discoverable', 'pinnedStats']) {
-      if (fields[key] === null) delete fields[key];
-    }
     return { ...fields, ...changes, profileId: current.id };
   };
 

@@ -203,9 +203,40 @@ function commentsInsideSelectors(raw) {
   return found;
 }
 
+/**
+ * A COMMENT THAT ENDS EARLY, which is the sibling of the defect above and was
+ * shipped by the very comment written to explain that defect.
+ *
+ * `/*` ... a glob, a regex, or any star-slash inside the prose ... `*' + '/`
+ * TERMINATES the comment there. Everything after it is read as CSS: the rest
+ * of the sentence becomes a selector and consumes the NEXT declaration block,
+ * so a real rule silently ceases to exist. Measured 2026-09-15 — a comment
+ * naming the pattern for "every css file under src" swallowed
+ * `.adv-compact { container-type: inline-size }`, and every container query in
+ * that file was dead while the file parsed without error and every class name
+ * in it was real.
+ *
+ * The signal is exact and needs no parser: strip comments the way the parser
+ * does, and any `*' + '/` left in the residue is an unmatched terminator, which
+ * can only come from a comment that closed before its author meant it to.
+ * Like the split-selector check this is NOT part of the --max ratchet: it is
+ * never pre-existing debt to pay down, it is a rule that does not apply.
+ */
+function unterminatedComments(raw) {
+  const residue = stripComments(raw);
+  const found = [];
+  const lines = residue.split('\n');
+  for (const [index, line] of lines.entries()) {
+    const at = line.indexOf('*' + '/');
+    if (at >= 0) found.push({ line: index + 1, text: line.trim().slice(0, 70) });
+  }
+  return found;
+}
+
 let overrideCount = 0;
 let deadCount = 0;
 let splitSelectorCount = 0;
+let earlyCommentCount = 0;
 const haystack = buildHaystack();
 
 for (const file of CSS_FILES) {
@@ -218,6 +249,13 @@ for (const file of CSS_FILES) {
     splitSelectorCount += split.length;
     console.log(`\n${file} — ${split.length} comment(s) inside a selector:`);
     for (const s of split) console.log(`     line ${s.line}: after \`${s.before}\``);
+  }
+
+  const early = unterminatedComments(raw);
+  if (early.length) {
+    earlyCommentCount += early.length;
+    console.log(`\n${file} — ${early.length} comment(s) that end before their author meant them to:`);
+    for (const e of early) console.log(`     line ${e.line}: ${e.text}`);
   }
 
   if (!OVERRIDE_EXEMPT.has(file)) {
@@ -247,7 +285,7 @@ for (const file of CSS_FILES) {
 }
 
 console.log('\n' + '─'.repeat(64));
-console.log(`overriding redefinitions: ${overrideCount}   comments inside selectors: ${splitSelectorCount}   dead classes: ${deadCount} (advisory)   — ${CSS_FILES.length} stylesheet(s) read`);
+console.log(`overriding redefinitions: ${overrideCount}   comments inside selectors: ${splitSelectorCount}   comments ending early: ${earlyCommentCount}   dead classes: ${deadCount} (advisory)   — ${CSS_FILES.length} stylesheet(s) read`);
 
 /* Unconditional, and not part of the --max ratchet: this is never pre-existing
    debt to be paid down, it is a rule that does not do what it says. */
@@ -256,6 +294,15 @@ if (splitSelectorCount > 0) {
     `\nFAIL: ${splitSelectorCount} comment(s) sit inside a selector, joining it to the next one.\n` +
     'The rule matches something other than what it appears to. Move the comment\n' +
     'above the whole selector.',
+  );
+  process.exit(1);
+}
+
+if (earlyCommentCount > 0) {
+  console.error(
+    `\nFAIL: ${earlyCommentCount} comment(s) contain a star-slash and therefore end early.\n` +
+    'Everything after it is parsed as CSS, so the next rule in the file silently\n' +
+    'ceases to exist. Do not write a glob, a regex or a path pattern in a CSS comment.',
   );
   process.exit(1);
 }

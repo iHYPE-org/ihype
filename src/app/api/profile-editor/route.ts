@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { auth } from '@/lib/auth';
 import { db, withDbRetry } from '@/lib/db';
 import { canManageOwnedResource } from '@/lib/permissions';
-import { editorSchema } from '@/lib/profile-editor-schema';
+import { EDITOR_SELECT_FIELDS, editorSchema } from '@/lib/profile-editor-schema';
 import { statOptionsForRole } from '@/lib/profile-stats-catalog';
 import { sanitizeStoredProfileLocation } from '@/lib/public-location';
 import { isStoredMediaUrl } from '@/lib/object-storage';
@@ -15,51 +15,6 @@ function emptyToNull(value: string | null | undefined) {
   if (value === null) return null;
   return value.length ? value : null;
 }
-
-const EDITOR_FIELDS = {
-  id: true,
-  slug: true,
-  type: true,
-  ownerId: true,
-  name: true,
-  pressKitContent: true,
-  headline: true,
-  bio: true,
-  aboutContent: true,
-  topFiveContent: true,
-  mediaContent: true,
-  nowPlaying: true,
-  links: true,
-  merchUrl: true,
-  merchContent: true,
-  tourContent: true,
-  requestContent: true,
-  upcomingContent: true,
-  previousShowHighlights: true,
-  addressLine1: true,
-  city: true,
-  stateRegion: true,
-  postalCode: true,
-  country: true,
-  hometown: true,
-  members: true,
-  contactInfo: true,
-  hoursText: true,
-  parkingDetails: true,
-  stayRecommendations: true,
-  heroImage: true,
-  avatarImage: true,
-  logoImage: true,
-  galleryImage: true,
-  themePreset: true,
-  themeAccentTone: true,
-  themeBackdropTone: true,
-  fanShareEnabled: true,
-  discoverable: true,
-  capacity: true,
-  roomType: true,
-  pinnedStats: true,
-} as const;
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -75,7 +30,7 @@ export async function GET(request: Request) {
 
   let profile;
   try {
-    profile = await withDbRetry(() => db.profile.findUnique({ where: { id: profileId }, select: EDITOR_FIELDS }));
+    profile = await withDbRetry(() => db.profile.findUnique({ where: { id: profileId }, select: EDITOR_SELECT_FIELDS }));
   } catch {
     return NextResponse.json({ error: 'Database unavailable — please try again in a moment.' }, { status: 503 });
   }
@@ -102,7 +57,20 @@ export async function PATCH(request: Request) {
     body = editorSchema.parse(await request.json());
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: error.issues[0]?.message ?? 'Invalid page editor payload.' }, { status: 400 });
+      /* NAME THE FIELD. zod carries `issue.path`; discarding it left the
+         member reading a bare "Invalid input: expected number, received null"
+         above the Save button, with nothing saying which of ~40 inputs it was
+         about -- so it read as a complaint about whichever field happened to
+         sit last in the form. The same file already writes errors this way
+         one screen down ("heroImage must be an image uploaded through
+         iHYPE."). */
+      const issue = error.issues[0];
+      const field = issue?.path?.join('.');
+      return NextResponse.json({
+        error: field
+          ? `Could not save — check the ${field} field.`
+          : issue?.message ?? 'Invalid page editor payload.'
+      }, { status: 400 });
     }
     return NextResponse.json({ error: 'Invalid JSON.' }, { status: 400 });
   }
