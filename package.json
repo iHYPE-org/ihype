@@ -23,6 +23,7 @@
     "audit:untranslated": "node scripts/audit-untranslated.mjs --max=0",
     "audit:retired-claims": "node scripts/audit-retired-claims.mjs",
     "audit:doc-paths": "node scripts/audit-doc-paths.mjs",
+    "audit:sync-rows": "node scripts/audit-sync-rows.mjs --max=0",
     "audit:published-urls": "node scripts/audit-published-urls.mjs --max=0",
     "audit:contrast": "node scripts/audit-theme-contrast.mjs",
     "audit:routes": "node scripts/audit-routes.mjs",
