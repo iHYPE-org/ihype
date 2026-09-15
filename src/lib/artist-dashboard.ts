@@ -2,7 +2,18 @@ import { db } from '@/lib/db';
 import { payoutHoldEndsAt } from '@/lib/payout-release';
 
 export type ArtistDashboardStats = {
-  /** Sum of RELEASED ARTIST_PAYOUT AccountsPayableEntry rows paid this calendar month — real money already transferred, not a projection. */
+  /**
+   * Sum of RELEASED ARTIST_PAYOUT AccountsPayableEntry rows paid this calendar
+   * month — real money already transferred, not a projection.
+   *
+   * This is NOT the venue dashboard's `thisMonthEarningsCents`, which sums the
+   * venue's split of every CAPTURED order this month, i.e. money earned rather
+   * than money received. Both cards are labelled "This Month" and the two
+   * quantities diverge for the ten days of the payout hold — and for the whole
+   * life of a `VENUE_DIRECT` show, where the venue's share never becomes a
+   * payable at all. Each card's sub-line names its own quantity; read
+   * `venue-dashboard.ts`'s comment at the sum before changing either.
+   */
   monthEarningsCents: number;
   /** Tickets sold (quantity, CAPTURED orders) on this artist's shows this calendar month. */
   ticketsSoldThisMonth: number;

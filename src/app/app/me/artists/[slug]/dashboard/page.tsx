@@ -112,7 +112,7 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         <Link className="ad-stat-card" href={`/app/me/artists/${profile.slug}/analytics`}>
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.thisMonthLabel', 'This Month')}</div>
           <div className="ad-stat-val" style={{ color: 'var(--accent-text)' }}>{formatCurrencyFromCents(dashStats.monthEarningsCents, locale)}</div>
-          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.yourShare', 'Your 70% share · $0 iHYPE fee')}</div>
+          <div className="ad-stat-sub">{t('artistsSlugDashboardPage.paidOutThisMonth', 'Paid out to you this month · $0 iHYPE fee')}</div>
         </Link>
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.ticketsSoldLabel', 'Tickets Sold')}</div>
