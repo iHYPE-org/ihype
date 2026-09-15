@@ -28,6 +28,11 @@ export type VenueDashboardData = {
   upcomingShowsCount: number;
   pendingBookingRequestCount: number;
   ticketsSoldAllTime: number;
+  /**
+   * The venue's share of every CAPTURED order this calendar month — money
+   * EARNED, not money received. It is deliberately NOT the artist dashboard's
+   * quantity, which sums RELEASED payables; see the comment at the sum.
+   */
   thisMonthEarningsCents: number;
   /** `dateLabel` is the formatted date alone; the page writes the sentence around it ("After … show ends"), so the words come from the dictionary. */
   nextPayout: { dateLabel: string; amountCents?: number; estimated: boolean } | null;
@@ -112,6 +117,25 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
 
   const upcomingShows = shows.filter((s) => s.status === 'LIVE' || s.startsAt >= now);
 
+  /* EARNED, NOT RECEIVED — AND THE ARTIST DASHBOARD'S "This Month" IS THE
+     OPPOSITE QUANTITY UNDER THE SAME LABEL.
+
+     `getArtistDashboardStats` sums RELEASED `AccountsPayableEntry` rows paid
+     this month; this sums the venue's split of every CAPTURED order placed
+     this month. So one sold-out Saturday reads banked here and $0.00 to the
+     act, for ten days, with both cards labelled "This Month" and both
+     sub-lines reading "Your … share · $0 iHYPE fee". Two owners of one event
+     compare notes and neither card says why they disagree.
+
+     THE ARITHMETIC IS NOT THE THING TO NORMALISE, and that is the trap worth
+     recording: a venue on `VENUE_DIRECT` is the merchant on its own shows, so
+     its 20% never becomes a payable at all (`buildPayableEntries`'s
+     `venueIsMerchant`). Summing RELEASED rows here would read $0.00 for a
+     venue holding the money in its own Stripe balance. The asymmetry is what
+     the settlement modes actually do; what was wrong is that neither card
+     said which quantity it was showing. Both sub-lines name it now, under
+     RENAMED keys, because changing the English under a live key leaves eleven
+     dictionaries translating the retired sentence. */
   let thisMonthEarningsCents = 0;
   for (const s of shows) {
     for (const order of s.ticketOrders) {

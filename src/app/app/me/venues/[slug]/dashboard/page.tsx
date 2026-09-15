@@ -57,7 +57,7 @@ export default async function VenueDashboardPage({ params }: { params: Promise<{
         <div className="vdash-card">
           <div className="vdash-card-label">{t('venuesSlugDashboardPage.thisMonth', 'This Month')}</div>
           <div className="vdash-card-val">{formatCurrencyFromCents(data.thisMonthEarningsCents, locale)}</div>
-          <div className="vdash-card-sub">{t('venuesSlugDashboardPage.thisMonthSub', 'Your split share this calendar month · $0 iHYPE fee')}</div>
+          <div className="vdash-card-sub">{t('venuesSlugDashboardPage.thisMonthEarnedSub', 'Earned from this month’s sales · $0 iHYPE fee')}</div>
         </div>
         <div className="vdash-card">
           <div className="vdash-card-label">{t('venuesSlugDashboardPage.showsBooked', 'Shows Booked')}</div>
