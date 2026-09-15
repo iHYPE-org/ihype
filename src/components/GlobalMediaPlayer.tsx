@@ -1010,13 +1010,33 @@ export function SitePlayerDock() {
         </div>
         <div className="site-dock-scrub">
           <span className="site-dock-time">{fmt(currentTime)}</span>
+          {/* A slider that is focusable and announced but ignores the arrow
+              keys is a WCAG 2.1.1 failure that axe cannot see: it checks the
+              role's required attributes, which were all present, and has no
+              way to know the key handler is missing. Found by a static pass,
+              2026-09-15. `aria-valuemin`/`-valuemax` are stated rather than
+              left to default so `aria-valuetext` reads against a real range. */}
           <div
             className="site-dock-track site-dock-waveform"
             role="slider"
             aria-label={t('globalMediaPlayer.playbackPosition', 'Playback position')}
+            aria-valuemin={0}
+            aria-valuemax={100}
             aria-valuenow={Math.round(progress * 100)}
+            aria-valuetext={`${fmt(currentTime)} / ${fmt(duration)}`}
             tabIndex={0}
             onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration); }}
+            onKeyDown={e => {
+              if (!duration) return;
+              const step = e.shiftKey ? 30 : 5;
+              const to = (secs: number) => { e.preventDefault(); seekTo(Math.max(0, Math.min(duration, secs))); };
+              if (e.key === 'ArrowRight' || e.key === 'ArrowUp') to(currentTime + step);
+              else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') to(currentTime - step);
+              else if (e.key === 'Home') to(0);
+              else if (e.key === 'End') to(duration);
+              else if (e.key === 'PageUp') to(currentTime + 60);
+              else if (e.key === 'PageDown') to(currentTime - 60);
+            }}
           >
             {waveform.map((h, i) => (
               <span

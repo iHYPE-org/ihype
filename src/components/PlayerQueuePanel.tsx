@@ -75,7 +75,14 @@ export function PlayerQueuePanel({
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <span style={{ fontSize: '0.9375rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track, queue)}>
+                <div
+                  aria-label={t('playerQueuePanel.playTrack', 'Play {title}').replace('{title}', track.title)}
+                  onClick={() => playTrack(track, queue)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playTrack(track, queue); } }}
+                  role="button"
+                  style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+                  tabIndex={0}
+                >
                   <div style={{ fontSize: '0.9375rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
                   <div style={{ fontSize: '0.9375rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
                 </div>
@@ -92,7 +99,14 @@ export function PlayerQueuePanel({
                 onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
               >
                 <span style={{ fontSize: '0.9375rem', opacity: 0.35, width: 14, textAlign: 'right', flexShrink: 0 }}>{i + 1}</span>
-                <div style={{ flex: 1, minWidth: 0, cursor: 'pointer' }} onClick={() => playTrack(track)}>
+                <div
+                  aria-label={t('playerQueuePanel.playTrack', 'Play {title}').replace('{title}', track.title)}
+                  onClick={() => playTrack(track)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); playTrack(track); } }}
+                  role="button"
+                  style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}
+                  tabIndex={0}
+                >
                   <div style={{ fontSize: '0.9375rem', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.title}</div>
                   <div style={{ fontSize: '0.9375rem', opacity: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{track.artistName}</div>
                 </div>

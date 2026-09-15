@@ -89,6 +89,11 @@ const REQUESTED_TESTS = process.argv.slice(2).filter((argument) => argument !== 
 // nor the spec existed. `npm run test:e2e:responsive` runs it alone.
 const DEFAULT_TEST_SHARDS = [
   ['e2e/accessibility.spec.ts'],
+  // The SIGNED-IN half of the same question. `accessibility.spec.ts` covers
+  // four signed-out pages; until 2026-09-15 no automated accessibility check
+  // had ever loaded a route under `/app/*`, which is the product. Own shard
+  // for the reason every shard below has one.
+  ['e2e/accessibility-shell.spec.ts'],
   // The alpha acceptance list's creation flows (page creator, advertiser
   // signup, track upload, event publish). Its own shard on purpose: a fresh
   // workerd per shard keeps it clear of the per-request PrismaClient memory
@@ -109,6 +114,24 @@ const DEFAULT_TEST_SHARDS = [
   ['e2e/mmm-panes.spec.ts'],
   ['e2e/responsive.spec.ts'],
   ['e2e/public-smoke.spec.ts'],
+  // ADDED 2026-09-15. These six existed and ran NOWHERE — not here, not in
+  // the nightly, which only uses `--serve` to host the acceptance walk. Each
+  // was written as the durable proof of a specific fix: the offline door (row
+  // 376), the Spanish document (row 426), the venue wall clock (row 464), the
+  // theme and language pills (row 352), the header search, and the admin
+  // console (row 432). `admin-console` had ROTTED from never running: it read
+  // `process.env.DATABASE_URL`, which CI points at a placeholder on purpose,
+  // so it could not have passed here.
+  //
+  // THE ALLOWLIST COMMENT ABOVE SAYS TO ADD THE FILE IN THE SAME COMMIT AS THE
+  // SPEC, and six commits did not. A spec that never executes protects nothing
+  // while looking green — the same defect `audit:mounts` catches for
+  // components and `api-method-callers` for routes, in the one tree neither of
+  // them scans. `wiring-guards.test.ts` now refuses a spec no shard names.
+  ['e2e/door-offline.spec.ts'],
+  ['e2e/locale-hydration.spec.ts', 'e2e/show-door-time.spec.ts'],
+  ['e2e/accessibility-settings.spec.ts', 'e2e/public-search.spec.ts'],
+  ['e2e/admin-console.spec.ts'],
 ];
 const TEST_SHARDS = SERVE_ONLY
   ? [[]]
