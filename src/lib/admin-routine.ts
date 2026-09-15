@@ -1,4 +1,8 @@
 import type { WorkbenchQueue } from '@/lib/admin-workbench';
+/* The hold is read, never restated: `payout-release.ts` owns the five release
+   conditions and the cron reads the same constant, so the sentence this board
+   shows an operator cannot drift from what the run actually waits for. */
+import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 /**
  * The operator's routine, and the machine's.
@@ -193,8 +197,23 @@ export const AUTOMATED_JOBS: readonly AutomatedJob[] = [
   { path: '/api/cron?job=show-reminders', schedule: '0 12 * * *', label: 'Show reminders', what: 'Reminds ticket holders about tomorrow’s show', aliveKey: 'show-reminders' },
   { path: '/api/cron?job=workbench-digest', schedule: '0 12 * * *', label: 'Workbench digest', what: 'Emails the administrators ONLY when a queue is past its promised turnaround', aliveKey: 'workbench-digest' },
   { path: '/api/cron?job=held-track-notice', schedule: '0 12 * * *', label: 'Held-track notice', what: 'Tells an artist once their flagged upload has waited five days — never auto-publishes it', aliveKey: 'held-track-notice' },
-  { path: '/api/cron?job=show-payouts', schedule: '0 13 * * *', label: 'Show payouts', what: 'Transfers every PENDING payable on an ENDED show through Stripe and emails the recipient — do not pay anyone by hand', aliveKey: 'show-payouts' },
-  { path: '/api/cron?job=ad-settlement', schedule: '0 13 * * *', label: 'Ad settlement', what: 'Refunds the unspent remainder of every finished campaign and records what Stripe did', aliveKey: 'ad-settlement' },
+  /* NOT "every PENDING payable on an ENDED show", and the closing clause was
+     the harmful half. `payout-release.ts` holds FIVE conditions and this
+     line named two: a TAX_* entry is never transferred by anything (manual
+     remittance, by design), the show must ALSO be PAYOUT_HOLD_DAYS past its
+     start, and a payee with no usable Connect account is skipped on every
+     run. So "do not pay anyone by hand" told the operator the machine had
+     it covered for precisely the cases the machine will never cover — the
+     tax entries, which REQUIRE a human, and the payee with no destination,
+     who requires one to chase them. Say what it does and name what it
+     leaves; `describePayableRelease` is what the member-facing surfaces
+     read for the same five conditions. */
+  { path: '/api/cron?job=show-payouts', schedule: '0 13 * * *', label: 'Show payouts', what: `Transfers a PENDING artist, venue or promoter payable once its show has ENDED and started more than ${PAYOUT_HOLD_DAYS} days ago, and emails the payee. Tax entries and payees with no Connect account are never paid by it`, aliveKey: 'show-payouts' },
+  /* NOT "every finished campaign": a SPONSORSHIP is sold by the month and is
+     owed nothing at the end of a term it ran in full — only an early
+     cancellation refunds its unused days — and a metered remainder under
+     Stripe's 50c minimum is kept because Stripe cannot refund it. */
+  { path: '/api/cron?job=ad-settlement', schedule: '0 13 * * *', label: 'Ad settlement', what: 'Settles a campaign whose run has ended: a metered one is refunded what it did not spend, a sponsorship that ran its full term is owed nothing. Records what Stripe did', aliveKey: 'ad-settlement' },
   { path: '/api/cron?job=onboarding', schedule: '0 14 * * *', label: 'Member onboarding', what: 'Sends the next onboarding step to new members', aliveKey: 'onboarding' },
   { path: '/api/cron/welcome-sequence', schedule: '0 15 * * *', label: 'Welcome sequence', what: 'Sends the welcome drip' },
   { path: '/api/cron/post-show-recap', schedule: '0 16 * * *', label: 'Post-show recap', what: 'Sends attendees the morning-after recap' },
