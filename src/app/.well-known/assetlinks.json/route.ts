@@ -56,6 +56,30 @@ import { log } from '@/lib/logger';
  * which excludes the auth paths — if magic-link sign-in must stay in the
  * browser on Android too, that has to be solved in the intent filters in
  * AndroidManifest.xml, not here.
+ *
+ * ## No passkey relation here, and that is a QUESTION rather than a fix
+ *
+ * The iOS association file gained a `webcredentials` section on 2026-09-15,
+ * because the app claimed `webcredentials:ihype.org` and the domain never
+ * granted it back, so every passkey inside the WebView failed as
+ * `NotAllowedError`. The Android counterpart of that grant is a second
+ * relation, `delegate_permission/common.get_login_creds`, and this file does
+ * not carry it. That much is measured.
+ *
+ * What is NOT measured from here is whether adding it would change anything.
+ * The Android app is a WebView pointed at ihype.org, and passkey support in a
+ * plain `android.webkit.WebView` is not the same question as support in a
+ * native activity using Credential Manager — so the relation could be a real
+ * missing half, or it could be the served side of a contract the platform
+ * cannot honour in a WebView regardless. Nothing in this repository can tell
+ * those apart, and no Android handset has been driven against it.
+ *
+ * So the relation is deliberately NOT added speculatively: a grant published
+ * for a capability that cannot work is the same defect in the other
+ * direction. Settle it on a real device — does "Sign in with passkey" throw
+ * the same `NotAllowedError` in the Android app? — and then either add the
+ * relation with that reading recorded, or record that the button should not
+ * be offered there at all.
  */
 export async function GET() {
   // Via readRuntimeEnv, same reason as the Apple association route: this

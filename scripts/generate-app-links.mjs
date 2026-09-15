@@ -190,6 +190,26 @@ async function check() {
       const [teamId, ...rest] = appID.split('.');
       if (!TEAM_ID.test(teamId)) broken.push(`${APPLE}: appID starts with "${teamId}", which is not a 10-character Team ID.`);
       if (rest.join('.') !== id) broken.push(`${APPLE}: appID names "${rest.join('.')}", expected "${id}".`);
+
+      /* THE PASSKEY HALF, AND IT IS BROKEN RATHER THAN MISSING.
+         `App.entitlements` claims `webcredentials:ihype.org`; this file is the
+         domain granting it back, and iOS verifies the PAIR. Served without
+         this section the claim never verifies, WKWebView holds no relying
+         party for the domain, and every passkey ceremony in the app dies as
+         `NotAllowedError` — "possibly because the user denied permission",
+         with nobody having denied anything. That shipped, and was reported
+         from a handset on 2026-09-15 rather than by anything here.
+
+         It counts as BROKEN, not MISSING: `missing` is the honest-degradation
+         bucket (no file, so links open in the browser and nothing is worse
+         than before), and a file that IS served while silently disabling one
+         of only two ways into an account is the other thing entirely. */
+      const webcredentials = parsed?.webcredentials?.apps;
+      if (!Array.isArray(webcredentials) || webcredentials.length === 0) {
+        broken.push(`${APPLE}: no webcredentials.apps section. App.entitlements claims webcredentials:${new URL(BASE).hostname}, so iOS cannot verify it and every passkey in the app fails as NotAllowedError. This one is a DEPLOY, not a secret: the section is emitted by the route handler.`);
+      } else if (!webcredentials.includes(appID)) {
+        broken.push(`${APPLE}: webcredentials.apps is ${JSON.stringify(webcredentials)} and does not name "${appID}" — the applinks half and the passkey half disagree about which app this is. This one is a DEPLOY, not a secret.`);
+      }
     } catch {
       broken.push(`${APPLE}: not valid JSON. It must have no file extension and be served as application/json.`);
     }
@@ -197,10 +217,17 @@ async function check() {
 
   /* NOT "run the generator". Both paths are ROUTE HANDLERS reading Worker
      secrets; writing static files into public/.well-known/ would shadow them.
-     The fix is a secret, and it needs no deploy. */
+
+     This block addresses the findings whose cause is an ABSENT SECRET, and it
+     used to open "no deploy needed" over every finding indiscriminately. That
+     stopped being true the moment this script learned to check the
+     `webcredentials` section: that one is emitted by the route's own code, so
+     a secret cannot fix it and an operator told to run `wrangler secret put`
+     is being sent to the wrong screen. Those findings say so in their own
+     text; this header no longer speaks for them. */
   const howToWrite = [
     '',
-    'Both are served by route handlers from Worker secrets — no deploy needed:',
+    'Findings that name an absent SECRET are fixed without a deploy:',
     '  npx wrangler secret put APPLE_TEAM_ID                      # 10 chars, Apple Developer -> Membership',
     '  npx wrangler secret put ANDROID_CERT_SHA256_FINGERPRINTS   # comma-separated SHA-256s',
     '',
@@ -225,7 +252,7 @@ async function check() {
     process.exit(2);
   }
 
-  console.log(`App links verified for ${id} at ${BASE}: Android fingerprints present, Apple Team ID present.`);
+  console.log(`App links verified for ${id} at ${BASE}: Android fingerprints present, Apple Team ID present, webcredentials grants the passkey claim.`);
 }
 
 if (CHECK) {
