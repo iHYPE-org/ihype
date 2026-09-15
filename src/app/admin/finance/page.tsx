@@ -42,7 +42,7 @@ export default async function AdminFinancePage({
   const ticketWhere: Record<string, unknown> = {};
   if (ticketStatus) ticketWhere.status = ticketStatus;
 
-  const [monthlyOrders, payoutEntries, payoutTotal, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
+  const [monthlyOrders, payoutEntries, payoutTotal, payoutTotals, revenueAgg, ticketOrders, ticketOrderTotal] = await Promise.all([
     readList(db.ticketOrder.findMany({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       select: { chargedAt: true, totalChargeCents: true },
@@ -55,6 +55,18 @@ export default async function AdminFinancePage({
       include: { profile: { select: { name: true, slug: true } } },
     })),
     readValue(db.accountsPayableEntry.count({ where: payoutWhere })),
+    /* THE TILES COUNT THE WHOLE FILTERED SET; THE LIST BELOW SHOWS ONE PAGE.
+       `payoutEntries` is `take: PAGE_SIZE` — the tiles used to reduce over it,
+       so past 50 payables they understated the total and on page 2 they
+       reported page 2 alone. A figure derived from a capped page is a claim
+       about the whole set (DESIGN_SYNC row 459). `/admin`'s own Revenue block
+       has always grouped; this is that read, narrowed to the same filter the
+       list is showing so the tiles and the rows answer one question. */
+    readList(db.accountsPayableEntry.groupBy({
+      by: ['status'],
+      where: payoutWhere,
+      _sum: { amountCents: true },
+    })),
     readValue(db.ticketOrder.aggregate({
       where: { status: 'CAPTURED', chargedAt: { gte: fromDate, lte: toDate } },
       _sum: { totalChargeCents: true },
@@ -88,9 +100,16 @@ export default async function AdminFinancePage({
   const unreadable = t('adminFinancePage.unreadable', 'Could not be read just now — the database query failed, so this is not an empty list or a zero. Reload to try again.');
   const money = (cents: number | null) => (cents === null ? '—' : `$${(cents / 100).toFixed(2)}`);
   const revenueCents = revenueAgg === null ? null : (revenueAgg._sum.totalChargeCents ?? 0);
-  const platformFee = revenueCents === null ? null : Math.round(revenueCents * 0.1);
-  const payoutPaid = payoutEntries === null ? null : payoutEntries.filter(e => e.status === 'RELEASED').reduce((s, e) => s + e.amountCents, 0);
-  const payoutPending = payoutEntries === null ? null : payoutEntries.filter(e => e.status === 'PENDING').reduce((s, e) => s + e.amountCents, 0);
+  /* THERE IS NO iHYPE PLATFORM FEE. A "Platform fee est. (10%)" tile used to
+     sit here on `Math.round(revenueCents * 0.1)` — a figure the charter sets
+     at 0% and `TransparencyPanel` publishes as 0% to the public, so the
+     console was telling its own operators a number the product's own report
+     contradicts. The 10% that exists is the PROMOTER POOL, which is somebody
+     else's money; and the arithmetic was wrong even for a fee that existed,
+     since `totalChargeCents` carries taxes and the reserve above face value.
+     Do not reintroduce it — `audit:retired-claims` refuses the phrase. */
+  const payoutPaid = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'RELEASED')?._sum.amountCents ?? 0);
+  const payoutPending = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'PENDING')?._sum.amountCents ?? 0);
 
   const payoutPages = payoutTotal === null ? 0 : Math.ceil(payoutTotal / PAGE_SIZE);
   const ticketPages = ticketOrderTotal === null ? 0 : Math.ceil(ticketOrderTotal / PAGE_SIZE);
@@ -135,7 +154,6 @@ export default async function AdminFinancePage({
             <div className="admin-metric-grid" style={{ marginBottom: 20 }}>
               {[
                 [t('adminFinancePage.metricTotalRevenue', 'Total revenue (CAPTURED)'), money(revenueCents)],
-                [t('adminFinancePage.metricPlatformFee', 'Platform fee est. (10%)'), money(platformFee)],
                 [t('adminFinancePage.metricPayoutsPaid', 'Payouts paid'), money(payoutPaid)],
                 [t('adminFinancePage.metricPayoutsPending', 'Payouts pending'), money(payoutPending)],
               ].map(([label, value]) => (

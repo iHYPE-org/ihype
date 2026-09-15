@@ -517,7 +517,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
   // Payout totals
   const payoutPaid = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'RELEASED')?._sum.amountCents ?? 0);
   const payoutPending = payoutTotals === null ? null : (payoutTotals.find(p => p.status === 'PENDING')?._sum.amountCents ?? 0);
-  const platformFeeTotal = revenueCents === null ? null : Math.round((revenueCents * 0.1)); // rough 10% estimate
 
   return (
     <div className="container section admin-console">
@@ -1016,7 +1015,6 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <h2>{t('adminPage.revenue', 'Revenue')}</h2>
           <div className="admin-list" style={{ marginBottom: 16 }}>
             <div className="admin-list-row"><strong>{t('adminPage.totalTicketRevenue', 'Total ticket revenue (CAPTURED)')}</strong><span>{money(revenueCents)}</span></div>
-            <div className="admin-list-row"><strong>{t('adminPage.platformFeeEst', 'Platform fee est. (10%)')}</strong><span>{money(platformFeeTotal)}</span></div>
             <div className="admin-list-row"><strong>{t('adminPage.payoutsPaid', 'Payouts paid')}</strong><span>{money(payoutPaid)}</span></div>
             <div className="admin-list-row"><strong>{t('adminPage.payoutsPending', 'Payouts pending')}</strong><span>{money(payoutPending)}</span></div>
           </div>
