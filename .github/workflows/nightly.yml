@@ -111,6 +111,20 @@ jobs:
       # gap only became visible when the key arrived. A scratch value, like
       # AUTH_SECRET above: this worker is thrown away with the job.
       CRON_SECRET: ci-only-nightly-cron-secret-0123456789
+      # The THIRD blocker, and the one the flag above did not clear.
+      # `getPaymentProcessingReadiness()` refuses an `sk_test_` key whenever
+      # `NODE_ENV === 'production'`, and `cf:build` bakes exactly that into the
+      # worker this step serves — so the repository's test key is refused by
+      # design however the feature flag reads. That refusal is right in
+      # production and wrong here, which is what this deliberately narrow
+      # escape hatch is for: it can only ever permit a TEST key, never make a
+      # live one more capable, and `lint-source.mjs` fails the build if
+      # `wrangler.toml` ever defines it.
+      #
+      # Measured rather than reasoned: run 34915746354 flipped the feature
+      # flag and the ticket items answered the SAME two 503s as the run before
+      # it, word for word. Two blockers were standing; only one moved.
+      STRIPE_ALLOW_TEST_MODE_REHEARSAL: 'true'
       NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
 
     steps:
