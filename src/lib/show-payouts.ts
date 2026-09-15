@@ -1,4 +1,5 @@
 import { AccountsPayableCategory, AccountsPayableStatus } from '@prisma/client/edge';
+import { CONNECT_PAYOUT_CATEGORIES, PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 import { db } from '@/lib/db';
 import { sendGenericEmail } from '@/lib/mailer';
 import { getAdminAlertRecipients } from '@/lib/env';
@@ -6,15 +7,11 @@ import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/
 import { log } from '@/lib/logger';
 import { escapeHtml } from '@/lib/html-escape';
 
-// Only these three categories are ever paid out via a Stripe Connect
-// transfer — tax entries (TAX_LOCAL/STATE/COUNTRY/INTERNATIONAL) have no
-// profileId/Connect account and are a manual remittance matter, out of
-// scope here; they stay PENDING for a human to handle.
-const CONNECT_PAYOUT_CATEGORIES: AccountsPayableCategory[] = [
-  AccountsPayableCategory.VENUE_PAYOUT,
-  AccountsPayableCategory.ARTIST_PAYOUT,
-  AccountsPayableCategory.PROMOTER_AFFILIATE,
-];
+/* The five release conditions live in payout-release.ts, because the member
+   surfaces that promise a member when their money arrives read the same ones.
+   Two copies of "when does a payable pay" is how "released automatically once
+   the show ends" came to be printed over a tax entry nothing ever releases. */
+export { PAYOUT_HOLD_DAYS };
 
 /**
  * Real payout release — pays out every still-PENDING AccountsPayableEntry
@@ -25,33 +22,6 @@ const CONNECT_PAYOUT_CATEGORIES: AccountsPayableCategory[] = [
  * ever actually moved for the venue/promoter shares, and the artist share
  * used different (wrong) percentages than what was actually captured.
  */
-/**
- * How long after a show ends before its payables are released.
- *
- * ## Why any delay at all
- *
- * Until 2026-08-27 there was none: an entry became payable the moment the show
- * flipped to ENDED, so there was ZERO window between the last note and the
- * money being gone. A dispute arriving the next morning had nothing left to
- * reverse, and Stripe debits a disputed amount plus its $15 fee from the
- * PLATFORM account whether or not the charge was settled on the act's behalf.
- * The hold is the only thing that makes recovery possible rather than
- * theoretical.
- *
- * ## Why ten days and not longer
- *
- * A card dispute can arrive up to about 120 days out, and holding artists' door
- * money for four months is not a thing a platform for artists can do. Ten days
- * covers the shape of dispute that actually happens on event tickets — "I did
- * not authorise this", "the event was cancelled" — which arrives before or
- * within days of the date, while a late dispute is rare and is what the
- * protection reserve exists to absorb.
- *
- * It is a deliberate trade, not a safety maximum: raising it protects the fund
- * and costs artists patience, lowering it does the reverse. Ten is the number
- * to argue with.
- */
-export const PAYOUT_HOLD_DAYS = 10;
 
 export async function triggerShowPayouts(): Promise<{ released: number; skipped: number }> {
   if (!isStripeConfigured()) return { released: 0, skipped: 0 };
@@ -61,7 +31,7 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
   const entries = await db.accountsPayableEntry.findMany({
     where: {
       status: AccountsPayableStatus.PENDING,
-      category: { in: CONNECT_PAYOUT_CATEGORIES },
+      category: { in: [...CONNECT_PAYOUT_CATEGORIES] as AccountsPayableCategory[] },
       profileId: { not: null },
       /* ENDED *and* ten days past the date. Both conditions, because they
          answer different questions: the status says the show happened, the

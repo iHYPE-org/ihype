@@ -393,3 +393,37 @@ export function meActivityFallbackTitle(t: Translate, english: string): string {
     default: return english;
   }
 }
+
+/**
+ * What a PENDING payable is waiting for, keyed on the `kind` that
+ * `describePayableRelease()` (src/lib/payout-release.ts) returns.
+ *
+ * Switching on a state rather than on English is the one departure from this
+ * module's rule, and it is the right one here: there is no English label in
+ * the enumeration to key on — the state is computed — while the shape that
+ * matters (a switch of literal `t('key', 'English')` calls, so the extractor
+ * and the applier can both see them) is unchanged. `releasesOn` arrives
+ * already formatted, because only the caller knows the member's locale.
+ *
+ * Until 2026-09-15 every one of these read "Released automatically once the
+ * show ends", unconditionally, including over a tax entry nothing releases and
+ * over a payee with no account to release to.
+ */
+export function payoutReleaseLabel(t: Translate, kind: string, opts?: { releasesOn?: string; holdDays?: number }): string {
+  switch (kind) {
+    case 'manual-remittance':
+      return t('payoutsHistoryPanel.release.manual', 'Tax. Remitted by hand — no automatic payout runs against this.');
+    case 'no-destination':
+      return t('payoutsHistoryPanel.release.noDestination', 'Waiting on a payout account. Connect one under Settings and this is released on the next run.');
+    case 'awaiting-show':
+      return t('payoutsHistoryPanel.release.awaitingShow', 'Released about {days} days after the show, once it has ended.')
+        .replace('{days}', String(opts?.holdDays ?? 10));
+    case 'holding':
+      return t('payoutsHistoryPanel.release.holding', 'The show has ended. Held until {date} in case of a card dispute, then released.')
+        .replace('{date}', opts?.releasesOn ?? '');
+    case 'due':
+      return t('payoutsHistoryPanel.release.due', 'Due now — the next payout run pays this.');
+    default:
+      return t('payoutsHistoryPanel.release.unknown', 'We could not read this show, so we cannot say when this is released.');
+  }
+}
