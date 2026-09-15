@@ -29,15 +29,21 @@ vi.mock('@/lib/stripe', () => ({
 }));
 vi.mock('@/lib/mailer', () => ({ sendGenericEmail: vi.fn().mockResolvedValue(undefined) }));
 vi.mock('@/lib/env', () => ({ getAdminAlertRecipients: () => ['admin@ihype.org'] }));
+/* Mocked so the skipped-payable report can be read back. It is the only
+   channel that reaches Sentry, and DESIGN_SYNC row 476 made it the one thing
+   standing between an unpayable payee and total silence. */
+vi.mock('@/lib/logger', () => ({ log: { error: vi.fn() } }));
 
 import { db } from '@/lib/db';
 import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { sendGenericEmail } from '@/lib/mailer';
+import { log } from '@/lib/logger';
 import { triggerShowPayouts } from '@/lib/show-payouts';
 
 const mockDb = db as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
 const mockIsStripeConfigured = isStripeConfigured as unknown as ReturnType<typeof vi.fn>;
 const mockCreatePayoutTransfer = createPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
+const mockLogError = log.error as unknown as ReturnType<typeof vi.fn>;
 const mockFindPayoutTransfer = findPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
 const mockSendEmail = sendGenericEmail as unknown as ReturnType<typeof vi.fn>;
 
@@ -47,7 +53,7 @@ function entry(overrides: Partial<Record<string, unknown>> = {}) {
     amountCents: 7000,
     showId: 'show_1',
     payeeLabel: 'Artist Payout',
-    profile: { stripeConnectAccountId: 'acct_artist', owner: { email: 'artist@ihype.org' } },
+    profile: { stripeConnectAccountId: 'acct_artist', stripeConnectOnboarded: true, owner: { email: 'artist@ihype.org' } },
     show: { title: 'Neon Night' },
     ...overrides,
   };
@@ -191,12 +197,32 @@ describe('triggerShowPayouts', () => {
 
   it('skips (does not transfer) an entry whose profile has no Stripe Connect account', async () => {
     mockDb.accountsPayableEntry.findMany.mockResolvedValue([
-      entry({ profile: { stripeConnectAccountId: null, owner: { email: 'x@ihype.org' } } }),
+      entry({ profile: { stripeConnectAccountId: null, stripeConnectOnboarded: false, owner: { email: 'x@ihype.org' } } }),
     ]);
 
     await expect(triggerShowPayouts()).resolves.toEqual({ released: 0, skipped: 1 });
     expect(mockCreatePayoutTransfer).not.toHaveBeenCalled();
     expect(mockDb.accountsPayableEntry.update).not.toHaveBeenCalled();
+  });
+
+  it('skips a payee who started Connect onboarding and never finished it', async () => {
+    /* `connect/onboard` writes `stripeConnectAccountId` the moment Stripe
+       creates the account, before the member has been through one screen of
+       the hosted flow — so this is the ordinary state of everyone who pressed
+       the button and wandered off, not an edge case. Paying on the id alone
+       sent a doomed transfer and emailed the administrators about it, every
+       day, for ever. The entry is still SELECTED so the run can report it;
+       only the transfer is withheld. */
+    mockDb.accountsPayableEntry.findMany.mockResolvedValue([
+      entry({ profile: { stripeConnectAccountId: 'acct_started', stripeConnectOnboarded: false, owner: { email: 'x@ihype.org' } } }),
+    ]);
+
+    await expect(triggerShowPayouts()).resolves.toEqual({ released: 0, skipped: 1 });
+    expect(mockCreatePayoutTransfer).not.toHaveBeenCalled();
+    expect(mockDb.accountsPayableEntry.update).not.toHaveBeenCalled();
+    // Reported, not silent — and named as still onboarding rather than as a
+    // payee with no account, because the two take different action.
+    expect(String(mockLogError.mock.calls.at(-1))).toContain('still onboarding');
   });
 
   it('never marks an entry RELEASED when its transfer throws — it stays PENDING for retry and admin is alerted', async () => {
@@ -217,7 +243,7 @@ describe('triggerShowPayouts', () => {
   it('processes the remaining entries after one fails (a single bad transfer does not abort the batch)', async () => {
     mockDb.accountsPayableEntry.findMany.mockResolvedValue([
       entry({ id: 'ap_1' }),
-      entry({ id: 'ap_2', profile: { stripeConnectAccountId: 'acct_venue', owner: { email: 'venue@ihype.org' } } }),
+      entry({ id: 'ap_2', profile: { stripeConnectAccountId: 'acct_venue', stripeConnectOnboarded: true, owner: { email: 'venue@ihype.org' } } }),
     ]);
     mockCreatePayoutTransfer
       .mockRejectedValueOnce(new Error('stripe down'))
