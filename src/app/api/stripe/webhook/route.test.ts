@@ -43,7 +43,21 @@ let processedEvents: Set<string>;
 const ticketOrderFindUnique = vi.fn();
 const adFindUnique = vi.fn();
 const adUpdate = vi.fn().mockResolvedValue({});
-const profileUpdateMany = vi.fn().mockResolvedValue({ count: 0 });
+/* An in-memory Profile table, for the same reason processedWebhookEvent is
+   backed by a real Set above: `account.updated` is judged by WHICH rows it
+   flags, not by the shape of the call it made. A where-clause assertion would
+   pass on a filter that matches nothing. */
+type TestProfile = { id: string; type: string; stripeConnectAccountId: string; stripeConnectOnboarded: boolean };
+let profiles: TestProfile[];
+const profileUpdateMany = vi.fn(
+  async ({ where, data }: { where: { stripeConnectAccountId: string; type?: { not: string } }; data: { stripeConnectOnboarded: boolean } }) => {
+    const matched = profiles.filter(
+      (p) => p.stripeConnectAccountId === where.stripeConnectAccountId && (!where.type || p.type !== where.type.not),
+    );
+    for (const p of matched) p.stripeConnectOnboarded = data.stripeConnectOnboarded;
+    return { count: matched.length };
+  },
+);
 const ticketOrderFindMany = vi.fn().mockResolvedValue([]);
 const ticketOrderUpdate = vi.fn().mockResolvedValue({});
 const dbTicketOrderFindUniqueTopLevel = vi.fn();
@@ -74,7 +88,7 @@ vi.mock('@/lib/db', () => ({
         },
         ad: { findUnique: (...a: unknown[]) => adFindUnique(...a), update: (...a: unknown[]) => adUpdate(...a) },
         ticketOrder: { findUnique: (...a: unknown[]) => ticketOrderFindUnique(...a), findMany: (...a: unknown[]) => ticketOrderFindMany(...a), update: (...a: unknown[]) => ticketOrderUpdate(...a) },
-        profile: { updateMany: (...a: unknown[]) => profileUpdateMany(...a) },
+        profile: { updateMany: profileUpdateMany },
         notificationJob: { upsert: vi.fn().mockResolvedValue({}) },
       };
       return cb(tx);
@@ -101,12 +115,25 @@ function succeededEvent(id: string, paymentIntentId: string) {
   };
 }
 
+function accountUpdated(id: string, accountId: string, payoutsEnabled: boolean) {
+  return {
+    id,
+    type: 'account.updated',
+    created: 1_700_000_000,
+    data: { object: { id: accountId, payouts_enabled: payoutsEnabled } },
+  };
+}
+
 // The order every ticket branch reads: settles on the platform, charges $20.
 const PLATFORM_ORDER = { id: 'order_1', settlementMode: 'PLATFORM', settlementAccountId: null, totalChargeCents: 2000 };
 
 beforeEach(() => {
   vi.clearAllMocks();
   processedEvents = new Set();
+  profiles = [
+    { id: 'artist', type: 'ARTIST', stripeConnectAccountId: 'acct_artist_payee', stripeConnectOnboarded: false },
+    { id: 'venue', type: 'VENUE', stripeConnectAccountId: 'acct_venue_payee', stripeConnectOnboarded: false },
+  ];
   isStripeConfigured.mockReturnValue(true);
   ticketOrderFindUnique.mockResolvedValue(PLATFORM_ORDER);
   dbTicketOrderFindUniqueTopLevel.mockResolvedValue({
@@ -375,6 +402,42 @@ describe('POST /api/stripe/webhook', () => {
     const res2 = await POST(makeRequest(short));
     expect(res2.status).toBe(200);
     expect(adUpdate).not.toHaveBeenCalled();
+  });
+
+  it('flags a non-venue payee onboarded when its account reports payouts_enabled', async () => {
+    const event = accountUpdated('evt_acct_artist', 'acct_artist_payee', true);
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(profiles.find((p) => p.id === 'artist')?.stripeConnectOnboarded).toBe(true);
+  });
+
+  it('never flags a VENUE from this event, because the return route asks a harder question', async () => {
+    /* A venue is the merchant on its own shows, so `connect/return` sets the
+       flag only on `payoutReady && merchantReady`. `payouts_enabled` says
+       nothing about `card_payments`, and `stripeConnectOnboarded` is what
+       POST /api/shows/[showId]/tickets reads to pick a settlement mode — so a
+       venue flagged here is chosen for VENUE_DIRECT, a charge created on an
+       account that cannot take one, failing for the buyer at purchase time. */
+    const event = accountUpdated('evt_acct_venue', 'acct_venue_payee', true);
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(profiles.find((p) => p.id === 'venue')?.stripeConnectOnboarded).toBe(false);
+  });
+
+  it('writes nothing while the account still cannot receive payouts', async () => {
+    const event = accountUpdated('evt_acct_not_yet', 'acct_artist_payee', false);
+    constructWebhookEvent.mockReturnValue(event);
+
+    const res = await POST(makeRequest(event));
+
+    expect(res.status).toBe(200);
+    expect(profileUpdateMany).not.toHaveBeenCalled();
   });
 
   it('voids reserved ticket orders on payment_intent.payment_failed', async () => {

@@ -397,11 +397,35 @@ export async function POST(request: NextRequest) {
              directly; this handler is a backstop for a status that changes
              later (a verification lapsing), and is deliberately one-way: it
              never clears a flag the capability check has set, because a v1
-             event about a v2 account is the less informed of the two. */
+             event about a v2 account is the less informed of the two.
+
+             A VENUE IS EXCLUDED, BECAUSE IT HAS A HIGHER BAR AND THIS EVENT
+             CANNOT SEE IT. `connect/return` sets the flag for a venue only on
+             `payoutReady && merchantReady` — it is the merchant on its own
+             shows, so `card_payments` is what makes that true — and this
+             handler used to set it on `payouts_enabled` alone for every
+             profile type, which is precisely the case that comment warns
+             about: "Verified" over an account that cannot take a charge.
+
+             That is not a cosmetic disagreement. `stripeConnectOnboarded` is
+             what `POST /api/shows/[showId]/tickets` reads to pick a settlement
+             mode, so a venue flagged here would be chosen for VENUE_DIRECT —
+             a charge created on an account whose `card_payments` is not
+             active — and it fails at PURCHASE TIME, for the buyer, on the
+             venue's own show.
+
+             The gate is a type filter rather than a capability call because
+             this runs inside the webhook transaction: asking Stripe about
+             `card_payments` here would put a network round trip inside it. A
+             venue's flag is owned by the return route, which already asks
+             that question in a place where it can. "One-way" was only ever
+             about not CLEARING a flag; setting one on a weaker test than the
+             authoritative path is the defect, and being one-way made it
+             permanent. */
           const account = event.data.object;
           if (account.payouts_enabled) {
             await tx.profile.updateMany({
-              where: { stripeConnectAccountId: account.id },
+              where: { stripeConnectAccountId: account.id, type: { not: 'VENUE' } },
               data: { stripeConnectOnboarded: true },
             });
           }
