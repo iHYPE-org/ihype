@@ -553,6 +553,82 @@ describe('iOS entitlements', () => {
 });
 
 /**
+ * AN ASSOCIATED DOMAIN IS A TWO-SIDED CLAIM AND BOTH SIDES SHIP FROM HERE.
+ *
+ * The app claims a service (`webcredentials:ihype.org`) in its entitlements;
+ * the domain grants it back in `apple-app-site-association`. iOS verifies the
+ * pair. Either side alone does nothing, and neither side alone is WRONG —
+ * which is why nothing caught the real failure: both files were individually
+ * correct, and only the PAIRING was missing.
+ *
+ * What that cost, measured from a handset on 2026-09-15 and confirmed against
+ * production the same day: `App.entitlements` had claimed
+ * `webcredentials:ihype.org` since it was written, the served file carried
+ * `applinks` and nothing else, so WKWebView held no relying party for
+ * `ihype.org` and every passkey ceremony in the app died as `NotAllowedError`
+ * — "possibly because the user denied permission", when nobody had denied
+ * anything. On a product whose only two ways in are a passkey and a magic
+ * link, that is half of native sign-in.
+ *
+ * The guard above asserts the entitlement CLAIMS the services. This one
+ * asserts the domain ANSWERS them, in both directions: a service claimed and
+ * not served is the bug that shipped, and a section served and not claimed is
+ * a file telling iOS about an app that never asked.
+ *
+ * BOTH SIDES ARE READ WITH THEIR COMMENTS STRIPPED, and that is not
+ * defensive tidiness — both files discuss the very strings this matches. The
+ * entitlement's own comment explains what `webcredentials:` is for, and the
+ * route's docstring names both sections repeatedly. Matched raw, this guard
+ * would have read the prose describing the defect as proof the defect was
+ * fixed: the seventh instance of a scanner acting on its own documentation.
+ */
+describe('associated domains: the entitlement and the served file agree', () => {
+  /** Services the app asks for, e.g. `applinks` — comments stripped first. */
+  function claimedServices(): string[] {
+    const plist = readFileSync('ios/App/App/App.entitlements', 'utf8')
+      /* Newlines preserved, same reason as `code()` above. */
+      .replace(/<!--[\s\S]*?-->/g, (block) => block.replace(/[^\n]/g, ' '));
+    const domains = /<key>com\.apple\.developer\.associated-domains<\/key>\s*<array>([\s\S]*?)<\/array>/.exec(plist);
+    expect(domains, 'App.entitlements declares no associated-domains array').toBeTruthy();
+    return [...(domains?.[1] ?? '').matchAll(/<string>\s*([a-z]+):/g)].map((m) => m[1]).sort();
+  }
+
+  /** Top-level sections the route actually emits. */
+  function servedSections(): string[] {
+    const src = code('src/app/.well-known/apple-app-site-association/route.ts');
+    const body = /const body = \{([\s\S]*?)\n  \};/.exec(src);
+    expect(body, 'could not find the response body in the association route').toBeTruthy();
+    /* Keys at the body's own indent only — a nested `apps:` or `details:` is
+       not a service, and matching any `\w+:` would collect both. */
+    return [...(body?.[1] ?? '').matchAll(/^ {4}([a-z]+): \{/gm)].map((m) => m[1]).sort();
+  }
+
+  it('serves a section for every service the app claims', () => {
+    const claimed = claimedServices();
+    /* A zero here means the regex stopped matching the plist, which would make
+       every assertion below vacuously true. */
+    expect(claimed.length, 'no associated-domain services parsed out of App.entitlements').toBeGreaterThan(0);
+
+    const missing = claimed.filter((service) => !servedSections().includes(service));
+    expect(
+      missing,
+      `App.entitlements claims ${missing.join(', ')} and the association file serves no such section — iOS cannot verify the claim, and for webcredentials that is every passkey in the app failing as NotAllowedError`,
+    ).toEqual([]);
+  });
+
+  it('claims every service it serves a section for', () => {
+    const served = servedSections();
+    expect(served.length, 'no sections parsed out of the association route').toBeGreaterThan(0);
+
+    const unclaimed = served.filter((section) => !claimedServices().includes(section));
+    expect(
+      unclaimed,
+      `the association file serves ${unclaimed.join(', ')} and App.entitlements claims no such service — the domain is answering an app that never asked`,
+    ).toEqual([]);
+  });
+});
+
+/**
  * A RESOURCE SHIPS ONLY IF IT IS IN THE RESOURCES BUILD PHASE.
  *
  * Four places in `project.pbxproj` mention a bundled file — PBXBuildFile,
