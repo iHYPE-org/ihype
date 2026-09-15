@@ -55,6 +55,8 @@
  * client component can load it. The reads live in `admin-feature-board-data.ts`.
  */
 
+import type { LivenessRead } from '@/lib/admin-routine';
+
 export type FeatureState = 'BLOCKED' | 'ATTENTION' | 'UNKNOWN' | 'OFF' | 'IDLE' | 'OK';
 
 /** A dependency a capability needs before it can do anything. */
@@ -86,6 +88,32 @@ export type FeatureDefinition = {
   needs: readonly FeatureDependency[];
   /** Workbench queue ids whose items belong to this capability. */
   queues: readonly string[];
+  /**
+   * The scheduled job that does this capability's work, by its
+   * `cron-alive:<job>` key.
+   *
+   * CONFIGURATION IS NOT THE ONLY WAY A CAPABILITY CAN BE OFFERED AND NOT
+   * FUNCTION. `payouts` moved money in exactly one place — the `show-payouts`
+   * cron — and the board could not see it: its only dependency was `stripe`,
+   * i.e. "a key starting with `sk_` exists", which the `ticketing` row already
+   * covers through the stricter `payments` check. So the payouts row carried
+   * no signal of its own, and a cron that stopped read OK while every act and
+   * venue owed money went unpaid. That is this board's own definition of
+   * BLOCKED, and its founding story: the feature simply off, silently, for
+   * everyone, with nothing queued and nothing wrong with traffic.
+   *
+   * Liveness is the key `pingCronAlive()` writes on a successful run, with a
+   * two-day TTL (`cron-health.ts`) — so an absent key means "no run inside
+   * that window", which is a finding, and an unreadable store means nothing at
+   * all. The two are kept apart for the reason `admin-routine-data.ts` keeps
+   * them apart: a board printing "never ran" over a KV outage sends someone to
+   * debug a job that is fine.
+   *
+   * Name a job here only when the capability's member-visible work happens
+   * THERE and nowhere else. A capability a member drives themselves is not
+   * blocked by a cron that supports it.
+   */
+  job?: string;
   /** `METRIC_CATALOGUE` id whose value counts as "somebody used this". */
   metric?: string;
   /** The `feature-health.ts` journey the nightly proves this with. */
@@ -215,6 +243,9 @@ export const FEATURE_CATALOGUE: readonly FeatureDefinition[] = [
     flags: ['payments_enabled'],
     needs: ['stripe'],
     queues: ['payouts'],
+    /* `triggerShowPayouts()` is the only thing in the product that issues a
+       transfer. Nothing a member does releases their own money. */
+    job: 'show-payouts',
     journey: 'payouts',
     href: '/admin/finance',
   },
@@ -226,6 +257,10 @@ export const FEATURE_CATALOGUE: readonly FeatureDefinition[] = [
     flags: ['advertising_enabled'],
     needs: ['payments'],
     queues: ['ads'],
+    /* A sponsorship is charged up front and its unused remainder refunded at
+       settlement, which happens only here — so a stopped `ad-settlement` is an
+       advertiser's money kept, quietly, past the end of their term. */
+    job: 'ad-settlement',
     metric: 'ad_impressions',
     journey: 'advertising',
     href: '/admin/ads',
@@ -325,6 +360,11 @@ export type FeatureBoardInput = {
   queues: QueueLike[];
   /** Metric id → value in the window, `null` when the read failed. */
   activity: Record<string, number | null>;
+  /**
+   * `cron-alive` key → what KV said. An absent entry is read as `unknown`,
+   * never as healthy: the board must not report a job it did not ask about.
+   */
+  jobs: Record<string, LivenessRead>;
 };
 
 export type FeatureRow = {
@@ -342,6 +382,8 @@ export type FeatureRow = {
   oldestHours: number | null;
   /** Activity in the window, `null` when unread or when it has no metric. */
   activity: number | null;
+  /** The capability's job, when it has one and it has not run inside its TTL. */
+  staleJob: string | null;
   /** Why it is in this state, in one line for the row itself. */
   reason: string;
 };
@@ -381,6 +423,13 @@ export function buildFeatureRow(feature: FeatureDefinition, input: FeatureBoardI
 
   const activity = feature.metric ? (input.activity[feature.metric] ?? null) : null;
 
+  /* A job the board was not asked about is unknown, not healthy — same rule as
+     an unreadable queue two lines up. */
+  const job = feature.job ? (input.jobs[feature.job] ?? { kind: 'unknown' as const }) : null;
+  const jobStale = job?.kind === 'stale';
+  const jobUnknown = job?.kind === 'unknown';
+  const staleJob = jobStale && feature.job ? feature.job : null;
+
   let state: FeatureState;
   let reason: string;
 
@@ -394,6 +443,16 @@ export function buildFeatureRow(feature: FeatureDefinition, input: FeatureBoardI
     /* Offered and cannot work. The whole reason this board exists. */
     state = 'BLOCKED';
     reason = `offered to members, but ${describeDependencies(missing)} is not configured`;
+  } else if (jobStale) {
+    /* Also offered and cannot work — the other way a capability goes dark.
+       The wording is deliberately NOT the dependency sentence: this job is
+       configured and armed, it has stopped running, and sending an operator to
+       check configuration is sending them to the wrong place. */
+    state = 'BLOCKED';
+    reason = `offered to members, but the ${feature.job} job has not run in two days`;
+  } else if (jobUnknown) {
+    state = 'UNKNOWN';
+    reason = `could not read whether the ${feature.job} job is running`;
   } else if (issues === null) {
     state = 'UNKNOWN';
     reason = 'could not read its queue';
@@ -411,7 +470,7 @@ export function buildFeatureRow(feature: FeatureDefinition, input: FeatureBoardI
     reason = 'working';
   }
 
-  return { feature, state, flagsOff, missing, issues, overdue, oldestHours, activity, reason };
+  return { feature, state, flagsOff, missing, issues, overdue, oldestHours, activity, staleJob, reason };
 }
 
 const RISK_ORDER: Record<FeatureState, number> = {

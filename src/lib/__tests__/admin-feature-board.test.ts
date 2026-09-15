@@ -32,6 +32,11 @@ const ALL_ON: FeatureBoardInput = {
     acrcloud: true,
     ai: true,
   },
+  /* Every job the catalogue names, having run. A test that leaves one out is
+     asserting over an UNKNOWN row and will not notice. */
+  jobs: Object.fromEntries(
+    FEATURE_CATALOGUE.flatMap((f) => (f.job ? [[f.job, { kind: 'ran' as const, at: 1_757_000_000_000 }]] : [])),
+  ),
   queues: [
     { id: 'access-requests', count: 0, oldestHours: null, overdue: false },
     { id: 'verifications', count: 0, oldestHours: null, overdue: false },
@@ -235,5 +240,85 @@ describe('the headline', () => {
     expect(summary.BLOCKED).toBe(0);
     expect(summary.UNKNOWN).toBe(0);
     expect(summary.OK + summary.IDLE).toBe(FEATURE_CATALOGUE.length);
+  });
+});
+
+/**
+ * A CAPABILITY WHOSE WORK IS A CRON IS BLOCKED WHEN THE CRON STOPS.
+ *
+ * Before `job` existed, `payouts` needed only `stripe` — "a key starting with
+ * `sk_` is present" — which the `ticketing` row already covers through the
+ * stricter `payments` check, so the row carried no signal of its own. The one
+ * thing that actually issues a transfer is `triggerShowPayouts()` at 13:00
+ * UTC, and a board that cannot see it read OK while nobody was being paid.
+ */
+describe('a stopped scheduled job', () => {
+  const jobFor = (id: string) => {
+    const feature = FEATURE_CATALOGUE.find((f) => f.id === id);
+    if (!feature?.job) throw new Error(`${id} names no job — this test is asserting over nothing`);
+    return feature.job;
+  };
+
+  const withJob = (key: string, liveness: FeatureBoardInput['jobs'][string]) =>
+    buildFeatureBoard(withInput({ jobs: { ...ALL_ON.jobs, [key]: liveness } }));
+
+  it.each(['payouts', 'advertising'])('blocks %s when its job has not run inside its TTL', (id) => {
+    const key = jobFor(id);
+    const row = withJob(key, { kind: 'stale' }).find((r) => r.feature.id === id)!;
+    expect(row.state).toBe('BLOCKED');
+    expect(row.staleJob).toBe(key);
+    expect(row.reason).toContain(key);
+    /* NOT the dependency sentence: the job is configured and armed, it has
+       stopped running, and "not configured" sends an operator to the wrong
+       place entirely. */
+    expect(row.reason).not.toContain('is not configured');
+  });
+
+  it('reports an unreadable store as unknown, never as healthy', () => {
+    const key = jobFor('payouts');
+    const row = withJob(key, { kind: 'unknown' }).find((r) => r.feature.id === 'payouts')!;
+    expect(row.state).toBe('UNKNOWN');
+    expect(row.staleJob).toBeNull();
+  });
+
+  it('reports a job the board never asked about as unknown', () => {
+    /* An absent entry is the shape a forgotten read takes. It must not pass
+       for a healthy job — the same rule as a queue the reader could not
+       produce. */
+    const rows = buildFeatureBoard(withInput({ jobs: {} }));
+    for (const feature of FEATURE_CATALOGUE.filter((f) => f.job)) {
+      expect(rows.find((r) => r.feature.id === feature.id)!.state).toBe('UNKNOWN');
+    }
+  });
+
+  it('leaves a capability with no job alone', () => {
+    const rows = buildFeatureBoard(withInput({ jobs: {} }));
+    for (const feature of FEATURE_CATALOGUE.filter((f) => !f.job)) {
+      expect(rows.find((r) => r.feature.id === feature.id)!.staleJob).toBeNull();
+    }
+  });
+
+  it('a flag that is off wins over a stale job', () => {
+    /* OFF is not BLOCKED: the product is not offering this, so a member cannot
+       be disappointed by it, and a red row nobody can clear is the noise that
+       got the nightly ignored on its first run. */
+    const row = buildFeatureBoard(withInput({
+      flags: { ...ALL_ON.flags, payments_enabled: false },
+      jobs: { ...ALL_ON.jobs, [jobFor('payouts')]: { kind: 'stale' } },
+    })).find((r) => r.feature.id === 'payouts')!;
+    expect(row.state).toBe('OFF');
+  });
+
+  it('every job it names is one cron-health.ts watches', async () => {
+    /* A key nothing writes is a row that reads BLOCKED for ever, and a key
+       cron-health does not watch is a job whose silence only this board would
+       notice. Read the source: the list is a literal, and importing it would
+       pull `@/lib/kv` into the unit suite. */
+    const { readFile } = await import('node:fs/promises');
+    const source = await readFile(new URL('../cron-health.ts', import.meta.url), 'utf8');
+    for (const feature of FEATURE_CATALOGUE) {
+      if (!feature.job) continue;
+      expect(source).toContain(`'${feature.job}'`);
+    }
   });
 });

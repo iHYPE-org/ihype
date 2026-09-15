@@ -1,9 +1,11 @@
 import {
+  FEATURE_CATALOGUE,
   buildFeatureBoard,
   type FeatureBoardInput,
   type FeatureDependency,
   type FeatureRow,
 } from '@/lib/admin-feature-board';
+import type { LivenessRead } from '@/lib/admin-routine';
 import { getWorkbenchQueues } from '@/lib/admin-workbench';
 import { getAnalytics } from '@/lib/analytics-metrics';
 import type { AnalyticsRange } from '@/lib/analytics-engine';
@@ -12,6 +14,7 @@ import { isEmailDeliveryConfigured } from '@/lib/mailer';
 import { isObjectStorageConfigured } from '@/lib/object-storage';
 import { isPaymentProcessingConfigured } from '@/lib/payments';
 import { isStripeConfigured } from '@/lib/stripe';
+import { readLiveness } from '@/lib/admin-routine-data';
 import { readRuntimeBinding } from '@/lib/runtime-env';
 import {
   areMapsEnabledRuntime,
@@ -73,6 +76,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
     email,
     queues,
     analytics,
+    jobs,
   ] = await Promise.all([
     flag(areRegistrationsEnabledRuntime),
     flag(areUploadsEnabledRuntime),
@@ -87,6 +91,15 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
        reports as UNKNOWN rather than as clear. */
     getWorkbenchQueues().catch(() => []),
     getAnalytics('platform', { kind: 'platform' }, range).catch(() => null),
+    /* One read per DISTINCT job the catalogue names, not one per row — two
+       capabilities may share a slot, and asking twice is two chances for the
+       same board to print two answers. `readLiveness` never throws; it returns
+       `unknown`, which the row reports as unknown rather than as healthy. */
+    (async () => {
+      const keys = [...new Set(FEATURE_CATALOGUE.map((f) => f.job).filter((j): j is string => Boolean(j)))];
+      const reads = await Promise.all(keys.map(async (key) => [key, await readLiveness(key)] as const));
+      return Object.fromEntries(reads) as Record<string, LivenessRead>;
+    })(),
   ]);
 
   const activity: Record<string, number | null> = {};
@@ -116,6 +129,7 @@ export async function getFeatureBoard(range: AnalyticsRange = '7d'): Promise<Fea
       outbound_email_enabled: email,
     },
     configured: deps,
+    jobs,
     queues: queues.map((q) => ({
       id: q.id,
       count: q.count,
