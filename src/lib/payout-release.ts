@@ -120,3 +120,31 @@ export function describePayableRelease(
   if (releasesOn.getTime() > now.getTime()) return { kind: 'holding', releasesOn };
   return { kind: 'due' };
 }
+
+/**
+ * The Prisma `where` for a payable the payout run SHOULD already have cleared.
+ *
+ * Kept beside the conditions rather than in the workbench, because the queue
+ * that shows an operator "stalled payouts" and the cron that clears them must
+ * agree about what stalled MEANS. They did not: the queue counted every
+ * PENDING entry on an ENDED show against a 24-hour promise while the cron
+ * holds for `PAYOUT_HOLD_DAYS`, so the queue was overdue by construction and
+ * sat permanently at the top of a board sorted worst-first.
+ *
+ * Deliberately NOT the cron's own filter: this is the complement of it. The
+ * cron asks "may I pay this now"; this asks "should this already be gone". So
+ * it omits the destination check — an entry skipped for want of a Connect
+ * account is exactly what an operator needs to see, and filtering it out here
+ * would hide the one case that never resolves by itself.
+ */
+export function stalledPayoutWhere(now: Date) {
+  return {
+    status: 'PENDING' as const,
+    // A TAX_* entry is manual remittance by design and is never "stalled".
+    category: { in: [...CONNECT_PAYOUT_CATEGORIES] },
+    show: {
+      status: 'ENDED' as const,
+      startsAt: { lte: new Date(now.getTime() - PAYOUT_HOLD_DAYS * 24 * 60 * 60 * 1000) },
+    },
+  };
+}

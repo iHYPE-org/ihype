@@ -1,4 +1,5 @@
 import { db } from '@/lib/db';
+import { payoutHoldEndsAt, stalledPayoutWhere } from '@/lib/payout-release';
 
 /**
  * Everything on the platform that is waiting on a human.
@@ -108,6 +109,9 @@ async function pendingAccessRequests(): Promise<{ count: number; oldest: Date | 
 }
 
 export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
+  /* One clock for every queue in this board, so two rows cannot straddle a
+     boundary and disagree about the same instant. */
+  const now = new Date();
   // Every query is independently guarded. A workbench that renders nothing
   // because one count threw would be worse than one that renders a zero: the
   // admin would conclude there was no work rather than that the page broke.
@@ -179,17 +183,30 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
       select: { createdAt: true },
     }).catch(() => null),
 
-    // Money that should already have moved. triggerShowPayouts() only
-    // processes ENDED shows, so a PENDING entry on a show that has ended is
-    // either a tax entry (no Connect account, remitted by hand) or a transfer
-    // that failed. Both want a person.
+    /* MONEY THAT SHOULD ALREADY HAVE MOVED — AND THIS QUEUE USED TO BE
+       OVERDUE BY CONSTRUCTION (2026-09-15).
+       It counted every PENDING entry on an ENDED show against a 24-hour
+       promise, while `triggerShowPayouts()` deliberately holds a payable
+       PAYOUT_HOLD_DAYS past the show's START (2026-08-27, so a card dispute
+       has something left to reverse). So every payable was "overdue" from the
+       moment its show ended, for at least ten days, by design — on the board
+       the workbench sorts WORST FIRST, which put a queue that cries wolf
+       permanently at the top of the operator's screen.
+       It also aged from `createdAt`, the moment the ticket was BOUGHT, so a
+       ticket sold three months ahead read ninety days overdue on the day the
+       show ended.
+       Now: only entries the cron would actually pay on its next run — past
+       the hold, and a category a Stripe transfer can carry (a TAX_* entry is
+       manual remittance by design and is never stalled) — aged from when the
+       hold lifted rather than from the sale. 24 hours is the right promise
+       against that window, because the payout cron runs daily. */
     db.accountsPayableEntry.count({
-      where: { status: 'PENDING', show: { status: 'ENDED' } },
+      where: stalledPayoutWhere(now),
     }).catch(() => 0),
     db.accountsPayableEntry.findFirst({
-      where: { status: 'PENDING', show: { status: 'ENDED' } },
-      orderBy: { createdAt: 'asc' },
-      select: { createdAt: true },
+      where: stalledPayoutWhere(now),
+      orderBy: { show: { startsAt: 'asc' } },
+      select: { show: { select: { startsAt: true } } },
     }).catch(() => null),
 
     // Alpha access requests still waiting for an invite. See the note above
@@ -249,10 +266,11 @@ export async function getWorkbenchQueues(): Promise<WorkbenchQueue[]> {
     build(
       'payouts',
       'Stalled payouts',
-      'Payable entries still pending on shows that have already ended',
+      'Payable entries the payout run should have cleared — past the dispute hold and still unpaid',
       '/admin/finance',
       stalledPayouts,
-      oldestPayout?.createdAt,
+      // Age from when the hold lifted, not from when the ticket was sold.
+      oldestPayout?.show ? payoutHoldEndsAt(oldestPayout.show.startsAt) : undefined,
       24,
     ),
     build(
