@@ -17,7 +17,6 @@ const REQUIRED = [
   { key: 'CRON_SECRET', hint: 'Protects /api/cron/* routes; generate with: openssl rand -hex 32' },
   { key: 'TURNSTILE_SECRET_KEY', hint: 'Required for production signup abuse protection' },
   { key: 'ADMIN_DEVICE_SECRET', hint: 'Protects admin-device registration; generate with: openssl rand -hex 32' },
-  { key: 'ADMIN_ALERT_EMAIL', hint: 'Operational alert recipient' },
   { key: 'RESTORE_DRILL_VERIFIED_AT', hint: 'ISO timestamp from a successful isolated backup restore drill' },
   { key: 'VAPID_PUBLIC_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
   { key: 'VAPID_PRIVATE_KEY', hint: 'Generate with: node scripts/generate-vapid-keys.mjs' },
@@ -87,15 +86,9 @@ for (const key of ['AUTH_SECRET', 'CRON_SECRET', 'ADMIN_DEVICE_SECRET']) {
   }
 }
 
-const alertRecipients = (process.env.ADMIN_ALERT_EMAIL ?? '')
-  .split(',')
-  .map((email) => email.trim())
-  .filter(Boolean);
-const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-if (alertRecipients.length < 1 || alertRecipients.some((email) => !emailPattern.test(email))) {
-  console.error('  INVALID  ADMIN_ALERT_EMAIL must contain at least one valid operator address.');
-  failed = true;
-}
+/* Operational alerts need no configuration check: they are pinned to
+   admin@ihype.org in src/lib/env.ts (owner, 2026-09-15). Requiring an operator
+   to set a variable nothing reads is the defect env-example.test.ts catches. */
 
 const restoreVerifiedAt = new Date(process.env.RESTORE_DRILL_VERIFIED_AT ?? '');
 const restoreAgeMs = Date.now() - restoreVerifiedAt.getTime();

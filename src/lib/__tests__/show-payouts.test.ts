@@ -234,8 +234,12 @@ describe('triggerShowPayouts', () => {
     // RELEASED, or the money is owed but the ledger says it was paid.
     expect(mockDb.accountsPayableEntry.update).not.toHaveBeenCalled();
     expect(mockSendEmail).toHaveBeenCalledWith(
-      // Now a list: ADMIN_ALERT_EMAIL accepts several comma-separated
-      // addresses so an alert is not a bus factor of one.
+      // An array because getAdminAlertRecipients() returns one, holding
+      // exactly one address: operational alerts are pinned to admin@ihype.org
+      // and no environment value can move them (2026-09-15). The comment here
+      // used to argue the opposite — that the list existed so an alert was not
+      // a bus factor of one — which is the cost that instruction overrode, not
+      // a property of this code. admin-alert-address.test.ts is the guard.
       expect.objectContaining({ to: ['admin@ihype.org'] }),
     );
   });

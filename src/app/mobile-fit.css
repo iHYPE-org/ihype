@@ -116,7 +116,9 @@
      padding is on the span, so the ANCHOR — the thing a finger actually hits —
      was 13-18px tall. It is named `-link` and not `-chip` deliberately:
      `audit:shell` treats any `-chip` suffix as a pill primitive that must be
-     registered in `shell-surfaces.css`, and this anchor is NOT a pill. The
+     registered in the shell stylesheets it scans (`mmm.css`,
+     `mmm-primitives.css`, `mmm-workflows.css` — `shell-surfaces.css` was
+     deleted with the legacy shell), and this anchor is NOT a pill. The
      span inside it is. Registering the wrapper would paint a pill around a
      pill. Worth knowing why the prose exemption in the check did not
      swallow these: they sit in a flex row, which blockifies an inline anchor,

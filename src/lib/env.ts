@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { hasRuntimeEnvContext, readRuntimeEnv, runtimeEnvSource } from '@/lib/runtime-env';
+import { hasRuntimeEnvContext, runtimeEnvSource } from '@/lib/runtime-env';
 import { log } from '@/lib/logger';
 
 // Treat empty strings the same as undefined for optional env vars.
@@ -32,24 +32,35 @@ const envSchema = z.object({
   // Video-provider configuration is intentionally absent: iHYPE hosts audio only.
 });
 
+/** The single mailbox every operational alert reaches. */
+export const ADMIN_ALERT_ADDRESS = 'admin@ihype.org';
+
 /**
- * Every address that should receive an operational alert.
+ * The address every operational alert goes to.
  *
- * Accepts a comma-separated ADMIN_ALERT_EMAIL so the project can add backup
- * recipients later without changing alert call sites. A shared operational
- * mailbox is also valid for a single-operator alpha.
+ * ONE ADDRESS, PINNED, NOT CONFIGURABLE (2026-09-15, owner: "send all emails
+ * to admin@ihype.org always"). This used to read a comma-separated
+ * `ADMIN_ALERT_EMAIL` and fall back to this address, so an environment value
+ * could redirect every alert in the product — 32 call sites: cron failures,
+ * the DMCA queue, access requests, payout alerts, a show cancellation. The
+ * variable is gone from `.env.example` and from `check:alpha` in the same
+ * change, because a name an operator is told to set and nothing reads is the
+ * defect `env-example.test.ts` exists to catch.
  *
- * Empty entries are dropped and the default is always kept as a floor: a
- * typo'd env var must not silently result in alerts going nowhere, which is
- * strictly worse than alerts going to one place.
+ * WHAT THIS GIVES UP, stated because the old docstring argued the other way
+ * and a later reader will meet that argument first: the override existed so
+ * alerts were "not a bus factor of one" and so a second recipient could be
+ * added without touching call sites. That is a real cost and the owner's
+ * instruction outranks it — alpha runs one operational mailbox. Adding a
+ * second recipient is a code change here, deliberately, the same shape as
+ * `admin-allowlist.ts` making a second administrator a code change.
+ *
+ * NOT the same list as `DEFAULT_ADMIN_EMAILS` in `src/lib/admin-allowlist.ts`,
+ * which is who may HOLD the admin role and names `staff@ihype.org` too. Who
+ * may sign in and who gets paged are different questions; do not merge them.
  */
 export function getAdminAlertRecipients(): string[] {
-  const raw = readRuntimeEnv('ADMIN_ALERT_EMAIL');
-  const parsed = (raw ?? '')
-    .split(',')
-    .map((entry) => entry.trim())
-    .filter((entry) => entry.includes('@'));
-  return parsed.length > 0 ? parsed : ['admin@ihype.org'];
+  return [ADMIN_ALERT_ADDRESS];
 }
 
 type Env = z.infer<typeof envSchema>;

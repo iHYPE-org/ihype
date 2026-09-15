@@ -193,7 +193,7 @@ jobs:
         # much; the point is that slack is never the number it looks like,
         # because nothing measures it between passes. Tighten it in the change
         # that lowers the count, and this line stops being necessary.
-        run: npm run audit:spacing -- --max=894
+        run: npm run audit:spacing -- --max=892
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy
