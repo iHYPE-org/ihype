@@ -537,10 +537,12 @@ export default async function ShowDetailPage({
         ) : null}
 
         {/* LAYOUT: tabs + sticky ticket box */}
-        {/* Layout, so not `shell-surfaces.css` — that file is paint-only by
-            design and explicitly forbids `display`/`grid-template`. Nor
-            `mobile-fit.css`, whose every rule is a FLOOR. A page-local style
-            block is the pattern the other shell pages already use. */}
+        {/* Layout, so it does not belong in the shell stylesheets: those are
+            paint-only by design and `audit:shell` holds them to it. (This note
+            used to name `shell-surfaces.css`, deleted with the legacy shell —
+            the rule outlived the file.) Nor `mobile-fit.css`, whose every rule
+            is a FLOOR. A page-local style block is the pattern the other shell
+            pages already use. */}
         <style>{`
           .show-detail-grid { grid-template-columns: minmax(0, 1fr) 300px; }
           @media (max-width: 620px) {

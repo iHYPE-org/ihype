@@ -1,3 +1,4 @@
+import { ADMIN_ALERT_ADDRESS } from '@/lib/env';
 import { db } from '@/lib/db';
 import { deferWork } from '@/lib/defer-work';
 import { sendGenericEmail } from '@/lib/mailer';
@@ -12,7 +13,6 @@ type LoginUser = {
   lastLoginCountry: string | null;
 };
 
-const ADMIN_ALERT_EMAIL = 'admin@ihype.org';
 
 // Notifies admin@ihype.org every time an ADMIN-role account signs in — an
 // audit trail, not a credential; the account's own passkey/magic-link is
@@ -26,7 +26,7 @@ function notifyAdminLogin(user: LoginUser, request: Request) {
   const who = user.name?.trim() || user.email || user.id;
 
   deferWork(sendGenericEmail({
-    to: ADMIN_ALERT_EMAIL,
+    to: ADMIN_ALERT_ADDRESS,
     subject: `Admin login — ${who}`,
     text: [
       `Admin account login recorded.`,

@@ -25,16 +25,22 @@ const ICON_COMMON = {
   strokeLinejoin: 'round' as const,
 };
 
+/* `includes`, not equality, because two crons store a DEDUP KEY in the `type`
+   column rather than a taxonomy value — `post-show:<showId>:<userId>` and
+   `rsvp-24h:<showId>:<userId>` (post-show-recap and rsvp-reminders). That is
+   the only reason the show branch names RSVP and POST-SHOW, and rewriting this
+   as equality would silently drop both to the fallback bell.
+
+   Three branches were removed on 2026-09-15. Every writer of a Notification
+   row was enumerated — `notifyUser` plus seven direct `notification.create` /
+   `createMany` call sites — and no type produced by any of them contains
+   RADIO, LIVE or REFERRAL. Radio shows were deleted 2026-09-11 and nothing can
+   go live; REFERRAL exists only as an AuditLog action and a cookie name, never
+   as a notification type. Restore a branch with the feature, not before. */
 function iconForType(type: string, color: string) {
   const t = type.toUpperCase();
   if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) {
     return <svg {...ICON_COMMON} fill={color} stroke="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" /></svg>;
-  }
-  if (t.includes('REFERRAL')) {
-    return <svg {...ICON_COMMON} stroke={color}><line x1="12" y1="1" x2="12" y2="23" /><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" /></svg>;
-  }
-  if (t.includes('RADIO') || t.includes('LIVE')) {
-    return <svg {...ICON_COMMON} stroke={color}><circle cx="12" cy="12" r="2" /><path d="M16.24 7.76a6 6 0 0 1 0 8.49m-8.48-.01a6 6 0 0 1 0-8.49m11.31-2.82a10 10 0 0 1 0 14.14m-14.14 0a10 10 0 0 1 0-14.14" /></svg>;
   }
   if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) {
     return <svg {...ICON_COMMON} stroke={color}><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z" /><path d="M13 5v2M13 11v2M13 17v2" /></svg>;
@@ -45,8 +51,6 @@ function iconForType(type: string, color: string) {
 function colorForType(type: string) {
   const t = type.toUpperCase();
   if (t.includes('HYPE') || t.includes('EARLY_BELIEVER')) return 'var(--accent)';
-  if (t.includes('REFERRAL')) return 'var(--accent-2)';
-  if (t.includes('RADIO') || t.includes('LIVE')) return 'var(--role-fan)';
   if (t.includes('SHOW') || t.includes('RSVP') || t.includes('TICKET') || t.includes('POST-SHOW')) return 'var(--role-venue)';
   return 'var(--ink-a65)';
 }

@@ -12,13 +12,6 @@
  * .wb-admin where a portal'd overlay would escape them.
  */
 :root {
-  --wb-ink-1:     var(--ink);
-  --wb-ink-2:     var(--ink-2);
-  --wb-ink-3:     var(--ink-3);
-  --wb-surface-2: var(--bg-2);
-  --wb-surface-3: var(--bg-3);
-  --wb-border:    var(--hair-100);
-  --wb-accent:    var(--accent);
 }
 
 /* ── iH/OPS Operator Console ─────────────────────────── */
@@ -102,8 +95,6 @@
 }
 
 /* ── iH/OPS Login Gate ────────────────────────────────── */
-@keyframes opsFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes opsSpin{to{transform:rotate(360deg)}}
 
 /* ── Admin console content re-theme ──────────────────────
    Every /admin/* page.tsx still composes the sitewide pre-rebrand

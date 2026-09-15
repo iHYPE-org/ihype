@@ -251,10 +251,6 @@
      pointed at the amber it always rendered as, via the token that means it. */
   --heat-warm: var(--warning);
   --heat-cold: #40506b;
-  --heat-fire-rgb: 255, 31, 61;
-  --heat-hot-rgb:  var(--accent-rgb);
-  --heat-warm-rgb: 255, 184, 74;
-  --heat-cold-rgb: 64, 80, 107;
 
   /* ── Materials: brass, walnut, lamp ───────────────────────────────────
      These arrived with the console theme and lived inside its block, which
@@ -482,7 +478,6 @@
   --rule-on-walnut-2: rgba(60, 60, 67, .5);
 
   /* ── Status ──────────────────────────────────────────────────────── */
-  --live:    #ff3c3c;
   --success: #22e5d4;
   --warning: #ffb84a;
   --danger:  #ff5029;
@@ -498,15 +493,6 @@
   --blue:    #7fb3ff;
 
   /* ── Semantic aliases ────────────────────────────────────────────── */
-  --surface-page:   var(--bg);
-  --surface-sunken: var(--bg-2);
-  --surface-card:   var(--bg-3);
-  --surface-raised: var(--bg-4);
-  --text-strong:    var(--ink);
-  --text-body:      var(--ink-2);
-  --text-muted:     var(--ink-3);
-  --border-subtle:  var(--line);
-  --border-strong:  var(--line-2);
 
   /* ── Legacy aliases (referenced throughout existing CSS) ──────────── */
   --text:  var(--ink);
@@ -524,7 +510,6 @@
   --bg-base:    var(--bg);
   --bg-surface: var(--bg-2);
   --bg-raised:  var(--bg-3);
-  --bg-overlay: var(--bg-4);
   --ink-1: var(--ink);
   /* --ink-2/--ink-3/--ink-4 already carry the design-system names. */
 
@@ -540,11 +525,6 @@
      other three are here so a status surface has a fill token to reach for
      instead of hand-composing rgba() from a hex, which is what every
      pending/rejected badge in the app currently does. */
-  --color-success:    var(--success);
-  --color-success-bg: rgba(var(--role-venue-rgb), .10);
-  --color-error:      #ff4545;
-  --color-error-rgb:  255, 69, 69;
-  --color-error-bg:   rgba(var(--color-error-rgb), .10);
   /* Amber as copy. #ffb84a is a fill: on the light theme's cream surfaces it
      measures 2.85:1, so every amber *label* needs a darker value, which is
      what --role-advertiser-text already discovered independently. One token
@@ -559,11 +539,6 @@
      worst inversions in the palette, and it was carrying the signup page's
      "Free forever. We never sell your data." line. */
   --success-text:     #0a655e;
-  --color-warning:    var(--warning-text);
-  --color-warning-bg: rgba(var(--warning-rgb), .10);
-  --color-info:       var(--blue);
-  --color-info-rgb:   127, 179, 255;
-  --color-info-bg:    rgba(var(--color-info-rgb), .10);
 
   /* ── Music/Map/Me chrome (DESIGN_SYNC row 267) ────────────────────
      Named here because the handoff's shell reuses them across the map pane,
@@ -607,10 +582,6 @@
      12..96; a heading rendered at 38px should carry opsz 38, not the 14 it
      inherits from body copy, or the letterforms stay text-weight at display
      size. Unitless on purpose — font-variation-settings takes a number. */
-  --opsz-lg:  20;
-  --opsz-xl:  28;
-  --opsz-2xl: 38;
-  --opsz-3xl: 54;
 
   /* ── Type scale ──────────────────────────────────────────────────── */
   --text-xs:      0.72rem;
@@ -627,17 +598,8 @@
   --text-display: clamp(3rem, 8vw, 6.5rem);
 
   /* ── Weights ─────────────────────────────────────────────────────── */
-  --fw-regular:  400;
-  --fw-medium:   500;
-  --fw-semibold: 600;
-  --fw-bold:     700;
-  --fw-black:    800;
 
   /* ── Line heights ────────────────────────────────────────────────── */
-  --lh-display: 0.93;
-  --lh-tight:   1.1;
-  --lh-snug:    1.4;
-  --lh-body:    1.65;
   /* Design System 8's own names for the same idea, at Bricolage/Work Sans
      metrics. They are NOT aliases of the --lh-* rung above them: Bricolage
      sets shorter than Syne did, so its display leading opens from 0.93 to
@@ -703,7 +665,6 @@
      --radius-lg is 10px. Reach for --radius-card and --radius-pill in new
      work; leave the sm/md/lg/xl ramp to the surfaces already built on it. */
   --radius-card:    10px;   /* iOS: 10 on artwork and cells (was the console's 3px cut edge) */
-  --radius-trigger: 26px;
   /* The radius the shared card/row/stat primitives actually use, named so a
      theme can retune every card in both shells at once instead of a theme
      having to restate a class list it does not own. The primitives carried a
@@ -732,14 +693,8 @@
   --shadow-logo:   0 0 22px rgba(var(--accent-rgb),.42);
 
   /* ── Focus ring ──────────────────────────────────────────────────── */
-  --focus-border: var(--accent);
-  --focus-ring:   0 0 0 3px rgba(255,80,41,.16);
 
   /* ── Layout rails ────────────────────────────────────────────────── */
-  --queue-w:       300px;
-  --player-h:      64px;
-  --top-h:         42px;
-  --container-max: 1100px;
 
   /* ── Z-index ─────────────────────────────────────────────────────── */
   --z-base:    1;
@@ -776,8 +731,6 @@
   --duration-medium:  320ms;
   --duration-slow:    480ms;
   --duration-xslow:   700ms;
-  --transition-transform: transform var(--duration-default) var(--ease-spring);
-  --transition-all:       all var(--duration-default) var(--ease-default);
   --sheet-enter-dur: 320ms;
   --sheet-exit-dur:  120ms;
 }
@@ -1450,7 +1403,6 @@
   }
 }
 
-
 /* The default `body` rule hardcodes a dark gradient (see far below), which
    otherwise overrides the light --bg token and leaves light mode rendering
    dark-on-light. Mirror that rule's structure — two soft brand-tinted
@@ -1551,18 +1503,9 @@ body:has(.site-dock) .site-shell {
 }
 
 /* Pulse: skeleton loaders and live-dot opacity cycling. */
-@keyframes ihype-pulse {
-  0%,
-100% { opacity: 1; }
-  50% { opacity: .4; }
-}
+
 /* Pop: the signature hype bounce — scale 1 → 1.18 → 0.95 → 1 over 350ms. */
-@keyframes ihype-pop {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.18); }
-  70%  { transform: scale(0.95); }
-  100% { transform: scale(1); }
-}
+
 .site-background {
   position: fixed;
   inset: 0;
@@ -1652,24 +1595,9 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 }
 
 /* Vinyl spin + album art breathing animations */
-@keyframes vinyl-spin {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(360deg); }
-}
-@keyframes album-breathe {
-  0%,
-100% { box-shadow: var(--album-glow, 0 4px 24px rgba(var(--accent-rgb),.35)), 0 0 0 1px var(--hair-80); }
-  50%       { box-shadow: var(--album-glow, 0 4px 36px rgba(var(--accent-rgb),.55)), 0 0 0 1px var(--hair-120); }
-}
+
 /* Passkey nudge slide-in from bottom-right */
-@keyframes nudge-slide-in {
-  from { opacity: 0; transform: translateY(24px) scale(0.96); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-@keyframes orb-drift {
-  0%   { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(30px, 22px) scale(1.07); }
-}
+
 .nav-logo-right { justify-self: end; }
 /* stats */
 /* panels */
@@ -1833,8 +1761,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
 .section { padding: 1.5rem 0 3rem; }
 .section h2 { margin: 0 0 0.75rem; font-size: 1.65rem; }
 .kicker { margin-bottom: 1rem; }
-@keyframes show-card-live-pulse { 0%,
-100% { box-shadow: 0 0 0 0 rgba(255,60,60,0); } 50% { box-shadow: 0 0 0 6px rgba(255,60,60,0.22); } }
+
 .meta { font-size: 0.95rem; }
 .cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
 
@@ -2955,20 +2882,7 @@ body:has(#wt-wrap) .site-shell > main {
     flex-direction: column;
   }
 }
-@keyframes map-marker-pulse {
-  0% {
-    transform: scale(0.76);
-    opacity: 0.75;
-  }
-  70% {
-    transform: scale(1.18);
-    opacity: 0;
-  }
-  100% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
-}
+
 .ticketing-panel {
   padding: 1.5rem;
 }
@@ -3090,25 +3004,7 @@ body:has(#wt-wrap) .site-shell > main {
 }
 .field textarea { resize: vertical; min-height: 120px; }
 .request-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
-@keyframes fan-companion-bob {
-  0%,
-100% { transform: translate3d(var(--fan-companion-offset-x), calc(var(--fan-companion-offset-y) + 0px), 0) rotate(var(--fan-companion-tilt)) scale(var(--fan-companion-pulse)); }
-  50% { transform: translate3d(var(--fan-companion-offset-x), calc(var(--fan-companion-offset-y) - 8px), 0) rotate(calc(var(--fan-companion-tilt) * 0.6)) scale(calc(var(--fan-companion-pulse) + 0.02)); }
-}
-@keyframes fan-companion-orbit {
-  from { transform: translate(-50%, -50%) rotate(0deg); }
-  to { transform: translate(-50%, -50%) rotate(360deg); }
-}
-@keyframes fan-companion-sprite {
-  0%,
-24.9% { background-position: 0% 0%; }
-  25%,
-49.9% { background-position: 100% 0%; }
-  50%,
-74.9% { background-position: 0% 100%; }
-  75%,
-100% { background-position: 100% 100%; }
-}
+
 .section-tab {
   padding: 0.7rem 1rem;
   border-radius: 999px;
@@ -3910,14 +3806,6 @@ html.high-contrast p {
 
 /* ─── Home Page ─────────────────────────────────────────────────── */
 
-.home-page {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
-  padding-top: 2rem;
-  padding-bottom: 4rem;
-}
-
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
@@ -3941,10 +3829,6 @@ html.high-contrast p {
 .hype-pop { animation: hype-pop 0.35s ease; }
 
 /* ── News ticker ─────────────────────────────────────────────── */
-@keyframes news-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
 
 /* Main content — scoped to wb-root to avoid interfering with wb-wrap grid */
 
@@ -4546,10 +4430,6 @@ textarea { min-height: 44px; }
 }
 
 /* ── Skeleton shimmer (spec-compliant variant) ────────────────────── */
-@keyframes skeleton-shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 
 *:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
 
@@ -4572,71 +4452,10 @@ textarea {
 }
 
 /* ── iHYPE animation keyframes ── */
-@keyframes hype-burst-0 {
-  0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
-  100% { transform: translate(-50%,-120%) scale(1); opacity: 0; }
-}
-@keyframes hype-burst-1 {
-  0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
-  100% { transform: translate(60%,-80%) scale(1); opacity: 0; }
-}
-@keyframes hype-burst-2 {
-  0%   { transform: translate(-50%,-50%) scale(0); opacity: 1; }
-  100% { transform: translate(-160%,-80%) scale(1); opacity: 0; }
-}
-@keyframes ghost-pulse {
-  from { opacity: 0.3; transform: scale(0.95); }
-  to   { opacity: 0.7; transform: scale(1.05); }
-}
-@keyframes hype-wave {
-  0%   { box-shadow: 0 0 0 0 rgba(var(--accent-rgb),.6); opacity: 1; }
-  100% { box-shadow: 0 0 0 24px rgba(var(--accent-rgb),0); opacity: 0; }
-}
 
 /* ── Builder-published page enhancements ─────────────────────────────────── */
-@keyframes builder-hype-float {
-  0%,
-100% { transform: translateY(0) scale(1); }
-  50%       { transform: translateY(-3px) scale(1.04); }
-}
-@keyframes builder-accent-glow {
-  0%,
-100% { box-shadow: 0 0 0 0 rgba(var(--builder-accent-rgb, 35,208,216), 0); }
-  50%       { box-shadow: 0 0 18px 4px rgba(var(--builder-accent-rgb, 35,208,216), 0.28); }
-}
 
 /* ── Shared utility cards (used by search, notifications, settings, discover, events) ── */
-.ihype-card {
-  border: 1px solid var(--hair-70);
-  border-radius: 10px;
-  background: var(--bg-2, var(--bg-2));
-}
-.ihype-card:hover {
-  border-color: var(--hair-160);
-  background: var(--bg-3, var(--bg-3));
-}
-a .ihype-card,
-a.ihype-card {
-  cursor: pointer;
-}
-
-.ihype-input {
-  width: 100%;
-  padding: 11px 14px;
-  border: 1px solid var(--hair-100);
-  border-radius: 8px;
-  background: var(--hair-40);
-  color: var(--ink);
-  font-size: 0.9375rem;
-  font-family: var(--font-body, 'Work Sans', sans-serif);
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
-}
-.ihype-input:focus {
-  border-color: rgba(var(--accent-rgb),.5);
-  box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.08);
-}
 
 .ihype-btn-primary {
   padding: 13px;
@@ -4701,29 +4520,11 @@ a.ihype-card {
 }
 
 /* Staggered list children — add .ihype-list to any ul/ol/flex column */
-@keyframes list-item-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+
 @media (prefers-reduced-motion: reduce) {
 }
 
 /* Enhanced card hover — deeper lift + accent glow */
-.ihype-card {
-  box-shadow: 0 0 0 0 rgba(var(--accent-rgb),0);
-  transition: border-color 200ms ease, background 200ms ease,
-              transform 200ms cubic-bezier(0.22, 1, 0.36, 1),
-              box-shadow 200ms ease;
-}
-.ihype-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,0,0,.28), 0 0 0 1px rgba(var(--accent-rgb),.08);
-}
-.ihype-card:active {
-  transform: translateY(0);
-  box-shadow: none;
-  transition-duration: 80ms;
-}
 
 /* Button press feedback */
 .ihype-btn-primary,
@@ -4745,46 +4546,19 @@ a.ihype-card {
 }
 
 /* Eyebrow / section header slide-in */
-@keyframes eyebrow-enter {
-  from { opacity: 0; transform: translateX(-6px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
 
 /* Hero headline scale-in */
-@keyframes hero-enter {
-  from { opacity: 0; transform: scale(0.97) translateY(6px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
+
 @media (prefers-reduced-motion: reduce) {
 }
 
 /* Notification / toast slide up */
-@keyframes toast-enter {
-  from { opacity: 0; transform: translateY(12px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
 
 /* Input focus ring pulse */
-.ihype-input:focus {
-  animation: input-focus-ring 0.25s ease both;
-}
-@keyframes input-focus-ring {
-  0%   { box-shadow: 0 0 0 0 rgba(var(--accent-rgb),.4); }
-  100% { box-shadow: 0 0 0 3px rgba(var(--accent-rgb),.15); }
-}
 
 /* Skeleton shimmer (already exists in some places, unify here) */
-@keyframes ihype-shimmer {
-  0%   { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
 
 /* Stat / number count-up feel — subtle pop when value changes */
-@keyframes stat-pop {
-  0%   { transform: scale(1); }
-  40%  { transform: scale(1.06); }
-  100% { transform: scale(1); }
-}
 
 /* Nav link animated underline. `.nav-menu-trigger` is the Menu <button>; it
    gets the same treatment as the links beside it, which an `a`-only selector
@@ -4980,10 +4754,6 @@ h2 {
 .adaptive-site-header.is-scrolled .search-bar-desktop { max-width: 0; opacity: 0; overflow: hidden; pointer-events: none; }
 .adaptive-site-header-spacer { flex: 1 1 auto; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
-@keyframes scene-landing-drift {
-  from { transform: scale(1.015) translate3d(0,0,0); }
-  to { transform: scale(1.04) translate3d(-.45%,.35%,0); }
-}
 
 @media (max-width: 900px) {
 }
@@ -5318,7 +5088,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .fan-entry-logo { transition: none; }
 }
 
-
 .site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
 .site-dock-l { min-width: min(30vw,340px); }
 .site-dock-art { width: 58px; height: 58px; border-radius: 10px; transition: width .3s ease, height .3s ease; }
@@ -5436,15 +5205,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   height: 100%;
   border-radius: 16px;
   object-fit: cover;
-}
-@keyframes app-menu-demo-pulse {
-  0%,
-100% { transform: scale(1); }
-  50% { transform: scale(1.07); box-shadow: 0 0 0 7px rgba(var(--role-venue-rgb),.1),0 0 30px rgba(var(--role-venue-rgb),.25); }
-}
-@keyframes app-menu-demo-label {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 .adaptive-site-header .app-menu-logo + * { min-width: 0; }
@@ -5852,7 +5612,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .notifications-tab { min-width: 44px; min-height: 44px; }   /* "All" measured 22×40 */
 .rk-footer-inner a { min-width: 44px; }                      /* "Info" measured 28 wide once it was 44 tall */
-
 
 /* THE PUBLIC SHOW PAGE'S REPEATED ROLES (`/shows/[slug]`, the URL this product
    exists to share). Four shapes written inline twelve times, the panel five
