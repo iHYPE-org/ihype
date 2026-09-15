@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
+import { maskComments } from '../../../scripts/lib/mask-comments.mjs';
 import {
   CONNECT_PAYOUT_CATEGORIES,
   PAYOUT_HOLD_DAYS,
@@ -103,6 +104,39 @@ describe('the promise and the payout cron read the same conditions', () => {
     expect(cron).toMatch(/profileId:\s*\{\s*not:\s*null\s*\}/);
     expect(cron).toMatch(/status:\s*'ENDED'/);
     expect(cron).toContain('stripeConnectAccountId');
+  });
+
+  it('the cron pays on FINISHED onboarding, not on an account id existing', () => {
+    /* `connect/onboard` writes `stripeConnectAccountId` the moment Stripe
+       creates the account, before the member has completed a screen of the
+       hosted flow — so an id exists for everyone who ever pressed the button
+       and wandered off. Paying on it sent a real transfer to an account with
+       no active transfers capability, every day, for ever, and emailed the
+       administrators each time. `describePayableRelease` judges the same
+       flag, so what a member is told and what the run pays agree. */
+    /* MASKED, because the comment explaining this gate names the flag — and a
+       scanner that reads its own documentation is the failure this repository
+       has now shipped four times. The first draft of this assertion passed
+       with the gate deleted, on the strength of the prose above it. */
+    const code = maskComments(cron);
+    expect(code).toMatch(/if\s*\(!connectAccountId\s*\|\|\s*!entry\.profile\?\.stripeConnectOnboarded\)/);
+    /* And the skipped entry is still REPORTED. Gating in the `where` instead
+       would have been the tidier-looking fix and would have made these
+       payables invisible again — which is the whole of what the block after
+       the loop was written to fix. They have to be selected to be counted. */
+    const gate = code.search(/if\s*\(!connectAccountId\s*\|\|/);
+    expect(code.slice(gate, gate + 400)).toContain('noDestination.push');
+  });
+
+  it('the cron orders its batch, so the cap is a queue and not an arbitrary 200', () => {
+    /* `take` without `orderBy` lets Postgres return any 200 of the matching
+       rows, and it need not return the same 200 twice — so past the cap an
+       entry can be passed over run after run while every run reports
+       success. */
+    const code = maskComments(cron);
+    const take = code.indexOf('take: 200');
+    expect(take).toBeGreaterThan(0);
+    expect(code.slice(0, take)).toMatch(/orderBy:\s*\{\s*createdAt:\s*'asc'\s*\}/);
   });
 
   it('only the three transferable categories are connect categories', () => {

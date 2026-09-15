@@ -110,11 +110,15 @@ export default async function PayoutsHubPage({
       : Promise.resolve(0),
   ]);
 
-  /* Which of the member's own profiles can actually receive a transfer. The
-     payout cron skips an entry whose profile has no Connect account, silently,
-     on every run — so a pending row for one of those is not "released once the
-     show ends", it is waiting on the member. */
-  const payoutReady = new Set(profiles.filter((p) => p.stripeConnectAccountId).map((p) => p.id));
+  /* Which of the member's own profiles can actually receive a transfer, and
+     that is `stripeConnectOnboarded` — NOT the presence of an account id.
+     `connect/onboard` writes the id the moment Stripe creates the account,
+     before the member has been through one screen of the hosted flow, so an
+     id exists for everyone who has ever pressed the button and wandered off.
+     Reading the id told exactly those members their payout was on its way
+     while the payout run skipped them on every pass. The cron gates on the
+     same flag, so the sentence here and the set it pays cannot disagree. */
+  const payoutReady = new Set(profiles.filter((p) => p.stripeConnectOnboarded).map((p) => p.id));
   const pendingRows = pending.map((entry) => ({
     ...entry,
     hasPayoutDestination: entry.profileId ? payoutReady.has(entry.profileId) : false,

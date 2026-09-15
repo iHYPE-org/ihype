@@ -40,26 +40,70 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
       show: { status: 'ENDED', startsAt: { lte: releasableAfter } },
     },
     include: {
-      profile: { select: { stripeConnectAccountId: true, owner: { select: { email: true } } } },
+      profile: { select: { stripeConnectAccountId: true, stripeConnectOnboarded: true, owner: { select: { email: true } } } },
       show: { select: { title: true } },
     },
+    /* OLDEST FIRST, because `take` without `orderBy` is not a queue.
+       Postgres may return any 200 of the matching rows and need not return
+       the same 200 twice, so past the cap an entry could be passed over run
+       after run while every run reported success — the money is owed, the
+       row is due, and nothing is stuck enough for anything to notice.
+       Ordered, the cap is a batch size: the oldest debts clear first and the
+       tail drains over successive runs. */
+    orderBy: { createdAt: 'asc' },
     take: 200,
   });
 
   let released = 0;
   let skipped = 0;
   /* WHO was skipped, so the log names them. See the block after the loop. */
-  const noDestination: { entryId: string; profileId: string | null; payeeLabel: string; amountCents: number }[] = [];
+  const noDestination: {
+    entryId: string;
+    profileId: string | null;
+    payeeLabel: string;
+    amountCents: number;
+    /** 'none' = never started Connect. 'unfinished' = has an account, onboarding not complete. */
+    reason: 'none' | 'unfinished';
+  }[] = [];
 
   for (const entry of entries) {
     const connectAccountId = entry.profile?.stripeConnectAccountId;
-    if (!connectAccountId) {
+    /* AN ACCOUNT ID IS NOT A PAYOUT DESTINATION, and the gap between them is
+       the ordinary state of every member mid-signup. `connect/onboard` writes
+       `stripeConnectAccountId` the moment Stripe creates the account — BEFORE
+       the member has seen one screen of the hosted flow — so an id exists for
+       everyone who has ever pressed the button and wandered off. Paying on
+       the id alone sent a real transfer to an account with no active
+       `stripe_transfers` capability: Stripe refuses, the catch below emails
+       the administrators, and it repeats every day, for ever, about somebody
+       doing nothing wrong.
+
+       The connect-health cron says exactly this about its OWN alert — that
+       "started onboarding and has not finished is the ordinary condition of
+       every member mid-signup", and that including it "is how an alert
+       becomes something nobody reads" — and then this file paid on the looser
+       test. Two files, one state, opposite conclusions.
+
+       `stripeConnectOnboarded` is the flag that means a transfer can land:
+       `connect/return` sets it from the real capability check, the
+       connect-health cron promotes a stale one every six hours, and the
+       webhook backstops it — so a flag that is false while the account is
+       genuinely ready converges within hours rather than stranding anyone.
+       `describePayableRelease` reads the same thing, so what the member is
+       told and what this run pays cannot disagree.
+
+       THE GATE IS HERE AND NOT IN THE `where`, deliberately. Filtering these
+       entries out of the query would make them invisible again — which is the
+       whole of what the block after this loop was written to fix. They have
+       to be SELECTED to be REPORTED. */
+    if (!connectAccountId || !entry.profile?.stripeConnectOnboarded) {
       skipped++;
       noDestination.push({
         entryId: entry.id,
         profileId: entry.profileId,
         payeeLabel: entry.payeeLabel,
         amountCents: entry.amountCents,
+        reason: connectAccountId ? 'unfinished' : 'none',
       });
       continue;
     }
@@ -130,12 +174,23 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
    * daily mail saying the same thing is what `workbench-digest.ts` exists to
    * avoid. */
   if (noDestination.length > 0) {
-    const payees = [...new Set(noDestination.map((e) => e.profileId ?? e.payeeLabel))];
+    /* THE TWO REASONS ARE DIFFERENT PROBLEMS AND TAKE DIFFERENT ACTION, so
+       the line names both rather than blending them. A payee who never
+       started Connect needs to be asked to; a payee who started and did not
+       finish needs the shorter nudge, and will clear themselves the moment
+       they do — the connect-health cron promotes the flag within six hours of
+       the capability going active. One line collapsing them says "these
+       people cannot be paid" about a group that is half nearly-there. */
     const owedCents = noDestination.reduce((sum, e) => sum + e.amountCents, 0);
+    const describe = (reason: 'none' | 'unfinished') => {
+      const payees = [...new Set(noDestination.filter((e) => e.reason === reason).map((e) => e.profileId ?? e.payeeLabel))];
+      return payees.length === 0 ? null : `${payees.length} ${reason === 'none' ? 'with no Connect account' : 'still onboarding'} (${payees.slice(0, 10).join(', ')})`;
+    };
+    const parts = [describe('none'), describe('unfinished')].filter(Boolean);
     log.error(
       '[show-payouts]',
       null,
-      `${noDestination.length} payable(s) worth ${owedCents}c could not be paid: no Stripe Connect account on ${payees.length} payee(s) — ${payees.slice(0, 10).join(', ')}`,
+      `${noDestination.length} payable(s) worth ${owedCents}c could not be paid — ${parts.join('; ')}`,
     );
   }
 

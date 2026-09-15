@@ -4,8 +4,13 @@
  * `triggerShowPayouts()` (src/lib/show-payouts.ts) is the only thing that
  * ever moves a payable to RELEASED, and it pays an entry only when FIVE
  * conditions hold at once: the category is one a Stripe transfer can carry,
- * the entry names a profile, that profile has a Connect account, the show is
- * ENDED, and the show started at least PAYOUT_HOLD_DAYS ago.
+ * the entry names a profile, that profile has FINISHED Connect onboarding,
+ * the show is ENDED, and the show started at least PAYOUT_HOLD_DAYS ago.
+ *
+ * That third one is `stripeConnectOnboarded`, NOT the presence of a
+ * `stripeConnectAccountId`: the id is written when Stripe creates the
+ * account, before the member has completed a single screen of the hosted
+ * flow, so an id alone means "started" and never "payable".
  *
  * Every member-facing surface that says anything about timing used to state
  * one sentence unconditionally -- "Released automatically once the show ends"
@@ -74,7 +79,8 @@ export function isConnectPayoutCategory(category: string): category is ConnectPa
 export type PayableReleaseState =
   /** A tax entry. Nothing automated will ever release it; a human remits. */
   | { kind: 'manual-remittance' }
-  /** The payee has no Stripe Connect account, so every run skips this entry. */
+  /** The payee has no FINISHED Connect account — never started, or started and
+   *  not completed — so every run skips this entry. */
   | { kind: 'no-destination' }
   /** The show has not ended yet. */
   | { kind: 'awaiting-show' }
@@ -105,7 +111,8 @@ export function payoutHoldEndsAt(startsAt: Date): Date {
 export function describePayableRelease(
   entry: {
     category: string;
-    /** Does the payee profile have a Stripe Connect account id? */
+    /** Has the payee profile FINISHED Connect onboarding (`stripeConnectOnboarded`)?
+     *  NOT "does an account id exist" — that is true from the first click. */
     hasPayoutDestination: boolean;
     show: { status: string; startsAt: Date } | null;
   },
