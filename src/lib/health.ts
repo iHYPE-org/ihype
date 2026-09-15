@@ -19,6 +19,7 @@ import { readSigningSecrets } from '@/lib/signing-secrets';
 import { orderSigningSecrets } from '@/lib/signing-secret-order';
 import { isNativePushConfigured } from '@/lib/native-push';
 import { buildAlphaBlockers, evaluateRestoreDrill, parseAutomatedDrillAt } from '@/lib/alpha-readiness';
+import { getUnpayableBalance } from '@/lib/unpayable-balance';
 import { kvGet } from '@/lib/kv';
 
 export async function getHealthSnapshot() {
@@ -140,6 +141,26 @@ export async function getHealthSnapshot() {
           : null;
       })
       .catch(() => null);
+    /* WHETHER ANYONE CAN BE PAID, beside the figures for whether there is
+       anything to listen to. `buildAlphaBlockers` had no payout condition at
+       all — not blocking, not reported — on a product whose charter promise is
+       that 70% of a ticket reaches the act, so the readiness payload could
+       read fully ready with every payee unreachable.
+
+       REPORTED, NOT A BLOCKER, and `alphaReadiness.content` is the precedent
+       rather than an analogy: the playable-track count sits there for exactly
+       this reason after the owner ruled the doors do not wait for uploads. A
+       blocking condition here would be red from the first day at an
+       invite-only alpha where no venue has finished onboarding — a reason
+       nobody can clear today — and this repository has twice recorded what a
+       permanently-red check does to the instruments behind it.
+
+       So `buildAlphaBlockers` is deliberately NOT given this input. */
+    const payouts = await getUnpayableBalance().catch(() => ({
+      unpayableCents: null,
+      unpayablePayees: null,
+      manualRemittanceCents: null,
+    }));
     const restoreDrill = evaluateRestoreDrill(readRuntimeEnv('RESTORE_DRILL_VERIFIED_AT'), Date.now(), automatedDrillAt);
     const alphaBlockers = buildAlphaBlockers({
       administrators: administratorCount,
@@ -237,6 +258,10 @@ export async function getHealthSnapshot() {
           discoverableVenues: discoverableVenueCount,
           upcomingEvents: upcomingEventCount,
         },
+        /* Reported like `content`, and never folded into `blockers`. A null
+           is an unread figure and renders as a dash; a 0 is the claim that
+           every payee can be paid, which this must never make by accident. */
+        payouts,
       },
       warnings: process.env.NODE_ENV === 'production'
         ? [
