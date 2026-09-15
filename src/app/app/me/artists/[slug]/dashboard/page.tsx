@@ -127,7 +127,14 @@ export default async function ArtistDashboardPage({ params }: { params: Promise<
         <div className="ad-stat-card">
           <div className="ad-stat-label">{t('artistsSlugDashboardPage.nextPayoutLabel', 'Next Payout')}</div>
           <div className="ad-stat-val">{dashStats.nextPayoutAt ? fmtDate(dashStats.nextPayoutAt, locale) : '—'}</div>
-          <div className="ad-stat-sub">{dashStats.nextPayoutAt ? t('artistsSlugDashboardPage.releasedAfterShow', 'Released after show ends') : t('artistsSlugDashboardPage.noPendingPayout', 'No pending payout')}</div>
+          {/* "Released after show ends" was wrong twice: the hold runs ten
+              days past the start, and a show that has not ended yet has no
+              release date at all — only an earliest one. */}
+          <div className="ad-stat-sub">{!dashStats.nextPayoutAt
+            ? t('artistsSlugDashboardPage.noPendingPayout', 'No pending payout')
+            : dashStats.nextPayoutAwaitingShow
+              ? t('artistsSlugDashboardPage.releaseEarliest', 'Earliest — the show has to end first')
+              : t('artistsSlugDashboardPage.releaseAfterHold', 'Once the dispute window closes')}</div>
         </div>
       </div>
 

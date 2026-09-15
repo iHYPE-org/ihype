@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { PasskeyManager } from '@/components/AuthScreens';
 import { useI18n } from '@/components/I18nProvider';
 import { openExternalUrl } from '@/lib/open-external';
+import { PAYOUT_HOLD_DAYS } from '@/lib/payout-release';
 
 interface Prefs {
   newShows: boolean;
@@ -636,10 +637,22 @@ export function MmmSettings() {
                         ? t('settingsPage.payoutConnected', 'Payout method connected')
                         : t('settingsPage.noPayoutDestination', 'No payout destination connected yet')}
                   </div>
+                  {/* TWO THINGS WERE WRONG HERE AT ONCE (2026-09-15).
+                      "Within 2 business days of a show closing" was the
+                      behaviour until PAYOUT_HOLD_DAYS was introduced on
+                      2026-08-27 so a card dispute arriving the next morning
+                      has something left to reverse; the sentence outlived it.
+                      And it printed the same promise to a member with NO
+                      payout destination, whom the cron skips on every run,
+                      silently, for ever. The key is renamed rather than
+                      edited, so every locale falls back to correct English. */}
                   <div className="settings-row-detail">
-                    {isCreator
-                      ? t('settingsPage.payoutsLandDetail', 'Payouts land within 2 business days of a show closing')
-                      : t('settingsPage.payoutPromoterDetail', 'Receives the 10% promoter share your HYPE link earns')}
+                    {!isCreator
+                      ? t('settingsPage.payoutPromoterDetail', 'Receives the 10% promoter share your HYPE link earns')
+                      : payout?.connected
+                        ? t('settingsPage.payoutsLandHold', 'Released about {days} days after a show ends, once the dispute window closes')
+                            .replace('{days}', String(PAYOUT_HOLD_DAYS))
+                        : t('settingsPage.payoutsNeedDestination', 'Connect an account to be paid — your share is held until you do, and nothing is released without one')}
                   </div>
                   <div className="settings-split-mini">
                     {isCreator ? (

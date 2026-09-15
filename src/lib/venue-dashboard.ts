@@ -1,4 +1,5 @@
 import { formatDate } from '@/lib/format-locale';
+import { payoutHoldEndsAt } from '@/lib/payout-release';
 import type { Locale } from '@/lib/i18n/locales';
 import { db } from '@/lib/db';
 import { getProfileInsights } from '@/lib/profile-insights';
@@ -118,23 +119,37 @@ export async function getVenueDashboardData(profileId: string, locale: Locale): 
     }
   }
 
-  // A PENDING entry for a show that has already ENDED will be released on
-  // the next daily payout cron run; one still tied to a future show only
-  // pays out once that show ends (no fixed date exists for it yet).
+  /* THE COMMENT THIS REPLACES SAID A PENDING ENTRY FOR AN ENDED SHOW IS
+     "released on the next daily payout cron run", AND PROMISED THAT DATE WITH
+     `estimated: false`. `triggerShowPayouts()` also requires the show to have
+     started at least PAYOUT_HOLD_DAYS ago (2026-08-27, so a card dispute
+     arriving the next morning has something left to reverse), so a venue whose
+     show closed last night read a payout date nine days early, flagged as not
+     an estimate. The hold is the arithmetic; `payout-release.ts` owns it and
+     the cron reads the same constant. Still an estimate in the honest sense —
+     the cron also skips a payee with no Connect account — which is why the
+     ENDED branch no longer claims otherwise. */
   const endedPending = pendingPayoutEntries.filter((e) => e.show.status === 'ENDED');
   const futurePending = pendingPayoutEntries.filter((e) => e.show.status !== 'ENDED');
 
   let nextPayout: VenueDashboardData['nextPayout'] = null;
   if (endedPending.length > 0) {
     const amountCents = endedPending.reduce((sum, e) => sum + e.amountCents, 0);
+    // The soonest entry whose hold has lifted decides; one still inside it
+    // cannot be paid by the next run however recently the show ended.
+    const releaseAt = endedPending.reduce<Date | null>((min, e) => {
+      const d = payoutHoldEndsAt(e.show.startsAt);
+      return !min || d < min ? d : min;
+    }, null);
+    const dueAt = releaseAt && releaseAt > now ? releaseAt : nextCronRun(now);
     nextPayout = {
-      dateLabel: formatDate(locale, nextCronRun(now), { month: 'short', day: 'numeric' }),
+      dateLabel: formatDate(locale, dueAt, { month: 'short', day: 'numeric' }),
       amountCents,
-      estimated: false,
+      estimated: true,
     };
   } else if (futurePending.length > 0) {
     const soonest = futurePending.reduce<Date | null>((min, e) => {
-      const d = e.show.endsAt ?? e.show.startsAt;
+      const d = payoutHoldEndsAt(e.show.startsAt);
       return !min || d < min ? d : min;
     }, null);
     if (soonest) {
