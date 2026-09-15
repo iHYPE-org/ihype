@@ -224,6 +224,35 @@ export function scoreVenueDemand(requests: readonly VenueDemandRequest[], now: D
   );
 }
 
+/**
+ * Below this many DISTINCT fans, a demand entry's figures are not shown to a
+ * party the ask was not addressed to.
+ *
+ * `describeDemand` renders "1 fan asked · 1 nearby · this week", and on the
+ * venue analytics pane that line describes asks made to OTHER venues
+ * (`venueProfileId: { not: profile.id }`) by fans the proximity rule calls
+ * nearby. One person, within 40 km, this week, for a named act — shown to a
+ * venue that was never part of that conversation. In a scene the size of this
+ * one that is plausibly identifying, and the venue learns nothing actionable
+ * from the "1" that it does not learn from "there is nearby demand".
+ *
+ * NOT applied to the demand radar or the booking inbox: those are asks
+ * addressed TO that venue, and a fan naming a room is the whole feature.
+ * Nor to the artist pane, where the artist is the ask's subject and the
+ * grouping is by venue rather than by fan.
+ *
+ * Suppressing the ROW instead would empty the section at alpha scale and read
+ * as a broken feature; blurring the figures keeps the signal a venue books on
+ * (which acts have demand nearby) and drops the precision that names someone.
+ * Same floor as `profile-insights.ts` and the Trust & Safety report.
+ */
+export const DEMAND_K_ANON_FLOOR = 5;
+
+/** Whether an entry's exact figures may be shown to a third party. */
+export function demandFiguresArePublishable(fans: number): boolean {
+  return fans >= DEMAND_K_ANON_FLOOR;
+}
+
 /** The reason chip: "3 fans asked · 2 nearby · this week". Frequency first. */
 export function describeDemand(entry: Pick<DemandEntry, 'fans' | 'nearby' | 'latestAt'>, now: Date = new Date()): string {
   const parts = [entry.fans === 1 ? '1 fan asked' : `${entry.fans} fans asked`];

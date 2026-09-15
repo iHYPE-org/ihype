@@ -9,7 +9,7 @@ import { getVenueAnalyticsData, type VenueAnalyticsRange } from '@/lib/venue-ana
 import { formatCurrencyFromCents } from '@/lib/ticketing';
 import { getServerI18n } from '@/lib/i18n/server';
 import { readList } from '@/lib/read-list';
-import { describeDemand, proximityWeight, scoreFanDemand, type DemandVenue } from '@/lib/fan-demand';
+import { demandFiguresArePublishable, describeDemand, proximityWeight, scoreFanDemand, type DemandVenue } from '@/lib/fan-demand';
 
 export const dynamic = 'force-dynamic';
 
@@ -214,9 +214,13 @@ export default async function VenueAnalyticsPage({
               <Link className="vaa-event-row" href={`/app/artists/${artist.slug}`} key={entry.key}>
                 <div>
                   <div className="vaa-event-title">{artist.name}</div>
-                  <div className="vaa-event-meta">{describeDemand(entry)} · {t('venuesSlugAnalyticsPage.askedElsewhere', 'asked of other venues')}</div>
+                  <div className="vaa-event-meta">{demandFiguresArePublishable(entry.fans)
+                    ? `${describeDemand(entry)} · ${t('venuesSlugAnalyticsPage.askedElsewhere', 'asked of other venues')}`
+                    : t('venuesSlugAnalyticsPage.askedElsewhereQuiet', 'Nearby demand · asked of other venues')}</div>
                 </div>
-                <span className="vaa-event-gross">{formatNumber(locale, entry.nearby)} {entry.nearby === 1 ? t('venuesSlugAnalyticsPage.nearbyFan', 'nearby fan') : t('venuesSlugAnalyticsPage.nearbyFans', 'nearby fans')}</span>
+                <span className="vaa-event-gross">{demandFiguresArePublishable(entry.fans)
+                  ? `${formatNumber(locale, entry.nearby)} ${entry.nearby === 1 ? t('venuesSlugAnalyticsPage.nearbyFan', 'nearby fan') : t('venuesSlugAnalyticsPage.nearbyFans', 'nearby fans')}`
+                  : t('venuesSlugAnalyticsPage.nearbyFansQuiet', 'nearby')}</span>
               </Link>
             );
           })}
