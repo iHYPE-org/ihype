@@ -673,6 +673,89 @@ describe('workflow expressions', () => {
 });
 
 /**
+ * A VARIABLE THAT DISABLES A SAFETY CHECK IS SCOPED TO THE STEP THAT NEEDS IT.
+ *
+ * #991 put `STRIPE_ALLOW_TEST_MODE_REHEARSAL` — the hatch that lets a
+ * production build accept an `sk_test_` key — in the nightly's JOB env, which
+ * is every step's environment, `npm test` included. `payments.test.ts`'s
+ * "rejects Stripe test credentials when production ticketing is enabled" sets
+ * NODE_ENV=production and an `sk_test_` key and asserts `ready === false`; with
+ * the hatch ambient that assertion inverts. **The guard for the exact rule the
+ * hatch bends was switched off by the hatch**, and two nightly runs
+ * (34919046002, both attempts) died at step 12 in ~28s having never reached the
+ * walk.
+ *
+ * #992 moved it to the walk step and wrote the rule into a YAML comment. Its
+ * own commit message and DESIGN_SYNC row 470 then said "the YAML asserts the
+ * job env does NOT carry it and the walk step does" — and **nothing did**;
+ * the only related check was `lint-source.mjs` refusing the variable in
+ * `wrangler.toml`, which is a different rule (never ship it to the Worker).
+ * Found 2026-09-15 by looking for the named guard and not finding it. THIS is
+ * that guard; a comment is not coverage, which is the first thing this file
+ * says about itself.
+ *
+ * The companion fix is in `payments.test.ts`, which now pins the variable
+ * rather than inheriting it — that one also covers a developer who has the
+ * hatch exported in their own shell, which no YAML check can reach. Both are
+ * kept: this one protects the RULE, that one protects the SUITE.
+ */
+describe('a safety-check escape hatch never reaches a whole job', () => {
+  /* Variables whose only effect is to make a check pass that would otherwise
+     fail. Add to this list whenever one is introduced — the test is not "is
+     this variable set", it is "can it reach a step that asserts about it". */
+  const HATCHES = ['STRIPE_ALLOW_TEST_MODE_REHEARSAL'];
+
+  /** The `env:` block belonging to a job (indent 4), not to a step (deeper). */
+  function jobLevelEnv(yaml: string): string {
+    const lines = yaml.split('\n');
+    const out: string[] = [];
+    let inBlock = false;
+    for (const line of lines) {
+      if (/^ {4}env:\s*$/.test(line)) { inBlock = true; continue; }
+      if (!inBlock) continue;
+      if (line.trim() === '' || line.trim().startsWith('#')) continue;
+      const indent = line.length - line.trimStart().length;
+      if (indent <= 4) { inBlock = false; continue; }
+      out.push(line);
+    }
+    return out.join('\n');
+  }
+
+  const dir = '.github/workflows';
+  const files = readdirSync(dir).filter((name) => /\.ya?ml$/.test(name));
+
+  it('scans the workflows it claims to — a zero over no files is not a pass', () => {
+    expect(files.length, 'no workflow files found; this guard is measuring nothing').toBeGreaterThan(3);
+  });
+
+  it('no workflow puts one in a job-level env, where `npm test` would inherit it', () => {
+    const offenders: string[] = [];
+    for (const name of files) {
+      const env = jobLevelEnv(readFileSync(`${dir}/${name}`, 'utf8'));
+      for (const hatch of HATCHES) if (env.includes(hatch)) offenders.push(`${dir}/${name}: ${hatch}`);
+    }
+    expect(
+      offenders,
+      'a job-level env reaches every step, including the unit suite that asserts the check this variable turns off. '
+      + `Scope it to the one step that needs it: ${offenders.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('the nightly still hands the hatch to the walk — the rule is scoping, not removal', () => {
+    /* Without it the walk serves a production build, which bakes in
+       NODE_ENV=production, and every money item answers 503 — four journeys
+       reading BROKEN over a product that works (DESIGN_SYNC row 469). The
+       failure to fear here is a later edit deleting the variable to satisfy
+       the guard above, which would be green and wrong. */
+    const yaml = readFileSync(`${dir}/nightly.yml`, 'utf8');
+    expect(yaml, 'the nightly must still set the rehearsal hatch somewhere').toContain(
+      'STRIPE_ALLOW_TEST_MODE_REHEARSAL',
+    );
+    expect(jobLevelEnv(yaml)).not.toContain('STRIPE_ALLOW_TEST_MODE_REHEARSAL');
+  });
+});
+
+/**
  * NOBODY GETS A PASSWORD.
  *
  * Owner instruction, 2026-09-04: *"I don't want users to have a password. I
