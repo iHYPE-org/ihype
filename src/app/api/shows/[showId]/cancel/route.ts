@@ -126,12 +126,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
   let refunded = 0;
   let skippedScanned = 0;
   let failed = 0;
+  /* SETTLED AT STRIPE, NOT RECORDED HERE — the one outcome that costs money
+     if an operator acts on it.
+
+     Both branches below call Stripe FIRST and write the row second, which is
+     the only safe order (a row marked refunded over a refund that never
+     happened is worse). But the try used to wrap both halves and the catch
+     counted everything as `failed`, under an email reading "N order refunds
+     failed and need a manual refund in Stripe" — so a refund that SUCCEEDED
+     and then lost the race in `refundCapturedTicketOrder()` (which throws by
+     design) told the operator to refund the buyer a second time, with no
+     `refundedAt`/`stripeRefundId` on the row to show the first one happened.
+
+     These are two states with opposite correct actions and they cannot share
+     a counter: nothing moved wants a manual refund; money already returned
+     wants the ROW reconciled and must never be refunded again. */
+  const settledNotRecorded: { orderId: string; confirmationCode: string; what: 'refunded' | 'released'; reference: string | null }[] = [];
 
   for (const order of orders) {
     if (order.tickets.some((t) => t.status === 'SCANNED')) {
       skippedScanned += 1;
       continue;
     }
+    /* Hoisted out of the try on purpose: the catch cannot tell a refund that
+       never happened from one that did unless it can see this. */
+    let settled: { what: 'refunded' | 'released'; reference: string | null } | null = null;
     try {
       if (order.status === 'CAPTURED') {
         if (!order.stripePaymentIntentId) { failed += 1; continue; }
@@ -161,6 +180,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
           refundableCents,
           { settlementMode: order.settlementMode, settlementAccountId: order.settlementAccountId },
         );
+        settled = { what: 'refunded', reference: refundId };
         await db.$transaction(async (tx) => {
           const ok = await refundCapturedTicketOrder(tx, order.id);
           if (!ok) throw new Error('Order changed state before the refund could be recorded.');
@@ -173,9 +193,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
             // A venue-direct intent exists only on the venue's account.
             order.settlementMode === 'VENUE_DIRECT' ? order.settlementAccountId : null,
           );
+          /* Nothing was ever captured, so there is no money to return twice —
+             but the authorization IS released, and an operator told to "refund
+             in Stripe" would go looking for a charge that does not exist. */
+          settled = { what: 'released', reference: order.stripePaymentIntentId };
         }
         const ok = await db.$transaction((tx) => voidReservedTicketOrder(tx, order.id));
-        if (!ok) { failed += 1; continue; }
+        if (!ok) {
+          if (settled) settledNotRecorded.push({ orderId: order.id, confirmationCode: order.confirmationCode, ...settled });
+          else failed += 1;
+          continue;
+        }
       }
       refunded += 1;
       if (order.buyerUserId) {
@@ -205,8 +233,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
         });
       }
     } catch (error) {
-      log.error('[shows/cancel]', error instanceof Error ? error : { error: String(error) }, `refund failed for order ${order.id}`);
-      failed += 1;
+      if (settled) {
+        log.error('[shows/cancel]', error instanceof Error ? error : { error: String(error) },
+          `order ${order.id} was ${settled.what} at Stripe (${settled.reference}) but the row could not be updated — RECONCILE, DO NOT REFUND AGAIN`);
+        settledNotRecorded.push({ orderId: order.id, confirmationCode: order.confirmationCode, ...settled });
+      } else {
+        log.error('[shows/cancel]', error instanceof Error ? error : { error: String(error) }, `refund failed for order ${order.id}`);
+        failed += 1;
+      }
     }
   }
 
@@ -224,14 +258,36 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
      retry path — the payout cron only runs for ENDED shows, so the money is
      stuck rather than double-paid, and nobody is told. The show still cancels
      (ticketing has to stop), but the admin hears about the stuck orders now
-     rather than from the buyer (security sweep, 2026-09-02). */
+     rather than from the buyer (security sweep, 2026-09-02).
+
+     THAT SENTENCE WAS ONLY TRUE OF HALF THE ORDERS IT COUNTED, and the email
+     it justified was the dangerous part: "N order refunds failed and need a
+     manual refund in Stripe" went out for orders Stripe had ALREADY refunded,
+     because the try wrapped the database write too. "Stuck rather than
+     double-paid" holds only where nothing moved; where the refund landed and
+     the row did not, acting on that instruction pays the buyer twice. The two
+     lists are reported separately now, each with its own action, and the
+     dangerous one is named first — an operator reads the top of an alert. */
+  if (settledNotRecorded.length > 0) {
+    const lines = settledNotRecorded.map((o) => `${o.confirmationCode} (${o.what} at Stripe: ${o.reference ?? 'no reference'})`);
+    await sendOperationalEmail(
+      {
+        to: getAdminAlertRecipients(),
+        subject: `[iHYPE] DO NOT REFUND — ${settledNotRecorded.length} order${settledNotRecorded.length === 1 ? '' : 's'} settled at Stripe but not recorded`,
+        text: `Show ${showId} was cancelled. Stripe has ALREADY settled these ${settledNotRecorded.length} order${settledNotRecorded.length === 1 ? '' : 's'} — the buyer has their money (refunded) or the authorization was released — but the order row could not be updated.\n\nDO NOT REFUND THESE AGAIN. They need the ROW reconciled, not another refund.\n\n${lines.join('\n')}\n\nDetails are in Sentry under [shows/cancel].`,
+        html: `<p>Show <code>${showId}</code> was cancelled. Stripe has <strong>already settled</strong> these ${settledNotRecorded.length} order${settledNotRecorded.length === 1 ? '' : 's'} — the buyer has their money (refunded) or the authorization was released — but the order row could not be updated.</p><p><strong>DO NOT REFUND THESE AGAIN.</strong> They need the row reconciled, not another refund.</p><ul>${lines.map((l) => `<li><code>${l}</code></li>`).join('')}</ul><p>Details are in Sentry under <code>[shows/cancel]</code>.</p>`,
+      },
+      'show-cancel-settled-not-recorded',
+    );
+  }
+
   if (failed > 0) {
     await sendOperationalEmail(
       {
         to: getAdminAlertRecipients(),
         subject: `[iHYPE] ${failed} refund${failed === 1 ? '' : 's'} failed cancelling a show`,
-        text: `Show ${showId} was cancelled but ${failed} order refund${failed === 1 ? '' : 's'} failed and need${failed === 1 ? 's' : ''} a manual refund in Stripe. Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}. Details are in Sentry under [shows/cancel].`,
-        html: `<p>Show <code>${showId}</code> was cancelled but <strong>${failed}</strong> order refund${failed === 1 ? '' : 's'} failed and need${failed === 1 ? 's' : ''} a manual refund in Stripe.</p><p>Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}.</p><p>Details are in Sentry under <code>[shows/cancel]</code>.</p>`,
+        text: `Show ${showId} was cancelled but ${failed} order refund${failed === 1 ? '' : 's'} never reached Stripe and may need${failed === 1 ? 's' : ''} a manual refund. Check Stripe before refunding — nothing here confirmed a charge was reversed. Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}. Details are in Sentry under [shows/cancel].`,
+        html: `<p>Show <code>${showId}</code> was cancelled but <strong>${failed}</strong> order refund${failed === 1 ? '' : 's'} never reached Stripe and may need${failed === 1 ? 's' : ''} a manual refund. Check Stripe before refunding — nothing here confirmed a charge was reversed.</p><p>Refunded: ${refunded}. Skipped (already scanned): ${skippedScanned}.</p><p>Details are in Sentry under <code>[shows/cancel]</code>.</p>`,
       },
       'show-cancel-refund-failures',
     );
@@ -242,6 +298,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ sho
     ordersRefunded: refunded,
     ordersSkippedAlreadyScanned: skippedScanned,
     ordersFailed: failed,
+    /* Named separately in the response too: the confirmation screen must not
+       add these into a "failed" figure the organiser reads as unrefunded. */
+    ordersSettledNotRecorded: settledNotRecorded.length,
     // Echoed back so the confirmation screen shows the stored, normalised
     // text — what ticket holders actually received — rather than the raw
     // textarea contents the browser still has in state.
