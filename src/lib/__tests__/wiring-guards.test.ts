@@ -673,6 +673,49 @@ describe('workflow expressions', () => {
 });
 
 /**
+ * EVERY BROWSER SPEC RUNS SOMEWHERE.
+ *
+ * `scripts/e2e-workerd.mjs`'s `DEFAULT_TEST_SHARDS` is an ALLOWLIST, and its
+ * own comment says to add a new spec in the same commit that writes it. Six
+ * commits did not: `door-offline`, `locale-hydration`, `show-door-time`,
+ * `accessibility-settings`, `public-search` and `admin-console` sat in `e2e/`
+ * executing nowhere — not here, and not in the nightly, which only ever calls
+ * this script with `--serve` to host the acceptance walk. Each had been
+ * written as the durable proof of a specific fix, so six fixes were guarded by
+ * a file nobody ran.
+ *
+ * `admin-console` shows the cost directly: never having executed, it drifted
+ * to reading `process.env.DATABASE_URL`, which CI points at a placeholder on
+ * purpose, so adding it to the allowlist without running it first would have
+ * turned the mandatory suite red.
+ *
+ * This is `audit:mounts` for the e2e tree: a spec no runner names is the same
+ * defect as a component no route mounts, and neither is an error in any
+ * language.
+ */
+describe('every e2e spec is in a CI shard', () => {
+  it('names every spec file on disk', () => {
+    const harness = readFileSync('scripts/e2e-workerd.mjs', 'utf8');
+    const specs = readdirSync('e2e').filter((f) => f.endsWith('.spec.ts'));
+    expect(specs.length, 'no specs found — the directory moved').toBeGreaterThan(10);
+    const missing = specs.filter((f) => !harness.includes(`'e2e/${f}'`));
+    expect(
+      missing,
+      'these specs exist and no runner names them, so they protect nothing while looking green. '
+      + `Add them to DEFAULT_TEST_SHARDS — after running each one: ${missing.join(', ')}`,
+    ).toEqual([]);
+  });
+
+  it('names no spec that does not exist', () => {
+    const harness = readFileSync('scripts/e2e-workerd.mjs', 'utf8');
+    const named = [...harness.matchAll(/'(e2e\/[\w.-]+\.spec\.ts)'/g)].map((m) => m[1]);
+    expect(named.length).toBeGreaterThan(10);
+    const gone = [...new Set(named)].filter((f) => !existsSync(f));
+    expect(gone, `the harness names specs that are not there: ${gone.join(', ')}`).toEqual([]);
+  });
+});
+
+/**
  * A VARIABLE THAT DISABLES A SAFETY CHECK IS SCOPED TO THE STEP THAT NEEDS IT.
  *
  * #991 put `STRIPE_ALLOW_TEST_MODE_REHEARSAL` — the hatch that lets a

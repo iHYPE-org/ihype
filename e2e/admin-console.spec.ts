@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-import { canSeedSession, seedSessionCookie, sessionCookieName } from './fixtures/session';
+import { canSeedSession, databaseUrl, seedSessionCookie, sessionCookieName } from './fixtures/session';
 import {
   generateDeviceToken,
   getDeviceCookieName,
@@ -55,8 +55,14 @@ test.describe('admin console', () => {
   test('every domain tab renders, and an unknown one falls back to Overview', async ({ browser }) => {
     const seeded = await seedSessionCookie(ADMIN_EMAIL, { role: 'ADMIN' });
 
+    /* `databaseUrl()`, not `DATABASE_URL`: CI deliberately points that variable
+       at a placeholder (the worker reaches Postgres through Hyperdrive, seeded
+       from E2E_WORKERD_DATABASE_URL), so reading it directly could never have
+       connected. This spec had never executed — it is not in
+       `e2e-workerd.mjs`'s shard allowlist — which is how the divergence
+       survived. Every other spec resolves the URL through the fixture. */
     const prisma = new PrismaClient({
-      adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL ?? '' }),
+      adapter: new PrismaPg({ connectionString: databaseUrl() }),
     });
     const deviceToken = generateDeviceToken();
     try {

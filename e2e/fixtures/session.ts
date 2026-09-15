@@ -93,7 +93,7 @@ export type SeedAdCampaign = {
   stripeRefundId?: string;
 };
 
-function databaseUrl() {
+export function databaseUrl() {
   const url = process.env.E2E_WORKERD_DATABASE_URL || process.env.DATABASE_URL;
   if (!url) throw new Error('E2E_WORKERD_DATABASE_URL (or DATABASE_URL) must be set to seed a session.');
   return url;

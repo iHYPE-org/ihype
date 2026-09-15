@@ -403,7 +403,11 @@ export function PagesHome({
                   return (
                     <div
                       key={p.id}
+                      aria-current={selected ? 'true' : undefined}
                       onClick={() => setSelectedPageId(p.id)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedPageId(p.id); } }}
+                      role="button"
+                      tabIndex={0}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '11px 15px 11px 12px',
                         borderRadius: 12, cursor: 'pointer',
@@ -526,7 +530,11 @@ export function PagesHome({
             {NET_FILTERS.map((f) => (
               <div
                 key={f.id}
+                aria-pressed={netFilter === f.id}
                 onClick={() => setNetFilter(f.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setNetFilter(f.id); } }}
+                role="button"
+                tabIndex={0}
                 style={{
                   fontSize: '0.9375rem', padding: '7px 14px', borderRadius: 9999, cursor: 'pointer',
                   background: netFilter === f.id ? 'rgba(var(--accent-rgb),.12)' : 'var(--hair-30)',
