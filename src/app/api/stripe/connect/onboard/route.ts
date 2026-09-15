@@ -90,10 +90,51 @@ export async function POST(request: Request) {
       profileUrl: `${process.env.NEXT_PUBLIC_APP_URL ?? 'https://ihype.org'}${getProfilePathForType(profile.type, profile.slug)}`,
     });
 
-    await db.profile.update({
-      where: { id: profile.id },
-      data: { stripeConnectAccountId: connectAccountId }
-    });
+    /* A LIVE STRIPE ACCOUNT EXISTS THE INSTANT THE CALL ABOVE RETURNS, AND
+       THIS WRITE IS THE ONLY THING THAT CONNECTS IT TO ANYTHING HERE.
+       Unhandled, the throw became a generic 500 and the id went nowhere —
+       not the database, not the response, not the error message — so the
+       account was orphaned with nothing in this system naming it, and the
+       member's next attempt created a second one.
+
+       Stripe's own copy is findable: `createStripeConnectAccount` stamps
+       `metadata: { profileId, profileType }`, so an operator can locate the
+       orphan in the dashboard by the profile id this log names.
+
+       WHAT THIS DELIBERATELY DOES NOT DO, both of which read as the obvious
+       fix and are worse:
+
+         - Search for an existing account by metadata before creating one.
+           `stripe.v2.core.accounts.list()` filters by applied configuration
+           and closed state and NOTHING ELSE — there is no metadata filter —
+           so adopting an orphan means paging every connected account the
+           platform has, on the first-time onboarding path, for a case that
+           is rare and gets slower as the platform grows.
+         - Close the account we just made. A throw from Prisma does not prove
+           the write did not land (a lost response to a committed UPDATE
+           throws exactly the same way), and closing is irreversible, so the
+           failure mode is destroying a real member's live account to tidy up
+           one that may not be orphaned at all.
+
+       So it records and rethrows. Going on to build an onboarding link would
+       be worse than failing: the member would complete a flow into an
+       account `connect/return` cannot verify, because that route reads
+       `stripeConnectAccountId` and it is still null. */
+    try {
+      await db.profile.update({
+        where: { id: profile.id },
+        data: { stripeConnectAccountId: connectAccountId }
+      });
+    } catch (err) {
+      log.error(
+        `[stripe/connect/onboard] ORPHANED CONNECT ACCOUNT ${connectAccountId} — created at Stripe, not stored on profile ${profile.id}. Find it by metadata.profileId and set stripeConnectAccountId by hand, or the member's next attempt creates a second account.`,
+        err instanceof Error ? err : { error: String(err) },
+      );
+      return NextResponse.json(
+        { error: 'Could not finish setting up payouts. Nothing was charged; please try again.' },
+        { status: 500 },
+      );
+    }
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
