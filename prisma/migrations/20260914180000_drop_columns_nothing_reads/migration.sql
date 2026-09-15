@@ -1,4 +1,3 @@
--- @gated
 --
 -- Drops eight columns that no product code reads or writes.
 --
@@ -54,6 +53,21 @@
 --
 -- Rehearsed against a scratch Postgres in a rolled-back transaction: all
 -- eight columns present, the drop applied, a second pass a no-op (IF EXISTS).
+
+--
+-- RUN 2026-09-15 against production (bjkabtzvgfshsrmjhrkx), read through the
+-- Supabase connector, which is pinned read-only. All EIGHT counts the query
+-- above asks for, none omitted:
+--
+--   User.pageLayout 0 | Profile.recommendContent 0 | Profile.pageDraft 0
+--   Profile.pagePublished 0 | Profile.companionSpriteSheet 0
+--   Show.setlistProgress 0 | TicketOrder.paymentTokenRef 0
+--   SocialPost.postedAt 0
+--
+-- The eight are listed in full deliberately. The first pass at this check ran
+-- a hand-rewritten query that dropped `with_posted_at`, and a seven-of-eight
+-- answer reads exactly like an eight-of-eight one. Run the query the header
+-- states; do not paraphrase it.
 
 ALTER TABLE "User"        DROP COLUMN IF EXISTS "pageLayout";
 ALTER TABLE "Profile"     DROP COLUMN IF EXISTS "recommendContent";

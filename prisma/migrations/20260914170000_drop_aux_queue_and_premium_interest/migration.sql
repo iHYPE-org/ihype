@@ -1,4 +1,3 @@
--- @gated
 --
 -- Drops four tables no code path can put a row into: "AuxQueue", "AuxItem",
 -- "PremiumInterest" and "ArtistJournalPost".
@@ -48,6 +47,15 @@
 -- Rehearsed against a scratch Postgres in a rolled-back transaction: all
 -- four tables present, the drop applied, and re-running it a no-op (IF
 -- EXISTS) with the four relations gone.
+
+--
+-- RUN 2026-09-15 against production (bjkabtzvgfshsrmjhrkx), read through the
+-- Supabase connector, which is pinned read-only:
+--
+--   AuxQueue 0 | AuxItem 0 | PremiumInterest 0 | ArtistJournalPost 0
+--
+-- All four tables are empty, which is what "no code path can create a row"
+-- predicts and is the reason the drop is safe.
 
 DROP TABLE IF EXISTS "AuxItem";
 DROP TABLE IF EXISTS "AuxQueue";
