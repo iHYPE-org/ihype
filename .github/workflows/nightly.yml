@@ -30,6 +30,15 @@
 # leave it and the other three dozen still run. `scripts/e2e-workerd.mjs`
 # refuses a `sk_live_` key outright, so a misconfigured secret cannot touch
 # real money.
+#
+# **A BLOCK hides every other reason an item could not run.** Both Stripe
+# secrets were set on 2026-09-14; the first run that had them turned four
+# journeys BROKEN, and not one of the four was a product fault — the money
+# items had simply never reached the code past the `!stripe` guard, so two
+# defects in this file's own env block (ticket payments pinned off, no
+# CRON_SECRET) had sat unreachable since the day it was written. When a gate
+# opens, read the first run through it as a reading about the HARNESS before
+# concluding anything about the product.
 name: Nightly
 
 on:
@@ -77,7 +86,31 @@ jobs:
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_TURNSTILE_SITE_KEY: "1x00000000000000000000AA"
       FEATURE_REQUIRE_INVITE_CODE: 'false'
-      FEATURE_ENABLE_TICKET_PAYMENTS: 'false'
+      # TRUE, matching production (wrangler.toml has carried "true" since
+      # 2026-08-31). This read 'false' from the day it was written, which was
+      # honest while no Stripe key existed: the walk's money items reported
+      # BLOCKED and the flag never came into it. The moment the key arrived the
+      # items stopped blocking and ran — straight into
+      # `getPaymentProcessingReadiness()`, which answers 503 "Paid ticketing is
+      # temporarily unavailable" when the flag is off. So the board read four
+      # BROKEN journeys (ticketing, payouts, fan-payment, advertising) over a
+      # product that works, and the nightly went red for a reason nobody
+      # reading the board could have cleared. Measured: run 34914298500,
+      # 42 passed · 4 failed · 7 blocked.
+      #
+      # `scripts/e2e-workerd.mjs` forwards this to the worker, and it refuses
+      # an `sk_live_` key outright, so a nightly with ticket payments on can
+      # only ever charge test-mode money.
+      FEATURE_ENABLE_TICKET_PAYMENTS: 'true'
+      # The walk authenticates the cron routes it drives (item 20d settles an
+      # expired sponsorship through `/api/cron?job=ad-settlement`). With this
+      # unset the walk sends a bare `Bearer `, `verifyBearerToken` refuses an
+      # empty secret — correctly, or an unconfigured deploy would leave every
+      # cron job open — and the item answers 401. It had never once been able
+      # to pass here; the `!stripe` guard blocked it before the request, so the
+      # gap only became visible when the key arrived. A scratch value, like
+      # AUTH_SECRET above: this worker is thrown away with the job.
+      CRON_SECRET: ci-only-nightly-cron-secret-0123456789
       NEXT_PUBLIC_APP_VERSION: ${{ github.sha }}
 
     steps:
