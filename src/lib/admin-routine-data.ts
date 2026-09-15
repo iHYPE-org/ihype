@@ -17,7 +17,12 @@ import { AUTOMATED_JOBS, SCHEDULED_WORKFLOWS, buildRoutineBoard, type LivenessRe
  * are kept apart because a board that prints "never ran" over a KV outage
  * sends someone to debug a job that is fine.
  */
-async function readLiveness(key: string): Promise<LivenessRead> {
+/**
+ * Exported so the feature board asks the same question the same way. Two
+ * readers of `cron-alive:` with two ideas of what an absent key means is the
+ * drift this file's own header warns about.
+ */
+export async function readLiveness(key: string): Promise<LivenessRead> {
   try {
     const at = await kvGet<number>(`cron-alive:${key}`);
     if (typeof at === 'number' && Number.isFinite(at)) return { kind: 'ran', at };
