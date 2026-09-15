@@ -142,7 +142,7 @@ function CoverageBuilder() {
   }
 
   return (
-    <div className="adv-builder" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18, alignItems: 'stretch' }}>
+    <div className="adv-builder">
       {/* Controls */}
       <div className="adbuild-card">
         <div className="adbuild-cardhead">
@@ -166,7 +166,7 @@ function CoverageBuilder() {
                   <span style={{ width: 34, height: 34, borderRadius: '50%', flexShrink: 0, position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {[0, 6, 12].map(o => <span key={o} style={{ position: 'absolute', inset: o, borderRadius: '50%', border: `1.5px solid ${s === scope ? 'var(--accent)' : 'var(--ink-4)'}` }} />)}
                   </span>
-                  <span>
+                  <span className="adv-scope-label">
                     <div className="adbuild-cardtitle">{AD_SCOPE_LABELS[s]}</div>
                     <div style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', marginTop: 3 }}>{AD_SCOPE_DESCRIPTIONS[s]}</div>
                   </span>
@@ -187,10 +187,10 @@ function CoverageBuilder() {
             <div className="adbuild-eyebrow">
               <span className="adbuild-accent">B.</span> {t('advertisePage.term', 'Term')}
             </div>
-            <div style={{ display: 'flex', gap: 6 }}>
+            <div className="adv-term-row">
               {SPONSORSHIP_TERMS_MONTHS.map(m => (
                 <button key={m} onClick={() => setMonths(m)} style={{
-                  flex: 1, padding: '11px 8px', borderRadius: 9,
+                  padding: '11px 8px', borderRadius: 9,
                   border: `1px solid ${months === m ? 'var(--accent)' : 'var(--hair-70)'}`,
                   background: months === m ? 'rgba(var(--accent-rgb),.07)' : 'var(--bg-3)',
                   fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', letterSpacing: '.04em',
@@ -258,7 +258,7 @@ function CoverageBuilder() {
           </div>
 
           {/* Stats */}
-          <div className="adv-quote-stats" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 10, marginTop: 20 }}>
+          <div className="adv-quote-stats" style={{ display: 'grid', gap: 10, marginTop: 20 }}>
             {/* NO IMPRESSION FORECAST HERE, deliberately. This block used to
                 read "Daily impressions 8,000 · Total over run 240,000 ·
                 Effective CPM $0.19" beside a receipt the buyer was charged in
@@ -301,8 +301,8 @@ function CoverageBuilder() {
             ))}
             <div className="adv-receipt-total" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 16, marginTop: 12, paddingTop: 14, borderTop: '1px solid var(--hair-70)' }}>
               <span style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--ink-a65)' }}>{t('advertisePage.total', 'Total')}</span>
-              <span style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent-text)' }}>
-                {money(total, locale)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400, marginLeft: 4 }}>{money(monthly, locale)}{t('advertisePage.slashMonth', '/month')}</small>
+              <span className="adv-receipt-figure" style={{ fontFamily: "var(--f-d,'Bricolage Grotesque',sans-serif)", fontWeight: 800, fontSize: '2.125rem', letterSpacing: '-.03em', color: 'var(--accent-text)' }}>
+                {money(total, locale)}<small style={{ fontFamily: 'var(--f-m,monospace)', fontSize: '0.9375rem', color: 'var(--ink-2)', letterSpacing: '.04em', fontWeight: 400 }}>{money(monthly, locale)}{t('advertisePage.slashMonth', '/month')}</small>
               </span>
             </div>
 
@@ -380,9 +380,17 @@ export function MmmCampaignBuilderPage() {
         .adv-btn-ghost { border:1px solid var(--line-2); color:var(--ink); display:inline-flex; align-items:center; justify-content:center; gap:8px; font-family:var(--f-m,monospace); font-weight:600; font-size: 0.9375rem; letter-spacing:.06em; padding:13px 22px; border-radius:9px; cursor:pointer; transition:background .15s, border-color .15s; text-decoration:none; white-space:nowrap; background:none }
         .adv-btn-ghost:hover { background:var(--hair-50); border-color:var(--ink-2) }
         .adv-btn-sm { padding:9px 15px !important; font-size: 0.9375rem !important; min-height:44px }
-        @media (max-width:480px) { .adv-dot-grid { grid-template-columns:repeat(8, 1fr) !important } }
+        /* Container, not viewport, for the same reason as every other
+           breakpoint in this file: the dots live inside a card inside the
+           shell frame, so a 1280px window says nothing about their room. */
+        @container (max-width:420px) { .adv-dot-grid { grid-template-columns:repeat(8, 1fr) !important } }
         @media (max-width:640px) { .adv-shell { padding-left:16px !important; padding-right:16px !important } }
-        .adv-compact { width:100%; max-width:1180px; margin:0 auto; padding:20px 40px 72px }
+        /* The max-width was 1180px, authored for a full-width public page.
+           This component is mounted only at /app/me/advertising/new, inside
+           the shell frame -- so that value was unreachable and the 40px side
+           padding was subtracting from a 680px pane. See mmm-workflows.css's
+           builder block for the layout and the container query. */
+        .adv-compact { width:100%; max-width:var(--mmm-frame-max,712px); margin:0 auto; padding:20px 24px 72px }
         .adv-compact-head { display:flex; align-items:end; justify-content:space-between; gap:24px; margin-bottom:22px }
         .adv-compact h1 { margin:6px 0 0; font-family:var(--f-d,'Bricolage Grotesque',sans-serif); font-size:clamp(2rem,5vw,3.4rem); line-height:.95; letter-spacing:-.04em }
         .adv-compact-intro { max-width:52ch; margin:10px 0 0; color:var(--ink-2); line-height:1.5 }
@@ -393,17 +401,23 @@ export function MmmCampaignBuilderPage() {
         .adv-compact-rules { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; padding:0 18px 18px }
         .adv-compact-rules div { color:var(--ink-2); font-size: 0.9375rem; line-height:1.5 }
         .adv-compact-rules b { display:block; margin-bottom:3px; color:var(--ink); font-size:.8125rem }
-        @media (max-width:1180px) { .adv-builder { grid-template-columns:1fr !important } }
-        @media (max-width:520px) {
-          .adv-quote-stats { grid-template-columns:1fr !important }
+        /* The @media (max-width:1180px) collapse that used to live here was
+           dead above 1180px and redundant below it: the builder is one column
+           by default now, and widens on a CONTAINER query. The 520px rules
+           below were mis-keyed the same way -- a 393px phone clears them, a
+           1280px desktop inside a 600px container does not -- so they are
+           container queries too. */
+        @container (max-width:520px) {
           .adv-receipt-row, .adv-receipt-total { align-items:flex-start !important; flex-direction:column; gap:4px !important }
         }
-        @media (max-width:760px) {
-          .adv-compact { padding:14px 16px 56px }
+        @container (max-width:760px) {
           .adv-compact-head { display:block }
           .adv-compact-note { margin-top:16px }
           .adv-compact-rules { grid-template-columns:1fr }
         }
+        /* Side padding stays on the VIEWPORT: it is about the phone's edge,
+           not about how much room this panel has. */
+        @media (max-width:760px) { .adv-compact { padding:14px 16px 56px } }
       `}</style>
       <header className="adv-compact-head">
         <div>

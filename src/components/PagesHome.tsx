@@ -112,14 +112,29 @@ export function PagesHome({
   initialProfileId,
   initialEditorSection,
   initialTool,
+  initialCreate,
 }: {
   initialTab?: string;
   initialProfileId?: string;
   initialEditorSection?: string;
   initialTool?: string;
+  /** `?create=artist` / `?create=venue` — the deep link ME's two add rows
+   *  have always written and nothing has ever read. See the effect below. */
+  initialCreate?: string;
 } = {}) {
   const { t } = useI18n();
   const validInitialTab = TABS.some((t) => t.id === initialTab) ? (initialTab as TabId) : null;
+  /* ME's "Add artist page" / "Add venue page" rows link here with `?create=`,
+     and until 2026-09-15 this component had no prop for it, the page did not
+     forward it, and the member landed on My Page — which for anyone who
+     already has a page is their existing page's editor, i.e. the link looked
+     like it did nothing at all. Advertiser worked only because
+     /app/me/advertising/start IS the form, so it had no handshake to drop.
+     Matched case-insensitively against the real cards, so an unknown value
+     falls through to the ordinary My Page landing rather than opening a form
+     for a type POST /api/profiles would refuse. */
+  const requestedCreateType =
+    CREATE_CARDS.find((card) => card.type.toLowerCase() === initialCreate?.trim().toLowerCase())?.type ?? null;
   const [tab, setTab] = useState<TabId>(validInitialTab ?? 'mypage');
   // The app shell's context strip navigates between these tabs with real
   // links (/pages?tab=creator). Same route, different query = a soft nav, so
@@ -194,6 +209,16 @@ export function PagesHome({
   const [createError, setCreateError] = useState<string | null>(null);
   const [justCreatedName, setJustCreatedName] = useState<string | null>(null);
   const contentTopRef = useRef<HTMLDivElement>(null);
+  const createGridRef = useRef<HTMLDivElement>(null);
+  /* One-shot, set by the deep-link effect below and consumed by the scroll
+     reset. Without it the two fight and the reset wins: `setTab('creator')`
+     and `setCreatingType(...)` land in the same batch, so the `[tab]` effect
+     re-fires on that commit and scrolls the pane back to the top — where the
+     member is looking at the EDITOR for the page they already have, because
+     the creator tab renders `selectedProfile`'s PageEditor (over a thousand
+     lines of it) above the create grid. Opening the right form and then
+     scrolling away from it is not a fix. */
+  const deepLinkScroll = useRef(false);
 
   // These are local tabs, not route navigation, so the shell's route scroll
   // manager never runs. `scrollIntoView()` was also the wrong primitive here:
@@ -201,11 +226,28 @@ export function PagesHome({
   // left `.mmm-pane` visibly scrolled down. Reset the actual scroll owner in
   // MMM, and fall back to the document when PagesHome is rendered elsewhere.
   useEffect(() => {
+    if (deepLinkScroll.current) {
+      deepLinkScroll.current = false;
+      createGridRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      return;
+    }
     const marker = contentTopRef.current;
     const pane = marker?.closest<HTMLElement>('.mmm-pane');
     if (pane) pane.scrollTo({ top: 0, behavior: 'auto' });
     else window.scrollTo({ top: 0, behavior: 'auto' });
   }, [tab]);
+
+  /* THE DEEP LINK ME HAS ALWAYS WRITTEN. Same soft-navigation reason as the
+     `initialTab` effect above — arriving from another `/app` surface is a soft
+     nav, so the useState initialiser never re-runs. `requestedCreateType` is
+     stable for the life of the mount, so this fires once and pressing Cancel
+     does not re-open the card. */
+  useEffect(() => {
+    if (!requestedCreateType) return;
+    deepLinkScroll.current = true;
+    setTab('creator');
+    setCreatingType(requestedCreateType);
+  }, [requestedCreateType]);
 
   useEffect(() => {
     if (initialProfileId) setSelectedPageId(initialProfileId);
@@ -461,17 +503,17 @@ export function PagesHome({
                   }}>
                     {selectedProfile.name.charAt(0).toUpperCase()}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
+                  <div className="mmm-profiles-card-body">
                     <div style={{
                       fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.14em', textTransform: 'uppercase',
                       marginBottom: 5, color: TYPE_COLOR[selectedProfile.type] ?? 'var(--accent-text)',
                     }}>
                       {typeLabel(selectedProfile.type).toUpperCase()} {t('pagesHome.pageSuffix', 'PAGE')}
                     </div>
-                    <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.375rem', fontWeight: 800, letterSpacing: '-.02em', marginBottom: 3 }}>
+                    <div className="mmm-profiles-card-name">
                       {selectedProfile.name}
                     </div>
-                    <div style={{ fontSize: '0.9375rem', color: 'var(--ink-a65)' }}>
+                    <div className="mmm-profiles-card-handle">
                       @{selectedProfile.owner?.username ?? selectedProfile.hexId} · iHYPE
                     </div>
                   </div>
@@ -653,7 +695,7 @@ export function PagesHome({
             </>
           )}
 
-          <div className="mmm-profiles-eyebrow">
+          <div className="mmm-profiles-eyebrow" ref={createGridRef}>
             {selectedProfile ? t('pagesHome.addAnotherPageLabel', 'ADD ANOTHER PAGE') : t('pagesHome.pageCreatorLabel', 'PAGE CREATOR')}
           </div>
           <div className="pages-create-grid">

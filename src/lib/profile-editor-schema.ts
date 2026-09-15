@@ -49,7 +49,67 @@ export const editorSchema = z.object({
   themeFontPreset: text(80),
   fanShareEnabled: z.boolean().optional(),
   discoverable: z.boolean().optional(),
-  capacity: z.number().int().min(0).max(200000).optional(),
+  /* `.nullable()` is not decoration: the GET hands back `capacity: null`
+     for every profile that is not a venue with a stated room size, and
+     PageEditor PATCHes that value straight back. Without it, no ARTIST
+     and no LISTENER profile could save anything through this editor at
+     all -- the whole batch save was refused, and the 400 named no field.
+     That is the rule the comment at the top of this object already
+     states; this was the one field that did not follow it. */
+  capacity: z.number().int().min(0).max(200000).nullable().optional(),
   roomType: text(40),
   pinnedStats: z.array(z.string()).max(4).optional()
 });
+
+/* THE COLUMNS THE EDITOR READS BACK, AND THE ONLY DEFINITION OF THEM.
+   `GET /api/profile-editor` selects exactly these, PageEditor holds the
+   response as its state, and `save()` PATCHes the whole thing back — so this
+   list and `editorSchema` above are two halves of one contract. It lives here
+   rather than in the route so `profile-editor-schema.test.ts` can derive its
+   payload from it: the capacity defect shipped because a column was added to
+   the select in one commit and never added to the hand-written payload of the
+   test whose stated job is "matching a GET response". */
+export const EDITOR_SELECT_FIELDS = {
+  id: true,
+  slug: true,
+  type: true,
+  ownerId: true,
+  name: true,
+  pressKitContent: true,
+  headline: true,
+  bio: true,
+  aboutContent: true,
+  topFiveContent: true,
+  mediaContent: true,
+  nowPlaying: true,
+  links: true,
+  merchUrl: true,
+  merchContent: true,
+  tourContent: true,
+  requestContent: true,
+  upcomingContent: true,
+  previousShowHighlights: true,
+  addressLine1: true,
+  city: true,
+  stateRegion: true,
+  postalCode: true,
+  country: true,
+  hometown: true,
+  members: true,
+  contactInfo: true,
+  hoursText: true,
+  parkingDetails: true,
+  stayRecommendations: true,
+  heroImage: true,
+  avatarImage: true,
+  logoImage: true,
+  galleryImage: true,
+  themePreset: true,
+  themeAccentTone: true,
+  themeBackdropTone: true,
+  fanShareEnabled: true,
+  discoverable: true,
+  capacity: true,
+  roomType: true,
+  pinnedStats: true,
+} as const;

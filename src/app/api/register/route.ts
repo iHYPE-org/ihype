@@ -322,7 +322,19 @@ export async function POST(request: Request) {
     const profileType = getProfileType(body.role);
     const hexId = await generateUniqueProfileHexId();
     const slug = await generateUniqueNonwordSlug(db);
-    const profileName = profileType === 'LISTENER' ? hexId : trimmedName;
+    /* A FAN'S PAGE IS TITLED WITH THEIR HANDLE, NOT WITH ITS HEX ID.
+       This line read `? hexId :` and wrote a 34-character `0x…` string into
+       Profile.name — the title every fan page, every Pages card and every
+       avatar monogram renders, because no display-name resolver exists
+       anywhere and every consumer renders Profile.name raw. It was not a
+       fallback: it was an assignment, and the correct value was already
+       computed on the next line for the bio. The line predates 2026-08-05,
+       when a fan signup stopped asking for a name — until then `trimmedName`
+       was normally supplied and the hex was a placeholder a real name
+       replaced. `normalizedUsername` is what User.name already gets below,
+       so the page and the account now agree. hexId and slug are untouched,
+       so no URL moves. */
+    const profileName = profileType === 'LISTENER' ? normalizedUsername : trimmedName;
     const profileCopyName = profileType === 'LISTENER' ? normalizedUsername : trimmedName;
     const passkeyBootstrap = body.passkeyFlow ? createPasskeyBootstrapCapability() : null;
 

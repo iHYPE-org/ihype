@@ -131,9 +131,10 @@ export default async function WelcomePage() {
   // The account's own name, not a mockup's. This block used to render one of
   // four hardcoded placeholders from Welcome.dc.html — 'Nyla', 'DJ Caro',
   // 'Port City Music Hall', 'Jess R.' — so every real signup was greeted by
-  // somebody else's name and initial. session.user.name is the right source
-  // rather than profile.name: registration stores the raw hexId as a fan
-  // profile's name, while User.name holds their chosen username.
+  // somebody else's name and initial. session.user.name is the source because
+  // it is on the session already; a fan profile's name is the same handle as
+  // of 2026-09-15 (it used to be the raw hexId, which is what this comment
+  // originally worked around).
   const displayName =
     session.user.name?.trim()
     || session.user.email?.split('@')[0]
