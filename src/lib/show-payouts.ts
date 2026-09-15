@@ -5,6 +5,7 @@ import { sendGenericEmail } from '@/lib/mailer';
 import { getAdminAlertRecipients } from '@/lib/env';
 import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { log } from '@/lib/logger';
+import { kvPut } from '@/lib/kv';
 import { escapeHtml } from '@/lib/html-escape';
 
 /* The five release conditions live in payout-release.ts, because the member
@@ -12,6 +13,9 @@ import { escapeHtml } from '@/lib/html-escape';
    Two copies of "when does a payable pay" is how "released automatically once
    the show ends" came to be printed over a tax entry nothing ever releases. */
 export { PAYOUT_HOLD_DAYS };
+
+/** Where the last run's figures are stored for `/api/health`. */
+export const SHOW_PAYOUTS_LAST_KEY = 'show-payouts:last';
 
 /**
  * Real payout release — pays out every still-PENDING AccountsPayableEntry
@@ -192,6 +196,34 @@ export async function triggerShowPayouts(): Promise<{ released: number; skipped:
       null,
       `${noDestination.length} payable(s) worth ${owedCents}c could not be paid — ${parts.join('; ')}`,
     );
+  }
+
+  /* WHAT THE RUN DID, WHERE SOMEBODY CAN READ IT.
+   *
+   * `{ released, skipped }` is returned to the cron route, which puts it in a
+   * JSON body the SCHEDULED invocation discards — so the only record that a
+   * payout run happened at all was `cron-alive:show-payouts`, which proves it
+   * ran and says nothing about whether it paid anybody. A night that released
+   * forty payables and a night that released none because the query matched
+   * nothing were, from every operator surface, the same night.
+   *
+   * The loud paths above stay the loud paths: a failed transfer emails the
+   * administrators per entry, and an unpayable payee is one Sentry error per
+   * run. Neither of those fires on a run that simply did nothing, which is
+   * exactly the run this key is for.
+   *
+   * Three days, matching `stripe-reconcile:last`, so a reader after two
+   * missed nights knows the figure is old rather than current. Caught,
+   * because a KV failure must never affect a run that has already moved
+   * money — the transfers are done by the time this line is reached. */
+  try {
+    await kvPut(
+      SHOW_PAYOUTS_LAST_KEY,
+      JSON.stringify({ at: new Date().toISOString(), released, skipped, unpayable: noDestination.length }),
+      { ex: 3 * 24 * 60 * 60 },
+    );
+  } catch {
+    // KV unavailable: the logs above still carry every failure.
   }
 
   return { released, skipped };

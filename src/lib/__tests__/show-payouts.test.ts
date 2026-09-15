@@ -33,17 +33,22 @@ vi.mock('@/lib/env', () => ({ getAdminAlertRecipients: () => ['admin@ihype.org']
    channel that reaches Sentry, and DESIGN_SYNC row 476 made it the one thing
    standing between an unpayable payee and total silence. */
 vi.mock('@/lib/logger', () => ({ log: { error: vi.fn() } }));
+/* The run stores its own figures; `{released, skipped}` otherwise goes into a
+   JSON body the scheduled invocation discards. */
+vi.mock('@/lib/kv', () => ({ kvPut: vi.fn().mockResolvedValue(undefined) }));
 
 import { db } from '@/lib/db';
 import { createPayoutTransfer, findPayoutTransfer, isStripeConfigured } from '@/lib/stripe';
 import { sendGenericEmail } from '@/lib/mailer';
 import { log } from '@/lib/logger';
+import { kvPut } from '@/lib/kv';
 import { triggerShowPayouts } from '@/lib/show-payouts';
 
 const mockDb = db as unknown as Record<string, Record<string, ReturnType<typeof vi.fn>>>;
 const mockIsStripeConfigured = isStripeConfigured as unknown as ReturnType<typeof vi.fn>;
 const mockCreatePayoutTransfer = createPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
 const mockLogError = log.error as unknown as ReturnType<typeof vi.fn>;
+const mockKvPut = kvPut as unknown as ReturnType<typeof vi.fn>;
 const mockFindPayoutTransfer = findPayoutTransfer as unknown as ReturnType<typeof vi.fn>;
 const mockSendEmail = sendGenericEmail as unknown as ReturnType<typeof vi.fn>;
 
@@ -238,6 +243,35 @@ describe('triggerShowPayouts', () => {
       // addresses so an alert is not a bus factor of one.
       expect.objectContaining({ to: ['admin@ihype.org'] }),
     );
+  });
+
+  it('stores what the run did, so a night that paid nobody is distinguishable from a night with nothing to pay', async () => {
+    /* `{released, skipped}` is returned to the cron route, which puts it in a
+       JSON body the SCHEDULED invocation discards — so the only trace of a
+       run was `cron-alive:show-payouts`, proof it ran and silence about
+       whether it paid anybody. The loud paths do not cover this: a failed
+       transfer emails per entry and an unpayable payee is one Sentry error,
+       and neither fires on a run that simply did nothing. */
+    mockDb.accountsPayableEntry.findMany.mockResolvedValue([entry()]);
+
+    await triggerShowPayouts();
+
+    expect(mockKvPut).toHaveBeenCalledTimes(1);
+    const [key, body] = mockKvPut.mock.calls[0];
+    expect(key).toBe('show-payouts:last');
+    const stored = JSON.parse(String(body)) as { released: number; skipped: number; unpayable: number; at: string };
+    expect(stored.released).toBe(1);
+    expect(stored.skipped).toBe(0);
+    expect(typeof stored.at).toBe('string');
+  });
+
+  it('a KV failure never fails a run that has already moved money', async () => {
+    mockDb.accountsPayableEntry.findMany.mockResolvedValue([entry()]);
+    mockKvPut.mockRejectedValue(new Error('kv down'));
+
+    await expect(triggerShowPayouts()).resolves.toEqual({ released: 1, skipped: 0 });
+    // The transfer still happened; only the record of it was lost.
+    expect(mockCreatePayoutTransfer).toHaveBeenCalledTimes(1);
   });
 
   it('processes the remaining entries after one fails (a single bad transfer does not abort the batch)', async () => {
