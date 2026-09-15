@@ -234,7 +234,7 @@ describe('triggerShowPayouts', () => {
     // RELEASED, or the money is owed but the ledger says it was paid.
     expect(mockDb.accountsPayableEntry.update).not.toHaveBeenCalled();
     expect(mockSendEmail).toHaveBeenCalledWith(
-      // Now a list: ADMIN_ALERT_EMAIL accepts several comma-separated
+      // A list by TYPE, but pinned to one address since 2026-09-15 —
       // addresses so an alert is not a bus factor of one.
       expect.objectContaining({ to: ['admin@ihype.org'] }),
     );
