@@ -348,6 +348,16 @@ skipped are 4 and 5, because skipping either fails exactly like a bad key:
    permission that matters is granted in step 5, on the Play side.
 3. On that service account: **Keys → Add key → Create new key → JSON**, and
    download the file. Google issues the private key once and stores no copy.
+   **This is the step that can be refused outright, and the refusal is not a
+   misconfiguration.** Google's Secure by Default applies the organization
+   policy `iam.managed.disableServiceAccountKeyCreation` to new organizations,
+   and the dialog then reads "Service account key creation is disabled" —
+   measured on project `ihype-508800`, 2026-09-16. Lifting it means an
+   org-policy exception (IAM & Admin → Organization Policies, which needs
+   `roles/orgpolicy.policyAdmin`) scoped to that one project, never
+   organization-wide. **Prefer the hand upload below**: weakening an org-wide
+   security control to automate one upload is a bad trade, and the hand upload
+   reaches the same track with the same bundle.
 4. **Enable the Google Play Android Developer API** on that same Cloud project
    (APIs & Services → Library). Linking usually enables it; when it does not,
    every upload answers 403 with a key that is perfectly valid.
@@ -395,6 +405,42 @@ the API will accept one. **That is already behind us**: a bundle reached Interna
 testing on 2026-09-08, which is where `assetlinks.json`'s three fingerprints came
 from. `versionCode` is `run_number × 100 + run_attempt`, so every dispatch — a
 re-run of a failed one included — outranks the code Play already holds.
+
+---
+
+## Google Play — hand upload, with no service account at all
+
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` automates the last mile and nothing else.
+This is the same `.aab`, on the same track, with no Cloud project, no service
+account, no key and no org-policy exception. **This section exists because the
+section above told the reader twice to use "the hand upload below" and there was
+no hand upload below** — a pointer at a procedure nobody could open, which is
+the same defect as a page map naming a file that is not there.
+
+1. **Get a signed bundle.** Dispatch **Native shell build (iOS + Android)** with
+   `publish=false` (Actions → Run workflow → `main`). The Android release job
+   verifies the signature itself — it fails on an unsigned bundle or an expired
+   certificate rather than handing one onward — and leaves the file as the run
+   artifact `ihype-android-signed-<run_number>`. **Artifacts expire after 14
+   days** (`retention-days: 14` in the workflow), so an older run's bundle may
+   simply be gone; dispatching a fresh run is the reliable path and takes
+   minutes.
+2. Download that artifact and unzip it. Inside is `app-release.aab`. **An `.aab`
+   cannot be installed on a phone** — it is the bundle Play opens and builds
+   per-device APKs from. The debug `.apk` artifact from the same run is the
+   sideloadable one, and being debug-signed it verifies neither deep links nor
+   passkeys, so do not test either on it.
+3. **Play Console → Test and release → Testing → Internal testing → Create new
+   release**, drag `app-release.aab` in, write the release notes, then **Save →
+   Review release → Start rollout to Internal testing**.
+4. That is the whole of it. `versionCode` is `run_number × 100 + run_attempt`,
+   so every dispatch outranks whatever Play already holds and the upload is
+   never refused as a duplicate of an earlier code.
+
+**What the hand upload does not do**, so the trade is stated rather than
+discovered: it does not tie the release to the run that built it, so nothing
+records which commit reached Play. Read the `versionCode` shown on the Play
+release back against the run number when you need to know.
 
 ---
 
@@ -449,4 +495,6 @@ the workflow with `publish=true` — iOS goes to TestFlight and Android to Play
 from the one run. The Play half additionally needs
 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` (see "Play API access" above, and note that
 it reports its own absence rather than failing obscurely); a hand upload of the
-`.aab` needs no secret at all.
+`.aab` needs no secret at all (see **Google Play — hand upload** above; as of
+2026-09-16 that is the recommended path, because an organization policy blocks
+service-account key creation on the Cloud project).
