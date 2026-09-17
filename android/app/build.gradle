@@ -7,8 +7,21 @@ android {
         applicationId "com.ihype.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        // VERSION CODE COMES FROM THE BUILD, AND A LITERAL HERE IS THE BUG.
+        //
+        // This read `versionCode 1` with the release workflow passing
+        // `-Pandroid.injected.version.code`. That property is the IDE's
+        // inject API; this AGP does not apply it to `bundleRelease`, so every
+        // signed bundle CI has ever produced carried versionCode 1 —
+        // measured, by reading the manifest out of the .aab from run 383.
+        // Play burns a version code permanently, so the Sep 4 upload spent 1
+        // and every upload after it was refused with "Version code 1 has
+        // already been used", days before anyone connected that to the build.
+        //
+        // A plain project property is applied by Gradle itself and cannot be
+        // silently ignored. The fallbacks keep a local `./gradlew` working.
+        versionCode project.hasProperty('ihypeVersionCode') ? project.property('ihypeVersionCode').toInteger() : 1
+        versionName project.hasProperty('ihypeVersionName') ? project.property('ihypeVersionName') : "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
