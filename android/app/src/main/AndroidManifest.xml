@@ -79,4 +79,35 @@
          refused with no prompt, which reads as a broken scanner. Asked at the
          moment of use behind the app's own primer, never at launch. -->
     <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- Hardware features: DECLARED, and every one of them optional.
+
+         Android IMPLIES a uses-feature from several permissions and defaults
+         it to required="true", so a permission silently narrows who may
+         install. CAMERA implies android.hardware.camera (and .autofocus),
+         ACCESS_FINE_LOCATION implies .location.gps, ACCESS_COARSE_LOCATION
+         implies .location.network. Nothing here declared them, so all four
+         were required, and Play reported the release "no longer supports
+         19,174 devices that were supported in your previous release" — the
+         camera permission arrived with the door scanner (2026-09-10), after
+         the release before it.
+
+         Every one of these is genuinely optional in this product and the
+         fallbacks are built and documented: the door scanner's manual code
+         field admits a ticket with no camera at all (it is the designed
+         denied-permission state), and the map keeps its seeded county camera
+         when location is refused, unavailable or slow. A fan with a
+         camera-less tablet can still hold a ticket; a venue on such a device
+         can still work the door.
+
+         Required="false" is therefore the honest declaration, not a
+         workaround: the app asks for these at the moment of use and works
+         without them. Anything added here that the app CANNOT work without
+         belongs at required="true" — but then its absence has to be a real
+         refusal, not a broken screen. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.location" android:required="false" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+    <uses-feature android:name="android.hardware.location.network" android:required="false" />
 </manifest>
