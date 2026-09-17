@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import { Capacitor } from '@capacitor/core';
-import { resolveInternalPath } from '@/lib/deep-link';
+import { needsBrowserNavigation, resolveInternalPath } from '@/lib/deep-link';
 
 /**
  * Native-shell-only glue, mounted once at the app root (AppProviders) — a
@@ -41,7 +41,11 @@ export function NativePushRegistration() {
         if (cancelled) return undefined;
         return App.addListener('appUrlOpen', ({ url }) => {
           const path = resolveInternalPath(url);
-          if (path) router.push(path);
+          if (!path) return;
+          // A route handler (the magic link) has to be fetched by the browser
+          // so its 303 is followed; the client router renders pages only.
+          if (needsBrowserNavigation(path)) window.location.assign(path);
+          else router.push(path);
         });
       })
       .then((listener) => {
