@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
+import { releaseShowInventory } from '@/lib/ticket-inventory';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -86,14 +87,12 @@ export async function GET(request: NextRequest) {
       if (transitioned.count === 0) return 0;
 
       const seats = transitioned.count * group.quantity;
-      const released = await tx.show.updateMany({
-        // Never below zero: a count that has already drifted is a reason to
-        // fail loudly, not to write a negative capacity the purchase guard
-        // would then read as room.
-        where: { id: group.showId, ticketsSoldCount: { gte: seats } },
-        data: { ticketsSoldCount: { decrement: seats } }
-      });
-      if (released.count !== 1) {
+      // Never below zero: a count that has already drifted is a reason to fail
+      // loudly, not to write a negative capacity the purchase guard would then
+      // read as room. That floor lives in `ticket-inventory.ts` beside the take
+      // side of the same rule.
+      const released = await releaseShowInventory(tx, { showId: group.showId, seats });
+      if (!released) {
         throw new Error(
           `Show ${group.showId} could not release ${seats} seat(s) for ${transitioned.count} expired reservation(s).`
         );

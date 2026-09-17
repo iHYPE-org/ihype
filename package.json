@@ -76,7 +76,8 @@
     "rehearse:money": "tsx scripts/rehearse-money-path.mts",
     "alpha:walk": "tsx scripts/alpha-acceptance-walk.mts",
     "feature:health": "tsx scripts/feature-health.mts",
-    "check:backup-cadence": "node scripts/check-backup-cadence.mjs"
+    "check:backup-cadence": "node scripts/check-backup-cadence.mjs",
+    "probe:concurrency": "tsx scripts/concurrency-probe.mts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "2.11.3",
