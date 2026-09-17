@@ -552,11 +552,51 @@ jobs:
           VERSION_CODE=$(( RUN_NUMBER * 100 + RUN_ATTEMPT ))
           echo "versionCode $VERSION_CODE"
           ./gradlew bundleRelease \
-            -Pandroid.injected.version.code="$VERSION_CODE" \
+            -PihypeVersionCode="$VERSION_CODE" \
+            -PihypeVersionName="$VERSION_CODE" \
             -Pandroid.injected.signing.store.file="$RUNNER_TEMP/release.keystore" \
             -Pandroid.injected.signing.store.password="$ANDROID_KEYSTORE_PASSWORD" \
             -Pandroid.injected.signing.key.alias="$ANDROID_KEY_ALIAS" \
             -Pandroid.injected.signing.key.password="$ANDROID_KEY_PASSWORD"
+
+      # THE BUILD IS ASKED WHAT IT STAMPED, NOT TOLD.
+      #
+      # `-Pandroid.injected.version.code` was passed for the life of this
+      # workflow and silently did nothing: every signed bundle carried
+      # versionCode 1, Play burned that code on the first upload, and every
+      # upload after it was refused. Nothing compared the number CI asked for
+      # against the number the bundle carries — the same one-sided-guard shape
+      # as the passkey entitlement. It is compared here now, and a mismatch
+      # fails the build rather than the release dialog days later.
+      - name: Verify the .aab carries the version code CI asked for
+        if: steps.check.outputs.configured == 'true'
+        working-directory: android
+        env:
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          VERSION_CODE=$(( RUN_NUMBER * 100 + RUN_ATTEMPT ))
+          AAB=$(find app/build/outputs/bundle/release -name '*.aab' | head -1)
+          [ -n "$AAB" ] || { echo "::error::no .aab to verify"; exit 1; }
+          unzip -p "$AAB" base/manifest/AndroidManifest.xml > "$RUNNER_TEMP/manifest.pb"
+          # aapt2 writes the manifest as protobuf, and the attribute's textual
+          # value follows its name as 0x1a <length> <ascii>. No bundletool on
+          # the runner, and this needs no schema.
+          STAMPED=$(python3 -c "
+          import sys
+          d = open(sys.argv[1], 'rb').read()
+          i = d.find(b'versionCode')
+          if i < 0:
+              print('ABSENT')
+          else:
+              j = d.find(b'\x1a', i)
+              print(d[j + 2 : j + 2 + d[j + 1]].decode('ascii', 'replace'))
+          " "$RUNNER_TEMP/manifest.pb")
+          echo "asked for $VERSION_CODE, bundle carries $STAMPED"
+          if [ "$STAMPED" != "$VERSION_CODE" ]; then
+            echo "::error::versionCode was not applied - the bundle carries '$STAMPED', not $VERSION_CODE. Play burns a version code permanently, so uploading this would spend the wrong one."
+            exit 1
+          fi
 
       # `android.injected.signing.*` has never run against a real keystore in
       # this repository. If gradle emits an unsigned bundle, learn it here
