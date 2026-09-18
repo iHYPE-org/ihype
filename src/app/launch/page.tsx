@@ -235,7 +235,7 @@ export default async function LaunchPage() {
               padding: 'clamp(2rem, 5vw, 3.5rem)',
               borderRadius: 24,
               border: '1px solid rgba(var(--accent-rgb),.22)',
-              background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.1), rgba(var(--accent-2-rgb),.05), transparent)',
+              background: 'var(--bg-2)',
             }}
           >
             <h2

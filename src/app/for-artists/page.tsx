@@ -13,7 +13,6 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   role: 'ARTIST',
   tint: 'var(--accent)',
   glow: 'var(--accent)',
-  navCta: t('forArtistsPage.navCta', 'Apply as artist →'),
   eyebrow: t('forArtistsPage.eyebrow', 'For Artists'),
   headline: <>{t('forArtistsPage.headlineLine1', 'Your music.')}<br />{t('forArtistsPage.headlineLine2', 'Your gate.')}<br /><span style={{ color: 'var(--accent-text)' }}>{t('forArtistsPage.headlineLine3', 'Your fans.')}</span></>,
   heroBody: (
@@ -27,14 +26,24 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
     { value: '70%', label: t('forArtistsPage.stat1Label', 'Your gate · locked') },
     { value: '$0', label: t('forArtistsPage.stat2Label', 'Platform fee on tickets') },
     { value: '100%', label: t('forArtistsPage.stat3Label', 'Fan data ownership') },
-    { value: '24h', label: t('forArtistsPage.stat4Label', 'Payout turnaround') },
+    /* NOT "24h". `PAYOUT_HOLD_DAYS` is 10 and has been since 2026-08-27 —
+       `triggerShowPayouts()` pays a payable only once the show has ENDED and
+       its start is at least ten days past, and only to a FINISHED Connect
+       account. This tile said 24h and the checklist below said "night of
+       show"; both were the pre-hold behaviour, left on the page an artist
+       reads BEFORE they sign up, which is the worst place in the product to
+       overstate when money arrives. Same defect row 474 records fixing on the
+       surfaces that COMPUTE a release date — that fix went to the computers
+       and never to the page that states the number as a headline.
+       Read the figure off `PAYOUT_HOLD_DAYS`, never off this line. */
+    { value: '10 days', label: t('forArtistsPage.statPayoutHold', 'After the show, then paid out') },
   ],
   heatLabel: t('forArtistsPage.heatLabel', 'Where fan demand is hottest right now'),
   quote: <>{t('forArtistsPage.quoteLead', 'A charter that can’t be')} <span>{t('forArtistsPage.quoteEmphasis', 'unwritten')}</span>{t('forArtistsPage.quoteRest', ' after the first ticket sells.')}</>,
   checklist: [
     t('forArtistsPage.checklist1', 'Set your price and split before publish'),
     t('forArtistsPage.checklist2', 'Once a ticket sells, the split is sealed'),
-    t('forArtistsPage.checklist3', 'Your 70% hits your account night of show'),
+    t('forArtistsPage.checklistPayoutHold', 'Your 70% transfers ten days after the show, straight to your own account'),
     t('forArtistsPage.checklistCalendar', 'Tour dates and open nights on your profile'),
     t('forArtistsPage.checklist5', 'No agent or manager needed to list'),
   ],

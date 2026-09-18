@@ -13,7 +13,6 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
   role: 'VENUE',
   tint: 'var(--role-venue)',
   glow: 'var(--role-venue)',
-  navCta: t('forVenuesPage.navCta', 'Apply as a venue →'),
   eyebrow: t('forVenuesPage.eyebrow', 'For Venues'),
   headline: <>{t('forVenuesPage.headlineLine1', 'Your room.')}<br />{t('forVenuesPage.headlineLine2', 'Your booking.')}<br /><span style={{ color: 'var(--role-venue)' }}>{t('forVenuesPage.headlineLine3', 'Your data.')}</span></>,
   heroBody: (
@@ -27,7 +26,9 @@ function buildConfig(t: Awaited<ReturnType<typeof getServerT>>): RecruitingKitCo
     { value: '20%', label: t('forVenuesPage.stat1Label', 'Your gate · guaranteed') },
     { value: '$0', label: t('forVenuesPage.stat2Label', 'Platform fee to list') },
     { value: 'Live', label: t('forVenuesPage.stat3Label', 'Demand radar by city') },
-    { value: '24h', label: t('forVenuesPage.stat4Label', 'Settlement turnaround') },
+    /* See the same tile on /for-artists: the hold is `PAYOUT_HOLD_DAYS` = 10
+       days after the show, not 24 hours. */
+    { value: '10 days', label: t('forVenuesPage.statPayoutHold', 'After the show, then settled') },
   ],
   heatLabel: t('forVenuesPage.heatLabel', 'Where fans are asking for shows'),
   quote: <>{t('forVenuesPage.quoteLead', 'Book who your city is')} <span>{t('forVenuesPage.quoteEmphasis', 'actually hyping')}</span>{t('forVenuesPage.quoteRest', ' — not a guess.')}</>,

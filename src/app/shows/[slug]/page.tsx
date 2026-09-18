@@ -387,7 +387,13 @@ export default async function ShowDetailPage({
         <ReferralClickTracker ref={refHexId} />
 
         {/* HERO */}
-        <div style={{ background: 'linear-gradient(140deg,rgba(var(--accent-rgb),.15),rgba(var(--role-venue-rgb),.08))', border: '1px solid rgba(var(--accent-rgb),.2)', borderRadius: 16, padding: 36, marginBottom: 40 }}>
+        {/* A CARD, NOT A WASH (2026-09-18). This was a 140deg sweep from the
+            accent into `--role-venue`, 685,000px of pink-to-mint behind the
+            show title on the one URL this product exists to share — and
+            `--role-venue` means "this thing is a venue", not "decoration".
+            A surface reads as a card from its edge and its ground; the
+            gradient only made the ink sit on a colour that changes under it. */}
+        <div style={{ background: 'var(--bg-2)', border: '1px solid var(--line)', borderRadius: 16, padding: 36, marginBottom: 40 }}>
           <div className="video-shell" style={{ marginBottom: 22, borderRadius: 12, overflow: 'hidden' }}>
             {productionPlan ? (
               <ShowSequencePlayer

@@ -1,5 +1,6 @@
 import { formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
+import { IhypeMark } from '@/components/brand/IhypeMark';
 import { getServerI18n } from '@/lib/i18n/server';
 
 type Stat = { value: string; label: string };
@@ -10,7 +11,6 @@ export type RecruitingKitConfig = {
   role: 'ARTIST' | 'VENUE' | 'FAN';
   tint: string;
   glow: string;
-  navCta: string;
   eyebrow: string;
   headline: React.ReactNode;
   heroBody: React.ReactNode;
@@ -47,17 +47,26 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
 
   return (
     <div className="rk-page" style={{ ['--rk-tint' as string]: config.tint, ['--rk-glow' as string]: config.glow }}>
-      <nav className="rk-nav">
-        <div className="rk-nav-inner">
-          <Link className="rk-logo" href="/">iHYPE</Link>
-          <Link className="rk-nav-cta" href={`/register?role=${config.role}`}>
-            {config.navCta}
-          </Link>
-        </div>
-      </nav>
+      {/* THERE IS NO PAGE-LOCAL NAV HERE, AND ITS ABSENCE IS THE FIX
+          (2026-09-18). This component used to open with a sticky `.rk-nav`
+          carrying its own `iHYPE` wordmark and its own role CTA — under the
+          sitewide `AdaptiveSiteHeader`, which `layout.tsx` mounts on every
+          page. So all four kit pages rendered TWO brand marks stacked about
+          100px apart, each with its own primary button, signed in and signed
+          out alike. Measured at 1280 and at 393; it is the first thing on the
+          page in both.
 
+          Nothing was lost by deleting it. The role CTA it held is the same
+          `/register?role=` link as `rk-apply-btn` in the hero directly below,
+          so the page still opens with exactly one primary action instead of
+          two competing ones, and the wordmark is the sitewide header's job.
+
+          `navCta` went with it rather than being left on the config: a field
+          with no reader is weight no audit here can see, which is the same
+          call recorded in `IhypeMark.tsx` for its unused variant. Add a nav
+          back only with a reason these pages need chrome the rest of the site
+          does not. */}
       <header className="rk-hero">
-        <div className="rk-hero-glow" aria-hidden="true" />
         <div className="rk-hero-inner">
           {/* Unclassed: this is the `minmax(0, 1fr)` cell of `.rk-hero-inner`,
               and the eyebrow, h1 and body inside it carry their own spacing.
@@ -134,7 +143,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
 
       <footer className="rk-footer">
         <div className="rk-footer-inner">
-          <Link className="rk-logo" href="/">iHYPE</Link>
+          <Link aria-label="iHYPE" className="rk-logo" href="/"><IhypeMark /></Link>
           <div className="rk-footer-links">
             <Link href="/advertise">{t('recruitingKitPage.footerAdvertise', 'Advertise')}</Link>
             <Link href="/info">{t('recruitingKitPage.footerInfo', 'Info')}</Link>
@@ -144,13 +153,19 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
       </footer>
 
       <style>{`
-        .rk-page { background: radial-gradient(1100px 560px at 50% -12%, color-mix(in srgb, var(--rk-glow) 9%, transparent), transparent 62%), var(--bg); color: var(--ink); }
-        .rk-nav { position: sticky; top: 0; z-index: 50; backdrop-filter: blur(16px); background: color-mix(in srgb, var(--bg) 75%, transparent); border-bottom: 1px solid var(--line); }
-        .rk-nav-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 62px; }
-        .rk-logo { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.04em; color: var(--accent-text); text-decoration: none; }
-        .rk-nav-cta { font-family: var(--font-display); font-weight: 800; font-size: 0.9375rem; background: var(--rk-tint); color: var(--bg); padding: 9px 18px; border-radius: 999px; text-decoration: none; }
-        .rk-hero { padding: 100px 0 80px; position: relative; overflow: hidden; }
-        .rk-hero-glow { position: absolute; top: -160px; right: -80px; width: 600px; height: 600px; background: radial-gradient(circle, color-mix(in srgb, var(--rk-glow) 20%, transparent), transparent 65%); pointer-events: none; }
+        /* Ground only. This carried a 1100x560 radial in the role tint --
+           2.9 million pixels of soft colour behind the whole page -- and
+           .rk-hero-glow layered a second 600px circle of the same hue on
+           top of it. Two washes, one page, neither saying anything the
+           headline and the role-tinted CTA do not already say. */
+        .rk-page { background: var(--bg); color: var(--ink); }
+        /* Display, alignment and the 44px floor come from the tap-target block in globals.css, which names .rk-logo already; restating them here would be a second copy of one number. NO BACKTICKS IN THIS BLOCK -- it is a template literal, so one closes it. */
+        .rk-logo { text-decoration: none; }
+        /* 44 top, not 100: the 100 was clearing this component's own sticky
+           62px nav, which is gone. Measured at 1280 with it still at 100 --
+           header bottom 76px, first text at 246px -- so the page opened on
+           170px of nothing. */
+        .rk-hero { padding: 44px 0 80px; position: relative; overflow: hidden; }
         /* minmax(0, …), not 1fr: a bare 1fr floors at MIN-CONTENT, so one long
            unbreakable token — a venue name, a URL — pushes this column past its
            share and scrolls the page sideways above the breakpoint below. */

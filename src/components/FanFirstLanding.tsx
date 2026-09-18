@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { NearbyShowsWidget } from '@/components/NearbyShowsWidget';
-import Image from 'next/image';
+import { IhypeMark } from '@/components/brand/IhypeMark';
 import Link from 'next/link';
 import { RequestBetaAccessForm } from '@/components/RequestBetaAccessForm';
 import { getServerT } from '@/lib/i18n/server';
@@ -46,7 +46,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
         <Link aria-label={t('fanFirstLanding.home', 'iHYPE home')} className="fan-entry-logo" href="/">
-          <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+          <IhypeMark size={22} />
         </Link>
         <nav aria-label={t('fanFirstLanding.accountNav', 'Account')} className="fan-entry-nav">
           <Link className="fan-entry-signin" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>
@@ -57,6 +57,32 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
       </header>
 
       <main className="fan-entry-main">
+        {/* ONE COLUMN, AND NO ARTWORK (2026-09-18, owner: "Do anything you
+            think is necessary to … limit 'AI look'. It's our first big
+            feedback item, and it was almost entirely universally stated by
+            users").
+
+            The right-hand column used to carry `ihype-icon-master-2026.png`
+            at 42vw, under a blurred two-colour "stage light" — so the single
+            largest thing on the front door was a 1MB raster of distressed
+            brush type over a crowd silhouette and orange embers, which is the
+            most generic live-music image there is, in a colour scheme two
+            grounds out of date. `IhypeMark.tsx`'s own header records the four
+            measured objections to that file; they apply with more force at
+            610px than at 54px, and it made no sense to remove it from the app
+            chrome and leave it as the hero.
+
+            Nothing replaced it, deliberately. This page's whole job is to say
+            what iHYPE is and take an email address while access is by
+            request; a decorative second column is what pushes that job into
+            half the width. A single measured column also drops ~1MB off the
+            LCP element this component's own comment names.
+
+            The honest replacement is a photograph of a room with people in
+            it, and the product does not have one — see the closing paragraph
+            of CLAUDE.md's "less AI-generated" row. Commission that before
+            putting anything back in this slot; another piece of generated
+            artwork is the problem, not the fix. */}
         <section className="fan-entry-hero">
           <div className="fan-entry-copy">
             {/* The city stays in English: it is a place, not a word. */}
@@ -103,28 +129,15 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
             </p>
           </div>
 
-          <div className="fan-entry-visual">
-            <div aria-hidden="true" className="fan-entry-stage-light" />
-            <Image
-              alt={t('fanFirstLanding.artAlt', 'iHYPE.org — local music')}
-              className="fan-entry-art"
-              height={1024}
-              priority
-              sizes="(max-width: 900px) 82vw, 42vw"
-              src="/brand/ihype-icon-master-2026.png"
-              width={1024}
-            />
-            <p className="fan-entry-signal"><span /> {t('fanFirstLanding.signal', 'Support the scene. Be the signal.')}</p>
-          </div>
         </section>
 
         {/* What the app does, in the order you would do it. Named as concrete
             capabilities rather than the old one-word verbs, which read as a
             brand slogan rather than a description of software. */}
         <section aria-label={t('fanFirstLanding.stepsLabel', 'What iHYPE does')} className="fan-entry-steps">
-          <article><span>01</span><div><strong>{t('fanFirstLanding.step1Title', 'Listen free')}</strong><p>{t('fanFirstLanding.step1Body', 'Full tracks from artists near you. No subscription, no paywall.')}</p></div></article>
-          <article><span>02</span><div><strong>{t('fanFirstLanding.step2Title', 'Find the show')}</strong><p>{t('fanFirstLanding.step2Body', 'Who is playing this week, at which room, for how much.')}</p></div></article>
-          <article><span>03</span><div><strong>{t('fanFirstLanding.step3Title', 'HYPE it')}</strong><p>{t('fanFirstLanding.step3Body', 'Your HYPE moves an artist up your city’s chart. That is the whole ranking.')}</p></div></article>
+          <article><div><strong>{t('fanFirstLanding.step1Title', 'Listen free')}</strong><p>{t('fanFirstLanding.step1Body', 'Full tracks from artists near you. No subscription, no paywall.')}</p></div></article>
+          <article><div><strong>{t('fanFirstLanding.step2Title', 'Find the show')}</strong><p>{t('fanFirstLanding.step2Body', 'Who is playing this week, at which room, for how much.')}</p></div></article>
+          <article><div><strong>{t('fanFirstLanding.step3Title', 'HYPE it')}</strong><p>{t('fanFirstLanding.step3Body', 'Your HYPE moves an artist up your city’s chart. That is the whole ranking.')}</p></div></article>
         </section>
 
         {/* What is actually on, near whoever is reading. The signed-in answer

@@ -282,8 +282,10 @@ function Slide01Cover() {
   const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'space-between' }}>
-      <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(120px)', top: -200, left: -120, background: 'radial-gradient(circle, rgba(var(--accent-rgb),.3), transparent 70%)' }} />
-      <div style={{ position: 'absolute', width: 600, height: 600, borderRadius: '50%', filter: 'blur(120px)', bottom: -240, right: -120, background: 'radial-gradient(circle, rgba(var(--role-fan-rgb),.22), transparent 70%)' }} />
+      {/* Two 600px blurred colour orbs used to sit here, accent at .3 and
+          `--role-fan` at .22 — a corner-to-corner pastel gradient on a white
+          cover slide, and a role token spent on decoration. The cover carries
+          the mark, the title and the kicker; that is the whole slide. */}
       <div style={{ position: 'relative' }}><Logo size="lg" /></div>
       <div style={{ position: 'relative' }}>
         <Kick>{t('walkthroughDeck.slide01Kick', 'Product walkthrough')}</Kick>
