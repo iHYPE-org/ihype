@@ -31,19 +31,28 @@
  * icons are built from it and are already in review, so replacing those is a
  * store-asset change with a build attached, deliberately not made here.
  */
+/**
+ * THERE IS NO MARK-ONLY VARIANT, AND THAT IS A DECISION RATHER THAN AN
+ * OMISSION. The first draft carried `variant: 'full' | 'mark'` so the bare
+ * `i` could fill a square — and nothing ever passed `'mark'`, which is this
+ * repository's own dead-surface defect written small: a prop with no caller
+ * is weight, and `audit:mounts` cannot see it because the COMPONENT is
+ * mounted. It was also the weakest thing in the set on its own merits: a
+ * lowercase `i` on a red square says nothing about local music and could
+ * belong to any product, which is a reason not to reach for it as an app
+ * icon either. The wordmark carries the identity; add the variant back when
+ * a square space actually needs filling, with its caller in the same change.
+ */
 type Props = {
   /** Cap height of the wordmark in px. The `i` scales from it. */
   size?: number;
-  /** `mark` drops the wordmark, for square spaces that already say iHYPE. */
-  variant?: 'full' | 'mark';
   className?: string;
 };
 
-export function IhypeMark({ size = 20, variant = 'full', className }: Props) {
+export function IhypeMark({ size = 20, className }: Props) {
   return (
     <span
       className={`ihype-mark${className ? ` ${className}` : ''}`}
-      data-variant={variant}
       style={{ '--ihype-mark-size': `${size}px` } as React.CSSProperties}
     >
       <svg aria-hidden="true" className="ihype-mark-i" viewBox="0 0 12 34">
@@ -52,17 +61,15 @@ export function IhypeMark({ size = 20, variant = 'full', className }: Props) {
         <rect height="8" rx="1.6" width="9" x="1.5" y="0" />
         <rect height="22" rx="1.6" width="9" x="1.5" y="12" />
       </svg>
-      {variant === 'full' ? (
-        /* Not wrapped in `t()`, and deliberately NOT carrying an
-           `i18n-exempt:` marker either. A brand name is the same word in every
-           locale — CLAUDE.md's Brand constants allow exactly one — and
-           `audit:untranslated` already declines to flag a single all-caps
-           token, verified against a controlled probe rather than assumed: a
-           sentence in this same file IS reported, `HYPE` is not. A marker here
-           would read as the thing holding the gate down while doing nothing,
-           which is the shape this repository has been bitten by before. */
-        <span className="ihype-mark-word">HYPE</span>
-      ) : null}
+      {/* Not wrapped in `t()`, and deliberately NOT carrying an
+          `i18n-exempt:` marker either. A brand name is the same word in every
+          locale — CLAUDE.md's Brand constants allow exactly one — and
+          `audit:untranslated` already declines to flag a single all-caps
+          token, verified against a controlled probe rather than assumed: a
+          sentence in this same file IS reported, `HYPE` is not. A marker here
+          would read as the thing holding the gate down while doing nothing,
+          which is the shape this repository has been bitten by before. */}
+      <span className="ihype-mark-word">HYPE</span>
     </span>
   );
 }
