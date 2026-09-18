@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
+import { IhypeMark } from '@/components/brand/IhypeMark';
 
 const MIN_VISIBLE_MS = 900;
 const FADE_MS = 300;
@@ -11,6 +11,23 @@ const FADE_MS = 300;
  * this. An installed app has no browser chrome, so without this it flashes
  * straight to a blank page while fonts/JS settle after the OS's own
  * (icon-based) launch screen disappears.
+ *
+ * IT DRAWS THE MARK, AND THIS WAS THE LAST PLACE THE STICKER RENDERED
+ * (2026-09-18; owner: "It's ok to not have the audience in the logo, the
+ * mission is what's important (and the testers really hated the AI look and
+ * feel, including the logo)").
+ *
+ * The 2026-09-18 pass took `logo-sticker-2026.png` out of the header and off
+ * the landing hero and then stopped, because the remaining uses were "store
+ * assets with a build attached". That was true of the icons and NOT true of
+ * this one: an installed app renders this from the web bundle, so it ships
+ * with a Cloudflare deploy and no store review — and it is the FIRST thing a
+ * tester sees, on every launch of the app they were asked to test. A grep for
+ * the filename would have found it; what did not happen is asking what each
+ * remaining hit actually costs to change.
+ *
+ * The sticker still backs `public/icons/*` and both stores' submitted builds.
+ * Replacing those is a separate change with new binaries in it.
  */
 export function AppSplash() {
   const [visible, setVisible] = useState(false);
@@ -34,7 +51,11 @@ export function AppSplash() {
 
   return (
     <div aria-hidden="true" className={`app-splash${fading ? ' app-splash-fade' : ''}`}>
-      <Image alt="" height={144} priority src="/brand/logo-sticker-2026.png" width={144} />
+      {/* 52 renders 149x52 — about 38% of a 393px screen, measured against the
+          real stylesheet and the real local woff2. The sticker was a 144px
+          square tile; a wordmark needs more width and less height to carry the
+          same weight. */}
+      <IhypeMark size={52} />
     </div>
   );
 }

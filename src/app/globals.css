@@ -4724,27 +4724,18 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fefdfe;
+  /* The page's own ground, not a near-white literal. This read `#fefdfe`,
+     which was the DS8-era off-white and is now one shade off `--bg` on the
+     default theme and flatly wrong on all five others — a splash is the first
+     frame of the app and must be the app's colour. */
+  background: var(--bg);
   opacity: 1;
   transition: opacity .3s ease;
-}
-.app-splash img {
-  border-radius: 28px;
-  animation: app-splash-pulse 1.4s ease-in-out infinite;
 }
 .app-splash-fade {
   opacity: 0;
   pointer-events: none;
 }
-@keyframes app-splash-pulse {
-  0%,
-100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-splash img { animation: none; }
-}
-
 /* ── Section tab strips ───────────────────────────────────────────────────
    `/shows` and `/pages` render a pill tab strip above their content. Both were
    once the second half of a mobile "quick grid" home screen that replaced the
