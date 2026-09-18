@@ -154,10 +154,10 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 .profile-facts dt {
   flex: none;
   min-width: 8.5rem;
-  font-family: var(--f-m);
+  font-family: var(--font-body);
   font-size: 0.9375rem;       /* 14px */
-  letter-spacing: .1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 .profile-facts dd { margin: 0; font-size: 1rem; line-height: 1.5; color: var(--ink); }
@@ -415,17 +415,17 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   margin-bottom: 14px;
 }
 .mmm-profiles-meta {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: .12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-a65);
 }
 .mmm-profiles-sub {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: .08em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-a65);
   margin-top: 3px;
   overflow: hidden;

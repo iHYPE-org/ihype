@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { IhypeMark } from '@/components/brand/IhypeMark';
 import { HeaderAuthLinks } from '@/components/HeaderAuthLinks';
 import { HeaderLogo } from '@/components/HeaderLogo';
 import { SearchBar } from '@/components/SearchBar';
@@ -48,7 +48,10 @@ export function AdaptiveSiteHeader({
           <>
             <div className="app-menu-trigger-wrap">
               <Link aria-label={t('adaptiveSiteHeader.openApp', 'Open Music Map Me')} className="app-menu-logo" href="/app/map">
-                <Image alt="" height={54} priority src="/brand/ihype-menu-logo.webp" width={54} />
+                {/* The mark, not the 1MB sticker this used to render at 54px —
+                    at that size its tagline and TLD were illegible, so the file
+                    was paying for detail nobody could resolve. */}
+                <IhypeMark />
               </Link>
             </div>
             <SearchBar compact={scrolled} />

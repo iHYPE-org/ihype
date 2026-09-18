@@ -568,10 +568,10 @@ html:has(.mmm-frame) {
    its floor: this is a readout, not a sentence. */
 .mmm-chart-place {
   margin: 0 0 12px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
@@ -1267,10 +1267,10 @@ html:has(.mmm-frame) {
 }
 .mmm-datepick-clear,
 .mmm-datepick-done {
-  font-family: var(--f-m);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   border-radius: var(--radius-pill);
   padding: 7px 12px;
   cursor: pointer;
@@ -1370,10 +1370,10 @@ html:has(.mmm-frame) {
 .mmm-me-add[data-kind='admin']:hover { border-color: var(--accent); }
 .mmm-me-add[data-kind='admin'] > [aria-hidden] { color: var(--accent-text); }
 .mmm-me-add-chip {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
@@ -1546,10 +1546,10 @@ html:has(.mmm-frame) {
   padding-top: 8px;
 }
 .mmm-search-scope {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-2);
   background: transparent;
   border: 1px solid var(--line-2);
@@ -2016,10 +2016,10 @@ input.mmm-row-title { min-height: 44px; }
   /* The 44px floor holds on desktop too — this is a control. */
   min-height: 44px;
   padding: 0 2px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
   cursor: pointer;
   list-style: none;
@@ -2626,10 +2626,10 @@ input.mmm-row-title { min-height: 44px; }
    `.mmm-chip` uses. The map's chips sit over a photograph of a city, so a
    translucent chip is unreadable in a way the same chip over a pane is not. */
 .mmm-map-chip {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   border-radius: var(--radius-pill);
   padding: 8px 15px;
   cursor: pointer;
@@ -2786,10 +2786,10 @@ input.mmm-row-title { min-height: 44px; }
   line-height: 1;
 }
 .mmm-ticket-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--accent-text);
   text-align: left;
 }
@@ -2822,10 +2822,10 @@ input.mmm-row-title { min-height: 44px; }
 }
 .mmm-ticket-rule {
   margin-top: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 .mmm-ticket-money {
@@ -2874,10 +2874,10 @@ input.mmm-row-title { min-height: 44px; }
   display: inline-flex;
   align-items: center;
   padding: 10px 2px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
   text-decoration: none;
 }
@@ -2905,8 +2905,8 @@ input.mmm-row-title { min-height: 44px; }
   margin-top: 8px;
   font-family: var(--font-mono);
   font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--ink-3);
 }
 .mmm-show-sale { margin-top: 20px; }
@@ -3452,10 +3452,10 @@ input.mmm-row-title { min-height: 44px; }
   box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.38);
 }
 .mmm-full-exit-label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-on-walnut-3);
 }
 
@@ -3805,10 +3805,10 @@ input.mmm-row-title { min-height: 44px; }
 /* Why this card is in the deck. Never optional — see ADHERENCE 36. */
 .mmm-deck-why {
   margin: 11px 0 0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: rgba(var(--ink-on-media-rgb), 0.6);
 }
 .mmm-deck-controls { display: flex; align-items: center; gap: 16px; }
@@ -3849,10 +3849,10 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-deck-artist:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .mmm-deck-count {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 /* A verdict the route refused, named under the count so the member knows what

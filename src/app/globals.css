@@ -565,11 +565,32 @@
      opsz the pixel size is the point of choosing it: see --opsz-* below and
      the display ramp, which sets font-variation-settings rather than
      scaling one static instance. */
-  /* SF Pro where it exists, which is every device this app ships to. The
-     system stack costs no download and is what makes the shell read as the
-     platform's own; Bricolage and Work Sans stay loaded for the four character
-     themes, which set --f-d/--f-b back. */
-  --f-d: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* DISPLAY IS BRICOLAGE; BODY AND UI ARE THE SYSTEM FACE. The split is the
+     whole decision, and the line above it used to set BOTH to the system
+     stack — under a comment claiming Bricolage "stays loaded for the four
+     character themes, which set --f-d/--f-b back". Measured 2026-09-18:
+     `var(--font-bricolage)` appeared ZERO times in src/ and zero times in the
+     built CSS, because the four themes set --f-d to Anton, Chakra Petch,
+     Playfair and Instrument Serif — not one of them sets Bricolage. So the
+     family the handoff chose for its optical-size axis was PRELOADED on every
+     request (~76KB, first on the critical path) and painted nothing, while
+     every heading in the product rendered in the OS default.
+
+     That is the loudest generic-design signal a page can carry: system-ui is
+     what a page renders in when nobody made a choice. It arrived honestly —
+     the iOS skin (row 346) copied Apple Music, and copying Apple Music means
+     copying SF Pro — but Apple Music does not set its editorial headers in SF
+     Pro UI either.
+
+     So: --f-b stays the system stack, because that is what makes a list row,
+     a tab label and a control read as the platform's own, and it is right.
+     --f-d is Bricolage, because a heading is where a product gets to sound
+     like itself and 179 sites already read --font-display. No new bytes: the
+     face was already being downloaded.
+
+     The four character themes still override --f-d with their own display
+     face, which is unchanged — they were never the problem. */
+  --f-d: var(--font-bricolage, 'Bricolage Grotesque', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif);
   --f-b: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
   --f-m: var(--font-jb,        'JetBrains Mono', monospace);
   --f-s: var(--font-serif,     'Instrument Serif', serif);
@@ -1936,8 +1957,8 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   color: var(--muted);
   font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 .field input,
 .field select,
@@ -2173,15 +2194,15 @@ fieldset.authcard-field { border: 0; padding: 0; }
 .authcard-field > label,
 .authcard-field > legend {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   /* Body floor, not the 9px eyebrow floor: this matches the eyebrow SHAPE
      (tracked mono uppercase) but it is a form field's name, which a person has
      to read to know what to type. `.authcard-eyebrow` above is a real eyebrow
      and keeps its size. */
   font-size: 0.9375rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .14em;
+  text-transform: none;
+  letter-spacing: 0.01em;
   color: var(--ink-3);
   margin-bottom: 7px;
 }
@@ -3326,9 +3347,9 @@ body:has(#wt-wrap) .site-shell > main {
   .artist-media-upload-header { flex-direction: column; align-items: flex-start; }
   .ticketing-panel-header,
   .ticket-price-badge { width: 100%; text-align: left; }
-  .nav-logo-mark {
+  .ihype-mark {
     font-size: 0.9375rem;
-    letter-spacing: 0.05em;
+    letter-spacing: -0.01em;
   }
   .fan-playlist-panel {
     right: -0.1rem;
@@ -3482,47 +3503,68 @@ body {
   backdrop-filter: blur(22px);
 }
 
-.nav-logo,
-.nav-logo-mark {
+.nav-logo {
   display: inline-flex;
   align-items: center;
   /* The header's only home link measured 73×17 on thirty public pages
      (2026-09-10); the floor lives here rather than in the audit block below
      because this rule already owns `display` and `align-items`. */
   min-height: 44px;
-  gap: 2px;
   /* Follows the ground, same reason as .nav above. */
   color: var(--ink);
-  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  font-size: 1.0625rem;
-  font-weight: 800;
-  letter-spacing: 0.17em;
-  line-height: 1;
-  text-transform: uppercase;
-  /* No lift shadow: it was a glow for white type on a navy bar, and under a
-     theme where the wordmark is dark ink on cream it only smears the letters. */
-}
-
-.nav-logo {
   text-decoration: none;
+  /* The TYPE lives on .ihype-mark now — one lockup, sized once, used by both
+     the signed-out header and the signed-in one. This rule used to restate
+     the family, size, weight, tracking and an uppercase transform, which is
+     how the wordmark came to carry +0.17em: two places owned it and only one
+     was ever adjusted. No lift shadow: it was a glow for white type on a navy
+     bar, and under a light ground it only smears the letters. */
 }
 
-.nav-logo-word {
+/* ── THE MARK ─────────────────────────────────────────────────────────────
+   Replaces `.nav-logo-word`/`.nav-logo-dot` and the four-stop rainbow that
+   used to run under the wordmark on hover (#ff4635 → #ff3d87 → #7c5cff →
+   #39d8df). That gradient was four raw literals no theme could reach, and a
+   purple-to-blue sweep is the single most recognisable generated-design
+   flourish there is — so it was doing the opposite of what a brand mark is
+   for. Hover is now the accent deepening, one token, one idea.
+
+   Sizing is driven by --ihype-mark-size, which is the wordmark's FONT SIZE.
+   The `i` is sized in em of that so the lockup scales as one object from a
+   16px favicon to a splash screen. */
+.ihype-mark {
+  display: inline-flex;
+  align-items: center;
+  /* Optically tighter than the 6px a flex gap would suggest: the `i` is a
+     bare stem, so it needs less air than a glyph with sidebearings would. */
+  gap: 0.13em;
+  font-family: var(--font-display);
+  font-size: var(--ihype-mark-size, 1.0625rem);
+  font-weight: 800;
+  /* A WORDMARK IS TIGHT. This was +0.17em, which is the letterspaced-caps
+     treatment every generated brand ships; at 800 weight it read as four
+     separate letters rather than one word. */
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+.ihype-mark-i {
+  /* Cap height of the display face is ~0.72em, and the `i` runs dot-to-baseline
+     over that same height, so 0.72em matches the caps beside it exactly. */
+  height: 0.72em;
+  width: auto;
+  fill: var(--accent);
+  transition: fill 150ms;
+}
+
+.ihype-mark-word {
   color: var(--ink);
   transition: color 150ms;
 }
 
-.nav-logo-dot {
-  color: var(--accent-text);
-  transition: color 150ms;
-}
-
-.nav-logo:hover .nav-logo-dot,
-.nav-logo:focus-visible .nav-logo-dot {
-  background: linear-gradient(90deg, #ff4635, #ff3d87 35%, #7c5cff 68%, #39d8df);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.nav-logo:hover .ihype-mark-i,
+.nav-logo:focus-visible .ihype-mark-i {
+  fill: var(--accent-text);
 }
 .nav-a11y-button{
   min-height: 38px;
@@ -5163,48 +5205,27 @@ body:has(.fan-entry) #main-content { width: 100%; }
   z-index: 2;
   flex: 0 0 auto;
 }
+/* The signed-in home link. It used to be a 54x54 tile with a raw #070605
+   ground, a 17px radius and a hover ring in rgba(--role-venue-rgb) — a
+   SEMANTIC role colour (venue teal) spent on the app's own home link, which
+   is the wrong-token mistake this file records twice elsewhere. With the
+   sticker gone there is nothing to frame: it is a link around the mark, at
+   the 44px floor, and the mark's own hover carries the state. */
 .app-menu-logo {
-  width: 54px;
-  height: 54px;
-  position: relative;
-  display: grid;
-  place-items: center;
-  overflow: visible;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-2));
-  border-radius: 17px;
-  background: #070605;
-  box-shadow: 0 9px 24px rgba(0,0,0,.22);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-decoration: none;
   cursor: pointer;
-  transition: transform .2s var(--ease-out), border-color .2s ease, box-shadow .2s ease;
 }
-.app-menu-logo::after {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  z-index: -1;
-  border: 1px solid rgba(var(--role-venue-rgb),.16);
-  border-radius: 21px;
-  opacity: 0;
-  transform: scale(.84);
-  transition: opacity .2s ease, transform .2s var(--ease-out);
-}
-.app-menu-logo:hover,
-.app-menu-logo[aria-expanded="true"] {
-  border-color: rgba(var(--role-venue-rgb),.62);
-  box-shadow: 0 0 0 3px rgba(var(--role-venue-rgb),.08), 0 14px 32px rgba(0,0,0,.3);
-  transform: translateY(-1px);
-}
-.app-menu-logo:hover::after,
-.app-menu-logo[aria-expanded="true"]::after {
-  opacity: 1;
-  transform: scale(1);
-}
-.app-menu-logo img {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  object-fit: cover;
+
+.app-menu-logo:hover .ihype-mark-i,
+.app-menu-logo:focus-visible .ihype-mark-i {
+  fill: var(--accent-text);
 }
 
 .adaptive-site-header .app-menu-logo + * { min-width: 0; }
@@ -5387,10 +5408,10 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .primer-moment {
   margin: 14px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
@@ -5421,8 +5442,8 @@ body:has(.fan-entry) #main-content { width: 100%; }
      three lines. */
   font-size: clamp(1.5rem, 6.5vw, 2.125rem);
   line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  text-transform: none;
   color: var(--accent-text);
 }
 .ticket-final-detail {
@@ -5488,11 +5509,11 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .composer-card h3 {
   margin: 0 0 10px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--brass-deep);
 }
 .composer-library-list,
