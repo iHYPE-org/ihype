@@ -58,4 +58,10 @@ describe('browser Sentry wiring', () => {
     expect(middleware).toMatch(/process\.env\.NEXT_PUBLIC_SENTRY_DSN/);
     expect(middleware).toMatch(/connect-src[^\n]*sentryIngestOrigin\(\)/);
   });
+
+  it('reports App Router root render failures from the global error boundary', () => {
+    const boundary = read('src/app/global-error.tsx');
+    expect(boundary).toMatch(/import\\(['"]@sentry\\/nextjs['"]\\)/);
+    expect(boundary).toMatch(/Sentry\\.captureException\\(error\\)/);
+  });
 });
