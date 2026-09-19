@@ -9,7 +9,10 @@ import {
   summarizeReconciliation,
   type ReconcileAccountCoverage,
   type ReconcileIntent,
+  type ReconcilePayable,
   type ReconcileSummary,
+  type ReconcileTransfer,
+  type ReconcileTransferCoverage,
 } from '@/lib/stripe-reconcile';
 
 /**
@@ -31,6 +34,7 @@ import {
 
 export const RECONCILE_WINDOW_DAYS = 7;
 const MAX_INTENTS_PER_ACCOUNT = 2000;
+const MAX_TRANSFERS = 2000;
 export const RECONCILE_LAST_KEY = 'stripe-reconcile:last';
 
 function toIntent(pi: Stripe.PaymentIntent, account: string | null): ReconcileIntent {
@@ -69,11 +73,58 @@ async function listIntents(
   return { intents: out, truncated };
 }
 
+function toTransfer(transfer: Stripe.Transfer): ReconcileTransfer {
+  const metadata = transfer.metadata ?? {};
+  return {
+    id: transfer.id,
+    amount: transfer.amount,
+    amountReversed: transfer.amount_reversed ?? 0,
+    created: new Date(transfer.created * 1000),
+    /* `destination` expands to an Account object when asked for; we never ask,
+       so it is the id string. Narrowed rather than cast, because an expanded
+       object silently stringifying to "[object Object]" is the kind of thing
+       that reads fine in a finding and names nothing. */
+    destination: typeof transfer.destination === 'string' ? transfer.destination : transfer.destination?.id ?? null,
+    metadata: {
+      payableEntryId: typeof metadata.payableEntryId === 'string' ? metadata.payableEntryId : undefined,
+      showId: typeof metadata.showId === 'string' ? metadata.showId : undefined,
+    },
+  };
+}
+
+/**
+ * Every payout transfer, platform-scoped.
+ *
+ * ONE LIST, NOT ONE PER ACCOUNT, unlike the intents above: `createPayoutTransfer`
+ * passes no `stripeAccount`, so a payout is always created on the platform and
+ * only its `destination` names the venue or the act. Listing per connected
+ * account here would find nothing and read as a clean comparison.
+ */
+async function listTransfers(stripe: Stripe, sinceSeconds: number): Promise<{ transfers: ReconcileTransfer[]; truncated: boolean }> {
+  const out: ReconcileTransfer[] = [];
+  let truncated = false;
+  for await (const transfer of stripe.transfers.list({ created: { gte: sinceSeconds }, limit: 100 })) {
+    out.push(toTransfer(transfer));
+    if (out.length >= MAX_TRANSFERS) { truncated = true; break; }
+  }
+  return { transfers: out, truncated };
+}
+
 export async function runStripeReconciliation(now = new Date()): Promise<ReconcileSummary | { skipped: string }> {
   if (!isStripeConfigured()) return { skipped: 'Stripe is not configured' };
   const since = new Date(now.getTime() - RECONCILE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
-  const [orders, ads] = await Promise.all([
+  const payableSelect = {
+    id: true,
+    status: true,
+    stripeTransferId: true,
+    amountCents: true,
+    payeeLabel: true,
+    paidAt: true,
+    updatedAt: true,
+  } as const;
+
+  const [orders, ads, windowPayables] = await Promise.all([
     db.ticketOrder.findMany({
       where: { OR: [{ createdAt: { gte: since } }, { updatedAt: { gte: since } }] },
       select: {
@@ -91,6 +142,7 @@ export async function runStripeReconciliation(now = new Date()): Promise<Reconci
       where: { OR: [{ createdAt: { gte: since } }, { status: { in: [...LIVE_AD_STATUSES] } }] },
       select: { id: true, status: true, stripePaymentIntentId: true, budgetCents: true, createdAt: true },
     }),
+    db.accountsPayableEntry.findMany({ where: { updatedAt: { gte: since } }, select: payableSelect }),
   ]);
 
   const accounts = [...new Set(orders.map((o) => o.settlementAccountId).filter((id): id is string => Boolean(id)))];
@@ -115,15 +167,69 @@ export async function runStripeReconciliation(now = new Date()): Promise<Reconci
     }
   }
 
+  /* The outbound list, independently caught like each account's above: a
+     transfer read that fails must cost the run its payable comparison and
+     nothing else. */
+  let transfers: ReconcileTransfer[] = [];
+  const transferCoverage: ReconcileTransferCoverage = { truncated: false, failed: false };
+  try {
+    const listed = await listTransfers(stripe, sinceSeconds);
+    transfers = listed.transfers;
+    transferCoverage.truncated = listed.truncated;
+  } catch (error) {
+    log.error('[stripe-reconcile]', error instanceof Error ? error : { error: String(error) }, 'could not list transfers');
+    transferCoverage.failed = true;
+  }
+
+  /* THE SECOND PAYABLE QUERY IS WHAT MAKES THE COMPARISON HONEST, and the
+     comparison cannot check that it happened — `ReconcileInput.payables` says
+     so. A transfer whose RELEASED write failed belongs to a row whose
+     `updatedAt` never moved, so it can sit weeks outside the window its own
+     transfer is inside; on the window query alone the single case this whole
+     comparison exists to catch would report as "money left the platform
+     balance and nothing here accounts for it", about a payable sitting in the
+     table. Fetched by id, so the extra read is bounded by what Stripe listed. */
+  const seen = new Set(windowPayables.map((entry) => entry.id));
+  const namedByTransfer = [
+    ...new Set(
+      transfers
+        .map((transfer) => transfer.metadata.payableEntryId)
+        .filter((id): id is string => Boolean(id) && !seen.has(id as string)),
+    ),
+  ];
+  const extraPayables = namedByTransfer.length
+    ? await db.accountsPayableEntry
+        .findMany({ where: { id: { in: namedByTransfer } }, select: payableSelect })
+        .catch((error: unknown) => {
+          /* Not caught to [] and carried on: an empty answer here reads as
+             "these payables do not exist", which is the money finding. Rethrow
+             so the run fails loudly rather than reporting invented drift. */
+          log.error('[stripe-reconcile]', error instanceof Error ? error : { error: String(error) }, 'could not read the payables named by listed transfers');
+          throw error;
+        })
+    : [];
+  const payables: ReconcilePayable[] = [...windowPayables, ...extraPayables].map((entry) => ({
+    ...entry,
+    status: entry.status as ReconcilePayable['status'],
+  }));
+
   const findings = reconcileStripe({
     orders: orders.map((o) => ({ ...o, status: o.status as 'RESERVED' | 'CAPTURED' | 'VOID' })),
     ads,
     intents,
     accounts: coverage,
+    payables,
+    transfers,
+    transferCoverage,
     since,
     now,
   });
-  const summary = summarizeReconciliation(findings, { orders: orders.length, ads: ads.length, intents: intents.length, accounts: accounts.length }, since, now);
+  const summary = summarizeReconciliation(
+    findings,
+    { orders: orders.length, ads: ads.length, intents: intents.length, accounts: accounts.length, payables: payables.length, transfers: transfers.length },
+    since,
+    now,
+  );
 
   /* The last result, for the admin console and /api/health. Three days, so a
      board reading it after two missed nights knows the figure is old. */

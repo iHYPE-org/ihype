@@ -20,6 +20,26 @@
  * dispute, a webhook two seconds away). It says WHAT disagrees and WHICH side
  * holds the money; a person decides.
  *
+ * THE OUTBOUND HALF IS COMPARED TOO, and it was not until 2026-09-15: orders
+ * and campaigns against PaymentIntents is the money coming IN, and the money
+ * going OUT — `AccountsPayableEntry` rows against Stripe transfers — had
+ * nothing looking at it at all. It is the pair with the loudest failure mode:
+ * `triggerShowPayouts()` creates the transfer and then writes RELEASED, and
+ * its own docstring records that the write can fail after the money has
+ * moved. From inside, that row simply reads PENDING and the next run heals it;
+ * from outside, an act was paid and the ledger says they were not. The reverse
+ * — RELEASED with no transfer Stripe knows about — is an act told they were
+ * paid when nothing moved.
+ *
+ * WHAT IS DELIBERATELY NOT HERE: whether a payee can be paid at all. A payable
+ * owed to a profile that never finished Connect onboarding is skipped by every
+ * payout run, for ever — a real and expensive condition, and NOT a
+ * reconciliation finding, because it is a fact about ONE ledger rather than a
+ * disagreement between two. The payout run names it itself, once per run, with
+ * the two reasons apart. Reporting it here as well would be a second opinion
+ * about the same fact, arriving from a job whose whole discipline is that it
+ * only ever says "these two lists differ".
+ *
  * Every finding names a Stripe object id or a confirmation code, never an
  * amount to charge or refund. Findings are `money` when a member has paid and
  * holds nothing, or holds something nobody paid for; `info` otherwise.
@@ -47,6 +67,31 @@ export type ReconcileAd = {
   createdAt: Date;
 };
 
+export type ReconcilePayable = {
+  id: string;
+  status: 'PENDING' | 'RELEASED' | 'VOID';
+  /** Written in the same statement that sets RELEASED, so RELEASED without it
+   *  is a state no code path here can produce. */
+  stripeTransferId: string | null;
+  amountCents: number;
+  payeeLabel: string;
+  /** When the payout run recorded the transfer. Null unless RELEASED. */
+  paidAt: Date | null;
+  updatedAt: Date;
+};
+
+export type ReconcileTransfer = {
+  id: string;
+  amount: number;
+  /** Stripe keeps a reversal ON the transfer rather than removing it, so a
+   *  transfer that was sent and clawed back still lists, with its full
+   *  `amount`, and only this field says so. */
+  amountReversed: number;
+  created: Date;
+  destination: string | null;
+  metadata: { payableEntryId?: string; showId?: string };
+};
+
 export type ReconcileIntent = {
   id: string;
   status: string;
@@ -67,6 +112,17 @@ export type ReconcileFindingKind =
   | 'paid-ad-not-live'
   | 'paid-ad-missing'
   | 'live-ad-without-intent'
+  /* The outbound half: what the ledger says left, against what Stripe says
+     left. `released-*` is the database making a claim about a transfer;
+     `transfer-*` is Stripe holding a transfer the database does not account
+     for. */
+  | 'released-without-transfer'
+  | 'released-transfer-unknown'
+  | 'released-transfer-amount'
+  | 'released-transfer-reversed'
+  | 'transfer-without-payable'
+  | 'transfer-payable-not-released'
+  | 'transfers-not-compared'
   /* Not a disagreement: a note that one account could not be compared at all,
      so the silence about it means nothing. Carried as `info` so the headline
      count stays "money", and reported so a quiet night is not read as a clean
@@ -78,7 +134,8 @@ export type ReconcileFinding = {
   severity: 'money' | 'info';
   /** The database side: a confirmation code or an ad id. */
   ref: string | null;
-  /** The Stripe side: a PaymentIntent id, with its account when not the platform. */
+  /** The Stripe side: a PaymentIntent or a Transfer id, with its account when
+   *  the intent was listed from a connected one. */
   intent: string | null;
   detail: string;
 };
@@ -93,6 +150,17 @@ export type ReconcileAccountCoverage = {
   failed: boolean;
 };
 
+/** Whether the transfer list is complete enough to judge a payable against.
+ *  Separate from the per-account intent coverage above, because every payout
+ *  transfer is created on the PLATFORM account — `createPayoutTransfer` passes
+ *  no `stripeAccount` — so there is one list, not one per venue. */
+export type ReconcileTransferCoverage = {
+  /** The list hit its cap, so the OLDEST transfers of the window are missing. */
+  truncated: boolean;
+  /** Stripe refused the list; no transfer was read at all. */
+  failed: boolean;
+};
+
 /** Stands in for the platform account in the coverage set, which is keyed by string. */
 export const PLATFORM_ACCOUNT = 'platform';
 
@@ -101,6 +169,20 @@ export type ReconcileInput = {
   accounts?: ReconcileAccountCoverage[];
   ads: ReconcileAd[];
   intents: ReconcileIntent[];
+  /**
+   * Payables in the window, PLUS every payable named by a listed transfer.
+   *
+   * THE SECOND HALF IS A CONTRACT THE DATA SIDE OWES AND THIS MODULE CANNOT
+   * CHECK. The case worth catching most is a transfer whose RELEASED write
+   * failed — and that row's `updatedAt` never moved, so it can sit weeks
+   * outside a window its own transfer is inside. Fetched by window alone, the
+   * single most important finding here would report as `transfer-without-
+   * payable`: "money left and nothing here accounts for it", about a payable
+   * sitting in the table.
+   */
+  payables?: ReconcilePayable[];
+  transfers?: ReconcileTransfer[];
+  transferCoverage?: ReconcileTransferCoverage;
   /** Intents were listed from this instant on. An order or campaign older than
    *  it can hold an intent legitimately absent from the list, and is judged
    *  only on what the database itself says. */
@@ -257,13 +339,131 @@ export function reconcileStripe(input: ReconcileInput): ReconcileFinding[] {
     }
   }
 
+  /* THE OUTBOUND HALF: the ledger's claims about money it sent, against
+     Stripe's list of what left. */
+  const payables = input.payables ?? [];
+  const transfers = input.transfers ?? [];
+  const coverage = input.transferCoverage;
+  /* Same rule as an account whose intents could not be listed: a transfer
+     absent from a truncated or failed list looks exactly like a transfer that
+     was never made, and judging a payable against it turns a Stripe outage
+     into "an act was told they were paid and nothing moved". Truncation
+     invalidates only the ABSENCE of a transfer — every transfer that WAS read
+     is still a real one, so the Stripe-side loop below runs regardless. */
+  const transfersComplete = Boolean(coverage) && !coverage!.failed && !coverage!.truncated;
+  const transfersById = new Map(transfers.map((transfer) => [transfer.id, transfer]));
+  const payablesById = new Map(payables.map((payable) => [payable.id, payable]));
+
+  for (const payable of payables) {
+    if (payable.status !== 'RELEASED') continue;
+
+    if (!payable.stripeTransferId) {
+      /* `triggerShowPayouts()` is the only code that writes RELEASED and it
+         writes the transfer id in the same statement, so this state cannot be
+         reached by running the product — which is exactly why it is worth
+         reporting: it means a hand-edited row or a restore. */
+      if (settled(payable.updatedAt)) {
+        findings.push({
+          kind: 'released-without-transfer',
+          severity: 'money',
+          ref: payable.id,
+          intent: null,
+          detail: `payable ${payable.id} (${payable.payeeLabel}, ${payable.amountCents}c) is RELEASED with no transfer id — the only code that releases one records the transfer in the same write, so nothing proves this money ever moved`,
+        });
+      }
+      continue;
+    }
+
+    const transfer = transfersById.get(payable.stripeTransferId);
+    if (!transfer) {
+      if (!transfersComplete) continue;
+      /* Judged on `paidAt`, not `createdAt`: the payable is created when the
+         order is captured and can predate the window by weeks while the
+         transfer it names is inside it. */
+      if (payable.paidAt && inWindow(payable.paidAt) && settled(payable.updatedAt)) {
+        findings.push({
+          kind: 'released-transfer-unknown',
+          severity: 'money',
+          ref: payable.id,
+          intent: payable.stripeTransferId,
+          detail: `payable ${payable.id} (${payable.payeeLabel}) names transfer ${payable.stripeTransferId}, which Stripe did not list for the window — ${payable.payeeLabel} is recorded as paid and Stripe has no record of sending it`,
+        });
+      }
+      continue;
+    }
+
+    if (transfer.amount !== payable.amountCents) {
+      findings.push({
+        kind: 'released-transfer-amount',
+        severity: 'money',
+        ref: payable.id,
+        intent: transfer.id,
+        detail: `payable ${payable.id} (${payable.payeeLabel}) records ${payable.amountCents}c and transfer ${transfer.id} moved ${transfer.amount}c`,
+      });
+    }
+    if (transfer.amountReversed > 0) {
+      findings.push({
+        kind: 'released-transfer-reversed',
+        severity: 'money',
+        ref: payable.id,
+        intent: transfer.id,
+        detail: `transfer ${transfer.id} for payable ${payable.id} has ${transfer.amountReversed}c reversed and the payable still reads RELEASED — ${payable.payeeLabel} was told they were paid and the money came back`,
+      });
+    }
+  }
+
+  for (const transfer of transfers) {
+    const payableId = transfer.metadata.payableEntryId;
+    /* A transfer this product did not create. Nothing here can say anything
+       about it, and saying something anyway is how a reconciler starts
+       reporting the operator's own dashboard actions as drift. */
+    if (!payableId) continue;
+    if (!settled(transfer.created)) continue;
+
+    const payable = payablesById.get(payableId);
+    if (!payable) {
+      findings.push({
+        kind: 'transfer-without-payable',
+        severity: 'money',
+        ref: payableId,
+        intent: transfer.id,
+        detail: `transfer ${transfer.id} moved ${transfer.amount}c naming payable ${payableId}, and no such payable exists — money left the platform balance and nothing here accounts for it`,
+      });
+      continue;
+    }
+    if (payable.status === 'RELEASED') continue;
+
+    findings.push({
+      kind: 'transfer-payable-not-released',
+      severity: 'money',
+      ref: payableId,
+      intent: transfer.id,
+      detail:
+        payable.status === 'VOID'
+          ? `transfer ${transfer.id} moved ${transfer.amount}c to ${payable.payeeLabel} and payable ${payableId} is VOID — the order behind it was refunded and the payout went out anyway`
+          : `transfer ${transfer.id} moved ${transfer.amount}c to ${payable.payeeLabel} and payable ${payableId} is still PENDING — the transfer succeeded and the write recording it did not. The next payout run asks Stripe before paying and records this transfer rather than sending a second one, so if this is still here tomorrow, it did not`,
+    });
+  }
+
+  if (coverage && (coverage.failed || coverage.truncated)) {
+    findings.push({
+      kind: 'transfers-not-compared',
+      severity: 'info',
+      ref: null,
+      intent: null,
+      detail: coverage.failed
+        ? 'Stripe would not list transfers, so no released payable was compared against one this run'
+        : 'the transfer list hit its cap, so the oldest of the window is missing and a released payable naming one of those is not reported this run',
+    });
+  }
+
   return findings;
 }
 
 export type ReconcileSummary = {
   at: string;
   since: string;
-  counts: { orders: number; ads: number; intents: number; accounts: number };
+  counts: { orders: number; ads: number; intents: number; accounts: number; payables: number; transfers: number };
   money: number;
   info: number;
   findings: ReconcileFinding[];
@@ -289,11 +489,16 @@ export function summarizeReconciliation(
 export function renderReconciliationText(summary: ReconcileSummary): string {
   const lines = [
     `Stripe reconciliation · ${summary.at}`,
-    `Compared ${summary.counts.orders} orders and ${summary.counts.ads} campaigns against ${summary.counts.intents} PaymentIntents (platform + ${summary.counts.accounts} connected accounts) since ${summary.since}.`,
+    /* THE SCOPE LINE IS PART OF THE FINDING. "No disagreement" is only worth
+       anything beside a statement of what was compared, and this line is what
+       stopped the outbound half being unreconciled in silence: it named
+       orders, campaigns and intents, and an operator reading it could see
+       that payables were not in it. Add a comparison, add it here. */
+    `Compared ${summary.counts.orders} orders and ${summary.counts.ads} campaigns against ${summary.counts.intents} PaymentIntents (platform + ${summary.counts.accounts} connected accounts), and ${summary.counts.payables} payables against ${summary.counts.transfers} transfers, since ${summary.since}.`,
     '',
   ];
   if (summary.findings.length === 0) {
-    lines.push('No disagreement. Every captured order and live campaign has a succeeded intent, and every succeeded intent has its row.');
+    lines.push('No disagreement. Every captured order and live campaign has a succeeded intent, every succeeded intent has its row, and every released payable has a transfer Stripe agrees it sent.');
     return lines.join('\n');
   }
   lines.push(`${summary.money} finding(s) about money, ${summary.info} informational:`);
