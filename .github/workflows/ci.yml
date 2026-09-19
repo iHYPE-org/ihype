@@ -251,6 +251,25 @@ jobs:
         # quietly self-exempted were found.
         run: npm run audit:doc-paths
 
+      - name: DESIGN_SYNC row numbers are unique
+        # The row number is the ADDRESS CLAUDE.md cites ("DESIGN_SYNC row 346").
+        # Two rows sharing one does not break the build or the product — it
+        # sends the next reader who follows a citation to whichever row their
+        # grep hits first, which is the audit:doc-paths defect one level out.
+        #
+        # Nothing could see it, because the merge that causes it is CLEAN:
+        # parallel PRs each append a row, pick the same next number, and
+        # neither side edits the other's line, so git resolves nothing. One
+        # branch was renumbered three times in an afternoon (473 -> 483 -> 485
+        # -> 486) and a fourth collision still reached main; row 182 had been
+        # duplicated since July and nobody had noticed.
+        #
+        # A gate at 0 from day one is only fair because the pass that wrote it
+        # cleared both collisions first — the same move audit:retired-claims
+        # made. Every run also prints the next free number, which is the half
+        # that stops the collision being written at all.
+        run: npm run audit:sync-rows
+
       - name: Published URLs resolve
         # The other half of the gate above. A documented path is a claim about
         # a file; a PUBLISHED URL is a claim about a route, and nothing
