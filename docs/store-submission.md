@@ -348,6 +348,16 @@ skipped are 4 and 5, because skipping either fails exactly like a bad key:
    permission that matters is granted in step 5, on the Play side.
 3. On that service account: **Keys → Add key → Create new key → JSON**, and
    download the file. Google issues the private key once and stores no copy.
+   **This is the step that can be refused outright, and the refusal is not a
+   misconfiguration.** Google's Secure by Default applies the organization
+   policy `iam.managed.disableServiceAccountKeyCreation` to new organizations,
+   and the dialog then reads "Service account key creation is disabled" —
+   measured on project `ihype-508800`, 2026-09-16. Lifting it means an
+   org-policy exception (IAM & Admin → Organization Policies, which needs
+   `roles/orgpolicy.policyAdmin`) scoped to that one project, never
+   organization-wide. **Prefer the hand upload below**: weakening an org-wide
+   security control to automate one upload is a bad trade, and the hand upload
+   reaches the same track with the same bundle.
 4. **Enable the Google Play Android Developer API** on that same Cloud project
    (APIs & Services → Library). Linking usually enables it; when it does not,
    every upload answers 403 with a key that is perfectly valid.
@@ -398,6 +408,110 @@ re-run of a failed one included — outranks the code Play already holds.
 
 ---
 
+## Google Play — hand upload, with no service account at all
+
+`GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` automates the last mile and nothing else.
+This is the same `.aab`, on the same track, with no Cloud project, no service
+account, no key and no org-policy exception. **This section exists because the
+section above told the reader twice to use "the hand upload below" and there was
+no hand upload below** — a pointer at a procedure nobody could open, which is
+the same defect as a page map naming a file that is not there.
+
+1. **Get a signed bundle.** Dispatch **Native shell build (iOS + Android)** with
+   `publish=false` (Actions → Run workflow → `main`). The Android release job
+   verifies the signature itself — it fails on an unsigned bundle or an expired
+   certificate rather than handing one onward — and leaves the file as the run
+   artifact `ihype-android-signed-<run_number>`. **Artifacts expire after 14
+   days** (`retention-days: 14` in the workflow), so an older run's bundle may
+   simply be gone; dispatching a fresh run is the reliable path and takes
+   minutes.
+2. Download that artifact and unzip it. Inside is `app-release.aab`. **An `.aab`
+   cannot be installed on a phone** — it is the bundle Play opens and builds
+   per-device APKs from. The debug `.apk` artifact from the same run is the
+   sideloadable one, and being debug-signed it verifies neither deep links nor
+   passkeys, so do not test either on it.
+3. **Play Console → Test and release → Testing → Internal testing → Create new
+   release**, drag `app-release.aab` in, write the release notes, then **Save →
+   Review release → Start rollout to Internal testing**.
+4. That is the whole of it. `versionCode` is `run_number × 100 + run_attempt`,
+   so every dispatch outranks whatever Play already holds and the upload is
+   never refused as a duplicate of an earlier code. **That sentence was false
+   for the life of this workflow and is the reason step 3 kept failing** — see
+   "What actually goes wrong" below.
+
+**What the hand upload does not do**, so the trade is stated rather than
+discovered: it does not tie the release to the run that built it, so nothing
+records which commit reached Play. Read the `versionCode` shown on the Play
+release back against the run number when you need to know.
+
+---
+
+## What actually goes wrong, from the first real alpha upload (2026-09-17)
+
+Every item here cost real time on the day both apps went to alpha. They are
+written as symptoms, because that is how the next person meets them.
+
+**"Version code 1 has already been used."** The bundle genuinely carried
+version code 1. The workflow passed `-Pandroid.injected.version.code`, which is
+the IDE's *inject* API and which this AGP does not apply to `bundleRelease`, so
+every signed bundle CI had ever produced was version 1 — and Play burns a code
+permanently, so the first upload spent it and every later one was refused. The
+build now passes `-PihypeVersionCode` (a plain project property Gradle cannot
+silently ignore) **and reads the number back out of the built `.aab`, failing
+the build on a mismatch**. If you see this error again, the verify step should
+have caught it first; check that step's log before touching the console.
+
+**"This release does not add or remove any app bundles."** Nothing attached.
+Almost always the **`.zip`** was dropped rather than the `app-release.aab`
+inside it — GitHub serves artifacts as zips and Play rejects them quietly. You
+know the upload took when a row appears showing the version code and ~4.5 MB.
+
+**"Create new release" is greyed out.** A draft release already exists on that
+track. Play allows one. Either **Edit release** on the draft or **Discard draft
+release**; nothing else re-enables the button, and hunting for another way is
+how you end up creating a half-made draft on the *closed* testing track.
+
+**"No longer supports N devices."** Android implies a `uses-feature` from
+certain permissions and defaults it to `required="true"`, so adding a
+permission silently narrows who may install. All five are now declared
+optional in `AndroidManifest.xml` and a unit test holds them there; read that
+file's comment before changing any of them.
+
+**Warnings are not errors.** The advertising-ID declaration and the
+device-support notice both render as *warnings* in the release review. Only the
+error disables **Save and publish**. Do not stall an internal rollout on a
+warning.
+
+### Finding anything in the Play Console
+
+**Do not trust a remembered navigation path for this console, including the
+ones in this document.** Google reorganises it, and on 2026-09-17 three
+separate paths given from memory were all wrong: "Policy → App content" (no
+Policy section exists), the App signing page (already recorded above as having
+moved to **Protected with Play**), and the Dashboard setup list. Each wrong
+turn cost more than the answer was worth.
+
+What is reliable, in order:
+
+1. **Click the link in the console's own message.** A release-review warning
+   names the form it wants and links to it. That route cannot go stale.
+2. **Construct the URL.** Console URLs are stable even when the navigation is
+   not, and the developer and app ids are in whatever page you are already on:
+   `https://play.google.com/console/u/0/developers/<developerId>/app/<appId>/app-content`
+   is the declarations page (privacy policy, ads, content rating, target
+   audience, data safety, advertising ID).
+3. **Only then go looking in the sidebar**, and if what you find disagrees with
+   this document, fix the document in the same sitting.
+
+**Advertising ID, specifically**: iHYPE's bundle carries no
+`com.google.android.gms.permission.AD_ID` — verified by reading the merged
+manifest out of the `.aab`, not inferred from the dependency list — so the
+answer is always **"No, my app does not use advertising ID."** The declaration
+may not be offered at all until a release targeting API 33+ has been processed,
+which is worth knowing before concluding the form is missing.
+
+---
+
 ## Order of operations
 
 0. **Push should work before you submit, and it is the only remaining item that
@@ -440,6 +554,11 @@ re-run of a failed one included — outranks the code Play already holds.
    days — `src/lib/review-access.ts`); the invite codes are single-use, which is
    why three.
 
+**BOTH APPS ARE IN ALPHA AS OF 2026-09-17** — a signed build on TestFlight and
+a signed bundle live on Play Internal testing, version code 38701. What it took
+on the day is in "What actually goes wrong" above; read that before the next
+release rather than rediscovering it.
+
 **What is NOT left, so nobody re-does it:** every signing secret works. Native
 build run 307 (2026-09-09, off `main`) produced a signed `.ipa` and a signed
 `.aab`; both upload steps were skipped only because the dispatch had
@@ -449,4 +568,6 @@ the workflow with `publish=true` — iOS goes to TestFlight and Android to Play
 from the one run. The Play half additionally needs
 `GOOGLE_PLAY_SERVICE_ACCOUNT_JSON` (see "Play API access" above, and note that
 it reports its own absence rather than failing obscurely); a hand upload of the
-`.aab` needs no secret at all.
+`.aab` needs no secret at all (see **Google Play — hand upload** above; as of
+2026-09-16 that is the recommended path, because an organization policy blocks
+service-account key creation on the Cloud project).

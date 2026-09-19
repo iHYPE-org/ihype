@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isCronRequestAuthorized } from '@/lib/cron-auth';
 import { db } from '@/lib/db';
+import { releaseShowInventory } from '@/lib/ticket-inventory';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
@@ -29,7 +30,6 @@ export async function GET(request: NextRequest) {
 
   const cutoff = new Date(Date.now() - RESERVATION_TTL_MINUTES * 60 * 1000);
 
-  // Find stale reservations grouped by show so we can release seat counts atomically
   const stale = await db.ticketOrder.findMany({
     where: {
       status: 'RESERVED',
@@ -41,36 +41,77 @@ export async function GET(request: NextRequest) {
   });
 
   if (stale.length === 0) {
-    return NextResponse.json({ ok: true, voided: 0 });
+    return NextResponse.json({ ok: true, voided: 0, raced: 0, showsAffected: 0 });
   }
 
-  // Group by show for the seat-count release
-  const seatsByShow = new Map<string, number>();
+  // THE SEATS RELEASED MUST BE EXACTLY THE SEATS ACTUALLY VOIDED, and getting
+  // that wrong oversells the show.
+  //
+  // This used to void with a `status: 'RESERVED', stripePaymentIntentId: null`
+  // guard — correctly refusing an order that captured between the read above
+  // and this write — and then decrement each show by the quantity summed from
+  // the READ. So the one race the guard exists to defend against was also the
+  // race that handed a paid buyer's seats back to the pool: the order stayed
+  // CAPTURED, its seats were released anyway, and `ticketsSoldCount` fell
+  // below the number of tickets really held. The next buyers bought seats that
+  // did not exist. The release was also an unguarded `show.update`, so the
+  // count could go negative — where both paths in `ticket-order-state.ts`
+  // guard `ticketsSoldCount: { gte: quantity }` and throw when the release does
+  // not apply. Two implementations of one rule, and this was the weaker.
+  //
+  // Grouping by (show, quantity) is what makes the release exact without a
+  // statement per order: every order in a group frees the same number of
+  // seats, so `count × quantity` is the true figure, whatever raced. Quantity
+  // is 1..MAX_TICKETS_PER_SHOW_PER_ACCOUNT, so a show contributes at most
+  // eight groups however many reservations went stale — which matters here,
+  // because the run after a big on-sale is the one with the most orders in it.
+  const groups = new Map<string, { showId: string; quantity: number; ids: string[] }>();
   for (const order of stale) {
-    seatsByShow.set(order.showId, (seatsByShow.get(order.showId) ?? 0) + order.quantity);
+    const key = `${order.showId}:${order.quantity}`;
+    const group = groups.get(key) ?? { showId: order.showId, quantity: order.quantity, ids: [] };
+    group.ids.push(order.id);
+    groups.set(key, group);
   }
 
-  const orderIds = stale.map((o) => o.id);
+  let voided = 0;
+  const showsAffected = new Set<string>();
 
-  await db.$transaction([
-    db.ticketOrder.updateMany({
-      // Still RESERVED: a capture landing between the read above and this
-      // write must not be flipped to VOID and have its seats handed back.
-      where: { id: { in: orderIds }, status: 'RESERVED', stripePaymentIntentId: null },
-      data: { status: 'VOID' }
-    }),
-    // Release seats back to each show
-    ...Array.from(seatsByShow.entries()).map(([showId, qty]) =>
-      db.show.update({
-        where: { id: showId },
-        data: { ticketsSoldCount: { decrement: qty } }
-      })
-    )
-  ]);
+  for (const group of groups.values()) {
+    const releasedSeats = await db.$transaction(async (tx) => {
+      const transitioned = await tx.ticketOrder.updateMany({
+        // Still RESERVED and still unpaid: a capture landing between the read
+        // above and this write must not be flipped to VOID.
+        where: { id: { in: group.ids }, status: 'RESERVED', stripePaymentIntentId: null },
+        data: { status: 'VOID' }
+      });
+      if (transitioned.count === 0) return 0;
+
+      const seats = transitioned.count * group.quantity;
+      // Never below zero: a count that has already drifted is a reason to fail
+      // loudly, not to write a negative capacity the purchase guard would then
+      // read as room. That floor lives in `ticket-inventory.ts` beside the take
+      // side of the same rule.
+      const released = await releaseShowInventory(tx, { showId: group.showId, seats });
+      if (!released) {
+        throw new Error(
+          `Show ${group.showId} could not release ${seats} seat(s) for ${transitioned.count} expired reservation(s).`
+        );
+      }
+
+      voided += transitioned.count;
+      return seats;
+    });
+
+    if (releasedSeats > 0) showsAffected.add(group.showId);
+  }
 
   return NextResponse.json({
     ok: true,
-    voided: stale.length,
-    showsAffected: seatsByShow.size
+    // What was VOIDED, not what was read — the two differ by exactly the
+    // orders that captured while this ran, and reporting the read count would
+    // be a figure this job never measured.
+    voided,
+    raced: stale.length - voided,
+    showsAffected: showsAffected.size
   });
 }

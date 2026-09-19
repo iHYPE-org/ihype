@@ -14,6 +14,7 @@ import {
   resolvePurchaseAllowance,
 } from '@/lib/ticket-purchase-guard';
 import { getPaymentProcessingReadiness } from '@/lib/payments';
+import { reserveShowInventory } from '@/lib/ticket-inventory';
 import { detectLocationFromHeaders } from '@/lib/request-location';
 import {
   createTicketCheckoutSession,
@@ -393,29 +394,15 @@ export async function POST(
         throw new TicketPurchaseLimitError(allowance.reason ?? 'Ticket limit reached for this show.');
       }
 
-      const remainingCapacityGuard = show.ticketCapacity === null
-        ? {}
-        : { ticketsSoldCount: { lte: show.ticketCapacity - body.quantity } };
-
-      // The ticketsSoldCount comparison below is the atomic capacity guard —
-      // it's evaluated against the row's live value at update time, so it
-      // alone is sufficient to prevent overselling under concurrent
-      // reservations. Do not also gate on show.updatedAt: that column is
-      // bumped by any write to the row (including another buyer's own
-      // successful reservation moments earlier), so pinning it to a value
-      // read before this transaction started would reject concurrent,
-      // still-within-capacity purchases as spurious "availability changed"
-      // errors.
-      const reserved = await tx.show.updateMany({
-        where: {
-          id: show.id,
-          isTicketed: true,
-          status: { in: ['SCHEDULED', 'LIVE'] },
-          ...remainingCapacityGuard,
-        },
-        data: { ticketsSoldCount: { increment: body.quantity } },
+      // The capacity rule lives in `ticket-inventory.ts` — one conditional
+      // write, evaluated against the row's live value, shared with the three
+      // paths that give seats back. See that file before changing any of it.
+      const reserved = await reserveShowInventory(tx, {
+        showId: show.id,
+        quantity: body.quantity,
+        ticketCapacity: show.ticketCapacity,
       });
-      if (reserved.count !== 1) {
+      if (!reserved) {
         throw new TicketAvailabilityError('Ticket availability changed before the reservation completed.');
       }
 

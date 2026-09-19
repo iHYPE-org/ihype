@@ -262,6 +262,18 @@ jobs:
           psql "$DATABASE_URL" -c 'CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS citext;'
           npx prisma db push --accept-data-loss
 
+      # Overselling is a property of concurrent transactions, not of source
+      # text, so no static gate can see it and the unit suite cannot either —
+      # a fake transaction client has no MVCC. This drives the product's own
+      # reserve/release functions from 32 connections at once against the
+      # scratch Postgres above. It BLOCKS (exit 2) rather than passing when it
+      # cannot connect or makes too few attempts, so a green line here always
+      # means seats were actually contended for.
+      - name: Ticket inventory under simultaneous writers
+        run: npm run probe:concurrency
+        env:
+          PROBE_DATABASE_URL: ${{ env.DATABASE_URL }}
+
       - name: Build the Cloudflare worker
         run: npm run cf:build
 

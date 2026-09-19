@@ -5,6 +5,7 @@ import {
   TicketOrderStatus,
 } from '@prisma/client/edge';
 import { createSerializedTicketId } from '@/lib/tickets';
+import { releaseShowInventory } from '@/lib/ticket-inventory';
 
 type DbClient = typeof import('@/lib/db').db;
 type Tx = Pick<
@@ -259,11 +260,8 @@ export async function refundCapturedTicketOrder(tx: Tx, orderId: string) {
     data: { status: 'VOID' },
   });
 
-  const released = await tx.show.updateMany({
-    where: { id: order.showId, ticketsSoldCount: { gte: order.quantity } },
-    data: { ticketsSoldCount: { decrement: order.quantity } },
-  });
-  if (released.count !== 1) {
+  const released = await releaseShowInventory(tx, { showId: order.showId, seats: order.quantity });
+  if (!released) {
     throw new Error(`Ticket order ${order.id} was refunded without releasing sold capacity.`);
   }
 
@@ -288,11 +286,8 @@ export async function voidReservedTicketOrder(tx: Tx, orderId: string) {
   });
   if (transitioned.count !== 1) return false;
 
-  const released = await tx.show.updateMany({
-    where: { id: order.showId, ticketsSoldCount: { gte: order.quantity } },
-    data: { ticketsSoldCount: { decrement: order.quantity } },
-  });
-  if (released.count !== 1) {
+  const released = await releaseShowInventory(tx, { showId: order.showId, seats: order.quantity });
+  if (!released) {
     throw new Error(`Ticket order ${order.id} was voided without releasing reserved capacity.`);
   }
 

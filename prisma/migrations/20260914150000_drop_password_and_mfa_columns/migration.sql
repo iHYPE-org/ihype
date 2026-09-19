@@ -1,4 +1,3 @@
--- @gated
 --
 -- Drops the four columns of a credential model this product does not have.
 --
@@ -32,6 +31,19 @@
 -- not a reason to keep the column: nothing verifies it. A non-zero MFA count
 -- would be surprising and worth reading before the drop, because no code has
 -- ever written those columns.
+
+--
+-- RUN 2026-09-15 against production (bjkabtzvgfshsrmjhrkx), read through the
+-- Supabase connector, which is pinned read-only:
+--
+--   User.passwordHash 0 | User.mfaSecret 0
+--   User.mfaEnabledAt 0 | User.mfaBackupCodes 0        (over 17 users)
+--
+-- Every credential column is empty across all 17 accounts, so the drop takes
+-- no data. `with_password_hash` reading 0 rather than the expected non-zero
+-- is itself worth recording: the registrations that could send a password
+-- predate every surviving account, and the workflow that set a shared hash
+-- was deleted before it ran again.
 
 ALTER TABLE "User" DROP COLUMN IF EXISTS "passwordHash";
 ALTER TABLE "User" DROP COLUMN IF EXISTS "mfaSecret";
