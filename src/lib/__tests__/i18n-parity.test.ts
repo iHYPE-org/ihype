@@ -104,7 +104,8 @@ describe('i18n invariants', () => {
     for (const locale of locales) {
       for (const [key, value] of Object.entries(dict(locale))) {
         for (const email of value.match(/[\w.+-]+@[\w.-]+\.\w+/g) ?? []) {
-          if (email.endsWith('ihype.org') && email !== 'admin@ihype.org') {
+          const domain = email.slice(email.lastIndexOf('@') + 1).toLowerCase();
+          if (domain === 'ihype.org' && email !== 'admin@ihype.org') {
             defects.push(`${locale}/${key}: ${email}`);
           }
         }
