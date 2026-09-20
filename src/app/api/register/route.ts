@@ -28,7 +28,7 @@ import {
 /** A handle for a member whose display name yields nothing legal — or none at
  *  all, which is the ordinary case now that a fan signup asks for no name. */
 function randomHandle() {
-  return `user${Math.random().toString(36).slice(2, 10)}`;
+  return `user${crypto.randomUUID().replaceAll('-', '').slice(0, 8)}`;
 }
 
 /**
