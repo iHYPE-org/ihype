@@ -340,7 +340,7 @@ jobs:
         # the run. `--strict` would make a browser flake look like a broken
         # deploy, and the deploy has already happened by this point.
         continue-on-error: true
-        run: npm run audit:mobile -- --base=https://ihype.org
+        run: npm run audit:mobile -- --base=https://ihype.org --strict
         env:
           PLAYWRIGHT_BROWSERS_PATH: /opt/pw-browsers
 
