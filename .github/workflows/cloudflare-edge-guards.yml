@@ -36,6 +36,9 @@ on:
         default: false
         type: boolean
 
+permissions:
+  contents: read
+
 jobs:
   guards:
     name: ${{ inputs.apply && 'Apply' || 'Dry run' }}

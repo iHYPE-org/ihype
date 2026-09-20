@@ -65,7 +65,7 @@ export async function POST(request: Request) {
 
     let normalizedUsername = normalizeUsername(`adv-${body.companyName}`).slice(0, 30);
     if (!isValidUsername(normalizedUsername)) {
-      normalizedUsername = `advertiser${Math.random().toString(36).slice(2, 8)}`;
+      normalizedUsername = `advertiser${crypto.randomUUID().replaceAll('-', '').slice(0, 6)}`;
     }
 
     const { user } = await db.$transaction(async (tx) => {

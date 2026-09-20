@@ -2366,7 +2366,7 @@ fieldset.authcard-field { border: 0; padding: 0; }
 }
 /* Magic-link fallback inside the passkey step. */
 .authcard-passkey-fallback { margin-top: 18px; }
-.authcard-charter a { color: var(--ink-3); text-decoration: none; }
+.authcard-charter a { align-items: center; color: var(--ink-3); display: inline-flex; min-height: 44px; text-decoration: none; }
 .authcard-charter a:hover { text-decoration: underline; }
 
 .authcard-status {
