@@ -1,4 +1,6 @@
 import { createHmac } from 'crypto';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { constantTimeEqual, verifyBearerToken } from '@/lib/secret-compare';
 import { readClientAddress } from '@/lib/request-meta';
@@ -17,6 +19,37 @@ function signResendPayload(payload: string, svixId: string, svixTimestamp: strin
 }
 
 const RESEND_WEBHOOK_SECRET = `whsec_${Buffer.from('ihype-resend-webhook-test-key-32b').toString('base64')}`;
+
+
+const readSource = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
+
+describe('security-sensitive source policy', () => {
+  it('does not use predictable randomness for generated account handles', () => {
+    for (const path of [
+      'src/app/api/register/route.ts',
+      'src/app/api/advertise/register/route.ts',
+    ]) {
+      const source = readSource(path);
+      expect(source).not.toContain('Math.random()');
+      expect(source).toContain('crypto.randomUUID()');
+    }
+  });
+
+  it('gives production maintenance workflows explicit least-privilege permissions', () => {
+    const expectations = new Map([
+      ['.github/workflows/purge-cache.yml', 'permissions: {}'],
+      ['.github/workflows/seed-preview-content.yml', 'permissions:\n  contents: read'],
+      ['.github/workflows/resolve-failed-migration.yml', 'permissions:\n  contents: read'],
+      ['.github/workflows/cloudflare-edge-guards.yml', 'permissions:\n  contents: read'],
+    ]);
+    for (const [path, policy] of expectations) {
+      expect(readSource(path), path).toContain(policy);
+    }
+    expect(readSource('.github/workflows/deploy-production.yml')).toContain(
+      'npm run audit:mobile -- --base=https://ihype.org --strict',
+    );
+  });
+});
 
 describe('secret comparison helpers', () => {
   it('matches equal strings and rejects unequal strings', () => {
