@@ -141,9 +141,25 @@
       let val = window.ihypeT(key);
       const pctArg = el.getAttribute('data-i18n-arg-pct');
       if (pctArg) val = val.replace('{pct}', pctArg);
-      if (key === 'akHeroBody') { el.innerHTML = val.replace(pctArg || '70%', `<strong style="color:var(--ink-1)">${pctArg || '70%'}</strong>`); }
-      else if (val.includes('⟦')) { el.innerHTML = val.replace(/⟦([^⟧]*)⟧/, '<span style="color:var(--accent)">$1</span>'); }
-      else el.textContent = val;
+      const renderAccent = (text, marker, tag, color) => {
+        const start = text.indexOf(marker.open);
+        const end = start < 0 ? -1 : text.indexOf(marker.close, start + marker.open.length);
+        if (start < 0 || end < 0) { el.textContent = text; return; }
+        el.replaceChildren(
+          document.createTextNode(text.slice(0, start)),
+          Object.assign(document.createElement(tag), {
+            textContent: text.slice(start + marker.open.length, end),
+          }),
+          document.createTextNode(text.slice(end + marker.close.length)),
+        );
+        el.children[0].style.color = color;
+      };
+      if (key === 'akHeroBody') {
+        const pct = pctArg || '70%';
+        renderAccent(val, { open: pct, close: '' }, 'strong', 'var(--ink-1)');
+      } else if (val.includes('⟦')) {
+        renderAccent(val, { open: '⟦', close: '⟧' }, 'span', 'var(--accent)');
+      } else el.textContent = val;
     });
   }
   document.addEventListener('DOMContentLoaded', applyI18n);
