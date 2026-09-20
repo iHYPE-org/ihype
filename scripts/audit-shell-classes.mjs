@@ -244,7 +244,7 @@ for (const file of colourFiles) {
 
     for (const [lit, tok] of TOKENED) {
       const re = lit.startsWith('#')
-        ? new RegExp(lit.replace('#', '#'), 'i')
+        ? new RegExp(lit, 'i')
         : new RegExp(`rgba?\\(\\s*${lit.replace(/,/g, '\\s*,\\s*')}`, 'i');
       if (re.test(line)) colourHits.push({ file, n: i + 1, lit, tok, kind: 'tokened' });
     }
