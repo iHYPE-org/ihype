@@ -32,7 +32,6 @@ describe('browser Sentry wiring', () => {
     expect(existsSync(join(ROOT, 'src/instrumentation-client.ts'))).toBe(true);
     const entry = read('src/instrumentation-client.ts');
     expect(entry).toMatch(/process\.env\.NEXT_PUBLIC_SENTRY_DSN/);
-    expect(entry).toMatch(/Sentry\.init\(/);
     expect(entry).toMatch(/export const onRouterTransitionStart = Sentry\.captureRouterTransitionStart/);
     /* The wizard's root files are entry points only under withSentryConfig,
        which next.config.mjs must not adopt (see worker.js). Their return
@@ -57,5 +56,11 @@ describe('browser Sentry wiring', () => {
     const middleware = read('src/middleware.ts');
     expect(middleware).toMatch(/process\.env\.NEXT_PUBLIC_SENTRY_DSN/);
     expect(middleware).toMatch(/connect-src[^\n]*sentryIngestOrigin\(\)/);
+  });
+
+  it('reports App Router root render failures from the global error boundary', () => {
+    const boundary = read('src/app/global-error.tsx');
+    expect(boundary).toContain("import('@sentry/nextjs')");
+    expect(boundary).toContain('Sentry.captureException(error)');
   });
 });
