@@ -20,7 +20,6 @@ function signResendPayload(payload: string, svixId: string, svixTimestamp: strin
 
 const RESEND_WEBHOOK_SECRET = `whsec_${Buffer.from('ihype-resend-webhook-test-key-32b').toString('base64')}`;
 
-
 const readSource = (path: string) => readFileSync(join(process.cwd(), path), 'utf8');
 
 describe('security-sensitive source policy', () => {
@@ -32,6 +31,27 @@ describe('security-sensitive source policy', () => {
       const source = readSource(path);
       expect(source).not.toContain('Math.random()');
       expect(source).toContain('crypto.randomUUID()');
+    }
+  });
+
+  it('does not use predictable randomness in server-generated identifiers or ordering', () => {
+    for (const path of [
+      'src/app/api/shows/route.ts',
+      'src/app/api/discover/seeds/route.ts',
+      'src/lib/alpha-diagnostics.ts',
+      'scripts/seed-preview-content.mjs',
+    ]) {
+      expect(readSource(path), path).not.toContain('Math.random()');
+    }
+  });
+
+  it('scrubs request details and disables default PII in both Sentry runtimes', () => {
+    for (const path of ['src/instrumentation-client.ts', 'worker.js']) {
+      const source = readSource(path);
+      expect(source, path).toContain('sendDefaultPii: false');
+      expect(source, path).toContain('delete event.request.cookies');
+      expect(source, path).toContain('delete event.request.headers');
+      expect(source, path).toContain('delete event.request.data');
     }
   });
 
