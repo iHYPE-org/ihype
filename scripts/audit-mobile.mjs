@@ -93,8 +93,8 @@ const BASE = arg('base', 'https://ihype.org');
 // globals.css measures 25 on a local build with fixture content; 28 leaves
 // slack for production content, the same reason tinyBodyText carries some.
 const BUDGET = {
-  smallTaps: 28,
-  tinyBodyText: 6,
+  smallTaps: 0,
+  tinyBodyText: 0,
   overflowingPages: 0,
 };
 
