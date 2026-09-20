@@ -199,7 +199,12 @@ export function renderSummaryMarkdown(report) {
     for (const entry of lcpFailures) {
       const el = entry.lcpElement;
       const text = el
-        ? `\`${((el.snippet ?? el.selector ?? '').replace(/\s+/g, ' ').trim() || 'unknown').replace(/\|/g, '\\|')}\``
+        ? `\`${((el.snippet ?? el.selector ?? '').replace(/\s+/g, ' ').trim() || 'unknown')
+            .replaceAll('&', '&amp;')
+            .replaceAll('`', '&#96;')
+            .replaceAll('|', '&#124;')
+            .replaceAll('<', '&lt;')
+            .replaceAll('>', '&gt;')}\``
         : '_not reported_';
       lines.push(`| \`${entry.path}\` | ${text} |`);
     }

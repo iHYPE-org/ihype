@@ -1289,7 +1289,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
           <h2>{t('adminPage.backups', 'Backups')}</h2>
           <article className="panel" style={{ padding: '1rem 1.25rem' }}>
             <p className="meta" style={{ marginTop: 0 }}>
-              {t('adminPage.backupsDesc', 'iHYPE does not currently run an automated database backup job. Postgres backups should be taken from the managed provider dashboard on a regular cadence (daily for production).')}
+              {t('adminPage.backupsDesc', 'Production runs encrypted off-cluster database backups on a recurring schedule, plus a backup immediately before pending migrations.')}
             </p>
             <ul style={{ paddingLeft: '1.2rem', margin: '0.5rem 0', lineHeight: 1.6 }}>
               <li>
@@ -1297,7 +1297,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
                 <a href="https://supabase.com/dashboard" rel="noopener noreferrer" target="_blank">
                   supabase.com/dashboard
                 </a>{' '}
-                — {t('adminPage.supabaseDesc', 'branch the production database for point-in-time snapshots.')}
+                — {t('adminPage.supabaseDesc', 'review database health and enable point-in-time recovery when the operating budget allows.')}
               </li>
               <li>
                 <strong>{t('adminPage.cloudflareLabel', 'Cloudflare:')}</strong>{' '}
@@ -1312,7 +1312,7 @@ export default async function AdminPage({ searchParams }: { searchParams?: Promi
               </li>
             </ul>
             <p className="meta" style={{ marginBottom: 0 }}>
-              {t('adminPage.backupsNote', 'Note: an R2/S3-backed automated rotation job is planned but intentionally not wired up yet — this section is informational so admins know where to look.')}
+              {t('adminPage.backupsNote', 'Nightly restore drills verify that the newest encrypted archive decrypts, restores into isolated Postgres, and contains the expected application schema and critical records.')}
             </p>
           </article>
         </section>

@@ -58,7 +58,7 @@ function stripComments(source: string): string {
 function legacyHrefs(rawSource: string): string[] {
   const source = stripComments(rawSource);
   const found: string[] = [];
-  const pattern = new RegExp(`['\`"](/(?:${LEGACY_FIRST_SEGMENTS.join('|')})(?:/[^'\`"\s]*)?)`, 'g');
+  const pattern = new RegExp(`['\`"](/(?:${LEGACY_FIRST_SEGMENTS.join('|')})(?:/[^'\`"\\s]*)?)`, 'g');
   for (const match of source.matchAll(pattern)) {
     const route = match[1].split('?')[0];
     // `/me` inside `/app/me` is not an escape; the pattern anchors on the

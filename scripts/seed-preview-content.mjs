@@ -49,7 +49,7 @@
  * one real scene reads as a product rather than as lorem ipsum.
  */
 
-import { createHash } from 'node:crypto';
+import { createHash, randomInt } from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
@@ -218,10 +218,10 @@ async function main() {
           city: 'Portland',
           stateRegion: 'ME',
           country: 'US',
-          latitude: 43.6591 + (Math.random() - 0.5) * 0.02,
-          longitude: -70.2568 + (Math.random() - 0.5) * 0.02,
+          latitude: 43.6591 + (randomInt(0, 20_001) / 1_000_000 - 0.01),
+          longitude: -70.2568 + (randomInt(0, 20_001) / 1_000_000 - 0.01),
           verificationStatus: 'VERIFIED',
-          hypeCount: 12 + Math.floor(Math.random() * 180),
+          hypeCount: randomInt(12, 192),
         },
         select: { id: true, name: true },
       });
@@ -242,7 +242,7 @@ async function main() {
             originalFileName: `${trackSeed}.mp3`,
             mimeType: 'audio/mpeg',
             fileSizeBytes: 0,
-            durationSecs: 150 + Math.floor(Math.random() * 130),
+            durationSecs: randomInt(150, 280),
             sortOrder: index,
             isPublished: true,
           },
@@ -331,8 +331,8 @@ async function main() {
           isTicketed: true,
           ticketPriceCents: [1200, 1500, 1800, 2200, 2500][index % 5],
           ticketCapacity: 120 + index * 40,
-          ticketsSoldCount: Math.floor(Math.random() * 90),
-          hypeCount: Math.floor(Math.random() * 60),
+          ticketsSoldCount: randomInt(0, 90),
+          hypeCount: randomInt(0, 60),
           featured: index === 0,
           description: `${artist.name} at ${venue.name}. Doors 8pm.`,
         },

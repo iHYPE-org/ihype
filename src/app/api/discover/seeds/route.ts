@@ -229,7 +229,9 @@ export async function GET(request: NextRequest) {
       },
     });
     for (let index = randomPool.length - 1; index > 0; index -= 1) {
-      const swapWith = Math.floor(Math.random() * (index + 1));
+      const value = new Uint32Array(1);
+      crypto.getRandomValues(value);
+      const swapWith = value[0] % (index + 1);
       [randomPool[index], randomPool[swapWith]] = [randomPool[swapWith], randomPool[index]];
     }
     const randomMedia = randomPool.slice(0, 5);
