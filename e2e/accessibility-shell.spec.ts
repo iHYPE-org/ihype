@@ -75,7 +75,7 @@ test.describe('Accessibility — the signed-in shell', () => {
       await settled(page);
 
       const results = await new AxeBuilder({ page })
-        .withTags(['wcag2a', 'wcag2aa'])
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
         .exclude('[data-axe-ignore]')
         .analyze();
 
