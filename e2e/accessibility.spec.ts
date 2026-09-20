@@ -52,7 +52,7 @@ async function assertNoSeriousViolations(page: Page, path: string, response: Res
   }
 
   const results = await new AxeBuilder({ page })
-    .withTags(['wcag2a', 'wcag2aa'])
+    .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
     .exclude('[data-axe-ignore]')
     .analyze();
 
