@@ -5,6 +5,17 @@
 // navigate the app to an external origin.
 const ALLOWED_HOSTS = new Set(['ihype.org', 'www.ihype.org']);
 
+/**
+ * These paths belong to Cloudflare Access and must stay in Safari. They carry
+ * browser-bound, one-use authentication state; accepting them in the native
+ * WebView produces "Invalid login session" after the OAuth redirect.
+ */
+const EXTERNAL_ONLY_PATHS = ['/admin', '/cdn-cgi/access'] as const;
+
+function isExternalOnlyPath(pathname: string): boolean {
+  return EXTERNAL_ONLY_PATHS.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+}
+
 export function resolveInternalPath(rawUrl: string): string | null {
   const candidate = rawUrl.trim();
   const isInternalRelativePath = candidate.startsWith('/') && !candidate.startsWith('//') && !candidate.startsWith('/\\');
@@ -18,6 +29,7 @@ export function resolveInternalPath(rawUrl: string): string | null {
   }
 
   if (url.protocol !== 'https:' || !ALLOWED_HOSTS.has(url.hostname.toLowerCase())) return null;
+  if (isExternalOnlyPath(url.pathname)) return null;
 
   return `${url.pathname}${url.search}${url.hash}` || '/';
 }

@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, it, expect } from 'vitest';
 import { needsBrowserNavigation, resolveInternalPath } from '@/lib/deep-link';
 
@@ -45,6 +46,40 @@ describe('resolveInternalPath', () => {
 
   it('rejects a malformed URL', () => {
     expect(resolveInternalPath('not a url')).toBeNull();
+  });
+
+  it('keeps Cloudflare-protected admin links outside the native shell', () => {
+    expect(resolveInternalPath('https://ihype.org/admin')).toBeNull();
+    expect(resolveInternalPath('https://ihype.org/admin/users')).toBeNull();
+    expect(resolveInternalPath('/admin?tab=system')).toBeNull();
+  });
+
+  it('keeps Cloudflare Access callbacks outside the native shell', () => {
+    expect(resolveInternalPath('https://ihype.org/cdn-cgi/access/authorized?nonce=one-use')).toBeNull();
+    expect(resolveInternalPath('/cdn-cgi/access/login/ihype.org')).toBeNull();
+  });
+
+  it('does not overmatch neighboring public paths', () => {
+    expect(resolveInternalPath('/administrator')).toBe('/administrator');
+    expect(resolveInternalPath('/cdn-cgi/image/example')).toBe('/cdn-cgi/image/example');
+  });
+});
+
+describe('the iOS association keeps Cloudflare Access in Safari', () => {
+  const source = readFileSync('src/app/.well-known/apple-app-site-association/route.ts', 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/\/\/[^\n]*/g, '');
+
+  it('places explicit exclusions before every app-owned path', () => {
+    const admin = source.indexOf("'NOT /admin'");
+    const adminChildren = source.indexOf("'NOT /admin/*'");
+    const access = source.indexOf("'NOT /cdn-cgi/access/*'");
+    const firstAllowed = source.indexOf("'/shows/*'");
+
+    expect(admin).toBeGreaterThan(-1);
+    expect(adminChildren).toBeGreaterThan(admin);
+    expect(access).toBeGreaterThan(adminChildren);
+    expect(firstAllowed).toBeGreaterThan(access);
   });
 });
 
