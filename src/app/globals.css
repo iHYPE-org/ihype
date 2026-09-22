@@ -402,6 +402,35 @@
   --key-press-shadow: none;
   --key-press-dim: .88;
   --key-hover-dim: .94;
+  /* THE FULL PLAYER'S HARDWARE (2026-09-22, DESIGN_SYNC row 498). Until this
+     date `.mmm-full-play`, `.mmm-full-step`, the two range sliders and the
+     art bezel in mmm.css were the console written as literals — a brass play
+     key lit from a lamp, bakelite step keys in brass collars, a lamp-lit knob
+     on a brass rail, a machined bezel round the artwork — with seven hex stops
+     no theme could reach, drawn on the white default. Each is a token now:
+     iOS here (Apple Music's transport — a solid ink disc for play that turns
+     accent while playing, bare glyphs for the skips, a white knob with a soft
+     cast on a tinted rail, the art under a soft shadow), the console's own
+     literals restored verbatim in the four character themes. */
+  --transport-play-bg: var(--ink);
+  --transport-play-ink: var(--bg);
+  --transport-play-shadow: 0 6px 18px -8px rgba(0, 0, 0, .35);
+  --transport-play-lit-bg: var(--accent);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: 0 8px 22px -8px rgba(var(--accent-rgb), .6);
+  --transport-step-bg: transparent;
+  --transport-step-ink: var(--ink);
+  --transport-step-ink-hover: var(--accent-text);
+  --transport-step-shadow: none;
+  --range-track-bg: rgba(var(--ink-1-rgb), .12);
+  --range-track-fill: var(--ink-2);
+  --range-track-edge: transparent;
+  --range-track-shadow: none;
+  --range-thumb-bg: #ffffff;   /* iOS's slider knob is white on both grounds */
+  --range-thumb-edge: rgba(0, 0, 0, .08);
+  --range-thumb-shadow: 0 1px 4px rgba(0, 0, 0, .28);
+  --art-radius: 10px;
+  --art-frame: 0 0 0 0.5px rgba(0, 0, 0, .08), 0 18px 48px -14px rgba(0, 0, 0, .35);
   /* The segmented control over the map: iOS insets it from the edges, pads
      the track and rounds each segment; the console's brass plate is
      full-bleed with divisions cut into it. */
@@ -976,6 +1005,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1135,6 +1183,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1294,6 +1361,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1448,6 +1534,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;

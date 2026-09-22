@@ -3036,21 +3036,15 @@ input.mmm-row-title { min-height: 44px; }
   display: grid;
   place-items: center;
   overflow: hidden;
-  /* The machined bezel: deep brass, bright brass, deep again, then the inner
-     top shadow that makes the sleeve read as cut INTO the faceplate rather
-     than floating on it. Radius 2px, not 26 — a bezel is turned metal, and a
-     26px round-rect reads as a phone app icon. Same stack as .walnut-plate;
-     it is stated here rather than composed because this one also carries the
-     drop shadow and the placeholder glyph. */
+  /* The frame is a token (`--art-frame`/`--art-radius`, globals.css): a soft
+     cast under 10px corners on iOS; on the character themes the machined
+     bezel — deep brass, bright brass, deep again, then the inner top shadow
+     that makes the sleeve read as cut INTO the faceplate — at 2px, because a
+     bezel is turned metal and a 26px round-rect reads as a phone app icon. */
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--art-radius);
   background: var(--walnut-3);
-  box-shadow:
-    0 0 0 2px var(--brass-deep),
-    0 0 0 5px var(--brass),
-    0 0 0 6px #6d5222,
-    inset 0 3px 12px rgba(0, 0, 0, .7),
-    0 24px 60px -16px rgba(0, 0, 0, .8);
+  box-shadow: var(--art-frame);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 6rem;
@@ -3118,9 +3112,13 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-player-range::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  border: 1px solid var(--range-track-edge);
+  /* The played part is painted over the rail from `--fill`, which the
+     component writes on the input; the pseudo-element inherits it. */
+  background:
+    linear-gradient(90deg, var(--range-track-fill) var(--fill, 0%), transparent var(--fill, 0%)),
+    var(--range-track-bg);
+  box-shadow: var(--range-track-shadow);
 }
 .mmm-player-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -3129,23 +3127,26 @@ input.mmm-row-title { min-height: 44px; }
   /* (8px track - 22px thumb) / 2 - 1px border: centres the knob on the rail. */
   margin-top: -8px;
   border-radius: 50%;
-  border: 1px solid var(--brass-deep);
-  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  border: 1px solid var(--range-thumb-edge);
+  background: var(--range-thumb-bg);
+  box-shadow: var(--range-thumb-shadow);
 }
 .mmm-player-range::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  border: 1px solid var(--range-track-edge);
+  background:
+    linear-gradient(90deg, var(--range-track-fill) var(--fill, 0%), transparent var(--fill, 0%)),
+    var(--range-track-bg);
+  box-shadow: var(--range-track-shadow);
 }
 .mmm-player-range::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1px solid var(--brass-deep);
-  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  border: 1px solid var(--range-thumb-edge);
+  background: var(--range-thumb-bg);
+  box-shadow: var(--range-thumb-shadow);
 }
 .mmm-full-seek { margin-top: 22px; }
 .mmm-full-volume { margin-top: 18px; }
@@ -3163,10 +3164,11 @@ input.mmm-row-title { min-height: 44px; }
   gap: 22px;
   margin-top: 20px;
 }
-/* The transport, as hardware.
-   Brass while paused, LIT accent while playing — the state is the lamp, which
-   is how a receiver shows it and means the control reads at a glance without
-   a label. */
+/* The transport. Every finish is a token (`--transport-*`, globals.css):
+   Apple Music's solid disc and bare skip glyphs on iOS; on the character
+   themes brass while paused and LIT accent while playing — the state is the
+   lamp, which is how a receiver shows it and means the control reads at a
+   glance without a label. Paint nothing here directly; set the token. */
 .mmm-full-play {
   position: relative;
   flex: 0 0 auto;
@@ -3177,26 +3179,20 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
-  color: var(--walnut-3);
+  background: var(--transport-play-bg);
+  color: var(--transport-play-ink);
   font-size: 1.5rem;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .9),
-    inset 0 -3px 8px rgba(0, 0, 0, .3),
-    0 3px 10px -2px rgba(0, 0, 0, .75);
+  box-shadow: var(--transport-play-shadow);
   transition: background 180ms ease, box-shadow 180ms ease;
 }
 .mmm-full-play:not([data-paused]) {
-  background: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
-  color: var(--ink-on-accent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .5),
-    inset 0 -3px 8px rgba(0, 0, 0, .35),
-    0 0 24px -2px rgba(var(--accent-rgb), .8);
+  background: var(--transport-play-lit-bg);
+  color: var(--transport-play-lit-ink);
+  box-shadow: var(--transport-play-lit-shadow);
 }
 
-/* Bakelite, in a brass collar. Same family as the logo trigger. */
+/* The skips: bare glyphs on iOS; bakelite in a brass collar on the console. */
 .mmm-full-step {
   flex: 0 0 auto;
   width: 52px;
@@ -3206,21 +3202,14 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%),
-    radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
-  box-shadow:
-    0 0 0 2px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    inset 0 1px 0 rgba(255, 226, 175, .35),
-    inset 0 -2px 7px rgba(0, 0, 0, .75),
-    0 3px 8px -1px rgba(0, 0, 0, .8);
-  color: var(--ink-on-walnut-2);
+  background: var(--transport-step-bg);
+  box-shadow: var(--transport-step-shadow);
+  color: var(--transport-step-ink);
   font-size: 1.25rem;
   cursor: pointer;
   transition: color 180ms ease, transform 200ms cubic-bezier(.34, 1.4, .5, 1);
 }
-.mmm-full-step:hover:not(:disabled) { color: var(--ink-on-walnut); }
+.mmm-full-step:hover:not(:disabled) { color: var(--transport-step-ink-hover); }
 .mmm-full-step:active:not(:disabled) { transform: scale(.9); }
 .mmm-full-step:disabled { opacity: .45; cursor: default; }
 .mmm-full-play svg { position: absolute; inset: 0; }
