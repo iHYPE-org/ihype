@@ -104,7 +104,7 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
 }
 .profile-panel-empty {
   /* The panel's empty state — the SAME plate `.mmm-empty` draws on a MUSIC
-     tab (2026-09-22, DESIGN_SYNC row 497): the `--empty-*` tokens, iOS's
+     tab (2026-09-22, DESIGN_SYNC row 501): the `--empty-*` tokens, iOS's
      filled grey cell in the body face by default and the console's dashed
      serif plate on its own themes. Until this date the dashed serif was
      written here as literals, so an artist's Albums tab and the Charts tab

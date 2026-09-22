@@ -200,7 +200,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-checklist li { display: flex; align-items: flex-start; gap: 12px; font-size: .96rem; line-height: 1.5; }
         .rk-check { color: var(--rk-tint); font-family: var(--font-display); font-weight: 800; flex-shrink: 0; margin-top: 1px; }
         .rk-fanfit { max-width: 1080px; margin: 40px auto 0; padding: 0 32px; text-align: center; font-size: 1rem; color: var(--ink-a70); line-height: 1.6; }
-        .rk-fanfit a { color: var(--rk-tint); text-decoration: underline; }
+        .rk-fanfit a { align-items: center; color: var(--rk-tint); display: inline-flex; min-height: 44px; text-decoration: underline; }
         .rk-features { padding: 88px 0; }
         .rk-features-inner { max-width: 1080px; margin: 0 auto; padding: 0 32px; }
         .rk-features-eyebrow { font-family: var(--font-mono); font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--rk-tint); }

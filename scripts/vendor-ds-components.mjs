@@ -183,15 +183,24 @@ function requestTextPresentation(source, componentFile, glyphs) {
   for (const escape of TEXT_PRESENTATION) {
     if (!out.includes(escape)) continue;
     /* The source writes these as the six-character TEXT `\u25c0`, not as the
-       character itself, so the backslash has to be escaped for the regex —
-       unescaped, `\u25c0` in a pattern means the glyph and matches nothing
-       here. The lookahead keeps the transform idempotent: a run over
-       already-converted source finds no unselected glyph and reports zero. */
-    const literal = escape.replace('\\', '\\\\');
-    const pattern = new RegExp(`${literal}(?!\\\\ufe0[ef])`, 'gi');
-    const count = (out.match(pattern) ?? []).length;
+       character itself. Scan the literal directly rather than assembling a
+       regular expression from source text; checking the following selector
+       keeps the transform idempotent. */
+    let count = 0;
+    let cursor = 0;
+    while (cursor < out.length) {
+      const index = out.indexOf(escape, cursor);
+      if (index < 0) break;
+      const selector = out.slice(index + escape.length, index + escape.length + 6).toLowerCase();
+      if (selector !== '\\ufe0e' && selector !== '\\ufe0f') {
+        out = `${out.slice(0, index)}${escape}\\ufe0e${out.slice(index + escape.length)}`;
+        count += 1;
+        cursor = index + escape.length + 6;
+      } else {
+        cursor = index + escape.length + 6;
+      }
+    }
     if (!count) continue;
-    out = out.replace(pattern, `${escape}\\ufe0e`);
     glyphs.push({ componentFile, glyph: escape, count });
   }
   return out;

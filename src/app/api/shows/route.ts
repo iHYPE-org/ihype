@@ -70,7 +70,7 @@ async function createShowWithUniqueSlug<T>(title: string, create: (slug: string)
   const baseSlug = slugify(title);
   let lastError: unknown;
   for (let attempt = 0; attempt < 5; attempt += 1) {
-    const slug = `${baseSlug}-${Math.random().toString(36).slice(2, 7)}`;
+    const slug = `${baseSlug}-${crypto.randomUUID().replaceAll('-', '').slice(0, 5)}`;
     if (await db.show.findUnique({ where: { slug }, select: { id: true } })) continue;
     try {
       return await create(slug);

@@ -112,7 +112,7 @@ export function CookieConsent() {
           times over. */}
       <p style={{ flex: '1 1 230px', margin: 0, fontSize: '0.9375rem', color: 'var(--ink-2)', lineHeight: 1.45 }}>
         {t('cookieConsent.description', 'We use essential cookies to keep you signed in, and optional analytics cookies to understand usage in aggregate.')}{' '}
-        <Link href="/info?tab=privacy" style={{ color: 'var(--accent-text, var(--accent))', textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
+        <Link href="/info?tab=privacy" style={{ alignItems: 'center', color: 'var(--accent-text, var(--accent))', display: 'inline-flex', minHeight: 44, textDecoration: 'underline' }}>{t('cookieConsent.privacyLink', 'Read our privacy policy')}</Link>.
       </p>
       <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
         {/* No inline `minHeight` here: an inline style outranks every

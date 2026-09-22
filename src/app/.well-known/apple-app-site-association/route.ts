@@ -85,8 +85,14 @@ export async function GET() {
           appID: `${teamId}.${bundleId}`,
           /**
            * An ALLOWLIST — a path absent from this array opens in Safari, so
-           * the exclusions that matter are made by omission and are listed
-           * here so the omission reads as a decision:
+           * paths are allowlisted, with explicit negative rules first for
+           * the two security-sensitive surfaces that must always stay in
+           * Safari even if a broader rule is added later:
+           *
+           *   · `/admin` and `/admin/*` — Cloudflare Access owns this surface.
+           *   · `/cdn-cgi/access/*` — Cloudflare's one-use OAuth callbacks.
+           *
+           * The remaining exclusions are made by omission:
            *
            *   · `/login`, `/register`, `/auth/*`, the rest of `/api/*` — a
            *     PASSKEY ceremony must finish in the browser that started it:
@@ -126,6 +132,10 @@ export async function GET() {
            * Android has always made.
            */
           paths: [
+            // First match wins. Never hand Cloudflare Access state to the app.
+            'NOT /admin',
+            'NOT /admin/*',
+            'NOT /cdn-cgi/access/*',
             '/shows/*',      // the URL that sells tickets, and the one people share
             '/artists/*', '/venues/*', '/fans/*', // redirect into the matching /app pane
             '/playlist/*',

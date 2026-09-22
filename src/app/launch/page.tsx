@@ -166,7 +166,7 @@ export default async function LaunchPage() {
                 >
                   {launchCohortCopy(t, cohort.copy)}
                 </p>
-                <Link href={cohort.href} style={{ color: 'var(--accent-text)', fontFamily: 'var(--f-d)', fontWeight: 700 }}>
+                <Link href={cohort.href} style={{ alignItems: 'center', color: 'var(--accent-text)', display: 'inline-flex', fontFamily: 'var(--f-d)', fontWeight: 700, minHeight: 44 }}>
                   {launchCohortCta(t, cohort.cta)} →
                 </Link>
               </article>

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DEMAND_K_ANON_FLOOR, demandFiguresArePublishable,
   HALF_LIFE_DAYS, describeDemand, haversineKm, proximityWeight, recencyWeight, scoreFanDemand,
   type DemandRequest, type DemandVenue,
 } from '@/lib/fan-demand';
@@ -185,5 +186,24 @@ describe('summarizeRequestSignals (what feeds the fan\'s own recommendations)', 
       { artistProfileId: 'act_b', venueProfileId: 'v2', requesterId: 'f1', venueName: 'Space' },
     ], 'me');
     expect(signals.wantedAt).toEqual([{ artistProfileId: 'act_b', venueName: 'Port City', fans: 1 }]);
+  });
+});
+
+describe('demandFiguresArePublishable', () => {
+  /* The venue analytics pane shows demand from asks addressed to OTHER venues.
+     "1 fan asked · 1 nearby · this week" for a named act, seen by a venue that
+     was never part of that conversation, is one identifiable person in a small
+     scene. Below the floor that pane draws the row without its figures. */
+  it('withholds figures below the floor and releases them at it', () => {
+    expect(DEMAND_K_ANON_FLOOR).toBe(5);
+    for (const fans of [0, 1, 2, 3, 4]) expect(demandFiguresArePublishable(fans)).toBe(false);
+    for (const fans of [5, 6, 40]) expect(demandFiguresArePublishable(fans)).toBe(true);
+  });
+
+  it('does not change describeDemand, which the addressed surfaces still use in full', () => {
+    // The floor is applied by the third-party CALLER, not by the formatter —
+    // the demand radar and booking inbox were addressed by the fan and the
+    // artist pane is the ask's subject, so all three keep the exact line.
+    expect(describeDemand({ fans: 1, nearby: 1, latestAt: daysAgo(1) }, NOW)).toBe('1 fan asked · 1 nearby · this week');
   });
 });

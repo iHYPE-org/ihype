@@ -88,7 +88,7 @@ beforeEach(() => {
    the hype state of one artist — the viewer's last listen, resolved by the
    /app layout — and gated the player's control on NO track being loaded,
    while the player opens only from the pill, which exists only WITH one. So
-   the control never rendered (DESIGN_SYNC row 499). The GET below is what the
+   the control never rendered (DESIGN_SYNC row 503). The GET below is what the
    player now asks, and the slug arm on POST is what it presses. */
 describe('GET /api/hype — the state a HYPE control is drawn from', () => {
   it('requires a session', async () => {

@@ -11,10 +11,10 @@ export type AlphaDiagnostics = {
 };
 
 export function createAlphaErrorId() {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID().replaceAll('-', '').slice(0, 12);
-  }
-  return Math.random().toString(36).slice(2, 14);
+  if (typeof crypto !== 'undefined') return crypto.randomUUID().replaceAll('-', '').slice(0, 12);
+  // Only reachable in obsolete browsers without Web Crypto. This identifier
+  // correlates diagnostics; it never authenticates or authorizes anything.
+  return Date.now().toString(36).padStart(12, '0').slice(-12);
 }
 
 export function createAlphaDiagnostics(moduleOverride?: string): AlphaDiagnostics {

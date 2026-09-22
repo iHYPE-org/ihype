@@ -521,7 +521,7 @@ html:has(.mmm-frame) {
   align-items: center;
   min-height: 44px;
   padding: 0 14px;
-  /* ONE CHIP VOCABULARY (2026-09-22, DESIGN_SYNC row 497). A filter chip is
+  /* ONE CHIP VOCABULARY (2026-09-22, DESIGN_SYNC row 501). A filter chip is
      the same object as a section-strip pill (`.mmm-strip-item`): same radius,
      same material tokens, same 15px/600 sentence-case system face, same
      14px of side padding. Until this date the chips wore the console's
@@ -1642,7 +1642,7 @@ html:has(.mmm-frame) {
    primitive. Card nameplates opt out: a dash on a brass plate is a scratch. */
 /* A CONTENT heading inside a pane — "Your playlists · 3", "Fan stats", "About
    me · visible activity", "Have a transfer code?" (2026-09-22, DESIGN_SYNC
-   row 497). Row 492's rule: uppercase is for a STATUS, a UNIT or a RANK, never
+   row 501). Row 492's rule: uppercase is for a STATUS, a UNIT or a RANK, never
    for content, a control's label or a sentence. These were `.mmm-eyebrow`,
    tracked uppercase mono, so every list heading in the shell read as
    metadata and the hierarchy flattened. Sentence case in the display face at
@@ -3249,7 +3249,7 @@ input.mmm-row-title { min-height: 44px; }
   /* A locked HYPE is also a hyped one, and the hyped rule above sets the ink
      for an ACCENT fill. This rule wins on order and takes the fill back to an
      8% tint, so without its own ink the label was white on near-white —
-     measured the first time the control rendered at all (row 499). */
+     measured the first time the control rendered at all (row 503). */
   color: var(--accent-text);
   cursor: default;
 }
@@ -3398,7 +3398,7 @@ input.mmm-row-title { min-height: 44px; }
 }
 .mmm-advertiser .mmm-profile-card { margin-bottom: 24px; }
 .mmm-profile-band img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-/* NO IMAGERY, NO BAND (2026-09-22, DESIGN_SYNC row 497). With no hero the band
+/* NO IMAGERY, NO BAND (2026-09-22, DESIGN_SYNC row 501). With no hero the band
    was 132px of flat grey with the initial tile floating over its bottom edge,
    which reads as a broken image on every profile that has not uploaded one —
    at alpha, nearly all of them. The page sets `data-hero` on the card; with

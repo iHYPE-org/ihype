@@ -29,6 +29,9 @@ import * as Sentry from '@sentry/nextjs';
 if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
   Sentry.init({
     dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+    environment: process.env.NODE_ENV,
+    release: process.env.NEXT_PUBLIC_APP_VERSION,
+    sendDefaultPii: false,
     tracesSampler(ctx) {
       // Always sample requests that produced an error
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
@@ -45,6 +48,27 @@ if (process.env.NEXT_PUBLIC_SENTRY_DSN) {
       // User-initiated aborts
       'AbortError',
     ],
+    beforeSend(event) {
+      // URLs may carry search terms, email addresses, or one-time callback
+      // tokens. Route-level grouping needs the path, never the query/hash.
+      if (event.request?.url) {
+        try {
+          const url = new URL(event.request.url, window.location.origin);
+          event.request.url = `${url.origin}${url.pathname}`;
+        } catch {
+          delete event.request.url;
+        }
+      }
+      if (event.request) {
+        delete event.request.cookies;
+        delete event.request.headers;
+        delete event.request.data;
+      }
+      if (event.user) {
+        event.user = event.user.id ? { id: event.user.id } : undefined;
+      }
+      return event;
+    },
   });
 }
 

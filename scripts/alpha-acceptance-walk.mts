@@ -1713,8 +1713,12 @@ async function main() {
     const body = ok(result, [200, 201]);
     const url = body?.checkoutUrl ?? body?.url;
     assert(url, `no Checkout url returned: ${JSON.stringify(body).slice(0, 160)}`);
-    assert(String(url).includes('checkout.stripe.com'), `returned url is not a Stripe Checkout url: ${String(url).slice(0, 80)}`);
-    return `setup-mode Checkout session created — ${String(url).split('#')[0].slice(0, 56)}…`;
+    const checkoutUrl = new URL(String(url));
+    assert(
+      checkoutUrl.protocol === 'https:' && checkoutUrl.hostname === 'checkout.stripe.com',
+      `returned url is not a Stripe Checkout url: ${checkoutUrl.origin}`,
+    );
+    return `setup-mode Checkout session created — ${checkoutUrl.origin}${checkoutUrl.pathname.slice(0, 28)}…`;
   });
 
   // ── 29. Update payout method ─────────────────────────────────────────────

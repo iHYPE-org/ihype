@@ -402,7 +402,7 @@
   --key-press-shadow: none;
   --key-press-dim: .88;
   --key-hover-dim: .94;
-  /* THE FULL PLAYER'S HARDWARE (2026-09-22, DESIGN_SYNC row 498). Until this
+  /* THE FULL PLAYER'S HARDWARE (2026-09-22, DESIGN_SYNC row 502). Until this
      date `.mmm-full-play`, `.mmm-full-step`, the two range sliders and the
      art bezel in mmm.css were the console written as literals — a brass play
      key lit from a lamp, bakelite step keys in brass collars, a lamp-lit knob
@@ -503,7 +503,7 @@
   /* THE DECORATIVE GRADIENTS ARE TOKENS, AND FLAT ON THE PHONE THEMES
      (2026-09-22, the "AI look" sweep's third pass). A diagonal two-stop
      gradient is the single most recognisable generated-design device there
-     is, and after rows 493-494 the default theme still painted eleven of
+     is, and after rows 497-498 the default theme still painted eleven of
      them: the accent-into-walnut band at the top of every artist, venue and
      advertiser pane, an accent-into-purple circle behind every avatar
      initial in the sheets, the six shelf tiles, the station art, and the CTA
@@ -2593,7 +2593,7 @@ fieldset.authcard-field { border: 0; padding: 0; }
 }
 /* Magic-link fallback inside the passkey step. */
 .authcard-passkey-fallback { margin-top: 18px; }
-.authcard-charter a { color: var(--ink-3); text-decoration: none; }
+.authcard-charter a { align-items: center; color: var(--ink-3); display: inline-flex; min-height: 44px; text-decoration: none; }
 .authcard-charter a:hover { text-decoration: underline; }
 
 .authcard-status {
@@ -4606,7 +4606,7 @@ textarea { min-height: 44px; }
 
 /* 11. Audio player bar on a phone.
    Until 2026-09-22 this sat `bottom: calc(60px + safe-area)` — stacked ABOVE
-   the bottom tab bar, which is deleted (DESIGN_SYNC row 496). The offset
+   the bottom tab bar, which is deleted (DESIGN_SYNC row 500). The offset
    survived the deletion for one build and left the dock floating 60px up the
    page with content showing beneath it, measured on the public show page at
    393. It is the bottom-most element now, so it owns the home-indicator inset

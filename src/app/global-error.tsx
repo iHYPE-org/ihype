@@ -1,9 +1,20 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useI18n } from '@/components/I18nProvider';
 
 export default function GlobalError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   const { t } = useI18n();
+
+  useEffect(() => {
+    // Keep the SDK behind the browser-only effect. A static import here is
+    // evaluated while Next prerenders /_global-error and pulls the SDK's
+    // Node-oriented server graph into the Cloudflare-targeted build.
+    void import('@sentry/nextjs').then((Sentry) => {
+      Sentry.captureException(error);
+    });
+  }, [error]);
+
   return (
     <html>
       <body style={{

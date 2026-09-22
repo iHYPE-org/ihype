@@ -529,7 +529,7 @@ test.describe('Music · Map · Me shell', () => {
      `canHype = !currentTrack && …` — while the player can only be opened from
      the pill, which exists only WITH a track loaded. Nothing measured the
      player's controls, so the button was dead for the life of the middle road
-     and the owner found it ("I don't see hype button"; DESIGN_SYNC row 499).
+     and the owner found it ("I don't see hype button"; DESIGN_SYNC row 503).
      The member here is NOT the shared listener: the fixture leaves a hype on
      the station artist for the fan it warms, and this test needs a window
      that is open, so it warms the station for one member and presses as

@@ -116,6 +116,7 @@ export default Sentry.withSentry(
     dsn: env.SENTRY_DSN,
     environment: env.NODE_ENV,
     release: env.CF_VERSION_METADATA?.id,
+    sendDefaultPii: false,
     tracesSampler(ctx) {
       if (ctx.parentSampled !== undefined) return ctx.parentSampled;
       const name = ctx.name ?? '';
@@ -140,12 +141,26 @@ export default Sentry.withSentry(
       // isolate has ever served a local request. Without this the filter only
       // caught events that happened to carry a URL, and every other local
       // error still shipped as production.
-      if (!url) return sawLocalRequest ? null : event;
-      try {
-        return isLocalHostname(new URL(url).hostname) ? null : event;
-      } catch {
-        return event;
+      if (!url) {
+        if (sawLocalRequest) return null;
+      } else {
+        try {
+          const parsed = new URL(url);
+          if (isLocalHostname(parsed.hostname)) return null;
+          event.request.url = `${parsed.origin}${parsed.pathname}`;
+        } catch {
+          delete event.request.url;
+        }
       }
+      if (event.request) {
+        delete event.request.cookies;
+        delete event.request.headers;
+        delete event.request.data;
+      }
+      if (event.user) {
+        event.user = event.user.id ? { id: event.user.id } : undefined;
+      }
+      return event;
     },
   } : undefined,
   handler,

@@ -28,6 +28,7 @@ const GATES: Array<{ script: string; args: string[]; refusal: RegExp }> = [
   { script: 'scripts/audit-retro-coverage.mjs', args: ['--max=0'], refusal: /collected 0 page/ },
   { script: 'scripts/audit-routes.mjs', args: ['--max-legacy=0'], refusal: /collected 0 page/ },
   { script: 'scripts/audit-spacing.mjs', args: ['--max=900'], refusal: /read 0 file/ },
+  { script: 'scripts/audit-sync-rows.mjs', args: ['--max=0'], refusal: /could not be read/ },
 ];
 
 describe('a ratchet or gate that read nothing refuses to report a pass', () => {
