@@ -130,8 +130,81 @@ const schema = z.discriminatedUnion('targetType', [
     targetId: z.string().cuid(),
     positionSeconds: z.number().int().nonnegative().max(86_400).optional()
   }),
-  z.object({ targetType: z.literal('profile'), targetId: z.string().cuid() })
+  /* A profile is named by id (the artist page, which holds one) OR by slug
+     (the full player, whose queue rows carry `artistProfileSlug` and nothing
+     else — every station, chart, playlist and deck writer stores the slug, so
+     asking each of them for an id would be five more writers to keep in
+     step). Exactly one of the two; the handler checks, because a `.refine`
+     would make this a ZodEffects and the discriminated union refuses those. */
+  z.object({ targetType: z.literal('profile'), targetId: z.string().cuid().optional(), slug: z.string().trim().min(1).max(120).optional() })
 ]);
+
+/**
+ * The profile a hype would land on, resolved the way the layout resolves the
+ * last listen's: everything the POST refuses is answered here first, so a
+ * control is never drawn that is guaranteed to fail. `hypeable` is false for
+ * a profile that does not exist, one that is not discoverable, and the
+ * viewer's own; `hyped` and `nextHypeAt` describe the viewer's window on it.
+ */
+async function resolveHypeTarget(userId: string, by: { id?: string; slug?: string }) {
+  const profile = await db.profile.findFirst({
+    where: { ...(by.id ? { id: by.id } : { slug: by.slug }), discoverable: true },
+    select: { id: true, ownerId: true },
+  });
+  if (!profile) return { hypeable: false as const, profileId: null, reason: 'not_found' as const };
+  if (profile.ownerId === userId) return { hypeable: false as const, profileId: profile.id, reason: 'own' as const };
+  const existing = await db.profileHypeEvent.findUnique({
+    where: { userId_profileId: { userId, profileId: profile.id } },
+    select: { createdAt: true },
+  });
+  const wait = hypeWaitMs(existing?.createdAt);
+  return {
+    hypeable: true as const,
+    profileId: profile.id,
+    reason: null,
+    hyped: wait > 0,
+    nextHypeAt: wait > 0 ? nextHypeAt(existing?.createdAt)?.toISOString() ?? null : null,
+  };
+}
+
+/**
+ * GET /api/hype?targetType=profile&slug=<slug>  (or &targetId=<cuid>)
+ *
+ * The full player's HYPE state for the artist of the track that is PLAYING.
+ * Until 2026-09-22 the shell knew the hype state of exactly one artist — the
+ * viewer's last listen, resolved server-side by the /app layout — and gated
+ * the full player's HYPE on NO track being loaded, while the player itself
+ * can only be opened from the pill, which exists only WITH a track loaded.
+ * So the control could never render. The player asks here for whatever is
+ * in the audio element now; the answer is private to the viewer.
+ */
+export async function GET(request: NextRequest) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: 'Login required' }, { status: 401 });
+  }
+  const params = request.nextUrl.searchParams;
+  if (params.get('targetType') !== 'profile') {
+    return NextResponse.json({ error: 'targetType must be profile' }, { status: 400 });
+  }
+  const id = params.get('targetId')?.trim() || undefined;
+  const slug = params.get('slug')?.trim() || undefined;
+  if ((id ? 1 : 0) + (slug ? 1 : 0) !== 1 || (id && !z.string().cuid().safeParse(id).success) || (slug && slug.length > 120)) {
+    return NextResponse.json({ error: 'Name the profile by targetId or slug' }, { status: 400 });
+  }
+  try {
+    const target = await resolveHypeTarget(session.user.id, { id, slug });
+    return NextResponse.json(
+      target.hypeable
+        ? { hypeable: true, profileId: target.profileId, hyped: target.hyped, nextHypeAt: target.nextHypeAt }
+        : { hypeable: false, profileId: target.profileId, reason: target.reason, hyped: false, nextHypeAt: null },
+      { headers: { 'Cache-Control': 'private, no-store' } },
+    );
+  } catch (err) {
+    log.error('[hype] status', err instanceof Error ? err : { error: String(err) });
+    return NextResponse.json({ error: 'Could not read the hype state' }, { status: 503, headers: { 'Retry-After': '10' } });
+  }
+}
 
 export async function POST(request: NextRequest) {
   const session = await auth();
@@ -275,10 +348,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Profile hype — toggle on/off
+    // Profile hype — once per 24h window, by id or by slug (see `schema`).
+    if ((payload.targetId ? 1 : 0) + (payload.slug ? 1 : 0) !== 1) {
+      return NextResponse.json({ error: 'Name the profile by targetId or slug' }, { status: 400 });
+    }
     const targetProfile = await db.profile.findFirst({
-      where: { id: payload.targetId, discoverable: true },
-      select: { ownerId: true },
+      where: { ...(payload.targetId ? { id: payload.targetId } : { slug: payload.slug }), discoverable: true },
+      select: { id: true, ownerId: true },
     });
     if (!targetProfile) {
       return NextResponse.json({ error: 'Public profile not found' }, { status: 404 });
@@ -286,8 +362,9 @@ export async function POST(request: NextRequest) {
     if (targetProfile.ownerId === session.user.id) {
       return NextResponse.json({ error: 'You cannot HYPE your own profile.' }, { status: 409 });
     }
+    const profileId = targetProfile.id;
     const existing = await db.profileHypeEvent.findUnique({
-      where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } }
+      where: { userId_profileId: { userId: session.user.id, profileId } }
     });
 
     const profileWait = hypeWaitMs(existing?.createdAt);
@@ -308,11 +385,11 @@ export async function POST(request: NextRequest) {
       // See the note in the show branch: replaced, not updated.
       if (existing) {
         await tx.profileHypeEvent.delete({
-          where: { userId_profileId: { userId: session.user.id, profileId: payload.targetId } },
+          where: { userId_profileId: { userId: session.user.id, profileId: profileId } },
         });
       }
       const hype = await tx.profileHypeEvent.create({
-        data: { userId: session.user.id, profileId: payload.targetId },
+        data: { userId: session.user.id, profileId: profileId },
       });
       const spend = await applyHypeEntry(tx, {
         userId: session.user.id,
@@ -320,10 +397,10 @@ export async function POST(request: NextRequest) {
         source: 'HYPE_GIVEN',
         idempotencyKey: `profile-hype:${hype.id}`,
         targetType: 'profile',
-        targetId: payload.targetId,
+        targetId: profileId,
       });
       const updatedProfile = await tx.profile.update({
-        where: { id: payload.targetId },
+        where: { id: profileId },
         data: { hypeCount: { increment: 1 } },
       });
       return { updatedProfile, balance: spend.entry?.balanceAfter };
@@ -334,10 +411,10 @@ export async function POST(request: NextRequest) {
       actorUserId: session.user.id,
       action: 'profile_hyped',
       entityType: 'profile',
-      entityId: payload.targetId
+      entityId: profileId
     });
 
-    await checkAndRecordMilestone(payload.targetId, updatedProfile.hypeCount);
+    await checkAndRecordMilestone(profileId, updatedProfile.hypeCount);
     checkAndAwardBadges(session.user.id).catch(() => {});
 
     // Early-believer re-engagement. `hypeCount` is a running total and stopped
@@ -348,10 +425,10 @@ export async function POST(request: NextRequest) {
     // rank to be told about.
     if (isFirstHype) {
       const rank = await db.profileHypeEvent
-        .count({ where: { profileId: payload.targetId } })
+        .count({ where: { profileId: profileId } })
         .catch(() => 0);
       if (rank > 0 && rank <= 25) {
-      db.profile.findUnique({ where: { id: payload.targetId }, select: { slug: true, name: true, type: true } })
+      db.profile.findUnique({ where: { id: profileId }, select: { slug: true, name: true, type: true } })
         .then((p: { slug: string; name: string; type: string } | null) => {
           if (p && p.type === 'ARTIST') {
             notifyUser(session.user.id, {
@@ -367,7 +444,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Push notification to track owner (fire-and-forget, skip self-hype)
-    db.profile.findUnique({ where: { id: payload.targetId }, select: { ownerId: true, name: true } })
+    db.profile.findUnique({ where: { id: profileId }, select: { ownerId: true, name: true } })
       .then(profile => {
         if (profile && profile.ownerId !== session.user.id) {
           sendPushToAllDevices(profile.ownerId, {
@@ -380,6 +457,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       action: 'hyped',
+      profileId,
       hypeCount: updatedProfile.hypeCount,
       hypeBalance: result.balance,
       nextHypeAt: nextHypeAt(new Date())?.toISOString(),

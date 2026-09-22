@@ -29,6 +29,13 @@ export type MmmPlayerTrack = {
   album?: string;
 };
 
+/** The full player's HYPE target — see `hypeTarget` inside the shell. */
+type HypeTarget = { profileId: string; hyped: boolean; nextHypeAt: string | null };
+
+function hypeTargetFromNowPlaying(nowPlaying: MmmNowPlaying): HypeTarget | null {
+  return nowPlaying?.artistProfileId ? { profileId: nowPlaying.artistProfileId, hyped: nowPlaying.hyped, nextHypeAt: null } : null;
+}
+
 export type MmmNowPlaying = {
   title: string;
   artist: string;
@@ -115,16 +122,24 @@ export function MmmShell({
     requestedLayer === 'venues' || requestedLayer === 'artists' ? requestedLayer : 'events';
 
   const [sheet, setSheet] = useState<MapSheetTarget | null>(null);
-  const [hyped, setHyped] = useState(nowPlaying?.hyped ?? false);
-  const [hypePending, setHypePending] = useState(false);
   /**
-   * When this artist can be hyped again. The API already returns it on the
-   * 429 it sends inside the window, and returned it to nobody: the pill and
-   * the full player both accept `hypeLocked`/`hypeLabel` and neither was ever
-   * given them, so a spent hype looked identical to an available one and the
-   * only feedback was a refusal with no reason.
+   * The artist the full player's HYPE lands on, and the viewer's window on it.
+   *
+   * Keyed on the track that is PLAYING, not on the last listen. Until
+   * 2026-09-22 this was `hyped`/`hypeNextAt` for `nowPlaying` alone, and the
+   * control was gated on `!currentTrack` — while the full player can only be
+   * opened from the pill, which exists only WITH a track loaded. So HYPE could
+   * never render there (owner: "I don't see hype button"). The queue rows
+   * carry `artistProfileSlug` and no id, so the state is read from
+   * `GET /api/hype` for the current track's artist (the same resolution the
+   * /app layout does server-side for the last listen — non-discoverable and
+   * own profiles come back `hypeable: false` and the control stays hidden
+   * rather than being drawn to fail), and seeded from the layout's answer
+   * while nothing is loaded. `nextHypeAt` is the 429's own field: a spent hype
+   * used to look identical to an available one.
    */
-  const [hypeNextAt, setHypeNextAt] = useState<string | null>(null);
+  const [hypeTarget, setHypeTarget] = useState<HypeTarget | null>(() => hypeTargetFromNowPlaying(nowPlaying));
+  const [hypePending, setHypePending] = useState(false);
 
   // Real playback, not local state. The pill used to own a `playing` boolean
   // that toggled nothing — DESIGN_SYNC row 268 open item (d). /app sits inside
@@ -345,11 +360,43 @@ export function MmmShell({
     setFullOpen(false);
   }, [pathname]);
 
-  // The hype heart resolves its target server-side, against `nowPlaying`. If
-  // the audio element has since moved to a different track, that target is no
-  // longer the artist on screen — so the heart is hidden rather than left
-  // pointing at the wrong profile.
-  const canHype = !currentTrack && Boolean(nowPlaying?.artistProfileId);
+  /* The hype target follows the audio element. With a track loaded it is that
+     track's artist, read from the route by slug; with nothing loaded it is the
+     layout's server-resolved last listen. A read that fails hides the control
+     — the same rule the layout applies — because a HYPE that is guaranteed to
+     answer 404 is worse than none. The cancelled flag keeps a slow answer for
+     the previous track from landing on the next one. */
+  const loadedArtistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : null;
+  const trackLoaded = Boolean(currentTrack);
+  const serverProfileId = nowPlaying?.artistProfileId ?? null;
+  const serverHyped = nowPlaying?.hyped ?? false;
+  useEffect(() => {
+    if (!trackLoaded) {
+      setHypeTarget(serverProfileId ? { profileId: serverProfileId, hyped: serverHyped, nextHypeAt: null } : null);
+      return;
+    }
+    if (!loadedArtistSlug) {
+      setHypeTarget(null);
+      return;
+    }
+    let cancelled = false;
+    setHypeTarget(null);
+    fetch(`/api/hype?targetType=profile&slug=${encodeURIComponent(loadedArtistSlug)}`, { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((body: { hypeable?: boolean; profileId?: string | null; hyped?: boolean; nextHypeAt?: string | null } | null) => {
+        if (cancelled) return;
+        if (body?.hypeable && body.profileId) {
+          setHypeTarget({ profileId: body.profileId, hyped: Boolean(body.hyped), nextHypeAt: body.nextHypeAt ?? null });
+        } else {
+          setHypeTarget(null);
+        }
+      })
+      .catch(() => { if (!cancelled) setHypeTarget(null); });
+    return () => { cancelled = true; };
+  }, [trackLoaded, loadedArtistSlug, serverProfileId, serverHyped]);
+
+  const canHype = Boolean(hypeTarget?.profileId);
+  const hyped = hypeTarget?.hyped ?? false;
 
   // Leaving the map closes any open pin sheet — it belongs to the map, and a
   // sheet floating over the Music pane would be orphaned chrome.
@@ -373,41 +420,39 @@ export function MmmShell({
   // then reverted on failure — leaving the heart filled after a refusal would
   // tell the viewer they spent a hype they still have.
   const toggleHype = useCallback(async () => {
-    const profileId = nowPlaying?.artistProfileId;
-    if (!profileId || hypePending || hyped) return;
-    setHyped(true);
+    const target = hypeTarget;
+    if (!target || hypePending || target.hyped) return;
+    /* Every write below is guarded on the profile id, so an answer arriving
+       after the track (and the target) changed cannot mark the next artist. */
+    const patch = (change: Partial<HypeTarget>) =>
+      setHypeTarget((current) => (current && current.profileId === target.profileId ? { ...current, ...change } : current));
+    patch({ hyped: true });
     setHypePending(true);
     try {
       const res = await fetch('/api/hype', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetType: 'profile', targetId: profileId }),
+        body: JSON.stringify({ targetType: 'profile', targetId: target.profileId }),
       });
       // A 429 from the 24h window is not a failure to reflect: the hype IS
       // spent for this target, which is what the filled heart says. What it
       // also carries is WHEN — captured here so the controls can say it.
       if (res.status === 429) {
         const body = (await res.json().catch(() => null)) as { nextHypeAt?: string } | null;
-        if (body?.nextHypeAt) setHypeNextAt(body.nextHypeAt);
+        patch({ hyped: true, nextHypeAt: body?.nextHypeAt ?? target.nextHypeAt });
       } else if (!res.ok) {
-        setHyped(false);
+        patch({ hyped: false });
       } else {
-        setHypeNextAt(new Date(Date.now() + HYPE_WINDOW_MS).toISOString());
+        patch({ nextHypeAt: new Date(Date.now() + HYPE_WINDOW_MS).toISOString() });
       }
     } catch {
-      setHyped(false);
+      patch({ hyped: false });
     } finally {
       setHypePending(false);
     }
-  }, [hyped, hypePending, nowPlaying?.artistProfileId]);
+  }, [hypeTarget, hypePending]);
 
-  // The window is per artist, so it resets with the artist rather than the
-  // track: two songs by the same act share one hype.
-  useEffect(() => {
-    setHypeNextAt(null);
-  }, [nowPlaying?.artistProfileId]);
-
-  const hypeWait = hypeWaitUntil(hypeNextAt);
+  const hypeWait = hypeWaitUntil(hypeTarget?.nextHypeAt ?? null);
   const hypeLocked = hypeWait > 0;
   const hypeLabel = formatHypeWait(hypeWait);
 

@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext, type BrowserContext, type Locator, type Page } from '@playwright/test';
-import { applySessionCookie, canSeedSession, seedPlayableStation, seedShowWithTicket } from './fixtures/session';
+import { applySessionCookie, canSeedSession, openHypeWindow, seedPlayableStation, seedShowWithTicket } from './fixtures/session';
 import { MMM_MUSIC_TABS } from '../src/lib/mmm-nav';
 
 /**
@@ -523,6 +523,64 @@ test.describe('Music · Map · Me shell', () => {
       }
     });
   }
+
+  /* The full player's HYPE, for the artist of the track that is PLAYING.
+     Until 2026-09-22 the shell gated that control on NO track being loaded —
+     `canHype = !currentTrack && …` — while the player can only be opened from
+     the pill, which exists only WITH a track loaded. Nothing measured the
+     player's controls, so the button was dead for the life of the middle road
+     and the owner found it ("I don't see hype button"; DESIGN_SYNC row 499).
+     The member here is NOT the shared listener: the fixture leaves a hype on
+     the station artist for the fan it warms, and this test needs a window
+     that is open, so it warms the station for one member and presses as
+     another, with `openHypeWindow` making the second run the same as the
+     first. `hypeBalance` is stated, because a fresh member has 0 and the
+     ledger refuses the spend — a real state, and not the one under test.
+     Played from the TRACK PAGE with autoplay off, not from Radio: the
+     fixture's chime is one second long, and on a station queue its end
+     advances to the neighbour — a different artist, whose state the player
+     then re-reads — while a one-track queue with autoplay off just stops on
+     the artist under test. The first drive of this on the built worker read
+     the control mid-swap and found nothing; that was the harness's race,
+     and the pill-then-player path is the same on both surfaces. */
+  test('the full player offers HYPE for the playing artist, and a press spends it', async ({ page, context }) => {
+    const warmed = await warmListener(context);
+    const presser = await applySessionCookie(context, 'e2e-mmm-hype-listener@ihype.org', { profiles: [], hypeBalance: 5 });
+    await openHypeWindow({ fanUserId: presser.user.id, profileSlug: warmed.artistSlug });
+    await context.addInitScript(() => {
+      try { window.localStorage.setItem('ihype-global-media-player', JSON.stringify({ isAutoplay: false })); } catch { /* storage may be unavailable */ }
+    });
+
+    await page.setViewportSize({ width: 393, height: 852 });
+    await page.goto(`/app/tracks/${warmed.trackHexId}`);
+    await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
+    await page.getByRole('button', { name: /^Play / }).first().click();
+    const pill = page.locator('.mmm-mini:visible');
+    await expect(pill).toHaveCount(1);
+    /* Armed before the pill opens: the player reads the hype state from
+       `GET /api/hype` as the track loads, and the control is drawn only once
+       that answer names a hypeable profile — an absent answer draws nothing,
+       which is what the old gate did for a different reason. */
+    const status = page.waitForResponse((r) => r.url().includes('/api/hype?') && r.request().method() === 'GET', { timeout: 15_000 });
+    await pill.locator('.mmm-mini-open').click();
+    await expect(page.locator('.mmm-full')).toBeVisible();
+    expect((await status).status(), 'the hype status read failed').toBe(200);
+
+    const hype = page.locator('.mmm-full-hype');
+    await expect(hype, 'the full player draws no HYPE control over a playing track').toBeVisible();
+    await expect(hype).toHaveAttribute('aria-pressed', 'false');
+    await expect(hype).toBeEnabled();
+
+    const spend = page.waitForResponse((r) => r.url().endsWith('/api/hype') && r.request().method() === 'POST', { timeout: 15_000 });
+    await hype.click();
+    const spent = await spend;
+    expect(spent.status(), `the hype POST answered ${spent.status()}: ${await spent.text()}`).toBe(200);
+    // Pressed, and locked for the window with the wait stated — the same
+    // control the artist page draws, saying when rather than no.
+    await expect(hype).toHaveAttribute('aria-pressed', 'true');
+    await expect(hype).toBeDisabled();
+    await expect(hype.locator('.mmm-full-hype-wait')).toBeVisible();
+  });
 
   /* A heart pressed while a DECK card plays is stored under the track's hexId.
      The deck's queue entry is named by the asset's ROW id (its `id` is what

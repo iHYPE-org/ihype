@@ -3246,6 +3246,11 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-full-hype[data-locked] {
   background: rgba(var(--accent-rgb), 0.08);
   border-color: rgba(var(--accent-rgb), 0.28);
+  /* A locked HYPE is also a hyped one, and the hyped rule above sets the ink
+     for an ACCENT fill. This rule wins on order and takes the fill back to an
+     8% tint, so without its own ink the label was white on near-white —
+     measured the first time the control rendered at all (row 499). */
+  color: var(--accent-text);
   cursor: default;
 }
 .mmm-full-hype-wait {
