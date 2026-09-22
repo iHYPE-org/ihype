@@ -69,7 +69,7 @@ export default async function MmmNotificationsPage() {
     <article className="mmm-info-report">
       <Link className="mmm-charter-back" href="/app/me?panel=settings">‹ {t('mmmStrip.settings', 'Settings')}</Link>
       <header className="mmm-info-report-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmDock.tab.me', 'Me')} · {t('mmmStrip.settings', 'Settings')}</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmNav.tab.me', 'Me')} · {t('mmmStrip.settings', 'Settings')}</p>
         <h1>{t('mmmNotificationsPage.title', 'Notifications')}</h1>
       </header>
       <NotificationsList

@@ -149,15 +149,6 @@ export function payoutTabLabel(t: Translate, english: string): string {
   }
 }
 
-export function siteTabLabel(t: Translate, english: string): string {
-  switch (english) {
-    case 'Listen': return t('siteTabBar.listen', 'Listen');
-    case 'Events': return t('siteTabBar.events', 'Events');
-    case 'Dashboard': return t('siteTabBar.dashboard', 'Dashboard');
-    default: return english;
-  }
-}
-
 /** `'console'` is the stored id of the DEFAULT theme; since 2026-09-05 that is the Apple Music light look, so it reads "Light". */
 export function themeLabel(t: Translate, name: string): string {
   switch (name) {

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { MmmDock } from '@/components/mmm/MmmDock';
+import { MmmNowPlaying } from '@/components/mmm/MmmNowPlaying';
 import { MmmFullPlayer } from '@/components/mmm/MmmFullPlayer';
 import { MmmSectionStrip } from '@/components/mmm/MmmSectionStrip';
 import { MmmMap, type MapLayer, type MapSheetTarget } from '@/components/mmm/MmmMap';
@@ -51,36 +51,44 @@ export type MmmNowPlaying = {
 } | null;
 
 /**
- * The Music · Map · Me frame, on the console dock.
+ * The Music · Map · Me frame.
  *
  * ## The contract
  *
- * 1. **No header, no tab bar, and now no arc.** The only persistent chrome is
- *    one walnut dock across the bottom carrying three controls — see
- *    `MmmDock.tsx`. The logo trigger, the radial arc, the nav hint, the scrim,
- *    the player pill and the phone mini-player are all retired (2026-08-22,
- *    owner decision: "I don't want any previous design … Bottom hifi nav system
- *    is the only thing I want"). Nothing they were wired to was dropped.
+ * 1. **No chrome of its own but the now-playing pill.** The walnut dock — four
+ *    tabs and a mini player along the bottom of every screen — is DELETED
+ *    (2026-09-22, owner: "The chrome button bottom nav is no longer the
+ *    direction we're going for the design of this app. You can remove those
+ *    components to save space"). The four destinations are text links in the
+ *    SITE HEADER (`AdaptiveSiteHeader.tsx`), which renders above this frame
+ *    on every page a member reaches, and the transport is `MmmNowPlaying.tsx`,
+ *    a pill that exists only while a track is loaded. Nothing either was wired
+ *    to was dropped: the commit rescue moved to the header, the play-intent
+ *    chain and `wakeAudio` to the pill. The logo trigger, the radial arc, the
+ *    nav hint, the scrim, the player pill of 2026-08 and the phone mini-player
+ *    were retired before either (2026-08-22).
  * 2. **The map is the base layer and stays mounted.** Music and Me are panes
  *    over it, so returning to MAP keeps your pan and zoom. This component is
  *    rendered by the `/app` LAYOUT, which is the only place the App Router
  *    guarantees a subtree survives navigation.
  * 3. **Module, tab and view are routes, not state.** Only `sheet`, `fullOpen`,
  *    `queueOpen`, `faved` and `hyped` live here.
- * 4. **One dial per screen, and it is the dock's.** A page with its own section
- *    set registers it through `MmmStationsProvider` (mounted here) rather than
- *    drawing a selector of its own — the handoff's rule, because two
- *    identical-looking dials on one screen mean different things.
+ * 4. **A page with its own sections draws them** (`MmmSectionStrip`), fed by
+ *    `MmmStationsProvider` (mounted here). The "one dial per screen" rule that
+ *    preceded it protected against two identical controls on one screen; with
+ *    no dial in the chrome, the strip is the only way a member sees them.
  * 5. One scroll container: the module pane. `html`/`body` are locked by
- *    `.mmm-locked`, which this component toggles.
+ *    `.mmm-locked`, which this component toggles. The lock no longer hides the
+ *    site header — it is the navigation — and `.mmm-frame` starts below it.
  *
- * ## What the dock cost, deliberately
+ * ## What the chrome cost, deliberately
  *
- * There is no longer a persistent readout of what is playing: the dock is three
- * controls and no text, which is what the console template draws. The track,
- * the artist, the queue and the scrubber are one flick up (▲ on the joystick)
- * in `MmmFullPlayer`, which now opens at every width rather than on the phone
- * alone. That is a real trade and it is the design's.
+ * With nothing loaded there is NO transport anywhere in the shell: a member on
+ * MAP, ME or a ticket starts audio from a surface's own play control (the deck,
+ * a chart row, a station shelf, a release row). That trade predates the pill
+ * (owner, 2026-09-04: "remove radio tab on bottom it's already under listen")
+ * and the pill keeps it — the alternative is a permanent control whose only
+ * job is to reach a tab.
  */
 export function MmmShell({
   children,
@@ -314,13 +322,12 @@ export function MmmShell({
      plain text and the panel has no target to open. */
   const artistSlug = currentTrack ? currentTrack.artistProfileSlug ?? null : nowPlaying?.artistSlug ?? null;
 
-  /* The DOCK's mini player shows `currentTrack` and nothing else — never
-     `nowPlaying`. The two are not interchangeable here even though they are in
-     the full player: `nowPlaying` is a server-resolved last listen with NO url,
-     so a mini player showing it would sit under a play key that cannot start
-     it. Tapping would fall through to the radio and begin a different song than
-     the one named an inch above the thumb. With nothing loaded the dock draws
-     its Radio key instead, which promises exactly what it does.
+  /* The PILL shows `currentTrack` and nothing else — never `nowPlaying`. The
+     two are not interchangeable here even though they are in the full player:
+     `nowPlaying` is a server-resolved last listen with NO url, so a pill
+     showing it would sit under a play key that cannot start it. Tapping would
+     fall through to the radio and begin a different song than the one named an
+     inch above the thumb. With nothing loaded there is no pill at all.
 
      (What would close that gap is `nowPlaying` carrying a playable url so the
      key could read "Resume". That is an endpoint change, not a chrome one.) */
@@ -481,21 +488,19 @@ export function MmmShell({
           volume={volume * 100}
         />
 
-        {/* The whole of the chrome. One walnut cabinet, four labelled tabs and
-            a mini player — see MmmDock.tsx for what the hardware cost and why
-            it went. The transport's resolution order is UNCHANGED and is the
+        {/* The whole of the shell's own chrome: a now-playing pill, only while
+            a track is loaded — see MmmNowPlaying.tsx. Navigation is the site
+            header's. The transport's resolution order is UNCHANGED and is the
             thing not to break here: pause the current track, else start
             whatever the surface registered (MmmPlayIntent.tsx), else turn the
-            radio on. That last branch is what keeps it from being inert on MAP,
-            ME, a profile and a ticket, none of which register anything. */}
-        <MmmDock
+            radio on. */}
+        <MmmNowPlaying
           canTogglePlay={Boolean(currentTrack)}
           onPlayFallback={startRadio}
           onExpand={() => setFullOpen(true)}
           onNext={playNext}
           onPrev={skipBack}
           onTogglePlay={togglePlayback}
-          pathname={pathname}
           track={dockTrack}
           playing={Boolean(currentTrack) && isPlaying}
         />

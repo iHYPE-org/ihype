@@ -174,7 +174,7 @@ export default async function MmmShowPage({
 
   return (
     <div className="mmm-show">
-      <Link className="mmm-show-back" href="/app/map">← {t('mmmDock.tab.map', 'Map')}</Link>
+      <Link className="mmm-show-back" href="/app/map">← {t('mmmNav.tab.map', 'Map')}</Link>
 
       <div className="mmm-show-eyebrow" style={{ color: 'var(--accent-text)' }}>{formatShowTime(show.startsAt, locale, show.timeZone)}</div>
       <h1 className="mmm-show-title">{show.title}</h1>

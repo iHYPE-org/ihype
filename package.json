@@ -33,7 +33,7 @@
     "seed:preview": "node --import dotenv/config scripts/seed-preview-content.mjs",
     "seed:preview:remove": "node --import dotenv/config scripts/seed-preview-content.mjs --remove",
     "audit:mobile": "node scripts/audit-mobile.mjs",
-    "measure:dock": "node scripts/measure-dock.mjs",
+    "measure:chrome": "node scripts/measure-chrome.mjs",
     "measure:datepick": "node scripts/measure-datepicker.mjs",
     "app-links:write": "node scripts/generate-app-links.mjs",
     "check:app-links": "node scripts/generate-app-links.mjs --check",

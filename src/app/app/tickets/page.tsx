@@ -33,7 +33,7 @@ export default async function MmmTicketsPage() {
   const data = await loadMmmMe(session.user.id, undefined, locale, isAdminSession(session));
   return (
     <>
-      <h1 className="sr-only">{t('mmmDock.tab.tickets', 'Tickets')}</h1>
+      <h1 className="sr-only">{t('mmmNav.tab.tickets', 'Tickets')}</h1>
       <MmmTickets tickets={data.tickets} />
     </>
   );

@@ -25,15 +25,16 @@ export const metadata: Metadata = {
  * is preserved. Moving this into a page re-mounts the map on every module
  * change.
  *
- * The hi-fi console dock is rendered INSIDE `MmmShell` (`MmmDock`: RotaryNav ·
- * TunerDial · JoystickTransport) and is the whole of this shell's navigation.
- * Do not mount a second dock here. The console handoff's `ConsoleDock.tsx`
- * (IMPLEMENT.md step 2) briefly stood beside it as a sibling and was retired
- * at the 2026-08-23 merge: it was a second, thinner implementation of the same
- * hardware — hardcoded section ring, no registered stations, an unwired
- * transport — which is the TunerDial failure mode the vendoring row in
- * CLAUDE.md exists to prevent. The handoff's token skin (mmm-console.css)
- * stays; its dock component does not.
+ * THERE IS NO DOCK (2026-09-22, owner: "The chrome button bottom nav is no
+ * longer the direction we're going … remove those components to save space").
+ * This shell's navigation is the SITE HEADER the root layout mounts on every
+ * page — `AdaptiveSiteHeader.tsx` draws the four destinations as text links
+ * and `MmmShell` no longer hides it — and its only chrome is the now-playing
+ * pill `MmmShell` renders while a track is loaded. Do not mount a navigation
+ * here: the header is it, and this layout would be putting a second one on
+ * screen. (The console dock, the middle road's tab bar and the handoff's own
+ * `ConsoleDock.tsx` each stood here in turn; every one is gone, and
+ * `guard:design` asserts the files stay gone.)
  */
 export default async function MmmLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();

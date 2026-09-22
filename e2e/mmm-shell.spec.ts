@@ -127,11 +127,11 @@ test.describe('Music · Map · Me shell', () => {
     await expect(page).toHaveURL(/\/app\/map$/);
   });
 
-  // Rule 1: no header, no bottom tab bar. This is the single biggest departure
-  // from the shell it replaces, and the easiest thing to reintroduce by accident
-  // — mounting the shell anywhere the root layout's AppShell also applies would
-  // put an 82px header back on screen.
-  test('renders no top bar and no bottom tab bar', async ({ page }) => {
+  // Rule 1: the site header, and no other chrome. The legacy app shell's
+  // header and context strip, the phone tab bar and the global player dock
+  // are all stood down here; what IS on screen is the ONE site header, which
+  // carries the four destinations since the bottom dock went (2026-09-22).
+  test('renders the site header and no other bar', async ({ page }) => {
     await page.goto('/app/map');
     await expect(page.locator('.mmm-frame:visible')).toBeVisible();
     // Real class names, checked against the components: AppShellHeader renders
@@ -139,33 +139,43 @@ test.describe('Music · Map · Me shell', () => {
     // MobileBottomNav `.ihype-mobile-nav`, GlobalMediaPlayer `.site-dock`. A
     // guessed name would make this pass whether or not the chrome rendered.
     //
-    // `toBeHidden`, not `toHaveCount(0)`: the last two render from the ROOT
-    // layout and are therefore always in the DOM on this route — mmm.css stands
-    // them down with `display: none`. What matters is that none of it is
+    // `toBeHidden`, not `toHaveCount(0)`: the last one renders from the ROOT
+    // layout and is therefore always in the DOM on this route — mmm.css stands
+    // it down with `display: none`. What matters is that none of it is
     // presented or focusable, and toBeHidden covers absent AND hidden.
     await expect(page.locator('.shell-header')).toBeHidden();
     await expect(page.locator('.shell-context-strip')).toBeHidden();
     await expect(page.locator('.ihype-mobile-nav')).toBeHidden();
     await expect(page.locator('.site-dock')).toBeHidden();
+    /* The header is VISIBLE — until 2026-09-22 this rule hid it, and the
+       assertion here read the other way. It is slim inside the shell, and the
+       frame starts at its bottom edge rather than under it. */
+    const header = page.locator('.adaptive-site-header');
+    await expect(header).toBeVisible();
+    await expect(header).toHaveClass(/is-app/);
+    const [headerBottom, frameTop] = await page.evaluate(() => [
+      document.querySelector('.adaptive-site-header')!.getBoundingClientRect().bottom,
+      [...document.querySelectorAll('.mmm-frame')].find((n) => (n as HTMLElement).offsetParent !== null || getComputedStyle(n).position === 'fixed')!.getBoundingClientRect().top,
+    ]);
+    expect(Math.round(frameTop), 'the frame does not start at the header\'s bottom edge').toBe(Math.round(headerBottom));
   });
 
-  test('the dock is the only persistent chrome', async ({ page }) => {
+  test('the header carries the navigation, and nothing else persists', async ({ page }) => {
     await page.goto('/app/map');
-    /* The whole of the navigation, and the whole of the chrome: one walnut bar
-       with four labelled destinations and a transport (MIDDLE ROAD,
-       2026-09-04). Everything that used to float over the map bottom-left is
-       retired, and so is the hardware that replaced it — assert both are GONE
-       rather than merely hidden, because a hidden control still in the DOM is a
-       second way to navigate waiting to be un-hidden. */
-    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1); // settle: the staged copy makes a bare visibility check a strict-mode failure
+    /* The whole of the navigation: four text links in the site header
+       (2026-09-22, owner: "The chrome button bottom nav is no longer the
+       direction we're going … remove those components to save space"). The
+       walnut dock and its tab row are GONE, and so is everything before it —
+       assert absent rather than hidden, because a hidden control still in the
+       DOM is a second way to navigate waiting to be un-hidden. */
+    const nav = page.locator('.adaptive-site-header .site-nav-links');
+    await expect(nav).toBeVisible();
     for (const label of ['Listen', 'Map', 'Tickets', 'Me']) {
-      await expect(page.getByRole('link', { name: label, exact: true })).toBeVisible();
+      await expect(nav.getByRole('link', { name: label, exact: true })).toBeVisible();
     }
-    /* And NO play key in the tab row — retired 2026-09-04, see the idle-bar
-       test below. Asserted absent rather than left unmentioned: a retired
-       control comes back one piece at a time, which is the same reason the
-       list of dead selectors below exists. */
+    /* No transport over silence: the pill exists only with a track loaded. */
     await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+    await expect(page.locator('.mmm-mini')).toHaveCount(0);
 
     for (const retired of [
       // The pre-console chrome.
@@ -173,6 +183,8 @@ test.describe('Music · Map · Me shell', () => {
       // The console's own hardware, retired by the middle road. A knob or a
       // dial reappearing here is the whole decision quietly coming back.
       '.mmm-knob', '.mmm-hifi-dial', '.mmm-dial-station', '.mmm-stick', '.mmm-gate', '.mmm-dock-badge', '.mmm-dock-plate',
+      // The middle road's own bar, and the public pages' bottom tab bar.
+      '.mmm-dock', '.mmm-tabs', '.mmm-tab', '.site-tabbar',
     ]) {
       await expect(page.locator(retired), `${retired} is retired chrome`).toHaveCount(0);
     }
@@ -186,26 +198,22 @@ test.describe('Music · Map · Me shell', () => {
     expect(overflow).toBe('hidden');
   });
 
-  /* The bar is one row at every width, nothing overflows, and every control
-     clears the 44px floor MOBILE.md sets for desktop as well as phone. This
-     used to assert that the two brass knobs matched at 74px; the knobs are
-     gone, the requirement underneath them is not — the chrome must not wrap,
-     must not push the page sideways, and must not hand anyone a target too
-     small to hit. `measure:dock` measures all of it in more detail without a
+  /* The navigation is one row at every width, nothing overflows, and every
+     control clears the 44px floor MOBILE.md sets for desktop as well as phone.
+     This used to assert that the two brass knobs matched at 74px, then that
+     the dock's tab row held; the hardware and the bar are gone, the
+     requirement underneath them is not — the chrome must not wrap, must not
+     push the page sideways, and must not hand anyone a target too small to
+     hit. `measure:chrome` measures all of it in more detail without a
      database; this is the same claim against the REAL app. */
-  test('the tab bar is one row at every width, with no target under 44px', async ({ page }) => {
-    for (const width of [390, 1280]) {
+  test('the header navigation is one row at every width, with no target under 44px', async ({ page }) => {
+    for (const width of [320, 390, 1280]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/app/map');
-      /* Settle to the one live dock before measuring. Mid-stream there are two
-         — the live dock and Next's staged copy — so a bare `.mmm-dock` here is
-         a strict-mode failure, and the staged copy would measure a bar that has
-         not been laid out. Eleventh member of the duplication family; same
-         treatment as every other. */
-      const docks = page.locator('.mmm-dock:visible');
-      await expect(docks).toHaveCount(1);
-      const box = await docks.evaluate((dock) => {
-        const controls = [...dock.querySelectorAll('.mmm-tab')];
+      const nav = page.locator('.adaptive-site-header .site-nav-links');
+      await expect(nav).toHaveCount(1);
+      const box = await nav.evaluate((row) => {
+        const controls = [...row.querySelectorAll('.site-nav-link')];
         const rects = controls.map((child) => child.getBoundingClientRect());
         return {
           /* Vertical OVERLAP, not distinct tops: the row centres items of
@@ -217,25 +225,25 @@ test.describe('Music · Map · Me shell', () => {
           scrollWidth: document.documentElement.scrollWidth,
         };
       });
-      expect(box.overlapping, `the bar wrapped at ${width}px`).toBe(true);
+      expect(box.overlapping, `the navigation wrapped at ${width}px`).toBe(true);
       /* FOUR destinations and nothing else. It was five until the owner
          retired the cold-start radio key ("remove radio tab on bottom it's
          already under listen"), and this assertion survived that change while
          three siblings in this file were updated — so CI failed the app for
-         obeying the instruction, which is the exact failure the header of the
-         `measure:dock` script warns about. A mini player adds no `.mmm-tab`,
-         so this figure is 4 in both bar states. */
+         obeying the instruction. `wiring-guards.test.ts` now reads this figure
+         against MMM_NAV, which is why it is still a literal. */
       expect(box.count, `wrong number of controls at ${width}px`).toBe(4);
       expect(box.under44, `a control is under the 44px floor at ${width}px`).toBe(0);
       expect(box.scrollWidth, `page scrolls sideways at ${width}px`).toBeLessThanOrEqual(width);
     }
   });
 
-  /* Every tab reaches its destination and the bar reports where you are. The
-     knob version of this had to be tapped in a fixed cycle because a rotary
-     switch only steps to its neighbour; a bar goes anywhere from anywhere,
-     which is the whole argument for it, so the test goes anywhere too. */
-  test('every tab navigates, and exactly one is current', async ({ page }) => {
+  /* Every destination reaches its route and the header reports where you are.
+     The knob version of this had to be tapped in a fixed cycle because a rotary
+     switch only steps to its neighbour; a row of links goes anywhere from
+     anywhere, which is the whole argument for it, so the test goes anywhere
+     too. */
+  test('every destination navigates, and exactly one is current', async ({ page }) => {
     await page.goto('/app/map');
     for (const [label, url] of [
       ['Tickets', /\/app\/tickets$/],
@@ -249,8 +257,10 @@ test.describe('Music · Map · Me shell', () => {
          member cannot tell where they are — and `moduleForPath` answering the
          wrong module for `/app/tickets` (it is tested before `/app/me` for
          exactly this reason) shows up here first. */
-      await expect(page.locator('.mmm-dock:visible .mmm-tab[data-on="true"]')).toHaveCount(1);
-      await expect(page.locator('.mmm-dock:visible .mmm-tab[data-on="true"]')).toHaveText(label);
+      const current = page.locator('.adaptive-site-header .site-nav-link[aria-current="page"]');
+      await expect(current).toHaveCount(1);
+      await expect(current).toHaveText(label);
+      await expect(current).toHaveAttribute('data-on', 'true');
     }
   });
 
@@ -320,25 +330,23 @@ test.describe('Music · Map · Me shell', () => {
   /* The transport with nothing playing — the state a fresh session is actually
      in, and the reason this asserts what it does.
 
-     There is no mini player over silence: the whole height saving depends on
-     the bar being tabs-only until something is loaded. What must still be true
-     is that the transport EXISTS — the console's universal-play promise is not
-     negotiable and MAP, ME, a profile and a ticket have nothing of their own —
-     so the radio key stands in for it, and it says what it does rather than
-     being a glyph that silently starts a station. */
-  test('over silence the bar carries no transport at all', async ({ page }) => {
+     There is NO chrome over silence (2026-09-22, owner: "Floating pill while
+     playing … no chrome the rest of the time"): the now-playing pill exists
+     only once a track is loaded, and nothing else in the shell carries a
+     transport. */
+  test('over silence the shell carries no transport at all', async ({ page }) => {
     await page.goto('/app/music/discover');
-    await expect(page.locator('.mmm-dock:visible')).toHaveCount(1);
+    await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
     /* This test asserted the OPPOSITE until 2026-09-04 — that an idle bar
        carries a "Radio" key, because the console's rule was that the transport
        is universal and never inert. The owner retired that key ("remove radio
-       tab on bottom it's already under listen"), so the idle bar is tabs only
-       and that is now the correct state rather than a regression. The rule it
-       bends is real and the trade is recorded in MmmDock.tsx; what survives of
-       it is that there is never MORE than one transport. */
+       tab on bottom it's already under listen"), and then the bar (2026-09-22),
+       so silence is chrome-free and that is the correct state rather than a
+       regression. What survives of the old rule is that there is never MORE
+       than one transport. */
     await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
-    await expect(page.locator('.mmm-dock .mmm-mini')).toHaveCount(0);
-    await expect(page.locator('.mmm-dock .mmm-key')).toHaveCount(0);
+    await expect(page.locator('.mmm-mini')).toHaveCount(0);
+    await expect(page.locator('.mmm-key')).toHaveCount(0);
     /* `MmmFullPlayer` renders NOTHING without a track (its contract returns
        null) — ADHERENCE rule 15, never render a control guaranteed to fail —
        so nothing on the bar can conjure one over silence. */
@@ -402,10 +410,9 @@ test.describe('Music · Map · Me shell', () => {
 
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(surface);
-      const dock = page.locator('.mmm-dock:visible');
-      await expect(dock).toHaveCount(1);
-      await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
-      await expect(dock.locator('.mmm-mini')).toHaveCount(0);
+      await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
+      await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+      await expect(page.locator('.mmm-mini')).toHaveCount(0);
       await expect(page.getByRole('button', { name: /^Play / })).toHaveCount(0);
     });
   }
@@ -455,20 +462,18 @@ test.describe('Music · Map · Me shell', () => {
       await page.setViewportSize({ width: 393, height: 852 });
       await page.goto(path(warmed));
       /* Count-settled, not just visibility: while the route streams there are
-         briefly TWO docks — the live one and Next's staging copy — and a bare
-         `.mmm-dock` visibility check fails strict mode on the duplicate. Same
-         class and same fix as the four ME-pane tests hardened on 2026-08-26;
-         this was the fifth member, caught by the OOM-fix verification run. */
-      const dock = page.locator('.mmm-dock:visible');
-      await expect(dock).toHaveCount(1);
+         briefly TWO frames — the live one and Next's staging copy — and a bare
+         visibility check fails strict mode on the duplicate. Same class and
+         same fix as the four ME-pane tests hardened on 2026-08-26. */
+      await expect(page.locator('.mmm-frame:visible')).toHaveCount(1);
 
-      /* The bar no longer carries a cold-start transport, so this can no
-         longer be driven from the dock — it is driven from the SURFACE's own
-         play control, which is how a member starts audio now. What the test
-         proves is unchanged and is the part worth keeping: once something is
-         loaded the mini player appears, it carries the transport, and the bar
-         never ends up with two. */
-      await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+      /* Nothing in the chrome carries a cold-start transport, so this is
+         driven from the SURFACE's own play control, which is how a member
+         starts audio now. What the test proves is the part worth keeping: once
+         something is loaded the now-playing pill appears, it carries the
+         transport, and there is never a second one. */
+      await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+      await expect(page.locator('.mmm-mini')).toHaveCount(0);
 
       /* The surface was seeded content, so a missing control is the surface
          failing to offer one — not a reason to skip. The first run of this
@@ -489,12 +494,17 @@ test.describe('Music · Map · Me shell', () => {
         : null;
       await play.click();
 
-      // The mini player only exists once a track is loaded, so its arrival is
-      // the proof the tap reached the media player rather than the surface.
-      await expect(dock.locator('.mmm-mini')).toBeVisible();
-      await expect(dock.getByRole('button', { name: 'Pause' })).toBeVisible();
-      // And still exactly one transport, in the mini player.
-      await expect(dock.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
+      // The pill only exists once a track is loaded, so its arrival is the
+      // proof the tap reached the media player rather than the surface.
+      const pill = page.locator('.mmm-mini:visible');
+      await expect(pill).toHaveCount(1);
+      await expect(pill.locator('.mmm-key')).toHaveCount(3);
+      // And still exactly one pill and no cold-start key. NOT "exactly one
+      // Pause button on the page": the surface's own control legitimately
+      // reads Pause too while its clip plays, and the fixture's chime is a
+      // second long, so a page-wide count read 2 and then 0 within the same
+      // wait — measured on the first run of this assertion.
+      await expect(page.getByRole('button', { name: 'Play the radio' })).toHaveCount(0);
 
       /* And the play is HEARD by the product: when the chime ends the player
          posts the completion, and the route must record it. Until 2026-09-14
@@ -534,8 +544,8 @@ test.describe('Music · Map · Me shell', () => {
     await page.goto('/app/music/discover');
     await page.getByRole('button', { name: 'Play the clip' }).first().click();
 
-    const dock = page.locator('.mmm-dock:visible');
-    const open = dock.getByRole('button', { name: /^Now playing: / });
+    const pill = page.locator('.mmm-mini:visible');
+    const open = pill.getByRole('button', { name: /^Now playing: / });
     await expect(open).toBeVisible();
     const label = (await open.getAttribute('aria-label')) ?? '';
     const title = /^Now playing: (.+) by .+\. Open the player\.$/.exec(label)?.[1];
@@ -1215,8 +1225,8 @@ test.describe('Music · Map · Me shell', () => {
     // Either real ticket rows, or the empty note — never a way out of the shell.
     await expect(body.getByRole('link', { name: /My tickets|Browse shows/ })).toHaveCount(0);
     await expect(body.locator('.mmm-ticket-list, .mmm-me-note')).not.toHaveCount(0);
-    // And it is a tab, not a section: the bar reports Tickets as current.
-    await expect(page.locator('.mmm-dock:visible .mmm-tab[data-on="true"]')).toHaveText('Tickets');
+    // And it is a destination, not a section: the header reports Tickets as current.
+    await expect(page.locator('.adaptive-site-header .site-nav-link[aria-current="page"]')).toHaveText('Tickets');
   });
 
   // An account with no Profile row has no hexId and therefore no HYPE link. The
@@ -1404,10 +1414,10 @@ test.describe('ME with a real profile', () => {
     await expect(page).toHaveURL(/\/app\/artists\//);
 
     await expect(page.locator('.mmm-pane [role="tablist"]')).toBeVisible();
-    // The bar is navigation, never sections — two controls that look alike and
-    // mean different things is the failure the old rule was protecting against,
-    // and it is still the failure.
-    await expect(page.locator('.mmm-dock [role="tablist"]')).toHaveCount(0);
+    // The header is navigation, never sections — two controls that look alike
+    // and mean different things is the failure the old rule was protecting
+    // against, and it is still the failure.
+    await expect(page.locator('.adaptive-site-header [role="tablist"]')).toHaveCount(0);
     await expect(page.getByRole('tablist')).toHaveCount(1);
   });
 
@@ -1420,12 +1430,14 @@ test.describe('ME with a real profile', () => {
 
      **The nameplate is gone** (MIDDLE ROAD, 2026-09-04) and so is the class of
      bug: it guessed a destination from a remembered path, and both failures
-     above were failures of that guess. Four labelled tabs cannot early-return
+     above were failures of that guess. Four labelled links cannot early-return
      on a module they cannot resolve, because each one names an absolute
-     destination. What still has to be true, and is what this asserts, is that
-     the bar is PRESENT and WORKS from a detail route — reached by clicking
-     through rather than by `goto`, so the real navigation is exercised. */
-  test('the bar escapes a detail page — it is the only way out', async ({ page }) => {
+     destination. The tab row became the header's links on 2026-09-22 and the
+     commit rescue moved with it. What still has to be true, and is what this
+     asserts, is that the navigation is PRESENT and WORKS from a detail route —
+     reached by clicking through rather than by `goto`, so the real navigation
+     is exercised. */
+  test('the header escapes a detail page — it is the only way out', async ({ page }) => {
     await page.goto('/app/me?role=artist&section=profiles');
     /* SCOPE THE LINK TO THE SETTLED CARD, and this is a correctness fix rather
        than a timing tweak: while the route streams, Next holds a copy of the
@@ -1441,9 +1453,9 @@ test.describe('ME with a real profile', () => {
     await expect(page).toHaveURL(/\/app\/artists\//);
 
     // Every destination, from a detail route, in one tap each.
-    const dock = page.locator('.mmm-dock:visible');
-    await expect(dock).toHaveCount(1);
-    await dock.getByRole('link', { name: 'Me', exact: true }).click();
+    const nav = page.locator('.adaptive-site-header .site-nav-links');
+    await expect(nav).toHaveCount(1);
+    await nav.getByRole('link', { name: 'Me', exact: true }).click();
     await expect(page).toHaveURL(/\/app\/me(\?|\/|$)/, { timeout: 15_000 });
   });
 
@@ -1543,7 +1555,7 @@ test.describe('computed stations', () => {
  * screen, and the trigger is really clickable anyway.
  */
 test.describe('Music · Map · Me shell — first visit, consent pending', () => {
-  test('a tab is clickable with the consent dialog on screen', async ({ page, context }) => {
+  test('a destination is clickable with the consent dialog on screen', async ({ page, context }) => {
     // Note the absence of the consent-seeding init script the `signIn` helper
     // adds. A first visit is the state under test.
     await applySessionCookie(context, EMAIL, { profiles: [] });
@@ -1559,13 +1571,14 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     await expect(trigger).toBeVisible();
 
     /* The real assertion is hit-testing, not visibility: the failure mode was a
-       fully visible control sitting underneath a higher z-index dialog. EVERY
-       tab is checked, not just one — the bar spans the width where the old
-       chrome floated bottom-left, so a banner can cover some of it and leave
-       the rest reachable, which would pass a single-control probe. */
+       fully visible control sitting underneath a higher z-index dialog. The
+       navigation is at the TOP of the screen since 2026-09-22 and the banner at
+       the bottom, so this cannot fail the way it did — it is kept because a
+       banner that grew to cover the header would fail it, and because EVERY
+       destination is checked rather than one. */
     await expect.poll(async () => page.evaluate(() => {
-      const tabs = [...document.querySelectorAll('.mmm-dock .mmm-tab')];
-      if (tabs.length === 0) return 'no tabs rendered';
+      const tabs = [...document.querySelectorAll('.adaptive-site-header .site-nav-link')];
+      if (tabs.length === 0) return 'no destinations rendered';
       for (const tab of tabs) {
         const box = tab.getBoundingClientRect();
         const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
@@ -1581,46 +1594,48 @@ test.describe('Music · Map · Me shell — first visit, consent pending', () =>
     await expect(consent).toBeVisible();
   });
 
-  test('the dock returns to its resting position once consent is answered', async ({ page, context }) => {
+  test('the now-playing pill rides the consent dialog and settles once it is answered', async ({ page, context }) => {
     // The lift must be tied to the dialog being present, not latched — a stale
-    // inset would hold the nav up the page with nothing there to avoid.
-    await applySessionCookie(context, EMAIL, { profiles: [] });
+    // inset would hold the pill up the page with nothing there to avoid. The
+    // pill is the one piece of chrome at the bottom edge now (the dock is
+    // gone, 2026-09-22), and it exists only with a track loaded, so the test
+    // loads one first: a listener whose default station the fixture warmed,
+    // started from the deck's own play control.
+    const session = await applySessionCookie(context, 'e2e-mmm-consent-listener@ihype.org', { profiles: [] });
+    await seedPlayableStation({ fanUserId: session.user.id });
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/app/map');
-
-    /* Distance from the bottom of the viewport, which is what the CSS controls.
-       Measured rather than compared against a constant: the dock's resting
-       value is 0 (it is flush to the edge, with the home-indicator inset inside
-       its own padding), and the lifted value is whatever the banner measured
-       itself to be — which depends on locale and on how the copy wraps. */
-    /* The LIVE dock, not `querySelector`'s first match: while the route
-       streams there are two, and the staged copy's rect is all zeros — which
-       would report a gap of a whole viewport and fail a correct page. */
-    const gap = () => page.evaluate(() => {
-      const dock = [...document.querySelectorAll('.mmm-dock')]
-        .find((node) => (node as HTMLElement).offsetParent !== null) ?? document.querySelector('.mmm-dock')!;
-      const box = dock.getBoundingClientRect();
-      return Math.round(window.innerHeight - box.bottom);
-    });
+    await page.goto('/app/music/discover');
 
     // Wait for the dialog before measuring: "lifted" is only meaningful once
-    // the thing being avoided is actually on screen, and measuring straight
-    // after goto() samples the pre-stylesheet frame where the trigger has not
-    // been positioned yet.
+    // the thing being avoided is actually on screen.
     await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toBeVisible();
+    await page.getByRole('button', { name: 'Play the clip' }).first().click();
+    const pill = page.locator('.mmm-mini:visible');
+    await expect(pill).toHaveCount(1);
+
+    /* Distance from the bottom of the viewport, which is what the CSS controls.
+       Measured rather than compared against a constant: the pill's resting
+       value is its own 12px gap plus the home-indicator inset (0 in a browser),
+       and the lifted value is whatever the banner measured itself to be — which
+       depends on locale and on how the copy wraps. */
+    const gap = () => page.evaluate(() => {
+      const node = [...document.querySelectorAll('.mmm-mini')]
+        .find((n) => (n as HTMLElement).offsetParent !== null) ?? document.querySelector('.mmm-mini')!;
+      return Math.round(window.innerHeight - node.getBoundingClientRect().bottom);
+    });
 
     const lifted = await gap();
     await page.getByRole('button', { name: /Essential only/i }).click();
     await expect(page.getByRole('dialog', { name: /cookie preferences/i })).toHaveCount(0);
 
-    // Flush to the bottom edge once there is nothing to ride on.
-    await expect.poll(gap).toBeLessThan(4);
+    // Its own gap off the bottom edge once there is nothing to ride on.
+    await expect.poll(gap).toBeLessThan(16);
     const resting = await gap();
 
-    // The dock really had been lifted clear of the dialog, so the assertion
-    // above is not vacuously true of a bar that never moved. A whole banner's
-    // height separates the two states — and being covered here would leave the
-    // member with no way to navigate at all.
+    // The pill really had been lifted clear of the dialog, so the assertion
+    // above is not vacuously true of a control that never moved. A whole
+    // banner's height separates the two states — and being covered here would
+    // leave the member with no way to stop what is playing.
     expect(lifted).toBeGreaterThan(resting + 80);
   });
 

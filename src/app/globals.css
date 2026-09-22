@@ -1652,17 +1652,13 @@ body:has(.site-dock) .site-shell {
     linear-gradient(var(--hair-22) 1px, transparent 1px),
     linear-gradient(90deg, var(--hair-22) 1px, transparent 1px);
 }
-/* ── The site tab bar ──
-   It was `.ihype-mobile-nav`, shown only at <=768px, while the SAME three
-   destinations sat in the header as `SiteNavTabs` for everyone wider. Two
-   implementations of one nav, and the desktop one cost a row at the top of
-   every page — the row the tuner dial now wants for a 26px section name.
-
-   So the header selector is gone and this is the nav at every width. The
-   rename came with it: a control called "mobile" that renders on a desktop is
-   the kind of name that makes the next reader wrong before they start. */
-.site-tabbar { display: flex !important; }
-body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+/* The site tab bar that was here (`.site-tabbar`, Listen · Events · Dashboard
+   along the bottom of every signed-in public page) is DELETED (2026-09-22,
+   owner: "The chrome button bottom nav is no longer the direction we're going
+   for the design of this app"). The four destinations are text links in the
+   site header (`.site-nav-links`), on every signed-in page including the
+   shell. The `body { padding-bottom: 68px }` that cleared the bar went with
+   it. */
 
 /* ── Bottom sheet on mobile: centered dialog on desktop, anchored to the
    bottom edge with a drag-handle affordance on phones — shared pattern for
@@ -2594,12 +2590,10 @@ body:has(.authcard-page) #main-content { width: 100%; }
 
    Same mechanism the auth card above uses, and for the same reason: the root
    layout has no path awareness, so a page that owns the whole screen has to say
-   so in markup rather than the layout guessing. `.site-tabbar` is included
-   because the console has its own bottom bar and two would stack. */
+   so in markup rather than the layout guessing. */
 body:has(.ops-shell) .adaptive-site-header,
 body:has(.ops-shell) .site-background,
 body:has(.ops-shell) .site-dock,
-body:has(.ops-shell) .site-tabbar,
 body:has(.ops-shell) .site-shell > footer { display: none !important; }
 body:has(.ops-shell) .site-shell { padding: 0 !important; }
 body:has(.ops-shell) #main-content { width: 100%; }
@@ -4505,20 +4499,23 @@ textarea { min-height: 44px; }
 @media (max-width: 640px) {
 }
 
-/* 11. Audio player bar — above bottom tab bar on mobile */
+/* 11. Audio player bar on a phone.
+   Until 2026-09-22 this sat `bottom: calc(60px + safe-area)` — stacked ABOVE
+   the bottom tab bar, which is deleted (DESIGN_SYNC row 496). The offset
+   survived the deletion for one build and left the dock floating 60px up the
+   page with content showing beneath it, measured on the public show page at
+   393. It is the bottom-most element now, so it owns the home-indicator inset
+   itself: `viewport-fit=cover` puts the bottom of the WebView at the bottom of
+   the physical display, and without the padding the controls sit in the swipe
+   zone. */
 @media (max-width: 768px) {
   .site-dock {
-    /* The tab bar is 60px of content PLUS its own bottom safe-area padding
-       (MobileBottomNav.tsx), so stacking on top of it means clearing both.
-       Without the inset the dock sat ~34px low on every notched iPhone —
-       overlapping the tab bar it is supposed to rest above, because
-       `viewport-fit=cover` puts the bottom of the WebView at the bottom of the
-       physical display, not above the home indicator. */
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     min-height: 64px;
   }
   .site-dock-play { min-width: 44px; min-height: 44px; }
-  body:has(.site-dock) .site-shell { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.site-dock) .site-shell { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 }
 .ptr-indicator {
   display: flex;
@@ -4747,7 +4744,6 @@ h2 {
    (light background, card borders, etc). */
 @media print {
   .site-nav,
-.site-tabbar,
 .ihype-cookie-consent,
 .site-dock-l {
     display: none !important;
@@ -4861,6 +4857,79 @@ h2 {
 .adaptive-site-header.is-scrolled .search-bar-desktop { max-width: 0; opacity: 0; overflow: hidden; pointer-events: none; }
 .adaptive-site-header-spacer { flex: 1 1 auto; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
+
+/* ── The signed-in navigation: four text links in the header ────────────
+   (2026-09-22; owner: "Slim top header — the mark on the left, the four
+   destinations as text links on the right, the same header the public pages
+   already use, so the whole product has one header".) These replace the walnut
+   dock's tab row inside `/app/*` and the `.site-tabbar` along the bottom of
+   every public page — one navigation where there were three. The links are
+   `MMM_NAV`, drawn by `AdaptiveSiteHeader.tsx`; `data-on` paints the current
+   one and `aria-current` announces it. 15px sentence case, not the tab bar's
+   11px tracked mono: a word in a header is a control's name, and the eyebrow
+   exemption is for metadata under a glyph. Every link clears the 44px floor
+   by height and by a 44px minimum width; the word plus 8px a side is what
+   fits four destinations beside the mark at 320px — `measure:chrome` measures
+   the box at every width. */
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.site-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-family: var(--f-b);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The current destination: primary ink, heavier, and an accent rule beneath —
+   never colour alone, which a member who cannot separate the two would lose. */
+.site-nav-link[data-on='true'] { color: var(--ink); font-weight: 700; }
+.site-nav-link[data-on='true']::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+@media (hover: hover) {
+  /* Behind `hover: hover` without exception — an unguarded :hover sticks on a
+     touchscreen, so the last link tapped would stay lit beside the real one. */
+  .site-nav-link:hover { color: var(--ink); background: rgba(var(--surface-tint-rgb), .07); }
+}
+.site-nav-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+/* Inside the shell the header is SLIM and still: the document under `/app/*`
+   cannot scroll, so the 76→54 fold never fires there, and the frame below
+   starts at exactly this height (`.mmm-frame` reads the same token). The top
+   safe-area inset is the header's — it is the top-most element now, which the
+   dock used to be at the bottom — so the frame's panes no longer pad for it. */
+:root { --app-header-h: 54px; }
+.adaptive-site-header.is-app {
+  height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  transition: none;
+  background: var(--material-regular);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+}
 
 @media (max-width: 900px) {
 }
@@ -5167,12 +5236,28 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .site-shell { padding-bottom: 82px; }
 
 @media (max-width: 1050px) {}
+/* 320px, the smallest phone the type ramp is checked at: the mark, four words
+   at 8px a side and the row's two 10px gaps come to 302px against 296px of
+   header, measured by `measure:chrome`. Half the padding is the difference;
+   "Me" is at the 44px floor and does not move. */
+@media (max-width: 360px) {
+  .site-nav-link { padding: 0 4px; }
+  .site-nav-link[data-on='true']::after { left: 4px; right: 4px; }
+}
 @media (max-width: 768px) {
   .adaptive-site-header { display: block !important; height: 62px; }
+  .adaptive-site-header.is-app { height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)); }
   .adaptive-site-header-inner { width: calc(100% - 24px); gap: 10px; }
   .adaptive-site-header .search-bar-desktop { display: flex; max-width: none; }
   .adaptive-site-header-auth { display: none; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
+  /* Signed in, a phone-width header holds the mark and the four destinations
+     and nothing else: 320px cannot also carry a search field and a gear, and
+     the tab bar this navigation replaces carried neither. Listen has its own
+     search; Me has Settings. */
+  .adaptive-site-header.has-nav .search-bar-desktop,
+  .adaptive-site-header.has-nav .search-bar-mobile-trigger,
+  .adaptive-site-header.has-nav .app-settings-link { display: none; }
   .site-dock { height: 70px; padding: 0 12px; }
   .site-dock-art { width: 48px; height: 48px; }
   .site-dock-settled .site-dock-art { width: 38px; height: 38px; }

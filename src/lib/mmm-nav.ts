@@ -11,7 +11,8 @@
  * The dock's HARDWARE is retired. A `RotaryNav` knob stepping the modules and
  * a `TunerDial` tuning the sections of the current screen are both gone; the
  * cabinet survives as a walnut TAB BAR carrying four labelled destinations, and
- * a screen with its own sections draws its own strip. See `MmmDock.tsx`.
+ * a screen with its own sections draws its own strip. The destinations are
+ * drawn by `AdaptiveSiteHeader.tsx` since 2026-09-22 (the dock is gone).
  *
  * **The rule this reverses was load-bearing and its reasoning is worth keeping,
  * because it was right about the thing it was solving.** The handoff said "one

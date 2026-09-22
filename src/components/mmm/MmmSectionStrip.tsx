@@ -25,8 +25,8 @@ import { useI18n } from '@/components/I18nProvider';
  * rule protected against is a consequence of a section control EXISTING in the
  * dock; with none there, a page drawing its own strip is the only way a member
  * can see their sections at all. **Before re-deriving the old rule from the old
- * reasoning, check whether the chrome still carries one. It does not** — see
- * `MmmDock.tsx`.
+ * reasoning, check whether the chrome still carries one. It does not** — the
+ * dock itself is gone (2026-09-22); navigation is the site header's.
  *
  * ## Why this reads the same registry the dial did
  *

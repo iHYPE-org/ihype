@@ -24,7 +24,6 @@ const SAMPLES: Array<[keyof typeof labels, string[]]> = [
   ['showTrailLabel', ['On stage now', 'On sale', 'Tickets soon']],
   ['ticketPriceLabel', ['Free']],
   ['meActivityFallbackTitle', ['Ticket order', 'Show payout', 'Show settlement']],
-  ['siteTabLabel', ['Listen', 'Events', 'Dashboard']],
   ['cancellationReasonLabel', ['Artist can no longer perform', 'Venue issue / closure', 'Low ticket sales', 'Other']],
   ['analyticsRangeLabel', ['7 Days', '30 Days', 'YTD']],
   ['askStatusLabel', ['Pending', 'Booked', 'Passed']],

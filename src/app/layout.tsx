@@ -13,7 +13,6 @@ import localFont from 'next/font/local';
 import { AppProviders } from '@/components/AppProviders';
 import { AdaptiveSiteHeader } from '@/components/AdaptiveSiteHeader';
 import { ServiceWorkerRegister } from '@/components/ServiceWorkerRegister';
-import { SiteTabBar } from '@/components/SiteTabBar';
 import { OfflineBanner } from '@/components/OfflineBanner';
 import { SitePlayerDock } from '@/components/GlobalMediaPlayer';
 import { WebVitals } from '@/components/WebVitals';
@@ -266,8 +265,10 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
             <span className="site-background-orb site-background-orb-b" />
             <span className="site-background-grid" />
           </div>
-          {/* Public-site navigation. The /app layout supplies MMM's own
-              persistent chrome and locks this header while it is active. */}
+          {/* THE ONE HEADER, on every route a member reaches — inside `/app/*`
+              too, since 2026-09-22, where it carries the four destinations
+              that used to be the bottom dock's tabs. The shell's frame starts
+              below it (`--app-header-h`). */}
           {/* The operator console owns its whole screen and must never carry
               member chrome. This is decided from `x-pathname` HERE rather than
               by the `body:has(.ops-shell)` rule in globals.css, because
@@ -275,13 +276,10 @@ try{if(window.CSS&&CSS.supports('font','-apple-system-body')){var p=document.cre
               lookup — and for the length of that wait there is no `.ops-shell`
               for the stylesheet to match. See `chrome-visibility.ts`. */}
           {!wholeScreen && (
-            <>
-              <AdaptiveSiteHeader
-                inviteOnly={inviteOnly}
-                label={t('layout.primarySiteHeader', 'Primary site header')}
-              />
-              <SiteTabBar />
-            </>
+            <AdaptiveSiteHeader
+              inviteOnly={inviteOnly}
+              label={t('layout.primarySiteHeader', 'Primary site header')}
+            />
           )}
           {/* Music · Map · Me owns its persistent chrome in /app/layout.tsx.
               Every route outside /app is now marketing, auth, admin, or a

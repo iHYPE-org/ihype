@@ -193,7 +193,7 @@ jobs:
         # much; the point is that slack is never the number it looks like,
         # because nothing measures it between passes. Tighten it in the change
         # that lowers the count, and this line stops being necessary.
-        run: npm run audit:spacing -- --max=884
+        run: npm run audit:spacing -- --max=881
 
       - name: Route inventory ratchet
         # `audit:routes` classifies every page.tsx three ways and --max-legacy
@@ -332,16 +332,18 @@ jobs:
       - name: Install Playwright browser
         run: npx playwright install chromium --with-deps
 
-      - name: Dock geometry
-        # The dock is the whole of the app's navigation and every figure in it
-        # is load-bearing on the others (DESIGN_SYNC row 289). This drives
-        # Chromium against slices of the real stylesheets — no build and no
-        # database, since /app/* is behind auth — and fails on a wrapped bar,
-        # mismatched knobs, an overflowing knob cap, a clipped station name or
-        # a covered step chevron. It is gated with the other browser stages,
-        # and the depth step already selects them for exactly the diffs that
-        # can break it: src/components/mmm/, src/components/ds/ and any *.css.
-        run: npm run measure:dock
+      - name: Chrome geometry
+        # The site header carries the whole of the app's navigation and the
+        # now-playing pill its only transport (DESIGN_SYNC row 496), and every
+        # figure in each is load-bearing on the panes that clear them. This
+        # drives Chromium against the real components and slices of the real
+        # stylesheets — no build and no database, since /app/* is behind auth —
+        # and fails on a wrapped navigation, a control under 44x44, a clipped
+        # label, a pill whose height disagrees with --mmm-chrome-size, or a
+        # second transport. It is gated with the other browser stages, and the
+        # depth step already selects them for exactly the diffs that can break
+        # it: src/components/mmm/, src/components/ds/ and any *.css.
+        run: npm run measure:chrome
 
       - name: Measure the map's date picker
         # Same method and the same reason as the dock probe above: /app/map is

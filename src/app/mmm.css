@@ -61,18 +61,22 @@ html.mmm-locked, html.mmm-locked body {
   overscroll-behavior: none;
 }
 
-/* Stand the public site chrome down. It renders from the root layout and remains
-   in the DOM behind this frame: the marketing header, the mobile tab bar,
-   the global player dock and the footer.
+/* Stand the REST of the public site chrome down. It renders from the root
+   layout and remains in the DOM behind this frame: the background orbs, the
+   global player dock and the site footer.
    `display: none` rather than opacity or z-index, because the frame is opaque:
    the problem was never that they were visible, it was that they were focusable
-   and present in the accessibility tree. A keyboard user could tab into a tab
-   bar the design deliberately removed, and a screen reader saw two players.
-   This design has no tab bar at any width — the logo fan replaced it. */
-html.mmm-locked .adaptive-site-header,
+   and present in the accessibility tree. A screen reader saw two players.
+
+   THE SITE HEADER IS NOT IN THIS LIST ANY MORE (2026-09-22, owner: "The chrome
+   button bottom nav is no longer the direction we're going … remove those
+   components to save space"). The walnut dock is deleted, and the header —
+   the same one every public page draws — carries the four destinations as
+   text links inside the shell. The frame starts below it: `--app-header-h`
+   in globals.css is the one figure the header's height and the frame's top
+   edge both read. */
 html.mmm-locked .site-background,
 html.mmm-locked .site-shell > footer,
-html.mmm-locked .site-tabbar,
 html.mmm-locked .site-dock {
   display: none !important;
 }
@@ -104,17 +108,20 @@ html.mmm-locked .site-shell > main {
 
 /* iOS Safari extends the PAGE's background into the gap between the web
    content and its own bottom bar (and into rubber-band overscroll). That gap
-   sits directly under the dock, so with the page ground there the walnut ended
-   in a hard edge against a Safari-painted cream strip — the owner's "slight
-   line under console" (2026-08-25). Painting the html ground walnut while the
-   console is mounted makes whatever Safari extends read as the cabinet the
-   dock is part of. Scoped with :has so nothing outside /app/* changes. */
+   used to sit directly under the walnut dock, so the html ground was painted
+   `--chrome-ground` (the cabinet) while the frame was mounted. The dock is gone
+   (2026-09-22) and the pane's own ground is what should extend there now.
+   Scoped with :has so nothing outside /app/* changes. */
 html:has(.mmm-frame) {
-  background: var(--chrome-ground);
+  background: var(--bg);
 }
 .mmm-frame {
   position: fixed;
-  inset: 0;
+  /* Below the site header, which is the shell's navigation since 2026-09-22
+     and is `position: sticky; top: 0` in the document above this frame. The
+     header owns the top safe-area inset (it pads for it and grows by it), so
+     the frame begins where the header ends. Same token the header reads. */
+  inset: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)) 0 0 0;
   background: var(--bg);
   overflow: hidden;
   /* Below a modal but above ordinary page content. */
@@ -164,57 +171,46 @@ html:has(.mmm-frame) {
   /* ── Safe areas ────────────────────────────────────────────────────────
      The handoff is drawn at 430px on a rectangle with no notch. The real
      target is a Capacitor WebView with `viewport-fit=cover`, where the bottom
-     ~34px is the home indicator and the top ~59px is the Dynamic Island. The
-     dock — the app's ONLY navigation — spans that bottom band, so without this
-     the three controls that reach everything sit inside the iOS system swipe
-     zone and compete with it for the touch.
+     ~34px is the home indicator and the top ~59px is the Dynamic Island.
 
-     `--mmm-safe-bottom` reaches the dock twice on purpose: once as its own
-     bottom padding, so the controls clear the home indicator, and once inside
-     `--mmm-chrome-size`, so the panes clear the whole bar. Both resolve to 0
-     off-device. */
+     The TOP inset is the site header's now — it is the top-most element and
+     grows by the inset (globals.css, `.adaptive-site-header.is-app`), and this
+     frame starts below it — so nothing inside the frame pads for it except
+     the full player, which is `position: fixed` over the header and reads
+     `--mmm-safe-top` directly. The BOTTOM inset is still the frame's: the
+     now-playing pill sits above it, and every pane's bottom padding carries
+     it. All four resolve to 0 off-device. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
   --mmm-safe-left: env(safe-area-inset-left, 0px);
   --mmm-safe-right: env(safe-area-inset-right, 0px);
 
-  /* ONE FIGURE DRIVES THE DOCK, and it is the tab row.
-     (MIDDLE ROAD, 2026-09-04 — the knob was the origin until this date and its
-     74px is gone with it. See `MmmDock.tsx` for why the hardware went.)
+  /* THE CHROME IS ZERO UNTIL SOMETHING PLAYS.
+     (2026-09-22, owner: "The chrome button bottom nav is no longer the
+     direction we're going for the design of this app. You can remove those
+     components to save space" — then "Floating pill while playing … no chrome
+     the rest of the time".)
 
-     What survives from the console table, and it is the important half: the
-     chrome's height is DERIVED, in one place, and everything that must clear it
-     reads `--mmm-chrome-size` rather than a number. That contract is why
-     replacing three hand-fitted controls with a flex bar moved no pane by hand.
+     Until this date the bottom of every screen was a bar: 105px of console
+     hardware, then the middle road's 55px tab row (111 with a track loaded).
+     Navigation is the site header now, so there is nothing at the bottom of
+     the frame by default, and the map gets the whole height.
 
-     The bar is two stacked rows and only one of them is always there:
+     What survives from both tables, and it is the important half: the chrome's
+     height is DERIVED, in one place, and everything that must clear it reads
+     `--mmm-chrome-size` rather than a number. So:
 
-       tabs      46px  always. 44px is the control floor (MOBILE.md, desktop
-                       included) and 46 leaves the active underline 2px that is
-                       not stolen from the target.
-       mini      56px  ONLY while a track is loaded. Conditional on purpose — a
-                       bar that always carried a player would be 111px, which is
-                       the old dock with different furniture and no saving at
-                       all. Idle the chrome is 55px + safe area against the
-                       console dock's 105px; playing it is 111px, and what the
-                       extra 6px buys is the title, the artist, the artwork and
-                       a skip, none of which the console could show.
+       idle      0px   nothing is loaded; no pill, no clearance.
+       playing   pill  `--mmm-mini-h` plus `--mmm-mini-gap` above and below —
+                       the pill floats `--mmm-mini-gap` off the bottom edge and
+                       a pane's last row needs the same gap above it.
 
-     `--mmm-chrome-size` therefore has a second declaration under `:has()`
-     further down this file, and that is the ONLY place it is allowed to move. */
-  /* 50px, from 46 (2026-09-05): iOS's tab bar is 49pt and the row now carries
-     a 26px glyph over a 12px label with the 44px floor met at every width.
-     Everything below derives from this figure, so the bar grew by 4px and no
-     pane was re-measured by hand — measure:dock reads the table. */
-  --mmm-tab-h: 50px;
+     `--mmm-chrome-size` has exactly ONE other declaration, under
+     `.mmm-frame:has(.mmm-mini)` further down this file, and that is the only
+     place it is allowed to move. */
   --mmm-mini-h: 56px;
-  --mmm-dock-pad: 3px;
-  /* The brass lip is a real 3px border on the dock, so it is part of the height
-     content has to clear - not decoration sitting inside the padding. */
-  --mmm-dock-lip: 3px;
-  --mmm-chrome-size: calc(
-    var(--mmm-tab-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
-  );
+  --mmm-mini-gap: 12px;
+  --mmm-chrome-size: 0px;
   /* The pane's own horizontal padding, named because a surface inside the
      pane sometimes has to cancel it — a horizontally scrolling strip has to
      reach the viewport edge or its overflow is invisible. Written once here
@@ -223,17 +219,16 @@ html:has(.mmm-frame) {
   --mmm-inset: 26px;
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
   /* The cookie banner is pinned to the bottom of the viewport, and so is the
-     dock. `CookieConsent.tsx` measures its own height into `--consent-inset`
-     (measured, not a constant: the copy wraps and ships in twelve locales), and
-     the dock rides up by exactly that much while it is on screen.
-
-     This matters more than it did: the old chrome floated bottom-LEFT with room
-     beside it, so an overlap covered part of one control. The dock spans the
-     width — an un-lifted dock would be covered outright, and it is now the only
-     way to navigate anywhere. The e2e suite measures the lift for that reason. */
+     now-playing pill. `CookieConsent.tsx` measures its own height into
+     `--consent-inset` (measured, not a constant: the copy wraps and ships in
+     twelve locales), and the pill rides up by exactly that much while the
+     banner is on screen. The name is the dock's — the pill took over the
+     token rather than the token being renamed, because the banner, the seed
+     deck, the layout instrument and two e2e files all know it by this name. */
   --mmm-dock-lift: var(--consent-inset, 0px);
-  /* Anything that must clear the chrome sits above the dock, including whatever
-     the dock is currently riding on. */
+  /* Anything that must clear the chrome sits above the pill, including whatever
+     the pill is currently riding on. Anything clearing the chrome reads THIS,
+     never `--mmm-chrome-size` (row 375). */
   --mmm-chrome-top: calc(var(--mmm-chrome-size) + var(--mmm-dock-lift));
 }
 
@@ -727,7 +722,10 @@ html:has(.mmm-frame) {
      `chrome-size`, the last ~170px of every list sat under the dock and the
      banner for as long as the banner was up — measured on CHARTS at 393, rows
      06–10 rendering beneath both and continuing below them (2026-09-10). */
-  padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
+  /* 14px at the top, with NO safe-area term: the site header above the frame
+     owns the Dynamic Island now (2026-09-22). Adding `--mmm-safe-top` here
+     again would pad every pane twice on a phone. */
+  padding: 14px var(--mmm-pane-pad) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
 }
 /* The pane is the same sheet of paper as the chart (owner, 2026-08-24: "all
    frames should fit to this console and this map design"): the map's own film
@@ -2175,207 +2173,66 @@ input.mmm-row-title { min-height: 44px; }
   cursor: pointer;
 }
 
-/* ── The dock ─────────────────────────────────────────────────────────────
-   The whole of the app's navigation, and the only persistent chrome. Still the
-   design's walnut cabinet from
-   `design/handoff-console/reference/console-dock/Console Dock.dc.html`; no
-   longer its hardware.
+/* ── The now-playing pill ────────────────────────────────────────────────
+   The only chrome the shell draws, and only while a track is loaded
+   (2026-09-22, owner: "Floating pill while playing — a compact pill at the
+   bottom that appears only when a track is loaded and disappears when nothing
+   is. No chrome the rest of the time"). `MmmNowPlaying.tsx` renders it; the
+   four destinations that shared the bottom bar with it are text links in the
+   site header now.
 
-   MIDDLE ROAD, 2026-09-04 (owner: "let's do it — build and implement the middle
-   ground"). The knob, the tuner dial and the thumbstick are gone; four labelled
-   tabs and a mini player sit on the same cabinet. `MmmDock.tsx` carries the
-   three reasons and what each one cost. **The cabinet itself is deliberately
-   untouched** — walnut, brass lip, film grain, the frame cap, the safe area.
-   The middle road keeps the console as a SURFACE and spends the rest of its
-   distinctiveness on the map, so painting this bar flat would be undoing the
-   decision rather than completing it.
+   What used to be here: `.mmm-dock` (the walnut cabinet — brass lip, film
+   grain, `--mmm-frame-max` centring), `.mmm-tabs` and `.mmm-tab-*` (four
+   labelled destinations), and the console hardware before them. About 280
+   lines. `git show 80aa5396:src/app/mmm.css` is the whole of the tab bar.
 
-   Three of the four textures are still in use and still the design's own,
-   served from `/console/`: walnut-v3 (the cabinet — "real grain photographed,
-   not a repeating stripe") and grain (film grain, "the single strongest
-   anti-CG cue"). `brushed.png` went with the plate and `brass-turned.png` with
-   the knob cap; both files stay in `public/console/` because the map and the
-   plates still reach for them.
+   Three things this keeps from every chrome before it:
+    1. **Own the safe area.** The pill is the bottom-most element, so it sits
+       `--mmm-mini-gap` above the home indicator; the panes clear the pill AND
+       the inset through `--mmm-chrome-top` + `--mmm-safe-bottom`.
+    2. **Ride the cookie banner.** `bottom` carries `--mmm-dock-lift`, so a
+       banner never covers the only transport on screen.
+    3. **Keep the geometry table honest.** The pill's presence is what moves
+       `--mmm-chrome-size` off zero, through the ONE `:has()` rule below;
+       content clearance follows the token, which is why removing the whole
+       of the bar moved no pane by hand.
 
-   ## Three things this must keep doing
-
-   1. **Own the safe area.** `layout.tsx` sets `viewportFit: 'cover'`; the dock
-      is the bottom-most element, so the home-indicator zone is its problem.
-      Bottom padding carries `--mmm-safe-bottom`, and `--mmm-chrome-size`
-      includes it so the panes clear the whole bar.
-   2. **Stay one row at 375px.** Four tabs at `flex: 1 1 0; min-width: 0` and a
-      fixed 58px transport: 375 - 58 = 79px a tab, which holds "TICKETS" at
-      11px/.14em with room. Nothing here may take an intrinsic width.
-   3. **Keep the geometry table honest.** `--mmm-chrome-size` is derived once
-      and has exactly one conditional override (the `:has()` rule for the mini
-      player). Content clearance follows the token, which is the rule that made
-      swapping the whole of the chrome move no pane by hand. */
-.mmm-dock {
+   MATERIAL FROM TOKENS (row 346's rule): the ground, the blur, the edge and
+   the shadow are `--dock-*`, iOS's translucent material on the default theme
+   and the console's walnut and brass on the four character themes. Paint no
+   material here; set the token. Ink is `--ink-on-walnut*`, which resolves to
+   the page ink on the default theme and to cream on a walnut pill. */
+.mmm-mini {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: var(--mmm-dock-lift);
-  /* The console is the same size on every screen (owner, 2026-08-24: "For
-     desktop let's set the size limit to match mobile"). 430px is the width the
-     dc.html draws the dock at — its whole demo frame — so above that the bar
-     stops growing and centres, an object sitting on the desk rather than a
-     strip painted across it. No breakpoint: at phone widths min() takes the
-     viewport and nothing changes. */
-  box-sizing: border-box;
-  max-width: var(--mmm-frame-max, 430px);
+  left: var(--mmm-mini-gap);
+  right: var(--mmm-mini-gap);
+  bottom: calc(var(--mmm-dock-lift) + var(--mmm-mini-gap) + var(--mmm-safe-bottom));
+  /* A pill, not a bar: it holds one width and centres above it. 480px is the
+     widest a song title needs; wider and the transport drifts away from the
+     title on a desk. Below the cap the frame's width minus two gaps wins. */
+  max-width: 480px;
   margin-inline: auto;
+  box-sizing: border-box;
+  height: var(--mmm-mini-h);
   z-index: 45;
-  padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
-  /* The nameplate used to straddle the lip, so the bar could not clip. It is
-     gone and nothing overhangs any more, so the grain and the lip meet the
-     cabinet's own edge. */
-  /* MATERIAL FROM TOKENS (2026-09-05, owner: "Make design like Apple Music iOS
-     style"). The walnut photograph, its darkening tint, the brass lip and the
-     cast shadow were written here; they are `--dock-*` tokens in globals.css
-     now, `none` by default and restored by the four character themes. The
-     default is iOS's tab bar: a translucent light material with a saturating
-     blur, a hairline on top, nothing photographed. Geometry is untouched —
-     `--mmm-dock-lip` still feeds `--mmm-chrome-size`; only its colour moved. */
-  border-top: var(--mmm-dock-lip) solid var(--dock-lip);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--dock-lip);
   background-image: var(--dock-tint), var(--dock-texture);
   background-size: auto, 300px auto;
   background-blend-mode: multiply, normal;
   background-color: var(--dock-bg);
   -webkit-backdrop-filter: var(--dock-blur);
   backdrop-filter: var(--dock-blur);
-  box-shadow: var(--dock-shadow);
+  box-shadow: 0 10px 30px -14px rgba(var(--scrim-rgb), .45), var(--dock-shadow);
+  color: var(--ink-on-walnut);
   overflow: hidden;
-  /* The controls are the only interactive chrome; the bar itself swallows taps
+  /* The controls are the only interactive chrome; the pill swallows taps
      rather than passing them to the map underneath. */
   pointer-events: auto;
-}
-/* Film grain over the whole cabinet, unifying every material under one
-   exposure. Above the plate (z2), below nothing interactive. */
-.mmm-dock-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background-image: var(--grain-texture);
-  background-size: 160px;
-  mix-blend-mode: overlay;
-  opacity: 0.09;
-}
-/* NOTHING ON THE DOCK REFLECTS, and that predates the middle road (owner,
-   2026-08-25: "Let's drop the reflection in the console base, it's
-   distracting", then "Remove reflective element from console"). The fascia
-   sheen was a screen-blended gradient rewritten live by pointer and tilt, so on
-   a phone the largest surface in the app carried a highlight that tracked the
-   handset's every move — glare, not material. The controls' speculars went with
-   it. What remains is occlusion and light SOURCES, never an image of the room.
-   Do not reinstate any of them: the request came twice, and a dome that has to
-   be explained is not describing itself. */
-/* ── The tab row ──────────────────────────────────────────────────────────
-   Four labelled destinations and, when nothing is loaded, the transport.
-
-   What used to be here: `.mmm-dock-plate`, `.mmm-dock-badge*`, `.mmm-knob-*`
-   (11 layers: fluted bakelite skirt, lathe-turned brass cap, wear, pointer,
-   occlusion, readout), `.mmm-hifi-dial` and `.mmm-dial-*` (backlight, spill,
-   smudge, two glass layers, a rotating compass card, a tapered needle, a pilot
-   bead, two engraved step affordances), `.mmm-gate*` and `.mmm-stick-*`. About
-   550 lines. It is in the history if a figure from it is ever wanted again;
-   `git show HEAD~1:src/app/mmm.css` is the whole of it.
-
-   The three things the console table got right and this keeps: the height is
-   derived from one token, the safe area belongs to the bottom-most element, and
-   the bar is the same object at every width (`--mmm-frame-max`), an item on the
-   desk rather than a strip painted across the screen. */
-.mmm-tabs {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: stretch;
-}
-.mmm-tab {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: var(--mmm-tab-h);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 4px 2px 6px;
-  border: 0;
-  background: none;
-  text-decoration: none;
-  position: relative;
-  /* The floor's own ink. Resting tabs take `-3` (5.51:1 on walnut, the measured
-     floor of the ramp) and the active one takes the primary, so "which tab am I
-     on" is carried by ink weight AND by the brass underline below — never by
-     colour alone, which a member who cannot separate the two would lose. */
-  color: var(--ink-on-walnut-3);
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer;
-}
-.mmm-tab-glyph { display: block; line-height: 0; }
-/* 26px, over the SVG's own 21 (2026-09-05, "better visibility"): iOS draws its
-   tab glyphs at roughly 25pt, and a 21px outline at 1.5px stroke on a phone
-   read as a hairline sketch. Sized here rather than in the markup so a theme
-   can move it. */
-.mmm-tab-glyph svg { width: 26px; height: 26px; }
-.mmm-tab-label {
-  /* 12px tracked mono — the type floor's own exemption shape (mono family AND
-     tracking >= .14em). A tab label is metadata under a glyph, which is exactly
-     what that exemption is for — it is not body copy. Was 11px; the extra
-     pixel is the difference between a label and a caption on a phone. */
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  line-height: 1;
-  white-space: nowrap;
-}
-/* The lit tab. Accent on the iOS bar, the cabinet's primary ink on the console —
-   and heavier, so "where am I" is carried by weight as well as hue. */
-.mmm-tab[data-on='true'] { color: var(--tab-on-ink); }
-.mmm-tab[data-on='true'] .mmm-tab-label { font-weight: 700; }
-.mmm-tab[data-on='true'] .mmm-tab-glyph svg { stroke-width: 0; }
-.mmm-tab[data-on='true'] .mmm-tab-glyph [stroke] { stroke-width: 2; }
-/* The lit rail under the active tab. Brass, fading at both ends, so it reads as
-   a lamp behind the fascia rather than a border. */
-.mmm-tab[data-on='true']::after {
-  content: '';
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  bottom: 0;
-  height: 2px;
-  border-radius: 1px;
-  background: linear-gradient(90deg, transparent, var(--tab-rail), transparent);
-}
-@media (hover: hover) {
-  /* Behind `hover: hover` without exception — an unguarded :hover STICKS on a
-     touchscreen, so the last tab tapped would stay lit next to the real one. */
-  .mmm-tab:hover { color: var(--ink-on-walnut-2); }
-  .mmm-tab[data-on='true']:hover { color: var(--tab-on-ink); }
-}
-.mmm-tab:active .mmm-tab-glyph { transform: translateY(1px); }
-.mmm-tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -3px;
-  border-radius: 4px;
-}
-
-/* ── The mini player ──────────────────────────────────────────────────────
-   Present only while a track is loaded. Everything it can do, the full player
-   could already do; what is new is that it says WHAT IS PLAYING without being
-   opened, which the console's pilot bead could not. */
-.mmm-mini {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: var(--mmm-mini-h);
-  padding: 0 2px;
-  border-bottom: 1px solid var(--line);
 }
 .mmm-mini-open {
   flex: 1;
@@ -2383,22 +2240,22 @@ input.mmm-row-title { min-height: 44px; }
   min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 6px;
+  gap: 8px;
+  padding: 4px 8px 4px 2px;
   border: 0;
   background: none;
   text-align: left;
   color: inherit;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .mmm-mini-art {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 50%;
   border: 1px solid var(--art-edge);
   display: grid;
   place-items: center;
@@ -2413,8 +2270,8 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-mini-meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .mmm-mini-title {
   /* 15px, the shell's content floor. A mini player's title is the name of a
-     song, which is content — the tracked-mono exemption that lets a tab label
-     sit at 11px does not reach it, and `lint-source.mjs` says so. */
+     song, which is content — the tracked-mono exemption does not reach it,
+     and `lint-source.mjs` says so. */
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -2430,9 +2287,8 @@ input.mmm-row-title { min-height: 44px; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mmm-mini-transport { display: flex; align-items: center; gap: 2px; }
-/* A machined key: brass edge, lit top, one pixel of travel on press. The same
-   material vocabulary the plates and slats use, at control scale. */
+.mmm-mini-transport { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* A key: 44x44, one pixel of travel on press. */
 .mmm-key {
   min-width: 44px;
   min-height: 44px;
@@ -2440,7 +2296,7 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   background: none;
-  border-radius: 4px;
+  border-radius: 50%;
   color: var(--ink-on-walnut-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2450,20 +2306,18 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-key:focus-visible { outline: 2px solid var(--tab-on-ink); outline-offset: -3px; }
 @media (hover: hover) {
   .mmm-mini-open:hover,
-  .mmm-key:hover { background: rgba(255, 232, 190, 0.08); }
+  .mmm-key:hover { background: rgba(var(--surface-tint-rgb), .08); }
   .mmm-key:hover { color: var(--ink-on-walnut); }
 }
 
 /* The ONE place `--mmm-chrome-size` is allowed to move, and it moves because
-   the dock really is taller: the panes must clear the mini player or the last
-   row of every list sits behind it. `:has()` rather than a class on the frame
-   because the dock owns the answer — it is the component that knows whether a
-   track is loaded, and a second copy of that state on an ancestor is a second
-   thing to keep in sync. */
-.mmm-frame:has(.mmm-dock[data-mini='true']) {
-  --mmm-chrome-size: calc(
-    var(--mmm-tab-h) + var(--mmm-mini-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
-  );
+   there really is something at the bottom of the frame: the panes must clear
+   the pill or the last row of every list sits behind it. `:has()` rather than
+   a class on the frame because the pill owns the answer — it is the component
+   that knows whether a track is loaded, and a second copy of that state on an
+   ancestor is a second thing to keep in sync. */
+.mmm-frame:has(.mmm-mini) {
+  --mmm-chrome-size: calc(var(--mmm-mini-h) + var(--mmm-mini-gap) * 2);
 }
 
 /* Reduced motion: the sheet settles instantly. Complements the token-level
@@ -2474,12 +2328,10 @@ input.mmm-row-title { min-height: 44px; }
 }
 
 /* The design system's ONE breakpoint (`MOBILE.md`) has nothing left to move.
-   The dock is the same bar at every width — four flexed tabs and a fixed
-   transport — which is what "there is no separate mobile build" means in
-   practice. The block that was here redefined the whole chrome table for the
-   phone because three absolutely-positioned pieces had to be re-fitted at that
-   width; a flex row re-fits itself. The 44px floors in `mobile-fit.css` still
-   apply, and every control in this bar clears them at every width. */
+   The pill is the same object at every width — it holds one width and centres
+   above it — which is what "there is no separate mobile build" means in
+   practice. The 44px floors in `mobile-fit.css` still apply, and every control
+   in the pill clears them at every width. */
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
 

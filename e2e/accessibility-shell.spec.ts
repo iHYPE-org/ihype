@@ -41,7 +41,7 @@ test.skip(!canSeedSession(), 'Needs E2E_WORKERD_DATABASE_URL + AUTH_SECRET to se
 
 async function signIn(context: BrowserContext) {
   const seeded = await applySessionCookie(context, EMAIL);
-  // The consent banner overlays the dock and feeds `--mmm-dock-lift`; every
+  // The consent banner overlays the now-playing pill and feeds `--mmm-dock-lift`; every
   // other authenticated spec dismisses it for the same reason.
   await context.addInitScript(() => {
     try { localStorage.setItem('ihype_cookie_consent', 'accepted'); } catch { /* private mode */ }

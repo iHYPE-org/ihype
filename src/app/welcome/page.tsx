@@ -189,8 +189,7 @@ export default async function WelcomePage() {
            the same job (body:has(.site-dock) in shell.css) — the rule lives
            with the page that needs it and costs no JS. */
         body:has(.welcome-body) .adaptive-site-header,
-        body:has(.welcome-body) .site-dock,
-        body:has(.welcome-body) .site-tabbar { display: none; }
+        body:has(.welcome-body) .site-dock { display: none; }
 
         .welcome-body { background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 24px; }
         .welcome-card { max-width: 560px; width: 100%; text-align: center; }

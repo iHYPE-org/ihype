@@ -455,24 +455,24 @@ describe('the native shell paints the app\'s ground', () => {
   });
 
   /**
-   * The dock's tab count is decided by MMM_NAV, and a spec restated it as a
-   * literal.
+   * The navigation's link count is decided by MMM_NAV, and a spec restated it
+   * as a literal.
    *
-   * `e2e/mmm-shell.spec.ts` asserts the bar is one row with no target under
-   * 44px, and counts `.mmm-tab` to prove it measured a real bar rather than an
-   * empty selector. That count was `5` — four destinations plus the cold-start
-   * radio key — and it SURVIVED the owner removing that key on 2026-09-04,
-   * while three sibling assertions in the same file were updated. So CI failed
-   * the app for obeying the instruction, and the only thing that caught it was
-   * a full browser run on a self-hosted runner: `tsc`, lint and 1091 unit
-   * tests were all green.
+   * `e2e/mmm-shell.spec.ts` asserts the header's links are one row with no
+   * target under 44px, and counts `.site-nav-link` to prove it measured a real
+   * row rather than an empty selector. When this was the dock's tab row that
+   * count was `5` — four destinations plus the cold-start radio key — and it
+   * SURVIVED the owner removing that key on 2026-09-04, while three sibling
+   * assertions in the same file were updated. So CI failed the app for obeying
+   * the instruction, and the only thing that caught it was a full browser run
+   * on a self-hosted runner: `tsc`, lint and 1091 unit tests were all green.
    *
    * The fix is the number; this guard is what stops the next nav change
    * leaving it stale again. It is deliberately NOT an import of MMM_NAV into
    * the spec — no e2e file imports from `@/` today, and introducing that for
-   * one integer is a larger change than the failure needs. A stray play key
-   * appearing in the tab row is a different claim and `measure:dock` already
-   * makes it.
+   * one integer is a larger change than the failure needs. The dock became the
+   * site header's text links on 2026-09-22 and the guard did not have to
+   * change, which is the point of reading the manifest.
    */
   it('the e2e tab-count assertion matches MMM_NAV', () => {
     const spec = code('e2e/mmm-shell.spec.ts');
@@ -495,7 +495,7 @@ describe('the native shell paints the app\'s ground', () => {
 
     expect(
       Number(asserted),
-      `e2e/mmm-shell.spec.ts expects ${asserted} dock tabs and MMM_NAV has ${entries}`,
+      `e2e/mmm-shell.spec.ts expects ${asserted} header links and MMM_NAV has ${entries}`,
     ).toBe(entries);
   });
 
