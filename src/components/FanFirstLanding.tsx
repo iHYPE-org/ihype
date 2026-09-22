@@ -46,7 +46,7 @@ export async function FanFirstLanding({ stats }: { stats: ReactNode }) {
     <div className="fan-entry">
       <header aria-label="iHYPE" className="fan-entry-header">
         <Link aria-label={t('fanFirstLanding.home', 'iHYPE home')} className="fan-entry-logo" href="/">
-          <IhypeMark size={22} />
+          <IhypeMark size={16} />
         </Link>
         <nav aria-label={t('fanFirstLanding.accountNav', 'Account')} className="fan-entry-nav">
           <Link className="fan-entry-signin" href="/login">{t('fanFirstLanding.signIn', 'Sign in')}</Link>

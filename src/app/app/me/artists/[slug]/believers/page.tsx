@@ -104,7 +104,7 @@ const BELIEVERS_CSS = `
 .believers-row { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
 .believers-row-you { background: rgba(var(--accent-rgb),0.08); }
 .believers-rank { font-family: 'JetBrains Mono', monospace; font-size: 0.9375rem; color: var(--ink-a65); width: 24px; }
-.believers-avatar { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--role-fan), var(--accent-2)); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9375rem; color: var(--ink-on-accent); }
+.believers-avatar { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--role-fan); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 0.9375rem; color: var(--ink-on-accent); }
 .believers-name { flex: 1; font-family: 'Work Sans', sans-serif; font-weight: 500; font-size: 0.9375rem; color: var(--ink); display: flex; align-items: center; gap: 8px; }
 .believers-name a { color: var(--ink); text-decoration: none; }
 .believers-name a:hover { color: var(--accent-text); }

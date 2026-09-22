@@ -163,7 +163,7 @@ export default async function WelcomePage() {
 
         <div className="welcome-panel">
           <div className="welcome-identity">
-            <div className="welcome-avatar" style={{ background: `linear-gradient(135deg, ${c.tint}, var(--role-fan))` }}>{initial}</div>
+            <div className="welcome-avatar" style={{ background: c.tint }}>{initial}</div>
             <div>
               <div className="welcome-name">{displayName}</div>
               <div className="welcome-role" style={{ color: c.tint }}>{c.roleLabel}{pendingNote}</div>

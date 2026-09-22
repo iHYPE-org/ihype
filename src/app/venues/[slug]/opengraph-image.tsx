@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
+import { BrandMarkImage } from '@/components/brand/BrandMarkImage';
+import { OG, OG_FRAME, OG_KICKER } from '@/app/api/og/palette';
 
 export const runtime = 'nodejs';
 export const alt = 'Venue on iHYPE';
@@ -21,46 +23,27 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          background: '#0b1220',
-          padding: '72px 80px',
-          fontFamily: 'sans-serif'
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ color: '#fff7ec', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>i</span>
-          <span style={{ color: '#ff5029', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>HYPE</span>
-          <span style={{ color: '#22e5d4', fontSize: 18, fontWeight: 700, marginLeft: 24, letterSpacing: '0.16em' }}>
+      <div style={OG_FRAME}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <BrandMarkImage accent={OG.accent} height={28} ink={OG.ink} />
+          {/* The venue hue is the one thing that tells this card from an artist's, as on the panes. */}
+          <span style={{ ...OG_KICKER, color: OG.venue, marginLeft: 24, letterSpacing: '0.16em' }}>
             {t('venuesSlugOpengraphImage.venueTag', 'VENUE')}
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div
-            style={{
-              fontSize: 80,
-              fontWeight: 900,
-              color: '#eef1f6',
-              lineHeight: 0.98,
-              letterSpacing: '-0.04em'
-            }}
-          >
+          <div style={{ fontSize: 80, fontWeight: 800, color: OG.ink, lineHeight: 0.98, letterSpacing: '-0.04em' }}>
             {name}
           </div>
           <div style={{ display: 'flex', gap: 24, alignItems: 'center' }}>
-            {location ? <span style={{ fontSize: 24, color: '#5a5048' }}>{location}</span> : null}
-            {hype ? (
-              <span style={{ fontSize: 24, color: '#22e5d4', fontWeight: 700 }}>{hype}</span>
-            ) : null}
+            {location ? <span style={{ fontSize: 24, color: OG.ink3 }}>{location}</span> : null}
+            {hype ? <span style={{ fontSize: 24, color: OG.venue, fontWeight: 700 }}>{hype}</span> : null}
           </div>
         </div>
-        <div style={{ color: '#3a342e', fontSize: 20, letterSpacing: '0.08em' }}>
-          ihype.org/venues/{slug}
+        <div style={{ color: OG.ink3, fontSize: 20, letterSpacing: '0.04em' }}>
+          {/* One text node, not two: `ihype.org/…/{slug}` is TWO children to Satori and it refuses a
+            div holding them without display:flex — which is why this card had never rendered. */}
+        {`ihype.org/venues/${slug}`}
         </div>
       </div>
     ),

@@ -145,11 +145,15 @@
      exactly as before. This is copy only, which is the whole point of the
      token existing. */
   --accent-text: #c8102e;   /* 5.88:1 on white */
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  /* Flat on the phone themes since 2026-09-22 — a gradient CTA is the
+     "gradient action language" the launch scheme comment further down still
+     names, and it reads as generated. The four character themes restate the
+     sweep. The name is kept because four readers use it. */
+  --accent-grad: var(--accent);
   /* The warm CTA gradient. Seven pages had hand-written
      `linear-gradient(135deg, #ff5029, #ff3e6e)` on their primary button —
      same two stops, same angle, copied by hand each time. */
-  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: var(--accent);
 
   /* Ink ON a brand fill — the inverse of --accent-text, which is the accent
      used AS copy over a page background. The dark neutral keeps the orange
@@ -467,6 +471,27 @@
   --tile-bg: var(--bg-2);
   --art-edge: transparent;
   --mini-art-bg: var(--bg-3);
+  /* THE DECORATIVE GRADIENTS ARE TOKENS, AND FLAT ON THE PHONE THEMES
+     (2026-09-22, the "AI look" sweep's third pass). A diagonal two-stop
+     gradient is the single most recognisable generated-design device there
+     is, and after rows 493-494 the default theme still painted eleven of
+     them: the accent-into-walnut band at the top of every artist, venue and
+     advertiser pane, an accent-into-purple circle behind every avatar
+     initial in the sheets, the six shelf tiles, the station art, and the CTA
+     buttons. Each is a token now — flat here and on dark, the console's own
+     gradients restored in the four character themes, which is the row-346
+     rule (set the token; the themes decide). The fifth `--tile-tone-*` is the
+     plate, already one colour on iOS. */
+  --profile-band: var(--bg-3);
+  --profile-band-venue: var(--bg-3);
+  --profile-band-advertiser: var(--bg-3);
+  --profile-band-glare: none;
+  --tile-tone-0: var(--tile-1);
+  --tile-tone-1: var(--plate-1);
+  --tile-tone-2: var(--tile-2);
+  --tile-tone-3: var(--plate-1);
+  --tile-tone-4: var(--tile-3);
+  --tile-tone-5: var(--plate-1);
   /* The empty plate: a quiet filled cell in the body face. */
   --empty-edge: 1px solid var(--line);
   --empty-bg: var(--bg-2);
@@ -987,6 +1012,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1134,6 +1171,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1281,6 +1330,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1423,6 +1484,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -3219,8 +3292,10 @@ body:has(#wt-wrap) .site-shell > main {
   color: inherit;
 }
 .show-sequence-item.active {
-  border-color: rgba(35,208,216,0.35);
-  background: linear-gradient(135deg, rgba(35,208,216,0.12), rgba(143,91,255,0.12));
+  /* Was a cyan-into-violet wash in two DS8 literals — a pastel diagonal no
+     theme could reach, on the one row that is playing. */
+  border-color: var(--accent);
+  background: var(--bg-2);
 }
 /* Same repaint as `.composer-media-code` above: pale cyan `#aef4f6` on a
    translucent cyan fill was DS8's, and on cream it is a number you cannot
@@ -3321,7 +3396,9 @@ body:has(#wt-wrap) .site-shell > main {
   opacity: 0.72;
 }.panel::before,
 .card::before{
-  background: linear-gradient(180deg, var(--line), transparent 18%, transparent 82%, rgba(113,217,255,0.04));
+  /* The trailing stop was `rgba(113,217,255,0.04)`, a DS8 cyan literal
+     painting a tint nobody could see; the top hairline is the whole idea. */
+  background: linear-gradient(180deg, var(--line), transparent 18%);
 }
 .subtitle,
 .meta,
@@ -3369,10 +3446,6 @@ body:has(#wt-wrap) .site-shell > main {
   .artist-media-upload-header { flex-direction: column; align-items: flex-start; }
   .ticketing-panel-header,
   .ticket-price-badge { width: 100%; text-align: left; }
-  .ihype-mark {
-    font-size: 0.9375rem;
-    letter-spacing: -0.01em;
-  }
   .fan-playlist-panel {
     right: -0.1rem;
     width: min(94vw, 400px);
@@ -3418,7 +3491,9 @@ body:has(#wt-wrap) .site-shell > main {
   border-color: var(--hair-70);
 }
 .fan-playlist-panel{
-  background: linear-gradient(180deg, rgba(17, 22, 34, 0.96), rgba(10, 14, 23, 0.98));
+  /* Was DS8's navy as a two-stop literal gradient — the last dark panel on
+     the white product, and unreachable by any theme. */
+  background: var(--bg-surface);
 }
 /* .button.secondary carries the console press shadow at its own definition;
    listing it here would zero that shadow on order alone. */
@@ -3548,33 +3623,26 @@ body {
    The `i` is sized in em of that so the lockup scales as one object from a
    16px favicon to a splash screen. */
 .ihype-mark {
-  display: inline-flex;
-  align-items: center;
-  /* Optically tighter than the 6px a flex gap would suggest: the `i` is a
-     bare stem, so it needs less air than a glyph with sidebearings would. */
-  gap: 0.13em;
-  font-family: var(--font-display);
-  font-size: var(--ihype-mark-size, 1.0625rem);
-  font-weight: 800;
-  /* A WORDMARK IS TIGHT. This was +0.17em, which is the letterspaced-caps
-     treatment every generated brand ships; at 800 weight it read as four
-     separate letters rather than one word. */
-  letter-spacing: -0.015em;
-  line-height: 1;
+  /* ONE SVG, sized by its cap height. The viewBox's height IS the cap (660
+     font units), so --ihype-mark-size is the height of the capitals and the
+     width follows at 3.86:1. There is no type here to size, track or weight
+     any more: the letters are Bricolage's outlines baked into
+     src/lib/brand-mark.ts, which is why the mark stopped changing face with
+     the theme on 2026-09-22 (Anton on street, Playfair on classical, before). */
+  display: inline-block;
+  height: var(--ihype-mark-size, 12px);
+  width: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
 .ihype-mark-i {
-  /* Cap height of the display face is ~0.72em, and the `i` runs dot-to-baseline
-     over that same height, so 0.72em matches the caps beside it exactly. */
-  height: 0.72em;
-  width: auto;
   fill: var(--accent);
   transition: fill 150ms;
 }
 
-.ihype-mark-word {
-  color: var(--ink);
-  transition: color 150ms;
+.ihype-mark-letters {
+  fill: var(--ink);
 }
 
 .nav-logo:hover .ihype-mark-i,

@@ -173,7 +173,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
       {/* Hero */}
       <div className="payout-card" style={{
         borderRadius: 24, padding: '2.5rem',
-        background: 'linear-gradient(135deg, rgba(var(--accent-rgb),.15), rgba(var(--role-fan-rgb),.06))',
+        background: 'var(--bg-2)',
         border: '1px solid var(--line)', marginBottom: '1.25rem', position: 'relative', overflow: 'hidden',
       }}>
         <p style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginBottom: 16 }}>
@@ -257,7 +257,7 @@ export default async function PayoutPage({ params }: { params: Promise<{ id: str
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '.75rem' }}>
           {CELLS.map((c) => (
-            <div key={c.label} style={{ padding: '1rem', borderRadius: 14, border: `1px solid ${c.color}33`, background: `linear-gradient(135deg, ${c.color}14, transparent)` }}>
+            <div key={c.label} style={{ padding: '1rem', borderRadius: 14, border: `1px solid ${c.color}33`, background: 'var(--bg-2)' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1.6rem', letterSpacing: '-.03em', color: c.color, lineHeight: 1 }}>{fmtCents(c.cents, locale)}</div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.9375rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--ink-3)', marginTop: 5 }}>{c.pct}% · {c.label}</div>
               <div style={{ fontSize: '0.9375rem', color: 'var(--ink-2)', marginTop: 4 }}>

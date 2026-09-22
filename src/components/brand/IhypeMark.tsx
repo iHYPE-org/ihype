@@ -1,75 +1,57 @@
+import type { CSSProperties } from 'react';
+import { MARK, MARK_I, MARK_LETTERS_PATH } from '@/lib/brand-mark';
+
 /**
- * THE iHYPE MARK.
+ * THE iHYPE MARK — the lowercase `i` as two blocks with a square dot, then
+ * HYPE, drawn as ONE SVG from the geometry in `src/lib/brand-mark.ts`.
  *
- * What it replaces, and why the old one had to go. `public/brand/
- * logo-sticker-2026.png` is a 1MB raster sticker carrying five competing
- * ideas in one container: a rounded-square frame, a crowd-with-raised-hands
- * silhouette over orange embers, a distressed brush wordmark, the domain
- * `.ORG`, and a ruled "LOCAL MUSIC" tagline. Four measured problems with it:
+ * It is all geometry and no text as of 2026-09-22. The first version typeset
+ * HYPE in `var(--font-display)`, so the mark wore Anton on the street theme
+ * and Playfair on classical while its own header said a mark may not change
+ * shape on a font swap. The letters are Bricolage's own outlines now (see the
+ * lib for how they were taken and placed), so the header, the launch screen,
+ * every shared-link image and every app icon draw the same shape — the four
+ * of them were three different logos before this.
  *
- *  1. It does not scale. At the 54px it rendered at in the header, the
- *     tagline and the TLD are illegible, so most of the file is paying for
- *     detail nobody can resolve.
- *  2. Distressed brush type over a crowd silhouette with orange sparks is
- *     the most generic "live music" image there is — which is the opposite
- *     of what this change set is for.
- *  3. Its colour is two grounds out of date: DS8 orange on near-black, while
- *     the product has been Apple Music red on white since row 346. Same drift
- *     this file's own memory records for `sw.js` and the launch colours.
- *  4. A domain inside a mark spends its most valuable space on something the
- *     address bar already says.
+ * Paint comes from the stylesheet: `.ihype-mark-i` fills `--accent` and
+ * `.ihype-mark-letters` fills `--ink`, so the six themes and `audit:retro`
+ * are both satisfied, and the header's hover deepens the `i` through one
+ * token. No container, so it sits on any ground.
  *
- * What this is instead: the lowercase `i` as an accent block with a square
- * dot, then HYPE set tight in the display face. One idea — the product's own
- * name, in the product's own typeface — and no container, so it sits on any
- * ground. It is drawn rather than typeset for the `i` because a glyph's stem
- * width is a property of whichever font actually loaded, and a mark may not
- * change shape on a font swap.
+ * Every mount names the mark on its wrapper (`aria-label="iHYPE home"` on the
+ * header links, `aria-hidden` on the splash), so the SVG itself is hidden from
+ * the accessibility tree rather than announcing "HYPE" a second time.
  *
- * Everything paints from tokens, so it follows the six themes and `audit:retro`
- * stays at zero. The sticker is NOT deleted: the shipped iOS and Android app
- * icons are built from it and are already in review, so replacing those is a
- * store-asset change with a build attached, deliberately not made here.
- */
-/**
- * THERE IS NO MARK-ONLY VARIANT, AND THAT IS A DECISION RATHER THAN AN
- * OMISSION. The first draft carried `variant: 'full' | 'mark'` so the bare
- * `i` could fill a square — and nothing ever passed `'mark'`, which is this
- * repository's own dead-surface defect written small: a prop with no caller
- * is weight, and `audit:mounts` cannot see it because the COMPONENT is
- * mounted. It was also the weakest thing in the set on its own merits: a
- * lowercase `i` on a red square says nothing about local music and could
- * belong to any product, which is a reason not to reach for it as an app
- * icon either. The wordmark carries the identity; add the variant back when
- * a square space actually needs filling, with its caller in the same change.
+ * What it replaces, for the record: `public/brand/logo-sticker-2026.png`, a
+ * 1MB raster carrying five ideas in one container (a rounded frame, a crowd
+ * silhouette over embers, distressed brush type, the domain, a ruled "LOCAL
+ * MUSIC" tagline) on a ground two conversions old. Illegible at header size,
+ * the most generic live-music image there is, and — the testers' own words —
+ * the AI look. The sticker and the icon set built from it are gone; the icons
+ * are rendered from this same geometry by `npm run brand:assets`.
  */
 type Props = {
-  /** Cap height of the wordmark in px. The `i` scales from it. */
+  /** Cap height in px — the wordmark's height, since its viewBox IS the cap. */
   size?: number;
   className?: string;
 };
 
-export function IhypeMark({ size = 20, className }: Props) {
+export function IhypeMark({ size = 12, className }: Props) {
+  const { width, dot, stemY, stemHeight, radius } = MARK_I;
   return (
-    <span
+    <svg
+      aria-hidden="true"
       className={`ihype-mark${className ? ` ${className}` : ''}`}
-      style={{ '--ihype-mark-size': `${size}px` } as React.CSSProperties}
+      style={{ '--ihype-mark-size': `${size}px` } as CSSProperties}
+      viewBox={`0 0 ${MARK.width} ${MARK.height}`}
     >
-      <svg aria-hidden="true" className="ihype-mark-i" viewBox="0 0 12 34">
-        {/* Square dot, not round: it is the one letterform decision that makes
-            this an iHYPE `i` rather than any `i`, and it survives to 16px. */}
-        <rect height="8" rx="1.6" width="9" x="1.5" y="0" />
-        <rect height="22" rx="1.6" width="9" x="1.5" y="12" />
-      </svg>
-      {/* Not wrapped in `t()`, and deliberately NOT carrying an
-          `i18n-exempt:` marker either. A brand name is the same word in every
-          locale — CLAUDE.md's Brand constants allow exactly one — and
-          `audit:untranslated` already declines to flag a single all-caps
-          token, verified against a controlled probe rather than assumed: a
-          sentence in this same file IS reported, `HYPE` is not. A marker here
-          would read as the thing holding the gate down while doing nothing,
-          which is the shape this repository has been bitten by before. */}
-      <span className="ihype-mark-word">HYPE</span>
-    </span>
+      {/* Square dot, not round: it is the one letterform decision that makes
+          this an iHYPE `i` rather than any `i`, and it survives to 16px. */}
+      <g className="ihype-mark-i">
+        <rect height={dot} rx={radius} width={width} x="0" y="0" />
+        <rect height={stemHeight} rx={radius} width={width} x="0" y={stemY} />
+      </g>
+      <path className="ihype-mark-letters" d={MARK_LETTERS_PATH} />
+    </svg>
   );
 }

@@ -323,7 +323,7 @@ export default async function FanProfilePage({
         .fan-hero { padding: 40px 32px 32px; background: var(--profile-hero, transparent); border-bottom: 1px solid var(--profile-border, transparent); }
         .fan-hero-row { display: flex; gap: 32px; align-items: flex-start; flex-wrap: wrap; }
         @media (max-width: 600px) { .fan-hero { padding: 24px 20px; } .fan-content { padding: 0 20px; } }
-        .fan-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, linear-gradient(135deg,var(--role-fan),var(--accent-2))); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
+        .fan-avatar { width: 96px; height: 96px; border-radius: 50%; background: var(--profile-hero, var(--role-fan)); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--ink-on-accent); overflow: hidden; }
         .fan-display-name { font-family: var(--profile-font-display, var(--font-display)); font-size: 2rem; font-weight: 800; letter-spacing: -.02em; margin-bottom: 6px; color: var(--ink); }
         .fan-handle { font-family: var(--font-mono); font-size: 0.75rem; text-transform: uppercase; letter-spacing: .14em; color: var(--ink-a65); margin-bottom: 12px; }
         .fan-hero-badges { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }

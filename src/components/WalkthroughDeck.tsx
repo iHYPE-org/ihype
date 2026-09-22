@@ -1,5 +1,7 @@
 'use client';
 
+import { IhypeMark } from '@/components/brand/IhypeMark';
+
 import { formatNumber } from '@/lib/format-locale';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useI18n } from '@/components/I18nProvider';
@@ -29,30 +31,14 @@ function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.75 }: {
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
 
-function Logo({ gradient = false, size = 'md' }: { gradient?: boolean; size?: 'sm' | 'md' | 'lg' }) {
-  const fs = size === 'lg' ? '2rem' : size === 'sm' ? '0.95rem' : '1.25rem';
-  const accentStyle = gradient
-    ? {
-        /* The brand's four hues, from tokens. It was `#ff4635,#ff3d87,#7c5cff,
-           #39d8df` — the pre-console palette, so this wordmark kept glowing in
-           DS8 colours on a cream page nine months after the ground moved. Each
-           stop is a FILL here (the gradient is clipped to the text but the text
-           itself is transparent), which is why the fill tokens are correct and
-           the `-text` pairs are not. */
-        background: 'linear-gradient(90deg,var(--accent),var(--role-promoter) 35%,var(--role-fan) 68%,var(--role-venue))',
-        WebkitBackgroundClip: 'text' as const,
-        backgroundClip: 'text' as const,
-        color: 'transparent',
-      }
-    : { color: 'var(--accent-text)' };
-  return (
-    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-      <span style={{ fontFamily: 'var(--f-d)', fontWeight: 900, fontSize: fs, letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>
-        <span style={{ color: 'var(--ink)' }}>i</span>
-        <span style={accentStyle}>HYPE</span>
-      </span>
-    </span>
-  );
+function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
+  /* The real mark, at a cap height for the slide. This used to typeset
+     "iHYPE" itself — 900 weight, +0.08em tracking, uppercase, with a
+     four-hue gradient clipped to the letters on the closing slide — which is
+     the letterspaced-caps-and-rainbow treatment the mark was redrawn to get
+     rid of, surviving here as a second copy. */
+  const cap = size === 'lg' ? 34 : size === 'sm' ? 12 : 18;
+  return <IhypeMark size={cap} />;
 }
 
 // ─── HypeButton ──────────────────────────────────────────────────────────────
@@ -97,7 +83,7 @@ function StatTile({ value, label, color = 'var(--accent)' }: { value: string; la
     <div style={{
       padding: '1rem 1.25rem', borderRadius: 'var(--radius-lg)',
       border: '1px solid var(--hair-100)',
-      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
+      background: 'var(--hair-40)',
       minWidth: 190,
     }}>
       <div style={{ fontFamily: 'var(--f-d)', fontWeight: 800, fontSize: '2rem', letterSpacing: '-0.03em', color, lineHeight: 1 }}>{value}</div>
@@ -116,13 +102,13 @@ function ListRow({ icon, iconTint = 'var(--accent)', title, subtitle }: {
       display: 'flex', alignItems: 'center', gap: 12,
       padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
       border: '1px solid var(--hair-100)',
-      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
+      background: 'var(--hair-40)',
     }}>
       {icon && (
         <span style={{
           width: 42, height: 42, borderRadius: 'var(--radius-md)', flexShrink: 0,
           display: 'grid', placeItems: 'center', color: 'var(--ink-on-accent)',
-          background: `linear-gradient(135deg, ${iconTint}cc, ${iconTint}44)`,
+          background: iconTint,
         }}>
           <Icon name={icon} size={18} />
         </span>
@@ -219,7 +205,7 @@ function QRPass({ artist, detail, admits = 1, serial = 'IH-0000-0000' }: {
       background: 'var(--bg-3)', maxWidth: 340, width: '100%',
       boxShadow: '0 32px 80px rgba(0,0,0,.5)',
     }}>
-      <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, var(--accent), var(--accent-2))' }}>
+      <div style={{ padding: '1.5rem', background: 'var(--accent)' }}>
         <div style={{ fontFamily: 'var(--f-m)', fontSize: '0.6875rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(var(--ink-on-media-rgb),.85)' }}>
           iHYPE · {t('walkthroughDeck.admit', 'admit')} {admits}
         </div>
@@ -257,7 +243,7 @@ function StepCard({ children, style }: { children: React.ReactNode; style?: Reac
   return (
     <div style={{
       borderRadius: 22, padding: 34,
-      background: 'linear-gradient(135deg, var(--hair-40), transparent)',
+      background: 'var(--hair-40)',
       border: '1px solid var(--hair-100)', ...style,
     }}>
       {children}
@@ -489,7 +475,7 @@ function Slide10Surfaces() {
 function Slide11Quote() {
   const { t } = useI18n();
   return (
-    <section style={{ ...SLIDE_STYLE, background: 'linear-gradient(135deg,var(--accent),var(--accent-2) 55%,var(--role-fan))', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
+    <section style={{ ...SLIDE_STYLE, background: 'var(--accent)', padding: 96, flexDirection: 'column', justifyContent: 'center' }}>
       <div style={{ fontFamily: 'var(--f-s)', fontSize: '3.875rem', lineHeight: 1.18, color: 'var(--ink-on-accent)', maxWidth: '24ch' }}>
         &ldquo;{t('walkthroughDeck.slide11Quote', '70% to the artist, 20% to the venue, 10% to whoever brought the fan. iHYPE takes nothing.')}&rdquo;
       </div>
@@ -504,8 +490,7 @@ function Slide12Close() {
   const { t } = useI18n();
   return (
     <section style={{ ...SLIDE_STYLE, background: 'var(--bg)', padding: 88, flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, background: 'linear-gradient(90deg,var(--accent),var(--accent-2),var(--role-fan))' }} />
-      <Logo size="lg" gradient />
+      <Logo size="lg" />
       <h2 style={{ fontFamily: 'var(--f-d)', fontWeight: 800, letterSpacing: '-.04em', color: 'var(--ink)', lineHeight: .95, margin: '32px 0 0', fontSize: '5rem' }}>
         {t('walkthroughDeck.slide12TitleLine1', 'For the scene,')}<br />{t('walkthroughDeck.slide12TitleLine2', 'not the algorithm.')}
       </h2>

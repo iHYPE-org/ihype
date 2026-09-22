@@ -19,7 +19,7 @@ export default async function NotFound() {
       <div style={{
         height: 3,
         width: 160,
-        background: 'linear-gradient(90deg,#ff4635,#ff3d87,#7c5cff,#39d8df)',
+        background: 'var(--accent)',
         borderRadius: 999,
         marginBottom: 32,
       }} />
@@ -82,7 +82,7 @@ export default async function NotFound() {
       <div style={{
         height: 3,
         width: 160,
-        background: 'linear-gradient(90deg,#ff4635,#ff3d87,#7c5cff,#39d8df)',
+        background: 'var(--accent)',
         borderRadius: 999,
         opacity: 0.3,
         marginTop: 40,

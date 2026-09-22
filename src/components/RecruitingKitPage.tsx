@@ -174,7 +174,7 @@ export async function RecruitingKitPage({ config, cityHeat }: { config: Recruiti
         .rk-h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.8rem, 5.5vw, 4.6rem); letter-spacing: -.04em; line-height: .98; }
         .rk-hero-body { font-size: 1.15rem; line-height: 1.6; color: var(--ink-a70); margin-top: 22px; max-width: 48ch; }
         .rk-hero-body strong { color: var(--ink); }
-        .rk-apply-card { background: linear-gradient(160deg, var(--bg2), var(--bg)); border: 1px solid color-mix(in srgb, var(--rk-glow) 20%, transparent); border-radius: 22px; padding: 36px 32px; }
+        .rk-apply-card { background: var(--bg2); border: 1px solid color-mix(in srgb, var(--rk-glow) 20%, transparent); border-radius: 22px; padding: 36px 32px; }
         .rk-apply-heading { font-family: var(--font-display); font-weight: 800; font-size: 1.4rem; letter-spacing: -.02em; margin-bottom: 10px; }
         .rk-apply-sub { font-size: 0.9375rem; color: var(--ink-a70); line-height: 1.6; margin-bottom: 22px; }
         .rk-apply-btn { display: block; width: 100%; box-sizing: border-box; text-align: center; padding: 14px; border-radius: 12px; background: var(--rk-tint); color: var(--bg); font-family: var(--font-display); font-weight: 800; font-size: 1rem; text-decoration: none; }

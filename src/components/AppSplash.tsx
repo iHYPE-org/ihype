@@ -26,8 +26,10 @@ const FADE_MS = 300;
  * the filename would have found it; what did not happen is asking what each
  * remaining hit actually costs to change.
  *
- * The sticker still backs `public/icons/*` and both stores' submitted builds.
- * Replacing those is a separate change with new binaries in it.
+ * The icons followed on 2026-09-22: `npm run brand:assets` rasterises the PWA
+ * set, both native launcher sets and every splash from the same geometry this
+ * draws, and the sticker files are deleted. The store listings pick the new
+ * icon up with the next native build.
  */
 export function AppSplash() {
   const [visible, setVisible] = useState(false);
@@ -51,11 +53,11 @@ export function AppSplash() {
 
   return (
     <div aria-hidden="true" className={`app-splash${fading ? ' app-splash-fade' : ''}`}>
-      {/* 52 renders 149x52 — about 38% of a 393px screen, measured against the
+      {/* A 44px cap renders 170x44 — about 43% of a 393px screen, measured against the
           real stylesheet and the real local woff2. The sticker was a 144px
           square tile; a wordmark needs more width and less height to carry the
           same weight. */}
-      <IhypeMark size={52} />
+      <IhypeMark size={44} />
     </div>
   );
 }

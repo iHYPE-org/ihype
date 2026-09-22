@@ -52,7 +52,9 @@ export type MmmSeedItem = {
 };
 
 /**
- * The two stops of the card's fallback gradient, when an artist has no artwork.
+ * The card's fallback tone, when an artist has no artwork. (`c2` was the second
+ * stop of a diagonal gradient until 2026-09-22; the card is flat now and the
+ * stop is kept only so the six-entry table stays the shape its comment describes.)
  *
  * ## Why this is a fixed set and not a hue wheel
  *
@@ -255,7 +257,7 @@ export function MmmSeedDeck({
           opacity: 1 - step * 0.28,
         }}
       >
-        <span style={{ background: `linear-gradient(150deg, ${shade.c1}, ${shade.c2})` }} />
+        <span style={{ background: shade.c1 }} />
       </div>
     );
   };
@@ -298,7 +300,7 @@ export function MmmSeedDeck({
             <span
               aria-hidden="true"
               className="mmm-deck-art"
-              style={{ background: `linear-gradient(150deg, ${colors.c1} 0%, ${colors.c2} 100%)` }}
+              style={{ background: colors.c1 }}
             >
               <span className="mmm-deck-initial">{item.initial}</span>
             </span>
