@@ -172,7 +172,7 @@ function InfoTabs({ trustPanel, transparencyPanel }: InfoTabsProps) {
             "0% artist · 0% venue · 0% promoters". Not a trade worth an
             animation. */}
         <div className="charter-split-bar" aria-hidden="true">
-          <div style={{ flex: 70, background: 'linear-gradient(90deg, var(--accent), var(--accent-2))' }} />
+          <div style={{ flex: 70, background: 'var(--accent)' }} />
           <div style={{ flex: 20, background: 'var(--role-venue)' }} />
           <div style={{ flex: 10, background: 'var(--role-promoter)' }} />
         </div>

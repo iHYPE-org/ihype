@@ -283,8 +283,8 @@ export function PageRoleModules({ profile, color, initialTool }: { profile: Modu
 
   return (
     <div style={{ marginBottom: 36 }}>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: '0.6875rem', letterSpacing: '.18em', textTransform: 'uppercase', color: 'var(--ink-a65)', marginBottom: 14 }}>
-        {t('pageRoleModules.pageToolkitLabel', 'PAGE TOOLKIT')}
+      <div className="mmm-section-label" style={{ marginBottom: 14 }}>
+        {t('pageRoleModules.pageToolkitTitle', 'Page toolkit')}
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {setupHref && (

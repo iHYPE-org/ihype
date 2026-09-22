@@ -1,4 +1,4 @@
-import { formatDate, formatUsd } from '@/lib/format-locale';
+import { formatDoorTime, formatUsd } from '@/lib/format-locale';
 import type { Locale } from '@/lib/i18n/locales';
 import { isTicketingOpen, type ShowTicketing } from '@/lib/show-detail';
 
@@ -42,9 +42,13 @@ export function formatTicketPrice(show: Pick<ShowRowSource, 'isTicketed' | 'tick
 }
 
 /**
- * The clock alone. A row already carries the date in its date block, so the
- * meta line repeating "Sep 9, 2026" beside it said the same thing twice.
+ * The clock alone, on the VENUE's clock. A row already carries the date in
+ * its date block, so the meta line repeating "Sep 9, 2026" beside it said the
+ * same thing twice. Until 2026-09-22 this was a zoneless `timeStyle: 'short'`,
+ * so both profile calendars read an 8pm Portland show as "12:00 AM" on the
+ * Worker (row 464's defect, surviving in a helper the guard could not see
+ * because `.startsAt` was on the caller's line and the formatter on this one).
  */
-export function formatShowClock(date: Date, locale: Locale): string {
-  return formatDate(locale, date, { timeStyle: 'short' });
+export function formatShowClock(date: Date, locale: Locale, timeZone: string | null): string {
+  return formatDoorTime(locale, date, timeZone, { hour: 'numeric', minute: '2-digit' });
 }

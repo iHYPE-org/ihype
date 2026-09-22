@@ -145,11 +145,15 @@
      exactly as before. This is copy only, which is the whole point of the
      token existing. */
   --accent-text: #c8102e;   /* 5.88:1 on white */
-  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  /* Flat on the phone themes since 2026-09-22 — a gradient CTA is the
+     "gradient action language" the launch scheme comment further down still
+     names, and it reads as generated. The four character themes restate the
+     sweep. The name is kept because four readers use it. */
+  --accent-grad: var(--accent);
   /* The warm CTA gradient. Seven pages had hand-written
      `linear-gradient(135deg, #ff5029, #ff3e6e)` on their primary button —
      same two stops, same angle, copied by hand each time. */
-  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: var(--accent);
 
   /* Ink ON a brand fill — the inverse of --accent-text, which is the accent
      used AS copy over a page background. The dark neutral keeps the orange
@@ -398,6 +402,35 @@
   --key-press-shadow: none;
   --key-press-dim: .88;
   --key-hover-dim: .94;
+  /* THE FULL PLAYER'S HARDWARE (2026-09-22, DESIGN_SYNC row 502). Until this
+     date `.mmm-full-play`, `.mmm-full-step`, the two range sliders and the
+     art bezel in mmm.css were the console written as literals — a brass play
+     key lit from a lamp, bakelite step keys in brass collars, a lamp-lit knob
+     on a brass rail, a machined bezel round the artwork — with seven hex stops
+     no theme could reach, drawn on the white default. Each is a token now:
+     iOS here (Apple Music's transport — a solid ink disc for play that turns
+     accent while playing, bare glyphs for the skips, a white knob with a soft
+     cast on a tinted rail, the art under a soft shadow), the console's own
+     literals restored verbatim in the four character themes. */
+  --transport-play-bg: var(--ink);
+  --transport-play-ink: var(--bg);
+  --transport-play-shadow: 0 6px 18px -8px rgba(0, 0, 0, .35);
+  --transport-play-lit-bg: var(--accent);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: 0 8px 22px -8px rgba(var(--accent-rgb), .6);
+  --transport-step-bg: transparent;
+  --transport-step-ink: var(--ink);
+  --transport-step-ink-hover: var(--accent-text);
+  --transport-step-shadow: none;
+  --range-track-bg: rgba(var(--ink-1-rgb), .12);
+  --range-track-fill: var(--ink-2);
+  --range-track-edge: transparent;
+  --range-track-shadow: none;
+  --range-thumb-bg: #ffffff;   /* iOS's slider knob is white on both grounds */
+  --range-thumb-edge: rgba(0, 0, 0, .08);
+  --range-thumb-shadow: 0 1px 4px rgba(0, 0, 0, .28);
+  --art-radius: 10px;
+  --art-frame: 0 0 0 0.5px rgba(0, 0, 0, .08), 0 18px 48px -14px rgba(0, 0, 0, .35);
   /* The segmented control over the map: iOS insets it from the edges, pads
      the track and rounds each segment; the console's brass plate is
      full-bleed with divisions cut into it. */
@@ -421,10 +454,30 @@
   --back-pad: 0;
   /* The marketing site's ambient ground — two blurred colour orbs and a
      ruled grid — and the auth pages' accent wash. Off on iOS: Apple's pages
-     are white. The character themes keep theirs. */
+     are white. The character themes keep theirs.
+
+     `--site-wash` is the THIRD member of that set and it was missing until
+     2026-09-18, which is why the sentence above was describing an intent the
+     file did not implement. The `body` rule near the end of this stylesheet
+     painted its own pair of radial orbs — accent at 10%, `--role-venue` at
+     8% — as literals, so the two opacity tokens turned off the orb ELEMENT
+     and the ruled grid while the ground itself went on washing every page in
+     the product pink and teal, on a theme whose whole point is that Apple's
+     pages are white. Two copies of one decision, the token unable to reach
+     the one that paints: the same shape as `mmm-console.css` re-declaring the
+     ground, and as the four `--heat-*-rgb` triplets nothing read.
+
+     It also spent `--role-venue` — a SEMANTIC token, meaning "this thing is a
+     venue" — on the site background, which is the mistake this file already
+     records for the signed-in tile's hover ring. A page background states
+     nothing about a venue.
+
+     Measured on `/app/me` at 1280 before the fix: `getComputedStyle(body)`
+     returned both gradients live under `--site-orb-opacity: 0`. */
   --site-orb-opacity: 0;
   --site-grid-opacity: 0;
   --auth-wash: none;
+  --site-wash: none;
   /* A selected chip is FILLED, the way Apple Music's filter pills are —
      black on white, white on black — not a tint the eye has to compare. */
   --chip-on-bg: var(--ink);
@@ -447,6 +500,27 @@
   --tile-bg: var(--bg-2);
   --art-edge: transparent;
   --mini-art-bg: var(--bg-3);
+  /* THE DECORATIVE GRADIENTS ARE TOKENS, AND FLAT ON THE PHONE THEMES
+     (2026-09-22, the "AI look" sweep's third pass). A diagonal two-stop
+     gradient is the single most recognisable generated-design device there
+     is, and after rows 497-498 the default theme still painted eleven of
+     them: the accent-into-walnut band at the top of every artist, venue and
+     advertiser pane, an accent-into-purple circle behind every avatar
+     initial in the sheets, the six shelf tiles, the station art, and the CTA
+     buttons. Each is a token now — flat here and on dark, the console's own
+     gradients restored in the four character themes, which is the row-346
+     rule (set the token; the themes decide). The fifth `--tile-tone-*` is the
+     plate, already one colour on iOS. */
+  --profile-band: var(--bg-3);
+  --profile-band-venue: var(--bg-3);
+  --profile-band-advertiser: var(--bg-3);
+  --profile-band-glare: none;
+  --tile-tone-0: var(--tile-1);
+  --tile-tone-1: var(--plate-1);
+  --tile-tone-2: var(--tile-2);
+  --tile-tone-3: var(--plate-1);
+  --tile-tone-4: var(--tile-3);
+  --tile-tone-5: var(--plate-1);
   /* The empty plate: a quiet filled cell in the body face. */
   --empty-edge: 1px solid var(--line);
   --empty-bg: var(--bg-2);
@@ -565,11 +639,32 @@
      opsz the pixel size is the point of choosing it: see --opsz-* below and
      the display ramp, which sets font-variation-settings rather than
      scaling one static instance. */
-  /* SF Pro where it exists, which is every device this app ships to. The
-     system stack costs no download and is what makes the shell read as the
-     platform's own; Bricolage and Work Sans stay loaded for the four character
-     themes, which set --f-d/--f-b back. */
-  --f-d: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
+  /* DISPLAY IS BRICOLAGE; BODY AND UI ARE THE SYSTEM FACE. The split is the
+     whole decision, and the line above it used to set BOTH to the system
+     stack — under a comment claiming Bricolage "stays loaded for the four
+     character themes, which set --f-d/--f-b back". Measured 2026-09-18:
+     `var(--font-bricolage)` appeared ZERO times in src/ and zero times in the
+     built CSS, because the four themes set --f-d to Anton, Chakra Petch,
+     Playfair and Instrument Serif — not one of them sets Bricolage. So the
+     family the handoff chose for its optical-size axis was PRELOADED on every
+     request (~76KB, first on the critical path) and painted nothing, while
+     every heading in the product rendered in the OS default.
+
+     That is the loudest generic-design signal a page can carry: system-ui is
+     what a page renders in when nobody made a choice. It arrived honestly —
+     the iOS skin (row 346) copied Apple Music, and copying Apple Music means
+     copying SF Pro — but Apple Music does not set its editorial headers in SF
+     Pro UI either.
+
+     So: --f-b stays the system stack, because that is what makes a list row,
+     a tab label and a control read as the platform's own, and it is right.
+     --f-d is Bricolage, because a heading is where a product gets to sound
+     like itself and 179 sites already read --font-display. No new bytes: the
+     face was already being downloaded.
+
+     The four character themes still override --f-d with their own display
+     face, which is unchanged — they were never the problem. */
+  --f-d: var(--font-bricolage, 'Bricolage Grotesque', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif);
   --f-b: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', 'Segoe UI', Roboto, system-ui, sans-serif;
   --f-m: var(--font-jb,        'JetBrains Mono', monospace);
   --f-s: var(--font-serif,     'Instrument Serif', serif);
@@ -910,6 +1005,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -926,6 +1040,9 @@
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
   --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
+  --site-wash:
+    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
+    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -943,6 +1060,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1054,6 +1183,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1070,6 +1218,9 @@
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
   --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
+  --site-wash:
+    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
+    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1087,6 +1238,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1198,6 +1361,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1214,6 +1396,9 @@
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
   --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
+  --site-wash:
+    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
+    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1231,6 +1416,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1337,6 +1534,25 @@
   --key-press-shadow: inset 0 2px 4px rgba(0, 0, 0, .28);
   --key-press-dim: 1;
   --key-hover-dim: 1.04;
+  --transport-play-bg: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
+  --transport-play-ink: var(--walnut-3);
+  --transport-play-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -3px 8px rgba(0, 0, 0, .3), 0 3px 10px -2px rgba(0, 0, 0, .75);
+  --transport-play-lit-bg: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
+  --transport-play-lit-ink: var(--ink-on-accent);
+  --transport-play-lit-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -3px 8px rgba(0, 0, 0, .35), 0 0 24px -2px rgba(var(--accent-rgb), .8);
+  --transport-step-bg: radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%), radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
+  --transport-step-ink: var(--ink-on-walnut-2);
+  --transport-step-ink-hover: var(--ink-on-walnut);
+  --transport-step-shadow: 0 0 0 2px var(--brass-deep), 0 0 0 3px var(--brass), inset 0 1px 0 rgba(255, 226, 175, .35), inset 0 -2px 7px rgba(0, 0, 0, .75), 0 3px 8px -1px rgba(0, 0, 0, .8);
+  --range-track-bg: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  --range-track-fill: var(--brass-deep);
+  --range-track-edge: var(--brass-deep);
+  --range-track-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  --range-thumb-bg: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
+  --range-thumb-edge: var(--brass-deep);
+  --range-thumb-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  --art-radius: 2px;
+  --art-frame: 0 0 0 2px var(--brass-deep), 0 0 0 5px var(--brass), 0 0 0 6px #6d5222, inset 0 3px 12px rgba(0, 0, 0, .7), 0 24px 60px -16px rgba(0, 0, 0, .8);
   --seg-inset: 0;
   --seg-pad: 0;
   --seg-gap: 0;
@@ -1353,6 +1569,9 @@
   --site-orb-opacity: .2;
   --site-grid-opacity: .08;
   --auth-wash: radial-gradient(circle at 50% 0%, rgba(var(--accent-rgb), .1), transparent 62%);
+  --site-wash:
+    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), .1), transparent 24rem),
+    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), .08), transparent 30rem);
   --chip-on-bg: rgba(var(--accent-rgb), .16);
   --chip-on-ink: var(--accent-text);
   --chip-on-edge: rgba(var(--accent-rgb), .5);
@@ -1370,6 +1589,18 @@
   --tile-bg: transparent;
   --art-edge: var(--brass);
   --mini-art-bg: linear-gradient(150deg, var(--walnut), var(--walnut-3));
+  --profile-band: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  --profile-band-venue: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-advertiser: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  --profile-band-glare: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  --tile-tone-0: linear-gradient(150deg, var(--tile-1), var(--tile-3));
+  --tile-tone-1: linear-gradient(35deg, var(--plate-1), var(--plate-2));
+  --tile-tone-2: linear-gradient(200deg, var(--tile-2), var(--tile-3));
+  --tile-tone-3: linear-gradient(115deg, var(--plate-2), var(--plate-1));
+  --tile-tone-4: linear-gradient(70deg, var(--tile-3), var(--tile-1));
+  --tile-tone-5: linear-gradient(255deg, var(--plate-1), var(--plate-2));
+  --accent-grad: linear-gradient(90deg, var(--accent), var(--accent-2));
+  --accent-grad-warm: linear-gradient(135deg, var(--accent), var(--accent-2));
   --empty-edge: 2px dashed var(--line-2);
   --empty-bg: transparent;
   --empty-font: var(--f-s, Georgia, serif);
@@ -1526,17 +1757,13 @@ body:has(.site-dock) .site-shell {
     linear-gradient(var(--hair-22) 1px, transparent 1px),
     linear-gradient(90deg, var(--hair-22) 1px, transparent 1px);
 }
-/* ── The site tab bar ──
-   It was `.ihype-mobile-nav`, shown only at <=768px, while the SAME three
-   destinations sat in the header as `SiteNavTabs` for everyone wider. Two
-   implementations of one nav, and the desktop one cost a row at the top of
-   every page — the row the tuner dial now wants for a 26px section name.
-
-   So the header selector is gone and this is the nav at every width. The
-   rename came with it: a control called "mobile" that renders on a desktop is
-   the kind of name that makes the next reader wrong before they start. */
-.site-tabbar { display: flex !important; }
-body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+/* The site tab bar that was here (`.site-tabbar`, Listen · Events · Dashboard
+   along the bottom of every signed-in public page) is DELETED (2026-09-22,
+   owner: "The chrome button bottom nav is no longer the direction we're going
+   for the design of this app"). The four destinations are text links in the
+   site header (`.site-nav-links`), on every signed-in page including the
+   shell. The `body { padding-bottom: 68px }` that cleared the bar went with
+   it. */
 
 /* ── Bottom sheet on mobile: centered dialog on desktop, anchored to the
    bottom edge with a drag-handle affordance on phones — shared pattern for
@@ -1936,8 +2163,8 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   color: var(--muted);
   font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
 }
 .field input,
 .field select,
@@ -2173,15 +2400,15 @@ fieldset.authcard-field { border: 0; padding: 0; }
 .authcard-field > label,
 .authcard-field > legend {
   display: block;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   /* Body floor, not the 9px eyebrow floor: this matches the eyebrow SHAPE
      (tracked mono uppercase) but it is a form field's name, which a person has
      to read to know what to type. `.authcard-eyebrow` above is a real eyebrow
      and keeps its size. */
   font-size: 0.9375rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: .14em;
+  text-transform: none;
+  letter-spacing: 0.01em;
   color: var(--ink-3);
   margin-bottom: 7px;
 }
@@ -2468,12 +2695,10 @@ body:has(.authcard-page) #main-content { width: 100%; }
 
    Same mechanism the auth card above uses, and for the same reason: the root
    layout has no path awareness, so a page that owns the whole screen has to say
-   so in markup rather than the layout guessing. `.site-tabbar` is included
-   because the console has its own bottom bar and two would stack. */
+   so in markup rather than the layout guessing. */
 body:has(.ops-shell) .adaptive-site-header,
 body:has(.ops-shell) .site-background,
 body:has(.ops-shell) .site-dock,
-body:has(.ops-shell) .site-tabbar,
 body:has(.ops-shell) .site-shell > footer { display: none !important; }
 body:has(.ops-shell) .site-shell { padding: 0 !important; }
 body:has(.ops-shell) #main-content { width: 100%; }
@@ -3166,8 +3391,10 @@ body:has(#wt-wrap) .site-shell > main {
   color: inherit;
 }
 .show-sequence-item.active {
-  border-color: rgba(35,208,216,0.35);
-  background: linear-gradient(135deg, rgba(35,208,216,0.12), rgba(143,91,255,0.12));
+  /* Was a cyan-into-violet wash in two DS8 literals — a pastel diagonal no
+     theme could reach, on the one row that is playing. */
+  border-color: var(--accent);
+  background: var(--bg-2);
 }
 /* Same repaint as `.composer-media-code` above: pale cyan `#aef4f6` on a
    translucent cyan fill was DS8's, and on cream it is a number you cannot
@@ -3268,7 +3495,9 @@ body:has(#wt-wrap) .site-shell > main {
   opacity: 0.72;
 }.panel::before,
 .card::before{
-  background: linear-gradient(180deg, var(--line), transparent 18%, transparent 82%, rgba(113,217,255,0.04));
+  /* The trailing stop was `rgba(113,217,255,0.04)`, a DS8 cyan literal
+     painting a tint nobody could see; the top hairline is the whole idea. */
+  background: linear-gradient(180deg, var(--line), transparent 18%);
 }
 .subtitle,
 .meta,
@@ -3313,23 +3542,9 @@ body:has(#wt-wrap) .site-shell > main {
   .nav {
     max-height: 30svh;
   }
-  .nav-inner {
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      "logo auth"
-      "player player";
-    gap: 0.35rem 0.65rem;
-    align-items: center;
-    padding: 0.42rem 0 0.48rem;
-    max-height: 30svh;
-  }
   .artist-media-upload-header { flex-direction: column; align-items: flex-start; }
   .ticketing-panel-header,
   .ticket-price-badge { width: 100%; text-align: left; }
-  .nav-logo-mark {
-    font-size: 0.9375rem;
-    letter-spacing: 0.05em;
-  }
   .fan-playlist-panel {
     right: -0.1rem;
     width: min(94vw, 400px);
@@ -3375,7 +3590,9 @@ body:has(#wt-wrap) .site-shell > main {
   border-color: var(--hair-70);
 }
 .fan-playlist-panel{
-  background: linear-gradient(180deg, rgba(17, 22, 34, 0.96), rgba(10, 14, 23, 0.98));
+  /* Was DS8's navy as a two-stop literal gradient — the last dark panel on
+     the white product, and unreachable by any theme. */
+  background: var(--bg-surface);
 }
 /* .button.secondary carries the console press shadow at its own definition;
    listing it here would zero that shadow on order alone. */
@@ -3408,13 +3625,6 @@ body:has(#wt-wrap) .site-shell > main {
   box-shadow: none;
 }
 
-@media (max-width: 980px) {
-
-  .nav-inner {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-}
-
 /* Current iHYPE launch scheme: dark signal grid, restrained glass panels, gradient action language. */
 
 /*
@@ -3433,10 +3643,10 @@ body:has(#wt-wrap) .site-shell > main {
  * tokens and nothing has to be counteracted anywhere.
  */
 body {
-  background:
-    radial-gradient(circle at 8% 16%, rgba(var(--accent-rgb), 0.10), transparent 24rem),
-    radial-gradient(circle at 92% 35%, rgba(var(--role-venue-rgb), 0.08), transparent 30rem),
-    var(--bg);
+  /* The ambient wash is a TOKEN, so a theme that wants a white page gets one.
+     See `--site-wash` in `:root` for what these two literals were doing here
+     and why nothing could turn them off. */
+  background: var(--site-wash), var(--bg);
   color: var(--ink);
   font-family: var(--font-body);
 }
@@ -3482,47 +3692,61 @@ body {
   backdrop-filter: blur(22px);
 }
 
-.nav-logo,
-.nav-logo-mark {
+.nav-logo {
   display: inline-flex;
   align-items: center;
   /* The header's only home link measured 73×17 on thirty public pages
      (2026-09-10); the floor lives here rather than in the audit block below
      because this rule already owns `display` and `align-items`. */
   min-height: 44px;
-  gap: 2px;
   /* Follows the ground, same reason as .nav above. */
   color: var(--ink);
-  font-family: var(--font-display, 'Bricolage Grotesque', sans-serif);
-  font-size: 1.0625rem;
-  font-weight: 800;
-  letter-spacing: 0.17em;
-  line-height: 1;
-  text-transform: uppercase;
-  /* No lift shadow: it was a glow for white type on a navy bar, and under a
-     theme where the wordmark is dark ink on cream it only smears the letters. */
-}
-
-.nav-logo {
   text-decoration: none;
+  /* The TYPE lives on .ihype-mark now — one lockup, sized once, used by both
+     the signed-out header and the signed-in one. This rule used to restate
+     the family, size, weight, tracking and an uppercase transform, which is
+     how the wordmark came to carry +0.17em: two places owned it and only one
+     was ever adjusted. No lift shadow: it was a glow for white type on a navy
+     bar, and under a light ground it only smears the letters. */
 }
 
-.nav-logo-word {
-  color: var(--ink);
-  transition: color 150ms;
+/* ── THE MARK ─────────────────────────────────────────────────────────────
+   Replaces `.nav-logo-word`/`.nav-logo-dot` and the four-stop rainbow that
+   used to run under the wordmark on hover (#ff4635 → #ff3d87 → #7c5cff →
+   #39d8df). That gradient was four raw literals no theme could reach, and a
+   purple-to-blue sweep is the single most recognisable generated-design
+   flourish there is — so it was doing the opposite of what a brand mark is
+   for. Hover is now the accent deepening, one token, one idea.
+
+   Sizing is driven by --ihype-mark-size, which is the wordmark's FONT SIZE.
+   The `i` is sized in em of that so the lockup scales as one object from a
+   16px favicon to a splash screen. */
+.ihype-mark {
+  /* ONE SVG, sized by its cap height. The viewBox's height IS the cap (660
+     font units), so --ihype-mark-size is the height of the capitals and the
+     width follows at 3.86:1. There is no type here to size, track or weight
+     any more: the letters are Bricolage's outlines baked into
+     src/lib/brand-mark.ts, which is why the mark stopped changing face with
+     the theme on 2026-09-22 (Anton on street, Playfair on classical, before). */
+  display: inline-block;
+  height: var(--ihype-mark-size, 12px);
+  width: auto;
+  vertical-align: middle;
+  flex: 0 0 auto;
 }
 
-.nav-logo-dot {
-  color: var(--accent-text);
-  transition: color 150ms;
+.ihype-mark-i {
+  fill: var(--accent);
+  transition: fill 150ms;
 }
 
-.nav-logo:hover .nav-logo-dot,
-.nav-logo:focus-visible .nav-logo-dot {
-  background: linear-gradient(90deg, #ff4635, #ff3d87 35%, #7c5cff 68%, #39d8df);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+.ihype-mark-letters {
+  fill: var(--ink);
+}
+
+.nav-logo:hover .ihype-mark-i,
+.nav-logo:focus-visible .ihype-mark-i {
+  fill: var(--accent-text);
 }
 .nav-a11y-button{
   min-height: 38px;
@@ -3792,15 +4016,6 @@ html.high-contrast p {
     max-height: calc(100dvh - 92px);
     overflow: auto;
     -webkit-overflow-scrolling: touch;
-  }
-}
-
-@media (max-width: 780px) {
-  .nav-inner {
-    align-items: flex-start;
-    flex-direction: column;
-    min-height: auto;
-    padding: 14px 18px;
   }
 }
 
@@ -4389,20 +4604,23 @@ textarea { min-height: 44px; }
 @media (max-width: 640px) {
 }
 
-/* 11. Audio player bar — above bottom tab bar on mobile */
+/* 11. Audio player bar on a phone.
+   Until 2026-09-22 this sat `bottom: calc(60px + safe-area)` — stacked ABOVE
+   the bottom tab bar, which is deleted (DESIGN_SYNC row 500). The offset
+   survived the deletion for one build and left the dock floating 60px up the
+   page with content showing beneath it, measured on the public show page at
+   393. It is the bottom-most element now, so it owns the home-indicator inset
+   itself: `viewport-fit=cover` puts the bottom of the WebView at the bottom of
+   the physical display, and without the padding the controls sit in the swipe
+   zone. */
 @media (max-width: 768px) {
   .site-dock {
-    /* The tab bar is 60px of content PLUS its own bottom safe-area padding
-       (MobileBottomNav.tsx), so stacking on top of it means clearing both.
-       Without the inset the dock sat ~34px low on every notched iPhone —
-       overlapping the tab bar it is supposed to rest above, because
-       `viewport-fit=cover` puts the bottom of the WebView at the bottom of the
-       physical display, not above the home indicator. */
-    bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     min-height: 64px;
   }
   .site-dock-play { min-width: 44px; min-height: 44px; }
-  body:has(.site-dock) .site-shell { padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.site-dock) .site-shell { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
 }
 .ptr-indicator {
   display: flex;
@@ -4631,7 +4849,6 @@ h2 {
    (light background, card borders, etc). */
 @media print {
   .site-nav,
-.site-tabbar,
 .ihype-cookie-consent,
 .site-dock-l {
     display: none !important;
@@ -4676,27 +4893,18 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #fefdfe;
+  /* The page's own ground, not a near-white literal. This read `#fefdfe`,
+     which was the DS8-era off-white and is now one shade off `--bg` on the
+     default theme and flatly wrong on all five others — a splash is the first
+     frame of the app and must be the app's colour. */
+  background: var(--bg);
   opacity: 1;
   transition: opacity .3s ease;
-}
-.app-splash img {
-  border-radius: 28px;
-  animation: app-splash-pulse 1.4s ease-in-out infinite;
 }
 .app-splash-fade {
   opacity: 0;
   pointer-events: none;
 }
-@keyframes app-splash-pulse {
-  0%,
-100% { transform: scale(1); }
-  50% { transform: scale(1.045); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .app-splash img { animation: none; }
-}
-
 /* ── Section tab strips ───────────────────────────────────────────────────
    `/shows` and `/pages` render a pill tab strip above their content. Both were
    once the second half of a mobile "quick grid" home screen that replaced the
@@ -4755,6 +4963,97 @@ h2 {
 .adaptive-site-header-spacer { flex: 1 1 auto; }
 .adaptive-site-header-auth { flex: 0 0 auto; }
 
+/* ── The signed-in navigation: four text links in the header ────────────
+   (2026-09-22; owner: "Slim top header — the mark on the left, the four
+   destinations as text links on the right, the same header the public pages
+   already use, so the whole product has one header".) These replace the walnut
+   dock's tab row inside `/app/*` and the `.site-tabbar` along the bottom of
+   every public page — one navigation where there were three. The links are
+   `MMM_NAV`, drawn by `AdaptiveSiteHeader.tsx`; `data-on` paints the current
+   one and `aria-current` announces it. 15px sentence case, not the tab bar's
+   11px tracked mono: a word in a header is a control's name, and the eyebrow
+   exemption is for metadata under a glyph. Every link clears the 44px floor
+   by height and by a 44px minimum width; the word plus 8px a side is what
+   fits four destinations beside the mark at 320px — `measure:chrome` measures
+   the box at every width. */
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.site-nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 8px;
+  border-radius: 8px;
+  color: var(--ink-2);
+  font-family: var(--f-b);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+/* The current destination: primary ink, heavier, and an accent rule beneath —
+   never colour alone, which a member who cannot separate the two would lose. */
+.site-nav-link[data-on='true'] { color: var(--ink); font-weight: 700; }
+.site-nav-link[data-on='true']::after {
+  content: '';
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 4px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+@media (hover: hover) {
+  /* Behind `hover: hover` without exception — an unguarded :hover sticks on a
+     touchscreen, so the last link tapped would stay lit beside the real one. */
+  .site-nav-link:hover { color: var(--ink); background: rgba(var(--surface-tint-rgb), .07); }
+}
+.site-nav-link:focus-visible { outline: 2px solid var(--accent); outline-offset: -3px; }
+
+/* Inside the shell the header is SLIM and still: the document under `/app/*`
+   cannot scroll, so the 76→54 fold never fires there, and the frame below
+   starts at exactly this height (`.mmm-frame` reads the same token). The top
+   safe-area inset is the header's — it is the top-most element now, which the
+   dock used to be at the bottom — so the frame's panes no longer pad for it. */
+:root {
+  --app-header-h: 54px;
+  /* The shell's frame width and pane padding, declared HERE rather than on
+     `.mmm-frame` (where they lived until 2026-09-22) because the header is
+     outside the frame and aligns to them: on a desk the frame is a 712px
+     column and the header's mark and links sit on the same content edges as
+     the pane, instead of at the far corners of a 1280px window. mmm.css reads
+     both from here; `measure:chrome` measures the result. */
+  --mmm-frame-max: 712px;
+  --mmm-pane-pad: 16px;
+}
+.adaptive-site-header.is-app {
+  height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px));
+  padding-top: env(safe-area-inset-top, 0px);
+  transition: none;
+  background: var(--material-regular);
+  -webkit-backdrop-filter: var(--material-blur);
+  backdrop-filter: var(--material-blur);
+}
+/* Inside the shell the header's inner width IS the pane's content column:
+   the frame (`min(100vw, --mmm-frame-max)`) minus the pane padding on each
+   side, at every width. On a phone that is the same 16px the pane uses; on a
+   desk it puts the mark over the first character of the pane and the links
+   over its right edge, rather than 280px out at the window's corners. */
+.adaptive-site-header.is-app .adaptive-site-header-inner {
+  width: calc(min(100%, var(--mmm-frame-max)) - 2 * var(--mmm-pane-pad));
+}
+
 @media (max-width: 900px) {
 }
 @media (max-width: 520px) {
@@ -4790,18 +5089,30 @@ h2 {
   isolation: isolate;
   overflow: hidden;
   color: var(--fan-entry-paper);
-  background:
-    radial-gradient(circle at 76% 46%, rgba(var(--accent-rgb),.12), transparent 27%),
-    radial-gradient(circle at 84% 52%, rgba(var(--role-venue-rgb),.09), transparent 38%),
-    var(--fan-entry-ground);
+  /* THE THIRD COPY OF THE SAME WASH, and the one that survived removing the
+     other two (2026-09-18). It was the stage lighting BEHIND the sticker —
+     both circles sit at 76-84% across and mid-height, which is precisely
+     where the hero's right column used to be — so with the artwork gone it
+     was a pink-and-teal smudge over empty page. The `body` rule's pair is a
+     token now and `--site-orb-opacity` turns the orb element off; this one
+     was reachable by neither, so the front door went on washing while the
+     other two were fixed. Ground only.
+     It also spent `--role-venue`, a token that means "this thing is a venue",
+     on page decoration — the mistake this file records twice already. */
+  background: var(--fan-entry-ground);
 }
+/* A hairline under the header, not a two-colour sweep. The gradient version
+   was the same teal-and-accent pair as the ground above, drawn as a 1px bar,
+   and a rule that fades from one brand colour into another is decoration
+   pretending to be structure. `--hair-100` is what every other rule in this
+   product separates a header from a page with. */
 .fan-entry::before {
   content: "";
   position: absolute;
   inset: 74px 0 auto;
   height: 1px;
   z-index: 4;
-  background: linear-gradient(90deg, transparent, rgba(var(--role-venue-rgb),.25), rgba(var(--accent-rgb),.22), transparent);
+  background: var(--hair-100);
 }
 .fan-entry-header {
   width: 100%;
@@ -4817,15 +5128,11 @@ h2 {
   backdrop-filter: blur(18px);
 }
 .fan-entry-logo {
-  width: 54px;
-  height: 54px;
-  display: block;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   flex: 0 0 auto;
-  border-radius: 14px;
-  transition: transform .2s ease, filter .2s ease;
 }
-.fan-entry-logo img { width: 100%; height: 100%; display: block; border-radius: inherit; }
-.fan-entry-logo:hover { transform: translateY(-2px) rotate(-1deg); filter: brightness(1.08); }
 .fan-entry-nav { display: flex; align-items: center; gap: clamp(8px,1.4vw,18px); }
 .fan-entry-nav a {
   /* 44, not 42: this is the landing nav's own floor and it outranks the
@@ -4859,10 +5166,10 @@ h2 {
   margin: 0 auto;
   box-sizing: border-box;
   padding: clamp(42px,6vh,76px) clamp(24px,6vw,100px) clamp(32px,5vh,64px);
-  display: grid;
-  grid-template-columns: minmax(0,1.03fr) minmax(360px,.87fr);
-  align-items: center;
-  gap: clamp(34px,5vw,84px);
+  /* ONE COLUMN. The second one held the sticker hero; see FanFirstLanding.tsx
+     for why it is gone and what would have to exist before anything returns
+     to that slot. */
+  display: block;
 }
 .fan-entry-copy { min-width: 0; position: relative; z-index: 2; }
 .fan-entry-kicker {
@@ -4922,48 +5229,6 @@ h2 {
   letter-spacing: .06em;
 }
 .fan-entry-assurance i { padding: 0 .4em; color: var(--fan-entry-orange-text); font-style: normal; }
-.fan-entry-visual {
-  min-width: 0;
-  position: relative;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-}
-.fan-entry-stage-light {
-  width: 112%;
-  aspect-ratio: 1;
-  position: absolute;
-  z-index: -1;
-  border-radius: 50%;
-  opacity: .78;
-  background:
-    radial-gradient(circle at 50% 58%, rgba(var(--accent-rgb),.2), transparent 34%),
-    radial-gradient(circle at 38% 45%, rgba(var(--role-venue-rgb),.13), transparent 46%);
-  filter: blur(18px);
-}
-.fan-entry-art {
-  width: min(100%,610px);
-  height: auto;
-  display: block;
-  border-radius: 18%;
-  filter: drop-shadow(0 34px 62px rgba(0,0,0,.48));
-  animation: fan-entry-float 9s ease-in-out infinite;
-}
-.fan-entry-signal {
-  margin: 18px 0 0;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  color: var(--ink-a65);
-  /* 13px, not 12. This is a SENTENCE — "Support the scene. Be the signal." —
-     wearing the tracked-mono eyebrow's clothes, and it sits on the homepage.
-     The 9-12px exemption is for metadata; leaking it onto copy is the exact
-     mistake the type ramp work was cleaning up. */
-  font: 700 .8125rem/1.3 var(--f-m);
-  letter-spacing: .14em;
-  text-transform: uppercase;
-}
-.fan-entry-signal span { width: 30px; height: 1px; background: var(--fan-entry-orange); box-shadow: 0 0 12px var(--fan-entry-orange); }
 /* Shows near you, on the logged-out front door — see NearbyShowsWidget. Its
    own classes, because the `.weekend-*` set it used to borrow went with the
    `/this-weekend` page and it was rendering unstyled. */
@@ -5001,8 +5266,7 @@ h2 {
 .fan-entry-steps article { min-width: 0; padding: 4px clamp(18px,3vw,42px); display: flex; align-items: flex-start; gap: 16px; }
 .fan-entry-steps article:first-child { padding-left: 0; }
 .fan-entry-steps article + article { border-left: 1px solid var(--hair-100); }
-.fan-entry-steps article > span { color: var(--fan-entry-orange-text); font: 700 0.9375rem/1.2 var(--f-m); letter-spacing: .12em; }
-.fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1 var(--f-d); text-transform: uppercase; }
+.fan-entry-steps strong { display: block; color: var(--fan-entry-paper); font: 800 clamp(1.05rem,1.4vw,1.35rem)/1.15 var(--f-d); }
 .fan-entry-steps p { max-width: 30ch; margin: 8px 0 0; color: var(--ink-a65); font-size: 0.9375rem; line-height: 1.45; }
 .fan-entry-stats {
   width: min(1420px,calc(100% - clamp(36px,8vw,140px)));
@@ -5019,9 +5283,6 @@ h2 {
 .fan-entry-stats:empty { display: none; }
 .fan-entry-stats strong { color: var(--fan-entry-paper); font: 800 clamp(1.45rem,2.4vw,2.45rem)/1 var(--f-d); letter-spacing: -.035em; }
 .fan-entry-stats span { margin-top: 8px; color: var(--fan-entry-teal); font: 700 clamp(0.9375rem,.58vw,.78rem)/1.3 var(--f-m); letter-spacing: .12em; text-transform: uppercase; }
-@keyframes fan-entry-float { 0%,
-100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-8px) rotate(-.35deg); } }
-
 body:has(.fan-entry) { background: var(--bg); }
 body:has(.fan-entry) .adaptive-site-header,
 body:has(.fan-entry) .site-background,
@@ -5046,22 +5307,20 @@ body:has(.fan-entry) #main-content { width: 100%; }
 
 @media (max-width: 980px) {
   .fan-entry { overflow: visible; }
-  .fan-entry-hero { min-height: 0; grid-template-columns: 1fr; gap: 38px; padding: 48px 24px 38px; }
+  .fan-entry-hero { min-height: 0; padding: 48px 24px 38px; }
   .fan-entry-copy { width: min(100%,680px); }
   .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(3.4rem,10.8vw,5.8rem); }
-  .fan-entry-visual { width: min(76vw,560px); margin: 0 auto; }
   .fan-entry-steps { width: calc(100% - 48px); }
   .fan-entry-stats { width: calc(100% - 48px); }
 }
 @media (max-width: 680px) {
   .fan-entry::before { top: 64px; }
   .fan-entry-header { height: 64px; padding: 8px 12px; }
-  .fan-entry-logo { width: 46px; height: 46px; border-radius: 12px; }
   .fan-entry-nav { gap: 8px; }
   .fan-entry-nav a { min-height: 44px; font-size: 0.9375rem; }
   .fan-entry-signin { padding-inline: 4px; }
   .fan-entry-join { min-width: 94px; padding-inline: 14px; }
-  .fan-entry-hero { gap: 30px; padding: 38px 18px 28px; }
+  .fan-entry-hero { padding: 38px 18px 28px; }
   .fan-entry-kicker { margin-bottom: 16px; font-size: 0.9375rem; line-height: 1.5; }
   .fan-entry-copy h1 { max-width: 12ch; font-size: clamp(2.65rem,10.8vw,3.7rem); line-height: .92; }
   .fan-entry-lead { max-width: 40ch; margin-top: 20px; font-size: .94rem; }
@@ -5070,8 +5329,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   /* .75rem = 12px. Was .48rem (7.68px) — the smallest text in the app, on
      the page every visitor sees first. */
   .fan-entry-assurance { font-size: 0.9375rem; line-height: 1.6; text-align: center; }
-  .fan-entry-visual { width: min(88vw,440px); }
-  .fan-entry-signal { margin-top: 12px; justify-content: center; }
   .fan-entry-steps { width: calc(100% - 36px); padding: 6px 0; grid-template-columns: 1fr; }
   .fan-entry-steps article { padding: 17px 0; }
   .fan-entry-steps article + article { border-top: 1px solid var(--hair-100); border-left: 0; }
@@ -5083,11 +5340,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   /* The light-theme border restatement that used to sit here is gone with the
      rest of the parallel palette — --hair-100 is already black-on-light. */
 }
-@media (prefers-reduced-motion: reduce) {
-  .fan-entry-art { animation: none; }
-  .fan-entry-logo { transition: none; }
-}
-
 .site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
 .site-dock-l { min-width: min(30vw,340px); }
 .site-dock-art { width: 58px; height: 58px; border-radius: 10px; transition: width .3s ease, height .3s ease; }
@@ -5107,12 +5359,28 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .site-shell { padding-bottom: 82px; }
 
 @media (max-width: 1050px) {}
+/* 320px, the smallest phone the type ramp is checked at: the mark, four words
+   at 8px a side and the row's two 10px gaps come to 302px against 296px of
+   header, measured by `measure:chrome`. Half the padding is the difference;
+   "Me" is at the 44px floor and does not move. */
+@media (max-width: 360px) {
+  .site-nav-link { padding: 0 4px; }
+  .site-nav-link[data-on='true']::after { left: 4px; right: 4px; }
+}
 @media (max-width: 768px) {
   .adaptive-site-header { display: block !important; height: 62px; }
+  .adaptive-site-header.is-app { height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)); }
   .adaptive-site-header-inner { width: calc(100% - 24px); gap: 10px; }
   .adaptive-site-header .search-bar-desktop { display: flex; max-width: none; }
   .adaptive-site-header-auth { display: none; }
   .adaptive-site-header.is-scrolled .search-bar-desktop { display: none; }
+  /* Signed in, a phone-width header holds the mark and the four destinations
+     and nothing else: 320px cannot also carry a search field and a gear, and
+     the tab bar this navigation replaces carried neither. Listen has its own
+     search; Me has Settings. */
+  .adaptive-site-header.has-nav .search-bar-desktop,
+  .adaptive-site-header.has-nav .search-bar-mobile-trigger,
+  .adaptive-site-header.has-nav .app-settings-link { display: none; }
   .site-dock { height: 70px; padding: 0 12px; }
   .site-dock-art { width: 48px; height: 48px; }
   .site-dock-settled .site-dock-art { width: 38px; height: 38px; }
@@ -5163,48 +5431,27 @@ body:has(.fan-entry) #main-content { width: 100%; }
   z-index: 2;
   flex: 0 0 auto;
 }
+/* The signed-in home link. It used to be a 54x54 tile with a raw #070605
+   ground, a 17px radius and a hover ring in rgba(--role-venue-rgb) — a
+   SEMANTIC role colour (venue teal) spent on the app's own home link, which
+   is the wrong-token mistake this file records twice elsewhere. With the
+   sticker gone there is nothing to frame: it is a link around the mark, at
+   the 44px floor, and the mark's own hover carries the state. */
 .app-menu-logo {
-  width: 54px;
-  height: 54px;
-  position: relative;
-  display: grid;
-  place-items: center;
-  overflow: visible;
-  padding: 0;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--line-2));
-  border-radius: 17px;
-  background: #070605;
-  box-shadow: 0 9px 24px rgba(0,0,0,.22);
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 2px;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  text-decoration: none;
   cursor: pointer;
-  transition: transform .2s var(--ease-out), border-color .2s ease, box-shadow .2s ease;
 }
-.app-menu-logo::after {
-  content: "";
-  position: absolute;
-  inset: -5px;
-  z-index: -1;
-  border: 1px solid rgba(var(--role-venue-rgb),.16);
-  border-radius: 21px;
-  opacity: 0;
-  transform: scale(.84);
-  transition: opacity .2s ease, transform .2s var(--ease-out);
-}
-.app-menu-logo:hover,
-.app-menu-logo[aria-expanded="true"] {
-  border-color: rgba(var(--role-venue-rgb),.62);
-  box-shadow: 0 0 0 3px rgba(var(--role-venue-rgb),.08), 0 14px 32px rgba(0,0,0,.3);
-  transform: translateY(-1px);
-}
-.app-menu-logo:hover::after,
-.app-menu-logo[aria-expanded="true"]::after {
-  opacity: 1;
-  transform: scale(1);
-}
-.app-menu-logo img {
-  width: 100%;
-  height: 100%;
-  border-radius: 16px;
-  object-fit: cover;
+
+.app-menu-logo:hover .ihype-mark-i,
+.app-menu-logo:focus-visible .ihype-mark-i {
+  fill: var(--accent-text);
 }
 
 .adaptive-site-header .app-menu-logo + * { min-width: 0; }
@@ -5387,10 +5634,10 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .primer-moment {
   margin: 14px 0 0;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.13em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
@@ -5421,8 +5668,8 @@ body:has(.fan-entry) #main-content { width: 100%; }
      three lines. */
   font-size: clamp(1.5rem, 6.5vw, 2.125rem);
   line-height: 1.1;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  text-transform: none;
   color: var(--accent-text);
 }
 .ticket-final-detail {
@@ -5488,11 +5735,11 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 .composer-card h3 {
   margin: 0 0 10px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
   font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--brass-deep);
 }
 .composer-library-list,
@@ -5603,7 +5850,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
 .booking-cta,                       /* 174×41 */
 .fan-entry-signin,                  /* 72×42 */
 .fan-entry-join,                    /* 173×42 */
-.rk-nav-cta,                        /* 36px — the kit pages' "Apply →" */
 .payouts-tablink,                   /* 40px — floored only under (pointer: coarse) until now */
 .support-ticketlink,                /* 156×42 — same: coarse-pointer floor only */
 .ihype-btn-primary,                 /* 146×40 — "Submit idea" */

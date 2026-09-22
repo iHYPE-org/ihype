@@ -30,7 +30,7 @@ export default async function MmmCommunityPage() {
     <article className="mmm-info-report">
       <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmStrip.info', 'Info')}</Link>
       <header className="mmm-info-report-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmDock.tab.me', 'Me')} · {t('mmmStrip.info', 'Info')}</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmNav.tab.me', 'Me')} · {t('mmmStrip.info', 'Info')}</p>
         <h1>{t('mmmCommunityPage.title', 'Community roadmap')}</h1>
         <p>{t('mmmCommunityPage.lede', 'What members have asked for, and what they have voted up. Anyone signed in can add one.')}</p>
       </header>

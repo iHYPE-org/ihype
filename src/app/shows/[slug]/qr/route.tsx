@@ -3,6 +3,8 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { getBaseUrl } from '@/lib/utils';
 import { getServerT } from '@/lib/i18n/server';
+import { BrandMarkImage } from '@/components/brand/BrandMarkImage';
+import { OG, OG_KICKER } from '@/app/api/og/palette';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -28,22 +30,25 @@ export async function GET(
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#0a0a0f',
-          color: '#ffffff',
+          background: OG.bg,
+          color: OG.ink,
           fontFamily: 'sans-serif',
           padding: 40
         }}
       >
-        <div style={{ fontSize: 18, color: '#ff5029', letterSpacing: 4, marginBottom: 16 }}>
-          {t('showsSlugQrRoute.ihypeCheckin', 'iHYPE CHECK-IN')}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 16 }}>
+          <BrandMarkImage accent={OG.accent} height={18} ink={OG.ink} />
+          <span style={{ ...OG_KICKER, fontSize: 16, color: OG.ink3 }}>
+            {t('showsSlugQrRoute.ihypeCheckin', 'iHYPE CHECK-IN')}
+          </span>
         </div>
         <div style={{ fontSize: 28, fontWeight: 700, textAlign: 'center', marginBottom: 32 }}>
           {title}
         </div>
         <div
           style={{
-            background: '#ffffff',
-            color: '#0a0a0f',
+            background: OG.bg2,
+            color: OG.ink,
             borderRadius: 8,
             padding: '14px 20px',
             fontSize: 14,
@@ -54,7 +59,7 @@ export async function GET(
         >
           {checkinUrl}
         </div>
-        <div style={{ fontSize: 12, color: '#888', marginTop: 20 }}>
+        <div style={{ fontSize: 12, color: OG.ink3, marginTop: 20 }}>
           {t('showsSlugQrRoute.scanOrVisitToCheckin', 'Scan or visit the URL above to check in')}
         </div>
       </div>

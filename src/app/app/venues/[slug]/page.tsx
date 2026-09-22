@@ -118,6 +118,7 @@ export default async function MmmVenuePage({
           slug: true,
           title: true,
           startsAt: true,
+          timeZone: true,
           hypeCount: true,
           /* For the row's trail and price — the same fields the show page
              decides "on sale" from, so the row cannot disagree with it. */
@@ -155,7 +156,7 @@ export default async function MmmVenuePage({
     <div className="mmm-show mmm-public-profile" data-profile-type="venue">
       <Link className="mmm-show-back" href="/app/map">← {t('venuePane.backMap', 'Map')}</Link>
 
-      <div className="mmm-profile-card">
+      <div className="mmm-profile-card" data-hero={profile.heroImage ? 'true' : 'false'}>
         <div className="mmm-profile-band">
           {profile.heroImage && <img alt="" src={profile.heroImage} />}
           <span aria-hidden="true" className="mmm-profile-band-glare" />
@@ -229,8 +230,9 @@ export default async function MmmVenuePage({
               <ProfileRow locale={locale}
                 key={show.id}
                 date={show.startsAt}
+                timeZone={show.timeZone}
                 href={`/app/shows/${show.slug}`}
-                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt, locale), priceLabel(formatTicketPrice(show, locale))].filter(Boolean).join(' · ')}
+                meta={[show.headlinerProfile?.name, formatShowClock(show.startsAt, locale, show.timeZone), priceLabel(formatTicketPrice(show, locale))].filter(Boolean).join(' · ')}
                 title={show.title}
                 trail={localiseTrail(showRowTrail(show, now))}
               />

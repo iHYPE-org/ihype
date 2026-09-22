@@ -306,15 +306,19 @@ assertMissing(
   'Discovery lives at /app/music/discover; nav links there directly.'
 );
 
-/* The dock is the app's whole navigation, and nothing else may be (2026-08-22).
+/* Retired chrome stays retired (2026-08-22, then 2026-09-22).
  *
- * The owner's instruction was "I don't want any previous design, retire it …
- * Bottom hifi nav system is the only thing I want", and the failure mode is not
- * that someone disagrees — it is that a retired control comes back one piece at
- * a time. The logo trigger was the way into the arc; the arc was a second way to
- * switch module; the pill and the phone mini-player were two transports for one
- * audio element. Each was reasonable on its own and the set of them was three
- * navigation models in one shell.
+ * The owner's 2026-08-22 instruction was "I don't want any previous design,
+ * retire it", and the failure mode is not that someone disagrees — it is that
+ * a retired control comes back one piece at a time. The logo trigger was the
+ * way into the arc; the arc was a second way to switch module; the pill and the
+ * phone mini-player were two transports for one audio element. Each was
+ * reasonable on its own and the set of them was three navigation models in one
+ * shell. On 2026-09-22 the walnut dock that replaced them went the same way
+ * ("The chrome button bottom nav is no longer the direction we're going … remove
+ * those components to save space"), and so did the public pages' bottom tab
+ * bar: navigation is the site header's text links and the shell's only chrome
+ * is the now-playing pill (`MmmNowPlaying.tsx`).
  *
  * So: the components are asserted GONE, not merely unmounted. A file left on
  * disk is an import away from rendering, and this repository has already had one
@@ -326,8 +330,11 @@ for (const retired of [
   'src/components/mmm/MmmMiniPlayer.tsx',
   'src/components/mmm/MmmChromeDial.tsx',
   'src/components/mmm/MmmArtistCard.tsx',
+  'src/components/mmm/MmmDock.tsx',
+  'src/components/SiteTabBar.tsx',
+  'scripts/measure-dock.mjs',
 ]) {
-  assertMissing(retired, 'The console dock is the only chrome — see MmmDock.tsx and DESIGN_SYNC row 289.');
+  assertMissing(retired, 'The site header carries the navigation and MmmNowPlaying the transport — see DESIGN_SYNC rows 289, 341 and 496.');
 }
 /* Six components orphaned by the legacy-shell retirement, and asserted gone for
  * the reason the dock components above are: a file left on disk is an import
@@ -352,13 +359,23 @@ for (const [retired, replacement] of [
 
 assertIncludes(
   'src/components/mmm/MmmShell.tsx',
-  '<MmmDock',
-  'The shell must mount the dock: it is the only way to reach any other module.'
+  '<MmmNowPlaying',
+  'The shell must mount the now-playing pill: it is the only transport a member has once a track is loaded.'
+);
+assertIncludes(
+  'src/components/AdaptiveSiteHeader.tsx',
+  'MMM_NAV.map(',
+  'The site header must draw the four destinations: it is the only way to reach any other module.'
 );
 assertIncludes(
   'src/app/mmm.css',
-  '.mmm-dock {',
-  'The dock needs its bar. Without this rule the three controls stack in flow at the top of the frame.'
+  '.mmm-mini {',
+  'The pill needs its rule. Without it the transport renders in flow at the top of the frame.'
+);
+assertIncludes(
+  'src/app/globals.css',
+  '.site-nav-link {',
+  'The header navigation needs its rule; unstyled, four bare anchors sit under the 44px floor.'
 );
 /* One dial per screen, and it is the dock's. A page that renders its own puts
    two identical-looking dials on screen meaning different things — which is

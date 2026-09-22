@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
 import { formatDoorTime } from '@/lib/format-locale';
+import { BrandMarkImage } from '@/components/brand/BrandMarkImage';
+import { OG, OG_FRAME, OG_KICKER } from '@/app/api/og/palette';
 
 export const runtime = 'nodejs';
 export const alt = 'Show on iHYPE';
@@ -31,37 +33,29 @@ export default async function OgImage({ params }: { params: Promise<{ slug: stri
 
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: '100%', height: '100%',
-          display: 'flex', flexDirection: 'column',
-          justifyContent: 'space-between',
-          background: '#0b1220',
-          padding: '72px 80px',
-          fontFamily: 'sans-serif',
-        }}
-      >
+      <div style={OG_FRAME}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ color: '#fff7ec', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>i</span>
-          <span style={{ color: '#ff5029', fontSize: 28, fontWeight: 900, letterSpacing: '0.06em' }}>HYPE</span>
+          <BrandMarkImage accent={OG.accent} height={28} ink={OG.ink} />
           {isLive && (
-            <span style={{ marginLeft: 16, fontSize: 14, fontWeight: 800, letterSpacing: '0.12em', color: '#ff5029', background: 'rgba(255,80,41,0.15)', padding: '4px 12px', borderRadius: 999 }}>{t('showsSlugOpengraphImage.liveBadge', '● LIVE')}</span>
+            <span style={{ marginLeft: 16, fontSize: 14, fontWeight: 800, letterSpacing: '0.12em', color: OG.bg, background: OG.accent, padding: '4px 12px', borderRadius: 999 }}>{t('showsSlugOpengraphImage.liveBadge', '● LIVE')}</span>
           )}
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           {date && (
-            <div style={{ fontSize: 18, color: '#22e5d4', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+            <div style={{ ...OG_KICKER, color: OG.accent }}>
               {date}
             </div>
           )}
-          <div style={{ fontSize: 72, fontWeight: 900, color: '#eef1f6', lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>
+          <div style={{ fontSize: 72, fontWeight: 800, color: OG.ink, lineHeight: 0.98, letterSpacing: '-0.03em' }}>{title}</div>
           <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-            {headliner && <span style={{ fontSize: 22, color: '#5a5048' }}>{headliner}</span>}
-            {venue && <span style={{ fontSize: 22, color: '#5a5048' }}>{venue}</span>}
-            {city && <span style={{ fontSize: 22, color: '#5a5048' }}>{city}</span>}
+            {headliner && <span style={{ fontSize: 22, color: OG.ink2 }}>{headliner}</span>}
+            {venue && <span style={{ fontSize: 22, color: OG.ink3 }}>{venue}</span>}
+            {city && <span style={{ fontSize: 22, color: OG.ink3 }}>{city}</span>}
           </div>
         </div>
-        <div style={{ color: '#3a342e', fontSize: 20, letterSpacing: '0.08em' }}>ihype.org/shows/{slug}</div>
+        <div style={{ color: OG.ink3, fontSize: 20, letterSpacing: '0.04em' }}>{/* One text node, not two: `ihype.org/…/{slug}` is TWO children to Satori and it refuses a
+            div holding them without display:flex — which is why this card had never rendered. */}
+        {`ihype.org/shows/${slug}`}</div>
       </div>
     ),
     { ...size }

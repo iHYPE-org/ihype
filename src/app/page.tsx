@@ -8,6 +8,7 @@ import { getBaseUrl } from '@/lib/utils';
 import { WORKBENCH_PATH } from '@/lib/auth-redirects';
 import { isInviteCodeRequiredRuntime } from '@/lib/runtime-flags';
 import { log } from '@/lib/logger';
+import { getServerT } from '@/lib/i18n/server';
 
 // Says what the app is, not what it makes you feel. The old title named three
 // verbs and never the noun, so a search result for "local music app" had
@@ -96,7 +97,7 @@ export default async function RootPage() {
   return (
     <FanFirstLanding
       stats={
-        <Suspense fallback={<LandingStatsFallback />}>
+        <Suspense fallback={<LandingStatsFallback t={await getServerT()} />}>
           <LandingStats />
         </Suspense>
       }

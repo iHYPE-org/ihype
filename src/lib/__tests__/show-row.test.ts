@@ -31,7 +31,9 @@ describe('formatTicketPrice', () => {
 });
 
 describe('formatShowClock', () => {
-  it('gives the time alone, since the row already shows the date', () => {
-    expect(formatShowClock(new Date('2026-09-09T19:05:00'), 'en')).toMatch(/^7:05\sPM$/);
+  it('gives the time alone on the venue clock, since the row already shows the date', () => {
+    // 23:05Z is 7:05 PM in Portland, Maine; the zone name rides along so a
+    // reader in another city is never wrong about which 7:05 it is.
+    expect(formatShowClock(new Date('2026-09-09T23:05:00Z'), 'en', 'America/New_York')).toMatch(/^7:05\sPM\sEDT$/);
   });
 });

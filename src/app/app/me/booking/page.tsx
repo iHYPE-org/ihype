@@ -119,7 +119,7 @@ const BOOKING_CSS = `
 .booking-card-demand { border-color: rgba(var(--role-fan-rgb),0.5); }
 .booking-requests { margin-top: 40px; }
 .booking-requests-title { margin: 8px 0 16px; }
-.booking-avatar { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, var(--role-venue), var(--role-fan)); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; color: var(--bg); }
+.booking-avatar { flex-shrink: 0; width: 48px; height: 48px; border-radius: 50%; background: var(--role-venue); background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 1.125rem; color: var(--bg); }
 .booking-card-body { flex: 1; min-width: 0; }
 .booking-card-name { font-family: 'Work Sans', sans-serif; font-weight: 600; font-size: 1rem; color: var(--ink); text-decoration: none; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .booking-card-name:hover { color: var(--role-venue); }

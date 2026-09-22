@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 /**
- * The decision the dock makes on a tap.
+ * The decision the now-playing pill makes on a tap.
  *
- * `MmmDock` resolves three possibilities in order — pause the current track,
+ * `MmmNowPlaying` (the dock's mini player until 2026-09-22) resolves three possibilities in order — pause the current track,
  * start what the surface registered, or turn the radio on — and that ordering
  * IS the "universal play" behaviour. It is one expression in a React component,
  * so it is restated here as a function and tested directly: the alternative is
  * a browser, and the e2e suite that does drive one needs a database.
  *
- * Kept deliberately close to the source. If the dock's expression changes, this
+ * Kept deliberately close to the source. If the pill's expression changes, this
  * is a copy that no longer describes it — which is why the assertions are about
  * the ORDER and the fallthrough rather than about implementation details.
  */
@@ -27,7 +27,7 @@ function resolveTap({
   return canTogglePlay ? onTogglePlay : (playIntent ?? onPlayFallback);
 }
 
-describe('the dock transport chain', () => {
+describe('the now-playing transport chain', () => {
   const toggle = vi.fn();
   const intent = vi.fn();
   const fallback = vi.fn();

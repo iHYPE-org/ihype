@@ -2,6 +2,8 @@ import { ImageResponse } from 'next/og';
 import { db } from '@/lib/db';
 import { getServerT } from '@/lib/i18n/server';
 import { formatDoorTime } from '@/lib/format-locale';
+import { BrandMarkImage } from '@/components/brand/BrandMarkImage';
+import { OG } from '@/app/api/og/palette';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -43,25 +45,30 @@ export async function GET(
           flexDirection: 'column',
           justifyContent: 'space-between',
           padding: 80,
-          background: 'linear-gradient(135deg, #15001f 0%, #2b0033 50%, #420020 100%)',
-          color: '#fff',
-          fontFamily: 'Inter, sans-serif'
+          /* Was a purple-to-maroon diagonal gradient with the name as tracked
+             grey caps — a generated poster in the colours of no theme this
+             product has had. White ground, the mark, the type. */
+          background: OG.bg,
+          color: OG.ink,
+          fontFamily: 'sans-serif'
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div style={{ fontSize: 28, opacity: 0.7, letterSpacing: 4, textTransform: 'uppercase' }}>iHYPE</div>
-          <div style={{ fontSize: 86, fontWeight: 800, lineHeight: 1.05 }}>{show.title}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+          <div style={{ display: 'flex' }}>
+            <BrandMarkImage accent={OG.accent} height={40} ink={OG.ink} />
+          </div>
+          <div style={{ fontSize: 86, fontWeight: 800, lineHeight: 1.02, letterSpacing: '-0.03em' }}>{show.title}</div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14, fontSize: 38 }}>
           {show.headlinerProfile?.name ? (
             <div style={{ display: 'flex' }}>
-              <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.feat', 'FEAT')}</span>
+              <span style={{ color: OG.ink3, marginRight: 12 }}>{t('showsSlugPosterRoute.feat', 'FEAT')}</span>
               <strong>{show.headlinerProfile.name}</strong>
             </div>
           ) : null}
           {show.venueProfile?.name ? (
             <div style={{ display: 'flex' }}>
-              <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.at', 'AT')}</span>
+              <span style={{ color: OG.ink3, marginRight: 12 }}>{t('showsSlugPosterRoute.at', 'AT')}</span>
               <strong>
                 {show.venueProfile.name}
                 {show.venueProfile.city ? `, ${show.venueProfile.city}` : ''}
@@ -69,12 +76,12 @@ export async function GET(
             </div>
           ) : null}
           <div style={{ display: 'flex' }}>
-            <span style={{ opacity: 0.6, marginRight: 12 }}>{t('showsSlugPosterRoute.on', 'ON')}</span>
+            <span style={{ color: OG.ink3, marginRight: 12 }}>{t('showsSlugPosterRoute.on', 'ON')}</span>
             <strong>{dateLabel}</strong>
           </div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 22, opacity: 0.6 }}>
-          <span>ihype.org/shows/{show.slug}</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 22, color: OG.ink3 }}>
+          <span>{`ihype.org/shows/${show.slug}`}</span>
           <span>{t('showsSlugPosterRoute.hypeTheLocalScene', 'HYPE THE LOCAL SCENE')}</span>
         </div>
       </div>

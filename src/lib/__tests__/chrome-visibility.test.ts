@@ -34,17 +34,24 @@ describe('ownsWholeScreen', () => {
     /* A predicate nothing calls is the defect `audit:mounts` exists for. */
     const layout = readFileSync('src/app/layout.tsx', 'utf8');
     expect(layout).toContain('ownsWholeScreen');
-    for (const chrome of ['<AdaptiveSiteHeader', '<SiteTabBar />', '<SitePlayerDock />']) {
+    for (const chrome of ['<AdaptiveSiteHeader', '<SitePlayerDock />']) {
       expect(layout, chrome).toMatch(/wholeScreen/);
     }
   });
 
-  it('leaves no site tab pointing at a route that was deleted', () => {
-    /* "Dashboard" pointed at `/pages` for ten days after that route was
-       removed — it only worked because next.config.mjs redirects it. */
-    const bar = readFileSync('src/components/SiteTabBar.tsx', 'utf8');
+  it('leaves no header destination pointing at a route that was deleted', () => {
+    /* The deleted tab bar's "Dashboard" pointed at `/pages` for ten days after
+       that route was removed — it only worked because next.config.mjs
+       redirects it. The header's four links are MMM_NAV, so the manifest is
+       what is read. */
+    const nav = readFileSync('src/lib/mmm-nav.ts', 'utf8');
     for (const dead of ["href: '/pages'", "href: '/listen'", "href: '/discover'", "href: '/radio'"]) {
-      expect(bar, dead).not.toContain(dead);
+      expect(nav, dead).not.toContain(dead);
     }
+    /* And the header is where they are drawn — a manifest nothing renders is
+       the `audit:mounts` defect. */
+    const header = readFileSync('src/components/AdaptiveSiteHeader.tsx', 'utf8');
+    expect(header).toContain('MMM_NAV.map(');
+    expect(header).toContain("aria-current={on ? 'page' : undefined}");
   });
 });

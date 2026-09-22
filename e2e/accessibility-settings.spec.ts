@@ -91,11 +91,11 @@ test.describe('Settings → Accessibility', () => {
     await themeGroup(page).getByRole('button', { name: 'Light', exact: true }).click();
   });
 
-  test('picking Español changes the heading, the section strip and the dock', async ({ page }) => {
+  test('picking Español changes the heading, the section strip and the header navigation', async ({ page }) => {
     await openAccessibility(page);
     const heading = page.locator('h1.mmm-settings-title:visible').first();
     await expect(heading).toHaveText('Accessibility');
-    const listenTab = page.locator('.mmm-tab-label:visible', { hasText: /^Listen$/ });
+    const listenTab = page.locator('.adaptive-site-header .site-nav-link:visible', { hasText: /^Listen$/ });
     await expect(listenTab).toHaveCount(1);
 
     const languages = page.locator('[role="group"][aria-label="Language"]:visible').first();
@@ -103,17 +103,18 @@ test.describe('Settings → Accessibility', () => {
 
     await expect(heading).toHaveText('Accesibilidad');
     await expect(page.locator('html')).toHaveAttribute('lang', 'es');
-    // The dock's four tabs are drawn by the shell layout, outside the page —
-    // so a translation that reached only the page would leave them English.
-    await expect(page.locator('.mmm-tab-label:visible', { hasText: /^Escuchar$/ })).toHaveCount(1);
-    await expect(page.locator('.mmm-tab-label:visible', { hasText: /^Listen$/ })).toHaveCount(0);
+    // The header's four destinations are drawn by the root layout, outside
+    // the page — so a translation that reached only the page would leave them
+    // English. (They were the dock's tabs until 2026-09-22; same claim.)
+    await expect(page.locator('.adaptive-site-header .site-nav-link:visible', { hasText: /^Escuchar$/ })).toHaveCount(1);
+    await expect(page.locator('.adaptive-site-header .site-nav-link:visible', { hasText: /^Listen$/ })).toHaveCount(0);
     // And the section strip above the page (ME's Profiles · Info · Settings).
     await expect(page.locator('.mmm-strip-item:visible', { hasText: /^Ajustes$/ })).toHaveCount(1);
 
     // A server-rendered pane reads the same cookie: the artist counters and
     // panel titles come from getServerT(), not the client dictionary.
     await page.goto('/app/me');
-    await expect(page.locator('.mmm-tab-label:visible', { hasText: /^Escuchar$/ })).toHaveCount(1);
+    await expect(page.locator('.adaptive-site-header .site-nav-link:visible', { hasText: /^Escuchar$/ })).toHaveCount(1);
 
     // Back to English so the fixture account does not leak a locale into
     // any other spec that reuses it.

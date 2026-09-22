@@ -283,7 +283,7 @@ const EMOJI_CAPABLE_GLYPH = /[◀▶](?![︎️])/;
  * Comments collapsed to NEWLINES, not to nothing.
  *
  * Scoped this way because the glyph rule above is about what RENDERS, and these
- * files describe the joystick's own directions in prose — `MmmDock.tsx`'s
+ * files describe the joystick's own directions in prose — the retired `MmmDock.tsx`'s
  * docstring names all four, and a comment does not need a variation selector.
  *
  * Newlines rather than a space, so a reported line number still points at the

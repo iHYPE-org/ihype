@@ -142,6 +142,7 @@ export default async function MmmArtistPage({
           slug: true,
           title: true,
           startsAt: true,
+          timeZone: true,
           hypeCount: true,
           /* For the row's trail and price — the same fields the show page
              decides "on sale" from, so the row cannot disagree with it. */
@@ -277,8 +278,9 @@ export default async function MmmArtistPage({
      Three things in the reference are deliberately NOT reproduced here, each
      because it belongs to something the app already owns:
        · the 430px card frame — a specimen chrome; the pane sets the width
-       · the walnut dock along its bottom edge — that is the console dock
-         (`MmmDock`, rendered once by `MmmShell`), not painted per page
+       · the walnut dock along its bottom edge — retired 2026-09-22; the
+         shell's navigation is the site header and its only chrome is the
+         now-playing pill (`MmmNowPlaying`, rendered once by `MmmShell`)
        · the 3-tab strip (Shows/Tracks/About) — the real tab set is
          `ARTIST_TABS` (6), routed by `ProfileTabs`; cutting it to three
          would delete four panels' worth of content */
@@ -286,7 +288,7 @@ export default async function MmmArtistPage({
     <div className="mmm-show mmm-public-profile" data-profile-type="artist">
       <Link className="mmm-show-back" href="/app/music/charts">← {t('artistPane.backMusic', 'Music')}</Link>
 
-      <div className="mmm-profile-card">
+      <div className="mmm-profile-card" data-hero={profile.heroImage ? 'true' : 'false'}>
         <div className="mmm-profile-band">
           {/* The artist's own cover art still wins when they have uploaded one —
               the gradient is the ground beneath it, not a replacement for it. */}
@@ -487,8 +489,9 @@ export default async function MmmArtistPage({
                 <ProfileRow locale={locale}
                   key={show.id}
                   date={show.startsAt}
+                  timeZone={show.timeZone}
                   href={`/app/shows/${show.slug}`}
-                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale), priceLabel(formatTicketPrice(show, locale))]
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale, show.timeZone), priceLabel(formatTicketPrice(show, locale))]
                     .filter(Boolean)
                     .join(' · ')}
                   title={show.title}

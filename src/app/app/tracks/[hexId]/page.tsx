@@ -116,7 +116,7 @@ export default async function MmmTrackPage({ params }: { params: Promise<{ hexId
 
   return (
     <div className="mmm-show">
-      <Link className="mmm-show-back" href="/app/music/discover">← {t('mmmDock.tab.listen', 'Listen')}</Link>
+      <Link className="mmm-show-back" href="/app/music/discover">← {t('mmmNav.tab.listen', 'Listen')}</Link>
 
       <div className="mmm-show-eyebrow">{t('mmmTrackPage.eyebrow', 'Track')}</div>
       {/* Renders nothing; hands this track to the dock's transport — which,

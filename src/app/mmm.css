@@ -61,18 +61,22 @@ html.mmm-locked, html.mmm-locked body {
   overscroll-behavior: none;
 }
 
-/* Stand the public site chrome down. It renders from the root layout and remains
-   in the DOM behind this frame: the marketing header, the mobile tab bar,
-   the global player dock and the footer.
+/* Stand the REST of the public site chrome down. It renders from the root
+   layout and remains in the DOM behind this frame: the background orbs, the
+   global player dock and the site footer.
    `display: none` rather than opacity or z-index, because the frame is opaque:
    the problem was never that they were visible, it was that they were focusable
-   and present in the accessibility tree. A keyboard user could tab into a tab
-   bar the design deliberately removed, and a screen reader saw two players.
-   This design has no tab bar at any width — the logo fan replaced it. */
-html.mmm-locked .adaptive-site-header,
+   and present in the accessibility tree. A screen reader saw two players.
+
+   THE SITE HEADER IS NOT IN THIS LIST ANY MORE (2026-09-22, owner: "The chrome
+   button bottom nav is no longer the direction we're going … remove those
+   components to save space"). The walnut dock is deleted, and the header —
+   the same one every public page draws — carries the four destinations as
+   text links inside the shell. The frame starts below it: `--app-header-h`
+   in globals.css is the one figure the header's height and the frame's top
+   edge both read. */
 html.mmm-locked .site-background,
 html.mmm-locked .site-shell > footer,
-html.mmm-locked .site-tabbar,
 html.mmm-locked .site-dock {
   display: none !important;
 }
@@ -104,17 +108,20 @@ html.mmm-locked .site-shell > main {
 
 /* iOS Safari extends the PAGE's background into the gap between the web
    content and its own bottom bar (and into rubber-band overscroll). That gap
-   sits directly under the dock, so with the page ground there the walnut ended
-   in a hard edge against a Safari-painted cream strip — the owner's "slight
-   line under console" (2026-08-25). Painting the html ground walnut while the
-   console is mounted makes whatever Safari extends read as the cabinet the
-   dock is part of. Scoped with :has so nothing outside /app/* changes. */
+   used to sit directly under the walnut dock, so the html ground was painted
+   `--chrome-ground` (the cabinet) while the frame was mounted. The dock is gone
+   (2026-09-22) and the pane's own ground is what should extend there now.
+   Scoped with :has so nothing outside /app/* changes. */
 html:has(.mmm-frame) {
-  background: var(--chrome-ground);
+  background: var(--bg);
 }
 .mmm-frame {
   position: fixed;
-  inset: 0;
+  /* Below the site header, which is the shell's navigation since 2026-09-22
+     and is `position: sticky; top: 0` in the document above this frame. The
+     header owns the top safe-area inset (it pads for it and grows by it), so
+     the frame begins where the header ends. Same token the header reads. */
+  inset: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)) 0 0 0;
   background: var(--bg);
   overflow: hidden;
   /* Below a modal but above ordinary page content. */
@@ -154,7 +161,11 @@ html:has(.mmm-frame) {
 
      Every surface inside the frame is percentage- or flex-sized against this,
      so the one value moves the chart, the panes and the dock together. */
-  --mmm-frame-max: 712px;
+  /* `--mmm-frame-max` (712px) and `--mmm-pane-pad` (16px) are declared on
+     `:root` in globals.css since 2026-09-22, because the site header — which
+     is OUTSIDE this frame — aligns its inner width to the pane's content
+     column on a desk. Two declarations of one figure is the drift this
+     repository keeps finding; the frame reads the root's. */
   width: min(100vw, var(--mmm-frame-max));
   transform: translateX(-50%);
   /* The sheet's edge against the desk — invisible at phone width (clipped by
@@ -164,76 +175,62 @@ html:has(.mmm-frame) {
   /* ── Safe areas ────────────────────────────────────────────────────────
      The handoff is drawn at 430px on a rectangle with no notch. The real
      target is a Capacitor WebView with `viewport-fit=cover`, where the bottom
-     ~34px is the home indicator and the top ~59px is the Dynamic Island. The
-     dock — the app's ONLY navigation — spans that bottom band, so without this
-     the three controls that reach everything sit inside the iOS system swipe
-     zone and compete with it for the touch.
+     ~34px is the home indicator and the top ~59px is the Dynamic Island.
 
-     `--mmm-safe-bottom` reaches the dock twice on purpose: once as its own
-     bottom padding, so the controls clear the home indicator, and once inside
-     `--mmm-chrome-size`, so the panes clear the whole bar. Both resolve to 0
-     off-device. */
+     The TOP inset is the site header's now — it is the top-most element and
+     grows by the inset (globals.css, `.adaptive-site-header.is-app`), and this
+     frame starts below it — so nothing inside the frame pads for it except
+     the full player, which is `position: fixed` over the header and reads
+     `--mmm-safe-top` directly. The BOTTOM inset is still the frame's: the
+     now-playing pill sits above it, and every pane's bottom padding carries
+     it. All four resolve to 0 off-device. */
   --mmm-safe-top: env(safe-area-inset-top, 0px);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
   --mmm-safe-left: env(safe-area-inset-left, 0px);
   --mmm-safe-right: env(safe-area-inset-right, 0px);
 
-  /* ONE FIGURE DRIVES THE DOCK, and it is the tab row.
-     (MIDDLE ROAD, 2026-09-04 — the knob was the origin until this date and its
-     74px is gone with it. See `MmmDock.tsx` for why the hardware went.)
+  /* THE CHROME IS ZERO UNTIL SOMETHING PLAYS.
+     (2026-09-22, owner: "The chrome button bottom nav is no longer the
+     direction we're going for the design of this app. You can remove those
+     components to save space" — then "Floating pill while playing … no chrome
+     the rest of the time".)
 
-     What survives from the console table, and it is the important half: the
-     chrome's height is DERIVED, in one place, and everything that must clear it
-     reads `--mmm-chrome-size` rather than a number. That contract is why
-     replacing three hand-fitted controls with a flex bar moved no pane by hand.
+     Until this date the bottom of every screen was a bar: 105px of console
+     hardware, then the middle road's 55px tab row (111 with a track loaded).
+     Navigation is the site header now, so there is nothing at the bottom of
+     the frame by default, and the map gets the whole height.
 
-     The bar is two stacked rows and only one of them is always there:
+     What survives from both tables, and it is the important half: the chrome's
+     height is DERIVED, in one place, and everything that must clear it reads
+     `--mmm-chrome-size` rather than a number. So:
 
-       tabs      46px  always. 44px is the control floor (MOBILE.md, desktop
-                       included) and 46 leaves the active underline 2px that is
-                       not stolen from the target.
-       mini      56px  ONLY while a track is loaded. Conditional on purpose — a
-                       bar that always carried a player would be 111px, which is
-                       the old dock with different furniture and no saving at
-                       all. Idle the chrome is 55px + safe area against the
-                       console dock's 105px; playing it is 111px, and what the
-                       extra 6px buys is the title, the artist, the artwork and
-                       a skip, none of which the console could show.
+       idle      0px   nothing is loaded; no pill, no clearance.
+       playing   pill  `--mmm-mini-h` plus `--mmm-mini-gap` above and below —
+                       the pill floats `--mmm-mini-gap` off the bottom edge and
+                       a pane's last row needs the same gap above it.
 
-     `--mmm-chrome-size` therefore has a second declaration under `:has()`
-     further down this file, and that is the ONLY place it is allowed to move. */
-  /* 50px, from 46 (2026-09-05): iOS's tab bar is 49pt and the row now carries
-     a 26px glyph over a 12px label with the 44px floor met at every width.
-     Everything below derives from this figure, so the bar grew by 4px and no
-     pane was re-measured by hand — measure:dock reads the table. */
-  --mmm-tab-h: 50px;
+     `--mmm-chrome-size` has exactly ONE other declaration, under
+     `.mmm-frame:has(.mmm-mini)` further down this file, and that is the only
+     place it is allowed to move. */
   --mmm-mini-h: 56px;
-  --mmm-dock-pad: 3px;
-  /* The brass lip is a real 3px border on the dock, so it is part of the height
-     content has to clear - not decoration sitting inside the padding. */
-  --mmm-dock-lip: 3px;
-  --mmm-chrome-size: calc(
-    var(--mmm-tab-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
-  );
-  /* The pane's own horizontal padding, named because a surface inside the
-     pane sometimes has to cancel it — a horizontally scrolling strip has to
-     reach the viewport edge or its overflow is invisible. Written once here
-     rather than as a 16 repeated at each such site. */
-  --mmm-pane-pad: 16px;
+  --mmm-mini-gap: 12px;
+  --mmm-chrome-size: 0px;
+  /* `--mmm-pane-pad` (the pane's own horizontal padding, which a scrolling
+     strip cancels to reach the edge) lives on `:root` now — see the frame
+     width above for why. */
   --mmm-inset: 26px;
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
   /* The cookie banner is pinned to the bottom of the viewport, and so is the
-     dock. `CookieConsent.tsx` measures its own height into `--consent-inset`
-     (measured, not a constant: the copy wraps and ships in twelve locales), and
-     the dock rides up by exactly that much while it is on screen.
-
-     This matters more than it did: the old chrome floated bottom-LEFT with room
-     beside it, so an overlap covered part of one control. The dock spans the
-     width — an un-lifted dock would be covered outright, and it is now the only
-     way to navigate anywhere. The e2e suite measures the lift for that reason. */
+     now-playing pill. `CookieConsent.tsx` measures its own height into
+     `--consent-inset` (measured, not a constant: the copy wraps and ships in
+     twelve locales), and the pill rides up by exactly that much while the
+     banner is on screen. The name is the dock's — the pill took over the
+     token rather than the token being renamed, because the banner, the seed
+     deck, the layout instrument and two e2e files all know it by this name. */
   --mmm-dock-lift: var(--consent-inset, 0px);
-  /* Anything that must clear the chrome sits above the dock, including whatever
-     the dock is currently riding on. */
+  /* Anything that must clear the chrome sits above the pill, including whatever
+     the pill is currently riding on. Anything clearing the chrome reads THIS,
+     never `--mmm-chrome-size` (row 375). */
   --mmm-chrome-top: calc(var(--mmm-chrome-size) + var(--mmm-dock-lift));
 }
 
@@ -523,24 +520,29 @@ html:has(.mmm-frame) {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 7px 13px;
-  /* A machined key. It was a pill on flat --bg-surface with a 1px ink edge,
-     which on a plate reads as a web button sitting on a console. Radius,
-     brass edge and the lit top come from the templates' own controls.
+  padding: 0 14px;
+  /* ONE CHIP VOCABULARY (2026-09-22, DESIGN_SYNC row 501). A filter chip is
+     the same object as a section-strip pill (`.mmm-strip-item`): same radius,
+     same material tokens, same 15px/600 sentence-case system face, same
+     14px of side padding. Until this date the chips wore the console's
+     "machined key" (10px radius, `--key-*`) beside the strip's pills, and the
+     Charts tab stacked three pill styles in three rows — the strip in bold
+     sans, then two rows of tracked mono. Two shapes for one job read as
+     assembled, not designed.
 
-     The LABEL is deliberately left alone — body font, mixed case. The
-     templates set their chips in tracked uppercase mono, but this class is
-     also the map's layer and genre filters, and uppercasing those mangles
-     proper nouns. Shape carries the character; the words stay readable. */
-  border-radius: var(--key-radius);
-  border: 1.5px solid var(--key-edge);
-  background: var(--key-bg);
-  color: var(--ink);
+     The LABEL stays body font, mixed case: this class is also the map's layer
+     and genre filters, and uppercasing those mangles proper nouns. */
+  border-radius: var(--pill-radius);
+  border: 1px solid var(--plate-border);
+  background: var(--pill-bg);
+  color: var(--ink-2);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
-  box-shadow: var(--key-shadow);
+  box-shadow: var(--pill-shadow);
   white-space: nowrap;
 }
 /* Selected: FILLED on iOS (Apple Music's filter pill inverts), the accent tint
@@ -551,7 +553,10 @@ html:has(.mmm-frame) {
   color: var(--chip-on-ink);
   font-weight: 700;
 }
-/* Charts' chip rows — dataset, then the area scope or the genre list under it.
+/* Charts' and Radio's chip rows — dataset, then the area scope or the genre
+   list under it. `.mmm-chip-genre` was a MONO variant of the chip with .04em
+   tracking; it is the plain chip now (one vocabulary, above) and the class
+   survives only as the hook the two tabs' markup carries.
    Scrolls rather than wraps: the genre row is as long as the catalogue's genre
    list, and a wrapping row changes the pane's height every time the dataset
    changes, which moves the chart out from under the reader's eye. */
@@ -568,19 +573,14 @@ html:has(.mmm-frame) {
    its floor: this is a readout, not a sentence. */
 .mmm-chart-place {
   margin: 0 0 12px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
-.mmm-chip-genre {
-  padding: 5px 11px;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.04em;
-}
+.mmm-chip-genre { padding: 0 14px; }
 
 .mmm-result-line {
   position: absolute;
@@ -727,7 +727,10 @@ html:has(.mmm-frame) {
      `chrome-size`, the last ~170px of every list sat under the dock and the
      banner for as long as the banner was up — measured on CHARTS at 393, rows
      06–10 rendering beneath both and continuing below them (2026-09-10). */
-  padding: calc(14px + var(--mmm-safe-top)) var(--mmm-pane-pad) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
+  /* 14px at the top, with NO safe-area term: the site header above the frame
+     owns the Dynamic Island now (2026-09-22). Adding `--mmm-safe-top` here
+     again would pad every pane twice on a phone. */
+  padding: 14px var(--mmm-pane-pad) calc(var(--mmm-chrome-top) + var(--mmm-inset) + var(--mmm-safe-bottom) + 24px);
 }
 /* The pane is the same sheet of paper as the chart (owner, 2026-08-24: "all
    frames should fit to this console and this map design"): the map's own film
@@ -838,11 +841,14 @@ html:has(.mmm-frame) {
 }
 /* The nameplate is a real heading. It was a `<p>` in the rail this replaces, so
    a screen reader walking the headings of MUSIC found none of its collections;
-   `.mmm-eyebrow` supplies the paint and the h3 supplies the outline. */
-/* Apple Music names a shelf with a bold title, not a legend: 20px, weight 700,
-   sentence case, the display face. This overrides the `.mmm-eyebrow` paint the
-   element also carries — `.mmm-eyebrow` supplies the outline role, this the
-   type — and is why it must stay after that rule. */
+   the h3 supplies the outline. Apple Music names a shelf with a bold title,
+   not a legend: 20px, weight 700, sentence case, the display face.
+
+   Until 2026-09-22 the h3 ALSO carried `.mmm-eyebrow`, whose rule sits ~800
+   lines below this one and won the cascade — so every shelf name rendered as
+   TRACKED UPPERCASE MONO while this rule and its own comment said sentence
+   case. The class is off the element now; a rule that has to "stay after"
+   another one is a rule that will lose the moment either moves. */
 .mmm-shelf-name {
   margin: 0;
   font-family: var(--font-display);
@@ -852,7 +858,6 @@ html:has(.mmm-frame) {
   text-transform: none;
   color: var(--ink);
 }
-.mmm-shelf-name::before { content: none; }
 .mmm-shelf-count { color: var(--ink-3); }
 .mmm-shelf-more {
   flex: 0 0 auto;
@@ -935,18 +940,18 @@ html:has(.mmm-frame) {
    were considered and refused**: they are semantic (venue teal, the promoter's
    10% slice) and a track tile coloured "venue" states something false.
    `--accent` is refused too — cream on it measures 2.70:1. */
-.mmm-shelf-art[data-tone='0'] { background: linear-gradient(150deg, var(--tile-1), var(--tile-3)); }
-.mmm-shelf-art[data-tone='2'] { background: linear-gradient(200deg, var(--tile-2), var(--tile-3)); }
-.mmm-shelf-art[data-tone='4'] { background: linear-gradient(70deg, var(--tile-3), var(--tile-1)); }
+.mmm-shelf-art[data-tone='0'] { background: var(--tile-tone-0); }
+.mmm-shelf-art[data-tone='2'] { background: var(--tile-tone-2); }
+.mmm-shelf-art[data-tone='4'] { background: var(--tile-tone-4); }
 .mmm-shelf-art[data-tone='1'],
 .mmm-shelf-art[data-tone='3'],
 .mmm-shelf-art[data-tone='5'] {
   color: var(--ink-3);
   box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 1px 0 rgba(255, 255, 255, .7) inset;
 }
-.mmm-shelf-art[data-tone='1'] { background: linear-gradient(35deg, var(--plate-1), var(--plate-2)); }
-.mmm-shelf-art[data-tone='3'] { background: linear-gradient(115deg, var(--plate-2), var(--plate-1)); }
-.mmm-shelf-art[data-tone='5'] { background: linear-gradient(255deg, var(--plate-1), var(--plate-2)); }
+.mmm-shelf-art[data-tone='1'] { background: var(--tile-tone-1); }
+.mmm-shelf-art[data-tone='3'] { background: var(--tile-tone-3); }
+.mmm-shelf-art[data-tone='5'] { background: var(--tile-tone-5); }
 .mmm-shelf-tile[data-active='true'] .mmm-shelf-art {
   border-color: var(--accent);
   box-shadow: 0 2px 6px -2px rgba(28, 20, 8, .4), 0 0 0 2px var(--accent) inset;
@@ -1267,10 +1272,10 @@ html:has(.mmm-frame) {
 }
 .mmm-datepick-clear,
 .mmm-datepick-done {
-  font-family: var(--f-m);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   border-radius: var(--radius-pill);
   padding: 7px 12px;
   cursor: pointer;
@@ -1370,10 +1375,10 @@ html:has(.mmm-frame) {
 .mmm-me-add[data-kind='admin']:hover { border-color: var(--accent); }
 .mmm-me-add[data-kind='admin'] > [aria-hidden] { color: var(--accent-text); }
 .mmm-me-add-chip {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 
@@ -1546,10 +1551,10 @@ html:has(.mmm-frame) {
   padding-top: 8px;
 }
 .mmm-search-scope {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-2);
   background: transparent;
   border: 1px solid var(--line-2);
@@ -1635,6 +1640,25 @@ html:has(.mmm-frame) {
    One rule reaches every section header in the shell, which is what "brass
    nameplates on every section header" costs when the eyebrow is already a
    primitive. Card nameplates opt out: a dash on a brass plate is a scratch. */
+/* A CONTENT heading inside a pane — "Your playlists · 3", "Fan stats", "About
+   me · visible activity", "Have a transfer code?" (2026-09-22, DESIGN_SYNC
+   row 501). Row 492's rule: uppercase is for a STATUS, a UNIT or a RANK, never
+   for content, a control's label or a sentence. These were `.mmm-eyebrow`,
+   tracked uppercase mono, so every list heading in the shell read as
+   metadata and the hierarchy flattened. Sentence case in the display face at
+   17px/700; `.mmm-eyebrow` stays for the breadcrumbs, badges and status
+   readouts that ARE metadata. */
+.mmm-section-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
 .mmm-eyebrow::before {
   content: '';
   /* The machined dash is console hardware: `none` on the iOS default, restored
@@ -1741,11 +1765,11 @@ input.mmm-row-title { min-height: 44px; }
   align-items: center;
   justify-content: center;
   font-size: 1rem;
-  background: linear-gradient(140deg, var(--bg-4), var(--bg-3));
+  background: var(--bg-3);
   color: var(--ink-3);
 }
 .mmm-station[data-playing='true'] .mmm-station-art {
-  background: linear-gradient(140deg, var(--accent), var(--accent-deep));
+  background: var(--accent);
   color: var(--ink-on-accent);
 }
 .mmm-station { border-bottom: 1px solid var(--hair-100); }
@@ -2016,10 +2040,10 @@ input.mmm-row-title { min-height: 44px; }
   /* The 44px floor holds on desktop too — this is a control. */
   min-height: 44px;
   padding: 0 2px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: .14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
   cursor: pointer;
   list-style: none;
@@ -2100,7 +2124,9 @@ input.mmm-row-title { min-height: 44px; }
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent), var(--role-fan));
+  /* Was accent-into-`--role-fan` — a red-to-purple diagonal behind every
+     initial, and a SEMANTIC token spent on decoration. Flat accent. */
+  background: var(--accent);
   color: var(--ink-on-accent);
   display: flex;
   align-items: center;
@@ -2109,7 +2135,7 @@ input.mmm-row-title { min-height: 44px; }
   font-weight: 800;
   font-size: 1.3rem;
 }
-.mmm-sheet-avatar-venue { border-radius: 11px; background: linear-gradient(135deg, var(--role-venue), var(--accent)); }
+.mmm-sheet-avatar-venue { border-radius: 11px; background: var(--role-venue); }
 .mmm-sheet-title {
   font-family: var(--font-display);
   font-weight: 800;
@@ -2173,207 +2199,66 @@ input.mmm-row-title { min-height: 44px; }
   cursor: pointer;
 }
 
-/* ── The dock ─────────────────────────────────────────────────────────────
-   The whole of the app's navigation, and the only persistent chrome. Still the
-   design's walnut cabinet from
-   `design/handoff-console/reference/console-dock/Console Dock.dc.html`; no
-   longer its hardware.
+/* ── The now-playing pill ────────────────────────────────────────────────
+   The only chrome the shell draws, and only while a track is loaded
+   (2026-09-22, owner: "Floating pill while playing — a compact pill at the
+   bottom that appears only when a track is loaded and disappears when nothing
+   is. No chrome the rest of the time"). `MmmNowPlaying.tsx` renders it; the
+   four destinations that shared the bottom bar with it are text links in the
+   site header now.
 
-   MIDDLE ROAD, 2026-09-04 (owner: "let's do it — build and implement the middle
-   ground"). The knob, the tuner dial and the thumbstick are gone; four labelled
-   tabs and a mini player sit on the same cabinet. `MmmDock.tsx` carries the
-   three reasons and what each one cost. **The cabinet itself is deliberately
-   untouched** — walnut, brass lip, film grain, the frame cap, the safe area.
-   The middle road keeps the console as a SURFACE and spends the rest of its
-   distinctiveness on the map, so painting this bar flat would be undoing the
-   decision rather than completing it.
+   What used to be here: `.mmm-dock` (the walnut cabinet — brass lip, film
+   grain, `--mmm-frame-max` centring), `.mmm-tabs` and `.mmm-tab-*` (four
+   labelled destinations), and the console hardware before them. About 280
+   lines. `git show 80aa5396:src/app/mmm.css` is the whole of the tab bar.
 
-   Three of the four textures are still in use and still the design's own,
-   served from `/console/`: walnut-v3 (the cabinet — "real grain photographed,
-   not a repeating stripe") and grain (film grain, "the single strongest
-   anti-CG cue"). `brushed.png` went with the plate and `brass-turned.png` with
-   the knob cap; both files stay in `public/console/` because the map and the
-   plates still reach for them.
+   Three things this keeps from every chrome before it:
+    1. **Own the safe area.** The pill is the bottom-most element, so it sits
+       `--mmm-mini-gap` above the home indicator; the panes clear the pill AND
+       the inset through `--mmm-chrome-top` + `--mmm-safe-bottom`.
+    2. **Ride the cookie banner.** `bottom` carries `--mmm-dock-lift`, so a
+       banner never covers the only transport on screen.
+    3. **Keep the geometry table honest.** The pill's presence is what moves
+       `--mmm-chrome-size` off zero, through the ONE `:has()` rule below;
+       content clearance follows the token, which is why removing the whole
+       of the bar moved no pane by hand.
 
-   ## Three things this must keep doing
-
-   1. **Own the safe area.** `layout.tsx` sets `viewportFit: 'cover'`; the dock
-      is the bottom-most element, so the home-indicator zone is its problem.
-      Bottom padding carries `--mmm-safe-bottom`, and `--mmm-chrome-size`
-      includes it so the panes clear the whole bar.
-   2. **Stay one row at 375px.** Four tabs at `flex: 1 1 0; min-width: 0` and a
-      fixed 58px transport: 375 - 58 = 79px a tab, which holds "TICKETS" at
-      11px/.14em with room. Nothing here may take an intrinsic width.
-   3. **Keep the geometry table honest.** `--mmm-chrome-size` is derived once
-      and has exactly one conditional override (the `:has()` rule for the mini
-      player). Content clearance follows the token, which is the rule that made
-      swapping the whole of the chrome move no pane by hand. */
-.mmm-dock {
+   MATERIAL FROM TOKENS (row 346's rule): the ground, the blur, the edge and
+   the shadow are `--dock-*`, iOS's translucent material on the default theme
+   and the console's walnut and brass on the four character themes. Paint no
+   material here; set the token. Ink is `--ink-on-walnut*`, which resolves to
+   the page ink on the default theme and to cream on a walnut pill. */
+.mmm-mini {
   position: absolute;
-  left: 0;
-  right: 0;
-  bottom: var(--mmm-dock-lift);
-  /* The console is the same size on every screen (owner, 2026-08-24: "For
-     desktop let's set the size limit to match mobile"). 430px is the width the
-     dc.html draws the dock at — its whole demo frame — so above that the bar
-     stops growing and centres, an object sitting on the desk rather than a
-     strip painted across it. No breakpoint: at phone widths min() takes the
-     viewport and nothing changes. */
-  box-sizing: border-box;
-  max-width: var(--mmm-frame-max, 430px);
+  left: var(--mmm-mini-gap);
+  right: var(--mmm-mini-gap);
+  bottom: calc(var(--mmm-dock-lift) + var(--mmm-mini-gap) + var(--mmm-safe-bottom));
+  /* A pill, not a bar: it holds one width and centres above it. 480px is the
+     widest a song title needs; wider and the transport drifts away from the
+     title on a desk. Below the cap the frame's width minus two gaps wins. */
+  max-width: 480px;
   margin-inline: auto;
+  box-sizing: border-box;
+  height: var(--mmm-mini-h);
   z-index: 45;
-  padding: var(--mmm-dock-pad) var(--mmm-dock-pad) calc(var(--mmm-dock-pad) + var(--mmm-safe-bottom));
-  /* The nameplate used to straddle the lip, so the bar could not clip. It is
-     gone and nothing overhangs any more, so the grain and the lip meet the
-     cabinet's own edge. */
-  /* MATERIAL FROM TOKENS (2026-09-05, owner: "Make design like Apple Music iOS
-     style"). The walnut photograph, its darkening tint, the brass lip and the
-     cast shadow were written here; they are `--dock-*` tokens in globals.css
-     now, `none` by default and restored by the four character themes. The
-     default is iOS's tab bar: a translucent light material with a saturating
-     blur, a hairline on top, nothing photographed. Geometry is untouched —
-     `--mmm-dock-lip` still feeds `--mmm-chrome-size`; only its colour moved. */
-  border-top: var(--mmm-dock-lip) solid var(--dock-lip);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px 0 4px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--dock-lip);
   background-image: var(--dock-tint), var(--dock-texture);
   background-size: auto, 300px auto;
   background-blend-mode: multiply, normal;
   background-color: var(--dock-bg);
   -webkit-backdrop-filter: var(--dock-blur);
   backdrop-filter: var(--dock-blur);
-  box-shadow: var(--dock-shadow);
+  box-shadow: 0 10px 30px -14px rgba(var(--scrim-rgb), .45), var(--dock-shadow);
+  color: var(--ink-on-walnut);
   overflow: hidden;
-  /* The controls are the only interactive chrome; the bar itself swallows taps
+  /* The controls are the only interactive chrome; the pill swallows taps
      rather than passing them to the map underneath. */
   pointer-events: auto;
-}
-/* Film grain over the whole cabinet, unifying every material under one
-   exposure. Above the plate (z2), below nothing interactive. */
-.mmm-dock-grain {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 3;
-  background-image: var(--grain-texture);
-  background-size: 160px;
-  mix-blend-mode: overlay;
-  opacity: 0.09;
-}
-/* NOTHING ON THE DOCK REFLECTS, and that predates the middle road (owner,
-   2026-08-25: "Let's drop the reflection in the console base, it's
-   distracting", then "Remove reflective element from console"). The fascia
-   sheen was a screen-blended gradient rewritten live by pointer and tilt, so on
-   a phone the largest surface in the app carried a highlight that tracked the
-   handset's every move — glare, not material. The controls' speculars went with
-   it. What remains is occlusion and light SOURCES, never an image of the room.
-   Do not reinstate any of them: the request came twice, and a dome that has to
-   be explained is not describing itself. */
-/* ── The tab row ──────────────────────────────────────────────────────────
-   Four labelled destinations and, when nothing is loaded, the transport.
-
-   What used to be here: `.mmm-dock-plate`, `.mmm-dock-badge*`, `.mmm-knob-*`
-   (11 layers: fluted bakelite skirt, lathe-turned brass cap, wear, pointer,
-   occlusion, readout), `.mmm-hifi-dial` and `.mmm-dial-*` (backlight, spill,
-   smudge, two glass layers, a rotating compass card, a tapered needle, a pilot
-   bead, two engraved step affordances), `.mmm-gate*` and `.mmm-stick-*`. About
-   550 lines. It is in the history if a figure from it is ever wanted again;
-   `git show HEAD~1:src/app/mmm.css` is the whole of it.
-
-   The three things the console table got right and this keeps: the height is
-   derived from one token, the safe area belongs to the bottom-most element, and
-   the bar is the same object at every width (`--mmm-frame-max`), an item on the
-   desk rather than a strip painted across the screen. */
-.mmm-tabs {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: stretch;
-}
-.mmm-tab {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: var(--mmm-tab-h);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: 4px 2px 6px;
-  border: 0;
-  background: none;
-  text-decoration: none;
-  position: relative;
-  /* The floor's own ink. Resting tabs take `-3` (5.51:1 on walnut, the measured
-     floor of the ramp) and the active one takes the primary, so "which tab am I
-     on" is carried by ink weight AND by the brass underline below — never by
-     colour alone, which a member who cannot separate the two would lose. */
-  color: var(--ink-on-walnut-3);
-  -webkit-tap-highlight-color: transparent;
-  cursor: pointer;
-}
-.mmm-tab-glyph { display: block; line-height: 0; }
-/* 26px, over the SVG's own 21 (2026-09-05, "better visibility"): iOS draws its
-   tab glyphs at roughly 25pt, and a 21px outline at 1.5px stroke on a phone
-   read as a hairline sketch. Sized here rather than in the markup so a theme
-   can move it. */
-.mmm-tab-glyph svg { width: 26px; height: 26px; }
-.mmm-tab-label {
-  /* 12px tracked mono — the type floor's own exemption shape (mono family AND
-     tracking >= .14em). A tab label is metadata under a glyph, which is exactly
-     what that exemption is for — it is not body copy. Was 11px; the extra
-     pixel is the difference between a label and a caption on a phone. */
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  line-height: 1;
-  white-space: nowrap;
-}
-/* The lit tab. Accent on the iOS bar, the cabinet's primary ink on the console —
-   and heavier, so "where am I" is carried by weight as well as hue. */
-.mmm-tab[data-on='true'] { color: var(--tab-on-ink); }
-.mmm-tab[data-on='true'] .mmm-tab-label { font-weight: 700; }
-.mmm-tab[data-on='true'] .mmm-tab-glyph svg { stroke-width: 0; }
-.mmm-tab[data-on='true'] .mmm-tab-glyph [stroke] { stroke-width: 2; }
-/* The lit rail under the active tab. Brass, fading at both ends, so it reads as
-   a lamp behind the fascia rather than a border. */
-.mmm-tab[data-on='true']::after {
-  content: '';
-  position: absolute;
-  left: 22%;
-  right: 22%;
-  bottom: 0;
-  height: 2px;
-  border-radius: 1px;
-  background: linear-gradient(90deg, transparent, var(--tab-rail), transparent);
-}
-@media (hover: hover) {
-  /* Behind `hover: hover` without exception — an unguarded :hover STICKS on a
-     touchscreen, so the last tab tapped would stay lit next to the real one. */
-  .mmm-tab:hover { color: var(--ink-on-walnut-2); }
-  .mmm-tab[data-on='true']:hover { color: var(--tab-on-ink); }
-}
-.mmm-tab:active .mmm-tab-glyph { transform: translateY(1px); }
-.mmm-tab:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -3px;
-  border-radius: 4px;
-}
-
-/* ── The mini player ──────────────────────────────────────────────────────
-   Present only while a track is loaded. Everything it can do, the full player
-   could already do; what is new is that it says WHAT IS PLAYING without being
-   opened, which the console's pilot bead could not. */
-.mmm-mini {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: var(--mmm-mini-h);
-  padding: 0 2px;
-  border-bottom: 1px solid var(--line);
 }
 .mmm-mini-open {
   flex: 1;
@@ -2381,22 +2266,22 @@ input.mmm-row-title { min-height: 44px; }
   min-height: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 6px;
+  gap: 8px;
+  padding: 4px 8px 4px 2px;
   border: 0;
   background: none;
   text-align: left;
   color: inherit;
-  border-radius: 4px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .mmm-mini-art {
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   flex: 0 0 auto;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 50%;
   border: 1px solid var(--art-edge);
   display: grid;
   place-items: center;
@@ -2411,8 +2296,8 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-mini-meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
 .mmm-mini-title {
   /* 15px, the shell's content floor. A mini player's title is the name of a
-     song, which is content — the tracked-mono exemption that lets a tab label
-     sit at 11px does not reach it, and `lint-source.mjs` says so. */
+     song, which is content — the tracked-mono exemption does not reach it,
+     and `lint-source.mjs` says so. */
   font-size: 0.9375rem;
   font-weight: 600;
   letter-spacing: -0.01em;
@@ -2428,9 +2313,8 @@ input.mmm-row-title { min-height: 44px; }
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.mmm-mini-transport { display: flex; align-items: center; gap: 2px; }
-/* A machined key: brass edge, lit top, one pixel of travel on press. The same
-   material vocabulary the plates and slats use, at control scale. */
+.mmm-mini-transport { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* A key: 44x44, one pixel of travel on press. */
 .mmm-key {
   min-width: 44px;
   min-height: 44px;
@@ -2438,7 +2322,7 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   background: none;
-  border-radius: 4px;
+  border-radius: 50%;
   color: var(--ink-on-walnut-2);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -2448,20 +2332,18 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-key:focus-visible { outline: 2px solid var(--tab-on-ink); outline-offset: -3px; }
 @media (hover: hover) {
   .mmm-mini-open:hover,
-  .mmm-key:hover { background: rgba(255, 232, 190, 0.08); }
+  .mmm-key:hover { background: rgba(var(--surface-tint-rgb), .08); }
   .mmm-key:hover { color: var(--ink-on-walnut); }
 }
 
 /* The ONE place `--mmm-chrome-size` is allowed to move, and it moves because
-   the dock really is taller: the panes must clear the mini player or the last
-   row of every list sits behind it. `:has()` rather than a class on the frame
-   because the dock owns the answer — it is the component that knows whether a
-   track is loaded, and a second copy of that state on an ancestor is a second
-   thing to keep in sync. */
-.mmm-frame:has(.mmm-dock[data-mini='true']) {
-  --mmm-chrome-size: calc(
-    var(--mmm-tab-h) + var(--mmm-mini-h) + var(--mmm-dock-pad) * 2 + var(--mmm-dock-lip) + var(--mmm-safe-bottom)
-  );
+   there really is something at the bottom of the frame: the panes must clear
+   the pill or the last row of every list sits behind it. `:has()` rather than
+   a class on the frame because the pill owns the answer — it is the component
+   that knows whether a track is loaded, and a second copy of that state on an
+   ancestor is a second thing to keep in sync. */
+.mmm-frame:has(.mmm-mini) {
+  --mmm-chrome-size: calc(var(--mmm-mini-h) + var(--mmm-mini-gap) * 2);
 }
 
 /* Reduced motion: the sheet settles instantly. Complements the token-level
@@ -2472,12 +2354,10 @@ input.mmm-row-title { min-height: 44px; }
 }
 
 /* The design system's ONE breakpoint (`MOBILE.md`) has nothing left to move.
-   The dock is the same bar at every width — four flexed tabs and a fixed
-   transport — which is what "there is no separate mobile build" means in
-   practice. The block that was here redefined the whole chrome table for the
-   phone because three absolutely-positioned pieces had to be re-fitted at that
-   width; a flex row re-fits itself. The 44px floors in `mobile-fit.css` still
-   apply, and every control in this bar clears them at every width. */
+   The pill is the same object at every width — it holds one width and centres
+   above it — which is what "there is no separate mobile build" means in
+   practice. The 44px floors in `mobile-fit.css` still apply, and every control
+   in the pill clears them at every width. */
 
 /* ── Wide viewports ────────────────────────────────────────────────────── */
 
@@ -2626,10 +2506,10 @@ input.mmm-row-title { min-height: 44px; }
    `.mmm-chip` uses. The map's chips sit over a photograph of a city, so a
    translucent chip is unreadable in a way the same chip over a pane is not. */
 .mmm-map-chip {
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   border-radius: var(--radius-pill);
   padding: 8px 15px;
   cursor: pointer;
@@ -2786,10 +2666,10 @@ input.mmm-row-title { min-height: 44px; }
   line-height: 1;
 }
 .mmm-ticket-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--accent-text);
   text-align: left;
 }
@@ -2822,10 +2702,10 @@ input.mmm-row-title { min-height: 44px; }
 }
 .mmm-ticket-rule {
   margin-top: 8px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 0.9375rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 .mmm-ticket-money {
@@ -2874,10 +2754,10 @@ input.mmm-row-title { min-height: 44px; }
   display: inline-flex;
   align-items: center;
   padding: 10px 2px;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
   text-decoration: none;
 }
@@ -2905,8 +2785,8 @@ input.mmm-row-title { min-height: 44px; }
   margin-top: 8px;
   font-family: var(--font-mono);
   font-size: 0.9375rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
   color: var(--ink-3);
 }
 .mmm-show-sale { margin-top: 20px; }
@@ -3156,21 +3036,15 @@ input.mmm-row-title { min-height: 44px; }
   display: grid;
   place-items: center;
   overflow: hidden;
-  /* The machined bezel: deep brass, bright brass, deep again, then the inner
-     top shadow that makes the sleeve read as cut INTO the faceplate rather
-     than floating on it. Radius 2px, not 26 — a bezel is turned metal, and a
-     26px round-rect reads as a phone app icon. Same stack as .walnut-plate;
-     it is stated here rather than composed because this one also carries the
-     drop shadow and the placeholder glyph. */
+  /* The frame is a token (`--art-frame`/`--art-radius`, globals.css): a soft
+     cast under 10px corners on iOS; on the character themes the machined
+     bezel — deep brass, bright brass, deep again, then the inner top shadow
+     that makes the sleeve read as cut INTO the faceplate — at 2px, because a
+     bezel is turned metal and a 26px round-rect reads as a phone app icon. */
   border: 0;
-  border-radius: 2px;
+  border-radius: var(--art-radius);
   background: var(--walnut-3);
-  box-shadow:
-    0 0 0 2px var(--brass-deep),
-    0 0 0 5px var(--brass),
-    0 0 0 6px #6d5222,
-    inset 0 3px 12px rgba(0, 0, 0, .7),
-    0 24px 60px -16px rgba(0, 0, 0, .8);
+  box-shadow: var(--art-frame);
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 6rem;
@@ -3238,9 +3112,13 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-player-range::-webkit-slider-runnable-track {
   height: 8px;
   border-radius: 999px;
-  border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .35);
+  border: 1px solid var(--range-track-edge);
+  /* The played part is painted over the rail from `--fill`, which the
+     component writes on the input; the pseudo-element inherits it. */
+  background:
+    linear-gradient(90deg, var(--range-track-fill) var(--fill, 0%), transparent var(--fill, 0%)),
+    var(--range-track-bg);
+  box-shadow: var(--range-track-shadow);
 }
 .mmm-player-range::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -3249,23 +3127,26 @@ input.mmm-row-title { min-height: 44px; }
   /* (8px track - 22px thumb) / 2 - 1px border: centres the knob on the rail. */
   margin-top: -8px;
   border-radius: 50%;
-  border: 1px solid var(--brass-deep);
-  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  border: 1px solid var(--range-thumb-edge);
+  background: var(--range-thumb-bg);
+  box-shadow: var(--range-thumb-shadow);
 }
 .mmm-player-range::-moz-range-track {
   height: 8px;
   border-radius: 999px;
-  border: 1px solid var(--brass-deep);
-  background: linear-gradient(180deg, rgba(0, 0, 0, .20), rgba(0, 0, 0, .05));
+  border: 1px solid var(--range-track-edge);
+  background:
+    linear-gradient(90deg, var(--range-track-fill) var(--fill, 0%), transparent var(--fill, 0%)),
+    var(--range-track-bg);
+  box-shadow: var(--range-track-shadow);
 }
 .mmm-player-range::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  border: 1px solid var(--brass-deep);
-  background: radial-gradient(circle at 36% 30%, var(--lamp), var(--brass) 55%, var(--brass-deep));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, .5);
+  border: 1px solid var(--range-thumb-edge);
+  background: var(--range-thumb-bg);
+  box-shadow: var(--range-thumb-shadow);
 }
 .mmm-full-seek { margin-top: 22px; }
 .mmm-full-volume { margin-top: 18px; }
@@ -3283,10 +3164,11 @@ input.mmm-row-title { min-height: 44px; }
   gap: 22px;
   margin-top: 20px;
 }
-/* The transport, as hardware.
-   Brass while paused, LIT accent while playing — the state is the lamp, which
-   is how a receiver shows it and means the control reads at a glance without
-   a label. */
+/* The transport. Every finish is a token (`--transport-*`, globals.css):
+   Apple Music's solid disc and bare skip glyphs on iOS; on the character
+   themes brass while paused and LIT accent while playing — the state is the
+   lamp, which is how a receiver shows it and means the control reads at a
+   glance without a label. Paint nothing here directly; set the token. */
 .mmm-full-play {
   position: relative;
   flex: 0 0 auto;
@@ -3297,26 +3179,20 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at 38% 28%, #fff6dd, var(--brass) 56%, var(--brass-deep));
-  color: var(--walnut-3);
+  background: var(--transport-play-bg);
+  color: var(--transport-play-ink);
   font-size: 1.5rem;
   cursor: pointer;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .9),
-    inset 0 -3px 8px rgba(0, 0, 0, .3),
-    0 3px 10px -2px rgba(0, 0, 0, .75);
+  box-shadow: var(--transport-play-shadow);
   transition: background 180ms ease, box-shadow 180ms ease;
 }
 .mmm-full-play:not([data-paused]) {
-  background: radial-gradient(circle at 38% 28%, #ffb08c, var(--accent) 58%, #9c3016);
-  color: var(--ink-on-accent);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .5),
-    inset 0 -3px 8px rgba(0, 0, 0, .35),
-    0 0 24px -2px rgba(var(--accent-rgb), .8);
+  background: var(--transport-play-lit-bg);
+  color: var(--transport-play-lit-ink);
+  box-shadow: var(--transport-play-lit-shadow);
 }
 
-/* Bakelite, in a brass collar. Same family as the logo trigger. */
+/* The skips: bare glyphs on iOS; bakelite in a brass collar on the console. */
 .mmm-full-step {
   flex: 0 0 auto;
   width: 52px;
@@ -3326,21 +3202,14 @@ input.mmm-row-title { min-height: 44px; }
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background:
-    radial-gradient(ellipse 30% 22% at 34% 20%, rgba(255, 231, 190, .45), transparent 70%),
-    radial-gradient(circle at 38% 30%, #6b4526, #3a2110 56%, #170c04 100%);
-  box-shadow:
-    0 0 0 2px var(--brass-deep),
-    0 0 0 3px var(--brass),
-    inset 0 1px 0 rgba(255, 226, 175, .35),
-    inset 0 -2px 7px rgba(0, 0, 0, .75),
-    0 3px 8px -1px rgba(0, 0, 0, .8);
-  color: var(--ink-on-walnut-2);
+  background: var(--transport-step-bg);
+  box-shadow: var(--transport-step-shadow);
+  color: var(--transport-step-ink);
   font-size: 1.25rem;
   cursor: pointer;
   transition: color 180ms ease, transform 200ms cubic-bezier(.34, 1.4, .5, 1);
 }
-.mmm-full-step:hover:not(:disabled) { color: var(--ink-on-walnut); }
+.mmm-full-step:hover:not(:disabled) { color: var(--transport-step-ink-hover); }
 .mmm-full-step:active:not(:disabled) { transform: scale(.9); }
 .mmm-full-step:disabled { opacity: .45; cursor: default; }
 .mmm-full-play svg { position: absolute; inset: 0; }
@@ -3377,6 +3246,11 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-full-hype[data-locked] {
   background: rgba(var(--accent-rgb), 0.08);
   border-color: rgba(var(--accent-rgb), 0.28);
+  /* A locked HYPE is also a hyped one, and the hyped rule above sets the ink
+     for an ACCENT fill. This rule wins on order and takes the fill back to an
+     8% tint, so without its own ink the label was white on near-white —
+     measured the first time the control rendered at all (row 503). */
+  color: var(--accent-text);
   cursor: default;
 }
 .mmm-full-hype-wait {
@@ -3452,10 +3326,10 @@ input.mmm-row-title { min-height: 44px; }
   box-shadow: 0 0 30px rgba(var(--accent-rgb), 0.38);
 }
 .mmm-full-exit-label {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-on-walnut-3);
 }
 
@@ -3505,26 +3379,38 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-profile-band {
   position: relative;
   height: 132px;
-  background: linear-gradient(142deg, var(--accent) 0%, var(--accent-deep) 52%, var(--walnut) 100%);
+  /* One token, flat on iOS, the console's sweep on its own themes — see
+     --profile-band in globals.css. The artist's own cover art still paints
+     over it. */
+  background: var(--profile-band);
 }
 /* A venue's band takes the venue hue: the role colour is the one thing that
    tells the two panes apart at a glance, and the eyebrow is small. */
 .mmm-public-profile[data-profile-type='venue'] .mmm-profile-band {
-  background: linear-gradient(142deg, var(--role-venue) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  background: var(--profile-band-venue);
 }
 /* The third profile type, scoped on its own page rather than on
    `[data-profile-type]`, because `.mmm-public-profile` also sets a 760px column
    and this dashboard is 920. `--role-advertiser` has existed since Design
    System 6 and coloured nothing until 2026-09-13. */
 .mmm-advertiser .mmm-profile-band {
-  background: linear-gradient(142deg, var(--role-advertiser) 0%, var(--walnut-2) 56%, var(--walnut) 100%);
+  background: var(--profile-band-advertiser);
 }
 .mmm-advertiser .mmm-profile-card { margin-bottom: 24px; }
 .mmm-profile-band img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* NO IMAGERY, NO BAND (2026-09-22, DESIGN_SYNC row 501). With no hero the band
+   was 132px of flat grey with the initial tile floating over its bottom edge,
+   which reads as a broken image on every profile that has not uploaded one —
+   at alpha, nearly all of them. The page sets `data-hero` on the card; with
+   it false the band collapses and the head sits in the card's own padding,
+   the tile and the name on one row. A profile WITH a cover is unchanged. */
+.mmm-profile-card[data-hero='false'] .mmm-profile-band { display: none; }
+.mmm-profile-card[data-hero='false'] .mmm-profile-head { margin-top: 22px; align-items: center; }
+.mmm-profile-card[data-hero='false'] .mmm-profile-head-label { padding-bottom: 0; }
 .mmm-profile-band-glare {
   position: absolute;
   inset: 0;
-  background: radial-gradient(70% 100% at 22% 8%, rgba(var(--bg-base-rgb), 0.34), transparent 60%);
+  background: var(--profile-band-glare);
 }
 .mmm-profile-body { padding: 0 22px 22px; display: flex; flex-direction: column; gap: 18px; }
 .mmm-profile-head { display: flex; align-items: flex-end; gap: 14px; margin-top: -34px; }
@@ -3805,10 +3691,10 @@ input.mmm-row-title { min-height: 44px; }
 /* Why this card is in the deck. Never optional — see ADHERENCE 36. */
 .mmm-deck-why {
   margin: 11px 0 0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: rgba(var(--ink-on-media-rgb), 0.6);
 }
 .mmm-deck-controls { display: flex; align-items: center; gap: 16px; }
@@ -3849,10 +3735,10 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-deck-artist:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .mmm-deck-count {
   margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ink-3);
 }
 /* A verdict the route refused, named under the count so the member knows what
@@ -3909,7 +3795,7 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--back-font); font-size: 0.9375rem; letter-spacing: var(--back-tracking); text-transform: var(--back-case); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mmm-me-route-trail span { display: inline-flex; gap: 7px; }
 .mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
-.mmm-empty-state { padding: 18px; border: 1px dashed var(--ink-a45); border-radius: var(--radius-panel); background: transparent; }
+.mmm-empty-state { padding: 18px; border: var(--empty-edge); background: var(--empty-bg); font-family: var(--empty-font); border-radius: var(--radius-panel); background: transparent; }
 .mmm-empty-state strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 1rem; }
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

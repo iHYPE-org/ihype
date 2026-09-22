@@ -1,4 +1,6 @@
 import { ImageResponse } from 'next/og';
+import { BrandMarkImage } from '@/components/brand/BrandMarkImage';
+import { OG, OG_FRAME } from '@/app/api/og/palette';
 
 export const runtime = 'nodejs';
 export const alt = 'iHYPE — Independent music discovery for the scene';
@@ -8,35 +10,22 @@ export const contentType = 'image/png';
 export default function OgImage() {
   return new ImageResponse(
     (
-      <div
-        style={{
-          width: '100%', height: '100%',
-          display: 'flex', flexDirection: 'column',
-          justifyContent: 'space-between',
-          background: '#0b1220',
-          padding: '72px 80px',
-          fontFamily: 'sans-serif',
-        }}
-      >
-        {/* Top: wordmark */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ color: '#fff7ec', fontSize: 36, fontWeight: 900, letterSpacing: '0.06em' }}>i</span>
-          <span style={{ color: '#ff5029', fontSize: 36, fontWeight: 900, letterSpacing: '0.06em' }}>HYPE</span>
+      <div style={OG_FRAME}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <BrandMarkImage accent={OG.accent} height={36} ink={OG.ink} />
         </div>
 
-        {/* Centre: headline */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 72, fontWeight: 900, color: '#eef1f6', lineHeight: 1.05, letterSpacing: '-0.03em' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', fontSize: 72, fontWeight: 800, color: OG.ink, lineHeight: 1.05, letterSpacing: '-0.03em' }}>
             <span>Independent music,</span>
-            <span style={{ color: '#ff5029' }}>built for the scene.</span>
+            <span style={{ color: OG.accent }}>built for the scene.</span>
           </div>
-          <div style={{ fontSize: 28, color: '#5a5048', maxWidth: 780 }}>
+          <div style={{ fontSize: 28, color: OG.ink3, maxWidth: 780 }}>
             Completely free · Not-for-profit · 0% ticket fees
           </div>
         </div>
 
-        {/* Bottom: domain */}
-        <div style={{ color: '#3a342e', fontSize: 22, letterSpacing: '0.08em' }}>ihype.org</div>
+        <div style={{ color: OG.ink3, fontSize: 22, letterSpacing: '0.04em' }}>ihype.org</div>
       </div>
     ),
     { ...size }

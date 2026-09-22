@@ -85,7 +85,26 @@ const RETIRED = [
        `PAYOUT_HOLD_DAYS` in src/lib/payout-release.ts; a surface that wants
        to name a date asks `payoutHoldEndsAt()` or `describePayableRelease()`
        rather than writing one down. */
-    pattern: /\b(?:2|two) business days\b|released? (?:automatically )?(?:once|after|when) (?:the|a) show (?:ends|closes|closing)|\bsame night\b/i,
+    /* WIDENED 2026-09-18. The three alternatives above were written against
+       the surfaces that COMPUTE a release date, and they matched none of the
+       three claims still live on the recruiting pages a year later: two stat
+       tiles reading `'24h'` beside `Payout turnaround` / `Settlement
+       turnaround`, and a checklist line promising "your 70% hits your account
+       night of show". The first two are the harder shape and the reason the
+       last two alternatives exist — the number and the noun sit in SEPARATE
+       fields on one source line, so a pattern for the phrase alone sees
+       nothing; these require the pair within a line, in either order, which
+       is what the line-at-a-time loop below can actually judge.
+       Note `\d+%` carries NO trailing `\b`: `%` is a non-word character and so
+       is the space after it, so a `\b` there can never match and the whole
+       alternative is dead. That was the first draft, and the BREAK TEST is
+       what said so — restoring the old copy caught the stat tile and silently
+       missed the checklist line, which is a guard that reads as working.
+       Drive both failures before believing this entry.
+       "night of show" is deliberately NOT matched on its own: doors, load-in
+       and merch legitimately happen the night of the show. It is a claim only
+       next to money, so a money word is required. */
+    pattern: /\b(?:2|two) business days\b|released? (?:automatically )?(?:once|after|when) (?:the|a) show (?:ends|closes|closing)|\bsame night\b|\b\d{1,2}\s?h(?:ours?|rs?)?\b[^\n]{0,90}\b(?:payout|settlement|paid out|transfer)\b|\b(?:payout|settlement|paid out|transfer)\b[^\n]{0,90}\b(?:within|in|after)\s+\d{1,2}\s?h(?:ours?|rs?)?\b|(?:\d+%|\b(?:cut|share|money|takings|earnings)\b)[^\n]{0,60}\bnight of (?:the )?show\b|\bnight of (?:the )?show\b[^\n]{0,60}\b(?:paid|payout|account|transfer)\b/i,
     what: 'the pre-hold payout timing',
     retired: '2026-08-27 — PAYOUT_HOLD_DAYS became 10 so a card dispute has something left to reverse',
     instead: 'A payable is released about PAYOUT_HOLD_DAYS after the show STARTS, only once it has ENDED and the payee has a Connect account. Read the number from payout-release.ts; never write a duration into copy.',

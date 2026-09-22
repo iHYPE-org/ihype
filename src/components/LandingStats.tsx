@@ -1,5 +1,5 @@
 import { formatNumber } from '@/lib/format-locale';
-import { getLocale } from '@/lib/i18n/server';
+import { getLocale, getServerT } from '@/lib/i18n/server';
 import { getTransparencySnapshot } from '@/lib/transparency';
 
 /**
@@ -16,26 +16,65 @@ import { getTransparencySnapshot } from '@/lib/transparency';
  * resolving the boundary does not shift layout — '/' currently measures
  * 0.000-0.003 CLS against a real budget and this must not spend it.
  */
-const STAT_LABELS = ['local artists', 'music fans', 'HYPEs sent', 'upcoming shows'] as const;
+/**
+ * The four counters, each carrying BOTH English forms.
+ *
+ * "1 music fans" shipped on the front door of a private alpha, where a count
+ * of one is the likeliest count there is. The labels were four bare plural
+ * strings in an array, and an array of strings cannot know what number is
+ * about to be printed beside it.
+ *
+ * It is also the shape no instrument here can see: `audit:untranslated` reads
+ * JSX text, so a label living in a string constant is invisible to it exactly
+ * the way the legal documents' own clauses are -- which is why these four were
+ * English in eleven locales as well as ungrammatical in one.
+ *
+ * Both forms go through `t()` as literals so `extract-i18n-keys.mjs` can see
+ * them and `apply-i18n-batch.mjs` can translate them. English is the only
+ * language this file chooses BETWEEN the two forms for; every other locale
+ * gets whatever its own dictionary supplies for each key. A language with
+ * three plural forms would need its own rule, so say "two forms", never
+ * "pluralised".
+ */
+export type T = (key: string, fallback?: string) => string;
+type StatLabel = { key: string; one: string; other: string };
 
-function StatList({ values }: { values: readonly string[] }) {
+function statLabels(t: T): StatLabel[] {
+  return [
+    { key: 'artists', one: t('landingStats.artistsOne', 'local artist'), other: t('landingStats.artistsOther', 'local artists') },
+    { key: 'fans', one: t('landingStats.fansOne', 'music fan'), other: t('landingStats.fansOther', 'music fans') },
+    { key: 'hypes', one: t('landingStats.hypesOne', 'HYPE sent'), other: t('landingStats.hypesOther', 'HYPEs sent') },
+    { key: 'shows', one: t('landingStats.showsOne', 'upcoming show'), other: t('landingStats.showsOther', 'upcoming shows') },
+  ];
+}
+
+function StatList({ rows }: { rows: { key: string; value: string; label: string }[] }) {
   return (
     <>
-      {STAT_LABELS.map((label, index) => (
-        <div key={label}>
-          <strong>{values[index]}</strong>
-          <span>{label}</span>
+      {rows.map((row) => (
+        <div key={row.key}>
+          <strong>{row.value}</strong>
+          <span>{row.label}</span>
         </div>
       ))}
     </>
   );
 }
 
-export function LandingStatsFallback() {
+/**
+ * Takes `t` rather than awaiting `getServerT()` itself, and that is the whole
+ * point of the prop: this renders as a Suspense FALLBACK, so an async version
+ * would suspend in the slot whose job is to paint immediately — the boundary
+ * would then have nothing to show and the hero's own stream would be the
+ * thing waiting. The caller already has `t` in hand.
+ */
+export function LandingStatsFallback({ t }: { t: T }) {
   // U+2007 (figure space) rather than an em dash or a spinner: it occupies the
   // width of a digit in the same font, so the box is already the right size
   // when the real number lands, and it reads as "not yet" rather than "zero".
-  return <StatList values={STAT_LABELS.map(() => ' ')} />;
+  // The plural form is the placeholder's, because no count has arrived to
+  // choose with.
+  return <StatList rows={statLabels(t).map((l) => ({ key: l.key, value: ' ', label: l.other }))} />;
 }
 
 export async function LandingStats() {
@@ -58,14 +97,20 @@ export async function LandingStats() {
     counters.profileHypes + counters.showHypes + counters.upcomingShows;
   if (total === 0) return null;
 
+  const t = await getServerT();
+  const counts = [
+    counters.totalArtists,
+    counters.totalListeners,
+    counters.profileHypes + counters.showHypes,
+    counters.upcomingShows,
+  ];
   return (
     <StatList
-      values={[
-        format(counters.totalArtists),
-        format(counters.totalListeners),
-        format(counters.profileHypes + counters.showHypes),
-        format(counters.upcomingShows)
-      ]}
+      rows={statLabels(t).map((label, index) => ({
+        key: label.key,
+        value: format(counts[index]),
+        label: counts[index] === 1 ? label.one : label.other,
+      }))}
     />
   );
 }

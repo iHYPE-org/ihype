@@ -112,14 +112,26 @@ describe('the retired-claims audit', () => {
   it('every table entry says when and what instead, not just what is banned', () => {
     /* An entry that only forbids a phrase teaches the next reader nothing
        and is the first thing deleted when it becomes inconvenient. */
+    /* Judged per ENTRY, not per 600-character window. The window version read
+       `entry.slice(0, 600)` after each `pattern:`, so it was measuring text
+       LENGTH as well as content — widening one pattern on 2026-09-18 pushed
+       that entry's own `instead:` past the 600th character and failed a table
+       that was completely correct. This repository's recurring
+       window-attribution trap, in a test this time: cut at the real boundary
+       (the next entry's opening brace, or the array's close) and judge what is
+       actually inside it. */
     const source = readFileSync('scripts/audit-retired-claims.mjs', 'utf8');
-    const entries = source.split('pattern:').slice(1);
+    const table = source.slice(source.indexOf('const RETIRED = ['));
+    const entries = table
+      .split(/\n  \{\n/)
+      .slice(1)
+      .map((chunk) => chunk.split(/\n  \},?\n/)[0]);
     expect(entries.length).toBeGreaterThanOrEqual(6);
     for (const entry of entries) {
-      const head = entry.slice(0, 600);
-      expect(head).toContain('what:');
-      expect(head).toContain('retired:');
-      expect(head).toContain('instead:');
+      expect(entry).toContain('pattern:');
+      expect(entry).toContain('what:');
+      expect(entry).toContain('retired:');
+      expect(entry).toContain('instead:');
     }
   });
 });

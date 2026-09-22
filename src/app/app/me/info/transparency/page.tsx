@@ -11,7 +11,7 @@ export default async function MmmTransparencyPage() {
     <article className="mmm-info-report">
       <Link className="mmm-charter-back" href="/app/me?panel=info">‹ {t('mmmStrip.info', 'Info')}</Link>
       <header className="mmm-info-report-head">
-        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmDock.tab.me', 'Me')} · {t('mmmStrip.info', 'Info')}</p>
+        <p className="mmm-eyebrow mmm-eyebrow-accent">{t('mmmNav.tab.me', 'Me')} · {t('mmmStrip.info', 'Info')}</p>
         <h1>{t('mmmTransparencyPage.title', 'Transparency report')}</h1>
         <p>{t('mmmTransparencyPage.lede', 'Financial, platform, moderation, and safety numbers—together in one public record.')}</p>
       </header>

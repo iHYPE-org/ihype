@@ -27,10 +27,10 @@ export type Translate = (key: string, fallback?: string) => string;
 /** The dock's four engraved tab labels. */
 export function translateTabLabel(t: Translate, moduleId: string, fallback: string): string {
   switch (moduleId) {
-    case 'music': return t('mmmDock.tab.listen', 'Listen');
-    case 'map': return t('mmmDock.tab.map', 'Map');
-    case 'tickets': return t('mmmDock.tab.tickets', 'Tickets');
-    case 'me': return t('mmmDock.tab.me', 'Me');
+    case 'music': return t('mmmNav.tab.listen', 'Listen');
+    case 'map': return t('mmmNav.tab.map', 'Map');
+    case 'tickets': return t('mmmNav.tab.tickets', 'Tickets');
+    case 'me': return t('mmmNav.tab.me', 'Me');
     default: return fallback;
   }
 }

@@ -571,6 +571,28 @@ const STATION_CITY = 'Portland';
 const STATION_REGION = 'ME';
 const STATION_COUNTRY = 'US';
 
+/**
+ * Puts a member's HYPE window on a profile back to "never hyped".
+ *
+ * `seedPlayableStation` leaves a hype on the station artist for the fan it
+ * warms, and a spec that wants to PRESS the full player's HYPE needs a member
+ * whose window on that artist is open — which, against a database that
+ * persists between local runs, a fresh email alone does not guarantee past the
+ * first run. Deleting the row is the fixture owning its state (the row-434
+ * rule), not a bypass: the window is a timestamp per (user, profile), and no
+ * row is exactly what a member who never hyped has.
+ */
+export async function openHypeWindow({ fanUserId, profileSlug }: { fanUserId: string; profileSlug: string }) {
+  const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: databaseUrl() }) });
+  try {
+    const profile = await prisma.profile.findUnique({ where: { slug: profileSlug }, select: { id: true } });
+    if (!profile) throw new Error(`openHypeWindow: no profile with slug ${profileSlug}`);
+    await prisma.profileHypeEvent.deleteMany({ where: { userId: fanUserId, profileId: profile.id } });
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
 export async function seedPlayableStation({
   fanUserId,
   key = 'default',

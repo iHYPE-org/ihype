@@ -65,7 +65,7 @@ export async function GET(
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:var(--bg);color:#eef1f6;font-family:"Work Sans",system-ui,sans-serif;height:80px;overflow:hidden;display:flex;align-items:center}
 .player{display:flex;align-items:center;gap:12px;padding:12px 16px;width:100%}
-.art{width:56px;height:56px;border-radius:8px;background:linear-gradient(135deg,var(--accent),var(--accent-2));flex-shrink:0;overflow:hidden}
+.art{width:56px;height:56px;border-radius:8px;background:var(--accent);flex-shrink:0;overflow:hidden}
 .art img{width:100%;height:100%;object-fit:cover}
 .info{flex:1;min-width:0}
 .title{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#eef1f6}

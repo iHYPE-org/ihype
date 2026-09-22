@@ -391,7 +391,7 @@ export function PagesHome({
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-on-accent)',
-                      background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`,
+                      background: color,
                     }}>
                       {initials}
                     </div>
@@ -417,7 +417,7 @@ export function PagesHome({
       {tab === 'mypage' && (
         <div className="sub-panel">
           <div className="mmm-profiles-eyebrow">
-            {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
+            {t('pagesHome.yourPagesTitle', 'Your pages')}
           </div>
 
           {loadFailed && data === null ? (
@@ -604,7 +604,7 @@ export function PagesHome({
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-on-accent)',
-                      background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
+                      background: color, textDecoration: 'none',
                     }}>
                       {initials}
                     </Link>
@@ -648,7 +648,7 @@ export function PagesHome({
                       width: 46, height: 46, borderRadius: 9999, flexShrink: 0,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-on-accent)',
-                      background: `linear-gradient(135deg, ${color}, ${hexA(color, 0.55)})`, textDecoration: 'none',
+                      background: color, textDecoration: 'none',
                     }}>
                       {initials}
                     </Link>

@@ -52,7 +52,9 @@ export type MmmSeedItem = {
 };
 
 /**
- * The two stops of the card's fallback gradient, when an artist has no artwork.
+ * The card's fallback tone, when an artist has no artwork. (`c2` was the second
+ * stop of a diagonal gradient until 2026-09-22; the card is flat now and the
+ * stop is kept only so the six-entry table stays the shape its comment describes.)
  *
  * ## Why this is a fixed set and not a hue wheel
  *
@@ -152,10 +154,13 @@ export function MmmSeedDeck({
          been 20px since this read moved onto `.mmm-frame`, the card sized to
          its 480px ceiling on every phone, and its bottom third (artist, city,
          the reason line) sat under the dock and the banner. The token stays
-         only as the fallback for a render with no dock in the document. */
-      const dock = document.querySelector('.mmm-dock');
-      const fromDock = dock ? Math.max(0, window.innerHeight - dock.getBoundingClientRect().top) : null;
-      const reserved = (fromDock ?? px('--mmm-chrome-top')) + 20;
+         only as the fallback for a render with no pill in the document. */
+      /* The now-playing pill replaced the dock as the shell's only bottom
+         chrome (2026-09-22); with no pill on screen there is nothing to clear
+         but the token's own answer, which is the cookie banner's lift. */
+      const pill = document.querySelector('.mmm-mini');
+      const fromPill = pill ? Math.max(0, window.innerHeight - pill.getBoundingClientRect().top) : null;
+      const reserved = (fromPill ?? px('--mmm-chrome-top')) + 20;
       /* visualViewport follows the actually visible WebView when iOS browser
          chrome or the keyboard changes size; innerHeight can continue to
          report the larger layout viewport and put the actions behind it. */
@@ -255,7 +260,7 @@ export function MmmSeedDeck({
           opacity: 1 - step * 0.28,
         }}
       >
-        <span style={{ background: `linear-gradient(150deg, ${shade.c1}, ${shade.c2})` }} />
+        <span style={{ background: shade.c1 }} />
       </div>
     );
   };
@@ -298,7 +303,7 @@ export function MmmSeedDeck({
             <span
               aria-hidden="true"
               className="mmm-deck-art"
-              style={{ background: `linear-gradient(150deg, ${colors.c1} 0%, ${colors.c2} 100%)` }}
+              style={{ background: colors.c1 }}
             >
               <span className="mmm-deck-initial">{item.initial}</span>
             </span>
