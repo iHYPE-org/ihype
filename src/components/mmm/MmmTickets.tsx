@@ -1,7 +1,7 @@
 'use client';
 
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate } from '@/lib/format-locale';
+import { formatDoorTime } from '@/lib/format-locale';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { MmmMeTicket } from '@/lib/mmm-me';
 import { TicketClaimForm } from '@/components/TicketTransferPanel';
@@ -11,8 +11,8 @@ import { useI18n } from '@/components/I18nProvider';
 const DEMO_QR = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"><rect width="120" height="120" fill="white"/><g fill="#07101f"><path d="M8 8h36v36H8zm8 8v20h20V16zM76 8h36v36H76zm8 8v20h20V16zM8 76h36v36H8zm8 8v20h20V84zM54 8h12v12H54zm0 22h12v24H54zm22 24h12v12H76zm22 0h14v14H98zM54 76h12v36H54zm22 0h12v12H76zm12 12h24v24H88zM76 100h12v12H76z"/></g></svg>')}`;
 
 const DEMO_TICKETS: MmmMeTicket[] = [
-  { serializedId: 'DEMO-7F3A-2026', title: 'Harbor Lights', where: 'Signal Hall · Portland', startsAt: '2026-10-09T19:30:00-04:00', faceValue: '$18', processingFee: '$0.82', scannedAt: null, qrDataUrl: DEMO_QR },
-  { serializedId: 'DEMO-2C91-2026', title: 'Static Bloom', where: 'The Foundry · Biddeford', startsAt: '2026-06-14T20:00:00-04:00', faceValue: '$14', processingFee: '$0.70', scannedAt: '2026-06-14T19:42:00-04:00', qrDataUrl: DEMO_QR },
+  { serializedId: 'DEMO-7F3A-2026', title: 'Harbor Lights', where: 'Signal Hall · Portland', startsAt: '2026-10-09T19:30:00-04:00', timeZone: 'America/New_York', faceValue: '$18', processingFee: '$0.82', scannedAt: null, qrDataUrl: DEMO_QR },
+  { serializedId: 'DEMO-2C91-2026', title: 'Static Bloom', where: 'The Foundry · Biddeford', startsAt: '2026-06-14T20:00:00-04:00', timeZone: 'America/New_York', faceValue: '$14', processingFee: '$0.70', scannedAt: '2026-06-14T19:42:00-04:00', qrDataUrl: DEMO_QR },
 ];
 
 /**
@@ -30,13 +30,19 @@ const DEMO_TICKETS: MmmMeTicket[] = [
  * and omitted entirely on orders placed before the fee existed.
  */
 
-function dayParts(iso: string, locale: Locale) {
+/* Every part on the VENUE's clock (row 464). Until 2026-09-22 this called
+   `formatDate` with no zone, so on the Worker a wallet row read "Doors 00:00"
+   for a show the ticket page beside it rendered as 8:00 PM EDT — the guard
+   that stops that class of read never saw it, because `.startsAt` and the
+   formatter sat on different lines. The clock carries its zone name so a fan
+   in another city is never wrong about which 8:00 it is. */
+function dayParts(iso: string, locale: Locale, timeZone: string | null) {
   const date = new Date(iso);
   return {
-    day: formatDate(locale, date, { day: '2-digit' }),
-    month: formatDate(locale, date, { month: 'short' }).toUpperCase(),
-    time: formatDate(locale, date, { hour: '2-digit', minute: '2-digit', hour12: false }),
-    full: formatDate(locale, date, { day: 'numeric', month: 'short' }).toUpperCase(),
+    day: formatDoorTime(locale, date, timeZone, { day: '2-digit' }),
+    month: formatDoorTime(locale, date, timeZone, { month: 'short' }).toUpperCase(),
+    time: formatDoorTime(locale, date, timeZone, { hour: 'numeric', minute: '2-digit' }),
+    full: formatDoorTime(locale, date, timeZone, { day: 'numeric', month: 'short' }).toUpperCase(),
   };
 }
 
@@ -59,12 +65,16 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
   return (
     <>
       {/* Claiming sits on the LIST, not on a ticket page: the person redeeming a
-          code does not have the ticket yet, so they cannot open its page. Above
-          the list because on a first transfer the list below is empty or demo
-          content, and a control under an empty state reads as part of it. */}
-      <div style={{ padding: '0 2px 14px' }}>
-        <TicketClaimForm />
-      </div>
+          code does not have the ticket yet, so they cannot open its page. ABOVE
+          the list only while the list is empty — on a first transfer a control
+          under an empty state reads as part of it — and BELOW it otherwise,
+          because the tickets are what the member came for and an edge-case
+          form leading the wallet read as a banner (2026-09-22). */}
+      {demo && (
+        <div style={{ padding: '0 2px 14px' }}>
+          <TicketClaimForm />
+        </div>
+      )}
       {demo && (
         <div className="mmm-demo-head mmm-ticket-demo-head">
           <span className="mmm-demo-badge">{t('mmmTickets.demoBadge', 'Demo content')}</span>
@@ -73,7 +83,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
       )}
       <div className="mmm-ticket-list">
         {visibleTickets.map((ticket) => {
-          const when = dayParts(ticket.startsAt, locale);
+          const when = dayParts(ticket.startsAt, locale, ticket.timeZone);
           const attended = Boolean(ticket.scannedAt);
           return (
             <div className="mmm-ticket-row" key={ticket.serializedId}>
@@ -95,7 +105,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
                 </span>
                 {attended ? (
                   <span className="mmm-ticket-checkin">
-                    {t('mmmTickets.checkedIn', 'Checked in {time}').replace('{time}', dayParts(ticket.scannedAt!, locale).time)}
+                    {t('mmmTickets.checkedIn', 'Checked in {time}').replace('{time}', dayParts(ticket.scannedAt!, locale, ticket.timeZone).time)}
                   </span>
                 ) : (
                   <>
@@ -111,6 +121,12 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
         })}
       </div>
 
+      {!demo && (
+        <div style={{ padding: '18px 2px 0' }}>
+          <TicketClaimForm />
+        </div>
+      )}
+
       {/* "The wallet opens in airplane mode" — the design's promise, and until
           2026-09-03 not true for a single ticket. This list is the one surface
           that knows every ticket the member holds, so it is where the save
@@ -125,7 +141,7 @@ export function MmmTickets({ tickets }: { tickets: MmmMeTicket[] }) {
 
 function TicketSheet({ demo, onClose, ticket }: { demo?: boolean; onClose: () => void; ticket: MmmMeTicket }) {
   const { locale, t } = useI18n();
-  const when = dayParts(ticket.startsAt, locale);
+  const when = dayParts(ticket.startsAt, locale, ticket.timeZone);
   const closeRef = useRef<HTMLButtonElement | null>(null);
   const returnTo = useRef<HTMLElement | null>(null);
 

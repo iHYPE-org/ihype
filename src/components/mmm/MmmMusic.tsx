@@ -731,7 +731,10 @@ function RecommendedTab() {
               {/* The WHY. A recommendation a listener cannot account for reads as
                   an advert; this is the endpoint's own derivation, not a guess
                   made here, so it cannot disagree with why the row qualified. */}
-              {track.reason && <span className="mmm-row-sub" style={{ display: 'block', color: 'var(--accent-text)' }}>{track.reason}</span>}
+              {/* Secondary ink, not the accent: five rows of red reason lines read as
+      five warnings (2026-09-22). The accent is for the current or actionable
+      item, and a reason is neither. */}
+                {track.reason && <span className="mmm-row-sub" style={{ display: 'block', color: 'var(--ink-3)' }}>{track.reason}</span>}
             </span>
             <span aria-hidden="true" style={{ color: 'var(--ink-3)' }}>›</span>
           </Link>
@@ -1296,7 +1299,7 @@ function PlaylistsTab() {
 
       {ownLists.length > 0 && (
         <>
-          <p className="mmm-eyebrow" style={{ padding: '14px 2px 8px' }}>{t('mmmMusic.yourPlaylists', 'Your playlists')} · {ownLists.length}</p>
+          <p className="mmm-section-label" style={{ padding: '14px 2px 8px' }}>{t('mmmMusic.yourPlaylists', 'Your playlists')} · {ownLists.length}</p>
           {ownLists.map((list) => (
             <OwnPlaylistRow
               key={list.id}

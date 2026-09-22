@@ -161,7 +161,11 @@ html:has(.mmm-frame) {
 
      Every surface inside the frame is percentage- or flex-sized against this,
      so the one value moves the chart, the panes and the dock together. */
-  --mmm-frame-max: 712px;
+  /* `--mmm-frame-max` (712px) and `--mmm-pane-pad` (16px) are declared on
+     `:root` in globals.css since 2026-09-22, because the site header — which
+     is OUTSIDE this frame — aligns its inner width to the pane's content
+     column on a desk. Two declarations of one figure is the drift this
+     repository keeps finding; the frame reads the root's. */
   width: min(100vw, var(--mmm-frame-max));
   transform: translateX(-50%);
   /* The sheet's edge against the desk — invisible at phone width (clipped by
@@ -211,11 +215,9 @@ html:has(.mmm-frame) {
   --mmm-mini-h: 56px;
   --mmm-mini-gap: 12px;
   --mmm-chrome-size: 0px;
-  /* The pane's own horizontal padding, named because a surface inside the
-     pane sometimes has to cancel it — a horizontally scrolling strip has to
-     reach the viewport edge or its overflow is invisible. Written once here
-     rather than as a 16 repeated at each such site. */
-  --mmm-pane-pad: 16px;
+  /* `--mmm-pane-pad` (the pane's own horizontal padding, which a scrolling
+     strip cancels to reach the edge) lives on `:root` now — see the frame
+     width above for why. */
   --mmm-inset: 26px;
   --mmm-left: calc(var(--mmm-inset) + var(--mmm-safe-left));
   /* The cookie banner is pinned to the bottom of the viewport, and so is the
@@ -518,24 +520,29 @@ html:has(.mmm-frame) {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  padding: 7px 13px;
-  /* A machined key. It was a pill on flat --bg-surface with a 1px ink edge,
-     which on a plate reads as a web button sitting on a console. Radius,
-     brass edge and the lit top come from the templates' own controls.
+  padding: 0 14px;
+  /* ONE CHIP VOCABULARY (2026-09-22, DESIGN_SYNC row 497). A filter chip is
+     the same object as a section-strip pill (`.mmm-strip-item`): same radius,
+     same material tokens, same 15px/600 sentence-case system face, same
+     14px of side padding. Until this date the chips wore the console's
+     "machined key" (10px radius, `--key-*`) beside the strip's pills, and the
+     Charts tab stacked three pill styles in three rows — the strip in bold
+     sans, then two rows of tracked mono. Two shapes for one job read as
+     assembled, not designed.
 
-     The LABEL is deliberately left alone — body font, mixed case. The
-     templates set their chips in tracked uppercase mono, but this class is
-     also the map's layer and genre filters, and uppercasing those mangles
-     proper nouns. Shape carries the character; the words stay readable. */
-  border-radius: var(--key-radius);
-  border: 1.5px solid var(--key-edge);
-  background: var(--key-bg);
-  color: var(--ink);
+     The LABEL stays body font, mixed case: this class is also the map's layer
+     and genre filters, and uppercasing those mangles proper nouns. */
+  border-radius: var(--pill-radius);
+  border: 1px solid var(--plate-border);
+  background: var(--pill-bg);
+  color: var(--ink-2);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: 0.9375rem;
+  letter-spacing: 0;
+  text-transform: none;
   cursor: pointer;
-  box-shadow: var(--key-shadow);
+  box-shadow: var(--pill-shadow);
   white-space: nowrap;
 }
 /* Selected: FILLED on iOS (Apple Music's filter pill inverts), the accent tint
@@ -546,7 +553,10 @@ html:has(.mmm-frame) {
   color: var(--chip-on-ink);
   font-weight: 700;
 }
-/* Charts' chip rows — dataset, then the area scope or the genre list under it.
+/* Charts' and Radio's chip rows — dataset, then the area scope or the genre
+   list under it. `.mmm-chip-genre` was a MONO variant of the chip with .04em
+   tracking; it is the plain chip now (one vocabulary, above) and the class
+   survives only as the hook the two tabs' markup carries.
    Scrolls rather than wraps: the genre row is as long as the catalogue's genre
    list, and a wrapping row changes the pane's height every time the dataset
    changes, which moves the chart out from under the reader's eye. */
@@ -570,12 +580,7 @@ html:has(.mmm-frame) {
   color: var(--ink-3);
 }
 
-.mmm-chip-genre {
-  padding: 5px 11px;
-  font-family: var(--font-mono);
-  font-size: 0.9375rem;
-  letter-spacing: 0.04em;
-}
+.mmm-chip-genre { padding: 0 14px; }
 
 .mmm-result-line {
   position: absolute;
@@ -836,11 +841,14 @@ html:has(.mmm-frame) {
 }
 /* The nameplate is a real heading. It was a `<p>` in the rail this replaces, so
    a screen reader walking the headings of MUSIC found none of its collections;
-   `.mmm-eyebrow` supplies the paint and the h3 supplies the outline. */
-/* Apple Music names a shelf with a bold title, not a legend: 20px, weight 700,
-   sentence case, the display face. This overrides the `.mmm-eyebrow` paint the
-   element also carries — `.mmm-eyebrow` supplies the outline role, this the
-   type — and is why it must stay after that rule. */
+   the h3 supplies the outline. Apple Music names a shelf with a bold title,
+   not a legend: 20px, weight 700, sentence case, the display face.
+
+   Until 2026-09-22 the h3 ALSO carried `.mmm-eyebrow`, whose rule sits ~800
+   lines below this one and won the cascade — so every shelf name rendered as
+   TRACKED UPPERCASE MONO while this rule and its own comment said sentence
+   case. The class is off the element now; a rule that has to "stay after"
+   another one is a rule that will lose the moment either moves. */
 .mmm-shelf-name {
   margin: 0;
   font-family: var(--font-display);
@@ -850,7 +858,6 @@ html:has(.mmm-frame) {
   text-transform: none;
   color: var(--ink);
 }
-.mmm-shelf-name::before { content: none; }
 .mmm-shelf-count { color: var(--ink-3); }
 .mmm-shelf-more {
   flex: 0 0 auto;
@@ -1633,6 +1640,25 @@ html:has(.mmm-frame) {
    One rule reaches every section header in the shell, which is what "brass
    nameplates on every section header" costs when the eyebrow is already a
    primitive. Card nameplates opt out: a dash on a brass plate is a scratch. */
+/* A CONTENT heading inside a pane — "Your playlists · 3", "Fan stats", "About
+   me · visible activity", "Have a transfer code?" (2026-09-22, DESIGN_SYNC
+   row 497). Row 492's rule: uppercase is for a STATUS, a UNIT or a RANK, never
+   for content, a control's label or a sentence. These were `.mmm-eyebrow`,
+   tracked uppercase mono, so every list heading in the shell read as
+   metadata and the hierarchy flattened. Sentence case in the display face at
+   17px/700; `.mmm-eyebrow` stays for the breadcrumbs, badges and status
+   readouts that ARE metadata. */
+.mmm-section-label {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
 .mmm-eyebrow::before {
   content: '';
   /* The machined dash is console hardware: `none` on the iOS default, restored
@@ -3378,6 +3404,15 @@ input.mmm-row-title { min-height: 44px; }
 }
 .mmm-advertiser .mmm-profile-card { margin-bottom: 24px; }
 .mmm-profile-band img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+/* NO IMAGERY, NO BAND (2026-09-22, DESIGN_SYNC row 497). With no hero the band
+   was 132px of flat grey with the initial tile floating over its bottom edge,
+   which reads as a broken image on every profile that has not uploaded one —
+   at alpha, nearly all of them. The page sets `data-hero` on the card; with
+   it false the band collapses and the head sits in the card's own padding,
+   the tile and the name on one row. A profile WITH a cover is unchanged. */
+.mmm-profile-card[data-hero='false'] .mmm-profile-band { display: none; }
+.mmm-profile-card[data-hero='false'] .mmm-profile-head { margin-top: 22px; align-items: center; }
+.mmm-profile-card[data-hero='false'] .mmm-profile-head-label { padding-bottom: 0; }
 .mmm-profile-band-glare {
   position: absolute;
   inset: 0;
@@ -3766,7 +3801,7 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-me-route-trail { min-width: 0; display: flex; gap: 7px; color: var(--ink-3); font-family: var(--back-font); font-size: 0.9375rem; letter-spacing: var(--back-tracking); text-transform: var(--back-case); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .mmm-me-route-trail span { display: inline-flex; gap: 7px; }
 .mmm-me-route-trail i { color: var(--hair-180); font-style: normal; }
-.mmm-empty-state { padding: 18px; border: 1px dashed var(--ink-a45); border-radius: var(--radius-panel); background: transparent; }
+.mmm-empty-state { padding: 18px; border: var(--empty-edge); background: var(--empty-bg); font-family: var(--empty-font); border-radius: var(--radius-panel); background: transparent; }
 .mmm-empty-state strong { display: block; color: var(--ink); font-family: var(--font-display); font-size: 1rem; }
 .mmm-empty-state p { max-width: 58ch; margin: 6px 0 0; color: var(--ink-3); font-size: 0.9375rem; line-height: 1.55; }
 .mmm-empty-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }

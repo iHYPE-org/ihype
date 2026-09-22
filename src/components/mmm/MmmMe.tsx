@@ -46,7 +46,7 @@ function ListeningCard() {
   return (
     <>
       <div className="mmm-me-stats-head">
-        <span className="mmm-eyebrow">{t('mmmMe.listening.eyebrow', 'Your listening')}</span>
+        <span className="mmm-section-label">{t('mmmMe.listening.eyebrow', 'Your listening')}</span>
         <span aria-hidden="true" className="mmm-me-stats-rule" />
       </div>
       <div className="mmm-stat-grid" style={{ marginBottom: 12 }}>
@@ -65,7 +65,7 @@ function ListeningCard() {
       </div>
       {summary.topArtists && summary.topArtists.length > 0 && (
         <div className="mmm-card" style={{ padding: 15, marginBottom: 16 }}>
-          <div className="mmm-eyebrow" style={{ marginBottom: 8 }}>{t('mmmMe.listening.mostPlayed', 'Most played artists')}</div>
+          <div className="mmm-section-label" style={{ marginBottom: 8 }}>{t('mmmMe.listening.mostPlayed', 'Most played artists')}</div>
           {summary.topArtists.map((artist, index) => (
             <div key={`${artist.name}-${index}`} style={{ display: 'flex', gap: 10, alignItems: 'baseline', padding: '4px 0' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontWeight: 800, fontSize: '1rem', color: 'var(--ink-3)', width: 22 }}>
@@ -180,7 +180,7 @@ function AboutMeActivity({ data }: { data: MmmMeData }) {
   const { locale, t } = useI18n();
   return (
     <div className="mmm-me-about-in-profiles">
-      <div className="mmm-eyebrow" style={{ marginBottom: 9 }}>{t('mmmMe.activity.eyebrow', 'About me · visible activity')}</div>
+      <div className="mmm-section-label" style={{ marginBottom: 9 }}>{t('mmmMe.activity.eyebrow', 'About me · visible activity')}</div>
       {data.activity.length === 0 ? (
         <div className="mmm-empty-state">
           <strong>{t('mmmMe.activity.emptyTitle', 'Build your visible activity')}</strong>
@@ -433,7 +433,7 @@ export function MmmMe({ data }: { data: MmmMeData }) {
       {data.stats.length > 0 && (
         <>
           <div className="mmm-me-stats-head">
-            <span className="mmm-eyebrow">{t('mmmMe.roleStats', '{role} stats').replace('{role}', translateRoleLabel(t, data.role))}</span>
+            <span className="mmm-section-label">{t('mmmMe.roleStats', '{role} stats').replace('{role}', translateRoleLabel(t, data.role))}</span>
             <span aria-hidden="true" className="mmm-me-stats-rule" />
           </div>
           <div className="mmm-stat-grid" style={{ marginBottom: 16 }}>

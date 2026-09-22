@@ -142,6 +142,7 @@ export default async function MmmArtistPage({
           slug: true,
           title: true,
           startsAt: true,
+          timeZone: true,
           hypeCount: true,
           /* For the row's trail and price — the same fields the show page
              decides "on sale" from, so the row cannot disagree with it. */
@@ -287,7 +288,7 @@ export default async function MmmArtistPage({
     <div className="mmm-show mmm-public-profile" data-profile-type="artist">
       <Link className="mmm-show-back" href="/app/music/charts">← {t('artistPane.backMusic', 'Music')}</Link>
 
-      <div className="mmm-profile-card">
+      <div className="mmm-profile-card" data-hero={profile.heroImage ? 'true' : 'false'}>
         <div className="mmm-profile-band">
           {/* The artist's own cover art still wins when they have uploaded one —
               the gradient is the ground beneath it, not a replacement for it. */}
@@ -488,8 +489,9 @@ export default async function MmmArtistPage({
                 <ProfileRow locale={locale}
                   key={show.id}
                   date={show.startsAt}
+                  timeZone={show.timeZone}
                   href={`/app/shows/${show.slug}`}
-                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale), priceLabel(formatTicketPrice(show, locale))]
+                  meta={[show.venueProfile?.name, show.venueProfile?.city, formatShowClock(show.startsAt, locale, show.timeZone), priceLabel(formatTicketPrice(show, locale))]
                     .filter(Boolean)
                     .join(' · ')}
                   title={show.title}

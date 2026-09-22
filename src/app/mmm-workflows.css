@@ -103,17 +103,21 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
   color: var(--ink);
 }
 .profile-panel-empty {
-  /* The console template's empty state: a dashed plate carrying the panel's
-     own sentence, so "nothing here yet" reads as deliberate rather than as a
-     container with no children. */
+  /* The panel's empty state — the SAME plate `.mmm-empty` draws on a MUSIC
+     tab (2026-09-22, DESIGN_SYNC row 497): the `--empty-*` tokens, iOS's
+     filled grey cell in the body face by default and the console's dashed
+     serif plate on its own themes. Until this date the dashed serif was
+     written here as literals, so an artist's Albums tab and the Charts tab
+     one tap away drew two different empty states on the default theme. */
   margin: 0;
   padding: 30px 22px;
   text-align: center;
-  border: 2px dashed var(--line-2);
+  border: var(--empty-edge);
   border-radius: var(--radius-panel);
-  font-family: var(--f-s, Georgia, serif);
-  font-size: 1.1875rem;      /* 19px — an empty state is read, not skimmed */
-  line-height: 1.45;
+  background: var(--empty-bg);
+  font-family: var(--empty-font);
+  font-size: 1.0625rem;
+  line-height: 1.5;
   color: var(--ink-2);
 }
 .profile-panel-unavailable {
@@ -406,12 +410,16 @@ html.a11y-reduce-motion .mmm-settings-pill { transition: none !important; }
    inline are the ones carrying a computed value (a role colour, a card's own
    background), which is what inline style is actually for. */
 .mmm-profiles-empty { text-align: center; padding: 80px 0; color: var(--ink-a65); }
+/* A content heading, not an eyebrow (2026-09-22): the same type as
+   `.mmm-section-label` in mmm.css, kept under its own name because the
+   profile editor's markup and tests carry it. */
 .mmm-profiles-eyebrow {
-  font-family: var(--font-mono);
-  font-size: 0.6875rem;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  color: var(--ink-a65);
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-transform: none;
+  color: var(--ink);
   margin-bottom: 14px;
 }
 .mmm-profiles-meta {

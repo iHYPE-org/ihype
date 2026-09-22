@@ -417,7 +417,7 @@ export function PagesHome({
       {tab === 'mypage' && (
         <div className="sub-panel">
           <div className="mmm-profiles-eyebrow">
-            {t('pagesHome.yourPagesLabel', 'YOUR PAGES')}
+            {t('pagesHome.yourPagesTitle', 'Your pages')}
           </div>
 
           {loadFailed && data === null ? (

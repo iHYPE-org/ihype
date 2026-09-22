@@ -4921,7 +4921,17 @@ h2 {
    starts at exactly this height (`.mmm-frame` reads the same token). The top
    safe-area inset is the header's — it is the top-most element now, which the
    dock used to be at the bottom — so the frame's panes no longer pad for it. */
-:root { --app-header-h: 54px; }
+:root {
+  --app-header-h: 54px;
+  /* The shell's frame width and pane padding, declared HERE rather than on
+     `.mmm-frame` (where they lived until 2026-09-22) because the header is
+     outside the frame and aligns to them: on a desk the frame is a 712px
+     column and the header's mark and links sit on the same content edges as
+     the pane, instead of at the far corners of a 1280px window. mmm.css reads
+     both from here; `measure:chrome` measures the result. */
+  --mmm-frame-max: 712px;
+  --mmm-pane-pad: 16px;
+}
 .adaptive-site-header.is-app {
   height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px));
   padding-top: env(safe-area-inset-top, 0px);
@@ -4929,6 +4939,14 @@ h2 {
   background: var(--material-regular);
   -webkit-backdrop-filter: var(--material-blur);
   backdrop-filter: var(--material-blur);
+}
+/* Inside the shell the header's inner width IS the pane's content column:
+   the frame (`min(100vw, --mmm-frame-max)`) minus the pane padding on each
+   side, at every width. On a phone that is the same 16px the pane uses; on a
+   desk it puts the mark over the first character of the pane and the links
+   over its right edge, rather than 280px out at the window's corners. */
+.adaptive-site-header.is-app .adaptive-site-header-inner {
+  width: calc(min(100%, var(--mmm-frame-max)) - 2 * var(--mmm-pane-pad));
 }
 
 @media (max-width: 900px) {

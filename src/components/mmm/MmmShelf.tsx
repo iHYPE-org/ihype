@@ -104,7 +104,7 @@ export function MmmShelf({
   return (
     <section aria-label={heading} className="mmm-shelf">
       <div className="mmm-shelf-head">
-        <h3 className="mmm-eyebrow mmm-shelf-name">
+        <h3 className="mmm-shelf-name">
           {heading}
           {typeof count === 'number' && <span className="mmm-shelf-count"> · {count}</span>}
         </h3>

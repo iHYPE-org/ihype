@@ -97,6 +97,10 @@ export type MmmMeTicket = {
   /** `Venue · City`, already joined, with either half omitted if unknown. */
   where: string;
   startsAt: string;
+  /** The venue's IANA zone (`Show.timeZone`), so the wallet renders the door
+      time on the venue's clock and not the Worker's UTC. Null for a show that
+      predates the column; the formatter then says which clock it used. */
+  timeZone: string | null;
   /** Face value, from the SHOW's own price — a Ticket row carries no price. */
   faceValue: string | null;
   /** The buyer's share of Stripe's fee for this ticket, or null pre-fee. */
@@ -188,6 +192,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
             select: {
               title: true,
               startsAt: true,
+              timeZone: true,
               ticketPriceCents: true,
               venueProfile: { select: { name: true, city: true } },
             },
@@ -222,6 +227,7 @@ export async function loadMmmMe(userId: string, requestedRole: string | undefine
         .filter(Boolean)
         .join(' · '),
       startsAt: row.show.startsAt.toISOString(),
+      timeZone: row.show.timeZone ?? null,
       // Free shows say Free rather than $0 — the same distinction the map pins
       // already make. A price that could not be read is omitted, not zeroed.
       faceValue: row.show.ticketPriceCents > 0 ? money(locale, row.show.ticketPriceCents) : 'Free',

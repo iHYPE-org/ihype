@@ -136,6 +136,7 @@ export function TicketTransferPanel({ orderId }: { orderId: string }) {
 /** Redeems a code. Lives wherever a member without the ticket can reach it —
  *  the tickets list, not the ticket page, which they cannot open yet. */
 export function TicketClaimForm() {
+  const { t } = useI18n();
   const [value, setValue] = useState('');
   const [pending, setPending] = useState(false);
   const [note, setNote] = useState<string | null>(null);
@@ -176,8 +177,8 @@ export function TicketClaimForm() {
 
   return (
     <form onSubmit={submit} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-      <label className="mmm-eyebrow" htmlFor="ticket-claim-code" style={{ width: '100%' }}>
-        Have a transfer code?
+      <label className="mmm-section-label" htmlFor="ticket-claim-code" style={{ width: '100%' }}>
+        {t('ticketTransfer.claimLabel', 'Have a transfer code?')}
       </label>
       <input
         autoCapitalize="characters"

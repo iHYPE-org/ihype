@@ -1,5 +1,5 @@
 import type { Locale } from '@/lib/i18n/locales';
-import { formatDate, formatNumber } from '@/lib/format-locale';
+import { formatDate, formatDoorTime, formatNumber } from '@/lib/format-locale';
 import Link from 'next/link';
 import type { RowTrail } from '@/lib/show-row';
 
@@ -15,12 +15,15 @@ import type { RowTrail } from '@/lib/show-row';
  *
  * `utc` is for calendar days stored at UTC midnight (`AvailabilityDate`): a
  * local-time read shifts every date to the evening before for anyone west of
- * Greenwich. A show's `startsAt` is an instant and reads in local time.
+ * Greenwich. A show's `startsAt` is an instant and reads on the VENUE's clock
+ * (`timeZone`, row 464) — until 2026-09-22 it read on the runtime's, which on
+ * the Worker put an 8pm Friday show in Portland under Saturday's date block.
  */
 export function ProfileRow({
   href,
   date,
   utc = false,
+  timeZone = null,
   title,
   meta,
   trail,
@@ -30,12 +33,16 @@ export function ProfileRow({
   date: Date;
   locale: Locale;
   utc?: boolean;
+  /** The venue's IANA zone for a show row; ignored for a UTC calendar day. */
+  timeZone?: string | null;
   title: string;
   meta?: string | null;
   trail?: RowTrail | null;
 }) {
-  const month = formatDate(locale, date, utc ? { month: 'short', timeZone: 'UTC' } : { month: 'short' }).toUpperCase();
-  const day = utc ? date.getUTCDate() : date.getDate();
+  const month = (utc
+    ? formatDate(locale, date, { month: 'short', timeZone: 'UTC' })
+    : formatDoorTime(locale, date, timeZone, { month: 'short' })).toUpperCase();
+  const day = utc ? String(date.getUTCDate()) : formatDoorTime(locale, date, timeZone, { day: 'numeric' });
   const body = (
     <>
       <span className="mmm-profile-row-date">

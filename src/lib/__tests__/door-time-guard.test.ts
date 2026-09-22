@@ -40,6 +40,21 @@ const NOT_A_SHOW: { where: string; needle: string; why: string }[] = [
   },
 ];
 
+/**
+ * Files whose whole job is to format a show's time, where `.startsAt` is on
+ * the CALLER's line and the formatter on this one — so the line rule above
+ * cannot see them. Two of them shipped the defect for a week (2026-09-22):
+ * the wallet's `dayParts` read "Doors 00:00" and `formatShowClock` put
+ * "12:00 AM" on both profile calendars for an 8pm show. Inside these files a
+ * zoneless formatter is allowed only on a line that also names `timeZone`
+ * (ProfileRow's UTC calendar day is the one such line).
+ */
+const SHOW_TIME_HELPERS = [
+  'src/lib/show-row.ts',
+  'src/components/mmm/MmmTickets.tsx',
+  'src/components/profile/ProfileRow.tsx',
+];
+
 function walk(dir: string, out: string[] = []): string[] {
   for (const entry of readdirSync(dir)) {
     if (entry === 'node_modules' || entry === '__tests__') continue;
@@ -84,5 +99,20 @@ describe('a show start is formatted on the venue clock', () => {
     for (const e of NOT_A_SHOW) {
       expect(usedExemptions, `stale exemption: ${e.where}::${e.needle}`).toContain(`${e.where}::${e.needle}`);
     }
+  });
+
+  it('the show-time helpers format nothing without a zone', () => {
+    const offenders: string[] = [];
+    for (const rel of SHOW_TIME_HELPERS) {
+      const file = join(process.cwd(), rel);
+      expect(files, `${rel} is gone — re-derive this list`).toContain(file);
+      const source = maskComments(readFileSync(file, 'utf8'));
+      source.split('\n').forEach((line, i) => {
+        if (!ZONELESS.test(line)) return;
+        if (line.includes('timeZone')) return;
+        offenders.push(`${rel}:${i + 1}  ${line.trim()}`);
+      });
+    }
+    expect(offenders, 'a helper that formats a show time takes the venue zone and uses formatDoorTime').toEqual([]);
   });
 });
