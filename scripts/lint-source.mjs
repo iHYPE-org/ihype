@@ -113,6 +113,10 @@ const WHITE_LITERAL = /(?:^|[{;\s])(?:-webkit-text-fill-)?color: *'?(?:#fff(?:f{
  * is playing.
  *
  * The ramp is --ink-on-walnut / -2 / -3, measured against the LIGHTEST stop.
+ *
+ * `.walnut-panel` itself is DELETED as of 2026-09-23 (the public dock became
+ * the now-playing pill and paints from `--dock-*`, DESIGN_SYNC row 508); the
+ * rule stays for any surface that revives the class.
  */
 const WALNUT_SURFACE = /\.walnut-panel\b|walnut-panel/;
 const PAGE_INK_AS_COLOR = /(?:^|[{;\s])color: *'?var\(--ink(?:-[1-4]|-a\d\d)?\)/;

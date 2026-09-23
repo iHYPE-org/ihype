@@ -1782,11 +1782,6 @@ input.mmm-row-title { min-height: 44px; }
 .mmm-station-main > .mmm-row-title,
 .mmm-station-main > .mmm-row-sub { display: block; }
 .mmm-station-count { color: var(--ink-3); font-size: 0.9375rem; letter-spacing: 0.06em; }
-/* A station with nothing to play is listed, said plainly, and not offered as
-   a control — see the Radio tab. Disabled paint, not hidden. */
-.mmm-station[data-empty='true'] { cursor: default; opacity: 0.72; }
-.mmm-station[data-empty='true'] .mmm-station-art { background: var(--bg-3); color: var(--ink-3); }
-
 .mmm-stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
 .mmm-stat-value {
   font-family: var(--font-display);

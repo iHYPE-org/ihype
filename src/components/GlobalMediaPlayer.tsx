@@ -832,6 +832,58 @@ function fmtSleep(seconds: number) {
 
 type DockPanel = 'queue' | 'history' | null;
 
+/**
+ * The now-playing pill on the PUBLIC pages — the same object `MmmNowPlaying`
+ * draws inside the shell, for the pages outside it (a show page, a kit page,
+ * the landing page signed in).
+ *
+ * (2026-09-23, owner: "do it", on the recommendation. DESIGN_SYNC row 500
+ * retired the shell's walnut dock for "a compact pill at the bottom that
+ * appears only when a track is loaded and disappears when nothing is. No
+ * chrome the rest of the time" and left THIS bar as the one bottom bar in the
+ * product — 82px of walnut on every public page, signed in, with or without a
+ * track, reading "Nothing playing · Pick a track to start". The two were the
+ * same member's player drawn two ways a route apart.)
+ *
+ * ## What it keeps, all of it pre-existing
+ *
+ *  - Every capability the bar carried is behind the title: tap it and a sheet
+ *    opens ABOVE the pill with the waveform scrubber (keyboard-operable — a
+ *    slider that is announced and ignores the arrow keys is the WCAG 2.1.1
+ *    failure found on 2026-09-15), shuffle, repeat, mute and volume, speed,
+ *    the sleep timer, share, the queue/history panel and the playlist manager.
+ *    `PlayerQueuePanel` and `FanPlaylistManager` are mounted by nothing else
+ *    (`audit:mounts`), so they render here or nowhere.
+ *  - The pill row is art · title/artist · previous · play · next, 44x44 keys,
+ *    the transport the shell's pill carries. The status line replaces the
+ *    artist name only while something is wrong or loading (`role="status"`).
+ *  - `usePlayerKeyboard` still runs in the provider; nothing here changed it.
+ *
+ * ## What it drops, on purpose
+ *
+ *  - The "Nothing playing" state. The pill exists while a track is loaded and
+ *    not otherwise, which is the rule the shell already follows and the whole
+ *    point of the change: no chrome the rest of the time.
+ *  - The scroll-settled shrink and the hover marquee: a pill has one height,
+ *    and a title that does not fit ellipsises like the shell's.
+ *
+ * ## Material and geometry
+ *
+ * Painted by `.site-dock*` in `globals.css` (mmm.css is loaded only under the
+ * `/app` layout), from the same `--dock-*` tokens as `.mmm-mini` — iOS's
+ * translucent material by default, walnut and brass on the four character
+ * themes — with `--ink-on-walnut*` for the ink, which is why the class names
+ * changed and the material classes went: `walnut-panel walnut-lip-top` painted
+ * the cabinet whatever the theme said. Inside the shell `html.mmm-locked
+ * .site-dock { display: none }` still hides it, so a member never sees two
+ * pills. `body:has(.site-dock) .site-shell` clears it — and the unconditional
+ * `.site-shell { padding-bottom: 82px }` that padded EVERY public page for a
+ * dock that might not exist is gone with the bar.
+ *
+ * The playlist panel used to open BELOW its launcher (`top: calc(100% + …)`),
+ * which from a bar pinned to the bottom of the viewport is off-screen; inside
+ * the sheet it is a static block, so it is reachable for the first time.
+ */
 export function SitePlayerDock() {
   const { status: sessionStatus } = useSession();
   const { t } = useI18n();
@@ -847,24 +899,7 @@ export function SitePlayerDock() {
 
   const [panel, setPanel] = useState<DockPanel>(null);
   const [copied, setCopied] = useState(false);
-  const [mobileExpanded, setMobileExpanded] = useState(false);
-  const [playerSettled, setPlayerSettled] = useState(false);
-
-  useEffect(() => {
-    let scheduled = false;
-    const update = () => {
-      setPlayerSettled(window.scrollY > 8);
-      scheduled = false;
-    };
-    const onScroll = () => {
-      if (scheduled) return;
-      scheduled = true;
-      window.requestAnimationFrame(update);
-    };
-    update();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
+  const [expanded, setExpanded] = useState(false);
 
   const progress = duration > 0 ? currentTime / duration : 0;
   const fmt = (s: number) => { const sec = Math.floor(s); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; };
@@ -891,225 +926,159 @@ export function SitePlayerDock() {
     } catch { /* clipboard denied */ }
   }
 
-  const btnBase: React.CSSProperties = { background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', padding: '2px 4px' };
-
   // Playback is an authenticated app feature. Keeping the provider mounted
-  // preserves navigation state after sign-in, while the dock itself never
-  // appears on the public landing or other signed-out pages.
-  if (sessionStatus !== 'authenticated') return null;
+  // preserves navigation state after sign-in, while the pill itself never
+  // appears on the public landing or other signed-out pages — and never while
+  // nothing is loaded, which is the rule that makes it a pill and not a bar.
+  if (sessionStatus !== 'authenticated' || !currentTrack) return null;
+
+  const initial = (currentTrack.title.trim().charAt(0) || '♪').toUpperCase();
+  const toolOn = (on: boolean) => (on ? 'true' : 'false');
 
   return (
-    // walnut-panel + walnut-lip-top are the material, not decoration: the dock
-    // is the one piece of the player always on screen, and it is the same
-    // cabinet face the full player uses. Everything painted on it takes its
-    // ink from --ink-on-walnut*, which is why that class also carries a colour.
     <div
-      className={`site-dock walnut-panel walnut-lip-top${mobileExpanded ? ' site-dock-expanded' : ''}${playerSettled ? ' site-dock-settled' : ''}`}
+      className="site-dock"
+      data-expanded={expanded}
       role="region"
       aria-label={t('globalMediaPlayer.mediaPlayerRegion', 'Media player')}
       style={{ '--dock-progress': `${Math.round(progress * 1000) / 10}%` } as React.CSSProperties}
     >
-      {/* Progress hairline across the very top edge — the app shell's dock
-          spec. Decorative and aria-hidden: the real, keyboard-operable
-          position slider is the waveform scrubber below, and announcing the
-          same value twice is worse than not announcing it here. Hidden by CSS
-          outside the shell, where it would double that scrubber. */}
-      <div aria-hidden="true" className="site-dock-hairline">
-        <span className="site-dock-hairline-fill" />
-        <span className="site-dock-hairline-thumb" />
-      </div>
-
-      {/* ── Queue / history popover ───────────────────────────────────────── */}
-      <PlayerQueuePanel
-        panel={panel}
-        setPanel={setPanel}
-        upcomingTracks={upcomingTracks}
-        history={history}
-        isAutoplay={isAutoplay}
-        toggleAutoplay={toggleAutoplay}
-        playTrack={playTrack}
-        removeFromQueue={removeFromQueue}
-        queue={queue}
-      />
-
-      {/* ── Left: art + meta (tap to expand controls on mobile) ────────────── */}
-      <div
-        className="site-dock-l"
-        onClick={() => setMobileExpanded(v => !v)}
-        role="button"
-        tabIndex={0}
-        aria-expanded={mobileExpanded}
-        aria-label={mobileExpanded ? t('globalMediaPlayer.collapsePlayerControls', 'Collapse player controls') : t('globalMediaPlayer.expandPlayerControls', 'Expand player controls')}
-        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setMobileExpanded(v => !v); } }}
-      >
-        <div className="site-dock-art" style={{ position: 'relative', background: currentTrack ? 'var(--accent)' : 'var(--bg-3)' }}>
-          {currentTrack?.artworkUrl && <Image src={currentTrack.artworkUrl} alt={currentTrack.title} fill sizes="42px" style={{ objectFit: 'cover', borderRadius: 5 }} />}
-        </div>
-        <div className="site-dock-meta">
-          <div className="site-dock-now-playing">{t('globalMediaPlayer.nowPlaying', 'Now playing')}</div>
-          <div
-            className={`site-dock-title${currentTrack ? ' has-track' : ''}`}
-            aria-label={currentTrack ? `${currentTrack.title} — ${currentTrack.artistName}` : t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}
-          >
-            {currentTrack ? (
-              <span className="site-dock-marquee-track" aria-hidden="true">
-                <span>{currentTrack.title}<i>•</i>{currentTrack.artistName}</span>
-                <span>{currentTrack.title}<i>•</i>{currentTrack.artistName}</span>
-              </span>
-            ) : (
-              <span>{t('globalMediaPlayer.nothingPlaying', 'Nothing playing')}</span>
-            )}
-          </div>
-          {/* The status line replaces the artist name only while something is
-              actually wrong or loading — an unheard error is the same bug as
-              no error handling at all. role="status" so screen readers
-              announce it without stealing focus. */}
-          {playbackError ? (
-            <div className="site-dock-artist site-dock-error" role="status">{playbackError}</div>
-          ) : isBuffering ? (
-            <div className="site-dock-artist" role="status">{t('globalMediaPlayer.buffering', 'Buffering…')}</div>
-          ) : (
-            <div className="site-dock-artist">
-              {currentTrack ? t('globalMediaPlayer.localSignal', 'Local signal') : t('globalMediaPlayer.pickTrackToStart', 'Pick a track to start')}
+      {expanded && (
+        <div className="site-dock-sheet" id="site-dock-sheet">
+          <div className="site-dock-scrub">
+            <span className="site-dock-time">{fmt(currentTime)}</span>
+            {/* A slider that is focusable and announced but ignores the arrow
+                keys is a WCAG 2.1.1 failure that axe cannot see: it checks the
+                role's required attributes, which were all present, and has no
+                way to know the key handler is missing. Found by a static pass,
+                2026-09-15. `aria-valuemin`/`-valuemax` are stated rather than
+                left to default so `aria-valuetext` reads against a real range. */}
+            <div
+              className="site-dock-waveform"
+              role="slider"
+              aria-label={t('globalMediaPlayer.playbackPosition', 'Playback position')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(progress * 100)}
+              aria-valuetext={`${fmt(currentTime)} / ${fmt(duration)}`}
+              tabIndex={0}
+              onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration); }}
+              onKeyDown={e => {
+                if (!duration) return;
+                const step = e.shiftKey ? 30 : 5;
+                const to = (secs: number) => { e.preventDefault(); seekTo(Math.max(0, Math.min(duration, secs))); };
+                if (e.key === 'ArrowRight' || e.key === 'ArrowUp') to(currentTime + step);
+                else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') to(currentTime - step);
+                else if (e.key === 'Home') to(0);
+                else if (e.key === 'End') to(duration);
+                else if (e.key === 'PageUp') to(currentTime + 60);
+                else if (e.key === 'PageDown') to(currentTime - 60);
+              }}
+            >
+              {waveform.map((h, i) => (
+                <span
+                  key={i}
+                  className="site-dock-wave-bar"
+                  data-played={i / waveform.length <= progress}
+                  style={{ height: `${h * 100}%` }}
+                />
+              ))}
             </div>
-          )}
+            <span className="site-dock-time">{fmt(duration)}</span>
+          </div>
+
+          <div className="site-dock-tools">
+            <button className="site-dock-tool" data-on={toolOn(isShuffle)} onClick={toggleShuffle} aria-pressed={isShuffle} aria-label={t('globalMediaPlayer.toggleShuffle', 'Toggle shuffle')} title={t('globalMediaPlayer.shuffle', 'Shuffle')} type="button">
+              <DkShuffle />
+            </button>
+            <button className="site-dock-tool" data-on={toolOn(repeatMode !== 'off')} onClick={cycleRepeat} aria-label={t('globalMediaPlayer.cycleRepeat', 'Cycle repeat')} title={t(...repeatTitleKey(repeatMode))} type="button">
+              <DkRepeat />
+              {rLabel && <span className="site-dock-tool-badge">{rLabel}</span>}
+            </button>
+            <button className="site-dock-tool" data-on={toolOn(!isMuted)} onClick={toggleMute} aria-pressed={isMuted} aria-label={isMuted ? t('globalMediaPlayer.unmute', 'Unmute') : t('globalMediaPlayer.mute', 'Mute')} title={isMuted ? t('globalMediaPlayer.unmuteShortcut', 'Unmute (M)') : t('globalMediaPlayer.muteShortcut', 'Mute (M)')} type="button">
+              {isMuted ? '⊘' : '◂))'}
+            </button>
+            {/* 44 tall, not the 16 a bare range input paints: MOBILE.md's floor
+                is every control. The track stays thin; the BOX is what a
+                pointer has to hit. */}
+            <input
+              aria-label={t('globalMediaPlayer.volume', 'Volume')}
+              className="site-dock-volume"
+              type="range" min={0} max={1} step={0.05}
+              value={isMuted ? 0 : volume}
+              onChange={e => setVolume(Number(e.target.value))}
+            />
+            <button className="site-dock-tool site-dock-tool-text" data-on={toolOn(playbackRate !== 1)} onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button">
+              {playbackRate}×
+            </button>
+            <button className="site-dock-tool site-dock-tool-text" data-on={toolOn(sleepMinutes !== null)} onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
+              aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button">
+              {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
+            </button>
+            <button className="site-dock-tool" data-on={toolOn(copied)} onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button">
+              {copied ? '✓' : '⬆'}
+            </button>
+            <button className="site-dock-tool" data-on={toolOn(panel !== null)} onClick={() => togglePanel('queue')} aria-expanded={panel !== null} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button">
+              ≡
+              {upcomingTracks.length > 0 && <span className="site-dock-tool-badge site-dock-tool-count">{upcomingTracks.length}</span>}
+            </button>
+            <FanPlaylistManager currentTrack={currentTrack} playTrack={playTrack} />
+          </div>
+
+          <PlayerQueuePanel
+            panel={panel}
+            setPanel={setPanel}
+            upcomingTracks={upcomingTracks}
+            history={history}
+            isAutoplay={isAutoplay}
+            toggleAutoplay={toggleAutoplay}
+            playTrack={playTrack}
+            removeFromQueue={removeFromQueue}
+            queue={queue}
+          />
         </div>
-        <svg className="site-dock-expand-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <polyline points="18 15 12 9 6 15" />
-        </svg>
-      </div>
+      )}
 
-      {/* ── Mobile-only play/pause (collapsed-bar shortcut; hidden once expanded or on desktop) ── */}
-      <button
-        className="site-dock-play site-dock-mobile-play"
-        onClick={e => { e.stopPropagation(); togglePlayback(); }}
-        aria-label={isPlaying ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')}
-        type="button"
-      >
-        {isPlaying ? <DkPause /> : <DkPlay />}
-      </button>
-
-      {/* ── Center: controls + scrubber ──────────────────────────────────── */}
-      <div className="site-dock-c">
-        <div className="site-dock-ctrls">
-          <button className="site-dock-btn" onClick={toggleShuffle} aria-label={t('globalMediaPlayer.toggleShuffle', 'Toggle shuffle')} title={t('globalMediaPlayer.shuffle', 'Shuffle')} type="button"
-            style={{ opacity: isShuffle ? 1 : 0.4, color: isShuffle ? 'var(--accent-text)' : 'inherit' }}>
-            <DkShuffle />
-          </button>
-          <button className="site-dock-btn" onClick={playPrevious} aria-label={t('globalMediaPlayer.previous', 'Previous')} type="button"><DkSkipP /></button>
-          <button className="site-dock-play" onClick={togglePlayback} aria-label={isPlaying ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')} type="button">
+      <div className="site-dock-pill">
+        <button
+          className="site-dock-open"
+          onClick={() => setExpanded(v => !v)}
+          aria-expanded={expanded}
+          aria-controls={expanded ? 'site-dock-sheet' : undefined}
+          aria-label={expanded ? t('globalMediaPlayer.collapsePlayerControls', 'Collapse player controls') : t('globalMediaPlayer.expandPlayerControls', 'Expand player controls')}
+          type="button"
+        >
+          <span className="site-dock-art">
+            {currentTrack.artworkUrl
+              ? <Image src={currentTrack.artworkUrl} alt="" fill sizes="44px" style={{ objectFit: 'cover' }} />
+              : <span aria-hidden="true">{initial}</span>}
+          </span>
+          <span className="site-dock-meta">
+            <span className="site-dock-title">{currentTrack.title}</span>
+            {/* The status line replaces the artist name only while something
+                is actually wrong or loading — an unheard error is the same bug
+                as no error handling at all. role="status" so screen readers
+                announce it without stealing focus. */}
+            {playbackError ? (
+              <span className="site-dock-artist site-dock-error" role="status">{playbackError}</span>
+            ) : isBuffering ? (
+              <span className="site-dock-artist" role="status">{t('globalMediaPlayer.buffering', 'Buffering…')}</span>
+            ) : (
+              <span className="site-dock-artist">{currentTrack.artistName}</span>
+            )}
+          </span>
+        </button>
+        <div className="site-dock-transport">
+          <button className="site-dock-key" onClick={playPrevious} aria-label={t('globalMediaPlayer.previous', 'Previous')} type="button"><DkSkipP /></button>
+          <button className="site-dock-key" data-lit={isPlaying} onClick={togglePlayback} aria-pressed={isPlaying} aria-label={isPlaying ? t('globalMediaPlayer.pause', 'Pause') : t('globalMediaPlayer.play', 'Play')} type="button">
             {isPlaying ? <DkPause /> : <DkPlay />}
           </button>
-          <button className="site-dock-btn" onClick={playNext} aria-label={t('globalMediaPlayer.next', 'Next')} type="button"><DkSkipN /></button>
-          <button className="site-dock-btn" onClick={cycleRepeat} aria-label={t('globalMediaPlayer.cycleRepeat', 'Cycle repeat')}
-            title={t(...repeatTitleKey(repeatMode))} type="button"
-            style={{ opacity: repeatMode !== 'off' ? 1 : 0.4, color: repeatMode !== 'off' ? 'var(--accent-text)' : 'inherit', position: 'relative' }}>
-            <DkRepeat />
-            {rLabel && <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.9375rem', fontWeight: 700, lineHeight: 1 }}>{rLabel}</span>}
-          </button>
+          <button className="site-dock-key" onClick={playNext} aria-label={t('globalMediaPlayer.next', 'Next')} type="button"><DkSkipN /></button>
         </div>
-        <div className="site-dock-scrub">
-          <span className="site-dock-time">{fmt(currentTime)}</span>
-          {/* A slider that is focusable and announced but ignores the arrow
-              keys is a WCAG 2.1.1 failure that axe cannot see: it checks the
-              role's required attributes, which were all present, and has no
-              way to know the key handler is missing. Found by a static pass,
-              2026-09-15. `aria-valuemin`/`-valuemax` are stated rather than
-              left to default so `aria-valuetext` reads against a real range. */}
-          <div
-            className="site-dock-track site-dock-waveform"
-            role="slider"
-            aria-label={t('globalMediaPlayer.playbackPosition', 'Playback position')}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-valuenow={Math.round(progress * 100)}
-            aria-valuetext={`${fmt(currentTime)} / ${fmt(duration)}`}
-            tabIndex={0}
-            onClick={e => { const r = e.currentTarget.getBoundingClientRect(); seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * duration); }}
-            onKeyDown={e => {
-              if (!duration) return;
-              const step = e.shiftKey ? 30 : 5;
-              const to = (secs: number) => { e.preventDefault(); seekTo(Math.max(0, Math.min(duration, secs))); };
-              if (e.key === 'ArrowRight' || e.key === 'ArrowUp') to(currentTime + step);
-              else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') to(currentTime - step);
-              else if (e.key === 'Home') to(0);
-              else if (e.key === 'End') to(duration);
-              else if (e.key === 'PageUp') to(currentTime + 60);
-              else if (e.key === 'PageDown') to(currentTime - 60);
-            }}
-          >
-            {waveform.map((h, i) => (
-              <span
-                key={i}
-                className="site-dock-wave-bar"
-                style={{
-                  height: `${h * 100}%`,
-                  // On the walnut panel, not on the page: --line-2 is a dark alpha under the
-                  // console theme and an unplayed bar drawn with it disappears into the timber.
-                  background: i / waveform.length <= progress ? 'var(--accent)' : 'var(--rule-on-walnut)',
-                }}
-              />
-            ))}
-          </div>
-          <span className="site-dock-time">{fmt(duration)}</span>
-        </div>
-      </div>
-
-      {/* ── Right: volume + utility controls ─────────────────────────────── */}
-      <div className="site-dock-r" style={{ alignItems: 'center', gap: 4 }}>
-
-        {/* Mute + volume */}
-        <button className="site-dock-btn" onClick={toggleMute} aria-label={isMuted ? t('globalMediaPlayer.unmute', 'Unmute') : t('globalMediaPlayer.mute', 'Mute')} title={isMuted ? t('globalMediaPlayer.unmuteShortcut', 'Unmute (M)') : t('globalMediaPlayer.muteShortcut', 'Mute (M)')} type="button"
-          style={{ opacity: isMuted ? 0.4 : 0.6, fontSize: '0.9375rem' }}>
-          {isMuted ? '⊘' : '◂))'}
-        </button>
-        <input
-          aria-label={t('globalMediaPlayer.volume', 'Volume')}
-          type="range" min={0} max={1} step={0.05}
-          value={isMuted ? 0 : volume}
-          onChange={e => setVolume(Number(e.target.value))}
-          /* 44 tall, not the 16 a bare range input paints: MOBILE.md's floor is
-             every control, and this one is only ever offered to a mouse (the
-             dock's whole right group is hidden below 768px), so the
-             coarse-pointer floors never reached it. The track stays thin; the
-             BOX is what a pointer has to hit. */
-          style={{ width: 48, height: 44, accentColor: 'var(--accent)', opacity: 0.6 }}
-        />
-
-        {/* Speed */}
-        <button onClick={cycleSpeed} aria-label={t('globalMediaPlayer.cycleSpeed', 'Cycle speed')} title={t('globalMediaPlayer.playbackSpeed', 'Playback speed')} type="button"
-          className="site-dock-btn site-dock-speed"
-          style={{ fontSize: '0.9375rem', fontWeight: 700, opacity: playbackRate !== 1 ? 1 : 0.5 }}>
-          {playbackRate}×
-        </button>
-
-        {/* Sleep timer */}
-        <button onClick={sleepMinutes !== null ? cancelSleepTimer : cycleSleepTimer}
-          aria-label={t('globalMediaPlayer.sleepTimer', 'Sleep timer')} title={sleepMinutes ? `${t('globalMediaPlayer.sleepIn', 'Sleep in')} ${sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '—'} — ${t('globalMediaPlayer.clickToCancel', 'click to cancel')}` : t('globalMediaPlayer.sleepTimer', 'Sleep timer')} type="button"
-          className="site-dock-btn site-dock-sleep"
-          style={{ fontSize: '0.9375rem', opacity: sleepMinutes !== null ? 1 : 0.45, color: sleepMinutes !== null ? 'var(--accent-text)' : 'inherit', fontWeight: sleepMinutes !== null ? 700 : 400 }}>
-          {sleepMinutes !== null && sleepRemainingSeconds !== null ? fmtSleep(sleepRemainingSeconds) : '☾'}
-        </button>
-
-        {/* Share */}
-        <button className="site-dock-btn" onClick={shareCurrentTrack} aria-label={t('globalMediaPlayer.shareTrack', 'Share track')} title={t('globalMediaPlayer.copyTrackLink', 'Copy track link')} type="button"
-          style={{ opacity: currentTrack ? (copied ? 1 : 0.5) : 0.2, fontSize: '0.9375rem', color: copied ? 'var(--accent-text)' : 'inherit' }}
-          disabled={!currentTrack}>
-          {copied ? '✓' : '⬆'}
-        </button>
-
-        {/* Queue / History toggle */}
-        <button className="site-dock-btn" onClick={() => togglePanel('queue')} aria-label={t('globalMediaPlayer.toggleQueue', 'Toggle queue')} title={t('globalMediaPlayer.queueAndHistory', 'Queue & history')} type="button"
-          style={{ opacity: panel !== null ? 1 : 0.5, color: panel !== null ? 'var(--accent-text)' : 'inherit', fontSize: '0.9375rem', position: 'relative' }}>
-          ≡
-          {upcomingTracks.length > 0 && (
-            <span style={{ position: 'absolute', top: -4, right: -4, fontSize: '0.9375rem', background: 'var(--accent)', color: 'var(--ink-on-accent)', borderRadius: 8, padding: '0 3px', lineHeight: 1.4 }}>
-              {upcomingTracks.length}
-            </span>
-          )}
-        </button>
-
-        <FanPlaylistManager currentTrack={currentTrack} playTrack={playTrack} />
+        {/* Position cue while the sheet (and its scrubber) is closed. Decorative
+            and aria-hidden: the keyboard-operable slider is the waveform above,
+            and announcing one value twice is worse than not announcing it here. */}
+        {!expanded && <span aria-hidden="true" className="site-dock-hairline" />}
       </div>
     </div>
   );
