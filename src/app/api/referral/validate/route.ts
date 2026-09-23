@@ -28,6 +28,12 @@ export async function POST(request: Request) {
     const rateLimit = await consumeRateLimit(`referral-validate:${clientAddress}`, {
       limit: 20,
       windowMs: 15 * 60 * 1000,
+      // Signup path, keyed per visitor and hit a few times ever, so its
+      // Durable Object is cold on nearly every call — the same shape as the
+      // auth buckets, which take 2500ms for the same reason. At the 1800ms
+      // default it timed out 166 times (Sentry JAVASCRIPT-NEXTJS-3), each one
+      // halving this visitor's limit during the one flow that lets them in.
+      timeoutMs: 2500,
     });
     if (!rateLimit.allowed) {
       return NextResponse.json(

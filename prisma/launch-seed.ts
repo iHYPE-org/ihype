@@ -119,6 +119,8 @@ async function main() {
       // sale — see the comment in `scripts/seed-preview-content.mjs`. This is
       // the launch night; it has to be buyable.
       ticketingOpensAt: new Date(),
+      // The launch venue is in Chicago; the door time is its wall clock.
+      timeZone: 'America/Chicago',
       hypeCount: 31
     },
     create: {
@@ -133,6 +135,8 @@ async function main() {
       promoterProfileId: promoter.id,
       isTicketed: true,
       ticketingOpensAt: new Date(),
+      // The launch venue is in Chicago; the door time is its wall clock.
+      timeZone: 'America/Chicago',
       ticketPriceCents: 1200,
       ticketCapacity: 150,
       venuePayoutPercent: 20,
