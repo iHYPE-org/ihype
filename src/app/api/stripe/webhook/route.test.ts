@@ -33,7 +33,15 @@ const processNotificationJobs = vi.fn().mockResolvedValue({ selected: 1, complet
 vi.mock('@/lib/notification-jobs', () => ({
   processNotificationJobs: (...args: unknown[]) => processNotificationJobs(...args),
 }));
-vi.mock('@/lib/logger', () => ({ log: { error: vi.fn() } }));
+const logError = vi.fn();
+const logWarn = vi.fn();
+vi.mock('@/lib/logger', () => ({ log: { error: (...a: unknown[]) => logError(...a), warn: (...a: unknown[]) => logWarn(...a) } }));
+
+/* The route reads STRIPE_SECRET_KEY to judge an event's mode. Undefined by
+   default, as in every test written before the pre-signature mode check, so
+   those keep exercising the signature path exactly as they did. */
+const readRuntimeEnv = vi.fn<(name: string) => string | undefined>(() => undefined);
+vi.mock('@/lib/runtime-env', () => ({ readRuntimeEnv: (name: string) => readRuntimeEnv(name) }));
 
 // In-memory table backing tx.processedWebhookEvent, so a real event ID
 // replayed twice actually hits the same duplicate-detection path the live
@@ -129,6 +137,9 @@ const PLATFORM_ORDER = { id: 'order_1', settlementMode: 'PLATFORM', settlementAc
 
 beforeEach(() => {
   vi.clearAllMocks();
+  // clearAllMocks clears calls, not implementations: a test that armed a live
+  // key would otherwise arm every test after it.
+  readRuntimeEnv.mockImplementation(() => undefined);
   processedEvents = new Set();
   profiles = [
     { id: 'artist', type: 'ARTIST', stripeConnectAccountId: 'acct_artist_payee', stripeConnectOnboarded: false },
@@ -170,6 +181,37 @@ describe('POST /api/stripe/webhook', () => {
 
     const res = await POST(makeRequest({}));
     expect(res.status).toBe(400);
+  });
+
+  it('refuses a delivery declaring the other mode BEFORE the signature check, at warn and never error (DESIGN_SYNC row 504)', async () => {
+    // A sandbox endpoint pointing at production: Stripe signs with a secret
+    // this Worker does not hold, so the signature can only ever fail. The
+    // route names the cause instead of paging on a bad signature.
+    readRuntimeEnv.mockImplementation((name) => (name === 'STRIPE_SECRET_KEY' ? 'sk_live_x' : undefined));
+
+    const res = await POST(makeRequest({ id: 'evt_sandbox', type: 'payment_intent.created', livemode: false }));
+
+    expect(res.status).toBe(400);
+    expect(constructWebhookEvent).not.toHaveBeenCalled();
+    expect(logWarn).toHaveBeenCalledTimes(1);
+    expect(String(logWarn.mock.calls[0]?.[2])).toMatch(/other mode points at this URL/);
+    expect(logError).not.toHaveBeenCalled();
+  });
+
+  it('still verifies a delivery that declares the key\'s own mode, and one that declares none', async () => {
+    readRuntimeEnv.mockImplementation((name) => (name === 'STRIPE_SECRET_KEY' ? 'sk_live_x' : undefined));
+    constructWebhookEvent.mockImplementation(() => {
+      throw new Error('signature mismatch');
+    });
+
+    const live = await POST(makeRequest({ id: 'evt_live', type: 'payment_intent.created', livemode: true }));
+    const silent = await POST(makeRequest({ id: 'evt_silent', type: 'payment_intent.created' }));
+
+    expect(live.status).toBe(400);
+    expect(silent.status).toBe(400);
+    expect(constructWebhookEvent).toHaveBeenCalledTimes(2);
+    expect(logWarn).not.toHaveBeenCalled();
+    expect(logError).toHaveBeenCalledTimes(2);
   });
 
   it('returns 503, not 400, when the webhook secret is unreadable this invocation', async () => {

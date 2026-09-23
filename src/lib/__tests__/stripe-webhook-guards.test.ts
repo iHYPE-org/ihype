@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   adEventIsPlatform,
   amountCoversOrder,
+  declaredLivemode,
   expectedEventAccount,
   holdCoversBudget,
   livemodeMatchesKey,
@@ -61,5 +62,36 @@ describe('livemodeMatchesKey', () => {
     expect(livemodeMatchesKey(false, 'sk_live_x')).toBe(false);
     expect(livemodeMatchesKey(true, 'sk_test_x')).toBe(false);
     expect(livemodeMatchesKey(true, undefined)).toBe(false);
+  });
+});
+
+describe('declaredLivemode', () => {
+  it('reads the boolean a delivery declares about itself', () => {
+    expect(declaredLivemode('{"id":"evt_1","livemode":false}')).toBe(false);
+    expect(declaredLivemode('{"id":"evt_1","livemode":true}')).toBe(true);
+  });
+
+  it('is null for anything that is not an object carrying a boolean livemode', () => {
+    expect(declaredLivemode('{"id":"evt_1"}')).toBeNull();
+    expect(declaredLivemode('{"livemode":"false"}')).toBeNull();
+    expect(declaredLivemode('[]')).toBeNull();
+    expect(declaredLivemode('null')).toBeNull();
+    expect(declaredLivemode('not json')).toBeNull();
+    expect(declaredLivemode('')).toBeNull();
+  });
+
+  it('refuses the sandbox under a live key and the live account under a test key, and nothing else', () => {
+    // The route's pre-signature rule, stated once: refuse only when the body
+    // declares a mode and the key is the other one.
+    const refused = (payload: string, key: string | undefined) => {
+      const declared = declaredLivemode(payload);
+      return Boolean(key && declared !== null && !livemodeMatchesKey(declared, key));
+    };
+    expect(refused('{"livemode":false}', 'sk_live_x')).toBe(true);
+    expect(refused('{"livemode":true}', 'sk_test_x')).toBe(true);
+    expect(refused('{"livemode":true}', 'sk_live_x')).toBe(false);
+    expect(refused('{"livemode":false}', 'sk_test_x')).toBe(false);
+    expect(refused('{"id":"evt_1"}', 'sk_live_x')).toBe(false);
+    expect(refused('{"livemode":false}', undefined)).toBe(false);
   });
 });

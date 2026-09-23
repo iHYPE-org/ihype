@@ -69,3 +69,29 @@ export function livemodeMatchesKey(eventLivemode: boolean, secretKey: string | n
   // `rk_live_` is a restricted live key; a rotation to one must not 400 every event.
   return eventLivemode === /^(sk|rk)_live_/.test(secretKey);
 }
+
+/**
+ * The `livemode` flag a delivery DECLARES about itself, read off the raw body
+ * BEFORE any signature check. Unverified by construction and used only ever
+ * to REFUSE, never to act: a live key cannot verify a sandbox delivery
+ * whatever the body says (Stripe signs it with the sandbox endpoint's
+ * secret), so a body declaring the other mode is refused without spending a
+ * signature check on it — and the refusal can name the cause, a Stripe
+ * webhook endpoint in the other mode pointing at this URL, instead of
+ * reading as a bad signature. Measured 2026-09-23 (DESIGN_SYNC row 504): 341
+ * "No signatures found" errors, every batch starting within seconds of a
+ * sandbox PaymentIntent being created by the payout rehearsal or the nightly
+ * walk, against a live account holding zero PaymentIntents. Null when the
+ * body is not JSON, not an object, or carries no boolean `livemode`; the
+ * verified-event check still runs afterwards for a body that lies.
+ */
+export function declaredLivemode(payload: string): boolean | null {
+  try {
+    const parsed: unknown = JSON.parse(payload);
+    if (!parsed || typeof parsed !== 'object') return null;
+    const value = (parsed as { livemode?: unknown }).livemode;
+    return typeof value === 'boolean' ? value : null;
+  } catch {
+    return null;
+  }
+}

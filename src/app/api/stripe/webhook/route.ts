@@ -9,6 +9,7 @@ import { processNotificationJobs } from '@/lib/notification-jobs';
 import {
   adEventIsPlatform,
   amountCoversOrder,
+  declaredLivemode,
   holdCoversBudget,
   livemodeMatchesKey,
   ticketOrderMatchesEvent,
@@ -34,6 +35,28 @@ export async function POST(request: NextRequest) {
   if (!signature) return NextResponse.json({ error: 'Missing signature.' }, { status: 400 });
 
   const payload = await request.text();
+
+  /* A delivery that DECLARES the other mode can never verify under this key:
+     Stripe signs a sandbox event with the sandbox endpoint's secret, which a
+     live Worker does not hold. So it is refused before the signature check,
+     at warn rather than error, naming the cause — a Stripe webhook endpoint
+     in the other mode pointing at this URL, a dashboard defect and not a
+     forged request. 341 error-level Sentry events between 2026-08-26 and
+     2026-09-19 were this shape (DESIGN_SYNC row 504) and buried real ones.
+     The status stays 400 so the sandbox dashboard shows the failure; the body
+     is unverified and is used only to refuse, and the verified-event check
+     below still runs for a body that lies about its mode. */
+  const secretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
+  const declared = declaredLivemode(payload);
+  if (secretKey && declared !== null && !livemodeMatchesKey(declared, secretKey)) {
+    log.warn(
+      '[stripe/webhook]',
+      { declaredLivemode: declared },
+      `Refused an unverified ${declared ? 'live' : 'test'}-mode delivery under a ${declared ? 'test' : 'live'} key: a Stripe webhook endpoint in the other mode points at this URL. Delete it in the Stripe Dashboard with that mode selected — no code change fixes this.`,
+    );
+    return NextResponse.json({ error: 'Event mode does not match this endpoint.' }, { status: 400 });
+  }
+
   let event;
   try {
     event = constructWebhookEvent(payload, signature);
@@ -53,8 +76,8 @@ export async function POST(request: NextRequest) {
 
   /* A test-mode event must never drive state under a live key, nor a live
      event under a test key. Signatures already keep the two apart when each
-     endpoint has its own secret; this is the check for the day they do not. */
-  const secretKey = readRuntimeEnv('STRIPE_SECRET_KEY');
+     endpoint has its own secret; this is the check for the day they do not,
+     and for a body that declared one mode and was signed for the other. */
   if (secretKey && !livemodeMatchesKey(event.livemode === true, secretKey)) {
     log.error('[stripe/webhook]', null, `Refused a ${event.livemode ? 'live' : 'test'}-mode event under the other mode's key (${event.type})`);
     return NextResponse.json({ error: 'Event mode does not match this endpoint.' }, { status: 400 });
