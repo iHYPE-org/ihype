@@ -61,7 +61,13 @@ function rootTokens(): { bg: string; accent: string; ink: string } {
 
 const tokens = rootTokens();
 const paint = { accent: tokens.accent, ink: tokens.ink };
-const GLYPH = 0.56;
+/* The wordmark's width as a fraction of the icon's side. The mark is 2545x660, so a width w
+   needs a circle of diameter ~1.033w to clear its corners: 0.74 survives the PWA maskable safe
+   zone (a centred circle of 80%), the iOS squircle and the round legacy launcher. */
+const MARK_W = 0.74;
+/* The Android adaptive foreground: the launcher guarantees only a 66dp circle of the 108dp
+   canvas, so the wordmark may be at most 66/108/1.033 = 0.59 of it. */
+const MARK_W_ADAPTIVE = 0.56;
 
 type Out = { file: string; width: number; height: number; colourType: number };
 const written: Out[] = [];
@@ -78,13 +84,13 @@ async function write(rel: string, svg: string, opts: { opaque?: boolean } = {}) 
 
 /* PWA: full-bleed square; `purpose: any maskable` needs the glyph inside the central 80%. */
 for (const size of [72, 96, 128, 144, 152, 180, 192, 512, 1024]) {
-  await write(`public/icons/icon-${size}.png`, iconSvg({ size, ground: tokens.bg, glyphHeight: GLYPH, ...paint }));
+  await write(`public/icons/icon-${size}.png`, iconSvg({ size, ground: tokens.bg, markWidth: MARK_W, ...paint }));
 }
 
 /* iOS store icon: square, opaque, no alpha channel. iOS masks its own corners. */
 await write(
   'ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png',
-  iconSvg({ size: 1024, ground: tokens.bg, glyphHeight: GLYPH, ...paint }),
+  iconSvg({ size: 1024, ground: tokens.bg, markWidth: MARK_W, ...paint }),
   { opaque: true },
 );
 
@@ -93,9 +99,9 @@ const DENSITIES: Array<[string, number]> = [['mdpi', 1], ['hdpi', 1.5], ['xhdpi'
 for (const [density, scale] of DENSITIES) {
   const dir = `android/app/src/main/res/mipmap-${density}`;
   const legacy = 48 * scale;
-  await write(`${dir}/ic_launcher.png`, iconSvg({ size: legacy, ground: tokens.bg, glyphHeight: GLYPH, cornerRadius: 0.18, ...paint }));
-  await write(`${dir}/ic_launcher_round.png`, iconSvg({ size: legacy, ground: tokens.bg, glyphHeight: GLYPH, cornerRadius: 0.5, ...paint }));
-  await write(`${dir}/ic_launcher_foreground.png`, iconSvg({ size: 108 * scale, ground: null, glyphHeight: 44 / 108, ...paint }));
+  await write(`${dir}/ic_launcher.png`, iconSvg({ size: legacy, ground: tokens.bg, markWidth: MARK_W, cornerRadius: 0.18, ...paint }));
+  await write(`${dir}/ic_launcher_round.png`, iconSvg({ size: legacy, ground: tokens.bg, markWidth: MARK_W, cornerRadius: 0.5, ...paint }));
+  await write(`${dir}/ic_launcher_foreground.png`, iconSvg({ size: 108 * scale, ground: null, markWidth: MARK_W_ADAPTIVE, ...paint }));
 }
 const SPLASH_PORTRAIT: Array<[string, number, number]> = [
   ['mdpi', 320, 480], ['hdpi', 480, 800], ['xhdpi', 720, 1280], ['xxhdpi', 960, 1600], ['xxxhdpi', 1280, 1920],

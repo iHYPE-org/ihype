@@ -121,7 +121,7 @@ html:has(.mmm-frame) {
      and is `position: sticky; top: 0` in the document above this frame. The
      header owns the top safe-area inset (it pads for it and grows by it), so
      the frame begins where the header ends. Same token the header reads. */
-  inset: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)) 0 0 0;
+  inset: calc(var(--app-header-h) + var(--safe-top)) 0 0 0;
   background: var(--bg);
   overflow: hidden;
   /* Below a modal but above ordinary page content. */
@@ -184,7 +184,7 @@ html:has(.mmm-frame) {
      `--mmm-safe-top` directly. The BOTTOM inset is still the frame's: the
      now-playing pill sits above it, and every pane's bottom padding carries
      it. All four resolve to 0 off-device. */
-  --mmm-safe-top: env(safe-area-inset-top, 0px);
+  --mmm-safe-top: var(--safe-top);
   --mmm-safe-bottom: env(safe-area-inset-bottom, 0px);
   --mmm-safe-left: env(safe-area-inset-left, 0px);
   --mmm-safe-right: env(safe-area-inset-right, 0px);

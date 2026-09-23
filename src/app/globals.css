@@ -5027,6 +5027,18 @@ h2 {
    safe-area inset is the header's — it is the top-most element now, which the
    dock used to be at the bottom — so the frame's panes no longer pad for it. */
 :root {
+  /* THE TOP SAFE AREA, READ ONCE. Everything that clears the status bar reads
+     this, never env() directly, because the iOS app already clears it natively:
+     `capacitor.config.ts` sets `ios.contentInset: 'automatic'`, so the WebView's
+     content starts BELOW the status bar while env(safe-area-inset-top) still
+     reports the full ~47-59px. Reading env() there padded the header for the
+     notch a second time — a ~47pt grey band above the nav on every screen
+     (owner's screenshot, 2026-09-23). `html.native-ios` is set before first
+     paint by the bootstrap in layout.tsx from the bridge Capacitor injects at
+     document start. The installed web app and Safari have no native inset and
+     keep env(). If contentInset ever becomes 'never', delete the override —
+     the app would then need env() like the web. */
+  --safe-top: env(safe-area-inset-top, 0px);
   --app-header-h: 54px;
   /* The shell's frame width and pane padding, declared HERE rather than on
      `.mmm-frame` (where they lived until 2026-09-22) because the header is
@@ -5037,9 +5049,10 @@ h2 {
   --mmm-frame-max: 712px;
   --mmm-pane-pad: 16px;
 }
+html.native-ios { --safe-top: 0px; }
 .adaptive-site-header.is-app {
-  height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px));
-  padding-top: env(safe-area-inset-top, 0px);
+  height: calc(var(--app-header-h) + var(--safe-top));
+  padding-top: var(--safe-top);
   transition: none;
   background: var(--material-regular);
   -webkit-backdrop-filter: var(--material-blur);
@@ -5369,7 +5382,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 @media (max-width: 768px) {
   .adaptive-site-header { display: block !important; height: 62px; }
-  .adaptive-site-header.is-app { height: calc(var(--app-header-h) + env(safe-area-inset-top, 0px)); }
+  .adaptive-site-header.is-app { height: calc(var(--app-header-h) + var(--safe-top)); }
   .adaptive-site-header-inner { width: calc(100% - 24px); gap: 10px; }
   .adaptive-site-header .search-bar-desktop { display: flex; max-width: none; }
   .adaptive-site-header-auth { display: none; }
@@ -5504,7 +5517,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
   align-items: center;
   gap: 12px;
   padding: 8px max(12px, env(safe-area-inset-right)) 8px max(12px, env(safe-area-inset-left));
-  padding-top: max(8px, env(safe-area-inset-top));
+  padding-top: max(8px, var(--safe-top));
   background: var(--warning);
   color: var(--ink-on-accent);
   font-family: var(--font-body);

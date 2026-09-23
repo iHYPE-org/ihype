@@ -24,7 +24,7 @@ export function OfflineBanner() {
     <div
       style={{
         position: 'fixed',
-        top: 'env(safe-area-inset-top)',
+        top: 'var(--safe-top)',
         left: 0,
         right: 0,
         zIndex: 500,
