@@ -36,12 +36,15 @@ export function PlayerQueuePanel({
   const { t } = useI18n();
   if (panel === null) return null;
 
+  // A block in the pill's sheet, not a popover: it used to hang
+  // `bottom: 100%` off the walnut bar, and the sheet it lives in now is
+  // already above the pill (SitePlayerDock, 2026-09-23).
   return (
     <div style={{
-      position: 'absolute', bottom: '100%', right: 0, width: 300, maxHeight: 340,
+      width: '100%', maxHeight: 340,
       display: 'flex', flexDirection: 'column',
       background: 'var(--bg-2)', border: '1px solid var(--hair-100)',
-      borderRadius: '8px 8px 0 0', zIndex: 10,
+      borderRadius: 8,
     }}>
       {/* Tab bar */}
       <div style={{ display: 'flex', borderBottom: '1px solid var(--hair-80)' }}>

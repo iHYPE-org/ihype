@@ -1727,10 +1727,15 @@ a,
   isolation: isolate;
   padding-top: 70px;
 }
-/* Reserve bottom space when the fixed-position site player dock is rendered,
-   so content (especially on mobile) is not hidden behind it. */
+/* Reserve bottom space while the now-playing pill is rendered, so the last
+   row of a page is not hidden behind it: the pill's 56px, its 12px gap above
+   and below, and the home-indicator inset it sits over. `:has(.site-dock)`
+   and nothing unconditional — the pill exists only while a track is loaded,
+   and until 2026-09-23 a second, unconditional `.site-shell { padding-bottom:
+   82px }` further down padded EVERY public page for a bar that might not be
+   there (DESIGN_SYNC row 508). */
 body:has(.site-dock) .site-shell {
-  padding-bottom: 80px;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom, 0px) + var(--consent-inset, 0px));
 }
 
 /* Pulse: skeleton loaders and live-dot opacity cycling. */
@@ -4097,46 +4102,16 @@ html.high-contrast p {
 
 /* ── Mobile bottom navigation bar ──────────────────────────────── */
 
-/* ── Site Player Dock ─────────────────────────────────────────── */
-/* The dock's own palette. These were hardcoded #f2ede8 / #090806 — the dark
-   theme's ink and background as literals — so on the light theme the "now
-   playing" title rendered near-white on a near-white surface and read as a
-   ghost. Found by screenshotting the shell against an empty database in light
-   theme, which is also the alpha condition. Rule 8 of the chrome contract:
-   never hardcode a colour. */
-/* ── Material: the walnut panel ──────────────────────────────────────────
-   The cabinet face from the console prototype's full player, as ONE class so
-   a surface opts into the material rather than copying a four-stop gradient
-   and a grain that will drift the second time it is pasted.
-
-   Three parts, and each is doing a job:
-     · the 88deg repeating grain — not 90, because a grain that is exactly
-       vertical reads as a UI stripe pattern; a couple of degrees off reads as
-       cut timber. Two weights of streak at different intervals, so it does
-       not tile visibly.
-     · the three-stop gradient, lit from the top, so the panel has a top and
-       a bottom instead of being a flat brown rectangle.
-     · the brass edge and the inset highlight — the machined lip. This is what
-       stops it reading as "dark mode happened to this element".
-
-   ANY surface carrying this is dark in EVERY theme, so its copy must come
-   from --ink-on-walnut*, never --ink*. There is a lint guard for that. */
-.walnut-panel {
-  background:
-    repeating-linear-gradient(88deg,
-      rgba(30, 14, 4, .22) 0 1px, transparent 1px 5px,
-      rgba(94, 56, 26, .14) 5px 7px, transparent 7px 15px),
-    linear-gradient(180deg, var(--walnut) 0%, var(--walnut-2) 34%, var(--walnut-3) 100%);
-  color: var(--ink-on-walnut);
-}
-/* The lip, as its own class: a panel pinned to the bottom of the viewport
-   wears it on top, a sheet that slides up wears it underneath, and a framed
-   plate wears it all the way round. Splitting them is what keeps the brass
-   from being re-declared at every call site. */
-.walnut-lip-top {
-  border-top: 3px solid var(--brass);
-  box-shadow: inset 0 4px 0 -1px rgba(255, 214, 160, .18);
-}
+/* ── Material: the walnut classes ─────────────────────────────────────────
+   `.walnut-panel` (the cabinet face as a four-stop gradient and a grain) and
+   `.walnut-lip-top` (the brass lip) were the public player dock's material,
+   painted whatever the theme said. The dock is the now-playing pill as of
+   2026-09-23 (DESIGN_SYNC row 508) and paints from `--dock-*`, so both are
+   deleted rather than left as dead rules the next surface might reach for;
+   `git show 9e577c29:src/app/globals.css` has them. The lint rule in
+   `lint-source.mjs` that refuses the page's ink on a `.walnut-panel` block
+   stays, for any surface that revives the class. The two below are still
+   worn by the vendored `ds/` components. */
 /* A panel that is a free-standing box rather than an edge of the viewport
    wears the brass all the way round. */
 .walnut-frame {
@@ -4164,143 +4139,163 @@ html.high-contrast p {
     0 20px 44px -16px rgba(0, 0, 0, .85);
 }
 
+/* THE NOW-PLAYING PILL ON THE PUBLIC PAGES (2026-09-23, DESIGN_SYNC row 508).
+   The same object `.mmm-mini` is inside the shell, written under its own names
+   because mmm.css loads only under the `/app` layout and the shell's e2e reads
+   `.mmm-mini` as the shell's. Same values: 56px tall, 12px off the edges, one
+   width of at most 480px centred, `--dock-*` material, `--ink-on-walnut*` ink,
+   44x44 keys. `SitePlayerDock` renders it only while a track is loaded.
+
+   What used to be here: the 82px walnut bar (`walnut-panel walnut-lip-top`, a
+   settled-on-scroll shrink, a hover marquee, a brass play disc and a twelve
+   control row that measured 906px of row in an 860px window), about 260 lines.
+   `git show 9e577c29:src/app/globals.css` is the whole of it. */
 .site-dock {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  left: 12px;
+  right: 12px;
+  /* Rides the cookie banner: `--consent-inset` is the dialog's measured extent
+     from the bottom of the viewport, published on :root (CookieConsent.tsx) —
+     the same lift the shell's pill takes as `--mmm-dock-lift`. Measured before
+     this term existed: the banner covered the open sheet and intercepted the
+     title's tap at 1280. */
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px) + var(--consent-inset, 0px));
   z-index: 200;
+  max-width: 480px;
+  margin-inline: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  color: var(--ink-on-walnut);
+  font-family: var(--f-b);
+}
+.site-dock-pill,
+.site-dock-sheet {
+  box-sizing: border-box;
+  border: 1px solid var(--dock-lip);
+  background-image: var(--dock-tint), var(--dock-texture);
+  background-size: auto, 300px auto;
+  background-blend-mode: multiply, normal;
+  background-color: var(--dock-bg);
+  -webkit-backdrop-filter: var(--dock-blur);
+  backdrop-filter: var(--dock-blur);
+  box-shadow: 0 10px 30px -14px rgba(var(--scrim-rgb), .45), var(--dock-shadow);
+}
+.site-dock-pill {
+  position: relative;
+  height: 56px;
   display: flex;
   align-items: center;
-  gap: 18px;
-  /* No page hairline and no blur: this is a solid piece of furniture, and it
-     carries the brass lip from .walnut-lip-top instead. */
-  font-family: var(--f-m);
-}
-.site-dock-l {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-}
-.site-dock-art {
-  flex-shrink: 0;
+  gap: 4px;
+  padding: 0 8px 0 4px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
 }
-.site-dock-meta { min-width: 0; }
-.site-dock-title {
-  font-family: var(--f-d, 'Bricolage Grotesque', sans-serif);
+.site-dock-open {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 2px;
+  border: 0;
+  background: none;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.site-dock-art {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  overflow: hidden;
+  border-radius: 50%;
+  border: 1px solid var(--art-edge);
+  display: grid;
+  place-items: center;
+  background: var(--mini-art-bg);
+  color: var(--ink-on-walnut-2);
+  font-family: var(--font-display);
   font-weight: 700;
+  font-size: 1rem;
+  line-height: 1;
+}
+.site-dock-meta { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.site-dock-title {
+  /* 15px, the content floor: a song's title is content, not an eyebrow. */
   font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--ink-on-walnut);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Playback failure state for the dock's status line. Uses the accent rather
-   than a new colour token so it reads as "attention" in both themes. */
-.site-dock-artist.site-dock-error { color: var(--accent-text); }
 .site-dock-artist {
   font-size: 0.9375rem;
-  /* Was rgba(242,237,232,.45) — 3.9:1 on the panel. A percentage of a light
-     is not a contrast decision; the ramp is. */
-  color: var(--ink-on-walnut-2);
-  margin-top: 2px;
-  letter-spacing: .04em;
+  color: var(--ink-on-walnut-3);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.site-dock-c {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  max-width: 500px;
-  margin: 0 auto;
-}
-.site-dock-ctrls {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-/* NO WIDTH FLOOR HERE, and the arithmetic that suggested one was wrong.
-   "Five 44px keys and four 12px gaps is 268px inside a 500px column" is true
-   and irrelevant: the column is `flex: 1` with no `min-width: 0`, so its
-   content width becomes the row's floor, and at 860px the row is what runs
-   out — not the column. Measured on the built worker, four variants at 860:
-
-     no floors (what shipped)      906px of row in 860   1 control spilling
-     height-only floor             860px of row in 860   nothing spilling
-     + a 44px width on the centre  920px of row in 860   1 control spilling
-     + tighter gaps as well        904px of row in 860   1 control spilling
-
-   So the bar ALREADY overflowed itself at 860 before any of this, which
-   nothing had ever measured, and the height floor incidentally fixes it. A
-   width floor re-breaks it. Nine of the twelve are still narrower than 44 and
-   `measure:taps` counts them; closing that means deciding what the bar carries
-   at 860, which is a design change with a .dc.html attached. */
-.site-dock-btn {
+/* Playback failure state for the status line. The accent as copy rather than
+   a new token so it reads as "attention" on every material. */
+.site-dock-artist.site-dock-error { color: var(--accent-text); }
+.site-dock-transport { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+/* A key: 44x44, one pixel of travel on press. */
+.site-dock-key {
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
   background: none;
-  border: none;
+  border-radius: 50%;
   color: var(--ink-on-walnut-2);
   cursor: pointer;
-  padding: 4px;
-  /* THE FLOOR IS UNCONDITIONAL, and it was not. `.site-dock-play` carried
-     `min-width/min-height: 44px` inside the `(pointer: coarse)` block at the
-     end of this file and nothing carried it for a mouse — the exact shape
-     DESIGN_SYNC row 375 records ("a floor in a shared block is a proposal").
-     The whole centre and right of this dock is hidden below 768px, so the
-     coarse-pointer copy could never apply to it: every one of these controls
-     was 16.5-34px for every desktop member, and nothing measured it until
-     `measure:taps` drove the signed-in surfaces at 860 and 1280.
-
-     HEIGHT ONLY HERE, AND THE WIDTH IS MEASURED DEBT RATHER THAN AN OVERSIGHT.
-     Flooring both dimensions was tried and MEASURED: the dock needed 980px of
-     row inside an 860px window with a control spilling out of its own bar, so
-     a blanket floor buys a compliant number with a broken layout at the width
-     where the bar is tightest. Vertical room costs nothing and is the half
-     that helps most — 16-34px becomes 44px on every one of the twelve, and
-     the row stops overflowing (see the note above `.site-dock-c
-     .site-dock-btn` for the four variants and their numbers). */
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: color .15s;
+  -webkit-tap-highlight-color: transparent;
 }
-.site-dock-btn:hover { color: var(--ink-on-walnut); }
-/* The two dock keys whose LABEL is their content — a speed multiplier and a
-   sleep countdown — need a little more room than a glyph so the row does not
-   reflow as the text changes. These numbers were `minWidth: 26` and
-   `minWidth: 28` written inline in GlobalMediaPlayer.tsx, and an inline width
-   outranks every rule in this file: the 44px floor above could never have
-   reached these two whatever it said, and nothing here or in `audit:css` can
-   see an inline style to tell you so. Same values, same geometry, now in the
-   one place the cascade is readable.
-
-   They stay under 44 for the reason the comment above gives — the bar has no
-   horizontal room at 860 — so `measure:taps` still counts them. */
-.site-dock-speed { min-width: 26px; }
-.site-dock-sleep { min-width: 28px; }
-.site-dock-play {
-  /* Was 30x30 for a mouse and 44 only under `(pointer: coarse)`; the floor is
-     the floor. The brass disc grows with it. */
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  /* Brass, not the page's ink: this is the one control on the panel and the
-     material already has a vocabulary for one. 7.92:1 for the glyph. */
-  background: var(--brass);
-  color: var(--walnut-3);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background .15s;
+.site-dock-key[data-lit='true'] { color: var(--ink-on-walnut); }
+.site-dock-key:active { transform: translateY(1px); }
+.site-dock-key:focus-visible,
+.site-dock-open:focus-visible,
+.site-dock-tool:focus-visible { outline: 2px solid var(--tab-on-ink); outline-offset: -3px; }
+@media (hover: hover) {
+  .site-dock-open:hover,
+  .site-dock-key:hover,
+  .site-dock-tool:hover { background: rgba(var(--surface-tint-rgb), .08); }
+  .site-dock-key:hover,
+  .site-dock-tool:hover { color: var(--ink-on-walnut); }
 }
-.site-dock-play:hover { background: var(--lamp); }
+/* The position cue while the sheet is closed: a hairline along the pill's
+   bottom edge filled to `--dock-progress`, which the component publishes on
+   every timeupdate. Decorative; the real slider is the waveform in the sheet. */
+.site-dock-hairline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  pointer-events: none;
+  background: linear-gradient(90deg, var(--accent) var(--dock-progress, 0%), transparent var(--dock-progress, 0%));
+}
+
+/* The sheet: everything the bar used to carry across its centre and right,
+   above the pill, open from the title. One column, so it fits a phone. */
+.site-dock-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 16px;
+  max-height: calc(100dvh - 56px - 12px * 4 - env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+}
 .site-dock-scrub {
   display: flex;
   align-items: center;
@@ -4309,125 +4304,85 @@ html.high-contrast p {
 }
 .site-dock-time {
   font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
   color: var(--ink-on-walnut-3);
-  width: 32px;
+  width: 44px;
   text-align: center;
   flex-shrink: 0;
 }
-.site-dock-track {
-  flex: 1;
-  height: 3px;
-  background: var(--rule-on-walnut);
-  border-radius: 2px;
-  position: relative;
-  cursor: pointer;
-}
-.site-dock-track:hover { background: var(--rule-on-walnut-2); }
 .site-dock-waveform {
-  height: 24px;
-  background: none;
+  flex: 1;
+  height: 44px;
   display: flex;
   align-items: center;
   gap: 2px;
+  cursor: pointer;
+  border-radius: 4px;
 }
-.site-dock-waveform:hover { background: none; }
+.site-dock-waveform:focus-visible { outline: 2px solid var(--tab-on-ink); outline-offset: 2px; }
 .site-dock-wave-bar {
   flex: 1;
   min-width: 1px;
   border-radius: 1px;
-  transition: background .1s;
   pointer-events: none;
-}
-.site-dock-r {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 140px;
-  justify-content: flex-end;
-  flex-shrink: 0;
-}
-/* Nudge body content up so it's not hidden under the dock */
-@media (max-width: 768px) {
-  .site-dock-c { display: none; }
-  .site-dock-r { display: none; }
-  .site-dock-l { flex: 1 1 auto; cursor: pointer; }
-  .site-dock-expand-chevron { display: inline-flex !important; }
-  .site-dock-mobile-play { display: flex !important; }
-  .site-dock-expanded {
-    height: auto;
-    flex-wrap: wrap;
-    align-items: stretch;
-    padding-bottom: 14px;
-  }
-  .site-dock-expanded .site-dock-c {
-    display: flex !important;
-    order: 3;
-    width: 100%;
-    max-width: none;
-    margin-top: 12px;
-  }
-  .site-dock-expanded .site-dock-r {
-    display: flex !important;
-    order: 2;
-    min-width: unset;
-  }
-  .site-dock-expanded .site-dock-mobile-play { display: none !important; }
-}
-.site-dock-expand-chevron {
-  display: none;
-  transition: transform .2s;
-  flex-shrink: 0;
-  opacity: 0.5;
-}
-/* THE PROGRESS HAIRLINE, which the markup has rendered and no stylesheet has
-   ever answered. `GlobalMediaPlayer` writes `.site-dock-hairline` with a fill
-   and a thumb, and publishes `--dock-progress` on the dock for them on every
-   timeupdate — a custom property read by NOTHING until this rule, so the
-   component has been paying for a style write per tick to feed a line that
-   was never drawn.
-   It matters on a PHONE, which is where it was always aimed: at <= 768px the
-   collapsed dock sets `.site-dock-c { display: none }`, the waveform scrubber
-   lives inside it, and a member therefore had no position cue of any kind
-   until they expanded the dock. That is the gap this fills.
-   So it is shown exactly where the scrubber is not, which is what the
-   component's own comment asks for ("hidden ... where it would double that
-   scrubber"): off by default, on for the collapsed phone dock, off again the
-   moment expanding brings the real slider back. `inset 3px` clears the brass
-   lip `.walnut-lip-top` draws on the same edge rather than fighting it. */
-.site-dock-hairline {
-  display: none;
-  position: absolute;
-  top: 3px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  pointer-events: none;
+  /* On the pill's material, not on the page: --line-2 is a dark alpha under
+     the console themes and an unplayed bar drawn with it disappears into the
+     timber. */
   background: var(--rule-on-walnut);
+  transition: background .1s;
 }
-.site-dock-hairline-fill {
-  display: block;
-  height: 100%;
-  width: var(--dock-progress, 0%);
-  background: var(--accent);
+.site-dock-wave-bar[data-played='true'] { background: var(--accent); }
+.site-dock-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
 }
-.site-dock-hairline-thumb {
-  position: absolute;
-  top: 50%;
-  left: var(--dock-progress, 0%);
-  width: 6px;
-  height: 6px;
-  margin: -3px 0 0 -3px;
+/* A tool: 44x44, dimmed until it is on. `data-on` is the paint, `aria-pressed`
+   or `aria-expanded` the reader's. */
+.site-dock-tool {
+  position: relative;
+  min-width: 44px;
+  min-height: 44px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: none;
   border-radius: 50%;
+  color: var(--ink-on-walnut-3);
+  font: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.site-dock-tool[data-on='true'] { color: var(--ink-on-walnut); }
+.site-dock-tool-text { font-weight: 700; padding: 0 8px; }
+.site-dock-tool-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.site-dock-tool-count {
   background: var(--accent);
+  color: var(--ink-on-accent);
+  border-radius: var(--radius-pill);
+  padding: 2px 4px;
 }
-@media (max-width: 768px) {
-  .site-dock-hairline { display: block; }
-  .site-dock-expanded .site-dock-hairline { display: none; }
-}
-.site-dock-expanded .site-dock-expand-chevron { transform: rotate(180deg); }
-.site-dock-mobile-play {
-  display: none;
-  flex-shrink: 0;
+/* 44 tall, not the 16 a bare range input paints: the BOX is what a pointer
+   has to hit, the track stays thin. */
+.site-dock-volume { width: 64px; height: 44px; accent-color: var(--accent); }
+/* The sheet's own containers are flow, not popovers: the playlist panel used
+   to open BELOW its launcher (`top: calc(100% + …)`), which from a bar pinned
+   to the bottom of the viewport is off the screen — measured; nobody could
+   reach "My playlists" from the dock. In the sheet it is a block. */
+.site-dock-sheet .fan-playlist-launcher { display: contents; }
+.site-dock-sheet .fan-playlist-panel {
+  position: static;
+  width: 100%;
+  max-height: min(50dvh, 420px);
 }
 
 /* ── Mobile-first improvements ──────────────────────────────────── */
@@ -4604,24 +4559,12 @@ textarea { min-height: 44px; }
 @media (max-width: 640px) {
 }
 
-/* 11. Audio player bar on a phone.
-   Until 2026-09-22 this sat `bottom: calc(60px + safe-area)` — stacked ABOVE
-   the bottom tab bar, which is deleted (DESIGN_SYNC row 500). The offset
-   survived the deletion for one build and left the dock floating 60px up the
-   page with content showing beneath it, measured on the public show page at
-   393. It is the bottom-most element now, so it owns the home-indicator inset
-   itself: `viewport-fit=cover` puts the bottom of the WebView at the bottom of
-   the physical display, and without the padding the controls sit in the swipe
-   zone. */
-@media (max-width: 768px) {
-  .site-dock {
-    bottom: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    min-height: 64px;
-  }
-  .site-dock-play { min-width: 44px; min-height: 44px; }
-  body:has(.site-dock) .site-shell { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)); }
-}
+/* 11. The now-playing pill needs no phone rule: it owns the home-indicator
+   inset at every width (`bottom: calc(12px + env(safe-area-inset-bottom))`,
+   above). Until 2026-09-22 the bar this replaced sat `bottom: calc(60px +
+   safe-area)` — stacked above a tab bar deleted in DESIGN_SYNC row 500 — and
+   the offset survived the deletion for one build; a bar that clears a sibling
+   records the sibling's height. */
 .ptr-indicator {
   display: flex;
   align-items: center;
@@ -4850,7 +4793,7 @@ h2 {
 @media print {
   .site-nav,
 .ihype-cookie-consent,
-.site-dock-l {
+.site-dock {
     display: none !important;
   }
 }
@@ -5353,24 +5296,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   /* The light-theme border restatement that used to sit here is gone with the
      rest of the parallel palette — --hair-100 is already black-on-light. */
 }
-.site-dock { height: 82px; padding: 0 clamp(14px,2.4vw,34px); box-shadow: 0 -16px 42px rgba(0,0,0,.24); }
-.site-dock-l { min-width: min(30vw,340px); }
-.site-dock-art { width: 58px; height: 58px; border-radius: 10px; transition: width .3s ease, height .3s ease; }
-.site-dock-settled .site-dock-art { width: 42px; height: 42px; }
-.site-dock-meta { max-width: 230px; overflow: hidden; }
-/* The pilot lamp. It borrowed --role-venue, which the console theme darkens
-   to #0f6b62 to survive the cream board — dark teal on dark walnut. A panel's
-   accents come from the panel. 7.41:1. */
-.site-dock-now-playing { margin-bottom: 3px; color: var(--lamp); font: 700 0.9375rem/1 var(--f-m); letter-spacing: .16em; text-transform: uppercase; }
-.site-dock-title span,
-.site-dock-artist span { display: inline-block; min-width: 100%; }
-.site-dock-title:hover span,
-.site-dock-artist:hover span { animation: dock-marquee 10s linear infinite; }
-@keyframes dock-marquee { 0%,
-12% { transform: translateX(0); } 88%,
-100% { transform: translateX(calc(-100% + 180px)); } }
-.site-shell { padding-bottom: 82px; }
-
 @media (max-width: 1050px) {}
 /* 320px, the smallest phone the type ramp is checked at: the mark, four words
    at 8px a side and the row's two 10px gaps come to 302px against 296px of
@@ -5394,12 +5319,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
   .adaptive-site-header.has-nav .search-bar-desktop,
   .adaptive-site-header.has-nav .search-bar-mobile-trigger,
   .adaptive-site-header.has-nav .app-settings-link { display: none; }
-  .site-dock { height: 70px; padding: 0 12px; }
-  .site-dock-art { width: 48px; height: 48px; }
-  .site-dock-settled .site-dock-art { width: 38px; height: 38px; }
-  .site-dock-l { min-width: 0; }
-  .site-dock-now-playing { display: none; }
-  .site-shell { padding-bottom: 70px; }
 }
 @media (max-width: 470px) {
   .adaptive-site-header .nav-logo { max-width: 78px; }
@@ -5407,10 +5326,7 @@ body:has(.fan-entry) #main-content { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .adaptive-site-header,
-.adaptive-site-header .search-bar-desktop,
-.site-dock-art { transition: none; }
-  .site-dock-title:hover span,
-.site-dock-artist:hover span { animation: none; }
+.adaptive-site-header .search-bar-desktop { transition: none; }
 }
 
 /* ── Authenticated local-scene shell ────────────────────────────────
@@ -5498,10 +5414,6 @@ body:has(.fan-entry) #main-content { width: 100%; }
     font-size: 0.9375rem;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .site-dock-marquee-track { animation: none; }
-}
-
 /* ── Impersonation banner ────────────────────────────────────────────────
    Fixed to the top of the viewport on every route and above every shell.
    It uses --warning rather than the accent on purpose: the accent is the

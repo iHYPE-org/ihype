@@ -600,7 +600,25 @@ function RadioTab() {
   if (!all.length) return <Empty>{t('mmmMusic.noStations', 'No stations are active yet.')}</Empty>;
 
   const active = RADIO_FILTERS.find((entry) => entry.id === filter) ?? RADIO_FILTERS[0];
-  const stations = all.filter((station) => active.kinds.includes(station.kind));
+  const inFilter = all.filter((station) => active.kinds.includes(station.kind));
+  /* A station with NOTHING in it is not a row (2026-09-23; owner: "do it", on
+     the recommendation). Row 338 listed it disabled and saying so, on the
+     reasoning that a station that vanishes reads as a fetch that failed — and
+     that reasoning is about a FAILED read. Measured against the production
+     catalogue the tab was eight disabled rows reading "No tracks yet" and not
+     one thing to play, which is a list of nothing wearing a list's clothes. A
+     count of zero is a read that SUCCEEDED, so the playable stations are the
+     rows and the empty ones are folded under one sentence that NAMES them: the
+     set is still on screen, nothing silently vanished, and a member reads once
+     why the list is short. A null count is the failed read and stays a row —
+     the tap finds out, and `stationError` says which way it went. */
+  const stations = inFilter.filter((station) => station.trackCount !== 0);
+  const waiting = inFilter.filter((station) => station.trackCount === 0);
+  const waitingLine = waiting.length === 1
+    ? t('mmmMusic.stationWaitingOne', '{name} fills as local artists upload.').replace('{name}', waiting[0].title)
+    : t('mmmMusic.stationWaitingMany', '{count} stations fill as local artists upload: {names}.')
+        .replace('{count}', String(waiting.length))
+        .replace('{names}', waiting.map((station) => station.title).join(' · '));
 
   return (
     <>
@@ -628,39 +646,38 @@ function RadioTab() {
       {/* The filter is named by the pressed chip directly above, so the
           sentence does not interpolate a lowercased English label into itself
           — a construction no translator can follow. */}
-      {stations.length === 0 && <Empty>{t('mmmMusic.noStationForFilter', 'No station is active yet for this filter.')}</Empty>}
+      {inFilter.length === 0 && <Empty>{t('mmmMusic.noStationForFilter', 'No station is active yet for this filter.')}</Empty>}
+      {/* Every station in the filter is waiting: ONE plate carrying the
+          sentence, never an empty list above a note. */}
+      {inFilter.length > 0 && stations.length === 0 && <Empty>{waitingLine}</Empty>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
       {stations.map((station) => (
         <button
           className="mmm-row mmm-card mmm-station"
-          /* A station that resolves to nothing is listed — the set is fixed and
-             a missing row says nothing — but it is not PLAYABLE: it used to
-             offer a live play button beside "0 tracks", and a tap started
-             nothing. Disabled, said plainly, and drawn without the play glyph. */
-          data-empty={station.trackCount === 0 ? 'true' : undefined}
           data-playing="false"
-          disabled={pendingStation === station.slug || station.trackCount === 0}
+          disabled={pendingStation === station.slug}
           key={station.slug}
           onClick={() => void openStation(station.slug, station.title)}
           type="button"
         >
-          <span aria-hidden="true" className="mmm-station-art">{station.trackCount === 0 ? '·' : '▶︎'}</span>
+          <span aria-hidden="true" className="mmm-station-art">▶︎</span>
           <span className="mmm-station-main">
             <span className="mmm-row-title">{station.title}</span>
             <span className="mmm-row-sub">{station.subtitle}</span>
           </span>
-          {/* A null count means the query failed. Rendering "0 tracks" beside a
+          {/* A null count means the query failed. Rendering a figure beside a
               station that may be full is worse than rendering nothing. */}
           {station.trackCount !== null && (
             <span className="mmm-row-meta mmm-station-count">
-              {station.trackCount === 0
-                ? t('mmmMusic.noTracksYet', 'No tracks yet')
-                : `${station.trackCount} ${station.trackCount === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}`}
+              {`${station.trackCount} ${station.trackCount === 1 ? t('mmmMusic.trackOne', 'track') : t('mmmMusic.trackMany', 'tracks')}`}
             </span>
           )}
         </button>
       ))}
       </div>
+      {stations.length > 0 && waiting.length > 0 && (
+        <p className="mmm-me-note">{waitingLine}</p>
+      )}
     </>
   );
 }
