@@ -247,12 +247,18 @@ function fetchTabPayload(url: string): Promise<unknown> {
   return request;
 }
 
-/** Warm a URL the member has not asked for yet; a failure here is nobody's error. */
-function prefetchTabPayloads(urls: readonly string[]) {
+/**
+ * Warm URLs the member has not asked for yet — ONE AT A TIME, so the warming
+ * never competes with the tab on screen for the connection: seven reads fired
+ * at once beside the active tab's own fetch measurably delayed the deck on a
+ * single-instance worker. A failure here is nobody's error.
+ */
+async function prefetchTabPayloads(urls: readonly string[], cancelled: () => boolean) {
   for (const url of urls) {
+    if (cancelled()) return;
     const cached = tabPayloadCache.get(url);
     if (cached && Date.now() - cached.at < TAB_CACHE_TTL_MS) continue;
-    fetchTabPayload(url).catch(() => {});
+    await fetchTabPayload(url).catch(() => {});
   }
 }
 
@@ -273,19 +279,24 @@ const TAB_WARM_URLS: Record<MusicTabId, readonly string[]> = {
 
 function useWarmSiblingTabs(tab: MusicTabId) {
   useEffect(() => {
-    // After the active tab's own reads have had the connection: ~1.5s, or the
-    // browser's idle callback if it has one.
+    // After the active tab's own reads have landed: wait at least 1.5s, then
+    // until nothing of this surface's is in flight (up to ~10s), then warm
+    // sequentially. The active tab always gets the connection first.
+    let cancelled = false;
     const urls = (Object.keys(TAB_WARM_URLS) as MusicTabId[])
       .filter((id) => id !== tab)
       .flatMap((id) => TAB_WARM_URLS[id]);
-    const run = () => prefetchTabPayloads(urls);
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number; cancelIdleCallback?: (id: number) => void };
-    if (typeof w.requestIdleCallback === 'function') {
-      const id = w.requestIdleCallback(run, { timeout: 2500 });
-      return () => w.cancelIdleCallback?.(id);
-    }
-    const timer = window.setTimeout(run, 1500);
-    return () => window.clearTimeout(timer);
+    let attempts = 0;
+    const start = () => {
+      if (cancelled) return;
+      if (tabPayloadInFlight.size > 0 && attempts++ < 30) {
+        timer = window.setTimeout(start, 300);
+        return;
+      }
+      void prefetchTabPayloads(urls, () => cancelled);
+    };
+    let timer = window.setTimeout(start, 1500);
+    return () => { cancelled = true; window.clearTimeout(timer); };
   }, [tab]);
 }
 
