@@ -296,6 +296,9 @@ async function main() {
         status: offsetDays < 0 ? 'ENDED' : 'SCHEDULED',
         startsAt,
         ticketingOpensAt,
+        // Every preview venue is in Portland, Maine, so every door time is
+        // on Eastern time. Without it the page states the runtime's clock.
+        timeZone: 'America/New_York',
         /**
          * THE SPLIT, without which the ticket box does not render at all.
          *

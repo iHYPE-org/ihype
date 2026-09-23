@@ -364,6 +364,8 @@ model TicketTransferCode {
 
   /// The order's live code is looked up to rotate it when a new one is minted.
   @@index([ticketOrderId, claimedAt])
+  @@index([createdById])
+  @@index([claimedById])
 }
 
 model FanPlaylist {
@@ -496,6 +498,7 @@ model ArtistMediaAsset {
   @@index([publishAt, isPublished])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_title_trgm_idx")
   @@index([notes(ops: raw("gin_trgm_ops"))], type: Gin, map: "ArtistMediaAsset_notes_trgm_idx")
+  @@index([albumId])
 }
 
 /// A release a set of tracks belongs to. Deliberately thin: a title, its cover
@@ -672,6 +675,9 @@ model Show {
   @@index([creatorId])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_title_trgm_idx")
   @@index([description(ops: raw("gin_trgm_ops"))], type: Gin, map: "Show_description_trgm_idx")
+  @@index([venueProfileId])
+  @@index([headlinerProfileId])
+  @@index([promoterProfileId])
 }
 
 // Lineup & Split Agreement (DESIGN_SYNC row 226) — only relevant when a Show
@@ -782,6 +788,8 @@ model TicketOrder {
   accountsPayableEntries     AccountsPayableEntry[]
 
   @@index([buyerUserId])
+  @@index([showId])
+  @@index([affiliatePromoterProfileId])
 }
 
 model Ticket {
@@ -808,6 +816,9 @@ model Ticket {
 
   @@index([showId, status])
   @@index([venueProfileId, status])
+  @@index([ticketOrderId])
+  @@index([scannedByUserId])
+  @@index([reassignedByUserId])
 }
 
 model AccountsPayableEntry {
@@ -866,6 +877,7 @@ model ShowListen {
 
   @@unique([userId, showId])
   @@index([userId])
+  @@index([showId])
 }
 
 model PasswordResetCode {
@@ -963,6 +975,7 @@ model SetlistVote {
 
   @@unique([showId, userId, mediaId])
   @@index([showId, mediaId])
+  @@index([userId])
 }
 
 model ProfileHypeEvent {
@@ -974,6 +987,7 @@ model ProfileHypeEvent {
   profile   Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
 
   @@unique([userId, profileId])
+  @@index([profileId])
 }
 
 model VenueConnectionRequest {
@@ -1032,6 +1046,7 @@ model Account {
   user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
+  @@index([userId])
 }
 
 model Session {
@@ -1040,6 +1055,7 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId])
 }
 
 
@@ -1082,6 +1098,7 @@ model ShowRsvp {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([showId, userId])
+  @@index([userId])
 }
 
 model NotificationPreference {
